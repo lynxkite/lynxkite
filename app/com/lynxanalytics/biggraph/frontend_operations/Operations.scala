@@ -1390,10 +1390,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldVAttrs = project.vertexAttributes.toMap
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
-      val segmentationMap = project.segmentationMap
+      val oldSegmentations = project.viewer.segmentationMap
       project.setVertexSet(m.segments, idAttr = "id")
-      for ((name, segState) <- segmentationMap) {
-        project.newSegmentation(name, segState)
+      for ((name, segViewer) <- oldSegmentations) {
+        project.newSegmentation(name, segViewer.segmentationState)
         val seg = project.segmentation(name)
         val op = graph_operations.InducedEdgeBundle(induceDst = false)
         seg.belongsTo = op(

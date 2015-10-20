@@ -379,13 +379,13 @@ sealed trait ProjectEditor {
 
   def vertexSet = viewer.vertexSet
   def vertexSet_=(e: VertexSet): Unit = {
-    updateVertexSet(e, killSegmentations = true)
+    updateVertexSet(e)
   }
-  protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+  protected def updateVertexSet(e: VertexSet): Unit = {
     if (e != vertexSet) {
       edgeBundle = null
       vertexAttributes = Map()
-      if (killSegmentations) state = state.copy(segmentations = Map())
+      state = state.copy(segmentations = Map())
       if (e != null) {
         state = state.copy(vertexSetGUID = Some(e.gUID))
         scalars("vertex_count") = graph_operations.Count.run(e)
@@ -500,7 +500,6 @@ sealed trait ProjectEditor {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq
 
-  def segmentationMap = state.segmentations
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
   def segmentationNames = state.segmentations.keys.toSeq
@@ -562,8 +561,9 @@ sealed trait ProjectEditor {
     val origEAttrs = edgeAttributes.toIndexedSeq
     val origBelongsTo: Option[EdgeBundle] =
       if (isSegmentation) Some(asSegmentation.belongsTo) else None
+    val origSegmentations = state.segmentations
+    updateVertexSet(pullBundle.srcVertexSet)
 
-    updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
     for ((name, attr) <- origVAttrs) {
       vertexAttributes(name) =
         graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
@@ -578,7 +578,9 @@ sealed trait ProjectEditor {
       pullBackEdges(origEB, origEAttrs, induction.induced, induction.embedding)
     }
 
-    for (seg <- segmentations) {
+    for ((segName, segState) <- origSegmentations) {
+      newSegmentation(segName, segState)
+      val seg = segmentation(segName)
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
         op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
@@ -676,9 +678,9 @@ class SegmentationEditor(
     scalars.set("!belongsToEdges", graph_operations.Count.run(e))
   }
 
-  override protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+  override protected def updateVertexSet(e: VertexSet): Unit = {
     if (e != vertexSet) {
-      super.updateVertexSet(e, killSegmentations)
+      super.updateVertexSet(e)
       val op = graph_operations.EmptyEdgeBundle()
       belongsTo = op(op.src, parent.vertexSet)(op.dst, e).result.eb
     }
