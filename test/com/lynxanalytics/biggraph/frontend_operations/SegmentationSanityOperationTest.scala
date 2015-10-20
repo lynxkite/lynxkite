@@ -3,6 +3,8 @@
 // is revolving around.
 package com.lynxanalytics.biggraph.frontend_operations
 
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+
 class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation handles belongsTo edges properly") {
     run("Example Graph")
@@ -62,6 +64,11 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
       Map("key" -> "gender")
     )
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+    val belongsTo = seg.belongsTo.rdd.collect
+    // 4 edges:
+    assert(belongsTo.toSeq.size == 4)
+    // Edges coming from 2 vertices on project side:
+    assert(belongsTo.map { case (_, (src)) => src.src }.toSeq.distinct.size == 2)
   }
 }
 
