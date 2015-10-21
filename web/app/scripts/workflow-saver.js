@@ -19,8 +19,7 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
             workflowName: scope.name,
             stepsAsGroovy: scope.code,
             description: scope.description,
-          },
-          function() {
+          }).then(function() {
             scope.mode.enabled = false;
             scope.side.reloadAllProjects();
           });

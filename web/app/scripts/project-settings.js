@@ -22,8 +22,7 @@ angular.module('biggraph').directive('projectSettings', function(util) {
           project: scope.side.state.projectName,
           readACL: scope.readACL,
           writeACL: scope.writeACL,
-        },
-        function() {
+        }).then(function() {
           scope.side.reload();
         });
       };
