@@ -5,4 +5,4 @@ set -e
 
 ./stage.sh
 
-stage/bin/biggraph "$@" interactive
+./quick_run.sh "$@"
