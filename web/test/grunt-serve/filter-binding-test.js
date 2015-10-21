@@ -2,7 +2,7 @@ var mocks = require('../mocks.js');
 describe('the all filters button', function() {
   beforeEach(function() {
     mocks.addTo(browser);
-    browser.get('/#/project/Project_Strawberry');
+    browser.get('/#/project/Project%20Strawberry');
     this.header = element(by.css('.side > .project > .project-name'))
   });
 

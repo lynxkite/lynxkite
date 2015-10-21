@@ -1,5 +1,5 @@
 {
-  "name": "My_Little_Project",
+  "name": "My Little Project",
   "readACL": "*",
   "writeACL": "*",
   "vertexSet": "1234-1234-1234-1234",
@@ -30,13 +30,13 @@
   "segmentations": [
     {
       "name": "maximal_cliques",
-      "fullName": "My_Little_Project|maximal_cliques",
+      "fullName": "My Little Project|maximal_cliques",
       "belongsTo": { "id": "belongsTo-maximal_cliques", "title": "belongsTo of maximal_cliques" },
       "equivalentAttribute": { "id": "eq-max-cliques", "title": "segmentation[maximal_cliques]" }
     },
     {
       "name": "connected_components",
-      "fullName": "My_Little_Project|connected_components",
+      "fullName": "My Little Project|connected_components",
       "belongsTo": { "id": "belongsTo-connected_components", "title": "belongsTo of connected_components" },
       "equivalentAttribute": { "id": "eq-cc", "title": "segmentation[connected_components]" }
     }

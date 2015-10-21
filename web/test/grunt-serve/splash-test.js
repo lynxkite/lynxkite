@@ -17,7 +17,7 @@ describe('splash page', function() {
     it('opens a project when clicked', function() {
       var melon = element.all(by.css('.project-list > .project-entry')).get(1);
       melon.click();
-      expect(browser.getCurrentUrl()).toContain('/#/project/Project_Melon');
+      expect(browser.getCurrentUrl()).toContain('/#/project/Project%20Melon');
     });
   });
 });
