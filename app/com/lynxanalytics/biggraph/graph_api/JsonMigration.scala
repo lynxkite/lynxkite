@@ -61,6 +61,7 @@ class JsonMigration {
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+    ("com.lynxanalytics.biggraph.graph_api.ProjectFrame", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
       j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
     },
@@ -76,8 +77,7 @@ class JsonMigration {
     ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.SampledView", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_util.ProjectFrame", 0) -> identity)
+    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
   // Make sure we have all the upgraders.
   for ((cls, version) <- version) {
     for (i <- 0 until version) {
