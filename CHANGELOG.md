@@ -15,6 +15,7 @@ Please add changes to "master". When releasing a version add a new header for th
    into a segmentation.
  - Added _Import segmentation_ operations.
  - _Merge vertices by attribute_ will no longer discard segmentations.
+ - Added _Segment by interval_ operation.
 
 ### 1.5.6
 
