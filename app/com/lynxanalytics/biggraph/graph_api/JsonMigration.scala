@@ -77,6 +77,12 @@ class JsonMigration {
     ("com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_util.ProjectFrame", 0) -> identity)
+  // Make sure we have all the upgraders.
+  for ((cls, version) <- version) {
+    for (i <- 0 until version) {
+      assert(upgraders.contains((cls, i)), s"Upgrader missing for ($cls, $i).")
+    }
+  }
 }
 
 object MetaRepositoryManager {
