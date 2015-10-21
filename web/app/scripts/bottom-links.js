@@ -16,7 +16,7 @@ angular.module('biggraph').directive('bottomLinks', function($window, util) {
       };
 
       scope.logout = function() {
-        util.post('/logout', {}, function() {
+        util.post('/logout', {}).then(function() {
           $window.location.href = '/';
         });
       };
