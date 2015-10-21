@@ -72,6 +72,7 @@ class JsonMigration {
         JsonMigration.replaceJson(j, "value" -> value)
     },
     ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.DoubleBucketing", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.SampledView", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid", 0) -> identity,
