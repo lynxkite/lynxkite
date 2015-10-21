@@ -60,8 +60,7 @@ class BucketingTest extends FunSuite with TestGraphOp {
       Seq(-10.0, 0.0, 10.0, 40.0))
   }
 
-  def getSegmentWithSizes(bucketing: IntervalBucketing.Output): Seq[((Double, Double), Int)] = {
-
+  def getSegmentsWithSizes(bucketing: IntervalBucketing.Output): Seq[((Double, Double), Int)] = {
     val segmentSizes = bucketing
       .belongsTo
       .rdd
@@ -72,6 +71,7 @@ class BucketingTest extends FunSuite with TestGraphOp {
       .collect
       .toSeq
       .map { case (_, (size, (bottom, top))) => ((bottom, top), size) }
+      .sorted
   }
 
   test("example graph by age intervals") {
@@ -89,15 +89,14 @@ class BucketingTest extends FunSuite with TestGraphOp {
       val op = IntervalBucketing(bucketWidth = 10.0, overlap = false)
       op(op.beginAttr, g.age)(op.endAttr, ageTimes1_5).result
     }
-    val segmentsWithSizes = getSegmentWithSizes(bucketing)
-    assert(segmentsWithSizes.size == 7)
-    assert(segmentsWithSizes.contains(((0.0, 10.0), 1)))
-    assert(segmentsWithSizes.contains(((10.0, 20.0), 1)))
-    assert(segmentsWithSizes.contains(((20.0, 30.0), 2)))
-    assert(segmentsWithSizes.contains(((30.0, 40.0), 1)))
-    assert(segmentsWithSizes.contains(((50.0, 60.0), 1)))
-    assert(segmentsWithSizes.contains(((60.0, 70.0), 1)))
-    assert(segmentsWithSizes.contains(((70.0, 80.0), 1)))
+    assert(getSegmentsWithSizes(bucketing) == Seq(
+      ((0.0, 10.0), 1),
+      ((10.0, 20.0), 1),
+      ((20.0, 30.0), 2),
+      ((30.0, 40.0), 1),
+      ((50.0, 60.0), 1),
+      ((60.0, 70.0), 1),
+      ((70.0, 80.0), 1)))
   }
 
   test("example graph by age intervals with overlap") {
@@ -115,19 +114,20 @@ class BucketingTest extends FunSuite with TestGraphOp {
       val op = IntervalBucketing(bucketWidth = 10.0, overlap = true)
       op(op.beginAttr, g.age)(op.endAttr, ageTimes1_5).result
     }
-    val segmentsWithSizes = getSegmentWithSizes(bucketing)
-    assert(segmentsWithSizes.size == 12)
-    assert(segmentsWithSizes.contains(((-5.0, 5.0), 1)))
-    assert(segmentsWithSizes.contains(((0.0, 10.0), 1)))
-    assert(segmentsWithSizes.contains(((10.0, 20.0), 1)))
-    assert(segmentsWithSizes.contains(((15.0, 25.0), 2)))
-    assert(segmentsWithSizes.contains(((20.0, 30.0), 2)))
-    assert(segmentsWithSizes.contains(((25.0, 35.0), 2)))
-    assert(segmentsWithSizes.contains(((30.0, 40.0), 1)))
-    assert(segmentsWithSizes.contains(((50.0, 60.0), 1)))
-    assert(segmentsWithSizes.contains(((55.0, 65.0), 1)))
-    assert(segmentsWithSizes.contains(((60.0, 70.0), 1)))
-    assert(segmentsWithSizes.contains(((65.0, 75.0), 1)))
-    assert(segmentsWithSizes.contains(((70.0, 80.0), 1)))
+    assert(getSegmentsWithSizes(bucketing) == Seq(
+      ((-5.0, 5.0), 1),
+      ((0.0, 10.0), 1),
+      ((10.0, 20.0), 1),
+      ((15.0, 25.0), 2),
+      ((20.0, 30.0), 2),
+      ((25.0, 35.0), 2),
+      ((30.0, 40.0), 1),
+      ((45.0, 55.0), 1),
+      ((50.0, 60.0), 1),
+      ((55.0, 65.0), 1),
+      ((60.0, 70.0), 1),
+      ((65.0, 75.0), 1),
+      ((70.0, 80.0), 1),
+      ((75.0, 85.0), 1)))
   }
 }
