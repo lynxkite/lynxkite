@@ -83,7 +83,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       scope.createProject = function() {
         scope.newProject.sending = true;
-        var name = scope.newProject.name.replace(/ /g, '_');
+        var name = scope.newProject.name;
         if (scope.path) {
           name = scope.path + '/' + name;
         }
@@ -102,7 +102,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       scope.createDirectory = function() {
         scope.newDirectory.sending = true;
-        var name = scope.newDirectory.name.replace(/ /g, '_');
+        var name = scope.newDirectory.name;
         if (scope.path) {
           name = scope.path + '/' + name;
         }
@@ -170,7 +170,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
               { from: fullPath(p), to: fullPath('Copy of ' + p) }).then(refresh);
         },
         discard: function(kind, p) {
-          var message = 'Permanently delete ' + kind + ' ' + util.spaced(p) + '?';
+          var message = 'Permanently delete ' + kind + ' ' + p + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
             util.post('/ajax/discardDirectory', { name: fullPath(p) }).then(refresh);

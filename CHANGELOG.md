@@ -16,6 +16,9 @@ Please add changes to "master". When releasing a version add a new header for th
  - Added _Import segmentation_ operations.
  - _Merge vertices by attribute_ will no longer discard segmentations.
  - Added _Segment by interval_ operation.
+ - Until now we replaced spaces with underscores in project names and did the reverse when
+   displaying them. We now stop doing this to avoid some inconsistencies. (Feel free to use either
+   underscores or spaces in project names. Both work fine.)
 
 ### 1.5.6
 

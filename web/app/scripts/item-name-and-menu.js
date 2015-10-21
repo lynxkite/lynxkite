@@ -6,9 +6,8 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
     restrict: 'E',
     scope: { menu: '=', name: '@', type: '@' },
     templateUrl: 'item-name-and-menu.html',
-    link: function(scope, element, attrs) {
+    link: function(scope, element) {
       scope.util = util;
-      scope.spaced = attrs.spaced !== undefined;
 
       scope.toggleRenaming = function() {
         scope.renaming = !scope.renaming;
