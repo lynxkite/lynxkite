@@ -682,6 +682,44 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Segment by interval", new CreateSegmentationOperation(_, _) {
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = "bucketing"),
+      Choice("begin_attr", "Begin attribute", options = vertexAttributes[Double]),
+      Choice("end_attr", "End attribute", options = vertexAttributes[Double]),
+      NonNegDouble("interval_size", "Interval size"),
+      Choice("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
+    def enabled = FEStatus.assert(
+      vertexAttributes[Double].size >= 2,
+      "Less than two double vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val beginAttrName = params("begin_attr")
+      val endAttrName = params("end_attr")
+      val overlap = params("overlap") == "yes"
+      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "")
+    }
+
+    def apply(params: Map[String, String]) = {
+      val beginAttrName = params("begin_attr")
+      val endAttrName = params("end_attr")
+      val beginAttr = project.vertexAttributes(beginAttrName).runtimeSafeCast[Double]
+      val endAttr = project.vertexAttributes(endAttrName).runtimeSafeCast[Double]
+      val overlap = params("overlap") == "yes"
+      val intervalSize = params("interval_size").toDouble
+      val bucketing = {
+        val op = graph_operations.IntervalBucketing(intervalSize, overlap)
+        op(op.beginAttr, beginAttr)(op.endAttr, endAttr).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = bucketing.belongsTo
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+      segmentation.newVertexAttribute("bottom", bucketing.bottom)
+      segmentation.newVertexAttribute("top", bucketing.top)
+    }
+  })
+
   register("Combine segmentations", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "New segmentation name"),
