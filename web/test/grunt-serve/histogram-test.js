@@ -2,7 +2,7 @@ var mocks = require('../mocks.js');
 describe('a histogram', function() {
   beforeEach(function() {
     mocks.addTo(browser);
-    browser.get('/#/project/Project_Strawberry');
+    browser.get('/#/project/Project%20Strawberry');
     this.attr = element.all(by.css('[vertex-attribute]')).first();
     this.button = this.attr.element(by.css('[tooltip="Show histogram"]'));
     this.histogram = this.attr.element(by.css('histogram'));
