@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
 
+import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CommonProjectState
 import com.lynxanalytics.biggraph.controllers.ObsoleteProject
@@ -46,15 +47,16 @@ object JsonMigration {
 }
 import JsonMigration._
 class JsonMigration {
+  private def className(o: Any) = o.getClass.getName.replace("$", "")
   val version: VersionMap = Map(
-    "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.DoubleBucketing" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.SampledView" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid" -> 1,
-    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1,
+    className(graph_operations.ComputeVertexNeighborhoodFromTriplets) -> 1,
+    className(graph_operations.CreateUIStatusScalar) -> 1,
+    className(graph_operations.CreateVertexSet) -> 1,
+    className(graph_operations.DoubleBucketing) -> 1,
+    className(graph_operations.FastRandomEdgeBundle) -> 1,
+    className(graph_operations.SampledView) -> 1,
+    className(graph_operations.VertexBucketGrid) -> 1,
+    className(graph_util.HadoopFile) -> 1,
     // Forces a migration due to switch to v2 tags.
     "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1)
     .withDefaultValue(0)
@@ -62,22 +64,22 @@ class JsonMigration {
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
     ("com.lynxanalytics.biggraph.graph_api.ProjectFrame", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
+    (className(graph_operations.ComputeVertexNeighborhoodFromTriplets), 0) -> {
       j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
     },
-    ("com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar", 0) -> {
+    (className(graph_operations.CreateUIStatusScalar), 0) -> {
       j =>
         val default = json.JsString("neutral")
         val animate = JsonMigration.replaceJson(j \ "value" \ "animate", "style" -> default)
         val value = JsonMigration.replaceJson(j \ "value", "animate" -> animate)
         JsonMigration.replaceJson(j, "value" -> value)
     },
-    ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.DoubleBucketing", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.SampledView", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
+    (className(graph_operations.CreateVertexSet), 0) -> identity,
+    (className(graph_operations.DoubleBucketing), 0) -> identity,
+    (className(graph_operations.FastRandomEdgeBundle), 0) -> identity,
+    (className(graph_operations.SampledView), 0) -> identity,
+    (className(graph_operations.VertexBucketGrid), 0) -> identity,
+    (className(graph_util.HadoopFile), 0) -> identity)
   // Make sure we have all the upgraders.
   for ((cls, version) <- version) {
     for (i <- 0 until version) {
