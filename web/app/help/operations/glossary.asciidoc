@@ -9,6 +9,7 @@
 tag::database-access[]
 The database name is the JDBC connection string without the `jdbc:` prefix.
 (For example `mysql://127.0.0.1/my_database?user=batman&password=alfred`.)
+See <<jdbc-details>> for more details.
 end::database-access[]
 
 tag::database-import[]

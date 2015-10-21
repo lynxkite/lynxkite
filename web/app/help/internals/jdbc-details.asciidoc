@@ -1,0 +1,19 @@
+[[jdbc-details]]
+## Database connections
+
+LynxKite can connect to databases via JDBC. JDBC is a widely adopted database connection interface
+and all major databases support it.
+
+### Installation
+
+To be able to connect to a database LynxKite requires the JDBC drivers for the database to be
+installed. LynxKite comes with the JDBC drivers for MySQL, PostgreSQL, and SQLite pre-installed.
+For accessing other databases you will need to acquire the driver from the vendor. The driver is a
+`jar` file. You have to add the full path of the `jar` file to `KITE_EXTRA_JARS` in `.kiterc` and
+restart LynxKite.
+
+### Usage
+
+The database for import/export operations is specified via a connection URL. The driver is
+responsible for interpreting the connection URL. Please consult the documentation for the JDBC
+driver for the connection URL syntax.
