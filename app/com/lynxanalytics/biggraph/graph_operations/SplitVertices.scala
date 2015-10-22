@@ -1,4 +1,4 @@
-// Split vertices (sort of opposite of merge vertices
+// Split vertices (sort of opposite of merge vertices)
 
 package com.lynxanalytics.biggraph.graph_operations
 
@@ -8,20 +8,20 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object SplitVertices extends OpFromJson {
   class Output(
       implicit instance: MetaGraphOperationInstance,
-      inputs: VertexAttributeInput[_]) extends MagicOutput(instance) {
+      inputs: VertexAttributeInput[Long]) extends MagicOutput(instance) {
 
-    val segments = vertexSet
+    val newVertices = vertexSet
     val belongsTo = edgeBundle(inputs.vs.entity,
-      segments,
+      newVertices,
       EdgeBundleProperties(isReversedFunction = true, isReverseEverywhereDefined = true))
-    val indexAttr = vertexAttribute[Long](segments)
+    val indexAttr = vertexAttribute[Long](newVertices)
   }
   def fromJson(j: JsValue) = SplitVertices()
 }
 import SplitVertices._
-case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Double], Output] {
+case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], Output] {
   override val isHeavy = true
-  @transient override lazy val inputs = new VertexAttributeInput[Double]
+  @transient override lazy val inputs = new VertexAttributeInput[Long]
   def outputMeta(instance: MetaGraphOperationInstance) = {
     new Output()(instance, inputs)
   }
@@ -33,7 +33,6 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Double]
     implicit val id = inputDatas
 
     val repetitionAttr = inputs.attr.rdd
-      .map { case (oldId, rep) => (oldId, rep.floor.toLong) }
 
     val requestedNumberOfVerticesWithIndex =
       repetitionAttr.flatMapValues { numRepetitions => (1.toLong to numRepetitions) }
@@ -41,18 +40,20 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Double]
     val partitioner =
       rc.partitionerForNRows(requestedNumberOfVerticesWithIndex.count)
 
-    val newAndAndOldIdAndIndex =
-      requestedNumberOfVerticesWithIndex.randomNumbered(partitioner)
+    val newIdAndOldIdAndZeroBasedIndex =
+      requestedNumberOfVerticesWithIndex
+        .map { case (oldId, index) => (oldId, index - 1) }
+        .randomNumbered(partitioner)
 
-    output(o.segments,
-      newAndAndOldIdAndIndex
+    output(o.newVertices,
+      newIdAndOldIdAndZeroBasedIndex
         .mapValues(_ => ()).toSortedRDD(partitioner))
     output(o.belongsTo,
-      newAndAndOldIdAndIndex
+      newIdAndOldIdAndZeroBasedIndex
         .map { case (newId, (oldId, idx)) => newId -> Edge(oldId, newId) }
         .toSortedRDD(partitioner))
     output(o.indexAttr,
-      newAndAndOldIdAndIndex
+      newIdAndOldIdAndZeroBasedIndex
         .map { case (newId, (oldId, idx)) => newId -> idx }
         .toSortedRDD(partitioner))
   }
