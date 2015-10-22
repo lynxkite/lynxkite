@@ -1375,7 +1375,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Split vertices by attribute", new StructureOperation(_, _) {
+  register("Split vertices", new StructureOperation(_, _) {
     def parameters = List(
       Choice("rep", "Repetition attribute", options = vertexAttributes[Double]),
       Param("idx", "Index attribute name", defaultValue = "index"))

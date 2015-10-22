@@ -206,6 +206,8 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::shortest-path.asciidoc[]
 
+include::split-vertices.asciidoc[]
+
 include::union-with-another-project.asciidoc[]
 
 include::vertex-attribute-to-double.asciidoc[]
