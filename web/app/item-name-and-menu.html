@@ -4,7 +4,7 @@
 </form>
 
 <span ng-hide="renaming">
-  {{ spaced ? util.spaced(name) : name }}
+  {{ name }}
 </span>
 
 <form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming" ng-click="util.captureClick($event)">

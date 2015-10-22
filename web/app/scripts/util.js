@@ -169,11 +169,6 @@ angular.module('biggraph').factory('util', function utilFactory(
       }
     },
 
-    // Replaces underscores with spaces.
-    spaced: function(s) {
-      return s.replace(/_/g, ' ');
-    },
-
     ajaxError: function(resp) {
       util.error(
         util.responseToErrorMessage(resp),
@@ -237,9 +232,7 @@ angular.module('biggraph').factory('util', function utilFactory(
 
     projectPath: function(projectName) {
       if (!projectName) { return []; }
-      return projectName.split('|').map(function(name) {
-        return util.spaced(name);
-      });
+      return projectName.split('|');
     },
 
     captureClick: function(event) {
