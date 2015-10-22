@@ -114,11 +114,14 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(!new File(dir, "2").exists)
     import play.api.libs.json
     // Load the test data using a fake JsonMigration class.
-    val m = MetaRepositoryManager(dir, new JsonMigration {
-      override val version = Map(
+    val m = MetaRepositoryManager(dir, new JsonMigration(
+      Map(
         "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0)
-      override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0),
+      Map(
+        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 0 -> identity,
+        // The input data has version 1. The upgrader for version 0 will not be called.
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
         // From version 1 to version 2 we added the "arg" argument.
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
           j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
@@ -127,8 +130,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         // (Unused data in JSON is fine, we only add an upgrader for this for the sake of testing.)
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
           j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
-        })
-    })
+        })))
     // The new directory exists.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
@@ -158,32 +160,36 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // Load the test data using a fake JsonMigration class.
     class TestException extends Exception("test")
     val ex = intercept[Exception] {
-      MetaRepositoryManager(dir, new JsonMigration {
-        override val version = Map(
+      MetaRepositoryManager(dir, new JsonMigration(
+        Map(
           "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
-          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0)
-        override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
+        Map(
+          "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 0 -> identity,
+          // The input data has version 1. The upgrader for version 0 will not be called.
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
           // Bad migration from version 1 to version 2.
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
             j => throw new TestException
-          })
-      })
+          })))
     }
     assert(ex.getCause.isInstanceOf[TestException])
     // The migration failed, so the version file was not created.
     assert(new File(dir, "2").exists)
     assert(!new File(dir, "2/version").exists)
     // Try again with a corrected upgrader.
-    val m = MetaRepositoryManager(dir, new JsonMigration {
-      override val version = Map(
+    val m = MetaRepositoryManager(dir, new JsonMigration(
+      Map(
         "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0)
-      override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
+      Map(
+        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 0 -> identity,
+        // The input data has version 1. The upgrader for version 0 will not be called.
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
         // Correct migration from version 1 to version 2.
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
           j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
-        })
-    })
+        })))
     // The migration succeeded.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
@@ -200,7 +206,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/json-error-test").toURI)
     FileUtils.copyDirectory(template, new File(dir))
     val e = intercept[Exception] {
-      MetaRepositoryManager(dir, new JsonMigration)
+      MetaRepositoryManager(dir, JsonMigration.current)
     }
     // Top exception reports the file name.
     assert(e.getMessage.startsWith("Failed to load /"))
