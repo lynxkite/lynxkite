@@ -113,8 +113,6 @@ if [ "${SPARK_MASTER}" == "local" ]; then
  export SPARK_MASTER="${SPARK_MASTER}[${NUM_CORES_PER_EXECUTOR}]"
 fi
 
-export KITE_SCHEDULER_POOLS_CONFIG="${conf_dir}/scheduler-pools.xml"
-
 FULL_CLASSPATH=${app_classpath}
 if [ -n "${KITE_EXTRA_JARS}" ]; then
   FULL_CLASSPATH=${FULL_CLASSPATH}:${KITE_EXTRA_JARS}

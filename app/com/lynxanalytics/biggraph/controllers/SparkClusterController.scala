@@ -29,28 +29,32 @@ case class StageInfo(
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
 class KiteListener extends spark.scheduler.SparkListener {
-  val activeStages = collection.mutable.Map[String, StageInfo]()
-  val pastStages = collection.mutable.Queue[StageInfo]()
-  val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
-  var currentResp =
+  private val activeStages = collection.mutable.Map[String, StageInfo]()
+  private val pastStages = collection.mutable.Queue[StageInfo]()
+  private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
+  private var currentResp =
     SparkStatusResponse(0, List(), List(), sparkWorking = true, kiteCoreWorking = true)
-  var lastSparkActivity = 0L
-  var sparkStalled = false
+  // The time of the last registered spark task finish event.
+  private var lastSparkTaskFinish = 0L
+  // Whether, to the knowledge of this listener, spark is stalled.
+  private var sparkStalled = false
+  // Whether, to the knowledge of this listener, kite core (*Manager) is working.
+  private var kiteCoreWorking = true
 
-  var kiteCoreWorking = true
-  var kiteCoreLastChecked = 0L
+  def getCurrentResponse = synchronized { currentResp }
 
-  def updateKiteCoreStatus(newKiteCoreWorking: Boolean): Unit = {
+  def getLastSparkTaskFinish = synchronized { lastSparkTaskFinish }
+
+  def updateKiteCoreStatus(newKiteCoreWorking: Boolean): Unit = synchronized {
     val old = kiteCoreWorking
     kiteCoreWorking = newKiteCoreWorking
-    kiteCoreLastChecked = Platform.currentTime
     if (old != kiteCoreWorking) {
       log.info(s"Monitor: kite core working state changed to: $kiteCoreWorking")
       send()
     }
   }
 
-  def isSparkActive: Boolean = activeStages.nonEmpty
+  def isSparkActive: Boolean = synchronized { activeStages.nonEmpty }
 
   private def fullId(stage: org.apache.spark.scheduler.StageInfo): String =
     s"${stage.stageId}.${stage.attemptId}"
@@ -76,7 +80,7 @@ class KiteListener extends spark.scheduler.SparkListener {
       val stage = activeStages(id)
       stage.tasksCompleted += 1
       val time = taskEnd.taskInfo.finishTime
-      sparkActivity(time)
+      lastSparkTaskFinish = time max lastSparkTaskFinish
       setSparkStalled(false)
       // Post at most one update per second.
       if (time - stage.lastTaskTime > 1000) {
@@ -93,18 +97,14 @@ class KiteListener extends spark.scheduler.SparkListener {
     val hash = stage.details.hashCode
     val size = stage.numTasks
     val time = stage.submissionTime.getOrElse(System.currentTimeMillis)
-    sparkActivity(time)
     if (!stage.details.contains("checkSparkOperational")) { // Ignore health checks.
       activeStages += id -> StageInfo(id, hash, size, lastTaskTime = time)
       send()
     }
   }
 
-  def sparkActivity(time: Long): Unit = {
-    lastSparkActivity = time max lastSparkActivity
-  }
-
-  def setSparkStalled(stalled: Boolean): Unit = {
+  def isSparkStalled = synchronized { sparkStalled }
+  def setSparkStalled(stalled: Boolean): Unit = synchronized {
     val old = sparkStalled
     sparkStalled = stalled
     if (old != sparkStalled) {
@@ -149,10 +149,11 @@ class SparkCheckThread(
   override def run(): Unit = {
     while (true) {
       if (synchronized { shouldRun }) {
-        sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
         try {
           assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
-        } finally sc.setLocalProperty("spark.scheduler.pool", null)
+        } catch {
+          case _: Exception => ()
+        }
         synchronized {
           shouldRun = false
         }
@@ -180,12 +181,20 @@ class SparkCheckThread(
   setDaemon(true)
 }
 
+// A monitoring thread that periodically checks Kite components for being operational. It works
+// together with a KiteListener: it updates the listener with its findings and also uses the
+// listener's insights for determining Spark's status. (If we see successful tasks from normal
+// (non-monitoring) spark jobs then we don't even start test spark jobs to test the cluster.)
 class KiteMonitorThread(
     listener: KiteListener,
     environment: BigGraphEnvironment,
+    // We report a problem if there were no any successful task on an active spark for this long.
     maxNoSparkProgressMillis: Long,
+    // We start a test job on spark if it was idle for this amount of time.
     maxSparkIdleMillis: Long,
+    // We check kite core if it went unchecked for this amount of time.
     maxCoreUncheckedMillis: Long,
+    // We declare kite core dead if it didn't respond in this amount of time.
     coreTimeoutMillis: Long) extends Thread("kite-monitor") {
 
   val sparkChecker = new SparkCheckThread(listener, environment.sparkContext)
@@ -230,24 +239,27 @@ class KiteMonitorThread(
   }
 
   override def run(): Unit = {
+    var sparkLastLookedAt = 0L
+    var kiteCoreLastChecked = 0L
+
     while (true) {
       val now = Platform.currentTime
-      val nextCoreCheck = listener.kiteCoreLastChecked + maxCoreUncheckedMillis
+      val nextCoreCheck = kiteCoreLastChecked + maxCoreUncheckedMillis
       // We consider spark active if the checker is running, even if it failed to submit
       // any stages.
       val sparkActive = listener.isSparkActive || sparkChecker.isRunning
-      val sparkStalled = listener.sparkStalled
-      val lastSparkActivity = listener.lastSparkActivity
+      val sparkStalled = listener.isSparkStalled
+      val lastSparkEvent = listener.getLastSparkTaskFinish max sparkLastLookedAt
       val nextSparkCheck = if (sparkActive) {
         if (sparkStalled) {
           // We use our idle check interval if we already know Spark is stalled to avoid
           // logging too much.
-          lastSparkActivity + maxSparkIdleMillis
+          lastSparkEvent + maxSparkIdleMillis
         } else {
-          lastSparkActivity + maxNoSparkProgressMillis
+          lastSparkEvent + maxNoSparkProgressMillis
         }
       } else {
-        lastSparkActivity + maxSparkIdleMillis
+        lastSparkEvent + maxSparkIdleMillis
       }
       if (now > nextCoreCheck) {
         // do core checks
@@ -259,11 +271,10 @@ class KiteMonitorThread(
               testsDone,
               concurrent.duration.Duration(coreTimeoutMillis, "millisecond")))
             .getOrElse(false))
-      }
-      if (now > nextSparkCheck) {
+        kiteCoreLastChecked = Platform.currentTime
+      } else if (now > nextSparkCheck) {
         logSparkClusterInfo()
-        // We fake some activity to base the next check on the current time.
-        listener.sparkActivity(now)
+        sparkLastLookedAt = now
         if (sparkActive) {
           // Nothing happened on an active spark for too long. Let's report this.
           listener.setSparkStalled(true)
@@ -311,7 +322,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def checkSparkOperational(): Unit = {
-    val res = listener.currentResp
+    val res = listener.getCurrentResponse
     assert(res.kiteCoreWorking && res.sparkWorking)
   }
 }
