@@ -61,7 +61,7 @@
       class="entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       <span class="lead">
-        <item-name-and-menu menu="menu" name="{{directory}}" spaced type="directory"></item-name-and-menu>
+        <item-name-and-menu menu="menu" name="{{directory}}" type="directory"></item-name-and-menu>
       </span>
     </div>
 
@@ -70,7 +70,7 @@
       class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <span class="icon glyphicon glyphicon-file pull-left"></span>
       <span class="lead">
-        <item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu>
+        <item-name-and-menu menu="menu" name="{{project.name}}" type="project"></item-name-and-menu>
         <a href="#/project/{{project.name}}" target="_blank" ng-hide="project.error"
             ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
           <span class="icon glyphicon glyphicon-new-window"></span>

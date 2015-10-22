@@ -2,7 +2,7 @@ var mocks = require('../mocks.js');
 describe('the segmentation', function() {
   beforeEach(function() {
     mocks.addTo(browser);
-    browser.get('/#/project/Project_Strawberry');
+    browser.get('/#/project/Project%20Strawberry');
     this.sides = element.all(by.css('.side > .project'));
     this.segmentation = this.sides.first().all(by.css('[segmentation]')).first();
     this.openButton = this.segmentation.element(by.css('[tooltip="Open"]'));
@@ -18,6 +18,6 @@ describe('the segmentation', function() {
       return p.element(by.css('.side > .project > .project-name')).getText();
     }
     expect(projectName(this.sides.get(0))).toBe('Project Strawberry');
-    expect(projectName(this.sides.get(1))).toContain('maximal cliques');
+    expect(projectName(this.sides.get(1))).toContain('maximal_cliques');
   });
 });
