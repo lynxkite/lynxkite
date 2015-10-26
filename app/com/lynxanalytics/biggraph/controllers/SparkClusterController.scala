@@ -151,7 +151,12 @@ class SparkCheckThread(
         try {
           assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
         } catch {
-          case _: Exception => ()
+          // We don't care about errors here, we just want to start some Spark job
+          // that can be observed by the listener to succeed (or not). So we just catch all
+          // possible error and let the thread live regardless.
+          case e: Throwable => {
+            log.error("Error in running the Spark check job in SparkCheckThread", e)
+          }
         }
         synchronized {
           shouldRun = false
@@ -187,7 +192,7 @@ class SparkCheckThread(
 class KiteMonitorThread(
     listener: KiteListener,
     environment: BigGraphEnvironment,
-    // We report a problem if there were no any successful task on an active spark for this long.
+    // We report a problem if no successful tasks were reported on an active spark for this long.
     maxNoSparkProgressMillis: Long,
     // We start a test job on spark if it was idle for this amount of time.
     maxSparkIdleMillis: Long,
@@ -242,7 +247,7 @@ class KiteMonitorThread(
     var kiteCoreLastChecked = 0L
 
     while (true) {
-      val now = System.currentTimeMillies
+      val now = System.currentTimeMillis
       val nextCoreCheck = kiteCoreLastChecked + maxCoreUncheckedMillis
       // We consider spark active if the checker is running, even if it failed to submit
       // any stages.
