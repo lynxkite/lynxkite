@@ -176,7 +176,7 @@ case class DoubleAttributeToLong()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    output(o.attr, inputs.attr.rdd.mapValues(_.round.toLong))
+    output(o.attr, inputs.attr.rdd.mapValues(_.round))
   }
 }
 

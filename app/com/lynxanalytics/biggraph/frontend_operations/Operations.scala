@@ -1395,7 +1395,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
       val oldSegmentations = project.viewer.segmentationMap
-      val oldVNames = project.vertexAttributeNames
 
       project.setVertexSet(split.newVertices, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
@@ -1407,7 +1406,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             op.edges, seg.belongsTo).result.induced
       }
 
-      for (attr <- oldVNames) {
+      for (attr <- oldVAttrs.keys) {
         val result = aggregateViaConnection(
           split.belongsTo,
           AttributeWithLocalAggregator(oldVAttrs(attr), "most_common"))

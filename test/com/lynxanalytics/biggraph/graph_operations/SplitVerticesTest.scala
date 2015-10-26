@@ -1,23 +1,18 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.{ JavaScript, graph_operations }
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.graph_operations.DoubleAttributeToLong._
 
 class SplitVerticesTest extends FunSuite with TestGraphOp {
-
-  def convAttr(attribute: Attribute[Double]): Attribute[Long] = {
-    val convOp = graph_operations.DoubleAttributeToLong
-    val attr = convOp.run(attribute)
-    attr
-  }
 
   test("example graph") {
     val g = ExampleGraph()().result
 
-    val longAttr = convAttr(g.weight)
+    val longAttr = DoubleAttributeToLong.run(g.weight)
     val op = SplitVertices()
     val res = op(op.attr, longAttr).result
     assert(res.newVertices.rdd.count() == 10)
@@ -47,7 +42,8 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
       op.attrs,
       VertexAttributeToJSValue.seq(g.name.entity)).result.attr
     val splitOp = SplitVertices()
-    val res = splitOp(splitOp.attr, convAttr(derived)).result
+    val longAttr = DoubleAttributeToLong.run(derived)
+    val res = splitOp(splitOp.attr, longAttr).result
     assert(res.newVertices.rdd.count() == 100)
     assert(res.indexAttr.rdd.values.collect.toSeq.sorted ==
       (0 to 99))
