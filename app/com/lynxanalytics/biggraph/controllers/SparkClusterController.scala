@@ -5,7 +5,6 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
-import scala.compat.Platform
 
 // Long-poll request for changes in the "busy" state of Spark.
 case class SparkStatusRequest(
@@ -243,7 +242,7 @@ class KiteMonitorThread(
     var kiteCoreLastChecked = 0L
 
     while (true) {
-      val now = Platform.currentTime
+      val now = System.currentTimeMillies
       val nextCoreCheck = kiteCoreLastChecked + maxCoreUncheckedMillis
       // We consider spark active if the checker is running, even if it failed to submit
       // any stages.
@@ -271,7 +270,7 @@ class KiteMonitorThread(
               testsDone,
               concurrent.duration.Duration(coreTimeoutMillis, "millisecond")))
             .getOrElse(false))
-        kiteCoreLastChecked = Platform.currentTime
+        kiteCoreLastChecked = System.currentTimeMillis
       } else if (now > nextSparkCheck) {
         logSparkClusterInfo()
         sparkLastLookedAt = now
@@ -284,7 +283,7 @@ class KiteMonitorThread(
         }
       }
       val nextCheck = nextSparkCheck min nextCoreCheck
-      val untilNextCheck = 0L max (nextCheck - Platform.currentTime)
+      val untilNextCheck = 0L max (nextCheck - System.currentTimeMillis)
       Thread.sleep(untilNextCheck)
     }
   }
