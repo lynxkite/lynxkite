@@ -1378,6 +1378,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Split vertices", new StructureOperation(_, _) {
     def parameters = List(
       Choice("rep", "Repetition attribute", options = vertexAttributes[Double]),
+      Param("origIds", "Name for the saved id", defaultValue = "orig_id"),
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
@@ -1390,43 +1391,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val rep = params("rep")
+
       val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
-      val oldVAttrs = project.vertexAttributes.toMap
-      val oldEdges = project.edgeBundle
-      val oldEAttrs = project.edgeAttributes.toMap
-      val oldSegmentations = project.viewer.segmentationMap
 
-      project.setVertexSet(split.newVertices, idAttr = "id")
-      for ((name, segViewer) <- oldSegmentations) {
-        project.newSegmentation(name, segViewer.segmentationState)
-        val seg = project.segmentation(name)
-        val op = graph_operations.InducedEdgeBundle(induceDst = false)
-        seg.belongsTo = op(
-          op.srcMapping, split.belongsTo)(
-            op.edges, seg.belongsTo).result.induced
-      }
-
-      for (attr <- oldVAttrs.keys) {
-        val result = aggregateViaConnection(
-          split.belongsTo,
-          AttributeWithLocalAggregator(oldVAttrs(attr), "most_common"))
-        project.vertexAttributes(attr) = result
-      }
-
+      project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
+      project.vertexAttributes(params("origIds")) = split.oldIds
 
-      if (oldEdges != null) {
-        val edgeInduction = {
-          val op = graph_operations.InducedEdgeBundle()
-          op(op.srcMapping, split.belongsTo)(op.dstMapping, split.belongsTo)(op.edges, oldEdges).result
-        }
-        project.edgeBundle = edgeInduction.induced
-        for ((name, eAttr) <- oldEAttrs) {
-          project.edgeAttributes(name) =
-            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-              eAttr, edgeInduction.embedding)
-        }
-      }
     }
   })
 
