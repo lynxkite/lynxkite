@@ -197,7 +197,7 @@ Side.prototype = {
   },
 
   toggleSampledVisualization: function() {
-    this.side.element(by.css('label[btn-radio="\'sampled\'"]')).click();
+    this.side.element(by.id('sampled-mode-button')).click();
   },
 
   undoButton: function() {
@@ -302,6 +302,58 @@ var visualization = {
   // The visualization response received from the server.
   graphView: function() {
     return visualization.svg.evaluate('graph.view');
+  },
+
+  // The data presented in the SVG DOM.
+  graphData: function() {
+    return browser.executeScript(function() {
+      var i, d;
+      var svg = document.querySelector('svg.graph-view');
+      var data = {
+        edges: [],
+        vertices: [],
+      };
+
+      var vertices = svg.querySelectorAll('g.vertex');
+      for (i = 0; i < vertices.length; ++i) {
+        var v = vertices[i];
+        var touch = v.querySelector('circle.touch');
+        var icon = v.querySelector('path.icon');
+        d = {
+          pos: touch.getAttribute('cx') + ' ' + touch.getAttribute('cy'),
+          label: v.querySelector('text').innerHTML,
+          icon: icon.id,
+          color: icon.style.fill,
+          size: touch.getAttribute('r'),
+        };
+        data.vertices.push(d);
+      }
+      data.vertices.sort();
+      var byPosition = {};
+      for (i = 0; i < data.vertices.length; ++i) {
+        d = data.vertices[i];
+        byPosition[d.pos] = i;
+      }
+
+      var edges = svg.querySelectorAll('g.edge');
+      function arcStart(d) {
+        return d.match(/M (.*? .*?) /)[1];
+      }
+      for (i = 0; i < edges.length; ++i) {
+        var e = edges[i];
+        var srcPos = arcStart(e.querySelector('path.first').getAttribute('d'));
+        var dstPos = arcStart(e.querySelector('path.second').getAttribute('d'));
+        console.log(srcPos, dstPos);
+        data.edges.push({
+          src: byPosition[srcPos],
+          dst: byPosition[dstPos],
+          label: e.querySelector('text').innerHTML,
+        });
+      }
+      data.edges.sort();
+
+      return data;
+    });
   },
 
   vertexCounts: function(index) {
@@ -453,6 +505,10 @@ testLib = {
 
   expectCurrentProjectIs: function(name) {
     expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
+  },
+
+  openProject: function(name) {
+    browser.get('/#/project/' + name);
   },
 
   expectHelpPopupVisible: function(helpId, isVisible) {
