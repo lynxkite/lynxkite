@@ -43,7 +43,23 @@ module.exports = function(fw) {
           { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
           ]);
       });
-      // Restore state.
-      lib.openProject('test-example');
+
+      lib.left.visualizeAttribute('gender', 'icon');
+      browser.waitForAngular();
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur([
+          { src : 2, dst: 1 },
+          { src : 1, dst: 0 },
+          { src : 2, dst: 0 },
+          { src : 0, dst: 1 },
+          ]);
+        expect(graph.vertices).toConcur([
+          { icon: 'male' },
+          { icon: 'female' },
+          { icon: 'male' },
+          ]);
+      });
+
+      lib.openProject('test-example'); // Restore state.
     });
 };
