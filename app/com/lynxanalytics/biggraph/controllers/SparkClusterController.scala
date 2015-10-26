@@ -163,11 +163,7 @@ class SparkCheckThread(
         }
       } else {
         synchronized {
-          try {
-            wait()
-          } catch {
-            case e: InterruptedException => ()
-          }
+          wait()
         }
       }
     }
