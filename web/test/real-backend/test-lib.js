@@ -207,6 +207,12 @@ Side.prototype = {
   attributeCount: function() {
     return this.side.all(by.css('li.attribute')).count();
   },
+
+  visualizeAttribute: function(attr, visualization) {
+    var e = this.side.element(by.id('attribute-' + attr));
+    e.element(by.id('visualize-as-button')).click();
+    e.element(by.id('visualize-as-' + visualization)).click();
+  },
 };
 
 function History(side) {

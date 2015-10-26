@@ -332,13 +332,19 @@
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
         <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
-      <li class="sublist list-group-item attribute" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item attribute vertex-attribute"
+        ng-repeat="attr in side.project.vertexAttributes"
+        id="attribute-{{ attr.title }}"
+        vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
         <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
-      <li class="sublist list-group-item attribute" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item attribute edge-attribute"
+        ng-repeat="attr in side.project.edgeAttributes"
+        id="attribute-{{ attr.title }}"
+        edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">
         <span class="lead de-emph">Segmentations</span>
