@@ -210,7 +210,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 class GroovyWorkflowProject(ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
   protected def viewer = rootProject.offspringEditor(path).viewer
   override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
-    val opctx = Operation.Context(ctx.user, viewer)
+    val opctx = Operation.Context(ctx.user, Some(viewer))
     // Execute the operation.
     val op = ctx.ops.appliedOp(opctx, FEOperationSpec(id, params))
     // Then copy back the state created by the operation. We have to copy at

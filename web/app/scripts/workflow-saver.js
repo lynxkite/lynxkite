@@ -1,32 +1,58 @@
 // Presents the parameters for saving an operation.
 'use strict';
 
-angular.module('biggraph').directive('workflowSaver', function(util) {
+angular.module('biggraph').directive('workflowSaver', function(side, util) {
   return {
     restrict: 'E',
-    scope: { code: '=', mode: '=', side: '=' },
+    scope: { side: '=', initialName: '@' },
     templateUrl: 'workflow-saver.html',
     link: function(scope) {
-      scope.name = '';
-      scope.description = '';
+      var loadWorkflow = function() {
+        var id = scope.state.id;
+        scope.state.id = undefined;
+        util.get(
+          '/ajax/workflow',
+          {
+            workflowName: id
+          }).then(function(response) {  // success
+            function getVisibleName(id) {
+              return id.split('/')[1];
+            }
+            function getVisibleDescription(description) {
+              return description.split('<p>').slice(2).join('<p>');
+            }
+            scope.state.code = response.stepsAsGroovy;
+            scope.state.name = getVisibleName(id);
+            scope.state.description = getVisibleDescription(response.description);
+          },
+          function() {  // failure
+            scope.cancel();
+          });
+      };
+      scope.state = scope.side.state.workflow;
+      if (scope.state.id !== undefined) {
+        loadWorkflow();
+      }
       scope.cancel = function() {
-        scope.mode.enabled = false;
+        scope.state.enabled = false;
+        scope.state.code = '';
+        scope.state.description = '';
+        scope.state.name = '';
       };
       scope.save = function() {
         util.post(
           '/ajax/saveWorkflow',
           {
-            workflowName: scope.name,
-            stepsAsGroovy: scope.code,
-            description: scope.description,
+            workflowName: scope.state.name,
+            stepsAsGroovy: scope.state.code,
+            description: scope.state.description,
           }).then(function() {
-            scope.mode.enabled = false;
+            scope.cancel();
             scope.side.reloadAllProjects();
           });
       };
       scope.getParams = function() {
-        if (!scope.code) { return []; }
-        var params = scope.code.match(/params\[['"](.*?)['"]\]/g);
+        var params = scope.state.code.match(/params\[['"](.*?)['"]\]/g);
         if (!params) { return []; }
         var uniques = [];
         for (var i = 0; i < params.length; ++i) {

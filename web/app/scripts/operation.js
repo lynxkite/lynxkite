@@ -10,6 +10,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
       editable: '=',  // (Input.)
       params: '=',  // (Input/output.)
       applying: '=?',  // (Input.) Whether an operation is being applied currently.
+      side: '=',  // (Input/output.) The side on which this operation is being edited.
     },
     templateUrl: 'operation.html',
     link: function(scope, element) {
@@ -39,6 +40,14 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
         combo: 'enter',
         callback: scope.apply,
       });
+      scope.editOperation = function() {
+        var workflowState = scope.side.state.workflow;
+        workflowState.enabled = true;
+        workflowState.id = scope.op.id;
+      };
+      scope.operationIsEditable = function() {
+        return scope.op.isWorkflow && scope.side;
+      };
 
       // Focus the first input box when the operation is opened.
       scope.$watch(function() {

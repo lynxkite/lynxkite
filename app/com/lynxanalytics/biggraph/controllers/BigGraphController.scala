@@ -42,7 +42,8 @@ case class FEOperationMeta(
   parameters: List[FEOperationParameterMeta],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
-  description: String = "")
+  description: String = "",
+  isWorkflow: Boolean = false)
 
 case class FEOperationParameterMeta(
     id: String,
@@ -168,6 +169,9 @@ case class SaveWorkflowRequest(
   stepsAsGroovy: String,
   description: String)
 
+case class WorkflowRequest(
+  workflowName: String)
+
 case class SavedWorkflow(
     stepsAsGroovy: String,
     author: String,
@@ -206,7 +210,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p = SubProject.parsePath(request.name)
     assert(p.frame.exists, s"Project ${request.name} does not exist.")
     p.frame.assertReadAllowedFrom(user)
-    val context = Operation.Context(user, p.viewer)
+    val context = Operation.Context(user, Some(p.viewer))
     val categories = ops.categories(context)
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
@@ -370,7 +374,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
     val startStateRootViewer = new RootProjectViewer(startState)
-    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
+    val context = Operation.Context(user, Some(startStateRootViewer.offspringViewer(request.path)))
     val opCategoriesBefore = ops.categories(context)
     val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
     val op = ops.opById(context, request.op.id)
@@ -478,6 +482,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
     metaManager.setTag(tagName, savedWorkflow.prettyJson)
   }
+
+  def workflow(user: serving.User, request: WorkflowRequest): SavedWorkflow = metaManager.synchronized {
+
+    val context = Operation.Context(user, None)
+    ops.opById(context, request.workflowName)
+      .asInstanceOf[WorkflowOperation]
+      .workflow
+  }
 }
 
 abstract class OperationParameterMeta {
@@ -495,13 +507,17 @@ abstract class OperationParameterMeta {
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
-  val project = context.project.editor
+  val project = context.project match {
+    case Some(project) => project.editor
+    case None => null
+  }
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
+  def isWorkflow: Boolean = false
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
 
@@ -534,7 +550,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
   def toFE: FEOperationMeta =
-    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description)
+    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description, isWorkflow)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -573,12 +589,13 @@ object Operation {
       OperationCategory(title, icon, color, ops)
   }
 
-  case class Context(user: serving.User, project: ProjectViewer)
+  case class Context(user: serving.User, project: Option[ProjectViewer])
 
   def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
     val root = new SymbolPath(Nil)
     val projects = new ProjectDirectory(root).listProjectsRecursively
     val readable = projects.filter(_.readAllowedFrom(user))
+
     // Do not list internal project names (starting with "!").
     readable.filterNot(_.projectName.startsWith("!"))
   }
@@ -621,6 +638,9 @@ case class WorkflowOperation(
       .map(paramName => OperationParams.Param(paramName, paramName))
 
   def enabled = FEStatus.enabled
+
+  override def isWorkflow = true
+
   def apply(params: Map[String, String]): Unit = {
     val ctx = groovy.GroovyContext(context.user, operationRepository)
     ctx.withUntrustedShell(
@@ -691,7 +711,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
 
   def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
     val opResult = appliedOp(context, opSpec).project.rootState
-    manager.checkpointRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
+    manager.checkpointRepo.checkpointState(opResult, context.project.get.rootState.checkpoint.get) // TODO
   }
 
   def apply(
@@ -699,7 +719,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     subProject: SubProject,
     op: FEOperationSpec): Unit = manager.tagBatch {
 
-    val context = Operation.Context(user, subProject.viewer)
+    val context = Operation.Context(user, Some(subProject.viewer))
     subProject.frame.setCheckpoint(applyAndCheckpoint(context, op).checkpoint.get)
   }
 }

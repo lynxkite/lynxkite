@@ -203,6 +203,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
   implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
   implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
+  implicit val rWorkflowRequest = json.Json.reads[WorkflowRequest]
   implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
@@ -323,6 +324,7 @@ object ProductionJsonServer extends JsonServer {
   def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
+  def workflow = jsonGet(bigGraphController.workflow)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

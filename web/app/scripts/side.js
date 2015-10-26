@@ -28,6 +28,12 @@ angular.module('biggraph')
         centers: undefined,
         lastCentersRequest: undefined,
         lastCentersResponse: undefined,
+        workflow: {
+          code: '',
+          description: '',
+          enabled: false,
+          name: '',
+        },
       };
     }
 
