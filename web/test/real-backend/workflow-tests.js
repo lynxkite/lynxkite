@@ -137,4 +137,26 @@ module.exports = function(fw) {
         ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
       lib.closeErrors();
     });
+
+  fw.statePreservingTest(
+    'some project is open',
+    'editing a workflow',
+    function() {
+      saveWorkflow(
+        'TestConstWorkflow',
+        'A simple workflow that adds a constant attribute.',
+        'project.exampleGraph()\n');
+      lib.left.openOperation('TestConstWorkflow');
+      lib.left.clickWorkflowEditButton();
+      lib.sendKeysToACE(
+        lib.left.getWorkflowCodeEditor(),
+        'project.addConstantVertexAttribute' +
+          '(name: \'testConstAttr\',' +
+          ' value: \'1.0\',' +
+          ' type: \'Double\')');
+      lib.left.getWorkflowSaveButton().click();
+      lib.expectNotElement(lib.left.vertexAttribute('testConstAttr'));
+      lib.left.runOperation('TestConstWorkflow');
+      lib.expectElement(lib.left.vertexAttribute('testConstAttr'));
+    });
 };

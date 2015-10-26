@@ -21,6 +21,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - Until now we replaced spaces with underscores in project names and did the reverse when
    displaying them. We now stop doing this to avoid some inconsistencies. (Feel free to use either
    underscores or spaces in project names. Both work fine.)
+ - Add possibility to edit workflows.
 
 ### 1.5.6
 

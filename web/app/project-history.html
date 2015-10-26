@@ -1,4 +1,4 @@
-<div class="panel panel-default project history" ng-if="show && !workflowMode.enabled">
+<div class="panel panel-default project history" ng-if="show && !side.state.workflow.enabled">
 
   <div class="panel-heading project-name">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
@@ -121,5 +121,3 @@
     </li>
   </div>
 </div>
-<workflow-saver mode="workflowMode" code="code" side="side">
-</workflow-saver>
