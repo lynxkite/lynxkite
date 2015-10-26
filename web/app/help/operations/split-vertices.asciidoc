@@ -4,7 +4,7 @@ Split (multiply) vertices in a graph. A double vertex attribute controls how man
 copies of the vertex should exist after the operation. If this attribute is
 1, the vertex will be kept as it is. If this attribute is zero, the vertex
 will be discarded entirely. Higher values (e.g., 2) will result in
-two (or more) identical copies of the given vertex.
+more identical copies of the given vertex.
 All edges coming from and going to this vertex are
 multiplied (or discarded) appropriately.
 
