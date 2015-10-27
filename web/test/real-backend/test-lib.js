@@ -226,6 +226,11 @@ Side.prototype = {
     var e = this.side.element(by.id('attribute-' + attr));
     e.element(by.id('do-not-visualize-as-' + visualization)).click();
   },
+
+  attributeSlider: function(attr) {
+    var e = this.side.element(by.id('attribute-' + attr));
+    return e.element(by.id('slider'));
+  },
 };
 
 function History(side) {
