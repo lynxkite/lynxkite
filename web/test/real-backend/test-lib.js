@@ -213,6 +213,11 @@ Side.prototype = {
     e.element(by.id('visualize-as-button')).click();
     e.element(by.id('visualize-as-' + visualization)).click();
   },
+
+  doNotVisualizeAttribute: function(attr, visualization) {
+    var e = this.side.element(by.id('attribute-' + attr));
+    e.element(by.id('do-not-visualize-as-' + visualization)).click();
+  },
 };
 
 function History(side) {
@@ -326,12 +331,18 @@ var visualization = {
         var v = vertices[i];
         var touch = v.querySelector('circle.touch');
         var icon = v.querySelector('path.icon');
+        var label = v.querySelector('text');
+        var image = v.querySelector('image');
         d = {
           pos: touch.getAttribute('cx') + ' ' + touch.getAttribute('cy'),
-          label: v.querySelector('text').innerHTML,
-          icon: icon.id,
-          color: icon.style.fill,
+          label: label.innerHTML,
+          icon: image ? null : icon.id,
+          color: image ? null : icon.style.fill,
           size: touch.getAttribute('r'),
+          opacity: v.getAttribute('opacity'),
+          labelSize: label.getAttribute('font-size'),
+          labelColor: label.style.fill,
+          image: image ? image.getAttribute('href') : null,
         };
         data.vertices.push(d);
       }
