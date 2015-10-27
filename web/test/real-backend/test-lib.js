@@ -359,13 +359,16 @@ var visualization = {
       }
       for (i = 0; i < edges.length; ++i) {
         var e = edges[i];
-        var srcPos = arcStart(e.querySelector('path.first').getAttribute('d'));
-        var dstPos = arcStart(e.querySelector('path.second').getAttribute('d'));
-        console.log(srcPos, dstPos);
+        var first = e.querySelector('path.first');
+        var second = e.querySelector('path.second');
+        var srcPos = arcStart(first.getAttribute('d'));
+        var dstPos = arcStart(second.getAttribute('d'));
         data.edges.push({
           src: byPosition[srcPos],
           dst: byPosition[dstPos],
           label: e.querySelector('text').innerHTML,
+          color: first.style.stroke,
+          width: first.getAttribute('stroke-width'),
         });
       }
       data.edges.sort(function(a, b) {

@@ -53,8 +53,16 @@ module.exports = function(fw) {
     function() {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
+
+      // No attributes visualized.
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.edges).toConcur([
+          { color: '', label: '', width: '4.048' },
+          { color: '', label: '', width: '4.048' },
+          { color: '', label: '', width: '4.048' },
+          { color: '', label: '', width: '4.048' },
+          ]);
         expect(graph.vertices).toConcur([
           { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
           { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
@@ -167,6 +175,44 @@ module.exports = function(fw) {
         expectPositions(graph);
       });
 
+      // Edge attributes.
+      lib.left.visualizeAttribute('weight', 'width');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.edges).toConcur([
+          { width: '2.5300000000000002' },
+          { width: '5.0600000000000005' },
+          { width: '7.590000000000002' },
+          { width: '10.120000000000001' },
+        ]);
+        expectPositions(graph);
+      });
+
+      lib.left.visualizeAttribute('weight', 'edge-color');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.edges).toConcur([
+          { color: 'rgb(53, 53, 161)' },
+          { color: 'rgb(125, 53, 161)' },
+          { color: 'rgb(161, 53, 125)' },
+          { color: 'rgb(161, 53, 53)' },
+        ]);
+        expectPositions(graph);
+      });
+
+      lib.left.visualizeAttribute('comment', 'edge-label');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.edges).toConcur([
+          { label: 'Adam loves Eve' },
+          { label: 'Eve loves Adam' },
+          { label: 'Bob envies Adam' },
+          { label: 'Bob loves Eve' },
+        ]);
+        expectPositions(graph);
+      });
+
+      // Location attributes.
       lib.left.visualizeAttribute('location', 'position');
       // Toggle off and on to shake off the unpredictable offset from the non-positioned layout.
       lib.left.toggleSampledVisualization();
