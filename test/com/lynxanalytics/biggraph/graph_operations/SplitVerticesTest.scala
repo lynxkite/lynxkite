@@ -23,7 +23,7 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
         2, 2,
         3 // But only weight 4.0 has index 3
       ))
-    assert(res.belongsTo.rdd.values.collect.toSeq.map { e => e.src }.sorted ==
+    assert(res.belongsTo.rdd.values.collect.toSeq.map { e => e.dst }.sorted ==
       Seq[Long](
         0, // id 0 (weight 1.0) has 1 copy
         1, 1,
@@ -47,7 +47,7 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
     assert(res.newVertices.rdd.count() == 100)
     assert(res.indexAttr.rdd.values.collect.toSeq.sorted ==
       (0 to 99))
-    assert(res.belongsTo.rdd.values.collect.toSeq.map { e => e.src }.toSet ==
+    assert(res.belongsTo.rdd.values.collect.toSeq.map { e => e.dst }.toSet ==
       Set(3)) // Joe
   }
 
