@@ -312,6 +312,7 @@ var visualization = {
 
   // The data presented in the SVG DOM.
   graphData: function() {
+    browser.waitForAngular();
     return browser.executeScript(function() {
       var i, d;
       var svg = document.querySelector('svg.graph-view');
@@ -356,7 +357,9 @@ var visualization = {
           label: e.querySelector('text').innerHTML,
         });
       }
-      data.edges.sort();
+      data.edges.sort(function(a, b) {
+        return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
+      });
 
       return data;
     });
