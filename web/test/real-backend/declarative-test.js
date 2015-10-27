@@ -22,7 +22,7 @@ var fw = (function UIDescription() {
       }
 
       function runStatePreservingTest(currentTest) {
-        it(' -- ' + currentTest.name, function() {
+        it('-- ' + currentTest.name, function() {
           currentTest.runTest();
           // Checking that it was indeed statePreserving.
           checks();
