@@ -1378,6 +1378,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Split vertices", new StructureOperation(_, _) {
     def parameters = List(
       Choice("rep", "Repetition attribute", options = vertexAttributes[Double]),
+      Param("idattr", "ID attribute name", defaultValue = "new_id"),
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
@@ -1395,6 +1396,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
+      project.newVertexAttribute(params("idattr"), idAsAttribute(project.vertexSet))
     }
   })
 
