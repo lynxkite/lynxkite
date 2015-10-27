@@ -15,6 +15,12 @@ function Side(direction) {
 }
 
 Side.prototype = {
+  // Only for opening the second project next to an already open project.
+  open: function(project) {
+    this.side.element(by.id('show-selector-button')).click();
+    this.side.element(by.id('project-' + project)).click();
+  },
+
   close: function() {
     this.side.element(by.id('close-project')).click();
   },
@@ -322,6 +328,12 @@ History.prototype = {
 
 var visualization = {
   svg: element(by.css('svg.graph-view')),
+
+  asTSV: function() {
+    var copyButton = element(by.css('.graph-sidebar [data-clipboard-text'));
+    // It would be too complicated to test actual copy & paste. We just trust ZeroClipboard instead.
+    return copyButton.getAttribute('data-clipboard-text');
+  },
 
   // The visualization response received from the server.
   graphView: function() {

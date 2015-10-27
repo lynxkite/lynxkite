@@ -86,7 +86,7 @@ module.exports = function(fw) {
       saveWorkflow(
         'ComplexTest',
         'The workflow example from the help page.',
-        fs.readFileSync('app/help/ui/workflow-example.groovy'));
+        fs.readFileSync('app/help/ui/workflow-example.groovy', 'utf8'));
       lib.left.runOperation('ComplexTest', { size: 25, degree: 'all edges' });
       expect(lib.left.vertexCount()).toEqual(25);
       expect(lib.left.edgeCount()).toEqual(191);

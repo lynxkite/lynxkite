@@ -1,7 +1,7 @@
 <div class="col-sm-6 side" id="side-{{side.direction}}">
 
   <div ng-if="side.state.projectName === undefined">
-    <button ng-hide="showProjectSelector" style="width: 100%;"
+    <button id="show-selector-button" ng-hide="showProjectSelector" style="width: 100%;"
       ng-click="showProjectSelector = true" class="btn btn-link btn-lg">
       <i class="glyphicon glyphicon-plus"
         tooltip="Open&nbsp;project" tooltip-placement="bottom"></i>
