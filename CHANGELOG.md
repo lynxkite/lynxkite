@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - A new operation _Split vertices_ was added. It can be used to create multiple copies
+   of the same vertex, based on a 'count' attribute.
  - You can use Ammonite (https://lihaoyi.github.io/Ammonite/#Ammonite-REPL) to interact with a
    running Kite via a Scala interpreter. Among others, this allows one to use sparkSQL for
    arbitrary data processing tasks using the computation resources held by Kite. For details on
