@@ -1413,6 +1413,31 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Split vertices", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice("rep", "Repetition attribute", options = vertexAttributes[Double]),
+      Param("idattr", "ID attribute name", defaultValue = "new_id"),
+      Param("idx", "Index attribute name", defaultValue = "index"))
+
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes")
+    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitVertices.Output = {
+      val convOp = graph_operations.DoubleAttributeToLong
+      val longAttr = convOp.run(doubleAttr)
+      val op = graph_operations.SplitVertices()
+      op(op.attr, longAttr).result
+    }
+    def apply(params: Map[String, String]) = {
+      val rep = params("rep")
+
+      val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
+
+      project.pullBack(split.belongsTo)
+      project.vertexAttributes(params("idx")) = split.indexAttr
+      project.newVertexAttribute(params("idattr"), idAsAttribute(project.vertexSet))
+    }
+  })
+
   register("Merge vertices by attribute", new StructureOperation(_, _) {
     def parameters = List(
       Choice("key", "Match by", options = vertexAttributes)) ++
