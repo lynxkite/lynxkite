@@ -16,7 +16,6 @@ object SplitVertices extends OpFromJson {
       inputs.vs.entity,
       EdgeBundleProperties(isFunction = true, isEverywhereDefined = true))
     val indexAttr = vertexAttribute[Long](newVertices)
-    val oldIds = vertexAttribute[Long](newVertices)
   }
   def fromJson(j: JsValue) = SplitVertices()
 }
@@ -57,10 +56,6 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
     output(o.indexAttr,
       newIdAndOldIdAndZeroBasedIndex
         .map { case (newId, (oldId, idx)) => newId -> idx }
-        .toSortedRDD(partitioner))
-    output(o.oldIds,
-      newIdAndOldIdAndZeroBasedIndex
-        .map { case (newId, (oldId, idx)) => newId -> oldId }
         .toSortedRDD(partitioner))
   }
 }

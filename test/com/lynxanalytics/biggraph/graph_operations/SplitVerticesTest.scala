@@ -30,13 +30,6 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
         2, 2, 2,
         3, 3, 3, 3 // id 3 (weight 4.0) has 4 copies 
       ))
-    assert(res.oldIds.rdd.values.collect.toSeq.sorted ==
-      Seq[Long](
-        0,
-        1, 1,
-        2, 2, 2,
-        3, 3, 3, 3
-      ))
   }
 
   test("Zero drops vertices - one hundred lonely guys") {
@@ -56,7 +49,6 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
       (0 to 99))
     assert(res.belongsTo.rdd.values.collect.toSeq.map { e => e.src }.toSet ==
       Set(3)) // Joe
-    assert(res.oldIds.rdd.values.collect.toSeq == (0 to 99).map { _ => 3 })
   }
 
 }
