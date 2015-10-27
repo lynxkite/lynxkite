@@ -15,16 +15,11 @@ created so that you can differentiate between copies of the same vertex.
 If a given vertex was multiplied by n times, the n new vertices will have n different
 index attribute values running from 0 to n-1.
 
-Moreover, the original vertex ids will also be saved in an attribute.
-
 ====
 [[rep]] Repetition attribute::
 A double vertex attribute that specifies how many copies of the vertex should
 exist after the operation.
 (The double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
-
-[[origIds]] Name for the saved id::
-The original vertex ids will be saved in this attribute.
 
 [[idx]] Index attribute name::
 The name of the attribute that will contain unique identifiers for the otherwise
