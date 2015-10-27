@@ -123,7 +123,7 @@ require('./workflow-tests.js')(fw);
 require('./center-picker.js')(fw);
 require('./splash-page.js')(fw);
 require('./operations.js')(fw);
-require('./sampled-view.js')(fw);
+require('./visualization.js')(fw);
 
 fw.runAll();
 fw.cleanup();
