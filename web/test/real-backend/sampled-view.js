@@ -107,6 +107,66 @@ module.exports = function(fw) {
         expectPositions(graph);
       });
 
+      lib.left.visualizeAttribute('age', 'opacity');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.vertices).toConcur([
+          { opacity: '0.4035785288270378' },
+          { opacity: '0.36182902584493043' },
+          { opacity: '1' },
+          ]);
+        expectPositions(graph);
+      });
+
+      lib.left.visualizeAttribute('age', 'label-size');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.vertices).toConcur([
+          { labelSize: '12.107355864811135px' },
+          { labelSize: '10.854870775347912px' },
+          { labelSize: '30px' },
+          ]);
+        expectPositions(graph);
+      });
+
+      lib.left.visualizeAttribute('age', 'label-color');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.vertices).toConcur([
+          { labelColor: 'rgb(66, 53, 161)' },
+          { labelColor: 'rgb(53, 53, 161)' },
+          { labelColor: 'rgb(161, 53, 53)' },
+          ]);
+        expectPositions(graph);
+      });
+
+      // We don't have a URL attribute. Since we only look at the "href" anyway, anything will do.
+      lib.left.visualizeAttribute('name', 'image');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.vertices).toConcur([
+          { image: 'Adam' },
+          { image: 'Eve' },
+          { image: 'Bob' },
+          ]);
+        expectPositions(graph);
+      });
+
+      // Try removing some visualizations.
+      lib.left.doNotVisualizeAttribute('age', 'opacity');
+      lib.left.doNotVisualizeAttribute('age', 'label-size');
+      lib.left.doNotVisualizeAttribute('age', 'label-color');
+      lib.left.doNotVisualizeAttribute('name', 'image');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur(expectedEdges);
+        expect(graph.vertices).toConcur([
+          { opacity: '1', labelSize: '15px', labelColor: '', image: null },
+          { opacity: '1', labelSize: '15px', labelColor: '', image: null },
+          { opacity: '1', labelSize: '15px', labelColor: '', image: null },
+          ]);
+        expectPositions(graph);
+      });
+
       lib.left.visualizeAttribute('location', 'position');
       // Toggle off and on to shake off the unpredictable offset from the non-positioned layout.
       lib.left.toggleSampledVisualization();
