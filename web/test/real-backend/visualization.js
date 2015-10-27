@@ -241,6 +241,83 @@ module.exports = function(fw) {
 
   fw.statePreservingTest(
     'test-example project with example graph',
+    'visualize as slider',
+    function() {
+      addConcurMatcher();
+      lib.left.toggleSampledVisualization();
+      lib.left.visualizeAttribute('name', 'label');
+      lib.left.visualizeAttribute('age', 'slider');
+      var RED = 'rgb(161, 53, 53)',
+          YELLOW = 'rgb(184, 184, 46)',
+          GREEN = 'rgb(53, 161, 53)';
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: GREEN },
+          { label: 'Eve', color: GREEN },
+          { label: 'Bob', color: RED },
+          ]);
+      });
+      var slider = lib.left.attributeSlider('age');
+      /* global protractor */
+      var K = protractor.Key;
+
+      slider.sendKeys(K.HOME);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: RED },
+          { label: 'Eve', color: RED },
+          { label: 'Bob', color: RED },
+          ]);
+      });
+
+      slider.sendKeys(K.RIGHT);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: RED },
+          { label: 'Eve', color: YELLOW },
+          { label: 'Bob', color: RED },
+          ]);
+      });
+
+      slider.sendKeys(K.RIGHT);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: RED },
+          { label: 'Eve', color: GREEN },
+          { label: 'Bob', color: RED },
+          ]);
+      });
+
+      slider.sendKeys(K.END);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: GREEN },
+          { label: 'Eve', color: GREEN },
+          { label: 'Bob', color: GREEN },
+          ]);
+      });
+
+      slider.sendKeys(K.LEFT);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: GREEN },
+          { label: 'Eve', color: GREEN },
+          { label: 'Bob', color: YELLOW },
+          ]);
+      });
+
+      slider.sendKeys(K.LEFT);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam', color: GREEN },
+          { label: 'Eve', color: GREEN },
+          { label: 'Bob', color: RED },
+          ]);
+      });
+    });
+
+  fw.statePreservingTest(
+    'test-example project with example graph',
     'bucketed mode attribute visualizations',
     function() {
       addConcurMatcher();
