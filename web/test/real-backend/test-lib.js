@@ -200,6 +200,10 @@ Side.prototype = {
     this.side.element(by.id('sampled-mode-button')).click();
   },
 
+  toggleBucketedVisualization: function() {
+    this.side.element(by.id('bucketed-mode-button')).click();
+  },
+
   undoButton: function() {
     return this.side.element(by.id('undo-button'));
   },
@@ -210,8 +214,12 @@ Side.prototype = {
 
   visualizeAttribute: function(attr, visualization) {
     var e = this.side.element(by.id('attribute-' + attr));
-    e.element(by.id('visualize-as-button')).click();
-    e.element(by.id('visualize-as-' + visualization)).click();
+    if (visualization === 'x' || visualization === 'y') {
+      e.element(by.id('axis-' + visualization + '-' + attr)).click();
+    } else {
+      e.element(by.id('visualize-as-button')).click();
+      e.element(by.id('visualize-as-' + visualization)).click();
+    }
   },
 
   doNotVisualizeAttribute: function(attr, visualization) {

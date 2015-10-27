@@ -26,13 +26,6 @@ module.exports = function(fw) {
       }});
   }
 
-  var expectedEdges = [
-    { src : 0, dst: 1 },
-    { src : 1, dst: 0 },
-    { src : 2, dst: 0 },
-    { src : 2, dst: 1 },
-  ];
-
   var positions;
   function savePositions(graph) {
     positions = [];
@@ -49,10 +42,17 @@ module.exports = function(fw) {
 
   fw.statePreservingTest(
     'test-example project with example graph',
-    'attribute visualizations',
+    'sampled mode attribute visualizations',
     function() {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
+
+      var expectedEdges = [
+        { src : 0, dst: 1 },
+        { src : 1, dst: 0 },
+        { src : 2, dst: 0 },
+        { src : 2, dst: 1 },
+      ];
 
       // No attributes visualized.
       lib.visualization.graphData().then(function(graph) {
@@ -233,6 +233,49 @@ module.exports = function(fw) {
           { pos: '400.192773769436 72.88458991024139' },
           { pos: '547.2699646213099 57.85735348192763' },
           { pos: '681.3038848805471 141.32935071053427' },
+          ]);
+      });
+
+      lib.openProject('test-example'); // Restore state.
+    });
+
+  fw.statePreservingTest(
+    'test-example project with example graph',
+    'bucketed mode attribute visualizations',
+    function() {
+      addConcurMatcher();
+      lib.left.toggleBucketedVisualization();
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur([{ src: 0, dst: 0 }]);
+        expect(graph.vertices).toConcur([{ label: '4' }]);
+      });
+
+      lib.left.visualizeAttribute('gender', 'x');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur([
+          { src: 0, dst: 1, width: '4.048' },
+          { src: 1, dst: 0, width: '8.096' },
+          { src: 1, dst: 1, width: '4.048' },
+          ]);
+        expect(graph.vertices).toConcur([
+          { label: '1' },
+          { label: '3' },
+          ]);
+      });
+
+      lib.left.visualizeAttribute('age', 'y');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.edges).toConcur([
+          { src: 0, dst: 2, width: '4.048' },
+          { src: 2, dst: 0, width: '4.048' },
+          { src: 3, dst: 0, width: '4.048' },
+          { src: 3, dst: 2, width: '4.048' },
+          ]);
+        expect(graph.vertices).toConcur([
+          { label: '1' },
+          { label: '1' },
+          { label: '1' },
+          { label: '1' },
           ]);
       });
 
