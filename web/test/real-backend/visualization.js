@@ -386,7 +386,7 @@ module.exports = function(fw) {
         expect(graph.vertices.length).toBe(3);
       });
 
-      lib.right.open('test-example');
+      lib.right.openSecondProject('test-example');
       lib.right.toggleBucketedVisualization();
       lib.right.visualizeAttribute('gender', 'y');
       lib.visualization.graphData().then(function(graph) {
