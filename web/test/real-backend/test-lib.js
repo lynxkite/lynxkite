@@ -367,7 +367,7 @@ var visualization = {
   graphData: function() {
     browser.waitForAngular();
     return browser.executeScript(function() {
-      var i, d;
+      var i;
       var svg = document.querySelector('svg.graph-view');
       var data = {
         edges: [],
@@ -381,7 +381,7 @@ var visualization = {
         var icon = v.querySelector('path.icon');
         var label = v.querySelector('text');
         var image = v.querySelector('image');
-        d = {
+        data.vertices.push({
           pos: touch.getAttribute('cx') + ' ' + touch.getAttribute('cy'),
           label: label.innerHTML,
           icon: image ? null : icon.id,
@@ -391,14 +391,12 @@ var visualization = {
           labelSize: label.getAttribute('font-size'),
           labelColor: label.style.fill,
           image: image ? image.getAttribute('href') : null,
-        };
-        data.vertices.push(d);
+        });
       }
       data.vertices.sort();
       var byPosition = {};
       for (i = 0; i < data.vertices.length; ++i) {
-        d = data.vertices[i];
-        byPosition[d.pos] = i;
+        byPosition[data.vertices[i].pos] = i;
       }
 
       var edges = svg.querySelectorAll('g.edge');
