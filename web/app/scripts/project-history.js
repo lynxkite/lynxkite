@@ -242,12 +242,12 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             return step.request;
           });
           state.code = toGroovy(requests);
+          state.name = '';
+          state.description = '';
+          state.enabled = true;
         } else {
-          state.code = '';
+          state.enabled = false;
         }
-        state.name = '';
-        state.description = '';
-        state.enabled = true;
       };
 
       function blankStep(seg) {
