@@ -237,6 +237,21 @@ Side.prototype = {
     var e = this.side.element(by.id('attribute-' + attr));
     return e.element(by.id('slider'));
   },
+
+  setSampleRadius: function(radius) {
+    var slider = this.side.element(by.id('sample-radius-slider'));
+    slider.getAttribute('value').then(function(value) {
+      var diff = radius - value;
+      while (diff > 0) {
+        slider.sendKeys(K.RIGHT);
+        diff -= 1;
+      }
+      while (diff < 0) {
+        slider.sendKeys(K.LEFT);
+        diff += 1;
+      }
+    });
+  },
 };
 
 function History(side) {
@@ -328,6 +343,14 @@ History.prototype = {
 
 var visualization = {
   svg: element(by.css('svg.graph-view')),
+
+  vertexByLabel: function(label) {
+    return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
+  },
+
+  clickMenu: function(item) {
+    element(by.css('.context-menu #menu-' + item)).click();
+  },
 
   asTSV: function() {
     var copyButton = element(by.css('.graph-sidebar [data-clipboard-text'));
