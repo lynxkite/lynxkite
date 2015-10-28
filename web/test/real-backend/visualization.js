@@ -375,7 +375,7 @@ module.exports = function(fw) {
 
   fw.statePreservingTest(
     'test-example project with example graph',
-    'two open projects',
+    'visualization for two open projects',
     function() {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
@@ -430,6 +430,39 @@ module.exports = function(fw) {
       // Check TSV of this complex visualization.
       var expectedTSV = fs.readFileSync('test/real-backend/visualization-tsv-data.txt', 'utf8');
       expect(lib.visualization.asTSV()).toEqual(expectedTSV);
+
+      lib.openProject('test-example'); // Restore state.
+    });
+
+  fw.statePreservingTest(
+    'test-example project with example graph',
+    'visualization context menu',
+    function() {
+      addConcurMatcher();
+      lib.left.toggleSampledVisualization();
+      lib.left.visualizeAttribute('name', 'label');
+      lib.visualization.vertexByLabel('Eve').click();
+      lib.visualization.clickMenu('add-to-centers');
+      lib.left.setSampleRadius(0);
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Adam' },
+          { label: 'Eve' },
+        ]);
+        expect(graph.edges).toConcur([
+          { src: 0, dst: 1 },
+          { src: 1, dst: 0 },
+        ]);
+      });
+
+      lib.visualization.vertexByLabel('Adam').click();
+      lib.visualization.clickMenu('remove-from-centers');
+      lib.visualization.graphData().then(function(graph) {
+        expect(graph.vertices).toConcur([
+          { label: 'Eve' },
+        ]);
+        expect(graph.edges).toEqual([]);
+      });
 
       lib.openProject('test-example'); // Restore state.
     });

@@ -3,7 +3,7 @@
 <button
   type="button"
   class="close"
-  id="do-not-visualize-as-{{ visualization.replace(' ', '-') }}"
+  id="do-not-visualize-as-{{ visualization.split(' ').join('-') }}"
   aria-label="Remove"
   ng-click="side.toggleAttributeTitle(visualization, attr)">
   <span aria-hidden="true">&times;</span>
