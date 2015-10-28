@@ -374,6 +374,7 @@ var visualization = {
         vertices: [],
       };
 
+      // Collect vertices.
       var vertices = svg.querySelectorAll('g.vertex');
       for (i = 0; i < vertices.length; ++i) {
         var v = vertices[i];
@@ -394,11 +395,14 @@ var visualization = {
         });
       }
       data.vertices.sort();
+
+      // Build an index by position, so edges can be resolved to vertices.
       var byPosition = {};
       for (i = 0; i < data.vertices.length; ++i) {
         byPosition[data.vertices[i].pos] = i;
       }
 
+      // Collect edges.
       var edges = svg.querySelectorAll('g.edge');
       function arcStart(d) {
         return d.match(/M (.*? .*?) /)[1];
