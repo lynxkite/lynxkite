@@ -17,7 +17,7 @@ module.exports = function(fw) {
     function() {
       lib.left.history.open();
       lib.left.openWorkflowSavingDialog();
-      expect(lib.left.getWorkflowCodeEditor().evaluate('code')).toBe(
+      expect(lib.left.getWorkflowCodeEditor().evaluate('state.code')).toBe(
         'project.exampleGraph()' +
           '\nproject.filterByAttributes(\'filterea-comment\': \'\',' +
           ' \'filterea-weight\': \'!1\',' +
