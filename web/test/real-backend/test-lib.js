@@ -363,7 +363,7 @@ var visualization = {
     return visualization.svg.evaluate('graph.view');
   },
 
-  // The data presented in the SVG DOM.
+  // The currently visualized graph data extracted from the SVG DOM.
   graphData: function() {
     browser.waitForAngular();
     return browser.executeScript(function() {
