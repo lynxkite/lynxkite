@@ -135,7 +135,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category(
       "Segmentation utility operations",
       "green",
-      visible = c.project.get.isSegmentation, // TODO
+      visible = c.project.isSegmentation,
       icon = "wrench",
       sortKey = "zz")) with SegOp
 
@@ -172,7 +172,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Create segmentation",
       "green",
       icon = "th-large",
-      visible = !c.project.get.isSegmentation)) // TODO
+      visible = !c.project.isSegmentation))
 
   abstract class StructureOperation(t: String, c: Context)
     extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))

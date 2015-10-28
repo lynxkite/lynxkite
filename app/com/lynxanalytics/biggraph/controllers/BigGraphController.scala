@@ -210,7 +210,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p = SubProject.parsePath(request.name)
     assert(p.frame.exists, s"Project ${request.name} does not exist.")
     p.frame.assertReadAllowedFrom(user)
-    val context = Operation.Context(user, Some(p.viewer))
+    val context = Operation.Context(user, p.viewer)
     val categories = ops.categories(context)
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
@@ -374,7 +374,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
     val startStateRootViewer = new RootProjectViewer(startState)
-    val context = Operation.Context(user, Some(startStateRootViewer.offspringViewer(request.path)))
+    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val opCategoriesBefore = ops.categories(context)
     val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
     val op = ops.opById(context, request.op.id)
@@ -485,7 +485,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def workflow(user: serving.User, request: WorkflowRequest): SavedWorkflow = metaManager.synchronized {
 
-    val context = Operation.Context(user, None)
+    val context = Operation.Context(user, null)
     ops.opById(context, request.workflowName)
       .asInstanceOf[WorkflowOperation]
       .workflow
@@ -508,8 +508,8 @@ abstract class OperationParameterMeta {
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project match {
-    case Some(project) => project.editor
-    case None => null
+    case null => null
+    case project => project.editor
   }
   val user = context.user
   def id = Operation.titleToID(originalTitle)
@@ -589,13 +589,12 @@ object Operation {
       OperationCategory(title, icon, color, ops)
   }
 
-  case class Context(user: serving.User, project: Option[ProjectViewer])
+  case class Context(user: serving.User, project: ProjectViewer)
 
   def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
     val root = new SymbolPath(Nil)
     val projects = new ProjectDirectory(root).listProjectsRecursively
     val readable = projects.filter(_.readAllowedFrom(user))
-
     // Do not list internal project names (starting with "!").
     readable.filterNot(_.projectName.startsWith("!"))
   }
@@ -711,7 +710,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
 
   def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
     val opResult = appliedOp(context, opSpec).project.rootState
-    manager.checkpointRepo.checkpointState(opResult, context.project.get.rootState.checkpoint.get) // TODO
+    manager.checkpointRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
   }
 
   def apply(
@@ -719,7 +718,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     subProject: SubProject,
     op: FEOperationSpec): Unit = manager.tagBatch {
 
-    val context = Operation.Context(user, Some(subProject.viewer))
+    val context = Operation.Context(user, subProject.viewer)
     subProject.frame.setCheckpoint(applyAndCheckpoint(context, op).checkpoint.get)
   }
 }
