@@ -16,7 +16,7 @@ function Side(direction) {
 
 Side.prototype = {
   // Only for opening the second project next to an already open project.
-  open: function(project) {
+  openSecondProject: function(project) {
     this.side.element(by.id('show-selector-button')).click();
     this.side.element(by.id('project-' + project)).click();
   },
