@@ -250,7 +250,7 @@ module.exports = function(fw) {
           ]);
       });
 
-      lib.openProject('test-example'); // Restore state.
+      lib.navigateToProject('test-example'); // Restore state.
     });
 
   fw.statePreservingTest(
@@ -370,7 +370,7 @@ module.exports = function(fw) {
           ]);
       });
 
-      lib.openProject('test-example'); // Restore state.
+      lib.navigateToProject('test-example'); // Restore state.
     });
 
   fw.statePreservingTest(
@@ -431,7 +431,7 @@ module.exports = function(fw) {
       var expectedTSV = fs.readFileSync('test/real-backend/visualization-tsv-data.txt', 'utf8');
       expect(lib.visualization.asTSV()).toEqual(expectedTSV);
 
-      lib.openProject('test-example'); // Restore state.
+      lib.navigateToProject('test-example'); // Restore state.
     });
 
   fw.statePreservingTest(
@@ -464,6 +464,6 @@ module.exports = function(fw) {
         expect(graph.edges).toEqual([]);
       });
 
-      lib.openProject('test-example'); // Restore state.
+      lib.navigateToProject('test-example'); // Restore state.
     });
 };

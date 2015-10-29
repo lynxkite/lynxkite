@@ -580,7 +580,7 @@ testLib = {
     expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
   },
 
-  openProject: function(name) {
+  navigateToProject: function(name) {
     browser.get('/#/project/' + name);
   },
 
