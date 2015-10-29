@@ -9,7 +9,7 @@ module.exports = function(fw) {
     function() {
       lib.left.runOperation('Import vertices from CSV files'); // Missing filename.
       // There should be an error message.
-      expect(lib.errors()).toMatch(['.*']);
+      expect(lib.error()).toMatch('.*');
       // Check that we can press OK again. (#2529) (It will give the same error.)
       lib.left.submitOperation(lib.left.toolbox);
       lib.closeErrors();
