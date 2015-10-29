@@ -28,12 +28,6 @@ angular.module('biggraph')
         centers: undefined,
         lastCentersRequest: undefined,
         lastCentersResponse: undefined,
-        workflow: {
-          code: '',
-          description: '',
-          enabled: false,
-          name: '',
-        },
       };
     }
 
@@ -49,6 +43,7 @@ angular.module('biggraph')
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
+      this.workflowEditor = { enabled: false };
     }
 
     // Creates a JSON formatted version of the current UI state of this side. The output is

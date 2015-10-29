@@ -43,7 +43,8 @@ case class FEOperationMeta(
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "",
-  isWorkflow: Boolean = false)
+  isWorkflow: Boolean = false,
+  workflowAuthor: String = "")
 
 case class FEOperationParameterMeta(
     id: String,
@@ -170,7 +171,16 @@ case class SaveWorkflowRequest(
   description: String)
 
 case class WorkflowRequest(
-  workflowName: String)
+  id: String)
+
+case class WorkflowResponse(
+  name: String,
+  description: String,
+  code: String)
+object WorkflowResponse {
+  implicit val fWorkflowResponse = json.Json.format[WorkflowResponse]
+  def fromJson(js: String): WorkflowResponse = json.Json.parse(js).as[WorkflowResponse]
+}
 
 case class SavedWorkflow(
     stepsAsGroovy: String,
@@ -469,26 +479,22 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
-    val dateString =
-      (new java.text.SimpleDateFormat("dd-MM-yyyy hh:mm")).format(new java.util.Date())
-    val description =
-      s"<p>User defined workflow saved by ${user.email} at $dateString<p>${request.description}"
-
     val savedWorkflow = SavedWorkflow(
       request.stepsAsGroovy,
       user.email,
-      description)
+      request.description)
     ProjectFrame.validateName(request.workflowName, "Workflow name")
     val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
     metaManager.setTag(tagName, savedWorkflow.prettyJson)
   }
 
-  def workflow(user: serving.User, request: WorkflowRequest): SavedWorkflow = metaManager.synchronized {
-
-    val context = Operation.Context(user, null)
-    ops.opById(context, request.workflowName)
-      .asInstanceOf[WorkflowOperation]
-      .workflow
+  def workflow(user: serving.User, request: WorkflowRequest): WorkflowResponse = metaManager.synchronized {
+    val id = SymbolPath.parse(request.id)
+    val workflow = SavedWorkflow.fromJson(env.metaGraphManager.getTag(id))
+    WorkflowResponse(
+      request.id.split("/")(1), // extract name from id
+      workflow.description,
+      workflow.stepsAsGroovy)
   }
 }
 
@@ -507,10 +513,7 @@ abstract class OperationParameterMeta {
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
-  val project = context.project match {
-    case null => null
-    case project => project.editor
-  }
+  val project = context.project.editor
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
@@ -518,6 +521,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
   def isWorkflow: Boolean = false
+  def workflowAuthor: String = ""
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
 
@@ -549,8 +553,15 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
-  def toFE: FEOperationMeta =
-    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description, isWorkflow)
+  def toFE: FEOperationMeta = FEOperationMeta(
+    id,
+    title,
+    parameters.map { param => param.toFE },
+    category.title,
+    enabled,
+    description,
+    isWorkflow,
+    workflowAuthor)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -627,6 +638,8 @@ case class WorkflowOperation(
   override val id = fullName.toString
 
   override val description = workflow.description
+
+  override val workflowAuthor = workflow.author
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsGroovy)
 
