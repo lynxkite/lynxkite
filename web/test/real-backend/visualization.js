@@ -5,6 +5,8 @@ var lib = require('./test-lib.js');
 
 module.exports = function(fw) {
   // A matcher for lists of objects that ignores fields not present in the reference.
+  // Example use:
+  //   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
   function addConcurMatcher() {
     jasmine.addMatchers({
       toConcur: function(util, customEqualityTesters) {
