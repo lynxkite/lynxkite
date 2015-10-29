@@ -7,7 +7,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
 
 // Things tested here are unfortunately not trivial due to things not being registered in kryo...
-class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
+class SparkSQLTest extends FunSuite with TestGraphOp with BeforeAndAfter {
   var oldOut: java.io.PrintStream = null
   before {
     assert(oldOut == null)
@@ -31,6 +31,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     df.filter(df("age") > 21).show()
     df.groupBy("age").count().show()
   }
+
   test("We can run do SQL on dataframes and reuse results as normal RDD") {
     val sqlContext = cleanDataManager.sqlContext
     val resDir = getClass.getResource("/graph_api/SparkSQLTest").toString
@@ -80,5 +81,30 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     // The results of SQL queries are DataFrames and support all the normal RDD operations.
     // The columns of a row in the result can be accessed by field index or by field name.
     results.map(t => "Name: " + t(0)).collect().foreach(println)
+  }
+
+  test("DataFrame from LynxKite project") {
+    import com.lynxanalytics.biggraph.controllers._
+
+    val controller = new BigGraphController(this)
+    val projectName = "df-test"
+    val projectFrame = ProjectFrame.fromName(projectName)
+    val subProject = projectFrame.subproject
+    val user = com.lynxanalytics.biggraph.serving.User.fake
+    controller.createProject(
+      user,
+      CreateProjectRequest(name = projectName, notes = "test project", privacy = "private"))
+    def run(op: String, params: Map[String, String] = Map(), on: String = projectName) = {
+      controller.projectOp(
+        user,
+        ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
+    }
+    val sqlContext = dataManager.sqlContext
+    com.lynxanalytics.biggraph.DefaultSource.env = this
+
+    run("Example Graph", Map())
+    val df = sqlContext.read.format("com.lynxanalytics.biggraph").load("df-test")
+    df.printSchema()
+    df.show()
   }
 }
