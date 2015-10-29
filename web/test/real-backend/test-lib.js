@@ -701,8 +701,17 @@ testLib = {
     });
   },
 
+  // A promise of the list of error messages.
   errors: function() {
     return element.all(by.css('.top-alert-message')).map(function(e) { return e.getText(); });
+  },
+
+  // Expects that there will be a single error message and returns it as a promise.
+  error: function() {
+    return testLib.errors().then(function(errors) {
+      expect(errors.length).toBe(1);
+      return errors[0];
+    });
   },
 
   closeErrors: function() {

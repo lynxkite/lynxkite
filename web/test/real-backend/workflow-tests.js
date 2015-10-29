@@ -122,8 +122,8 @@ module.exports = function(fw) {
     function() {
       saveWorkflow('MaliciousTest1', '', 'print "hello world"');
       lib.left.runOperation('MaliciousTest1');
-      expect(lib.errors()).toMatch(
-        ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
+      expect(lib.error()).toMatch(
+        'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
     });
 
@@ -133,8 +133,8 @@ module.exports = function(fw) {
     function() {
       saveWorkflow('MaliciousTest2', '', '"hello world".getClass().getClassLoader()');
       lib.left.runOperation('MaliciousTest2');
-      expect(lib.errors()).toMatch(
-        ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
+      expect(lib.error()).toMatch(
+        'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
     });
 };
