@@ -14,7 +14,7 @@ angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
       searching: '=?',  // (Input/output.) Whether operation search is active.
       applying: '=',  // (Input.) Whether an operation is just being submitted.
       editable: '=',  // (Input.) Whether the toolbox should be interactive.
-      side: '=',  // (Input/output.) The side to which this toolbox is assigned.
+      sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {

@@ -33,10 +33,10 @@
 
   <project-history side="side" show="side.project.$resolved && !side.project.$error && side.showHistory">
   </project-history>
-  <workflow-saver side="side" ng-if="side.project.$resolved && !side.project.$error && side.state.workflow.enabled">
+  <workflow-saver side="side" state="side.workflowEditor" ng-if="side.project.$resolved && !side.project.$error && side.workflowEditor.enabled">
   </workflow-saver>
 
-  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory && !side.state.workflow.enabled">
+  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory && !side.workflowEditor.enabled">
 
     <div class="panel-heading project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">

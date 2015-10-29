@@ -1,7 +1,7 @@
 // Displays an operation (title, description, parameters, OK button).
 'use strict';
 
-angular.module('biggraph').directive('operation', function(util, hotkeys) {
+angular.module('biggraph').directive('operation', function(util, hotkeys /*, $timeout */) {
   return {
     restrict: 'E',
     scope: {
@@ -10,7 +10,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
       editable: '=',  // (Input.)
       params: '=',  // (Input/output.)
       applying: '=?',  // (Input.) Whether an operation is being applied currently.
-      side: '=',  // (Input/output.) The side on which this operation is being edited.
+      sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
     },
     templateUrl: 'operation.html',
     link: function(scope, element) {
@@ -41,12 +41,12 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
         callback: scope.apply,
       });
       scope.editOperation = function() {
-        var workflowState = scope.side.state.workflow;
-        workflowState.enabled = true;
-        workflowState.id = scope.op.id;
+        scope.sideWorkflowEditor.enabled = true;
+        scope.sideWorkflowEditor.workflow =
+          util.get('/ajax/workflow', { id: scope.op.id });
       };
       scope.operationIsEditable = function() {
-        return scope.op.isWorkflow && scope.side;
+        return scope.op.isWorkflow && scope.sideWorkflowEditor;
       };
 
       // Focus the first input box when the operation is opened.
