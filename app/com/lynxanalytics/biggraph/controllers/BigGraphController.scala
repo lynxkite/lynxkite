@@ -490,7 +490,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def workflow(user: serving.User, request: WorkflowRequest): WorkflowResponse = metaManager.synchronized {
     val id = SymbolPath.parse(request.id)
-    val workflow = SavedWorkflow.fromJson(env.metaGraphManager.getTag(id))
+    val workflow = env.metaGraphManager.workflow(id)
     WorkflowResponse(
       request.id.split("/")(1), // extract name from id
       workflow.description,
@@ -679,7 +679,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   private def workflowOpFromTag(fullName: SymbolPath, context: Operation.Context) =
-    WorkflowOperation(fullName, SavedWorkflow.fromJson(manager.getTag(fullName)), context, this)
+    WorkflowOperation(fullName, manager.workflow(fullName), context, this)
 
   private def workflowOperations(context: Operation.Context): Seq[Operation] =
     if (manager.tagExists(BigGraphController.workflowsRoot)) {
