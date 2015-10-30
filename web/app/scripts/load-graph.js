@@ -45,6 +45,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           edgeWeightId: (viewData.edgeWidth || { id: '' }).id,
           layout3D: viewData.display === '3d',
           attrs: edgeAttrs,
+          maxSize: (viewData.display === '3d') ? 1000000 : 10000,
         });
       }
       var vertexAttrs = [];
@@ -75,6 +76,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
         centralVertexIds: viewData.centers,
         sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
         attrs: vertexAttrs,
+        maxSize: (viewData.display === '3d') ? 1000000 : 10000,
       });
     }
 
@@ -90,6 +92,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           edgeWeightId: '',
           layout3D: false,
           attrs: [],
+          maxSize: 10000,
         });
       }
       if (rightToLeftBundle !== undefined) {
@@ -103,6 +106,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           edgeWeightId: '',
           layout3D: false,
           attrs: [],
+          maxSize: 10000,
         });
       }
     }
