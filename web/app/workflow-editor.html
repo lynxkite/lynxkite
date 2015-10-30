@@ -2,7 +2,7 @@
 <progressbar ng-if="state.workflow.$resolved === false" class="progress-striped active">
     Loading...
 </progressbar>
-<div ng-if="state.workflow.$resolved !== false" class="panel panel-default project workflow-saver">
+<div ng-if="state.workflow.$resolved !== false" class="panel panel-default project workflow-editor">
 
   <div class="panel-heading project-name">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">

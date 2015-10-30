@@ -1,11 +1,11 @@
 // Presents the parameters for saving an operation.
 'use strict';
 
-angular.module('biggraph').directive('workflowSaver', function(side, util) {
+angular.module('biggraph').directive('workflowEditor', function(side, util) {
   return {
     restrict: 'E',
     scope: { side: '=', state: '=' },
-    templateUrl: 'workflow-saver.html',
+    templateUrl: 'workflow-editor.html',
     link: function(scope) {
       scope.close = function() {
         scope.state.enabled = false;
@@ -24,14 +24,11 @@ angular.module('biggraph').directive('workflowSaver', function(side, util) {
           });
       };
       scope.getParams = function() {
-        function getCode() {
-          if (scope.state && scope.state.workflow && scope.state.workflow.code) {
-            return scope.state.workflow.code;
-          } else {
-            return '';
-          }
+        var code = '';
+        if (scope.state && scope.state.workflow && scope.state.workflow.code) {
+          code = scope.state.workflow.code;
         }
-        var params = getCode().match(/params\[['"](.*?)['"]\]/g);
+        var params = code.match(/params\[['"](.*?)['"]\]/g);
         if (!params) { return []; }
         var uniques = [];
         for (var i = 0; i < params.length; ++i) {
