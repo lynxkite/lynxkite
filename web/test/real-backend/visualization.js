@@ -46,7 +46,7 @@ module.exports = function(fw) {
       var parts = positions[i].split(' ');
       var p = { x: parseFloat(parts[0]), y: parseFloat(parts[1]) };
       result.push(p);
-      minx = minx === undefined || p.x < minx ? p.x : minx;
+      minx = (minx === undefined || p.x < minx) ? p.x : minx;
     }
     for (i = 0; i < result.length; ++i) {
       result[i].x -= minx;
