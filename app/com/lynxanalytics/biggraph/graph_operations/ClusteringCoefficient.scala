@@ -96,15 +96,15 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
     val edgePartitioner = inputs.es.rdd.partitioner.get
     val neighbors = Neighbors(nonLoopEdges, edgePartitioner)
 
-    val outNeighborsOfNeighborsRdd = neighbors.allNoIsolated.sortedJoin(neighbors.out)
+    val outNeighborsOfNeighborsRaw = neighbors.allNoIsolated.sortedJoin(neighbors.out)
       .flatMap {
         case (vid, (all, outs)) => all.map((_, outs))
       }
-    val dataSize = outNeighborsOfNeighborsRdd.map {
-      case (_, arr) => arr.size
-    }.sum.toLong
+    val dataSize = outNeighborsOfNeighborsRaw.map {
+      case (_, arr) => arr.size.toLong
+    }.reduce(_ + _)
     val massivePartitioner = rc.partitionerForNRows(dataSize)
-    val outNeighborsOfNeighbors = outNeighborsOfNeighborsRdd.groupBySortedKey(massivePartitioner)
+    val outNeighborsOfNeighbors = outNeighborsOfNeighborsRaw.groupBySortedKey(massivePartitioner)
 
     val vertices = inputs.vs.rdd
 
