@@ -13,7 +13,7 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.controllers.CheckpointRepository
+import com.lynxanalytics.biggraph.controllers.{ SavedWorkflow, CheckpointRepository }
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
@@ -136,6 +136,9 @@ class MetaGraphManager(val repositoryPath: String) {
   }
   def entity(tag: SymbolPath): MetaGraphEntity = synchronized {
     entity((tagRoot / tag).gUID)
+  }
+  def workflow(tag: SymbolPath): SavedWorkflow = synchronized {
+    SavedWorkflow.fromJson(getTag(tag))
   }
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
