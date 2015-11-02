@@ -367,65 +367,71 @@ var visualization = {
   graphData: function() {
     browser.waitForAngular();
     return browser.executeScript(function() {
-      var i;
+
+      // Vertices as simple objects.
+      function vertexData(svg) {
+        var vertices = svg.querySelectorAll('g.vertex');
+        var result = [];
+        for (var i = 0; i < vertices.length; ++i) {
+          var v = vertices[i];
+          var touch = v.querySelector('circle.touch');
+          var icon = v.querySelector('path.icon');
+          var label = v.querySelector('text');
+          var image = v.querySelector('image');
+          result.push({
+            pos: touch.getAttribute('cx') + ' ' + touch.getAttribute('cy'),
+            label: label.innerHTML,
+            icon: image ? null : icon.id,
+            color: image ? null : icon.style.fill,
+            size: touch.getAttribute('r'),
+            opacity: v.getAttribute('opacity'),
+            labelSize: label.getAttribute('font-size'),
+            labelColor: label.style.fill,
+            image: image ? image.getAttribute('href') : null,
+          });
+        }
+        result.sort();
+        return result;
+      }
+
+      // Edges as simple objects.
+      function edgeData(svg, vertices) {
+        // Build an index by position, so edges can be resolved to vertices.
+        var i, byPosition = {};
+        for (i = 0; i < vertices.length; ++i) {
+          byPosition[vertices[i].pos] = i;
+        }
+
+        // Collect edges.
+        var result = [];
+        var edges = svg.querySelectorAll('g.edge');
+        function arcStart(d) {
+          return d.match(/M (.*? .*?) /)[1];
+        }
+        for (i = 0; i < edges.length; ++i) {
+          var e = edges[i];
+          var first = e.querySelector('path.first');
+          var second = e.querySelector('path.second');
+          var srcPos = arcStart(first.getAttribute('d'));
+          var dstPos = arcStart(second.getAttribute('d'));
+          result.push({
+            src: byPosition[srcPos],
+            dst: byPosition[dstPos],
+            label: e.querySelector('text').innerHTML,
+            color: first.style.stroke,
+            width: first.getAttribute('stroke-width'),
+          });
+        }
+        result.sort(function(a, b) {
+          return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
+        });
+        return result;
+      }
+
       var svg = document.querySelector('svg.graph-view');
-      var data = {
-        edges: [],
-        vertices: [],
-      };
-
-      // Collect vertices.
-      var vertices = svg.querySelectorAll('g.vertex');
-      for (i = 0; i < vertices.length; ++i) {
-        var v = vertices[i];
-        var touch = v.querySelector('circle.touch');
-        var icon = v.querySelector('path.icon');
-        var label = v.querySelector('text');
-        var image = v.querySelector('image');
-        data.vertices.push({
-          pos: touch.getAttribute('cx') + ' ' + touch.getAttribute('cy'),
-          label: label.innerHTML,
-          icon: image ? null : icon.id,
-          color: image ? null : icon.style.fill,
-          size: touch.getAttribute('r'),
-          opacity: v.getAttribute('opacity'),
-          labelSize: label.getAttribute('font-size'),
-          labelColor: label.style.fill,
-          image: image ? image.getAttribute('href') : null,
-        });
-      }
-      data.vertices.sort();
-
-      // Build an index by position, so edges can be resolved to vertices.
-      var byPosition = {};
-      for (i = 0; i < data.vertices.length; ++i) {
-        byPosition[data.vertices[i].pos] = i;
-      }
-
-      // Collect edges.
-      var edges = svg.querySelectorAll('g.edge');
-      function arcStart(d) {
-        return d.match(/M (.*? .*?) /)[1];
-      }
-      for (i = 0; i < edges.length; ++i) {
-        var e = edges[i];
-        var first = e.querySelector('path.first');
-        var second = e.querySelector('path.second');
-        var srcPos = arcStart(first.getAttribute('d'));
-        var dstPos = arcStart(second.getAttribute('d'));
-        data.edges.push({
-          src: byPosition[srcPos],
-          dst: byPosition[dstPos],
-          label: e.querySelector('text').innerHTML,
-          color: first.style.stroke,
-          width: first.getAttribute('stroke-width'),
-        });
-      }
-      data.edges.sort(function(a, b) {
-        return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
-      });
-
-      return data;
+      var vertices = vertexData(svg);
+      var edges = edgeData(svg, vertices);
+      return { vertices: vertices, edges: edges };
     });
   },
 
