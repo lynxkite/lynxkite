@@ -344,7 +344,7 @@ History.prototype = {
 var visualization = {
   svg: element(by.css('svg.graph-view')),
 
-  vertexByLabel: function(label) {
+  elementByLabel: function(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
   },
 
