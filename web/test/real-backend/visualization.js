@@ -443,7 +443,7 @@ module.exports = function(fw) {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
       lib.left.visualizeAttribute('name', 'label');
-      lib.visualization.vertexByLabel('Eve').click();
+      lib.visualization.elementByLabel('Eve').click();
       lib.visualization.clickMenu('add-to-centers');
       lib.left.setSampleRadius(0);
       lib.visualization.graphData().then(function(graph) {
@@ -457,7 +457,7 @@ module.exports = function(fw) {
         ]);
       });
 
-      lib.visualization.vertexByLabel('Adam').click();
+      lib.visualization.elementByLabel('Adam').click();
       lib.visualization.clickMenu('remove-from-centers');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
