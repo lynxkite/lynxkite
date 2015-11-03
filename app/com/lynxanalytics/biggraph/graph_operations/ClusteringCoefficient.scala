@@ -96,24 +96,21 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
     val edgePartitioner = inputs.es.rdd.partitioner.get
     val neighbors = Neighbors(nonLoopEdges, edgePartitioner)
 
-    val outNeighborsOfNeighborsRaw = neighbors.allNoIsolated.sortedJoin(neighbors.out)
+    val outNeighborsOfNeighbors = neighbors.allNoIsolated.sortedJoin(neighbors.out)
       .flatMap {
         case (vid, (all, outs)) => all.map((_, outs))
       }
-    val dataSize = outNeighborsOfNeighborsRaw.map {
+    val dataSize = outNeighborsOfNeighbors.map {
       case (_, arr) => arr.size.toLong
     }.reduce(_ + _)
     val massivePartitioner = rc.partitionerForNRows(dataSize)
-    val outNeighborsOfNeighbors = outNeighborsOfNeighborsRaw.groupBySortedKey(massivePartitioner)
+    val outNeighborsOfNeighborsByKey = outNeighborsOfNeighbors.groupBySortedKey(massivePartitioner)
 
     val vertices = inputs.vs.rdd
 
-    val repartitionedVertices = vertices.toSortedRDD(edgePartitioner)
-    val repartitionedIsolated =
-      neighbors.allWithIsolated(repartitionedVertices).toSortedRDD(massivePartitioner)
-    val clusteringCoeff =
-      repartitionedIsolated
-        .sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
+    val clusteringCoeffNonIsolated =
+      neighbors.allNoIsolated.toSortedRDD(massivePartitioner)
+        .sortedLeftOuterJoin(outNeighborsOfNeighborsByKey).mapValues {
           case (mine, theirs) =>
             val numNeighbors = mine.size
             if (numNeighbors > 1) {
@@ -126,8 +123,10 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
             } else {
               1.0
             }
-        }
-
-    output(o.clustering, clusteringCoeff.toSortedRDD(vertices.partitioner.get))
+        }.toSortedRDD(vertices.partitioner.get)
+    val clusteringCoeff =
+      vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
+        .mapValues { case (_, cc) => cc.getOrElse(1.0) }
+    output(o.clustering, clusteringCoeff)
   }
 }
