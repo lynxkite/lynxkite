@@ -125,6 +125,10 @@ Side.prototype = {
     return this.side.element(by.id('workflow-name'));
   },
 
+  clickWorkflowEditButton: function() {
+    return this.toolbox.element(by.id('edit-operation-button')).click();
+  },
+
   getWorkflowSaveButton: function() {
     return this.side.element(by.id('save-workflow-button'));
   },
@@ -207,6 +211,11 @@ Side.prototype = {
   attributeCount: function() {
     return this.side.all(by.css('li.attribute')).count();
   },
+
+  vertexAttribute: function(name) {
+    return this.side.element(by.css(
+      'li.attribute item-name-and-menu[type="vertex-attribute"][name="' + name  + '"]'));
+  }
 };
 
 function History(side) {
