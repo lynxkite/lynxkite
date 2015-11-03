@@ -375,17 +375,19 @@ var visualization = {
         for (var i = 0; i < vertices.length; ++i) {
           var v = vertices[i];
           var touch = v.querySelector('circle.touch');
+          var x = touch.getAttribute('cx');
+          var y = touch.getAttribute('cy');
           var icon = v.querySelector('path.icon');
           var label = v.querySelector('text');
           var image = v.querySelector('image');
           result.push({
-            pos: touch.getAttribute('cx') + ' ' + touch.getAttribute('cy'),
+            pos: { x: parseFloat(x), y: parseFloat(y), string: x + ' ' + y },
             label: label.innerHTML,
             icon: image ? null : icon.id,
             color: image ? null : icon.style.fill,
             size: touch.getAttribute('r'),
             opacity: v.getAttribute('opacity'),
-            labelSize: label.getAttribute('font-size'),
+            labelSize: label.getAttribute('font-size').slice(0, -2), // Drop "px".
             labelColor: label.style.fill,
             image: image ? image.getAttribute('href') : null,
           });
@@ -399,7 +401,7 @@ var visualization = {
         // Build an index by position, so edges can be resolved to vertices.
         var i, byPosition = {};
         for (i = 0; i < vertices.length; ++i) {
-          byPosition[vertices[i].pos] = i;
+          byPosition[vertices[i].pos.string] = i;
         }
 
         // Collect edges.
