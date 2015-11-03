@@ -52,5 +52,8 @@
       options="param.options"
       class="operation-attribute-entry"
       data-kind="tag-list"></tag-list>
+    <div ng-if="param.kind === 'scalar'">
+      <value class="emph" id="param-scalar-{{param.id}}" ref="scalars[param.id]"></value>
+    </div>
   </div>
 </div>

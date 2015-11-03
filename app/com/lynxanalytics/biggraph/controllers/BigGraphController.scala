@@ -52,14 +52,16 @@ case class FEOperationParameterMeta(
     kind: String, // Special rendering on the UI.
     defaultValue: String,
     options: List[UIValue],
-    multipleChoice: Boolean) {
+    multipleChoice: Boolean,
+    scalarId: String) {
 
   val validKinds = Seq(
     "default", // A simple textbox.
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
-    "code") // code
+    "code", // code
+    "scalar") // A read-only scalar value to show the user some information.
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
@@ -506,10 +508,11 @@ abstract class OperationParameterMeta {
   val options: List[UIValue]
   val multipleChoice: Boolean
   val mandatory: Boolean
+  val scalarId: String
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
-  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
+  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice, scalarId)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
