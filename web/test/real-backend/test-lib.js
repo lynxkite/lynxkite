@@ -193,6 +193,12 @@ Side.prototype = {
     this.submitOperation(this.toolbox);
   },
 
+  expectOperationScalar: function(name, text) {
+    var valueElement =
+      this.toolbox.element(by.css('value#param-scalar-num_created_edges'));
+    expect(valueElement.getText()).toBe(text);
+  },
+
   setAttributeFilter: function(attributeName, filterValue) {
     var filterBox = this.side.element(
       by.css('.attribute input[name="' + attributeName + '"]'));
