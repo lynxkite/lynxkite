@@ -70,12 +70,6 @@ object ClusteringCoefficient extends OpFromJson {
       .mapValues {
         case (outs, ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
-
-    def allWithIsolated(vertices: VertexSetRDD) =
-      vertices.sortedLeftOuterJoin(out).sortedLeftOuterJoin(in)
-        .mapValues {
-          case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
-        }
   }
   def fromJson(j: JsValue) = ClusteringCoefficient()
 }
