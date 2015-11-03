@@ -452,7 +452,7 @@ module.exports = function (grunt) {
     'protractor:onRealBackend'
   ]);
   function getPort() {
-    return grunt.option('port') || 9300;
+    return grunt.option('port') || 9000;
   }
 
   grunt.registerTask('build', [
