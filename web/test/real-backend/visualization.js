@@ -7,21 +7,40 @@ module.exports = function(fw) {
   // A matcher for lists of objects that ignores fields not present in the reference.
   // Example use:
   //   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
+  // Constraints in strings are also accepted for numerical values. E.g. '<5'.
+  // Objects are recursively checked.
   function addConcurMatcher() {
     jasmine.addMatchers({
       toConcur: function(util, customEqualityTesters) {
         return { compare: function(actual, expected) {
+          function match(actual, expected) {
+            if (expected === null) {
+              return actual === null;
+            } else if (typeof expected === 'object') {
+              var keys = Object.keys(expected);
+              for (var i = 0; i < keys.length; ++i) {
+                var av = actual[keys[i]];
+                var ev = expected[keys[i]];
+                if (!match(av, ev)) {
+                  return false;
+                }
+              }
+              return true;
+            } else if (typeof expected === 'string' && expected[0] === '<') {
+              return actual < parseFloat(expected.slice(1));
+            } else if (typeof expected === 'string' && expected[0] === '>') {
+              return actual > parseFloat(expected.slice(1));
+            } else {
+              return util.equals(actual, expected, customEqualityTesters);
+            }
+          }
+
           if (actual.length !== expected.length) {
             return { pass: false };
           }
           for (var i = 0; i < actual.length; ++i) {
-            var keys = Object.keys(expected[i]);
-            for (var j = 0; j < keys.length; ++j) {
-              var av = actual[i][keys[j]];
-              var ev = expected[i][keys[j]];
-              if (!util.equals(av, ev, customEqualityTesters)) {
-                return { pass: false };
-              }
+            if (!match(actual[i], expected[i])) {
+              return { pass: false };
             }
           }
           return { pass: true };
@@ -41,18 +60,13 @@ module.exports = function(fw) {
   // position becomes zero. (Inputs and outputs string lists.)
   function normalize(positions) {
     var i, minx;
-    var result = [];
     for (i = 1; i < positions.length; ++i) {
-      var parts = positions[i].split(' ');
-      var p = { x: parseFloat(parts[0]), y: parseFloat(parts[1]) };
-      result.push(p);
+      var p = positions[i];
       minx = (minx === undefined || p.x < minx) ? p.x : minx;
     }
-    for (i = 0; i < result.length; ++i) {
-      result[i].x -= minx;
-      result[i] = result[i].x.toFixed(3) + ' ' + result[i].y.toFixed(3);
+    for (i = 0; i < positions.length; ++i) {
+      positions[i].x -= minx;
     }
-    return result;
   }
 
   fw.statePreservingTest(
@@ -74,10 +88,10 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
-          { color: '', label: '', width: '4.048' },
-          { color: '', label: '', width: '4.048' },
-          { color: '', label: '', width: '4.048' },
-          { color: '', label: '', width: '4.048' },
+          { color: '', label: '', width: '>2' },
+          { color: '', label: '', width: '>2' },
+          { color: '', label: '', width: '>2' },
+          { color: '', label: '', width: '>2' },
           ]);
         expect(graph.vertices).toConcur([
           { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
@@ -124,9 +138,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { size: '12.858032957292307' },
-          { size: '12.17481048468403' },
-          { size: '20.240000000000002' },
+          { size: '<15' },
+          { size: '<15' },
+          { size: '>15' },
           ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
@@ -135,8 +149,8 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { opacity: '0.4035785288270378' },
-          { opacity: '0.36182902584493043' },
+          { opacity: '<0.5' },
+          { opacity: '<0.5' },
           { opacity: '1' },
           ]);
         expect(positions(graph)).toEqual(savedPositions);
@@ -146,9 +160,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { labelSize: '12.107355864811135px' },
-          { labelSize: '10.854870775347912px' },
-          { labelSize: '30px' },
+          { labelSize: '<15' },
+          { labelSize: '<15' },
+          { labelSize: '>15' },
           ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
@@ -184,9 +198,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { opacity: '1', labelSize: '15px', labelColor: '', image: null },
-          { opacity: '1', labelSize: '15px', labelColor: '', image: null },
-          { opacity: '1', labelSize: '15px', labelColor: '', image: null },
+          { opacity: '1', labelSize: '15', labelColor: '', image: null },
+          { opacity: '1', labelSize: '15', labelColor: '', image: null },
+          { opacity: '1', labelSize: '15', labelColor: '', image: null },
           ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
@@ -196,10 +210,10 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
-          { width: '2.5300000000000002' },
-          { width: '5.0600000000000005' },
-          { width: '7.590000000000002' },
-          { width: '10.120000000000001' },
+          { width: '<6' },
+          { width: '<6' },
+          { width: '>6' },
+          { width: '>6' },
         ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
@@ -236,9 +250,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { pos: '563.5240305688799 227.70000000000005' },
-          { pos: '571.2779522478335 121.80442258665076' },
-          { pos: '518.7220477521668 25.299999999999997' },
+          { pos: { x: '>560', y: '>200' } },
+          { pos: { x: '>560', y: '<200' } },
+          { pos: { x: '<560', y: '<100' } },
           ]);
       });
 
@@ -246,9 +260,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { pos: '400.192773769436 72.88458991024139' },
-          { pos: '547.2699646213099 57.85735348192763' },
-          { pos: '681.3038848805471 141.32935071053427' },
+          { pos: { x: '<500', y: '<100' } },
+          { pos: { x: '>500', y: '<100' } },
+          { pos: { x: '>600', y: '>100' } },
           ]);
       });
 
@@ -346,9 +360,9 @@ module.exports = function(fw) {
       lib.left.visualizeAttribute('gender', 'x');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '4.048' },
-          { src: 1, dst: 0, width: '8.096' },
-          { src: 1, dst: 1, width: '4.048' },
+          { src: 0, dst: 1, width: '<6' },
+          { src: 1, dst: 0, width: '>6' },
+          { src: 1, dst: 1, width: '<6' },
           ]);
         expect(graph.vertices).toConcur([
           { label: '1' },
@@ -359,10 +373,10 @@ module.exports = function(fw) {
       lib.left.visualizeAttribute('age', 'y');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
-          { src: 0, dst: 2, width: '4.048' },
-          { src: 2, dst: 0, width: '4.048' },
-          { src: 3, dst: 0, width: '4.048' },
-          { src: 3, dst: 2, width: '4.048' },
+          { src: 0, dst: 2, width: '>2' },
+          { src: 2, dst: 0, width: '>2' },
+          { src: 3, dst: 0, width: '>2' },
+          { src: 3, dst: 2, width: '>2' },
           ]);
         expect(graph.vertices).toConcur([
           { label: '1' },
@@ -384,7 +398,8 @@ module.exports = function(fw) {
       lib.left.visualizeAttribute('name', 'label');
       var leftPositions;
       lib.visualization.graphData().then(function(graph) {
-        leftPositions = normalize(positions(graph));
+        leftPositions = positions(graph);
+        normalize(leftPositions);
         expect(graph.vertices.length).toBe(3);
       });
 
@@ -393,11 +408,15 @@ module.exports = function(fw) {
       lib.right.visualizeAttribute('gender', 'y');
       lib.visualization.graphData().then(function(graph) {
         // Make sure the original vertices did not move.
-        var pos = normalize(positions(graph));
+        function match(a, b) {
+          return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
+        }
+        var pos = positions(graph);
+        normalize(pos);
         for (var i = 0; i < leftPositions.length; ++i) {
           var found = false;
           for (var j = 0; j < pos.length; ++j) {
-            if (pos[j] === leftPositions[i]) {
+            if (match(pos[j], leftPositions[i])) {
               found = true;
               break;
             }
@@ -405,20 +424,20 @@ module.exports = function(fw) {
           expect(found).toBe(true);
         }
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '4.048' },
-          { src: 0, dst: 3, width: '4.048' },
-          { src: 1, dst: 0, width: '4.048' },
-          { src: 1, dst: 4, width: '4.048' },
-          { src: 2, dst: 0, width: '4.048' },
-          { src: 2, dst: 1, width: '4.048' },
-          { src: 2, dst: 3, width: '4.048' },
-          { src: 2, dst: 4, width: '4.048' },
-          { src: 3, dst: 0, width: '4.048' },
-          { src: 3, dst: 4, width: '4.048' },
-          { src: 4, dst: 0, width: '4.048' },
-          { src: 4, dst: 1, width: '8.096' },
-          { src: 4, dst: 3, width: '8.096' },
-          { src: 4, dst: 4, width: '4.048' },
+          { src: 0, dst: 1, width: '<6' },
+          { src: 0, dst: 3, width: '<6' },
+          { src: 1, dst: 0, width: '<6' },
+          { src: 1, dst: 4, width: '<6' },
+          { src: 2, dst: 0, width: '<6' },
+          { src: 2, dst: 1, width: '<6' },
+          { src: 2, dst: 3, width: '<6' },
+          { src: 2, dst: 4, width: '<6' },
+          { src: 3, dst: 0, width: '<6' },
+          { src: 3, dst: 4, width: '<6' },
+          { src: 4, dst: 0, width: '<6' },
+          { src: 4, dst: 1, width: '>6' },
+          { src: 4, dst: 3, width: '>6' },
+          { src: 4, dst: 4, width: '<6' },
           ]);
         expect(graph.vertices).toConcur([
           { label: 'Adam' },
