@@ -83,6 +83,9 @@ module.exports = function(fw) {
         { src : 2, dst: 1 },
       ];
       var savedPositions;
+      var GRAY = 'rgb(107, 107, 107)',
+          BLUE = 'rgb(53, 53, 161)',
+          RED = 'rgb(161, 53, 53)';
 
       // No attributes visualized.
       lib.visualization.graphData().then(function(graph) {
@@ -94,9 +97,9 @@ module.exports = function(fw) {
           { color: '', label: '', width: '>2' },
           ]);
         expect(graph.vertices).toConcur([
-          { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
-          { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
-          { color: 'rgb(107, 107, 107)', icon: 'circle', label: '' },
+          { color: GRAY, icon: 'circle', label: '' },
+          { color: GRAY, icon: 'circle', label: '' },
+          { color: GRAY, icon: 'circle', label: '' },
           ]);
         savedPositions = positions(graph);
       });
@@ -127,9 +130,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { color: 'rgb(53, 53, 161)' },
-          { color: 'rgb(107, 107, 107)' },
-          { color: 'rgb(161, 53, 53)' },
+          { color: BLUE },
+          { color: GRAY },
+          { color: RED },
           ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
@@ -172,8 +175,8 @@ module.exports = function(fw) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
           { labelColor: 'rgb(66, 53, 161)' },
-          { labelColor: 'rgb(53, 53, 161)' },
-          { labelColor: 'rgb(161, 53, 53)' },
+          { labelColor: BLUE },
+          { labelColor: RED },
           ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
@@ -222,10 +225,10 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
-          { color: 'rgb(53, 53, 161)' },
+          { color: BLUE },
           { color: 'rgb(125, 53, 161)' },
           { color: 'rgb(161, 53, 125)' },
-          { color: 'rgb(161, 53, 53)' },
+          { color: RED },
         ]);
         expect(positions(graph)).toEqual(savedPositions);
       });
