@@ -181,7 +181,8 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      // We don't have a URL attribute. Since we only look at the "href" anyway, anything will do.
+      // There is no URL attribute in the example graph. Since we only check the "href"
+      // attribute anyway, any string is good enough for the test.
       lib.left.visualizeAttribute('name', 'image');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
@@ -411,7 +412,7 @@ module.exports = function(fw) {
       lib.right.visualizeAttribute('gender', 'y');
       lib.visualization.graphData().then(function(graph) {
         // Make sure the original vertices did not move.
-        function match(a, b) {
+        function matchPos(a, b) {
           return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
         }
         var pos = positions(graph);
@@ -419,7 +420,7 @@ module.exports = function(fw) {
         for (var i = 0; i < leftPositions.length; ++i) {
           var found = false;
           for (var j = 0; j < pos.length; ++j) {
-            if (match(pos[j], leftPositions[i])) {
+            if (matchPos(pos[j], leftPositions[i])) {
               found = true;
               break;
             }
