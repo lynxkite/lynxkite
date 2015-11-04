@@ -70,12 +70,6 @@ object ClusteringCoefficient extends OpFromJson {
       .mapValues {
         case (outs, ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
-
-    def allWithIsolated(vertices: VertexSetRDD) =
-      vertices.sortedLeftOuterJoin(out).sortedLeftOuterJoin(in)
-        .mapValues {
-          case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
-        }
   }
   def fromJson(j: JsValue) = ClusteringCoefficient()
 }
@@ -93,30 +87,42 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val nonLoopEdges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
-    val vertices = inputs.vs.rdd
-    val vertexPartitioner = vertices.partitioner.get
-    val neighbors = Neighbors(nonLoopEdges, vertexPartitioner)
+    val edgePartitioner = inputs.es.rdd.partitioner.get
+    val neighbors = Neighbors(nonLoopEdges, edgePartitioner)
 
-    val outNeighborsOfNeighbors = neighbors.allNoIsolated.sortedJoin(neighbors.out).flatMap {
-      case (vid, (all, outs)) => all.map((_, outs))
-    }.groupBySortedKey(vertexPartitioner)
-
-    val clusteringCoeff =
-      neighbors.allWithIsolated(vertices).sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
-        case (mine, theirs) =>
-          val numNeighbors = mine.size
-          if (numNeighbors > 1) {
-            theirs match {
-              case Some(ns) =>
-                val edgesInNeighborhood = ns.map(his => sortedIntersectionSize(his, mine)).sum
-                edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
-              case None => 0.0
-            }
-          } else {
-            1.0
-          }
+    neighbors.allNoIsolated.cacheBackingArray()
+    neighbors.out.cacheBackingArray()
+    val outNeighborsOfNeighbors = neighbors.allNoIsolated.sortedJoin(neighbors.out)
+      .flatMap {
+        case (vid, (all, outs)) => all.map((_, outs))
       }
+    val dataSize = outNeighborsOfNeighbors.map {
+      case (_, arr) => arr.size.toLong
+    }.reduce(_ + _)
+    val massivePartitioner = rc.partitionerForNRows(dataSize)
+    val outNeighborsOfNeighborsByKey = outNeighborsOfNeighbors.groupBySortedKey(massivePartitioner)
 
+    val vertices = inputs.vs.rdd
+
+    val clusteringCoeffNonIsolated =
+      neighbors.allNoIsolated.toSortedRDD(massivePartitioner)
+        .sortedLeftOuterJoin(outNeighborsOfNeighborsByKey).mapValues {
+          case (mine, theirs) =>
+            val numNeighbors = mine.size
+            if (numNeighbors > 1) {
+              theirs match {
+                case Some(ns) =>
+                  val edgesInNeighborhood = ns.map(his => sortedIntersectionSize(his, mine)).sum
+                  edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
+                case None => 0.0
+              }
+            } else {
+              1.0
+            }
+        }.toSortedRDD(vertices.partitioner.get)
+    val clusteringCoeff =
+      vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
+        .mapValues { case (_, cc) => cc.getOrElse(1.0) }
     output(o.clustering, clusteringCoeff)
   }
 }
