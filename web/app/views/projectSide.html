@@ -335,7 +335,7 @@
       </li>
       <li class="sublist list-group-item attribute vertex-attribute"
         ng-repeat="attr in side.project.vertexAttributes"
-        id="attribute-{{ attr.title }}"
+        id="attribute-{{ attr.title | id }}"
         vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
@@ -344,7 +344,7 @@
       </li>
       <li class="sublist list-group-item attribute edge-attribute"
         ng-repeat="attr in side.project.edgeAttributes"
-        id="attribute-{{ attr.title }}"
+        id="attribute-{{ attr.title | id }}"
         edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">

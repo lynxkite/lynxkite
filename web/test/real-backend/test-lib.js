@@ -7,6 +7,11 @@ var History; // Forward declarations.
 var request = require('request');
 var K = protractor.Key;  // Short alias.
 
+// Mirrors the "id" filter.
+function toID(x) {
+  return x.toLowerCase().replace(/ /g, '-');
+}
+
 function Side(direction) {
   this.direction = direction;
   this.side = element(by.id('side-' + direction));
@@ -18,7 +23,7 @@ Side.prototype = {
   // Only for opening the second project next to an already open project.
   openSecondProject: function(project) {
     this.side.element(by.id('show-selector-button')).click();
-    this.side.element(by.id('project-' + project)).click();
+    this.side.element(by.id('project-' + toID(project))).click();
   },
 
   close: function() {
@@ -446,11 +451,11 @@ var visualization = {
 
 var splash = {
   project: function(name) {
-    return element(by.id('project-' + name));
+    return element(by.id('project-' + toID(name)));
   },
 
   directory: function(name) {
-    return element(by.id('directory-' + name));
+    return element(by.id('directory-' + toID(name)));
   },
 
   openNewProject: function(name) {
