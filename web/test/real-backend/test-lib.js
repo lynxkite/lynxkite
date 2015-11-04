@@ -136,6 +136,10 @@ Side.prototype = {
     return this.side.element(by.id('workflow-name'));
   },
 
+  clickWorkflowEditButton: function() {
+    return this.toolbox.element(by.id('edit-operation-button')).click();
+  },
+
   getWorkflowSaveButton: function() {
     return this.side.element(by.id('save-workflow-button'));
   },
@@ -224,7 +228,7 @@ Side.prototype = {
   },
 
   visualizeAttribute: function(attr, visualization) {
-    var e = this.side.element(by.id('attribute-' + attr));
+    var e = this.attribute(attr);
     if (visualization === 'x' || visualization === 'y') {
       e.element(by.id('axis-' + visualization + '-' + attr)).click();
     } else {
@@ -234,12 +238,12 @@ Side.prototype = {
   },
 
   doNotVisualizeAttribute: function(attr, visualization) {
-    var e = this.side.element(by.id('attribute-' + attr));
+    var e = this.attribute(attr);
     e.element(by.id('do-not-visualize-as-' + visualization)).click();
   },
 
   attributeSlider: function(attr) {
-    var e = this.side.element(by.id('attribute-' + attr));
+    var e = this.attribute(attr);
     return e.element(by.id('slider'));
   },
 
@@ -256,6 +260,14 @@ Side.prototype = {
         diff += 1;
       }
     });
+  },
+
+  attribute: function(name) {
+    return this.side.element(by.id('attribute-' + toID(name)));
+  },
+
+  vertexAttribute: function(name) {
+    return this.side.element(by.css('.vertex-attribute#attribute-' + toID(name)));
   },
 };
 

@@ -6,7 +6,7 @@ object Timestamp {
   // Returns a millisecond timestamp as a string. It is guaranteed to be unique
   // for each call.
   override def toString: String = this.synchronized {
-    val time = scala.compat.Platform.currentTime
+    val time = System.currentTimeMillis
     val fixed = if (lastTime < time) time else lastTime + 1
     lastTime = fixed
     return "%013d".format(fixed)

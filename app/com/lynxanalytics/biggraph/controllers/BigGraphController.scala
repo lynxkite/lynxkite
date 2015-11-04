@@ -42,7 +42,9 @@ case class FEOperationMeta(
   parameters: List[FEOperationParameterMeta],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
-  description: String = "")
+  description: String = "",
+  isWorkflow: Boolean = false,
+  workflowAuthor: String = "")
 
 case class FEOperationParameterMeta(
     id: String,
@@ -167,6 +169,18 @@ case class SaveWorkflowRequest(
   workflowName: String,
   stepsAsGroovy: String,
   description: String)
+
+case class WorkflowRequest(
+  id: String)
+
+case class WorkflowResponse(
+  name: String,
+  description: String,
+  code: String)
+object WorkflowResponse {
+  implicit val fWorkflowResponse = json.Json.format[WorkflowResponse]
+  def fromJson(js: String): WorkflowResponse = json.Json.parse(js).as[WorkflowResponse]
+}
 
 case class SavedWorkflow(
     stepsAsGroovy: String,
@@ -465,18 +479,22 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
-    val dateString =
-      (new java.text.SimpleDateFormat("dd-MM-yyyy hh:mm")).format(new java.util.Date())
-    val description =
-      s"<p>User defined workflow saved by ${user.email} at $dateString<p>${request.description}"
-
     val savedWorkflow = SavedWorkflow(
       request.stepsAsGroovy,
       user.email,
-      description)
+      request.description)
     ProjectFrame.validateName(request.workflowName, "Workflow name")
     val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
     metaManager.setTag(tagName, savedWorkflow.prettyJson)
+  }
+
+  def workflow(user: serving.User, request: WorkflowRequest): WorkflowResponse = metaManager.synchronized {
+    val id = SymbolPath.parse(request.id)
+    val workflow = env.metaGraphManager.workflow(id)
+    WorkflowResponse(
+      request.id.split("/")(1), // extract name from id
+      workflow.description,
+      workflow.stepsAsGroovy)
   }
 }
 
@@ -502,6 +520,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
+  def isWorkflow: Boolean = false
+  def workflowAuthor: String = ""
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
 
@@ -533,8 +553,15 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
-  def toFE: FEOperationMeta =
-    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description)
+  def toFE: FEOperationMeta = FEOperationMeta(
+    id,
+    title,
+    parameters.map { param => param.toFE },
+    category.title,
+    enabled,
+    description,
+    isWorkflow,
+    workflowAuthor)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -612,6 +639,8 @@ case class WorkflowOperation(
 
   override val description = workflow.description
 
+  override val workflowAuthor = workflow.author
+
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsGroovy)
 
   def parameters =
@@ -621,6 +650,9 @@ case class WorkflowOperation(
       .map(paramName => OperationParams.Param(paramName, paramName))
 
   def enabled = FEStatus.enabled
+
+  override def isWorkflow = true
+
   def apply(params: Map[String, String]): Unit = {
     val ctx = groovy.GroovyContext(context.user, operationRepository)
     ctx.withUntrustedShell(
@@ -647,7 +679,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   private def workflowOpFromTag(fullName: SymbolPath, context: Operation.Context) =
-    WorkflowOperation(fullName, SavedWorkflow.fromJson(manager.getTag(fullName)), context, this)
+    WorkflowOperation(fullName, manager.workflow(fullName), context, this)
 
   private def workflowOperations(context: Operation.Context): Seq[Operation] =
     if (manager.tagExists(BigGraphController.workflowsRoot)) {

@@ -17,7 +17,7 @@ module.exports = function(fw) {
     function() {
       lib.left.history.open();
       lib.left.openWorkflowSavingDialog();
-      expect(lib.left.getWorkflowCodeEditor().evaluate('code')).toBe(
+      expect(lib.left.getWorkflowCodeEditor().evaluate('state.workflow.code')).toBe(
         'project.exampleGraph()' +
           '\nproject.filterByAttributes(\'filterea-comment\': \'\',' +
           ' \'filterea-weight\': \'!1\',' +
@@ -136,5 +136,27 @@ module.exports = function(fw) {
       expect(lib.error()).toMatch(
         'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
+    });
+
+  fw.statePreservingTest(
+    'some project is open',
+    'editing a workflow',
+    function() {
+      saveWorkflow(
+        'TestConstWorkflow',
+        'A simple workflow that adds a constant attribute.',
+        'project.exampleGraph()\n');
+      lib.left.openOperation('TestConstWorkflow');
+      lib.left.clickWorkflowEditButton();
+      lib.sendKeysToACE(
+        lib.left.getWorkflowCodeEditor(),
+        'project.addConstantVertexAttribute' +
+          '(name: \'testConstAttr\',' +
+          ' value: \'1.0\',' +
+          ' type: \'Double\')');
+      lib.left.getWorkflowSaveButton().click();
+      lib.expectNotElement(lib.left.vertexAttribute('testConstAttr'));
+      lib.left.runOperation('TestConstWorkflow');
+      lib.expectElement(lib.left.vertexAttribute('testConstAttr'));
     });
 };

@@ -44,6 +44,13 @@ angular.module('biggraph')
         }
         return 'Last progress ' + (last / 1000).toFixed() + ' seconds ago.';
       };
+
+      scope.normalOperation = function(status) {
+        return !status.error &&
+          status.activeStages.length > 0 &&
+          status.sparkWorking &&
+          status.kiteCoreWorking;
+      };
     },
   };
 })
