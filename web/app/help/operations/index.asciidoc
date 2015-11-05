@@ -204,7 +204,11 @@ include::segment-by-double-attribute.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
 
+include::segment-by-interval.asciidoc[]
+
 include::shortest-path.asciidoc[]
+
+include::split-vertices.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 

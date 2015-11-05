@@ -44,15 +44,12 @@ object BigGraphEnvironmentImpl {
     val sparkContextFuture = Future(sparkContextProvider.createSparkContext)
     val dataManagerFuture = sparkContextFuture.map(
       sparkContext => createDataManager(sparkContext, repositoryDirs))
-    Await.ready(Future.sequence(Seq(
-      metaGraphManagerFuture,
-      sparkContextFuture,
-      dataManagerFuture)),
-      Duration.Inf)
-    new BigGraphEnvironmentImpl(
-      sparkContextFuture.value.get.get,
-      metaGraphManagerFuture.value.get.get,
-      dataManagerFuture.value.get.get)
+    val envFuture = for {
+      sparkContext <- sparkContextFuture
+      metaGraphManager <- metaGraphManagerFuture
+      dataManager <- dataManagerFuture
+    } yield new BigGraphEnvironmentImpl(sparkContext, metaGraphManager, dataManager)
+    Await.result(envFuture, Duration.Inf)
   }
 
   def createMetaGraphManager(repositoryDirs: RepositoryDirs) = {
