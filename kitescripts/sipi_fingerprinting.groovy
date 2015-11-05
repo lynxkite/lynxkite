@@ -126,8 +126,10 @@ union.derivedVertexAttribute(
   expr: '(test_matched_fb_name === fb_name) ? 1.0 : 0.0',
   output: 'match_is_good',
   type: 'double')
-union.aggregateVertexAttributeGlobally('aggregate-match_is_good': 'sum,count', prefix: '')
-union.aggregateVertexAttributeGlobally('aggregate-test_matched_fb_name': 'count', prefix: '')
+union.aggregateVertexAttributeGlobally(
+  'aggregate-match_is_good': 'sum,count',
+  'aggregate-test_matched_fb_name': 'count',
+  prefix: '')
 
 union.renameScalar(from: 'test_matched_fb_name_count', to: 'test_set_size')
 union.renameScalar(from: 'match_is_good_count', to: 'matched_count')
@@ -141,7 +143,7 @@ println "Test set size: $testSetSize"
 // First restrict to matched test vertices. This is basically an is defined test.
 union.filterByAttributes('filterva-match_is_good': '>=0.0')
 
-println "Treshold\tPrecision\tRecall"
+println "Treshold\tPrecision\tRecall\tFScore"
 maxFScore = 0
 while (union.scalars['vertex_count'].toDouble() > 0) {
   // Compute current precision/recall
