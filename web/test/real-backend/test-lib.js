@@ -7,6 +7,11 @@ var History; // Forward declarations.
 var request = require('request');
 var K = protractor.Key;  // Short alias.
 
+// Mirrors the "id" filter.
+function toID(x) {
+  return x.toLowerCase().replace(/ /g, '-');
+}
+
 function Side(direction) {
   this.direction = direction;
   this.side = element(by.id('side-' + direction));
@@ -15,6 +20,12 @@ function Side(direction) {
 }
 
 Side.prototype = {
+  // Only for opening the second project next to an already open project.
+  openSecondProject: function(project) {
+    this.side.element(by.id('show-selector-button')).click();
+    this.side.element(by.id('project-' + toID(project))).click();
+  },
+
   close: function() {
     this.side.element(by.id('close-project')).click();
   },
@@ -170,13 +181,15 @@ Side.prototype = {
     return this.side.element(by.id('redo-button'));
   },
 
+  operationParameter: function(opElement, param) {
+    return opElement.element(by.css(
+      'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
+
   populateOperation: function(parentElement, params) {
     params = params || {};
     for (var key in params) {
-      var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      testLib.setParameter(
-          parentElement.element(by.css(p)),
-          params[key]);
+      testLib.setParameter(this.operationParameter(parentElement, key), params[key]);
     }
   },
 
@@ -207,7 +220,11 @@ Side.prototype = {
   },
 
   toggleSampledVisualization: function() {
-    this.side.element(by.css('label[btn-radio="\'sampled\'"]')).click();
+    this.side.element(by.id('sampled-mode-button')).click();
+  },
+
+  toggleBucketedVisualization: function() {
+    this.side.element(by.id('bucketed-mode-button')).click();
   },
 
   undoButton: function() {
@@ -218,10 +235,52 @@ Side.prototype = {
     return this.side.all(by.css('li.attribute')).count();
   },
 
+  visualizeAttribute: function(attr, visualization) {
+    var e = this.attribute(attr);
+    if (visualization === 'x' || visualization === 'y') {
+      e.element(by.id('axis-' + visualization + '-' + attr)).click();
+    } else {
+      e.element(by.id('visualize-as-button')).click();
+      e.element(by.id('visualize-as-' + visualization)).click();
+    }
+  },
+
+  doNotVisualizeAttribute: function(attr, visualization) {
+    var e = this.attribute(attr);
+    e.element(by.id('do-not-visualize-as-' + visualization)).click();
+  },
+
+  attributeSlider: function(attr) {
+    var e = this.attribute(attr);
+    return e.element(by.id('slider'));
+  },
+
+  setSampleRadius: function(radius) {
+    var slider = this.side.element(by.id('sample-radius-slider'));
+    slider.getAttribute('value').then(function(value) {
+      var diff = radius - value;
+      while (diff > 0) {
+        slider.sendKeys(K.RIGHT);
+        diff -= 1;
+      }
+      while (diff < 0) {
+        slider.sendKeys(K.LEFT);
+        diff += 1;
+      }
+    });
+  },
+
+  attribute: function(name) {
+    return this.side.element(by.id('attribute-' + toID(name)));
+  },
+
   vertexAttribute: function(name) {
-    return this.side.element(by.css(
-      'li.attribute item-name-and-menu[type="vertex-attribute"][name="' + name  + '"]'));
-  }
+    return this.side.element(by.css('.vertex-attribute#attribute-' + toID(name)));
+  },
+
+  scalar: function(name) {
+    return this.side.element(by.id('scalar-' + toID(name)));
+  },
 };
 
 function History(side) {
@@ -314,9 +373,97 @@ History.prototype = {
 var visualization = {
   svg: element(by.css('svg.graph-view')),
 
+  elementByLabel: function(label) {
+    return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
+  },
+
+  clickMenu: function(item) {
+    element(by.css('.context-menu #menu-' + item)).click();
+  },
+
+  asTSV: function() {
+    var copyButton = element(by.css('.graph-sidebar [data-clipboard-text'));
+    // It would be too complicated to test actual copy & paste. We just trust ZeroClipboard instead.
+    return copyButton.getAttribute('data-clipboard-text');
+  },
+
   // The visualization response received from the server.
   graphView: function() {
     return visualization.svg.evaluate('graph.view');
+  },
+
+  // The currently visualized graph data extracted from the SVG DOM.
+  graphData: function() {
+    browser.waitForAngular();
+    return browser.executeScript(function() {
+
+      // Vertices as simple objects.
+      function vertexData(svg) {
+        var vertices = svg.querySelectorAll('g.vertex');
+        var result = [];
+        for (var i = 0; i < vertices.length; ++i) {
+          var v = vertices[i];
+          var touch = v.querySelector('circle.touch');
+          var x = touch.getAttribute('cx');
+          var y = touch.getAttribute('cy');
+          var icon = v.querySelector('path.icon');
+          var label = v.querySelector('text');
+          var image = v.querySelector('image');
+          result.push({
+            pos: { x: parseFloat(x), y: parseFloat(y), string: x + ' ' + y },
+            label: label.innerHTML,
+            icon: image ? null : icon.id,
+            color: image ? null : icon.style.fill,
+            size: touch.getAttribute('r'),
+            opacity: v.getAttribute('opacity'),
+            labelSize: label.getAttribute('font-size').slice(0, -2), // Drop "px".
+            labelColor: label.style.fill,
+            image: image ? image.getAttribute('href') : null,
+          });
+        }
+        result.sort();
+        return result;
+      }
+
+      // Edges as simple objects.
+      function edgeData(svg, vertices) {
+        // Build an index by position, so edges can be resolved to vertices.
+        var i, byPosition = {};
+        for (i = 0; i < vertices.length; ++i) {
+          byPosition[vertices[i].pos.string] = i;
+        }
+
+        // Collect edges.
+        var result = [];
+        var edges = svg.querySelectorAll('g.edge');
+        function arcStart(d) {
+          return d.match(/M (.*? .*?) /)[1];
+        }
+        for (i = 0; i < edges.length; ++i) {
+          var e = edges[i];
+          var first = e.querySelector('path.first');
+          var second = e.querySelector('path.second');
+          var srcPos = arcStart(first.getAttribute('d'));
+          var dstPos = arcStart(second.getAttribute('d'));
+          result.push({
+            src: byPosition[srcPos],
+            dst: byPosition[dstPos],
+            label: e.querySelector('text').innerHTML,
+            color: first.style.stroke,
+            width: first.getAttribute('stroke-width'),
+          });
+        }
+        result.sort(function(a, b) {
+          return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
+        });
+        return result;
+      }
+
+      var svg = document.querySelector('svg.graph-view');
+      var vertices = vertexData(svg);
+      var edges = edgeData(svg, vertices);
+      return { vertices: vertices, edges: edges };
+    });
   },
 
   vertexCounts: function(index) {
@@ -328,11 +475,11 @@ var visualization = {
 
 var splash = {
   project: function(name) {
-    return element(by.id('project-' + name));
+    return element(by.id('project-' + toID(name)));
   },
 
   directory: function(name) {
-    return element(by.id('directory-' + name));
+    return element(by.id('directory-' + toID(name)));
   },
 
   openNewProject: function(name) {
@@ -470,6 +617,10 @@ testLib = {
     expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
   },
 
+  navigateToProject: function(name) {
+    browser.get('/#/project/' + name);
+  },
+
   expectHelpPopupVisible: function(helpId, isVisible) {
     expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
   },
@@ -541,6 +692,12 @@ testLib = {
               },
               input.getWebElement());
             input.sendKeys(value);
+          } else if (dataKind === 'tag-list') {
+            var values = value.split(',');
+            for (var i = 0; i < values.length; ++i) {
+              e.element(by.css('.dropdown-toggle')).click();
+              e.element(by.css('.dropdown-menu #' + values[i])).click();
+            }
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -587,8 +744,17 @@ testLib = {
     });
   },
 
+  // A promise of the list of error messages.
   errors: function() {
     return element.all(by.css('.top-alert-message')).map(function(e) { return e.getText(); });
+  },
+
+  // Expects that there will be a single error message and returns it as a promise.
+  error: function() {
+    return testLib.errors().then(function(errors) {
+      expect(errors.length).toBe(1);
+      return errors[0];
+    });
   },
 
   closeErrors: function() {
@@ -602,6 +768,16 @@ testLib = {
   // But the current Protractor version uses 2.45, so we have this wrapper.
   wait: function(condition) {
     browser.wait(condition, 99999999);
+  },
+
+  expectModal: function(title) {
+    var t = element(by.css('.modal-title'));
+    testLib.expectElement(t);
+    expect(t.getText()).toEqual(title);
+  },
+
+  closeModal: function() {
+    element(by.id('close-modal-button')).click();
   },
 };
 

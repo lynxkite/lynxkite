@@ -22,7 +22,7 @@ var fw = (function UIDescription() {
       }
 
       function runStatePreservingTest(currentTest) {
-        it(' -- ' + currentTest.name, function() {
+        it('-- ' + currentTest.name, function() {
           currentTest.runTest();
           // Checking that it was indeed statePreserving.
           checks();
@@ -83,6 +83,30 @@ var fw = (function UIDescription() {
     runOne: function(stateName) {
       states[stateName].reachAndTest();
     },
+
+    cleanup: function() {
+      describe('Cleanup', function() {
+        it('temporary files', function() {
+          var lib = require('./test-lib.js');
+          var fs = require('fs');
+          var pattern = lib.theRandomPattern;
+
+          fs.readdir('/tmp', function (error, files) {
+            if (error) {
+              throw error;
+            }
+            for (var i = 0; i < files.length; i++) {
+              var f = files[i];
+              if (f.indexOf(pattern) > -1) {
+                var full = '/tmp/' + f;
+                console.log('Deleting: ' + full);
+                fs.unlink(full);
+              }
+            }
+          });
+        });
+      });
+    },
   };
 })();
 
@@ -98,43 +122,12 @@ require('./undo-redo.js')(fw);
 require('./workflow-tests.js')(fw);
 require('./center-picker.js')(fw);
 require('./splash-page.js')(fw);
+require('./errors.js')(fw);
+require('./visualization.js')(fw);
 require('./operations.js')(fw);
 
 fw.runAll();
 // Use the below line to only run one transition test and its
 // state-preserving descendants.
 // fw.runOne('NAME OF A TRANSITION TEST');
-
-
-var deleteTemporaryFiles = function() {
-  var lib = require('./test-lib.js');
-  var fs = require('fs');
-  var pattern = lib.theRandomPattern;
-
-  fs.readdir('/tmp', function (error, files) {
-    if (error) {
-      throw error;
-    }
-    for (var i = 0; i < files.length; i++) {
-      var f = files[i];
-      if (f.indexOf(pattern) > -1) {
-        var full = '/tmp/' + f;
-        console.log('Deleting: ' + full);
-        fs.unlink(full);
-      }
-    }
-  });
-};
-
-//
-// Override the finishCallback so we can add our cleanup function.
-// This is run after all tests have been completed.
-//
-var savedFinishCallback = jasmine.Runner.prototype.finishCallback;
-jasmine.Runner.prototype.finishCallback = function () {
-  // Run the old finishCallback
-  savedFinishCallback.bind(this)();
-
-  console.log('Cleaning up');
-  deleteTemporaryFiles();
-};
+fw.cleanup();
