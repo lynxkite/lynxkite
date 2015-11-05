@@ -140,7 +140,7 @@ println "Test set size: $testSetSize"
 
 // ======= Drawing a primitive P/R curve ============
 
-// First restrict to matched test vertices. This is basically an is defined test.
+// First restrict to matched test vertices. This is basically an is-defined test.
 union.filterByAttributes('filterva-match_is_good': '>=0.0')
 
 println "Treshold\tPrecision\tRecall\tFScore"
