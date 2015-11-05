@@ -91,7 +91,7 @@ fb.addReversedEdges()
 fb.copyVertexAttribute(from: 'fb_name', to: 'merge_key_name')
 
 // ================== Take the union, merge and fingerprint =======================
-union = linkedin.forkAs('linkedin facebook FP')
+union = linkedin.saveAs('linkedin facebook FP')
 union.unionWithAnotherProject('id-attr': 'new_id', other: 'facebook for FP')
 
 union.mergeVerticesByAttribute(
