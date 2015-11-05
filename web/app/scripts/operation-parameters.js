@@ -14,16 +14,6 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       });
       // Translate between arrays and comma-separated strings for multiselects.
       scope.multiOutput = {};
-      // Fetch scalar values to be displayed to the user.
-      scope.scalars = {};
-      for (var i = 0; i < scope.op.parameters.length; ++i) {
-        var param = scope.op.parameters[i];
-        if (param.kind === 'scalar') {
-          scope.scalars[param.id] = util.get(
-            '/ajax/scalarValue',
-            { scalarId: param.scalarId, calculate: true });
-        }
-      }
       util.deepWatch(scope, 'output', function(output) {
         for (var i = 0; i < scope.op.parameters.length; ++i) {
           var param = scope.op.parameters[i];
