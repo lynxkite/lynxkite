@@ -24,11 +24,12 @@ module.exports = function(fw) {
         'Derived vertex attribute', { output: 'empty', 'type': 'double', expr: 'undefined' });
       lib.left.runOperation(
         'Aggregate vertex attribute globally',
-        { 'aggregate-empty': 'average', 'aggregate-income': 'average' });
+        { 'aggregate-empty': 'average,sum', 'aggregate-income': 'average' });
       // Check non-error behavior while we're here.
       expect(lib.left.scalar('income_average').getText()).toBe('2k');
       lib.left.scalar('income_average').click();
       expect(lib.left.scalar('income_average').getText()).toBe('1500');
+      expect(lib.left.scalar('empty_sum').getText()).toBe('0');
       // Check error.
       expect(lib.left.scalar('empty_average').getText()).toBe('×');
       lib.left.scalar('empty_average').click();
