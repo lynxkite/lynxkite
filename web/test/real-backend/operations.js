@@ -4,15 +4,13 @@ var lib = require('./test-lib.js');
 
 module.exports = function(fw) {
   fw.statePreservingTest(
-    'empty test-example project',
-    'error reporting',
+    'test-example project with example graph',
+    'attributes are alphabetically ordered',
     function() {
-      lib.left.runOperation('Import vertices from CSV files'); // Missing filename.
-      // There should be an error message.
-      expect(lib.errors()).toMatch(['.*']);
-      // Check that we can press OK again. (#2529) (It will give the same error.)
-      lib.left.submitOperation(lib.left.toolbox);
-      lib.closeErrors();
+      lib.left.openOperation('Vertex attribute to string');
+      var list = lib.left.operationParameter(lib.left.toolbox, 'attr');
+      var expected = ['age', 'gender', 'id', 'income', 'location', 'name'];
+      expect(list.getText()).toEqual(expected.join('\n'));
       lib.left.closeOperation();
     });
   fw.transitionTest(

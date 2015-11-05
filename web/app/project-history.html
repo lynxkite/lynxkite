@@ -8,7 +8,8 @@
 
     <div class="btn-group pull-right">
       <label class="btn btn-default" ng-click="enterWorkflowSaving()" id="save-as-workflow-button"
-        tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom">
+        tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom"
+        ng-disabled="localChanges || remoteChanges">
         <i class="glyphicon glyphicon-film"></i>
       </label>
       <label class="btn btn-default" ng-click="closeHistory()"

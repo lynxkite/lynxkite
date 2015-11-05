@@ -17,3 +17,5 @@ include::project-history.asciidoc[]
 include::spark-ui.asciidoc[]
 
 include::hotkeys.asciidoc[]
+
+include::color-customization.asciidoc[]
