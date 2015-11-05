@@ -124,6 +124,7 @@ require('./center-picker.js')(fw);
 require('./splash-page.js')(fw);
 require('./errors.js')(fw);
 require('./visualization.js')(fw);
+require('./operations.js')(fw);
 
 fw.runAll();
 fw.cleanup();
