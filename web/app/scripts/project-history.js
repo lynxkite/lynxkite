@@ -235,9 +235,6 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       };
 
       scope.enterWorkflowSaving = function() {
-        if (scope.changed && !window.confirm('Discard history changes?')) {
-          return;
-        }
         var history = scope.history;
         var code = '';
         if (history && history.$resolved && !history.$error) {
