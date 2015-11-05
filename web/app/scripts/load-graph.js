@@ -67,8 +67,8 @@ angular.module('biggraph').factory('loadGraph', function (util) {
         yBucketingAttributeId: yAttr,
         xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
         yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
-        xAxisOptions: angular.copy(viewData.xAxisOptions),
-        yAxisOptions: angular.copy(viewData.yAxisOptions),
+        xAxisOptions: viewData.xAxisOptions,
+        yAxisOptions: viewData.yAxisOptions,
         sampleSize: viewData.preciseBucketSizes ? -1 : 50000,
         // Sampled view parameters.
         // angular.js/pull/7370
@@ -112,7 +112,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     }
 
     if (!angular.equals(this.request, q)) {
-      this.request = q;
+      this.request = angular.copy(q);  // Store request without any references to living objects.
       this.view = util.get('/ajax/complexView', this.request);
     }
   };
