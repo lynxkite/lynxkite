@@ -1372,7 +1372,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
           }
           val scalar = aggregate(AttributeWithAggregator(sizeSquare, "sum"))
-          OperationScalarMeta("num_created_edges", scalar.gUID.toString)
+          FEOperationScalarMeta("num_created_edges", scalar.gUID.toString)
         }
       )
     } else {
