@@ -11,5 +11,10 @@ This operation will create +++<value ref="scalars['num_created_edges']"></value>
 --
 [help-only]
 --
-Before applying this operation from the toolbox, you will be shown the number of edges to be created.
+Before applying this operation from the toolbox, you will be shown the number of edges
+that will be created.
 --
+Co-occurrence has a potential to create a very large number of edges.
+If the predicted number is too high, try to eliminate very large
+segments before running the operation!
+

@@ -517,13 +517,6 @@ abstract class OperationParameterMeta {
   def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
 }
 
-case class OperationScalarMeta(
-    id: String,
-    guid: String) {
-
-  def toFE = FEOperationScalarMeta(id, guid)
-}
-
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project.editor
   val user = context.user
@@ -531,7 +524,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
-  def visibleScalars: List[OperationScalarMeta] = List()
+  def visibleScalars: List[FEOperationScalarMeta] = List()
   def enabled: FEStatus
   def isWorkflow: Boolean = false
   def workflowAuthor: String = ""
@@ -570,7 +563,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     id,
     title,
     parameters.map { param => param.toFE },
-    visibleScalars.map { scalar => scalar.toFE },
+    visibleScalars,
     category.title,
     enabled,
     description,
