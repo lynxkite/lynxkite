@@ -181,13 +181,15 @@ Side.prototype = {
     return this.side.element(by.id('redo-button'));
   },
 
+  operationParameter: function(opElement, param) {
+    return opElement.element(by.css(
+      'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
+
   populateOperation: function(parentElement, params) {
     params = params || {};
     for (var key in params) {
-      var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      testLib.setParameter(
-          parentElement.element(by.css(p)),
-          params[key]);
+      testLib.setParameter(this.operationParameter(parentElement, key), params[key]);
     }
   },
 
