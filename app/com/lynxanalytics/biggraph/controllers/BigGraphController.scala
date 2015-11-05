@@ -459,7 +459,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     metaManager.tagBatch {
       // Create/check target project.
-      ProjectFrame.validateName(request.newProject, "Project name")
       val p = ProjectFrame.fromName(request.newProject)
       if (request.newProject != request.oldProject) {
         // Saving under a new name.
