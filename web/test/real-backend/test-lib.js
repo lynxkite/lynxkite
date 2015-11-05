@@ -269,6 +269,10 @@ Side.prototype = {
   vertexAttribute: function(name) {
     return this.side.element(by.css('.vertex-attribute#attribute-' + toID(name)));
   },
+
+  scalar: function(name) {
+    return this.side.element(by.id('scalar-' + toID(name)));
+  },
 };
 
 function History(side) {
@@ -680,6 +684,12 @@ testLib = {
               },
               input.getWebElement());
             input.sendKeys(value);
+          } else if (dataKind === 'tag-list') {
+            var values = value.split(',');
+            for (var i = 0; i < values.length; ++i) {
+              e.element(by.css('.dropdown-toggle')).click();
+              e.element(by.css('.dropdown-menu #' + values[i])).click();
+            }
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -750,6 +760,16 @@ testLib = {
   // But the current Protractor version uses 2.45, so we have this wrapper.
   wait: function(condition) {
     browser.wait(condition, 99999999);
+  },
+
+  expectModal: function(title) {
+    var t = element(by.css('.modal-title'));
+    testLib.expectElement(t);
+    expect(t.getText()).toEqual(title);
+  },
+
+  closeModal: function() {
+    element(by.id('close-modal-button')).click();
   },
 };
 
