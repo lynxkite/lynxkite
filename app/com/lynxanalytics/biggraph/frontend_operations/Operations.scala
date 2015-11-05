@@ -2854,7 +2854,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             UIValue.list(List("sum", "average", "min", "max", "count", "first", "std_deviation"))
           } else {
-            UIValue.list(List("sum", "average", "min", "max", "most_common", "count_distinct", "count", "vector", "std_deviation"))
+            UIValue.list(List(
+              "sum", "average", "min", "max", "most_common", "count_distinct",
+              "count", "vector", "set", "std_deviation"))
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -2862,7 +2864,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             UIValue.list(List("count", "first"))
           } else {
-            UIValue.list(List("most_common", "count_distinct", "majority_50", "majority_100", "count", "vector"))
+            UIValue.list(List(
+              "most_common", "count_distinct", "majority_50", "majority_100",
+              "count", "vector", "set"))
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -2870,7 +2874,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             UIValue.list(List("count", "first"))
           } else {
-            UIValue.list(List("most_common", "count_distinct", "count", "vector"))
+            UIValue.list(List("most_common", "count_distinct", "count", "vector", "set"))
           }
         }
         TagList(s"aggregate-$name", name, options = options)
