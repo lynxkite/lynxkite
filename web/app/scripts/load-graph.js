@@ -112,7 +112,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     }
 
     if (!angular.equals(this.request, q)) {
-      this.request = q;
+      this.request = angular.copy(q);  // Store request without any references to living objects.
       this.view = util.get('/ajax/complexView', this.request);
     }
   };
