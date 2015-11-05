@@ -96,4 +96,12 @@ angular
       result = str.substr(0, l - i) + result;
       return result;
     };
+  })
+
+  // Makes the string suitable for use as an HTML id attribute.
+  .filter('id', function() {
+    return function(x) {
+      if (x === undefined) { return x; }
+      return x.toLowerCase().replace(/ /g, '-');
+    };
   });

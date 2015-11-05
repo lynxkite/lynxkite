@@ -1,4 +1,5 @@
 exports.config = {
+  framework: 'jasmine2',
   directConnect: true,
   baseUrl: 'http://localhost:9000/',
   specs: ['real-backend/declarative-test.js'],
