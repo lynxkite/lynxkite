@@ -57,7 +57,7 @@
     </p>
 
     <div ng-repeat="directory in data.directories"
-      id="directory-{{directory}}"
+      id="directory-{{ directory | id }}"
       class="entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       <span class="lead">
@@ -66,7 +66,7 @@
     </div>
 
     <div ng-repeat="project in data.projects"
-      id="project-{{project.name}}"
+      id="project-{{ project.name | id }}"
       class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <span class="icon glyphicon glyphicon-file pull-left"></span>
       <span class="lead">

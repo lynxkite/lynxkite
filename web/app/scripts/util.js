@@ -106,6 +106,7 @@ angular.module('biggraph').factory('util', function utilFactory(
   // Replaces a promise with another promise that behaves like Angular's ngResource.
   // It will populate itself with the response data and set $resolved, $error, and $statusCode.
   // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
+  // $config describes the original request config.
   function toResource(promise) {
     var resource = promise.then(
       function onSuccess(response) {
@@ -129,6 +130,8 @@ angular.module('biggraph').factory('util', function utilFactory(
         return $q.reject(failure);
       });
     resource.$resolved = false;
+    // Propagate $config and $abandon.
+    resource.$config = promise.$config;
     resource.$abandon = function() { promise.$abandon(); };
     // A promise of the success state, for flexibility.
     resource.$status = resource.then(function() { return true; }, function() { return false; });
@@ -209,8 +212,8 @@ angular.module('biggraph').factory('util', function utilFactory(
         util.reportError({
           message: request.$error,
           details: {
-            url: request.config.url,
-            params: request.config.params,
+            url: request.$config.url,
+            params: request.$config.params,
             details: details,
           },
         });
