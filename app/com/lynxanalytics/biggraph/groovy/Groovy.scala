@@ -102,9 +102,12 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
 
 // This is the interface that is visible from trustedShell as "lynx".
 class GroovyInterface(ctx: GroovyContext) {
-  def project(name: String): GroovyProject = {
+  def project(name: String, reset: Boolean = false): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
+    if (reset && project.exists) {
+      project.remove()
+    }
     if (!project.exists) {
       project.writeACL = ctx.user.email
       project.readACL = ctx.user.email
@@ -160,6 +163,14 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
       case _ => super.getProperty(name)
     }
   }
+
+  def saveAs(newRootName: String): GroovyBatchProject = {
+    import ctx.metaManager
+    val newFrame = ProjectFrame.fromName(newRootName)
+    subproject.frame.copy(newFrame)
+    new GroovyBatchProject(ctx, new SubProject(newFrame, subproject.path))
+  }
+
   protected def applyOperation(id: String, params: Map[String, String]): Unit = {
     ctx.ops.apply(ctx.user, subproject, FEOperationSpec(id, params))
   }
@@ -187,6 +198,9 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
   override def toString = {
     import ctx.dataManager
     scalar.value.toString
+  }
+  def toDouble: Double = {
+    toString.toDouble
   }
 }
 
