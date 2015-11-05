@@ -164,7 +164,7 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
     }
   }
 
-  def forkAs(newRootName: String): GroovyBatchProject = {
+  def saveAs(newRootName: String): GroovyBatchProject = {
     import ctx.metaManager
     val newFrame = ProjectFrame.fromName(newRootName)
     subproject.frame.copy(newFrame)

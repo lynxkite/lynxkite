@@ -12,7 +12,7 @@
     </a>
     <ul class="dropdown-menu">
       <li ng-repeat="option in options">
-        <a href ng-click="addTag(option.id)">
+        <a href id="{{ option.id }}" ng-click="addTag(option.id)">
           {{option.title}}
         </a>
       </li>
