@@ -132,10 +132,10 @@ case class Fingerprinting(
             // of the indegree from left and from right if both are defined, otherwise just take the
             // one that's defined.
             val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
-            val avg = degrees.mapValues(ds => ds.sum / ds.size)
+            val weights = degrees.mapValues(ds => 500.0)
             // Calculate similarity score.
-            val isect = common.map(k => (lw(k) min rw(k)) / avg(k)).sum
-            val union = all.map(k => (lw(k) max rw(k)) / avg(k)).sum
+            val isect = common.map(k => (lw(k) min rw(k)) * weights(k)).sum
+            val union = all.map(k => (lw(k) max rw(k)) * weights(k)).sum
             val similarity = isect / union
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
