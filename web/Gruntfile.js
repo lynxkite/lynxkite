@@ -40,7 +40,7 @@ module.exports = function (grunt) {
       },
       jsTest: {
         files: ['test/real-backend/*.js'],
-        tasks: ['newer:jshint:test', 'karma']
+        tasks: ['newer:jshint:test']
       },
       styles: {
         files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
@@ -390,14 +390,6 @@ module.exports = function (grunt) {
         files: {
           '<%= yeoman.dist %>/scripts/vendor.js': '<%= yeoman.dist %>/scripts/vendor.js',
         },
-      }
-    },
-
-    // Test settings
-    karma: {
-      unit: {
-        configFile: 'karma.conf.js',
-        singleRun: true
       }
     },
 

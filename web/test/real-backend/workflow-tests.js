@@ -17,7 +17,7 @@ module.exports = function(fw) {
     function() {
       lib.left.history.open();
       lib.left.openWorkflowSavingDialog();
-      expect(lib.left.getWorkflowCodeEditor().evaluate('code')).toBe(
+      expect(lib.left.getWorkflowCodeEditor().evaluate('state.workflow.code')).toBe(
         'project.exampleGraph()' +
           '\nproject.filterByAttributes(\'filterea-comment\': \'\',' +
           ' \'filterea-weight\': \'!1\',' +
@@ -86,7 +86,7 @@ module.exports = function(fw) {
       saveWorkflow(
         'ComplexTest',
         'The workflow example from the help page.',
-        fs.readFileSync('app/help/ui/workflow-example.groovy'));
+        fs.readFileSync('app/help/ui/workflow-example.groovy', 'utf8'));
       lib.left.runOperation('ComplexTest', { size: 25, degree: 'all edges' });
       expect(lib.left.vertexCount()).toEqual(25);
       expect(lib.left.edgeCount()).toEqual(191);
@@ -122,8 +122,8 @@ module.exports = function(fw) {
     function() {
       saveWorkflow('MaliciousTest1', '', 'print "hello world"');
       lib.left.runOperation('MaliciousTest1');
-      expect(lib.errors()).toMatch(
-        ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
+      expect(lib.error()).toMatch(
+        'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
     });
 
@@ -133,8 +133,30 @@ module.exports = function(fw) {
     function() {
       saveWorkflow('MaliciousTest2', '', '"hello world".getClass().getClassLoader()');
       lib.left.runOperation('MaliciousTest2');
-      expect(lib.errors()).toMatch(
-        ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
+      expect(lib.error()).toMatch(
+        'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
+    });
+
+  fw.statePreservingTest(
+    'some project is open',
+    'editing a workflow',
+    function() {
+      saveWorkflow(
+        'TestConstWorkflow',
+        'A simple workflow that adds a constant attribute.',
+        'project.exampleGraph()\n');
+      lib.left.openOperation('TestConstWorkflow');
+      lib.left.clickWorkflowEditButton();
+      lib.sendKeysToACE(
+        lib.left.getWorkflowCodeEditor(),
+        'project.addConstantVertexAttribute' +
+          '(name: \'testConstAttr\',' +
+          ' value: \'1.0\',' +
+          ' type: \'Double\')');
+      lib.left.getWorkflowSaveButton().click();
+      lib.expectNotElement(lib.left.vertexAttribute('testConstAttr'));
+      lib.left.runOperation('TestConstWorkflow');
+      lib.expectElement(lib.left.vertexAttribute('testConstAttr'));
     });
 };

@@ -28,20 +28,23 @@
     visualization="visualization"></selected-visualization></span>
 
   <span class="dropdown-toggle" dropdown-toggle data-toggle="dropdown">
-    <span class="clicky glyphicon glyphicon-eye-open" tooltip="Visualize attribute"></span>
+    <span class="clicky glyphicon glyphicon-eye-open" id="visualize-as-button" tooltip="Visualize attribute"></span>
   </span>
   <ul class="dropdown-menu" role="menu">
     <li class="text-center">
       Visualize as...
     </li>
     <li ng-if="attr.typeName === 'Double'">
-      <a ng-click="side.toggleAttributeTitle('width', attr.title)" href>Width</a>
+      <a ng-click="side.toggleAttributeTitle('width', attr.title)" href
+        id="visualize-as-width">Width</a>
     </li>
     <li>
-      <a ng-click="side.toggleAttributeTitle('edge label', attr.title)" href>Edge label</a>
+      <a ng-click="side.toggleAttributeTitle('edge label', attr.title)" href
+        id="visualize-as-edge-label">Edge label</a>
     </li>
     <li ng-if="attr.typeName === 'Double' || attr.typeName === 'String'">
-      <a ng-click="side.toggleAttributeTitle('edge color', attr.title)" href>Edge color</a>
+      <a ng-click="side.toggleAttributeTitle('edge color', attr.title)" href
+        id="visualize-as-edge-color">Edge color</a>
     </li>
   </ul>
 </span>

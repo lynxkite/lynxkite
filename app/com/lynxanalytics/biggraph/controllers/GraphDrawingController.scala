@@ -18,26 +18,27 @@ import com.lynxanalytics.biggraph.spark_util
 import scala.collection.mutable
 
 case class VertexDiagramSpec(
-  val vertexSetId: String,
-  val filters: Seq[FEVertexAttributeFilter],
-  val mode: String, // For now, one of "bucketed", "sampled".
+  vertexSetId: String,
+  filters: Seq[FEVertexAttributeFilter],
+  mode: String, // For now, one of "bucketed", "sampled".
 
   // ** Parameters for bucketed view **
   // Empty string means no bucketing on that axis.
-  val xBucketingAttributeId: String = "",
-  val xNumBuckets: Int = 1,
-  val xAxisOptions: AxisOptions = AxisOptions(),
-  val yBucketingAttributeId: String = "",
-  val yNumBuckets: Int = 1,
-  val yAxisOptions: AxisOptions = AxisOptions(),
-  val sampleSize: Int = 50000,
+  xBucketingAttributeId: String = "",
+  xNumBuckets: Int = 1,
+  xAxisOptions: AxisOptions = AxisOptions(),
+  yBucketingAttributeId: String = "",
+  yNumBuckets: Int = 1,
+  yAxisOptions: AxisOptions = AxisOptions(),
+  sampleSize: Int = 50000,
 
   // ** Parameters for sampled view **
-  val centralVertexIds: Seq[String] = Seq(),
+  centralVertexIds: Seq[String] = Seq(),
   // Edge bundle used to find neighborhood of the central vertex.
-  val sampleSmearEdgeBundleId: String = "",
-  val attrs: Seq[String] = Seq(),
-  val radius: Int = 1)
+  sampleSmearEdgeBundleId: String = "",
+  attrs: Seq[String] = Seq(),
+  radius: Int = 1,
+  maxSize: Int = 10000)
 
 case class FEVertex(
   // For bucketed view:
@@ -90,7 +91,8 @@ case class EdgeDiagramSpec(
   // Attributes to be returned together with the edges. As one visualized edge can correspond to
   // many actual edges, clients always have to specify an aggregator as well. For now, this only
   // works for small edge set visualizations (i.e. sampled mode).
-  attrs: Seq[AggregatedAttribute] = Seq())
+  attrs: Seq[AggregatedAttribute] = Seq(),
+  maxSize: Int = 10000)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -126,11 +128,8 @@ case class FEGraphRequest(
   edgeBundles: Seq[EdgeDiagramSpec])
 
 case class FEGraphResponse(
-    vertexSets: Seq[VertexDiagramResponse],
-    edgeBundles: Seq[EdgeDiagramResponse]) {
-
-  def fullSize: Long = vertexSets.map(_.size).sum + edgeBundles.map(_.size).sum
-}
+  vertexSets: Seq[VertexDiagramResponse],
+  edgeBundles: Seq[EdgeDiagramResponse])
 
 case class AxisOptions(
   logarithmic: Boolean = false)
@@ -170,7 +169,6 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
-  val SampleSizeMax = System.getProperty("biggraph.sample.size.max", "10000").toInt
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
@@ -191,11 +189,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val centers = if (request.centralVertexIds == Seq("*")) {
       // Try to show the whole graph.
-      val op = graph_operations.SampleVertices(SampleSizeMax + 1)
+      val op = graph_operations.SampleVertices(request.maxSize + 1)
       val sample = op(op.vs, filtered).result.sample.value
       assert(
-        sample.size <= SampleSizeMax,
-        s"The full graph is too large to display (larger than $SampleSizeMax)")
+        sample.size <= request.maxSize,
+        s"The full graph is too large to display (larger than ${request.maxSize})")
       sample
     } else {
       request.centralVertexIds.map(_.toLong)
@@ -205,7 +203,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
       val triplets = tripletMapping(smearBundle, sampled = false)
-      val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(centers, request.radius, SampleSizeMax)
+      val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(
+        centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(
           nop.edges, smearBundle)(
@@ -214,7 +213,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
-        s"Neigborhood is too large to display (larger than $SampleSizeMax)")
+        s"Neigborhood is too large to display (larger than ${request.maxSize})")
       neighborhood
     } else {
       centers.toSet
@@ -529,6 +528,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getComplexView(user: User, request: FEGraphRequest): FEGraphResponse = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(user, _))
+    for ((spec, diag) <- request.vertexSets zip vertexDiagrams) {
+      assert(
+        diag.size <= spec.maxSize,
+        s"Vertex diagram too large to display. Would return ${diag.size} vertices for $spec")
+    }
     val idxPattern = "idx\\[(\\d+)\\]".r
     def resolveDiagramId(reference: String): String = {
       reference match {
@@ -541,12 +545,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         srcDiagramId = resolveDiagramId(eb.srcDiagramId),
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(user, _))
+    for ((spec, diag) <- request.edgeBundles zip edgeDiagrams) {
+      assert(
+        diag.size <= spec.maxSize,
+        s"Edge diagram too large to display. Would return ${diag.size} edges for $spec")
+    }
     spark_util.Counters.printAll
-    val res = FEGraphResponse(vertexDiagrams, edgeDiagrams)
-    assert(
-      res.fullSize <= SampleSizeMax,
-      s"Visualization too large to display (larger than $SampleSizeMax vertices + edges)")
-    res
+    FEGraphResponse(vertexDiagrams, edgeDiagrams)
   }
 
   private def getFilteredVSByFA(

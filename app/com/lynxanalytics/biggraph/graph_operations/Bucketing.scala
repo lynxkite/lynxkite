@@ -100,3 +100,60 @@ case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
     output(o.belongsTo, bucketing.belongsTo)
   }
 }
+
+// Creates a segmentation where each vertex is treated as an interval defined
+// by two of its attributes. Each segment represents an interval, and
+// all the vertices with intersecting intervals are counted to the segment.
+// Bucketing starts from 0 and each bucket is the size of "bucketWidth". If
+// "overlap" is true, buckets will overlap their neighbors.
+object IntervalBucketing extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val beginAttr = vertexAttribute[Double](vs)
+    val endAttr = vertexAttribute[Double](vs)
+  }
+  class Output(properties: EdgeBundleProperties)(
+      implicit instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val segments = vertexSet
+    val belongsTo = edgeBundle(inputs.vs.entity, segments, properties)
+    // The start and end of intervals for each segment.
+    val bottom = vertexAttribute[Double](segments)
+    val top = vertexAttribute[Double](segments)
+  }
+  def fromJson(j: JsValue) =
+    IntervalBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
+}
+case class IntervalBucketing(bucketWidth: Double, overlap: Boolean)
+    extends TypedMetaGraphOp[IntervalBucketing.Input, IntervalBucketing.Output] {
+  import IntervalBucketing._
+  override val isHeavy = true
+  @transient override lazy val inputs = new IntervalBucketing.Input
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    if (overlap) new Output(EdgeBundleProperties.default)(instance, inputs)
+    else new Output(EdgeBundleProperties.partialFunction)(instance, inputs)
+  }
+  override def toJson = Json.obj("bucketWidth" -> bucketWidth, "overlap" -> overlap)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val bucketStep = if (overlap) bucketWidth / 2 else bucketWidth
+    // vertexid -> (begin, end):
+    val inputIntervals = inputs.beginAttr.rdd.sortedJoin(inputs.endAttr.rdd)
+    val buckets = inputIntervals.flatMapValues {
+      case (begin, end) =>
+        val beginBucket = (begin / bucketStep).floor.round
+        val endBucket = (end / bucketStep).floor.round
+        if (overlap) (beginBucket - 1) to endBucket
+        else beginBucket to endBucket
+    }
+    val bucketing = Bucketing(buckets)
+    output(o.segments, bucketing.segments)
+    output(o.bottom, bucketing.label.mapValues { bucket => bucket * bucketStep })
+    output(o.top, bucketing.label.mapValues { bucket => bucket * bucketStep + bucketWidth })
+    output(o.belongsTo, bucketing.belongsTo)
+  }
+}
