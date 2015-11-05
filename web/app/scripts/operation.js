@@ -14,6 +14,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
     },
     templateUrl: 'operation.html',
     link: function(scope, element) {
+      scope.scalars = {};
       scope.fileUploads = {};
       scope.$watch('op.parameters', function() {
         for (var i = 0; i < scope.op.parameters.length; ++i) {
@@ -27,6 +28,15 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
           } else {
             scope.params[p.id] = p.options[0].id;
           }
+        }
+      });
+      scope.$watch('op.visibleScalars', function() {
+        scope.scalars = {};
+        for (var i = 0; i < scope.op.visibleScalars.length; ++i) {
+          var scalar = scope.op.visibleScalars[i];
+          scope.scalars[scalar.id] = util.get(
+            '/ajax/scalarValue',
+            { scalarId: scalar.guid, calculate: true });
         }
       });
 

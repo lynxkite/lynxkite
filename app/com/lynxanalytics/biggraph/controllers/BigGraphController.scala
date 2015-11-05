@@ -40,6 +40,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: List[FEOperationParameterMeta],
+  visibleScalars: List[FEOperationScalarMeta],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "",
@@ -52,19 +53,21 @@ case class FEOperationParameterMeta(
     kind: String, // Special rendering on the UI.
     defaultValue: String,
     options: List[UIValue],
-    multipleChoice: Boolean,
-    scalarId: String) {
+    multipleChoice: Boolean) {
 
   val validKinds = Seq(
     "default", // A simple textbox.
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
-    "code", // code
-    "scalar") // A read-only scalar value to show the user some information.
+    "code") // code
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
+
+case class FEOperationScalarMeta(
+  id: String,
+  guid: String)
 
 case class FEOperationSpec(
   id: String,
@@ -508,11 +511,17 @@ abstract class OperationParameterMeta {
   val options: List[UIValue]
   val multipleChoice: Boolean
   val mandatory: Boolean
-  val scalarId: String
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
-  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice, scalarId)
+  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
+}
+
+case class OperationScalarMeta(
+    id: String,
+    guid: String) {
+
+  def toFE = FEOperationScalarMeta(id, guid)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
@@ -522,6 +531,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
+  def visibleScalars: List[OperationScalarMeta] = List()
   def enabled: FEStatus
   def isWorkflow: Boolean = false
   def workflowAuthor: String = ""
@@ -560,6 +570,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     id,
     title,
     parameters.map { param => param.toFE },
+    visibleScalars.map { scalar => scalar.toFE },
     category.title,
     enabled,
     description,

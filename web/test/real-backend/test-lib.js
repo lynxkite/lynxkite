@@ -194,8 +194,8 @@ Side.prototype = {
   },
 
   expectOperationScalar: function(name, text) {
-    var valueElement =
-      this.toolbox.element(by.css('value#param-scalar-num_created_edges'));
+    var cssSelector = 'value[ref="scalars[\'' + name + '\']"';
+    var valueElement = this.toolbox.element(by.css(cssSelector));
     expect(valueElement.getText()).toBe(text);
   },
 
