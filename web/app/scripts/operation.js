@@ -61,22 +61,25 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
         return scope.op.isWorkflow && scope.sideWorkflowEditor;
       };
 
-      // Focus the first input box when the operation is opened.
-      scope.$watch(function() {
-        // Have to watch for the parameters to finish rendering.
-        return element.find('input, select')[0];
-      }, function(firstInput) {
-        if (firstInput) {
-          if (firstInput.select) {
-            firstInput.select();
+      if (!scope.historyMode) {
+        // Focus the first input box when the operation is opened.
+        // Don't do this in history mode to avoid random scrolling.
+        scope.$watch(function() {
+          // Have to watch for the parameters to finish rendering.
+          return element.find('input, select')[0];
+        }, function(firstInput) {
+          if (firstInput) {
+            if (firstInput.select) {
+              firstInput.select();
+            } else {
+              firstInput.focus();
+            }
           } else {
-            firstInput.focus();
+            // No parameters? Focus on the OK button.
+            element.find('.ok-button').focus();
           }
-        } else {
-          // No parameters? Focus on the OK button.
-          element.find('.ok-button').focus();
-        }
-      });
+        });
+      }
     }
   };
 });
