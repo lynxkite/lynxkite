@@ -61,8 +61,9 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
         return scope.op.isWorkflow && scope.sideWorkflowEditor;
       };
 
-      if (scope.editable) {
+      if (!scope.historyMode) {
         // Focus the first input box when the operation is opened.
+        // Don't do this in history mode to avoid random scrolling.
         scope.$watch(function() {
           // Have to watch for the parameters to finish rendering.
           return element.find('input, select')[0];
