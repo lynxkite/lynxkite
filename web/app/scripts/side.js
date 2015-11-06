@@ -139,12 +139,12 @@ angular.module('biggraph')
         'sum');
       vd.edgeAttrs.edgeLabel = aggregated(
         this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
-        'vector');
+        'set');
       var edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
       if (edgeColorAttr !== undefined) {
         vd.edgeAttrs.edgeColor =
           (edgeColorAttr.typeName === 'Double') ?
-          aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'vector');
+          aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'set');
       }
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
