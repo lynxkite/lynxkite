@@ -2192,18 +2192,43 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (params("weights") == "!no weight") const(project.edgeBundle)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
 
+      val leftRightJoined = joinAttr(leftName, rightName)
+      val bothDefinedRestriction = {
+        val op = graph_operations.VertexAttributeFilter(
+          graph_operations.TrueFilter[(String, String)]())
+        op(op.attr, leftRightJoined).result
+      }
+      val allToBothDefinedEdgesInduction = {
+        val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+        op(op.edges, project.edgeBundle)(op.dstMapping, reverse(bothDefinedRestriction.identity))
+          .result
+      }
+      val allToBothDefinedEdges = allToBothDefinedEdgesInduction.induced
+      val pulledWeight = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+        weights, allToBothDefinedEdgesInduction.embedding)
+
       val candidates = {
         val op = graph_operations.FingerprintingCandidates()
         op(op.es, project.edgeBundle)(op.leftName, leftName)(op.rightName, rightName)
           .result.candidates
       }
-      val fingerprinting = {
+      /*val fingerprinting = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
           op.leftEdges, project.edgeBundle)(
             op.leftEdgeWeights, weights)(
               op.rightEdges, project.edgeBundle)(
                 op.rightEdgeWeights, weights)(
+                  op.candidates, candidates)
+          .result
+      }*/
+      val fingerprinting = {
+        val op = graph_operations.Fingerprinting(mo, ms)
+        op(
+          op.leftEdges, allToBothDefinedEdges)(
+            op.leftEdgeWeights, pulledWeight)(
+              op.rightEdges, allToBothDefinedEdges)(
+                op.rightEdgeWeights, pulledWeight)(
                   op.candidates, candidates)
           .result
       }
