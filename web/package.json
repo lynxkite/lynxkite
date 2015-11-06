@@ -35,7 +35,7 @@
     "karma-ng-scenario": "0.1.0",
     "karma-phantomjs-launcher": "0.1.4",
     "load-grunt-tasks": "0.4.0",
-    "protractor": "2.2.0",
+    "protractor": "2.5.1",
     "request": "2.62.0",
     "time-grunt": "1.2.1"
   },
