@@ -11,6 +11,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
       params: '=',  // (Input/output.)
       applying: '=?',  // (Input.) Whether an operation is being applied currently.
       sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
+      historyMode: '=',  // (Input.) Whether this operation is inside the history browser.
     },
     templateUrl: 'operation.html',
     link: function(scope, element) {
@@ -32,11 +33,12 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
       });
       scope.$watch('op.visibleScalars', function() {
         scope.scalars = {};
+        var calculateScalars = !scope.historyMode;
         for (var i = 0; i < scope.op.visibleScalars.length; ++i) {
           var scalar = scope.op.visibleScalars[i];
           scope.scalars[scalar.id] = util.get(
             '/ajax/scalarValue',
-            { scalarId: scalar.guid, calculate: true });
+            { scalarId: scalar.guid, calculate: calculateScalars });
         }
       });
 
