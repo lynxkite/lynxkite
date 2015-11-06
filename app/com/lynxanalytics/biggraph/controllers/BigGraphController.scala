@@ -40,6 +40,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: List[FEOperationParameterMeta],
+  visibleScalars: List[FEOperationScalarMeta],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "",
@@ -63,6 +64,10 @@ case class FEOperationParameterMeta(
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
+
+case class FEOperationScalarMeta(
+  id: String,
+  guid: String)
 
 case class FEOperationSpec(
   id: String,
@@ -518,6 +523,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
+  def visibleScalars: List[FEOperationScalarMeta] = List()
   def enabled: FEStatus
   def isWorkflow: Boolean = false
   def workflowAuthor: String = ""
@@ -556,6 +562,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     id,
     title,
     parameters.map { param => param.toFE },
+    visibleScalars,
     category.title,
     enabled,
     description,

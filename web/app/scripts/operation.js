@@ -11,9 +11,11 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
       params: '=',  // (Input/output.)
       applying: '=?',  // (Input.) Whether an operation is being applied currently.
       sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
+      historyMode: '=',  // (Input.) Whether this operation is inside the history browser.
     },
     templateUrl: 'operation.html',
     link: function(scope, element) {
+      scope.scalars = {};
       scope.fileUploads = {};
       scope.$watch('op.parameters', function() {
         for (var i = 0; i < scope.op.parameters.length; ++i) {
@@ -27,6 +29,16 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
           } else {
             scope.params[p.id] = p.options[0].id;
           }
+        }
+      });
+      scope.$watch('op.visibleScalars', function() {
+        scope.scalars = {};
+        var calculateScalars = !scope.historyMode;
+        for (var i = 0; i < scope.op.visibleScalars.length; ++i) {
+          var scalar = scope.op.visibleScalars[i];
+          scope.scalars[scalar.id] = util.get(
+            '/ajax/scalarValue',
+            { scalarId: scalar.guid, calculate: calculateScalars });
         }
       });
 
