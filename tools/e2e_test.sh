@@ -36,4 +36,4 @@ cd web
 # Make sure the webdriver is installed.
 node node_modules/protractor/bin/webdriver-manager update
 # Run test against backend.
-grunt test_e2e --port=$PORT "$@"
+grunt test --port=$PORT "$@"
