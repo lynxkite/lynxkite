@@ -22,7 +22,7 @@ EOF
 # Start backend.
 KITE_SITE_CONFIG="conf/kiterc_template" \
 KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" \
-  stage/bin/biggraph interactive &
+  stage/bin/biggraph interactive 2> /dev/null &
 KITE_PID=$!
 function kill_backend {
   echo "Shutting down server on port $KITE_PID."
