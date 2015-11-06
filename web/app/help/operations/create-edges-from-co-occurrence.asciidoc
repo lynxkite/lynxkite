@@ -5,13 +5,13 @@ Multiple co-occurrences will result in multiple parallel edges. Loop edges
 are generated for each segment that a vertex belongs to. The attributes of
 the segment are copied to the edges created from it.
 
-[gui-only]
+[.gui-only]
 --
 This operation will create +++<value ref="scalars['num_created_edges']"></value>+++ edges.
 --
-[help-only]
+[.help-only]
 --
-Before applying this operation from the toolbox, you will be shown the number of edges
+After opening this operation from the toolbox, you will be shown the number of edges
 that will be created.
 --
 Co-occurrence has a potential to create a very large number of edges.
