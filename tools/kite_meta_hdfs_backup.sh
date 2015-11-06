@@ -19,7 +19,7 @@ TMP_BACKUP_DIR=$KITE_LOCAL_TMP/kite_meta_backup
 HDFS_BACKUP_DIR=/user/$USER/backup
 
 # Copy the kite meta dir to a temporary location for cleansing.
-rm -r $TMP_BACKUP_DIR
+rm -rf $TMP_BACKUP_DIR
 mkdir $TMP_BACKUP_DIR
 cp -r $KITE_META_DIR $TMP_BACKUP_DIR/
 
