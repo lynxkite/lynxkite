@@ -1355,7 +1355,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
-    private def segmentationSizesSquareSum(): Scalar[Double] = {
+    private def segmentationSizesSquareSum()(
+      implicit manager: MetaGraphManager): Scalar[_] = {
       val size = aggregateViaConnection(
         seg.belongsTo,
         AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
@@ -1368,8 +1369,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           op.attrs,
           graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
       }
-      aggregate(AttributeWithAggregator(
-        sizeSquare, graph_operations.Aggregator.Sum()))
+      aggregate(AttributeWithAggregator(sizeSquare, "sum"))
     }
 
     def segmentationParameters = List()
