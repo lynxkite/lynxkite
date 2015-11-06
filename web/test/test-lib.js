@@ -75,9 +75,9 @@ Side.prototype = {
     function allFrom(td) {
       var toolTip = td.getAttribute('tooltip');
       var style = td.element(by.css('div.bar')).getAttribute('style');
-      return testLib.flatten({toolTip: toolTip, style: style}).then(function(rawData) {
-        var toolTipMatch = rawData.toolTip.match(/^(.*): (\d+)$/);
-        var styleMatch = rawData.style.match(/^height: (\d+)%;$/);
+      return protractor.promise.all([toolTip, style]).then(function(results) {
+        var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
+        var styleMatch = results[1].match(/^height: (\d+)%;$/);
         return {
           title: toolTipMatch[1],
           size: parseInt(styleMatch[1]),
@@ -96,12 +96,13 @@ Side.prototype = {
 
     browser.actions().mouseMove(tds.first()).perform();
     expect(total.isDisplayed()).toBe(true);
-    testLib.flatten({totalText: total.getText(), values: res}).then(function(c) {
-      var totalValue = c.totalText.match(/total: ([0-9,]+)/)[1];
+    protractor.promise.all([total.getText(), res]).then(function(results) {
+      var totalValue = results[0].match(/total: ([0-9,]+)/)[1];
+      var values = results[1];
       var total = parseInt(totalValue.replace(/,/g, ''));
       var sum = 0;
-      for (var j = 0; j < c.values.length; j++) {
-        sum += c.values[j].value;
+      for (var j = 0; j < values.length; j++) {
+        sum += values[j].value;
       }
       expect(total).toEqual(sum);
     });
@@ -617,42 +618,6 @@ testLib = {
 
   expectHelpPopupVisible: function(helpId, isVisible) {
     expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
-  },
-
-  // Given an object, finds all promises within it and returns a promise for the completely resolved
-  // object.
-  flatten: function(objOfPromises) {
-    if (typeof objOfPromises !== 'object') {
-      return objOfPromises;
-    }
-    var keys = Object.keys(objOfPromises);
-    var promiseKeys = [];
-    var result = {};
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      if (typeof objOfPromises[key].then === 'function') {
-        promiseKeys.push(key);
-      } else {
-        result[key] = this.flatten(objOfPromises[key]);
-      }
-    }
-
-    var elementsSet = 0;
-    var defer = protractor.promise.defer();
-    function futureSetter(key) {
-      return function(value) {
-        result[key] = value;
-        elementsSet += 1;
-        if (elementsSet === promiseKeys.length) {
-          defer.fulfill(result);
-        }
-      };
-    }
-    for (var j = 0; j < promiseKeys.length; j++) {
-      var promiseKey = promiseKeys[j];
-      objOfPromises[promiseKey].then(futureSetter(promiseKey));
-    }
-    return defer;
   },
 
   openNewProject: function(name) {
