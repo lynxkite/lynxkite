@@ -1355,29 +1355,31 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
-    def segmentationParameters = List()
-    override def visibleScalars = if (project.isSegmentation) {
-      List(
-        {
-          val size = aggregateViaConnection(
-            seg.belongsTo,
-            AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
-          )
-          val sizeSquare = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript("size * size"),
-              Seq("size"))
-            op(
-              op.attrs,
-              graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
-          }
-          val scalar = aggregate(AttributeWithAggregator(sizeSquare, "sum"))
-          FEOperationScalarMeta("num_created_edges", scalar.gUID.toString)
-        }
+    private def segmentationSizesSquareSum(): Scalar[Double] = {
+      val size = aggregateViaConnection(
+        seg.belongsTo,
+        AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
       )
-    } else {
-      List()
+      val sizeSquare: Attribute[Double] = {
+        val op = graph_operations.DeriveJSDouble(
+          JavaScript("size * size"),
+          Seq("size"))
+        op(
+          op.attrs,
+          graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
+      }
+      aggregate(AttributeWithAggregator(
+        sizeSquare, graph_operations.Aggregator.Sum()))
     }
+
+    def segmentationParameters = List()
+    override def visibleScalars =
+      if (project.isSegmentation) {
+        val scalar = segmentationSizesSquareSum()
+        List(FEOperationScalarMeta("num_created_edges", scalar.gUID.toString))
+      } else {
+        List()
+      }
 
     def enabled =
       isSegmentation &&
