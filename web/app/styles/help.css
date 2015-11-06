@@ -94,3 +94,10 @@ help-popup {
 .users-guide a.anchor:before {
   content: "\2605  link here";
 }
+
+#whole-help .gui-only {
+  display: none;
+}
+.operation-toolbox .help-only {
+  display: none;
+}

@@ -4,3 +4,17 @@ Connects vertices in the parent project if they co-occur in any segments.
 Multiple co-occurrences will result in multiple parallel edges. Loop edges
 are generated for each segment that a vertex belongs to. The attributes of
 the segment are copied to the edges created from it.
+
+[.gui-only]
+--
+This operation will create +++<value ref="scalars['num_created_edges']"></value>+++ edges.
+--
+[.help-only]
+--
+After opening this operation from the toolbox, you will be shown the number of edges
+that will be created.
+--
+Co-occurrence has a potential to create a very large number of edges.
+If the predicted number is too high, try to eliminate very large
+segments before running the operation!
+

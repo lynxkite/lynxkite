@@ -41,13 +41,16 @@ angular.module('biggraph').directive('helpId',
     function(helpContent, $compile, $anchorScroll, util) {
   return {
     restrict: 'A',
-    scope: { helpId: '@', removeHeader: '@' },
+    scope: {
+      helpId: '@',
+      removeHeader: '@',
+      scalars: '=',
+    },
     link: function(scope, element) {
       function isUserWorkflowId(id) {
         return id.match('^workflows/');
       }
       element.addClass('help');
-
       helpContent.then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
         if (isUserWorkflowId(id)) {
