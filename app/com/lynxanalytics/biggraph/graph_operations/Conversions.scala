@@ -44,6 +44,10 @@ object DynamicValue {
       val seq = value.asInstanceOf[Seq[Any]]
       DynamicValue(string = seq.mkString(", "))
     }
+    else if (typeOf[T] <:< typeOf[Set[_]]) value => {
+      val set = value.asInstanceOf[Set[Any]]
+      DynamicValue(string = set.toSeq.map(_.toString).sorted.mkString(", "))
+    }
     else if (typeOf[T] =:= typeOf[UIStatus]) value => {
       import UIStatusSerialization._
       val uiStatus = value.asInstanceOf[UIStatus]
