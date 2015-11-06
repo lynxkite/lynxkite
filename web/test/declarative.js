@@ -5,7 +5,7 @@ var fw = (function UIDescription() {
   var statePreservingTests = {};
   var hasChild = {};
 
-  var mocks = require('../mocks.js');
+  var mocks = require('./mocks.js');
   mocks.addTo(browser);
   browser.driver.manage().window().setSize(1100, 600);
 
@@ -164,21 +164,13 @@ var fw = (function UIDescription() {
   };
 })();
 
-require('./example-graph-basics.js')(fw);
-require('./download-test.js')(fw);
-require('./upload-test.js')(fw);
-require('./filter-tests.js')(fw);
-require('./segmentation-opens.js')(fw);
-require('./help-popups.js')(fw);
-require('./histogram-tests.js')(fw);
-require('./history-editor.js')(fw);
-require('./undo-redo.js')(fw);
-require('./workflow-tests.js')(fw);
-require('./center-picker.js')(fw);
-require('./splash-page.js')(fw);
-require('./errors.js')(fw);
-require('./visualization.js')(fw);
-require('./operations.js')(fw);
+var fs = require('fs');
+var testFiles = fs.readdirSync(__dirname + '/tests');
+for (var i = 0; i < testFiles.length; ++i) {
+  if (testFiles[i].slice(-3) === '.js') {
+    require('./tests/' + testFiles[i])(fw);
+  }
+}
 
 fw.runAll();
 fw.cleanup();

@@ -1,7 +1,7 @@
 'use strict';
 
 var fs = require('fs');
-var lib = require('./test-lib.js');
+var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.statePreservingTest(
