@@ -31,7 +31,7 @@ namespace.
  - `GroovyProject lynx.project(String name)` will return the given project,
    creating it if it does not yet exist.
  - `GroovyProject lynx.newProject(String name)` will return the given project,
-   reseting it to an empty state it it has already existed.
+   resetting it to an empty state if it has already existed.
 
 The properties of `GroovyProject` are:
 
