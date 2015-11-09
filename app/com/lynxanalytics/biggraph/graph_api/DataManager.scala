@@ -97,14 +97,18 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def loggedFuture(f: => Unit): Unit = {
-    future {
+  // This is for asynchronous tasks. We store them in a WeakHashMap so that waitAllFutures can wait
+  // for them, but the data structure does not grow indefinitely.
+  private val loggedFutures = new java.util.WeakHashMap[Future[Unit], Unit]
+  private def loggedFuture(func: => Unit): Unit = {
+    val f = future {
       try {
-        f
+        func
       } catch {
         case t: Throwable => log.error("future failed:", t)
       }
     }
+    loggedFutures.put(f, ())
   }
 
   private def execute(instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = {
@@ -264,6 +268,8 @@ class DataManager(sc: spark.SparkContext,
 
   def waitAllFutures(): Unit = {
     Await.ready(Future.sequence(entityCache.values.toSeq), Duration.Inf)
+    import collection.JavaConversions.mapAsScalaMap
+    Await.ready(Future.sequence(loggedFutures.keys.toSeq), Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
