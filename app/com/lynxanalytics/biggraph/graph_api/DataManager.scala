@@ -97,6 +97,16 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
+  private def loggedFuture(f: => Unit): Unit = {
+    future {
+      try {
+        f
+      } catch {
+        case t: Throwable => log.error("future failed:", t)
+      }
+    }
+  }
+
   private def execute(instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
     val futureInputs = Future.sequence(
@@ -119,7 +129,7 @@ class DataManager(sc: spark.SparkContext,
         } else {
           // We still save all scalars even for non-heavy operations.
           // This can happen asynchronously though.
-          future {
+          loggedFuture {
             saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
