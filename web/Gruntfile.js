@@ -360,14 +360,6 @@ module.exports = function (grunt) {
           cwd: '.tmp',
           dest: '<%= yeoman.dist %>',
           src: ['{,*/}*.html']
-        }, {
-          expand: true,
-          flatten: true,
-          cwd: '<%= yeoman.app %>',
-          dest: '<%= yeoman.dist %>',
-          src: [
-            'bower_components/ace-builds/src-min-noconflict/worker-javascript.js'
-          ]
         }]
       },
       styles: {
