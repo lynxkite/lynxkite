@@ -7,7 +7,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
 import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 
-class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager
+    with TestCleanup {
 
   val resDir = "/graph_api/io/EntityIOTest/"
   val res = getClass.getResource(resDir).toString

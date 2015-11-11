@@ -18,6 +18,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     assert(oldOut != null)
     Console.setOut(oldOut)
     oldOut = null
+    runCleanup()
   }
 
   test("We can run a simple SparkSQL workflow using our internal spark context") {

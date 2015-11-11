@@ -8,7 +8,8 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager
+    with TestCleanup {
   test("We can obtain a simple new graph") {
     val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
