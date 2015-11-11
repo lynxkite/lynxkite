@@ -1,6 +1,5 @@
 // Implicit classes that add utility methods to entities. For example edgeBundle.reverse is the
-// reversed edge bundle. All the operations have compile-time safety and use just a
-// MetaGraphManager.
+// reversed edge bundle. All the operations have compile-time safety and operate on the metagraph.
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -9,6 +8,8 @@ import com.lynxanalytics.biggraph.graph_operations
 
 object Scripting {
 
+  implicit class RichContainedVertexSet(
+    p: EntityContainer[VertexSet])(implicit m: MetaGraphManager) extends RichVertexSet(p.entity)
   implicit class RichVertexSet(self: VertexSet)(implicit manager: MetaGraphManager) {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self, value)
@@ -22,6 +23,8 @@ object Scripting {
       graph_operations.IdAsAttribute.run(self)
   }
 
+  implicit class RichContainedEdgeBundle(
+    p: EntityContainer[EdgeBundle])(implicit m: MetaGraphManager) extends RichEdgeBundle(p.entity)
   implicit class RichEdgeBundle(self: EdgeBundle)(implicit manager: MetaGraphManager) {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self.idSet, value)
@@ -48,6 +51,9 @@ object Scripting {
     }
   }
 
+  implicit class RichContainedAttribute[T](
+    p: EntityContainer[Attribute[T]])(implicit m: MetaGraphManager)
+      extends RichAttribute[T](p.entity)
   implicit class RichAttribute[T](self: Attribute[T])(implicit manager: MetaGraphManager) {
     def countScalar: Scalar[Long] = // Named to distinguish from EntityRDDData.count.
       graph_operations.Count.run(self.vertexSet)
@@ -70,21 +76,33 @@ object Scripting {
     }
   }
 
+  implicit class RichContainedStringAttribute(
+    p: EntityContainer[Attribute[String]])(implicit m: MetaGraphManager)
+      extends RichStringAttribute(p.entity)
   implicit class RichStringAttribute(self: Attribute[String])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.VertexAttributeToDouble.run(self)
   }
 
+  implicit class RichContainedDoubleAttribute(
+    p: EntityContainer[Attribute[Double]])(implicit m: MetaGraphManager)
+      extends RichDoubleAttribute(p.entity)
   implicit class RichDoubleAttribute(self: Attribute[Double])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.DoubleAttributeToLong.run(self)
   }
 
+  implicit class RichContainedLongAttribute(
+    p: EntityContainer[Attribute[Long]])(implicit m: MetaGraphManager)
+      extends RichLongAttribute(p.entity)
   implicit class RichLongAttribute(self: Attribute[Long])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.LongAttributeToDouble.run(self)
   }
 
+  implicit class RichContainedIntAttribute(
+    p: EntityContainer[Attribute[Int]])(implicit m: MetaGraphManager)
+      extends RichIntAttribute(p.entity)
   implicit class RichIntAttribute(self: Attribute[Int])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.IntAttributeToLong.run(self)
