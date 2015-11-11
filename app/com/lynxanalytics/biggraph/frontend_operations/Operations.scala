@@ -561,8 +561,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, cedges).result
       }
 
-      val weightedVertexToClique = cliquesResult.belongsTo.entity.const(1.0)
-      val weightedCliqueToCommunity = ccResult.belongsTo.entity.const(1.0)
+      val weightedVertexToClique = cliquesResult.belongsTo.const(1.0)
+      val weightedCliqueToCommunity = ccResult.belongsTo.const(1.0)
 
       val vertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -1069,7 +1069,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.AddRankingAttributeDouble(ascending)
       val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
       project.newVertexAttribute(
-        rankAttr, op(op.sortKey, sortKey).result.ordinal.entity.asDouble, s"rank by $keyAttr" + help)
+        rankAttr, op(op.sortKey, sortKey).result.ordinal.asDouble, s"rank by $keyAttr" + help)
     }
   })
 
@@ -1346,7 +1346,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val res = op(op.belongsTo, seg.belongsTo).result
       project.edgeBundle = res.overlaps
       // Long is better supported on the frontend than Int.
-      project.edgeAttributes("Overlap size") = res.overlapSize.entity.asLong
+      project.edgeAttributes("Overlap size") = res.overlapSize.asLong
     }
   })
 
@@ -2113,12 +2113,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.vertexAttributes
           .map {
             case (name, attr) =>
-              name -> attr.pull(vsUnion.injections(0).entity.reverse)
+              name -> attr.pull(vsUnion.injections(0).reverse)
           },
         other.vertexAttributes
           .map {
             case (name, attr) =>
-              name -> attr.pull(vsUnion.injections(1).entity.reverse)
+              name -> attr.pull(vsUnion.injections(1).reverse)
           })
       val ebInduced = Option(project.edgeBundle).map { eb =>
         val op = graph_operations.InducedEdgeBundle()
@@ -2151,8 +2151,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 op.injections, idUnion.injections.map(_.entity)).result.union
           }
           (ebUnion,
-            idUnion.injections(0).entity.reverse + ebInduced.get.embedding,
-            idUnion.injections(1).entity.reverse + otherEbInduced.get.embedding)
+            idUnion.injections(0).reverse + ebInduced.get.embedding,
+            idUnion.injections(1).reverse + otherEbInduced.get.embedding)
         } else {
           (null, null, null)
         }
@@ -2222,10 +2222,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                   op.candidates, candidates)
           .result
       }
-      val newLeftName = leftName.pull(fingerprinting.matching.entity.reverse)
+      val newLeftName = leftName.pull(fingerprinting.matching.reverse)
       val newRightName = rightName.pull(fingerprinting.matching)
 
-      project.scalars("fingerprinting matches found") = fingerprinting.matching.entity.countScalar
+      project.scalars("fingerprinting matches found") = fingerprinting.matching.countScalar
       project.vertexAttributes(params("leftName")) = newLeftName.fallback(leftName)
       project.vertexAttributes(params("rightName")) = newRightName.fallback(rightName)
       project.newVertexAttribute(
@@ -2298,7 +2298,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           .result
       }
 
-      project.scalars("fingerprinting matches found") = fingerprinting.matching.entity.countScalar
+      project.scalars("fingerprinting matches found") = fingerprinting.matching.countScalar
       seg.belongsTo = fingerprinting.matching
       parent.newVertexAttribute(
         "fingerprinting_similarity_score", fingerprinting.leftSimilarities)
