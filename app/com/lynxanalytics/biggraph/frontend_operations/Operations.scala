@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
 
@@ -330,7 +331,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(
         !project.vertexAttributes.contains(idAttr),
         s"The input also contains a field called '$idAttr'. Please pick a different name.")
-      project.newVertexAttribute(idAttr, idAsAttribute(project.vertexSet), "internal")
+      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
     }
   }
   register("Import vertices from CSV files",
@@ -514,8 +515,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val symmetric = params("directions") match {
-        case "ignore directions" => addReversed(project.edgeBundle)
-        case "require both directions" => makeEdgeBundleSymmetric(project.edgeBundle)
+        case "ignore directions" => project.edgeBundle.addReversed
+        case "require both directions" => project.edgeBundle.makeSymmetric
       }
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
@@ -560,8 +561,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, cedges).result
       }
 
-      val weightedVertexToClique = const(cliquesResult.belongsTo)
-      val weightedCliqueToCommunity = const(ccResult.belongsTo)
+      val weightedVertexToClique = cliquesResult.belongsTo.entity.const(1.0)
+      val weightedCliqueToCommunity = ccResult.belongsTo.entity.const(1.0)
 
       val vertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -599,7 +600,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val edgeBundle = project.edgeBundle
       val weightsName = params("weights")
       val weights =
-        if (weightsName == "!no weight") const(edgeBundle)
+        if (weightsName == "!no weight") edgeBundle.const(1.0)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
         val op = graph_operations.FindModularClusteringByTweaks(
@@ -768,7 +769,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       // Calculate sizes and ids at the end.
       result.newVertexAttribute("size", computeSegmentSizes(result))
-      result.newVertexAttribute("id", idAsAttribute(result.vertexSet))
+      result.newVertexAttribute("id", result.vertexSet.idAttribute)
     }
   })
   register("Internal vertex ID as attribute", new VertexAttributesOperation(_, _) {
@@ -777,13 +778,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      project.newVertexAttribute(params("name"), idAsAttribute(project.vertexSet), help)
+      project.newVertexAttribute(params("name"), project.vertexSet.idAttribute, help)
     }
   })
-
-  def idAsAttribute(vs: VertexSet) = {
-    graph_operations.IdAsAttribute.run(vs)
-  }
 
   register("Add gaussian vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
@@ -807,9 +804,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val res = {
         if (params("type") == "Double") {
-          const(project.edgeBundle, params("value").toDouble)
+          project.edgeBundle.const(params("value").toDouble)
         } else {
-          graph_operations.AddConstantAttribute.run(project.edgeBundle.idSet, params("value"))
+          project.edgeBundle.const(params("value"))
         }
       }
       project.edgeAttributes(params("name")) = res
@@ -1005,7 +1002,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weights =
-        if (params("weights") == "!no weight") const(project.edgeBundle)
+        if (params("weights") == "!no weight") project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank, help)
@@ -1030,7 +1027,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.ShortestPath(params("iterations").toInt)
       val edgeDistance =
         if (params("edge_distance") == "!unit distances") {
-          const(project.edgeBundle)
+          project.edgeBundle.const(1.0)
         } else {
           project.edgeAttributes(params("edge_distance")).runtimeSafeCast[Double]
         }
@@ -1072,7 +1069,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.AddRankingAttributeDouble(ascending)
       val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
       project.newVertexAttribute(
-        rankAttr, toDouble(op(op.sortKey, sortKey).result.ordinal), s"rank by $keyAttr" + help)
+        rankAttr, op(op.sortKey, sortKey).result.ordinal.entity.asDouble, s"rank by $keyAttr" + help)
     }
   })
 
@@ -1086,7 +1083,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- g.vertexAttributes) {
         project.newVertexAttribute(name, attr)
       }
-      project.newVertexAttribute("id", idAsAttribute(project.vertexSet))
+      project.newVertexAttribute("id", project.vertexSet.idAttribute)
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
@@ -1104,7 +1101,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- g.vertexAttributes) {
         project.newVertexAttribute(name, attr)
       }
-      project.newVertexAttribute("id", idAsAttribute(project.vertexSet))
+      project.newVertexAttribute("id", project.vertexSet.idAttribute)
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
     }
   })
@@ -1116,7 +1113,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]) = {
       for (attr <- params("attr").split(",", -1)) {
-        project.vertexAttributes(attr) = attributeToString(project.vertexAttributes(attr))
+        project.vertexAttributes(attr) = project.vertexAttributes(attr).asString
       }
     }
   })
@@ -1127,7 +1124,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]) = {
       for (attr <- params("attr").split(",", -1)) {
-        project.edgeAttributes(attr) = attributeToString(project.edgeAttributes(attr))
+        project.edgeAttributes(attr) = project.edgeAttributes(attr).asString
       }
     }
   })
@@ -1311,7 +1308,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
-          reverse(seg.belongsTo),
+          seg.belongsTo.reverse,
           AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
@@ -1333,7 +1330,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
-          reverse(seg.belongsTo),
+          seg.belongsTo.reverse,
           AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
         seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
       }
@@ -1348,9 +1345,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
       val res = op(op.belongsTo, seg.belongsTo).result
       project.edgeBundle = res.overlaps
-      project.edgeAttributes("Overlap size") =
-        // Long is better supported on the frontend.
-        graph_operations.IntAttributeToLong.run(res.overlapSize)
+      // Long is better supported on the frontend than Int.
+      project.edgeAttributes("Overlap size") = res.overlapSize.entity.asLong
     }
   })
 
@@ -1447,10 +1443,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitVertices.Output = {
-      val convOp = graph_operations.DoubleAttributeToLong
-      val longAttr = convOp.run(doubleAttr)
       val op = graph_operations.SplitVertices()
-      op(op.attr, longAttr).result
+      op(op.attr, doubleAttr.asLong).result
     }
     def apply(params: Map[String, String]) = {
       val rep = params("rep")
@@ -1459,7 +1453,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
-      project.newVertexAttribute(params("idattr"), idAsAttribute(project.vertexSet))
+      project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
     }
   })
 
@@ -1515,7 +1509,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
-    val edgesAndKey: Attribute[((ID, ID), T)] = joinAttr(edgesAsAttr, keyAttr)
+    val edgesAndKey: Attribute[((ID, ID), T)] = edgesAsAttr.join(keyAttr)
     val op = graph_operations.MergeVertices[((ID, ID), T)]()
     op(op.attr, edgesAndKey).result
   }
@@ -2119,16 +2113,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.vertexAttributes
           .map {
             case (name, attr) =>
-              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-                attr,
-                reverse(vsUnion.injections(0)))
+              name -> attr.pull(vsUnion.injections(0).entity.reverse)
           },
         other.vertexAttributes
           .map {
             case (name, attr) =>
-              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-                attr,
-                reverse(vsUnion.injections(1)))
+              name -> attr.pull(vsUnion.injections(1).entity.reverse)
           })
       val ebInduced = Option(project.edgeBundle).map { eb =>
         val op = graph_operations.InducedEdgeBundle()
@@ -2161,8 +2151,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 op.injections, idUnion.injections.map(_.entity)).result.union
           }
           (ebUnion,
-            concat(reverse(idUnion.injections(0).entity), ebInduced.get.embedding),
-            concat(reverse(idUnion.injections(1).entity), otherEbInduced.get.embedding))
+            idUnion.injections(0).entity.reverse + ebInduced.get.embedding,
+            idUnion.injections(1).entity.reverse + otherEbInduced.get.embedding)
         } else {
           (null, null, null)
         }
@@ -2190,7 +2180,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(
         !project.vertexAttributes.contains(idAttr),
         s"The project already contains a field called '$idAttr'. Please pick a different name.")
-      project.newVertexAttribute(idAttr, idAsAttribute(project.vertexSet))
+      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
     }
@@ -2214,7 +2204,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
       val weights =
-        if (params("weights") == "!no weight") const(project.edgeBundle)
+        if (params("weights") == "!no weight") project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
 
       val candidates = {
@@ -2232,14 +2222,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                   op.candidates, candidates)
           .result
       }
-      val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        leftName, reverse(fingerprinting.matching))
-      val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        rightName, fingerprinting.matching)
+      val newLeftName = leftName.pull(fingerprinting.matching.entity.reverse)
+      val newRightName = rightName.pull(fingerprinting.matching)
 
-      project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
-      project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
-      project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
+      project.scalars("fingerprinting matches found") = fingerprinting.matching.entity.countScalar
+      project.vertexAttributes(params("leftName")) = newLeftName.fallback(leftName)
+      project.vertexAttributes(params("rightName")) = newRightName.fallback(rightName)
       project.newVertexAttribute(
         params("leftName") + " similarity score", fingerprinting.leftSimilarities)
       project.newVertexAttribute(
@@ -2281,8 +2269,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- parent.vertexAttributes.toMap) {
         project.newVertexAttribute(
           prefix + name,
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, reverse(seg.belongsTo)))
+          attr.pull(seg.belongsTo.reverse))
       }
     }
   })
@@ -2299,19 +2286,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val ms = params("ms").toDouble
 
       val candidates = seg.belongsTo
-      val segNeighborsInParent = concat(project.edgeBundle, reverse(seg.belongsTo))
+      val segNeighborsInParent = project.edgeBundle + seg.belongsTo.reverse
       val fingerprinting = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
           op.leftEdges, parent.edgeBundle)(
-            op.leftEdgeWeights, const(parent.edgeBundle))(
+            op.leftEdgeWeights, parent.edgeBundle.const(1.0))(
               op.rightEdges, segNeighborsInParent)(
-                op.rightEdgeWeights, const(segNeighborsInParent))(
+                op.rightEdgeWeights, segNeighborsInParent.const(1.0))(
                   op.candidates, candidates)
           .result
       }
 
-      project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
+      project.scalars("fingerprinting matches found") = fingerprinting.matching.entity.countScalar
       seg.belongsTo = fingerprinting.matching
       parent.newVertexAttribute(
         "fingerprinting_similarity_score", fingerprinting.leftSimilarities)
@@ -2420,7 +2407,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           segTargetAvg)
         val predicted = {
           aggregateViaConnection(
-            reverse(seg.belongsTo),
+            seg.belongsTo.reverse,
             AttributeWithWeightedAggregator(segStdDevDefined, segTargetAvg, "by_min_weight"))
             .runtimeSafeCast[Double]
         }
@@ -2588,7 +2575,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- vertices.attrs) {
         project.newVertexAttribute(name, attr)
       }
-      project.newVertexAttribute("id", idAsAttribute(project.vertexSet))
+      project.newVertexAttribute("id", project.vertexSet.idAttribute)
       val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
       val edges = {
         val file = directory / "edges"
@@ -2705,7 +2692,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       pe: ProjectEditor): NameAndAttr[_] = {
 
       if (paramID == "!internal id (default)") {
-        NameAndAttr("id", idAsAttribute(pe.vertexSet))
+        NameAndAttr("id", pe.vertexSet.idAttribute)
       } else {
         NameAndAttr(paramID, pe.vertexAttributes(paramID))
       }
@@ -2836,27 +2823,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
   }
 
-  def joinAttr[A, B](a: Attribute[A], b: Attribute[B]): Attribute[(A, B)] = {
-    graph_operations.JoinAttributes.run(a, b)
-  }
-
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
-    op(op.es, reverse(segmentation.belongsTo)).result.outDegree
+    op(op.es, segmentation.belongsTo.reverse).result.outDegree
   }
 
   def toDouble(attr: Attribute[_]): Attribute[Double] = {
     if (attr.is[String])
-      graph_operations.VertexAttributeToDouble.run(attr.runtimeSafeCast[String])
+      attr.runtimeSafeCast[String].asDouble
     else if (attr.is[Long])
-      graph_operations.LongAttributeToDouble.run(attr.runtimeSafeCast[Long])
+      attr.runtimeSafeCast[Long].asDouble
     else
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
-  }
-
-  private def attributeToString[T](attr: Attribute[T]): Attribute[String] = {
-    val op = graph_operations.VertexAttributeToString[T]()
-    op(op.attr, attr).result.attr
   }
 
   def parseAggregateParams(params: Map[String, String]) = {
@@ -2930,21 +2908,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     res.dstAttr
   }
 
-  def reverse(eb: EdgeBundle): EdgeBundle = {
-    val op = graph_operations.ReverseEdges()
-    op(op.esAB, eb).result.esBA
-  }
-
-  def makeEdgeBundleSymmetric(eb: EdgeBundle): EdgeBundle = {
-    val op = graph_operations.MakeEdgeBundleSymmetric()
-    op(op.es, eb).result.symmetric
-  }
-
-  def addReversed(eb: EdgeBundle): EdgeBundle = {
-    val op = graph_operations.AddReversedEdges()
-    op(op.es, eb).result.esPlus
-  }
-
   def stripDuplicateEdges(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.StripDuplicateEdgesFromBundle()
     op(op.es, eb).result.unique
@@ -2991,7 +2954,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case "symmetric edges" =>
           // Use "null" as the injection because it is an error to use
           // "symmetric edges" with edge attributes.
-          (makeEdgeBundleSymmetric(origEB), Some(null))
+          (origEB.makeSymmetric, Some(null))
       }
     }
 
@@ -3005,17 +2968,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
-      pullBundleOpt.map { pullBundle =>
-        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, pullBundle)
-      }.getOrElse(attribute)
+      pullBundleOpt.map(attribute.pull(_)).getOrElse(attribute)
     }
   }
 
-  def count(eb: EdgeBundle): Scalar[Long] = graph_operations.Count.run(eb)
-
   private def unifyAttributeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
-    val op = graph_operations.AttributeFallback[T]()
-    op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
+    a1.fallback(a2.runtimeSafeCast(a1.typeTag))
   }
   def unifyAttribute(a1: Attribute[_], a2: Attribute[_]): Attribute[_] = {
     unifyAttributeT(a1, a2)
@@ -3030,14 +2988,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     m1.keySet.union(m2.keySet)
       .map(k => k -> (m1.get(k) ++ m2.get(k)).reduce(unifyAttribute _))
       .toMap
-  }
-
-  def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
-    new graph_util.BundleChain(Seq(eb1, eb2)).getCompositeEdgeBundle._1
-  }
-
-  def const(eb: EdgeBundle, value: Double = 1.0): Attribute[Double] = {
-    graph_operations.AddConstantAttribute.run(eb.idSet, value)
   }
 
   def newScalar(data: String): Scalar[String] = {
