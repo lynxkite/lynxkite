@@ -83,7 +83,7 @@ start)
   MASTER=`GetMasterHostName`
   # Prepare a config file.
   CONFIG_FILE="/tmp/${CLUSTER_NAME}.kiterc"
-  HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
+  HDFS_DATA='hdfs://$(curl http://169.254.169.254/latest/meta-data/public-hostname):9000/data'
   if [ -n "${S3_DATAREPO:-}" ]; then
     KITE_DATA_DIR="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}"
     KITE_EPHEMERAL_DATA_DIR="$HDFS_DATA"

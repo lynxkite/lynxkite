@@ -645,6 +645,7 @@ class SegmentationEditor(
     // create the corresponding SegmentationState in the project state's segmentations field.
     val oldSegs = parent.state.segmentations
     if (!oldSegs.contains(segmentationName)) {
+      ProjectFrame.validateName(segmentationName)
       parent.state = parent.state.copy(
         segmentations = oldSegs + (segmentationName -> SegmentationState.emptyState))
     }

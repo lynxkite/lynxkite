@@ -28,9 +28,10 @@ namespace.
 The script can interact with LynxKite through the `lynx` object that is injected into its
 namespace.
 
- - `GroovyProject lynx.project(String name, Boolean reset = false)` will return the given project,
-   creating it if it does not yet exist. Setting the optional reset argument to true will reset the
-   project to an empty state before returning it.
+ - `GroovyProject lynx.project(String name)` will return the given project,
+   creating it if it does not yet exist.
+ - `GroovyProject lynx.newProject(String name)` will return the given project,
+   resetting it to an empty state if it has already existed.
 
 The properties of `GroovyProject` are:
 

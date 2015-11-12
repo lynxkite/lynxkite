@@ -64,17 +64,20 @@ class JsonServer extends mvc.Controller {
     }
   }
 
+  private def parseJson[T: json.Reads](user: User, request: mvc.Request[mvc.AnyContent]): T = {
+    // We do our own simple parsing instead of using request.getQueryString due to #2507.
+    val qs = request.rawQueryString
+    assert(qs.startsWith("q="), "Missing query parameter: q")
+    val s = java.net.URLDecoder.decode(qs.drop(2), "utf8")
+    log.info(s"$user GET ${request.path} $s")
+    json.Json.parse(s).as[T]
+  }
+
   def jsonQuery[I: json.Reads, R](
     user: User,
     request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
     val t0 = System.currentTimeMillis
-    val key = "q"
-    val value = request.getQueryString(key)
-    assert(value.nonEmpty, s"Missing query parameter $key.")
-    val s = value.get
-    log.info(s"$user GET ${request.path} $s")
-    val i = json.Json.parse(s).as[I]
-    val result = util.Try(handler(user, i))
+    val result = util.Try(handler(user, parseJson(user, request)))
     val dt = System.currentTimeMillis - t0
     val status = if (result.isSuccess) "success" else "failure"
     log.info(s"$dt ms to respond with $status to $user GET ${request.path}")
@@ -153,6 +156,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val wUIValue = json.Json.writes[UIValue]
   implicit val wUIValues = json.Json.writes[UIValues]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val wFEOperationScalarMeta = json.Json.writes[FEOperationScalarMeta]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
