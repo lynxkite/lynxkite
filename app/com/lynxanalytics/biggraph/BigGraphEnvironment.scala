@@ -33,11 +33,10 @@ trait BigGraphEnvironment {
 
   private val uniqueId = s"env-${graph_util.Timestamp}"
   table.DefaultSource.env(uniqueId) = this // Register with table.DefaultSource.
-  def projectTable(project: String): spark.sql.DataFrame = {
+  def dataFrame: spark.sql.DataFrameReader = {
     dataManager.sqlContext.read
       .format("com.lynxanalytics.biggraph.table")
       .option("environment", uniqueId)
-      .load(project)
   }
 }
 
