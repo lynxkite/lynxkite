@@ -100,10 +100,10 @@ class SparkSQLTest extends FunSuite with TestGraphOp with BeforeAndAfter {
         ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
     }
     val sqlContext = dataManager.sqlContext
-    com.lynxanalytics.biggraph.DefaultSource.env = this
+    com.lynxanalytics.biggraph.table.DefaultSource.env = this
 
     run("Example Graph", Map())
-    val df = sqlContext.read.format("com.lynxanalytics.biggraph").load("df-test")
+    val df = sqlContext.read.format("com.lynxanalytics.biggraph.table").load("df-test")
     df.printSchema()
     df.show()
   }
