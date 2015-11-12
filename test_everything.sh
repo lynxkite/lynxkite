@@ -8,8 +8,8 @@ sbt -Dsbt.log.noformat=true test
 cd web
 bower install --silent --config.interactive=false
 npm install --silent
-npm test
-
+grunt
 cd -
+
 tools/check_documentation.sh
 tools/e2e_test.sh --no-color
