@@ -15,6 +15,8 @@ object Scripting {
       graph_operations.AddConstantAttribute.run(self, value)
     def const(value: Double): Attribute[Double] =
       graph_operations.AddConstantAttribute.run(self, value)
+    def const(value: Int): Attribute[Int] =
+      graph_operations.AddConstantAttribute.run(self, value)
 
     def countScalar: Scalar[Long] = // Named to distinguish from EntityRDDData.count.
       graph_operations.Count.run(self)
@@ -29,6 +31,8 @@ object Scripting {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self.idSet, value)
     def const(value: Double): Attribute[Double] =
+      graph_operations.AddConstantAttribute.run(self.idSet, value)
+    def const(value: Int): Attribute[Int] =
       graph_operations.AddConstantAttribute.run(self.idSet, value)
 
     def +(other: EdgeBundle) =
