@@ -1,9 +1,11 @@
 // A DataFrame datasource for LynxKite projects.
-package com.lynxanalytics.biggraph
+package com.lynxanalytics.biggraph.table
 
 import org.apache.spark.rdd
 import org.apache.spark.sql
 
+import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
