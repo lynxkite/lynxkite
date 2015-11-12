@@ -230,6 +230,7 @@ angular.module('biggraph').factory('util', function utilFactory(
         templateUrl: 'report-error.html',
         controller: 'ReportErrorCtrl',
         resolve: { alert: function() { return alert; } },
+        animation: false,  // Protractor does not like the animation.
       });
     },
 
