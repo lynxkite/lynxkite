@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark
+import org.scalatest
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
@@ -64,8 +65,12 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
   }
 }
 
-trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment {
+trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment
+    with scalatest.Suite with scalatest.BeforeAndAfter {
   PrefixRepository.dropResolutions()
+  after {
+    dataManager.waitAllFutures()
+  }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
