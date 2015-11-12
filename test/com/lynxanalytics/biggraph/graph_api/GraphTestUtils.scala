@@ -49,53 +49,35 @@ trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManager: MetaGraphManager = MetaRepositoryManager(cleanMetaManagerDir)
 }
 
-trait HaveCleanup {
-  def addCleanup(fn: => Unit) {
-    cleanups += { () => fn }
-  }
-  private val cleanups = collection.mutable.ListBuffer[() => Unit]()
-  protected def runCleanup() = {
-    for (c <- cleanups) {
-      c()
-    }
-  }
-}
-
-trait TestCleanup extends HaveCleanup with scalatest.Suite with scalatest.BeforeAndAfter {
-  after { runCleanup() }
-}
-
-trait TestDataManager extends TestTempDir with TestSparkContext with HaveCleanup {
+trait TestDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager: DataManager = {
     val dataDir = getDirForDataManager()
-    val dm = new DataManager(sparkContext, dataDir)
-    addCleanup { dm.waitAllFutures() }
-    dm
+    new DataManager(sparkContext, dataDir)
   }
 }
 
 // A TestDataManager that has an ephemeral path, too.
-trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext with HaveCleanup {
+trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
   def cleanDataManagerEphemeral: DataManager = {
     val permanentDir = getDirForDataManager()
     val ephemeralDir = getDirForDataManager()
-    val dm = new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
-    addCleanup { dm.waitAllFutures() }
-    dm
+    new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
   }
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment
-    with TestCleanup {
+    with scalatest.Suite with scalatest.BeforeAndAfter {
   PrefixRepository.dropResolutions()
+  after {
+    dataManager.waitAllFutures()
+  }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
 
-trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphemeral
-    with TestCleanup {
+trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphemeral {
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManagerEphemeral
