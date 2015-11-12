@@ -35,7 +35,7 @@ object Scripting {
     def const(value: Int): Attribute[Int] =
       graph_operations.AddConstantAttribute.run(self.idSet, value)
 
-    def +(other: EdgeBundle) =
+    def concat(other: EdgeBundle) =
       new BundleChain(Seq(self, other)).getCompositeEdgeBundle._1
 
     def countScalar: Scalar[Long] = // Named to distinguish from EntityRDDData.count.
