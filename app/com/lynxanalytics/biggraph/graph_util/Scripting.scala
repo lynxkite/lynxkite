@@ -62,7 +62,7 @@ object Scripting {
     def countScalar: Scalar[Long] = // Named to distinguish from EntityRDDData.count.
       graph_operations.Count.run(self.vertexSet)
 
-    def pull(function: EdgeBundle) =
+    def pullVia(function: EdgeBundle) =
       graph_operations.PulledOverVertexAttribute.pullAttributeVia(self, function)
 
     def fallback(fallback: Attribute[T]): Attribute[T] = {

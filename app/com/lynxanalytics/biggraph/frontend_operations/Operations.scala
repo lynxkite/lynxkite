@@ -410,9 +410,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.edgeBundle = newGraph.es
       project.newVertexAttribute("stringID", newGraph.stringID)
       for ((name, attr) <- oldAttrs) {
-        project.edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, newGraph.embedding)
+        project.edgeAttributes(name) = attr.pullVia(newGraph.embedding)
       }
     }
   })
@@ -755,16 +753,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         result.belongsTo = combination.belongsTo
         for ((name, attr) <- attrs) {
           // These names are already prefixed.
-          result.vertexAttributes(name) =
-            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-              attr, combination.origin1)
+          result.vertexAttributes(name) = attr.pullVia(combination.origin1)
         }
         for ((name, attr) <- seg.vertexAttributes) {
           // Add prefix for the new attributes.
           result.newVertexAttribute(
             s"${seg.segmentationName}_$name",
-            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-              attr, combination.origin2))
+            attr.pullVia(combination.origin2))
         }
       }
       // Calculate sizes and ids at the end.
@@ -1385,9 +1380,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = op(op.belongsTo, seg.belongsTo).result
       parent.edgeBundle = result.es
       for ((name, attr) <- project.vertexAttributes) {
-        parent.edgeAttributes(s"${seg.segmentationName}_$name") =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, result.origin)
+        parent.edgeAttributes(s"${seg.segmentationName}_$name") = attr.pullVia(result.origin)
       }
     }
   })
@@ -1500,9 +1493,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
         project.edgeBundle = edgeInduction.induced
         for ((name, eAttr) <- oldEAttrs) {
-          project.edgeAttributes(name) =
-            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-              eAttr, edgeInduction.embedding)
+          project.edgeAttributes(name) = eAttr.pullVia(edgeInduction.embedding)
         }
       }
     }
@@ -2113,12 +2104,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.vertexAttributes
           .map {
             case (name, attr) =>
-              name -> attr.pull(vsUnion.injections(0).reverse)
+              name -> attr.pullVia(vsUnion.injections(0).reverse)
           },
         other.vertexAttributes
           .map {
             case (name, attr) =>
-              name -> attr.pull(vsUnion.injections(1).reverse)
+              name -> attr.pullVia(vsUnion.injections(1).reverse)
           })
       val ebInduced = Option(project.edgeBundle).map { eb =>
         val op = graph_operations.InducedEdgeBundle()
@@ -2159,17 +2150,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val newEdgeAttributes = unifyAttributes(
         project.edgeAttributes
           .map {
-            case (name, attr) =>
-              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-                attr,
-                myEbInjection)
+            case (name, attr) => name -> attr.pullVia(myEbInjection)
           },
         other.edgeAttributes
           .map {
-            case (name, attr) =>
-              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-                attr,
-                otherEbInjection)
+            case (name, attr) => name -> attr.pullVia(otherEbInjection)
           })
 
       project.vertexSet = vsUnion.union
@@ -2222,8 +2207,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                   op.candidates, candidates)
           .result
       }
-      val newLeftName = leftName.pull(fingerprinting.matching.reverse)
-      val newRightName = rightName.pull(fingerprinting.matching)
+      val newLeftName = leftName.pullVia(fingerprinting.matching.reverse)
+      val newRightName = rightName.pullVia(fingerprinting.matching)
 
       project.scalars("fingerprinting matches found") = fingerprinting.matching.countScalar
       project.vertexAttributes(params("leftName")) = newLeftName.fallback(leftName)
@@ -2249,8 +2234,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- project.vertexAttributes.toMap) {
         parent.newVertexAttribute(
           prefix + name,
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, seg.belongsTo))
+          attr.pullVia(seg.belongsTo))
       }
     }
   })
@@ -2269,7 +2253,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- parent.vertexAttributes.toMap) {
         project.newVertexAttribute(
           prefix + name,
-          attr.pull(seg.belongsTo.reverse))
+          attr.pullVia(seg.belongsTo.reverse))
       }
     }
   })
@@ -2616,8 +2600,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       project.edgeBundle = induction.induced
       for ((name, attr) <- parent.edgeAttributes) {
-        project.edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, induction.embedding)
+        project.edgeAttributes(name) = attr.pullVia(induction.embedding)
       }
     }
   })
@@ -2968,7 +2951,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
-      pullBundleOpt.map(attribute.pull(_)).getOrElse(attribute)
+      pullBundleOpt.map(attribute.pullVia(_)).getOrElse(attribute)
     }
   }
 
