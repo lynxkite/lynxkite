@@ -30,6 +30,15 @@ trait BigGraphEnvironment {
   def sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
+
+  private val uniqueId = s"env-${graph_util.Timestamp}"
+  table.DefaultSource.env(uniqueId) = this // Register with table.DefaultSource.
+  def projectTable(project: String): spark.sql.DataFrame = {
+    dataManager.sqlContext.read
+      .format("com.lynxanalytics.biggraph.table")
+      .option("environment", uniqueId)
+      .load(project)
+  }
 }
 
 object BigGraphEnvironmentImpl {

@@ -10,14 +10,14 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 object DefaultSource {
-  // Environments can be set here. The "default" environment is used by default.
+  // BigGraphEnvironments register here.
   val env = collection.mutable.Map[String, BigGraphEnvironment]()
 }
 class DefaultSource extends sql.sources.RelationProvider {
   def createRelation(sqlContext: sql.SQLContext, parameters: Map[String, String]) = {
     val path = parameters("path")
-    val envName = parameters.getOrElse("environment", "default")
-    new ProjectRelation(DefaultSource.env(envName), sqlContext, path)
+    val environment = parameters("environment")
+    new ProjectRelation(DefaultSource.env(environment), sqlContext, path)
   }
 }
 
