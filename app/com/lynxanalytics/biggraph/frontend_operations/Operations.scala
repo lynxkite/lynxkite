@@ -2178,7 +2178,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("weights", "Edge weights",
         options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
       NonNegInt("mo", "Minimum overlap", default = 1),
-      Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
+      Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
+      Param("mode", "Weighting Mode", defaultValue = "InverseInDegree"))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(vertexAttributes[String].size >= 2, "Two string attributes are needed.")
@@ -2212,8 +2213,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, project.edgeBundle)(op.leftName, leftName)(op.rightName, rightName)
           .result.candidates
       }
-      /*val fingerprinting = {
-        val op = graph_operations.Fingerprinting(mo, ms)
+      val fingerprinting = {
+        val op = graph_operations.Fingerprinting(mo, ms, params("mode"))
         op(
           op.leftEdges, project.edgeBundle)(
             op.leftEdgeWeights, weights)(
@@ -2221,8 +2222,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 op.rightEdgeWeights, weights)(
                   op.candidates, candidates)
           .result
-      }*/
-      val fingerprinting = {
+      }
+      /*val fingerprinting = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
           op.leftEdges, allToBothDefinedEdges)(
@@ -2231,7 +2232,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 op.rightEdgeWeights, pulledWeight)(
                   op.candidates, candidates)
           .result
-      }
+      }*/
       val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
         leftName, reverse(fingerprinting.matching))
       val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(

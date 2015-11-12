@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 // For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
 // based on the network structure.
 object Fingerprinting extends OpFromJson {
+  private val weightingParameter = NewParameter("weightingMode", "InverseInDegree")
   class Input extends MagicInputSignature {
     val left = vertexSet
     val right = vertexSet
@@ -33,19 +34,25 @@ object Fingerprinting extends OpFromJson {
     val rightSimilarities = vertexAttribute[Double](inputs.right.entity)
   }
   def fromJson(j: JsValue) =
-    Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
+    Fingerprinting(
+      (j \ "minimumOverlap").as[Int],
+      (j \ "minimumSimilarity").as[Double],
+      weightingParameter.fromJson(j))
 
   val maxIterations = 30
 }
 case class Fingerprinting(
   minimumOverlap: Int,
-  minimumSimilarity: Double)
+  minimumSimilarity: Double,
+  weightingMode: String = "InverseInDegree")
     extends TypedMetaGraphOp[Fingerprinting.Input, Fingerprinting.Output] {
   import Fingerprinting._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity)
+  override def toJson =
+    Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity) ++
+      weightingParameter.toJson(weightingMode)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -132,12 +139,35 @@ case class Fingerprinting(
             // of the indegree from left and from right if both are defined, otherwise just take the
             // one that's defined.
             val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
-            //val weights = degrees.mapValues(ds => ds.size / ds.sum)
-            val weights = degrees.mapValues(ds => ds.sum / ds.size)
+            val weights = weightingMode match {
+              case "InDegree" => degrees.mapValues(ds => ds.sum / ds.size)
+              case "InverseInDegree" => degrees.mapValues(ds => ds.size / ds.sum)
+              case "Weird" => degrees.map {
+                case (key, ds) =>
+                  val inverseDeg = (ds.size / ds.sum) min 1
+                  if (ln.contains(key)) key -> inverseDeg
+                  else key -> (1 - inverseDeg)
+              }
+              case "SmoothWeird" => degrees.map {
+                case (key, ds) =>
+                  val deg = ds.sum / ds.size
+                  val smoothing = 5.0
+                  val inverseDeg = smoothing / (deg + smoothing - 1)
+                  if (ln.contains(key)) key -> inverseDeg
+                  else key -> (1 - inverseDeg)
+              }
+              case "OtherSmoothWeird" => degrees.map {
+                case (key, ds) =>
+                  val smoothing = 1.0
+                  val inverseDeg = ds.size / ds.sum
+                  if (ln.contains(key)) key -> (smoothing + inverseDeg)
+                  else key -> (smoothing + 1.0 - inverseDeg)
+              }
+            }
             // Calculate similarity score.
             val isect = common.map(k => (lw(k) min rw(k)) * weights(k)).sum
             val union = all.map(k => (lw(k) max rw(k)) * weights(k)).sum
-            val similarity = isect / union
+            val similarity = isect / (union + 5.0)
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
           }
