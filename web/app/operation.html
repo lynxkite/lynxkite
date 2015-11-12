@@ -24,7 +24,11 @@
     </p>
   </div>
   <!-- For documented operations. -->
-  <p ng-if="!op.isWorkflow" help-id="{{op.id}}" remove-header="yes" class="list-group-item description"></p>
+  <p ng-if="!op.isWorkflow"
+     help-id="{{op.id}}"
+     remove-header="yes"
+     scalars="scalars"
+     class="list-group-item description"></p>
 
   <p ng-if="op.parameters.length === 0" class="list-group-item text-center">
     No parameters

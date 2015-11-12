@@ -207,6 +207,12 @@ Side.prototype = {
     this.submitOperation(this.toolbox);
   },
 
+  expectOperationScalar: function(name, text) {
+    var cssSelector = 'value[ref="scalars[\'' + name + '\']"';
+    var valueElement = this.toolbox.element(by.css(cssSelector));
+    expect(valueElement.getText()).toBe(text);
+  },
+
   setAttributeFilter: function(attributeName, filterValue) {
     var filterBox = this.side.element(
       by.css('.attribute input[name="' + attributeName + '"]'));

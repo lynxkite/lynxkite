@@ -2,7 +2,7 @@
 //  https://drive.google.com/a/lynxanalytics.com/file/d/0B4_SBhzYAJK8VnJqLUNJdnoyalk/view?usp=sharing
 
 // ========= Preparing the LinkedIn graph ==================
-linkedin = lynx.project('linkedin for FP', reset = true)
+linkedin = lynx.newProject('linkedin for FP')
 
 // Import linkedin vertices
 linkedin.importVerticesFromCSVFiles(
@@ -66,7 +66,7 @@ linkedin.mergeTwoAttributes(
 
 
 // ========= Preparing the FaceBook graph ==================
-fb = lynx.project('facebook for FP', reset = true)
+fb = lynx.newProject('facebook for FP')
 fb.importVerticesFromCSVFiles(
   allow_corrupt_lines: 'no',
   delimiter: ',',
