@@ -1,7 +1,7 @@
 'use strict';
 
 /* global protractor, by */
-var lib = require('./test-lib.js');
+var lib = require('../test-lib.js');
 var K = protractor.Key;
 
 module.exports = function(fw) {

@@ -22,7 +22,7 @@ EOF
 # Start backend.
 KITE_SITE_CONFIG="conf/kiterc_template" \
 KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" \
-  stage/bin/biggraph interactive &
+  stage/bin/biggraph interactive 2> /dev/null &
 KITE_PID=$!
 function kill_backend {
   echo "Shutting down server on port $KITE_PID."
@@ -36,4 +36,4 @@ cd web
 # Make sure the webdriver is installed.
 node node_modules/protractor/bin/webdriver-manager update
 # Run test against backend.
-grunt test_e2e --port=$PORT "$@"
+grunt test --port=$PORT "$@"
