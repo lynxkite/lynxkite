@@ -101,7 +101,7 @@ class SparkSQLTest extends FunSuite with TestGraphOp with BeforeAndAfter {
     }
 
     run("Example Graph", Map())
-    val df = projectTable("df-test")
+    val df = dataFrame.load("df-test")
     df.printSchema()
     df.show()
   }
