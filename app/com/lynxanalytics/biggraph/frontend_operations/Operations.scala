@@ -1509,7 +1509,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
-    val edgesAndKey: Attribute[((ID, ID), T)] = edgesAsAttr.join(keyAttr)
+    val edgesAndKey: Attribute[((ID, ID), T)] = edgesAsAttr join keyAttr
     val op = graph_operations.MergeVertices[((ID, ID), T)]()
     op(op.attr, edgesAndKey).result
   }
@@ -2151,8 +2151,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 op.injections, idUnion.injections.map(_.entity)).result.union
           }
           (ebUnion,
-            idUnion.injections(0).reverse + ebInduced.get.embedding,
-            idUnion.injections(1).reverse + otherEbInduced.get.embedding)
+            idUnion.injections(0).reverse concat ebInduced.get.embedding,
+            idUnion.injections(1).reverse concat otherEbInduced.get.embedding)
         } else {
           (null, null, null)
         }
@@ -2286,7 +2286,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val ms = params("ms").toDouble
 
       val candidates = seg.belongsTo
-      val segNeighborsInParent = project.edgeBundle + seg.belongsTo.reverse
+      val segNeighborsInParent = project.edgeBundle concat seg.belongsTo.reverse
       val fingerprinting = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
