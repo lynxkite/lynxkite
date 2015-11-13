@@ -15,7 +15,7 @@ object AddReversedEdges extends OpFromJson {
     val newToOriginal = edgeBundle(
       esPlus.idSet, inputs.es.idSet,
       EdgeBundleProperties.surjection)
-    val attr = edgeAttribute[Long](esPlus)
+    val isNew = edgeAttribute[Double](esPlus)
   }
   def fromJson(j: JsValue) = AddReversedEdges()
 }
@@ -32,9 +32,9 @@ case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val es = inputs.es.rdd
-    val reverseAdded: SortedRDD[ID, (Edge, Long)] =
-      es.flatMapValues(e => Iterator((e, 0L), (Edge(e.dst, e.src), 1L)))
-    val renumbered: SortedRDD[ID, (ID, (Edge, Long))] =
+    val reverseAdded: SortedRDD[ID, (Edge, Double)] =
+      es.flatMapValues(e => Iterator((e, 0.0), (Edge(e.dst, e.src), 1.0)))
+    val renumbered: SortedRDD[ID, (ID, (Edge, Double))] =
       reverseAdded.randomNumbered(es.partitioner.get)
     output(o.esPlus, renumbered.mapValues { case (oldID, (e, _)) => e })
     output(
@@ -42,9 +42,9 @@ case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
       renumbered.mapValuesWithKeys {
         case (newID, (oldID, (e, _))) => Edge(newID, oldID)
       })
-    output(o.attr,
+    output(o.isNew,
       renumbered.mapValues {
         case (oldId, (e, attr)) => attr
-      }.asSortedRDD(es.partitioner.get))
+      })
   }
 }
