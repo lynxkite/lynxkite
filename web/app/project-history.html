@@ -1,4 +1,4 @@
-<div class="panel panel-default project history" ng-if="show && !workflowMode.enabled">
+<div class="panel panel-default project history" ng-if="show && !side.workflowEditor.enabled">
 
   <div class="panel-heading project-name">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
@@ -8,7 +8,8 @@
 
     <div class="btn-group pull-right">
       <label class="btn btn-default" ng-click="enterWorkflowSaving()" id="save-as-workflow-button"
-        tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom">
+        tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom"
+        ng-disabled="localChanges || remoteChanges">
         <i class="glyphicon glyphicon-film"></i>
       </label>
       <label class="btn btn-default" ng-click="closeHistory()"
@@ -92,7 +93,8 @@
         category="cat"
         params="step.request.op.parameters"
         editable="step.editable"
-        applying="validating">
+        applying="validating"
+        history-mode="true">
       </operation-toolbox>
       <div class="btn-group history-options pull-right" dropdown
         ng-hide="localChanges || !step.editable">
@@ -121,5 +123,3 @@
     </li>
   </div>
 </div>
-<workflow-saver mode="workflowMode" code="code" side="side">
-</workflow-saver>

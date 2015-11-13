@@ -234,18 +234,23 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         }
       };
 
-      scope.workflowMode = { enabled: false };
       scope.enterWorkflowSaving = function() {
         var history = scope.history;
+        var code = '';
         if (history && history.$resolved && !history.$error) {
           var requests = history.steps.map(function(step) {
             return step.request;
           });
-          scope.code = toGroovy(requests);
-        } else {
-          scope.code = '';
+          code = toGroovy(requests);
         }
-        scope.workflowMode.enabled = true;
+        scope.side.workflowEditor = {
+          enabled: true,
+          workflow: {
+            code: code,
+            name: '',
+            description: ''
+          }
+        };
       };
 
       function blankStep(seg) {

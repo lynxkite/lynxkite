@@ -43,6 +43,7 @@ angular.module('biggraph')
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
+      this.workflowEditor = { enabled: false };
     }
 
     // Creates a JSON formatted version of the current UI state of this side. The output is
@@ -136,14 +137,17 @@ angular.module('biggraph')
       vd.edgeAttrs.width = aggregated(
         this.resolveEdgeAttribute(this.state.attributeTitles.width),
         'sum');
-      vd.edgeAttrs.edgeLabel = aggregated(
-        this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
-        'vector');
-      var edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
-      if (edgeColorAttr !== undefined) {
-        vd.edgeAttrs.edgeColor =
-          (edgeColorAttr.typeName === 'Double') ?
-          aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'vector');
+
+      if (vd.graphMode !== 'bucketed') {
+        vd.edgeAttrs.edgeLabel = aggregated(
+          this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
+          'set');
+        var edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
+        if (edgeColorAttr !== undefined) {
+          vd.edgeAttrs.edgeColor =
+            (edgeColorAttr.typeName === 'Double') ?
+            aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'set');
+        }
       }
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);

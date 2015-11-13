@@ -40,7 +40,7 @@ module.exports = function (grunt) {
       },
       jsTest: {
         files: ['test/real-backend/*.js'],
-        tasks: ['newer:jshint:test', 'karma']
+        tasks: ['newer:jshint:test']
       },
       styles: {
         files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
@@ -393,23 +393,10 @@ module.exports = function (grunt) {
       }
     },
 
-    // Test settings
-    karma: {
-      unit: {
-        configFile: 'karma.conf.js',
-        singleRun: true
-      }
-    },
-
     protractor: {
-      onGruntServe: {
+      test: {
         options: {
-          configFile: 'test/protractor-on-grunt-serve.conf.js',
-        },
-      },
-      onRealBackend: {
-        options: {
-          configFile: 'test/protractor-on-real-backend.conf.js',
+          configFile: 'test/protractor.conf.js',
           args: {
             baseUrl: 'http://localhost:' + getPort() + '/',
           },
@@ -438,18 +425,7 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('test', [
-    'clean:server',
-    'wiredep',
-    'copy:styles',
-    'sass',
-    'autoprefixer',
-    'asciidoctor',
-    'connect:test',
-    'protractor:onGruntServe'
-  ]);
-
-  grunt.registerTask('test_e2e', [
-    'protractor:onRealBackend'
+    'protractor',
   ]);
   function getPort() {
     return grunt.option('port') || 9000;

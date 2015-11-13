@@ -1,32 +1,34 @@
 // Presents the parameters for saving an operation.
 'use strict';
 
-angular.module('biggraph').directive('workflowSaver', function(util) {
+angular.module('biggraph').directive('workflowEditor', function(side, util) {
   return {
     restrict: 'E',
-    scope: { code: '=', mode: '=', side: '=' },
-    templateUrl: 'workflow-saver.html',
+    scope: { side: '=', state: '=' },
+    templateUrl: 'workflow-editor.html',
     link: function(scope) {
-      scope.name = '';
-      scope.description = '';
-      scope.cancel = function() {
-        scope.mode.enabled = false;
+      scope.close = function() {
+        scope.state.enabled = false;
+        scope.state.workflow = {};
       };
       scope.save = function() {
         util.post(
           '/ajax/saveWorkflow',
           {
-            workflowName: scope.name,
-            stepsAsGroovy: scope.code,
-            description: scope.description,
+            workflowName: scope.state.workflow.name,
+            stepsAsGroovy: scope.state.workflow.code,
+            description: scope.state.workflow.description,
           }).then(function() {
-            scope.mode.enabled = false;
+            scope.close();
             scope.side.reloadAllProjects();
           });
       };
       scope.getParams = function() {
-        if (!scope.code) { return []; }
-        var params = scope.code.match(/params\[['"](.*?)['"]\]/g);
+        var code = '';
+        if (scope.state && scope.state.workflow && scope.state.workflow.code) {
+          code = scope.state.workflow.code;
+        }
+        var params = code.match(/params\[['"](.*?)['"]\]/g);
         if (!params) { return []; }
         var uniques = [];
         for (var i = 0; i < params.length; ++i) {

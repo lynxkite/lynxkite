@@ -59,11 +59,27 @@ private class BucketedAttributeSerialized(json: String) extends Serializable {
 
 class FilteredAttribute[T] private (
     protected val attributeGUID: UUID,
-    val filter: Filter[T]) extends AttributeFromGUID[T] {
+    val filter: Filter[T]) extends AttributeFromGUID[T] with Serializable with ToJson {
+
+  @throws(classOf[java.io.ObjectStreamException])
+  def writeReplace(): AnyRef = new FilteredAttributeSerialized(toJson.toString)
+
+  override def toJson = Json.obj(
+    "attributeGUID" -> attributeGUID.toString,
+    "filter" -> filter.toTypedJson)
 }
-object FilteredAttribute {
+object FilteredAttribute extends FromJson[FilteredAttribute[_]] {
   def apply[T](attribute: Attribute[T], filter: Filter[T]): FilteredAttribute[T] =
     new FilteredAttribute(attribute.gUID, filter)
+  def fromJson(j: JsValue) = new FilteredAttribute(
+    (j \ "attributeGUID").as[String].asUUID,
+    TypedJson.read[Filter[_]](j \ "filter"))
+}
+
+// Helper class for making FilteredAttribute Serializable without finalizing its structure.
+private class FilteredAttributeSerialized(json: String) extends Serializable {
+  @throws(classOf[java.io.ObjectStreamException])
+  def readResolve(): AnyRef = FilteredAttribute.fromJson(play.api.libs.json.Json.parse(json))
 }
 
 /*

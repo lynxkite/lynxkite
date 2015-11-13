@@ -1,11 +1,34 @@
 <div class="panel box col-sm-11 {{color}}">
-  <h1>{{op.title}}</h1>
+  <h1>
+    {{op.title}}
+    <div class="btn-group pull-right">
+      <label class="btn btn-default"
+             id="edit-operation-button"
+             ng-if="operationIsEditable()"
+             ng-click="editOperation()"
+             tootlip="Edit workflow">
+        <i class="glyphicon glyphicon-pencil"></i>
+      </label>
+    </div>
+  </h1>
 
   <!-- For workflows. -->
-  <p ng-if="op.description" class="list-group-item description"
-    ng-bind-html="op.description | trustAsHtml"></p>
+  <div ng-if="op.isWorkflow">
+    <p class="list-group-item description">
+      User defined workflow saved by
+      {{op.workflowAuthor}} at
+      {{op.id.split('/')[2] | date : 'dd-MM-yyyy hh:mm a'}}
+    </p>
+    <p ng-if="op.description" class="list-group-item description">
+      {{op.description}}
+    </p>
+  </div>
   <!-- For documented operations. -->
-  <p help-id="{{op.id}}" remove-header="yes" class="list-group-item description"></p>
+  <p ng-if="!op.isWorkflow"
+     help-id="{{op.id}}"
+     remove-header="yes"
+     scalars="scalars"
+     class="list-group-item description"></p>
 
   <p ng-if="op.parameters.length === 0" class="list-group-item text-center">
     No parameters
