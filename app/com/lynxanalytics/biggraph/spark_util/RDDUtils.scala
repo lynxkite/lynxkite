@@ -406,6 +406,14 @@ object Implicits {
           s" to RDD of size ${self.partitions.size}: $self")
       new AlreadySortedRDD(new AlreadyPartitionedRDD(self, partitioner))
     }
+    // Trust that this RDD is partitioned and sorted. Make sure it uses the given partitioner.
+    def asUniqueSortedRDD(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      assert(self.partitions.size == partitioner.numPartitions,
+        s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
+          s" to RDD of size ${self.partitions.size}: $self")
+      new AlreadySortedRDD(new AlreadyPartitionedRDD(self, partitioner)) with UniqueSortedRDD[K, V]
+    }
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
       toSortedRDD(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
@@ -420,6 +428,23 @@ object Implicits {
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
           SortedRDD.fromUnsorted(new spark.rdd.ShuffledRDD(self, partitioner))
+      }
+    }
+
+    // Sorts each partition of the RDD in isolation.
+    def uniqueToSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
+      uniqueToSortedRDD(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
+    def uniqueToSortedRDD(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+      self match {
+        case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
+          self
+        case self if partitioner eq self.partitioner.orNull =>
+          SortedRDD.fromUniqueUnsorted(self)
+        case self =>
+          // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
+          // partitioner.
+          SortedRDD.fromUniqueUnsorted(new spark.rdd.ShuffledRDD(self, partitioner))
       }
     }
 
