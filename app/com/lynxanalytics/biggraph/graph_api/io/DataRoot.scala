@@ -24,13 +24,24 @@ case class HadoopFileLike(root: DataRoot, path: Seq[String]) {
 class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
   // Contents of the top-level directories are cached.
   val contents = collection.mutable.Map[String, Set[String]]()
+
+  // Preload directories we are sure are needed (to avoid post-initialization slowness).
+  filesInTopDir(ScalarsDir)
+  filesInTopDir(EntitiesDir)
+  filesInTopDir(PartitionedDir)
+  filesInTopDir(OperationsDir)
+
+  def filesInTopDir(topDirName: String): Set[String] = {
+    contents.getOrElseUpdate(
+      topDirName,
+      (repositoryPath / topDirName / "*").list
+        .map(_.path.getName)
+        .toSet)
+  }
   def mayHaveExisted(path: Seq[String]) = {
     if (path.size < 2) true // Being incorrectly true is okay.
     else synchronized {
-      val files = contents.getOrElseUpdate(path.head,
-        (repositoryPath / path(0) / "*").list
-          .map(_.path.getName)
-          .toSet)
+      val files = filesInTopDir(path.head)
       files.contains(path(1))
     }
   }
