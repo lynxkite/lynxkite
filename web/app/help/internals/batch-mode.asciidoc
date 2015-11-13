@@ -28,14 +28,16 @@ namespace.
 The script can interact with LynxKite through the `lynx` object that is injected into its
 namespace.
 
- - `GroovyProject lynx.project(String name)` will return the given project, creating it if it
-   does not yet exist.
+ - `GroovyProject lynx.project(String name)` will return the given project,
+   creating it if it does not yet exist.
+ - `GroovyProject lynx.newProject(String name)` will return the given project,
+   resetting it to an empty state if it has already existed.
 
 The properties of `GroovyProject` are:
 
  - `Map<String, GroovyProject> segmentations` is the list of segmentations for the project.
  - `Map<String, GroovyScalar> scalars` is the list of scalars. `GroovyScalar` has a `toString()`
-   method that returns its value as a string.
+   and a `toDouble()` method, they return its value as a string/double respectively.
  - `Map<String, GroovyAttribute> vertexAttributes` and `Map<String, GroovyAttribute> edgeAttributes`
    are the vertex and edge attributes. `GroovyAttribute` has a `histogram()` method that returns
    a histogram of the attribute.
@@ -45,6 +47,9 @@ operation parameter. Rather than documenting these methods in detail, the recomm
 to run the operations in interactive mode, enter the <<project-history, history editor>> and the
 <<saving-a-workflow, workflow editor>> within. The correct Groovy code can then be copied from the
 workflow editor.
+
+`GroovyProject` also has a method `saveAs`. You can use this to save a project by a new name. It
+returns a `GroovyProject` object pointing to the project with the new name.
 
 ### Full example
 

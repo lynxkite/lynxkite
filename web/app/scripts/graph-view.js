@@ -286,7 +286,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu, xMin, xMax, i);
           }
           if (dataVs.mode === 'sampled') {
-            vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi]);
+            vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi], i);
           } else {
             vs = this.addBucketedVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi]);
           }
@@ -521,13 +521,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return resultMap;
   };
 
-  GraphView.prototype.addSampledVertices = function(data, offsetter, side, vertexGroup) {
+  GraphView.prototype.addSampledVertices = function(data, offsetter, side, vertexGroup, sideIndex) {
     var vertices = new Vertices(this);
     vertices.side = side;
     vertices.mode = 'sampled';
     vertices.offsetter = offsetter;
     vertices.vertexSetId = side.vertexSet.id;
-    vertices.leftOrRight = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
+    vertices.leftOrRight = sideIndex === 0 ? 'left' : 'right';
 
     for (var attr in side.vertexAttrs) {
       if (side.vertexAttrs[attr] !== undefined) {

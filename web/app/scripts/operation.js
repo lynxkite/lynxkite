@@ -1,7 +1,7 @@
 // Displays an operation (title, description, parameters, OK button).
 'use strict';
 
-angular.module('biggraph').directive('operation', function(util, hotkeys) {
+angular.module('biggraph').directive('operation', function(util, hotkeys /*, $timeout */) {
   return {
     restrict: 'E',
     scope: {
@@ -10,9 +10,12 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
       editable: '=',  // (Input.)
       params: '=',  // (Input/output.)
       applying: '=?',  // (Input.) Whether an operation is being applied currently.
+      sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
+      historyMode: '=',  // (Input.) Whether this operation is inside the history browser.
     },
     templateUrl: 'operation.html',
     link: function(scope, element) {
+      scope.scalars = {};
       scope.fileUploads = {};
       scope.$watch('op.parameters', function() {
         for (var i = 0; i < scope.op.parameters.length; ++i) {
@@ -28,6 +31,16 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
           }
         }
       });
+      scope.$watch('op.visibleScalars', function() {
+        scope.scalars = {};
+        var calculateScalars = !scope.historyMode;
+        for (var i = 0; i < scope.op.visibleScalars.length; ++i) {
+          var scalar = scope.op.visibleScalars[i];
+          scope.scalars[scalar.id] = util.get(
+            '/ajax/scalarValue',
+            { scalarId: scalar.guid, calculate: calculateScalars });
+        }
+      });
 
       scope.apply = function() {
         if (!scope.op.status.enabled || scope.applying || scope.busy) {
@@ -39,23 +52,34 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
         combo: 'enter',
         callback: scope.apply,
       });
+      scope.editOperation = function() {
+        scope.sideWorkflowEditor.enabled = true;
+        scope.sideWorkflowEditor.workflow =
+          util.get('/ajax/workflow', { id: scope.op.id });
+      };
+      scope.operationIsEditable = function() {
+        return scope.op.isWorkflow && scope.sideWorkflowEditor;
+      };
 
-      // Focus the first input box when the operation is opened.
-      scope.$watch(function() {
-        // Have to watch for the parameters to finish rendering.
-        return element.find('input, select')[0];
-      }, function(firstInput) {
-        if (firstInput) {
-          if (firstInput.select) {
-            firstInput.select();
+      if (!scope.historyMode) {
+        // Focus the first input box when the operation is opened.
+        // Don't do this in history mode to avoid random scrolling.
+        scope.$watch(function() {
+          // Have to watch for the parameters to finish rendering.
+          return element.find('input, select')[0];
+        }, function(firstInput) {
+          if (firstInput) {
+            if (firstInput.select) {
+              firstInput.select();
+            } else {
+              firstInput.focus();
+            }
           } else {
-            firstInput.focus();
+            // No parameters? Focus on the OK button.
+            element.find('.ok-button').focus();
           }
-        } else {
-          // No parameters? Focus on the OK button.
-          element.find('.ok-button').focus();
-        }
-      });
+        });
+      }
     }
   };
 });

@@ -6,6 +6,7 @@
   <div class="menu-title" ng-if="model.data.header">{{model.data.header}}</div>
   <div class="menu-item"
        ng-repeat="action in model.data.actions"
+       id="menu-{{ action.title | id }}"
        ng-click="executeAction(action)">
     {{action.title}}
   </div>
