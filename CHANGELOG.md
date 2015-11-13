@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.5.8
+
 ### 1.5.7
 
  - New aggregator added for all non-global aggregation operations: you can collect all unique
