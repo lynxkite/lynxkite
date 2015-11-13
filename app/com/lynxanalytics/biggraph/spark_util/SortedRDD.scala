@@ -29,6 +29,11 @@ object SortedRDD {
     val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
     new ArrayBackedSortedRDD(arrayRDD)
   }
+  // Creates a SortedRDD from an unsorted but partitioned RDD.
+  def fromUniqueUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): UniqueSortedRDD[K, V] = {
+    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
+    new ArrayBackedSortedRDD(arrayRDD) with UniqueSortedRDD[K, V]
+  }
 }
 
 private object SortedRDDUtil {
@@ -142,31 +147,65 @@ private object SortedRDDUtil {
   }
 }
 
+sealed trait SortedRDDRecipie[K, V] {
+  def asGeneral: SortedRDD[K, V]
+  def assertUnique: UniqueSortedRDD[K, V]
+}
+class DerivedSortedRDDRecipie[K: Ordering, VOld, VNew](
+    base: SortedRDD[K, VOld],
+    derivation: DerivedSortedRDD.Derivation[K, VOld, VNew]) extends SortedRDDRecipie[K, VNew] {
+  def asGeneral = new DerivedSortedRDD(base, derivation)
+  def assertUnique = new DerivedSortedRDD(base, derivation) with UniqueSortedRDD[K, VNew]
+}
+class BiDerivedSortedRDDRecipie[K: Ordering, VOld1, VOld2, VNew](
+  base1: SortedRDD[K, VOld1],
+  base2: SortedRDD[K, VOld2],
+  derivation: BiDerivedSortedRDD.Derivation[K, VOld1, VOld2, VNew])
+    extends SortedRDDRecipie[K, VNew] {
+
+  def asGeneral = new BiDerivedSortedRDD(base1, base2, derivation)
+  def assertUnique = new BiDerivedSortedRDD(base1, base2, derivation) with UniqueSortedRDD[K, VNew]
+}
+class RestrictedArrayBackedSortedRDDRecipie[K: Ordering, V](
+    arrayRDD: SortedArrayRDD[K, V],
+    ids: IndexedSeq[K]) extends SortedRDDRecipie[K, V] {
+  def asGeneral = new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
+  def assertUnique = new RestrictedArrayBackedSortedRDD(arrayRDD, ids) with UniqueSortedRDD[K, V]
+}
+
 // An RDD with each partition sorted by the key. "self" must already be sorted.
-abstract class SortedRDD[K: Ordering, V] private[spark_util] (
-  val self: RDD[(K, V)])
-    extends RDD[(K, V)](self) {
+abstract class SortedRDD[K, V](val self: RDD[(K, V)])(
+    implicit val kOrder: Ordering[K]) extends RDD[(K, V)](self) {
+
   assert(
     self.partitioner.isDefined,
     s"$self was used to create a SortedRDD, but it wasn't partitioned")
+
+  //implicit val kOrder: Ordering[K] = implicitly[Ordering[K]]
+
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.iterator(split, context)
 
+  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, V]
+
   // See comments at DerivedSortedRDD before blindly using this method!
-  private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
+  protected def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
     new DerivedSortedRDD(this, derivation)
 
   // See comments at DerivedSortedRDD before blindly using this method!
-  private def biDeriveWith[W, R](
+  protected def biDeriveWith[W, R](
     other: SortedRDD[K, W],
     derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
     new BiDerivedSortedRDD(this, other, derivation)
 
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
-  def sortedJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] =
-    biDeriveWith[W, (V, W)](
+  def sortedJoin[W](
+    other: /*Unique*/ SortedRDD[K, W]): SortedRDD[K, (V, W)] = sortedJoinRecipie(other).asGeneral
+  def sortedJoinRecipie[W](other: /*Unique*/ SortedRDD[K, W]): SortedRDDRecipie[K, (V, W)] =
+    new BiDerivedSortedRDDRecipie[K, V, W, (V, W)](
+      this,
       other,
       { (first, second) =>
         SortedRDDUtil.assertMatchingRDDs(first, second)
@@ -190,7 +229,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
 
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
-  def sortedLeftOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, Option[W])] =
+  def sortedLeftOuterJoin[W](other: /*Unique*/ SortedRDD[K, W]): SortedRDD[K, (V, Option[W])] =
     biDeriveWith[W, (V, Option[W])](
       other,
       { (first, second) =>
@@ -200,19 +239,16 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
         }
       })
 
-  // Returns an RDD with the union of the keyset of this and other. For each key it returns two
-  // Options with the value for the key in this and in the other RDD.
-  //
-  // Both RDDs must have unique keys. Otherwise the world might end.
-  def fullOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (Option[V], Option[W])] =
-    biDeriveWith[W, (Option[V], Option[W])](
+  def fullOuterJoin[W](other: SortedRDD[K, W]): UniqueSortedRDD[K, (Option[V], Option[W])] =
+    new BiDerivedSortedRDDRecipie(
+      this,
       other,
       { (first: SortedRDD[K, V], second: SortedRDD[K, W]) =>
         SortedRDDUtil.assertMatchingRDDs(first, second)
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.fullOuterMerge(it1.buffered, it2.buffered).iterator
         }
-      })
+      }).assertUnique
 
   def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] =
     derive(_.self.mapValues(x => f(x)))
@@ -270,9 +306,33 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   }
 
   // The ids seq needs to be sorted.
-  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V]
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] = restrictToIdSetRecipie(ids).asGeneral
 
   def cacheBackingArray(): Unit
+}
+
+trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
+  override def sortedJoin[W](
+    other: /*Unique*/ SortedRDD[K, W]): SortedRDD[K, (V, W)] = sortedJoinRecipie(other).assertUnique
+
+  // Returns an RDD with the union of the keyset of this and other. For each key it returns two
+  // Options with the value for the key in this and in the other RDD.
+  //
+  // Both RDDs must have unique keys. Otherwise the world might end.
+  def fullOuterJoinInTheFutureBelongsHere[W](other: UniqueSortedRDD[K, W]): UniqueSortedRDD[K, (Option[V], Option[W])] =
+    new BiDerivedSortedRDDRecipie(
+      this,
+      other,
+      { (first: SortedRDD[K, V], second: SortedRDD[K, W]) =>
+        SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
+          SortedRDDUtil.fullOuterMerge(it1.buffered, it2.buffered).iterator
+        }
+      }).assertUnique
+
+  // The ids seq needs to be sorted.
+  override def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
+    restrictToIdSetRecipie(ids).assertUnique
 }
 
 // SortedRDD which was derived from one other sorted rdd without changing the id space.
@@ -288,8 +348,8 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
   derivation: DerivedSortedRDD.Derivation[K, VOld, VNew])
     extends SortedRDD[K, VNew](derivation(source)) {
 
-  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, VNew] =
-    new DerivedSortedRDD(source.restrictToIdSet(ids), derivation)
+  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, VNew] =
+    new DerivedSortedRDDRecipie(source.restrictToIdSet(ids), derivation)
 
   def cacheBackingArray(): Unit =
     source.cacheBackingArray()
@@ -306,8 +366,8 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
   derivation: BiDerivedSortedRDD.Derivation[K, VOld1, VOld2, VNew])
     extends SortedRDD[K, VNew](derivation(source1, source2)) {
 
-  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, VNew] =
-    new BiDerivedSortedRDD(
+  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, VNew] =
+    new BiDerivedSortedRDDRecipie(
       source1.restrictToIdSet(ids), source2.restrictToIdSet(ids), derivation)
 
   def cacheBackingArray(): Unit = {
@@ -357,8 +417,8 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
     extends SortedRDD[K, V](data) {
   // Normal operations run on the iterators. Arrays are only created when necessary.
   lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
-  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
-    new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
+  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, V] =
+    new RestrictedArrayBackedSortedRDDRecipie(arrayRDD, ids)
   def cacheBackingArray(): Unit =
     arrayRDD.cache()
 }
@@ -368,8 +428,8 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
       arrayRDD.mapPartitions(
         it => it.next._2.iterator,
         preservesPartitioning = true)) {
-  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
-    new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
+  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, V] =
+    new RestrictedArrayBackedSortedRDDRecipie(arrayRDD, ids)
 
   def cacheBackingArray(): Unit =
     arrayRDD.cache()
@@ -447,9 +507,10 @@ object RestrictedArrayBackedSortedRDD {
 private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
   arrayRDD: SortedArrayRDD[K, V],
   ids: IndexedSeq[K])
-    extends SortedRDD[K, V](RestrictedArrayBackedSortedRDD.restrictArrayRDDToIds(arrayRDD, ids)) {
-  def restrictToIdSet(newIds: IndexedSeq[K]): SortedRDD[K, V] =
-    new RestrictedArrayBackedSortedRDD(arrayRDD, ids.intersect(newIds))
+    extends SortedRDD[K, V](
+      RestrictedArrayBackedSortedRDD.restrictArrayRDDToIds(arrayRDD, ids)) {
+  def restrictToIdSetRecipie(newIds: IndexedSeq[K]): SortedRDDRecipie[K, V] =
+    new RestrictedArrayBackedSortedRDDRecipie(arrayRDD, ids.intersect(newIds))
 
   def cacheBackingArray: Unit =
     arrayRDD.cache()
