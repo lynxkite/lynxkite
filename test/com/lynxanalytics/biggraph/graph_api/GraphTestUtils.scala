@@ -58,9 +58,14 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 
 // A TestDataManager that has an ephemeral path, too.
 trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
+  // Override this if you want to do some preparation to the data directories before
+  // the data manager is created.
+  def prepareDataRepos(permanent: HadoopFile, ephemeral: HadoopFile): Unit = {
+  }
   def cleanDataManagerEphemeral: DataManager = {
     val permanentDir = getDirForDataManager()
     val ephemeralDir = getDirForDataManager()
+    prepareDataRepos(permanentDir, ephemeralDir)
     new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
   }
 }
