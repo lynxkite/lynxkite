@@ -174,33 +174,33 @@ class RestrictedArrayBackedSortedRDDRecipie[K: Ordering, V](
 }
 
 // An RDD with each partition sorted by the key. "self" must already be sorted.
-abstract class SortedRDD[K, V](val self: RDD[(K, V)])(
+abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
+    // We need to make this implicit explicit so that it's visible from SortedRDD's subtraits.
     implicit val kOrder: Ordering[K]) extends RDD[(K, V)](self) {
 
   assert(
     self.partitioner.isDefined,
     s"$self was used to create a SortedRDD, but it wasn't partitioned")
-
-  //implicit val kOrder: Ordering[K] = implicitly[Ordering[K]]
-
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.iterator(split, context)
 
-  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, V]
-
+  // TODO: derive and biDeriveWith will go away. It's kept now so that I don't have to change
+  // everything yet.
   // See comments at DerivedSortedRDD before blindly using this method!
-  protected def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
+  private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
     new DerivedSortedRDD(this, derivation)
 
   // See comments at DerivedSortedRDD before blindly using this method!
-  protected def biDeriveWith[W, R](
+  private def biDeriveWith[W, R](
     other: SortedRDD[K, W],
     derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
     new BiDerivedSortedRDD(this, other, derivation)
 
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
+  // TODO: Parameter will be UniqueSortedRDD, left as is so that I don't have to change client code
+  // yet.
   def sortedJoin[W](
     other: /*Unique*/ SortedRDD[K, W]): SortedRDD[K, (V, W)] = sortedJoinRecipie(other).asGeneral
   def sortedJoinRecipie[W](other: /*Unique*/ SortedRDD[K, W]): SortedRDDRecipie[K, (V, W)] =
@@ -305,6 +305,9 @@ abstract class SortedRDD[K, V](val self: RDD[(K, V)])(
     combineByKey(createCombiner, mergeValue)
   }
 
+  // Concrete implementing classes should override this one.
+  def restrictToIdSetRecipie(ids: IndexedSeq[K]): SortedRDDRecipie[K, V]
+
   // The ids seq needs to be sorted.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] = restrictToIdSetRecipie(ids).asGeneral
 
@@ -312,6 +315,9 @@ abstract class SortedRDD[K, V](val self: RDD[(K, V)])(
 }
 
 trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
+  // This is how it's done if the implementation does not need to change.
+  // Of course complete new implementations or new methods are OK here, like
+  // fullOuterJoinInTheFutureBelongsHere below.
   override def sortedJoin[W](
     other: /*Unique*/ SortedRDD[K, W]): SortedRDD[K, (V, W)] = sortedJoinRecipie(other).assertUnique
 
