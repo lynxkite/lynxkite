@@ -7,7 +7,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
 
 // Things tested here are unfortunately not trivial due to things not being registered in kryo...
-class SparkSQLTest extends FunSuite with TestGraphOp with BeforeAndAfter {
+class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
   var oldOut: java.io.PrintStream = null
   before {
     assert(oldOut == null)
@@ -86,7 +86,9 @@ class SparkSQLTest extends FunSuite with TestGraphOp with BeforeAndAfter {
   test("DataFrame from LynxKite project") {
     import com.lynxanalytics.biggraph.controllers._
 
-    val controller = new BigGraphController(this)
+    val env = new TestGraphOp {}
+    implicit val mm = env.metaGraphManager
+    val controller = new BigGraphController(env)
     val projectName = "df-test"
     val projectFrame = ProjectFrame.fromName(projectName)
     val subProject = projectFrame.subproject
@@ -101,7 +103,7 @@ class SparkSQLTest extends FunSuite with TestGraphOp with BeforeAndAfter {
     }
 
     run("Example Graph", Map())
-    val df = dataFrame.load("df-test")
+    val df = env.dataFrame.load("df-test")
     df.printSchema()
     df.show()
   }
