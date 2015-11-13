@@ -919,20 +919,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Add reversed edges", new StructureOperation(_, _) {
     def parameters = List(
-      Param("distattr", "Distinguishing edge attribute", defaultValue = "!unset")
+      Param("distattr", "Distinguishing edge attribute")
     )
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.AddReversedEdges()
-      val rev = op(op.es, project.edgeBundle).result
+      val rev = {
+        val op = graph_operations.AddReversedEdges()
+        op(op.es, project.edgeBundle).result
+      }
 
       project.pullBackEdges(
         project.edgeBundle,
         project.edgeAttributes.toIndexedSeq,
         rev.esPlus,
         rev.newToOriginal)
-      if (params("distattr") != "!unset") {
-        project.edgeAttributes(params("distattr")) = rev.attr
+      if (params("distattr").nonEmpty) {
+        project.edgeAttributes(params("distattr")) = rev.isNew
       }
     }
   })
