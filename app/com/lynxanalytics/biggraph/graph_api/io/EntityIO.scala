@@ -214,7 +214,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val pn = partitioner.numPartitions
     val from = bestPartitionedSource(entityLocation, pn)
     val oldRDD = from.loadEntityRawRDD(sc)
-    val newRDD = oldRDD.toSortedRDD(partitioner)
+    val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRawRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
@@ -227,7 +227,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
       s"There should be a valid legacy path at $legacyPath")
     val pn = partitioner.numPartitions
     val oldRDD = legacyRDD
-    val newRDD = oldRDD.toSortedRDD(partitioner)
+    val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
@@ -281,7 +281,7 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
                 parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
     val rdd = path.loadEntityRDD[Unit](sc)
-    new VertexSetData(entity, rdd.asSortedRDD(partitioner), Some(count))
+    new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
 }
 
@@ -303,7 +303,7 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
       entity,
-      coLocated.asSortedRDD(partitioner),
+      coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
 }
@@ -327,7 +327,7 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
       entity,
-      coLocated.asSortedRDD(partitioner),
+      coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
 }

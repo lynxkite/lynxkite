@@ -40,7 +40,7 @@ case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output
         outEdges.collect {
           case (id, outEdge) if inEdgeSources.contains(outEdge.dst) => id -> outEdge
         }
-    }.toSortedRDD(es.partitioner.get)
+    }.sortUnique(es.partitioner.get)
     output(o.symmetric, edges)
     output(o.injection, edges.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }

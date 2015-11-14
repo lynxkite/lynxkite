@@ -84,7 +84,7 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
     output(
       o.vertices,
       sc.parallelize((Adam to Wanda).map((_, ())))
-        .toSortedRDD(partitioner))
+        .sortUnique(partitioner))
     output(
       o.edges,
       sc.parallelize(Seq(
@@ -107,7 +107,7 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
         (eCatBob2, Edge(Cat, Bob)),
         (eMouseCat, Edge(Mouse, Cat)),
         (eFishWanda, Edge(Fish, Wanda))))
-        .toSortedRDD(partitioner))
+        .sortUnique(partitioner))
     output(o.name, sc.parallelize(Seq(
       (Adam, "Adam"),
       (Eve, "Eve"),
@@ -116,7 +116,7 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (Cat, "Cat"),
       (Fish, "Fish"),
       (Mouse, "Mouse"),
-      (Wanda, "Wanda"))).toSortedRDD(partitioner))
+      (Wanda, "Wanda"))).sortUnique(partitioner))
     output(o.age, sc.parallelize(Seq(
       (Adam, 20.3),
       (Eve, 18.2),
@@ -125,7 +125,7 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (Cat, 12.0),
       (Fish, 5.0),
       (Mouse, 41.0),
-      (Wanda, 26.1))).toSortedRDD(partitioner))
+      (Wanda, 26.1))).sortUnique(partitioner))
     output(o.gender, sc.parallelize(Seq(
       (Adam, "Male"),
       (Eve, "Female"),
@@ -134,10 +134,10 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (Cat, "Female"),
       (Fish, "Female"),
       (Mouse, "Male"),
-      (Wanda, "Female"))).toSortedRDD(partitioner))
+      (Wanda, "Female"))).sortUnique(partitioner))
     output(o.income, sc.parallelize(Seq(
       (Adam, 1000.0),
-      (Joe, 2000.0))).toSortedRDD(partitioner))
+      (Joe, 2000.0))).sortUnique(partitioner))
     output(o.location, sc.parallelize(Seq(
       (Adam, (40.71448, -74.00598)), // New York
       (Eve, (47.5269674, 19.0323968)), // Budapest
@@ -147,7 +147,7 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (Fish, (1.352083, 103.819836)), // Singapore
       (Mouse, (1.352083, 103.819836)), // Singapore
       (Wanda, (3.1412, 101.68653)) // Kuala Lumpur
-    )).toSortedRDD(partitioner))
+    )).sortUnique(partitioner))
     output(o.comment, sc.parallelize(Seq(
       (eAdamEve, "Adam loves Eve"),
       (eEveAdam, "Eve loves Adam"),
@@ -167,9 +167,9 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (eCatBob1, "The cat distracts Bob's attention"),
       (eCatBob2, "The cat steals Bob's phone"),
       (eMouseCat, "The mouse sees the cat"),
-      (eFishWanda, "The fish calls Wanda"))).toSortedRDD(partitioner))
+      (eFishWanda, "The fish calls Wanda"))).sortUnique(partitioner))
     output(o.weight, sc.parallelize((firstEdge to lastEdge).map { x => (x, x.toDouble) })
-      .toSortedRDD(partitioner))
+      .sortUnique(partitioner))
 
     output(o.greeting, "Hello world!")
   }

@@ -48,8 +48,8 @@ case class CombineSegmentations()
     val vToSeg12 = belongsTo1.join(belongsTo2)
     // Generate random IDs for the new segments.
     val segToSeg12 = vToSeg12.values.distinct.randomNumbered(vp)
-    val seg12ToSeg = segToSeg12.map { case (seg, seg12) => (seg12, seg) }.toSortedRDD(vp)
-    val seg12ToV = vToSeg12.map { case (v, seg12) => (seg12, v) }.toSortedRDD(vp)
+    val seg12ToSeg = segToSeg12.map { case (seg, seg12) => (seg12, seg) }.sortUnique(vp)
+    val seg12ToV = vToSeg12.map { case (v, seg12) => (seg12, v) }.sort(vp)
     val vToSeg = seg12ToV.sortedJoin(seg12ToSeg).values
     output(o.segments, segToSeg12.mapValues(_ => ()))
     output(o.belongsTo, vToSeg.map { case (v, seg) => Edge(v, seg) }.randomNumbered(vp))

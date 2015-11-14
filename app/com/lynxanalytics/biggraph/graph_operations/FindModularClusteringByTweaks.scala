@@ -571,10 +571,10 @@ case class FindModularClusteringByTweaks(
                   vs.map(vid => vid -> (cid, pid))
               }
           })
-        .toSortedRDD(vPart)
+        .sort(vPart)
       val perPartitionData = vertexMeta.sortedJoin(edgeLists)
         .map { case (vid, ((cid, pid), edges)) => pid -> (vid, cid, edges) }
-        .toSortedRDD(vPart)
+        .sort(vPart)
 
       val refinedContainedIn = perPartitionData.mapPartitionsWithIndex {
         case (pid, vertexIt) =>
@@ -607,7 +607,7 @@ case class FindModularClusteringByTweaks(
 
     val belongsToFromEdges = members
       .flatMap { case (cid, vids) => vids.map(_ -> cid) }
-      .toSortedRDD(vPart)
+      .sortUnique(vPart)
     val fullMembers = vs.sortedLeftOuterJoin(belongsToFromEdges)
       .map { case (vid, (_, cidOpt)) => cidOpt.getOrElse(vid) -> vid }.groupByKey()
     val clusters = fullMembers.randomNumbered(vPart).mapValues(_._2)

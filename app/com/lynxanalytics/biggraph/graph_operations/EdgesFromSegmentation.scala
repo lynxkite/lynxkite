@@ -35,7 +35,7 @@ case class EdgesFromSegmentation()
     implicit val id = inputDatas
     val belongsTo = inputs.belongsTo.rdd
     val p = belongsTo.partitioner.get
-    val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
+    val segToVs = belongsTo.values.map(e => e.dst -> e.src).sort(p)
     val segAndEdgeArray = segToVs.groupByKey
     val numNewEdges = segAndEdgeArray.values.map(edges => edges.size * edges.size).sum.toLong
     val partitioner = rc.partitionerForNRows(numNewEdges)

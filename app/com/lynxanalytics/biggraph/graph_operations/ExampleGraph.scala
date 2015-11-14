@@ -51,7 +51,7 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
     output(
       o.vertices,
       sc.parallelize(Seq(0l, 1l, 2l, 3l).map((_, ())))
-        .toSortedRDD(partitioner))
+        .sortUnique(partitioner))
     output(
       o.edges,
       sc.parallelize(Seq(
@@ -59,41 +59,41 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
         (1l, Edge(1l, 0l)),
         (2l, Edge(2l, 0l)),
         (3l, Edge(2l, 1l))))
-        .toSortedRDD(partitioner))
+        .sortUnique(partitioner))
     output(o.name, sc.parallelize(Seq(
       (0l, "Adam"),
       (1l, "Eve"),
       (2l, "Bob"),
-      (3l, "Isolated Joe"))).toSortedRDD(partitioner))
+      (3l, "Isolated Joe"))).sortUnique(partitioner))
     output(o.age, sc.parallelize(Seq(
       (0l, 20.3),
       (1l, 18.2),
       (2l, 50.3),
-      (3l, 2.0))).toSortedRDD(partitioner))
+      (3l, 2.0))).sortUnique(partitioner))
     output(o.gender, sc.parallelize(Seq(
       (0l, "Male"),
       (1l, "Female"),
       (2l, "Male"),
-      (3l, "Male"))).toSortedRDD(partitioner))
+      (3l, "Male"))).sortUnique(partitioner))
     output(o.income, sc.parallelize(Seq(
       (0l, 1000.0),
-      (2l, 2000.0))).toSortedRDD(partitioner))
+      (2l, 2000.0))).sortUnique(partitioner))
     output(o.location, sc.parallelize(Seq(
       (0l, (40.71448, -74.00598)), // New York
       (1l, (47.5269674, 19.0323968)), // Budapest
       (2l, (1.352083, 103.819836)), // Singapore
       (3l, (-33.8674869, 151.2069902)) // Sydney
-    )).toSortedRDD(partitioner))
+    )).sortUnique(partitioner))
     output(o.comment, sc.parallelize(Seq(
       (0l, "Adam loves Eve"),
       (1l, "Eve loves Adam"),
       (2l, "Bob envies Adam"),
-      (3l, "Bob loves Eve"))).toSortedRDD(partitioner))
+      (3l, "Bob loves Eve"))).sortUnique(partitioner))
     output(o.weight, sc.parallelize(Seq(
       (0l, 1.0),
       (1l, 2.0),
       (2l, 3.0),
-      (3l, 4.0))).toSortedRDD(partitioner))
+      (3l, 4.0))).sortUnique(partitioner))
     output(o.greeting, "Hello world!")
   }
 }

@@ -190,7 +190,7 @@ object RDDUtils {
 
   def estimateValueWeights[T](
     fullRDD: SortedRDD[ID, _],
-    weightsRDD: SortedRDD[ID, Double],
+    weightsRDD: UniqueSortedRDD[ID, Double],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
     requiredPositiveSamples: Int,
@@ -239,9 +239,9 @@ object RDDUtils {
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
   def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)], lookupTable: SortedRDD[K, S]): RDD[(K, (T, S))] = {
+    sourceRDD: RDD[(K, T)], lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     import Implicits._
-    sourceRDD.toSortedRDD(lookupTable.partitioner.get).sortedJoin(lookupTable)
+    sourceRDD.sort(lookupTable.partitioner.get).sortedJoin(lookupTable)
   }
 
   // A lookup method based on sending the lookup table to all tasks. The lookup table should be
@@ -257,7 +257,7 @@ object RDDUtils {
   // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
-    lookupTable: SortedRDD[K, S],
+    lookupTable: UniqueSortedRDD[K, S],
     maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
 
     hybridLookupImpl(
@@ -273,7 +273,7 @@ object RDDUtils {
   // keys is already available for the caller.
   def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
-    lookupTableWithCounts: SortedRDD[K, (S, Long)],
+    lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)],
     maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
 
     hybridLookupImpl(
@@ -289,7 +289,7 @@ object RDDUtils {
   // table for large elements, it feds the top keys from countTable into largeKeysMapFn.
   private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S, C](
     sourceRDD: RDD[(K, T)],
-    lookupTable: SortedRDD[K, S],
+    lookupTable: UniqueSortedRDD[K, S],
     countsTable: RDD[(C, Long)],
     maxValuesPerKey: Int)(
       largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
@@ -347,12 +347,12 @@ object Implicits {
     }
 
     // Adds unique ID numbers to rows of an RDD as a transformation.
-    def randomNumbered(numPartitions: Int = self.partitions.size): SortedRDD[ID, T] = {
+    def randomNumbered(numPartitions: Int = self.partitions.size): UniqueSortedRDD[ID, T] = {
       val partitioner = new spark.HashPartitioner(numPartitions)
       randomNumbered(partitioner)
     }
 
-    def randomNumbered(partitioner: spark.Partitioner): SortedRDD[ID, T] = {
+    def randomNumbered(partitioner: spark.Partitioner): UniqueSortedRDD[ID, T] = {
       // generate a random id for the hash
       val numPartitions = self.partitions.size
       self.mapPartitionsWithIndex({
@@ -366,7 +366,7 @@ object Implicits {
             // int. Otherwise it's still unique with large probability.
             ((randomID << 32) ^ uniqueID) -> value
           }
-      }).toSortedRDD(partitioner)
+      }).sortUnique(partitioner)
     }
 
     // Cheap method to force an RDD calculation
@@ -408,16 +408,16 @@ object Implicits {
     }
     // Trust that this RDD is partitioned and sorted. Make sure it uses the given partitioner.
     def asUniqueSortedRDD(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       assert(self.partitions.size == partitioner.numPartitions,
         s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
           s" to RDD of size ${self.partitions.size}: $self")
       new AlreadySortedRDD(new AlreadyPartitionedRDD(self, partitioner)) with UniqueSortedRDD[K, V]
     }
     // Sorts each partition of the RDD in isolation.
-    def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
-      toSortedRDD(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
-    def toSortedRDD(partitioner: spark.Partitioner)(
+    def sort(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
+      sort(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
+    def sort(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {
         case self: SortedRDD[K, V] if partitioner eq self.partitioner.get =>
@@ -432,9 +432,9 @@ object Implicits {
     }
 
     // Sorts each partition of the RDD in isolation.
-    def uniqueToSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
-      uniqueToSortedRDD(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
-    def uniqueToSortedRDD(partitioner: spark.Partitioner)(
+    def sortUnique(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
+      sortUnique(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
+    def sortUnique(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       self match {
         case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
@@ -449,8 +449,8 @@ object Implicits {
     }
 
     def groupBySortedKey(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
-      SortedRDD.fromUnsorted(self.groupByKey(partitioner))
+      SortedRDD.fromUniqueUnsorted(self.groupByKey(partitioner))
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
-      SortedRDD.fromUnsorted(self.reduceByKey(partitioner, f))
+      SortedRDD.fromUniqueUnsorted(self.reduceByKey(partitioner, f))
   }
 }

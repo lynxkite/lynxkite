@@ -36,13 +36,13 @@ case class Modularity() extends TypedMetaGraphOp[Input, Output] {
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vPart = inputs.vs.rdd.partitioner.get
-    val vToS = inputs.belongsTo.rdd.map { case (eid, e) => (e.src, e.dst) }.toSortedRDD(vPart)
+    val vToS = inputs.belongsTo.rdd.map { case (eid, e) => (e.src, e.dst) }.sortUnique(vPart)
     val bySrc = inputs.edges.rdd.sortedJoin(inputs.weights.rdd)
       .map { case (eid, (e, w)) => (e.src, (e.dst, w)) }
-      .toSortedRDD(vPart)
+      .sort(vPart)
     val byDst = bySrc.sortedJoin(vToS)
       .map { case (src, ((dst, w), srcS)) => (dst, (srcS, w)) }
-      .toSortedRDD(vPart)
+      .sort(vPart)
     val segmentEdges = byDst.sortedJoin(vToS)
       .map { case (dst, ((srcS, w), dstS)) => ((srcS, dstS), w) }
       .reduceBySortedKey(vPart, _ + _)
