@@ -11,24 +11,32 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("join without intersection") {
     val p = new HashPartitioner(4)
-    val a = sparkContext.parallelize(10 to 15).map(x => (x, x)).partitionBy(p).toSortedRDD
-    val b = sparkContext.parallelize(20 to 25).map(x => (x, x)).partitionBy(p).toSortedRDD
+    val a = sparkContext.parallelize(10 to 15).map(x => (x, x)).partitionBy(p).sort
+    val b = sparkContext.parallelize(20 to 25).map(x => (x, x)).partitionBy(p).sortUnique
     val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
     assert(j.collect.toSeq == Seq())
   }
 
   test("join with intersection") {
     val p = new HashPartitioner(4)
-    val a = sparkContext.parallelize(10 to 15).map(x => (x, x + 1)).partitionBy(p).toSortedRDD
-    val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).toSortedRDD
+    val a = sparkContext.parallelize(10 to 15).map(x => (x, x + 1)).partitionBy(p).sort
+    val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).sortUnique
+    val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
+    assert(j.collect.toSeq == Seq(15 -> (16, 17)))
+  }
+
+  test("join with unique keys on both sides") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(10 to 15).map(x => (x, x + 1)).partitionBy(p).sortUnique
+    val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).sortUnique
     val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
     assert(j.collect.toSeq == Seq(15 -> (16, 17)))
   }
 
   test("join with multiple keys on the left side") {
     val p = new HashPartitioner(4)
-    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
-    val b = sparkContext.parallelize(5 to 15).map(x => (x, "A")).partitionBy(p).toSortedRDD
+    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).sort
+    val b = sparkContext.parallelize(5 to 15).map(x => (x, "A")).partitionBy(p).sortUnique
     val sj: SortedRDD[Int, (Int, String)] = a.sortedJoin(b)
     val j: RDD[(Int, (Int, String))] = a.join(b)
     assert(sj.count == j.count)
@@ -36,8 +44,8 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("join with multiple keys on both sides") {
     val p = new HashPartitioner(4)
-    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
-    val b = sparkContext.parallelize(Seq(10 -> "A", 10 -> "B")).partitionBy(p).toSortedRDD
+    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).sort
+    val b = sparkContext.parallelize(Seq(10 -> "A", 10 -> "B")).partitionBy(p).sort
     val sj: SortedRDD[Int, (Int, String)] = a.sortedJoinWithDuplicates(b)
     val j: RDD[(Int, (Int, String))] = a.join(b)
     println(sj.collect.toSeq)
@@ -47,7 +55,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("distinct") {
     val p = new HashPartitioner(4)
-    val a = sparkContext.parallelize((1 to 5) ++ (3 to 7)).map(x => (x, x)).partitionBy(p).toSortedRDD
+    val a = sparkContext.parallelize((1 to 5) ++ (3 to 7)).map(x => (x, x)).partitionBy(p).sort
     val d: SortedRDD[Int, Int] = a.distinct
     assert(d.keys.collect.toSeq.sorted == (1 to 7))
   }
@@ -89,8 +97,8 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     class Demo(parts: Int, rows: Int) {
       val vanilla = genData(7, rows, 1).values.map(x => (x, x)).cache
       vanilla.calculate
-      def oldGrouped = vanilla.groupByKey(new HashPartitioner(parts)).toSortedRDD.collect
-      def newGrouped = vanilla.partitionBy(new HashPartitioner(parts)).toSortedRDD.groupByKey.collect
+      def oldGrouped = vanilla.groupByKey(new HashPartitioner(parts)).sort.collect
+      def newGrouped = vanilla.partitionBy(new HashPartitioner(parts)).sort.groupByKey.collect
     }
     val parts = 4
     val table = "%10s | %10s | %10s"
@@ -110,7 +118,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     class Demo(parts: Int, rows: Int) {
       import scala.collection.mutable.ArrayBuffer
       val partitioner = new HashPartitioner(parts)
-      val sorted = genData(7, rows, 1).values.map(x => (x, x)).toSortedRDD(partitioner).cache
+      val sorted = genData(7, rows, 1).values.map(x => (x, x)).sort(partitioner).cache
       sorted.calculate
       val createCombiner = (v: Char) => ArrayBuffer(v)
       val mergeValue = (buf: ArrayBuffer[Char], v: Char) => buf += v
@@ -122,7 +130,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
           mergeCombiners,
           partitioner,
           mapSideCombine = true)
-        .toSortedRDD
+        .sort
         .collect
       def newGrouped = sorted
         .combineByKey(
@@ -147,9 +155,9 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   test("benchmark groupByKey on SortedRDD", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
-        .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
+        .partitionBy(new HashPartitioner(parts)).sort.cache
       sorted.calculate
-      def oldGrouped = sorted.groupByKey(sorted.partitioner.get).toSortedRDD.collect
+      def oldGrouped = sorted.groupByKey(sorted.partitioner.get).sort.collect
       def newGrouped = sorted.groupByKey.collect
     }
     val parts = 4
@@ -169,10 +177,10 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val partitioner = new HashPartitioner(parts)
-      val data = genData(parts, rows, 1).toSortedRDD(partitioner).cache
+      val data = genData(parts, rows, 1).sort(partitioner).cache
       data.calculate
       val other = genData(parts, rows, 2).sample(false, 0.5, 0)
-        .partitionBy(data.partitioner.get).toSortedRDD(partitioner).cache
+        .partitionBy(data.partitioner.get).sortUnique(partitioner).cache
       other.calculate
       def oldJoin = getSum(data.join(other))
       def newJoin = getSum(data.sortedJoin(other))
@@ -199,8 +207,8 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val other = genData(parts, rows, 2).sample(false, 0.5, 0).cache
       other.calculate
       assert(data.partitioner != other.partitioner)
-      def oldJoin = getSum(data.join(other).toSortedRDD)
-      def newJoin = getSum(data.toSortedRDD.sortedJoin(other.partitionBy(data.partitioner.get).toSortedRDD))
+      def oldJoin = getSum(data.join(other).sort)
+      def newJoin = getSum(data.sort.sortedJoin(other.partitionBy(data.partitioner.get).sortUnique))
       def getSum(rdd: SortedRDD[Long, (Char, Char)]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
     }
     val parts = 4
@@ -218,13 +226,13 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("benchmark leftOuterJoin if right is not sorted", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int, frac: Double) {
-      val data = genData(parts, rows, 1).toSortedRDD.cache
+      val data = genData(parts, rows, 1).sort.cache
       data.calculate
       val other = genData(parts, rows, 2).sample(false, frac, 0)
         .partitionBy(data.partitioner.get).cache
       other.calculate
-      def oldJoin = getSum(data.leftOuterJoin(other).mapValues { case (a, b) => a -> b.getOrElse('0') }.toSortedRDD)
-      def newJoin = getSum(data.sortedLeftOuterJoin(other.toSortedRDD).mapValues { case (a, b) => a -> b.getOrElse('0') }.toSortedRDD)
+      def oldJoin = getSum(data.leftOuterJoin(other).mapValues { case (a, b) => a -> b.getOrElse('0') }.sort)
+      def newJoin = getSum(data.sortedLeftOuterJoin(other.sortUnique).mapValues { case (a, b) => a -> b.getOrElse('0') }.sort)
       def getSum(rdd: RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
     }
     val parts = 4
@@ -245,7 +253,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   test("benchmark distinct", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
-        .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
+        .partitionBy(new HashPartitioner(parts)).sort.cache
       sorted.calculate
       val vanilla = sorted.map(x => x).cache
       vanilla.calculate
@@ -268,14 +276,14 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("sorted filter") {
     val sorted = genData(4, 1000, 1).values.map(x => (x, x))
-      .partitionBy(new HashPartitioner(4)).toSortedRDD
+      .partitionBy(new HashPartitioner(4)).sort
     val filtered = sorted.filter(_._2 != 'a')
     assert(sorted.count > filtered.count)
   }
 
   test("sorted mapValues") {
     val sorted = genData(4, 1000, 1).values.map(x => (x, x))
-      .partitionBy(new HashPartitioner(4)).toSortedRDD
+      .partitionBy(new HashPartitioner(4)).sort
     val mew = sorted.mapValues(x => 'a')
     val mewKeys = sorted.mapValuesWithKeys(x => 'a')
     val old = sorted.map(x => x).mapValues(x => 'a')
@@ -285,7 +293,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("id filter on ArrayBackedSortedRDD") {
     val sorted = genData(4, 1000, 1).values.map(x => (x, x))
-      .partitionBy(new HashPartitioner(4)).toSortedRDD
+      .partitionBy(new HashPartitioner(4)).sort
     val ids = IndexedSeq('l', 'n', 'x', 'y')
     val restricted = sorted.restrictToIdSet(ids)
     val filtered = sorted.filter { case (id, value) => ids.contains(id) }
@@ -295,9 +303,9 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   test("id filter on DerivedRDD") {
     val partitioner = new HashPartitioner(4)
     val sorted1 = genData(4, 1000, 1).values.map(x => (x, x))
-      .partitionBy(partitioner).toSortedRDD
+      .partitionBy(partitioner).sort
     val sorted2 = genData(4, 1000, 2).values.map(x => (x, x))
-      .partitionBy(partitioner).toSortedRDD
+      .partitionBy(partitioner).sort
     val complex =
       sorted1.mapValues(2 * _).sortedLeftOuterJoin(
         sorted2.distinct.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
@@ -317,9 +325,9 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   test("benchmark mapValues with keys", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
-        .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
+        .partitionBy(new HashPartitioner(parts)).sort.cache
       sorted.calculate
-      def oldMV = sorted.map({ case (id, x) => id -> (id, x) }).partitionBy(sorted.partitioner.get).toSortedRDD.collect.toMap
+      def oldMV = sorted.map({ case (id, x) => id -> (id, x) }).partitionBy(sorted.partitioner.get).sort.collect.toMap
       def newMV = sorted.mapValuesWithKeys({ case (id, x) => (id, x) }).collect.toMap
     }
     val parts = 4

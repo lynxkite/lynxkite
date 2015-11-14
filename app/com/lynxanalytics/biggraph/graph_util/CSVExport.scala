@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
@@ -60,7 +60,7 @@ object CSVExport {
     )
   }
 
-  private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
+  private def addRDDs(base: UniqueSortedRDD[ID, Seq[String]], rdds: Seq[UniqueSortedRDD[ID, String]]) = {
     rdds.foldLeft(base) { (seqs, rdd) =>
       seqs
         .sortedLeftOuterJoin(rdd)
@@ -69,13 +69,13 @@ object CSVExport {
   }
 
   private def attachAttributeData(
-    base: SortedRDD[ID, Seq[String]],
+    base: UniqueSortedRDD[ID, Seq[String]],
     attributes: Seq[Attribute[_]])(implicit dataManager: DataManager) = {
     addRDDs(base, attributes.map(stringRDDFromAttribute(_)))
   }
 
   private def stringRDDFromAttribute[T: ClassTag](
-    attribute: Attribute[T])(implicit dataManager: DataManager): SortedRDD[ID, String] = {
+    attribute: Attribute[T])(implicit dataManager: DataManager): UniqueSortedRDD[ID, String] = {
     implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     attribute.rdd.mapValues(op)

@@ -30,17 +30,17 @@ case class Embeddedness() extends TypedMetaGraphOp[GraphInput, Output] {
 
     val bySrc = edges.map {
       case (eid, e) => e.src -> (eid, e)
-    }.toSortedRDD(edgePartitioner)
+    }.sort(edgePartitioner)
     val srcJoined = bySrc.sortedJoin(neighbors)
     val byDst = srcJoined.map {
       case (src, ((eid, e), srcNeighbors)) => e.dst -> (eid, srcNeighbors)
-    }.toSortedRDD(edgePartitioner)
+    }.sort(edgePartitioner)
     val dstJoined = byDst.sortedJoin(neighbors)
 
     val embeddedness = dstJoined.map {
       case (dst, ((eid, srcNeighbors), dstNeighbors)) =>
         eid -> ClusteringCoefficient.sortedIntersectionSize(srcNeighbors, dstNeighbors).toDouble
-    }.toSortedRDD(edgePartitioner)
+    }.sortUnique(edgePartitioner)
     output(o.embeddedness, embeddedness)
   }
 }

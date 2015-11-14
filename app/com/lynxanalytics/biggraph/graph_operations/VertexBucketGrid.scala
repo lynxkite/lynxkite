@@ -5,6 +5,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object VertexBucketGrid extends OpFromJson {
   private val sampleSizeParameter = NewParameter("sampleSize", 50000)
@@ -63,14 +64,14 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     } else {
       val xAttr = inputs.xAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
-      filtered.sortedJoin(xAttr).flatMapValues { case (_, value) => xBucketer.whichBucket(value) }
+      filtered.sortedJoin(xAttr).flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
     }
     val yBuckets = if (yBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
-      filtered.sortedJoin(yAttr).flatMapValues { case (_, value) => yBucketer.whichBucket(value) }
+      filtered.sortedJoin(yAttr).flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
     }
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)

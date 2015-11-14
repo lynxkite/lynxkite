@@ -49,6 +49,6 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
     output(o.newVS, newVS)
     output(o.newES, newES.randomNumbered(edgePartitioner))
     // Just to connect to the results.
-    output(o.link, sc.emptyRDD[(ID, Edge)].toSortedRDD(edgePartitioner))
+    output(o.link, sc.emptyRDD[(ID, Edge)].sortUnique(edgePartitioner))
   }
 }

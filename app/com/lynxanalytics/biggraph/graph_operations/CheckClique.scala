@@ -53,7 +53,7 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
     val neighborsIn = es.map { case (_, edge) => edge.dst -> edge.src }
       .groupBySortedKey(vertexPartitioner)
     val vsToCliques = belongsTo.map { case (_, edge) => edge.src -> edge.dst }
-      .toSortedRDD(vertexPartitioner)
+      .sort(vertexPartitioner)
 
     val cliquesToVsWithNs = vsToCliques.sortedLeftOuterJoin(neighborsOut).sortedLeftOuterJoin(neighborsIn)
       .map {

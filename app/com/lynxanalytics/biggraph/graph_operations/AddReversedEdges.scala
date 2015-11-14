@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
 import com.lynxanalytics.biggraph.graph_api._
 
 object AddReversedEdges extends OpFromJson {
@@ -32,7 +32,7 @@ case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val es = inputs.es.rdd
     val reverseAdded: SortedRDD[ID, Edge] = es.flatMapValues(e => Iterator(e, Edge(e.dst, e.src)))
-    val renumbered: SortedRDD[ID, (ID, Edge)] = reverseAdded.randomNumbered(es.partitioner.get)
+    val renumbered: UniqueSortedRDD[ID, (ID, Edge)] = reverseAdded.randomNumbered(es.partitioner.get)
     output(o.esPlus, renumbered.mapValues { case (oldID, e) => e })
     output(
       o.newToOriginal,

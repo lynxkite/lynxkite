@@ -119,7 +119,7 @@ case class VertexAttributeToDouble()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    output(o.attr, inputs.attr.rdd.flatMapValues(str =>
+    output(o.attr, inputs.attr.rdd.flatMapOptionalValues(str =>
       if (str.nonEmpty) Some(str.toDouble) else None))
   }
 }

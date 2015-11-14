@@ -64,7 +64,7 @@ case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultipli
           val rnd = new Random(pSeed)
           it.map(x => rnd.nextLong() -> x)
       }
-      .toSortedRDD(partitioner)
+      .sort(partitioner)
       .values
   }
 
@@ -86,11 +86,11 @@ case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultipli
       val numberedFirsts = firsts
         .zipWithIndex
         .map { case (edge, idx) => idx -> edge }
-        .toSortedRDD(partitioner)
+        .sort(partitioner)
       val numberedSeconds = shuffledSeconds
         .zipWithIndex
         .map { case (edge, idx) => idx -> edge }
-        .toSortedRDD(partitioner)
+        .sortUnique(partitioner)
 
       edges = numberedFirsts.sortedJoin(numberedSeconds)
         .mapValues { case (edge1, edge2) => Edge(edge1.src, edge2.dst) }
