@@ -197,13 +197,13 @@ private object SortedRDDUtil {
 
 sealed trait SortedRDDRecipe[K, V] {
   def asGeneral: SortedRDD[K, V]
-  def assertUnique: UniqueSortedRDD[K, V]
+  def asUnique: UniqueSortedRDD[K, V]
 }
 class DerivedSortedRDDRecipe[K: Ordering, VOld, VNew](
     base: SortedRDD[K, VOld],
     derivation: DerivedSortedRDD.Derivation[K, VOld, VNew]) extends SortedRDDRecipe[K, VNew] {
   def asGeneral = new DerivedSortedRDD(base, derivation)
-  def assertUnique = new DerivedSortedRDD(base, derivation) with UniqueSortedRDD[K, VNew]
+  def asUnique = new DerivedSortedRDD(base, derivation) with UniqueSortedRDD[K, VNew]
 }
 class BiDerivedSortedRDDRecipe[K: Ordering, VOld1, VOld2, VNew](
   base1: SortedRDD[K, VOld1],
@@ -212,13 +212,13 @@ class BiDerivedSortedRDDRecipe[K: Ordering, VOld1, VOld2, VNew](
     extends SortedRDDRecipe[K, VNew] {
 
   def asGeneral = new BiDerivedSortedRDD(base1, base2, derivation)
-  def assertUnique = new BiDerivedSortedRDD(base1, base2, derivation) with UniqueSortedRDD[K, VNew]
+  def asUnique = new BiDerivedSortedRDD(base1, base2, derivation) with UniqueSortedRDD[K, VNew]
 }
 class RestrictedArrayBackedSortedRDDRecipe[K: Ordering, V](
     arrayRDD: SortedArrayRDD[K, V],
     ids: IndexedSeq[K]) extends SortedRDDRecipe[K, V] {
   def asGeneral = new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
-  def assertUnique = new RestrictedArrayBackedSortedRDD(arrayRDD, ids) with UniqueSortedRDD[K, V]
+  def asUnique = new RestrictedArrayBackedSortedRDD(arrayRDD, ids) with UniqueSortedRDD[K, V]
 }
 
 // An RDD with each partition sorted by the key. "self" must already be sorted.
@@ -336,7 +336,7 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
             n
           }
         }
-      }, preservesPartitioning = true)).assertUnique
+      }, preservesPartitioning = true)).asUnique
 
   // `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
   // `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
@@ -354,7 +354,7 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
             n._1 -> res
           }
         }
-      }, preservesPartitioning = true)).assertUnique
+      }, preservesPartitioning = true)).asUnique
 
   def groupByKey(): UniqueSortedRDD[K, ArrayBuffer[V]] = {
     val createCombiner = (v: V) => ArrayBuffer(v)
@@ -380,7 +380,7 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.mergeUnique(it1.buffered, it2.buffered).iterator // TODO
         }
-      }).assertUnique
+      }).asUnique
   }
 
   // Returns an RDD with the union of the keyset of this and other. For each key it returns two
@@ -394,7 +394,7 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.fullOuterMerge(it1.buffered, it2.buffered).iterator
         }
-      }).assertUnique
+      }).asUnique
 
   override def sortedLeftOuterJoin[W](other: UniqueSortedRDD[K, W]): UniqueSortedRDD[K, (V, Option[W])] =
     biDeriveWithRecipe[W, (V, Option[W])](
@@ -404,25 +404,25 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.uniqueLeftOuterMerge(it1.buffered, it2.buffered).iterator
         }
-      }).assertUnique
+      }).asUnique
 
   // The ids seq needs to be sorted.
   override def restrictToIdSet(ids: IndexedSeq[K]): UniqueSortedRDD[K, V] =
-    restrictToIdSetRecipe(ids).assertUnique
+    restrictToIdSetRecipe(ids).asUnique
 
   override def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
-    mapValuesRecipe(f).assertUnique
+    mapValuesRecipe(f).asUnique
 
   override def filter(f: ((K, V)) => Boolean): UniqueSortedRDD[K, V] =
-    filterRecipe(f).assertUnique
+    filterRecipe(f).asUnique
 
   override def mapValuesWithKeys[U](f: ((K, V)) => U): UniqueSortedRDD[K, U] =
-    mapValuesWithKeysRecipe(f).assertUnique
+    mapValuesWithKeysRecipe(f).asUnique
 
   def flatMapOptionalValues[U](
     f: V => Option[U])(
       implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] = {
-    flatMapValuesRecipe { x => f(x) }.assertUnique
+    flatMapValuesRecipe { x => f(x) }.asUnique
   }
 
 }
