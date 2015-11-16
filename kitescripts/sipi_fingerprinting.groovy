@@ -123,7 +123,7 @@ union.fingerprintingBasedOnAttributes(
   mo: '1',
   ms: '0.0',
   weights: '!no weight',
-  mode: 'Weird')
+  extra: '"weightingMode": "Weird", "multiNeighborsPreference": 5.0')
 
 // Evaluate.
 union.derivedVertexAttribute(

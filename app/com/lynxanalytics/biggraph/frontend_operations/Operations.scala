@@ -2172,6 +2172,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Fingerprinting based on attributes", new SpecialtyOperation(_, _) {
+    case class FingerprintingParameters(
+        weightingMode: String = "InverseDegree",
+        multiNeighborsPreference: Double = 0.0) extends ToJson {
+
+      override def toJson =
+        Json.obj("weightingMode" -> weightingMode,
+          "multiNeighborsPreference" -> multiNeighborsPreference)
+    }
+    object FingerprintingParameters extends FromJson[FingerprintingParameters] {
+      def fromJson(j: JsValue) =
+        FingerprintingParameters(
+          (j \ "weightingMode").as[String],
+          (j \ "multiNeighborsPreference").as[Double])
+    }
+
     def parameters = List(
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
@@ -2179,7 +2194,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
-      Param("mode", "Weighting Mode", defaultValue = "InverseInDegree"))
+      Param(
+        "extra",
+        "Fingerprinting algorithm additional parameters",
+        mandatory = false,
+        defaultValue = ""))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(vertexAttributes[String].size >= 2, "Two string attributes are needed.")
@@ -2214,7 +2233,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           .result.candidates
       }
       val fingerprinting = {
-        val op = graph_operations.Fingerprinting(mo, ms, params("mode"))
+        val baseParams = s""""minimumOverlap": $mo, "minimumSimilarity": $ms"""
+        val extraParams = params.getOrElse("extra", "")
+        val paramsJson = if (extraParams == "") baseParams else (baseParams + ", " + extraParams)
+        val op = graph_operations.Fingerprinting.fromJson(json.Json.parse(s"{$paramsJson}"))
         op(
           op.leftEdges, project.edgeBundle)(
             op.leftEdgeWeights, weights)(
@@ -2223,16 +2245,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                   op.candidates, candidates)
           .result
       }
-      /*val fingerprinting = {
-        val op = graph_operations.Fingerprinting(mo, ms)
-        op(
-          op.leftEdges, allToBothDefinedEdges)(
-            op.leftEdgeWeights, pulledWeight)(
-              op.rightEdges, allToBothDefinedEdges)(
-                op.rightEdgeWeights, pulledWeight)(
-                  op.candidates, candidates)
-          .result
-      }*/
       val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
         leftName, reverse(fingerprinting.matching))
       val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
