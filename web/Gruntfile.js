@@ -394,14 +394,9 @@ module.exports = function (grunt) {
     },
 
     protractor: {
-      onGruntServe: {
+      test: {
         options: {
-          configFile: 'test/protractor-on-grunt-serve.conf.js',
-        },
-      },
-      onRealBackend: {
-        options: {
-          configFile: 'test/protractor-on-real-backend.conf.js',
+          configFile: 'test/protractor.conf.js',
           args: {
             baseUrl: 'http://localhost:' + getPort() + '/',
           },
@@ -430,18 +425,7 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('test', [
-    'clean:server',
-    'wiredep',
-    'copy:styles',
-    'sass',
-    'autoprefixer',
-    'asciidoctor',
-    'connect:test',
-    'protractor:onGruntServe'
-  ]);
-
-  grunt.registerTask('test_e2e', [
-    'protractor:onRealBackend'
+    'protractor',
   ]);
   function getPort() {
     return grunt.option('port') || 9000;

@@ -2,26 +2,74 @@
 
 var fw = (function UIDescription() {
   var states = {};
-  var allStatePreservingTests = {};
+  var statePreservingTests = {};
   var hasChild = {};
 
-  var mocks = require('../mocks.js');
+  var mocks = require('./mocks.js');
   mocks.addTo(browser);
   browser.driver.manage().window().setSize(1100, 600);
+
+  // If any tests are tagged with "solo", disables all other tests.
+  function handleSolo() {
+    // Adds "solo" to itself and all ancestors of a state.
+    function soloAncestors(s) {
+      s.tags.push('solo');
+      if (s.parent !== undefined) {
+        soloAncestors(states[s.parent]);
+      }
+    }
+
+    var i, j, state, tests;
+    var haveSolo = false;
+    var stateNames = Object.keys(states);
+    for (i = 0; i < stateNames.length; ++i) {
+      state = states[stateNames[i]];
+      if (state.tags.indexOf('solo') !== -1) {
+        haveSolo = true;
+        soloAncestors(state);
+      }
+      tests = statePreservingTests[stateNames[i]] || [];
+      for (j = 0; j < tests.length; ++j) {
+        if (tests[j].tags.indexOf('solo') !== -1) {
+          haveSolo = true;
+          soloAncestors(state);
+        }
+      }
+    }
+
+    if (haveSolo) {
+      for (i = 0; i < stateNames.length; ++i) {
+        state = states[stateNames[i]];
+        if (state.tags.indexOf('solo') === -1) {
+          state.tags.push('disabled');
+        }
+        tests = statePreservingTests[stateNames[i]] || [];
+        for (j = 0; j < tests.length; ++j) {
+          if (tests[j].tags.indexOf('solo') === -1) {
+            tests[j].tags.push('disabled');
+          }
+        }
+      }
+    }
+  }
 
   return {
     transitionTest: function(
       previousStateName,  // Name of the state on which this transition should be applied.
       stateName,  // Name of the target state of this transition.
       transitionFunction,  // JS function that goes to this state from prev state.
-      checks) {  // Tests confirming we are indeed in this state. Should be very fast stuff only,
-                 // like looking at the DOM.
+      checks,  // Tests confirming we are indeed in this state. Should be very fast stuff only,
+               // like looking at the DOM.
+      tags) {  // Space-separated list of tags to associate with the test.
       var testingDone = false;
       if (previousStateName !== undefined) {
         hasChild[previousStateName] = true;
       }
 
       function runStatePreservingTest(currentTest) {
+        if (currentTest.tags.indexOf('disabled') !== -1) {
+          return;
+        }
         it('-- ' + currentTest.name, function() {
           currentTest.runTest();
           // Checking that it was indeed statePreserving.
@@ -30,7 +78,12 @@ var fw = (function UIDescription() {
       }
 
       states[stateName] = {
+        tags: tags ? tags.split(' ') : [],
+        parent: previousStateName,
         reachAndTest: function() {
+          if (this.tags.indexOf('disabled') !== -1) {
+            return;
+          }
           if (previousStateName !== undefined) {
             states[previousStateName].reachAndTest();
           }
@@ -40,9 +93,9 @@ var fw = (function UIDescription() {
               checks();
             });
             if (!testingDone) {
-              var statePreservingTests = allStatePreservingTests[stateName] || [];
-              for (var i = 0; i < statePreservingTests.length; i++) {
-                runStatePreservingTest(statePreservingTests[i]);
+              var tests = statePreservingTests[stateName] || [];
+              for (var i = 0; i < tests.length; i++) {
+                runStatePreservingTest(tests[i]);
               }
               testingDone = true;
             }
@@ -52,23 +105,28 @@ var fw = (function UIDescription() {
     },
 
     // These tests need to preserve the UI state or restore it when they are finished.
-    statePreservingTest: function(stateToRunAt, name, body) {
-      if (allStatePreservingTests[stateToRunAt] === undefined) {
-        allStatePreservingTests[stateToRunAt] = [];
+    statePreservingTest: function(stateToRunAt, name, body, tags) {
+      if (statePreservingTests[stateToRunAt] === undefined) {
+        statePreservingTests[stateToRunAt] = [];
       }
-      allStatePreservingTests[stateToRunAt].push({name: name, runTest: body});
+      statePreservingTests[stateToRunAt].push({
+        name: name,
+        runTest: body,
+        tags: tags ? tags.split(' ') : [],
+      });
     },
 
     runAll: function() {
       var stateNames = Object.keys(states);
       describe('Test setup', function() {
         it('defines all referenced test states', function() {
-          var references = Object.keys(allStatePreservingTests).concat(Object.keys(hasChild));
+          var references = Object.keys(statePreservingTests).concat(Object.keys(hasChild));
           for (var i = 0; i < references.length; ++i) {
             expect(stateNames).toContain(references[i]);
           }
         });
       });
+      handleSolo();
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
@@ -78,10 +136,6 @@ var fw = (function UIDescription() {
           state.reachAndTest();
         }
       }
-    },
-
-    runOne: function(stateName) {
-      states[stateName].reachAndTest();
     },
 
     cleanup: function() {
@@ -110,20 +164,16 @@ var fw = (function UIDescription() {
   };
 })();
 
-require('./example-graph-basics.js')(fw);
-require('./download-test.js')(fw);
-require('./upload-test.js')(fw);
-require('./filter-tests.js')(fw);
-require('./segmentation-opens.js')(fw);
-require('./help-popups.js')(fw);
-require('./histogram-tests.js')(fw);
-require('./history-editor.js')(fw);
-require('./undo-redo.js')(fw);
-require('./workflow-tests.js')(fw);
-require('./center-picker.js')(fw);
-require('./splash-page.js')(fw);
-require('./errors.js')(fw);
-require('./visualization.js')(fw);
+var fs = require('fs');
+var testFiles = fs.readdirSync(__dirname + '/tests');
+for (var i = 0; i < testFiles.length; ++i) {
+  if (testFiles[i].slice(-3) === '.js') {
+    require('./tests/' + testFiles[i])(fw);
+  }
+}
 
 fw.runAll();
+// Use the below line to only run one transition test and its
+// state-preserving descendants.
+// fw.runOne('NAME OF A TRANSITION TEST');
 fw.cleanup();

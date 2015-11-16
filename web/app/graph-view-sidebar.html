@@ -1,0 +1,23 @@
+<div class="graph-sidebar" ng-class="{ active: sidebarOpen }">
+  <div class="inside">
+    <copy-box description="Copy&nbsp;graph to&nbsp;clipboard" data="{{tsv}}"></copy-box>
+    <div class="filters">
+      <div><label><input type="checkbox" ng-model="filters.inverted"> inverted</label></div>
+      <div>
+        <i tooltip="Brightness" tooltip-placement="right" class="glyphicon glyphicon-certificate"></i>
+        <input type="range" max="200" step="1" ng-model="filters.brightness">
+      </div>
+      <div>
+        <i tooltip="Contrast" tooltip-placement="right" class="glyphicon glyphicon-adjust"></i>
+        <input type="range" max="200" step="1" ng-model="filters.contrast">
+      </div>
+      <div>
+        <i tooltip="Saturation" tooltip-placement="right" class="glyphicon glyphicon-tint"></i>
+        <input type="range" max="200" step="1" ng-model="filters.saturation">
+      </div>
+      <div><button ng-click="resetFilters()" class="btn btn-default btn-xs">Reset</button></div>
+    </div>
+  </div>
+  <div class="handle" ng-click="sidebarOpen = !sidebarOpen">
+  </div>
+</div>
