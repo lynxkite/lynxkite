@@ -431,7 +431,7 @@ object Implicits {
       }
     }
 
-    // Sorts each partition of the RDD in isolation.
+    // Sorts each partition of the RDD in isolation and trusts that keys are unique.
     def sortUnique(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
       sortUnique(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
     def sortUnique(partitioner: spark.Partitioner)(
