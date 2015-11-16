@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 // Helper class for creating segmentations by an attribute.
-case class Bucketing[T: Ordering: reflect.ClassTag](attrIdsToBuckets: NonUniqueAttributeRDD[T]) {
+case class Bucketing[T: Ordering: reflect.ClassTag](attrIdsToBuckets: SortedRDD[ID, T]) {
   // This implementation assumes many small buckets. (#1481)
   private val partitioner = attrIdsToBuckets.partitioner.get
   private val segToValue = attrIdsToBuckets.values.distinct.randomNumbered(partitioner)

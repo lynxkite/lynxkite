@@ -10,7 +10,8 @@ import org.apache.spark.storage.StorageLevel
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 object ConnectedComponents extends OpFromJson {
   def fromJson(j: JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
@@ -52,7 +53,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     output(o.belongsTo, ccEdges.randomNumbered(partitioner))
     val ccVertices = ccEdges.map(_.dst -> ())
       .sort(partitioner)
-      .distinct
+      .distinctByKey
     output(o.segments, ccVertices)
   }
 

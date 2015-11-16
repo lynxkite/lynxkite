@@ -105,7 +105,7 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
     val vertices = inputs.vs.rdd
 
     val clusteringCoeffNonIsolated =
-      neighbors.allNoIsolated.sort(massivePartitioner)
+      neighbors.allNoIsolated.sortedRepartition(massivePartitioner)
         .sortedLeftOuterJoin(outNeighborsOfNeighborsByKey).mapValues {
           case (mine, theirs) =>
             val numNeighbors = mine.size

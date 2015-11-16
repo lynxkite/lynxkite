@@ -38,6 +38,6 @@ case class CreateRole(ratio: Double, seed: Int) extends TypedMetaGraphOp[Input, 
               vid -> { if (rnd.nextDouble() < ratio) "test" else "train" }
           }
       },
-      preservesPartitioning = true).sortUnique)
+      preservesPartitioning = true).asUniqueSortedRDD)
   }
 }

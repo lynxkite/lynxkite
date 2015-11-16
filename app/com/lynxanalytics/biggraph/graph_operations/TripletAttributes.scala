@@ -48,7 +48,7 @@ case class TripletMapping(sampleSize: Int = -1)
     val src = inputs.src.rdd
     val bySrc = edges
       .map { case (id, edge) => (edge.src, id) }
-      .groupByKey(src.partitioner.get).sortUnique
+      .groupBySortedKey(src.partitioner.get)
     output(
       o.srcEdges,
       src.sortedLeftOuterJoin(bySrc)
@@ -60,7 +60,7 @@ case class TripletMapping(sampleSize: Int = -1)
     val dst = inputs.dst.rdd
     val byDst = edges
       .map { case (id, edge) => (edge.dst, id) }
-      .groupByKey(dst.partitioner.get).sortUnique
+      .groupBySortedKey(dst.partitioner.get)
     output(
       o.dstEdges,
       dst.sortedLeftOuterJoin(byDst)

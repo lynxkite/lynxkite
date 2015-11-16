@@ -2,13 +2,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.HashPartitioner
-import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ArrayBuffer
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 // For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
 // based on the network structure.
@@ -140,12 +140,12 @@ case class Fingerprinting(
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
           }
-      }.sortUnique(candidatesPartitioner)
+      }.sort(candidatesPartitioner)
     val rightSimilarities =
-      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.sortUnique(candidatesPartitioner)
+      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.sort(candidatesPartitioner)
 
     // Run findStableMarriage with the smaller side as "ladies".
-    def flipped(rdd: RDD[(ID, ID)]): UniqueSortedRDD[ID, ID] = {
+    def flipped(rdd: UniqueSortedRDD[ID, ID]): UniqueSortedRDD[ID, ID] = {
       rdd.map(pair => pair._2 -> pair._1).sortUnique(candidatesPartitioner)
     }
     val (leftToRight, rightToLeft) =
@@ -165,20 +165,20 @@ case class Fingerprinting(
         // The 1:1 mapping is at most as large as the smaller side.
         .randomNumbered(if (rightCount < leftCount) rightPartitioner else leftPartitioner))
     output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight)
-      .flatMapOptionalValues {
+      .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
       }.sortUnique(leftPartitioner))
     output(o.rightSimilarities, rightSimilarities.sortedJoin(rightToLeft)
-      .flatMapOptionalValues {
+      .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
       }.sortUnique(rightPartitioner))
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
-  def findStableMarriage(ladiesScores: UniqueSortedRDD[ID, (ID, Double)],
-                         gentlemenScores: UniqueSortedRDD[ID, (ID, Double)]): UniqueSortedRDD[ID, ID] = {
+  def findStableMarriage(ladiesScores: SortedRDD[ID, (ID, Double)],
+                         gentlemenScores: SortedRDD[ID, (ID, Double)]): UniqueSortedRDD[ID, ID] = {
     val ladiesPartitioner = ladiesScores.partitioner.get
     val gentlemenPartitioner = gentlemenScores.partitioner.get
     val gentlemenPreferences = gentlemenScores.groupByKey.mapValues {
