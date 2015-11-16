@@ -12,7 +12,7 @@ import org.apache.spark.Partitioner
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
   class Input(induceSrc: Boolean, induceDst: Boolean) extends MagicInputSignature {
@@ -80,16 +80,16 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val edges = inputs.edges.rdd
 
     def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate,
-                   partitioner: Partitioner): UniqueSortedRDD[ID, ID] = {
+                   partitioner: Partitioner): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
         // We might save a shuffle in this case.
-        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sortUnique(partitioner)
+        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(partitioner)
       } else {
         mappingEdges
           .map { case (id, edge) => (edge.src, edge.dst) }
-          .sortUnique(partitioner)
+          .sort(partitioner)
       }
     }
 
@@ -99,7 +99,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput, rdd.partitioner.get)
       // If the mapping has no duplicates we can use the faster sortedJoin.
-      if (props.isFunction) rdd.sortedJoin(mapping)
+      if (props.isFunction) rdd.sortedJoin(mapping.asUniqueSortedRDD)
       // If the mapping can have duplicates we need to use the slower sortedJoinWithDuplicates.
       else rdd.sortedJoinWithDuplicates(mapping)
     }

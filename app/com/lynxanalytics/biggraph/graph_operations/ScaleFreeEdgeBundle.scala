@@ -86,7 +86,7 @@ case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultipli
       val numberedFirsts = firsts
         .zipWithIndex
         .map { case (edge, idx) => idx -> edge }
-        .sort(partitioner)
+        .sortUnique(partitioner)
       val numberedSeconds = shuffledSeconds
         .zipWithIndex
         .map { case (edge, idx) => idx -> edge }

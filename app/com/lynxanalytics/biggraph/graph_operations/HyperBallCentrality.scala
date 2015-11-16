@@ -11,7 +11,8 @@ import org.apache.spark._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 import com.twitter.algebird.HyperLogLogMonoid
 import com.twitter.algebird.HLL

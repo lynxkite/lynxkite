@@ -5,7 +5,9 @@ import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
-import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, RDDUtils, SortedRDD }
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
@@ -200,7 +202,7 @@ trait ImportCommon {
     val singleColumns = fields.zipWithIndex.map {
       case (field, idx) =>
         (field,
-          if (mayHaveNulls) numberedValidLines.flatMapValues(line => Option(line(idx)))
+          if (mayHaveNulls) numberedValidLines.flatMapOptionalValues(line => Option(line(idx)))
           else numberedValidLines.mapValues(line => line(idx)))
     }.toMap
 
@@ -254,7 +256,7 @@ object ImportCommon {
           assert(id.size == 1,
             s"The ID attribute must contain unique keys. $key appears ${id.size} times.")
           id.head
-      }.sortUnique
+      }
 }
 
 object ImportVertexList extends OpFromJson {
@@ -281,7 +283,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
               rc: RuntimeContext): Unit = {
     val columns = readColumns(rc, input)
     for ((field, rdd) <- columns.singleColumns) {
-      output(o.attrs(field), rdd.sortUnique)
+      output(o.attrs(field), rdd)
     }
     output(o.vertices, columns.numberedValidLines.mapValues(_ => ()))
   }
@@ -297,7 +299,7 @@ trait ImportEdges extends ImportCommon {
                         oattr: Map[String, EntityContainer[Attribute[String]]],
                         output: OutputBuilder): Unit = {
     for ((field, rdd) <- columns.singleColumns) {
-      output(oattr(field), rdd.sortUnique)
+      output(oattr(field), rdd)
     }
   }
 
@@ -462,7 +464,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
       partitioner)
     val linesByExternalId = lines
       .map(line => (line(idFieldIdx), line))
-      .sort(partitioner)
+      .sortUnique(partitioner)
     val linesByInternalId =
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }

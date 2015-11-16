@@ -14,6 +14,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(4, 5, 6)),
       Map(20 -> Seq(1, 2, 3), 21 -> Seq(4, 5, 6)))
     assert(f.matching == Seq(10 -> 20, 11 -> 21))
+    assert(f.similarities == Map(10 -> 1.0, 11 -> 1.0))
   }
 
   test("one difficult pair A") {

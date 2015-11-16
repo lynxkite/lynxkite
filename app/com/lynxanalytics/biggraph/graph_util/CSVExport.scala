@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.spark_util.{ UniqueSortedRDD, SortedRDD }
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {

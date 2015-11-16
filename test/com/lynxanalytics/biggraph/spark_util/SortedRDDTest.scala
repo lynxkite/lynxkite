@@ -61,11 +61,13 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     assert(sj.count == j.count)
   }
 
-  test("distinct") {
+  test("distinctByKey") {
     val p = new HashPartitioner(4)
-    val a = sparkContext.parallelize((1 to 5) ++ (3 to 7)).map(x => (x, x)).partitionBy(p).sort
-    val d: SortedRDD[Int, Int] = a.distinct
-    assert(d.keys.collect.toSeq.sorted == (1 to 7))
+    val a = sparkContext.parallelize(
+      Array((1, 1), (2, 2), (3, 3), (4, 4), (3, 5), (4, 6), (5, 7), (6, 8)))
+      .partitionBy(p).sort
+    val d: SortedRDD[Int, Int] = a.distinctByKey
+    assert(d.keys.collect.toSeq.sorted == (1 to 6))
   }
 
   def genData(parts: Int, rows: Int, seed: Int): RDD[(Long, Char)] = {
@@ -316,7 +318,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       .partitionBy(partitioner).sort
     val complex =
       sorted1.mapValues(2 * _).sortedLeftOuterJoin(
-        sorted2.distinct.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
+        sorted2.distinctByKey.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
     // Make sure the test is not trivial.
     assert(complex.count > 1000)
 
