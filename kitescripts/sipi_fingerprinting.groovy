@@ -2,7 +2,7 @@
 //  https://drive.google.com/a/lynxanalytics.com/file/d/0B4_SBhzYAJK8VnJqLUNJdnoyalk/view?usp=sharing
 
 // ========= Preparing the LinkedIn graph ==================
-linkedin = lynx.project('linkedin for FP', reset = true)
+linkedin = lynx.newProject('linkedin for FP')
 
 // Import linkedin vertices
 linkedin.importVerticesFromCSVFiles(
@@ -67,7 +67,7 @@ linkedin.mergeTwoAttributes(
 
 
 // ========= Preparing the FaceBook graph ==================
-fb = lynx.project('facebook for FP', reset = true)
+fb = lynx.newProject('facebook for FP')
 fb.importVerticesFromCSVFiles(
   allow_corrupt_lines: 'no',
   delimiter: ',',
@@ -146,7 +146,7 @@ println "Test set size: $testSetSize"
 
 pr = union.saveAs('linkedin facebook PR curve')
 
-// First restrict to matched test vertices. This is basically an is defined test.
+// First restrict to matched test vertices. This is basically an is-defined test.
 pr.filterByAttributes('filterva-match_is_good': '>=0.0')
 
 println "Treshold\tPrecision\tRecall\tFScore"

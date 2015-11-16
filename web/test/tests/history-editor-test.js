@@ -2,7 +2,7 @@
 
 /* global by */
 
-var lib = require('./test-lib.js');
+var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   var numOperations = 5;

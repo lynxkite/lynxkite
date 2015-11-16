@@ -194,8 +194,8 @@ startWatchdog () {
       nohup ${tools_dir}/watchdog.py \
           --status_port=${KITE_WATCHDOG_PORT} \
           --watched_urls="${MAIN_URL}@1,${SPARK_CHECK_URL}@120" \
-          --sleep_seconds=10 \
-          --max_failures=10 \
+          --sleep_seconds=60 \
+          --max_failures=6 \
           --script="$0 watchdog_restart" \
           --pid_file ${WATCHDOG_PID_FILE} \
           > ${log_dir}/watchdog.stdout.$$ 2> ${log_dir}/watchdog.stderr.$$ &

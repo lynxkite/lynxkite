@@ -3,7 +3,7 @@
 /* global element, by  */
 
 module.exports = function(fw) {
-  var lib = require('./test-lib.js');
+  var lib = require('../test-lib.js');
   var downloadName = lib.theRandomPattern + '_vertex_attributes_csv';
   var exportPrefix = 'export_';
   var fullDownloadName = '/tmp/' + exportPrefix + downloadName + '.csv';

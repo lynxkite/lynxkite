@@ -38,7 +38,7 @@ class BundleChain(bundles: Seq[EdgeBundle],
       val (secondBundle, secondWeights) =
         (new BundleChain(bundles.drop(splitterIdx), Some(weights.drop(splitterIdx))))
           .getCompositeEdgeBundle
-      import Scripting._
+      import com.lynxanalytics.biggraph.graph_api.Scripting._
       val op = ConcatenateBundles()
       val res = op(
         op.edgesAB, firstBundle)(

@@ -6,6 +6,12 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.5.8
+
+### 1.5.7
+
+ - New aggregator added for all non-global aggregation operations: you can collect all unique
+   values into a set.
  - A new operation _Split vertices_ was added. It can be used to create multiple copies
    of the same vertex, based on a 'count' attribute.
  - You can use Ammonite (https://lihaoyi.github.io/Ammonite/#Ammonite-REPL) to interact with a
@@ -22,6 +28,8 @@ Please add changes to "master". When releasing a version add a new header for th
    displaying them. We now stop doing this to avoid some inconsistencies. (Feel free to use either
    underscores or spaces in project names. Both work fine.)
  - Add possibility to edit workflows.
+ - Show the number of edges that will be created before executing the _Created edges from co-occurrence_
+   operation.
 
 ### 1.5.6
 

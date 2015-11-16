@@ -362,6 +362,15 @@ object Aggregator {
     def aggregate(values: Iterable[T]): Vector[T] = values.toVector
   }
 
+  object AsSet extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsSet() }
+  case class AsSet[T]() extends LocalAggregator[T, Set[T]] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = {
+      implicit val tt = inputTypeTag
+      typeTag[Set[T]]
+    }
+    def aggregate(values: Iterable[T]): Set[T] = values.toSet
+  }
+
   object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev() }
   case class StdDev() extends Aggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag

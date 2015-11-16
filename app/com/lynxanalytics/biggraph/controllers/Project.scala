@@ -468,7 +468,7 @@ sealed trait ProjectEditor {
     vertexAttributes.updateEntityMap(attrs)
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
-  }.toSeq
+  }.toSeq.sorted
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
@@ -485,7 +485,7 @@ sealed trait ProjectEditor {
     edgeAttributes.updateEntityMap(attrs)
   def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
-  }.toSeq
+  }.toSeq.sorted
 
   def scalars =
     new StateMapHolder[Scalar[_]] {
@@ -498,11 +498,11 @@ sealed trait ProjectEditor {
     scalars.updateEntityMap(newScalars)
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
-  }.toSeq
+  }.toSeq.sorted
 
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
-  def segmentationNames = state.segmentations.keys.toSeq
+  def segmentationNames = state.segmentations.keys.toSeq.sorted
   def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
     setElementNote(SegmentationKind, name, null)
@@ -645,6 +645,7 @@ class SegmentationEditor(
     // create the corresponding SegmentationState in the project state's segmentations field.
     val oldSegs = parent.state.segmentations
     if (!oldSegs.contains(segmentationName)) {
+      ProjectFrame.validateName(segmentationName)
       parent.state = parent.state.copy(
         segmentations = oldSegs + (segmentationName -> SegmentationState.emptyState))
     }

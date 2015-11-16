@@ -266,11 +266,16 @@ class KiteMonitorThread(
         import scala.concurrent.ExecutionContext.Implicits.global
         val testsDone = concurrent.future { kiteCoreWorks() }
         listener.updateKiteCoreStatus(
-          scala.util.Try(
+          try {
             concurrent.Await.result(
               testsDone,
-              concurrent.duration.Duration(coreTimeoutMillis, "millisecond")))
-            .getOrElse(false))
+              concurrent.duration.Duration(coreTimeoutMillis, "millisecond"))
+          } catch {
+            case e: Throwable => {
+              log.error("Error while testing kite core", e)
+              false
+            }
+          })
         kiteCoreLastChecked = System.currentTimeMillis
       } else if (now > nextSparkCheck) {
         logSparkClusterInfo()
