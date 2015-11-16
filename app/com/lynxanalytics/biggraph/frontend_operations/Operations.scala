@@ -2172,21 +2172,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Fingerprinting based on attributes", new SpecialtyOperation(_, _) {
-    case class FingerprintingParameters(
-        weightingMode: String = "InverseDegree",
-        multiNeighborsPreference: Double = 0.0) extends ToJson {
-
-      override def toJson =
-        Json.obj("weightingMode" -> weightingMode,
-          "multiNeighborsPreference" -> multiNeighborsPreference)
-    }
-    object FingerprintingParameters extends FromJson[FingerprintingParameters] {
-      def fromJson(j: JsValue) =
-        FingerprintingParameters(
-          (j \ "weightingMode").as[String],
-          (j \ "multiNeighborsPreference").as[Double])
-    }
-
     def parameters = List(
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
@@ -2211,21 +2196,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weights =
         if (params("weights") == "!no weight") const(project.edgeBundle)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-
-      val leftRightJoined = joinAttr(leftName, rightName)
-      val bothDefinedRestriction = {
-        val op = graph_operations.VertexAttributeFilter(
-          graph_operations.TrueFilter[(String, String)]())
-        op(op.attr, leftRightJoined).result
-      }
-      val allToBothDefinedEdgesInduction = {
-        val op = graph_operations.InducedEdgeBundle(induceSrc = false)
-        op(op.edges, project.edgeBundle)(op.dstMapping, reverse(bothDefinedRestriction.identity))
-          .result
-      }
-      val allToBothDefinedEdges = allToBothDefinedEdgesInduction.induced
-      val pulledWeight = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        weights, allToBothDefinedEdgesInduction.embedding)
 
       val candidates = {
         val op = graph_operations.FingerprintingCandidates()
