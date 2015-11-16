@@ -29,8 +29,16 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val p = new HashPartitioner(4)
     val a = sparkContext.parallelize(10 to 15).map(x => (x, x + 1)).partitionBy(p).sortUnique
     val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).sortUnique
-    val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
+    val j: UniqueSortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
     assert(j.collect.toSeq == Seq(15 -> (16, 17)))
+  }
+
+  test("left outer join with unique keys on both sides") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(14 to 15).map(x => (x, x + 1)).partitionBy(p).sortUnique
+    val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).sortUnique
+    val j: UniqueSortedRDD[Int, (Int, Option[Int])] = a.sortedLeftOuterJoin(b)
+    assert(j.collect.toSeq == Seq(14 -> (15, None), 15 -> (16, Some(17))))
   }
 
   test("join with multiple keys on the left side") {

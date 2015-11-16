@@ -233,21 +233,11 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.iterator(split, context)
 
-  // TODO: derive and biDeriveWith will go away. It's kept now so that I don't have to change
-  // everything yet.
   // See comments at DerivedSortedRDD before blindly using this method!
-  private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
-    new DerivedSortedRDD(this, derivation)
-
   private def deriveRecipe[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
     new DerivedSortedRDDRecipe(this, derivation)
 
   // See comments at DerivedSortedRDD before blindly using this method!
-  private def biDeriveWith[W, R](
-    other: SortedRDD[K, W],
-    derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
-    new BiDerivedSortedRDD(this, other, derivation)
-
   protected def biDeriveWithRecipe[W, R](
     other: SortedRDD[K, W],
     derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
@@ -257,8 +247,7 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // The keys of 'other' must be unique!
   def sortedJoin[W](
     other: UniqueSortedRDD[K, W]): SortedRDD[K, (V, W)] =
-    new BiDerivedSortedRDDRecipe[K, V, W, (V, W)](
-      this,
+    biDeriveWithRecipe[W, (V, W)](
       other,
       { (first, second) =>
         SortedRDDUtil.assertMatchingRDDs(first, second)
@@ -271,14 +260,14 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // (much) larger than the input, as all combinations are enumerated for the duplicates.
   // It is 2-3 times slower than sortedJoin for the same data.
   def sortedJoinWithDuplicates[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] =
-    biDeriveWith[W, (V, W)](
+    biDeriveWithRecipe[W, (V, W)](
       other,
       { (first, second) =>
         SortedRDDUtil.assertMatchingRDDs(first, second)
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.mergeWithDuplicates(it1.buffered, it2.buffered).iterator
         }
-      })
+      }).asGeneral
 
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
