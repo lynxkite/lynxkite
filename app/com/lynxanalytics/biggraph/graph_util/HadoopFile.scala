@@ -194,7 +194,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
     file
       .map { case (k, v) => RDDUtils.kryoDeserialize[(Long, T)](v.getBytes) }
-      .asSortedRDD(p)
+      .asUniqueSortedRDD(p)
   }
 
   // Loads a Long-keyed rdd where the values are just raw bytes
