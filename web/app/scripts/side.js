@@ -367,8 +367,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.maybeSaveAs = function() {
-      // Called by whenever the button is clicked, but perhaps the input is still unchanged. Then
-      // we just exit renaming.
+      // We only need to do an actual action if the user has changed the name.
       if (this.saveAsName !== this.state.projectName) {
         this.saveAs(this.saveAsName);
       }
