@@ -242,6 +242,9 @@ class KiteMonitorThread(
     var sparkLastLookedAt = 0L
     var kiteCoreLastChecked = 0L
 
+    // Before starting the normal monitoring setup, we do a first core check. The first check
+    // might take a longer time as the example graph may not be computed yet.
+    assert(kiteCoreWorks(), "First kite core check failed")
     while (true) {
       val now = System.currentTimeMillis
       val nextCoreCheck = kiteCoreLastChecked + maxCoreUncheckedMillis
