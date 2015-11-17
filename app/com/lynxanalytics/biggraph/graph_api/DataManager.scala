@@ -119,6 +119,9 @@ class DataManager(sc: spark.SparkContext,
           getFuture(entity).map(data => (name, data))
       })
     futureInputs.map { inputs =>
+      if (instance.operation.isHeavy) {
+        log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
+      }
       val inputDatas = DataSet(inputs.toMap)
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computing scalar $scalar")
@@ -140,6 +143,9 @@ class DataManager(sc: spark.SparkContext,
       }
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computed scalar $scalar")
+      }
+      if (instance.operation.isHeavy) {
+        log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
       }
       outputDatas
     }
