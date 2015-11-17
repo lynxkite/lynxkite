@@ -31,8 +31,7 @@ trait BigGraphEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
 
-  private val uniqueId = s"env-${graph_util.Timestamp}"
-  table.DefaultSource.env(uniqueId) = this // Register with table.DefaultSource.
+  private lazy val uniqueId = table.DefaultSource.register(this)
   def dataFrame: spark.sql.DataFrameReader = {
     dataManager.sqlContext.read
       .format("com.lynxanalytics.biggraph.table")
