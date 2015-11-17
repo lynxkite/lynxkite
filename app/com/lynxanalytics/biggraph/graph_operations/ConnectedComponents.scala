@@ -53,7 +53,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     output(o.belongsTo, ccEdges.randomNumbered(partitioner))
     val ccVertices = ccEdges.map(_.dst -> ())
       .sort(partitioner)
-      .distinctByKey
+      .discardMultipleKeys
     output(o.segments, ccVertices)
   }
 

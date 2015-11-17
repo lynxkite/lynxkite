@@ -51,7 +51,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // Adding one more line? Do it at the bottom!
     // Deleting a line? Do not.
     // Types will change IDs otherwise.
-    kryo.setRegistrationRequired(false)
+    kryo.setRegistrationRequired(true)
     kryo.register(classOf[scala.Tuple2[_, _]])
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])

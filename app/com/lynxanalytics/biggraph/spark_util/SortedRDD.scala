@@ -247,11 +247,12 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
     derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
     new BiDerivedSortedRDDRecipe(this, other, derivation)
 
-  def sortedRepartition(partitioner: spark.Partitioner): SortedRDD[K, V] = {
+  def sortedRepartition(partitioner: spark.Partitioner)(
+    implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
     if (partitioner eq this.partitioner.orNull) {
       this
     } else {
-      new AlreadySortedRDD(new spark.rdd.ShuffledRDD(this, partitioner))
+      this.sort(partitioner)
     }
   }
 
@@ -322,7 +323,9 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   def filterRecipe(f: ((K, V)) => Boolean): SortedRDDRecipe[K, V] =
     deriveRecipe(_.self.filter(f))
 
-  def distinctByKey(): UniqueSortedRDD[K, V] = {
+  // When a key is present multiple times, keep the first key-value
+  // pair and discard the rest.
+  def discardMultipleKeys(): UniqueSortedRDD[K, V] = {
     val createCombiner = (v: V) => v
     val mergeValue = (buf: V, v: V) => buf
     combineByKey(createCombiner, mergeValue)
@@ -346,7 +349,6 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
         }
       }, preservesPartitioning = true)).trustedUnique
 
-  // TODO: override this in UniqueSortedRDD with a trivial implementation
   def groupByKey(): UniqueSortedRDD[K, ArrayBuffer[V]] = {
     val createCombiner = (v: V) => ArrayBuffer(v)
     val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
@@ -364,12 +366,12 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
 
 trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
 
-  override def sortedRepartition(partitioner: spark.Partitioner): UniqueSortedRDD[K, V] = {
+  override def sortedRepartition(partitioner: spark.Partitioner)(
+    implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
     if (partitioner eq this.partitioner.orNull) {
       this
     } else {
-      val shuffled: RDD[(K, V)] = new spark.rdd.ShuffledRDD(this, partitioner)
-      new AlreadySortedRDD(shuffled) with UniqueSortedRDD[K, V]
+      this.sortUnique(partitioner)
     }
   }
 

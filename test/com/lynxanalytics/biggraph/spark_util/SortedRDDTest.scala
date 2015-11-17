@@ -1,10 +1,13 @@
 package com.lynxanalytics.biggraph.spark_util
 
+import org.apache.spark.Partitioner
 import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.Timed
+
+import scala.reflect.ClassTag
 
 class SortedRDDTest extends FunSuite with TestSparkContext {
   import Implicits._
@@ -66,8 +69,34 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val a = sparkContext.parallelize(
       Array((1, 1), (2, 2), (3, 3), (4, 4), (3, 5), (4, 6), (5, 7), (6, 8)))
       .partitionBy(p).sort
-    val d: SortedRDD[Int, Int] = a.distinctByKey
+    val d: SortedRDD[Int, Int] = a.discardMultipleKeys
     assert(d.keys.collect.toSeq.sorted == (1 to 6))
+  }
+
+  def assertSortedPartitions(
+    rdd: SortedRDD[Int, Int],
+    partitioner: Partitioner) {
+    assert(rdd.partitioner.orNull eq partitioner)
+    val partitionContents = rdd
+      .mapPartitionsWithIndex { (pid, it) => it.map(x => (pid, x)) }
+      .groupByKey()
+      .map { case (pid, list) => list.toSeq }
+    for (partition <- partitionContents.collect.toSeq) {
+      assert(partition == partition.sorted)
+    }
+  }
+
+  test("sortedRepartition") {
+    val partitioner1 = new HashPartitioner(4)
+    val partitioner2 = new HashPartitioner(3)
+    val rdd = sparkContext.parallelize(
+      Array((1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)))
+    assertSortedPartitions(
+      rdd.sort(partitioner1).sortedRepartition(partitioner2),
+      partitioner2)
+    assertSortedPartitions(
+      rdd.sortUnique(partitioner1).sortedRepartition(partitioner2),
+      partitioner2)
   }
 
   def genData(parts: Int, rows: Int, seed: Int): RDD[(Long, Char)] = {
@@ -318,7 +347,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       .partitionBy(partitioner).sort
     val complex =
       sorted1.mapValues(2 * _).sortedLeftOuterJoin(
-        sorted2.distinctByKey.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
+        sorted2.discardMultipleKeys.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
     // Make sure the test is not trivial.
     assert(complex.count > 1000)
 
