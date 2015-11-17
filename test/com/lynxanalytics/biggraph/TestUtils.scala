@@ -3,7 +3,10 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository }
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import org.apache.spark
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.FunSuite
 import org.scalatest.Tag
 
 import spark_util.BigGraphSparkContext
@@ -78,6 +81,17 @@ private object SparkContextContainer {
 
 trait TestSparkContext {
   val sparkContext = SparkContextContainer.sparkContext
+}
+
+class RDDCheckerTestSuite extends FunSuite with BeforeAndAfterAll {
+
+  override def beforeAll(): Unit = {
+    SortedRDD.enableTestAsserts = true
+  }
+
+  override def afterAll(): Unit = {
+    SortedRDD.enableTestAsserts = false
+  }
 }
 
 case class Timed[X](nanos: Long, value: X)
