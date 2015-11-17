@@ -593,7 +593,7 @@ case class FindModularClusteringByTweaks(
           containedIn.iterator
       }
       // in refinedContainedIn:
-      // - keys are unique, but not sorted
+      // - keys are unique across the whole RDD, but not sorted
       // - vertex ids in the values are unique across the whole RDD
       // TODO: We know all clusters are contained in the same partition, so this could be optimized.
       members = refinedContainedIn.map { case (vid, cid) => (cid, vid) }.groupByKey().cache()

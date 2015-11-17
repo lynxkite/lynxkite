@@ -69,7 +69,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val a = sparkContext.parallelize(
       Array((1, 1), (2, 2), (3, 3), (4, 4), (3, 5), (4, 6), (5, 7), (6, 8)))
       .partitionBy(p).sort
-    val d: SortedRDD[Int, Int] = a.discardMultipleKeys
+    val d: SortedRDD[Int, Int] = a.distinctByKey
     assert(d.keys.collect.toSeq.sorted == (1 to 6))
   }
 
@@ -347,7 +347,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       .partitionBy(partitioner).sort
     val complex =
       sorted1.mapValues(2 * _).sortedLeftOuterJoin(
-        sorted2.discardMultipleKeys.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
+        sorted2.distinctByKey.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
     // Make sure the test is not trivial.
     assert(complex.count > 1000)
 
