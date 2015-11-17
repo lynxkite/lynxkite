@@ -642,10 +642,10 @@ testLib = {
   setParameter: function(e, value) {
     // Special parameter types need different handling.
     e.evaluate('param.kind').then(
-        function(dataKind) {
-          if (dataKind === 'code') {
+        function(kind) {
+          if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
-          } else if (dataKind === 'file') {
+          } else if (kind === 'file') {
             var input = e.element(by.id('file'));
             // Need to unhide flowjs's secret file uploader.
             browser.executeScript(
@@ -657,7 +657,7 @@ testLib = {
               },
               input.getWebElement());
             input.sendKeys(value);
-          } else if (dataKind === 'tag-list') {
+          } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
               e.element(by.css('.dropdown-toggle')).click();
