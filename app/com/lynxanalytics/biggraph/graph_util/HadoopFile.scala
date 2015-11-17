@@ -154,7 +154,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
      * We need to understand/fix this decently, but for now this is a stop-gap for the demo.
      * Looks like this might be fixable with a kryo upgrade.
      */
-    val myKryo = BigGraphSparkContext.createKryo()
+    val myKryo = BigGraphSparkContext.createKryoWithForcedRegistration()
     val output = new kryo.io.Output(create())
     try {
       myKryo.writeClassAndObject(output, obj)
