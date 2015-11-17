@@ -13,6 +13,12 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 // For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
 // based on the network structure.
 object Fingerprinting extends OpFromJson {
+  // TODO: These parameters are somewhat temporary until we figure out exactly what kind of
+  // configuration we need for fingerpringing. Users cannot set these without explicit instructions
+  // from us, so we don't have to take compatibility considerations too seriously about them.
+  // (But if we do instruct someone to use these, they need to be warned.)
+  private val weightingModeParameter = NewParameter("weightingMode", "InverseInDegree")
+  private val multiNeighborsPreferenceParameter = NewParameter("multiNeighborsPreference", 0.0)
   class Input extends MagicInputSignature {
     val left = vertexSet
     val right = vertexSet
@@ -33,19 +39,28 @@ object Fingerprinting extends OpFromJson {
     val rightSimilarities = vertexAttribute[Double](inputs.right.entity)
   }
   def fromJson(j: JsValue) =
-    Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
+    Fingerprinting(
+      (j \ "minimumOverlap").as[Int],
+      (j \ "minimumSimilarity").as[Double],
+      weightingModeParameter.fromJson(j),
+      multiNeighborsPreferenceParameter.fromJson(j))
 
   val maxIterations = 30
 }
 case class Fingerprinting(
   minimumOverlap: Int,
-  minimumSimilarity: Double)
+  minimumSimilarity: Double,
+  weightingMode: String = "InverseInDegree",
+  multiNeighborsPreference: Double = 0.0)
     extends TypedMetaGraphOp[Fingerprinting.Input, Fingerprinting.Output] {
   import Fingerprinting._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity)
+  override def toJson =
+    Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity) ++
+      weightingModeParameter.toJson(weightingMode) ++
+      multiNeighborsPreferenceParameter.toJson(multiNeighborsPreference)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -132,11 +147,20 @@ case class Fingerprinting(
             // of the indegree from left and from right if both are defined, otherwise just take the
             // one that's defined.
             val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
-            val avg = degrees.mapValues(ds => ds.sum / ds.size)
+            val weights = weightingMode match {
+              case "InDegree" => degrees.mapValues(ds => ds.sum / ds.size)
+              case "InverseInDegree" => degrees.mapValues(ds => ds.size / ds.sum)
+              case "InverseInDegreeBasedHybrid" => degrees.map {
+                case (key, ds) =>
+                  val inverseDeg = (ds.size / ds.sum) min 1
+                  if (ln.contains(key)) key -> inverseDeg
+                  else key -> (1 - inverseDeg)
+              }
+            }
             // Calculate similarity score.
-            val isect = common.map(k => (lw(k) min rw(k)) / avg(k)).sum
-            val union = all.map(k => (lw(k) max rw(k)) / avg(k)).sum
-            val similarity = isect / union
+            val isect = common.map(k => (lw(k) min rw(k)) * weights(k)).sum
+            val union = all.map(k => (lw(k) max rw(k)) * weights(k)).sum
+            val similarity = isect / (union + multiNeighborsPreference)
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
           }
