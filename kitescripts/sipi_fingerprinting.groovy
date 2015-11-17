@@ -45,7 +45,7 @@ linkedin.importVertexAttributesFromCSVFiles(
   prefix: '')
 
 // Somewhat hacky way to split to test/train sets.
-linkedin.addGaussianVertexAttribute(name: 'random', seed: '-646188926')
+linkedin.addGaussianVertexAttribute(name: 'random', seed: '0')
 linkedin.addRankAttribute(keyattr: 'random', order: 'ascending', rankattr: 'ranking')
 linkedin.derivedVertexAttribute(
   output: 'train_matched_fb_name',
@@ -98,6 +98,7 @@ union.mergeVerticesByAttribute(
   key: 'merge_key_name',
   'aggregate-fb_id': 'most_common',
   'aggregate-fb_name': 'most_common',
+  'aggregate-id': 'count',
   'aggregate-linkedin_id': 'most_common',
   'aggregate-linkedin_name': 'most_common',
   'aggregate-matched_fb_name': 'most_common',
@@ -114,12 +115,14 @@ union.renameVertexAttribute(from: 'train_matched_fb_name_most_common', to: 'trai
 union.renameVertexAttribute(from: 'test_matched_fb_name_most_common', to: 'test_matched_fb_name')
 
 // Fingerprint.
+union.derivedEdgeAttribute(expr: 'Math.min(src$id_count + dst$id_count - 1, 2)', output: 'weight', type: 'double')
 union.fingerprintingBasedOnAttributes(
   leftName: 'fb_name',
   rightName: 'linkedin_name',
   mo: '1',
   ms: '0.0',
-  weights: '!no weight')
+  weights: '!no weight',
+  extra: '"weightingMode": "InverseInDegreeBasedHybrid", "multiNeighborsPreference": 5.0')
 
 // Evaluate.
 union.derivedVertexAttribute(
@@ -140,21 +143,23 @@ println "Test set size: $testSetSize"
 
 // ======= Drawing a primitive P/R curve ============
 
+pr = union.saveAs('linkedin facebook PR curve')
+
 // First restrict to matched test vertices. This is basically an is-defined test.
-union.filterByAttributes('filterva-match_is_good': '>=0.0')
+pr.filterByAttributes('filterva-match_is_good': '>=0.0')
 
 println "Treshold\tPrecision\tRecall\tFScore"
 maxFScore = 0
-while (union.scalars['vertex_count'].toDouble() > 0) {
+while (pr.scalars['vertex_count'].toDouble() > 0) {
   // Compute current precision/recall
-  union.aggregateVertexAttributeGlobally('aggregate-match_is_good': 'sum,count', prefix: '')
-  matches = union.scalars['match_is_good_count'].toDouble()
-  good_matches = union.scalars['match_is_good_sum'].toDouble()
+  pr.aggregateVertexAttributeGlobally('aggregate-match_is_good': 'sum,count', prefix: '')
+  matches = pr.scalars['match_is_good_count'].toDouble()
+  good_matches = pr.scalars['match_is_good_sum'].toDouble()
 
-  union.aggregateVertexAttributeGlobally(
+  pr.aggregateVertexAttributeGlobally(
     'aggregate-linkedin_name similarity score': 'min',
     prefix: '')
-  currentMin = union.scalars['linkedin_name similarity score_min'].toDouble()
+  currentMin = pr.scalars['linkedin_name similarity score_min'].toDouble()
   recall = good_matches * 100.0 / matches
   precision = good_matches * 100.0 / testSetSize
   fScore = 2 / (1 / recall + 1 / precision)
@@ -167,7 +172,7 @@ while (union.scalars['vertex_count'].toDouble() > 0) {
     fScore)
 
   // Throw away lowest scoring matches.
-  union.filterByAttributes('filterva-linkedin_name similarity score': ">$currentMin")
+  pr.filterByAttributes('filterva-linkedin_name similarity score': ">$currentMin")
 }
 
 println "Maximal fScore: $maxFScore"
