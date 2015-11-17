@@ -34,7 +34,7 @@ class ProjectRelation(env: BigGraphEnvironment, val sqlContext: sql.SQLContext, 
 
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
-  val project = controllers.ProjectFrame.fromName(projectName).viewer.editor
+  val project = controllers.ProjectFrame.fromName(projectName).viewer
 
   // BaseRelation
   val schema: sql.types.StructType = {
