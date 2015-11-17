@@ -8,16 +8,23 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util
 
 object DefaultSource {
-  // BigGraphEnvironments register here.
-  val env = collection.mutable.Map[String, BigGraphEnvironment]()
+  // Returns a unique ID which has to be passed as the "environment" parameter of the
+  // DataFrameReader. Use BigGraphEnvironment.dataFrame for the most convenient access.
+  def register(env: BigGraphEnvironment): String = {
+    val id = s"env-${graph_util.Timestamp}"
+    envs(id) = env
+    id
+  }
+  private val envs = collection.mutable.Map[String, BigGraphEnvironment]()
 }
 class DefaultSource extends sql.sources.RelationProvider {
   def createRelation(sqlContext: sql.SQLContext, parameters: Map[String, String]) = {
     val path = parameters("path")
-    val environment = parameters("environment")
-    new ProjectRelation(DefaultSource.env(environment), sqlContext, path)
+    val env = DefaultSource.envs(parameters("environment"))
+    new ProjectRelation(env, sqlContext, path)
   }
 }
 
