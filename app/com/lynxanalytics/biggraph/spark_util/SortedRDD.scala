@@ -325,7 +325,7 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
 
   // When a key is present multiple times, keep the first key-value
   // pair and discard the rest.
-  def discardMultipleKeys(): UniqueSortedRDD[K, V] = {
+  def distinctByKey(): UniqueSortedRDD[K, V] = {
     val createCombiner = (v: V) => v
     val mergeValue = (buf: V, v: V) => buf
     combineByKey(createCombiner, mergeValue)
