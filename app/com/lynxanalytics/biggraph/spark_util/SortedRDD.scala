@@ -28,8 +28,6 @@ import scala.reflect.ClassTag
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
-  var enableTestAsserts: Boolean = false
-
   // Creates a SortedRDD from an unsorted but partitioned RDD.
   def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
     val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
@@ -37,7 +35,7 @@ object SortedRDD {
   }
   // Creates a SortedRDD from an unsorted but partitioned RDD.
   def fromUniqueUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): UniqueSortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true, uniqueKeys = true)
+    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
     new ArrayBackedSortedRDD(arrayRDD) with UniqueSortedRDD[K, V]
   }
 }
@@ -472,8 +470,7 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
 // the partition id. x._2 is an array of key-value pairs sorted by key. data is assumed to be
 // partitioned by a hash partitioner. A (k,v) in partition i of data will end up in the array in
 // partition i of this SortedArrayRDD.
-private[spark_util] class SortedArrayRDD[K: Ordering, V](
-  data: RDD[(K, V)], needsSorting: Boolean, uniqueKeys: Boolean = false)
+private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], needsSorting: Boolean)
     extends RDD[(Int, Array[(K, V)])](data) {
 
   assert(
@@ -490,13 +487,6 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](
     val it = data.iterator(split, context)
     val array = it.toArray
     if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
-    if (uniqueKeys && SortedRDD.enableTestAsserts) {
-      for (i <- 1 to array.length - 1) {
-        assert(
-          array(i - 1)._1 != array(i)._1,
-          s"$data should have unique keys")
-      }
-    }
     Iterator((split.index, array))
   }
 }

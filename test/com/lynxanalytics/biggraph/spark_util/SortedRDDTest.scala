@@ -1,14 +1,15 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import com.lynxanalytics.biggraph.RDDCheckerTestSuite
 import org.apache.spark.Partitioner
+import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.Timed
 
-class SortedRDDTest extends RDDCheckerTestSuite
-    with TestSparkContext {
+import scala.reflect.ClassTag
+
+class SortedRDDTest extends FunSuite with TestSparkContext {
   import Implicits._
 
   test("join without intersection") {
