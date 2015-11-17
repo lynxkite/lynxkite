@@ -45,7 +45,6 @@ linkedin.importVertexAttributesFromCSVFiles(
   prefix: '')
 
 // Somewhat hacky way to split to test/train sets.
-//linkedin.addGaussianVertexAttribute(name: 'random', seed: '-646188926')
 linkedin.addGaussianVertexAttribute(name: 'random', seed: '0')
 linkedin.addRankAttribute(keyattr: 'random', order: 'ascending', rankattr: 'ranking')
 linkedin.derivedVertexAttribute(
