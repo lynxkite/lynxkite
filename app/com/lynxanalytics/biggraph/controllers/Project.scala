@@ -790,9 +790,9 @@ object ProjectFrame {
                    allowSlash: Boolean = false,
                    allowEmpty: Boolean = false): Unit = {
     assert(allowEmpty || name.nonEmpty, s"$what cannot be empty.")
-    assert(!name.startsWith("!"), s"$what cannot start with '!'.")
-    assert(!name.contains(separator), s"$what cannot contain '$separator'.")
-    assert(allowSlash || !name.contains("/"), s"$what cannot contain '/'.")
+    assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
+    assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
+    assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
   }
 }
 
