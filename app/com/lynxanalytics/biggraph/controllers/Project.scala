@@ -92,12 +92,21 @@ sealed trait ProjectViewer {
     state.vertexSetGUID.map(manager.vertexSet(_)).getOrElse(null)
   lazy val vertexAttributes: Map[String, Attribute[_]] =
     state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
+  def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
+    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
+  }.toSeq.sorted
   lazy val edgeBundle: EdgeBundle =
     state.edgeBundleGUID.map(manager.edgeBundle(_)).getOrElse(null)
   lazy val edgeAttributes: Map[String, Attribute[_]] =
     state.edgeAttributeGUIDs.mapValues(manager.attribute(_))
+  def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
+    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
+  }.toSeq.sorted
   lazy val scalars: Map[String, Scalar[_]] =
     state.scalarGUIDs.mapValues(manager.scalar(_))
+  def scalarNames[T: TypeTag] = scalars.collect {
+    case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
+  }.toSeq.sorted
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations
@@ -466,9 +475,7 @@ sealed trait ProjectEditor {
     }
   def vertexAttributes_=(attrs: Map[String, Attribute[_]]) =
     vertexAttributes.updateEntityMap(attrs)
-  def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
-    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
-  }.toSeq.sorted
+  def vertexAttributeNames[T: TypeTag] = viewer.vertexAttributeNames[T]
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
@@ -483,9 +490,7 @@ sealed trait ProjectEditor {
     }
   def edgeAttributes_=(attrs: Map[String, Attribute[_]]) =
     edgeAttributes.updateEntityMap(attrs)
-  def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
-    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
-  }.toSeq.sorted
+  def edgeAttributeNames[T: TypeTag] = viewer.edgeAttributeNames[T]
 
   def scalars =
     new StateMapHolder[Scalar[_]] {
@@ -496,9 +501,7 @@ sealed trait ProjectEditor {
     }
   def scalars_=(newScalars: Map[String, Scalar[_]]) =
     scalars.updateEntityMap(newScalars)
-  def scalarNames[T: TypeTag] = scalars.collect {
-    case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
-  }.toSeq.sorted
+  def scalarNames[T: TypeTag] = viewer.scalarNames[T]
 
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
