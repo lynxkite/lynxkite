@@ -1,7 +1,7 @@
 // The toolbox shows the list of operation categories and the operations.
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
+angular.module('biggraph').directive('operationToolbox', function() {
   return {
     restrict: 'E',
     // A lot of internals are exposed, because this directive is used both in
@@ -26,43 +26,39 @@ angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
           scope.allOps = scope.allOps.concat(cats[i].ops);
         }
       });
+
       scope.$watch('searching && !op', function(search) {
         if (search) {
-          var filter = elem.find('#filter')[0];
+          var filter = elem.find('#filter');
           filter.focus();
-          // Here we rely on the search page living in a separate scope.
-          // This happens because it is inside an ng-if, but this is a bit sneaky.
-          // The point is that these hotkeys will be automatically unregistered when
-          // this scope is destroyed.
-          var searchKeys = hotkeys.bindTo(angular.element(filter).scope());
           scope.searchSelection = 0;
-          searchKeys.add({ combo: 'up', allowIn: ['INPUT'], callback: function(e) {
-            e.preventDefault();
-            scope.searchSelection -= 1;
-            var count = elem.find('.operation').length;
-            if (scope.searchSelection >= count) {
-              scope.searchSelection = count - 1;
-            }
-            if (scope.searchSelection < 0) {
-              scope.searchSelection = 0;
-            }
-          }});
-          searchKeys.add({ combo: 'down', allowIn: ['INPUT'], callback: function(e) {
-            e.preventDefault();
-            scope.searchSelection += 1;
-            var count = elem.find('.operation').length;
-            if (scope.searchSelection >= count) {
-              scope.searchSelection = count - 1;
-            }
-          }});
-          searchKeys.add({ combo: 'enter', allowIn: ['INPUT'], callback: function(e) {
-            e.preventDefault();
-            var elems = elem.find('.operation');  // Rely on Angular's filter.
-            var op = angular.element(elems[scope.searchSelection]).scope().op;
-            scope.clickedOp(op);
-          }});
         }
       });
+
+      scope.filterKey = function(e) {
+        if (!scope.searching || scope.op) { return; }
+        var operations = elem.find('.operation');
+        if (e.keyCode === 38) { // UP
+          e.preventDefault();
+          scope.searchSelection -= 1;
+          if (scope.searchSelection >= operations.length) {
+            scope.searchSelection = operations.length - 1;
+          }
+          if (scope.searchSelection < 0) {
+            scope.searchSelection = 0;
+          }
+        } else if (e.keyCode === 40) { // DOWN
+          e.preventDefault();
+          scope.searchSelection += 1;
+          if (scope.searchSelection >= operations.length) {
+            scope.searchSelection = operations.length - 1;
+          }
+        } else if (e.keyCode === 13) { // ENTER
+          e.preventDefault();
+          var op = angular.element(operations[scope.searchSelection]).scope().op;
+          scope.clickedOp(op);
+        }
+      };
 
       scope.findColor = function(opId) {
         var op = scope.findOp(opId);
