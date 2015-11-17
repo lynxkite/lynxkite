@@ -13,6 +13,10 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 // For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
 // based on the network structure.
 object Fingerprinting extends OpFromJson {
+  // TODO: These parameters are somewhat temporary until we figure out exactly what kind of
+  // configuration we need for fingerpringing. Users cannot set these without explicit instructions
+  // from us, so we don't have to take compatibility considerations too seriously about them.
+  // (But if we do instruct someone to use these, they need to be warned.)
   private val weightingModeParameter = NewParameter("weightingMode", "InverseInDegree")
   private val multiNeighborsPreferenceParameter = NewParameter("multiNeighborsPreference", 0.0)
   class Input extends MagicInputSignature {
@@ -146,7 +150,7 @@ case class Fingerprinting(
             val weights = weightingMode match {
               case "InDegree" => degrees.mapValues(ds => ds.sum / ds.size)
               case "InverseInDegree" => degrees.mapValues(ds => ds.size / ds.sum)
-              case "Weird" => degrees.map {
+              case "InverseInDegreeBasedHybrid" => degrees.map {
                 case (key, ds) =>
                   val inverseDeg = (ds.size / ds.sum) min 1
                   if (ln.contains(key)) key -> inverseDeg

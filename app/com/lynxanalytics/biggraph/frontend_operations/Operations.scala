@@ -2203,6 +2203,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           .result.candidates
       }
       val fingerprinting = {
+        // TODO: This is a temporary hack to facilitate experimentation with the underlying backend
+        // operation w/o too much disruption to users. Should be removed once we are clear on what
+        // we want to provide for fingerprinting.
         val baseParams = s""""minimumOverlap": $mo, "minimumSimilarity": $ms"""
         val extraParams = params.getOrElse("extra", "")
         val paramsJson = if (extraParams == "") baseParams else (baseParams + ", " + extraParams)
