@@ -50,8 +50,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     // Uncomment this if you are debugging some Kryo issue.
     // import com.esotericsoftware.minlog.Log
-    // import com.esotericsoftware.minlog.Log._
-    // Log.set(LEVEL_TRACE);
+    // Log.set(Log.LEVEL_TRACE);
 
     // Adding one more line? Do it at the bottom!
     // Deleting a line? Do not.
