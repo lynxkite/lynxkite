@@ -12,29 +12,21 @@ class AggregateTest extends FunSuite with TestGraphOp {
       val op = ConnectedComponents()
       op(op.es, example.edges).result
     }
-    val count = {
-      val op = AggregateByEdgeBundle(Aggregator.Count[Double]())
-      op(op.connection, components.belongsTo)(op.attr, example.age).result
+    def run[Attr, Res](
+      agg: LocalAggregator[Attr, Res], attr: Attribute[Attr]) = {
+      val op = AggregateByEdgeBundle(agg)
+      op(op.connection, components.belongsTo)(op.attr, attr).result.attr.rdd.collect.toMap
     }
-    assert(count.attr.rdd.collect.toSet == Set(0 -> 2, 2 -> 1, 3 -> 1))
-    val sum = {
-      val op = AggregateByEdgeBundle(Aggregator.Sum())
-      op(op.connection, components.belongsTo)(op.attr, example.age).result
-    }
-    assert(sum.attr.rdd.collect.toSet == Set(0 -> 38.5, 2 -> 50.3, 3 -> 2.0))
-    val average = {
-      val op = AggregateByEdgeBundle(Aggregator.Average())
-      op(op.connection, components.belongsTo)(op.attr, example.age).result
-    }
-    assert(average.attr.rdd.collect.toSet == Set(0 -> 19.25, 2 -> 50.3, 3 -> 2.0))
-    val first = {
-      val op = AggregateByEdgeBundle(Aggregator.First[String]())
-      op(op.connection, components.belongsTo)(op.attr, example.name).result
-    }
+    assert(run(Aggregator.Count[Double](), example.age) ==
+      Map(0 -> 2, 2 -> 1, 3 -> 1))
+    assert(run(Aggregator.Sum(), example.age) ==
+      Map(0 -> 38.5, 2 -> 50.3, 3 -> 2.0))
+    assert(run(Aggregator.Average(), example.age) ==
+      Map(0 -> 19.25, 2 -> 50.3, 3 -> 2.0))
     // Cannot predict output except for isolated points.
-    val firsts = first.attr.rdd.collect.toSet
-    assert(firsts.size == 3)
-    assert(firsts.contains(3L -> "Isolated Joe"))
+    val firsts = run(Aggregator.First[String](), example.name)
+    assert(firsts.contains(0))
+    assert(firsts - 0 == Map(2 -> "Bob", 3 -> "Isolated Joe"))
   }
   test("example graph attribute aggregates") {
     val example = ExampleGraph()().result
