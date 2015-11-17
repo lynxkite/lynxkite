@@ -27,7 +27,7 @@
     </div>
   </div>
   <div ng-if="searching && !op" class="panel box col-sm-11 yellow">
-    <h1><input id="filter" ng-model="opFilter"></h1>
+    <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
     <div class="list-group">
       <div ng-repeat="op in allOps | filter: { title: opFilter } | orderBy: 'title'" ng-click="clickedOp(op)"
           class="list-group-item operation"
