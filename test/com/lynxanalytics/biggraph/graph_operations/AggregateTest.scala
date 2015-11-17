@@ -17,6 +17,8 @@ class AggregateTest extends FunSuite with TestGraphOp {
       val op = AggregateByEdgeBundle(agg)
       op(op.connection, components.belongsTo)(op.attr, attr).result.attr.rdd.collect.toMap
     }
+    assert(run(Aggregator.AsSet[String](), example.name) ==
+      Map(0 -> Set("Adam", "Eve"), 2 -> Set("Bob"), 3 -> Set("Isolated Joe")))
     assert(run(Aggregator.Count[Double](), example.age) ==
       Map(0 -> 2, 2 -> 1, 3 -> 1))
     assert(run(Aggregator.Sum(), example.age) ==
