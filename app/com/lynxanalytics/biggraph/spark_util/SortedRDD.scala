@@ -146,7 +146,7 @@ private object SortedRDDUtil {
     }
   }
 
-  // Keys in bi2 must be unique.
+  // Keys in bi1 and bi2 must be unique.
   def uniqueLeftOuterMerge[K, V, W](
     bi1: collection.BufferedIterator[(K, V)],
     bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, Option[W]))] = {
