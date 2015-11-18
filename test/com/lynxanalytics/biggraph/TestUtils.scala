@@ -72,7 +72,7 @@ private object SparkContextContainer {
   lazy val sparkContext = BigGraphSparkContext(
     "BigGraphTests",
     useJars = false,
-    debugKryo = false, // Set this to true if you are debugging kryo issues.
+    forceRegistration = true,
     master = "local")
 }
 

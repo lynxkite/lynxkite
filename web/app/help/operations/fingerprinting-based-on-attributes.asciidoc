@@ -38,4 +38,8 @@ anyway.)
 [[ms]] Minimum similarity::
 The similarity threshold below which two vertices will not be considered a match even if there are
 no better matches for them. Similarity is normalized to [0, 1].
+
+[[extra]] Fingerprinting algorithm additional parameters::
+You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
+expert if you think you need this.
 ====

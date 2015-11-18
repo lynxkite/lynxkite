@@ -61,7 +61,7 @@ class CountOrdering[T] extends Ordering[(T, Long)] with Serializable {
 
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
-    override def initialValue() = BigGraphSparkContext.createKryo()
+    override def initialValue() = BigGraphSparkContext.createKryoWithForcedRegistration()
   }
 
   def serialize[T](obj: Any): Array[Byte] = {
