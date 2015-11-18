@@ -18,6 +18,21 @@ module.exports = function(fw) {
       expect(lib.left.attributeCount()).toEqual(8);
     });
 
+  fw.transitionTest(
+    'test-example project with example graph saved as apple',
+    'test-example project with example graph saved as pear/apple',
+    function() {
+      lib.left.saveProjectAs('pear/apple')
+    },
+    function() {
+      // We are now in a project with the new name.
+      lib.left.expectCurrentProjectIs('pear/apple');
+      // We also kept the contents of the project.
+      expect(lib.left.vertexCount()).toEqual(4);
+      expect(lib.left.edgeCount()).toEqual(4);
+      expect(lib.left.attributeCount()).toEqual(8);
+    });
+
   fw.statePreservingTest(
     'test-example project with example graph saved as apple',
     'cant save as to existing project',
