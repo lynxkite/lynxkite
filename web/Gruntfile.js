@@ -428,7 +428,7 @@ module.exports = function (grunt) {
     'protractor',
   ]);
   function getPort() {
-    return grunt.option('port') || 9000;
+    return grunt.option('port') || 2200;
   }
 
   grunt.registerTask('build', [

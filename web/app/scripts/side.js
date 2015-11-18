@@ -361,10 +361,17 @@ angular.module('biggraph')
       this.state.projectName = undefined;
     };
 
-    Side.prototype.maybeSaveAs = function(newName) {
-      // Called by whenever the button is clicked, but perhaps the input is still empty.
-      if (newName === undefined || newName === '') { return; }
-      this.saveAs(newName);
+    Side.prototype.startSavingAs = function() {
+      this.showSaveAs = true;
+      this.saveAsName = this.state.projectName;
+    };
+
+    Side.prototype.maybeSaveAs = function() {
+      // We only need to do an actual action if the user has changed the name.
+      if (this.saveAsName !== this.state.projectName) {
+        this.saveAs(this.saveAsName);
+      }
+      this.showSaveAs = false;
     };
 
     Side.prototype.saveAs = function(newName) {
