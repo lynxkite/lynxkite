@@ -42,19 +42,12 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   val sqlContext = new SQLContext(sc)
+  def ioContext = io.IOContext(dataRoot, runtimeContext)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
-  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val param = io.IOContext(dataRoot, sc)
-    entity match {
-      case vs: VertexSet => new io.VertexIO(vs, param)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
-      case va: Attribute[_] => new io.AttributeIO(va, param)
-      case sc: Scalar[_] => new io.ScalarIO(sc, param)
-    }
-  }
+  def entityIO(entity: MetaGraphEntity): io.EntityIO = ioContext.entityIO(entity)
 
   private val dataRoot: DataRoot = {
     val mainRoot = new io.SingleDataRoot(repositoryPath)
@@ -132,12 +125,13 @@ class DataManager(sc: spark.SparkContext,
       validateOutput(instance, outputDatas)
       blocking {
         if (instance.operation.isHeavy) {
-          saveOutputs(instance, outputDatas.values)
+          instance.saveOutputs(ioContext, outputDatas.values)
         } else {
           // We still save all scalars even for non-heavy operations.
           // This can happen asynchronously though.
           loggedFuture {
-            saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
+            instance.saveOutputs(
+              ioContext, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
       }
@@ -149,17 +143,6 @@ class DataManager(sc: spark.SparkContext,
       }
       outputDatas
     }
-  }
-
-  private def saveOutputs(instance: MetaGraphOperationInstance,
-                          outputs: Iterable[EntityData]): Unit = {
-    for (output <- outputs) {
-      saveToDisk(output)
-    }
-    // Mark the operation as complete. Entities may not be loaded from incomplete operations.
-    // The reason for this is that an operation may give different results if the number of
-    // partitions is different. So for consistency, all outputs must be from the same run.
-    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
@@ -302,16 +285,6 @@ class DataManager(sc: spark.SparkContext,
       case rddData: EntityRDDData => rddData.rdd.cacheBackingArray()
       case _ => ()
     }
-  }
-
-  private def saveToDisk(data: EntityData): Unit = {
-    val entity = data.entity
-    val eio = entityIO(entity)
-    val doesNotExist = eio.delete()
-    assert(doesNotExist, s"Cannot delete directory of entity $entity")
-    log.info(s"Saving entity $entity ...")
-    eio.write(data)
-    log.info(s"Entity $entity saved.")
   }
 
   def runtimeContext = {

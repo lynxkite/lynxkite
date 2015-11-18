@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -12,8 +12,11 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.lang.StringEscapeUtils
+import org.apache.hadoop
+import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Partitioner
+import org.apache.spark.ImportGraphHelper._
 
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
@@ -208,11 +211,11 @@ trait ImportCommon {
 
     def apply(fieldName: String) = singleColumns(fieldName)
 
-    def columnPair(fieldName1: String, fieldName2: String): SortedRDD[ID, (String, String)] = {
+    def columnPair(fieldName1: String, fieldName2: String): UniqueSortedRDD[ID, (String, String)] = {
       val idx1 = fields.indexOf(fieldName1)
       val idx2 = fields.indexOf(fieldName2)
       if (mayHaveNulls) {
-        numberedValidLines.flatMapValues { line =>
+        numberedValidLines.flatMapOptionalValues { line =>
           val value1 = line(idx1)
           val value2 = line(idx2)
           if ((value1 != null) && (value2 != null)) Some((value1, value2))
@@ -230,10 +233,9 @@ trait ImportCommon {
     assert(input.fields.contains(field), s"No such field: $field in ${input.fields}")
   }
 
-  protected def readColumns(
+  protected def numberedLines(
     rc: RuntimeContext,
-    input: RowInput,
-    requiredFields: Set[String] = Set()): Columns = {
+    input: RowInput): UniqueSortedRDD[ID, Seq[String]] = {
     val numbered = input.lines(rc)
     if (ImportUtil.cacheLines) numbered.cacheBackingArray()
     val maxLines = Limitations.maxImportedLines
@@ -244,7 +246,14 @@ trait ImportCommon {
           s"Can't import $numLines lines as your licence only allows $maxLines.")
       }
     }
-    return new Columns(numbered, input.fields, input.mayHaveNulls, requiredFields)
+    numbered
+  }
+
+  protected def readColumns(
+    rc: RuntimeContext,
+    input: RowInput,
+    requiredFields: Set[String] = Set()): Columns = {
+    return new Columns(numberedLines(rc, input), input.fields, input.mayHaveNulls, requiredFields)
   }
 }
 object ImportCommon {
@@ -281,11 +290,81 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc, input)
-    for ((field, rdd) <- columns.singleColumns) {
-      output(o.attrs(field), rdd)
+    val sc = rc.sparkContext
+    // Return empty placeholder RDDs. The real data will be written directly to disk in
+    // saveOutputs and loaded back from disk by the DataManager.
+    val vs = RDDUtils.invalidEntityRDD[Unit](sc)
+    for (field <- input.fields) {
+      output(o.attrs(field), vs.mapValues(_.toString))
     }
-    output(o.vertices, columns.numberedValidLines.mapValues(_ => ()))
+    output(o.vertices, vs)
+  }
+
+  class File(
+      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile) {
+    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
+    val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
+    val context = {
+      val config = new hadoop.mapred.JobConf(file.hadoopConfiguration)
+      config.set(
+        hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR,
+        file.resolvedNameWithNoCredentials)
+      config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
+      config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
+      createTaskAttemptContext(config, tracker, stage, task, attempt)
+    }
+    val writer = fmt.getRecordWriter(context)
+    val committer = fmt.getOutputCommitter(context)
+  }
+
+  // Single-pass import happens here. We ignore the placeholders and write out the actual data.
+  override def saveOutputs(
+    context: io.IOContext,
+    outputs: Iterable[EntityData]): Unit = {
+    val rc = context.runtimeContext
+    val sc = context.sparkContext
+    val lines = numberedLines(rc, input)
+
+    val rootByField: Map[String, HadoopFile] = outputs.map { ed =>
+      val e = ed.entity
+      val guid = e.gUID.toString
+      e.name.name -> (context.dataRoot / io.PartitionedDir / guid).forWriting
+    }.toMap
+    val pathByField = rootByField.mapValues(_ / lines.partitions.size.toString)
+    val paths = input.fields.map(f => pathByField(s"imported_field_$f")) :+ pathByField("vertices")
+
+    val trackerID = Timestamp.toString
+    val rddID = lines.id
+    val count = sc.accumulator[Long](0L, "Line count")
+    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
+      // TODO: Close already created writers if creating a writer throws an exception.
+      val files = paths.map {
+        path => new File(trackerID, rddID, task.partitionId, task.attemptNumber, path)
+      }
+      val verticesWriter = files.last.writer
+      val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
+      try {
+        for (file <- files) file.committer.setupTask(file.context)
+        for ((id, cols) <- iterator) {
+          count += 1
+          val key = new hadoop.io.LongWritable(id)
+          for ((file, col) <- (files zip cols) if col != null) {
+            val value = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(col))
+            file.writer.write(key, value)
+          }
+          verticesWriter.write(key, unit)
+        }
+        for (file <- files) file.committer.commitTask(file.context)
+      } finally {
+        for (file <- files) file.writer.close(file.context)
+      }
+    }
+    val files = paths.map(new File(trackerID, rddID, 0, 0, _))
+    for (file <- files) file.committer.setupJob(file.context)
+    sc.runJob(lines, writeShard)
+    for (file <- files) file.committer.commitJob(file.context)
+    val meta = io.EntityMetadata(count.value)
+    for (root <- rootByField.values) meta.write(root)
   }
 }
 

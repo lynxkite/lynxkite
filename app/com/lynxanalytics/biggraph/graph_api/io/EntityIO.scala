@@ -13,9 +13,31 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
+case class IOContext(dataRoot: DataRoot, runtimeContext: RuntimeContext) {
+  val sparkContext = runtimeContext.sparkContext
+  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
+    entity match {
+      case vs: VertexSet => new io.VertexIO(vs, this)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, this)
+      case va: Attribute[_] => new io.AttributeIO(va, this)
+      case sc: Scalar[_] => new io.ScalarIO(sc, this)
+    }
+  }
 
-case class EntityMetadata(lines: Long)
+  def saveToDisk(data: EntityData): Unit = {
+    val entity = data.entity
+    val eio = entityIO(entity)
+    val doesNotExist = eio.delete()
+    assert(doesNotExist, s"Cannot delete directory of entity $entity")
+    log.info(s"Saving entity $entity ...")
+    eio.write(data)
+    log.info(s"Entity $entity saved.")
+  }
+
+  def operationSucceeded(instance: MetaGraphOperationInstance): Unit = {
+    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
+  }
+}
 
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
@@ -29,6 +51,19 @@ object EntityIO {
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
     dataRoot / io.OperationsDir / instance.gUID.toString
+}
+
+case class EntityMetadata(lines: Long) {
+  def write(path: HadoopFile) = {
+    import EntityIO.fEntityMetadata
+    val metaFile = path / io.Metadata
+    assert(!metaFile.exists, s"Metafile $metaFile should not exist before we write it.")
+    val metaFileCreated = path / io.MetadataCreate
+    metaFileCreated.deleteIfExists()
+    val j = json.Json.toJson(this)
+    metaFileCreated.createFromStrings(json.Json.prettyPrint(j))
+    metaFileCreated.renameTo(metaFile)
+  }
 }
 
 abstract class EntityIO(val entity: MetaGraphEntity, context: IOContext) {
@@ -45,8 +80,8 @@ abstract class EntityIO(val entity: MetaGraphEntity, context: IOContext) {
   protected def operationExists = (EntityIO.operationPath(dataRoot, entity.source) / io.Success).exists
 }
 
-class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
-    extends EntityIO(entity, dMParam) {
+class ScalarIO[T](entity: Scalar[T], context: IOContext)
+    extends EntityIO(entity, context) {
 
   def read(parent: Option[VertexSetData]): ScalarData[T] = {
     assert(parent == None, s"Scalar read called with parent $parent")
@@ -97,8 +132,8 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
 }
 
 abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
-                                                      dMParam: IOContext)
-    extends EntityIO(entity, dMParam) {
+                                                      context: IOContext)
+    extends EntityIO(entity, context) {
 
   // This class reflects the current state of the disk during the read operation
   case class EntityLocationSnapshot(availablePartitions: Map[Int, HadoopFile]) {
@@ -108,7 +143,8 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
     val legacyPathExists = (legacyPath / io.Success).forReading.exists
     assert(hasPartitionedData || legacyPathExists,
-      s"Legacy path $legacyPath does not exist, and there seems to be no valid data in $partitionedPath")
+      s"Legacy path ${legacyPath.forReading} does not exist," +
+        s" and there seems to be no valid data in ${partitionedPath.forReading}")
 
     private def readMetadata: EntityMetadata = {
       import EntityIO.fEntityMetadata
@@ -144,7 +180,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val partitions = rdd.partitions.size
     val lines = targetDir(partitions).saveEntityRDD(rdd)
     val metadata = EntityMetadata(lines)
-    writeMetadata(metadata)
+    metadata.write(partitionedPath.forWriting)
     log.info(s"PERF Instantiated entity $entity on disk")
   }
 
@@ -158,20 +194,10 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   private val partitionedPath = dataRoot / PartitionedDir / entity.gUID.toString
   private val metaFile = partitionedPath / io.Metadata
-  private val metaFileCreated = partitionedPath / io.MetadataCreate
 
   private def targetDir(numPartitions: Int) = {
     val subdir = numPartitions.toString
     partitionedPath.forWriting / subdir
-  }
-
-  private def writeMetadata(metaData: EntityMetadata) = {
-    import EntityIO.fEntityMetadata
-    assert(!metaFile.forWriting.exists, s"Metafile $metaFile should not exist before we write it.")
-    metaFileCreated.forWriting.deleteIfExists()
-    val j = json.Json.toJson(metaData)
-    metaFileCreated.forWriting.createFromStrings(json.Json.prettyPrint(j))
-    metaFileCreated.forWriting.renameTo(metaFile.forWriting)
   }
 
   private def computeAvailablePartitions = {
@@ -231,7 +257,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
-    writeMetadata(EntityMetadata(lines))
+    EntityMetadata(lines).write(partitionedPath.forWriting)
     newFile
   }
 
@@ -268,8 +294,8 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 }
 
-class VertexIO(entity: VertexSet, dMParam: IOContext)
-    extends PartitionedDataIO[VertexSetData](entity, dMParam) {
+class VertexIO(entity: VertexSet, context: IOContext)
+    extends PartitionedDataIO[VertexSetData](entity, context) {
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadLegacyEntityRDD[Unit](sc)
@@ -285,8 +311,8 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
   }
 }
 
-class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
-    extends PartitionedDataIO[EdgeBundleData](entity, dMParam) {
+class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
+    extends PartitionedDataIO[EdgeBundleData](entity, context) {
 
   override def correspondingVertexSet = Some(entity.idSet)
 
@@ -308,8 +334,8 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
   }
 }
 
-class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
-    extends PartitionedDataIO[AttributeData[T]](entity, dMParam) {
+class AttributeIO[T](entity: Attribute[T], context: IOContext)
+    extends PartitionedDataIO[AttributeData[T]](entity, context) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {

@@ -313,6 +313,12 @@ object RDDUtils {
       }
     }
   }
+
+  // An entity RDD that raises an exception when read.
+  def invalidEntityRDD[T: ClassTag](sc: spark.SparkContext): UniqueSortedRDD[ID, T] = {
+    import Implicits._
+    sc.parallelize(Seq(1)).map[(ID, T)](_ => ???).sortUnique
+  }
 }
 
 object Implicits {
