@@ -168,12 +168,12 @@ case class Fingerprinting(
       .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
-      }.asUniqueSortedRDD.sortedRepartition(leftPartitioner))
+      }.sortUnique(leftPartitioner))
     output(o.rightSimilarities, rightSimilarities.sortedJoin(rightToLeft)
       .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
-      }.asUniqueSortedRDD.sortedRepartition(rightPartitioner))
+      }.sortUnique(rightPartitioner))
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
