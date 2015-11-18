@@ -172,7 +172,9 @@ while (pr.scalars['vertex_count'].toDouble() > 0) {
     fScore)
 
   // Throw away lowest scoring matches.
-  pr.filterByAttributes('filterva-linkedin_name similarity score': ">$currentMin")
+  // Make sure we avoid scientific notation (which cannot be parsed on the other side)
+  formattedCurrentMin = String.format("%.18f", currentMin+0.000000001).toString()
+  pr.filterByAttributes('filterva-linkedin_name similarity score': ">$formattedCurrentMin")
 }
 
 println "Maximal fScore: $maxFScore"
