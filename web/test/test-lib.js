@@ -20,6 +20,10 @@ function Side(direction) {
 }
 
 Side.prototype = {
+  expectCurrentProjectIs: function(name) {
+    expect(this.side.evaluate('side.state.projectName'), name);
+  },
+
   // Only for opening the second project next to an already open project.
   openSecondProject: function(project) {
     this.side.element(by.id('show-selector-button')).click();
@@ -281,6 +285,12 @@ Side.prototype = {
 
   scalar: function(name) {
     return this.side.element(by.id('scalar-' + toID(name)));
+  },
+
+  saveProjectAs: function(newName) {
+    this.side.element(by.id('save-as-starter-button')).click();
+    this.side.element(by.id('save-as-input')).sendKeys(testLib.selectAllKey + newName);
+    this.side.element(by.id('save-as-button')).click();
   },
 };
 
@@ -612,10 +622,6 @@ testLib = {
         }
       });
     browser.controlFlow().execute(function() { return defer.promise; });
-  },
-
-  expectCurrentProjectIs: function(name) {
-    expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
   },
 
   navigateToProject: function(name) {
