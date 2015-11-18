@@ -910,15 +910,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add reversed edges", new StructureOperation(_, _) {
-    def parameters = List()
+    def parameters = List(
+      Param("distattr", "Distinguishing edge attribute")
+    )
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val dir = Direction("all edges", project.edgeBundle)
+      val rev = {
+        val op = graph_operations.AddReversedEdges()
+        op(op.es, project.edgeBundle).result
+      }
+
       project.pullBackEdges(
         project.edgeBundle,
         project.edgeAttributes.toIndexedSeq,
-        dir.edgeBundle,
-        dir.pullBundleOpt.get)
+        rev.esPlus,
+        rev.newToOriginal)
+      if (params("distattr").nonEmpty) {
+        project.edgeAttributes(params("distattr")) = rev.isNew
+      }
     }
   })
 
@@ -2178,7 +2187,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("weights", "Edge weights",
         options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
       NonNegInt("mo", "Minimum overlap", default = 1),
-      Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
+      Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
+      Param(
+        "extra",
+        "Fingerprinting algorithm additional parameters",
+        mandatory = false,
+        defaultValue = ""))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(vertexAttributes[String].size >= 2, "Two string attributes are needed.")
@@ -2198,7 +2212,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           .result.candidates
       }
       val fingerprinting = {
-        val op = graph_operations.Fingerprinting(mo, ms)
+        // TODO: This is a temporary hack to facilitate experimentation with the underlying backend
+        // operation w/o too much disruption to users. Should be removed once we are clear on what
+        // we want to provide for fingerprinting.
+        val baseParams = s""""minimumOverlap": $mo, "minimumSimilarity": $ms"""
+        val extraParams = params.getOrElse("extra", "")
+        val paramsJson = if (extraParams == "") baseParams else (baseParams + ", " + extraParams)
+        val op = graph_operations.Fingerprinting.fromJson(json.Json.parse(s"{$paramsJson}"))
         op(
           op.leftEdges, project.edgeBundle)(
             op.leftEdgeWeights, weights)(

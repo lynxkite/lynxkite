@@ -22,7 +22,7 @@ object EntityIO {
   var verticesPerPartition =
     scala.util.Properties.envOrElse(
       "KITE_VERTICES_PER_PARTITION",
-      System.getProperty("biggraph.vertices.per.partition", "1000000")).toInt
+      System.getProperty("biggraph.vertices.per.partition", "200000")).toInt
   var tolerance =
     System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
 
