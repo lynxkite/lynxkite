@@ -26,7 +26,7 @@ object Scripting {
   import scala.language.implicitConversions
 
   implicit class InstanceBuilder[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-      op: TypedMetaGraphOp[IS, OMDS]) {
+      val op: TypedMetaGraphOp[IS, OMDS]) {
     val builder = this
     private var currentInput = MetaDataSet()
     def apply[T <: MetaGraphEntity](
