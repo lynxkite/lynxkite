@@ -53,6 +53,7 @@ object JsonMigration {
       className(graph_operations.FastRandomEdgeBundle) -> 1,
       className(graph_operations.SampledView) -> 1,
       className(graph_operations.VertexBucketGrid) -> 1,
+      className(graph_operations.AddReversedEdges) -> 1,
       className(graph_util.HadoopFile) -> 1,
       // Forces a migration due to switch to v2 tags.
       "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1)
@@ -74,6 +75,7 @@ object JsonMigration {
       (className(graph_operations.FastRandomEdgeBundle), 0) -> identity,
       (className(graph_operations.SampledView), 0) -> identity,
       (className(graph_operations.VertexBucketGrid), 0) -> identity,
+      (className(graph_operations.AddReversedEdges), 0) -> identity,
       (className(graph_util.HadoopFile), 0) -> identity))
 }
 import JsonMigration._
