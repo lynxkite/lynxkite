@@ -420,15 +420,12 @@ object Implicits {
       new AlreadySortedRDD(self) with UniqueSortedRDD[K, V]
     }
     // Sorts each partition of the RDD in isolation.
-    /*def sort(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
-      sort(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))*/
     def sort(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {
         case self: SortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
         case self if partitioner eq self.partitioner.orNull => ???
-        //SortedRDD.fromUnsorted(self)
         case self =>
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
@@ -439,15 +436,12 @@ object Implicits {
     }
 
     // Sorts each partition of the RDD in isolation and trusts that keys are unique.
-    /*def sortUnique(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
-      sortUnique(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))*/
     def sortUnique(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       self match {
         case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
         case self if partitioner eq self.partitioner.orNull => ???
-        // SortedRDD.fromUniqueUnsorted(self)
         case self =>
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
