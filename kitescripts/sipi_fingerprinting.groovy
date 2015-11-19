@@ -205,7 +205,6 @@ segmentationFP.renameScalar(from: 'match_is_good_sum', to: 'correct_match_count'
 
 // ======= Drawing a primitive P/R curve ============
 
-<<<<<<< HEAD
 def drawPR(pr) {
 
   // First restrict to matched test vertices. This is basically an is-defined test.
