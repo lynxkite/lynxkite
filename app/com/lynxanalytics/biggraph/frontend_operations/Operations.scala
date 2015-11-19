@@ -1196,10 +1196,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
-      Code(
-        "expr",
-        "Value",
-        defaultValue = "(function() {\n  // Add code here:\n  return 1.0;\n})();"))
+      Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
       val name = params("output")
@@ -1226,10 +1223,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
-      Code(
-        "expr",
-        "Value",
-        defaultValue = "(function() {\n  // Add code here:\n  return 1.0;\n})();"))
+      Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
       val name = params("output")
