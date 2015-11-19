@@ -205,6 +205,7 @@ segmentationFP.renameScalar(from: 'match_is_good_sum', to: 'correct_match_count'
 
 // ======= Drawing a primitive P/R curve ============
 
+<<<<<<< HEAD
 def drawPR(pr) {
 
   // First restrict to matched test vertices. This is basically an is-defined test.
@@ -234,7 +235,9 @@ def drawPR(pr) {
       fScore)
 
     // Throw away lowest scoring matches.
-    pr.filterByAttributes('filterva-score': ">$currentMin")
+    // Make sure we avoid scientific notation (which cannot be parsed on the other side)
+    formattedCurrentMin = String.format("%.18f", currentMin+0.000000001).toString()
+    pr.filterByAttributes('filterva-score': ">$formattedCurrentMin")
   }
   println "Maximal fScore: $maxFScore"
 }
