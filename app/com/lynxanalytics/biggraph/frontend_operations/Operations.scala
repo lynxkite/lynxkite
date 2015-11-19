@@ -2294,8 +2294,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val mo = params("mo").toInt
       val ms = params("ms").toDouble
 
-      // val leftWithLoops = parent.edgeBundle
-      // val rightWithLoops = project.edgeBundle
       val leftWithLoops = parallelEdgeBundleUnion(parent.edgeBundle, parent.vertexSet.loops)
       val rightWithLoops = parallelEdgeBundleUnion(project.edgeBundle, project.vertexSet.loops)
       val fromLeftToRight = leftWithLoops.concat(seg.belongsTo)
