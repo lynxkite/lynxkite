@@ -8,6 +8,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 object FindModularPartitioning extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -82,7 +83,7 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
       //   - new ID or None if we are to be finalized
       //   - outgoing weighted edges we are responsible to output somewhere
       //   - incoming weighted edges we are responsible to output somewhere
-      val iterationOutput: SortedRDD[ID, (Option[ID], Seq[(ID, Double)], Seq[(ID, Double)])] =
+      val iterationOutput: UniqueSortedRDD[ID, (Option[ID], Seq[(ID, Double)], Seq[(ID, Double)])] =
         friendsData.mapValuesWithKeys {
           case (id, friendsList) =>
             val friends: Map[ID, (Double, Double, Double, Double)] = friendsList.toMap
@@ -128,10 +129,10 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
             (newId, outEdges, inEdges)
         }.cache()
 
-      val memberMoves = iterationOutput.flatMapValues(_._1).filter { case (from, to) => from != to }
+      val memberMoves = iterationOutput.flatMapOptionalValues(_._1).filter { case (from, to) => from != to }
       val newMembers = members.sortedLeftOuterJoin(memberMoves).map {
         case (oldPart, (member, newPartOpt)) => newPartOpt.getOrElse(oldPart) -> member
-      }.toSortedRDD(vPart)
+      }.sort(vPart)
 
       val newConnections = iterationOutput.flatMap {
         case (_, (newIdOpt, outs, ins)) =>
@@ -156,7 +157,7 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
         .reduceBySortedKey(vPart, { case ((in1, out1), (in2, out2)) => (in1 + in2, out1 + out2) })
       val livePartitions = iterationOutput.filter {
         case (id, (newIdOpt, _, _)) => newIdOpt.map(_ == id).getOrElse(false)
-      }
+      }.sortUnique
       val newWeightsFromFinals = allFinalWeights.sortedJoin(livePartitions).mapValues(_._1)
       findModularRefinement(newMembers, newWeightsFromFinals, newConnections, Some(numEdges))
     }
@@ -171,7 +172,7 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
     val vPart = vs.partitioner.get
     val members = findModularRefinement(
       members = vs.mapValuesWithKeys(_._1),
-      weightsFromFinals = rc.sparkContext.emptyRDD[(ID, (Double, Double))].toSortedRDD(vPart),
+      weightsFromFinals = rc.sparkContext.emptyRDD[(ID, (Double, Double))].sort(vPart),
       connections = inputs.edges.rdd.sortedJoin(inputs.weights.rdd)
         .map { case (id, (e, w)) => ((e.src, e.dst), w) }
         .reduceBySortedKey(vPart, _ + _),

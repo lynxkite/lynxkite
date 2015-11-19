@@ -12,6 +12,7 @@ import org.apache.spark._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 import com.twitter.algebird.HyperLogLogMonoid
 import com.twitter.algebird.HLL
@@ -97,11 +98,11 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
      the size of the coreachable set of A.*/
   @tailrec private def getMeasures(
     diameter: Int, // Max diameter - iterations - to check
-    sumDistances: SortedRDD[ID, Int], // The sum of the distances to every vertex
-    hyperBallCounters: SortedRDD[ID, HLL], // HLLs counting the coreachable sets
-    hyperBallSizes: SortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
+    sumDistances: UniqueSortedRDD[ID, Int], // The sum of the distances to every vertex
+    hyperBallCounters: UniqueSortedRDD[ID, HLL], // HLLs counting the coreachable sets
+    hyperBallSizes: UniqueSortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
     vertexPartitioner: Partitioner,
-    edges: SortedRDD[ID, Iterable[ID]]): (SortedRDD[ID, Int], SortedRDD[ID, Int]) = {
+    edges: UniqueSortedRDD[ID, Iterable[ID]]): (UniqueSortedRDD[ID, Int], UniqueSortedRDD[ID, Int]) = {
 
     val newHyperBallCounters = getNextHyperBalls(
       hyperBallCounters, vertexPartitioner, edges).cache()
@@ -128,11 +129,11 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
   /* Returns the harmonic centrality of every vertex.*/
   @tailrec private def getHarmonicCentralities(
     diameter: Int, // Max diameter - iterations - to check
-    harmonicCentralities: SortedRDD[ID, Double],
-    hyperBallCounters: SortedRDD[ID, HLL], // HLLs counting the coreachable sets
-    hyperBallSizes: SortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
+    harmonicCentralities: UniqueSortedRDD[ID, Double],
+    hyperBallCounters: UniqueSortedRDD[ID, HLL], // HLLs counting the coreachable sets
+    hyperBallSizes: UniqueSortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
     vertexPartitioner: Partitioner,
-    edges: SortedRDD[ID, Iterable[ID]]): SortedRDD[ID, Double] = {
+    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, Double] = {
 
     val newHyperBallCounters = getNextHyperBalls(
       hyperBallCounters, vertexPartitioner, edges).cache()
@@ -160,7 +161,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
   private def getNextHyperBalls(
     hyperBallCounters: SortedRDD[ID, HLL],
     vertexPartitioner: Partitioner,
-    edges: SortedRDD[ID, Iterable[ID]]): SortedRDD[ID, HLL] = {
+    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HLL] = {
     // Aggregate the Hll counters for every neighbor.
     (hyperBallCounters
       .sortedJoin(edges)

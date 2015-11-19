@@ -96,9 +96,10 @@ class JsonServer extends mvc.Controller {
     }
   }
 
-  // An non-authenticated, no input GET request that returns JSon.
+  // An non-authenticated, no input GET request that returns JSON.
   def jsonPublicGet[O: json.Writes](handler: => O) = {
     action(parse.anyContent, withAuth = false) { (user, request) =>
+      log.info(s"GET ${request.path}")
       try {
         Ok(json.Json.toJson(handler))
       } catch {
@@ -116,6 +117,7 @@ class JsonServer extends mvc.Controller {
   }
 
   def healthCheck(checkHealthy: () => Unit) = mvc.Action { request =>
+    log.info(s"GET ${request.path}")
     checkHealthy()
     Ok("Server healthy")
   }

@@ -548,7 +548,9 @@ case class FindModularClusteringByTweaks(
     val totalDegreeSum = edgeLists.map { case (id, edges) => edges.map(_._2).sum }.sum
 
     val numParts = vPart.numPartitions
-    var members: RDD[(ID, Iterable[ID])] = edgeLists.mapValuesWithKeys(p => Seq(p._1))
+    // members is a (unique cluster id -> list of vertex ids) mapping.
+    // Invariant: one vertex id only shows up once in only one of the vertex id lists.
+    var members: RDD[(ID, Iterable[ID])] = edgeLists.mapValuesWithKeys { case (key, _) => Seq(key) }
 
     var i = 0
     // We keep the last few modularity increment values to decide whether we want to
@@ -571,10 +573,10 @@ case class FindModularClusteringByTweaks(
                   vs.map(vid => vid -> (cid, pid))
               }
           })
-        .toSortedRDD(vPart)
+        .sortUnique(vPart) // Unique because of the invariant of members, see above.
       val perPartitionData = vertexMeta.sortedJoin(edgeLists)
         .map { case (vid, ((cid, pid), edges)) => pid -> (vid, cid, edges) }
-        .toSortedRDD(vPart)
+        .sort(vPart)
 
       val refinedContainedIn = perPartitionData.mapPartitionsWithIndex {
         case (pid, vertexIt) =>
@@ -590,6 +592,9 @@ case class FindModularClusteringByTweaks(
           refineClusters(totalDegreeSum, edgeLists, containedIn, start, end, increase, rnd)
           containedIn.iterator
       }
+      // in refinedContainedIn:
+      // - keys are unique across the whole RDD, but not sorted
+      // - vertex ids in the values are unique across the whole RDD
       // TODO: We know all clusters are contained in the same partition, so this could be optimized.
       members = refinedContainedIn.map { case (vid, cid) => (cid, vid) }.groupByKey().cache()
       // We explicitly evaluate members to get the value of the accumulators that we need for
@@ -607,7 +612,7 @@ case class FindModularClusteringByTweaks(
 
     val belongsToFromEdges = members
       .flatMap { case (cid, vids) => vids.map(_ -> cid) }
-      .toSortedRDD(vPart)
+      .sortUnique(vPart)
     val fullMembers = vs.sortedLeftOuterJoin(belongsToFromEdges)
       .map { case (vid, (_, cidOpt)) => cidOpt.getOrElse(vid) -> vid }.groupByKey()
     val clusters = fullMembers.randomNumbered(vPart).mapValues(_._2)

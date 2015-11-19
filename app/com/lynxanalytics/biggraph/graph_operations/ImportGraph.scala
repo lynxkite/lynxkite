@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
@@ -73,7 +74,7 @@ object ImportUtil {
 
 trait RowInput extends ToJson {
   def fields: Seq[String]
-  def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]]
+  def lines(rc: RuntimeContext): UniqueSortedRDD[ID, Seq[String]]
   val mayHaveNulls: Boolean
 }
 
@@ -143,7 +144,7 @@ case class CSV private (file: HadoopFile,
       CSV.allowCorruptLinesParameter.toJson(allowCorruptLines)
   }
 
-  def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
+  def lines(rc: RuntimeContext): UniqueSortedRDD[ID, Seq[String]] = {
     val lines = file.loadTextFile(rc.sparkContext)
     val numRows = lines.count()
     val partitioner = rc.partitionerForNRows(numRows)
@@ -186,7 +187,7 @@ case class CSV private (file: HadoopFile,
 
 trait ImportCommon {
   class Columns(
-      allNumberedLines: SortedRDD[ID, Seq[String]],
+      allNumberedLines: UniqueSortedRDD[ID, Seq[String]],
       fields: Seq[String],
       mayHaveNulls: Boolean,
       requiredFields: Set[String] = Set()) {
@@ -201,7 +202,7 @@ trait ImportCommon {
     val singleColumns = fields.zipWithIndex.map {
       case (field, idx) =>
         (field,
-          if (mayHaveNulls) numberedValidLines.flatMapValues(line => Option(line(idx)))
+          if (mayHaveNulls) numberedValidLines.flatMapOptionalValues(line => Option(line(idx)))
           else numberedValidLines.mapValues(line => line(idx)))
     }.toMap
 
@@ -248,7 +249,7 @@ trait ImportCommon {
 }
 object ImportCommon {
   def toSymbol(field: String) = Symbol("imported_field_" + field)
-  def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
+  def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): UniqueSortedRDD[String, ID] =
     rdd.groupBySortedKey(partitioner)
       .mapValuesWithKeys {
         case (key, id) =>
@@ -343,7 +344,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
     val nameToIdWithCount = idToNameWithCount
       .map { case (id, (name, count)) => (name, (id, count)) }
       // This is going to be joined with edges, so we use the edge partitioner.
-      .toSortedRDD(edgePartitioner)
+      .sortUnique(edgePartitioner)
     val srcResolvedByDst = RDDUtils.hybridLookupUsingCounts(
       edgeSrcDst(columns).map {
         case (edgeId, (src, dst)) => src -> (edgeId, dst)
@@ -353,7 +354,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
 
     val edges = RDDUtils.hybridLookupUsingCounts(srcResolvedByDst, nameToIdWithCount)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .toSortedRDD(edgePartitioner)
+      .sortUnique(edgePartitioner)
 
     output(o.edges, edges)
     output(o.vertices, idToNameWithCount.mapValues(_ => ()))
@@ -415,7 +416,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
 
     val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .toSortedRDD(partitioner)
+      .sortUnique(partitioner)
 
     output(o.edges, edges)
   }
@@ -463,11 +464,11 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
       partitioner)
     val linesByExternalId = lines
       .map(line => (line(idFieldIdx), line))
-      .toSortedRDD(partitioner)
+      .sortUnique(partitioner)
     val linesByInternalId =
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
-        .toSortedRDD(partitioner)
+        .sortUnique(partitioner)
     if (ImportUtil.cacheLines) linesByInternalId.cacheBackingArray()
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {

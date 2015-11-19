@@ -118,7 +118,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
     output(
       o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
-        .toSortedRDD(p))
+        .sortUnique(p))
 
     val nodePairs = edgeLists.toSeq.flatMap {
       case (i, es) => es.map(e => i -> e)
@@ -128,7 +128,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
       sc.parallelize(nodePairs.zipWithIndex.map {
         case ((a, b), i) => i.toLong -> Edge(a, b)
       })
-        .toSortedRDD(p))
+        .sortUnique(p))
   }
 }
 
@@ -195,10 +195,10 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     val (srcs, dsts) = edgeLists.unzip
     val vs = sc.parallelize(
       srcs.flatten.map(_.toLong -> ()))
-      .toSortedRDD(rc.onePartitionPartitioner)
+      .sortUnique(rc.onePartitionPartitioner)
     val segments = sc.parallelize(
       dsts.map(_.toLong -> ()))
-      .toSortedRDD(rc.onePartitionPartitioner)
+      .sortUnique(rc.onePartitionPartitioner)
     val es = sc.parallelize(
       edgeLists.flatMap {
         case (s, i) => s.map(j => Edge(j.toLong, i.toLong))
@@ -261,7 +261,7 @@ case class AddVertexAttribute(values: Map[Int, String])
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
     val partitioner = inputs.vs.rdd.partitioner.get
-    output(o.attr, sc.parallelize(idMap).toSortedRDD(partitioner))
+    output(o.attr, sc.parallelize(idMap).sortUnique(partitioner))
   }
 }
 
@@ -287,6 +287,6 @@ case class AddDoubleVertexAttribute(values: Map[Int, Double])
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
     val partitioner = inputs.vs.rdd.partitioner.get
-    output(o.attr, sc.parallelize(idMap).toSortedRDD(partitioner))
+    output(o.attr, sc.parallelize(idMap).sortUnique(partitioner))
   }
 }

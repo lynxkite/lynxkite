@@ -38,7 +38,7 @@ case class AddRankingAttributeDouble(ascending: Boolean) extends TypedMetaGraphO
     val sorted = swapped.sortByKey(ascending)
     val zipped = sorted.zipWithIndex()
     val result = zipped.map { case ((key, id), idx) => id -> idx }
-    output(o.ordinal, result.toSortedRDD(sortKey.partitioner.get))
+    output(o.ordinal, result.sortUnique(sortKey.partitioner.get))
   }
 }
 

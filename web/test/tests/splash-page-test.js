@@ -20,7 +20,7 @@ module.exports = function(fw) {
       lib.splash.openNewProject('test-example');
     },
     function() {
-      lib.expectCurrentProjectIs('test-example');
+      lib.left.expectCurrentProjectIs('test-example');
     });
 
   fw.transitionTest(

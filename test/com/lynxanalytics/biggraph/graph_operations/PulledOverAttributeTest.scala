@@ -32,7 +32,7 @@ case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] 
       o.pull,
       rc.sparkContext
         .parallelize(Seq((0L, Edge(0, 1)), (1L, Edge(1, 2)), (2L, Edge(2, 0)), (3L, Edge(3, 3))))
-        .toSortedRDD(inputs.vs.rdd.partitioner.get))
+        .sortUnique(inputs.vs.rdd.partitioner.get))
   }
 }
 

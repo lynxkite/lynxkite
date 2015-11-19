@@ -27,6 +27,6 @@ case class EmptyEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    output(o.eb, rc.sparkContext.emptyRDD[(ID, Edge)].toSortedRDD(new HashPartitioner(1)))
+    output(o.eb, rc.sparkContext.emptyRDD[(ID, Edge)].sortUnique(new HashPartitioner(1)))
   }
 }

@@ -43,7 +43,7 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
               (vertices.drop(rnd.nextInt(vertices.size)).head, vertices)
           }
       }
-      .toSortedRDD(partitioner)
+      .sortUnique(partitioner)
     output(o.segments, matching.mapValues(_ => ()))
     output(o.representative, matching.mapValuesWithKeys { case (key, _) => Edge(key, key) })
     output(
@@ -51,6 +51,6 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
       matching.flatMap {
         case (groupId, vertices) =>
           vertices.map(v => v -> Edge(v, groupId))
-      }.toSortedRDD(partitioner))
+      }.sortUnique(partitioner))
   }
 }

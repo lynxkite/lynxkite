@@ -2,13 +2,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.HashPartitioner
-import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ArrayBuffer
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 // For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
 // based on the network structure.
@@ -98,7 +98,7 @@ case class Fingerprinting(
         .reduceBySortedKey(esPartitioner, _ + _)
       weightedEdges
         .map { case (_, (e, w)) => e.dst -> (w, e.src) }
-        .toSortedRDD(esPartitioner)
+        .sort(esPartitioner)
         .sortedJoin(inDegrees)
         .map { case (dst, ((w, src), dstInDegree)) => src -> (dst, (w, dstInDegree)) }
         .groupBySortedKey(workingPartitioner)
@@ -107,13 +107,13 @@ case class Fingerprinting(
     // Get the list of neighbors and their degrees for all candidates pairs.
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
-      .toSortedRDD(workingPartitioner)
+      .sort(workingPartitioner)
       .sortedLeftOuterJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
       .map {
         case (rightID, (leftID, Some(rightNeighbors))) => (leftID, (rightID, rightNeighbors))
         case (rightID, (leftID, None)) => (leftID, (rightID, Seq()))
       }
-      .toSortedRDD(workingPartitioner)
+      .sort(workingPartitioner)
       .sortedLeftOuterJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
       .map {
         case (leftID, ((rightID, rightNeighbors), Some(leftNeighbors))) =>
@@ -164,13 +164,13 @@ case class Fingerprinting(
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
           }
-      }.toSortedRDD(candidatesPartitioner)
+      }.sort(candidatesPartitioner)
     val rightSimilarities =
-      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(candidatesPartitioner)
+      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.sort(candidatesPartitioner)
 
     // Run findStableMarriage with the smaller side as "ladies".
-    def flipped(rdd: RDD[(ID, ID)]) = {
-      rdd.map(pair => pair._2 -> pair._1).toSortedRDD(candidatesPartitioner)
+    def flipped(rdd: UniqueSortedRDD[ID, ID]): UniqueSortedRDD[ID, ID] = {
+      rdd.map(pair => pair._2 -> pair._1).sortUnique(candidatesPartitioner)
     }
     val (leftToRight, rightToLeft) =
       if (rightCount < leftCount) {
@@ -192,17 +192,17 @@ case class Fingerprinting(
       .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
-      }.toSortedRDD(leftPartitioner))
+      }.sortUnique(leftPartitioner))
     output(o.rightSimilarities, rightSimilarities.sortedJoin(rightToLeft)
       .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
-      }.toSortedRDD(rightPartitioner))
+      }.sortUnique(rightPartitioner))
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
   def findStableMarriage(ladiesScores: SortedRDD[ID, (ID, Double)],
-                         gentlemenScores: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
+                         gentlemenScores: SortedRDD[ID, (ID, Double)]): UniqueSortedRDD[ID, ID] = {
     val ladiesPartitioner = ladiesScores.partitioner.get
     val gentlemenPartitioner = gentlemenScores.partitioner.get
     val gentlemenPreferences = gentlemenScores.groupByKey.mapValues {
@@ -214,7 +214,7 @@ case class Fingerprinting(
 
     @annotation.tailrec
     def iterate(
-      gentlemenCandidates: SortedRDD[ID, ArrayBuffer[ID]], iteration: Int): SortedRDD[ID, ID] = {
+      gentlemenCandidates: UniqueSortedRDD[ID, ArrayBuffer[ID]], iteration: Int): UniqueSortedRDD[ID, ID] = {
 
       val proposals = gentlemenCandidates.flatMap {
         case (gentleman, ladies) =>
@@ -226,7 +226,7 @@ case class Fingerprinting(
           val ps = proposals.toSet
           // Preferences are symmetrical, so we will always find one here.
           preferences.find(g => ps.contains(g)).get -> lady
-      }.toSortedRDD(gentlemenPartitioner)
+      }.sortUnique(gentlemenPartitioner)
       if (proposals.count == responsesByGentlemen.count) {
         // All proposals accepted. Stop iteration.
         responsesByGentlemen
@@ -278,12 +278,12 @@ case class FingerprintingCandidates()
     implicit val id = inputDatas
     val vertexPartitioner = inputs.vs.rdd.partitioner.get
     val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
-    val outEdges = edges.map { case (_, e) => e.src -> e.dst }.toSortedRDD(vertexPartitioner)
+    val outEdges = edges.map { case (_, e) => e.src -> e.dst }.sort(vertexPartitioner)
 
     // Returns the lines from the first attribute where the second attribute is undefined.
-    def definedUndefined(defined: SortedRDD[ID, String],
-                         undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
-      defined.sortedLeftOuterJoin(undefined).flatMapValues {
+    def definedUndefined(defined: UniqueSortedRDD[ID, String],
+                         undefined: UniqueSortedRDD[ID, String]): UniqueSortedRDD[ID, String] = {
+      defined.sortedLeftOuterJoin(undefined).flatMapOptionalValues {
         case (_, Some(_)) => None
         case (name, None) => Some(name)
       }

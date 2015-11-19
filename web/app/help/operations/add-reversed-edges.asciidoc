@@ -5,3 +5,14 @@ Thus this operation will double the number of edges in the project.
 
 Using this operation you end up with a graph with symmetric edges: if A{to}B exists then
 B{to}A also exists. This is the closest you can get to an "undirected" graph.
+
+Optionally, a new edge attribute (a 'distinguishing attribute') will be created so that you can
+tell the original edges from the new edges after the operation. Edges where this attribute is 0
+are original edges; edges where this attribute is 1 are new edges.
+
+====
+[[distattr]] Distinguishing edge attribute::
+The name of the distinguishing edge attribute; leave it empty if the attribute should not be created.
+
+====
+
