@@ -45,7 +45,7 @@ case class ShortestPath(maxIterations: Double)
       edges.sortedJoin(edgeDistance)
         .map { case (id, (edge, weight)) => (edge.src -> (edge.dst, weight)) }
         .union(loopEdges)
-        .toSortedRDD(distance.partitioner.get)
+        .sort(distance.partitioner.get)
 
     distance.cache()
     var iterationId = 1

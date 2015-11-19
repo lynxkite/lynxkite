@@ -63,21 +63,22 @@
           <i class="glyphicon glyphicon-forward"></i>
         </label>
         <!-- "Save as" is closed. The floppy reveals the input box. -->
-        <label class="btn btn-default" ng-click="side.showSaveAs = true; side.saveAsName = ''"
+        <label class="btn btn-default" ng-click="side.startSavingAs()"
           ng-if="!side.showSaveAs && !side.isSegmentation()"
+          id="save-as-starter-button"
           tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
         <label class="btn btn-default"
           ng-if="side.showSaveAs && !side.isSegmentation()"
-          ng-click="side.maybeSaveAs(side.saveAsName); side.showSaveAs = false;"
-          tooltip="{{side.saveAsName === '' ? 'Enter new name' : 'Click the icon to save as ' + side.saveAsName}}"
+          ng-click="side.maybeSaveAs()"
+          tooltip="{{side.saveAsName === side.state.projectName ? 'Enter new name' : 'Click the icon to save as ' + side.saveAsName}}"
           tooltip-append-to-body="true" tooltip-placement="bottom">
-          <form ng-submit="side.saveAs(side.saveAsName)" style="display: inline;">
-            <input class="form-control save-as" ng-model="side.saveAsName" ng-click="$event.stopPropagation();">
+          <form ng-submit="side.maybeSaveAs()" style="display: inline;">
+            <input class="form-control save-as" ng-model="side.saveAsName" ng-click="$event.stopPropagation();" id='save-as-input'>
           </form>
-          <i class="glyphicon glyphicon-floppy-disk"></i>
+          <i id="save-as-button" class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <label class="btn btn-{{ side.showSettings ? 'primary' : 'default' }}"
           ng-click="side.showSettings = !side.showSettings"

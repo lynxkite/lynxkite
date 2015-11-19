@@ -92,7 +92,7 @@ abstract class DeriveJS[T](
           }
       }
     }
-    val derived = joined.flatMapValues {
+    val derived = joined.flatMapOptionalValues {
       case values =>
         val namedValues = attrNames.zip(values).toMap.mapValues(_.value)
         // JavaScript's "undefined" is returned as a Java "null".

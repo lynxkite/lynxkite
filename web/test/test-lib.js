@@ -20,6 +20,10 @@ function Side(direction) {
 }
 
 Side.prototype = {
+  expectCurrentProjectIs: function(name) {
+    expect(this.side.evaluate('side.state.projectName'), name);
+  },
+
   // Only for opening the second project next to an already open project.
   openSecondProject: function(project) {
     this.side.element(by.id('show-selector-button')).click();
@@ -281,6 +285,12 @@ Side.prototype = {
 
   scalar: function(name) {
     return this.side.element(by.id('scalar-' + toID(name)));
+  },
+
+  saveProjectAs: function(newName) {
+    this.side.element(by.id('save-as-starter-button')).click();
+    this.side.element(by.id('save-as-input')).sendKeys(testLib.selectAllKey + newName);
+    this.side.element(by.id('save-as-button')).click();
   },
 };
 
@@ -614,10 +624,6 @@ testLib = {
     browser.controlFlow().execute(function() { return defer.promise; });
   },
 
-  expectCurrentProjectIs: function(name) {
-    expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
-  },
-
   navigateToProject: function(name) {
     browser.get('/#/project/' + name);
   },
@@ -642,10 +648,10 @@ testLib = {
   setParameter: function(e, value) {
     // Special parameter types need different handling.
     e.evaluate('param.kind').then(
-        function(dataKind) {
-          if (dataKind === 'code') {
+        function(kind) {
+          if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
-          } else if (dataKind === 'file') {
+          } else if (kind === 'file') {
             var input = e.element(by.id('file'));
             // Need to unhide flowjs's secret file uploader.
             browser.executeScript(
@@ -657,7 +663,7 @@ testLib = {
               },
               input.getWebElement());
             input.sendKeys(value);
-          } else if (dataKind === 'tag-list') {
+          } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
               e.element(by.css('.dropdown-toggle')).click();

@@ -112,9 +112,9 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
       val injection =
         inputs.injections(i).rdd
           .map { case (_, e) => e.src -> e.dst }
-          .toSortedRDD(eb.partitioner.get)
+          .sortUnique(eb.partitioner.get)
       eb.sortedJoin(injection).map { case (oldId, (edge, newId)) => (newId, edge) }
     }
-    output(o.union, rc.sparkContext.union(reIDedEbs).toSortedRDD(idSetUnion.partitioner.get))
+    output(o.union, rc.sparkContext.union(reIDedEbs).sortUnique(idSetUnion.partitioner.get))
   }
 }

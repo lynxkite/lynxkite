@@ -48,14 +48,13 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
 
     output(o.newVertices,
       newIdAndOldIdAndZeroBasedIndex
-        .mapValues(_ => ()).toSortedRDD(partitioner))
+        .mapValues(_ => ()))
     output(o.belongsTo,
       newIdAndOldIdAndZeroBasedIndex
-        .map { case (newId, (oldId, idx)) => newId -> Edge(newId, oldId) }
-        .toSortedRDD(partitioner))
+        .mapValuesWithKeys { case (newId, (oldId, idx)) => Edge(newId, oldId) })
     output(o.indexAttr,
       newIdAndOldIdAndZeroBasedIndex
-        .map { case (newId, (oldId, idx)) => newId -> idx }
-        .toSortedRDD(partitioner))
+        .mapValues { case (_, idx) => idx })
+
   }
 }

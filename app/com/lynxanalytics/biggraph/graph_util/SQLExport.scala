@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.spark.SparkContext
@@ -24,7 +24,7 @@ object SQLExport {
       case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
     }
   }
-  private def addRDDs(base: SortedRDD[ID, Seq[_]], rdds: Seq[SortedRDD[ID, _]]): RDD[Row] = {
+  private def addRDDs(base: UniqueSortedRDD[ID, Seq[_]], rdds: Seq[UniqueSortedRDD[ID, _]]): RDD[Row] = {
     rdds.foldLeft(base) { (seqs, rdd) =>
       seqs
         .sortedLeftOuterJoin(rdd)
@@ -46,7 +46,7 @@ object SQLExport {
     connection.close()
   }
 
-  private case class SQLColumn[T](name: String, sqlType: types.DataType, rdd: SortedRDD[ID, T], nullable: Boolean)
+  private case class SQLColumn[T](name: String, sqlType: types.DataType, rdd: UniqueSortedRDD[ID, T], nullable: Boolean)
 
   private def sqlAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) = {
     SQLColumn(name, ScalaReflection.schemaFor(attr.typeTag.tpe).dataType, attr.rdd, nullable = true)

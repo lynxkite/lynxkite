@@ -11,6 +11,7 @@ import org.apache.spark.storage.StorageLevel
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 object ConnectedComponents extends OpFromJson {
   def fromJson(j: JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
@@ -51,20 +52,20 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
       }
     output(o.belongsTo, ccEdges.randomNumbered(partitioner))
     val ccVertices = ccEdges.map(_.dst -> ())
-      .toSortedRDD(partitioner)
-      .distinct
+      .sort(partitioner)
+      .distinctByKey
     output(o.segments, ccVertices)
   }
 
   type ComponentID = ID
 
   def getComponents(
-    graph: SortedRDD[ID, Set[ID]], iteration: Int): SortedRDD[ID, ComponentID] = {
+    graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentID] = {
     // Need to take a count of edges, and then operate on the graph.
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      return graph.sparkContext.emptyRDD[(ID, ComponentID)].toSortedRDD(graph.partitioner.get)
+      return graph.sparkContext.emptyRDD[(ID, ComponentID)].sortUnique(graph.partitioner.get)
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= maxEdgesProcessedLocally) {
@@ -74,7 +75,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     }
   }
 
-  def getComponentsDist(graph: SortedRDD[ID, Set[ID]], iteration: Int): SortedRDD[ID, ComponentID] = {
+  def getComponentsDist(graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentID] = {
     val partitioner = graph.partitioner.get
 
     // Each node decides if it is hosting a party or going out as a guest.
@@ -125,19 +126,19 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     // Third, remove finished components.
     val newGraph = almostDone.filter({ case (n, edges) => edges.nonEmpty })
     // Recursion.
-    val newComponents: SortedRDD[ID, ComponentID] = getComponents(newGraph, iteration + 1)
+    val newComponents: UniqueSortedRDD[ID, ComponentID] = getComponents(newGraph, iteration + 1)
     // We just have to map back the component IDs to the vertices.
     val reverseMoves = moves.map({ case (n, party) => (party, n) })
     val parties = reverseMoves.groupBySortedKey(partitioner)
     val components = parties.sortedLeftOuterJoin(newComponents).flatMap({
       case (party, (guests, component)) =>
         guests.map((_, component.getOrElse(party)))
-    }).toSortedRDD(partitioner)
+    }).sortUnique(partitioner)
     components
   }
 
   def getComponentsLocal(
-    graphRDD: SortedRDD[ID, Set[ID]]): SortedRDD[ID, ComponentID] = {
+    graphRDD: SortedRDD[ID, Set[ID]]): UniqueSortedRDD[ID, ComponentID] = {
     // Moves all the data to one worker and processes it there.
     val p = graphRDD.coalesce(1)
 
@@ -164,6 +165,6 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
         }
         assert(components.size == graph.size, s"${components.size} != ${graph.size}")
         components.iterator
-      }).toSortedRDD(graphRDD.partitioner.get)
+      }).sortUnique(graphRDD.partitioner.get)
   }
 }

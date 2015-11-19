@@ -48,10 +48,13 @@ class DeadClass3
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
+    // Uncomment this if you are debugging some Kryo issue.
+    // import com.esotericsoftware.minlog.Log
+    // Log.set(Log.LEVEL_TRACE);
+
     // Adding one more line? Do it at the bottom!
     // Deleting a line? Do not.
     // Types will change IDs otherwise.
-    kryo.setRegistrationRequired(true)
     kryo.register(classOf[scala.Tuple2[_, _]])
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
@@ -162,27 +165,24 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
   }
 }
 
-class BigGraphKryoRegistratorWithDebug extends BigGraphKryoRegistrator {
+class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
   override def registerClasses(kryo: Kryo) {
-    import com.esotericsoftware.minlog.Log
-    import com.esotericsoftware.minlog.Log._
-    Log.set(LEVEL_TRACE);
-
+    kryo.setRegistrationRequired(true)
     super.registerClasses(kryo)
   }
 }
 
 object BigGraphSparkContext {
-  def createKryo(): Kryo = {
+  def createKryoWithForcedRegistration(): Kryo = {
     val myKryo = new Kryo()
     myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
-    new BigGraphKryoRegistrator().registerClasses(myKryo)
+    new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
   def apply(
     appName: String,
     useKryo: Boolean = true,
-    debugKryo: Boolean = false,
+    forceRegistration: Boolean = false,
     useJars: Boolean = true,
     master: String = ""): spark.SparkContext = {
     val versionFound = org.apache.spark.SPARK_VERSION
@@ -226,7 +226,8 @@ object BigGraphSparkContext {
           "org.apache.spark.serializer.KryoSerializer")
         .set(
           "spark.kryo.registrator",
-          if (debugKryo) "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistratorWithDebug"
+          if (forceRegistration)
+            "com.lynxanalytics.biggraph.spark_util.BigGraphKryoForcedRegistrator"
           else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
     }
     if (useJars) {
