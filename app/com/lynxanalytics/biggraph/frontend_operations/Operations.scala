@@ -915,8 +915,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     )
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      val addIsNewAttr = params.getOrElse("distattr", "").nonEmpty
+
       val rev = {
-        val op = graph_operations.AddReversedEdges()
+        val op = graph_operations.AddReversedEdges(addIsNewAttr)
         op(op.es, project.edgeBundle).result
       }
 
@@ -925,7 +927,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.edgeAttributes.toIndexedSeq,
         rev.esPlus,
         rev.newToOriginal)
-      if (params.getOrElse("distattr", "").nonEmpty) {
+      if (addIsNewAttr) {
         project.edgeAttributes(params("distattr")) = rev.isNew
       }
     }
