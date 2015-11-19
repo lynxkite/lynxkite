@@ -27,19 +27,6 @@ import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object SortedRDD {
-  // Creates a SortedRDD from an unsorted but partitioned RDD.
-  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
-    new ArrayBackedSortedRDD(arrayRDD)
-  }
-  // Creates a SortedRDD from an unsorted but partitioned RDD.
-  def fromUniqueUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): UniqueSortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
-    new ArrayBackedSortedRDD(arrayRDD) with UniqueSortedRDD[K, V]
-  }
-}
-
 private object SortedRDDUtil {
   def assertMatchingRDDs[K](first: SortedRDD[K, _], second: SortedRDD[K, _]): Unit = {
     assert(
