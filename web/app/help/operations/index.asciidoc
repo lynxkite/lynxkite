@@ -204,6 +204,8 @@ include::reverse-edge-direction.asciidoc[]
 
 include::save-ui-status-as-graph-attribute.asciidoc[]
 
+include::sample-edges-from-co-occurrence.asciidoc[]
+
 include::segment-by-double-attribute.asciidoc[]
 
 include::segment-by-interval.asciidoc[]

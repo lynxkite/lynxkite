@@ -1385,28 +1385,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
-    private def segmentationSizesSquareSum()(
-      implicit manager: MetaGraphManager): Scalar[_] = {
-      val size = aggregateViaConnection(
-        seg.belongsTo,
-        AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
-      )
-      val sizeSquare: Attribute[Double] = {
-        val op = graph_operations.DeriveJSDouble(
-          JavaScript("size * size"),
-          Seq("size"))
-        op(
-          op.attrs,
-          graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
-      }
-      aggregate(AttributeWithAggregator(sizeSquare, "sum"))
+  private def segmentationSizesSquareSum(seg: SegmentationEditor, parent: ProjectEditor)(
+    implicit manager: MetaGraphManager): Scalar[_] = {
+    val size = aggregateViaConnection(
+      seg.belongsTo,
+      AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
+    )
+    val sizeSquare: Attribute[Double] = {
+      val op = graph_operations.DeriveJSDouble(
+        JavaScript("size * size"),
+        Seq("size"))
+      op(
+        op.attrs,
+        graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
     }
+    aggregate(AttributeWithAggregator(sizeSquare, "sum"))
+  }
+
+  register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
 
     def segmentationParameters = List()
     override def visibleScalars =
       if (project.isSegmentation) {
-        val scalar = segmentationSizesSquareSum()
+        val scalar = segmentationSizesSquareSum(seg, parent)
         List(FEOperationScalarMeta("num_created_edges", scalar.gUID.toString))
       } else {
         List()
@@ -1422,6 +1423,32 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- project.vertexAttributes) {
         parent.edgeAttributes(s"${seg.segmentationName}_$name") = attr.pullVia(result.origin)
       }
+    }
+  })
+
+  register("Sample edges from co-occurrence", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List(
+      NonNegDouble("probability", "Vertex pair selection probability", defaultValue = "0.001"),
+      RandomSeed("seed", "Random seed")
+    )
+    override def visibleScalars =
+      if (project.isSegmentation) {
+        val scalar = segmentationSizesSquareSum(seg, parent)
+        List(FEOperationScalarMeta("num_total_edges", scalar.gUID.toString))
+      } else {
+        List()
+      }
+
+    def enabled =
+      isSegmentation &&
+        FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.SampleEdgesFromSegmentation(
+        params("probability").toDouble,
+        params("seed").toLong)
+      val result = op(op.belongsTo, seg.belongsTo).result
+      parent.edgeBundle = result.es
+      parent.edgeAttributes("multiplicity") = result.multiplicity
     }
   })
 
