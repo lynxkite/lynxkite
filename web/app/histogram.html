@@ -6,7 +6,7 @@
   <tr>
     <td ng-repeat="s in model.sizes track by $index" class="bar-container"
       ng-class="{ zoomable: zoomable(s) }"
-      tooltip="{{tooltipFor($index)}}" tooltip-append-to-body="true"
+      drop-tooltip="{{tooltipFor($index)}}"
       ng-click="zoom($index)">
       <i ng-if="zoomable(s)" class="glyphicon glyphicon-eye-open histogram-eye"></i>
       <div class="bar"
