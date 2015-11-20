@@ -380,11 +380,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val dst = params("dst")
       assert(src.nonEmpty, "The Source ID field parameter must be set.")
       assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
-      val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
-      project.setVertexSet(imp.vertices, idAttr = "id")
-      project.newVertexAttribute("stringID", imp.stringID)
-      project.edgeBundle = imp.edges
-      project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      val vg = graph_operations.ImportVertexList(source(params))().result
+      val eg = {
+        val op = graph_operations.VerticesToEdges()
+        op(op.srcAttr, vg.attrs(src))(op.dstAttr, vg.attrs(dst)).result
+      }
+      project.setVertexSet(eg.vs, idAttr = "id")
+      project.newVertexAttribute("stringID", eg.stringID)
+      project.edgeBundle = eg.es
+      for ((name, attr) <- vg.attrs) {
+        project.edgeAttributes(name) = attr.pullVia(eg.embedding)
+      }
     }
   }
   register("Import vertices and edges from single CSV fileset",
