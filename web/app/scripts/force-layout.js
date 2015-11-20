@@ -24,7 +24,7 @@ var FORCE_LAYOUT = (function() {
     var maxDist = 0;  // Max. distance from center along one coordinate.
     var edgeCount = (vertices.edges || []).length;
     if (vertices.vs.length <= 1) {
-      if (vertices.vs.length === 1) {
+      if (vertices.vs.length === 1 && !vertices.vs[0].positioned) {
         vertices.vs[0].x = 0;
         vertices.vs[0].y = 0;
       }
