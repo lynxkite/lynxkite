@@ -85,6 +85,30 @@ object RDDUtils {
     bos.toByteArray
   }
 
+  def doubleToBytes(double: Double): Array[Byte] = {
+    val bytes = new Array[Byte](8)
+    java.nio.ByteBuffer.wrap(bytes).putDouble(double)
+    bytes
+  }
+
+  def bytesToDouble(bytes: Array[Byte]): Double = {
+    java.nio.ByteBuffer.wrap(bytes).getDouble
+  }
+
+  def edgeToBytes(edge: Edge): Array[Byte] = {
+    val bytes = new Array[Byte](8)
+    java.nio.ByteBuffer.wrap(bytes).putLong(edge.src)
+    java.nio.ByteBuffer.wrap(bytes).putLong(edge.dst)
+    bytes
+  }
+
+  def bytesToEdge(bytes: Array[Byte]): Edge = {
+    val bb = java.nio.ByteBuffer.wrap(bytes)
+    val src = bb.getLong
+    val dst = bb.getLong
+    Edge(src, dst)
+  }
+
   /*
    * For a filtered RDD computes how many elements were "skipped" by the filter.
    *

@@ -7,9 +7,11 @@ import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.rdd.RDD
+import scala.reflect.runtime.universe._
 
 object HadoopFile {
 
@@ -105,7 +107,8 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   def deleteIfExists() = !exists() || delete()
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
-  private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
+  private def globStatus: Array[hadoop.fs.FileStatus] =
+    Option(fs.globStatus(path)).getOrElse(Array())
   def list = globStatus.map(st => hadoopFileForGlobOutput(st.getPath.toString))
 
   def length = fs.getFileStatus(path).getLen
@@ -209,10 +212,22 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Loads a Long-keyed rdd with deserialized values
-  def loadEntityRDD[T: scala.reflect.ClassTag](sc: spark.SparkContext): RDD[(Long, T)] = {
-    loadEntityRawRDD(sc).map {
-      case (k, v) => k -> RDDUtils.kryoDeserialize[T](v)
-    }
+  def loadEntityRDD[T: TypeTag](sc: spark.SparkContext): RDD[(Long, T)] = {
+    val raw = loadEntityRawRDD(sc)
+    val untyped: Any =
+      if (typeTag[T] == typeTag[Unit])
+        raw.mapValues(v => ())
+      else if (typeTag[T] == typeTag[String])
+        raw.mapValues(v => new String(v, "utf-8"))
+      else if (typeTag[T] == typeTag[Double])
+        raw.mapValues(v => RDDUtils.bytesToDouble(v))
+      else if (typeTag[T] == typeTag[graph_api.Edge])
+        raw.mapValues(v => RDDUtils.bytesToEdge(v))
+      else {
+        println(s"don't know about loading ${typeTag[T]}")
+        raw.mapValues(v => RDDUtils.kryoDeserialize[T](v))
+      }
+    untyped.asInstanceOf[RDD[(Long, T)]]
   }
 
   // Saves a Long-keyed rdd where the values are just raw bytes;
@@ -242,12 +257,23 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Saves a Long-keyed RDD, and returns the number of lines written.
-  def saveEntityRDD[T](data: RDD[(Long, T)]): Long = {
-    val rawData = data.map {
-      case (k, v) =>
-        k -> RDDUtils.kryoSerialize(v)
-    }
-    saveEntityRawRDD(rawData)
+  def saveEntityRDD[T: TypeTag](data: RDD[(Long, T)]): Long = {
+    println(typeTag[T])
+    implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(typeTag[T])
+    val raw =
+      if (typeTag[T] == typeTag[Unit])
+        data.mapValues(v => Array.emptyByteArray)
+      else if (typeTag[T] == typeTag[String])
+        data.mapValues(v => v.asInstanceOf[String].getBytes("utf-8"))
+      else if (typeTag[T] == typeTag[Double])
+        data.mapValues(v => RDDUtils.doubleToBytes(v.asInstanceOf[Double]))
+      else if (typeTag[T] == typeTag[graph_api.Edge])
+        data.mapValues(v => RDDUtils.edgeToBytes(v.asInstanceOf[graph_api.Edge]))
+      else {
+        println(s"don't know about saving ${typeTag[T]}")
+        data.mapValues(v => RDDUtils.kryoSerialize(v))
+      }
+    saveEntityRawRDD(raw)
   }
 
   def +(suffix: String): HadoopFile = {
