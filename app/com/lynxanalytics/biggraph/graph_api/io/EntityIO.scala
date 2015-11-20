@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import scala.reflect.runtime.universe
 
 case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
@@ -96,8 +97,8 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
 
 }
 
-abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
-                                                      dMParam: IOContext)
+abstract class PartitionedDataIO[T, DT <: EntityRDDData](entity: MetaGraphEntity,
+                                                         dMParam: IOContext)
     extends EntityIO(entity, dMParam) {
 
   // This class reflects the current state of the disk during the read operation
@@ -140,13 +141,15 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   def write(data: EntityData): Unit = {
     val rddData = data.asInstanceOf[EntityRDDData]
     log.info(s"PERF Instantiating entity $entity on disk")
-    val rdd = rddData.rdd
+    val rdd = rddData.rdd.asInstanceOf[RDD[(ID, T)]]
     val partitions = rdd.partitions.size
-    val lines = targetDir(partitions).saveEntityRDD(rdd)
+    val lines = targetDir(partitions).saveEntityRDD(rdd)(typeTag)
     val metadata = EntityMetadata(lines)
     writeMetadata(metadata)
     log.info(s"PERF Instantiated entity $entity on disk")
   }
+
+  def typeTag: universe.TypeTag[T]
 
   def delete(): Boolean = {
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
@@ -269,7 +272,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 }
 
 class VertexIO(entity: VertexSet, dMParam: IOContext)
-    extends PartitionedDataIO[VertexSetData](entity, dMParam) {
+    extends PartitionedDataIO[Unit, VertexSetData](entity, dMParam) {
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadLegacyEntityRDD[Unit](sc)
@@ -283,10 +286,12 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     val rdd = path.loadEntityRDD[Unit](sc)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
+
+  def typeTag = universe.typeTag[Unit]
 }
 
 class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
-    extends PartitionedDataIO[EdgeBundleData](entity, dMParam) {
+    extends PartitionedDataIO[Edge, EdgeBundleData](entity, dMParam) {
 
   override def correspondingVertexSet = Some(entity.idSet)
 
@@ -306,10 +311,12 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def typeTag = universe.typeTag[Edge]
 }
 
 class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
-    extends PartitionedDataIO[AttributeData[T]](entity, dMParam) {
+    extends PartitionedDataIO[T, AttributeData[T]](entity, dMParam) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {
@@ -323,6 +330,7 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
                 parent: Option[VertexSetData]): AttributeData[T] = {
     assert(partitioner eq parent.get.rdd.partitioner.get)
     implicit val ct = entity.classTag
+    implicit val tt = entity.typeTag
     val rdd = path.loadEntityRDD[T](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
@@ -330,4 +338,6 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def typeTag = entity.typeTag
 }
