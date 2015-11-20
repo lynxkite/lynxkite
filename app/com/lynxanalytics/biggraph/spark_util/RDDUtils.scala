@@ -425,7 +425,6 @@ object Implicits {
       self match {
         case self: SortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
-        case self if partitioner eq self.partitioner.orNull => ???
         case self =>
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
@@ -441,7 +440,6 @@ object Implicits {
       self match {
         case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
-        case self if partitioner eq self.partitioner.orNull => ???
         case self =>
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
