@@ -282,10 +282,10 @@ case class AttributeVectorToAny[From]() extends AttributeCast[Vector[From], Vect
 case class JSValue(value: Any)
 
 object JSValue {
-  def longNotSupported = {
+  def longNotSupported =
     throw new AssertionError(
-      "The Long type is not supported in JavaScript. Please convert to Double or String first.")
-  }
+      "The Long type is not supported in JavaScript due to language limitations." +
+        " Please convert to Double or String first.")
 
   def converter[T: TypeTag]: (T => JSValue) = {
     if (typeOf[T] <:< typeOf[Vector[Any]]) {
