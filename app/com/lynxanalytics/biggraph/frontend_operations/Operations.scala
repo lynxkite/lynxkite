@@ -790,6 +790,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Add random vertex attribute", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "random"),
+      Choice("dist", "Distribution", options = UIValue.list(List("Gaussian", "Uniform"))),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
+      project.newVertexAttribute(
+        params("name"), op(op.vs, project.vertexSet).result.attr, help)
+    }
+  })
+
+  register("Add random edge attribute", new EdgeAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "random"),
+      Choice("dist", "Distribution", options = UIValue.list(List("Gaussian", "Uniform"))),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
+      project.newEdgeAttribute(
+        params("name"), op(op.vs, project.edgeBundle.idSet).result.attr, help)
+    }
+  })
+
   register("Add constant edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "weight"),
