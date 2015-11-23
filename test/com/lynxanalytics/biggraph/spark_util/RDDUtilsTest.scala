@@ -76,7 +76,7 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
   test("lookup on empty RDD") {
     import Implicits._
     val sourceRDD = sparkContext.emptyRDD[(Int, Long)]
-    val lookupRDD = sparkContext.emptyRDD[(Int, Double)].sortUnique
+    val lookupRDD = sparkContext.emptyRDD[(Int, Double)].sortUnique(new HashPartitioner(1))
     assert(RDDUtils.joinLookup(sourceRDD, lookupRDD).collect.isEmpty)
     assert(RDDUtils.smallTableLookup(sourceRDD, Map()).collect.isEmpty)
     assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200).collect.isEmpty)
