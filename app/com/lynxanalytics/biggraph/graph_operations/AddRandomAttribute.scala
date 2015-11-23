@@ -1,4 +1,4 @@
-// Adds a random number (of a given distribution) for a vertex set.
+// Creates a random number (of a given distribution) vertex/edge attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random
