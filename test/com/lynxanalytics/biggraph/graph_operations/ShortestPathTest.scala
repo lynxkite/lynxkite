@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_operations._
 
 import com.lynxanalytics.biggraph.JavaScript
@@ -24,7 +25,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         Seq("ordinal"))
       op(
         op.attrs,
-        VertexAttributeToJSValue.seq(ordinal)).result.attr
+        VertexAttributeToJSValue.seq(ordinal.asDouble)).result.attr
     }
     val edgeDistance = AddConstantAttribute.run(es.idSet, 1.0)
     val distance = {
