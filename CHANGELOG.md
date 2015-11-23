@@ -6,6 +6,9 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Significantly reduced chance of out of memory errors in LynxKite. (We do not require anymore
+   that any spark data partition has to fit in memory.)
+
 ### 1.5.8
 
 ### 1.5.7
