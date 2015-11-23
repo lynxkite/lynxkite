@@ -6,25 +6,28 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-abstract class Rnd(seed: Int) {
+abstract class RandomDistribution(seed: Int) {
   val rnd = new Random(seed)
-  def nextRandom(): Double
+  def nextValue(): Double
 }
 
-class GaussianRandom(seed: Int) extends Rnd(seed) {
-  override def nextRandom(): Double = rnd.nextGaussian()
+class NormalDistribution(seed: Int) extends RandomDistribution(seed) {
+  override def nextValue(): Double = rnd.nextGaussian()
 }
 
-class UniformRandom(seed: Int) extends Rnd(seed) {
-  override def nextRandom(): Double = rnd.nextDouble()
+class UniformDistribution(seed: Int) extends RandomDistribution(seed) {
+  override def nextValue(): Double = rnd.nextDouble()
 }
 
-object RndFactory {
-  def getRnd(distribution: String, seed: Int): Rnd = {
-    distribution match {
-      case "Gaussian" => new GaussianRandom(seed)
-      case "Uniform" => new UniformRandom(seed)
-    }
+object Distribution {
+  val distributions = Map[String, Int => RandomDistribution](
+    "Standard Normal" -> { new NormalDistribution(_) },
+    "Standard Uniform" -> { new UniformDistribution(_) }
+  )
+  def getNames: List[String] = distributions.keys.toList
+
+  def apply(distribution: String, seed: Int): RandomDistribution = {
+    distributions(distribution)(seed)
   }
 }
 
@@ -59,8 +62,8 @@ case class AddRandomAttribute(seed: Int,
     output(o.attr, vertices.mapPartitionsWithIndex(
       {
         case (pid, it) =>
-          val rnd = RndFactory.getRnd(distribution, (pid << 16) + seed)
-          it.map { case (vid, _) => vid -> rnd.nextRandom() }
+          val rnd = Distribution(distribution, (pid << 16) + seed)
+          it.map { case (vid, _) => vid -> rnd.nextValue() }
       },
       preservesPartitioning = true).asUniqueSortedRDD)
   }
