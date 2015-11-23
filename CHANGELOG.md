@@ -6,6 +6,10 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Long attributes can no longer be referenced in derived attributes. This is to avoid the
+   surprising rounding that JavaScript performs on them. The attributes have to be converted to
+   strings or doubles first.
+
 ### 1.5.8
 
 ### 1.5.7
