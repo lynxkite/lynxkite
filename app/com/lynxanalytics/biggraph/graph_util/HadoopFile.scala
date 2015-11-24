@@ -224,7 +224,6 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       else if (typeTag[T] == typeTag[graph_api.Edge])
         raw.mapValues(v => RDDUtils.bytesToEdge(v))
       else {
-        println(s"don't know about loading ${typeTag[T]}")
         raw.mapValues(v => RDDUtils.kryoDeserialize[T](v))
       }
     untyped.asInstanceOf[RDD[(Long, T)]]
@@ -258,7 +257,6 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 
   // Saves a Long-keyed RDD, and returns the number of lines written.
   def saveEntityRDD[T: TypeTag](data: RDD[(Long, T)]): Long = {
-    println(typeTag[T])
     implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(typeTag[T])
     val raw =
       if (typeTag[T] == typeTag[Unit])
@@ -270,7 +268,6 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       else if (typeTag[T] == typeTag[graph_api.Edge])
         data.mapValues(v => RDDUtils.edgeToBytes(v.asInstanceOf[graph_api.Edge]))
       else {
-        println(s"don't know about saving ${typeTag[T]}")
         data.mapValues(v => RDDUtils.kryoSerialize(v))
       }
     saveEntityRawRDD(raw)
