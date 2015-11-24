@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.spark_util
 import com.esotericsoftware.kryo
 import org.apache.spark
 import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.ShuffledRDD
 import scala.collection.mutable
 import scala.reflect._
 
@@ -398,6 +399,12 @@ object Implicits {
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
+    // Trust that this RDD is partitioned and sorted.
+    def asSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      assert(self.partitioner.isDefined,
+        s"Cannot cast to unique RDD if there is no partitioner specified")
+      new AlreadySortedRDD(self)
+    }
     // Trust that this RDD is partitioned and sorted and has unique keys.
     // Make sure it uses the given partitioner.
     def asUniqueSortedRDD(partitioner: spark.Partitioner)(
@@ -413,42 +420,52 @@ object Implicits {
       new AlreadySortedRDD(self) with UniqueSortedRDD[K, V]
     }
     // Sorts each partition of the RDD in isolation.
-    def sort(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
-      sort(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
     def sort(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {
         case self: SortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
-        case self if partitioner eq self.partitioner.orNull =>
-          SortedRDD.fromUnsorted(self)
         case self =>
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
-          SortedRDD.fromUnsorted(new spark.rdd.ShuffledRDD(self, partitioner))
+          val rawRDD = new spark.rdd.ShuffledRDD[K, V, V](self, partitioner)
+          makeShuffledRDDSorted(rawRDD)
+          rawRDD.asSortedRDD
       }
     }
 
     // Sorts each partition of the RDD in isolation and trusts that keys are unique.
-    def sortUnique(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
-      sortUnique(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
     def sortUnique(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       self match {
         case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
-        case self if partitioner eq self.partitioner.orNull =>
-          SortedRDD.fromUniqueUnsorted(self)
         case self =>
           // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
           // partitioner.
-          SortedRDD.fromUniqueUnsorted(new spark.rdd.ShuffledRDD(self, partitioner))
+          val rawRDD = new spark.rdd.ShuffledRDD[K, V, V](self, partitioner)
+          makeShuffledRDDSorted(rawRDD)
+          rawRDD.asUniqueSortedRDD
       }
     }
 
-    def groupBySortedKey(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
-      SortedRDD.fromUniqueUnsorted(self.groupByKey(partitioner))
-    def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
-      SortedRDD.fromUniqueUnsorted(self.reduceByKey(partitioner, f))
+    def groupBySortedKey(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]) = {
+
+      val rawRDD = self.groupByKey(partitioner)
+      makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
+      rawRDD.asUniqueSortedRDD
+    }
+    def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]) = {
+
+      val rawRDD = self.reduceByKey(partitioner, f)
+      makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
+      rawRDD.asUniqueSortedRDD
+    }
+
+    private def makeShuffledRDDSorted[T: Ordering](rawRDD: ShuffledRDD[T, _, _]): Unit = {
+      rawRDD.setKeyOrdering(implicitly[Ordering[T]])
+    }
   }
 }

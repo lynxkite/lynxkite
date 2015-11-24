@@ -11,6 +11,7 @@
     "angular-ui-ace": "0.2.3",
     "angular-ui-layout": "1.1.1",
     "bootstrap": "3.3.4",
+    "drop": "1.4.0",
     "es5-shim": "4.1.11",
     "es6-shim": "0.33.3",
     "jquery": "2.1.4",
