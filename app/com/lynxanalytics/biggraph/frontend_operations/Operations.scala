@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -787,6 +788,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       project.newVertexAttribute(
         params("name"), op(op.vertices, project.vertexSet).result.attr, help)
+    }
+  })
+
+  register("Add random vertex attribute", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "random"),
+      Choice("dist", "Distribution", options = UIValue.list(RandomDistribution.getNames)),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
+      project.newVertexAttribute(
+        params("name"), op(op.vs, project.vertexSet).result.attr, help)
+    }
+  })
+
+  register("Add random edge attribute", new EdgeAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "random"),
+      Choice("dist", "Distribution", options = UIValue.list(RandomDistribution.getNames)),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
+      project.newEdgeAttribute(
+        params("name"), op(op.vs, project.edgeBundle.idSet).result.attr, help)
     }
   })
 
