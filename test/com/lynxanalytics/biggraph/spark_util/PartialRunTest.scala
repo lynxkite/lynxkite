@@ -29,12 +29,13 @@ class PartialRunTest extends FunSuite with TestSparkContext {
     for (round <- 10 to 10) {
       val parts = 4
       val rows = 10 * round
-      val d = genData(parts, rows, 0).sort.cache
+      val dorig = genData(parts, rows, 0)
+      val d = dorig.sort(dorig.partitioner.get).cache
       println("Caching initial data", Timed(d.calculate).nanos / 1000000)
       println("Second calculate", Timed(d.calculate).nanos / 1000000)
       for (pref <- 1 to 10) {
-        val d1 = d.filter(a => { Thread.sleep(10L); true }).sort
-        val d2 = d.mapValues(a => { Thread.sleep(10L); a }).sort
+        val d1 = d.filter(a => { Thread.sleep(10L); true })
+        val d2 = d.mapValues(a => { Thread.sleep(10L); a })
         val data = d1.join(d2).mapValues { case (a, b) => a }
         val prefLength = pref * rows / 10
         val t = Timed(countAs(data, prefLength))

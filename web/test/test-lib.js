@@ -77,7 +77,7 @@ Side.prototype = {
     expect(histo.isDisplayed()).toBe(true);
     expect(total.isDisplayed()).toBe(false);
     function allFrom(td) {
-      var toolTip = td.getAttribute('tooltip');
+      var toolTip = td.getAttribute('drop-tooltip');
       var style = td.element(by.css('div.bar')).getAttribute('style');
       return protractor.promise.all([toolTip, style]).then(function(results) {
         var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
