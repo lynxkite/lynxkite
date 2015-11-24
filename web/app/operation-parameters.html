@@ -13,11 +13,14 @@
       ui-ace="{
         mode: 'javascript',
         showGutter: false,
-        rendererOptions: {fontSize: '16px'},
+        rendererOptions: {
+          fontSize: '16px'
+        },
         advanced: {
           behavioursEnabled: false,
           useWorker: false
         },
+        onLoad: onLoad
       }"
       style="height: 60px;"
       class="form-control operation-attribute-entry"

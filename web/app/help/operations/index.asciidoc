@@ -18,6 +18,10 @@ include::add-constant-vertex-attribute.asciidoc[]
 
 include::add-gaussian-vertex-attribute.asciidoc[]
 
+include::add-random-edge-attribute.asciidoc[]
+
+include::add-random-vertex-attribute.asciidoc[]
+
 include::add-rank-attribute.asciidoc[]
 
 include::add-reversed-edges.asciidoc[]
@@ -202,9 +206,9 @@ include::save-ui-status-as-graph-attribute.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 
-include::segment-by-string-attribute.asciidoc[]
-
 include::segment-by-interval.asciidoc[]
+
+include::segment-by-string-attribute.asciidoc[]
 
 include::shortest-path.asciidoc[]
 
