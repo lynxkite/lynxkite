@@ -19,7 +19,7 @@ class UniformDistribution(seed: Int) extends RandomDistribution(seed) {
   override def nextValue(): Double = rnd.nextDouble()
 }
 
-object Distribution {
+object RandomDistribution {
   val distributions = Map[String, Int => RandomDistribution](
     "Standard Normal" -> { new NormalDistribution(_) },
     "Standard Uniform" -> { new UniformDistribution(_) }
@@ -62,7 +62,7 @@ case class AddRandomAttribute(seed: Int,
     output(o.attr, vertices.mapPartitionsWithIndex(
       {
         case (pid, it) =>
-          val rnd = Distribution(distribution, (pid << 16) + seed)
+          val rnd = RandomDistribution(distribution, (pid << 16) + seed)
           it.map { case (vid, _) => vid -> rnd.nextValue() }
       },
       preservesPartitioning = true).asUniqueSortedRDD)
