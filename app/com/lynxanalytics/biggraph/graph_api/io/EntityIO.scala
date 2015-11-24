@@ -97,8 +97,8 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
 
 }
 
-abstract class PartitionedDataIO[T, DT <: EntityRDDData](entity: MetaGraphEntity,
-                                                         dMParam: IOContext)
+abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEntity,
+                                                            dMParam: IOContext)
     extends EntityIO(entity, dMParam) {
 
   // This class reflects the current state of the disk during the read operation
@@ -139,9 +139,9 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData](entity: MetaGraphEntity
   }
 
   def write(data: EntityData): Unit = {
-    val rddData = data.asInstanceOf[EntityRDDData]
+    val rddData = data.asInstanceOf[EntityRDDData[T]]
     log.info(s"PERF Instantiating entity $entity on disk")
-    val rdd = rddData.rdd.asInstanceOf[RDD[(ID, T)]]
+    val rdd = rddData.rdd
     val partitions = rdd.partitions.size
     val lines = targetDir(partitions).saveEntityRDD(rdd)(typeTag)
     val metadata = EntityMetadata(lines)
