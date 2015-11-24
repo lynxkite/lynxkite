@@ -1,18 +1,3 @@
 ### Add random edge attribute
 
-Generates a new random double edge attribute with the specified distribution, which can be either
-(1) a Standard Normal (i.e., Gaussian) distribution with a mean of 0 and a standard deviation of 1, or (2)
-a Standard Uniform distribution where values fall between 0 and 1.
-
-====
-[[name]] Attribute name::
-The new attribute will be created under this name.
-
-[[dist]] Distribution::
-The desired random distribution (Standard Normal or Standard Uniform).
-
-[[seed]] Seed::
-The random seed.
-+
-include::{g}[tag=random-seed]
-====
+include::{g}[tag=random-attribute]
