@@ -72,12 +72,12 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     rng: JDKRandomGenerator): Int = {
     val sampler =
       if (n < Int.MaxValue) {
-        new BinomialDistribution(rng, n.toInt, prob)
+        new BinomialDistribution(rng, n.toInt, p)
       } else {
         // Use poisson distribution to approximate binomial. According to my numeric
-        // tests, if n > 50 and prob < 0.1 the difference in the p of choosing an edge
+        // tests, if n > 50 and p < 0.1 the difference in the p of choosing an edge
         // are in the range of 1e-15.
-        val lambda = n * prob
+        val lambda = n * p
         val maxAllowedLambda = Int.MaxValue * 0.01
         if (lambda >= maxAllowedLambda) {
           // The problem is that the return value of poisson distribution is an int32.
@@ -89,7 +89,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
         }
         new PoissonDistribution(
           rng,
-          n * prob,
+          lambda,
           PoissonDistribution.DEFAULT_EPSILON,
           PoissonDistribution.DEFAULT_MAX_ITERATIONS)
       }
@@ -190,7 +190,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
           it.flatMap {
             case (edge, count) => {
               val roll = rng.nextDouble()
-              val limit = prob / (1.toDouble - Math.pow(1.toDouble - prob, count))
+              val limit = prob / (1.0 - Math.pow(1.0 - prob, count))
               if (roll < limit) {
                 Some(edge, count)
               } else {
