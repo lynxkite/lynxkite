@@ -1,7 +1,7 @@
 // The project history viewer/editor.
 'use strict';
 
-angular.module('biggraph').directive('projectHistory', function(util) {
+angular.module('biggraph').directive('projectHistory', function(util, $timeout) {
   return {
     restrict: 'E',
     scope: { show: '=', side: '=' },
@@ -100,14 +100,29 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       }
 
       function validate() {
+        // The browser may forget the page scroll position in certain conditions.
+        // In particular, destroying and rebuilding the ACE editor control
+        // messes up itss value. Therefore we back it up here and restore it once
+        // the DOM tree has stabilized.
+        scope.scrollPositionBackup = window.pageYOffset;
+        console.log('saved position: ' + scope.scrollPositionBackup);
         scope.validating = true;
         scope.updatedHistory = util.post('/ajax/validateHistory', alternateHistory());
+        // The response will be evaluated in copyUpdate.
       }
       function copyUpdate() {
         if (scope.updatedHistory && scope.updatedHistory.$resolved) {
           scope.remoteChanges = true;
           scope.validating = false;
           scope.history = scope.updatedHistory;
+          $timeout(function() {
+            // The scrollbar position will be restored once the DOM of the document
+            // is stabilized.
+            if (scope.scrollPositionBackup) {
+              window.scrollTo(0, scope.scrollPositionBackup);
+              scope.scrollPositionBackup = undefined;
+            }
+          }, 0);
         }
       }
       scope.$watch('updatedHistory', copyUpdate);
