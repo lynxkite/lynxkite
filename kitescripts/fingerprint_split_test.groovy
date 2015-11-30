@@ -1,4 +1,12 @@
 // Parameters
+// The input graph is expected to be a sort of 'callgraph'.
+// It should contain neither loop edges nor multiple edges.
+// It should have a vertex attribute 'originalUniqueId', which is a unique numeric id
+// starting from 0.
+// Is should also have an edge attribute 'originalCalls', which is the number of times
+// one vertex (user) called another one. This property is used as a weight for the finger
+// printing algorithm.
+
 
 def getParameter(paramName, defaultValue) {
     if (params.containsKey(paramName))
@@ -7,16 +15,13 @@ def getParameter(paramName, defaultValue) {
        return defaultValue
 }
 
-vertices = getParameter('vertices', '30')
-ebSize=getParameter('ebSize', '5')
-splits=getParameter('splits', '10')
 furtherUndefinedAttr1=getParameter('fa1','5')
 furtherUndefinedAttr2=getParameter('fa2','5')
-seed= getParameter('seed', '31415')
-mostCallsPossible=getParameter('mostCalls', '3');
 splitProb= getParameter('splitProb', '0.3')
+splits=getParameter('splits', '10')
+input = getParameter('input', 'fprandom')
+seed= getParameter('seed', '31415')
 
-seed2=(seed.toInteger() + 42).toString()
 
 furtherUndefinedAttr1Expr =
         '(originalUniqueId >= ' +
@@ -76,13 +81,13 @@ function Mash() {
   return mash;
 }
 
-function Rnd(seed1, seed2) {
+function Rnd(seed21, seed) {
   var mash = Mash();
-  var seed = mash(seed1.toString() + '_' + seed2.toString());
-  var incr = seed;
+  var seed2 = mash(seed21.toString() + '_' + seed.toString());
+  var incr = seed2;
   var that = this;
   var unifRand = function() {
-    var a = Math.sin(seed++) * 10000;
+    var a = Math.sin(seed2++) * 10000;
     var b = a - Math.floor(a);
     return b;
   }
@@ -104,8 +109,8 @@ function Rnd(seed1, seed2) {
 
 
 
-var srcSeed = src\$originalUniqueId
-var dstSeed =  dst\$originalUniqueId
+var srcSeed2 = src\$originalUniqueId
+var dstSeed2 =  dst\$originalUniqueId
 var srcCount = src\$split;
 var dstCount = dst\$split;
 var srcIdx = src\$index;
@@ -123,7 +128,7 @@ function compute()
     return edgeCnt;
   }
 
-  var randomFunc = Rnd(srcSeed, dstSeed).geomChoose
+  var randomFunc = Rnd(srcSeed2, dstSeed2).geomChoose
   
   var count = 0;
 
@@ -138,13 +143,35 @@ compute();
 
 
 split=lynx.newProject('split test for FP')
-split.newVertexSet(size: vertices)
-split.createRandomEdgeBundle(degree: ebSize, seed: seed)
-split.discardLoopEdges()
-split.mergeParallelEdges()
+split.importVerticesFromCSVFiles(
+  files: 'DATA$exports/' + input + '_vertices/data/part*',
+  header: '"originalUniqueId"',
+  delimiter: ',',
+  omitted: '',
+  filter: '',
+  "id-attr": 'newId',
+  allow_corrupt_lines: 'no'
+)
+split.importEdgesForExistingVerticesFromCSVFiles(
+  files: 'DATA$exports/' + input + '_edges/data/part*',
+  header: '"src_originalUniqueId","dst_originalUniqueId","originalCalls"',
+  delimiter: ',',
+  omitted: '',
+  filter: '',
+  allow_corrupt_lines: 'no',
+  attr: 'originalUniqueId',
+  src: 'src_originalUniqueId',
+  dst: 'dst_originalUniqueId'  
+)
 
-split.addGaussianVertexAttribute(name: 'random', seed: seed)
-split.addRankAttribute(keyattr: 'random', order: 'ascending', rankattr: 'originalUniqueId')
+
+split.vertexAttributeToDouble(
+  attr: 'originalUniqueId'
+)
+
+split.edgeAttributeToDouble(
+  attr: 'originalCalls'
+)
 
 split.derivedVertexAttribute(
   output: 'split',
@@ -166,19 +193,6 @@ split.derivedVertexAttribute(
 
 split.vertexAttributeToString(
   attr: 'originalUniqueId'
-)
-
-
-split.addRandomEdgeAttribute(
-  name: 'originalCallsUnif',
-  dist: 'Standard Uniform',
-  seed: seed2
-)
-
-split.derivedEdgeAttribute(
-  output: 'originalCalls',
-  type: 'double',
-  expr: 'Math.floor(originalCallsUnif * ' + mostCallsPossible + ');'
 )
 
 split.splitVertices(
@@ -342,5 +356,3 @@ println "furtherBad $furtherBad"
 println "churnerFound $churnerFound"
 println "churnerNoMatch $churnerNoMatch"
 println "churnerMisMatch $churnerMisMatch"
-
-
