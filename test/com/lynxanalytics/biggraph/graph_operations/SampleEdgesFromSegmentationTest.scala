@@ -40,7 +40,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
     val res = sampler.sampleVertexPairs(members, 10, new JDKRandomGenerator())
     assert(res.size == 10)
     assert(res.distinct.size == res.size)
-    for (Edge(src, dst) <- res) {
+    for ((src, dst) <- res) {
       assert(members.contains(src))
       assert(members.contains(dst))
     }
@@ -90,9 +90,9 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       Seq((1l, 2l), (2l, 1l), (3l, 4l))).sort(p)
     val edgeCounts = sampler.getEdgeMultiplicities(selectedEdges, belongsTo, p).collect.toMap
     assert(edgeCounts == Map(
-      Edge(1, 2) -> 2,
-      Edge(2, 1) -> 2,
-      Edge(3, 4) -> 1
+      (1, 2) -> 2,
+      (2, 1) -> 2,
+      (3, 4) -> 1
     ))
   }
 

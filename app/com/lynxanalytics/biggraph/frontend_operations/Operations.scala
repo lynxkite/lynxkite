@@ -1389,7 +1389,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     implicit manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
       seg.belongsTo,
-      AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
     )
     val sizeSquare: Attribute[Double] = {
       val op = graph_operations.DeriveJSDouble(
