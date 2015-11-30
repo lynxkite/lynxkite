@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import breeze.stats.distributions.Poisson
+import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -53,17 +54,30 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     vertices: Seq[Long],
     numToGet: Int,
     rng: JDKRandomGenerator): Seq[(ID, ID)] = {
-    val n = vertices.size.toLong * vertices.size.toLong
-    assert(numToGet <= n, s"sampleVertexPairs was requested to sample $numToGet from $n")
-    val uniform = new UniformIntegerDistribution(rng, 0, vertices.size - 1);
-    var set = mutable.Set[(ID, ID)]()
-    while (set.size < numToGet) {
-      val id1 = uniform.sample()
-      val id2 = uniform.sample()
-      val edge = (vertices(id1), vertices(id2))
-      set += edge
+    if (numToGet == 0) {
+      Seq()
+    } else {
+      val n = vertices.size.toLong * vertices.size.toLong
+      assert(numToGet <= n, s"sampleVertexPairs was requested to sample $numToGet from $n")
+      val uniform = new UniformIntegerDistribution(rng, 0, vertices.size - 1);
+      var seq = new ArrayBuffer[(ID, ID)](numToGet) // Pairs collected so far.
+      var set = mutable.HashSet[Long]() // ids of pairs collected so far. This is used to make sure they are distinct.
+      set.sizeHint(numToGet)
+      // It would be simpler to just collect pairs in a set and in the end convert it to a sequence.
+      // Unfortunately, that's too slow in practice, because the hashCode of pair tuples is extremely slow.
+      while (seq.size < numToGet) {
+        val id1 = uniform.sample()
+        val id2 = uniform.sample()
+        val id = id1.toLong + id2.toLong * vertices.size.toLong
+        if (!set.contains(id)) {
+          set += id
+          val edge = (vertices(id1), vertices(id2))
+          seq += edge
+        }
+      }
+      assert(set.size == seq.size)
+      seq
     }
-    set.toSeq
   }
 
   def getApproximateBinomialDistributionSample(
@@ -155,6 +169,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     belongsTo: UniqueSortedRDD[ID, Edge],
     partitioner: Partitioner): SortedRDD[(ID, ID), Int] = {
     val vsToSegs = getVertexToSegmentPairsForSampledEdges(belongsTo, selectedEdges, partitioner)
+    vsToSegs.cache()
     val edgesToSrcSegList = selectedEdges
       .join(vsToSegs)
       .map { case (src, (dst, srcSeg)) => (src, dst) -> srcSeg }
