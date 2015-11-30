@@ -2336,6 +2336,40 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Compare segmentation edges", new PropagationOperation(_, _) with SegOp {
+    val possibleOthers =
+      if (!project.isSegmentation) {
+        UIValue.list(List())
+      } else {
+        UIValue.list(
+          parent.segmentations
+            .filter { seg => (seg.edgeBundle != null) }
+            .map { seg => seg.segmentationName }
+            .toList
+        )
+      }
+
+    def segmentationParameters = List(
+      Choice("golden-set", "Golden Set", multipleChoice = false, options = possibleOthers)
+    )
+    def enabled = isSegmentation && hasEdgeBundle
+
+    def apply(params: Map[String, String]): Unit = {
+      val goldenSet = parent.segmentation(params("golden-set"))
+      val op = graph_operations.CompareSegmentationEdges()
+      val result = op(
+        op.goldenBelongsTo, goldenSet.belongsTo)(
+          op.testBelongsTo, project.asSegmentation.belongsTo)(
+            op.goldenEdges, goldenSet.edgeBundle)(
+              op.testEdges, project.edgeBundle).result
+      project.scalars("precision") = result.precision
+      project.scalars("recall") = result.recall
+      project.edgeAttributes("present_in_" + goldenSet.segmentationName) = result.presentInGolden
+      goldenSet.edgeAttributes("present_in_" + project.asSegmentation.segmentationName) = result.presentInTest
+    }
+
+  })
+
   register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
       NonNegInt("mo", "Minimum overlap", default = 1),

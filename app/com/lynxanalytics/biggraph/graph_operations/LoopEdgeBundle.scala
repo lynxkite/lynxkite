@@ -10,7 +10,11 @@ object LoopEdgeBundle extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val eb = edgeBundle(inputs.vs.entity, inputs.vs.entity, idSet = inputs.vs.entity)
+    val eb = edgeBundle(
+      inputs.vs.entity,
+      inputs.vs.entity,
+      idSet = inputs.vs.entity,
+      properties = EdgeBundleProperties.identity)
   }
   def fromJson(j: JsValue) = LoopEdgeBundle()
 }

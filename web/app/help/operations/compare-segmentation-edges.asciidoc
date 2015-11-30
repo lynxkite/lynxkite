@@ -1,0 +1,24 @@
+### Compare segmentation edges
+
+Compares the edge set of this segmentation to the edge set of another segmentation
+and computes _precision_ and _recall_. In order to make this work, the edges of the
+two graphs should be matchable against each other. Therefore, the first thing
+this operation does is checking that both this and the other segmentation is derived
+from the main project with vertex-id-preserving operations, e.g. copy, filter.
+
+====
+The precision and recall values are computed the following way:
+
+_numGoldenEdges := number of edges in the other segmentation graph_ +
+_numTestEdges := number of edges in this segmentation graph_ +
+_numCommonEdges := number of common edges in the two segmentation graphs_ +
+_precision := numCommonEdges / numTestEdges_ +
+_recall := numCommonEdges / numGoldenEdges_
+
+Parallel edges are treated as one edge. Also, for each matching edge an edge
+attribute is created in both segmentation graphs.
+
+[[golden-set]] Golden set::
+The other segmentation to compare against.
+
+====
