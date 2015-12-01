@@ -336,10 +336,13 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
         }
       }, preservesPartitioning = true)).trustedUnique
 
-  def groupByKey(): UniqueSortedRDD[K, ArrayBuffer[V]] = {
+  def reduceByKey(func: (V, V) => V): UniqueSortedRDD[K, V] = combineByKey(identity, func)
+
+  def groupByKey()(implicit ck: ClassTag[K]): UniqueSortedRDD[K, Iterable[V]] = {
     val createCombiner = (v: V) => ArrayBuffer(v)
     val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
-    combineByKey(createCombiner, mergeValue)
+    // The mapValues is to change value type from arraybuffer to iterable.
+    combineByKey(createCombiner, mergeValue).mapValues(identity)
   }
 
   // Concrete implementing classes should override this one.
