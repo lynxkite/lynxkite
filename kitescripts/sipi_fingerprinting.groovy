@@ -234,7 +234,9 @@ def drawPR(pr) {
       fScore)
 
     // Throw away lowest scoring matches.
-    pr.filterByAttributes('filterva-score': ">$currentMin")
+    // Make sure we avoid scientific notation (which cannot be parsed on the other side)
+    formattedCurrentMin = String.format("%.18f", currentMin+0.000000001).toString()
+    pr.filterByAttributes('filterva-score': ">$formattedCurrentMin")
   }
   println "Maximal fScore: $maxFScore"
 }
