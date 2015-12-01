@@ -1196,7 +1196,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
-      Code("expr", "Value", defaultValue = "1"))
+      Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
       val name = params("output")
@@ -1223,7 +1223,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
-      Code("expr", "Value", defaultValue = "1"))
+      Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
       val name = params("output")
@@ -2294,8 +2294,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val mo = params("mo").toInt
       val ms = params("ms").toDouble
 
-      // val leftWithLoops = parent.edgeBundle
-      // val rightWithLoops = project.edgeBundle
       val leftWithLoops = parallelEdgeBundleUnion(parent.edgeBundle, parent.vertexSet.loops)
       val rightWithLoops = parallelEdgeBundleUnion(project.edgeBundle, project.vertexSet.loops)
       val fromLeftToRight = leftWithLoops.concat(seg.belongsTo)
