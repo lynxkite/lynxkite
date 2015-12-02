@@ -17,12 +17,6 @@ object DeriveJS {
                            inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
-  def add(a: Attribute[Double],
-          b: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
-    import Scripting._
-    val op = DeriveJSDouble(JavaScript("a + b"), Seq("a", "b"))
-    op(op.attrs, Seq(a, b).map(VertexAttributeToJSValue.run[Double])).result.attr
-  }
   def negative(x: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
     import Scripting._
     val op = DeriveJSDouble(JavaScript("-x"), Seq("x"))
