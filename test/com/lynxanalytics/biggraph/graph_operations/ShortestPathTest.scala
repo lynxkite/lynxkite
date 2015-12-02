@@ -22,7 +22,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     val startingDistance = {
       val op = DeriveJSDouble(
         JavaScript("ordinal < 3 ? 1000.0 : undefined"),
-        Seq("ordinal"))
+        Seq("ordinal"), Seq())
       op(
         op.attrs,
         VertexAttributeToJSValue.seq(ordinal.asDouble)).result.attr
@@ -102,7 +102,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     val startingDistance = {
       val op = DeriveJSDouble(
         JavaScript("name === 'Bob' ? 1000.0 : undefined"),
-        Seq("name"))
+        Seq("name"), Seq())
       op(
         op.attrs,
         VertexAttributeToJSValue.seq(name)).result.attr

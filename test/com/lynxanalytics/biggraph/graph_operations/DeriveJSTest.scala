@@ -12,11 +12,20 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSDouble(
       JavaScript(expr),
-      Seq("age", "name"))
+      Seq("age", "name"), Seq())
     val derived = op(
       op.attrs,
       VertexAttributeToJSValue.seq(g.age.entity, g.name.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> 60.3, 1 -> 48.2, 2 -> 80.3, 3 -> 122.0))
+  }
+
+  ignore("example graph: global") {
+    val expr = "global$greeting"
+    val g = ExampleGraph()().result
+    val op = DeriveJSString(
+      JavaScript(expr), Seq(),
+      Seq("global$greeting"))
+    // TODO
   }
 
   test("example graph: \"gender == 'Male' ? 'Mr ' + name : 'Ms ' + name\"") {
@@ -24,7 +33,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSString(
       JavaScript(expr),
-      Seq("gender", "name"))
+      Seq("gender", "name"), Seq())
     val derived = op(
       op.attrs,
       VertexAttributeToJSValue.seq(g.gender.entity, g.name.entity)).result.attr
@@ -37,7 +46,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSDouble(
       JavaScript(expr),
-      Seq())
+      Seq(), Seq())
     val derived = op(op.vs, g.vertices.entity)(
       op.attrs,
       Seq()).result.attr
@@ -46,13 +55,13 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
 
   test("JS integers become Scala doubles") {
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(JavaScript("2"), Seq())
+    val op = DeriveJSDouble(JavaScript("2"), Seq(), Seq())
     val derived = op(op.vs, g.vertices.entity)(op.attrs, Seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 2.0))
   }
 
   test("JS integers are accepted as Scala doubles") {
-    DeriveJS.validateJS[Double](JavaScript("2"), Seq())
+    DeriveJS.validateJS[Double](JavaScript("2"), Seq(), Seq())
   }
 
   test("DeriveJS works with no input attributes (edges)") {
@@ -60,7 +69,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSString(
       JavaScript(expr),
-      Seq())
+      Seq(), Seq())
     val derived = op(op.vs, g.edges.idSet)(
       op.attrs,
       Seq()).result.attr
