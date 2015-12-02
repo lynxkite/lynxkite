@@ -1001,7 +1001,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       var normalizedDispersion = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
-          Seq("disp", "emb"))
+          Seq("disp", "emb"), Seq())
         op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(
           dispersion, embeddedness)).result.attr.entity
       }
@@ -1240,11 +1240,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val namedAttributes = project.vertexAttributes
         .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
+      val namedScalars = project.scalars
+        .filter { case (name, sclr) => containsIdentifierJS(expr, "global$" + name) }
+        .toIndexedSeq
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, namedScalars, vertexSet)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, namedScalars, vertexSet)
       }
       project.newVertexAttribute(params("output"), result.attr, expr + help)
     }
@@ -1274,6 +1277,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           case (name, attr) =>
             "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
         }
+      val namedScalars = project.scalars
+        .filter { case (name, sclr) => containsIdentifierJS(expr, "global$" + name) }
+        .toIndexedSeq
       val namedDstVertexAttributes = project.vertexAttributes
         .filter { case (name, attr) => containsIdentifierJS(expr, "dst$" + name) }
         .toIndexedSeq
@@ -1287,9 +1293,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, namedScalars, idSet)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, namedScalars, idSet)
       }
       project.edgeAttributes(params("output")) = result.attr
     }
@@ -1395,7 +1401,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val sizeSquare: Attribute[Double] = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("size * size"),
-          Seq("size"))
+          Seq("size"), Seq())
         op(
           op.attrs,
           graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
@@ -2396,7 +2402,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
       var timeOfDefinition = {
-        val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
+        val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"), Seq())
         op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
       }
 
@@ -2428,7 +2434,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 defined >= ${params("min_num_defined")}
                 ? deviation
                 : undefined"""),
-            Seq("deviation", "ids", "defined"))
+            Seq("deviation", "ids", "defined"), Seq())
           op(
             op.attrs,
             graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
@@ -2453,7 +2459,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
         val error = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript("Math.abs(test - train)"), Seq("test", "train"))
+            JavaScript("Math.abs(test - train)"), Seq("test", "train"), Seq())
           val mae = op(
             op.attrs,
             graph_operations.VertexAttributeToJSValue.seq(
@@ -2472,7 +2478,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         timeOfDefinition = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript(i.toString), Seq("attr"))
+            JavaScript(i.toString), Seq("attr"), Seq())
           val newDefinitions = op(
             op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
           unifyAttributeT(timeOfDefinition, newDefinitions)
