@@ -390,7 +390,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
-    val opCategoriesBefore = ops.categories(context)
+    val opCategoriesBefore = ops.categories(context, forHistory = true)
     val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
@@ -596,6 +596,7 @@ object Operation {
   case class Category(
       title: String,
       color: String, // A color class from web/app/styles/operation-toolbox.css.
+      onlyInHistory: Boolean,
       visible: Boolean = true,
       icon: String = "", // Glyphicon name, or empty for first letter of title.
       sortKey: String = null // Categories are ordered by this. The title is used by default.
@@ -625,8 +626,8 @@ object WorkflowOperation {
       .map(_.group(1))
       .toSet
   }
-  val category = Operation.Category("User Defined Workflows", "pink")
-  val deprecatedCategory = Operation.Category("Deprecated User Defined Workflows", "red")
+  val category = Operation.Category("User Defined Workflows", "pink", onlyInHistory = false)
+  val deprecatedCategory = Operation.Category("Deprecated User Defined Workflows", "red", onlyInHistory = false)
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
@@ -697,14 +698,15 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       Seq()
     }
 
-  def categories(context: Operation.Context): List[OperationCategory] = {
+  def categories(context: Operation.Context, forHistory: Boolean = false): List[OperationCategory] = {
     val allOps = opsForContext(context) ++ workflowOperations(context)
     val cats = allOps.groupBy(_.category).toList
-    cats.filter(_._1.visible).sortBy(_._1).map {
-      case (cat, ops) =>
-        val feOps = ops.map(_.toFE).sortBy(_.title).toList
-        cat.toFE(feOps)
-    }
+    cats.filter { x => x._1.visible && (forHistory || !x._1.onlyInHistory) }
+      .sortBy(_._1).map {
+        case (cat, ops) =>
+          val feOps = ops.map(_.toFE).sortBy(_.title).toList
+          cat.toFE(feOps)
+      }
   }
 
   def operationIds = operations.keys.toSeq
