@@ -1,19 +1,11 @@
-// Parameters
+// Create a random 'call graph' suitable as input for
+// fingerprint_split_test.groovy.
 
-def getParameter(paramName, defaultValue) {
-    if (params.containsKey(paramName))
-       return params[paramName]
-    else
-       return defaultValue
-}
-
-seed = getParameter('seed', '31415')
-seed2 = getParameter('seed2', (seed.toInteger() + 42).toString())
-vertices = getParameter('vertices', '30')
-ebSize = getParameter('ebSize', '5')
-mostCallsPossible = getParameter('mostCalls', '3')
-output = getParameter('output', 'fprandom')
-
+seed = params.containsKey('seed') ? params['seed'] : '31415'
+vertices = params.containsKey('vertices') ? params['vertices'] : '30'
+ebSize = params.containsKey('ebSize') ? params['ebSize'] : '5'
+mostCallsPossible = params.containsKey('mostCalls') ? params['mostCalls'] : '3'
+output = params.containsKey('output') ? params['output'] : 'fprandom'
 project=lynx.newProject('random input graph for fp')
 
 project.newVertexSet(size: vertices)
@@ -33,24 +25,20 @@ project.derivedEdgeAttribute(
   expr: 'Math.floor(originalCallsUnif * ' + mostCallsPossible + ');'
 )
 
-// Give each vertex a unique id between 0 and vertices - 1
-project.addRandomVertexAttribute(
-  name: 'random',
-  dist: 'Standard Uniform',
-  seed: seed2
+// Create a peripheral attribute. In this case, no real peripheral
+// attributes exist, so we use a constant 0 almost everywhere.
+// The only exception is id 0; we can use this to check
+// if the peripheral property is treated correctly in fingerprint_split_test.groovy
+project.derivedVertexAttribute(
+  output: 'peripheral',
+  expr: 'ordinal == 0 ? 1.0 : 0.0',
+  type: 'double'
 )
-project.addRankAttribute(
-  keyattr: 'random',
-  order: 'ascending',
-  rankattr: 'originalUniqueId'
-)
-
-
 
 project.exportVertexAttributesToFile(
   path: 'DATA$exports/' + output + '_vertices',
   link: 'vertices_csv',
-  attrs: 'originalUniqueId',
+  attrs: 'id,peripheral',
   format: 'CSV'
 )
 
@@ -58,6 +46,6 @@ project.exportEdgeAttributesToFile(
   path: 'DATA$exports/' + output + '_edges',
   link: 'edges_csv',
   attrs: 'originalCalls',
-  id_attr: 'originalUniqueId',
+  id_attr: 'id',
   format: 'CSV'
 )

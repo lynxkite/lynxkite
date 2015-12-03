@@ -1,26 +1,21 @@
-// Parameters
 // The input graph is expected to be a sort of 'callgraph'.
 // It should contain neither loop edges nor multiple edges.
-// It should have a vertex attribute 'originalUniqueId', which is a unique numeric id
-// starting from 0.
+// It should have a vertex attribute 'peripheral' which is 0
+// when the vertex has all its neighbors in the graph, and 1
+// when the vertex (in the original graph) had some neighbors
+// which are not present in the input graph.
 // Is should also have an edge attribute 'originalCalls', which is the number of times
 // one vertex (user) called another one. This property is used as a weight for the finger
 // printing algorithm.
 
 
-def getParameter(paramName, defaultValue) {
-    if (params.containsKey(paramName))
-       return params[paramName]
-    else
-       return defaultValue
-}
-
-furtherUndefinedAttr1=getParameter('fa1','5')
-furtherUndefinedAttr2=getParameter('fa2','5')
-splitProb= getParameter('splitProb', '0.3')
-splits=getParameter('splits', '10')
-input = getParameter('input', 'fprandom')
-seed= getParameter('seed', '31415')
+// Parameters
+furtherUndefinedAttr1 = params.containsKey('fa1') ? params['fa1'] : '5'
+furtherUndefinedAttr2 = params.containsKey('fa2') ? params['fa2'] : '5'
+splitProb = params.containsKey('splitProb') ? params['splitProb'] : '0.3'
+splits = params.containsKey('splits') ? params['splits'] : '10'
+input =  params.containsKey('input') ? params['input'] : 'fprandom'
+seed = params.containsKey('seed') ? params['seed'] : '31415'
 
 
 furtherUndefinedAttr1Expr =
@@ -48,69 +43,46 @@ furtherUndefinedAttr2Expr =
 
 
 
-//
-//
-// The Mash() function used in this program
-// comes from here:
-// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
-// It is under MIT license.
 jsprogram=
 """
-// From http://baagoe.com/en/RandomMusings/javascript/
-// Johannes Baagøe <baagoe@baagoe.com>, 2010
-function Mash() {
-  var n = 0xefc8249d;
- 
-
-  var mash = function(data) {
-    data = data.toString();
+function Hasher() {
+  var hash = function(data) {
+    var h = 0x34140;
+    var phi = 0x9e377; // 2^20 * phi   (sqrt(5)-1)/2
     for (var i = 0; i < data.length; i++) {
-      n += data.charCodeAt(i);
-      var h = 0.02519603282416938 * n;
-      n = h >>> 0;
-      h -= n;
-      h *= n;
-      n = h >>> 0;
-      h -= n;
-      n += h * 0x100000000; // 2^32
+      h = h ^ data.charCodeAt(i);
+      h = h * phi;
+      h = h & 0xfffff;
     }
-    return (n >>> 0) * 2.3283064365386963e-10; // 2^-32
-  };
-
-  mash.version = 'Mash 0.9';
-  return mash;
+    return h;
+  }
+  return hash;
 }
 
-function Rnd(seed21, seed) {
-  var mash = Mash();
-  var seed2 = mash(seed21.toString() + '_' + seed.toString());
-  var incr = seed2;
-  var that = this;
+function Rnd(seedFirst, seedSecond) {
+  var hasher = Hasher();
+  var seed = hasher(seedFirst.toString() + '_' + seedSecond.toString());
   var unifRand = function() {
-    var a = Math.sin(seed2++) * 10000;
+    var a = Math.sin(seed++) * 10000;
     var b = a - Math.floor(a);
     return b;
   }
   return {
     random: unifRand,
-    geomChoose: function(id, p, lastId) {      
+    geomChoose: function(p, lastId) {      
       for (var i = 0; i <= lastId; i++) {
           var q = unifRand();
-          if (q < p) {
-             if (i == id) return 1;
-            else return 0;
-          }
+          if (q < p) return i;
       }
-      if (lastId == id) return 1;
-      else return 0;
+      return lastId;
     },
   }
 };
 
 
 
-var srcSeed2 = src\$originalUniqueId
-var dstSeed2 =  dst\$originalUniqueId
+var srcSeed = src\$originalUniqueId
+var dstSeed =  dst\$originalUniqueId
 var srcCount = src\$split;
 var dstCount = dst\$split;
 var srcIdx = src\$index;
@@ -122,30 +94,27 @@ var total = srcCount * dstCount;
 var myId = dstCount * srcIdx + dstIdx;
 var lastId = total - 1;
 
-function compute()
-{
+(function() {
   if (total == 1) {
     return edgeCnt;
   }
 
-  var randomFunc = Rnd(srcSeed2, dstSeed2).geomChoose
+  var randomFunc = Rnd(srcSeed, dstSeed).geomChoose
   
   var count = 0;
 
-  for (var j = 0; j < edgeCnt; j++) {
-    count += randomFunc(myId, prob, lastId);
+  for (var j = 0; j < edgeCnt; j++) {    
+    if (randomFunc(prob, lastId) == myId) count++;
   }
 
   return count;
-}
-compute();
+})();
 """
-
 
 split=lynx.newProject('split test for FP')
 split.importVerticesFromCSVFiles(
   files: 'DATA$exports/' + input + '_vertices/data/part*',
-  header: '"originalUniqueId"',
+  header: '"id","peripheral"',
   delimiter: ',',
   omitted: '',
   filter: '',
@@ -154,24 +123,42 @@ split.importVerticesFromCSVFiles(
 )
 split.importEdgesForExistingVerticesFromCSVFiles(
   files: 'DATA$exports/' + input + '_edges/data/part*',
-  header: '"src_originalUniqueId","dst_originalUniqueId","originalCalls"',
+  header: '"src_id","dst_id","originalCalls"',
   delimiter: ',',
   omitted: '',
   filter: '',
   allow_corrupt_lines: 'no',
-  attr: 'originalUniqueId',
-  src: 'src_originalUniqueId',
-  dst: 'dst_originalUniqueId'  
+  attr: 'id',
+  src: 'src_id',
+  dst: 'dst_id'  
 )
-
-
+// Convert strings to doubles:
 split.vertexAttributeToDouble(
-  attr: 'originalUniqueId'
+  attr: 'peripheral'
 )
-
 split.edgeAttributeToDouble(
   attr: 'originalCalls'
 )
+
+// Create vertex attribute 'originalUniqueId' - this runs beteen 0 and number of vertices - 1
+// Low ids will be treated specially, e.g., splits, and further undefined will come from
+// the low regions of the id range. We don't want peripheral vertices to be treated
+// specially, so we make sure that they are assigned higher ids.
+split.addRandomVertexAttribute(
+  name: 'urnd',
+  dist: 'Standard Uniform',
+  seed: seed
+)
+split.derivedVertexAttribute(
+  output: 'urndPeripheralHigh',
+  expr: 'peripheral == 0.0 ? urnd : urnd + 2.0',
+  type: 'double'
+)
+split.addRankAttribute(
+  rankattr: 'originalUniqueId',
+  keyattr: 'urndPeripheralHigh',
+  order: 'ascending'
+) 
 
 split.derivedVertexAttribute(
   output: 'split',
@@ -293,7 +280,7 @@ split.derivedVertexAttribute(
   expr:
 
   """
-  function fun() {
+  (function(){
   var tmp = "";
   tmp += normal == 1.0 ? "normal" : "";
   tmp += furtherOk == 1.0 ? "furtherOk" : "";
@@ -302,8 +289,7 @@ split.derivedVertexAttribute(
   tmp += churnerNoMatch == 1.0 ? "churnerNoMatch" : "";
   tmp += churnerMisMatch == 1.0 ? "churnerMisMatch" : "";
   return tmp;
-  }
-  fun();
+  })();
   """
 )
 
