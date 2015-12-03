@@ -5,8 +5,6 @@
 // only once. Loop edges are also considered.
 package com.lynxanalytics.biggraph.graph_operations
 
-import breeze.stats.distributions.Poisson
-import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -49,7 +47,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   )
 
   // Takes a random sample of size numToGet from the pairs of values
-  // from the vertices list.
+  // from the vertices list. Assumes that the members of vertices are distinct.
   def sampleVertexPairs(
     vertices: Seq[Long],
     numToGet: Int,
@@ -60,23 +58,15 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       val n = vertices.size.toLong * vertices.size.toLong
       assert(numToGet <= n, s"sampleVertexPairs was requested to sample $numToGet from $n")
       val uniform = new UniformIntegerDistribution(rng, 0, vertices.size - 1);
-      var seq = new ArrayBuffer[(ID, ID)](numToGet) // Pairs collected so far.
-      var set = mutable.HashSet[Long]() // ids of pairs collected so far. This is used to make sure they are distinct.
+      var set = mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
       set.sizeHint(numToGet)
-      // It would be simpler to just collect pairs in a set and in the end convert it to a sequence.
-      // Unfortunately, that's too slow in practice, because the hashCode of pair tuples is extremely slow.
-      while (seq.size < numToGet) {
+      while (set.size < numToGet) {
         val id1 = uniform.sample()
         val id2 = uniform.sample()
-        val id = id1.toLong + id2.toLong * vertices.size.toLong
-        if (!set.contains(id)) {
-          set += id
-          val edge = (vertices(id1), vertices(id2))
-          seq += edge
-        }
+        val edge = (vertices(id1), vertices(id2))
+        set += edge
       }
-      assert(set.size == seq.size)
-      seq
+      set.toSeq
     }
   }
 
@@ -88,16 +78,13 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       if (n < Int.MaxValue) {
         new BinomialDistribution(rng, n.toInt, p)
       } else {
-        // Use poisson distribution to approximate binomial. According to my numeric
-        // tests, if n > 50 and p < 0.1 the difference in the p of choosing an edge
-        // are in the range of 1e-15. The reason we are branching with Int.MaxValue
-        // and not 50 is that the implementation of poisson is much slower than the
-        // implementation of binomial.
+        // If n > Int.MaxValue, we cannot use binomial distribution anymore, so we fall back to approximating with
+        // poisson.
         val lambda = n * p
         val maxAllowedLambda = Int.MaxValue * 0.01
         if (lambda >= maxAllowedLambda) {
-          // The problem is that the return value of poisson distribution is an int32.
-          // Also, PoissonDistribution becomes really slow in those ranges.
+          // Refuse calculating this sample. This limit is arbitrary. The problem is that the return value of poisson
+          // distribution has to fit into an int32. Also, PoissonDistribution becomes really slow in those ranges.
           throw new AssertionError(
             s"There is a segment of size^2 = $n where the resulting sample size would be too large. " +
               s"Make sure that max(segmentSize^2) * probability < $maxAllowedLambda")
@@ -113,10 +100,14 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
 
   // Takes a sample from the pairs of values from the vertices list.
   // Each pair will have prob probability of being selected.
+  // Assumes that the elements of vertices array are distinct.
   def sampleVertexPairs(
-    vertices: Iterable[Long],
+    vertices: ArrayBuffer[Long],
     rng: JDKRandomGenerator): Seq[(ID, ID)] = {
-    val membersSeq = vertices.toIndexedSeq
+    // Sort the members array, because otherwise its order is non-deterministic.
+    // (Depends on shuffling. This would cause a problem in getEdgeMultiplicities, where
+    // the edges are joined with themselves.)
+    val membersSeq = vertices.toIndexedSeq.sorted
     val n = membersSeq.size.toLong * membersSeq.size.toLong
     val numSamples = getApproximateBinomialDistributionSample(n, prob, rng)
     sampleVertexPairs(membersSeq, numSamples, rng)
@@ -146,45 +137,49 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // and drop those pairs whose vertices are not present as endpoints
   // of preSelectedEdges.
   def getVertexToSegmentPairsForSampledEdges(
-    belongsTo: UniqueSortedRDD[ID, Edge],
+    vsToSeg: RDD[(ID, ID)],
     preSelectedEdges: RDD[(ID, ID)],
     partitioner: Partitioner): SortedRDD[ID, ID] = {
     val idSet = preSelectedEdges
       .flatMap {
         case (src, dst) => Seq(src -> (), dst -> ())
       }
-      .sort(belongsTo.partitioner.get)
-      .distinctByKey()
-    belongsTo.values.map(e => e.src -> e.dst)
-      .sort(belongsTo.partitioner.get)
+      .sort(partitioner)
+      .distinctByKey
+    vsToSeg
+      .sort(partitioner)
       .sortedJoin(idSet)
-      .mapValues { case (dst, ()) => dst }
+      .mapValues { case (dst, _) => dst }
   }
 
   // For each vertex pair in selectedEdges, compute the number of segments in which
   // they co-occur. (This is the same as the number of parallel edges the operation
   // EdgesFromSegmentation would create.)
+  // Assumes that the pairs in vsToSeg are distinct.
   def getEdgeMultiplicities(
     selectedEdges: RDD[(ID, ID)],
-    belongsTo: UniqueSortedRDD[ID, Edge],
-    partitioner: Partitioner): SortedRDD[(ID, ID), Int] = {
-    val vsToSegs = getVertexToSegmentPairsForSampledEdges(belongsTo, selectedEdges, partitioner)
-    vsToSegs.cache()
-    val edgesToSrcSegList = selectedEdges
-      .join(vsToSegs)
+    vsToSeg: RDD[(ID, ID)],
+    partitioner: Partitioner): RDD[((ID, ID), Int)] = {
+    val vsToSegRestricted =
+      getVertexToSegmentPairsForSampledEdges(vsToSeg, selectedEdges, partitioner)
+    val edgeToSrcSeg = selectedEdges
+      .sort(partitioner)
+      .sortedJoinWithDuplicates(vsToSegRestricted)
       .map { case (src, (dst, srcSeg)) => (src, dst) -> srcSeg }
-      .groupBySortedKey(partitioner)
-    val edgesToDstSegList = selectedEdges
+    val edgeToDstSeg = selectedEdges
       .map { case (src, dst) => (dst, src) }
-      .join(vsToSegs)
+      .sort(partitioner)
+      .sortedJoinWithDuplicates(vsToSegRestricted)
       .map { case (dst, (src, dstSeg)) => (src, dst) -> dstSeg }
-      .groupBySortedKey(partitioner)
-    edgesToSrcSegList
-      .sortedJoin(edgesToDstSegList)
-      .mapValues {
-        case (srcSegs, dstSegs) => {
+    edgeToSrcSeg
+      .cogroup(edgeToDstSeg)
+      .map {
+        case (keyEdge, (srcSegs, dstSegs)) => {
+          // Consistency-check: both endpoint of each edge should be in at least
+          // one segment of vsToSegRestricted.
+          assert(srcSegs.size > 0 && dstSegs.size > 0)
           val intersectionSize = (srcSegs.toSet & dstSegs.toSet).size
-          intersectionSize
+          (keyEdge, intersectionSize)
         }
       }
   }
@@ -193,7 +188,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // with parallel edges between them had higher probability of being
   // selected in the previous step.
   def resampleEdgesToCompensateMultiplicities(
-    preSelectedEdgesWithCounts: SortedRDD[(ID, ID), Int],
+    preSelectedEdgesWithCounts: RDD[((ID, ID), Int)],
     partitioner: Partitioner,
     seed: Long): UniqueSortedRDD[ID, ((ID, ID), Int)] = {
     preSelectedEdgesWithCounts
@@ -217,6 +212,19 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       }.randomNumbered(partitioner)
   }
 
+  // belongsTo may have multiple links between the same vertex -> segmentation pair.
+  // (This can happen for example after a "Merge vertices" operation.)
+  // This function eliminates those.
+  // (Such duplicates can lead to trouble, e.g. endless loop in sampleVertexPairs.)
+  def getVsToSegDistinct(belongsTo: UniqueSortedRDD[ID, Edge]): RDD[(ID, ID)] = {
+    belongsTo
+      .values
+      .map(e => (e.src -> e.dst) -> ())
+      .sort(belongsTo.partitioner.get)
+      .distinctByKey
+      .map { case ((src, dst), _) => src -> dst }
+  }
+
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
@@ -226,19 +234,19 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     val seedGenerator = new Random(seed)
     val belongsTo = inputs.belongsTo.rdd
     val segmentationPartitioner = belongsTo.partitioner.get
-    val segToVs = belongsTo.values.map(e => e.dst -> e.src).sort(segmentationPartitioner)
+    val vsToSeg = getVsToSegDistinct(belongsTo)
+    val segToVs = vsToSeg.map { case (src, dst) => (dst, src) }.sort(segmentationPartitioner)
     val segToMemberArray = segToVs.groupByKey
     val expectedNumberOfPreSelectedEdges =
-      (segToMemberArray.values.map(edges => edges.size * edges.size).sum * prob).toLong
+      (segToMemberArray.values.map(edges => edges.size.toLong * edges.size.toLong).sum * prob).toLong
     val sampledEdgesPartitioner = rc.partitionerForNRows(expectedNumberOfPreSelectedEdges)
 
     val preSelectedEdges = initialSampleEdges(
       segToMemberArray, sampledEdgesPartitioner, seedGenerator.nextLong())
     val preSelectedEdgesWithCounts = getEdgeMultiplicities(
-      preSelectedEdges, belongsTo, sampledEdgesPartitioner)
+      preSelectedEdges, vsToSeg, sampledEdgesPartitioner)
     val filteredEdges = resampleEdgesToCompensateMultiplicities(
       preSelectedEdgesWithCounts, sampledEdgesPartitioner, seedGenerator.nextLong())
-    filteredEdges.cache()
     output(o.es, filteredEdges.mapValues { case ((src, dst), _) => Edge(src, dst) })
     output(o.multiplicity, filteredEdges.mapValues { case (_, count) => count.toDouble })
   }
