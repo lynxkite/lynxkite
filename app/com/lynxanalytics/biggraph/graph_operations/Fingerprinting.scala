@@ -207,14 +207,10 @@ case class Fingerprinting(
     val gentlemenPartitioner = gentlemenScores.partitioner.get
     val gentlemenPreferences: UniqueSortedRDD[ID, Iterable[ID]] = gentlemenScores
       .groupByKey
-      .mapValues {
-        case ladies => ladies.toSeq.sortBy(-_._2).map(_._1)
-      }
+      .mapValues(_.toSeq.sortBy(-_._2).map(_._1))
     val ladiesPreferences: UniqueSortedRDD[ID, Iterable[ID]] = ladiesScores
       .groupByKey
-      .mapValues {
-        case gentlemen => gentlemen.toSeq.sortBy(-_._2).map(_._1)
-      }
+      .mapValues(_.toSeq.sortBy(-_._2).map(_._1))
 
     @annotation.tailrec
     def iterate(
