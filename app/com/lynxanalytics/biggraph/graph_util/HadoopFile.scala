@@ -201,14 +201,14 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Loads a Long-keyed rdd where the values are just raw bytes
-  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, Array[Byte])] = {
+  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, hadoop.io.BytesWritable)] = {
     val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
-    file.map { case (k, v) => k.get -> v.getBytes }
+    file.map { case (k, v) => k.get -> v }
   }
 
   // Loads a Long-keyed rdd with deserialized values
@@ -218,27 +218,27 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       if (typeTag[T] == typeTag[Unit])
         raw.mapValues(v => ())
       else if (typeTag[T] == typeTag[String])
-        raw.mapValues(v => new String(v, "utf-8"))
+        raw.mapValues(v => new String(v.getBytes, 0, v.getLength, "utf-8"))
       else if (typeTag[T] == typeTag[Double])
-        raw.mapValues(v => RDDUtils.bytesToDouble(v))
+        raw.mapValues(v => RDDUtils.bytesToDouble(v.getBytes))
       else if (typeTag[T] == typeTag[graph_api.Edge])
-        raw.mapValues(v => RDDUtils.bytesToEdge(v))
+        raw.mapValues(v => RDDUtils.bytesToEdge(v.getBytes))
       else {
-        raw.mapValues(v => RDDUtils.kryoDeserialize[T](v))
+        raw.mapValues(v => RDDUtils.kryoDeserialize[T](v.getBytes))
       }
     untyped.asInstanceOf[RDD[(Long, T)]]
   }
 
   // Saves a Long-keyed rdd where the values are just raw bytes;
   // Returns the number of lines written
-  def saveEntityRawRDD(data: RDD[(Long, Array[Byte])]): Long = {
+  def saveEntityRawRDD(data: RDD[(Long, hadoop.io.BytesWritable)]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
     val lines = data.context.accumulator[Long](0L, "Line count")
     val hadoopData = data.map {
       case (k, v) =>
         lines += 1
-        new hadoop.io.LongWritable(k) -> new hadoop.io.BytesWritable(v)
+        new hadoop.io.LongWritable(k) -> v
     }
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
@@ -258,7 +258,8 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   // Saves a Long-keyed RDD, and returns the number of lines written.
   def saveEntityRDD[T: TypeTag](data: RDD[(Long, T)]): Long = {
     implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(typeTag[T])
-    val raw =
+    // TODO: We could use a single BytesWritable per partition to re-use the same byte array.
+    val bytes =
       if (typeTag[T] == typeTag[Unit])
         data.mapValues(v => Array.emptyByteArray)
       else if (typeTag[T] == typeTag[String])
@@ -270,6 +271,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       else {
         data.mapValues(v => RDDUtils.kryoSerialize(v))
       }
+    val raw = bytes.mapValues(v => new hadoop.io.BytesWritable(v))
     saveEntityRawRDD(raw)
   }
 
