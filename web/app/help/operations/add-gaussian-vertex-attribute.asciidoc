@@ -1,5 +1,7 @@
 ### Add Gaussian vertex attribute
 
+This is a depricated operation! Please use <<add-random-vertex-attribute>> instead.
+
 Generates a new random double attribute with a Gaussian (normal) distribution
 with a mean of 0 and a standard deviation of 1.
 
