@@ -16,7 +16,6 @@ import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 object SampleEdgesFromSegmentation extends OpFromJson {
@@ -102,12 +101,12 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // Each pair will have prob probability of being selected.
   // Assumes that the elements of vertices array are distinct.
   def sampleVertexPairs(
-    vertices: ArrayBuffer[Long],
+    vertices: Iterable[Long],
     rng: JDKRandomGenerator): Seq[(ID, ID)] = {
     // Sort the members array, because otherwise its order is non-deterministic.
     // (Depends on shuffling. This would cause a problem in getEdgeMultiplicities, where
     // the edges are joined with themselves.)
-    val membersSeq = vertices.sorted
+    val membersSeq = vertices.toSeq.sorted
     val n = membersSeq.size.toLong * membersSeq.size.toLong
     val numSamples = getApproximateBinomialDistributionSample(n, prob, rng)
     sampleVertexPairs(membersSeq, numSamples, rng)
@@ -116,7 +115,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // Takes a sample from the set of edges that represent co-occurrences in
   // the segmentation. Each edge will have prob probability of being selected.
   def initialSampleEdges(
-    segIdAndMembersArray: SortedRDD[ID, ArrayBuffer[ID]],
+    segIdAndMembersArray: SortedRDD[ID, Iterable[ID]],
     partitioner: Partitioner,
     seed: Long): RDD[(ID, ID)] = {
 
