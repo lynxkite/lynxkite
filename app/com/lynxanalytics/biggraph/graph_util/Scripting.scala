@@ -125,8 +125,13 @@ object Scripting {
     if (others.isEmpty) first
     else {
       others.foreach { other =>
-        assert(first.srcVertexSet.gUID == other.srcVertexSet.gUID)
-        assert(first.dstVertexSet.gUID == other.dstVertexSet.gUID)
+        assert(
+          first.srcVertexSet.gUID == other.srcVertexSet.gUID,
+          s"Source vertex set of $first does not match that of $other so" +
+            "they cannot be used together in a parallelEdgeBundleUnion")
+        assert(first.dstVertexSet.gUID == other.dstVertexSet.gUID,
+          s"Destination vertex set of $first does not match that of $other so" +
+            "they cannot be used together in a parallelEdgeBundleUnion")
       }
       val all = first +: others
       val idSetUnion = {
@@ -142,9 +147,11 @@ object Scripting {
   }
 
   // Take the union of edge bundles that potentially go between different vertex set pairs.
-  // We first take the union of all the source vertex sets and the union of all the destination
-  // vertex sets, induce all the bundles to go between these two new vertex sets and then
-  // take their union.
+  // We first take the union of all different source vertex sets and the union of all
+  // different destination vertex sets,
+  // induce all the bundles to go between these two new vertex sets and then take their union.
+  // In effect, this corresponds to the mathematical "model" where we assume all different
+  // vertex sets represent disjoint mathematical sets.
   def generalEdgeBundleUnion(
     first: EdgeBundle, others: EdgeBundle*)(
       implicit m: MetaGraphManager): EdgeBundle = {

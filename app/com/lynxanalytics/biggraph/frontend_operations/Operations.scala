@@ -2294,6 +2294,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val mo = params("mo").toInt
       val ms = params("ms").toDouble
 
+      // We are setting the stage here for the generic fingerprinting operation. For a vertex A
+      // on the left (base project) side and a vertex B on the right (segmentation) side we
+      // want to "create" a common neighbor for fingerprinting purposes iff a neighbor of A (A') is
+      // connected to a neigbor of B (B'). In practice, to make the setup symmetric, we will
+      // actually create two common neighbors, namely we will connect both A and B to A' and B'.
+      //
+      // There is one more twist, that we want to consider A being connected to B directly also
+      // as an evidence for A and B being a good match. To achieve this, we basically artificially
+      // make every vertex a member of its own neighborhood by adding loop edges.
       val leftWithLoops = parallelEdgeBundleUnion(parent.edgeBundle, parent.vertexSet.loops)
       val rightWithLoops = parallelEdgeBundleUnion(project.edgeBundle, project.vertexSet.loops)
       val fromLeftToRight = leftWithLoops.concat(seg.belongsTo)

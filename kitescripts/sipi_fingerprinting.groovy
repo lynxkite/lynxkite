@@ -210,7 +210,7 @@ def drawPR(pr) {
   // First restrict to matched test vertices. This is basically an is-defined test.
   pr.filterByAttributes('filterva-match_is_good': '>=0.0')
 
-  println "Treshold\tPrecision\tRecall\tFScore"
+  println "Threshold\tPrecision\tRecall\tFScore"
   maxFScore = 0
   while (pr.scalars['vertex_count'].toDouble() > 0) {
     // Compute current precision/recall
