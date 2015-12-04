@@ -95,7 +95,7 @@ var myId = dstCount * srcIdx + dstIdx;
 var lastId = total - 1;
 
 (function() {
-  if (total == 1) {
+  if (total === 1) {
     return edgeCnt;
   }
 
@@ -104,7 +104,7 @@ var lastId = total - 1;
   var count = 0;
 
   for (var j = 0; j < edgeCnt; j++) {    
-    if (randomFunc(prob, lastId) == myId) count++;
+    if (randomFunc(prob, lastId) === myId) count++;
   }
 
   return count;
