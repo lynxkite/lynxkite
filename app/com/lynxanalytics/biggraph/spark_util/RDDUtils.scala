@@ -450,18 +450,26 @@ object Implicits {
     }
 
     def groupBySortedKey(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]) = {
+      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, Iterable[V]] = {
 
-      val rawRDD = self.groupByKey(partitioner)
-      makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
-      rawRDD.asUniqueSortedRDD
+      if (self.isInstanceOf[SortedRDD[K, V]]) {
+        self.asInstanceOf[SortedRDD[K, V]].groupByKey()
+      } else {
+        val rawRDD = self.groupByKey(partitioner)
+        makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
+        rawRDD.asUniqueSortedRDD
+      }
     }
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(
       implicit ck: ClassTag[K], cv: ClassTag[V]) = {
 
-      val rawRDD = self.reduceByKey(partitioner, f)
-      makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
-      rawRDD.asUniqueSortedRDD
+      if (self.isInstanceOf[SortedRDD[K, V]]) {
+        self.asInstanceOf[SortedRDD[K, V]].reduceByKey(f)
+      } else {
+        val rawRDD = self.reduceByKey(partitioner, f)
+        makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
+        rawRDD.asUniqueSortedRDD
+      }
     }
 
     private def makeShuffledRDDSorted[T: Ordering](rawRDD: ShuffledRDD[T, _, _]): Unit = {
