@@ -13,7 +13,12 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
+case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
+  def partitionedPath(entity: MetaGraphEntity): HadoopFileLike =
+    dataRoot / io.PartitionedDir / entity.gUID.toString
+  def partitionedPath(entity: MetaGraphEntity, numPartitions: Int): HadoopFileLike =
+    partitionedPath(entity) / numPartitions.toString
+}
 
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
@@ -168,13 +173,11 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   def mayHaveExisted = operationMayHaveExisted && (partitionedPath.mayHaveExisted || legacyPath.mayHaveExisted)
 
-  private val partitionedPath = dataRoot / PartitionedDir / entity.gUID.toString
+  private val partitionedPath = context.partitionedPath(entity)
   private val metaFile = partitionedPath / io.Metadata
 
-  private def targetDir(numPartitions: Int) = {
-    val subdir = numPartitions.toString
-    partitionedPath.forWriting / subdir
-  }
+  private def targetDir(numPartitions: Int) =
+    context.partitionedPath(entity, numPartitions).forWriting
 
   private def computeAvailablePartitions = {
     val subDirs = (partitionedPath / "*").list

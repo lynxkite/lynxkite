@@ -313,11 +313,9 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     val lines = numberedLines(rc, input)
 
     val outputEntities = (o.attrs.values.toSeq :+ o.vertices).map(_.entity)
-    val entityRoots: Map[String, HadoopFile] = outputEntities.map { e =>
-      val guid = e.gUID.toString
-      e.name.name -> (rc.ioContext.dataRoot / io.PartitionedDir / guid).forWriting
+    val entityPaths: Map[String, HadoopFile] = outputEntities.map {
+      e => e.name.name -> rc.ioContext.partitionedPath(e, lines.partitions.size).forWriting
     }.toMap
-    val entityPaths = entityRoots.mapValues(_ / lines.partitions.size.toString)
     val paths = input.fields.map(f => entityPaths(s"imported_field_$f")) :+ entityPaths("vertices")
 
     val trackerID = Timestamp.toString
@@ -350,8 +348,9 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     for (file <- files) file.committer.setupJob(file.context)
     sc.runJob(lines, writeShard)
     for (file <- files) file.committer.commitJob(file.context)
+    // Write metadata files.
     val meta = io.EntityMetadata(count.value)
-    for (root <- entityRoots.values) meta.write(root)
+    for (e <- outputEntities) meta.write(rc.ioContext.partitionedPath(e).forWriting)
   }
 }
 
