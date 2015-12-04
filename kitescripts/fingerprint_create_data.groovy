@@ -1,11 +1,12 @@
 // Create a random 'call graph' suitable as input for
 // fingerprint_split_test.groovy.
 
-seed = params.containsKey('seed') ? params['seed'] : '31415'
-vertices = params.containsKey('vertices') ? params['vertices'] : '30'
-ebSize = params.containsKey('ebSize') ? params['ebSize'] : '5'
-mostCallsPossible = params.containsKey('mostCalls') ? params['mostCalls'] : '3'
-output = params.containsKey('output') ? params['output'] : 'fprandom'
+seed = params.seed ?: '31415'
+vertices = params.vertices ?: '30'
+ebSize = params.ebSize ?: '5'
+mostCallsPossible = params.mostCalls ?: '3'
+output = params.output ?: 'fprandom'
+
 project=lynx.newProject('random input graph for fp')
 
 project.newVertexSet(size: vertices)

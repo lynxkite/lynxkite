@@ -10,12 +10,12 @@
 
 
 // Parameters
-furtherUndefinedAttr1 = params.containsKey('fa1') ? params['fa1'] : '5'
-furtherUndefinedAttr2 = params.containsKey('fa2') ? params['fa2'] : '5'
-splitProb = params.containsKey('splitProb') ? params['splitProb'] : '0.3'
-splits = params.containsKey('splits') ? params['splits'] : '10'
-input =  params.containsKey('input') ? params['input'] : 'fprandom'
-seed = params.containsKey('seed') ? params['seed'] : '31415'
+furtherUndefinedAttr1 = params.fa1 ?: '5'
+furtherUndefinedAttr2 = params.fa2 ?: '5'
+splitProb = params.splitProb ?: '0.3'
+splits = params.splits ?: '10'
+input =  params.input ?: 'fprandom'
+seed = params.seed ?: '31415'
 
 
 furtherUndefinedAttr1Expr =
