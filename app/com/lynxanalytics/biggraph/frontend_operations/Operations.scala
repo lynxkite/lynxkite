@@ -170,7 +170,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
   abstract class DepricatedOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Depricated operations", "black", depricated = true))
+    extends Operation(t, c, Category("Depricated operations", "red", depricated = true, icon = "remove-sign"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
