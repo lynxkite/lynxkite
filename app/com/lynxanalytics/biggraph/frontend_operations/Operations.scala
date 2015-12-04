@@ -123,7 +123,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import Operation.Category
   import Operation.Context
   abstract class UtilityOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Utility operations", "green", onlyInHistory = false, icon = "wrench", sortKey = "zz"))
+    extends Operation(t, c, Category("Utility operations", "green", icon = "wrench", sortKey = "zz"))
   trait SegOp extends Operation {
     protected def seg = project.asSegmentation
     protected def parent = seg.parent
@@ -137,59 +137,47 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category(
       "Segmentation utility operations",
       "green",
-      onlyInHistory = false,
       visible = c.project.isSegmentation,
       icon = "wrench",
       sortKey = "zz")) with SegOp
 
   // Categories
-  abstract class SpecialtyOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Specialty operations", "green", icon = "book", onlyInHistory = onlyInHistory))
+  abstract class SpecialtyOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Specialty operations", "green", icon = "book"))
 
-  abstract class EdgeAttributesOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Edge attribute operations", "blue", sortKey = "Attribute, edge", onlyInHistory = onlyInHistory))
+  abstract class EdgeAttributesOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Edge attribute operations", "blue", sortKey = "Attribute, edge"))
 
-  abstract class VertexAttributesOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Vertex attribute operations", "blue", sortKey = "Attribute, vertex", onlyInHistory = onlyInHistory))
+  abstract class VertexAttributesOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Vertex attribute operations", "blue", sortKey = "Attribute, vertex"))
 
-  abstract class GlobalOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Global operations", "magenta", icon = "globe", onlyInHistory = onlyInHistory))
+  abstract class GlobalOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Global operations", "magenta", icon = "globe"))
 
-  abstract class ExportOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Export operations", "yellow", icon = "export", sortKey = "IO, export", onlyInHistory = onlyInHistory))
+  abstract class ExportOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Export operations", "yellow", icon = "export", sortKey = "IO, export"))
 
-  abstract class ImportOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Import operations", "yellow", icon = "import", sortKey = "IO, import", onlyInHistory = false))
+  abstract class ImportOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Import operations", "yellow", icon = "import", sortKey = "IO, import"))
 
-  abstract class MetricsOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Graph metrics", "green", icon = "stats", onlyInHistory = onlyInHistory))
+  abstract class MetricsOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Graph metrics", "green", icon = "stats"))
 
-  abstract class PropagationOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Propagation operations", "green", icon = "fullscreen", onlyInHistory = onlyInHistory))
+  abstract class PropagationOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Propagation operations", "green", icon = "fullscreen"))
 
-  abstract class HiddenOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Hidden operations", "black", visible = false, onlyInHistory = onlyInHistory))
+  abstract class HiddenOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
-  abstract class CreateSegmentationOperation(t: String, c: Context, onlyInHistory: Boolean = false)
+  abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
       "Create segmentation",
       "green",
       icon = "th-large",
-      visible = !c.project.isSegmentation,
-      onlyInHistory = onlyInHistory))
+      visible = !c.project.isSegmentation))
 
-  abstract class StructureOperation(t: String, c: Context, onlyInHistory: Boolean = false)
-    extends Operation(t, c,
-      Category("Structure operations", "pink", icon = "asterisk", onlyInHistory = onlyInHistory))
+  abstract class StructureOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
 
   import OperationParams._
 
@@ -790,7 +778,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Add gaussian vertex attribute", new VertexAttributesOperation(_, _, onlyInHistory = true) {
+  register("Add gaussian vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       RandomSeed("seed", "Seed"))
