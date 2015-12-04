@@ -169,8 +169,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class HiddenOperation(t: String, c: Context)
     extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
-  abstract class DepricatedOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Depricated operations", "red", depricated = true, icon = "remove-sign"))
+  abstract class DeprecatedOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Depricated operations", "red", deprecated = true, icon = "remove-sign"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
@@ -781,7 +781,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Add gaussian vertex attribute", new DepricatedOperation(_, _) {
+  register("Add gaussian vertex attribute", new DeprecatedOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       RandomSeed("seed", "Seed"))
