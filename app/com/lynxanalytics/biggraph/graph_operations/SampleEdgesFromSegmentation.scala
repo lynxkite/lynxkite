@@ -107,7 +107,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     // Sort the members array, because otherwise its order is non-deterministic.
     // (Depends on shuffling. This would cause a problem in getEdgeMultiplicities, where
     // the edges are joined with themselves.)
-    val membersSeq = vertices.toIndexedSeq.sorted
+    val membersSeq = vertices.sorted
     val n = membersSeq.size.toLong * membersSeq.size.toLong
     val numSamples = getApproximateBinomialDistributionSample(n, prob, rng)
     sampleVertexPairs(membersSeq, numSamples, rng)
