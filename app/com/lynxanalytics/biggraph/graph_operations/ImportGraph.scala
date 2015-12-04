@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -12,11 +12,8 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.lang.StringEscapeUtils
-import org.apache.hadoop
-import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Partitioner
-import org.apache.spark.ImportGraphHelper._
 
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
@@ -277,30 +274,12 @@ object ImportVertexList extends OpFromJson {
     }.toMap
   }
   def fromJson(j: JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
-
-  // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
-  private class TaskFile(
-      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile) {
-    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
-    val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
-    val context = {
-      val config = new hadoop.mapred.JobConf(file.hadoopConfiguration)
-      config.set(
-        hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR,
-        file.resolvedNameWithNoCredentials)
-      config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
-      config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
-      createTaskAttemptContext(config, tracker, stage, task, attempt)
-    }
-    val writer = fmt.getRecordWriter(context)
-    val committer = fmt.getOutputCommitter(context)
-  }
 }
 case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
   override val isHeavy = true
-  override val hasCustomSaving = true
+  override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
   override def toJson = Json.obj("input" -> input.toTypedJson)
@@ -310,47 +289,13 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val sc = rc.sparkContext
+
+    val entities = o.attrs.values.map(_.entity)
+    val entitiesByName = entities.map(e => e.name -> e).toMap
+    val inOrder = input.fields.map(f => entitiesByName(ImportCommon.toSymbol(f)))
+
     val lines = numberedLines(rc, input)
-
-    val outputEntities = (o.attrs.values.toSeq :+ o.vertices).map(_.entity)
-    val entityPaths: Map[String, HadoopFile] = outputEntities.map {
-      e => e.name.name -> rc.ioContext.partitionedPath(e, lines.partitions.size).forWriting
-    }.toMap
-    val paths = input.fields.map(f => entityPaths(s"imported_field_$f")) :+ entityPaths("vertices")
-
-    val trackerID = Timestamp.toString
-    val rddID = lines.id
-    val count = sc.accumulator[Long](0L, "Line count")
-    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
-      // TODO: Close already created writers if creating a writer throws an exception.
-      val files = paths.map {
-        path => new TaskFile(trackerID, rddID, task.partitionId, task.attemptNumber, path)
-      }
-      val verticesWriter = files.last.writer
-      val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
-      try {
-        for (file <- files) file.committer.setupTask(file.context)
-        for ((id, cols) <- iterator) {
-          count += 1
-          val key = new hadoop.io.LongWritable(id)
-          for ((file, col) <- (files zip cols) if col != null) {
-            val value = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(col))
-            file.writer.write(key, value)
-          }
-          verticesWriter.write(key, unit)
-        }
-        for (file <- files) file.committer.commitTask(file.context)
-      } finally {
-        for (file <- files) file.writer.close(file.context)
-      }
-    }
-    val files = paths.map(new TaskFile(trackerID, rddID, 0, 0, _))
-    for (file <- files) file.committer.setupJob(file.context)
-    sc.runJob(lines, writeShard)
-    for (file <- files) file.committer.commitJob(file.context)
-    // Write metadata files.
-    val meta = io.EntityMetadata(count.value)
-    for (e <- outputEntities) meta.write(rc.ioContext.partitionedPath(e).forWriting)
+    rc.ioContext.writeAttributes(inOrder, lines)
   }
 }
 
