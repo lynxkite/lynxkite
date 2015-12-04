@@ -96,9 +96,10 @@ object RDDUtils {
   }
 
   def edgeToBytes(edge: Edge): Array[Byte] = {
-    val bytes = new Array[Byte](8)
-    java.nio.ByteBuffer.wrap(bytes).putLong(edge.src)
-    java.nio.ByteBuffer.wrap(bytes).putLong(edge.dst)
+    val bytes = new Array[Byte](16)
+    val bb = java.nio.ByteBuffer.wrap(bytes)
+    bb.putLong(edge.src)
+    bb.putLong(edge.dst)
     bytes
   }
 
