@@ -409,14 +409,6 @@ trait MetaGraphOp extends Serializable with ToJson {
     StringStruct(
       className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
-
-  def saveOutputs(
-    context: io.IOContext,
-    outputs: Iterable[EntityData]): Unit = {
-    for (output <- outputs) {
-      context.saveToDisk(output)
-    }
-  }
 }
 
 object TypedMetaGraphOp {
@@ -497,14 +489,6 @@ trait MetaGraphOperationInstance {
       put(k, v)
     }
     StringStruct(op.name, op.contents ++ span)
-  }
-
-  def saveOutputs(context: io.IOContext, outputs: Iterable[EntityData]): Unit = {
-    operation.saveOutputs(context, outputs)
-    // Mark the operation as complete. Entities may not be loaded from incomplete operations.
-    // The reason for this is that an operation may give different results if the number of
-    // partitions is different. So for consistency, all outputs must be from the same run.
-    context.operationSucceeded(this)
   }
 }
 

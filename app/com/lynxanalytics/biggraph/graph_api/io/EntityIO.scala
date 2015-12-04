@@ -13,31 +13,8 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class IOContext(dataRoot: DataRoot, runtimeContext: RuntimeContext) {
-  val sparkContext = runtimeContext.sparkContext
-  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    entity match {
-      case vs: VertexSet => new io.VertexIO(vs, this)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, this)
-      case va: Attribute[_] => new io.AttributeIO(va, this)
-      case sc: Scalar[_] => new io.ScalarIO(sc, this)
-    }
-  }
+case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
-  def saveToDisk(data: EntityData): Unit = {
-    val entity = data.entity
-    val eio = entityIO(entity)
-    val doesNotExist = eio.delete()
-    assert(doesNotExist, s"Cannot delete directory of entity $entity")
-    log.info(s"Saving entity $entity ...")
-    eio.write(data)
-    log.info(s"Entity $entity saved.")
-  }
-
-  def operationSucceeded(instance: MetaGraphOperationInstance): Unit = {
-    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
-  }
-}
 
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
