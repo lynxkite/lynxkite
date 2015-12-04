@@ -2,22 +2,87 @@
 
 package com.lynxanalytics.biggraph.graph_api.io
 
+import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.HashPartitioner
+import org.apache.spark.{ EntityIOHelper, HashPartitioner }
 import org.apache.spark.rdd.RDD
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.{ RDDUtils, SortedRDD }
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
+
+object IOContext {
+  // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
+  private class TaskFile(
+      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile) {
+    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
+    val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
+    val context = {
+      val config = new hadoop.mapred.JobConf(file.hadoopConfiguration)
+      config.set(
+        hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR,
+        file.resolvedNameWithNoCredentials)
+      config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
+      config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
+      EntityIOHelper.createTaskAttemptContext(config, tracker, stage, task, attempt)
+    }
+    val writer = fmt.getRecordWriter(context)
+    val committer = fmt.getOutputCommitter(context)
+  }
+}
 
 case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
   def partitionedPath(entity: MetaGraphEntity): HadoopFileLike =
     dataRoot / io.PartitionedDir / entity.gUID.toString
+
   def partitionedPath(entity: MetaGraphEntity, numPartitions: Int): HadoopFileLike =
     partitionedPath(entity) / numPartitions.toString
+
+  // Writes multiple attributes and their vertex set to disk. The attributes are given in a
+  // single RDD which will be iterated over only once.
+  def writeAttributes(attributes: Seq[Attribute[String]], data: AttributeRDD[Seq[String]]) = {
+    val vs = attributes.head.vertexSet
+    for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
+    val outputEntities: Seq[MetaGraphEntity] = attributes :+ vs
+    val paths = outputEntities.map(e => partitionedPath(e, data.partitions.size).forWriting)
+
+    val trackerID = Timestamp.toString
+    val rddID = data.id
+    val count = sparkContext.accumulator[Long](0L, "Line count")
+    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
+      // TODO: Close already created writers if creating a writer throws an exception.
+      val files = paths.map {
+        path => new IOContext.TaskFile(trackerID, rddID, task.partitionId, task.attemptNumber, path)
+      }
+      val verticesWriter = files.last.writer
+      val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
+      try {
+        for (file <- files) file.committer.setupTask(file.context)
+        for ((id, cols) <- iterator) {
+          count += 1
+          val key = new hadoop.io.LongWritable(id)
+          for ((file, col) <- (files zip cols) if col != null) {
+            val value = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(col))
+            file.writer.write(key, value)
+          }
+          verticesWriter.write(key, unit)
+        }
+        for (file <- files) file.committer.commitTask(file.context)
+      } finally {
+        for (file <- files) file.writer.close(file.context)
+      }
+    }
+    val files = paths.map(new IOContext.TaskFile(trackerID, rddID, 0, 0, _))
+    for (file <- files) file.committer.setupJob(file.context)
+    sparkContext.runJob(data, writeShard)
+    for (file <- files) file.committer.commitJob(file.context)
+    // Write metadata files.
+    val meta = EntityMetadata(count.value)
+    for (e <- outputEntities) meta.write(partitionedPath(e).forWriting)
+  }
 }
 
 object EntityIO {
