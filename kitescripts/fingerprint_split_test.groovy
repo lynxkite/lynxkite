@@ -149,11 +149,13 @@ split.addRandomVertexAttribute(
   dist: 'Standard Uniform',
   seed: seed
 )
+
 split.derivedVertexAttribute(
   output: 'urndPeripheralHigh',
   expr: 'peripheral == 0.0 ? urnd : urnd + 2.0',
   type: 'double'
 )
+
 split.addRankAttribute(
   rankattr: 'originalUniqueId',
   keyattr: 'urndPeripheralHigh',
@@ -186,6 +188,9 @@ split.splitVertices(
   rep: 'split',
   idattr: 'newId',
   idx: 'index'
+)
+split.vertexAttributeToDouble(
+  attr: 'index'
 )
 
 split.derivedVertexAttribute(
