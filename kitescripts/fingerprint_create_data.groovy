@@ -30,9 +30,12 @@ project.derivedEdgeAttribute(
 // attributes exist, so we use a constant 0 almost everywhere.
 // The only exception is id 0; we can use this to check
 // if the peripheral property is treated correctly in fingerprint_split_test.groovy
+project.vertexAttributeToDouble(
+  attr: 'ordinal'
+)
 project.derivedVertexAttribute(
   output: 'peripheral',
-  expr: 'ordinal == 0 ? 1.0 : 0.0',
+  expr: 'ordinal == 0.0 ? 1.0 : 0.0',
   type: 'double'
 )
 
