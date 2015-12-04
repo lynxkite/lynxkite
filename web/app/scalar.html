@@ -2,9 +2,12 @@
 
 <value ng-if="asValue" class="scalar-value" id="scalar-{{scalar.title}}" ref="value"></value>
 
-<label ng-if="asSavedStatus" class="btn btn-default"
-       tooltip="Load UI Status" tooltip-append-to-body="true" tooltip-placement="bottom"
-       ng-click="loadStatus()">
+<inline-loading ng-if="!asValue && !value.$resolved" ref="value"></inline-loading>
+
+<label ng-if="asSavedStatus && value.$resolved"
+  class="btn btn-default"
+  tooltip="Load UI Status" tooltip-append-to-body="true" tooltip-placement="bottom"
+  ng-click="loadStatus()">
   <i class="glyphicon glyphicon-eye-open"></i>
 </label>
 

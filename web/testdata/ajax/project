@@ -10,7 +10,8 @@
     { "id": "1234-vertex-count", "title": "vertex_count", "typeName": "Int" },
     { "id": "1234-edge-count", "title": "edge_count", "typeName": "Int" },
     { "id": "1234-age-sum", "title": "age_sum", "typeName": "Double" },
-    { "id": "1234-call-duration-sum", "title": "call_duration_sum", "typeName": "Double" }
+    { "id": "1234-call-duration-sum", "title": "call_duration_sum", "typeName": "Double" },
+    { "id": "1234-visualization", "title": "visualization", "typeName": "com.lynxanalytics.biggraph.controllers.UIStatus" }
   ],
 
   "vertexAttributes": [
