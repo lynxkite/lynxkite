@@ -15,7 +15,6 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
-
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
   var verticesPerPartition =

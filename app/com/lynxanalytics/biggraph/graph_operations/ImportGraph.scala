@@ -277,30 +277,9 @@ object ImportVertexList extends OpFromJson {
     }.toMap
   }
   def fromJson(j: JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
-}
-case class ImportVertexList(input: RowInput) extends ImportCommon
-    with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
-  import ImportVertexList._
-  override val isHeavy = true
-  @transient override lazy val inputs = new NoInput()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
-  override def toJson = Json.obj("input" -> input.toTypedJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    val sc = rc.sparkContext
-    // Return empty placeholder RDDs. The real data will be written directly to disk in
-    // saveOutputs and loaded back from disk by the DataManager.
-    val vs = RDDUtils.invalidEntityRDD[Unit](sc)
-    for (field <- input.fields) {
-      output(o.attrs(field), vs.mapValues(_.toString))
-    }
-    output(o.vertices, vs)
-  }
-
-  class File(
+  // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
+  private class TaskFile(
       tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile) {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
     val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
@@ -316,22 +295,30 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     val writer = fmt.getRecordWriter(context)
     val committer = fmt.getOutputCommitter(context)
   }
+}
+case class ImportVertexList(input: RowInput) extends ImportCommon
+    with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
+  import ImportVertexList._
+  override val isHeavy = true
+  override val hasCustomSaving = true
+  @transient override lazy val inputs = new NoInput()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
+  override def toJson = Json.obj("input" -> input.toTypedJson)
 
-  // Single-pass import happens here. We ignore the placeholders and write out the actual data.
-  override def saveOutputs(
-    context: io.IOContext,
-    outputs: Iterable[EntityData]): Unit = {
-    val rc = context.runtimeContext
-    val sc = context.sparkContext
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    val sc = rc.sparkContext
     val lines = numberedLines(rc, input)
 
-    val rootByField: Map[String, HadoopFile] = outputs.map { ed =>
-      val e = ed.entity
+    val outputEntities = (o.attrs.values.toSeq :+ o.vertices).map(_.entity)
+    val entityRoots: Map[String, HadoopFile] = outputEntities.map { e =>
       val guid = e.gUID.toString
-      e.name.name -> (context.dataRoot / io.PartitionedDir / guid).forWriting
+      e.name.name -> (rc.ioContext.dataRoot / io.PartitionedDir / guid).forWriting
     }.toMap
-    val pathByField = rootByField.mapValues(_ / lines.partitions.size.toString)
-    val paths = input.fields.map(f => pathByField(s"imported_field_$f")) :+ pathByField("vertices")
+    val entityPaths = entityRoots.mapValues(_ / lines.partitions.size.toString)
+    val paths = input.fields.map(f => entityPaths(s"imported_field_$f")) :+ entityPaths("vertices")
 
     val trackerID = Timestamp.toString
     val rddID = lines.id
@@ -339,7 +326,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
       // TODO: Close already created writers if creating a writer throws an exception.
       val files = paths.map {
-        path => new File(trackerID, rddID, task.partitionId, task.attemptNumber, path)
+        path => new TaskFile(trackerID, rddID, task.partitionId, task.attemptNumber, path)
       }
       val verticesWriter = files.last.writer
       val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
@@ -359,12 +346,12 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
         for (file <- files) file.writer.close(file.context)
       }
     }
-    val files = paths.map(new File(trackerID, rddID, 0, 0, _))
+    val files = paths.map(new TaskFile(trackerID, rddID, 0, 0, _))
     for (file <- files) file.committer.setupJob(file.context)
     sc.runJob(lines, writeShard)
     for (file <- files) file.committer.commitJob(file.context)
     val meta = io.EntityMetadata(count.value)
-    for (root <- rootByField.values) meta.write(root)
+    for (root <- entityRoots.values) meta.write(root)
   }
 }
 
