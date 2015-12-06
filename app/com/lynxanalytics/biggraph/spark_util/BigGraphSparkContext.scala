@@ -159,6 +159,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Set(1, 2, 3).getClass)
     kryo.register(Set(1, 2, 3, 4).getClass)
     kryo.register(Set(1, 2, 3, 4, 5).getClass)
+    kryo.register(classOf[org.apache.spark.mllib.stat.MultivariateOnlineSummarizer])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
