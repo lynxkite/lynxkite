@@ -59,8 +59,6 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val b = sparkContext.parallelize(Seq(10 -> "A", 10 -> "B")).partitionBy(p).sort
     val sj: SortedRDD[Int, (Int, String)] = a.sortedJoinWithDuplicates(b)
     val j: RDD[(Int, (Int, String))] = a.join(b)
-    println(sj.collect.toSeq)
-    println(j.collect.toSeq)
     assert(sj.count == j.count)
   }
 
