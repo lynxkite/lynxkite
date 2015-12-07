@@ -1,10 +1,5 @@
-<form ng-submit="applyMoving()" style="display: inline;" ng-show="moving" ng-click="util.captureClick($event)">
-  <input id="moveBox" class="form-control" style="display: inline; width: 200px;" ng-model="newDirectory">
-  /
-</form>
-
 <span ng-hide="renaming">
-  {{ name }}
+  {{ shortName }}
 </span>
 
 <form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming" ng-click="util.captureClick($event)">
@@ -22,9 +17,6 @@
     </a></li>
     <li ng-show="menu.duplicate"><a href id="menu-duplicate" ng-click="duplicate()">
       <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
-    </a></li>
-    <li ng-show="menu.move"><a href id="menu-move" ng-click="toggleMoving()">
-      <i class="glyphicon glyphicon-folder-open"></i> Move...
     </a></li>
   </ul>
 </div>

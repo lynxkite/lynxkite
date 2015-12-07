@@ -38,7 +38,7 @@ module.exports = function(fw) {
       // Go back and move the project into the directory.
       lib.splash.popDirectory();
       lib.splash.expectProjectListed('test-example');
-      lib.splash.moveProject('test-example', 'test-dir');
+      lib.splash.renameProject('test-example', 'test-dir/test-example');
       lib.splash.expectProjectNotListed('test-example');
 
       // Open directory.
@@ -46,7 +46,7 @@ module.exports = function(fw) {
       lib.splash.expectProjectListed('test-example');
 
       // Rename project.
-      lib.splash.renameProject('test-example', 'test-renamed');
+      lib.splash.renameProject('test-example', 'test-dir/test-renamed');
       lib.splash.expectProjectListed('test-renamed');
       lib.splash.expectProjectNotListed('test-example');
 
