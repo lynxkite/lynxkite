@@ -144,7 +144,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   }
 
   def write(data: EntityData): Unit = {
-    val rddData = data.asInstanceOf[EntityRDDData[T]]
+    val rddData: EntityRDDData[T] = castData(data)
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
     val partitions = rdd.partitions.size
@@ -153,6 +153,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     writeMetadata(metadata)
     log.info(s"PERF Instantiated entity $entity on disk")
   }
+
+  def castData(data: EntityData): EntityRDDData[T]
 
   def delete(): Boolean = {
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
@@ -291,6 +293,8 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     val rdd = path.loadEntityRDD[Unit](sc, serialization)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
 }
 
 class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
@@ -315,6 +319,8 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
 }
 
 class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
@@ -341,4 +347,6 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[AttributeData[T]]
 }
