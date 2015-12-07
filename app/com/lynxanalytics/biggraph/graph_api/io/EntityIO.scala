@@ -12,7 +12,6 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import scala.reflect.runtime.universe
 
 case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
@@ -149,13 +148,11 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
     val partitions = rdd.partitions.size
-    val (lines, serialization) = targetDir(partitions).saveEntityRDD(rdd)(typeTag)
+    val (lines, serialization) = targetDir(partitions).saveEntityRDD(rdd)(rddData.typeTag)
     val metadata = EntityMetadata(lines, Some(serialization))
     writeMetadata(metadata)
     log.info(s"PERF Instantiated entity $entity on disk")
   }
-
-  def typeTag: universe.TypeTag[T]
 
   def delete(): Boolean = {
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
@@ -294,8 +291,6 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     val rdd = path.loadEntityRDD[Unit](sc, serialization)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
-
-  def typeTag = universe.typeTag[Unit]
 }
 
 class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
@@ -320,8 +315,6 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
-
-  def typeTag = universe.typeTag[Edge]
 }
 
 class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
@@ -348,6 +341,4 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
-
-  def typeTag = entity.typeTag
 }

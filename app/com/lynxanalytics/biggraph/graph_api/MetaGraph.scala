@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.util.IdentityHashMap
 import java.util.UUID
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
@@ -513,18 +514,21 @@ sealed trait EntityData {
 sealed trait EntityRDDData[T] extends EntityData {
   val rdd: SortedRDD[ID, T]
   val count: Option[Long]
+  val typeTag: TypeTag[T]
   rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
 }
 class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD,
                     val count: Option[Long] = None) extends EntityRDDData[Unit] {
   val vertexSet = entity
+  val typeTag = universe.typeTag[Unit]
 }
 
 class EdgeBundleData(val entity: EdgeBundle,
                      val rdd: EdgeBundleRDD,
                      val count: Option[Long] = None) extends EntityRDDData[Edge] {
   val edgeBundle = entity
+  val typeTag = universe.typeTag[Edge]
 }
 
 class AttributeData[T](val entity: Attribute[T],
