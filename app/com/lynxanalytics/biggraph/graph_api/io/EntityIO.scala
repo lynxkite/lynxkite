@@ -88,13 +88,15 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       } finally collection.close()
     }
     val collection = new IOContext.TaskFileCollection(trackerID, rddID, 0, 0)
-    val files = paths.map(collection.createTaskFile(_))
-    for (file <- files) file.committer.setupJob(file.context)
-    sparkContext.runJob(data, writeShard)
-    for (file <- files) file.committer.commitJob(file.context)
-    // Write metadata files.
-    val meta = EntityMetadata(count.value)
-    for (e <- outputEntities) meta.write(partitionedPath(e).forWriting)
+    try {
+      val files = paths.map(collection.createTaskFile(_))
+      for (file <- files) file.committer.setupJob(file.context)
+      sparkContext.runJob(data, writeShard)
+      for (file <- files) file.committer.commitJob(file.context)
+      // Write metadata files.
+      val meta = EntityMetadata(count.value)
+      for (e <- outputEntities) meta.write(partitionedPath(e).forWriting)
+    } finally collection.close()
   }
 }
 
