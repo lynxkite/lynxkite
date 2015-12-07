@@ -45,9 +45,12 @@ object SimpleSerializer {
     }
   })
 
-  val kryoSerializer = new SimpleSerializer[Any]("kryo", it => {
-    it.map { case (k, v) => k -> new BytesWritable(RDDUtils.kryoSerialize(v)) }
-  })
+  def kryoSerializer[T: TypeTag] = {
+    val tt = typeOf[T]
+    new SimpleSerializer[T](s"kryo[$tt]", it => {
+      it.map { case (k, v) => k -> new BytesWritable(RDDUtils.kryoSerialize(v)) }
+    })
+  }
 
   def forType[T: TypeTag]: SimpleSerializer[T] = {
     val tt = typeOf[T]
@@ -56,7 +59,7 @@ object SimpleSerializer {
       else if (tt =:= typeOf[String]) stringSerializer
       else if (tt =:= typeOf[Double]) doubleSerializer
       else if (tt =:= typeOf[Edge]) edgeSerializer
-      else kryoSerializer
+      else kryoSerializer[T]
     s.asInstanceOf[SimpleSerializer[T]]
   }
 }
@@ -91,7 +94,10 @@ object SimpleDeserializer {
   def forName[T: TypeTag](name: String): SimpleDeserializer[T] = {
     val deserializers = Seq[SimpleDeserializer[_]](
       unitDeserializer, kryoDeserializer, stringDeserializer, doubleDeserializer, edgeDeserializer)
-    val d = deserializers.find(_.name == name).get
+    val stripped = name.replaceFirst("\\[.*", "") // Drop Kryo type note.
+    val d = deserializers.find(_.name == stripped).getOrElse {
+      throw new AssertionError(s"Cannot find deserializer for $name.")
+    }
     d.assertSupports[T]
     d.asInstanceOf[SimpleDeserializer[T]]
   }
