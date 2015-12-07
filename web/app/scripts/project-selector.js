@@ -42,10 +42,20 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.util = util;
       function refresh() {
         abandonScalars();
-        scope.data = util.nocache('/ajax/projectList', { path: scope.path });
+        if (!scope.searchQuery) {
+          scope.data = util.nocache('/ajax/projectList', { path: scope.path });
+        } else {
+          scope.data = util.nocache(
+            '/ajax/projectSearch',
+            {
+              basePath: scope.path,
+              query: scope.searchQuery,
+            });
+        }
       }
 
       scope.$watch('path', refresh);
+      scope.$watch('searchQuery', refresh);
       function getScalar(title, scalar) {
         var res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id, calculate: false
@@ -111,6 +121,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             name: name,
           }).then(function() {
             scope.path = name;
+            scope.searchQuery = '';
             scope.newDirectory = {};
           }).finally(function() {
             scope.newDirectory.sending = false;
@@ -125,6 +136,13 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         var lastSlash = p.lastIndexOf('/');
         return p.slice(0, lastSlash + 1);
       };
+      scope.pathInside = function(p) {
+        if (scope.path) {
+          return p.slice(scope.path.length + 1);
+        } else {
+          return p;
+        }
+      };
 
       scope.projectClick = function(event, p) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
@@ -138,10 +156,12 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         scope.path = d;
+        scope.searchQuery = '';
       };
 
       scope.popDirectory = function() {
         scope.path = scope.path.split('/').slice(0, -1).join('/');
+        scope.searchQuery = '';
       };
 
       scope.pathElements = function() {
