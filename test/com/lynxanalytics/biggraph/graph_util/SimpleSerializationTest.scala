@@ -20,7 +20,7 @@ class SimpleSerializationTest extends FunSuite {
       serde(values, s, d)
     }
 
-    withTyped(Seq(1, 2, 3, 4), "kryo")
+    withTyped(Seq(1, 2, 3, 4), "kryo[Int]")
     withTyped(Seq((), ()), "unit")
     withTyped(Seq("alma", "beka"), "string")
     withTyped(Seq(5.5, 7.25), "double")
