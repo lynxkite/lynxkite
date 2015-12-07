@@ -998,7 +998,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, project.edgeBundle).result.embeddedness.entity
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
-      var normalizedDispersion = {
+      val normalizedDispersion = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
           Seq("disp", "emb"))
