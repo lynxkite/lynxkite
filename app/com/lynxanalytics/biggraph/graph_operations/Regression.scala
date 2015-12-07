@@ -8,7 +8,9 @@ import org.apache.spark.mllib
 object Regression extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
-    val features = (0 until numFeatures).map(i => vertexAttribute[Double](vertices, Symbol(s"feature-$i")))
+    val features = (0 until numFeatures).map {
+      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
+    }
     val label = vertexAttribute[Double](vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -50,8 +52,8 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     points.cache
 
     val algorithm = method match {
-      case "linear" => new mllib.regression.LinearRegressionWithSGD()
-      case "ridge" => new mllib.regression.RidgeRegressionWithSGD()
+      case "linear regression" => new mllib.regression.LinearRegressionWithSGD()
+      case "ridge regression" => new mllib.regression.RidgeRegressionWithSGD()
       case "lasso" => new mllib.regression.LassoWithSGD()
     }
     val model = algorithm.setIntercept(true).run(points)

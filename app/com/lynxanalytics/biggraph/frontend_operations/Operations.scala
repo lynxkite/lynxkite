@@ -1295,6 +1295,36 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("method", "Method", options = UIValue.list(List(
+        "linear regression", "ridge regression", "lasso"))))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val method = params("method").capitalize
+      val label = params("label")
+      s"$method for $label"
+    }
+    def apply(params: Map[String, String]) = {
+      assert(params("features").nonEmpty, "Please select at least one predictor.")
+      val featureNames = params("features").split(",", -1)
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val method = params("method")
+      val prediction = {
+        val op = graph_operations.Regression(method, features.size)
+        op(op.label, label)(op.features, features).result.prediction
+      }
+      project.newVertexAttribute(s"${labelName}_prediction", prediction, s"$method for $labelName")
+    }
+  })
+
   register("Aggregate to segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = aggregateParams(parent.vertexAttributes)
     def enabled =
