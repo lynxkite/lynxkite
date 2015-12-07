@@ -226,7 +226,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(p.frame.exists, s"Project ${request.name} does not exist.")
     p.frame.assertReadAllowedFrom(user)
     val context = Operation.Context(user, p.viewer)
-    val categories = ops.categories(context)
+    val categories = ops.categories(context, includeDeprecated = false)
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
     val nonUtilities = categories.filter(_.icon != "wrench")
@@ -390,7 +390,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
-    val opCategoriesBefore = ops.categories(context)
+    val opCategoriesBefore = ops.categories(context, includeDeprecated = true)
     val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
@@ -598,8 +598,8 @@ object Operation {
       color: String, // A color class from web/app/styles/operation-toolbox.css.
       visible: Boolean = true,
       icon: String = "", // Glyphicon name, or empty for first letter of title.
-      sortKey: String = null // Categories are ordered by this. The title is used by default.
-      ) extends Ordered[Category] {
+      sortKey: String = null, // Categories are ordered by this. The title is used by default.
+      deprecated: Boolean = false) extends Ordered[Category] {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
     def toFE(ops: List[FEOperationMeta]): OperationCategory =
@@ -697,14 +697,15 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       Seq()
     }
 
-  def categories(context: Operation.Context): List[OperationCategory] = {
+  def categories(context: Operation.Context, includeDeprecated: Boolean): List[OperationCategory] = {
     val allOps = opsForContext(context) ++ workflowOperations(context)
     val cats = allOps.groupBy(_.category).toList
-    cats.filter(_._1.visible).sortBy(_._1).map {
-      case (cat, ops) =>
-        val feOps = ops.map(_.toFE).sortBy(_.title).toList
-        cat.toFE(feOps)
-    }
+    cats.filter { x => x._1.visible && (includeDeprecated || x._1.deprecated == false) }
+      .sortBy(_._1).map {
+        case (cat, ops) =>
+          val feOps = ops.map(_.toFE).sortBy(_.title).toList
+          cat.toFE(feOps)
+      }
   }
 
   def operationIds = operations.keys.toSeq
