@@ -4,12 +4,12 @@ package com.lynxanalytics.biggraph.graph_api.io
 
 import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.{ EntityIOHelper, HashPartitioner }
+import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.{ RDDUtils, SortedRDD }
+import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
@@ -28,7 +28,7 @@ object IOContext {
         file.resolvedNameWithNoCredentials)
       config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
       config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
-      EntityIOHelper.createTaskAttemptContext(config, tracker, stage, task, attempt)
+      spark.EntityIOHelper.createTaskAttemptContext(config, tracker, stage, task, attempt)
     }
     val committer = fmt.getOutputCommitter(context)
     lazy val writer = {
