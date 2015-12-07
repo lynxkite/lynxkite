@@ -17,7 +17,8 @@ import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 object IOContext {
   // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
   private class TaskFile(
-      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile) {
+      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile,
+      collection: TaskFileCollection) {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
     val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
     val context = {
@@ -29,8 +30,22 @@ object IOContext {
       config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
       EntityIOHelper.createTaskAttemptContext(config, tracker, stage, task, attempt)
     }
-    val writer = fmt.getRecordWriter(context)
     val committer = fmt.getOutputCommitter(context)
+    lazy val writer = {
+      val w = fmt.getRecordWriter(context)
+      collection.registerForClosing(this)
+      w
+    }
+  }
+
+  private class TaskFileCollection(tracker: String, stage: Int, task: Int, attempt: Int) {
+    val toClose = new collection.mutable.ListBuffer[TaskFile]()
+    def createTaskFile(path: HadoopFile) = new TaskFile(tracker, stage, task, attempt, path, this)
+    def registerForClosing(file: TaskFile) = {
+      toClose += file
+    }
+    // Call this if you accessed any RecordWriters.
+    def close() = for (file <- toClose) file.writer.close(file.context)
   }
 }
 
@@ -53,13 +68,12 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     val rddID = data.id
     val count = sparkContext.accumulator[Long](0L, "Line count")
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
-      // TODO: Close already created writers if creating a writer throws an exception.
-      val files = paths.map {
-        path => new IOContext.TaskFile(trackerID, rddID, task.partitionId, task.attemptNumber, path)
-      }
-      val verticesWriter = files.last.writer
-      val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
+      val collection = new IOContext.TaskFileCollection(
+        trackerID, rddID, task.partitionId, task.attemptNumber)
       try {
+        val files = paths.map(collection.createTaskFile(_))
+        val verticesWriter = files.last.writer
+        val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
         for (file <- files) file.committer.setupTask(file.context)
         for ((id, cols) <- iterator) {
           count += 1
@@ -71,11 +85,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
           verticesWriter.write(key, unit)
         }
         for (file <- files) file.committer.commitTask(file.context)
-      } finally {
-        for (file <- files) file.writer.close(file.context)
-      }
+      } finally collection.close()
     }
-    val files = paths.map(new IOContext.TaskFile(trackerID, rddID, 0, 0, _))
+    val collection = new IOContext.TaskFileCollection(trackerID, rddID, 0, 0)
+    val files = paths.map(collection.createTaskFile(_))
     for (file <- files) file.committer.setupJob(file.context)
     sparkContext.runJob(data, writeShard)
     for (file <- files) file.committer.commitJob(file.context)
