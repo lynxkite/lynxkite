@@ -529,12 +529,6 @@ var splash = {
     menu.element(by.id('menu-' + action)).click();
   },
 
-  moveProject: function(name, destination) {
-    var project = this.project(name);
-    this.menuClick(project, 'move');
-    project.element(by.id('moveBox')).sendKeys(destination, K.ENTER);
-  },
-
   renameProject: function(name, newName) {
     var project = this.project(name);
     this.menuClick(project, 'rename');
@@ -546,7 +540,8 @@ var splash = {
     // We need to give the browser time to display the alert, see angular/protractor#1486.
     testLib.wait(protractor.ExpectedConditions.alertIsPresent());
     var confirmation = browser.switchTo().alert();
-    expect(confirmation.getText()).toContain('delete project ' + name);
+    expect(confirmation.getText()).toContain('delete project ');
+    expect(confirmation.getText()).toContain(name);
     confirmation.accept();
   },
 
