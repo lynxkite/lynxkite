@@ -212,21 +212,10 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Loads a Long-keyed rdd with deserialized values
-  def loadEntityRDD[T: TypeTag](sc: spark.SparkContext): RDD[(Long, T)] = {
+  def loadEntityRDD[T: TypeTag](sc: spark.SparkContext, serializer: String): RDD[(Long, T)] = {
     val raw = loadEntityRawRDD(sc)
-    val untyped: Any =
-      if (typeTag[T] == typeTag[Unit])
-        raw.mapValues(v => ())
-      else if (typeTag[T] == typeTag[String])
-        raw.mapValues(v => new String(v.getBytes, 0, v.getLength, "utf-8"))
-      else if (typeTag[T] == typeTag[Double])
-        raw.mapValues(v => RDDUtils.bytesToDouble(v.getBytes))
-      else if (typeTag[T] == typeTag[graph_api.Edge])
-        raw.mapValues(v => RDDUtils.bytesToEdge(v.getBytes))
-      else {
-        raw.mapValues(v => RDDUtils.kryoDeserialize[T](v.getBytes))
-      }
-    untyped.asInstanceOf[RDD[(Long, T)]]
+    val deserializer = SimpleDeserializer.forName[T](serializer)
+    raw.mapValues(deserializer.mapper)
   }
 
   // Saves a Long-keyed rdd where the values are just raw bytes;
@@ -255,24 +244,12 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     lines.value
   }
 
-  // Saves a Long-keyed RDD, and returns the number of lines written.
-  def saveEntityRDD[T: TypeTag](data: RDD[(Long, T)]): Long = {
-    implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(typeTag[T])
-    // TODO: We could use a single BytesWritable per partition to re-use the same byte array.
-    val bytes =
-      if (typeTag[T] == typeTag[Unit])
-        data.mapValues(v => Array.emptyByteArray)
-      else if (typeTag[T] == typeTag[String])
-        data.mapValues(v => v.asInstanceOf[String].getBytes("utf-8"))
-      else if (typeTag[T] == typeTag[Double])
-        data.mapValues(v => RDDUtils.doubleToBytes(v.asInstanceOf[Double]))
-      else if (typeTag[T] == typeTag[graph_api.Edge])
-        data.mapValues(v => RDDUtils.edgeToBytes(v.asInstanceOf[graph_api.Edge]))
-      else {
-        data.mapValues(v => RDDUtils.kryoSerialize(v))
-      }
-    val raw = bytes.mapValues(v => new hadoop.io.BytesWritable(v))
-    saveEntityRawRDD(raw)
+  // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
+  def saveEntityRDD[T: TypeTag](data: RDD[(Long, T)]): (Long, String) = {
+    val serializer = SimpleSerializer.forType[T]
+    val raw = data.mapPartitions(serializer.mapper, preservesPartitioning = true)
+    val lines = saveEntityRawRDD(raw)
+    (lines, serializer.name)
   }
 
   def +(suffix: String): HadoopFile = {
