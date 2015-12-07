@@ -29,25 +29,12 @@ object DeriveJS {
     op(op.attrs, Seq(x).map(VertexAttributeToJSValue.run[Double])).result.attr
   }
 
-  def validateJS[T: TypeTag](js: JavaScript, namedAttributes: Seq[(String, Attribute[_])]): Unit = {
-    // Validate JS using default values for the types of the attributes.
-    val testNamedValues =
-      namedAttributes
-        .map { case (attrName, attr) => (attrName, JSValue.defaultValue(attr.typeTag).value) }
-        .toMap
-    val classOfT = RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass
-    val testResult = js.evaluate(testNamedValues).asInstanceOf[T]
-    assert(testResult == null || ClassUtils.isAssignable(testResult.getClass, classOfT, true),
-      s"Cannot convert $testResult to $classOfT")
-  }
-
   def deriveFromAttributes[T: TypeTag](
     exprString: String,
     namedAttributes: Seq[(String, Attribute[_])],
     vertexSet: VertexSet)(implicit manager: MetaGraphManager): Output[T] = {
 
     val js = JavaScript(exprString)
-    validateJS[T](js, namedAttributes)
 
     // Good to go, let's prepare the attributes for DeriveJS.
     val jsValueAttributes =
@@ -59,6 +46,10 @@ object DeriveJS {
       } else if (typeOf[T] =:= typeOf[Double]) {
         DeriveJSDouble(js, namedAttributes.map(_._1)).asInstanceOf[DeriveJS[T]]
       } else ???
+
+    val defaultValues =
+      namedAttributes.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
+    op.validateJS[T](defaultValues)
 
     import Scripting._
     op(op.vs, vertexSet)(op.attrs, jsValueAttributes).result
@@ -74,6 +65,21 @@ abstract class DeriveJS[T](
   @transient override lazy val inputs = new Input(attrNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(resultTypeTag, instance, inputs)
+
+  // Validate JS using default values for the types of the attributes.
+  def validateJS[T: TypeTag](defaultValues: Seq[Any]): Unit = {
+    val testNamedValues = attrNames.zip(defaultValues).toMap
+    val result = expr.evaluate(testNamedValues)
+    if (result != null) {
+      val converted =
+        try convert(expr.evaluate(testNamedValues))
+        catch { case t: Throwable => t }
+      val classOfResult = ClassUtils.primitiveToWrapper(converted.getClass)
+      val classOfT = ClassUtils.primitiveToWrapper(
+        RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass)
+      assert(classOfResult == classOfT, s"Cannot convert $result to $classOfT")
+    }
+  }
 
   def execute(inputDatas: DataSet,
               o: Output[T],
@@ -96,10 +102,12 @@ abstract class DeriveJS[T](
       case values =>
         val namedValues = attrNames.zip(values).toMap.mapValues(_.value)
         // JavaScript's "undefined" is returned as a Java "null".
-        Option(expr.evaluate(namedValues).asInstanceOf[T])
+        Option(expr.evaluate(namedValues)).map(convert(_))
     }
     output(o.attr, derived)
   }
+
+  protected def convert(v: Any): T = v.asInstanceOf[T]
 }
 
 object DeriveJSString extends OpFromJson {
@@ -124,4 +132,8 @@ case class DeriveJSDouble(
     extends DeriveJS[Double](expr, attrNames) {
   @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
+  override protected def convert(v: Any): Double = v match {
+    case v: Int => v // Convert ints to doubles.
+    case v: Double => v
+  }
 }
