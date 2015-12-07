@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class RegressionTest extends FunSuite with TestGraphOp {
   test("income from age") {
     val g = ExampleGraph()().result
-    for (method <- "linear ridge lasso".split(" ")) {
+    for (method <- "linear regression, ridge regression, lasso".split(", ")) {
       val prediction = {
         val op = Regression(method, 1)
         op(op.features, Seq(g.age.entity))(op.label, g.income).result.prediction
