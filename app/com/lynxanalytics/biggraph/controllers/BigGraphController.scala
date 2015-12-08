@@ -241,8 +241,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       .filter { project =>
         val baseName = project.path.last.name
         val notes = project.viewer.state.notes
-        val fullText = baseName + "$$$$" + notes
-        terms.forall(term => fullText.contains(term))
+        terms.forall(term => baseName.contains(term) || notes.contains(term))
       }
 
     ProjectList(
