@@ -243,7 +243,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   def write(data: EntityData): Unit = {
     assert(data.entity == entity, s"Tried to write $data through EntityIO for $entity.")
-    val rddData: EntityRDDData[T] = data.asInstanceOf[EntityRDDData[T]]
+    val rddData: EntityRDDData[T] = castData(data)
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
     val partitions = rdd.partitions.size
@@ -252,6 +252,9 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     metadata.write(partitionedPath.forWriting)
     log.info(s"PERF Instantiated entity $entity on disk")
   }
+
+  // The subclasses know the specific type and can thus make a safer cast.
+  def castData(data: EntityData): EntityRDDData[T]
 
   def delete(): Boolean = {
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
@@ -379,6 +382,8 @@ class VertexIO(entity: VertexSet, context: IOContext)
     val rdd = path.loadEntityRDD[Unit](sc, serialization)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
 }
 
 class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
@@ -403,6 +408,8 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
 }
 
 class AttributeIO[T](entity: Attribute[T], context: IOContext)
@@ -429,4 +436,7 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def castData(data: EntityData) =
+    data.asInstanceOf[AttributeData[_]].runtimeSafeCast(entity.typeTag)
 }
