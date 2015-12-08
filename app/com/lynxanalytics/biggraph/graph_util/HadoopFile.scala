@@ -245,9 +245,9 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
-  def saveEntityRDD[T: TypeTag](data: SortedRDD[Long, T]): (Long, String) = {
-    val serializer = graph_api.io.EntitySerializer.forType[T]
-    implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(typeTag[T])
+  def saveEntityRDD[T](data: SortedRDD[Long, T], tt: TypeTag[T]): (Long, String) = {
+    val serializer = graph_api.io.EntitySerializer.forType(tt)
+    implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(tt)
     val raw = data.mapValues(serializer.serialize(_))
     val lines = saveEntityRawRDD(raw)
     (lines, serializer.name)
