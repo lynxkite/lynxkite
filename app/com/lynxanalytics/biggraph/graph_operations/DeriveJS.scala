@@ -107,7 +107,7 @@ abstract class DeriveJS[T](
     output(o.attr, derived)
   }
 
-  protected def convert(v: Any): T = v.asInstanceOf[T]
+  protected def convert(v: Any): T
 }
 
 object DeriveJSString extends OpFromJson {
@@ -120,6 +120,7 @@ case class DeriveJSString(
     extends DeriveJS[String](expr, attrNames) {
   @transient lazy val resultTypeTag = typeTag[String]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
+  def convert(v: Any): String = v.asInstanceOf[String]
 }
 
 object DeriveJSDouble extends OpFromJson {
@@ -132,7 +133,7 @@ case class DeriveJSDouble(
     extends DeriveJS[Double](expr, attrNames) {
   @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
-  override protected def convert(v: Any): Double = v match {
+  def convert(v: Any): Double = v match {
     case v: Int => v // Convert ints to doubles.
     case v: Double => v
   }
