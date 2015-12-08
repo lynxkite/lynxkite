@@ -61,6 +61,15 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
   def writeAttributes(attributes: Seq[Attribute[String]], data: AttributeRDD[Seq[String]]) = {
     val vs = attributes.head.vertexSet
     for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
+
+    // Delete output directories.
+    val doesNotExist = new VertexSetIO(vs, this).delete()
+    assert(doesNotExist, s"Cannot delete directory of $vs")
+    for (attr <- attributes) {
+      val doesNotExist = new AttributeIO(attr, this).delete()
+      assert(doesNotExist, s"Cannot delete directory of $attr")
+    }
+
     val outputEntities: Seq[MetaGraphEntity] = attributes :+ vs
     val paths = outputEntities.map(e => partitionedPath(e, data.partitions.size).forWriting)
 
@@ -314,7 +323,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRawRDD(newRDD)
-    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
+    assert(entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     newFile
   }
 
@@ -327,7 +337,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val (lines, serialization) = newFile.saveEntityRDD(newRDD)
-    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
+    assert(entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
     newFile
@@ -366,7 +377,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   }
 }
 
-class VertexIO(entity: VertexSet, context: IOContext)
+class VertexSetIO(entity: VertexSet, context: IOContext)
     extends PartitionedDataIO[Unit, VertexSetData](entity, context) {
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
@@ -400,7 +411,8 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
                 serialization: String,
                 partitioner: org.apache.spark.Partitioner,
                 parent: Option[VertexSetData]): EdgeBundleData = {
-    assert(partitioner eq parent.get.rdd.partitioner.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
     val rdd = path.loadEntityRDD[Edge](sc, serialization)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
@@ -426,7 +438,8 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
                 serialization: String,
                 partitioner: org.apache.spark.Partitioner,
                 parent: Option[VertexSetData]): AttributeData[T] = {
-    assert(partitioner eq parent.get.rdd.partitioner.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
     implicit val ct = entity.classTag
     implicit val tt = entity.typeTag
     val rdd = path.loadEntityRDD[T](sc, serialization)
