@@ -36,7 +36,7 @@ module.exports = function(fw) {
     });
   fw.transitionTest(
     'sub-segmentation can be created and opened',
-    'clsoing sub-segmentation on the RHS reopens its grandparent',
+    'closing sub-segmentation on the RHS reopens its grandparent',
     function() {
       lib.right.close();
       lib.left.expectCurrentProjectIs('example');
