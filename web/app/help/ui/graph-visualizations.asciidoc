@@ -118,6 +118,22 @@ Shows a consolidated view of all the vertices of the graph. Vertices can be grou
 attributes and the system visualizes the sizes of the groups and the amount of edges going among
 the groups.
 
+For `String` attributes, the created buckets will correspond to the possible values of the
+attribute.
+If the attribute has more possible values than the number of buckets selected by the user then the
+program will show buckets for the most frequent values and creates an extra `Other` bucket for the
+rest.
+
+For `Double` attributes buckets will correspond to intervals. We split the interval `[min, max]`
+(where `min` and `max` are the minimum and maximum values of the attribute respectively)
+into subintervals of the same length. E.g. we might end up with buckets `[0, 10)`,
+`[10, 20)`, `[20, 30]`.
+
+If `logarithmic mode` is selected for the attribute then the subintervals are
+selected so that they have the same length on the logarithmic scale. E.g. a possible
+bucketing is `[1, 2)`, `[2, 4)`, `[4, 8]`. In logarithmic mode, if the attribute has any
+non-positive value, then an extra bucket will be created which will contain all non-positive values.
+
 ### Saving visualizations
 
 You can save your current visualization settings using the `Save Visualization` button (only visible when visualization is enabled). Just type a name, press `Save Visualization` again and a new
