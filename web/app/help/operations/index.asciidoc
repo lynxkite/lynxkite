@@ -64,6 +64,8 @@ include::copy-scalar.asciidoc[]
 
 include::copy-segmentation.asciidoc[]
 
+include::copy-segmentation-one-level-up.asciidoc[]
+
 include::copy-vertex-attribute.asciidoc[]
 
 include::copy-vertex-attributes-from-segmentation.asciidoc[]
