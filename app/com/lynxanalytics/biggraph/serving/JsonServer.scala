@@ -211,6 +211,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
   implicit val rWorkflowRequest = json.Json.reads[WorkflowRequest]
   implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
+  implicit val rProjectSearchRequest = json.Json.reads[ProjectSearchRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
@@ -321,6 +322,7 @@ object ProductionJsonServer extends JsonServer {
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)
+  def projectSearch = jsonGet(bigGraphController.projectSearch)
   def filterProject = jsonPost(bigGraphController.filterProject)
   def forkDirectory = jsonPost(bigGraphController.forkDirectory)
   def undoProject = jsonPost(bigGraphController.undoProject)
