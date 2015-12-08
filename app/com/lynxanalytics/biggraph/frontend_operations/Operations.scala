@@ -1302,7 +1302,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
       Choice("method", "Method", options = UIValue.list(List(
-        "linear regression", "ridge regression", "lasso"))))
+        "Linear regression", "Ridge regression", "Lasso", "Logistic regression", "Naive Bayes",
+        "Decision tree", "Random forest", "Gradient-boosted trees"))))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary(params: Map[String, String]) = {

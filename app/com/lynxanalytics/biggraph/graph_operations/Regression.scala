@@ -54,13 +54,49 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     }
     points.cache
 
-    val algorithm = method match {
-      case "linear regression" => new mllib.regression.LinearRegressionWithSGD()
-      case "ridge regression" => new mllib.regression.RidgeRegressionWithSGD()
-      case "lasso" => new mllib.regression.LassoWithSGD()
+    val predictions = method match {
+      case "Linear regression" =>
+        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(points)
+        model.predict(vectors.values)
+      case "Ridge regression" =>
+        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(points)
+        model.predict(vectors.values)
+      case "Lasso" =>
+        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(points)
+        model.predict(vectors.values)
+      case "Logistic regression" =>
+        val model =
+          new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(points)
+        model.predict(vectors.values)
+      case "Naive Bayes" =>
+        val model = mllib.classification.NaiveBayes.train(points)
+        model.predict(vectors.values)
+      case "Decision tree" =>
+        val model = mllib.tree.DecisionTree.trainRegressor(
+          input = points,
+          categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
+          impurity = "variance", // This is the only option at the moment.
+          maxDepth = 5,
+          maxBins = 32)
+        model.predict(vectors.values)
+      case "Random forest" =>
+        val model = mllib.tree.RandomForest.trainRegressor(
+          input = points,
+          categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
+          numTrees = 10,
+          featureSubsetStrategy = "onethird",
+          impurity = "variance", // This is the only option at the moment.
+          maxDepth = 4,
+          maxBins = 100)
+        model.predict(vectors.values)
+      case "Gradient-boosted trees" =>
+        val boostingStrategy = mllib.tree.configuration.BoostingStrategy.defaultParams("Regression")
+        boostingStrategy.numIterations = 10
+        boostingStrategy.treeStrategy.maxDepth = 5
+        boostingStrategy.treeStrategy.categoricalFeaturesInfo = Map[Int, Int]() // All continuous.
+        val model = mllib.tree.GradientBoostedTrees.train(points, boostingStrategy)
+        model.predict(vectors.values)
     }
-    val model = algorithm.setIntercept(true).run(points)
-    val predictions = model.predict(vectors.values)
     val ids = vectors.keys // We just put back the keys with a zip.
     output(o.prediction, ids.zip(predictions).asUniqueSortedRDD(vectors.partitioner.get))
   }
