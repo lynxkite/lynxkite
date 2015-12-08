@@ -138,43 +138,111 @@ union.renameScalar(from: 'test_matched_fb_name_count', to: 'test_set_size')
 union.renameScalar(from: 'match_is_good_count', to: 'matched_count')
 union.renameScalar(from: 'match_is_good_sum', to: 'correct_match_count')
 
+union.renameVertexAttribute(
+  from: 'linkedin_name similarity score',
+  to: 'score')
+
 testSetSize = union.scalars['test_set_size'].toDouble()
 println "Test set size: $testSetSize"
 
+
+// Import linkedin as segmentation, connect by attribute, fingerprint.
+segmentationFP = fb.saveAs('linkedin facebook segmentation FP')
+
+// Import as segmentation, connect based on merge key.
+segmentationFP.importProjectAsSegmentation(them: 'linkedin for FP')
+segmentationFP.segmentations['linkedin for FP'].defineSegmentationLinksFromMatchingAttributes(
+  'base-id-attr': 'merge_key_name',
+  'seg-id-attr': 'merge_key_name')
+
+// Define linkedin_original_count just to mark vertices that were already paired.
+segmentationFP.segmentations['linkedin for FP'].aggregateFromSegmentation(
+  'aggregate-id': 'count',
+  prefix: 'linkedin_original')
+segmentationFP.fillWithConstantDefaultValue(attr: 'linkedin_original_id_count', def: '0')
+
+// Go fingerprinting.
+segmentationFP.segmentations['linkedin for FP'].fingerprintingBetweenProjectAndSegmentation(
+  mo: '1',
+  ms: '0.0',
+  extra: '"weightingMode": "InverseInDegreeBasedHybrid", "multiNeighborsPreference": 5.0')
+
+// Pull over some attributes.
+segmentationFP.segmentations['linkedin for FP'].aggregateFromSegmentation(
+  'aggregate-linkedin_name': 'most_common',
+  'aggregate-test_matched_fb_name': 'most_common',
+  prefix: 'linkedin for FP')
+segmentationFP.renameVertexAttribute(
+  from: 'linkedin for FP_linkedin_name_most_common',
+  to: 'linkedin_name')
+segmentationFP.renameVertexAttribute(
+  from: 'linkedin for FP_test_matched_fb_name_most_common',
+  to: 'test_matched_fb_name')
+
+// Just of eyeballing convenience.
+segmentationFP.derivedVertexAttribute(
+  expr: 'linkedin_name + ":" + fb_name',
+  output: 'names',
+  type: 'string')
+
+// Evaluate.
+segmentationFP.renameVertexAttribute(
+  from: 'fingerprinting_similarity_score',
+  to: 'score')
+
+segmentationFP.derivedVertexAttribute(
+  expr: '(test_matched_fb_name === fb_name) ? 1.0 : 0.0',
+  output: 'match_is_good',
+  type: 'double')
+
+segmentationFP.aggregateVertexAttributeGlobally(
+  'aggregate-match_is_good': 'sum,count',
+  'aggregate-test_matched_fb_name': 'count',
+  prefix: '')
+
+segmentationFP.renameScalar(from: 'match_is_good_count', to: 'matched_count')
+segmentationFP.renameScalar(from: 'match_is_good_sum', to: 'correct_match_count')
+
 // ======= Drawing a primitive P/R curve ============
 
-pr = union.saveAs('linkedin facebook PR curve')
+def drawPR(pr) {
 
-// First restrict to matched test vertices. This is basically an is-defined test.
-pr.filterByAttributes('filterva-match_is_good': '>=0.0')
+  // First restrict to matched test vertices. This is basically an is-defined test.
+  pr.filterByAttributes('filterva-match_is_good': '>=0.0')
 
-println "Treshold\tPrecision\tRecall\tFScore"
-maxFScore = 0
-while (pr.scalars['vertex_count'].toDouble() > 0) {
-  // Compute current precision/recall
-  pr.aggregateVertexAttributeGlobally('aggregate-match_is_good': 'sum,count', prefix: '')
-  matches = pr.scalars['match_is_good_count'].toDouble()
-  good_matches = pr.scalars['match_is_good_sum'].toDouble()
+  println "Threshold\tPrecision\tRecall\tFScore"
+  maxFScore = 0
+  while (pr.scalars['vertex_count'].toDouble() > 0) {
+    // Compute current precision/recall
+    pr.aggregateVertexAttributeGlobally('aggregate-match_is_good': 'sum,count', prefix: '')
+    matches = pr.scalars['match_is_good_count'].toDouble()
+    good_matches = pr.scalars['match_is_good_sum'].toDouble()
 
-  pr.aggregateVertexAttributeGlobally(
-    'aggregate-linkedin_name similarity score': 'min',
-    prefix: '')
-  currentMin = pr.scalars['linkedin_name similarity score_min'].toDouble()
-  recall = good_matches * 100.0 / matches
-  precision = good_matches * 100.0 / testSetSize
-  fScore = 2 / (1 / recall + 1 / precision)
-  maxFScore = [fScore, maxFScore].max()
-  System.out.printf(
-    "%8.3f\t% 8.2f\t% 8.2f % 8.2f\n",
-    currentMin,
-    recall,
-    precision,
-    fScore)
+    pr.aggregateVertexAttributeGlobally(
+      'aggregate-score': 'min',
+      prefix: '')
+    currentMin = pr.scalars['score_min'].toDouble()
+    recall = good_matches * 100.0 / matches
+    precision = good_matches * 100.0 / testSetSize
+    fScore = 2 / (1 / recall + 1 / precision)
+    maxFScore = [fScore, maxFScore].max()
+    System.out.printf(
+      "%8.3f\t% 8.2f\t% 8.2f % 8.2f\n",
+      currentMin,
+      recall,
+      precision,
+      fScore)
 
-  // Throw away lowest scoring matches.
-  // Make sure we avoid scientific notation (which cannot be parsed on the other side)
-  formattedCurrentMin = String.format("%.18f", currentMin+0.000000001).toString()
-  pr.filterByAttributes('filterva-linkedin_name similarity score': ">$formattedCurrentMin")
+    // Throw away lowest scoring matches.
+    // Make sure we avoid scientific notation (which cannot be parsed on the other side)
+    formattedCurrentMin = String.format("%.18f", currentMin+0.000000001).toString()
+    pr.filterByAttributes('filterva-score': ">$formattedCurrentMin")
+  }
+  println "Maximal fScore: $maxFScore"
 }
 
-println "Maximal fScore: $maxFScore"
+prSeg = segmentationFP.saveAs('linkedin facebook segmentation PR curve')
+drawPR(prSeg)
+
+prAttr = union.saveAs('linkedin facebook PR curve')
+drawPR(prAttr)

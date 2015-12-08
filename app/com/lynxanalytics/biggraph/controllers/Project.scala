@@ -764,7 +764,7 @@ class ProjectFrame(path: SymbolPath)(
 
   def toListElementFE = {
     try {
-      viewer.toListElementFE(path.last.name)
+      viewer.toListElementFE(projectName)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $projectName:", ex)
@@ -884,6 +884,13 @@ class ProjectDirectory(val path: SymbolPath)(
   def parent = if (path.size > 1) Some(new ProjectDirectory(path.init)) else None
   def parents: Iterable[ProjectDirectory] = parent ++ parent.toSeq.flatMap(_.parents)
   def isProject = new ProjectFrame(path).exists
+
+  // Returns the list of all directories contained in this directory.
+  def listDirectoriesRecursively: Seq[ProjectDirectory] = {
+    assert(!isProject, s"$this is not a directory.")
+    val (dirs, projects) = listDirectoriesAndProjects
+    dirs ++ dirs.flatMap(_.listDirectoriesRecursively)
+  }
 
   // Returns the list of all projects contained in this directory.
   def listProjectsRecursively: Seq[ProjectFrame] = {

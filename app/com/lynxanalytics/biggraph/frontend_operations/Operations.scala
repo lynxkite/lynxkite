@@ -171,12 +171,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class HiddenOperation(t: String, c: Context)
     extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
+  abstract class DeprecatedOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Depricated operations", "red", deprecated = true, icon = "remove-sign"))
+
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
       "Create segmentation",
       "green",
-      icon = "th-large",
-      visible = !c.project.isSegmentation))
+      icon = "th-large"))
 
   abstract class StructureOperation(t: String, c: Context)
     extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
@@ -383,11 +385,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val dst = params("dst")
       assert(src.nonEmpty, "The Source ID field parameter must be set.")
       assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
-      val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
-      project.setVertexSet(imp.vertices, idAttr = "id")
-      project.newVertexAttribute("stringID", imp.stringID)
-      project.edgeBundle = imp.edges
-      project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      val vg = graph_operations.ImportVertexList(source(params))().result
+      val eg = {
+        val op = graph_operations.VerticesToEdges()
+        op(op.srcAttr, vg.attrs(src))(op.dstAttr, vg.attrs(dst)).result
+      }
+      project.setVertexSet(eg.vs, idAttr = "id")
+      project.newVertexAttribute("stringID", eg.stringID)
+      project.edgeBundle = eg.es
+      for ((name, attr) <- vg.attrs) {
+        project.edgeAttributes(name) = attr.pullVia(eg.embedding)
+      }
     }
   }
   register("Import vertices and edges from single CSV fileset",
@@ -780,7 +788,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Add gaussian vertex attribute", new VertexAttributesOperation(_, _) {
+  register("Add gaussian vertex attribute", new DeprecatedOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       RandomSeed("seed", "Seed"))
@@ -1000,7 +1008,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, project.edgeBundle).result.embeddedness.entity
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
-      var normalizedDispersion = {
+      val normalizedDispersion = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
           Seq("disp", "emb"))
@@ -2033,6 +2041,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldProjectState = project.state
       val segmentation = project.segmentation(params("name"))
       segmentation.state = oldProjectState
+      for (subSegmentationName <- segmentation.segmentationNames) {
+        segmentation.deleteSegmentation(subSegmentationName)
+      }
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
@@ -2372,7 +2383,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
       NonNegInt("mo", "Minimum overlap", default = 1),
-      Ratio("ms", "Minimum similarity", defaultValue = "0.0"))
+      Ratio("ms", "Minimum similarity", defaultValue = "0.0"),
+      Param(
+        "extra",
+        "Fingerprinting algorithm additional parameters",
+        mandatory = false,
+        defaultValue = ""))
     def enabled =
       isSegmentation &&
         hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
@@ -2380,15 +2396,40 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val mo = params("mo").toInt
       val ms = params("ms").toDouble
 
-      val candidates = seg.belongsTo
-      val segNeighborsInParent = project.edgeBundle.concat(seg.belongsTo.reverse)
+      // We are setting the stage here for the generic fingerprinting operation. For a vertex A
+      // on the left (base project) side and a vertex B on the right (segmentation) side we
+      // want to "create" a common neighbor for fingerprinting purposes iff a neighbor of A (A') is
+      // connected to a neigbor of B (B'). In practice, to make the setup symmetric, we will
+      // actually create two common neighbors, namely we will connect both A and B to A' and B'.
+      //
+      // There is one more twist, that we want to consider A being connected to B directly also
+      // as an evidence for A and B being a good match. To achieve this, we basically artificially
+      // make every vertex a member of its own neighborhood by adding loop edges.
+      val leftWithLoops = parallelEdgeBundleUnion(parent.edgeBundle, parent.vertexSet.loops)
+      val rightWithLoops = parallelEdgeBundleUnion(project.edgeBundle, project.vertexSet.loops)
+      val fromLeftToRight = leftWithLoops.concat(seg.belongsTo)
+      val fromRightToLeft = rightWithLoops.concat(seg.belongsTo.reverse)
+      val leftEdges = generalEdgeBundleUnion(leftWithLoops, fromLeftToRight)
+      val rightEdges = generalEdgeBundleUnion(rightWithLoops, fromRightToLeft)
+
+      val candidates = {
+        val op = graph_operations.FingerprintingCandidatesFromCommonNeighbors()
+        op(op.leftEdges, leftEdges)(op.rightEdges, rightEdges).result.candidates
+      }
+
       val fingerprinting = {
-        val op = graph_operations.Fingerprinting(mo, ms)
+        // TODO: This is a temporary hack to facilitate experimentation with the underlying backend
+        // operation w/o too much disruption to users. Should be removed once we are clear on what
+        // we want to provide for fingerprinting.
+        val baseParams = s""""minimumOverlap": $mo, "minimumSimilarity": $ms"""
+        val extraParams = params.getOrElse("extra", "")
+        val paramsJson = if (extraParams == "") baseParams else (baseParams + ", " + extraParams)
+        val op = graph_operations.Fingerprinting.fromJson(json.Json.parse(s"{$paramsJson}"))
         op(
-          op.leftEdges, parent.edgeBundle)(
-            op.leftEdgeWeights, parent.edgeBundle.const(1.0))(
-              op.rightEdges, segNeighborsInParent)(
-                op.rightEdgeWeights, segNeighborsInParent.const(1.0))(
+          op.leftEdges, leftEdges)(
+            op.leftEdgeWeights, leftEdges.const(1.0))(
+              op.rightEdges, rightEdges)(
+                op.rightEdgeWeights, rightEdges.const(1.0))(
                   op.candidates, candidates)
           .result
       }
