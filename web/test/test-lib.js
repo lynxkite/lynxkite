@@ -493,6 +493,14 @@ var splash = {
     return element(by.id('directory-' + toID(name)));
   },
 
+  expectNumProjects: function(n) {
+    return expect(element.all(by.css('.project-entry')).count()).toEqual(n);
+  },
+
+  expectNumDirectories: function(n) {
+    return expect(element.all(by.css('.directory-entry')).count()).toEqual(n);
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
@@ -568,6 +576,14 @@ var splash = {
 
   expectDirectoryNotListed: function(name) {
     testLib.expectNotElement(this.directory(name));
+  },
+
+  enterSearchQuery: function(query) {
+    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
+  },
+
+  clearSearchQuery: function() {
+    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 };
 
