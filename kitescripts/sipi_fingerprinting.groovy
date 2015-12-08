@@ -114,8 +114,14 @@ union.renameVertexAttribute(from: 'matched_fb_name_most_common', to: 'matched_fb
 union.renameVertexAttribute(from: 'train_matched_fb_name_most_common', to: 'train_matched_fb_name')
 union.renameVertexAttribute(from: 'test_matched_fb_name_most_common', to: 'test_matched_fb_name')
 
+// Mark already known vertices - these will be excluded from evals.
+union.derivedVertexAttribute(
+  expr: 'id_count - 1.0',
+  output: 'known',
+  type: 'double')
+
+
 // Fingerprint.
-union.derivedEdgeAttribute(expr: 'Math.min(src$id_count + dst$id_count - 1, 2)', output: 'weight', type: 'double')
 union.fingerprintingBasedOnAttributes(
   leftName: 'fb_name',
   rightName: 'linkedin_name',
@@ -155,11 +161,14 @@ segmentationFP.segmentations['linkedin for FP'].defineSegmentationLinksFromMatch
   'base-id-attr': 'merge_key_name',
   'seg-id-attr': 'merge_key_name')
 
-// Define linkedin_original_count just to mark vertices that were already paired.
+// Mark already known vertices - these will be excluded from evals.
 segmentationFP.segmentations['linkedin for FP'].aggregateFromSegmentation(
   'aggregate-id': 'count',
   prefix: 'linkedin_original')
 segmentationFP.fillWithConstantDefaultValue(attr: 'linkedin_original_id_count', def: '0')
+segmentationFP.renameVertexAttribute(
+  from: 'linkedin_original_id_count',
+  to: 'known')
 
 // Go fingerprinting.
 segmentationFP.segmentations['linkedin for FP'].fingerprintingBetweenProjectAndSegmentation(
@@ -207,36 +216,49 @@ segmentationFP.renameScalar(from: 'match_is_good_sum', to: 'correct_match_count'
 
 def drawPR(pr) {
 
-  // First restrict to matched test vertices. This is basically an is-defined test.
-  pr.filterByAttributes('filterva-match_is_good': '>=0.0')
+  pr.filterByAttributes('filterva-known': '=0.0')
+
+  // It only make sense to draw the PR curve at boundaries just before throwing away a good match.
+  pr.derivedVertexAttribute(
+    output: 'important_score',
+    expr: '(match_is_good === 1.0) ? score : undefined',
+    type: 'double')
 
   println "Threshold\tPrecision\tRecall\tFScore"
   maxFScore = 0
-  while (pr.scalars['vertex_count'].toDouble() > 0) {
+
+  pr.aggregateVertexAttributeGlobally('aggregate-important_score': 'min,count', prefix: '')
+  while (pr.scalars['important_score_count'].toDouble() > 0) {
+    nextMin = pr.scalars['important_score_min'].toDouble()
+    // Filter just below the next important score.
+    // Make sure we avoid scientific notation (which cannot be parsed on the other side)
+    justBelow = String.format("%.18f", nextMin-0.000000001).toString()
+    pr.filterByAttributes('filterva-score': ">$justBelow")
+
     // Compute current precision/recall
-    pr.aggregateVertexAttributeGlobally('aggregate-match_is_good': 'sum,count', prefix: '')
-    matches = pr.scalars['match_is_good_count'].toDouble()
+    pr.aggregateVertexAttributeGlobally(
+      'aggregate-match_is_good': 'sum',
+      'aggregate-score': 'count',
+      prefix: '')
+    matches = pr.scalars['score_count'].toDouble()
     good_matches = pr.scalars['match_is_good_sum'].toDouble()
 
-    pr.aggregateVertexAttributeGlobally(
-      'aggregate-score': 'min',
-      prefix: '')
-    currentMin = pr.scalars['score_min'].toDouble()
-    recall = good_matches * 100.0 / matches
-    precision = good_matches * 100.0 / testSetSize
+    precision = good_matches * 100.0 / matches
+    recall = good_matches * 100.0 / testSetSize
     fScore = 2 / (1 / recall + 1 / precision)
     maxFScore = [fScore, maxFScore].max()
     System.out.printf(
       "%8.3f\t% 8.2f\t% 8.2f % 8.2f\n",
-      currentMin,
-      recall,
+      nextMin,
       precision,
+      recall,
       fScore)
 
     // Throw away lowest scoring matches.
     // Make sure we avoid scientific notation (which cannot be parsed on the other side)
-    formattedCurrentMin = String.format("%.18f", currentMin+0.000000001).toString()
-    pr.filterByAttributes('filterva-score': ">$formattedCurrentMin")
+    justAbove = String.format("%.18f", nextMin+0.000000001).toString()
+    pr.filterByAttributes('filterva-score': ">$justAbove")
+    pr.aggregateVertexAttributeGlobally('aggregate-important_score': 'min,count', prefix: '')
   }
   println "Maximal fScore: $maxFScore"
 }
