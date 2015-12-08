@@ -214,7 +214,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   // Loads a Long-keyed rdd with deserialized values
   def loadEntityRDD[T: TypeTag](sc: spark.SparkContext, serializer: String): RDD[(Long, T)] = {
     val raw = loadEntityRawRDD(sc)
-    val deserializer = SimpleDeserializer.forName[T](serializer)
+    val deserializer = graph_api.io.EntityDeserializer.forName[T](serializer)
     raw.mapValues(deserializer.mapper)
   }
 
@@ -246,7 +246,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 
   // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
   def saveEntityRDD[T: TypeTag](data: RDD[(Long, T)]): (Long, String) = {
-    val serializer = SimpleSerializer.forType[T]
+    val serializer = graph_api.io.EntitySerializer.forType[T]
     val raw = data.mapPartitions(serializer.mapper, preservesPartitioning = true)
     val lines = saveEntityRawRDD(raw)
     (lines, serializer.name)
