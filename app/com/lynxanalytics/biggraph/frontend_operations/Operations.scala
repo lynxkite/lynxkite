@@ -39,7 +39,9 @@ object OperationParams {
     val mandatory = true
     def validate(value: String): Unit = {
       val possibleValues = options.map { x => x.id }.toSet
-      val givenValues = value.split(",", -1).toSet
+      val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
+        if (value.isEmpty) Set() else value.split(",", -1).toSet
+      }
       val unknown = givenValues -- possibleValues
       assert(unknown.isEmpty,
         s"Unknown option: ${unknown.mkString(", ")} (Possibilities: ${possibleValues.mkString(", ")})")
