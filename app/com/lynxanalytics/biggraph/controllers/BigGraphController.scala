@@ -123,6 +123,9 @@ case class FESegmentation(
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
 case class ProjectListRequest(path: String)
+case class ProjectSearchRequest(
+  basePath: String, // We only search for projects/directories contained (recursively) in this.
+  query: String)
 case class ProjectList(path: String, directories: List[String], projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
@@ -217,8 +220,34 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
       request.path,
-      visibleDirs.map(_.path.last.name).toList,
+      visibleDirs.map(_.path.toString).toList,
       visible.map(_.toListElementFE).toList)
+  }
+
+  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
+    val dir = ProjectDirectory.fromName(request.basePath)
+    dir.assertReadAllowedFrom(user)
+    val terms = request.query.split(" ")
+    val dirs = dir
+      .listDirectoriesRecursively
+      .filter(_.readAllowedFrom(user))
+      .filter { dir =>
+        val baseName = dir.path.last.name
+        terms.forall(term => baseName.contains(term))
+      }
+    val projects = dir
+      .listProjectsRecursively
+      .filter(_.readAllowedFrom(user))
+      .filter { project =>
+        val baseName = project.path.last.name
+        val notes = project.viewer.state.notes
+        terms.forall(term => baseName.contains(term) || notes.contains(term))
+      }
+
+    ProjectList(
+      request.basePath,
+      dirs.map(_.path.toString).toList,
+      projects.map(_.toListElementFE).toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
@@ -226,7 +255,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(p.frame.exists, s"Project ${request.name} does not exist.")
     p.frame.assertReadAllowedFrom(user)
     val context = Operation.Context(user, p.viewer)
-    val categories = ops.categories(context)
+    val categories = ops.categories(context, includeDeprecated = false)
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
     val nonUtilities = categories.filter(_.icon != "wrench")
@@ -390,7 +419,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
-    val opCategoriesBefore = ops.categories(context)
+    val opCategoriesBefore = ops.categories(context, includeDeprecated = true)
     val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
@@ -483,6 +512,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
+    // Check for syntax errors with an unbound Groovy shell.
+    try {
+      groovy.GroovyContext(null, null).withUntrustedShell() {
+        shell => shell.parse(request.stepsAsGroovy, request.workflowName)
+      }
+    } catch {
+      case cfe: org.codehaus.groovy.control.CompilationFailedException =>
+        throw new AssertionError(cfe.getMessage) // Looks better on the frontend.
+      case t: Throwable => // It can throw Errors, that silently kill the request.
+        throw new AssertionError(t.getMessage)
+    }
     val savedWorkflow = SavedWorkflow(
       request.stepsAsGroovy,
       user.email,
@@ -598,8 +638,8 @@ object Operation {
       color: String, // A color class from web/app/styles/operation-toolbox.css.
       visible: Boolean = true,
       icon: String = "", // Glyphicon name, or empty for first letter of title.
-      sortKey: String = null // Categories are ordered by this. The title is used by default.
-      ) extends Ordered[Category] {
+      sortKey: String = null, // Categories are ordered by this. The title is used by default.
+      deprecated: Boolean = false) extends Ordered[Category] {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
     def toFE(ops: List[FEOperationMeta]): OperationCategory =
@@ -697,14 +737,15 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       Seq()
     }
 
-  def categories(context: Operation.Context): List[OperationCategory] = {
+  def categories(context: Operation.Context, includeDeprecated: Boolean): List[OperationCategory] = {
     val allOps = opsForContext(context) ++ workflowOperations(context)
     val cats = allOps.groupBy(_.category).toList
-    cats.filter(_._1.visible).sortBy(_._1).map {
-      case (cat, ops) =>
-        val feOps = ops.map(_.toFE).sortBy(_.title).toList
-        cat.toFE(feOps)
-    }
+    cats.filter { x => x._1.visible && (includeDeprecated || x._1.deprecated == false) }
+      .sortBy(_._1).map {
+        case (cat, ops) =>
+          val feOps = ops.map(_.toFE).sortBy(_.title).toList
+          cat.toFE(feOps)
+      }
   }
 
   def operationIds = operations.keys.toSeq

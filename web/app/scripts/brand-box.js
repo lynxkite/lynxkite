@@ -27,6 +27,7 @@ angular.module('biggraph').directive('brandBox', function() {
         'Shift-scroll to adjust vertex and edge sizes without zooming.',
         'Drag the graph background to pan the view.',
         'Click the handle on the left of the graph visualization for extra options.',
+        'Close the open sub-segmentation of a segmentation to reopen the parent project.'
       ];
       scope.tip = tips[Math.floor(Math.random() * tips.length)];
     },

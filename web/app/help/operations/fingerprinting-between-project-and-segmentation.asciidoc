@@ -1,10 +1,11 @@
 ### Fingerprinting between project and segmentation
 
-Finds the best match out of the potential matches that are defined between a project and
-a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
-and the segmentation.
+Finds the best matching between a project and a segmentation.
+It considers a base vertex A and a segment B a good "match"
+if the neighborhood of A (including A) is very connected to the neighborhood of B (including B)
+according to the current connections between project and segmentation.
 
-The result of this operation is an updated edge set between the project and the
+The result of this operation is a new edge set between the project and the
 segmentation, that is a one-to-one matching.
 
 ====
@@ -33,4 +34,8 @@ anyway.)
 [[ms]] Minimum similarity::
 The similarity threshold below which two vertices will not be considered a match even if there are
 no better matches for them. Similarity is normalized to [0, 1].
+
+[[extra]] Fingerprinting algorithm additional parameters::
+You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
+expert if you think you need this.
 ====

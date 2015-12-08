@@ -23,6 +23,11 @@ object Scripting {
 
     def idAttribute: Attribute[ID] =
       graph_operations.IdAsAttribute.run(self)
+
+    def loops: EdgeBundle = {
+      val op = graph_operations.LoopEdgeBundle()
+      op(op.vs, self).result.eb
+    }
   }
 
   implicit class RichContainedEdgeBundle(
@@ -110,5 +115,85 @@ object Scripting {
   implicit class RichIntAttribute(self: Attribute[Int])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.IntAttributeToLong.run(self)
+  }
+
+  // Take the union of edge bundles that are parallel, that is that are going between the same
+  // two vertex sets.
+  def parallelEdgeBundleUnion(
+    first: EdgeBundle, others: EdgeBundle*)(
+      implicit m: MetaGraphManager): EdgeBundle = {
+    if (others.isEmpty) first
+    else {
+      others.foreach { other =>
+        assert(
+          first.srcVertexSet.gUID == other.srcVertexSet.gUID,
+          s"Source vertex set of $first does not match that of $other so" +
+            " they cannot be used together in a parallelEdgeBundleUnion")
+        assert(first.dstVertexSet.gUID == other.dstVertexSet.gUID,
+          s"Destination vertex set of $first does not match that of $other so" +
+            " they cannot be used together in a parallelEdgeBundleUnion")
+      }
+      val all = first +: others
+      val idSetUnion = {
+        val op = graph_operations.VertexSetUnion(all.size)
+        op(op.vss, all.map(_.idSet)).result
+      }
+      val ebUnion = {
+        val op = graph_operations.EdgeBundleUnion(all.size)
+        op(op.ebs, all)(op.injections, idSetUnion.injections.map(_.entity)).result
+      }
+      ebUnion.union
+    }
+  }
+
+  // Take the union of edge bundles that potentially go between different vertex set pairs.
+  // We first take the union of all different source vertex sets and the union of all
+  // different destination vertex sets,
+  // induce all the bundles to go between these two new vertex sets and then take their union.
+  // In effect, this corresponds to the mathematical "model" where we assume all different
+  // vertex sets represent disjoint mathematical sets.
+  def generalEdgeBundleUnion(
+    first: EdgeBundle, others: EdgeBundle*)(
+      implicit m: MetaGraphManager): EdgeBundle = {
+    if (others.isEmpty) first
+    else {
+      val all = first +: others
+      // We sort these to make sure that the we get the same union vertex set if we start from
+      // the same component vertex sets. (E.g. A U B is the same as B U A.)
+      val srcs = all.map(_.srcVertexSet).toSet.toSeq.sortBy[java.util.UUID](_.gUID)
+      val dsts = all.map(_.dstVertexSet).toSet.toSeq.sortBy[java.util.UUID](_.gUID)
+
+      val induceSrc = (srcs.size > 1)
+      val induceDst = (dsts.size > 1)
+
+      val inducedAll = if (induceSrc || induceDst) {
+        var opBuilders = all.map { eb =>
+          val op = graph_operations.InducedEdgeBundle(induceSrc, induceDst)
+          op(op.edges, eb)
+        }
+        if (induceSrc) {
+          val op = graph_operations.VertexSetUnion(srcs.size)
+          val injections = op(op.vss, srcs).result.injections
+          val injectionMap = (srcs zip injections).toMap
+          opBuilders = (opBuilders zip all).map {
+            case (builder, eb) =>
+              builder(builder.op.srcMapping, injectionMap(eb.srcVertexSet))
+          }
+        }
+        if (induceDst) {
+          val op = graph_operations.VertexSetUnion(dsts.size)
+          val injections = op(op.vss, dsts).result.injections
+          val injectionMap = (dsts zip injections).toMap
+          opBuilders = (opBuilders zip all).map {
+            case (builder, eb) =>
+              builder(builder.op.dstMapping, injectionMap(eb.dstVertexSet))
+          }
+        }
+        opBuilders.map(_.result.induced.entity)
+      } else {
+        all
+      }
+      parallelEdgeBundleUnion(inducedAll.head, inducedAll.tail: _*)
+    }
   }
 }
