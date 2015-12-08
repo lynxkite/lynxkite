@@ -129,10 +129,10 @@ For `Double` attributes buckets will correspond to intervals. We split the inter
 into subintervals of the same length. E.g. we might end up with buckets `[0, 10)`,
 `[10, 20)`, `[20, 30]`.
 
-If `logarithmic mode` is selected for the attribute then the subintervals are
+If _logarithmic mode_ is selected for the attribute then the subintervals are
 selected so that they have the same length on the logarithmic scale. E.g. a possible
 bucketing is `[1, 2)`, `[2, 4)`, `[4, 8]`. In logarithmic mode, if the attribute has any
-non-positive value, then an extra bucket will be created which will contain all non-positive values.
+non-positive values, then an extra bucket will be created which will contain all non-positive values.
 
 ### Saving visualizations
 
