@@ -87,10 +87,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
           count += 1
           val key = new hadoop.io.LongWritable(id)
           for ((file, col) <- (files zip cols) if col != null) {
-            val value = SimpleSerializer.serializeString(col)
+            val value = EntitySerializer.serializeString(col)
             file.writer.write(key, value)
           }
-          verticesWriter.write(key, SimpleSerializer.serializedUnit)
+          verticesWriter.write(key, EntitySerializer.serializedUnit)
         }
         for (file <- files) file.committer.commitTask(file.context)
       } finally collection.close()
@@ -102,8 +102,8 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       sparkContext.runJob(data, writeShard)
       for (file <- files) file.committer.commitJob(file.context)
       // Write metadata files.
-      val vertexSetMeta = EntityMetadata(count.value, Some(SimpleSerializer.unitSerializer.name))
-      val attributeMeta = EntityMetadata(count.value, Some(SimpleSerializer.stringSerializer.name))
+      val vertexSetMeta = EntityMetadata(count.value, Some(EntitySerializer.unitSerializer.name))
+      val attributeMeta = EntityMetadata(count.value, Some(EntitySerializer.stringSerializer.name))
       vertexSetMeta.write(partitionedPath(vs).forWriting)
       for (attr <- attributes) attributeMeta.write(partitionedPath(attr).forWriting)
     } finally collection.close()

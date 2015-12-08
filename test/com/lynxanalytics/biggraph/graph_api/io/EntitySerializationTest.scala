@@ -1,11 +1,11 @@
-package com.lynxanalytics.biggraph.graph_util
+package com.lynxanalytics.biggraph.graph_api.io
 
 import com.lynxanalytics.biggraph.graph_api.Edge
 import org.scalatest.FunSuite
 import scala.reflect.runtime.universe._
 
-class SimpleSerializationTest extends FunSuite {
-  def serde[T](values: Seq[T], s: SimpleSerializer[T], d: SimpleDeserializer[T]) = {
+class EntitySerializationTest extends FunSuite {
+  def serde[T](values: Seq[T], s: EntitySerializer[T], d: EntityDeserializer[T]) = {
     val numbered = values.zipWithIndex.map { case (v, k) => k.toLong -> v }
     val serialized = s.mapper(numbered.iterator).toSeq
     val deserialized = serialized.map { case (k, v) => k -> d.mapper(v) }.toList
@@ -14,9 +14,9 @@ class SimpleSerializationTest extends FunSuite {
 
   test("basics") {
     def withTyped[T: TypeTag](values: Seq[T], expectedType: String) = {
-      val s = SimpleSerializer.forType(typeTag[T])
+      val s = EntitySerializer.forType(typeTag[T])
       assert(s.name == expectedType)
-      val d = SimpleDeserializer.forName[T](s.name)
+      val d = EntityDeserializer.forName[T](s.name)
       serde(values, s, d)
     }
 
@@ -29,8 +29,8 @@ class SimpleSerializationTest extends FunSuite {
 
   test("legacy") {
     def withKryo[T: TypeTag](values: Seq[T]) = {
-      val s = SimpleSerializer.kryoSerializer.asInstanceOf[SimpleSerializer[T]]
-      val d = SimpleDeserializer.forName[T]("kryo")
+      val s = EntitySerializer.kryoSerializer.asInstanceOf[EntitySerializer[T]]
+      val d = EntityDeserializer.forName[T]("kryo")
       serde(values, s, d)
     }
 
