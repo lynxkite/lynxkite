@@ -63,7 +63,7 @@
 
     <div ng-repeat="directory in data.directories"
       id="directory-{{ pathInside(directory) | id }}"
-      class="entry" href ng-click="enterDirectory($event, directory)">
+      class="entry directory-entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       <span class="lead">
         <item-name-and-menu
