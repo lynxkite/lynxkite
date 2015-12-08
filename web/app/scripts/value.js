@@ -1,5 +1,4 @@
-// Presents a DynamicValue response from a scalar request
-// with a loading animation and error handling.
+// Presents a DynamicValue response from a scalar request.
 'use strict';
 
 angular.module('biggraph').directive('value', function(util) {
@@ -8,9 +7,6 @@ angular.module('biggraph').directive('value', function(util) {
     scope: { ref: '=', details: '=' },
     templateUrl: 'value.html',
     link: function(scope) {
-      scope.reportError = function() {
-        util.reportRequestError(scope.ref, scope.ref.details);
-      };
       scope.human = true;
       scope.humanized = function(ref) {
         return scope.human && ref.double && ref.double.toString() !== util.human(ref.double);

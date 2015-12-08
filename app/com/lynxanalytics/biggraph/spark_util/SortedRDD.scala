@@ -27,19 +27,6 @@ import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object SortedRDD {
-  // Creates a SortedRDD from an unsorted but partitioned RDD.
-  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
-    new ArrayBackedSortedRDD(arrayRDD)
-  }
-  // Creates a SortedRDD from an unsorted but partitioned RDD.
-  def fromUniqueUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): UniqueSortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
-    new ArrayBackedSortedRDD(arrayRDD) with UniqueSortedRDD[K, V]
-  }
-}
-
 private object SortedRDDUtil {
   def assertMatchingRDDs[K](first: SortedRDD[K, _], second: SortedRDD[K, _]): Unit = {
     assert(
@@ -349,10 +336,13 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
         }
       }, preservesPartitioning = true)).trustedUnique
 
-  def groupByKey(): UniqueSortedRDD[K, ArrayBuffer[V]] = {
+  def reduceByKey(func: (V, V) => V): UniqueSortedRDD[K, V] = combineByKey(identity, func)
+
+  def groupByKey()(implicit ck: ClassTag[K]): UniqueSortedRDD[K, Iterable[V]] = {
     val createCombiner = (v: V) => ArrayBuffer(v)
     val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
-    combineByKey(createCombiner, mergeValue)
+    // The mapValues is to change value type from arraybuffer to iterable.
+    combineByKey(createCombiner, mergeValue).mapValues(identity)
   }
 
   // Concrete implementing classes should override this one.

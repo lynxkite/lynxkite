@@ -157,7 +157,7 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
         .reduceBySortedKey(vPart, { case ((in1, out1), (in2, out2)) => (in1 + in2, out1 + out2) })
       val livePartitions = iterationOutput.filter {
         case (id, (newIdOpt, _, _)) => newIdOpt.map(_ == id).getOrElse(false)
-      }.sortUnique
+      }
       val newWeightsFromFinals = allFinalWeights.sortedJoin(livePartitions).mapValues(_._1)
       findModularRefinement(newMembers, newWeightsFromFinals, newConnections, Some(numEdges))
     }
