@@ -24,4 +24,24 @@ module.exports = function(fw) {
     function() {
       expect(lib.right.segmentCount()).toEqual(2);
     });
+  fw.transitionTest(
+    'segmentation opens',
+    'sub-segmentation can be created and opened',
+    function() {
+      lib.right.runOperation('Copy graph into a segmentation', {'name': 'copy'});
+      lib.right.openSegmentation('copy');
+      lib.right.expectCurrentProjectIs('example|bucketing|copy');
+    },
+    function() {
+    });
+  fw.transitionTest(
+    'sub-segmentation can be created and opened',
+    'clsoing sub-segmentation on the RHS reopens its grandparent',
+    function() {
+      lib.right.close();
+      lib.left.expectCurrentProjectIs('example');
+      lib.right.expectCurrentProjectIs('example|bucketing');
+    },
+    function() {
+    });
 };
