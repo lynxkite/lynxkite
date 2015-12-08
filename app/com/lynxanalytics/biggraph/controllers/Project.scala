@@ -885,6 +885,13 @@ class ProjectDirectory(val path: SymbolPath)(
   def parents: Iterable[ProjectDirectory] = parent ++ parent.toSeq.flatMap(_.parents)
   def isProject = new ProjectFrame(path).exists
 
+  // Returns the list of all directories contained in this directory.
+  def listDirectoriesRecursively: Seq[ProjectDirectory] = {
+    assert(!isProject, s"$this is not a directory.")
+    val (dirs, projects) = listDirectoriesAndProjects
+    dirs ++ dirs.flatMap(_.listDirectoriesRecursively)
+  }
+
   // Returns the list of all projects contained in this directory.
   def listProjectsRecursively: Seq[ProjectFrame] = {
     assert(!isProject, s"$this is not a directory.")
