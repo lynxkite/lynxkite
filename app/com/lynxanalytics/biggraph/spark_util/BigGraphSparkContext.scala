@@ -14,39 +14,28 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
 
 private object SparkStageJars {
-  // Jars for classes that we need.
-  val jarsForClasses = {
-    val classesToBundle: Seq[Class[_]] = Seq(
-      getClass(),
-      classOf[com.mysql.jdbc.Driver],
-      classOf[org.postgresql.Driver],
-      classOf[org.sqlite.JDBC],
-      classOf[gcs.GoogleHadoopFileSystem],
-      classOf[play.api.libs.json.JsValue],
-      classOf[com.twitter.algebird.SparseHLL],
-      classOf[com.databricks.spark.csv.CsvParser],
-      // Dependencies of spark-csv.
-      classOf[com.univocity.parsers.csv.CsvParserSettings],
-      classOf[org.apache.commons.csv.CSVParser],
-      classOf[ch.qos.logback.classic.Logger],
-      classOf[ch.qos.logback.core.spi.AppenderAttachable[_]])
-    classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
-  }
-  // Jars by the jar file prefix.
-  val jarsForPrefixes = {
-    val libraryRoot = new java.io.File(jarsForClasses.head).getParentFile
-    val allJars = libraryRoot.listFiles.toSeq.filter(_.getName.endsWith(".jar"))
-    val prefixes = Seq("com.github.fommil")
-    prefixes.flatMap(p => allJars.filter(_.getName.startsWith(p))).map(_.getAbsolutePath)
-  }
-  // Jars specified by the user.
-  val jarsFromEnvironment =
+  val classesToBundle: Seq[Class[_]] = Seq(
+    getClass(),
+    classOf[com.mysql.jdbc.Driver],
+    classOf[org.postgresql.Driver],
+    classOf[org.sqlite.JDBC],
+    classOf[gcs.GoogleHadoopFileSystem],
+    classOf[play.api.libs.json.JsValue],
+    classOf[com.twitter.algebird.SparseHLL],
+    classOf[com.databricks.spark.csv.CsvParser],
+    // Dependencies of spark-csv.
+    classOf[com.univocity.parsers.csv.CsvParserSettings],
+    classOf[org.apache.commons.csv.CSVParser],
+    classOf[ch.qos.logback.classic.Logger],
+    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]])
+  val extraJarsToBundle =
     scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
       .split(":", -1)
       .map(_.trim)
       .filter(_ != "")
-  val jars = jarsForClasses ++ jarsForPrefixes ++ jarsFromEnvironment
-  for (j <- jars) println(j)
+  val jars =
+    classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath()) ++
+      extraJarsToBundle
   require(
     jars.forall(_.endsWith(".jar")),
     "You need to run this from a jar. Use 'sbt stage' to get one.")
