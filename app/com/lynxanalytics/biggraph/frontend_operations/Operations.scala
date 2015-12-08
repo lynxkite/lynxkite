@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
@@ -1457,6 +1458,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = op(op.belongsTo, seg.belongsTo).result
       parent.edgeBundle = result.es
       parent.edgeAttributes("multiplicity") = result.multiplicity
+    }
+  })
+
+  register("Copy segmentation one level up", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+
+    def enabled =
+      isSegmentation && FEStatus.assert(parent.isSegmentation, "Parent graph is not a segmentation")
+
+    def apply(params: Map[String, String]) = {
+      val parentSegmentation = parent.asSegmentation
+      val thisSegmentation = project.asSegmentation
+      val segmentationName = thisSegmentation.segmentationName
+      val targetSegmentation = parentSegmentation.parent.segmentation(segmentationName)
+      targetSegmentation.state = thisSegmentation.state
+      targetSegmentation.belongsTo =
+        parentSegmentation.belongsTo.concat(thisSegmentation.belongsTo)
     }
   })
 
