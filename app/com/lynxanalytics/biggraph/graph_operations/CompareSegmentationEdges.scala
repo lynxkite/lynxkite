@@ -11,9 +11,9 @@ object CompareSegmentationEdges extends OpFromJson {
     val goldenVs = vertexSet
     val testVs = vertexSet
     val goldenBelongsTo = edgeBundle(
-      parentVs, goldenVs, EdgeBundleProperties(isIdPreserving = true))
+      parentVs, goldenVs, EdgeBundleProperties.identity)
     val testBelongsTo = edgeBundle(
-      parentVs, testVs, EdgeBundleProperties(isIdPreserving = true))
+      parentVs, testVs, EdgeBundleProperties.identity)
     // The actually used inputs.
     val goldenEdges = edgeBundle(goldenVs, goldenVs)
     val testEdges = edgeBundle(testVs, testVs)
