@@ -1467,26 +1467,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       isSegmentation && FEStatus.assert(parent.isSegmentation, "Parent graph is not a segmentation")
 
-    private def concatEdgeBundles(edgesAB: EdgeBundle, edgesBC: EdgeBundle): EdgeBundle = {
-      val weightsAB = {
-        val op = graph_operations.AddConstantDoubleAttribute(1.0)
-        op(op.vs, edgesAB.idSet).result.attr
-      }
-      val weightsBC = {
-        val op = graph_operations.AddConstantDoubleAttribute(1.0)
-        op(op.vs, edgesBC.idSet).result.attr
-      }
-      val concatenated = {
-        val op = graph_operations.ConcatenateBundles()
-        op(
-          op.edgesAB, edgesAB)(
-            op.edgesBC, edgesBC)(
-              op.weightsAB, weightsAB)(
-                op.weightsBC, weightsBC).result.edgesAC
-      }
-      concatenated
-    }
-
     def apply(params: Map[String, String]) = {
       val parentSegmentation = parent.asSegmentation
       val thisSegmentation = project.asSegmentation
@@ -1494,7 +1474,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val targetSegmentation = parentSegmentation.parent.segmentation(segmentationName)
       targetSegmentation.state = thisSegmentation.state
       targetSegmentation.belongsTo =
-        concatEdgeBundles(parentSegmentation.belongsTo, thisSegmentation.belongsTo)
+        parentSegmentation.belongsTo.concat(thisSegmentation.belongsTo)
     }
   })
 
