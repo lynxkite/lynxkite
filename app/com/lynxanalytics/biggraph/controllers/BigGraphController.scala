@@ -123,6 +123,9 @@ case class FESegmentation(
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
 case class ProjectListRequest(path: String)
+case class ProjectSearchRequest(
+  basePath: String, // We only search for projects/directories contained (recursively) in this.
+  query: String)
 case class ProjectList(path: String, directories: List[String], projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
@@ -219,6 +222,32 @@ class BigGraphController(val env: BigGraphEnvironment) {
       request.path,
       visibleDirs.map(_.path.toString).toList,
       visible.map(_.toListElementFE).toList)
+  }
+
+  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
+    val dir = ProjectDirectory.fromName(request.basePath)
+    dir.assertReadAllowedFrom(user)
+    val terms = request.query.split(" ")
+    val dirs = dir
+      .listDirectoriesRecursively
+      .filter(_.readAllowedFrom(user))
+      .filter { dir =>
+        val baseName = dir.path.last.name
+        terms.forall(term => baseName.contains(term))
+      }
+    val projects = dir
+      .listProjectsRecursively
+      .filter(_.readAllowedFrom(user))
+      .filter { project =>
+        val baseName = project.path.last.name
+        val notes = project.viewer.state.notes
+        terms.forall(term => baseName.contains(term) || notes.contains(term))
+      }
+
+    ProjectList(
+      request.basePath,
+      dirs.map(_.path.toString).toList,
+      projects.map(_.toListElementFE).toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
@@ -483,6 +512,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
+    // Check for syntax errors with an unbound Groovy shell.
+    try {
+      groovy.GroovyContext(null, null).withUntrustedShell() {
+        shell => shell.parse(request.stepsAsGroovy, request.workflowName)
+      }
+    } catch {
+      case cfe: org.codehaus.groovy.control.CompilationFailedException =>
+        throw new AssertionError(cfe.getMessage) // Looks better on the frontend.
+      case t: Throwable => // It can throw Errors, that silently kill the request.
+        throw new AssertionError(t.getMessage)
+    }
     val savedWorkflow = SavedWorkflow(
       request.stepsAsGroovy,
       user.email,
