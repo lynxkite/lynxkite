@@ -128,10 +128,10 @@ object Scripting {
         assert(
           first.srcVertexSet.gUID == other.srcVertexSet.gUID,
           s"Source vertex set of $first does not match that of $other so" +
-            "they cannot be used together in a parallelEdgeBundleUnion")
+            " they cannot be used together in a parallelEdgeBundleUnion")
         assert(first.dstVertexSet.gUID == other.dstVertexSet.gUID,
           s"Destination vertex set of $first does not match that of $other so" +
-            "they cannot be used together in a parallelEdgeBundleUnion")
+            " they cannot be used together in a parallelEdgeBundleUnion")
       }
       val all = first +: others
       val idSetUnion = {
