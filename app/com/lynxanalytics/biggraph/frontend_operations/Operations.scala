@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
@@ -1457,6 +1458,55 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = op(op.belongsTo, seg.belongsTo).result
       parent.edgeBundle = result.es
       parent.edgeAttributes("multiplicity") = result.multiplicity
+    }
+  })
+
+  register("Copy segmentation one level up", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+
+    def enabled =
+      isSegmentation && FEStatus.assert(parent.isSegmentation, "Parent graph is not a segmentation")
+
+    private def concatEdgeBundlesNoDups(edgesAB: EdgeBundle, edgesBC: EdgeBundle): EdgeBundle = {
+      val weightsAB = {
+        val op = graph_operations.AddConstantDoubleAttribute(1.0)
+        op(op.vs, edgesAB.idSet).result.attr
+      }
+      val weightsBC = {
+        val op = graph_operations.AddConstantDoubleAttribute(1.0)
+        op(op.vs, edgesBC.idSet).result.attr
+      }
+      val concatenated = {
+        val op = graph_operations.ConcatenateBundles()
+        op(
+          op.edgesAB, edgesAB)(
+            op.edgesBC, edgesBC)(
+              op.weightsAB, weightsAB)(
+                op.weightsBC, weightsBC).result.edgesAC
+      }
+      // Merge parallel edges.
+      val edgesAsAttr = {
+        val op = EdgeBundleAsAttribute()
+        op(op.edges, concatenated).result.attr
+      }
+      val mergedResult = mergeEdges(edgesAsAttr)
+      val mergedEdges = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, concatenated)(
+          op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      mergedEdges
+    }
+
+    def apply(params: Map[String, String]) = {
+      val parentSegmentation = parent.asSegmentation
+      val thisSegmentation = project.asSegmentation
+      val segmentationName = thisSegmentation.segmentationName
+      val targetSegmentation = parentSegmentation.parent.segmentation(segmentationName)
+      targetSegmentation.state = thisSegmentation.state
+      targetSegmentation.belongsTo =
+        concatEdgeBundlesNoDups(parentSegmentation.belongsTo, thisSegmentation.belongsTo)
     }
   })
 
