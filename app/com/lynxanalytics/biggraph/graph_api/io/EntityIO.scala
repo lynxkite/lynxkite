@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
+import com.lynxanalytics.biggraph.graph_util._
 
 object IOContext {
   // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
@@ -73,16 +73,15 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       try {
         val files = paths.map(collection.createTaskFile(_))
         val verticesWriter = files.last.writer
-        val unit = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(()))
         for (file <- files) file.committer.setupTask(file.context)
         for ((id, cols) <- iterator) {
           count += 1
           val key = new hadoop.io.LongWritable(id)
           for ((file, col) <- (files zip cols) if col != null) {
-            val value = new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(col))
+            val value = SimpleSerializer.serializeString(col)
             file.writer.write(key, value)
           }
-          verticesWriter.write(key, unit)
+          verticesWriter.write(key, SimpleSerializer.serializedUnit)
         }
         for (file <- files) file.committer.commitTask(file.context)
       } finally collection.close()
@@ -94,8 +93,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       sparkContext.runJob(data, writeShard)
       for (file <- files) file.committer.commitJob(file.context)
       // Write metadata files.
-      val meta = EntityMetadata(count.value, Some("kryo"))
-      for (e <- outputEntities) meta.write(partitionedPath(e).forWriting)
+      val vertexSetMeta = EntityMetadata(count.value, Some(SimpleSerializer.unitSerializer.name))
+      val attributeMeta = EntityMetadata(count.value, Some(SimpleSerializer.stringSerializer.name))
+      vertexSetMeta.write(partitionedPath(vs).forWriting)
+      for (attr <- attributes) attributeMeta.write(partitionedPath(attr).forWriting)
     } finally collection.close()
   }
 }

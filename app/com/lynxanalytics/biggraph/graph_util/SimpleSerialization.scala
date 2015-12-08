@@ -13,13 +13,16 @@ object SimpleSerializer {
   type Serializer[T] = Iterator[(ID, T)] => Iterator[(ID, BytesWritable)]
 
   val unitSerializer = new SimpleSerializer[Unit]("unit", it => {
-    val empty = new BytesWritable()
-    it.map { case (k, v) => k -> empty }
+    it.map { case (k, v) => k -> serializedUnit }
   })
 
+  val serializedUnit = new BytesWritable()
+
   val stringSerializer = new SimpleSerializer[String]("string", it => {
-    it.map { case (k, v) => k -> new BytesWritable(v.getBytes("utf-8")) }
+    it.map { case (k, v) => k -> serializeString(v) }
   })
+
+  def serializeString(s: String) = new BytesWritable(s.getBytes("utf-8"))
 
   val doubleSerializer = new SimpleSerializer[Double]("double", it => {
     val bytes = new Array[Byte](8)
