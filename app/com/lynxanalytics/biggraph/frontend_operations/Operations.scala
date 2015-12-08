@@ -2009,6 +2009,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldProjectState = project.state
       val segmentation = project.segmentation(params("name"))
       segmentation.state = oldProjectState
+      for (subSegmentationName <- segmentation.segmentationNames) {
+        segmentation.deleteSegmentation(subSegmentationName)
+      }
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
