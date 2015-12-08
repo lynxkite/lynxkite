@@ -7,6 +7,7 @@ import org.apache.spark
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import play.api.libs.json
+import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util._
@@ -258,7 +259,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
     val partitions = rdd.partitions.size
-    val (lines, serialization) = targetDir(partitions).saveEntityRDD(rdd)(rddData.typeTag)
+    val (lines, serialization) = targetDir(partitions).saveEntityRDD(rdd, rddData.typeTag)
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
     log.info(s"PERF Instantiated entity $entity on disk")
@@ -266,6 +267,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   // The subclasses know the specific type and can thus make a safer cast.
   def castData(data: EntityData): EntityRDDData[T]
+
+  def valueTypeTag: TypeTag[T] // The TypeTag of the values we write out.
 
   def delete(): Boolean = {
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
@@ -300,12 +303,15 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
                           partitioner: org.apache.spark.Partitioner,
                           parent: Option[VertexSetData] = None): DT
 
-  protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
+  protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T]
 
-  private def bestPartitionedSource(entityLocation: EntityLocationSnapshot, desiredPartitionNumber: Int) = {
+  private def bestPartitionedSource(
+    entityLocation: EntityLocationSnapshot,
+    desiredPartitionNumber: Int) = {
     assert(entityLocation.availablePartitions.nonEmpty,
-      s"there should be valid sub directories in $partitionedPath")
-    val ratioSorter = RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desiredPartitionNumber)
+      s"There should be valid sub directories in $partitionedPath")
+    val ratioSorter =
+      RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desiredPartitionNumber)
     entityLocation.availablePartitions(ratioSorter.best.get)
   }
 
@@ -317,8 +323,9 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
       repartitionFromLegacyRDD(entityLocation, partitioner)
   }
 
-  private def repartitionFromPartitionedRDD(entityLocation: EntityLocationSnapshot,
-                                            partitioner: org.apache.spark.Partitioner): HadoopFile = {
+  private def repartitionFromPartitionedRDD(
+    entityLocation: EntityLocationSnapshot,
+    partitioner: org.apache.spark.Partitioner): HadoopFile = {
     val pn = partitioner.numPartitions
     val from = bestPartitionedSource(entityLocation, pn)
     val oldRDD = from.loadEntityRawRDD(sc)
@@ -336,9 +343,10 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
       s"There should be a valid legacy path at $legacyPath")
     val pn = partitioner.numPartitions
     val oldRDD = legacyRDD
+    implicit val ct = RuntimeSafeCastable.classTagFromTypeTag(valueTypeTag)
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
-    val (lines, serialization) = newFile.saveEntityRDD(newRDD)
+    val (lines, serialization) = newFile.saveEntityRDD[T](newRDD, valueTypeTag)
     assert(entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     val metadata = EntityMetadata(lines, Some(serialization))
@@ -397,6 +405,8 @@ class VertexSetIO(entity: VertexSet, context: IOContext)
   }
 
   def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
+
+  def valueTypeTag = typeTag[Unit]
 }
 
 class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
@@ -424,6 +434,8 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
   }
 
   def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
+
+  def valueTypeTag = typeTag[Edge]
 }
 
 class AttributeIO[T](entity: Attribute[T], context: IOContext)
@@ -454,4 +466,6 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
 
   def castData(data: EntityData) =
     data.asInstanceOf[AttributeData[_]].runtimeSafeCast(entity.typeTag)
+
+  def valueTypeTag = entity.typeTag
 }
