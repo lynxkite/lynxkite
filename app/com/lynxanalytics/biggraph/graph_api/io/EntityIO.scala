@@ -76,6 +76,8 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     val trackerID = Timestamp.toString
     val rddID = data.id
     val count = sparkContext.accumulator[Long](0L, "Line count")
+    val unitSerializer = EntitySerializer.forType[Unit]
+    val stringSerializer = EntitySerializer.forType[String]
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
       val collection = new IOContext.TaskFileCollection(
         trackerID, rddID, task.partitionId, task.attemptNumber)
@@ -87,10 +89,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
           count += 1
           val key = new hadoop.io.LongWritable(id)
           for ((file, col) <- (files zip cols) if col != null) {
-            val value = EntitySerializer.serializeString(col)
+            val value = stringSerializer.serialize(col)
             file.writer.write(key, value)
           }
-          verticesWriter.write(key, EntitySerializer.serializedUnit)
+          verticesWriter.write(key, unitSerializer.serialize(()))
         }
         for (file <- files) file.committer.commitTask(file.context)
       } finally collection.close()
@@ -102,8 +104,8 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       sparkContext.runJob(data, writeShard)
       for (file <- files) file.committer.commitJob(file.context)
       // Write metadata files.
-      val vertexSetMeta = EntityMetadata(count.value, Some(EntitySerializer.unitSerializer.name))
-      val attributeMeta = EntityMetadata(count.value, Some(EntitySerializer.stringSerializer.name))
+      val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
+      val attributeMeta = EntityMetadata(count.value, Some(stringSerializer.name))
       vertexSetMeta.write(partitionedPath(vs).forWriting)
       for (attr <- attributes) attributeMeta.write(partitionedPath(attr).forWriting)
     } finally collection.close()
