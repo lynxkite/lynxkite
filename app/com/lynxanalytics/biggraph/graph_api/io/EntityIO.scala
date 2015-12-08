@@ -311,7 +311,8 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRawRDD(newRDD)
-    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
+    assert(entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     newFile
   }
 
@@ -324,7 +325,8 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
-    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
+    assert(entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     EntityMetadata(lines).write(partitionedPath.forWriting)
     newFile
   }
@@ -392,7 +394,8 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
                 count: Long,
                 partitioner: org.apache.spark.Partitioner,
                 parent: Option[VertexSetData]): EdgeBundleData = {
-    assert(partitioner eq parent.get.rdd.partitioner.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
     val rdd = path.loadEntityRDD[Edge](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
@@ -415,7 +418,8 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
                 count: Long,
                 partitioner: org.apache.spark.Partitioner,
                 parent: Option[VertexSetData]): AttributeData[T] = {
-    assert(partitioner eq parent.get.rdd.partitioner.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
     implicit val ct = entity.classTag
     val rdd = path.loadEntityRDD[T](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
