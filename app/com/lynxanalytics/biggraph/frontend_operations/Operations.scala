@@ -1467,7 +1467,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       isSegmentation && FEStatus.assert(parent.isSegmentation, "Parent graph is not a segmentation")
 
-    private def concatEdgeBundlesNoDups(edgesAB: EdgeBundle, edgesBC: EdgeBundle): EdgeBundle = {
+    private def concatEdgeBundles(edgesAB: EdgeBundle, edgesBC: EdgeBundle): EdgeBundle = {
       val weightsAB = {
         val op = graph_operations.AddConstantDoubleAttribute(1.0)
         op(op.vs, edgesAB.idSet).result.attr
@@ -1484,19 +1484,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               op.weightsAB, weightsAB)(
                 op.weightsBC, weightsBC).result.edgesAC
       }
-      // Merge parallel edges.
-      val edgesAsAttr = {
-        val op = EdgeBundleAsAttribute()
-        op(op.edges, concatenated).result.attr
-      }
-      val mergedResult = mergeEdges(edgesAsAttr)
-      val mergedEdges = {
-        val op = graph_operations.PulledOverEdges()
-        op(op.originalEB, concatenated)(
-          op.injection, mergedResult.representative)
-          .result.pulledEB
-      }
-      mergedEdges
+      concatenated
     }
 
     def apply(params: Map[String, String]) = {
@@ -1506,7 +1494,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val targetSegmentation = parentSegmentation.parent.segmentation(segmentationName)
       targetSegmentation.state = thisSegmentation.state
       targetSegmentation.belongsTo =
-        concatEdgeBundlesNoDups(parentSegmentation.belongsTo, thisSegmentation.belongsTo)
+        concatEdgeBundles(parentSegmentation.belongsTo, thisSegmentation.belongsTo)
     }
   })
 

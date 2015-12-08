@@ -1,4 +1,5 @@
-// For each B and each pair of edges that go A->B and B->C creates an edge that goes A->C.
+// For each (A, C) pair of vertices for which A->B and B->C edges exist, creates
+// one new edge A->C.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
