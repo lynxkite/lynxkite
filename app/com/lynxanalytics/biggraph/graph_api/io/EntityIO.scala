@@ -61,6 +61,15 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
   def writeAttributes(attributes: Seq[Attribute[String]], data: AttributeRDD[Seq[String]]) = {
     val vs = attributes.head.vertexSet
     for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
+
+    // Delete output directories.
+    val doesNotExist = new VertexSetIO(vs, this).delete()
+    assert(doesNotExist, s"Cannot delete directory of $vs")
+    for (attr <- attributes) {
+      val doesNotExist = new AttributeIO(attr, this).delete()
+      assert(doesNotExist, s"Cannot delete directory of $attr")
+    }
+
     val outputEntities: Seq[MetaGraphEntity] = attributes :+ vs
     val paths = outputEntities.map(e => partitionedPath(e, data.partitions.size).forWriting)
 
