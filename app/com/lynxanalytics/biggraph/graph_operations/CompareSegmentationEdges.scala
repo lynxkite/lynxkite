@@ -22,8 +22,8 @@ object CompareSegmentationEdges extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val precision = scalar[Double]
     val recall = scalar[Double]
-    val presentInGolden = edgeAttribute[Boolean](inputs.testEdges.entity)
-    val presentInTest = edgeAttribute[Boolean](inputs.goldenEdges.entity)
+    val presentInGolden = edgeAttribute[Double](inputs.testEdges.entity)
+    val presentInTest = edgeAttribute[Double](inputs.goldenEdges.entity)
   }
   def fromJson(j: JsValue) = CompareSegmentationEdges()
 }
@@ -62,12 +62,12 @@ case class CompareSegmentationEdges()
     output(
       o.presentInTest,
       intersectionKeys
-        .map { case (_, (goldenId, _)) => (goldenId, true) }
+        .map { case (_, (goldenId, _)) => (goldenId, 1.0) }
         .sortUnique(golden.partitioner.get))
     output(
       o.presentInGolden,
       intersectionKeys
-        .map { case (_, (_, testId)) => (testId, true) }
+        .map { case (_, (_, testId)) => (testId, 1.0) }
         .sortUnique(test.partitioner.get))
 
   }

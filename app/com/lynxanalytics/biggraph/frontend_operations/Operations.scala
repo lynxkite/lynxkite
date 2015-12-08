@@ -2336,36 +2336,39 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Compare segmentation edges", new PropagationOperation(_, _) with SegOp {
-    val possibleOthers =
-      if (!project.isSegmentation) {
-        UIValue.list(List())
-      } else {
-        UIValue.list(
-          parent.segmentations
-            .filter { seg => (seg.edgeBundle != null) }
-            .map { seg => seg.segmentationName }
-            .toList
-        )
-      }
+  register("Compare segmentation edges", new GlobalOperation(_, _) {
+    def isCompatibleSegmentation(segmentation: SegmentationEditor): Boolean = {
+      return segmentation.edgeBundle != null &&
+        segmentation.belongsTo.properties.compliesWith(EdgeBundleProperties.identity)
+    }
 
-    def segmentationParameters = List(
-      Choice("golden-set", "Golden Set", multipleChoice = false, options = possibleOthers)
+    val possibleSegmentations = UIValue.list(project.segmentations
+      .filter(isCompatibleSegmentation)
+      .map { seg => seg.segmentationName }
+      .toList)
+
+    override def parameters = List(
+      Choice("golden", "Golden", multipleChoice = false, options = possibleSegmentations),
+      Choice("test", "Test", multipleChoice = false, options = possibleSegmentations)
     )
-    def enabled = isSegmentation && hasEdgeBundle
+    def enabled = FEStatus.assert(
+      possibleSegmentations.size >= 2,
+      "At least two segmentations are needed. Both should have edges " +
+        "and both should be created with an identity transformation.")
 
     def apply(params: Map[String, String]): Unit = {
-      val goldenSet = parent.segmentation(params("golden-set"))
+      val golden = project.segmentation(params("golden"))
+      val test = project.segmentation(params("test"))
       val op = graph_operations.CompareSegmentationEdges()
       val result = op(
-        op.goldenBelongsTo, goldenSet.belongsTo)(
-          op.testBelongsTo, project.asSegmentation.belongsTo)(
-            op.goldenEdges, goldenSet.edgeBundle)(
-              op.testEdges, project.edgeBundle).result
-      project.scalars("precision") = result.precision
-      project.scalars("recall") = result.recall
-      project.edgeAttributes("present_in_" + goldenSet.segmentationName) = result.presentInGolden
-      goldenSet.edgeAttributes("present_in_" + project.asSegmentation.segmentationName) = result.presentInTest
+        op.goldenBelongsTo, golden.belongsTo)(
+          op.testBelongsTo, test.belongsTo)(
+            op.goldenEdges, golden.edgeBundle)(
+              op.testEdges, test.edgeBundle).result
+      test.scalars("precision") = result.precision
+      test.scalars("recall") = result.recall
+      test.edgeAttributes("present_in_" + golden.segmentationName) = result.presentInGolden
+      golden.edgeAttributes("present_in_" + test.segmentationName) = result.presentInTest
     }
 
   })
