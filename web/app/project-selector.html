@@ -47,6 +47,11 @@
       <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon"></span>
     </div>
 
+    <div class="entry">
+      <span class="icon glyphicon glyphicon-search"></span>
+      <input class="form-control" id="project-search-box" placeholder="Search for projects" ng-model="searchQuery">
+    </div>
+
     <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
       Loading...
     </progressbar>
@@ -57,20 +62,30 @@
     </p>
 
     <div ng-repeat="directory in data.directories"
-      id="directory-{{ directory | id }}"
-      class="entry" href ng-click="enterDirectory($event, directory)">
+      id="directory-{{ pathInside(directory) | id }}"
+      class="entry directory-entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       <span class="lead">
-        <item-name-and-menu menu="menu" name="{{directory}}" type="directory"></item-name-and-menu>
+        <item-name-and-menu
+          menu="menu"
+          name="{{directory}}"
+          short-name="{{pathInside(directory)}}"
+          type="directory">
+        </item-name-and-menu>
       </span>
     </div>
 
     <div ng-repeat="project in data.projects"
-      id="project-{{ project.name | id }}"
+      id="project-{{ pathInside(project.name) | id }}"
       class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <span class="icon glyphicon glyphicon-file pull-left"></span>
       <span class="lead">
-        <item-name-and-menu menu="menu" name="{{project.name}}" type="project"></item-name-and-menu>
+        <item-name-and-menu
+          menu="menu"
+          name="{{project.name}}"
+          short-name="{{pathInside(project.name)}}"
+          type="project">
+        </item-name-and-menu>
         <a href="#/project/{{project.name}}" target="_blank" ng-hide="project.error"
             ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
           <span class="icon glyphicon glyphicon-new-window"></span>

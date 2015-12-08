@@ -47,12 +47,12 @@ class DataManager(sc: spark.SparkContext,
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val param = io.IOContext(dataRoot, sc)
+    val context = io.IOContext(dataRoot, sc)
     entity match {
-      case vs: VertexSet => new io.VertexIO(vs, param)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
-      case va: Attribute[_] => new io.AttributeIO(va, param)
-      case sc: Scalar[_] => new io.ScalarIO(sc, param)
+      case vs: VertexSet => new io.VertexSetIO(vs, context)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
+      case va: Attribute[_] => new io.AttributeIO(va, context)
+      case sc: Scalar[_] => new io.ScalarIO(sc, context)
     }
   }
 
@@ -318,6 +318,7 @@ class DataManager(sc: spark.SparkContext,
     val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
+      ioContext = io.IOContext(dataRoot, sc),
       broadcastDirectory = broadcastDirectory)
   }
 }

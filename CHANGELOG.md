@@ -6,12 +6,19 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Fingerprinting between project and segmentation made more general: it can now add new
+   connections, not only select from existing ones.
+ - Reintroduced project search on the project selector UI.
  - Added the _Predict vertex attribute_ operation to offer some simple machine learning tools.
  - Significantly reduced chance of out of memory errors in LynxKite. (We do not require anymore
    that any spark data partition has to fit in memory.)
  - Long attributes can no longer be referenced in derived attributes. This is to avoid the
    surprising rounding that JavaScript performs on them. The attributes have to be converted to
    strings or doubles first.
+ - Created new operations _Add random vertex attribute_ and _Add random edge attribute_. You can
+   specify the desired distribution (normal or uniform). These new operations obsolete _Add gaussian
+   vertex attribute_, which is no longer accessible from the operations menu.
+ - Enable creating segmentations on top of other segmentations.
 
 ### 1.5.8
 
