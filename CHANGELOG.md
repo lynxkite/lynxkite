@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Fingerprinting between project and segmentation made more general: it can now add new
+   connections, not only select from existing ones.
  - Reintroduced project search on the project selector UI.
  - Significantly reduced chance of out of memory errors in LynxKite. (We do not require anymore
    that any spark data partition has to fit in memory.)
