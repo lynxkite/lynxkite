@@ -483,6 +483,15 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
+    // Check for syntax errors with an unbound Groovy shell.
+    try {
+      groovy.GroovyContext(null, null).withUntrustedShell() {
+        shell => shell.parse(request.stepsAsGroovy, request.description)
+      }
+    } catch {
+      case cfe: org.codehaus.groovy.control.CompilationFailedException =>
+        throw new AssertionError(cfe.getMessage) // Looks better on the frontend.
+    }
     val savedWorkflow = SavedWorkflow(
       request.stepsAsGroovy,
       user.email,
