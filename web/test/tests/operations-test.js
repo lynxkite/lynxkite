@@ -17,7 +17,8 @@ module.exports = function(fw) {
     'empty test-example project',
     'scalar can show up in an operation box',
     function() {
-      lib.left.runOperation('New vertex set', {'size': '10'});
+      lib.left.runOperation('New vertex set', { size: '10' });
+      lib.left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
       lib.left.runOperation('Derived vertex attribute', {
         'output': 'seg',
         'type': 'double',

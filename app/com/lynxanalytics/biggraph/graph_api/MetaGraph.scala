@@ -391,7 +391,14 @@ object MetaGraphOp {
   val UTF8 = java.nio.charset.Charset.forName("UTF-8")
 }
 trait MetaGraphOp extends Serializable with ToJson {
+  // An operation is heavy if it is faster to load its results than it is to recalculate them.
+  // Heavy operation outputs are written out and loaded back on completion.
   val isHeavy: Boolean = false
+  // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
+  // instead of putting them in the OutputBuilder in execute().
+  val hasCustomSaving: Boolean = false
+  assert(!hasCustomSaving || isHeavy, "$this cannot have custom saving if it is not heavy.")
+
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
@@ -652,8 +659,10 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
   }
 
   def dataMap() = {
-    assert(outputMeta.all.values.forall(x => internalDataMap.contains(x.gUID)),
-      s"Output data missing for: ${outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))}")
+    if (!instance.operation.hasCustomSaving) {
+      val missing = outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))
+      assert(missing.isEmpty, s"Output data missing for: $missing")
+    }
     internalDataMap
   }
 

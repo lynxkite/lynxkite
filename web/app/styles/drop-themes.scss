@@ -1,0 +1,16 @@
+@import '../bower_components/tether/src/css/helpers/tether';
+@import '../bower_components/tether/src/css/helpers/tether-theme-arrows';
+
+@include tether($themePrefix: 'drop');
+@include tether-theme-arrows(
+  $themePrefix: 'drop',
+  $themeName: 'tooltip',
+  $arrowSize: 4px,
+  $backgroundColor: black,
+  $color: white,
+  $useDropShadow: false);
+
+.drop-element.drop-theme-tooltip .drop-content {
+  padding: 4px 8px;
+  font-size: 12px;
+}

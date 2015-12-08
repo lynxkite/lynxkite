@@ -208,11 +208,11 @@ trait ImportCommon {
 
     def apply(fieldName: String) = singleColumns(fieldName)
 
-    def columnPair(fieldName1: String, fieldName2: String): SortedRDD[ID, (String, String)] = {
+    def columnPair(fieldName1: String, fieldName2: String): UniqueSortedRDD[ID, (String, String)] = {
       val idx1 = fields.indexOf(fieldName1)
       val idx2 = fields.indexOf(fieldName2)
       if (mayHaveNulls) {
-        numberedValidLines.flatMapValues { line =>
+        numberedValidLines.flatMapOptionalValues { line =>
           val value1 = line(idx1)
           val value2 = line(idx2)
           if ((value1 != null) && (value2 != null)) Some((value1, value2))
@@ -230,10 +230,9 @@ trait ImportCommon {
     assert(input.fields.contains(field), s"No such field: $field in ${input.fields}")
   }
 
-  protected def readColumns(
+  protected def numberedLines(
     rc: RuntimeContext,
-    input: RowInput,
-    requiredFields: Set[String] = Set()): Columns = {
+    input: RowInput): UniqueSortedRDD[ID, Seq[String]] = {
     val numbered = input.lines(rc)
     if (ImportUtil.cacheLines) numbered.cacheBackingArray()
     val maxLines = Limitations.maxImportedLines
@@ -244,7 +243,14 @@ trait ImportCommon {
           s"Can't import $numLines lines as your licence only allows $maxLines.")
       }
     }
-    return new Columns(numbered, input.fields, input.mayHaveNulls, requiredFields)
+    numbered
+  }
+
+  protected def readColumns(
+    rc: RuntimeContext,
+    input: RowInput,
+    requiredFields: Set[String] = Set()): Columns = {
+    return new Columns(numberedLines(rc, input), input.fields, input.mayHaveNulls, requiredFields)
   }
 }
 object ImportCommon {
@@ -273,6 +279,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
   override val isHeavy = true
+  override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
   override def toJson = Json.obj("input" -> input.toTypedJson)
@@ -281,11 +288,14 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc, input)
-    for ((field, rdd) <- columns.singleColumns) {
-      output(o.attrs(field), rdd)
-    }
-    output(o.vertices, columns.numberedValidLines.mapValues(_ => ()))
+    val sc = rc.sparkContext
+
+    val entities = o.attrs.values.map(_.entity)
+    val entitiesByName = entities.map(e => e.name -> e).toMap
+    val inOrder = input.fields.map(f => entitiesByName(ImportCommon.toSymbol(f)))
+
+    val lines = numberedLines(rc, input)
+    rc.ioContext.writeAttributes(inOrder, lines)
   }
 }
 
