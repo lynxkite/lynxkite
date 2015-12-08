@@ -2348,8 +2348,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       .toList)
 
     override def parameters = List(
-      Choice("golden", "Golden", multipleChoice = false, options = possibleSegmentations),
-      Choice("test", "Test", multipleChoice = false, options = possibleSegmentations)
+      Choice("golden", "Golden segmentation", multipleChoice = false, options = possibleSegmentations),
+      Choice("test", "Test segmentation", multipleChoice = false, options = possibleSegmentations)
     )
     def enabled = FEStatus.assert(
       possibleSegmentations.size >= 2,
