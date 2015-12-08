@@ -7,25 +7,35 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 
 object AddReversedEdges extends OpFromJson {
+  private val addIsNewAttrParameter = NewParameter("addIsNewAttr", false)
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(addIsNewAttr: Boolean)(implicit instance: MetaGraphOperationInstance,
+                                      inputs: Input) extends MagicOutput(instance) {
     val esPlus = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val newToOriginal = edgeBundle(
       esPlus.idSet, inputs.es.idSet,
       EdgeBundleProperties.surjection)
-    val isNew = edgeAttribute[Double](esPlus)
+    // For backward compatibility. This is a bit more ugly than
+    // Json migration, but it avoids the recalculation migration
+    // comes with.
+    val isNew =
+      if (addIsNewAttr) edgeAttribute[Double](esPlus)
+      else null
   }
-  def fromJson(j: JsValue) = AddReversedEdges()
+  def fromJson(j: JsValue) = AddReversedEdges(
+    addIsNewAttrParameter.fromJson(j)
+  )
 }
 import AddReversedEdges._
-case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
+case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output(addIsNewAttr)(instance, inputs)
+
+  override def toJson = addIsNewAttrParameter.toJson(addIsNewAttr)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -43,9 +53,11 @@ case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
       renumbered.mapValuesWithKeys {
         case (newID, (oldID, (e, _))) => Edge(newID, oldID)
       })
-    output(o.isNew,
-      renumbered.mapValues {
-        case (oldId, (e, attr)) => attr
-      })
+    if (addIsNewAttr) {
+      output(o.isNew,
+        renumbered.mapValues {
+          case (oldId, (e, attr)) => attr
+        })
+    }
   }
 }

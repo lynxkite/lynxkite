@@ -318,6 +318,7 @@ class DataManager(sc: spark.SparkContext,
     val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
+      ioContext = io.IOContext(dataRoot, sc),
       broadcastDirectory = broadcastDirectory)
   }
 }

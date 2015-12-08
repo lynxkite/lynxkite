@@ -48,7 +48,7 @@ module.exports = function (grunt) {
       },
       sass: {
         files: ['<%= yeoman.app %>/styles/{,*/}*.scss'],
-        tasks: ['newer:copy:styles', 'sass', 'autoprefixer']
+        tasks: ['sass', 'autoprefixer']
       },
       help: {
         files: ['<%= yeoman.app %>/help/{,*/}*.asciidoc'],
@@ -177,7 +177,7 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: '.tmp/styles/',
+          cwd: '<%= yeoman.app %>/styles/',
           src: '{,*/}*.scss',
           dest: '.tmp/styles/',
           ext: '.css',
@@ -366,7 +366,7 @@ module.exports = function (grunt) {
         expand: true,
         cwd: '<%= yeoman.app %>/styles',
         dest: '.tmp/styles/',
-        src: '{,*/}*.{,s}css'
+        src: '{,*/}*.css'
       }
     },
 

@@ -13,5 +13,13 @@ class CopyGraphIntoASegmentationOperationTest extends OperationsTestBase {
     assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
   }
 
+  test("Copy graph into a segmentation discards sub-segmentations") {
+    run("Example Graph")
+    run("Copy graph into a segmentation", Map("name" -> "seg1"))
+    run("Copy graph into a segmentation", Map("name" -> "seg2"))
+    val seg2 = project.segmentation("seg2")
+    assert(seg2.segmentationNames.isEmpty)
+  }
+
 }
 

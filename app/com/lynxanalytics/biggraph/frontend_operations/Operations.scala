@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -167,6 +168,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   abstract class HiddenOperation(t: String, c: Context)
     extends Operation(t, c, Category("Hidden operations", "black", visible = false))
+
+  abstract class DeprecatedOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Depricated operations", "red", deprecated = true, icon = "remove-sign"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
@@ -380,11 +384,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val dst = params("dst")
       assert(src.nonEmpty, "The Source ID field parameter must be set.")
       assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
-      val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
-      project.setVertexSet(imp.vertices, idAttr = "id")
-      project.newVertexAttribute("stringID", imp.stringID)
-      project.edgeBundle = imp.edges
-      project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      val vg = graph_operations.ImportVertexList(source(params))().result
+      val eg = {
+        val op = graph_operations.VerticesToEdges()
+        op(op.srcAttr, vg.attrs(src))(op.dstAttr, vg.attrs(dst)).result
+      }
+      project.setVertexSet(eg.vs, idAttr = "id")
+      project.newVertexAttribute("stringID", eg.stringID)
+      project.edgeBundle = eg.es
+      for ((name, attr) <- vg.attrs) {
+        project.edgeAttributes(name) = attr.pullVia(eg.embedding)
+      }
     }
   }
   register("Import vertices and edges from single CSV fileset",
@@ -777,7 +787,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Add gaussian vertex attribute", new VertexAttributesOperation(_, _) {
+  register("Add gaussian vertex attribute", new DeprecatedOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       RandomSeed("seed", "Seed"))
@@ -787,6 +797,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       project.newVertexAttribute(
         params("name"), op(op.vertices, project.vertexSet).result.attr, help)
+    }
+  })
+
+  register("Add random vertex attribute", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "random"),
+      Choice("dist", "Distribution", options = UIValue.list(RandomDistribution.getNames)),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
+      project.newVertexAttribute(
+        params("name"), op(op.vs, project.vertexSet).result.attr, help)
+    }
+  })
+
+  register("Add random edge attribute", new EdgeAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "random"),
+      Choice("dist", "Distribution", options = UIValue.list(RandomDistribution.getNames)),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
+      project.newEdgeAttribute(
+        params("name"), op(op.vs, project.edgeBundle.idSet).result.attr, help)
     }
   })
 
@@ -915,8 +953,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     )
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      val addIsNewAttr = params.getOrElse("distattr", "").nonEmpty
+
       val rev = {
-        val op = graph_operations.AddReversedEdges()
+        val op = graph_operations.AddReversedEdges(addIsNewAttr)
         op(op.es, project.edgeBundle).result
       }
 
@@ -925,7 +965,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.edgeAttributes.toIndexedSeq,
         rev.esPlus,
         rev.newToOriginal)
-      if (params.getOrElse("distattr", "").nonEmpty) {
+      if (addIsNewAttr) {
         project.edgeAttributes(params("distattr")) = rev.isNew
       }
     }
@@ -967,7 +1007,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, project.edgeBundle).result.embeddedness.entity
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
-      var normalizedDispersion = {
+      val normalizedDispersion = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
           Seq("disp", "emb"))
@@ -1354,28 +1394,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
-    private def segmentationSizesSquareSum()(
-      implicit manager: MetaGraphManager): Scalar[_] = {
-      val size = aggregateViaConnection(
-        seg.belongsTo,
-        AttributeWithLocalAggregator(parent.vertexAttributes("id"), "count")
-      )
-      val sizeSquare: Attribute[Double] = {
-        val op = graph_operations.DeriveJSDouble(
-          JavaScript("size * size"),
-          Seq("size"))
-        op(
-          op.attrs,
-          graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
-      }
-      aggregate(AttributeWithAggregator(sizeSquare, "sum"))
+  private def segmentationSizesSquareSum(seg: SegmentationEditor, parent: ProjectEditor)(
+    implicit manager: MetaGraphManager): Scalar[_] = {
+    val size = aggregateViaConnection(
+      seg.belongsTo,
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
+    )
+    val sizeSquare: Attribute[Double] = {
+      val op = graph_operations.DeriveJSDouble(
+        JavaScript("size * size"),
+        Seq("size"))
+      op(
+        op.attrs,
+        graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
     }
+    aggregate(AttributeWithAggregator(sizeSquare, "sum"))
+  }
+
+  register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
 
     def segmentationParameters = List()
     override def visibleScalars =
       if (project.isSegmentation) {
-        val scalar = segmentationSizesSquareSum()
+        val scalar = segmentationSizesSquareSum(seg, parent)
         List(FEOperationScalarMeta("num_created_edges", scalar.gUID.toString))
       } else {
         List()
@@ -1391,6 +1432,32 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- project.vertexAttributes) {
         parent.edgeAttributes(s"${seg.segmentationName}_$name") = attr.pullVia(result.origin)
       }
+    }
+  })
+
+  register("Sample edges from co-occurrence", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List(
+      NonNegDouble("probability", "Vertex pair selection probability", defaultValue = "0.001"),
+      RandomSeed("seed", "Random seed")
+    )
+    override def visibleScalars =
+      if (project.isSegmentation) {
+        val scalar = segmentationSizesSquareSum(seg, parent)
+        List(FEOperationScalarMeta("num_total_edges", scalar.gUID.toString))
+      } else {
+        List()
+      }
+
+    def enabled =
+      isSegmentation &&
+        FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.SampleEdgesFromSegmentation(
+        params("probability").toDouble,
+        params("seed").toLong)
+      val result = op(op.belongsTo, seg.belongsTo).result
+      parent.edgeBundle = result.es
+      parent.edgeAttributes("multiplicity") = result.multiplicity
     }
   })
 
@@ -1942,6 +2009,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldProjectState = project.state
       val segmentation = project.segmentation(params("name"))
       segmentation.state = oldProjectState
+      for (subSegmentationName <- segmentation.segmentationNames) {
+        segmentation.deleteSegmentation(subSegmentationName)
+      }
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb

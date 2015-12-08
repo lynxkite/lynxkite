@@ -282,6 +282,11 @@ case class AttributeVectorToAny[From]() extends AttributeCast[Vector[From], Vect
 case class JSValue(value: Any)
 
 object JSValue {
+  def longNotSupported =
+    throw new AssertionError(
+      "The Long type is not supported in JavaScript due to language limitations." +
+        " Please convert to Double or String first.")
+
   def converter[T: TypeTag]: (T => JSValue) = {
     if (typeOf[T] <:< typeOf[Vector[Any]]) {
       value =>
@@ -291,7 +296,7 @@ object JSValue {
           val arr: Array[Any] =
             if (v.forall(_.isInstanceOf[Double])) v.map(_.asInstanceOf[Double]).toArray
             else if (v.forall(_.isInstanceOf[Float])) v.map(_.asInstanceOf[Float]).toArray
-            else if (v.forall(_.isInstanceOf[Long])) v.map(_.asInstanceOf[Long]).toArray
+            else if (v.forall(_.isInstanceOf[Long])) longNotSupported
             else if (v.forall(_.isInstanceOf[Int])) v.map(_.asInstanceOf[Int]).toArray
             else if (v.forall(_.isInstanceOf[Short])) v.map(_.asInstanceOf[Short]).toArray
             else if (v.forall(_.isInstanceOf[Byte])) v.map(_.asInstanceOf[Byte]).toArray
@@ -300,18 +305,21 @@ object JSValue {
             else v.toArray
           JSValue(arr)
         }
-    } else value => JSValue(value)
+    } else if (typeOf[T] =:= typeOf[Long]) longNotSupported
+    else value => JSValue(value)
   }
+
   def convert[T: TypeTag](value: T): JSValue = {
     val c = converter[T]
     c(value)
   }
+
   def defaultValue[T: TypeTag]: JSValue = {
     JSValue(
       if (typeOf[T] =:= typeOf[Byte]) 0.toByte
       else if (typeOf[T] =:= typeOf[Short]) 0.toShort
       else if (typeOf[T] =:= typeOf[Int]) 0
-      else if (typeOf[T] =:= typeOf[Long]) 0L
+      else if (typeOf[T] =:= typeOf[Long]) longNotSupported
       else if (typeOf[T] =:= typeOf[Float]) 0.toFloat
       else if (typeOf[T] =:= typeOf[Double]) 0.0
       else if (typeOf[T] =:= typeOf[Char]) 'a'
