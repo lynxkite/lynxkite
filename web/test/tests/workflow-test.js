@@ -43,7 +43,7 @@ module.exports = function(fw) {
       expect(lib.errors()).toEqual([]);
     });
 
-  function saveWorkflow(name, description, code) {
+  function tryToSaveWorkflow(name, description, code) {
     lib.left.history.open();
     lib.left.openWorkflowSavingDialog();
     lib.left.getWorkflowNameEditor().sendKeys(lib.selectAllKey + name);
@@ -52,6 +52,10 @@ module.exports = function(fw) {
       lib.left.getWorkflowCodeEditor(),
       lib.selectAllKey + code);
     lib.left.getWorkflowSaveButton().click();
+  }
+
+  function saveWorkflow(name, description, code) {
+    tryToSaveWorkflow(name, description, code);
     lib.left.history.close();
   }
 
@@ -136,6 +140,17 @@ module.exports = function(fw) {
       expect(lib.error()).toMatch(
         'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
+    });
+
+  fw.statePreservingTest(
+    'some project is open',
+    'syntax error in workflow',
+    function() {
+      tryToSaveWorkflow('SyntaxErrorTest', '', '}{');
+      expect(lib.error()).toMatch('unexpected token');
+      lib.closeErrors();
+      lib.left.closeWorkflowSavingDialog();
+      lib.left.history.close();
     });
 
   fw.statePreservingTest(

@@ -4,10 +4,11 @@
 angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util) {
   return {
     restrict: 'E',
-    scope: { menu: '=', name: '@', type: '@' },
+    scope: { menu: '=', name: '@', type: '@', shortName: '@' },
     templateUrl: 'item-name-and-menu.html',
     link: function(scope, element) {
       scope.util = util;
+      scope.shortName = scope.shortName || scope.name;
 
       scope.toggleRenaming = function() {
         scope.renaming = !scope.renaming;
@@ -29,20 +30,6 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
 
       scope.duplicate = function() {
         scope.menu.duplicate(scope.type, scope.name);
-      };
-
-      scope.toggleMoving = function() {
-        scope.moving = !scope.moving;
-        if (scope.moving) {
-          scope.newDirectory = '';
-          // Focus #moveBox once it has appeared.
-          $timeout(function() { element.find('#moveBox').focus(); });
-        }
-      };
-
-      scope.applyMoving = function() {
-        scope.moving = false;
-        scope.menu.move(scope.type, scope.name, scope.newDirectory);
       };
     },
   };
