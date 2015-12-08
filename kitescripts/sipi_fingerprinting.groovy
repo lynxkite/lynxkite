@@ -218,7 +218,7 @@ def drawPR(pr) {
 
   pr.filterByAttributes('filterva-known': '=0.0')
 
-  // It only make sense to draw the PR curve at boundaries just before throwing away a good match.
+  // It only makes sense to draw the PR curve at boundaries just before throwing away a good match.
   pr.derivedVertexAttribute(
     output: 'important_score',
     expr: '(match_is_good === 1.0) ? score : undefined',
