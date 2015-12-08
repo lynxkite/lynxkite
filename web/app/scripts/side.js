@@ -368,7 +368,6 @@ angular.module('biggraph')
       if (this.direction === 'right' &&
           this.parentProjects().length >= 2 &&
           this.parentProject() === this.sides[0].state.projectName) {
-        console.log('match');
         // If this project was:
         // 1. open on the right hand side
         // 2. was a segmentation of a segmentation

@@ -14,6 +14,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - Created new operations _Add random vertex attribute_ and _Add random edge attribute_. You can
    specify the desired distribution (normal or uniform). These new operations obsolete _Add gaussian
    vertex attribute_, which is no longer accessible from the operations menu.
+ - Enable creating segmentations on top of other segmentations.
 
 ### 1.5.8
 
