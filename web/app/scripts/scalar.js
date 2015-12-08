@@ -12,6 +12,7 @@ angular.module('biggraph').directive('scalar', function() {
         scope.asSavedStatus = isSavedStatus;
         scope.asValue = !isSavedStatus;
       });
+
       scope.loadStatus = function() {
         scope.side.updateFromBackendJson(scope.value.string);
       };

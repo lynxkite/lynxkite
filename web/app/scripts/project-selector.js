@@ -117,30 +117,27 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           });
       };
 
-      // The full path of a project, given its name within the current directory.
-      function fullPath(p) {
-        return pathInside(scope.path) + p;
-      }
-      function pathInside(directory) {
-        if (directory) {
-          return directory + '/';
-        } else {
-          return '';
-        }
-      }
+      scope.baseName = function(p) {
+        var lastSlash = p.lastIndexOf('/');
+        return p.slice(lastSlash + 1);
+      };
+      scope.dirName = function(p) {
+        var lastSlash = p.lastIndexOf('/');
+        return p.slice(0, lastSlash + 1);
+      };
 
       scope.projectClick = function(event, p) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
         if (p.error) { return; }
-        scope.name = fullPath(p.name);
+        scope.name = p.name;
       };
 
       scope.enterDirectory = function(event, d) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
-        scope.path = fullPath(d);
+        scope.path = d;
       };
 
       scope.popDirectory = function() {
@@ -163,25 +160,18 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
           util.post('/ajax/renameDirectory',
-              { from: fullPath(oldName), to: fullPath(newName) }).then(refresh);
+              { from: oldName, to: newName }).then(refresh);
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkDirectory',
-              { from: fullPath(p), to: fullPath('Copy of ' + p) }).then(refresh);
+              { from: p, to: scope.dirName(p) + 'Copy of ' + scope.baseName(p) }).then(refresh);
         },
         discard: function(kind, p) {
           var message = 'Permanently delete ' + kind + ' ' + p + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardDirectory', { name: fullPath(p) }).then(refresh);
+            util.post('/ajax/discardDirectory', { name: p }).then(refresh);
           }
-        },
-        move: function(kind, name, newDirectory) {
-          // Drop starting slash.
-          if (newDirectory[0] === '/') { newDirectory = newDirectory.slice(1); }
-          if (newDirectory === scope.path) { return; }
-          util.post('/ajax/renameDirectory',
-              { from: fullPath(name), to: pathInside(newDirectory) + name }).then(refresh);
         },
       };
     },
