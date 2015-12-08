@@ -1,4 +1,7 @@
 // Trains a machine learning model and uses it to generate predictions of an attribute.
+//
+// MLlib can use native linear algebra packages when properly configured.
+// See http://spark.apache.org/docs/latest/mllib-guide.html#dependencies.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
