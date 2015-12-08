@@ -353,7 +353,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 }
 
-class VertexIO(entity: VertexSet, context: IOContext)
+class VertexSetIO(entity: VertexSet, context: IOContext)
     extends PartitionedDataIO[VertexSetData](entity, context) {
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
