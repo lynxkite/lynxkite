@@ -7,8 +7,8 @@ import scala.reflect.runtime.universe._
 class EntitySerializationTest extends FunSuite {
   def serde[T](values: Seq[T], s: EntitySerializer[T], d: EntityDeserializer[T]) = {
     val numbered = values.zipWithIndex.map { case (v, k) => k.toLong -> v }
-    val serialized = s.mapper(numbered.iterator).toSeq
-    val deserialized = serialized.map { case (k, v) => k -> d.mapper(v) }.toList
+    val serialized = numbered.iterator.map { case (k, v) => k -> s.serialize(v) }
+    val deserialized = serialized.map { case (k, v) => k -> d.deserialize(v) }.toList
     assert(deserialized == numbered)
   }
 
@@ -29,7 +29,7 @@ class EntitySerializationTest extends FunSuite {
 
   test("legacy") {
     def withKryo[T: TypeTag](values: Seq[T]) = {
-      val s = EntitySerializer.kryoSerializer.asInstanceOf[EntitySerializer[T]]
+      val s = new KryoSerializer
       val d = EntityDeserializer.forName[T]("kryo")
       serde(values, s, d)
     }
