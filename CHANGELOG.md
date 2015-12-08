@@ -6,6 +6,7 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Reintroduced project search on the project selector UI.
  - Significantly reduced chance of out of memory errors in LynxKite. (We do not require anymore
    that any spark data partition has to fit in memory.)
  - Long attributes can no longer be referenced in derived attributes. This is to avoid the
