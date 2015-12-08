@@ -18,8 +18,7 @@ set can be used to evaluate the accuracy of the model's predictions. You can do 
 and using this restricted attribute as the basis of the prediction.
 
 [[label]] Attribute to predict::
-The attribute that you want to predict. It has to be at least partially defined, so that the
-algorithm has some examples to train on.
+The partially defined attribute that you want to predict.
 
 [[features]] Predictors::
 The attributes that will be used as the input of the predictions. Predictions will be
