@@ -9,6 +9,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - Fingerprinting between project and segmentation made more general: it can now add new
    connections, not only select from existing ones.
  - Reintroduced project search on the project selector UI.
+ - Added the _Predict vertex attribute_ operation to offer some simple machine learning tools.
  - Significantly reduced chance of out of memory errors in LynxKite. (We do not require anymore
    that any spark data partition has to fit in memory.)
  - Long attributes can no longer be referenced in derived attributes. This is to avoid the
