@@ -62,40 +62,40 @@ class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"kryo[${typeOf[T]}
 }
 
 object EntityDeserializer {
+  private def castDeserializer[From: TypeTag, To: TypeTag](
+    d: EntityDeserializer[From]): EntityDeserializer[To] = {
+    val from = typeOf[From]
+    val to = typeOf[To]
+    assert(from =:= to, s"${d.name} is for $from, not $to")
+    d.asInstanceOf[EntityDeserializer[To]]
+  }
+
   def forName[T: TypeTag](name: String): EntityDeserializer[T] = {
     val stripped = name.replaceFirst("\\[.*", "") // Drop Kryo type note.
-    val d = stripped match {
-      case "unit" => new UnitDeserializer
-      case "string" => new StringDeserializer
-      case "double" => new DoubleDeserializer
-      case "edge" => new EdgeDeserializer
-      case "kryo" => new KryoDeserializer
+    val d: EntityDeserializer[T] = stripped match {
+      case "unit" => castDeserializer(new UnitDeserializer)
+      case "string" => castDeserializer(new StringDeserializer)
+      case "double" => castDeserializer(new DoubleDeserializer)
+      case "edge" => castDeserializer(new EdgeDeserializer)
+      case "kryo" => new KryoDeserializer[T]
       case _ => throw new AssertionError(s"Cannot find deserializer for $name.")
     }
     assert(d.name == stripped, s"Bad deserializer mapping. $name mapped to ${d.name}.")
-    d.assertSupports[T]
-    d.asInstanceOf[EntityDeserializer[T]]
+    d
   }
 }
 // The API is nicer if this can be sent to the executors. The only problem is the TypeTag, as
 // it is not Serializable. It is only used during creation though, so we just make it @transient.
-abstract class EntityDeserializer[T](val name: String)(implicit @transient tt: TypeTag[T])
-    extends Serializable {
+abstract class EntityDeserializer[T](val name: String) extends Serializable {
   def deserialize(bw: BytesWritable): T
-  protected def assertSupports[T2: TypeTag] = {
-    val t = typeOf[T]
-    val t2 = typeOf[T2]
-    assert(t =:= t2, s"EntityDeserializer $name is for $t, not $t2")
-  }
 }
 
 class UnitDeserializer extends EntityDeserializer[Unit]("unit") {
   def deserialize(bw: BytesWritable) = ()
 }
 
-class KryoDeserializer extends EntityDeserializer[Any]("kryo") {
-  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Any](bw.getBytes)
-  override def assertSupports[T: TypeTag] = {} // Works for any type.
+class KryoDeserializer[T] extends EntityDeserializer[T]("kryo") {
+  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[T](bw.getBytes)
 }
 
 class StringDeserializer extends EntityDeserializer[String]("string") {
