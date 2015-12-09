@@ -45,7 +45,7 @@ object InducedEdgeBundle extends OpFromJson {
         isEverywhereDefined =
           origProp.isEverywhereDefined && srcMappingProp.isReverseEverywhereDefined,
         isReverseEverywhereDefined =
-          origProp.isReverseEverywhereDefined && dstMappingProp.isReverseEverywhereDefined,
+          origProp.isReverseEverywhereDefined && dstMappingProp.isEverywhereDefined,
         isIdPreserving =
           origProp.isIdPreserving && srcMappingProp.isIdPreserving && dstMappingProp.isIdPreserving)
       edgeBundle(src.entity, dst.entity, inducedProp)
