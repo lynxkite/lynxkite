@@ -62,10 +62,10 @@ class RegressionTest extends FunSuite with TestGraphOp {
     assertRoughly(gender("Naive Bayes"),
       Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
     assertRoughly(gender("Decision tree"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 0.5), maxError = 0.5)
     assertRoughly(gender("Random forest"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 0.5), maxError = 0.5)
     assertRoughly(gender("Gradient-boosted trees"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 0.5), maxError = 0.5)
   }
 }
