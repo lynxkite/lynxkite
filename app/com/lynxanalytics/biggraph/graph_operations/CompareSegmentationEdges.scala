@@ -1,3 +1,10 @@
+// Takes two segmentations ("golden" and "test") from the same base project as input.
+// They should have the same set of vertices as their common base project. (There should
+// be a one-to-one correspondence between the vertex sets.)
+//
+// Computes the difference between the edges of "golden" and the edges of "test" and computes
+// precision and recall of the "test" edges in relation to the "golden" edges. Parallel edges
+// are counted as one.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -22,7 +29,11 @@ object CompareSegmentationEdges extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val precision = scalar[Double]
     val recall = scalar[Double]
+    // An attribute on the test edges. It is assigned 1.0 if there is a corresponding
+    // golden edge, otherwise not defined.
     val presentInGolden = edgeAttribute[Double](inputs.testEdges.entity)
+    // An attribute on the golden edges. It is assigned 1.0 if there is a corresponding
+    // test edge, otherwise not defined.
     val presentInTest = edgeAttribute[Double](inputs.goldenEdges.entity)
   }
   def fromJson(j: JsValue) = CompareSegmentationEdges()

@@ -2359,13 +2359,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       .toList)
 
     override def parameters = List(
-      Choice("golden", "Golden segmentation", multipleChoice = false, options = possibleSegmentations),
-      Choice("test", "Test segmentation", multipleChoice = false, options = possibleSegmentations)
+      Choice("golden", "Golden segmentation", options = possibleSegmentations),
+      Choice("test", "Test segmentation", options = possibleSegmentations)
     )
     def enabled = FEStatus.assert(
       possibleSegmentations.size >= 2,
       "At least two segmentations are needed. Both should have edges " +
-        "and both should be created with an identity transformation.")
+        "and both have to contain the same vertices as the base project. " +
+        "(For example, use the copy graph into segmentation operation.)")
 
     def apply(params: Map[String, String]): Unit = {
       val golden = project.segmentation(params("golden"))
