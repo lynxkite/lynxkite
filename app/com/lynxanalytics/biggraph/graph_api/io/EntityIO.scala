@@ -240,14 +240,14 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val pn = parent.map(_.rdd.partitions.size).getOrElse(selectPartitionNumber(entityLocation))
     val partitioner = parent.map(_.rdd.partitioner.get).getOrElse(new HashPartitioner(pn))
 
-    val file =
+    val (file, serialization) =
       if (entityLocation.availablePartitions.contains(pn))
-        entityLocation.availablePartitions(pn)
+        (entityLocation.availablePartitions(pn), entityLocation.serialization)
       else
         repartitionTo(entityLocation, partitioner)
 
     val dataRead = finalRead(
-      file, entityLocation.numVertices, entityLocation.serialization, partitioner, parent)
+      file, entityLocation.numVertices, serialization, partitioner, parent)
     assert(dataRead.rdd.partitions.size == pn,
       s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
@@ -315,10 +315,11 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     entityLocation.availablePartitions(ratioSorter.best.get)
   }
 
+  // Returns the file and the serialization format.
   private def repartitionTo(entityLocation: EntityLocationSnapshot,
-                            partitioner: org.apache.spark.Partitioner): HadoopFile = {
+                            partitioner: org.apache.spark.Partitioner): (HadoopFile, String) = {
     if (entityLocation.hasPartitionedData)
-      repartitionFromPartitionedRDD(entityLocation, partitioner)
+      (repartitionFromPartitionedRDD(entityLocation, partitioner), entityLocation.serialization)
     else
       repartitionFromLegacyRDD(entityLocation, partitioner)
   }
@@ -337,8 +338,10 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     newFile
   }
 
-  private def repartitionFromLegacyRDD(entityLocation: EntityLocationSnapshot,
-                                       partitioner: org.apache.spark.Partitioner): HadoopFile = {
+  // Returns the file and the serialization format.
+  private def repartitionFromLegacyRDD(
+    entityLocation: EntityLocationSnapshot,
+    partitioner: org.apache.spark.Partitioner): (HadoopFile, String) = {
     assert(entityLocation.legacyPathExists,
       s"There should be a valid legacy path at $legacyPath")
     val pn = partitioner.numPartitions
@@ -351,7 +354,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
-    newFile
+    (newFile, serialization)
   }
 
   private def legacyRDD = legacyLoadRDD(legacyPath.forReading)
