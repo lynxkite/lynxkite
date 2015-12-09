@@ -87,7 +87,8 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
           featureSubsetStrategy = "onethird",
           impurity = "variance", // This is the only option at the moment.
           maxDepth = 4,
-          maxBins = 100)
+          maxBins = 100,
+          seed = 0)
         model.predict(vectors.values)
       case "Gradient-boosted trees" =>
         val boostingStrategy = mllib.tree.configuration.BoostingStrategy.defaultParams("Regression")
