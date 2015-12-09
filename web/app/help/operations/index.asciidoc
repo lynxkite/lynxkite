@@ -194,6 +194,8 @@ include::no-operation.asciidoc[]
 
 include::pagerank.asciidoc[]
 
+include::predict-vertex-attribute.asciidoc[]
+
 include::rename-edge-attribute.asciidoc[]
 
 include::rename-scalar.asciidoc[]
@@ -204,9 +206,9 @@ include::rename-vertex-attribute.asciidoc[]
 
 include::reverse-edge-direction.asciidoc[]
 
-include::save-ui-status-as-graph-attribute.asciidoc[]
-
 include::sample-edges-from-co-occurrence.asciidoc[]
+
+include::save-ui-status-as-graph-attribute.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 
