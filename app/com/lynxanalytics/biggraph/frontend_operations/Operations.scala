@@ -2398,6 +2398,44 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Compare segmentation edges", new GlobalOperation(_, _) {
+    def isCompatibleSegmentation(segmentation: SegmentationEditor): Boolean = {
+      return segmentation.edgeBundle != null &&
+        segmentation.belongsTo.properties.compliesWith(EdgeBundleProperties.identity)
+    }
+
+    val possibleSegmentations = UIValue.list(project.segmentations
+      .filter(isCompatibleSegmentation)
+      .map { seg => seg.segmentationName }
+      .toList)
+
+    override def parameters = List(
+      Choice("golden", "Golden segmentation", options = possibleSegmentations),
+      Choice("test", "Test segmentation", options = possibleSegmentations)
+    )
+    def enabled = FEStatus.assert(
+      possibleSegmentations.size >= 2,
+      "At least two segmentations are needed. Both should have edges " +
+        "and both have to contain the same vertices as the base project. " +
+        "(For example, use the copy graph into segmentation operation.)")
+
+    def apply(params: Map[String, String]): Unit = {
+      val golden = project.segmentation(params("golden"))
+      val test = project.segmentation(params("test"))
+      val op = graph_operations.CompareSegmentationEdges()
+      val result = op(
+        op.goldenBelongsTo, golden.belongsTo)(
+          op.testBelongsTo, test.belongsTo)(
+            op.goldenEdges, golden.edgeBundle)(
+              op.testEdges, test.edgeBundle).result
+      test.scalars("precision") = result.precision
+      test.scalars("recall") = result.recall
+      test.edgeAttributes("present_in_" + golden.segmentationName) = result.presentInGolden
+      golden.edgeAttributes("present_in_" + test.segmentationName) = result.presentInTest
+    }
+
+  })
+
   register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
       NonNegInt("mo", "Minimum overlap", default = 1),
