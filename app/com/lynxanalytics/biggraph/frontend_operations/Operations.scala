@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
@@ -39,7 +40,9 @@ object OperationParams {
     val mandatory = true
     def validate(value: String): Unit = {
       val possibleValues = options.map { x => x.id }.toSet
-      val givenValues = value.split(",", -1).toSet
+      val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
+        if (value.isEmpty) Set() else value.split(",", -1).toSet
+      }
       val unknown = givenValues -- possibleValues
       assert(unknown.isEmpty,
         s"Unknown option: ${unknown.mkString(", ")} (Possibilities: ${possibleValues.mkString(", ")})")
@@ -1303,6 +1306,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("method", "Method", options = UIValue.list(List(
+        "Linear regression", "Ridge regression", "Lasso", "Logistic regression", "Naive Bayes",
+        "Decision tree", "Random forest", "Gradient-boosted trees"))))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val method = params("method").capitalize
+      val label = params("label")
+      s"$method for $label"
+    }
+    def apply(params: Map[String, String]) = {
+      assert(params("features").nonEmpty, "Please select at least one predictor.")
+      val featureNames = params("features").split(",", -1)
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val method = params("method")
+      val prediction = {
+        val op = graph_operations.Regression(method, features.size)
+        op(op.label, label)(op.features, features).result.prediction
+      }
+      project.newVertexAttribute(s"${labelName}_prediction", prediction, s"$method for $labelName")
+    }
+  })
+
   register("Aggregate to segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = aggregateParams(parent.vertexAttributes)
     def enabled =
@@ -1457,6 +1491,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = op(op.belongsTo, seg.belongsTo).result
       parent.edgeBundle = result.es
       parent.edgeAttributes("multiplicity") = result.multiplicity
+    }
+  })
+
+  register("Copy segmentation one level up", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+
+    def enabled =
+      isSegmentation && FEStatus.assert(parent.isSegmentation, "Parent graph is not a segmentation")
+
+    def apply(params: Map[String, String]) = {
+      val parentSegmentation = parent.asSegmentation
+      val thisSegmentation = project.asSegmentation
+      val segmentationName = thisSegmentation.segmentationName
+      val targetSegmentation = parentSegmentation.parent.segmentation(segmentationName)
+      targetSegmentation.state = thisSegmentation.state
+      targetSegmentation.belongsTo =
+        parentSegmentation.belongsTo.concat(thisSegmentation.belongsTo)
     }
   })
 
@@ -2345,6 +2396,44 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           attr.pullVia(seg.belongsTo.reverse))
       }
     }
+  })
+
+  register("Compare segmentation edges", new GlobalOperation(_, _) {
+    def isCompatibleSegmentation(segmentation: SegmentationEditor): Boolean = {
+      return segmentation.edgeBundle != null &&
+        segmentation.belongsTo.properties.compliesWith(EdgeBundleProperties.identity)
+    }
+
+    val possibleSegmentations = UIValue.list(project.segmentations
+      .filter(isCompatibleSegmentation)
+      .map { seg => seg.segmentationName }
+      .toList)
+
+    override def parameters = List(
+      Choice("golden", "Golden segmentation", options = possibleSegmentations),
+      Choice("test", "Test segmentation", options = possibleSegmentations)
+    )
+    def enabled = FEStatus.assert(
+      possibleSegmentations.size >= 2,
+      "At least two segmentations are needed. Both should have edges " +
+        "and both have to contain the same vertices as the base project. " +
+        "(For example, use the copy graph into segmentation operation.)")
+
+    def apply(params: Map[String, String]): Unit = {
+      val golden = project.segmentation(params("golden"))
+      val test = project.segmentation(params("test"))
+      val op = graph_operations.CompareSegmentationEdges()
+      val result = op(
+        op.goldenBelongsTo, golden.belongsTo)(
+          op.testBelongsTo, test.belongsTo)(
+            op.goldenEdges, golden.edgeBundle)(
+              op.testEdges, test.edgeBundle).result
+      test.scalars("precision") = result.precision
+      test.scalars("recall") = result.recall
+      test.edgeAttributes("present_in_" + golden.segmentationName) = result.presentInGolden
+      golden.edgeAttributes("present_in_" + test.segmentationName) = result.presentInTest
+    }
+
   })
 
   register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
