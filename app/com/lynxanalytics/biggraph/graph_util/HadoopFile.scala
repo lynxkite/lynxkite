@@ -7,9 +7,11 @@ import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.rdd.RDD
+import scala.reflect.runtime.universe._
 
 object HadoopFile {
 
@@ -105,7 +107,8 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   def deleteIfExists() = !exists() || delete()
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
-  private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
+  private def globStatus: Array[hadoop.fs.FileStatus] =
+    Option(fs.globStatus(path)).getOrElse(Array())
   def list = globStatus.map(st => hadoopFileForGlobOutput(st.getPath.toString))
 
   def length = fs.getFileStatus(path).getLen
@@ -198,33 +201,33 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Loads a Long-keyed rdd where the values are just raw bytes
-  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, Array[Byte])] = {
+  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, hadoop.io.BytesWritable)] = {
     val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
-    file.map { case (k, v) => k.get -> v.getBytes }
+    file.map { case (k, v) => k.get -> v }
   }
 
   // Loads a Long-keyed rdd with deserialized values
-  def loadEntityRDD[T: scala.reflect.ClassTag](sc: spark.SparkContext): RDD[(Long, T)] = {
-    loadEntityRawRDD(sc).map {
-      case (k, v) => k -> RDDUtils.kryoDeserialize[T](v)
-    }
+  def loadEntityRDD[T: TypeTag](sc: spark.SparkContext, serializer: String): RDD[(Long, T)] = {
+    val raw = loadEntityRawRDD(sc)
+    val deserializer = graph_api.io.EntityDeserializer.forName[T](serializer)
+    raw.mapValues(deserializer.deserialize(_))
   }
 
   // Saves a Long-keyed rdd where the values are just raw bytes;
   // Returns the number of lines written
-  def saveEntityRawRDD(data: RDD[(Long, Array[Byte])]): Long = {
+  def saveEntityRawRDD(data: RDD[(Long, hadoop.io.BytesWritable)]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
     val lines = data.context.accumulator[Long](0L, "Line count")
     val hadoopData = data.map {
       case (k, v) =>
         lines += 1
-        new hadoop.io.LongWritable(k) -> new hadoop.io.BytesWritable(v)
+        new hadoop.io.LongWritable(k) -> v
     }
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
@@ -241,13 +244,13 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     lines.value
   }
 
-  // Saves a Long-keyed RDD, and returns the number of lines written.
-  def saveEntityRDD[T](data: RDD[(Long, T)]): Long = {
-    val rawData = data.map {
-      case (k, v) =>
-        k -> RDDUtils.kryoSerialize(v)
-    }
-    saveEntityRawRDD(rawData)
+  // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
+  def saveEntityRDD[T](data: SortedRDD[Long, T], tt: TypeTag[T]): (Long, String) = {
+    val serializer = graph_api.io.EntitySerializer.forType(tt)
+    implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(tt)
+    val raw = data.mapValues(serializer.serialize(_))
+    val lines = saveEntityRawRDD(raw)
+    (lines, serializer.name)
   }
 
   def +(suffix: String): HadoopFile = {
