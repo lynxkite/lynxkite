@@ -319,7 +319,7 @@ trait MetaDataSetProvider {
   def metaDataSet: MetaDataSet
 }
 
-trait EntityContainer[T <: MetaGraphEntity] {
+trait EntityContainer[+T <: MetaGraphEntity] {
   def entity: T
 }
 object EntityContainer {
