@@ -3,12 +3,16 @@
 Compares the edge sets of two segmentations and computes _precision_ and _recall_.
 In order to make this work, the edges of the both segmentation graphs should be
 matchable against each other. Therefore, this operation only allows comparing
-segmentations which were created using the `Copy graph to segmentation` operation
-from the same project. (Subsequent copies are allowed.)
+segmentations which were created using the <<Copy graph to segmentation>> operation
+from the same project. (More precisely, a one to one correspondence is needed between
+the vertices of both segmentations and the base project.)
+
+You can use this operation for example to evaluate different colocation results against
+a reference result.
 
 ====
-One of the input segmentations is the _golden_ graph, against which the
-other one, _test_ will be evaluated. The precision and recall values
+One of the input segmentations is the _golden_ (or reference) graph, against which the
+other one, the _test_ will be evaluated. The precision and recall values
 are computed the following way:
 
 _numGoldenEdges := number of edges in the golden segmentation graph_ +
