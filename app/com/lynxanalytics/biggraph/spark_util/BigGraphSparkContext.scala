@@ -159,6 +159,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Set(1, 2, 3).getClass)
     kryo.register(Set(1, 2, 3, 4).getClass)
     kryo.register(Set(1, 2, 3, 4, 5).getClass)
+    kryo.register(classOf[org.apache.hadoop.io.BytesWritable])
     kryo.register(classOf[org.apache.spark.mllib.stat.MultivariateOnlineSummarizer])
     kryo.register(classOf[org.apache.spark.mllib.classification.NaiveBayesModel])
     kryo.register(classOf[Array[Array[Double]]])

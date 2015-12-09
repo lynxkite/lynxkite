@@ -200,7 +200,7 @@ class DataManager(sc: spark.SparkContext,
           // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
           // shuffle files on the executors. See #2098.
           val nonRDD = output.map {
-            _.filterNot { case (guid, entityData) => entityData.isInstanceOf[EntityRDDData] }
+            _.filterNot { case (guid, entityData) => entityData.isInstanceOf[EntityRDDData[_]] }
           }
           // A GC is helpful here to avoid filling up the disk on the executors. See comment above.
           nonRDD.foreach { _ => System.gc() }
@@ -299,7 +299,7 @@ class DataManager(sc: spark.SparkContext,
     if (!computationAllowed) return
     val data = get(entity)
     data match {
-      case rddData: EntityRDDData => rddData.rdd.cacheBackingArray()
+      case rddData: EntityRDDData[_] => rddData.rdd.cacheBackingArray()
       case _ => ()
     }
   }
