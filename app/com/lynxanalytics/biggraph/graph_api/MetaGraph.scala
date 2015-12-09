@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.util.IdentityHashMap
 import java.util.UUID
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
@@ -517,27 +518,27 @@ sealed trait EntityData {
   val entity: MetaGraphEntity
   def gUID = entity.gUID
 }
-sealed trait EntityRDDData extends EntityData {
-  val rdd: SortedRDD[ID, _]
+sealed trait EntityRDDData[T] extends EntityData {
+  val rdd: SortedRDD[ID, T]
   val count: Option[Long]
   rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
 }
 class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD,
-                    val count: Option[Long] = None) extends EntityRDDData {
+                    val count: Option[Long] = None) extends EntityRDDData[Unit] {
   val vertexSet = entity
 }
 
 class EdgeBundleData(val entity: EdgeBundle,
                      val rdd: EdgeBundleRDD,
-                     val count: Option[Long] = None) extends EntityRDDData {
+                     val count: Option[Long] = None) extends EntityRDDData[Edge] {
   val edgeBundle = entity
 }
 
 class AttributeData[T](val entity: Attribute[T],
                        val rdd: AttributeRDD[T],
                        val count: Option[Long] = None)
-    extends EntityRDDData with RuntimeSafeCastable[T, AttributeData] {
+    extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
   val attribute = entity
   val typeTag = attribute.typeTag
 }
