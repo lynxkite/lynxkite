@@ -81,7 +81,15 @@ object RDDUtils {
   def kryoSerialize[T](obj: Any): Array[Byte] = {
     val bos = new java.io.ByteArrayOutputStream
     val oos = new kryo.io.Output(bos)
-    threadLocalKryo.get.writeClassAndObject(oos, obj)
+    try {
+      threadLocalKryo.get.writeClassAndObject(oos, obj)
+    } catch {
+      case e: Exception => {
+        log.error(
+          s"Serialization error. We were trying to serialize: $obj of class ${obj.getClass}")
+        throw e
+      }
+    }
     oos.close
     bos.toByteArray
   }
