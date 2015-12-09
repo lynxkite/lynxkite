@@ -2079,9 +2079,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val themName = params("them")
       assert(readableProjects.map(_.id).contains(themName), s"Unknown project: $themName")
-      val them = ProjectFrame.fromName(themName).viewer
+      val themFrame = ProjectFrame.fromName(themName)
+      val them = themFrame.viewer
       assert(them.vertexSet != null, s"No vertex set in $them")
-      val segmentation = project.segmentation(params("them"))
+      val segmentation = project.segmentation(themFrame.path.last.name)
       segmentation.state = them.state
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
