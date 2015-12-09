@@ -231,8 +231,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
       else legacyRDD.count
 
     val serialization =
-      if (hasPartitionedData) metadata.serialization.getOrElse("kryo")
-      else "kryo"
+      if (hasPartitionedData) Some(metadata.serialization.getOrElse("kryo"))
+      else None
   }
 
   def read(parent: Option[VertexSetData] = None): DT = {
@@ -242,7 +242,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
     val (file, serialization) =
       if (entityLocation.availablePartitions.contains(pn))
-        (entityLocation.availablePartitions(pn), entityLocation.serialization)
+        (entityLocation.availablePartitions(pn), entityLocation.serialization.get)
       else
         repartitionTo(entityLocation, partitioner)
 
@@ -319,7 +319,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   private def repartitionTo(entityLocation: EntityLocationSnapshot,
                             partitioner: org.apache.spark.Partitioner): (HadoopFile, String) = {
     if (entityLocation.hasPartitionedData)
-      (repartitionFromPartitionedRDD(entityLocation, partitioner), entityLocation.serialization)
+      (repartitionFromPartitionedRDD(entityLocation, partitioner), entityLocation.serialization.get)
     else
       repartitionFromLegacyRDD(entityLocation, partitioner)
   }
