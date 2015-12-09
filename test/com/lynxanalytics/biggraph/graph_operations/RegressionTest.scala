@@ -35,11 +35,10 @@ class RegressionTest extends FunSuite with TestGraphOp {
       Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 1000.0, 3L -> 1000.0), maxError = 10)
     assertRoughly(incomes("Decision tree"),
       Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 10)
-    // We're just happy these give some results. They are very random on this example.
     assertRoughly(incomes("Random forest"),
-      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 1000)
+      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 1300.0, 3L -> 1000.0), maxError = 10)
     assertRoughly(incomes("Gradient-boosted trees"),
-      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 1000)
+      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 10)
   }
 
   // More like classification.
@@ -52,20 +51,20 @@ class RegressionTest extends FunSuite with TestGraphOp {
       predict(method, gender, Seq(g.age))
     }
     assertRoughly(gender("Linear regression"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
     assertRoughly(gender("Ridge regression"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
     assertRoughly(gender("Lasso"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
     assertRoughly(gender("Logistic regression"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
     assertRoughly(gender("Naive Bayes"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
     assertRoughly(gender("Decision tree"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
     assertRoughly(gender("Random forest"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 0.5, 2L -> 1.0, 3L -> 0.8), maxError = 0.1)
     assertRoughly(gender("Gradient-boosted trees"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.5)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
   }
 }
