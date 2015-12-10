@@ -18,7 +18,6 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
-import views.html.helper.options
 
 object OperationParams {
   case class Param(
