@@ -14,3 +14,20 @@
   padding: 4px 8px;
   font-size: 12px;
 }
+
+@include tether-theme-arrows(
+  $themePrefix: 'drop',
+  $themeName: 'help-popup',
+  $arrowSize: 10px,
+  $backgroundColor: white,
+  $color: black,
+  $useDropShadow: true);
+
+.drop-element.drop-theme-help-popup {
+  z-index: 1000;
+  max-width: 30%;
+}
+.drop-element.drop-theme-help-popup .drop-content > div {
+  max-height: 80vh;
+  overflow-y: auto; /* Clip and display scrollbars when necessary. */
+}
