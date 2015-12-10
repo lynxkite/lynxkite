@@ -46,8 +46,9 @@ object ImportDataFrame extends OpFromJson {
       ids: => EntityContainer[VertexSet], name: Symbol): EntityContainer[Attribute[_]] =
       vertexAttribute[T](ids, name)
 
-    def attributeFromField(ids: => EntityContainer[VertexSet], field: types.StructField): EntityContainer[Attribute[_]] = {
-
+    def attributeFromField(
+      ids: => EntityContainer[VertexSet],
+      field: types.StructField): EntityContainer[Attribute[_]] = {
       attributeFromTypeTag(ids, toSymbol(field))(typeTagFromDataType(field.dataType))
     }
 

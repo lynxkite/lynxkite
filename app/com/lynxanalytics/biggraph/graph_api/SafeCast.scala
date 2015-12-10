@@ -17,7 +17,7 @@ import scala.reflect.ClassTag
 
 object RuntimeSafeCastable {
   def classTagFromTypeTag[T: TypeTag]: ClassTag[T] = {
-    val tt = implicitly[TypeTag[T]]
+    val tt = typeTag[T]
     ClassTag[T](tt.mirror.runtimeClass(tt.tpe))
   }
 }
