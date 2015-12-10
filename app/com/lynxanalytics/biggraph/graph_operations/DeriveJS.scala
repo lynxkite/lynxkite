@@ -76,7 +76,7 @@ abstract class DeriveJS[T](
         catch { case t: Throwable => t }
       val classOfResult = ClassUtils.primitiveToWrapper(converted.getClass)
       val classOfT = ClassUtils.primitiveToWrapper(
-        RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass)
+        RuntimeSafeCastable.classTagFromTypeTag[T].runtimeClass)
       assert(classOfResult == classOfT, s"Cannot convert $result to $classOfT")
     }
   }

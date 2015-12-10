@@ -19,10 +19,18 @@ object EntitySerializer {
       else new KryoSerializer[T]
     s.asInstanceOf[EntitySerializer[T]]
   }
+
+  def forAttribute[T](attribute: Attribute[T]): EntitySerializer[T] = {
+    forType[T](attribute.typeTag)
+  }
 }
 abstract class EntitySerializer[T](val name: String) extends Serializable {
   // Beware: it may re-use the same BytesWritable for all calls.
   def serialize(t: T): BytesWritable
+
+  // This can be used when the type system does not understand that t is of the right type.
+  // It still, of course, t has to be of type T actually.
+  def unsafeSerialize(t: Any): BytesWritable = serialize(t.asInstanceOf[T])
 }
 
 class UnitSerializer extends EntitySerializer[Unit]("unit") {

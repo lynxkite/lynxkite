@@ -59,7 +59,16 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
 
   // Writes multiple attributes and their vertex set to disk. The attributes are given in a
   // single RDD which will be iterated over only once.
-  def writeAttributes(attributes: Seq[Attribute[String]], data: AttributeRDD[Seq[String]]) = {
+  // It's the callers responsibility to make sure that the Seqs in data have elements of the right
+  // type, corresponding the to given attributes. For wrong types, the behavior is unspecified,
+  // it may or may not fail at write time.
+  // Don't let the W type parameter fool you, it has really no signifance, you can basically
+  // pass in an RDD of any kind of Seq you like. It's only needed because stupid RDDs are not
+  // covariant, so taking AttributeRDD[Seq[_]] wouldn't be generic enough.
+  def writeAttributes[W](
+    attributes: Seq[Attribute[_]],
+    data: AttributeRDD[Seq[W]]) = {
+
     val vs = attributes.head.vertexSet
     for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
 
@@ -78,19 +87,20 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     val rddID = data.id
     val count = sparkContext.accumulator[Long](0L, "Line count")
     val unitSerializer = EntitySerializer.forType[Unit]
-    val stringSerializer = EntitySerializer.forType[String]
-    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[String])]) => {
+    val serializers = attributes.map(EntitySerializer.forAttribute(_))
+    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
       val collection = new IOContext.TaskFileCollection(
         trackerID, rddID, task.partitionId, task.attemptNumber)
       try {
         val files = paths.map(collection.createTaskFile(_))
         val verticesWriter = files.last.writer
         for (file <- files) file.committer.setupTask(file.context)
+        val filesAndSerializers = files zip serializers
         for ((id, cols) <- iterator) {
           count += 1
           val key = new hadoop.io.LongWritable(id)
-          for ((file, col) <- (files zip cols) if col != null) {
-            val value = stringSerializer.serialize(col)
+          for (((file, serializer), col) <- (filesAndSerializers zip cols) if col != null) {
+            val value = serializer.unsafeSerialize(col)
             file.writer.write(key, value)
           }
           verticesWriter.write(key, unitSerializer.serialize(()))
@@ -106,9 +116,9 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       for (file <- files) file.committer.commitJob(file.context)
       // Write metadata files.
       val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
-      val attributeMeta = EntityMetadata(count.value, Some(stringSerializer.name))
       vertexSetMeta.write(partitionedPath(vs).forWriting)
-      for (attr <- attributes) attributeMeta.write(partitionedPath(attr).forWriting)
+      for ((attr, serializer) <- attributes zip serializers)
+        EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
     } finally collection.close()
   }
 }
