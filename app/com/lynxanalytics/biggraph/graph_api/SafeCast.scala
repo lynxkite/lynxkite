@@ -30,9 +30,8 @@ trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteK
     } else throw new ClassCastException("Cannot cast from %s to %s".format(typeOf[T], typeOf[S]))
   }
 
-  def classTag: ClassTag[T] = {
-    RuntimeSafeCastable.classTagFromTypeTag
-  }
+  def classTag = RuntimeSafeCastable.classTagFromTypeTag[T]
+
   def is[S: TypeTag]: Boolean = {
     typeOf[S] =:= typeOf[T]
   }

@@ -29,7 +29,7 @@ abstract class EntitySerializer[T](val name: String) extends Serializable {
   def serialize(t: T): BytesWritable
 
   // This can be used when the type system does not understand that t is of the right type.
-  // It still, of course, t has to be of type T actually.
+  // It still, of course, has to be of type T actually.
   def unsafeSerialize(t: Any): BytesWritable = serialize(t.asInstanceOf[T])
 }
 
