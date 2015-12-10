@@ -480,6 +480,14 @@ angular.module('biggraph')
     Side.prototype.nonEmptyVertexFilterNames = function() {
       return this.nonEmptyFilterNames(this.state.filters.vertex);
     };
+    // Same as above, but filters out virtual attributes unknown to the backend.
+    function isValidBackendFilter(filter) {
+      return filter.attributeName !== '#members';
+    }
+    Side.prototype.nonEmptyBackendVertexFilterNames = function() {
+      var names = this.nonEmptyFilterNames(this.state.filters.vertex);
+      return names.filter(isValidBackendFilter);
+    };
     Side.prototype.nonEmptyEdgeFilterNames = function() {
       return this.nonEmptyFilterNames(this.state.filters.edge);
     };
@@ -530,9 +538,15 @@ angular.module('biggraph')
         {
           project: this.state.projectName,
           edgeFilters: this.nonEmptyEdgeFilterNames(),
-          vertexFilters: this.nonEmptyVertexFilterNames(),
+          vertexFilters: this.nonEmptyBackendVertexFilterNames(),
+          //vertexFilters: this.nonEmptyBackendVertexFilterNames(),
         }).then(function() {
+          var members = that.state.filters.vertex['#members'];
           that.clearFilters();
+          // Don't clear (restore) frontend-only attributes.
+          if (members !== undefined) {
+            that.state.filters.vertex['#members'] = members;
+          }
           that.reload();
         });
     };
