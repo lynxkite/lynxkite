@@ -43,7 +43,7 @@ object ImportDataFrame extends OpFromJson {
   class Output(schema: types.StructType)(implicit instance: MetaGraphOperationInstance)
       extends MagicOutput(instance) {
     private def attributeFromTypeTag[T: TypeTag](
-      ids: => EntityContainer[VertexSet], name: Symbol): EntityContainer[Attribute[_]] =
+      ids: => EntityContainer[VertexSet], name: Symbol): EntityContainer[Attribute[T]] =
       vertexAttribute[T](ids, name)
 
     def attributeFromField(
