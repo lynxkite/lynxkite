@@ -1,6 +1,6 @@
 project.newVertexSet(size: '100000')
 project.addRandomVertexAttribute(dist: 'Standard Uniform', name: 'timeRnd', seed: '-699856464')
-project.addRandomVertexAttribute(dist: 'Standard Normal', name: 'locationRnd', seed: '1065087263')
+project.addRandomVertexAttribute(dist: 'Standard Uniform', name: 'locationRnd', seed: '1065087263')
 project.addRandomVertexAttribute(dist: 'Standard Uniform', name: 'personRnd', seed: '-196858015')
 project.derivedVertexAttribute(expr: '"person"+(personRnd * 300).toFixed()', output: 'personId', type: 'string')
 project.derivedVertexAttribute(expr: '(locationRnd * 300).toFixed()', output: 'locationId', type: 'string')
