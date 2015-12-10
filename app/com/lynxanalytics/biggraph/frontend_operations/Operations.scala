@@ -18,6 +18,7 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
+import views.html.helper.options
 
 object OperationParams {
   case class Param(
@@ -728,6 +729,62 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
       segmentation.newVertexAttribute("bottom", bucketing.bottom)
       segmentation.newVertexAttribute("top", bucketing.top)
+    }
+  })
+
+  register("Segment by event sequences", new CreateSegmentationOperation(_, _) {
+    def parameters = List(
+      Param("name", "Target segmentation name"),
+      Choice(
+        "location",
+        "Location",
+        options =
+          project
+            .segmentations
+            .map { seg => UIValue("seg!" + seg.segmentationName, "Segmentation: " + seg.segmentationName) }
+            .toList ++
+            vertexAttributes[String].map { x => UIValue("attr!" + x.id, "Attribute: " + x.title) }),
+      Choice("time-attr", "Time attribute", options = vertexAttributes[Double]),
+      Choice("algorithm", "Algorithm", options = List[UIValue](
+        UIValue("continuous", "Take continuous event sequences"),
+        UIValue("with-gaps", "Allow gaps in event sequences")
+      )),
+      NonNegInt("sequence-length", "Sequence length", default = 2),
+      NonNegDouble("time-window-step", "Time Window Step"),
+      NonNegDouble("time-window-length", "Time Window Length")
+    )
+
+    def enabled = FEStatus.assert(true, "")
+
+    def apply(params: Map[String, String]) = {
+      val timeAttrName = params("time-attr")
+      val timeAttr = project.vertexAttributes(timeAttrName).runtimeSafeCast[Double]
+      val locationAttr = params("location")
+      val belongsToLocation =
+        if (locationAttr.startsWith("seg!")) {
+          project.segmentation(locationAttr.substring("seg!".length)).belongsTo
+        } else {
+          val locationAttribute = project.vertexAttributes(locationAttr.substring("attr!".length)).runtimeSafeCast[String]
+          val op = graph_operations.StringBucketing()
+          op(op.attr, locationAttribute).result.belongsTo.entity
+        }
+
+      val cells = {
+        val op = graph_operations.SegmentByEventSequences(
+          params("algorithm"),
+          params("sequence-length").toInt,
+          params("time-window-step").toDouble,
+          params("time-window-length").toDouble)
+        op(op.personBelongsToEvent, project.asSegmentation.belongsTo)(
+          op.eventTimeAttribute, timeAttr)(
+            op.eventBelongsToLocation, belongsToLocation).result
+      }
+      val segmentation = project.asSegmentation.parent.segmentation(params("name"))
+      segmentation.setVertexSet(cells.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = cells.belongsTo
+      segmentation.vertexAttributes("description") = cells.segmentDescription
+      segmentation.vertexAttributes("size") = cells.segmentSize
     }
   })
 
