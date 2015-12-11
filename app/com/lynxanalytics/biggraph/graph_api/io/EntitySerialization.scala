@@ -95,7 +95,7 @@ object EntityDeserializer {
       case "string" => castDeserializer(new StringDeserializer)
       case "double" => castDeserializer(new DoubleDeserializer)
       case "edge" => castDeserializer(new EdgeDeserializer)
-      case "set" => SetDeserializer[T]
+      case "set" => SetDeserializer[T]()
       case "kryo" => new KryoDeserializer[T]
       case _ => throw new AssertionError(s"Cannot find deserializer for $name.")
     }
@@ -140,7 +140,7 @@ object SetDeserializer {
     EntityDeserializer.castDeserializer(d)(st, typeTag[To])
   }
 
-  def apply[T: TypeTag] = {
+  def apply[T: TypeTag]() = {
     val tt = typeTag[T]
     val args = TypeTagUtil.typeArgs(tt)
     // If it has more or less than 1 type args, it is definitely not a Set.
