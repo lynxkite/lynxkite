@@ -80,26 +80,12 @@ class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"kryo[${typeOf[T]}
 }
 
 object EntityDeserializer {
-  private def castDeserializer[From: TypeTag, To: TypeTag](
+  def castDeserializer[From: TypeTag, To: TypeTag](
     d: EntityDeserializer[From]): EntityDeserializer[To] = {
     val from = typeOf[From]
     val to = typeOf[To]
     assert(from =:= to, s"${d.name} is for $from, not $to")
     d.asInstanceOf[EntityDeserializer[To]]
-  }
-
-  def setDeserializerFromTypeTag[To: TypeTag, FromDT: TypeTag]: EntityDeserializer[To] = {
-    val d = new SetDeserializer[FromDT]
-    val st = TypeTagUtil.setTypeTag[FromDT]
-    castDeserializer(d)(st, typeTag[To])
-  }
-
-  def setDeserializer[T: TypeTag] = {
-    val tt = typeTag[T]
-    val args = TypeTagUtil.typeArgs(tt)
-    // If it has more or less than 1 type args, it is definitely not a Set.
-    assert(args.size == 1, s"set is for Set[_], not ${tt.tpe}")
-    setDeserializerFromTypeTag(tt, args(0))
   }
 
   def forName[T: TypeTag](name: String): EntityDeserializer[T] = {
@@ -109,7 +95,7 @@ object EntityDeserializer {
       case "string" => castDeserializer(new StringDeserializer)
       case "double" => castDeserializer(new DoubleDeserializer)
       case "edge" => castDeserializer(new EdgeDeserializer)
-      case "set" => setDeserializer[T]
+      case "set" => SetDeserializer[T]
       case "kryo" => new KryoDeserializer[T]
       case _ => throw new AssertionError(s"Cannot find deserializer for $name.")
     }
@@ -147,6 +133,21 @@ class EdgeDeserializer extends EntityDeserializer[Edge]("edge") {
   }
 }
 
+object SetDeserializer {
+  private def fromTypeTag[To: TypeTag, FromDT: TypeTag]: EntityDeserializer[To] = {
+    val d = new SetDeserializer[FromDT]
+    val st = TypeTagUtil.setTypeTag[FromDT]
+    EntityDeserializer.castDeserializer(d)(st, typeTag[To])
+  }
+
+  def apply[T: TypeTag] = {
+    val tt = typeTag[T]
+    val args = TypeTagUtil.typeArgs(tt)
+    // If it has more or less than 1 type args, it is definitely not a Set.
+    assert(args.size == 1, s"set is for Set[_], not ${tt.tpe}")
+    fromTypeTag(tt, args(0))
+  }
+}
 class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("set") {
   def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Vector[DT]](bw.getBytes).toSet
 }
