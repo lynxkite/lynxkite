@@ -20,4 +20,8 @@ object TypeTagUtil {
   }
 
   def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
+  def arrayTypeTag[T: TypeTag] = typeTag[Array[T]]
+  // Call mapTypeTag with explicit parameters to make sure the key and value are not switched.
+  def mapTypeTag[K, V](implicit kt: TypeTag[K], vt: TypeTag[V]) = typeTag[Map[K, V]]
+  def setTypeTag[T: TypeTag] = typeTag[Set[T]]
 }
