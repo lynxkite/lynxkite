@@ -38,17 +38,6 @@ help-popup {
   padding: 6px; /* Button-like padding. */
   font-size: 14px;
 }
-#help-popup {
-  position: absolute;
-  width: 30%;
-  background: white;
-  color: black;
-  z-index: 3000;
-  border-radius: 5px;
-  padding: 10px;
-  box-shadow: 0 2px 5px;
-  overflow-y: auto; /* Clip and display scrollbars when necessary. */
-}
 
 .help-popup-positioner {
   position: relative;
