@@ -433,10 +433,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
         opCategoriesBefore
       }
 
+    val validParameterIds = op.parameters.map(_.id).toSet
+    val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
+    val restrictedRequest = request.copy(op = request.op.copy(parameters = restrictedParameters))
     val status =
       if (op.enabled.enabled && !op.dirty) {
         try {
-          op.validateAndApply(request.op.parameters)
+          op.validateAndApply(restrictedRequest.op.parameters)
           FEStatus.enabled
         } catch {
           case t: Throwable =>
@@ -457,7 +460,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val segmentationsAfter = nextStateRootViewer.toFE("dummy").segmentations
     (nextState,
       ProjectHistoryStep(
-        request,
+        restrictedRequest,
         status,
         segmentationsBefore,
         segmentationsAfter,
