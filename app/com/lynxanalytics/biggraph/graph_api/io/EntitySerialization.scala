@@ -88,12 +88,18 @@ object EntityDeserializer {
     d.asInstanceOf[EntityDeserializer[To]]
   }
 
-  private def castCovariantDeserializer[From: TypeTag, To: TypeTag](
-    d: EntityDeserializer[From]): EntityDeserializer[To] = {
-    val from = typeOf[From]
-    val to = typeOf[To]
-    assert(to <:< from, s"${d.name} is for $from, not $to")
-    d.asInstanceOf[EntityDeserializer[To]]
+  def setDeserializerFromTypeTag[To: TypeTag, FromDT: TypeTag]: EntityDeserializer[To] = {
+    val d = new SetDeserializer[FromDT]
+    val st = TypeTagUtil.setTypeTag[FromDT]
+    castDeserializer(d)(st, typeTag[To])
+  }
+
+  def setDeserializer[T: TypeTag] = {
+    val tt = typeTag[T]
+    val args = TypeTagUtil.typeArgs(tt)
+    // If it has more or less than 1 type args, it is definitely not a Set.
+    assert(args.size == 1, s"set is for Set[_], not ${tt.tpe}")
+    setDeserializerFromTypeTag(tt, args(0))
   }
 
   def forName[T: TypeTag](name: String): EntityDeserializer[T] = {
@@ -103,7 +109,7 @@ object EntityDeserializer {
       case "string" => castDeserializer(new StringDeserializer)
       case "double" => castDeserializer(new DoubleDeserializer)
       case "edge" => castDeserializer(new EdgeDeserializer)
-      case "set" => castCovariantDeserializer(new SetDeserializer)
+      case "set" => setDeserializer[T]
       case "kryo" => new KryoDeserializer[T]
       case _ => throw new AssertionError(s"Cannot find deserializer for $name.")
     }
@@ -111,9 +117,7 @@ object EntityDeserializer {
     d
   }
 }
-// The API is nicer if this can be sent to the executors. The only problem is the TypeTag, as
-// it is not Serializable. It is only used during creation though, so we just make it @transient.
-abstract class EntityDeserializer[T](val name: String) extends Serializable {
+abstract class EntityDeserializer[+T](val name: String) extends Serializable {
   def deserialize(bw: BytesWritable): T
 }
 
@@ -143,6 +147,6 @@ class EdgeDeserializer extends EntityDeserializer[Edge]("edge") {
   }
 }
 
-class SetDeserializer extends EntityDeserializer[Set[_]]("set") {
-  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Vector[_]](bw.getBytes).toSet
+class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("set") {
+  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Vector[DT]](bw.getBytes).toSet
 }
