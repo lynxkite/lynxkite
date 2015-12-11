@@ -72,7 +72,7 @@ abstract class DeriveJS[T](
     val result = expr.evaluate(testNamedValues)
     if (result != null) {
       val converted =
-        try convert(expr.evaluate(testNamedValues))
+        try convert(result)
         catch { case t: Throwable => t }
       val classOfResult = ClassUtils.primitiveToWrapper(converted.getClass)
       val classOfT = ClassUtils.primitiveToWrapper(
@@ -120,7 +120,10 @@ case class DeriveJSString(
     extends DeriveJS[String](expr, attrNames) {
   @transient lazy val resultTypeTag = typeTag[String]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
-  def convert(v: Any): String = v.asInstanceOf[String]
+  def convert(v: Any): String = v match {
+    case v: String => v
+    case v: sun.org.mozilla.javascript.ConsString => v.toString
+  }
 }
 
 object DeriveJSDouble extends OpFromJson {
