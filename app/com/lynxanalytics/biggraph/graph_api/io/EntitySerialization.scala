@@ -25,7 +25,7 @@ object EntitySerializer {
     forType[T](attribute.typeTag)
   }
 }
-abstract class EntitySerializer[T](val name: String) extends Serializable {
+abstract class EntitySerializer[-T](val name: String) extends Serializable {
   // Beware: it may re-use the same BytesWritable for all calls.
   def serialize(t: T): BytesWritable
 
