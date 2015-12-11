@@ -452,7 +452,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.duplicate = function(kind, name) {
-      this.applyOp('Copy-' + kind, { from: name, to: 'Copy of ' + name });
+      this.applyOp('Copy-' + kind, { from: name, to: 'copy_of_' + name });
     };
 
     Side.prototype.discard = function(kind, name) {
