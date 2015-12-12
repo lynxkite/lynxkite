@@ -51,7 +51,7 @@ angular.module('biggraph')
       if (!left.loaded() || !right.loaded()) { return undefined; }
       // If it is a segmentation, use "belongsTo" as the connecting path.
       if (right.isSegmentationOf(left)) {
-        return left.getBelongsTo(right).id;
+        return left.getBelongsTo(right);
       }
       // If it is the same project on both sides, use its internal edges.
       if (left.project.name === right.project.name) {
