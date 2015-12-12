@@ -33,15 +33,29 @@ case class FEOption private (
 object FEOption {
   def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
   def special(specialID: String): FEOption = specialOpt(specialID).get
+  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),(.*)\)".r
   private def specialOpt(specialID: String): Option[FEOption] = {
     specialID match {
       case "!unset" => Some(FEOption(specialID, ""))
       case "!no weight" => Some(FEOption(specialID, "no weight"))
       case "!unit distances" => Some(FEOption(specialID, "unit distances"))
       case "!internal id (default)" => Some(FEOption(specialID, "internal id (default)"))
+      case TitledCheckpointRE(cp, title) =>
+        // TODO: human readable timestamp formatting
+        Some(FEOption(specialID, s"$title@$cp"))
       case _ => None
     }
   }
+  def titledCheckpoint(cp: String, title: String): FEOption =
+    special(s"!checkpoint($cp,$title)")
+  def unpackTitledCheckpoint(id: String, customError: Option[String] = None): (String, String) =
+    id match {
+      case TitledCheckpointRE(cp, title) => (cp, title)
+      case _ =>
+        throw new AssertionError(
+          customError.getOrElse(s"$id does not look like a project checkpoint identifier"))
+    }
+
   def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
   def list(lst: String*): List[FEOption] = list(lst.toList)
   def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))
@@ -671,8 +685,10 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def isSegmentation = FEStatus.assert(project.isSegmentation,
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
-  protected def readableProjects(implicit manager: MetaGraphManager): List[FEOption] = {
-    FEOption.list(Operation.allProjects(user).map(_.projectName).toList)
+  protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
+    Operation.allProjects(user)
+      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.projectName))
+      .toList
   }
 }
 object Operation {
