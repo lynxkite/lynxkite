@@ -27,11 +27,30 @@ object FEStatus {
 }
 
 // Something with a display name and an internal ID.
-case class FEOption(
+case class FEOption private (
   id: String,
   title: String)
 object FEOption {
-  def list(list: List[String]) = list.map(id => FEOption(id, id))
+  def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
+  def special(specialID: String): FEOption = specialOpt(specialID).get
+  private def specialOpt(specialID: String): Option[FEOption] = {
+    specialID match {
+      case "!unset" => Some(FEOption(specialID, ""))
+      case "!no weight" => Some(FEOption(specialID, "no weight"))
+      case "!unit distances" => Some(FEOption(specialID, "unit distances"))
+      case "!internal id (default)" => Some(FEOption(specialID, "internal id (default)"))
+      case _ => None
+    }
+  }
+  def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
+  def list(lst: String*): List[FEOption] = list(lst.toString)
+  def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))
+  val bools = list("true", "false")
+  val noyes = list("no", "yes")
+  val unset = special("!unset")
+  val noWeight = special("!no weight")
+  val unitDistances = special("!unit distances")
+  val internalId = special("!internal id (default)")
 }
 
 case class FEOperationMeta(
