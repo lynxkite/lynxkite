@@ -43,7 +43,7 @@ object FEOption {
     }
   }
   def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
-  def list(lst: String*): List[FEOption] = list(lst.toString)
+  def list(lst: String*): List[FEOption] = list(lst.toList)
   def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))
   val bools = list("true", "false")
   val noyes = list("no", "yes")
@@ -70,7 +70,8 @@ case class FEOperationParameterMeta(
     kind: String, // Special rendering on the UI.
     defaultValue: String,
     options: List[FEOption],
-    multipleChoice: Boolean) {
+    multipleChoice: Boolean,
+    hasFixedOptions: Boolean) {
 
   val validKinds = Seq(
     "default", // A simple textbox.
@@ -424,6 +425,21 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
+  private def extendGivenOpWithSelectedOption(
+    opId: String,
+    params: Map[String, String],
+    meta: FEOperationMeta): FEOperationMeta = {
+    meta.copy(parameters = meta.parameters.map { parameter =>
+      if (parameter.hasFixedOptions &&
+        params.contains(parameter.id) &&
+        !parameter.options.map(_.id).contains(params(parameter.id))) {
+        parameter.copy(options = FEOption.fromID(params(parameter.id)) +: parameter.options)
+      } else {
+        parameter
+      }
+    })
+  }
+
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
@@ -448,6 +464,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
         opCategoriesBefore :+ deprCatFE
       } else {
         opCategoriesBefore
+      }
+
+    val opCategoriesBeforeOptionsExtended = opCategoriesBeforeWithOp
+      .map { category =>
+        category.copy(
+          ops = category.ops.map { op =>
+            extendGivenOpWithSelectedOption(op.id, request.op.parameters, op)
+          })
       }
 
     val validParameterIds = op.parameters.map(_.id).toSet
@@ -481,7 +505,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         status,
         segmentationsBefore,
         segmentationsAfter,
-        opCategoriesBeforeWithOp,
+        opCategoriesBeforeOptionsExtended,
         nextStateOpt.flatMap(_.checkpoint)))
   }
 
@@ -570,10 +594,12 @@ abstract class OperationParameterMeta {
   val options: List[FEOption]
   val multipleChoice: Boolean
   val mandatory: Boolean
+  val hasFixedOptions: Boolean
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
-  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
+  def toFE = FEOperationParameterMeta(
+    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
