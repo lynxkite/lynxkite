@@ -35,19 +35,24 @@ object OperationParams {
       id: String,
       title: String,
       options: List[FEOption],
-      multipleChoice: Boolean = false) extends OperationParameterMeta {
+      multipleChoice: Boolean = false,
+      allowUnknownOption: Boolean = false) extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = ""
     val mandatory = true
     val hasFixedOptions = true
     def validate(value: String): Unit = {
-      val possibleValues = options.map { x => x.id }.toSet
-      val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
-        if (value.isEmpty) Set() else value.split(",", -1).toSet
+      if (!allowUnknownOption) {
+        val possibleValues = options.map { x => x.id }.toSet
+        val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
+          if (value.isEmpty) Set() else value.split(",", -1).toSet
+        }
+        val unknown = givenValues -- possibleValues
+        assert(
+          unknown.isEmpty,
+          s"Unknown option: ${unknown.mkString(", ")}" +
+            s" (Possibilities: ${possibleValues.mkString(", ")})")
       }
-      val unknown = givenValues -- possibleValues
-      assert(unknown.isEmpty,
-        s"Unknown option: ${unknown.mkString(", ")} (Possibilities: ${possibleValues.mkString(", ")})")
     }
   }
   case class TagList(
@@ -2080,19 +2085,26 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
-      Choice("them", "Other project's name", options = readableProjects))
+      Choice(
+        "them",
+        "Other project's name",
+        options = readableProjectCheckpoints,
+        allowUnknownOption = true))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
-      val them = params("them")
-      s"Import $them as segmentation"
+      val (cp, title) = FEOption.unpackTitledCheckpoint(params("them"))
+      s"Import $title as segmentation"
     }
     def apply(params: Map[String, String]) = {
-      val themName = params("them")
-      assert(readableProjects.map(_.id).contains(themName), s"Unknown project: $themName")
-      val themFrame = ProjectFrame.fromName(themName)
-      val them = themFrame.viewer
+      val themId = params("them")
+      val (cp, title) = FEOption.unpackTitledCheckpoint(
+        themId,
+        Some(
+          s"Obsolate project reference: $themId. Please select a new project from the dropdown."))
+      val baseName = SymbolPath.parse(title).last.name
+      val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(them.vertexSet != null, s"No vertex set in $them")
-      val segmentation = project.segmentation(themFrame.path.last.name)
+      val segmentation = project.segmentation(baseName)
       segmentation.state = them.state
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
@@ -2205,12 +2217,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Union with another project", new StructureOperation(_, _) {
     def parameters = List(
-      Choice("other", "Other project's name", options = readableProjects),
+      Choice(
+        "other",
+        "Other project's name",
+        options = readableProjectCheckpoints,
+        allowUnknownOption = true),
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
-      val other = params("other")
-      s"Union with $other"
+      val (cp, title) = FEOption.unpackTitledCheckpoint(params("other"))
+      s"Union with $title"
     }
 
     def checkTypeCollision(other: ProjectViewer) = {
@@ -2227,9 +2243,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     }
     def apply(params: Map[String, String]): Unit = {
-      val otherName = params("other")
-      assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
-      val other = ProjectFrame.fromName(otherName).viewer
+      val otherId = params("other")
+      val (cp, _) = FEOption.unpackTitledCheckpoint(
+        otherId,
+        Some(
+          s"Obsolate project reference: $otherId. Please select a new project from the dropdown."))
+      val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       if (other.vertexSet == null) {
         // Nothing to do
         return
