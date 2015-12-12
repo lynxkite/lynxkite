@@ -28,6 +28,7 @@ object OperationParams {
     val kind = "default"
     val options = List()
     val multipleChoice = false
+    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
   case class Choice(
@@ -38,6 +39,7 @@ object OperationParams {
     val kind = "choice"
     val defaultValue = ""
     val mandatory = true
+    val hasFixedOptions = true
     def validate(value: String): Unit = {
       val possibleValues = options.map { x => x.id }.toSet
       val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
@@ -56,6 +58,7 @@ object OperationParams {
     val kind = "tag-list"
     val multipleChoice = true
     val defaultValue = ""
+    val hasFixedOptions = true
     def validate(value: String): Unit = {}
   }
   case class File(id: String, title: String) extends OperationParameterMeta {
@@ -64,6 +67,7 @@ object OperationParams {
     val defaultValue = ""
     val options = List()
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
   case class Ratio(id: String, title: String, defaultValue: String = "")
@@ -72,6 +76,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
@@ -84,6 +89,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
@@ -94,6 +100,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
@@ -106,6 +113,7 @@ object OperationParams {
     val kind = "code"
     val options = List()
     val multipleChoice = false
+    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
 
@@ -116,6 +124,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
