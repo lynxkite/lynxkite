@@ -27,14 +27,12 @@ object FEStatus {
 }
 
 // Something with a display name and an internal ID.
-case class UIValue(
+case class FEOption(
   id: String,
   title: String)
-object UIValue {
-  def list(list: List[String]) = list.map(id => UIValue(id, id))
+object FEOption {
+  def list(list: List[String]) = list.map(id => FEOption(id, id))
 }
-
-case class UIValues(values: List[UIValue])
 
 case class FEOperationMeta(
   id: String,
@@ -52,7 +50,7 @@ case class FEOperationParameterMeta(
     title: String,
     kind: String, // Special rendering on the UI.
     defaultValue: String,
-    options: List[UIValue],
+    options: List[FEOption],
     multipleChoice: Boolean) {
 
   val validKinds = Seq(
@@ -116,11 +114,11 @@ case class FEProject(
 case class FESegmentation(
   name: String,
   fullName: String,
-  // The connecting edge bundle.
-  belongsTo: UIValue,
+  // The connecting edge bundle's GUID.
+  belongsTo: String,
   // A Vector[ID] vertex attribute, that contains for each vertex
   // the vector of ids of segments the vertex belongs to.
-  equivalentAttribute: UIValue)
+  equivalentAttribute: FEAttribute)
 case class ProjectRequest(name: String)
 case class ProjectListRequest(path: String)
 case class ProjectSearchRequest(
@@ -550,7 +548,7 @@ abstract class OperationParameterMeta {
   val title: String
   val kind: String
   val defaultValue: String
-  val options: List[UIValue]
+  val options: List[FEOption]
   val multipleChoice: Boolean
   val mandatory: Boolean
 
@@ -612,13 +610,13 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     isWorkflow,
     workflowAuthor)
   protected def scalars[T: TypeTag] =
-    UIValue.list(project.scalarNames[T].toList)
+    FEOption.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
-    UIValue.list(project.vertexAttributeNames[T].toList)
+    FEOption.list(project.vertexAttributeNames[T].toList)
   protected def edgeAttributes[T: TypeTag] =
-    UIValue.list(project.edgeAttributeNames[T].toList)
+    FEOption.list(project.edgeAttributeNames[T].toList)
   protected def segmentations =
-    UIValue.list(project.segmentationNames.toList)
+    FEOption.list(project.segmentationNames.toList)
   protected def hasVertexSet = FEStatus.assert(project.vertexSet != null, "No vertices.")
   protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
   protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
@@ -628,10 +626,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def isSegmentation = FEStatus.assert(project.isSegmentation,
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
-  protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
-    UIValue.list(Operation.allProjects(user)
-      .map(_.projectName)
-      .toList)
+  protected def readableProjects(implicit manager: MetaGraphManager): List[FEOption] = {
+    FEOption.list(Operation.allProjects(user).map(_.projectName).toList)
   }
 }
 object Operation {
