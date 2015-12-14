@@ -60,7 +60,7 @@ abstract class DeriveJS[T](
     extends TypedMetaGraphOp[Input, Output[T]] {
   implicit def resultTypeTag: TypeTag[T]
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(attrNames.size)
+  @transient override lazy val inputs = new Input(attrNames.size + scalarNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(resultTypeTag, instance, inputs)
 
