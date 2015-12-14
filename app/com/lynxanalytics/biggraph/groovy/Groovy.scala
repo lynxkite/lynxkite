@@ -65,7 +65,8 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
     // Shorthand for "receiver.isInstanceOf[T]".
     def isA[T: reflect.ClassTag] = reflect.classTag[T].runtimeClass.isInstance(receiver)
     // Method calls are only allowed on GroovyWorkflowProject and primitive types.
-    if (isA[GroovyWorkflowProject] || isA[String] || isA[Long] || isA[Double] || isA[Int] || isA[Boolean]) {
+    if (isA[GroovyWorkflowProject] || isA[String] || isA[Long] || isA[Double] || isA[Int]
+      || isA[Boolean]) {
       invoker.call(receiver, method, args: _*)
     } else {
       throw new SecurityException(
@@ -134,7 +135,9 @@ abstract class GroovyProject(ctx: GroovyContext)
     val argArray = args.asInstanceOf[Array[_]]
     val params: Map[String, String] = if (argArray.nonEmpty) {
       val javaParams = argArray.head.asInstanceOf[java.util.Map[AnyRef, AnyRef]]
-      JavaConversions.mapAsScalaMap(javaParams).map { case (k, v) => (k.toString, v.toString) }.toMap
+      JavaConversions.mapAsScalaMap(javaParams).map {
+        case (k, v) => (k.toString, v.toString)
+      }.toMap
     } else Map()
     val id = {
       val normalized = ctx.normalize(name)
@@ -228,7 +231,8 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 
 // No checkpointing or entity access in workflow mode.
 // This class is exposed to untrusted scripts. Make sure its public API is properly restricted!
-class GroovyWorkflowProject(ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
+class GroovyWorkflowProject(
+    ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
   protected def viewer = rootProject.offspringEditor(path).viewer
   override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
     val opctx = Operation.Context(ctx.user, viewer)
