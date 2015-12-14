@@ -22,6 +22,20 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
   }
 
+  test("Multi-line expression and utility function") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        var rnd = util.rnd(income);
+        rnd.nextDouble() + rnd.nextDouble();"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    def rndSumScala(income: Double) = {
+      val rnd = new scala.util.Random(income.toLong)
+      rnd.nextDouble + rnd.nextDouble
+    }
+    assert(attr.rdd.collect.toMap == Map(0 -> rndSumScala(1000.0), 2 -> rndSumScala(2000.0)))
+  }
+
   test("Vector attribute") {
     run("Example Graph")
     run("Aggregate on neighbors",

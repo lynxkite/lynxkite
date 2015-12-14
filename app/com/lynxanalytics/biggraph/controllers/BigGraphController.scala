@@ -27,14 +27,46 @@ object FEStatus {
 }
 
 // Something with a display name and an internal ID.
-case class UIValue(
+case class FEOption private (
   id: String,
   title: String)
-object UIValue {
-  def list(list: List[String]) = list.map(id => UIValue(id, id))
-}
+object FEOption {
+  def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
+  def special(specialID: String): FEOption = specialOpt(specialID).get
+  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),(.*)\)".r
+  private def specialOpt(specialID: String): Option[FEOption] = {
+    specialID match {
+      case "!unset" => Some(FEOption(specialID, ""))
+      case "!no weight" => Some(FEOption(specialID, "no weight"))
+      case "!unit distances" => Some(FEOption(specialID, "unit distances"))
+      case "!internal id (default)" => Some(FEOption(specialID, "internal id (default)"))
+      case TitledCheckpointRE(cp, title) =>
+        // TODO: human readable timestamp formatting
+        Some(FEOption(specialID, s"$title@$cp"))
+      case _ => None
+    }
+  }
+  def titledCheckpoint(cp: String, title: String): FEOption =
+    special(s"!checkpoint($cp,$title)")
+  def unpackTitledCheckpoint(id: String): (String, String) =
+    unpackTitledCheckpoint(id, "$id does not look like a project checkpoint identifier")
+  def unpackTitledCheckpoint(id: String, customError: String): (String, String) =
+    id match {
+      case TitledCheckpointRE(cp, title) => (cp, title)
+      case _ =>
+        throw new AssertionError(customError)
+    }
 
-case class UIValues(values: List[UIValue])
+  def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
+  def list(lst: String*): List[FEOption] = list(lst.toList)
+  def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))
+  val bools = list("true", "false")
+  val noyes = list("no", "yes")
+  val unset = special("!unset")
+  val noWeight = special("!no weight")
+  val unitDistances = special("!unit distances")
+  val internalId = special("!internal id (default)")
+}
 
 case class FEOperationMeta(
   id: String,
@@ -52,8 +84,9 @@ case class FEOperationParameterMeta(
     title: String,
     kind: String, // Special rendering on the UI.
     defaultValue: String,
-    options: List[UIValue],
-    multipleChoice: Boolean) {
+    options: List[FEOption],
+    multipleChoice: Boolean,
+    hasFixedOptions: Boolean) {
 
   val validKinds = Seq(
     "default", // A simple textbox.
@@ -116,11 +149,11 @@ case class FEProject(
 case class FESegmentation(
   name: String,
   fullName: String,
-  // The connecting edge bundle.
-  belongsTo: UIValue,
+  // The connecting edge bundle's GUID.
+  belongsTo: String,
   // A Vector[ID] vertex attribute, that contains for each vertex
   // the vector of ids of segments the vertex belongs to.
-  equivalentAttribute: UIValue)
+  equivalentAttribute: FEAttribute)
 case class ProjectRequest(name: String)
 case class ProjectListRequest(path: String)
 case class ProjectSearchRequest(
@@ -407,6 +440,21 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
+  private def extendGivenOpWithSelectedOption(
+    opId: String,
+    params: Map[String, String],
+    meta: FEOperationMeta): FEOperationMeta = {
+    meta.copy(parameters = meta.parameters.map { parameter =>
+      if (parameter.hasFixedOptions &&
+        params.contains(parameter.id) &&
+        !parameter.options.map(_.id).contains(params(parameter.id))) {
+        parameter.copy(options = FEOption.fromID(params(parameter.id)) +: parameter.options)
+      } else {
+        parameter
+      }
+    })
+  }
+
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
@@ -433,10 +481,21 @@ class BigGraphController(val env: BigGraphEnvironment) {
         opCategoriesBefore
       }
 
+    val opCategoriesBeforeOptionsExtended = opCategoriesBeforeWithOp
+      .map { category =>
+        category.copy(
+          ops = category.ops.map { op =>
+            extendGivenOpWithSelectedOption(op.id, request.op.parameters, op)
+          })
+      }
+
+    val validParameterIds = op.parameters.map(_.id).toSet
+    val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
+    val restrictedRequest = request.copy(op = request.op.copy(parameters = restrictedParameters))
     val status =
       if (op.enabled.enabled && !op.dirty) {
         try {
-          op.validateAndApply(request.op.parameters)
+          op.validateAndApply(restrictedRequest.op.parameters)
           FEStatus.enabled
         } catch {
           case t: Throwable =>
@@ -457,11 +516,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val segmentationsAfter = nextStateRootViewer.toFE("dummy").segmentations
     (nextState,
       ProjectHistoryStep(
-        request,
+        restrictedRequest,
         status,
         segmentationsBefore,
         segmentationsAfter,
-        opCategoriesBeforeWithOp,
+        opCategoriesBeforeOptionsExtended,
         nextStateOpt.flatMap(_.checkpoint)))
   }
 
@@ -547,13 +606,15 @@ abstract class OperationParameterMeta {
   val title: String
   val kind: String
   val defaultValue: String
-  val options: List[UIValue]
+  val options: List[FEOption]
   val multipleChoice: Boolean
   val mandatory: Boolean
+  val hasFixedOptions: Boolean
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
-  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
+  def toFE = FEOperationParameterMeta(
+    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
@@ -609,13 +670,13 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     isWorkflow,
     workflowAuthor)
   protected def scalars[T: TypeTag] =
-    UIValue.list(project.scalarNames[T].toList)
+    FEOption.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
-    UIValue.list(project.vertexAttributeNames[T].toList)
+    FEOption.list(project.vertexAttributeNames[T].toList)
   protected def edgeAttributes[T: TypeTag] =
-    UIValue.list(project.edgeAttributeNames[T].toList)
+    FEOption.list(project.edgeAttributeNames[T].toList)
   protected def segmentations =
-    UIValue.list(project.segmentationNames.toList)
+    FEOption.list(project.segmentationNames.toList)
   protected def hasVertexSet = FEStatus.assert(project.vertexSet != null, "No vertices.")
   protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
   protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
@@ -625,10 +686,10 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def isSegmentation = FEStatus.assert(project.isSegmentation,
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
-  protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
-    UIValue.list(Operation.allProjects(user)
-      .map(_.projectName)
-      .toList)
+  protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
+    Operation.allProjects(user)
+      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.projectName))
+      .toList
   }
 }
 object Operation {

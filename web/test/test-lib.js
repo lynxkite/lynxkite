@@ -639,8 +639,8 @@ testLib = {
     browser.get('/#/project/' + name);
   },
 
-  expectHelpPopupVisible: function(helpId, isVisible) {
-    expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
+  helpPopup: function(helpId) {
+    return element(by.css('div[help-id="' + helpId + '"]'));
   },
 
   openNewProject: function(name) {
