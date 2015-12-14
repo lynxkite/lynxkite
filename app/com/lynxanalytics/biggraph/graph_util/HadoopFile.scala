@@ -29,15 +29,20 @@ object HadoopFile {
     val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
     assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
       s"The path following $prefixSymbol has to start with a slash (/)")
-    HadoopFile(prefixSymbol, normalizedRelativePath)
+    HadoopFile(prefixSymbol, normalizedRelativePath, lazyFSOpt = None)
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
   private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+
+  class LazySharedFileSystem(f: HadoopFile) extends Serializable {
+    @transient lazy val get = hadoop.fs.FileSystem.get(f.uri, f.hadoopConfiguration)
+  }
 }
 
-case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
+case class HadoopFile private (
+    prefixSymbol: String, normalizedRelativePath: String, lazyFSOpt: Option[HadoopFile.LazySharedFileSystem]) {
   val symbolicName = prefixSymbol + normalizedRelativePath
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
@@ -83,10 +88,11 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   // This function processes the paths returned by hadoop 'ls' (= the globStatus command)
   // after we called globStatus with this hadoop file.
   def hadoopFileForGlobOutput(hadoopOutput: String): HadoopFile = {
-    this.copy(normalizedRelativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
+    new HadoopFile(prefixSymbol, computeRelativePathFromHadoopOutput(hadoopOutput), Some(lazyFS))
   }
 
-  @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
+  val lazyFS = lazyFSOpt.getOrElse(new HadoopFile.LazySharedFileSystem(this))
+  def fs = lazyFS.get
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
@@ -254,7 +260,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   def +(suffix: String): HadoopFile = {
-    HadoopFile(symbolicName + suffix)
+    new HadoopFile(prefixSymbol, normalizedRelativePath + suffix, Some(lazyFS))
   }
 
   def /(path_element: String): HadoopFile = {
