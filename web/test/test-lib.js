@@ -493,6 +493,14 @@ var splash = {
     return element(by.id('directory-' + toID(name)));
   },
 
+  expectNumProjects: function(n) {
+    return expect(element.all(by.css('.project-entry')).count()).toEqual(n);
+  },
+
+  expectNumDirectories: function(n) {
+    return expect(element.all(by.css('.directory-entry')).count()).toEqual(n);
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
@@ -529,12 +537,6 @@ var splash = {
     menu.element(by.id('menu-' + action)).click();
   },
 
-  moveProject: function(name, destination) {
-    var project = this.project(name);
-    this.menuClick(project, 'move');
-    project.element(by.id('moveBox')).sendKeys(destination, K.ENTER);
-  },
-
   renameProject: function(name, newName) {
     var project = this.project(name);
     this.menuClick(project, 'rename');
@@ -546,7 +548,8 @@ var splash = {
     // We need to give the browser time to display the alert, see angular/protractor#1486.
     testLib.wait(protractor.ExpectedConditions.alertIsPresent());
     var confirmation = browser.switchTo().alert();
-    expect(confirmation.getText()).toContain('delete project ' + name);
+    expect(confirmation.getText()).toContain('delete project ');
+    expect(confirmation.getText()).toContain(name);
     confirmation.accept();
   },
 
@@ -573,6 +576,14 @@ var splash = {
 
   expectDirectoryNotListed: function(name) {
     testLib.expectNotElement(this.directory(name));
+  },
+
+  enterSearchQuery: function(query) {
+    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
+  },
+
+  clearSearchQuery: function() {
+    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 };
 
@@ -628,8 +639,8 @@ testLib = {
     browser.get('/#/project/' + name);
   },
 
-  expectHelpPopupVisible: function(helpId, isVisible) {
-    expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
+  helpPopup: function(helpId) {
+    return element(by.css('div[help-id="' + helpId + '"]'));
   },
 
   openNewProject: function(name) {

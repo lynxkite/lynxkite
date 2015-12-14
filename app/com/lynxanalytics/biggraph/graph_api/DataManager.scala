@@ -47,12 +47,12 @@ class DataManager(sc: spark.SparkContext,
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val param = io.IOContext(dataRoot, sc)
+    val context = io.IOContext(dataRoot, sc)
     entity match {
-      case vs: VertexSet => new io.VertexIO(vs, param)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
-      case va: Attribute[_] => new io.AttributeIO(va, param)
-      case sc: Scalar[_] => new io.ScalarIO(sc, param)
+      case vs: VertexSet => new io.VertexSetIO(vs, context)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
+      case va: Attribute[_] => new io.AttributeIO(va, context)
+      case sc: Scalar[_] => new io.ScalarIO(sc, context)
     }
   }
 
@@ -200,7 +200,7 @@ class DataManager(sc: spark.SparkContext,
           // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
           // shuffle files on the executors. See #2098.
           val nonRDD = output.map {
-            _.filterNot { case (guid, entityData) => entityData.isInstanceOf[EntityRDDData] }
+            _.filterNot { case (guid, entityData) => entityData.isInstanceOf[EntityRDDData[_]] }
           }
           // A GC is helpful here to avoid filling up the disk on the executors. See comment above.
           nonRDD.foreach { _ => System.gc() }
@@ -299,7 +299,7 @@ class DataManager(sc: spark.SparkContext,
     if (!computationAllowed) return
     val data = get(entity)
     data match {
-      case rddData: EntityRDDData => rddData.rdd.cacheBackingArray()
+      case rddData: EntityRDDData[_] => rddData.rdd.cacheBackingArray()
       case _ => ()
     }
   }
@@ -318,6 +318,7 @@ class DataManager(sc: spark.SparkContext,
     val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
+      ioContext = io.IOContext(dataRoot, sc),
       broadcastDirectory = broadcastDirectory)
   }
 }

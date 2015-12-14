@@ -41,7 +41,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     val newAge = project.vertexAttributes("seg_age_average")
       .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
     // Two mappings.
-    assert(newAge == Seq(0 -> 20.3, 1 -> 18.2))
+    assert(newAge == Seq(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
     val oldAge = project.vertexAttributes("age")
       .runtimeSafeCast[Double].rdd.collect.toMap
     // They map Adam to Adam, Eve to Eve.
@@ -90,11 +90,11 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "mo" -> "0",
       "ms" -> "0"),
       on = seg)
-    assert(belongsTo.size == 5)
+    assert(belongsTo.size == 6)
     val similarity = seg.vertexAttributes("fingerprinting_similarity_score")
       .runtimeSafeCast[Double].rdd.values.collect
-    assert(similarity.size == 5)
-    assert(similarity.filter(_ > 0).size == 2)
+    assert(similarity.size == 6)
+    assert(similarity.filter(_ > 0).size == 6)
   }
 
 }

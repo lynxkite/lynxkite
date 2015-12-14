@@ -265,6 +265,9 @@ angular.module('biggraph')
     Side.prototype.isSegmentation = function() {
       return this.parentProjects().length !== 0;
     };
+    Side.prototype.parentProject = function() {
+      return this.parentProjects().join('|');
+    };
 
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
@@ -357,8 +360,25 @@ angular.module('biggraph')
         });
     };
 
-    Side.prototype.close = function() {
+    Side.prototype.closeInternal = function() {
       this.state.projectName = undefined;
+    };
+
+    Side.prototype.close = function() {
+      if (this.direction === 'right' &&
+          this.parentProjects().length >= 2 &&
+          this.parentProject() === this.sides[0].state.projectName) {
+        // If this project was:
+        // 1. open on the right hand side
+        // 2. was a segmentation of a segmentation
+        // 3. it's parent was open on the left hand side
+        // Then move its parent to the right hand side, and open its
+        // grandparent on the left hand side.
+        this.state.projectName = this.sides[0].parentProject();
+        this.swapWithSide(this.sides[0]);
+      } else {
+        this.closeInternal();
+      }
     };
 
     Side.prototype.startSavingAs = function() {
@@ -432,7 +452,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.duplicate = function(kind, name) {
-      this.applyOp('Copy-' + kind, { from: name, to: 'Copy of ' + name });
+      this.applyOp('Copy-' + kind, { from: name, to: 'copy_of_' + name });
     };
 
     Side.prototype.discard = function(kind, name) {
@@ -569,7 +589,7 @@ angular.module('biggraph')
       // Move this side to the left if it's not on the left.
       if (this.direction !== 'left') {
         // Swap sides 0 and this.
-        this.sides[0].close();
+        this.sides[0].closeInternal();
         this.sides[0].swapWithSide(this);
       }
       // Segmentations always open on the right.

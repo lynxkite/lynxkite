@@ -173,7 +173,4 @@ for (var i = 0; i < testFiles.length; ++i) {
 }
 
 fw.runAll();
-// Use the below line to only run one transition test and its
-// state-preserving descendants.
-// fw.runOne('NAME OF A TRANSITION TEST');
 fw.cleanup();

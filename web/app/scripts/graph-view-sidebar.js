@@ -16,14 +16,13 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         if (!gv || !gv.$resolved || gv.$error) {
           return;
         }
-        var sides = [scope.graph.left, scope.graph.right];
-        console.log(sides);
-        var vsIndex = 0;
+        var sides = [];
+        var left = scope.graph.left;
+        var right = scope.graph.right;
+        if (left && left.graphMode) { sides.push(left); }
+        if (right && right.graphMode) { sides.push(right); }
         for (var i = 0; i < sides.length; ++i) {
-          if (sides[i] && sides[i].graphMode) {
-            scope.tsv += vertexSetToTSV(i, gv.vertexSets[vsIndex], sides[i]);
-            vsIndex += 1;
-          }
+          scope.tsv += vertexSetToTSV(i, gv.vertexSets[i], sides[i]);
         }
         for (i = 0; i < gv.edgeBundles.length; ++i) {
           scope.tsv += edgeBundleToTSV(gv.edgeBundles[i], sides);
