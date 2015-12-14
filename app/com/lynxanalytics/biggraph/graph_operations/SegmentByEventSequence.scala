@@ -6,6 +6,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+import org.apache.spark.HashPartitioner
+
 // Each segment in which "persons" will be assigned to, will be defined by such
 // an identifier:
 trait TimeLineCrosserSegmentId extends Ordered[TimeLineCrosserSegmentId] {
@@ -176,7 +178,11 @@ case class SegmentByEventSequence(
     val eventTimeAttributeRdd = inputs.eventTimeAttribute.rdd
     val personBelongsToEventRdd = inputs.personBelongsToEvent.rdd
     val eventBelongsToLocationRdd = inputs.eventBelongsToLocation.rdd
-    val partitioner = eventBelongsToLocationRdd.partitioner.get
+    val partitioner = new HashPartitioner(
+      eventTimeAttributeRdd.partitions.length +
+        personBelongsToEventRdd.partitions.length +
+        eventBelongsToLocationRdd.partitions.length
+    )
     val eventToLocationAndTime = eventBelongsToLocationRdd
       .map { case (edgeId, Edge(eventId, locationId)) => (eventId, locationId) }
       .sort(partitioner)
