@@ -28,34 +28,42 @@ object OperationParams {
     val kind = "default"
     val options = List()
     val multipleChoice = false
+    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
   case class Choice(
       id: String,
       title: String,
-      options: List[UIValue],
-      multipleChoice: Boolean = false) extends OperationParameterMeta {
+      options: List[FEOption],
+      multipleChoice: Boolean = false,
+      allowUnknownOption: Boolean = false) extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = ""
     val mandatory = true
+    val hasFixedOptions = true
     def validate(value: String): Unit = {
-      val possibleValues = options.map { x => x.id }.toSet
-      val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
-        if (value.isEmpty) Set() else value.split(",", -1).toSet
+      if (!allowUnknownOption) {
+        val possibleValues = options.map { x => x.id }.toSet
+        val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
+          if (value.isEmpty) Set() else value.split(",", -1).toSet
+        }
+        val unknown = givenValues -- possibleValues
+        assert(
+          unknown.isEmpty,
+          s"Unknown option: ${unknown.mkString(", ")}" +
+            s" (Possibilities: ${possibleValues.mkString(", ")})")
       }
-      val unknown = givenValues -- possibleValues
-      assert(unknown.isEmpty,
-        s"Unknown option: ${unknown.mkString(", ")} (Possibilities: ${possibleValues.mkString(", ")})")
     }
   }
   case class TagList(
       id: String,
       title: String,
-      options: List[UIValue],
+      options: List[FEOption],
       mandatory: Boolean = false) extends OperationParameterMeta {
     val kind = "tag-list"
     val multipleChoice = true
     val defaultValue = ""
+    val hasFixedOptions = true
     def validate(value: String): Unit = {}
   }
   case class File(id: String, title: String) extends OperationParameterMeta {
@@ -64,6 +72,7 @@ object OperationParams {
     val defaultValue = ""
     val options = List()
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
   case class Ratio(id: String, title: String, defaultValue: String = "")
@@ -72,6 +81,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
@@ -84,6 +94,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
@@ -94,6 +105,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
@@ -106,6 +118,7 @@ object OperationParams {
     val kind = "code"
     val options = List()
     val multipleChoice = false
+    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
 
@@ -116,6 +129,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
+    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
@@ -287,7 +301,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("omitted", "(optional) Comma separated list of columns to omit"),
       Param("filter", "(optional) Filtering expression"),
       Choice("allow_corrupt_lines", "Tolerate ill-formed lines",
-        options = UIValue.list(List("no", "yes"))))
+        options = FEOption.noyes))
 
     def source(params: Map[String, String]) = {
       val files = HadoopFile(params("files"))
@@ -349,7 +363,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
       Choice("attr", "Vertex ID attribute",
-        options = UIValue("!unset", "") +: vertexAttributes[String]),
+        options = FEOption.unset +: vertexAttributes[String]),
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"))
     def enabled =
@@ -362,7 +376,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(src.nonEmpty, "The Source ID field parameter must be set.")
       assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
       val attrName = params("attr")
-      assert(attrName != "!unset", "The Vertex ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
       val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
@@ -431,7 +445,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
       Choice("id-attr", "Vertex ID attribute",
-        options = UIValue("!unset", "") +: vertexAttributes[String]),
+        options = FEOption.unset +: vertexAttributes[String]),
       Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported vertex attributes"))
     def enabled =
@@ -439,7 +453,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val attrName = params("id-attr")
-      assert(attrName != "!unset", "The Vertex ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
       val res = op(op.idAttr, idAttr).result
@@ -458,7 +472,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
       Choice("id-attr", "Edge ID attribute",
-        options = UIValue("!unset", "") +: edgeAttributes[String]),
+        options = FEOption.unset +: edgeAttributes[String]),
       Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported edge attributes"))
     def enabled =
@@ -468,7 +482,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val fieldName = params("id-field")
       assert(fieldName.nonEmpty, "The ID field parameter must be set.")
       val attrName = params("attr")
-      assert(attrName != "!unset", "The Edge ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), fieldName)
       val res = op(op.idAttr, idAttr).result
@@ -486,7 +500,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Maximal cliques", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
-      Choice("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))),
+      Choice(
+        "bothdir", "Edges required in both directions", options = FEOption.bools),
       NonNegInt("min", "Minimum clique size", default = 3))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -503,7 +518,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Check cliques", new SegmentationUtilityOperation(_, _) {
     def segmentationParameters = List(
       Param("selected", "Segment IDs to check", defaultValue = "<All>"),
-      Choice("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))))
+      Choice("bothdir", "Edges required in both directions", options = FEOption.bools))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       val selected =
@@ -521,7 +536,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "directions",
         "Edge direction",
-        options = UIValue.list(List("ignore directions", "require both directions"))))
+        options = FEOption.list("ignore directions", "require both directions")))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val symmetric = params("directions") match {
@@ -544,7 +559,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
-      Choice("bothdir", "Edges required in cliques in both directions", options = UIValue.list(List("true", "false"))),
+      Choice("bothdir", "Edges required in cliques in both directions", options = FEOption.bools),
       NonNegInt("min_cliques", "Minimum clique size", default = 3),
       Ratio("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
@@ -596,7 +611,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
-        UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
+        FEOption.noWeight +: edgeAttributes[Double]),
       Param(
         "max-iterations",
         "Maximum number of iterations to do",
@@ -610,7 +625,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val edgeBundle = project.edgeBundle
       val weightsName = params("weights")
       val weights =
-        if (weightsName == "!no weight") edgeBundle.const(1.0)
+        if (weightsName == FEOption.noWeight.id) edgeBundle.const(1.0)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
         val op = graph_operations.FindModularClusteringByTweaks(
@@ -640,7 +655,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = vertexAttributes[Double]),
       NonNegDouble("interval-size", "Interval size"),
-      Choice("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
+      Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
@@ -699,7 +714,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("begin_attr", "Begin attribute", options = vertexAttributes[Double]),
       Choice("end_attr", "End attribute", options = vertexAttributes[Double]),
       NonNegDouble("interval_size", "Interval size"),
-      Choice("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
+      Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
       vertexAttributes[Double].size >= 2,
       "Less than two double vertex attributes.")
@@ -805,7 +820,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Add random vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Choice("dist", "Distribution", options = UIValue.list(RandomDistribution.getNames)),
+      Choice("dist", "Distribution", options = FEOption.list(RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -819,7 +834,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Add random edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Choice("dist", "Distribution", options = UIValue.list(RandomDistribution.getNames)),
+      Choice("dist", "Distribution", options = FEOption.list(RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -834,7 +849,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"),
-      Choice("type", "Type", options = UIValue.list(List("Double", "String"))))
+      Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val res = {
@@ -852,7 +867,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
-      Choice("type", "Type", options = UIValue.list(List("Double", "String"))))
+      Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1040,7 +1055,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Choice("weights", "Weight attribute",
-        options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
+        options = FEOption.noWeight +: edgeAttributes[Double]),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"))
     def enabled = hasEdgeBundle
@@ -1048,7 +1063,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weights =
-        if (params("weights") == "!no weight") project.edgeBundle.const(1.0)
+        if (params("weights") == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank, help)
@@ -1059,7 +1074,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "shortest_distance"),
       Choice("edge_distance", "Edge distance attribute",
-        options = UIValue("!unit distances", "unit distances") +: edgeAttributes[Double]),
+        options = FEOption.unitDistances +: edgeAttributes[Double]),
       Choice("starting_distance", "Starting distance attribute", options = vertexAttributes[Double]),
       NonNegInt("iterations", "Maximum number of iterations", default = 10)
     )
@@ -1072,7 +1087,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         .runtimeSafeCast[Double]
       val op = graph_operations.ShortestPath(params("iterations").toInt)
       val edgeDistance =
-        if (params("edge_distance") == "!unit distances") {
+        if (params("edge_distance") == FEOption.unitDistances.id) {
           project.edgeBundle.const(1.0)
         } else {
           project.edgeAttributes(params("edge_distance")).runtimeSafeCast[Double]
@@ -1087,7 +1102,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "centrality"),
       NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
-      Choice("algorithm", "Centrality type", options = UIValue.list(List("Harmonic", "Lin"))))
+      Choice("algorithm", "Centrality type", options = FEOption.list("Harmonic", "Lin")))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
@@ -1103,7 +1118,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
       Choice("keyattr", "Key attribute name", options = vertexAttributes[Double]),
-      Choice("order", "Order", options = UIValue.list(List("ascending", "descending"))))
+      Choice("order", "Order", options = FEOption.list("ascending", "descending")))
 
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric (double) vertex attributes")
     def apply(params: Map[String, String]) = {
@@ -1237,7 +1252,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
+      Choice("type", "Result type", options = FEOption.list("double", "string")),
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
@@ -1264,7 +1279,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Derived edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
+      Choice("type", "Result type", options = FEOption.list("double", "string")),
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
@@ -1310,9 +1325,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
-      Choice("method", "Method", options = UIValue.list(List(
+      Choice("method", "Method", options = FEOption.list(
         "Linear regression", "Ridge regression", "Lasso", "Logistic regression", "Naive Bayes",
-        "Decision tree", "Random forest", "Gradient-boosted trees"))))
+        "Decision tree", "Random forest", "Gradient-boosted trees")))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary(params: Map[String, String]) = {
@@ -2070,19 +2085,26 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
-      Choice("them", "Other project's name", options = readableProjects))
+      Choice(
+        "them",
+        "Other project's name",
+        options = readableProjectCheckpoints,
+        allowUnknownOption = true))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
-      val them = params("them")
-      s"Import $them as segmentation"
+      val (cp, title) = FEOption.unpackTitledCheckpoint(params("them"))
+      s"Import $title as segmentation"
     }
     def apply(params: Map[String, String]) = {
-      val themName = params("them")
-      assert(readableProjects.map(_.id).contains(themName), s"Unknown project: $themName")
-      val themFrame = ProjectFrame.fromName(themName)
-      val them = themFrame.viewer
+      val themId = params("them")
+      val (cp, title) = FEOption.unpackTitledCheckpoint(
+        themId,
+        customError =
+          s"Obsolete project reference: $themId. Please select a new project from the dropdown.")
+      val baseName = SymbolPath.parse(title).last.name
+      val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(them.vertexSet != null, s"No vertex set in $them")
-      val segmentation = project.segmentation(themFrame.path.last.name)
+      val segmentation = project.segmentation(baseName)
       segmentation.state = them.state
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
@@ -2095,7 +2117,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "base-id-attr",
         s"Identifying vertex attribute in base project",
-        options = UIValue.list(parent.vertexAttributeNames[String].toList)),
+        options = FEOption.list(parent.vertexAttributeNames[String].toList)),
       Param("base-id-field", s"Identifying field for base project"),
       Choice(
         "seg-id-attr",
@@ -2126,13 +2148,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = sourceParameters ++ List(
       Param("name", s"Name of new segmentation"),
       Choice("attr", "Vertex ID attribute",
-        options = UIValue("!unset", "") +: vertexAttributes[String]),
+        options = FEOption.unset +: vertexAttributes[String]),
       Param("base-id-field", "Vertex ID field"),
       Param("seg-id-field", "Segment ID field"))
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes")
     def apply(params: Map[String, String]) = {
       val baseAttrName = params("attr")
-      assert(baseAttrName != "!unset", "The Vertex ID attribute parameter must be set.")
+      assert(baseAttrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val baseAttr = project.vertexAttributes(baseAttrName).runtimeSafeCast[String]
       val baseId = params("base-id-field")
       assert(baseId.nonEmpty, "The Vertex ID field parameter must be set.")
@@ -2174,7 +2196,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice(
           "base-id-attr",
           s"Identifying vertex attribute in base project",
-          options = UIValue.list(parent.vertexAttributeNames[String].toList)),
+          options = FEOption.list(parent.vertexAttributeNames[String].toList)),
         Choice(
           "seg-id-attr",
           s"Identifying vertex attribute in segmentation",
@@ -2195,12 +2217,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Union with another project", new StructureOperation(_, _) {
     def parameters = List(
-      Choice("other", "Other project's name", options = readableProjects),
+      Choice(
+        "other",
+        "Other project's name",
+        options = readableProjectCheckpoints,
+        allowUnknownOption = true),
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
-      val other = params("other")
-      s"Union with $other"
+      val (cp, title) = FEOption.unpackTitledCheckpoint(params("other"))
+      s"Union with $title"
     }
 
     def checkTypeCollision(other: ProjectViewer) = {
@@ -2217,9 +2243,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     }
     def apply(params: Map[String, String]): Unit = {
-      val otherName = params("other")
-      assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
-      val other = ProjectFrame.fromName(otherName).viewer
+      val otherId = params("other")
+      val (cp, _) = FEOption.unpackTitledCheckpoint(
+        otherId,
+        customError =
+          s"Obsolete project reference: $otherId. Please select a new project from the dropdown.")
+      val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       if (other.vertexSet == null) {
         // Nothing to do
         return
@@ -2306,7 +2335,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Choice("weights", "Edge weights",
-        options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
+        options = FEOption.noWeight +: edgeAttributes[Double]),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
       Param(
@@ -2324,7 +2353,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
       val weights =
-        if (params("weights") == "!no weight") project.edgeBundle.const(1.0)
+        if (params("weights") == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
 
       val candidates = {
@@ -2405,10 +2434,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         segmentation.belongsTo.properties.compliesWith(EdgeBundleProperties.identity)
     }
 
-    val possibleSegmentations = UIValue.list(project.segmentations
-      .filter(isCompatibleSegmentation)
-      .map { seg => seg.segmentationName }
-      .toList)
+    val possibleSegmentations = FEOption.list(
+      project.segmentations
+        .filter(isCompatibleSegmentation)
+        .map { seg => seg.segmentationName }
+        .toList)
 
     override def parameters = List(
       Choice("golden", "Golden segmentation", options = possibleSegmentations),
@@ -2513,7 +2543,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def segmentationParameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "viral"),
       Choice("target", "Target attribute",
-        options = UIValue.list(parentDoubleAttributes)),
+        options = FEOption.list(parentDoubleAttributes)),
       Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
       RandomSeed("seed", "Random seed for test set selection"),
       NonNegDouble("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
@@ -2524,7 +2554,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       isSegmentation &&
         hasVertexSet &&
-        FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
+        FEStatus.assert(FEOption.list(parentDoubleAttributes).nonEmpty,
           "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       // partition target attribute to test and train sets
@@ -2824,7 +2854,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
         Choice("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
-        Choice("format", "File format", options = UIValue.list(List("CSV"))))
+        Choice("format", "File format", options = FEOption.list("CSV")))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2849,7 +2879,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("db", "Database"),
         Param("table", "Table"),
         Choice("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
-        Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+        Choice("delete", "Overwrite table if it exists", options = FEOption.noyes))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2883,7 +2913,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       paramID: String,
       pe: ProjectEditor): NameAndAttr[_] = {
 
-      if (paramID == "!internal id (default)") {
+      if (paramID == FEOption.internalId.id) {
         NameAndAttr("id", pe.vertexSet.idAttribute)
       } else {
         NameAndAttr(paramID, pe.vertexAttributes(paramID))
@@ -2915,8 +2945,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
         Choice("id_attr", "Vertex id attribute",
-          options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
-        Choice("format", "File format", options = UIValue.list(List("CSV"))))
+          options = FEOption.internalId +: vertexAttributes),
+        Choice("format", "File format", options = FEOption.list("CSV")))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2950,7 +2980,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("db", "Database"),
         Param("table", "Table"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+        Choice("delete", "Overwrite table if it exists", options = FEOption.noyes))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2971,11 +3001,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
         Choice("base_id_attr", "Project vertex id attribute",
-          options = UIValue("!internal id (default)", "internal id (default)") +:
-            UIValue.list(parent.vertexAttributeNames.toList)),
+          options = FEOption.internalId +:
+            FEOption.list(parent.vertexAttributeNames.toList)),
         Choice("seg_id_attr", "Segmentation vertex id attribute",
-          options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
-        Choice("format", "File format", options = UIValue.list(List("CSV"))))
+          options = FEOption.internalId +: vertexAttributes),
+        Choice("format", "File format", options = FEOption.list("CSV")))
       def enabled = isSegmentation && FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
@@ -3004,7 +3034,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def segmentationParameters = List(
         Param("db", "Database"),
         Param("table", "Table"),
-        Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+        Choice("delete", "Overwrite table if it exists", options = FEOption.noyes))
       def enabled = isSegmentation && FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val export = graph_util.SQLExport(params("table"), seg.belongsTo, Map[String, Attribute[_]]())
@@ -3045,31 +3075,31 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.list(List("weighted_sum", "weighted_average", "by_max_weight", "by_min_weight"))
+            FEOption.list("weighted_sum", "weighted_average", "by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            UIValue.list(List("sum", "average", "min", "max", "count", "first", "std_deviation"))
+            FEOption.list("sum", "average", "min", "max", "count", "first", "std_deviation")
           } else {
-            UIValue.list(List(
+            FEOption.list(
               "sum", "average", "min", "max", "most_common", "count_distinct",
-              "count", "vector", "set", "std_deviation"))
+              "count", "vector", "set", "std_deviation")
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.list(List("by_max_weight", "by_min_weight"))
+            FEOption.list("by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            UIValue.list(List("count", "first"))
+            FEOption.list("count", "first")
           } else {
-            UIValue.list(List(
+            FEOption.list(
               "most_common", "count_distinct", "majority_50", "majority_100",
-              "count", "vector", "set"))
+              "count", "vector", "set")
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.list(List("by_max_weight", "by_min_weight"))
+            FEOption.list("by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            UIValue.list(List("count", "first"))
+            FEOption.list("count", "first")
           } else {
-            UIValue.list(List("most_common", "count_distinct", "count", "vector", "set"))
+            FEOption.list("most_common", "count_distinct", "count", "vector", "set")
           }
         }
         TagList(s"aggregate-$name", name, options = options)
@@ -3107,17 +3137,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   object Direction {
     // Options suitable when edge attributes are involved.
-    val attrOptions = UIValue.list(List(
-      "incoming edges",
-      "outgoing edges",
-      "all edges"))
+    val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
     // Options suitable when edge attributes are not involved.
-    val options = attrOptions :+
-      UIValue("symmetric edges", "symmetric edges") :+
-      UIValue("in-neighbors", "in-neighbors") :+
-      UIValue("out-neighbors", "out-neighbors") :+
-      UIValue("all neighbors", "all neighbors") :+
-      UIValue("symmetric neighbors", "symmetric neighbors")
+    val options = attrOptions ++
+      FEOption.list(
+        "symmetric edges", "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
     // Neighborhood directions correspond to these
     // edge directions, but they also retain only one A->B edge in
     // the output edgeBundle
