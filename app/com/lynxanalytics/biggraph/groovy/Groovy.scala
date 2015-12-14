@@ -148,6 +148,14 @@ abstract class GroovyProject(ctx: GroovyContext)
     null
   }
 
+  // Public method for running workflows. (Workflow names are not valid identifiers.)
+  def runWorkflow(javaParams: java.util.Map[AnyRef, AnyRef], id: String): Unit = {
+    val params = JavaConversions.mapAsScalaMap(javaParams).map {
+      case (k, v) => (k.toString, v.toString)
+    }.toMap
+    applyOperation("workflows/" + id, params)
+  }
+
   override def getProperty(name: String): AnyRef = {
     name match {
       case "segmentations" => JavaConversions.mapAsJavaMap(getSegmentations)
