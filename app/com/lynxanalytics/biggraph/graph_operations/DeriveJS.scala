@@ -42,10 +42,11 @@ object DeriveJS {
         DeriveJSDouble(js, namedAttributes.map(_._1), namedScalars.map(_._1)).asInstanceOf[DeriveJS[T]]
       } else ???
 
-    val defaultValues =
-      namedAttributes.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value } ++
-        namedScalars.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
-    op.validateJS[T](defaultValues)
+    val defaultAttributeValues =
+      namedAttributes.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
+    val defaultScalarValues =
+      namedScalars.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
+    op.validateJS[T](defaultAttributeValues, defaultScalarValues)
 
     import Scripting._
     op(op.vs, vertexSet)(op.attrs, jsValueAttributes).result
@@ -64,8 +65,11 @@ abstract class DeriveJS[T](
     new Output()(resultTypeTag, instance, inputs)
 
   // Validate JS using default values for the types of the attributes.
-  def validateJS[T: TypeTag](defaultValues: Seq[Any]): Unit = {
-    val testNamedValues = attrNames.zip(defaultValues).toMap
+  def validateJS[T: TypeTag](
+    defaultAttributeValues: Seq[Any],
+    defaultScalarValues: Seq[Any]): Unit = {
+    val testNamedValues =
+      (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues)
     if (result != null) {
       val converted =
