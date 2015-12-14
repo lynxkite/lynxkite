@@ -82,4 +82,30 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200).collect.isEmpty)
     assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0).collect.isEmpty)
   }
+
+  test("groupBySortedKey works as expected") {
+    import Implicits._
+    val rnd = new util.Random(0)
+    val data = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
+    val sourceRDD = sparkContext.parallelize(data, 10)
+    val p = new HashPartitioner(10)
+    val groupped = sourceRDD.groupBySortedKey(p).mapValues(_.toSeq.sorted)
+    assert(groupped.keys.collect.toSet == sourceRDD.keys.collect.toSet)
+    assert(groupped.values.map(_.size).reduce(_ + _) == 1000)
+    val groupped2 = sourceRDD.sort(p).groupBySortedKey(p).mapValues(_.toSeq.sorted)
+    assert(groupped.collect.toSeq == groupped2.collect.toSeq)
+  }
+
+  test("reduceBySortedKey works as expected") {
+    import Implicits._
+    val rnd = new util.Random(0)
+    val data = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
+    val sourceRDD = sparkContext.parallelize(data, 10)
+    val p = new HashPartitioner(10)
+    val reduced = sourceRDD.reduceBySortedKey(p, _ + _)
+    assert(reduced.keys.collect.toSeq.sorted == sourceRDD.keys.collect.toSet.toSeq.sorted)
+    assert(reduced.values.reduce(_ + _) == sourceRDD.values.reduce(_ + _))
+    val reduced2 = sourceRDD.sort(p).reduceBySortedKey(p, _ + _)
+    assert(reduced.collect.toSeq == reduced2.collect.toSeq)
+  }
 }

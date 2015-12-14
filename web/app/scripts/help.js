@@ -99,78 +99,35 @@ angular.module('biggraph').directive('helpId',
 });
 
 // A button that displays a help snippet on hover/click.
-angular.module('biggraph').directive('helpPopup', function($rootScope) {
+angular.module('biggraph').directive('helpPopup', function() {
   return {
     restrict: 'E',
     scope: { helpId: '@href' },
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
-      var body = angular.element('body');
-      var uiLayout = angular.element('.kite-top');
-      var button = element.find('#help-button');
-      var popup = element.find('#help-popup');
-      popup.hide();
-      scope.isEmpty = function() {
-        return popup.children().length === 0;
-      };
-      var sticky = false;
+      /* global Drop */
+      var button = element.find('#help-button')[0];
+      var popup = element.find('#help-popup')[0];
+      var drop = new Drop({
+        target: button,
+        content: popup,
+        position: 'bottom center',
+        classes: 'drop-theme-help-popup',
+        openOn: 'hover',
+        remove: true,
+        tetherOptions: {
+          // Keep within the page.
+          constraints: [{
+            to: 'window',
+            pin: true,
+            attachment: 'together',
+          }],
+        },
+      });
 
       scope.$on('$destroy', function() {
-        popup.remove();
+        drop.destroy();
       });
-      scope.$on('help popup opened', function(e, source) {
-        if (scope !== source) { // Another popup opened. Hide ourselves.
-          popup.hide();
-          sticky = false;
-        }
-      });
-
-      function show() {
-        if (popup.is(':visible')) { return; }
-        $rootScope.$broadcast('help popup opened', scope);
-        // Add the popup at the end of <body> to make sure it's above everything.
-        body.append(popup.detach());
-        popup.show();
-        var offset = button.offset();
-        var buttonLeft = offset.left;
-        var buttonTop = offset.top;
-        var buttonHeight = button.height();
-
-        var popupLeft = buttonLeft - popup.width() / 2;
-        var maxLeft = uiLayout.width() - popup.width() - 30;
-        if (popupLeft > maxLeft) {
-          popupLeft = maxLeft;
-        }
-        if (popupLeft < 0) {
-          popupLeft = 0;
-        }
-        var fullHeight = uiLayout.height();
-
-        popup.css('left', popupLeft + 'px');
-        // We don't allow large popups upwards as the user won't find the start of the text.
-        var topPopupHeight = Math.min(250, buttonTop - 10);
-        if (fullHeight - buttonTop - buttonHeight - 20 < topPopupHeight) {
-          // Very little room below, we put it above.
-          popup.css('top', (buttonTop - topPopupHeight - 10) + 'px');
-          popup.css('height', topPopupHeight + 'px');
-        } else {
-          // We have enough room below.
-          var popupTop = buttonTop + buttonHeight + 10;
-          popup.css('top', popupTop + 'px');
-          popup.css('max-height', (fullHeight - popupTop - 10) + 'px');
-        }
-      }
-
-      scope.on = function() {
-        show();
-      };
-      scope.off = function() {
-        if (!sticky) { popup.hide(); }
-      };
-      scope.toggle = function() {
-        sticky = !sticky;
-        if (sticky) { show(); }
-      };
     }
   };
 });

@@ -8,27 +8,18 @@ var lib = require('../test-lib.js');
 module.exports = function(fw) {
   fw.statePreservingTest(
     'empty test-example project',
-    'can open a help popup on the page by clicking',
-    function() {
-      var helpIcon = element(by.css('help-popup[href="project-header-buttons"]'));
-      lib.expectHelpPopupVisible('project-header-buttons', false);
-      helpIcon.click();  // click to show popup
-      lib.expectHelpPopupVisible('project-header-buttons', true);
-      helpIcon.click();  // click to stop showing popup, it still keeps showing :P
-      browser.actions().mouseMove({x: 100, y: 100}).perform();  // move mouse away
-      lib.expectHelpPopupVisible('project-header-buttons', false);
-    });
-
-  fw.statePreservingTest(
-    'empty test-example project',
     'can open a help popup on the page by hovering',
     function() {
       var helpIcon = element(by.css('help-popup[href="project-header-buttons"]'));
-      lib.expectHelpPopupVisible('project-header-buttons', false);
+      lib.expectNotElement(lib.helpPopup('project-header-buttons'));
       browser.actions().mouseMove(helpIcon).perform();  // hover mouse over icon
-      lib.expectHelpPopupVisible('project-header-buttons', true);
-      browser.actions().mouseMove({x: 100, y: 100}).perform();  // move mouse away
-      lib.expectHelpPopupVisible('project-header-buttons', false);
+      lib.expectElement(lib.helpPopup('project-header-buttons'));
+      browser.actions().mouseMove(lib.left.side, { x: 1, y: 1 }).perform();  // move mouse away
+      // Drop is not part of Angular and hiding happens on a short timeout. We need to wait.
+      lib.wait(function() {
+        return lib.helpPopup('project-header-buttons').isPresent().then(
+          function(present) { return !present; });
+      });
     });
 
   fw.transitionTest(

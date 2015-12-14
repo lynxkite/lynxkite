@@ -16,8 +16,10 @@ import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 object RuntimeSafeCastable {
-  def classTagFromTypeTag[T](tt: TypeTag[T]): ClassTag[T] =
-    ClassTag[T](typeTag.mirror.runtimeClass(tt.tpe))
+  def classTagFromTypeTag[T: TypeTag]: ClassTag[T] = {
+    val tt = typeTag[T]
+    ClassTag[T](tt.mirror.runtimeClass(tt.tpe))
+  }
 }
 trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteKind]] {
   implicit def typeTag: TypeTag[T]
@@ -28,9 +30,8 @@ trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteK
     } else throw new ClassCastException("Cannot cast from %s to %s".format(typeOf[T], typeOf[S]))
   }
 
-  def classTag: ClassTag[T] = {
-    RuntimeSafeCastable.classTagFromTypeTag(typeTag)
-  }
+  def classTag = RuntimeSafeCastable.classTagFromTypeTag[T]
+
   def is[S: TypeTag]: Boolean = {
     typeOf[S] =:= typeOf[T]
   }

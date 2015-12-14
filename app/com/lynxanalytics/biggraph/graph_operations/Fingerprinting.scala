@@ -205,16 +205,16 @@ case class Fingerprinting(
                          gentlemenScores: SortedRDD[ID, (ID, Double)]): UniqueSortedRDD[ID, ID] = {
     val ladiesPartitioner = ladiesScores.partitioner.get
     val gentlemenPartitioner = gentlemenScores.partitioner.get
-    val gentlemenPreferences = gentlemenScores.groupByKey.mapValues {
-      case ladies => ladies.sortBy(-_._2).map(_._1)
-    }
-    val ladiesPreferences = ladiesScores.groupByKey.mapValues {
-      case gentlemen => gentlemen.sortBy(-_._2).map(_._1)
-    }
+    val gentlemenPreferences: UniqueSortedRDD[ID, Iterable[ID]] = gentlemenScores
+      .groupByKey
+      .mapValues(_.toSeq.sortBy(-_._2).map(_._1))
+    val ladiesPreferences: UniqueSortedRDD[ID, Iterable[ID]] = ladiesScores
+      .groupByKey
+      .mapValues(_.toSeq.sortBy(-_._2).map(_._1))
 
     @annotation.tailrec
     def iterate(
-      gentlemenCandidates: UniqueSortedRDD[ID, ArrayBuffer[ID]], iteration: Int): UniqueSortedRDD[ID, ID] = {
+      gentlemenCandidates: UniqueSortedRDD[ID, Iterable[ID]], iteration: Int): UniqueSortedRDD[ID, ID] = {
 
       val proposals = gentlemenCandidates.flatMap {
         case (gentleman, ladies) =>
@@ -305,5 +305,55 @@ case class FingerprintingCandidates()
       candidates
         .map { case (left, right) => Edge(left, right) }
         .randomNumbered(inputs.es.rdd.partitioner.get))
+  }
+}
+
+// Generates a list of candidate matches for Fingerprinting. A pair (x \in left, y \in right) will
+// be considered a candidate if there is a z \in target such that (x, z) \in leftEdges and
+// (y, z) \in rightEdges.
+object FingerprintingCandidatesFromCommonNeighbors extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val left = vertexSet
+    val right = vertexSet
+    val target = vertexSet
+    val leftEdges = edgeBundle(left, target)
+    val rightEdges = edgeBundle(right, target)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val candidates = edgeBundle(inputs.left.entity, inputs.right.entity)
+  }
+  def fromJson(j: JsValue) = FingerprintingCandidatesFromCommonNeighbors()
+}
+case class FingerprintingCandidatesFromCommonNeighbors()
+    extends TypedMetaGraphOp[FingerprintingCandidatesFromCommonNeighbors.Input, FingerprintingCandidatesFromCommonNeighbors.Output] {
+  import FingerprintingCandidatesFromCommonNeighbors._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val neighborsPartitioner = new HashPartitioner(
+      inputs.rightEdges.rdd.partitions.size + inputs.leftEdges.rdd.partitions.size)
+
+    val leftByTargets =
+      inputs.leftEdges.rdd.values.map(e => (e.dst, e.src)).sort(neighborsPartitioner)
+    val rightByTargets =
+      inputs.rightEdges.rdd.values.map(e => (e.dst, e.src)).sort(neighborsPartitioner)
+
+    val candidatesByTargets = leftByTargets.sortedJoinWithDuplicates(rightByTargets)
+    val resultPartitioner = rc.partitionerForNRows(candidatesByTargets.count)
+
+    val distinctPairs =
+      candidatesByTargets.values.distinct(resultPartitioner.numPartitions)
+    output(
+      o.candidates,
+      distinctPairs
+        .map { case (left, right) => Edge(left, right) }
+        .randomNumbered(resultPartitioner))
   }
 }

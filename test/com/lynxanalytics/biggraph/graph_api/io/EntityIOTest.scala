@@ -108,7 +108,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
     if (legacyConfig != EntityDirStatus.NONEXISTENT) {
       val legacyData = HadoopFile("ENTITYIOTEST$") / gUID
-      assert(legacyData.exists)
       copyDirContents(legacyData, legacyPath)
       modifyEntityDir(legacyPath, legacyConfig)
     }

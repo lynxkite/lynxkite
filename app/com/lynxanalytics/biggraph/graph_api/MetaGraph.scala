@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.util.IdentityHashMap
 import java.util.UUID
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
@@ -319,7 +320,7 @@ trait MetaDataSetProvider {
   def metaDataSet: MetaDataSet
 }
 
-trait EntityContainer[T <: MetaGraphEntity] {
+trait EntityContainer[+T <: MetaGraphEntity] {
   def entity: T
 }
 object EntityContainer {
@@ -391,7 +392,14 @@ object MetaGraphOp {
   val UTF8 = java.nio.charset.Charset.forName("UTF-8")
 }
 trait MetaGraphOp extends Serializable with ToJson {
+  // An operation is heavy if it is faster to load its results than it is to recalculate them.
+  // Heavy operation outputs are written out and loaded back on completion.
   val isHeavy: Boolean = false
+  // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
+  // instead of putting them in the OutputBuilder in execute().
+  val hasCustomSaving: Boolean = false
+  assert(!hasCustomSaving || isHeavy, "$this cannot have custom saving if it is not heavy.")
+
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
@@ -510,27 +518,27 @@ sealed trait EntityData {
   val entity: MetaGraphEntity
   def gUID = entity.gUID
 }
-sealed trait EntityRDDData extends EntityData {
-  val rdd: SortedRDD[ID, _]
+sealed trait EntityRDDData[T] extends EntityData {
+  val rdd: SortedRDD[ID, T]
   val count: Option[Long]
   rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
 }
 class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD,
-                    val count: Option[Long] = None) extends EntityRDDData {
+                    val count: Option[Long] = None) extends EntityRDDData[Unit] {
   val vertexSet = entity
 }
 
 class EdgeBundleData(val entity: EdgeBundle,
                      val rdd: EdgeBundleRDD,
-                     val count: Option[Long] = None) extends EntityRDDData {
+                     val count: Option[Long] = None) extends EntityRDDData[Edge] {
   val edgeBundle = entity
 }
 
 class AttributeData[T](val entity: Attribute[T],
                        val rdd: AttributeRDD[T],
                        val count: Option[Long] = None)
-    extends EntityRDDData with RuntimeSafeCastable[T, AttributeData] {
+    extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
   val attribute = entity
   val typeTag = attribute.typeTag
 }
@@ -652,8 +660,10 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
   }
 
   def dataMap() = {
-    assert(outputMeta.all.values.forall(x => internalDataMap.contains(x.gUID)),
-      s"Output data missing for: ${outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))}")
+    if (!instance.operation.hasCustomSaving) {
+      val missing = outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))
+      assert(missing.isEmpty, s"Output data missing for: $missing")
+    }
     internalDataMap
   }
 

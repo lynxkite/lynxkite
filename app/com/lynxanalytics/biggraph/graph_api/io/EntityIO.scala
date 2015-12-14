@@ -2,20 +2,126 @@
 
 package com.lynxanalytics.biggraph.graph_api.io
 
+import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import play.api.libs.json
+import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util._
 
-case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
+object IOContext {
+  // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
+  private class TaskFile(
+      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile,
+      collection: TaskFileCollection) {
+    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
+    val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
+    val context = {
+      val config = new hadoop.mapred.JobConf(file.hadoopConfiguration)
+      config.set(
+        hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR,
+        file.resolvedNameWithNoCredentials)
+      config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
+      config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
+      spark.EntityIOHelper.createTaskAttemptContext(config, tracker, stage, task, attempt)
+    }
+    val committer = fmt.getOutputCommitter(context)
+    lazy val writer = {
+      val w = fmt.getRecordWriter(context)
+      collection.registerForClosing(this)
+      w
+    }
+  }
 
-case class EntityMetadata(lines: Long)
+  private class TaskFileCollection(tracker: String, stage: Int, task: Int, attempt: Int) {
+    val toClose = new collection.mutable.ListBuffer[TaskFile]()
+    def createTaskFile(path: HadoopFile) = new TaskFile(tracker, stage, task, attempt, path, this)
+    def registerForClosing(file: TaskFile) = {
+      toClose += file
+    }
+    // Call this if you accessed any RecordWriters.
+    def close() = for (file <- toClose) file.writer.close(file.context)
+  }
+}
+
+case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
+  def partitionedPath(entity: MetaGraphEntity): HadoopFileLike =
+    dataRoot / io.PartitionedDir / entity.gUID.toString
+
+  def partitionedPath(entity: MetaGraphEntity, numPartitions: Int): HadoopFileLike =
+    partitionedPath(entity) / numPartitions.toString
+
+  // Writes multiple attributes and their vertex set to disk. The attributes are given in a
+  // single RDD which will be iterated over only once.
+  // It's the callers responsibility to make sure that the Seqs in data have elements of the right
+  // type, corresponding to the given attributes. For wrong types, the behavior is unspecified,
+  // it may or may not fail at write time.
+  // Don't let the AnyType type parameter fool you, it has really no signifance, you can basically
+  // pass in an RDD of any kind of Seq you like. It's only needed because stupid RDDs are not
+  // covariant, so taking AttributeRDD[Seq[_]] wouldn't be generic enough.
+  def writeAttributes[AnyType](
+    attributes: Seq[Attribute[_]],
+    data: AttributeRDD[Seq[AnyType]]) = {
+
+    val vs = attributes.head.vertexSet
+    for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
+
+    // Delete output directories.
+    val doesNotExist = new VertexSetIO(vs, this).delete()
+    assert(doesNotExist, s"Cannot delete directory of $vs")
+    for (attr <- attributes) {
+      val doesNotExist = new AttributeIO(attr, this).delete()
+      assert(doesNotExist, s"Cannot delete directory of $attr")
+    }
+
+    val outputEntities: Seq[MetaGraphEntity] = attributes :+ vs
+    val paths = outputEntities.map(e => partitionedPath(e, data.partitions.size).forWriting)
+
+    val trackerID = Timestamp.toString
+    val rddID = data.id
+    val count = sparkContext.accumulator[Long](0L, "Line count")
+    val unitSerializer = EntitySerializer.forType[Unit]
+    val serializers = attributes.map(EntitySerializer.forAttribute(_))
+    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
+      val collection = new IOContext.TaskFileCollection(
+        trackerID, rddID, task.partitionId, task.attemptNumber)
+      try {
+        val files = paths.map(collection.createTaskFile(_))
+        val verticesWriter = files.last.writer
+        for (file <- files) file.committer.setupTask(file.context)
+        val filesAndSerializers = files zip serializers
+        for ((id, cols) <- iterator) {
+          count += 1
+          val key = new hadoop.io.LongWritable(id)
+          for (((file, serializer), col) <- (filesAndSerializers zip cols) if col != null) {
+            val value = serializer.unsafeSerialize(col)
+            file.writer.write(key, value)
+          }
+          verticesWriter.write(key, unitSerializer.serialize(()))
+        }
+        for (file <- files) file.committer.commitTask(file.context)
+      } finally collection.close()
+    }
+    val collection = new IOContext.TaskFileCollection(trackerID, rddID, 0, 0)
+    try {
+      val files = paths.map(collection.createTaskFile(_))
+      for (file <- files) file.committer.setupJob(file.context)
+      sparkContext.runJob(data, writeShard)
+      for (file <- files) file.committer.commitJob(file.context)
+      // Write metadata files.
+      val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
+      vertexSetMeta.write(partitionedPath(vs).forWriting)
+      for ((attr, serializer) <- attributes zip serializers)
+        EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
+    } finally collection.close()
+  }
+}
 
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
@@ -29,6 +135,19 @@ object EntityIO {
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
     dataRoot / io.OperationsDir / instance.gUID.toString
+}
+
+case class EntityMetadata(lines: Long, serialization: Option[String]) {
+  def write(path: HadoopFile) = {
+    import EntityIO.fEntityMetadata
+    val metaFile = path / io.Metadata
+    assert(!metaFile.exists, s"Metafile $metaFile should not exist before we write it.")
+    val metaFileCreated = path / io.MetadataCreate
+    metaFileCreated.deleteIfExists()
+    val j = json.Json.toJson(this)
+    metaFileCreated.createFromStrings(json.Json.prettyPrint(j))
+    metaFileCreated.renameTo(metaFile)
+  }
 }
 
 abstract class EntityIO(val entity: MetaGraphEntity, context: IOContext) {
@@ -45,8 +164,8 @@ abstract class EntityIO(val entity: MetaGraphEntity, context: IOContext) {
   protected def operationExists = (EntityIO.operationPath(dataRoot, entity.source) / io.Success).exists
 }
 
-class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
-    extends EntityIO(entity, dMParam) {
+class ScalarIO[T](entity: Scalar[T], context: IOContext)
+    extends EntityIO(entity, context) {
 
   def read(parent: Option[VertexSetData]): ScalarData[T] = {
     assert(parent == None, s"Scalar read called with parent $parent")
@@ -96,9 +215,9 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
 
 }
 
-abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
-                                                      dMParam: IOContext)
-    extends EntityIO(entity, dMParam) {
+abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEntity,
+                                                            context: IOContext)
+    extends EntityIO(entity, context) {
 
   // This class reflects the current state of the disk during the read operation
   case class EntityLocationSnapshot(availablePartitions: Map[Int, HadoopFile]) {
@@ -108,17 +227,23 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
     val legacyPathExists = (legacyPath / io.Success).forReading.exists
     assert(hasPartitionedData || legacyPathExists,
-      s"Legacy path $legacyPath does not exist, and there seems to be no valid data in $partitionedPath")
+      s"Legacy path ${legacyPath.forReading} does not exist," +
+        s" and there seems to be no valid data in ${partitionedPath.forReading}")
 
-    private def readMetadata: EntityMetadata = {
+    private lazy val metadata: EntityMetadata = {
       import EntityIO.fEntityMetadata
       val j = json.Json.parse(metaFile.forReading.readAsString)
       j.as[EntityMetadata]
     }
 
     val numVertices =
-      if (hasPartitionedData) readMetadata.lines
+      if (hasPartitionedData) metadata.lines
       else legacyRDD.count
+
+    def serialization = {
+      assert(hasPartitionedData, s"EntitySerialization cannot be used with legacy data. ($entity)")
+      metadata.serialization.getOrElse("kryo")
+    }
   }
 
   def read(parent: Option[VertexSetData] = None): DT = {
@@ -126,27 +251,35 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val pn = parent.map(_.rdd.partitions.size).getOrElse(selectPartitionNumber(entityLocation))
     val partitioner = parent.map(_.rdd.partitioner.get).getOrElse(new HashPartitioner(pn))
 
-    val file =
+    val (file, serialization) =
       if (entityLocation.availablePartitions.contains(pn))
-        entityLocation.availablePartitions(pn)
+        (entityLocation.availablePartitions(pn), entityLocation.serialization)
       else
         repartitionTo(entityLocation, partitioner)
 
-    val dataRead = finalRead(file, entityLocation.numVertices, partitioner, parent)
-    assert(dataRead.rdd.partitions.size == pn, s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
+    val dataRead = finalRead(
+      file, entityLocation.numVertices, serialization, partitioner, parent)
+    assert(dataRead.rdd.partitions.size == pn,
+      s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
   }
 
   def write(data: EntityData): Unit = {
-    val rddData = data.asInstanceOf[EntityRDDData]
+    assert(data.entity == entity, s"Tried to write $data through EntityIO for $entity.")
+    val rddData: EntityRDDData[T] = castData(data)
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
     val partitions = rdd.partitions.size
-    val lines = targetDir(partitions).saveEntityRDD(rdd)
-    val metadata = EntityMetadata(lines)
-    writeMetadata(metadata)
+    val (lines, serialization) = targetDir(partitions).saveEntityRDD(rdd, valueTypeTag)
+    val metadata = EntityMetadata(lines, Some(serialization))
+    metadata.write(partitionedPath.forWriting)
     log.info(s"PERF Instantiated entity $entity on disk")
   }
+
+  // The subclasses know the specific type and can thus make a safer cast.
+  def castData(data: EntityData): EntityRDDData[T]
+
+  def valueTypeTag: TypeTag[T] // The TypeTag of the values we write out.
 
   def delete(): Boolean = {
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
@@ -156,23 +289,11 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   def mayHaveExisted = operationMayHaveExisted && (partitionedPath.mayHaveExisted || legacyPath.mayHaveExisted)
 
-  private val partitionedPath = dataRoot / PartitionedDir / entity.gUID.toString
+  private val partitionedPath = context.partitionedPath(entity)
   private val metaFile = partitionedPath / io.Metadata
-  private val metaFileCreated = partitionedPath / io.MetadataCreate
 
-  private def targetDir(numPartitions: Int) = {
-    val subdir = numPartitions.toString
-    partitionedPath.forWriting / subdir
-  }
-
-  private def writeMetadata(metaData: EntityMetadata) = {
-    import EntityIO.fEntityMetadata
-    assert(!metaFile.forWriting.exists, s"Metafile $metaFile should not exist before we write it.")
-    metaFileCreated.forWriting.deleteIfExists()
-    val j = json.Json.toJson(metaData)
-    metaFileCreated.forWriting.createFromStrings(json.Json.prettyPrint(j))
-    metaFileCreated.forWriting.renameTo(metaFile.forWriting)
-  }
+  private def targetDir(numPartitions: Int) =
+    context.partitionedPath(entity, numPartitions).forWriting
 
   private def computeAvailablePartitions = {
     val subDirs = (partitionedPath / "*").list
@@ -189,50 +310,63 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   // A partitioner is also passed, because we don't want to create another one for VertexSetData
   protected def finalRead(path: HadoopFile,
                           count: Long,
-                          partitioner: org.apache.spark.Partitioner,
+                          serialization: String,
+                          partitioner: spark.Partitioner,
                           parent: Option[VertexSetData] = None): DT
 
-  protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
+  protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T]
 
-  private def bestPartitionedSource(entityLocation: EntityLocationSnapshot, desiredPartitionNumber: Int) = {
+  private def bestPartitionedSource(
+    entityLocation: EntityLocationSnapshot,
+    desiredPartitionNumber: Int) = {
     assert(entityLocation.availablePartitions.nonEmpty,
-      s"there should be valid sub directories in $partitionedPath")
-    val ratioSorter = RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desiredPartitionNumber)
+      s"There should be valid sub directories in $partitionedPath")
+    val ratioSorter =
+      RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desiredPartitionNumber)
     entityLocation.availablePartitions(ratioSorter.best.get)
   }
 
+  // Returns the file and the serialization format.
   private def repartitionTo(entityLocation: EntityLocationSnapshot,
-                            partitioner: org.apache.spark.Partitioner): HadoopFile = {
+                            partitioner: spark.Partitioner): (HadoopFile, String) = {
     if (entityLocation.hasPartitionedData)
       repartitionFromPartitionedRDD(entityLocation, partitioner)
     else
       repartitionFromLegacyRDD(entityLocation, partitioner)
   }
 
-  private def repartitionFromPartitionedRDD(entityLocation: EntityLocationSnapshot,
-                                            partitioner: org.apache.spark.Partitioner): HadoopFile = {
+  // Returns the file and the serialization format.
+  private def repartitionFromPartitionedRDD(
+    entityLocation: EntityLocationSnapshot,
+    partitioner: spark.Partitioner): (HadoopFile, String) = {
     val pn = partitioner.numPartitions
     val from = bestPartitionedSource(entityLocation, pn)
     val oldRDD = from.loadEntityRawRDD(sc)
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRawRDD(newRDD)
-    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
-    newFile
+    assert(entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
+    (newFile, entityLocation.serialization)
   }
 
-  private def repartitionFromLegacyRDD(entityLocation: EntityLocationSnapshot,
-                                       partitioner: org.apache.spark.Partitioner): HadoopFile = {
+  // Returns the file and the serialization format.
+  private def repartitionFromLegacyRDD(
+    entityLocation: EntityLocationSnapshot,
+    partitioner: spark.Partitioner): (HadoopFile, String) = {
     assert(entityLocation.legacyPathExists,
       s"There should be a valid legacy path at $legacyPath")
     val pn = partitioner.numPartitions
     val oldRDD = legacyRDD
+    implicit val ct = RuntimeSafeCastable.classTagFromTypeTag(valueTypeTag)
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
-    val lines = newFile.saveEntityRDD(newRDD)
-    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
-    writeMetadata(EntityMetadata(lines))
-    newFile
+    val (lines, serialization) = newFile.saveEntityRDD[T](newRDD, valueTypeTag)
+    assert(entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
+    val metadata = EntityMetadata(lines, Some(serialization))
+    metadata.write(partitionedPath.forWriting)
+    (newFile, serialization)
   }
 
   private def legacyRDD = legacyLoadRDD(legacyPath.forReading)
@@ -268,8 +402,8 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 }
 
-class VertexIO(entity: VertexSet, dMParam: IOContext)
-    extends PartitionedDataIO[VertexSetData](entity, dMParam) {
+class VertexSetIO(entity: VertexSet, context: IOContext)
+    extends PartitionedDataIO[Unit, VertexSetData](entity, context) {
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadLegacyEntityRDD[Unit](sc)
@@ -277,16 +411,21 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
 
   def finalRead(path: HadoopFile,
                 count: Long,
-                partitioner: org.apache.spark.Partitioner,
+                serialization: String,
+                partitioner: spark.Partitioner,
                 parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
-    val rdd = path.loadEntityRDD[Unit](sc)
+    val rdd = path.loadEntityRDD[Unit](sc, serialization)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
+
+  def valueTypeTag = typeTag[Unit]
 }
 
-class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
-    extends PartitionedDataIO[EdgeBundleData](entity, dMParam) {
+class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
+    extends PartitionedDataIO[Edge, EdgeBundleData](entity, context) {
 
   override def correspondingVertexSet = Some(entity.idSet)
 
@@ -296,20 +435,26 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
 
   def finalRead(path: HadoopFile,
                 count: Long,
-                partitioner: org.apache.spark.Partitioner,
+                serialization: String,
+                partitioner: spark.Partitioner,
                 parent: Option[VertexSetData]): EdgeBundleData = {
-    assert(partitioner eq parent.get.rdd.partitioner.get)
-    val rdd = path.loadEntityRDD[Edge](sc)
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
+    val rdd = path.loadEntityRDD[Edge](sc, serialization)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
       entity,
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
+
+  def valueTypeTag = typeTag[Edge]
 }
 
-class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
-    extends PartitionedDataIO[AttributeData[T]](entity, dMParam) {
+class AttributeIO[T](entity: Attribute[T], context: IOContext)
+    extends PartitionedDataIO[T, AttributeData[T]](entity, context) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {
@@ -319,15 +464,23 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
 
   def finalRead(path: HadoopFile,
                 count: Long,
-                partitioner: org.apache.spark.Partitioner,
+                serialization: String,
+                partitioner: spark.Partitioner,
                 parent: Option[VertexSetData]): AttributeData[T] = {
-    assert(partitioner eq parent.get.rdd.partitioner.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
     implicit val ct = entity.classTag
-    val rdd = path.loadEntityRDD[T](sc)
+    implicit val tt = entity.typeTag
+    val rdd = path.loadEntityRDD[T](sc, serialization)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
       entity,
       coLocated.asUniqueSortedRDD(partitioner),
       Some(count))
   }
+
+  def castData(data: EntityData) =
+    data.asInstanceOf[AttributeData[_]].runtimeSafeCast(valueTypeTag)
+
+  def valueTypeTag = entity.typeTag
 }
