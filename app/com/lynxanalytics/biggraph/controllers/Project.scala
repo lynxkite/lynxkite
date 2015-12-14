@@ -243,15 +243,13 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   override protected lazy val getFEMembers: Option[FEAttribute] =
     Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
 
-  lazy val equivalentUIAttribute = {
-    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
-    UIValue(id = bta, title = s"segmentation[$segmentationName]")
-  }
+  lazy val equivalentUIAttribute =
+    ProjectViewer.feEntity(belongsToAttribute, s"segmentation[$segmentationName]", note = "")
 
   def toFESegmentation(parentName: String): FESegmentation = {
     val bt =
       if (belongsTo == null) null
-      else UIValue(id = belongsTo.gUID.toString, title = s"belongsTo[$segmentationName]")
+      else belongsTo.gUID.toString
     FESegmentation(
       segmentationName,
       parentName + ProjectFrame.separator + segmentationName,
