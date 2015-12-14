@@ -43,7 +43,8 @@ object DeriveJS {
       } else ???
 
     val defaultValues =
-      (namedAttributes ++ namedScalars).map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
+      namedAttributes.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value } ++
+        namedScalars.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
     op.validateJS[T](defaultValues)
 
     import Scripting._
