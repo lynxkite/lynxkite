@@ -731,29 +731,38 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Segment by event sequences", new CreateSegmentationOperation(_, _) {
+  register("Segment by event sequence", new CreateSegmentationOperation(_, _) {
+    val possibleLocations =
+      project
+        .segmentations
+        .map { seg => UIValue("seg!" + seg.segmentationName, "Segmentation: " + seg.segmentationName) }
+        .toList ++
+        vertexAttributes[String].map { attr => UIValue("attr!" + attr.id, "Attribute: " + attr.title) }
+
     def parameters = List(
       Param("name", "Target segmentation name"),
       Choice(
         "location",
         "Location",
-        options =
-          project
-            .segmentations
-            .map { seg => UIValue("seg!" + seg.segmentationName, "Segmentation: " + seg.segmentationName) }
-            .toList ++
-            vertexAttributes[String].map { x => UIValue("attr!" + x.id, "Attribute: " + x.title) }),
+        options = possibleLocations),
       Choice("time-attr", "Time attribute", options = vertexAttributes[Double]),
       Choice("algorithm", "Algorithm", options = List[UIValue](
         UIValue("continuous", "Take continuous event sequences"),
         UIValue("with-gaps", "Allow gaps in event sequences")
       )),
       NonNegInt("sequence-length", "Sequence length", default = 2),
-      NonNegDouble("time-window-step", "Time Window Step"),
-      NonNegDouble("time-window-length", "Time Window Length")
+      NonNegDouble("time-window-step", "Time window step"),
+      NonNegDouble("time-window-length", "Time window length")
     )
 
-    def enabled = FEStatus.assert(true, "")
+    def enabled =
+      FEStatus.assert(project.isSegmentation, "Must be run on a segmentation") &&
+        FEStatus.assert(
+          possibleLocations.nonEmpty,
+          "There must be a string-attribute or a sub-segmentation to define event locations") &&
+          FEStatus.assert(
+            vertexAttributes[Double].nonEmpty,
+            "There must be a double attribute to define event times")
 
     def apply(params: Map[String, String]) = {
       val timeAttrName = params("time-attr")
@@ -769,7 +778,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
 
       val cells = {
-        val op = graph_operations.SegmentByEventSequences(
+        val op = graph_operations.SegmentByEventSequence(
           params("algorithm"),
           params("sequence-length").toInt,
           params("time-window-step").toDouble,
@@ -783,7 +792,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.notes = summary(params)
       segmentation.belongsTo = cells.belongsTo
       segmentation.vertexAttributes("description") = cells.segmentDescription
-      segmentation.vertexAttributes("size") = cells.segmentSize
+      segmentation.vertexAttributes("size") = toDouble(cells.segmentSize)
     }
   })
 

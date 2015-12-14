@@ -214,6 +214,8 @@ include::save-ui-status-as-graph-attribute.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 
+include::segment-by-event-sequence.asciidoc[]
+
 include::segment-by-interval.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
