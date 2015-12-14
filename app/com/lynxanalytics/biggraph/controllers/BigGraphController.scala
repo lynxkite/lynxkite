@@ -48,12 +48,13 @@ object FEOption {
   }
   def titledCheckpoint(cp: String, title: String): FEOption =
     special(s"!checkpoint($cp,$title)")
-  def unpackTitledCheckpoint(id: String, customError: Option[String] = None): (String, String) =
+  def unpackTitledCheckpoint(id: String): (String, String) =
+    unpackTitledCheckpoint(id, "$id does not look like a project checkpoint identifier")
+  def unpackTitledCheckpoint(id: String, customError: String): (String, String) =
     id match {
       case TitledCheckpointRE(cp, title) => (cp, title)
       case _ =>
-        throw new AssertionError(
-          customError.getOrElse(s"$id does not look like a project checkpoint identifier"))
+        throw new AssertionError(customError)
     }
 
   def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
