@@ -1,45 +1,86 @@
+// Naming convention: "people" are attending "events", each "event" has a "location" and a "time".
+// This operation puts people into segments based on sub-sequences of events of their event histories.
+// See the implementations of the trait TimeLineCrosser for concrete algorithm implementations.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
-import org.apache.spark.Accumulator
 
-import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.Scripting._
-
-trait TimeLineCrosser {
-  // Takes a list of events and returns a list of cells. A cell is a list of events.
-  def getSegments(events: Iterable[(Double, Long)]): Iterator[(Long, Seq[Long])]
+// Each segment in which "persons" will be assigned to, will be defined by such
+// an identifier:
+trait TimeLineCrosserSegmentId extends Ordered[TimeLineCrosserSegmentId] {
 }
 
-// For each event E1, generates an E1, E2, ..., EN cell where N = timeWindowLength.
-// The time difference between E1 and EN should be less than timeWindowLength.
-case class ContinuousEventsCrosser(
+// The strategy used in the algorithm to assign a "person" into segments.
+trait TimeLineSegmentGenerator {
+  // Takes a list of events of a "person" and returns a list of segment ids in which the
+  // person should belong.
+  def getSegments(events: Iterable[(Double, Long)]): Iterator[TimeLineCrosserSegmentId]
+}
+
+// This identifies a segment by the bucket of the starting time and a list of locations.
+case class EventListSegmentId(id: (Long, Seq[Long])) extends TimeLineCrosserSegmentId {
+  override def compare(otherObj: TimeLineCrosserSegmentId): Int = {
+    val other = otherObj.asInstanceOf[EventListSegmentId]
+    import scala.math.Ordering.Implicits._
+    import scala.math.Ordered.orderingToOrdered
+    id.compare(other.id)
+  }
+}
+
+object ContinuousEventsSegmentGenerator {
+  def groupEventsByLocation(seq: Iterable[(Double, Long)]): Iterator[(Double, Double, Long)] = {
+    Iterator.iterate((seq, Iterable[(Double, Long)]())) {
+      case (Seq(), _) =>
+        (Seq(), Seq())
+      case (seq, _) => {
+        val head = seq.head
+        (seq.dropWhile { x => x._2 == head._2 }, seq.takeWhile { x => x._2 == head._2 })
+      }
+    }.takeWhile {
+      case (input, part) => input.nonEmpty || part.nonEmpty
+    }.flatMap {
+      case (_, Seq()) =>
+        None
+      case (_, part) => {
+        Some(part.head._1, part.last._1, part.head._2)
+      }
+    }
+  }
+}
+// Generates continuous event lists as segments. In the input event list, subsequent
+// events at the same location are merged, and then all continuous sequences with max
+// |sequenceLength| items and |timeWindowLength| length are enumerated. Then a segment
+// is emitted for each time bucket falling into the time range of the first (possible merged)
+// event.
+case class ContinuousEventsSegmentGenerator(
     sequenceLength: Int,
     timeWindowStep: Double,
-    timeWindowLength: Double) extends TimeLineCrosser {
-  override def getSegments(events: Iterable[(Double, Long)]): Iterator[(Long, Seq[Long])] = {
-    events.sliding(sequenceLength).flatMap {
+    timeWindowLength: Double) extends TimeLineSegmentGenerator {
+
+  override def getSegments(events: Iterable[(Double, Long)]): Iterator[EventListSegmentId] = {
+    val dedupedEvents = ContinuousEventsSegmentGenerator.groupEventsByLocation(events)
+    dedupedEvents.sliding(sequenceLength).flatMap {
       eventWindow =>
         {
-          val (times, places) = eventWindow.unzip
-          val firstTime = times.head
-          val lastTime = times.last
-          if (lastTime < firstTime + timeWindowLength) {
-            val timeBucket = (firstTime / timeWindowStep).floor.round
-            Some(timeBucket, places.toSeq)
+          val (startTimes, endTimes, places) = eventWindow.unzip3
+          val endTime = endTimes.last
+          val minStartTime = startTimes.head
+          val maxStartTime = endTimes.head
+          val earliestAllowedStart = endTime - timeWindowLength
+          if (earliestAllowedStart <= maxStartTime) {
+            val minBucket = (Math.max(minStartTime, earliestAllowedStart) / timeWindowStep).floor.round
+            val maxBucket = (maxStartTime / timeWindowStep).floor.round
+            (minBucket to maxBucket).map { bucket => EventListSegmentId((bucket, places)) }
           } else {
-            None
+            Seq()
           }
         }
     }
   }
 }
 
-// Starting from each event, takes the longest possible sequence starting there and no longer than timeWindowLength.
-// From these, takes all possible event sublists of length sequenceLength.
-object EventsWithGapsCrosser {
+object EventsWithGapsSegmentGenerator {
   def sublists[T](seed: List[T], list: Seq[T], numToTake: Int): Set[List[T]] = {
     if (numToTake > list.length) {
       Set()
@@ -51,11 +92,13 @@ object EventsWithGapsCrosser {
     }
   }
 }
-case class EventsWithGapsCrosser(
+// Starting from each event, takes the longest possible sequence starting there and no longer than timeWindowLength.
+// From these, takes all possible event sublists of length sequenceLength.
+case class EventsWithGapsSegmentGenerator(
     sequenceLength: Int,
     timeWindowStep: Double,
-    timeWindowLength: Double) extends TimeLineCrosser {
-  override def getSegments(events: Iterable[(Double, Long)]): Iterator[(Long, Seq[Long])] = {
+    timeWindowLength: Double) extends TimeLineSegmentGenerator {
+  override def getSegments(events: Iterable[(Double, Long)]): Iterator[EventListSegmentId] = {
     val eventSeq = events.toSeq
     eventSeq.indices.flatMap {
       index =>
@@ -65,15 +108,15 @@ case class EventsWithGapsCrosser(
           val firstTime = times.head
           val timeBucket = (firstTime / timeWindowStep).floor.round
 
-          EventsWithGapsCrosser
+          EventsWithGapsSegmentGenerator
             .sublists(List(), places.toSeq, sequenceLength)
-            .map { placesSubList => (timeBucket, placesSubList) }
+            .map { placesSubList => EventListSegmentId((timeBucket, placesSubList)) }
         }
     }.distinct.iterator
   }
 }
 
-object SegmentByEventSequences extends OpFromJson {
+object SegmentByEventSequence extends OpFromJson {
   class Input extends MagicInputSignature {
     val personVs = vertexSet
     val eventVs = vertexSet
@@ -87,20 +130,20 @@ object SegmentByEventSequences extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val segmentDescription = vertexAttribute[String](segments)
-    val segmentSize = vertexAttribute[Double](segments)
+    val segmentSize = vertexAttribute[Long](segments)
     val belongsTo = edgeBundle(
       inputs.personVs.entity,
       segments,
       EdgeBundleProperties.partialFunction)
   }
-  def fromJson(j: JsValue) = SegmentByEventSequences(
+  def fromJson(j: JsValue) = SegmentByEventSequence(
     (j \ "algorithm").as[String],
     (j \ "sequenceLength").as[Int],
     (j \ "timeWindowStep").as[Double],
     (j \ "timeWindowLength").as[Double])
 }
-import SegmentByEventSequences._
-case class SegmentByEventSequences(
+import SegmentByEventSequence._
+case class SegmentByEventSequence(
   algorithm: String,
   sequenceLength: Int,
   timeWindowStep: Double,
@@ -116,12 +159,12 @@ case class SegmentByEventSequences(
     "timeWindowStep" -> timeWindowStep,
     "timeWindowLength" -> timeWindowLength)
 
-  private def getAlgorithm(algorithmId: String): TimeLineCrosser = {
+  private def getAlgorithm(algorithmId: String): TimeLineSegmentGenerator = {
     algorithmId match {
       case "continuous" =>
-        new ContinuousEventsCrosser(sequenceLength, timeWindowStep, timeWindowLength)
+        new ContinuousEventsSegmentGenerator(sequenceLength, timeWindowStep, timeWindowLength)
       case "with-gaps" =>
-        new EventsWithGapsCrosser(sequenceLength, timeWindowStep, timeWindowLength)
+        new EventsWithGapsSegmentGenerator(sequenceLength, timeWindowStep, timeWindowLength)
     }
   }
 
@@ -140,9 +183,9 @@ case class SegmentByEventSequences(
       .sortedJoin(eventTimeAttributeRdd.sortedRepartition(partitioner)) // eventid -> (locationId, time)
     val eventToPerson = personBelongsToEventRdd
       .map { case (edgeId, Edge(personId, eventId)) => (eventId, personId) }
-      .sortUnique(partitioner)
+      .sort(partitioner)
     val personToEvents = eventToPerson
-      .join(eventToLocationAndTime)
+      .sortedJoinWithDuplicates(eventToLocationAndTime)
       .map { case (eventId, (personId, (locationId, time))) => personId -> (time, locationId) }
       .groupBySortedKey(partitioner)
 
@@ -154,7 +197,6 @@ case class SegmentByEventSequences(
         }
     }
 
-    import scala.math.Ordering.Implicits._ // allow sorting by lists as keys
     val segmentIdToCodeAndPersons = personToSegmentCode
       .map { case (personId, segmentCode) => (segmentCode, personId) }
       .groupBySortedKey(partitioner)
@@ -176,7 +218,7 @@ case class SegmentByEventSequences(
     output(
       o.segmentSize,
       segmentIdToCodeAndPersons.mapValues {
-        case (_, persons) => persons.size.toDouble
+        case (_, persons) => persons.size.toLong
       })
   }
 }
