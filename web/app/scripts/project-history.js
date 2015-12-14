@@ -310,9 +310,15 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
             var seg = request.path[j];
             line.push('.segmentations[\'' + seg + '\']');
           }
-          line.push('.' + toGroovyId(request.op.id) + '(');
           var params = Object.keys(request.op.parameters);
           params.sort();
+          if (request.op.id.indexOf('workflows/') === 0) {
+            var workflowName = request.op.id.split('/').slice(1).join('/');
+            line.push('.runWorkflow(\'' + workflowName + '\'');
+            if (params.length > 0) { line.push(', '); }
+          } else {
+            line.push('.' + toGroovyId(request.op.id) + '(');
+          }
           for (j = 0; j < params.length; ++j) {
             var k = params[j];
             var v = request.op.parameters[k];
