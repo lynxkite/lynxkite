@@ -25,6 +25,7 @@ class EntitySerializationTest extends FunSuite {
     withTyped(Seq("alma", "beka"), "string")
     withTyped(Seq(5.5, 7.25), "double")
     withTyped(Seq(Edge(6L, 8L), Edge(7L, 9L)), "edge")
+    withTyped(Seq[Set[Int]](Set(), Set(1), Set(1, 2), Set(1, 2, 3)), "set")
   }
 
   test("legacy") {
@@ -40,5 +41,6 @@ class EntitySerializationTest extends FunSuite {
     withKryo(Seq("alma", "beka"))
     withKryo(Seq(5.5, 7.25))
     withKryo(Seq(Edge(6L, 8L), Edge(7L, 9L)))
+    withKryo(Seq(Set(), Set(1), Set(1, 2), Set(1, 2, 3)))
   }
 }

@@ -22,6 +22,7 @@ case class JavaScript(expression: String) {
 
   def evaluate(mapping: Map[String, Any]): Any = {
     val bindings = JavaScript.engine.createBindings
+    bindings.put("util", JavaScriptUtilities)
     for ((key, value) <- mapping) {
       bindings.put(key, value)
     }
@@ -38,3 +39,8 @@ object JavaScript {
   case class Error(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 }
 
+// This object is exposed to user-authored JavaScript. Only harmless stuff, please.
+object JavaScriptUtilities {
+  def rnd(seed: Int) = new scala.util.Random(seed)
+  def hash(str: String) = str.hashCode
+}

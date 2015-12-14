@@ -17,12 +17,10 @@ object ImportDataFrame extends OpFromJson {
 
   // I really don't understand why this isn't part of the spark API, but I can't find it.
   // So here it goes.
-  private def arrayTag[T: TypeTag] = typeTag[Array[T]]
-  private def mapTag[K, V](implicit kt: TypeTag[K], vt: TypeTag[V]) = typeTag[Map[K, V]]
   private def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
     import scala.reflect.runtime.universe._
     dataType match {
-      case at: types.ArrayType => arrayTag(typeTagFromDataType(at.elementType))
+      case at: types.ArrayType => TypeTagUtil.arrayTypeTag(typeTagFromDataType(at.elementType))
       case _: types.BinaryType => typeTag[Array[Byte]]
       case _: types.BooleanType => typeTag[Boolean]
       case _: types.ByteType => typeTag[Byte]
@@ -33,7 +31,7 @@ object ImportDataFrame extends OpFromJson {
       case _: types.IntegerType => typeTag[Int]
       case _: types.LongType => typeTag[Long]
       case mt: types.MapType =>
-        mapTag(typeTagFromDataType(mt.keyType), typeTagFromDataType(mt.valueType))
+        TypeTagUtil.mapTypeTag(typeTagFromDataType(mt.keyType), typeTagFromDataType(mt.valueType))
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
       case _: types.TimestampType => typeTag[java.sql.Timestamp]

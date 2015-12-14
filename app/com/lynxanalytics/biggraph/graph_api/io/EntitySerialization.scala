@@ -16,6 +16,7 @@ object EntitySerializer {
       else if (tt =:= typeOf[String]) new StringSerializer
       else if (tt =:= typeOf[Double]) new DoubleSerializer
       else if (tt =:= typeOf[Edge]) new EdgeSerializer
+      else if (tt <:< typeOf[Set[_]]) new SetSerializer
       else new KryoSerializer[T]
     s.asInstanceOf[EntitySerializer[T]]
   }
@@ -24,7 +25,7 @@ object EntitySerializer {
     forType[T](attribute.typeTag)
   }
 }
-abstract class EntitySerializer[T](val name: String) extends Serializable {
+abstract class EntitySerializer[-T](val name: String) extends Serializable {
   // Beware: it may re-use the same BytesWritable for all calls.
   def serialize(t: T): BytesWritable
 
@@ -63,6 +64,15 @@ class EdgeSerializer extends EntitySerializer[Edge]("edge") {
   }
 }
 
+// This serializer is not for speed, but for reliability. Scala sets are complex types internally
+// and we don't know the full set of classes that we would need to register with Kryo to be sure
+// we can successfully serialize them.
+class SetSerializer extends EntitySerializer[Set[_]]("set") {
+  def serialize(t: Set[_]) = {
+    new BytesWritable(RDDUtils.kryoSerialize(t.toVector))
+  }
+}
+
 class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"kryo[${typeOf[T]}]") {
   def serialize(t: T) = {
     new BytesWritable(RDDUtils.kryoSerialize(t))
@@ -70,7 +80,7 @@ class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"kryo[${typeOf[T]}
 }
 
 object EntityDeserializer {
-  private def castDeserializer[From: TypeTag, To: TypeTag](
+  def castDeserializer[From: TypeTag, To: TypeTag](
     d: EntityDeserializer[From]): EntityDeserializer[To] = {
     val from = typeOf[From]
     val to = typeOf[To]
@@ -85,6 +95,7 @@ object EntityDeserializer {
       case "string" => castDeserializer(new StringDeserializer)
       case "double" => castDeserializer(new DoubleDeserializer)
       case "edge" => castDeserializer(new EdgeDeserializer)
+      case "set" => SetDeserializer[T]()
       case "kryo" => new KryoDeserializer[T]
       case _ => throw new AssertionError(s"Cannot find deserializer for $name.")
     }
@@ -92,9 +103,7 @@ object EntityDeserializer {
     d
   }
 }
-// The API is nicer if this can be sent to the executors. The only problem is the TypeTag, as
-// it is not Serializable. It is only used during creation though, so we just make it @transient.
-abstract class EntityDeserializer[T](val name: String) extends Serializable {
+abstract class EntityDeserializer[+T](val name: String) extends Serializable {
   def deserialize(bw: BytesWritable): T
 }
 
@@ -122,4 +131,23 @@ class EdgeDeserializer extends EntityDeserializer[Edge]("edge") {
     val bb = ByteBuffer.wrap(bw.getBytes)
     Edge(bb.getLong(0), bb.getLong(8))
   }
+}
+
+object SetDeserializer {
+  private def fromTypeTag[To: TypeTag, FromDT: TypeTag]: EntityDeserializer[To] = {
+    val d = new SetDeserializer[FromDT]
+    val st = TypeTagUtil.setTypeTag[FromDT]
+    EntityDeserializer.castDeserializer(d)(st, typeTag[To])
+  }
+
+  def apply[T: TypeTag]() = {
+    val tt = typeTag[T]
+    val args = TypeTagUtil.typeArgs(tt)
+    // If it has more or less than 1 type args, it is definitely not a Set.
+    assert(args.size == 1, s"set is for Set[_], not ${tt.tpe}")
+    fromTypeTag(tt, args(0))
+  }
+}
+class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("set") {
+  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Vector[DT]](bw.getBytes).toSet
 }

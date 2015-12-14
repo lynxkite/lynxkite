@@ -43,43 +43,21 @@ furtherUndefinedAttr2Expr =
 
 
 
-jsprogram=
+jsprogram =
 """
-function Hasher() {
-  var hash = function(data) {
-    var h = 0x34140;
-    var phi = 0x9e377; // 2^20 * phi   (sqrt(5)-1)/2
-    for (var i = 0; i < data.length; i++) {
-      h = h ^ data.charCodeAt(i);
-      h = h * phi;
-      h = h & 0xfffff;
-    }
-    return h;
-  }
-  return hash;
-}
-
 function Rnd(seedFirst, seedSecond) {
-  var hasher = Hasher();
-  var seed = hasher(seedFirst.toString() + '_' + seedSecond.toString());
-  var unifRand = function() {
-    var a = Math.sin(seed++) * 10000;
-    var b = a - Math.floor(a);
-    return b;
-  }
+  var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
+  var rnd = util.rnd(seed);
   return {
-    random: unifRand,
-    geomChoose: function(p, lastId) {      
+    geomChoose: function(p, lastId) {
       for (var i = 0; i <= lastId; i++) {
-          var q = unifRand();
+          var q = rnd.nextDouble();
           if (q < p) return i;
       }
       return lastId;
     },
   }
-};
-
-
+}
 
 var srcSeed = src\$originalUniqueId
 var dstSeed =  dst\$originalUniqueId
@@ -94,26 +72,28 @@ var total = srcCount * dstCount;
 var myId = dstCount * srcIdx + dstIdx;
 var lastId = total - 1;
 
-(function() {
+function splitCalls() {
   if (total === 1) {
     return edgeCnt;
   }
 
   var randomFunc = Rnd(srcSeed, dstSeed).geomChoose
-  
+
   var count = 0;
 
-  for (var j = 0; j < edgeCnt; j++) {    
+  for (var j = 0; j < edgeCnt; j++) {
     if (randomFunc(prob, lastId) === myId) count++;
   }
 
   return count;
-})();
+}
+
+splitCalls();
 """
 
 split=lynx.newProject('split test for FP')
 split.importVerticesFromCSVFiles(
-  files: 'DATA$exports/' + input + '_vertices/data/part*',
+  files: 'DATA$/exports/' + input + '_vertices/data/part*',
   header: '"id","peripheral"',
   delimiter: ',',
   omitted: '',
@@ -122,7 +102,7 @@ split.importVerticesFromCSVFiles(
   allow_corrupt_lines: 'no'
 )
 split.importEdgesForExistingVerticesFromCSVFiles(
-  files: 'DATA$exports/' + input + '_edges/data/part*',
+  files: 'DATA$/exports/' + input + '_edges/data/part*',
   header: '"src_id","dst_id","originalCalls"',
   delimiter: ',',
   omitted: '',
@@ -130,7 +110,7 @@ split.importEdgesForExistingVerticesFromCSVFiles(
   allow_corrupt_lines: 'no',
   attr: 'id',
   src: 'src_id',
-  dst: 'dst_id'  
+  dst: 'dst_id'
 )
 // Convert strings to doubles:
 split.vertexAttributeToDouble(
@@ -160,7 +140,7 @@ split.addRankAttribute(
   rankattr: 'originalUniqueId',
   keyattr: 'urndPeripheralHigh',
   order: 'ascending'
-) 
+)
 
 split.derivedVertexAttribute(
   output: 'split',
@@ -285,7 +265,6 @@ split.derivedVertexAttribute(
   expr:
 
   """
-  (function(){
   var tmp = "";
   tmp += normal == 1.0 ? "normal" : "";
   tmp += furtherOk == 1.0 ? "furtherOk" : "";
@@ -293,8 +272,7 @@ split.derivedVertexAttribute(
   tmp += churnerFound == 1.0 ? "churnerFound" : "";
   tmp += churnerNoMatch == 1.0 ? "churnerNoMatch" : "";
   tmp += churnerMisMatch == 1.0 ? "churnerMisMatch" : "";
-  return tmp;
-  })();
+  tmp;
   """
 )
 
