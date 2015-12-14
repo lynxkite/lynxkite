@@ -2099,8 +2099,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val themId = params("them")
       val (cp, title) = FEOption.unpackTitledCheckpoint(
         themId,
-        Some(
-          s"Obsolate project reference: $themId. Please select a new project from the dropdown."))
+        customError =
+          s"Obsolate project reference: $themId. Please select a new project from the dropdown.")
       val baseName = SymbolPath.parse(title).last.name
       val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(them.vertexSet != null, s"No vertex set in $them")
@@ -2246,8 +2246,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val otherId = params("other")
       val (cp, _) = FEOption.unpackTitledCheckpoint(
         otherId,
-        Some(
-          s"Obsolate project reference: $otherId. Please select a new project from the dropdown."))
+        customError =
+          s"Obsolate project reference: $otherId. Please select a new project from the dropdown.")
       val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       if (other.vertexSet == null) {
         // Nothing to do
