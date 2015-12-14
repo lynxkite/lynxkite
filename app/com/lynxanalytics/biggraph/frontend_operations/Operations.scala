@@ -746,7 +746,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "Location",
         options = possibleLocations),
       Choice("time-attr", "Time attribute", options = vertexAttributes[Double]),
-      Choice("algorithm", "Algorithm", options = List[UIValue](
+      Choice("algorithm", "Algorithm", options = List(
         UIValue("continuous", "Take continuous event sequences"),
         UIValue("with-gaps", "Allow gaps in event sequences")
       )),
