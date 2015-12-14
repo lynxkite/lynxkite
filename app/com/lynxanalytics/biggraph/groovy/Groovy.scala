@@ -173,6 +173,11 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
     new GroovyBatchProject(ctx, new SubProject(newFrame, subproject.path))
   }
 
+  // Creates a string that can be used as the value for a Choice that expects a titled
+  // checkpoint. It will point to the checkpoint of the root project of this project.
+  def rootCheckpointWithTitle(title: String): String =
+    FEOption.titledCheckpoint(subproject.frame.checkpoint, title).id
+
   protected def applyOperation(id: String, params: Map[String, String]): Unit = {
     ctx.ops.apply(ctx.user, subproject, FEOperationSpec(id, params))
   }

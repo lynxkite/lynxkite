@@ -92,7 +92,9 @@ fb.copyVertexAttribute(from: 'fb_name', to: 'merge_key_name')
 
 // ================== Take the union, merge and fingerprint =======================
 union = linkedin.saveAs('linkedin facebook FP')
-union.unionWithAnotherProject('id-attr': 'new_id', other: 'facebook for FP')
+union.unionWithAnotherProject(
+  'id-attr': 'new_id',
+  other: fb.rootCheckpointWithTitle('facebook for FP'))
 
 union.mergeVerticesByAttribute(
   key: 'merge_key_name',
@@ -156,7 +158,8 @@ println "Test set size: $testSetSize"
 segmentationFP = fb.saveAs('linkedin facebook segmentation FP')
 
 // Import as segmentation, connect based on merge key.
-segmentationFP.importProjectAsSegmentation(them: 'linkedin for FP')
+segmentationFP.importProjectAsSegmentation(
+  them: linkedin.rootCheckpointWithTitle('linkedin for FP'))
 segmentationFP.segmentations['linkedin for FP'].defineSegmentationLinksFromMatchingAttributes(
   'base-id-attr': 'merge_key_name',
   'seg-id-attr': 'merge_key_name')
