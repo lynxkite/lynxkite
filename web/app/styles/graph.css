@@ -58,3 +58,7 @@ input.form-control.filter {
   width: 120px;
   display: inline-block;
 }
+
+label.btn.bypass-disabled {
+  pointer-events: auto;
+}
