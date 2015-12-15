@@ -32,12 +32,12 @@ namespace.
    creating it if it does not yet exist.
  - `GroovyProject **lynx.newProject**(String name)` will return the given project,
    resetting it to an empty state if it has already existed.
- - `DataFrame **lynx.sql**(String query)` executes a Spark SQL query and returns the result as an
-   Apache Spark DataFrame. See the
+ - `DataFrameReader **lynx.sqlContext**` provides access to Spark SQL.
+   See the
    http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
-   to learn about working with DataFrames.
- - `DataFrameReader **lynx.df**` allows reading DataFrames. For example
-   `lynx.df.format('parquet').load('my_data.parquet')` loads a Parquet file.
+   to learn more.
+ - `DataFrame **lynx.sql**(String query)` is a shortcut to `lynx.sqlContext.sql`. It executes a
+   Spark SQL query and returns the result as an Apache Spark DataFrame.
 
 The properties of `GroovyProject` are:
 
