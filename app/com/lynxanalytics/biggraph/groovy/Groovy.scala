@@ -122,6 +122,8 @@ class GroovyInterface(ctx: GroovyContext) {
   }
 
   def sql(s: String) = ctx.dataManager.sqlContext.sql(s)
+
+  val df = ctx.dataManager.sqlContext.read
 }
 
 // The basic interface for running operations against a project.

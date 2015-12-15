@@ -36,6 +36,8 @@ namespace.
    Apache Spark DataFrame. See the
    http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
    to learn about working with DataFrames.
+ - `DataFrameReader **lynx.df**` allows reading DataFrames. For example
+   `lynx.df.format('parquet').load('my_data.parquet')` loads a Parquet file.
 
 The properties of `GroovyProject` are:
 
