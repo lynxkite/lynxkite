@@ -23,9 +23,9 @@ echo -e "Eden space utilization\tOld space utilization"
 
 while :
 do
-   sudo -u $USER jcmd $PROCESS_ID GC.run &>/dev/null
+   sudo -u $USER jcmd $PROCESS_ID GC.run 1>/dev/null
    # Skip header and ignore the unimportant columns
-   sudo -u $USER jstat -gc $PROCESS_ID 2>/dev/null | \
+   sudo -u $USER jstat -gc $PROCESS_ID | \
      tail -1 | awk '{print $6 "\t" $8}'
    sleep $TIME_INTERVAL_SEC
 done
