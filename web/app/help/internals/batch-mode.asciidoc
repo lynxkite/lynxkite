@@ -35,7 +35,7 @@ namespace.
  - `DataFrameReader **lynx.sqlContext**` provides access to Spark SQL.
    See the
    http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
-   to learn more.
+   to learn more. (The Java examples also apply to Groovy.)
  - `DataFrame **lynx.sql**(String query)` is a shortcut to `lynx.sqlContext.sql`. It executes a
    Spark SQL query and returns the result as an Apache Spark DataFrame.
 
