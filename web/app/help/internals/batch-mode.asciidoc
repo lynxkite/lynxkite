@@ -48,6 +48,12 @@ to run the operations in interactive mode, enter the <<project-history, history 
 <<saving-a-workflow, workflow editor>> within. The correct Groovy code can then be copied from the
 workflow editor.
 
+Workflows can be run with the `GroovyProject.runWorkflow()` method. Workflows are internally
+identified by their creation timestamps in addition to their names. The first argument of
+`runWorkflow` is the workflow name either with or without the timestamp. If the timestamp is
+omitted, the latest version of the workflow is used. The workflow parameters can be passed as
+named arguments to `runWorkflow`, same as other operations.
+
 `GroovyProject` also has a method `saveAs`. You can use this to save a project by a new name. It
 returns a `GroovyProject` object pointing to the project with the new name.
 
