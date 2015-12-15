@@ -3,8 +3,6 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
-import com.lynxanalytics.biggraph.graph_operations.EventListSegmentId
-import com.lynxanalytics.biggraph.graph_operations.TimeLineCrosserSegmentId
 import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
@@ -184,9 +182,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
 
     kryo.register(classOf[Array[org.apache.spark.sql.Row]])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema])
-    kryo.register(classOf[graph_operations.EventListSegmentId])
+    kryo.register(classOf[graph_operations.SegmentByEventSequence.EventListSegmentId])
     kryo.register(classOf[Array[scala.collection.Iterable[_]]])
-
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

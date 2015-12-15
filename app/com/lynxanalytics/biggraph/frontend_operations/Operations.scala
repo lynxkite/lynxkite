@@ -749,10 +749,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Segment by event sequence", new CreateSegmentationOperation(_, _) {
     val SegmentationPrefix = "Segmentation: "
     val AttributePrefix = "Attribute: "
-    val AlgorithmMap = Map(
-      "Take continuous event sequences" -> "continuous",
-      "Allow gaps in event sequences" -> "with-gaps"
-    )
     val possibleLocations =
       project
         .segmentations
@@ -767,7 +763,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "Location",
         options = possibleLocations),
       Choice("time-attr", "Time attribute", options = vertexAttributes[Double]),
-      Choice("algorithm", "Algorithm", options = FEOption.list(AlgorithmMap.keys.toList)),
+      Choice("algorithm", "Algorithm", options = List(
+        FEOption("continuous", "Take continuous event sequences"),
+        FEOption("with-gaps", "Allow gaps in event sequences"))),
       NonNegInt("sequence-length", "Sequence length", default = 2),
       NonNegDouble("time-window-step", "Time window step"),
       NonNegDouble("time-window-length", "Time window length")
@@ -777,7 +775,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       FEStatus.assert(project.isSegmentation, "Must be run on a segmentation") &&
         FEStatus.assert(
           possibleLocations.nonEmpty,
-          "There must be a string-attribute or a sub-segmentation to define event locations") &&
+          "There must be a string attribute or a sub-segmentation to define event locations") &&
           FEStatus.assert(
             vertexAttributes[Double].nonEmpty,
             "There must be a double attribute to define event times")
@@ -798,7 +796,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val cells = {
         val op = graph_operations.SegmentByEventSequence(
-          AlgorithmMap.get(params("algorithm")).get,
+          params("algorithm"),
           params("sequence-length").toInt,
           params("time-window-step").toDouble,
           params("time-window-length").toDouble)
