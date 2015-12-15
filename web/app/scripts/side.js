@@ -476,17 +476,12 @@ angular.module('biggraph')
       this.applyOp('Discard-' + kind, { name: name });
     };
 
+    Side.prototype.isInternalVertexFilter = function(name) {
+      return this.resolveVertexAttribute(name).isInternal;
+    };
     // Returns unresolved filters (i.e. keyed by the attribute name).
     Side.prototype.nonEmptyVertexFilterNames = function() {
       return this.nonEmptyFilterNames(this.state.filters.vertex);
-    };
-    // Same as above, but filters out virtual attributes unknown to the backend.
-    function isValidBackendFilter(filter) {
-      return filter.attributeName !== '#members';
-    }
-    Side.prototype.nonEmptyBackendVertexFilterNames = function() {
-      var names = this.nonEmptyFilterNames(this.state.filters.vertex);
-      return names.filter(isValidBackendFilter);
     };
     Side.prototype.nonEmptyEdgeFilterNames = function() {
       return this.nonEmptyFilterNames(this.state.filters.edge);
@@ -532,21 +527,21 @@ angular.module('biggraph')
       return (this.nonEmptyEdgeFilterNames().length !== 0 ||
               this.nonEmptyVertexFilterNames().length !== 0);
     };
+    Side.prototype.applyFiltersEnabled = function() {
+      var that = this;
+      return this.nonEmptyVertexFilterNames().every(
+        function(filter) { return !that.isInternalVertexFilter(filter.attributeName); });
+    };
+
     Side.prototype.applyFilters = function() {
       var that = this;
       util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
           edgeFilters: this.nonEmptyEdgeFilterNames(),
-          vertexFilters: this.nonEmptyBackendVertexFilterNames(),
-          //vertexFilters: this.nonEmptyBackendVertexFilterNames(),
+          vertexFilters: this.nonEmptyVertexFilterNames(),
         }).then(function() {
-          var members = that.state.filters.vertex['#members'];
           that.clearFilters();
-          // Don't clear (restore) frontend-only attributes.
-          if (members !== undefined) {
-            that.state.filters.vertex['#members'] = members;
-          }
           that.reload();
         });
     };
@@ -554,13 +549,22 @@ angular.module('biggraph')
       this.state.filters = { edge: {}, vertex: {} };
     };
     Side.prototype.filterSummary = function() {
+      var that = this;
+      var NBSP = '\u00a0';
       var res = [];
       function addNonEmpty(value, key) {
         if (value) {
-          var nbsp = '\u00a0';
-          res.push(' ' + key + nbsp + value);
+          var note = '';
+          res.push(' ' + key + NBSP + value + note);
         }
       }
+      function addProblematic(value, key) {
+        if (that.isInternalVertexFilter(key)) {
+          var note = ' Cannot' + NBSP + 'apply' + NBSP + key + NBSP + 'here';
+          res.push(note);
+        }
+      }
+      angular.forEach(this.state.filters.vertex, addProblematic);
       angular.forEach(this.state.filters.vertex, addNonEmpty);
       angular.forEach(this.state.filters.edge, addNonEmpty);
       return res.join(', ');
