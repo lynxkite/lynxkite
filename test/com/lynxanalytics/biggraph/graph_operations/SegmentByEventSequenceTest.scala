@@ -5,11 +5,22 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
+import SegmentByEventSequence._
+
 class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
   test("ContinuousEventCrosser.groupEventsByLocation") {
-    val events = Seq((1.0, 1l), (1.1, 2l), (1.2, 2l), (1.3, 3l), (1.4, 3l), (1.5, 3l), (1.6, 1l), (1.7, 1l))
+    val events = Seq(
+      Event(1.0, 1l), Event(1.1, 2l),
+      Event(1.2, 2l), Event(1.3, 3l),
+      Event(1.4, 3l), Event(1.5, 3l),
+      Event(1.6, 1l), Event(1.7, 1l))
     val grouped = ContinuousEventsSegmentGenerator.groupEventsByLocation(events)
-    assert(grouped.toSeq == Seq((1.0, 1.0, 1l), (1.1, 1.2, 2l), (1.3, 1.5, 3l), (1.6, 1.7, 1l)))
+    assert(grouped.toSeq ==
+      Seq(
+        EventSpan(1.0, 1.0, 1l),
+        EventSpan(1.1, 1.2, 2l),
+        EventSpan(1.3, 1.5, 3l),
+        EventSpan(1.6, 1.7, 1l)))
   }
 
   test("EventsWithGapsCroesser.sublists") {
@@ -27,7 +38,11 @@ class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
   }
 
   test("ConinuousEventsSegmentGenerator") {
-    val events = Seq((1.0, 1l), (1.1, 2l), (1.21, 2l), (1.3, 3l), (1.4, 3l), (1.5, 3l), (1.6, 1l), (1.7, 1l))
+    val events = Seq(
+      Event(1.0, 1l), Event(1.1, 2l),
+      Event(1.21, 2l), Event(1.3, 3l),
+      Event(1.4, 3l), Event(1.5, 3l),
+      Event(1.6, 1l), Event(1.7, 1l))
     val segments = ContinuousEventsSegmentGenerator(3, 0.1, 5.0).getSegments(events)
     assert(
       segments.toSeq ==
@@ -38,9 +53,9 @@ class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
   }
 
   test("EventsWithGapsSegmentGenerator") {
-    val events = Seq((1.01, 1l), (1.11, 2l), (1.21, 3l), (1.31, 3l))
-    val segments: Iterator[TimeLineCrosserSegmentId] = EventsWithGapsSegmentGenerator(2, 0.1, 0.31).getSegments(events)
-    val golden: Seq[TimeLineCrosserSegmentId] =
+    val events = Seq(Event(1.01, 1l), Event(1.11, 2l), Event(1.21, 3l), Event(1.31, 3l))
+    val segments = EventsWithGapsSegmentGenerator(2, 0.1, 0.31).getSegments(events)
+    val golden =
       Seq(
         EventListSegmentId(10, Seq(1l, 2l)),
         EventListSegmentId(10, Seq(1l, 3l)),
