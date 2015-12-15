@@ -23,9 +23,8 @@ echo "Eden space utilization;Old space utilization" >> $OUTPUT_FILE
 while :
 do
    sudo -u $PROCESS_OWNER jcmd $PROCESS_ID GC.run
+   # Skip header and ignore the unimportant columns
    sudo -u $PROCESS_OWNER jstat -gc $PROCESS_ID | \
-     tail -1 | \ # No need for headers
-     awk '{print $6 ";" $8}' >> # Java 8 jstat prints Eden and Old space util as the 6th and 8th col
-     $OUTPUT_FILE
+     tail -1 | awk '{print $6 ";" $8}' >> $OUTPUT_FILE
    sleep $TIME_INTERVAL_SEC
 done
