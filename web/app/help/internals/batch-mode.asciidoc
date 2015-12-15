@@ -28,19 +28,27 @@ namespace.
 The script can interact with LynxKite through the `lynx` object that is injected into its
 namespace.
 
- - `GroovyProject lynx.project(String name)` will return the given project,
+ - `GroovyProject **lynx.project**(String name)` will return the given project,
    creating it if it does not yet exist.
- - `GroovyProject lynx.newProject(String name)` will return the given project,
+ - `GroovyProject **lynx.newProject**(String name)` will return the given project,
    resetting it to an empty state if it has already existed.
+ - `DataFrame **lynx.sql**(String query)` executes a Spark SQL query and returns the result as an
+   Apache Spark DataFrame. See the
+   http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
+   to learn about working with DataFrames.
 
 The properties of `GroovyProject` are:
 
- - `Map<String, GroovyProject> segmentations` is the list of segmentations for the project.
- - `Map<String, GroovyScalar> scalars` is the list of scalars. `GroovyScalar` has a `toString()`
+ - `Map<String, GroovyProject> **segmentations**` is the list of segmentations for the project.
+ - `Map<String, GroovyScalar> **scalars**` is the list of scalars. `GroovyScalar` has a `toString()`
    and a `toDouble()` method, they return its value as a string/double respectively.
- - `Map<String, GroovyAttribute> vertexAttributes` and `Map<String, GroovyAttribute> edgeAttributes`
-   are the vertex and edge attributes. `GroovyAttribute` has a `histogram()` method that returns
-   a histogram of the attribute.
+ - `Map<String, GroovyAttribute> **vertexAttributes**` and
+   `Map<String, GroovyAttribute> edgeAttributes` are the vertex and edge attributes.
+   `GroovyAttribute` has a `histogram()` method that returns a histogram of the attribute.
+ - `DataFrame **df**` gives you access to the vertex set and vertex attributes of the project as an
+   Apache Spark DataFrame. See the
+   http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
+   to learn about working with DataFrames.
 
 `GroovyProject` has a method for every operation. These methods take named arguments for each
 operation parameter. Rather than documenting these methods in detail, the recommended approach is
@@ -84,6 +92,16 @@ project.exportVertexAttributesToFile(
 count = project.scalars['vertex_count']
 time = (System.currentTimeMillis() - start_time) / 1000
 println "$count vertices processed in $time seconds."
+
+// Example of Spark SQL integration.
+project.df.printSchema()
+project.df.groupBy('gender').count().show()
+project.df.registerTempTable('example')
+df = lynx.sql('select * from example where gender = "Male"')
+df.show()
+df.write().format('com.databricks.spark.csv').option('header', 'true').save('males.csv')
+df.write().format('parquet').save('males.parquet')
+df.write().format('json').save('males.json')
 ----
 
 When running the script we must use <<prefixed-paths>> for the file names. For example:
