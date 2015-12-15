@@ -201,25 +201,6 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
       seg -> new GroovyBatchProject(ctx, new SubProject(subproject.frame, subproject.path :+ seg))
     }.toMap
   }
-
-  def importDF(df: org.apache.spark.sql.DataFrame) = {
-    import ctx.metaManager
-    val imp = biggraph.graph_operations.ImportDataFrame(df).result
-    val ed = subproject.viewer.editor
-    ed.vertexSet = imp.ids
-    for ((k, v) <- imp.columns) {
-      ed.newVertexAttribute(k, v)
-    }
-    // Create a checkpoint like an operation.
-    ed.setLastOperationDesc("Imported a DataFrame.")
-    ed.setLastOperationRequest(biggraph.controllers.SubProjectOperation(
-      Seq(), Operations.addNotesOperation("Imported a DataFrame"))) // Fake history entry.
-    val s = metaManager.checkpointRepo.checkpointState(
-      ed.rootState, subproject.viewer.rootState.checkpoint.get)
-    subproject.frame.setCheckpoint(s.checkpoint.get)
-    // Trigger the import.
-    getScalars("vertex_count").toDouble
-  }
 }
 
 class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {

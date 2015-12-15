@@ -35,10 +35,6 @@ object ImportDataFrame extends OpFromJson {
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
       case _: types.TimestampType => typeTag[java.sql.Timestamp]
-      case st: types.StructType if (
-        st.fields.size == 2 && st.fields(0).dataType.isInstanceOf[types.DoubleType]
-        && st.fields(1).dataType.isInstanceOf[types.DoubleType]) =>
-        typeTag[(Double, Double)]
       case x => throw new AssertionError(s"Unsupported type in DataFrame: $x")
     }
   }
@@ -116,7 +112,6 @@ class ImportDataFrame private (
         " then you have to reimport the data using a new instance of ImportDataFrame")
 
     val sc = rc.sparkContext
-    sc.setLocalProperty("spark.sql.execution.id", null) // No idea what I am doing.
 
     val entities = o.columns.values.map(_.entity)
     val entitiesByName = entities.map(e => (e.name, e): (Symbol, Attribute[_])).toMap

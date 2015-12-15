@@ -182,9 +182,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
 
     kryo.register(classOf[Array[org.apache.spark.sql.Row]])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema])
-    kryo.register(scala.math.Numeric.DoubleAsIfIntegral.getClass)
-    kryo.register(scala.math.Numeric.DoubleIsFractional.getClass)
-    kryo.register(Class.forName("org.apache.spark.sql.types.DoubleType$$anon$1"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
