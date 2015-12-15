@@ -58,3 +58,14 @@ input.form-control.filter {
   width: 120px;
   display: inline-block;
 }
+
+/*
+Makes disabled buttons still receive pointer (e.g. mouse) events.
+This is useful for example if we still want to have tooltips if the
+button is disabled.
+The CSS selector here has to be specific enough so that it overrides the
+disabling of pointer events.
+*/
+label.btn.bypass-disabled {
+  pointer-events: auto;
+}
