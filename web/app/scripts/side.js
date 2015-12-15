@@ -554,8 +554,7 @@ angular.module('biggraph')
       var res = [];
       function addNonEmpty(value, key) {
         if (value) {
-          var note = '';
-          res.push(' ' + key + NBSP + value + note);
+          res.push(' ' + key + NBSP + value);
         }
       }
       function addProblematic(value, key) {
