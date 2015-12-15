@@ -788,6 +788,9 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   private def workflowOpFromTag(fullName: SymbolPath, context: Operation.Context) =
     WorkflowOperation(fullName, manager.workflow(fullName), context, this)
 
+  def newestWorkflow(name: String) =
+    manager.lsTag(BigGraphController.workflowsRoot / name).sorted.last
+
   private def workflowOperations(context: Operation.Context): Seq[Operation] =
     if (manager.tagExists(BigGraphController.workflowsRoot)) {
       manager

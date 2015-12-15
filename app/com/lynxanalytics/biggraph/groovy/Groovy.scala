@@ -149,12 +149,22 @@ abstract class GroovyProject(ctx: GroovyContext)
   }
 
   // Public method for running workflows. (Workflow names are not valid identifiers.)
+  // Groovy methods with keyword arguments need to have a Map as their first parameter.
+  // Calling this from Groovy is pretty nice:
+  //   project.runWorkflow('My Workflow', my_parameter: 44, my_other_parameter: 'no')
+  // The workflow name may or may not include the timestamp. If it is missing, the
+  // latest version of the workflow is used.
   def runWorkflow(javaParams: java.util.Map[AnyRef, AnyRef], id: String): Unit = {
     val params = JavaConversions.mapAsScalaMap(javaParams).map {
       case (k, v) => (k.toString, v.toString)
     }.toMap
-    applyOperation("workflows/" + id, params)
+    val tag =
+      if (id.contains("/")) s"${BigGraphController.workflowsRoot}/$id"
+      else ctx.ops.newestWorkflow(id).toString
+    applyOperation(tag, params)
   }
+  // Special case with no parameters.
+  def runWorkflow(id: String): Unit = runWorkflow(new java.util.HashMap, id)
 
   override def getProperty(name: String): AnyRef = {
     name match {
