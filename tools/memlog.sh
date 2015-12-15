@@ -1,8 +1,6 @@
 # A simple tool to torce GC and log JVM's heap usage periodically.
 # Only use with Oracle Java 8.
 # https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html
-# Note that the JVM process (in case of a Hadoop deployment the NodeManager)
-# needs to be launched with the -XX:+StartAttachListener Java config option.
 
 set -eu
 set -o pipefail
