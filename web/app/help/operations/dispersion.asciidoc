@@ -1,8 +1,8 @@
 ### Dispersion
 
-Calculates the extent to which two people's mutual friends are not themselves well-connected
-as an edge attribute. The dispersion attribute for an A{to}B edge is the number of
-pairs of nodes that are both connected to A and B but are not directly connected to each other.
+Calculates the extent to which two people's mutual friends are not themselves well-connected.
+The dispersion attribute for an A{to}B edge is the number of pairs of nodes that are both
+connected to A and B but are not directly connected to each other.
 
 Dispersion ignores edge directions.
 
