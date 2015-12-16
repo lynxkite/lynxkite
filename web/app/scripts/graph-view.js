@@ -1161,9 +1161,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
     };
     vertices.step = function() {
-      engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
-      engine.opts.style = vertices.side.animate.style;
-      if (animating && vertices.side.animate.enabled && engine.step(vertices)) {
+      var animate = vertices.side.animate;
+      // This also ends up getting called when the side is closed due to the deep watch.
+      // Accept this silently.
+      if (!animate) { return; }
+      engine.opts.labelAttraction = parseFloat(animate.labelAttraction);
+      engine.opts.style = animate.style;
+      if (animating && animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
         animating = false;
