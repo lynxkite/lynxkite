@@ -122,7 +122,7 @@ case class DeriveJSString(
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
   def convert(v: Any): String = v match {
     case v: String => v
-    case v: sun.org.mozilla.javascript.ConsString => v.toString
+    //   case v: sun.org.mozilla.javascript.ConsString => v.toString
   }
 }
 
