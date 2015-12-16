@@ -205,6 +205,11 @@ class BiDerivedSortedRDDRecipe[K: Ordering, VOld1, VOld2, VNew](
   def asGeneral = new BiDerivedSortedRDD(base1, base2, derivation)
   def trustedUnique = new BiDerivedSortedRDD(base1, base2, derivation) with UniqueSortedRDD[K, VNew]
 }
+class ArrayBackedSortedRDDRecipe[K: Ordering, V](
+    arrayRDD: SortedArrayRDD[K, V]) extends SortedRDDRecipe[K, V] {
+  def asGeneral = new ArrayBackedSortedRDD(arrayRDD)
+  def trustedUnique = new ArrayBackedSortedRDD(arrayRDD) with UniqueSortedRDD[K, V]
+}
 class RestrictedArrayBackedSortedRDDRecipe[K: Ordering, V](
     arrayRDD: SortedArrayRDD[K, V],
     ids: IndexedSeq[K]) extends SortedRDDRecipe[K, V] {
@@ -351,7 +356,9 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // The ids seq needs to be sorted.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] = restrictToIdSetRecipe(ids).asGeneral
 
-  def cacheBackingArray(): Unit
+  protected def meCached: Option[this.type]
+  protected def cachedRecipe: SortedRDDRecipe[K, V]
+  def cached: SortedRDD[K, V] = meCached.getOrElse(cachedRecipe.asGeneral)
 }
 
 trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
@@ -401,6 +408,8 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
   override def restrictToIdSet(ids: IndexedSeq[K]): UniqueSortedRDD[K, V] =
     restrictToIdSetRecipe(ids).trustedUnique
 
+  override def cached: UniqueSortedRDD[K, V] = meCached.getOrElse(cachedRecipe.trustedUnique)
+
   override def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
     mapValuesRecipe(f).trustedUnique
 
@@ -431,8 +440,9 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, VNew] =
     new DerivedSortedRDDRecipe(source.restrictToIdSet(ids), derivation)
 
-  def cacheBackingArray(): Unit =
-    source.cacheBackingArray()
+  protected def meCached = None
+  protected def cachedRecipe(): SortedRDDRecipe[K, VNew] =
+    new DerivedSortedRDDRecipe(source.cached, derivation)
 }
 
 // SortedRDD which was derived from two other sorted rdds without changing the id space.
@@ -450,9 +460,10 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
     new BiDerivedSortedRDDRecipe(
       source1.restrictToIdSet(ids), source2.restrictToIdSet(ids), derivation)
 
-  def cacheBackingArray(): Unit = {
-    source1.cacheBackingArray()
-    source2.cacheBackingArray()
+  protected def meCached = None
+  protected def cachedRecipe: SortedRDDRecipe[K, VNew] = {
+    new BiDerivedSortedRDDRecipe(
+      source1.cached, source2.cached, derivation)
   }
 }
 
@@ -499,8 +510,11 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
   lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] =
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids)
-  def cacheBackingArray(): Unit =
+  protected def meCached = None
+  protected def cachedRecipe: SortedRDDRecipe[K, V] = {
     arrayRDD.cache()
+    new ArrayBackedSortedRDDRecipe(arrayRDD)
+  }
 }
 
 private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedArrayRDD[K, V])
@@ -511,8 +525,12 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] =
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids)
 
-  def cacheBackingArray(): Unit =
+  protected def meCached = {
     arrayRDD.cache()
+    Some(this)
+  }
+  // Should never be called.
+  protected def cachedRecipe: SortedRDDRecipe[K, V] = ???
 
   override def setName(newName: String): this.type = {
     name = newName
@@ -592,6 +610,10 @@ private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
   def restrictToIdSetRecipe(newIds: IndexedSeq[K]): SortedRDDRecipe[K, V] =
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids.intersect(newIds))
 
-  def cacheBackingArray: Unit =
+  protected def meCached = {
     arrayRDD.cache()
+    Some(this)
+  }
+  // Should never be called.
+  protected def cachedRecipe: SortedRDDRecipe[K, V] = ???
 }
