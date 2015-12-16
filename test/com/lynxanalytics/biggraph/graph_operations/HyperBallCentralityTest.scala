@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 // values works only for small graphs.
 class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   test("corner cases - Harmonic") {
-    val op = HyperBallCentrality(5, "Harmonic")
+    val op = HyperBallCentrality(5, "Harmonic", 8)
 
     check(op, Map(0 -> Seq()), Map(0 -> 0.0))
     check(op, Map(0 -> Seq(0)), Map(0 -> 0.0))
@@ -24,7 +24,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("corner cases - Lin") {
-    val op = HyperBallCentrality(5, "Lin")
+    val op = HyperBallCentrality(5, "Lin", 8)
 
     check(op, Map(0 -> Seq()), Map(0 -> 1.0))
     check(op, Map(0 -> Seq(0)), Map(0 -> 1.0))
@@ -40,7 +40,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
 
   test("small example graph - Harmonic") {
     val g = ExampleGraph()().result
-    val op = HyperBallCentrality(5, "Harmonic")
+    val op = HyperBallCentrality(5, "Harmonic", 8)
     val out = op(op.es, g.edges).result.centrality
     assert(out.rdd.collect.toMap ==
       Map(0 -> 2.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0))
@@ -48,14 +48,14 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
 
   test("small example graph - Lin") {
     val g = ExampleGraph()().result
-    val op = HyperBallCentrality(5, "Lin")
+    val op = HyperBallCentrality(5, "Lin", 8)
     val out = op(op.es, g.edges).result.centrality
     assert(out.rdd.collect.toMap ==
       Map(0 -> 4.5, 1 -> 4.5, 2 -> 1.0, 3 -> 1.0))
   }
 
   test("path graph - Harmonic") {
-    check(HyperBallCentrality(5, "Harmonic"), Map(
+    check(HyperBallCentrality(5, "Harmonic", 8), Map(
       0 -> Seq(1),
       1 -> Seq(2),
       2 -> Seq(3),
@@ -64,7 +64,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("path graph - Lin") {
-    check(HyperBallCentrality(5, "Lin"), Map(
+    check(HyperBallCentrality(5, "Lin", 8), Map(
       0 -> Seq(1),
       1 -> Seq(2),
       2 -> Seq(3),
@@ -73,7 +73,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("tree graph - Harmonic") {
-    check(HyperBallCentrality(5, "Harmonic"), Map(
+    check(HyperBallCentrality(5, "Harmonic", 8), Map(
       0 -> Seq(),
       1 -> Seq(0),
       2 -> Seq(0),
@@ -83,7 +83,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("tree graph - Lin") {
-    check(HyperBallCentrality(5, "Lin"), Map(
+    check(HyperBallCentrality(5, "Lin", 8), Map(
       0 -> Seq(),
       1 -> Seq(0),
       2 -> Seq(0),
@@ -93,7 +93,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("triangle graph - Harmonic") {
-    check(HyperBallCentrality(5, "Harmonic"), Map(
+    check(HyperBallCentrality(5, "Harmonic", 8), Map(
       0 -> Seq(1),
       1 -> Seq(2),
       2 -> Seq(0)),
@@ -101,7 +101,7 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("triangle graph - Lin") {
-    check(HyperBallCentrality(5, "Lin"), Map(
+    check(HyperBallCentrality(5, "Lin", 8), Map(
       0 -> Seq(1),
       1 -> Seq(2),
       2 -> Seq(0)),
