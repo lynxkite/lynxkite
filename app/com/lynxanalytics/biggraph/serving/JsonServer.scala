@@ -132,15 +132,18 @@ case class GlobalSettings(
   tagline: String,
   version: String)
 
-object ProductionJsonServer extends JsonServer {
-  // We check if licence is still valid.
-  if (Limitations.isExpired()) {
-    val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
-    println(message)
-    log.error(message)
-    System.exit(1)
+object AssertLicenseNotExpired {
+  def apply() = {
+    if (Limitations.isExpired()) {
+      val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
+      println(message)
+      log.error(message)
+      System.exit(1)
+    }
   }
+}
 
+object FrontendJson {
   /**
    * Implicit JSON inception
    *
@@ -234,6 +237,12 @@ object ProductionJsonServer extends JsonServer {
   implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
+}
+
+object ProductionJsonServer extends JsonServer {
+  import FrontendJson._
+
+  AssertLicenseNotExpired()
 
   // File upload.
   def upload = {

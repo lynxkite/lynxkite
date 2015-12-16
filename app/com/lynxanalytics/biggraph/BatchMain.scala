@@ -31,6 +31,7 @@ For example:
       (paramSpec.take(colonIdx), paramSpec.drop(colonIdx + 1))
     }
     .toMap
+  serving.AssertLicenseNotExpired()
 
   val env = BigGraphProductionEnvironment
   val ops = new Operations(env)
