@@ -10,60 +10,60 @@ import SegmentByEventSequence._
 class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
   test("ContinuousEventCrosser.groupEventsByLocation") {
     val events = Seq(
-      Event(1.0, 1l), Event(1.1, 2l),
-      Event(1.2, 2l), Event(1.3, 3l),
-      Event(1.4, 3l), Event(1.5, 3l),
-      Event(1.6, 1l), Event(1.7, 1l))
+      Event(1.0, 1L), Event(1.1, 2L),
+      Event(1.2, 2L), Event(1.3, 3L),
+      Event(1.4, 3L), Event(1.5, 3L),
+      Event(1.6, 1L), Event(1.7, 1L))
     val grouped = ContinuousEventsSegmentGenerator.groupEventsByLocation(events)
     assert(grouped.toSeq ==
       Seq(
-        EventSpan(1.0, 1.0, 1l),
-        EventSpan(1.1, 1.2, 2l),
-        EventSpan(1.3, 1.5, 3l),
-        EventSpan(1.6, 1.7, 1l)))
+        EventSpan(1.0, 1.0, 1L),
+        EventSpan(1.1, 1.2, 2L),
+        EventSpan(1.3, 1.5, 3L),
+        EventSpan(1.6, 1.7, 1L)))
   }
 
   test("EventsWithGapsCroesser.sublists") {
-    val events = Seq((1.0, 1l), (1.1, 2l), (1.2, 3l), (1.3, 3l))
+    val events = Seq((1.0, 1L), (1.1, 2L), (1.2, 3L), (1.3, 3L))
     val sublists = EventsWithGapsSegmentGenerator.sublists(List(), events, 2)
     import scala.math.Ordering.Implicits._
     assert(sublists.toSeq.sorted == Seq(
-      List((1.0, 1l), (1.1, 2l)),
-      List((1.0, 1l), (1.2, 3l)),
-      List((1.0, 1l), (1.3, 3l)),
-      List((1.1, 2l), (1.2, 3l)),
-      List((1.1, 2l), (1.3, 3l)),
-      List((1.2, 3l), (1.3, 3l))
+      List((1.0, 1L), (1.1, 2L)),
+      List((1.0, 1L), (1.2, 3L)),
+      List((1.0, 1L), (1.3, 3L)),
+      List((1.1, 2L), (1.2, 3L)),
+      List((1.1, 2L), (1.3, 3L)),
+      List((1.2, 3L), (1.3, 3L))
     ).sorted)
   }
 
   test("ConinuousEventsSegmentGenerator") {
     val events = Seq(
-      Event(1.0, 1l), Event(1.1, 2l),
-      Event(1.21, 2l), Event(1.3, 3l),
-      Event(1.4, 3l), Event(1.5, 3l),
-      Event(1.6, 1l), Event(1.7, 1l))
+      Event(1.0, 1L), Event(1.1, 2L),
+      Event(1.21, 2L), Event(1.3, 3L),
+      Event(1.4, 3L), Event(1.5, 3L),
+      Event(1.6, 1L), Event(1.7, 1L))
     val segments = ContinuousEventsSegmentGenerator(3, 0.1, 5.0).getSegments(events)
     assert(
       segments.toSeq ==
         Seq(
-          EventListSegmentId(10, Seq(1l, 2l, 3l)),
-          EventListSegmentId(11, Seq(2l, 3l, 1l)),
-          EventListSegmentId(12, Seq(2l, 3l, 1l))))
+          EventListSegmentId(10, Seq(1L, 2L, 3L)),
+          EventListSegmentId(11, Seq(2L, 3L, 1L)),
+          EventListSegmentId(12, Seq(2L, 3L, 1L))))
   }
 
   test("EventsWithGapsSegmentGenerator") {
-    val events = Seq(Event(1.01, 1l), Event(1.11, 2l), Event(1.21, 3l), Event(1.31, 3l))
+    val events = Seq(Event(1.01, 1L), Event(1.11, 2L), Event(1.21, 3L), Event(1.31, 3L))
     val segments = EventsWithGapsSegmentGenerator(2, 0.1, 0.31).getSegments(events)
     val golden =
       Seq(
-        EventListSegmentId(10, Seq(1l, 2l)),
-        EventListSegmentId(10, Seq(1l, 3l)),
-        EventListSegmentId(10, Seq(2l, 3l)),
-        EventListSegmentId(10, Seq(3l, 3l)),
-        EventListSegmentId(11, Seq(2l, 3l)),
-        EventListSegmentId(11, Seq(3l, 3l)),
-        EventListSegmentId(12, Seq(3l, 3l)))
+        EventListSegmentId(10, Seq(1L, 2L)),
+        EventListSegmentId(10, Seq(1L, 3L)),
+        EventListSegmentId(10, Seq(2L, 3L)),
+        EventListSegmentId(10, Seq(3L, 3L)),
+        EventListSegmentId(11, Seq(2L, 3L)),
+        EventListSegmentId(11, Seq(3L, 3L)),
+        EventListSegmentId(12, Seq(3L, 3L)))
     assert(segments.toSeq.sorted == golden.sorted)
   }
 
