@@ -1161,6 +1161,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
     };
     vertices.step = function() {
+      // By the time this runs the side may be gone.
+      if (!vertices.side || vertices.side.mode !== 'sampled') { return; }
       engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
       engine.opts.style = vertices.side.animate.style;
       if (animating && vertices.side.animate.enabled && engine.step(vertices)) {
