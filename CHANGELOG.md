@@ -19,7 +19,9 @@ Please add changes to "master". When releasing a version add a new header for th
    specify the desired distribution (normal or uniform). These new operations obsolete _Add gaussian
    vertex attribute_, which is no longer accessible from the operations menu.
  - Enable creating segmentations on top of other segmentations.
- - Workflows can run other workflows.
+ - Batch scripts can now access projects and files as Apache Spark DataFrames and run SQL queries
+   on them.
+ - Workflows and batch scripts can run workflows.
 
 ### 1.5.8
 
