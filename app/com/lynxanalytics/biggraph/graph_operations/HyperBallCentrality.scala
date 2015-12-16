@@ -174,7 +174,6 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
       } ++ hyperBallCounters)
       // Note that the + operator is defined on Algebird's HLL.
       .reduceBySortedKey(vertexPartitioner, _ + _)
-      .mapValues { hll => hll.toDenseHLL }
   }
 }
 
