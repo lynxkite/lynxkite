@@ -11,10 +11,8 @@ import org.apache.spark.HashPartitioner
 import scala.reflect.ClassTag
 
 object SegmentByEventSequence extends OpFromJson {
-  case class Event(time: Double, location: Long) {
-  }
-  case class EventSpan(startTime: Double, endTime: Double, location: Long) {
-  }
+  case class Event(time: Double, location: Long)
+  case class EventSpan(startTime: Double, endTime: Double, location: Long)
 
   // The strategy used in the algorithm to assign a person into segments.
   trait TimeLineSegmentGenerator[SegmentIdType] {
@@ -26,7 +24,7 @@ object SegmentByEventSequence extends OpFromJson {
   // This identifies a segment by the bucket of the starting time and a list of locations.
   case class EventListSegmentId(timeBucket: Long, locations: Seq[Long]) {
   }
-  implicit def eventListSegmentIdOrdering: Ordering[EventListSegmentId] = {
+  implicit val eventListSegmentIdOrdering: Ordering[EventListSegmentId] = {
     import scala.math.Ordering.Implicits._
     Ordering.by(id => (id.timeBucket, id.locations))
   }
@@ -45,10 +43,10 @@ object SegmentByEventSequence extends OpFromJson {
       }
     }
     def groupEventsByLocation(seq: Iterable[Event]): Iterator[EventSpan] = {
-      // Remove toIterator if you want to kryo.register classes like:
+      // Remove iterator conversion if you want to kryo.register classes like:
       // scala.collection.immutable.List$$anonfun$toStream$1
-      // I have given up stopped after the fourth.
-      groupEventsByLocation0(seq.iterator.buffered).toIterator
+      // I have given up after the fourth. TODO: investigate why is this
+      groupEventsByLocation0(seq.iterator.buffered).iterator
     }
   }
   // Generates continuous event lists as segments. In the input event list, subsequent
@@ -65,16 +63,16 @@ object SegmentByEventSequence extends OpFromJson {
       val dedupedEvents = ContinuousEventsSegmentGenerator.groupEventsByLocation(events)
       dedupedEvents.sliding(sequenceLength).flatMap {
         eventWindow =>
-          {
-            val firstEvent = eventWindow.head
-            val lastEvent = eventWindow.last
-            val locations = eventWindow.map { _.location }
-            val earliestAllowedStart = lastEvent.endTime - timeWindowLength
-            val minBucket = (Math.max(firstEvent.startTime, earliestAllowedStart) / timeWindowStep).floor.round
-            val maxBucket = (firstEvent.endTime / timeWindowStep).floor.round
-            // Can be empty if minBucket > maxBucket:
-            (minBucket to maxBucket).map { bucket => EventListSegmentId(bucket, locations) }
+          val firstEvent = eventWindow.head
+          val lastEvent = eventWindow.last
+          val locations = eventWindow.map {
+            _.location
           }
+          val earliestAllowedStart = lastEvent.endTime - timeWindowLength
+          val minBucket = (Math.max(firstEvent.startTime, earliestAllowedStart) / timeWindowStep).floor.round
+          val maxBucket = (firstEvent.endTime / timeWindowStep).floor.round
+          // Can be empty if minBucket > maxBucket:
+          (minBucket to maxBucket).map { bucket => EventListSegmentId(bucket, locations) }
       }
     }
   }
@@ -226,13 +224,21 @@ case class SegmentByEventSequence(
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val segmentGenerator =
-      algorithm match {
-        case "continuous" =>
-          new ContinuousEventsSegmentGenerator(sequenceLength, timeWindowStep, timeWindowLength)
-        case "with-gaps" =>
-          new EventsWithGapsSegmentGenerator(sequenceLength, timeWindowStep, timeWindowLength)
-      }
-    executeWithAlgorithm(inputDatas, o, output, rc, segmentGenerator)
+    algorithm match {
+      case "continuous" =>
+        executeWithAlgorithm(
+          inputDatas,
+          o,
+          output,
+          rc,
+          new ContinuousEventsSegmentGenerator(sequenceLength, timeWindowStep, timeWindowLength))
+      case "with-gaps" =>
+        executeWithAlgorithm(
+          inputDatas,
+          o,
+          output,
+          rc,
+          new EventsWithGapsSegmentGenerator(sequenceLength, timeWindowStep, timeWindowLength))
+    }
   }
 }
