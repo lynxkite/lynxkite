@@ -21,7 +21,10 @@ object HadoopFile {
   private def hasDangerousStart(str: String) =
     str.nonEmpty && !str.startsWith("/")
 
-  def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
+  def apply(
+    str: String,
+    legacyMode: Boolean = false,
+    parentLazyFS: Option[LazySharedFileSystem] = None): HadoopFile = {
     val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str, legacyMode)
     val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
@@ -29,15 +32,32 @@ object HadoopFile {
     val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
     assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
       s"The path following $prefixSymbol has to start with a slash (/)")
-    HadoopFile(prefixSymbol, normalizedRelativePath)
+    new HadoopFile(prefixSymbol, normalizedRelativePath, parentLazyFS)
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
   private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+
+  // We want to avoid creating a FileSystem object for each HadoopFile. But we also don't want to
+  // create the FileSystem object unnecessarily. Both desires are fulfilled by LazySharedFileSystem.
+  class LazySharedFileSystem(f: HadoopFile) extends Serializable {
+    @transient lazy val get = hadoop.fs.FileSystem.get(f.uri, f.hadoopConfiguration)
+  }
 }
 
-case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
+class HadoopFile private (
+    val prefixSymbol: String,
+    val normalizedRelativePath: String,
+    parentLazyFS: Option[HadoopFile.LazySharedFileSystem]) extends Serializable {
+
+  override def equals(o: Any) = o match {
+    case o: HadoopFile =>
+      o.prefixSymbol == this.prefixSymbol && o.normalizedRelativePath == this.normalizedRelativePath
+    case _ => false
+  }
+  override def hashCode = (prefixSymbol + normalizedRelativePath).hashCode
+
   val symbolicName = prefixSymbol + normalizedRelativePath
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
@@ -83,10 +103,13 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   // This function processes the paths returned by hadoop 'ls' (= the globStatus command)
   // after we called globStatus with this hadoop file.
   def hadoopFileForGlobOutput(hadoopOutput: String): HadoopFile = {
-    this.copy(normalizedRelativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
+    new HadoopFile(prefixSymbol, computeRelativePathFromHadoopOutput(hadoopOutput), lazyFSOpt)
   }
 
-  @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
+  val lazyFSOpt =
+    if (resolvedName.isEmpty) None // We cannot have a FileSystem because we don't have a path.
+    else parentLazyFS.orElse(Some(new HadoopFile.LazySharedFileSystem(this)))
+  def fs = lazyFSOpt.get.get
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
@@ -254,7 +277,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   def +(suffix: String): HadoopFile = {
-    HadoopFile(symbolicName + suffix)
+    HadoopFile(symbolicName + suffix, parentLazyFS = lazyFSOpt)
   }
 
   def /(path_element: String): HadoopFile = {
