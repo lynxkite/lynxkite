@@ -21,8 +21,8 @@ to the results. In typical small world graphs this effect may be acceptable, how
 sum of the shortest paths to A.
 
 [[bits]] The precision of the algorithm::
-The centrality algorithm is an approximation. This parameter sets the trade-off between the
-quality of the approximation and the memory and time consumption of the algorithm. In most cases the
-default value is good enough. On very large graphs it may help to use a lower number of counter bits
-in order to speed up the algorithm or meet memory constraints.
+The centrality algorithm is an approximation. This parameter sets the trade-off between
+the quality of the approximation and the memory and time consumption of the algorithm.
+In most cases the default value is good enough. On very large graphs it may help to use
+a lower number in order to speed up the algorithm or meet memory constraints.
 ====
