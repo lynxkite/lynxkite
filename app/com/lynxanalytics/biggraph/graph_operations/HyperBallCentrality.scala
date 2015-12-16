@@ -1,4 +1,4 @@
-// Estimates Harmonic Centrality for each vertex using the HyperBall algorithm.
+// Estimates Centrality for each vertex using the HyperBall algorithm.
 // http://vigna.di.unimi.it/ftp/papers/HyperBall.pdf
 // HyperBall uses HyperLogLog counters to estimate sizes of large sets, so
 // the centrality values calculated here are approximations. Note that this
@@ -20,6 +20,7 @@ import com.twitter.algebird.HyperLogLog._
 
 object HyperBallCentrality extends OpFromJson {
   private val algorithmParameter = NewParameter("algorithm", "Harmonic")
+  private val bitsParameter = NewParameter("bits", 8)
 
   class Input extends MagicInputSignature {
     val (vs, es) = graph
@@ -30,17 +31,19 @@ object HyperBallCentrality extends OpFromJson {
   }
   def fromJson(j: JsValue) = HyperBallCentrality(
     (j \ "maxDiameter").as[Int],
-    algorithmParameter.fromJson(j))
+    algorithmParameter.fromJson(j),
+    bitsParameter.fromJson(j))
 }
 import HyperBallCentrality._
-case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
+case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("maxDiameter" -> maxDiameter) ++
-    algorithmParameter.toJson(algorithm)
+    algorithmParameter.toJson(algorithm) ++
+    bitsParameter.toJson(bits)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -52,7 +55,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
     val edges = inputs.es.rdd.map { case (id, edge) => (edge.src, edge.dst) }
       .groupBySortedKey(vertexPartitioner).cache()
     // Hll counters are used to estimate set sizes.
-    val globalHll = new HyperLogLogMonoid(bits = 8)
+    val globalHll = new HyperLogLogMonoid(bits)
     val hyperBallCounters = vertices.mapValuesWithKeys {
       // Initialize a counter for every vertex 
       case (vid, _) => globalHll(vid)
@@ -171,6 +174,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
       } ++ hyperBallCounters)
       // Note that the + operator is defined on Algebird's HLL.
       .reduceBySortedKey(vertexPartitioner, _ + _)
+      .mapValues { hll => hll.toDenseHLL }
   }
 }
 
