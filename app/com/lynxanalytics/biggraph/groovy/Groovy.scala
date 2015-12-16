@@ -7,17 +7,16 @@ import org.kohsuke.groovy.sandbox
 import play.api.libs.json
 import scala.collection.JavaConversions
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.serving.User
 
 case class GroovyContext(
-    user: User,
+    user: biggraph.serving.User,
     ops: OperationRepository,
-    env: Option[BigGraphEnvironment] = None,
+    env: Option[biggraph.BigGraphEnvironment] = None,
     commandLine: Option[String] = None) {
 
   implicit lazy val metaManager = env.get.metaGraphManager
@@ -121,6 +120,10 @@ class GroovyInterface(ctx: GroovyContext) {
     }
     new GroovyBatchProject(ctx, project.subproject)
   }
+
+  def sql(s: String) = ctx.dataManager.sqlContext.sql(s)
+
+  val sqlContext = ctx.dataManager.sqlContext
 }
 
 // The basic interface for running operations against a project.
@@ -162,6 +165,7 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
+      case "df" => ctx.env.get.dataFrame.load(subproject.fullName)
       case _ => super.getProperty(name)
     }
   }
