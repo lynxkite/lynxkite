@@ -383,6 +383,10 @@ object ProductionJsonServer extends JsonServer {
   val copyController = new CopyController(BigGraphProductionEnvironment)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
+  Ammonite.maybeStart()
+}
+
+object Ammonite {
   // Starting Ammonite if requested.
   val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
     """
@@ -409,13 +413,13 @@ For convenience, we've set up some Kite specific bindings for you:
 Remember, any of the above can be used to easily destroy the running server or even any data.
 Drive responsibly.""")
 
-  scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map(_.toInt).foreach { ammonitePort =>
+  private val replServer = scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map { ammonitePort =>
     import ammonite.repl.Bind
-    val replServer = new ammonite.sshd.SshdRepl(
+    new ammonite.sshd.SshdRepl(
       ammonite.sshd.SshServerConfig(
         // We only listen on the local interface.
         address = "localhost",
-        port = ammonitePort,
+        port = ammonitePort.toInt,
         username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
         password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
       predef = s"""
@@ -430,9 +434,20 @@ println("${help}")
         Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
         Bind("dataManager", BigGraphProductionEnvironment.dataManager),
         Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext)))
+  }
 
-    replServer.start()
-    log.info("Ammonite sshd started")
+  def maybeStart() = {
+    replServer.foreach { s =>
+      s.start()
+      log.info("Ammonite sshd started.")
+    }
+  }
+
+  def maybeStop() = {
+    replServer.foreach { s =>
+      s.stop()
+      log.info("Ammonite sshd stopped.")
+    }
   }
 }
 

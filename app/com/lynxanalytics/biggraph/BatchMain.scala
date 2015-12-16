@@ -33,11 +33,14 @@ For example:
     .toMap
   serving.AssertLicenseNotExpired()
 
-  val env = BigGraphProductionEnvironment
-  val ops = new Operations(env)
-  val user = serving.User("Batch User", isAdmin = true)
-  val commandLine = s"run-kite.sh batch ${args.mkString(" ")}"
-  val ctx = groovy.GroovyContext(user, ops, Some(env), Some(commandLine))
-  val shell = ctx.trustedShell("params" -> JavaConversions.mapAsJavaMap(params))
-  shell.evaluate(new java.io.File(scriptFileName))
+  serving.Ammonite.maybeStart()
+  try {
+    val env = BigGraphProductionEnvironment
+    val ops = new Operations(env)
+    val user = serving.User("Batch User", isAdmin = true)
+    val commandLine = s"run-kite.sh batch ${args.mkString(" ")}"
+    val ctx = groovy.GroovyContext(user, ops, Some(env), Some(commandLine))
+    val shell = ctx.trustedShell("params" -> JavaConversions.mapAsJavaMap(params))
+    shell.evaluate(new java.io.File(scriptFileName))
+  } finally serving.Ammonite.maybeStop()
 }
