@@ -32,20 +32,23 @@ object SegmentByEventSequence extends OpFromJson {
   }
 
   object ContinuousEventsSegmentGenerator {
-    def groupEventsByLocation0(seq: Iterable[Event]): Stream[EventSpan] = {
-      if (seq.isEmpty) {
+    def groupEventsByLocation0(it: BufferedIterator[Event]): Stream[EventSpan] = {
+      if (!it.hasNext) {
         Stream()
       } else {
-        val items = seq.takeWhile { x => x.location == seq.head.location }
-        val rest = seq.dropWhile { x => x.location == seq.head.location }
-        EventSpan(items.head.time, items.last.time, items.head.location) #:: groupEventsByLocation0(rest)
+        val first = it.next
+        var last = first
+        while (it.hasNext && it.head.location == first.location) {
+          last = it.next
+        }
+        EventSpan(first.time, last.time, first.location) #:: groupEventsByLocation0(it)
       }
     }
     def groupEventsByLocation(seq: Iterable[Event]): Iterator[EventSpan] = {
-      // Remove this wrapper function if you want to kryo.register classes like:
+      // Remove toIterator if you want to kryo.register classes like:
       // scala.collection.immutable.List$$anonfun$toStream$1
-      // I have stopped after the fourth.
-      groupEventsByLocation0(seq).toIterator
+      // I have given up stopped after the fourth.
+      groupEventsByLocation0(seq.iterator.buffered).toIterator
     }
   }
   // Generates continuous event lists as segments. In the input event list, subsequent
