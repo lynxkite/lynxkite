@@ -14,6 +14,7 @@ import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_api.{ SafeFuture => Future }
 
 object DataManager {
   val maxParallelSparkStages =
@@ -27,7 +28,7 @@ object DataManager {
           private var nextIndex = 1
           private val uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler {
             def uncaughtException(thread: Thread, cause: Throwable): Unit = {
-              // graph_api.Future should catch everything but this is still here to be sure.
+              // SafeFuture should catch everything but this is still here to be sure.
               log.error("DataManager thread failed:", cause)
               throw cause
             }
@@ -43,47 +44,6 @@ object DataManager {
         }
       ))
   }
-}
-
-// Scala Futures don't handle all exceptions. #2707
-object Future {
-  class Wrapper(t: Throwable) extends Exception(t)
-
-  def apply[T](body: => T)(implicit ec: concurrent.ExecutionContext) =
-    new Future(concurrent.Future { safe(body) })
-
-  def successful[T](value: T) = new Future(concurrent.Future.successful(value))
-
-  def safe[B](body: => B): B = {
-    try body catch {
-      case t: Throwable => throw new Wrapper(t)
-    }
-  }
-  def safe[A, B](body: A => B): A => B = { a =>
-    try body(a) catch {
-      case t: Throwable => throw new Wrapper(t)
-    }
-  }
-
-  def sequence[T](s: Seq[Future[T]])(implicit ec: concurrent.ExecutionContext) =
-    new Future(concurrent.Future.sequence(s.map(_.future)))
-}
-class Future[+T](val future: concurrent.Future[T]) {
-  def map[U](f: T => U)(implicit ec: concurrent.ExecutionContext) =
-    new Future(future.map(Future.safe(f)))
-
-  def flatMap[U](f: T => Future[U])(implicit ec: concurrent.ExecutionContext) =
-    new Future(future.flatMap(t => f(t).future))
-
-  def awaitResult(atMost: Duration) = concurrent.Await.result(future, atMost)
-  def awaitReady(atMost: Duration): Unit = concurrent.Await.ready(future, atMost)
-
-  // Simple forwarding for methods that do not create a new Future.
-  def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: concurrent.ExecutionContext) =
-    future.onFailure(pf)
-  def foreach[U](f: T => U)(implicit ec: concurrent.ExecutionContext) =
-    future.foreach(f)
-  def value = future.value
 }
 
 class DataManager(sc: spark.SparkContext,
