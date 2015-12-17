@@ -14,7 +14,7 @@ class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
       Event(1.2, 2L), Event(1.3, 3L),
       Event(1.4, 3L), Event(1.5, 3L),
       Event(1.6, 1L), Event(1.7, 1L))
-    val grouped = ContinuousEventsSegmentGenerator.groupEventsByLocation(events)
+    val grouped = ContinuousEventsSegmentGenerator.groupEventsByLocation(events.iterator.buffered)
     assert(grouped.toSeq ==
       Seq(
         EventSpan(1.0, 1.0, 1L),
