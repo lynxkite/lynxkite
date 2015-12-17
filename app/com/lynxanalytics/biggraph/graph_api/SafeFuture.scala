@@ -3,46 +3,54 @@
 // all exceptions.
 package com.lynxanalytics.biggraph.graph_api
 
-import scala.concurrent.duration.Duration
+import scala.concurrent._
+import scala.util._
 
 object SafeFuture {
-  class Wrapper(t: Throwable) extends Exception(t)
+  def apply[T](func: => T)(implicit ec: ExecutionContext) =
+    new SafeFuture(unwrapException(Future { wrapException(func) }))
 
-  def apply[T](body: => T)(implicit ec: concurrent.ExecutionContext) =
-    new SafeFuture(concurrent.Future { wrapException(body) })
+  def successful[T](value: T) = new SafeFuture(Future.successful(value))
 
-  def successful[T](value: T) = new SafeFuture(concurrent.Future.successful(value))
+  def sequence[T](s: Seq[SafeFuture[T]])(implicit ec: ExecutionContext) =
+    new SafeFuture(Future.sequence(s.map(_.future)))
 
-  def wrapException[B](body: => B): B = {
-    try body catch {
+  private case class Wrapper(t: Throwable) extends Exception(t)
+
+  private def wrapException[B](func: => B): B = {
+    try func catch {
       case t: Throwable => throw new Wrapper(t)
     }
   }
 
-  def wrapException[A, B](body: A => B): A => B = { a =>
-    try body(a) catch {
+  private def wrapException[A, B](func: A => B): A => B = { a =>
+    try func(a) catch {
       case t: Throwable => throw new Wrapper(t)
     }
   }
 
-  def sequence[T](s: Seq[SafeFuture[T]])(implicit ec: concurrent.ExecutionContext) =
-    new SafeFuture(concurrent.Future.sequence(s.map(_.future)))
+  private def unwrapException[T](f: Future[T])(implicit ec: ExecutionContext): Future[T] = {
+    f.transform(identity, {
+      case Wrapper(t) => t
+      case x => x
+    })
+  }
 }
-class SafeFuture[+T](val future: concurrent.Future[T]) {
-  def map[U](f: T => U)(implicit ec: concurrent.ExecutionContext) =
-    new SafeFuture(future.map(SafeFuture.wrapException(f)))
+class SafeFuture[+T] private (val future: Future[T]) {
+  def map[U](func: T => U)(implicit ec: ExecutionContext) =
+    new SafeFuture(SafeFuture.unwrapException(future.map(SafeFuture.wrapException(func))))
 
-  def flatMap[U](f: T => SafeFuture[U])(implicit ec: concurrent.ExecutionContext) =
+  def flatMap[U](f: T => SafeFuture[U])(implicit ec: ExecutionContext) =
     new SafeFuture(future.flatMap(t => f(t).future))
 
-  def awaitResult(atMost: Duration) = concurrent.Await.result(future, atMost)
-  def awaitReady(atMost: Duration): Unit = concurrent.Await.ready(future, atMost)
+  def awaitResult(atMost: duration.Duration) = Await.result(future, atMost)
+  def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
 
   // Simple forwarding for methods that do not create a new Future.
-  def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: concurrent.ExecutionContext) =
+  def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: ExecutionContext) =
     future.onFailure(pf)
 
-  def foreach[U](f: T => U)(implicit ec: concurrent.ExecutionContext) =
+  def foreach[U](f: T => U)(implicit ec: ExecutionContext) =
     future.foreach(f)
 
   def value = future.value
