@@ -39,8 +39,8 @@ The properties of `GroovyProject` are:
  - `Map<String, GroovyScalar> scalars` is the list of scalars. `GroovyScalar` has a `toString()`
    and a `toDouble()` method, they return its value as a string/double respectively.
  - `Map<String, GroovyAttribute> vertexAttributes` and `Map<String, GroovyAttribute> edgeAttributes`
-   are the vertex and edge attributes. `GroovyAttribute` has a `histogram()` method that returns
-   a histogram of the attribute.
+   are the vertex and edge attributes. `GroovyAttribute` has a `histogram(Int n)` method that
+   returns a histogram of the attribute with `n` buckets.
 
 `GroovyProject` has a method for every operation. These methods take named arguments for each
 operation parameter. Rather than documenting these methods in detail, the recommended approach is
