@@ -191,7 +191,47 @@ split.derivedEdgeAttribute(
   expr: jsprogram
 )
 
-split.filterByAttributes('filterea-splitCalls': '> 0.0')
+// Now we must get rid of some edges (calls).
+// Some notation first:
+// Someone whose first attribute is defined, but the second is not: [d,-]
+// Someone whose first attribute is not defined, but the second is: [-,d]
+// Both attributes are defined: [d,d]
+// Neither attributes are defined: [-,-]
+//
+// In real situations, [-,-] does not exist. Furthermore, these calls are impossible:
+// [d,-] -> [-,d]
+// [-,d] -> [d,-]
+// We'll have to filter them out.
+// We'll also have to filter out calls where splitCalls happened to be assigned 0.
+
+split.addConstantVertexAttribute(
+  name: 'undefinedMarker',
+  value: 'undefinedMarker',
+  type: 'String'
+)
+
+split.mergeTwoAttributes(
+  name: 'auxAttr1',
+  attr1: 'attr1',
+  attr2: 'undefinedMarker'
+)
+
+split.mergeTwoAttributes(
+  name: 'auxAttr2',
+  attr1: 'attr2',
+  attr2: 'undefinedMarker'
+)
+split.derivedEdgeAttribute(
+  output: 'impossibleCall',
+  type: 'double',
+  expr: '''((src$auxAttr1 === "undefinedMarker" && dst$auxAttr2 === "undefinedMarker") ||
+            (src$auxAttr2 === "undefinedMarker" && dst$auxAttr1 === "undefinedMarker")) ? 1.0 : 0.0'''
+)
+
+split.filterByAttributes(
+'filterea-splitCalls': '> 0.0',
+'filterea-impossibleCall': '< 1.0'
+)
 
 
 // Do fingerprinting
