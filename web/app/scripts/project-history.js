@@ -244,7 +244,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         if (path.length === 0) { // This is the top-level project.
           return undefined;
         } else {
-          return path[path.length - 1];
+          return path.join('|');
         }
       };
 
@@ -270,7 +270,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
       function blankStep(seg) {
         var path = [];
         if (seg !== undefined) {
-          path = [seg.name];
+          path = seg.name.split('|');
         }
         return {
           request: {
