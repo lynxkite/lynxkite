@@ -30,7 +30,7 @@ object SegmentByEventSequence extends OpFromJson {
   }
 
   object ContinuousEventsSegmentGenerator {
-    def groupEventsByLocation0(it: BufferedIterator[Event]): Stream[EventSpan] = {
+    def groupEventsByLocation(it: BufferedIterator[Event]): Stream[EventSpan] = {
       if (!it.hasNext) {
         Stream()
       } else {
@@ -39,14 +39,8 @@ object SegmentByEventSequence extends OpFromJson {
         while (it.hasNext && it.head.location == first.location) {
           last = it.next
         }
-        EventSpan(first.time, last.time, first.location) #:: groupEventsByLocation0(it)
+        EventSpan(first.time, last.time, first.location) #:: groupEventsByLocation(it)
       }
-    }
-    def groupEventsByLocation(seq: Iterable[Event]): Iterator[EventSpan] = {
-      // Remove iterator conversion if you want to kryo.register classes like:
-      // scala.collection.immutable.List$$anonfun$toStream$1
-      // I have given up after the fourth. TODO: investigate why is this
-      groupEventsByLocation0(seq.iterator.buffered).iterator
     }
   }
   // Generates continuous event lists as segments. In the input event list, subsequent
@@ -60,14 +54,12 @@ object SegmentByEventSequence extends OpFromJson {
       timeWindowLength: Double) extends TimeLineSegmentGenerator[EventListSegmentId] {
 
     override def getSegments(events: Iterable[Event]): Iterator[EventListSegmentId] = {
-      val dedupedEvents = ContinuousEventsSegmentGenerator.groupEventsByLocation(events)
+      val dedupedEvents = ContinuousEventsSegmentGenerator.groupEventsByLocation(events.iterator.buffered)
       dedupedEvents.sliding(sequenceLength).flatMap {
         eventWindow =>
           val firstEvent = eventWindow.head
           val lastEvent = eventWindow.last
-          val locations = eventWindow.map {
-            _.location
-          }
+          val locations = eventWindow.map { _.location }.toIndexedSeq // avoid serializing a stream later
           val earliestAllowedStart = lastEvent.endTime - timeWindowLength
           val minBucket = (Math.max(firstEvent.startTime, earliestAllowedStart) / timeWindowStep).floor.round
           val maxBucket = (firstEvent.endTime / timeWindowStep).floor.round
@@ -194,7 +186,6 @@ case class SegmentByEventSequence(
           segmentGenerator.getSegments(sortedEvents)
         }
     }
-
     val segmentIdToCodeAndPersons = personToSegmentCode
       .map { case (personId, segmentCode) => (segmentCode, personId) }
       .groupBySortedKey(partitioner)
