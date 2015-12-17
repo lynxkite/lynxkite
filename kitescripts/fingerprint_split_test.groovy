@@ -187,7 +187,7 @@ split.derivedVertexAttribute(
 
 split.derivedEdgeAttribute(
   output: 'splitCalls',
-  type: double,
+  type: 'double',
   expr: jsprogram
 )
 
@@ -200,7 +200,6 @@ split.fingerprintingBasedOnAttributes(
   rightName: 'attr2',
   weights: 'splitCalls',
   mo: '2',
-  extra: '"weightingMode": "InDegree", "multiNeighborsPreference": 5.0, "alpha": -1.0',
   ms: '0.0'
 )
 
