@@ -108,12 +108,13 @@ class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
     // are sharing a vertex.
     val segmentList = result.belongsTo.rdd
       .map { case (_, Edge(member, segment)) => (segment, member) }
-      .groupByKey
-      .map { case (_, members) => members }
       .collect
       .toSeq
+      .groupBy { case (segment, _) => segment }
+      .map { case (_, members) => members.map { case (segment, member) => member } }
+      .toSeq // each item in our list is a segment now, represented by a list of its members
       .sortBy { members => -members.size } // sort by decreasing segment size
-    assert(segmentList(0) == Seq(0, 1))
-    assert(segmentList(1).size == 1) // subsequent segments are size of 1
+    assert(segmentList(0) == Seq(0, 1)) // the first (largest) segment has vertices 0 and 1 as members
+    assert(segmentList(1).size == 1) // the subsequent (smaller) segments are size of 1
   }
 }
