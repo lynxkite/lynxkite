@@ -212,12 +212,14 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 }
 
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
-  def histogram: String = {
+  def histogram: String = histogram(10)
+
+  def histogram(numBuckets: Int): String = {
     val drawing = new GraphDrawingController(ctx.env.get)
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
-      numBuckets = 10,
+      numBuckets = numBuckets,
       axisOptions = AxisOptions(logarithmic = false),
       sampleSize = 50000)
     val res = drawing.getHistogram(ctx.user, req)
