@@ -19,26 +19,41 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
-}
-class DataManager(sc: spark.SparkContext,
-                  val repositoryPath: HadoopFile,
-                  val ephemeralPath: Option[HadoopFile] = None) {
-  // Limit parallelism to maxParallelSparkStages.
-  implicit val executionContext =
+
+  def limitedExecutionContext(maxParallelism: Int) = {
     ExecutionContext.fromExecutorService(
       java.util.concurrent.Executors.newFixedThreadPool(
-        DataManager.maxParallelSparkStages,
+        maxParallelism,
         new java.util.concurrent.ThreadFactory() {
           private var nextIndex = 1
+          private val uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler {
+            def uncaughtException(thread: Thread, cause: Throwable): Unit = {
+              // Futures don't handle all exceptions. #2707
+              // Unfortunately we cannot complete the associated promise from here, so
+              // a thread will be left waiting for its completion indefinitely.
+              // The most we can do is make sure the exception at least ends up in the logs,
+              // not just dumped to stderr.
+              log.error("DataManager thread failed:", cause)
+              throw cause
+            }
+          }
           def newThread(r: Runnable) = synchronized {
             val t = new Thread(r)
             t.setDaemon(true)
             t.setName(s"DataManager-$nextIndex")
+            t.setUncaughtExceptionHandler(uncaughtExceptionHandler)
             nextIndex += 1
             t
           }
         }
       ))
+  }
+}
+class DataManager(sc: spark.SparkContext,
+                  val repositoryPath: HadoopFile,
+                  val ephemeralPath: Option[HadoopFile] = None) {
+  implicit val executionContext =
+    DataManager.limitedExecutionContext(DataManager.maxParallelSparkStages)
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   val sqlContext = new SQLContext(sc)
@@ -101,7 +116,7 @@ class DataManager(sc: spark.SparkContext,
   // for them, but the data structure does not grow indefinitely.
   private val loggedFutures = new java.util.WeakHashMap[Future[Unit], Unit]
   private def loggedFuture(func: => Unit): Unit = {
-    val f = future {
+    val f = Future {
       try {
         func
       } catch {
