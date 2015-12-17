@@ -13,7 +13,7 @@ fi
 set -x
 
 BARE_METAL_DIR=$(dirname "$0")
-REPO_DIR="$BARE_METAL_DIR/../.."
+REPO_DIR="$BARE_METAL_DIR/../../.."
 BUILD="/tmp/bare-metal-dvd"
 SPARK_VERSION=$(cat "$REPO_DIR/conf/SPARK_VERSION")
 rm -rf "$BUILD" || true

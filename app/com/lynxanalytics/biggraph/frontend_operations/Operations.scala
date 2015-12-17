@@ -1102,13 +1102,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "centrality"),
       NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
-      Choice("algorithm", "Centrality type", options = FEOption.list("Harmonic", "Lin")))
+      Choice("algorithm", "Centrality type", options = FEOption.list("Harmonic", "Lin")),
+      NonNegInt("bits", "Precision", default = 8))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
       val algorithm = params("algorithm")
       assert(name.nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, algorithm)
+      val op = graph_operations.HyperBallCentrality(
+        params("maxDiameter").toInt, algorithm, params("bits").toInt)
       project.newVertexAttribute(
         name, op(op.es, project.edgeBundle).result.centrality, algorithm + help)
     }

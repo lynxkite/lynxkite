@@ -7,17 +7,16 @@ import org.kohsuke.groovy.sandbox
 import play.api.libs.json
 import scala.collection.JavaConversions
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.serving.User
 
 case class GroovyContext(
-    user: User,
+    user: biggraph.serving.User,
     ops: OperationRepository,
-    env: Option[BigGraphEnvironment] = None,
+    env: Option[biggraph.BigGraphEnvironment] = None,
     commandLine: Option[String] = None) {
 
   implicit lazy val metaManager = env.get.metaGraphManager
@@ -65,7 +64,8 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
     // Shorthand for "receiver.isInstanceOf[T]".
     def isA[T: reflect.ClassTag] = reflect.classTag[T].runtimeClass.isInstance(receiver)
     // Method calls are only allowed on GroovyWorkflowProject and primitive types.
-    if (isA[GroovyWorkflowProject] || isA[String] || isA[Long] || isA[Double] || isA[Int] || isA[Boolean]) {
+    if (isA[GroovyWorkflowProject] || isA[String] || isA[Long] || isA[Double] || isA[Int]
+      || isA[Boolean]) {
       invoker.call(receiver, method, args: _*)
     } else {
       throw new SecurityException(
@@ -121,6 +121,10 @@ class GroovyInterface(ctx: GroovyContext) {
     }
     new GroovyBatchProject(ctx, project.subproject)
   }
+
+  def sql(s: String) = ctx.dataManager.sqlContext.sql(s)
+
+  val sqlContext = ctx.dataManager.sqlContext
 }
 
 // The basic interface for running operations against a project.
@@ -134,7 +138,9 @@ abstract class GroovyProject(ctx: GroovyContext)
     val argArray = args.asInstanceOf[Array[_]]
     val params: Map[String, String] = if (argArray.nonEmpty) {
       val javaParams = argArray.head.asInstanceOf[java.util.Map[AnyRef, AnyRef]]
-      JavaConversions.mapAsScalaMap(javaParams).map { case (k, v) => (k.toString, v.toString) }.toMap
+      JavaConversions.mapAsScalaMap(javaParams).map {
+        case (k, v) => (k.toString, v.toString)
+      }.toMap
     } else Map()
     val id = {
       val normalized = ctx.normalize(name)
@@ -144,6 +150,24 @@ abstract class GroovyProject(ctx: GroovyContext)
     applyOperation(id, params)
     null
   }
+
+  // Public method for running workflows. (Workflow names are not valid identifiers.)
+  // Groovy methods with keyword arguments need to have a Map as their first parameter.
+  // Calling this from Groovy is pretty nice:
+  //   project.runWorkflow('My Workflow', my_parameter: 44, my_other_parameter: 'no')
+  // The workflow name may or may not include the timestamp. If it is missing, the
+  // latest version of the workflow is used.
+  def runWorkflow(javaParams: java.util.Map[AnyRef, AnyRef], id: String): Unit = {
+    val params = JavaConversions.mapAsScalaMap(javaParams).map {
+      case (k, v) => (k.toString, v.toString)
+    }.toMap
+    val tag =
+      if (id.contains("/")) s"${BigGraphController.workflowsRoot}/$id"
+      else ctx.ops.newestWorkflow(id).toString
+    applyOperation(tag, params)
+  }
+  // Special case with no parameters.
+  def runWorkflow(id: String): Unit = runWorkflow(new java.util.HashMap, id)
 
   override def getProperty(name: String): AnyRef = {
     name match {
@@ -162,6 +186,7 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
+      case "df" => ctx.env.get.dataFrame.load(subproject.fullName)
       case _ => super.getProperty(name)
     }
   }
@@ -223,14 +248,15 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
       axisOptions = AxisOptions(logarithmic = false),
       sampleSize = 50000)
     val res = drawing.getHistogram(ctx.user, req)
-    import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
+    import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(res).toString
   }
 }
 
 // No checkpointing or entity access in workflow mode.
 // This class is exposed to untrusted scripts. Make sure its public API is properly restricted!
-class GroovyWorkflowProject(ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
+class GroovyWorkflowProject(
+    ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
   protected def viewer = rootProject.offspringEditor(path).viewer
   override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
     val opctx = Operation.Context(ctx.user, viewer)
