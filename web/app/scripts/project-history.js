@@ -244,7 +244,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         if (path.length === 0) { // This is the top-level project.
           return undefined;
         } else {
-          return path[path.length - 1];
+          return path.join('|');
         }
       };
 
@@ -270,7 +270,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
       function blankStep(seg) {
         var path = [];
         if (seg !== undefined) {
-          path = [seg.name];
+          path = seg.name.split('|');
         }
         return {
           request: {
@@ -310,9 +310,15 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
             var seg = request.path[j];
             line.push('.segmentations[\'' + seg + '\']');
           }
-          line.push('.' + toGroovyId(request.op.id) + '(');
           var params = Object.keys(request.op.parameters);
           params.sort();
+          if (request.op.id.indexOf('workflows/') === 0) {
+            var workflowName = request.op.id.split('/').slice(1).join('/');
+            line.push('.runWorkflow(\'' + workflowName + '\'');
+            if (params.length > 0) { line.push(', '); }
+          } else {
+            line.push('.' + toGroovyId(request.op.id) + '(');
+          }
           for (j = 0; j < params.length; ++j) {
             var k = params[j];
             var v = request.op.parameters[k];

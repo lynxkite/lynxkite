@@ -476,6 +476,9 @@ angular.module('biggraph')
       this.applyOp('Discard-' + kind, { name: name });
     };
 
+    Side.prototype.isInternalVertexFilter = function(name) {
+      return this.resolveVertexAttribute(name).isInternal;
+    };
     // Returns unresolved filters (i.e. keyed by the attribute name).
     Side.prototype.nonEmptyVertexFilterNames = function() {
       return this.nonEmptyFilterNames(this.state.filters.vertex);
@@ -524,6 +527,12 @@ angular.module('biggraph')
       return (this.nonEmptyEdgeFilterNames().length !== 0 ||
               this.nonEmptyVertexFilterNames().length !== 0);
     };
+    Side.prototype.applyFiltersEnabled = function() {
+      var that = this;
+      return this.nonEmptyVertexFilterNames().every(
+        function(filter) { return !that.isInternalVertexFilter(filter.attributeName); });
+    };
+
     Side.prototype.applyFilters = function() {
       var that = this;
       util.post('/ajax/filterProject',
@@ -540,13 +549,21 @@ angular.module('biggraph')
       this.state.filters = { edge: {}, vertex: {} };
     };
     Side.prototype.filterSummary = function() {
+      var that = this;
+      var NBSP = '\u00a0';
       var res = [];
       function addNonEmpty(value, key) {
         if (value) {
-          var nbsp = '\u00a0';
-          res.push(' ' + key + nbsp + value);
+          res.push(' ' + key + NBSP + value);
         }
       }
+      function addProblematic(value, key) {
+        if (that.isInternalVertexFilter(key)) {
+          var note = ' Cannot' + NBSP + 'apply' + NBSP + key + NBSP + 'here';
+          res.push(note);
+        }
+      }
+      angular.forEach(this.state.filters.vertex, addProblematic);
       angular.forEach(this.state.filters.vertex, addNonEmpty);
       angular.forEach(this.state.filters.edge, addNonEmpty);
       return res.join(', ');
