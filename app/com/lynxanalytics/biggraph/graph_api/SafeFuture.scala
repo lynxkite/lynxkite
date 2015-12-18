@@ -1,6 +1,8 @@
 // Scala Futures don't handle all exceptions. #2707
 // SafeFuture is a partial re-implementation of the Scala Future interface that catches
-// all exceptions.
+// all exceptions. Errors (as opposed to exceptions) are also caught, but they end up
+// wrapped inside java.util.concurrent.ExecutionException by the Promise API.
+// https://github.com/scala/scala/blob/v2.10.4/src/library/scala/concurrent/Promise.scala#L20
 package com.lynxanalytics.biggraph.graph_api
 
 import scala.concurrent._
@@ -30,18 +32,20 @@ object SafeFuture {
   }
 
   private def unwrapException[T](f: Future[T])(implicit ec: ExecutionContext): Future[T] = {
-    f.transform(identity, {
-      case Wrapper(t) => t
-      case x => x
-    })
+    val p = Promise[T]()
+    f.onComplete {
+      case Failure(Wrapper(t)) => p.complete(Failure(t))
+      case x => p.complete(x)
+    }
+    p.future
   }
 }
 class SafeFuture[+T] private (val future: Future[T]) {
   def map[U](func: T => U)(implicit ec: ExecutionContext) =
     new SafeFuture(SafeFuture.unwrapException(future.map(SafeFuture.wrapException(func))))
 
-  def flatMap[U](f: T => SafeFuture[U])(implicit ec: ExecutionContext) =
-    new SafeFuture(future.flatMap(t => f(t).future))
+  def flatMap[U](func: T => SafeFuture[U])(implicit ec: ExecutionContext) =
+    new SafeFuture(future.flatMap(t => func(t).future))
 
   def awaitResult(atMost: duration.Duration) = Await.result(future, atMost)
   def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
