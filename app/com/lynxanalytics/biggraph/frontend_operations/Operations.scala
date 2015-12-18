@@ -746,6 +746,73 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Segment by event sequence", new CreateSegmentationOperation(_, _) {
+    val SegmentationPrefix = "Segmentation: "
+    val AttributePrefix = "Attribute: "
+    val possibleLocations =
+      project
+        .segmentations
+        .map { seg => FEOption.regular(SegmentationPrefix + seg.segmentationName) }
+        .toList ++
+        vertexAttributes[String].map { attr => FEOption.regular(AttributePrefix + attr.title) }
+
+    def parameters = List(
+      Param("name", "Target segmentation name"),
+      Choice(
+        "location",
+        "Location",
+        options = possibleLocations),
+      Choice("time-attr", "Time attribute", options = vertexAttributes[Double]),
+      Choice("algorithm", "Algorithm", options = List(
+        FEOption("continuous", "Take continuous event sequences"),
+        FEOption("with-gaps", "Allow gaps in event sequences"))),
+      NonNegInt("sequence-length", "Sequence length", default = 2),
+      NonNegDouble("time-window-step", "Time window step"),
+      NonNegDouble("time-window-length", "Time window length")
+    )
+
+    def enabled =
+      FEStatus.assert(project.isSegmentation, "Must be run on a segmentation") &&
+        FEStatus.assert(
+          possibleLocations.nonEmpty,
+          "There must be a string attribute or a sub-segmentation to define event locations") &&
+          FEStatus.assert(
+            vertexAttributes[Double].nonEmpty,
+            "There must be a double attribute to define event times")
+
+    def apply(params: Map[String, String]) = {
+      val timeAttrName = params("time-attr")
+      val timeAttr = project.vertexAttributes(timeAttrName).runtimeSafeCast[Double]
+      val locationAttr = params("location")
+      val belongsToLocation =
+        if (locationAttr.startsWith(SegmentationPrefix)) {
+          project.segmentation(locationAttr.substring(SegmentationPrefix.length)).belongsTo
+        } else {
+          val locationAttribute =
+            project.vertexAttributes(locationAttr.substring(AttributePrefix.length)).runtimeSafeCast[String]
+          val op = graph_operations.StringBucketing()
+          op(op.attr, locationAttribute).result.belongsTo.entity
+        }
+
+      val cells = {
+        val op = graph_operations.SegmentByEventSequence(
+          params("algorithm"),
+          params("sequence-length").toInt,
+          params("time-window-step").toDouble,
+          params("time-window-length").toDouble)
+        op(op.personBelongsToEvent, project.asSegmentation.belongsTo)(
+          op.eventTimeAttribute, timeAttr)(
+            op.eventBelongsToLocation, belongsToLocation).result
+      }
+      val segmentation = project.asSegmentation.parent.segmentation(params("name"))
+      segmentation.setVertexSet(cells.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = cells.belongsTo
+      segmentation.vertexAttributes("description") = cells.segmentDescription
+      segmentation.vertexAttributes("size") = toDouble(cells.segmentSize)
+    }
+  })
+
   register("Combine segmentations", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "New segmentation name"),
