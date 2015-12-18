@@ -30,16 +30,16 @@ object SegmentByEventSequence extends OpFromJson {
   }
 
   object ContinuousEventsSegmentGenerator {
-    def groupEventsByLocation(it: BufferedIterator[Event]): Stream[EventSpan] = {
+    def groupEventsByLocation(it: BufferedIterator[Event]): List[EventSpan] = {
       if (!it.hasNext) {
-        Stream()
+        List()
       } else {
         val first = it.next
         var last = first
         while (it.hasNext && it.head.location == first.location) {
           last = it.next
         }
-        EventSpan(first.time, last.time, first.location) #:: groupEventsByLocation(it)
+        EventSpan(first.time, last.time, first.location) :: groupEventsByLocation(it)
       }
     }
   }
@@ -59,7 +59,7 @@ object SegmentByEventSequence extends OpFromJson {
         eventWindow =>
           val firstEvent = eventWindow.head
           val lastEvent = eventWindow.last
-          val locations = eventWindow.map { _.location }.toIndexedSeq // avoid serializing a stream later
+          val locations = eventWindow.map { _.location }
           val earliestAllowedStart = lastEvent.endTime - timeWindowLength
           val minBucket = (Math.max(firstEvent.startTime, earliestAllowedStart) / timeWindowStep).floor.round
           val maxBucket = (firstEvent.endTime / timeWindowStep).floor.round
