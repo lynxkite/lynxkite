@@ -19,6 +19,16 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> 60.3, 1 -> 48.2, 2 -> 80.3, 3 -> 122.0))
   }
 
+  test("example graph: cons string gets converted back to String correctly") {
+    val expr = "var res = 'a'; res += 'b'; res;"
+    val g = ExampleGraph()().result
+    val op = DeriveJSString(
+      JavaScript(expr),
+      Seq())
+    val derived = op(op.vs, g.vertices)(op.attrs, Seq()).result.attr
+    assert(derived.rdd.collect.toSet == Set(0 -> "ab", 1 -> "ab", 2 -> "ab", 3 -> "ab"))
+  }
+
   test("example graph: \"gender == 'Male' ? 'Mr ' + name : 'Ms ' + name\"") {
     val expr = "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"
     val g = ExampleGraph()().result
@@ -60,6 +70,21 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       op.attrs,
       Seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
+  }
+
+  test("Random weird types are not supported as input") {
+    val g = ExampleGraph()().result
+    intercept[AssertionError] {
+      DeriveJS.deriveFromAttributes[Double](
+        "location ? 1.0 : 2.0", Seq("location" -> g.location), g.vertices).attr
+    }
+  }
+
+  test("We cannot simply access java stuff from JS") {
+    val js = JavaScript("java.lang.System.out.println(3)")
+    intercept[org.mozilla.javascript.EcmaError] {
+      js.evaluate(Map(), classOf[Object])
+    }
   }
 
   test("Utility methods") {
