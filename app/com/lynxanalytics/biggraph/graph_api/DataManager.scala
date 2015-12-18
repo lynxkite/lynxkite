@@ -10,29 +10,25 @@ import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
-import scala.concurrent._
 import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_api.{ SafeFuture => Future }
 
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
 
   def limitedExecutionContext(maxParallelism: Int) = {
-    ExecutionContext.fromExecutorService(
+    concurrent.ExecutionContext.fromExecutorService(
       java.util.concurrent.Executors.newFixedThreadPool(
         maxParallelism,
         new java.util.concurrent.ThreadFactory() {
           private var nextIndex = 1
           private val uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler {
             def uncaughtException(thread: Thread, cause: Throwable): Unit = {
-              // Futures don't handle all exceptions. #2707
-              // Unfortunately we cannot complete the associated promise from here, so
-              // a thread will be left waiting for its completion indefinitely.
-              // The most we can do is make sure the exception at least ends up in the logs,
-              // not just dumped to stderr.
+              // SafeFuture should catch everything but this is still here to be sure.
               log.error("DataManager thread failed:", cause)
               throw cause
             }
@@ -49,6 +45,7 @@ object DataManager {
       ))
   }
 }
+
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) {
@@ -141,11 +138,11 @@ class DataManager(sc: spark.SparkContext,
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computing scalar $scalar")
       }
-      val outputDatas = blocking {
+      val outputDatas = concurrent.blocking {
         instance.run(inputDatas, runtimeContext)
       }
       validateOutput(instance, outputDatas)
-      blocking {
+      concurrent.blocking {
         if (instance.operation.isHeavy) {
           saveOutputs(instance, outputDatas.values)
         } else {
@@ -288,25 +285,25 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def waitAllFutures(): Unit = {
-    Await.ready(Future.sequence(entityCache.values.toSeq), Duration.Inf)
+    Future.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     import collection.JavaConversions.mapAsScalaMap
-    Await.ready(Future.sequence(loggedFutures.keys.toSeq), Duration.Inf)
+    Future.sequence(loggedFutures.keys.toSeq).awaitReady(Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
-    Await.result(getFuture(vertexSet), duration.Duration.Inf)
+    getFuture(vertexSet).awaitResult(Duration.Inf)
   }
   def get(edgeBundle: EdgeBundle): EdgeBundleData = {
-    Await.result(getFuture(edgeBundle), duration.Duration.Inf)
+    getFuture(edgeBundle).awaitResult(Duration.Inf)
   }
   def get[T](attribute: Attribute[T]): AttributeData[T] = {
-    Await.result(getFuture(attribute), duration.Duration.Inf)
+    getFuture(attribute).awaitResult(Duration.Inf)
   }
   def get[T](scalar: Scalar[T]): ScalarData[T] = {
-    Await.result(getFuture(scalar), duration.Duration.Inf)
+    getFuture(scalar).awaitResult(Duration.Inf)
   }
   def get(entity: MetaGraphEntity): EntityData = {
-    Await.result(getFuture(entity), duration.Duration.Inf)
+    getFuture(entity).awaitResult(Duration.Inf)
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
