@@ -356,7 +356,10 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // The ids seq needs to be sorted.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] = restrictToIdSetRecipe(ids).asGeneral
 
+  // Should return Some(this) with caching on if that's possible. If not, it should return None.
   protected def meCached: Option[this.type]
+  // Will be only called if meCached returns None. In this case, it should return a recipie to
+  // construct a cached version of this SortedRDD.
   protected def cachedRecipe: SortedRDDRecipe[K, V]
   def cached: SortedRDD[K, V] = meCached.getOrElse(cachedRecipe.asGeneral)
 }
