@@ -134,9 +134,8 @@ case class DeriveJSDouble(
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
   val desiredClass = classOf[java.lang.Double]
   def convert(v: Any): Double = v match {
-    //case v: Int => v // Convert ints to doubles.
     case v: Double => {
-      assert(!v.isNaN(), "$expr did not return a valid number")
+      assert(!v.isNaN(), s"$expr did not return a valid number")
       v
     }
     case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")

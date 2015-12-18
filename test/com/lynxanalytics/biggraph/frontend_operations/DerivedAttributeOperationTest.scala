@@ -53,7 +53,13 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
     run("Derived vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
-        (function() { neighbor_age_vector.sort(); return neighbor_age_vector[0]; })()"""))
+        (function() {
+           if (neighbor_age_vector.length > 0) {
+             neighbor_age_vector.sort();
+             return neighbor_age_vector[0] * 1;
+           }
+           return undefined;
+         })()"""))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 18.2, 1 -> 20.3, 2 -> 18.2))
   }
@@ -67,7 +73,6 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
         "prefix" -> "neighbor",
         "direction" -> "all edges",
         "aggregate-neighbor_age_vector" -> "vector"))
-    //(function() { return neighbor_neighbor_age_vector_vector.length })()"""))
     run("Derived vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         neighbor_neighbor_age_vector_vector.map(function(subarray) {
