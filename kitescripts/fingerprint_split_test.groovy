@@ -42,55 +42,6 @@ furtherUndefinedAttr2Expr =
         ' > originalUniqueId) ? 1.0 : 0.0'
 
 
-
-"""
-function Rnd(seedFirst, seedSecond) {
-  var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
-  var rnd = util.rnd(seed);
-  return {
-    geomChoose: function(p, lastId) {
-      for (var i = 0; i <= lastId; i++) {
-          var q = rnd.nextDouble();
-          if (q < p) return i;
-      }
-      return lastId;
-    },
-  }
-}
-
-var srcSeed = src\$originalUniqueId
-var dstSeed =  dst\$originalUniqueId
-var srcCount = src\$split;
-var dstCount = dst\$split;
-var srcIdx = src\$index;
-var dstIdx = dst\$index;
-var edgeCnt = originalCalls
-var prob = $splitProb
-
-var total = srcCount * dstCount;
-var myId = dstCount * srcIdx + dstIdx;
-var lastId = total - 1;
-
-function splitCalls() {
-  if (total === 1) {
-    return edgeCnt;
-  }
-  var rnd = Rnd(srcSeed, dstSeed)
-
-  var randomFunc = rnd.geomChoose
-
-  var count = 0;
-
-  for (var j = 0; j < edgeCnt; j++) {
-    if (randomFunc(prob, lastId) === myId) count++;
-  }
-
-  return count;
-}
-
-splitCalls();
-"""
-
 split=lynx.newProject('split test for FP')
 split.importVerticesFromCSVFiles(
   files: 'DATA$/exports/' + input + '_vertices/data/part*',
@@ -185,6 +136,7 @@ split.derivedVertexAttribute(
   type: 'string'
 )
 
+
 split.derivedEdgeAttribute(
   output: 'splitCalls',
   type: 'double',
@@ -201,8 +153,8 @@ split.derivedEdgeAttribute(
         }
         return lastId;
       },
-      flipChoose: function(a, b) {
-            return rnd.nextDouble() < 0.5 ? a : b;
+      flip: function() {
+            return rnd.nextDouble() < 0.5 ? true : false;
       },
     }
   }
@@ -218,26 +170,24 @@ split.derivedEdgeAttribute(
 
   var total = srcCount * dstCount;
   var myId = dstCount * srcIdx + dstIdx;
-  var lastId = total - 1;
 
   function splitCalls() {
-    if (total === 1) {
+    if (total <= 1) { // total === 0, when called from validateJS
       return edgeCnt;
     }
-    var rnd = Rnd(srcSeed, dstSeed);
-    var randomFunc = rnd.geomChoose;
-    var flipChoose = rnd.flipChoose;
+    if (total === 4 && (myId === 1 || myId === 2)) {
+      return 0;
+    }
 
-    var myIndirectId =
-      total === 2
-            ? flipChoose(0,1) // total === 2
-            : flipChoose(0,3) // total == 4 (assert)
-
-
+    var rnd = Rnd(srcSeed, dstSeed)
     var count = 0;
-
     for (var j = 0; j < edgeCnt; j++) {
-      if (randomFunc(prob, lastId) === myIndirectId) count++;
+      if (rnd.geomChoose(prob, 1) === 0) count++;
+    }
+
+    var heads = rnd.flip();
+    if ((myId === 0 && heads) || (myId !== 0 && !heads)) {
+        count = edgeCnt - count;
     }
 
     return count;
@@ -247,46 +197,9 @@ split.derivedEdgeAttribute(
   """
 )
 
-// Now we must get rid of some edges (calls).
-// Some notation first:
-// Someone whose first attribute is defined, but the second is not: [d,-]
-// Someone whose first attribute is not defined, but the second is: [-,d]
-// Both attributes are defined: [d,d]
-// Neither attributes are defined: [-,-]
-//
-// In real situations, [-,-] does not exist. Furthermore, these calls are impossible:
-// [d,-] -> [-,d]
-// [-,d] -> [d,-]
-// We'll have to filter them out.
-// We'll also have to filter out calls where splitCalls happened to be assigned 0.
-
-split.addConstantVertexAttribute(
-  name: 'undefinedMarker',
-  value: 'undefinedMarker',
-  type: 'String'
-)
-
-split.mergeTwoAttributes(
-  name: 'auxAttr1',
-  attr1: 'attr1',
-  attr2: 'undefinedMarker'
-)
-
-split.mergeTwoAttributes(
-  name: 'auxAttr2',
-  attr1: 'attr2',
-  attr2: 'undefinedMarker'
-)
-split.derivedEdgeAttribute(
-  output: 'impossibleCall',
-  type: 'double',
-  expr: '''((src$auxAttr1 === "undefinedMarker" && dst$auxAttr2 === "undefinedMarker") ||
-            (src$auxAttr2 === "undefinedMarker" && dst$auxAttr1 === "undefinedMarker")) ? 1.0 : 0.0'''
-)
 
 split.filterByAttributes(
 'filterea-splitCalls': '> 0.0',
-'filterea-impossibleCall': '< 1.0'
 )
 
 
