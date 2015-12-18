@@ -47,6 +47,36 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> "Bob", 1 -> "Adam", 2 -> "Adam"))
   }
 
+  test("Primitive vector attribute") {
+    run("Example Graph")
+    run("Aggregate on neighbors",
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        (function() { neighbor_age_vector.sort(); return neighbor_age_vector[0]; })()"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 18.2, 1 -> 20.3, 2 -> 18.2))
+  }
+
+  test("Vector of vector attribute") {
+    run("Example Graph")
+    run("Aggregate on neighbors",
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
+    run("Aggregate on neighbors",
+      Map(
+        "prefix" -> "neighbor",
+        "direction" -> "all edges",
+        "aggregate-neighbor_age_vector" -> "vector"))
+    //(function() { return neighbor_neighbor_age_vector_vector.length })()"""))
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        neighbor_neighbor_age_vector_vector.map(function(subarray) {
+          return subarray.reduce(function(a, b) { return a + b; }, 0);
+        }).reduce(function(a, b) { return a + b; }, 0)"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 220.3, 1 -> 211.89999999999998, 2 -> 177.6))
+  }
+
   test("Vector length") {
     run("Example Graph")
     run("Aggregate on neighbors",
@@ -61,10 +91,6 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     intercept[AssertionError] {
       run("Derived vertex attribute",
         Map("type" -> "double", "output" -> "output", "expr" -> "'hello'"))
-    }
-    intercept[AssertionError] {
-      run("Derived vertex attribute",
-        Map("type" -> "string", "output" -> "output", "expr" -> "123"))
     }
   }
 
