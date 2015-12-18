@@ -43,7 +43,6 @@ furtherUndefinedAttr2Expr =
 
 
 
-jsprogram =
 """
 function Rnd(seedFirst, seedSecond) {
   var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
@@ -76,8 +75,9 @@ function splitCalls() {
   if (total === 1) {
     return edgeCnt;
   }
+  var rnd = Rnd(srcSeed, dstSeed)
 
-  var randomFunc = Rnd(srcSeed, dstSeed).geomChoose
+  var randomFunc = rnd.geomChoose
 
   var count = 0;
 
@@ -188,7 +188,63 @@ split.derivedVertexAttribute(
 split.derivedEdgeAttribute(
   output: 'splitCalls',
   type: 'double',
-  expr: jsprogram
+  expr:
+  """
+  function Rnd(seedFirst, seedSecond) {
+    var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
+    var rnd = util.rnd(seed);
+    return {
+      geomChoose: function(p, lastId) {
+        for (var i = 0; i <= lastId; i++) {
+            var q = rnd.nextDouble();
+            if (q < p) return i;
+        }
+        return lastId;
+      },
+      flipChoose: function(a, b) {
+            return rnd.nextDouble() < 0.5 ? a : b;
+      },
+    }
+  }
+
+  var srcSeed = src\$originalUniqueId
+  var dstSeed =  dst\$originalUniqueId
+  var srcCount = src\$split;
+  var dstCount = dst\$split;
+  var srcIdx = src\$index;
+  var dstIdx = dst\$index;
+  var edgeCnt = originalCalls
+  var prob = $splitProb
+
+  var total = srcCount * dstCount;
+  var myId = dstCount * srcIdx + dstIdx;
+  var lastId = total - 1;
+
+  function splitCalls() {
+    if (total === 1) {
+      return edgeCnt;
+    }
+    var rnd = Rnd(srcSeed, dstSeed);
+    var randomFunc = rnd.geomChoose;
+    var flipChoose = rnd.flipChoose;
+
+    var myIndirectId =
+      total === 2
+            ? flipChoose(0,1) // total === 2
+            : flipChoose(0,3) // total == 4 (assert)
+
+
+    var count = 0;
+
+    for (var j = 0; j < edgeCnt; j++) {
+      if (randomFunc(prob, lastId) === myIndirectId) count++;
+    }
+
+    return count;
+  }
+
+  splitCalls();
+  """
 )
 
 // Now we must get rid of some edges (calls).
