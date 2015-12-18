@@ -1,0 +1,40 @@
+### Segment by event sequence
+
+Treat vertices as people attending events, and segment them by attendance of sequences of events.
+There are several algorithms for generating event sequences, see under
+<<segment-by-event-sequence-algorithm, Algorithm>>.
+
+This operation runs on a segmentation which contains events as vertices, and it is a segmentation
+over a graph containing people as vertices.
+
+====
+[[name]] segmentation name::
+The new segmentation will be saved under this name.
+
+[[time-attr]] Time attribute::
+The `double` attribute corresponding the time of events.
+
+[[location]] Location::
+A segmentation over events or an attribute corresponding to the location of events.
+
+[[algorithm]] Algorithm::
+* *Take continuous event sequences*:
+Merges subsequent events of the same location, and then takes all the continuous event sequences
+of length _Time window length_, with maximal timespan of _Time window length_. For each of these
+events, a segment is created for each time bucket the starting event falls into. Time buckets
+are defined by _Time window step_ and bucketing starts from 0.0 time.
+
+* *Allow gaps in event sequences:*
+Takes all event sequences that are no longer than _Time window length_ and then creates a segment
+for each subsequence with _Sequence length_.
+
+[[sequence-length]] Sequence length::
+Number of events in each segment.
+
+[[time-window-step]] Time window step::
+Bucket size used for discretizing events.
+
+[[time-window-length]] Time window length::
+Maximum time difference between first and last event in a segment.
+
+====

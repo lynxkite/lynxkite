@@ -27,7 +27,7 @@ object FEStatus {
 }
 
 // Something with a display name and an internal ID.
-case class FEOption private (
+case class FEOption(
   id: String,
   title: String)
 object FEOption {
