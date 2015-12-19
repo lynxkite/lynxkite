@@ -72,6 +72,10 @@ module.exports = function(fw) {
       // Center count.
       centerCount.clear();
       centerCount.sendKeys('2');
+
+      // At this point a tooltip is opened accidentally. It is preventing us from clicking on the pick
+      // button. So first we move away the mouse to close it.
+      browser.actions().mouseMove(simplePickButton).perform();
       advancedPickButton.click();
       expect(centers.getAttribute('value')).toBe('0, 1');
 
