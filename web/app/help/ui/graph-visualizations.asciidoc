@@ -78,19 +78,18 @@ vertices and their immediate neighbors. 2 also contains neighbors of neighbors. 
 This button is used to populate the contents of the _Show vertices_ box. The vertex
 placed there will be one that satisfies all the currently set restrictions (see
 below).
-You can access more advanced settings by clicking at
-+++<label class="btn btn-default">...</label>+++ The available options are:
+The available options are:
 
 Center count:: The number of vertices placed in the _Show vertices_ box (default: 1).
-Add restriction:: Restrictions narrow down the potential set of candidates that will be
+Use custom restrictions::
+Restrictions narrow down the potential set of candidates that will be
 placed in the _Show vertices_ box when you click on the _Pick_ button. They have the same syntax as
 filters (see  <<attribute-filter-syntax>>).
-Restrictions from filters:: Discards current restrictions and replaces them with a copy of the
-currently set vertex filters. Afterwards, the restrictions can be freely modified here.
+Use project attribute filters::
+(Default.) Use the currently set vertex attribute filters as restrictions.
 
 After picking one set of centers with the _Pick_ button the button is replaced by the _Next_ button.
 Clicking this button will iterate over samples that match the conditions.
-
 
 #### Context menu
 When clicking a vertex in Concrete Vertex View you can see a context menu with possible operations
