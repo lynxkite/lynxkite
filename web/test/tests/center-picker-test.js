@@ -74,8 +74,8 @@ module.exports = function(fw) {
       centerCount.sendKeys('2');
 
       // At this point a tooltip is opened accidentally. It is preventing us from clicking on the pick
-      // button. So first we move away the mouse to close it.
-      browser.actions().mouseMove(simplePickButton).perform();
+      // button. So first we click on the project name to make the tooltip close.
+      lib.left.side.element(by.css('div.project-name')).click();
       advancedPickButton.click();
       expect(centers.getAttribute('value')).toBe('0, 1');
 
@@ -104,5 +104,5 @@ module.exports = function(fw) {
       lib.left.close();
       lib.splash.openProject('test-example');
       lib.left.toggleSampledVisualization();
-    });
+    }, 'solo');
 };
