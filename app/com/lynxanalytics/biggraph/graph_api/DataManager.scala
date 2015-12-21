@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
+import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -53,6 +54,7 @@ class DataManager(sc: spark.SparkContext,
     DataManager.limitedExecutionContext(DataManager.maxParallelSparkStages)
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
+  private val sparkCachedEntities = mutable.Set[UUID]()
   val sqlContext = new SQLContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
@@ -253,29 +255,29 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
+  private def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
     loadOrExecuteIfNecessary(vertexSet)
     entityCache(vertexSet.gUID).map(_.asInstanceOf[VertexSetData])
   }
 
-  def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
+  private def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
     loadOrExecuteIfNecessary(edgeBundle)
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
-  def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
+  private def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
     loadOrExecuteIfNecessary(attribute)
     implicit val tagForT = attribute.typeTag
     entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
   }
 
-  def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
+  private def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
     loadOrExecuteIfNecessary(scalar)
     implicit val tagForT = scalar.typeTag
     entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
   }
 
-  def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
+  private def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
@@ -308,11 +310,17 @@ class DataManager(sc: spark.SparkContext,
 
   def cache(entity: MetaGraphEntity): Unit = {
     // We do not cache anything in demo mode.
-    if (!computationAllowed) return
-    val data = get(entity)
-    data match {
-      case rddData: EntityRDDData[_] => rddData.rdd.cacheBackingArray()
-      case _ => ()
+    if (computationAllowed) {
+      synchronized {
+        if (!sparkCachedEntities.contains(entity.gUID)) {
+          val dataFuture = getFuture(entity)
+          entityCache(entity.gUID) = dataFuture.map {
+            case rddData: EntityRDDData[_] => rddData.cached
+            case data: EntityData => data
+          }
+          sparkCachedEntities.add(entity.gUID)
+        }
+      }
     }
   }
 
