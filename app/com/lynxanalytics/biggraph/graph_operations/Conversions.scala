@@ -282,31 +282,50 @@ case class AttributeVectorToAny[From]() extends AttributeCast[Vector[From], Vect
 case class JSValue(value: Any)
 
 object JSValue {
-  def longNotSupported =
-    throw new AssertionError(
-      "The Long type is not supported in JavaScript due to language limitations." +
-        " Please convert to Double or String first.")
+  def converterForType(t: Type): (Any => Any) = {
+    if (t <:< typeOf[AnyVal]) {
+      if (t =:= typeOf[Long]) {
+        throw new AssertionError(
+          "The Long type is not supported in JavaScript due to language limitations." +
+            " Please convert to Double or String first.")
+      }
+      if (t =:= typeOf[Unit]) {
+        throw new AssertionError("The Unit type is not supported in JavaScript.")
+      }
+      primitive => primitive
+    } else if (t =:= typeOf[String]) {
+      string => string
+    } else if (t <:< typeOf[Iterable[_]]) {
+      val TypeRef(_, _, iterableParams) = t.baseType(typeOf[Iterable[_]].typeSymbol)
+      assert(iterableParams.size == 1, "How can a iterable have !=1 params?")
+      val dataType = iterableParams(0)
+      if (dataType =:= typeOf[Double]) {
+        iterable => iterable.asInstanceOf[Iterable[Double]].toArray
+      } else if (dataType =:= typeOf[Short]) {
+        iterable => iterable.asInstanceOf[Iterable[Short]].toArray
+      } else if (dataType =:= typeOf[Int]) {
+        iterable => iterable.asInstanceOf[Iterable[Int]].toArray
+      } else if (dataType =:= typeOf[Float]) {
+        iterable => iterable.asInstanceOf[Iterable[Float]].toArray
+      } else if (dataType =:= typeOf[Char]) {
+        iterable => iterable.asInstanceOf[Iterable[Char]].toArray
+      } else if (dataType =:= typeOf[Boolean]) {
+        iterable => iterable.asInstanceOf[Iterable[Boolean]].toArray
+      } else {
+        val elementConverter = converterForType(dataType)
+        iterable => {
+          val converted = iterable.asInstanceOf[Iterable[Any]].map(elementConverter(_))
+          converted.toArray
+        }
+      }
+    } else {
+      throw new AssertionError(s"Type: $t is not supported.")
+    }
+  }
 
   def converter[T: TypeTag]: (T => JSValue) = {
-    if (typeOf[T] <:< typeOf[Vector[Any]]) {
-      value =>
-        {
-          val v = value.asInstanceOf[Vector[Any]]
-          // There is no autounboxing in Javascript. So we unbox primitive arrays.
-          val arr: Array[Any] =
-            if (v.forall(_.isInstanceOf[Double])) v.map(_.asInstanceOf[Double]).toArray
-            else if (v.forall(_.isInstanceOf[Float])) v.map(_.asInstanceOf[Float]).toArray
-            else if (v.forall(_.isInstanceOf[Long])) longNotSupported
-            else if (v.forall(_.isInstanceOf[Int])) v.map(_.asInstanceOf[Int]).toArray
-            else if (v.forall(_.isInstanceOf[Short])) v.map(_.asInstanceOf[Short]).toArray
-            else if (v.forall(_.isInstanceOf[Byte])) v.map(_.asInstanceOf[Byte]).toArray
-            else if (v.forall(_.isInstanceOf[Boolean])) v.map(_.asInstanceOf[Boolean]).toArray
-            else if (v.forall(_.isInstanceOf[Char])) v.map(_.asInstanceOf[Char]).toArray
-            else v.toArray
-          JSValue(arr)
-        }
-    } else if (typeOf[T] =:= typeOf[Long]) longNotSupported
-    else value => JSValue(value)
+    val innerConverter = converterForType(typeOf[T])
+    value => JSValue(innerConverter(value))
   }
 
   def convert[T: TypeTag](value: T): JSValue = {
@@ -314,19 +333,22 @@ object JSValue {
     c(value)
   }
 
-  def defaultValue[T: TypeTag]: JSValue = {
-    JSValue(
+  def defaultJavaValue[T: TypeTag]: T = {
+    val res =
       if (typeOf[T] =:= typeOf[Byte]) 0.toByte
       else if (typeOf[T] =:= typeOf[Short]) 0.toShort
       else if (typeOf[T] =:= typeOf[Int]) 0
-      else if (typeOf[T] =:= typeOf[Long]) longNotSupported
       else if (typeOf[T] =:= typeOf[Float]) 0.toFloat
       else if (typeOf[T] =:= typeOf[Double]) 0.0
       else if (typeOf[T] =:= typeOf[Char]) 'a'
       else if (typeOf[T] =:= typeOf[Boolean]) false
       else if (typeOf[T] =:= typeOf[String]) ""
-      else if (typeOf[T] <:< typeOf[Vector[_]]) Array[Nothing]()
-      else null)
+      else if (typeOf[T] <:< typeOf[Iterable[_]]) Iterable()
+      else throw new AssertionError(s"Type ${typeOf[T]} is not supported as input for Javascript")
+    res.asInstanceOf[T]
+  }
+  def defaultValue[T: TypeTag]: JSValue = {
+    convert(defaultJavaValue)
   }
 }
 

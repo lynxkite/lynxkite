@@ -69,15 +69,9 @@ abstract class DeriveJS[T](
   // Validate JS using default values for the types of the attributes.
   def validateJS[T: TypeTag](defaultValues: Seq[Any]): Unit = {
     val testNamedValues = attrNames.zip(defaultValues).toMap
-    val result = expr.evaluate(testNamedValues)
+    val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
-      val converted =
-        try convert(result)
-        catch { case t: Throwable => t }
-      val classOfResult = ClassUtils.primitiveToWrapper(converted.getClass)
-      val classOfT = ClassUtils.primitiveToWrapper(
-        RuntimeSafeCastable.classTagFromTypeTag[T].runtimeClass)
-      assert(classOfResult == classOfT, s"Cannot convert $result to $classOfT")
+      convert(result)
     }
   }
 
@@ -102,11 +96,12 @@ abstract class DeriveJS[T](
       case values =>
         val namedValues = attrNames.zip(values).toMap.mapValues(_.value)
         // JavaScript's "undefined" is returned as a Java "null".
-        Option(expr.evaluate(namedValues)).map(convert(_))
+        Option(expr.evaluate(namedValues, desiredClass)).map(convert(_))
     }
     output(o.attr, derived)
   }
 
+  protected val desiredClass: Class[_]
   protected def convert(v: Any): T
 }
 
@@ -120,9 +115,10 @@ case class DeriveJSString(
     extends DeriveJS[String](expr, attrNames) {
   @transient lazy val resultTypeTag = typeTag[String]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
+  val desiredClass = classOf[String]
   def convert(v: Any): String = v match {
     case v: String => v
-    case v: sun.org.mozilla.javascript.ConsString => v.toString
+    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
   }
 }
 
@@ -136,8 +132,12 @@ case class DeriveJSDouble(
     extends DeriveJS[Double](expr, attrNames) {
   @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
+  val desiredClass = classOf[java.lang.Double]
   def convert(v: Any): Double = v match {
-    case v: Int => v // Convert ints to doubles.
-    case v: Double => v
+    case v: Double => {
+      assert(!v.isNaN(), s"$expr did not return a valid number")
+      v
+    }
+    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
   }
 }
