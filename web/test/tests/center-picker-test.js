@@ -104,5 +104,5 @@ module.exports = function(fw) {
       lib.left.close();
       lib.splash.openProject('test-example');
       lib.left.toggleSampledVisualization();
-    }, 'solo');
+    });
 };
