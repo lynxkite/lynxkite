@@ -149,6 +149,9 @@ sealed trait ProjectViewer {
   // each segment in a segmentation. None in root projects.
   protected def getFEMembers: Option[FEAttribute]
 
+  def sortedSegmentations: List[SegmentationViewer] =
+    segmentationMap.toList.sortBy(_._1).map(_._2)
+
   def toFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
@@ -168,16 +171,21 @@ sealed trait ProjectViewer {
       scalars = feList(scalars, ScalarKind),
       vertexAttributes = feList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
       edgeAttributes = feList(edgeAttributes, EdgeAttributeKind),
-      segmentations = segmentationMap
-        .toSeq
-        .sortBy(_._1)
-        .map { case (name, segm) => segm.toFESegmentation(projectName) }
-        .toList,
+      segmentations = sortedSegmentations.map(_.toFESegmentation(projectName)),
       // To be set by the ProjectFrame for root projects.
       undoOp = "",
       redoOp = "",
       readACL = "",
       writeACL = "")
+  }
+
+  def allOffspringFESegmentations(
+    rootName: String, rootRelativePath: String = ""): List[FESegmentation] = {
+    sortedSegmentations.flatMap { segmentation =>
+      segmentation.toFESegmentation(rootName, rootRelativePath) +:
+        segmentation.allOffspringFESegmentations(
+          rootName, rootRelativePath + segmentation.segmentationName + ProjectFrame.separator)
+    }
   }
 }
 object ProjectViewer {
@@ -246,13 +254,13 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   lazy val equivalentUIAttribute =
     ProjectViewer.feEntity(belongsToAttribute, s"segmentation[$segmentationName]", note = "")
 
-  def toFESegmentation(parentName: String): FESegmentation = {
+  def toFESegmentation(rootName: String, rootRelativePath: String = ""): FESegmentation = {
     val bt =
       if (belongsTo == null) null
       else belongsTo.gUID.toString
     FESegmentation(
-      segmentationName,
-      parentName + ProjectFrame.separator + segmentationName,
+      rootRelativePath + segmentationName,
+      rootName + ProjectFrame.separator + rootRelativePath + segmentationName,
       bt,
       equivalentUIAttribute)
   }
