@@ -42,6 +42,11 @@ Side.prototype = {
     return this.side.element(by.id('apply-filters-button')).click();
   },
 
+  hoverAway: function() {
+    browser.actions().mouseMove(
+      this.side.element(by.css('.project-name'))).perform();
+  },
+
   getCategorySelector: function(categoryTitle) {
     return this.toolbox.element(by.css('div.category[tooltip="' + categoryTitle + '"]'));
   },
@@ -114,6 +119,7 @@ Side.prototype = {
     if (precise) {
       preciseButton.click();
     }
+    this.hoverAway();
     histogramButton.click();
     expect(histo.isDisplayed()).toBe(false);
     expect(total.isDisplayed()).toBe(false);
