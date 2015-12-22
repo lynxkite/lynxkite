@@ -81,12 +81,16 @@ below).
 The available options are:
 
 Center count:: The number of vertices placed in the _Show vertices_ box (default: 1).
-Use custom restrictions::
+
 Restrictions narrow down the potential set of candidates that will be
 placed in the _Show vertices_ box when you click on the _Pick_ button. They have the same syntax as
-filters (see  <<attribute-filter-syntax>>).
+filters (see  <<attribute-filter-syntax>>). There are two ways to specify them:
+
 Use project attribute filters::
 (Default.) Use the currently set vertex attribute filters as restrictions.
+Use custom restrictions::
+Manually enter restrictions. When switching to this mode, the project filters
+are automatically copied into the custom restriction list, which can be edited then.
 
 After picking one set of centers with the _Pick_ button the button is replaced by the _Next_ button.
 Clicking this button will iterate over samples that match the conditions.

@@ -16,12 +16,14 @@
         <label class="btn btn-default"
                id="custom-filters-toggle-off-button"
                ng-model="side.state.customVisualizationFilters"
+               ng-click="toggleCustomFilters(false)"
                btn-radio="false">
           Use project attribute filters
         </label>
         <label class="btn btn-default"
                id="custom-filters-toggle-on-button"
                ng-model="side.state.customVisualizationFilters"
+               ng-click="toggleCustomFilters(true)"
                btn-radio="true">
           Use custom restrictions
         </label>
