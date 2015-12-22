@@ -68,8 +68,6 @@ object ImportUtil {
     }
     return splitters(delimiter)(line)
   }
-
-  val cacheLines = scala.util.Properties.envOrElse("CACHE_IN_IMPORT", "true").toBoolean
 }
 
 trait RowInput extends ToJson {
@@ -233,8 +231,7 @@ trait ImportCommon {
   protected def numberedLines(
     rc: RuntimeContext,
     input: RowInput): UniqueSortedRDD[ID, Seq[String]] = {
-    val numbered = input.lines(rc)
-    if (ImportUtil.cacheLines) numbered.cacheBackingArray()
+    val numbered = input.lines(rc).cached
     val maxLines = Limitations.maxImportedLines
     if (maxLines >= 0) {
       val numLines = numbered.count
@@ -479,7 +476,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
         .sortUnique(partitioner)
-    if (ImportUtil.cacheLines) linesByInternalId.cacheBackingArray()
+        .cached
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))

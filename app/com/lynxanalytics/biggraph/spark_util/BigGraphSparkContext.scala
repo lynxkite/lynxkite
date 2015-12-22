@@ -27,7 +27,8 @@ private object SparkStageJars {
     classOf[com.univocity.parsers.csv.CsvParserSettings],
     classOf[org.apache.commons.csv.CSVParser],
     classOf[ch.qos.logback.classic.Logger],
-    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]])
+    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]],
+    classOf[org.mozilla.javascript.Context])
   val extraJarsToBundle =
     scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
       .split(":", -1)
@@ -182,6 +183,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
 
     kryo.register(classOf[Array[org.apache.spark.sql.Row]])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema])
+    kryo.register(classOf[graph_operations.SegmentByEventSequence.EventListSegmentId])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

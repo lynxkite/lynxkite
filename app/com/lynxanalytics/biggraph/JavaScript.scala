@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph
 
 import scala.util.{ Failure, Success, Try }
+import org.mozilla.javascript;
 
 case class JavaScript(expression: String) {
   def isEmpty = expression.isEmpty
@@ -12,31 +13,28 @@ case class JavaScript(expression: String) {
     if (isEmpty) {
       return true
     }
-    return evaluate(mapping) match {
-      case result: java.lang.Boolean =>
-        result
-      case result =>
-        throw JavaScript.Error(s"JS expression ($expression) returned $result instead of a Boolean")
-    }
+    return evaluate(mapping, classOf[Boolean]).asInstanceOf[Boolean]
   }
 
-  def evaluate(mapping: Map[String, Any]): Any = {
-    val bindings = JavaScript.engine.createBindings
-    bindings.put("util", JavaScriptUtilities)
-    for ((key, value) <- mapping) {
-      bindings.put(key, value)
-    }
-    return Try(JavaScript.engine.eval(expression, bindings)) match {
-      case Success(result) =>
-        result
-      case Failure(e) =>
-        throw JavaScript.Error(s"Could not evaluate JS: $expression", e)
+  def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
+    val cx = javascript.Context.enter()
+    try {
+      val scope = cx.initSafeStandardObjects()
+      mapping.foreach {
+        case (name, value) =>
+          val jsValue = javascript.Context.javaToJS(value, scope)
+          javascript.ScriptableObject.putProperty(scope, name, jsValue)
+      }
+      javascript.ScriptableObject.putProperty(scope, "util", JavaScriptUtilities)
+      val jsResult = cx.evaluateString(scope, expression, "derivation script", 1, null)
+      jsResult match {
+        case _: javascript.Undefined => null
+        case definedValue => javascript.Context.jsToJava(definedValue, desiredClass)
+      }
+    } finally {
+      javascript.Context.exit()
     }
   }
-}
-object JavaScript {
-  val engine = new javax.script.ScriptEngineManager().getEngineByName("JavaScript")
-  case class Error(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 }
 
 // This object is exposed to user-authored JavaScript. Only harmless stuff, please.
