@@ -74,6 +74,7 @@ module.exports = function(fw) {
     'sampled mode attribute visualizations',
     function() {
       addConcurMatcher();
+      lib.left.hoverAway();
       lib.left.toggleSampledVisualization();
 
       var expectedEdges = [
@@ -278,6 +279,7 @@ module.exports = function(fw) {
     'visualize as slider',
     function() {
       addConcurMatcher();
+      lib.left.hoverAway();
       lib.left.toggleSampledVisualization();
       lib.left.visualizeAttribute('name', 'label');
       lib.left.visualizeAttribute('age', 'slider');
