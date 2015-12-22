@@ -12,7 +12,6 @@ module.exports = function(fw) {
     function() {
       var helpIcon = element(by.css('help-popup[href="project-header-buttons"]'));
       lib.expectNotElement(lib.helpPopup('project-header-buttons'));
-      lib.left.hoverAway();
       browser.actions().mouseMove(helpIcon).perform();  // hover mouse over icon
       lib.expectElement(lib.helpPopup('project-header-buttons'));
       browser.actions().mouseMove(lib.left.side, { x: 1, y: 1 }).perform();  // move mouse away

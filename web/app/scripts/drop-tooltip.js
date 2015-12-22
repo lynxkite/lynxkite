@@ -1,7 +1,11 @@
 // A tooltip based on the "Drop" popup library.
 'use strict';
 
-angular.module('biggraph').directive('dropTooltip', function() {
+angular.module('biggraph')
+.service('dropTooltipConfig', function() {
+  this.enabled = true;
+})
+.directive('dropTooltip', ['dropTooltipConfig', function(dropTooltipConfig) {
   return {
     restrict: 'A',
     scope: {
@@ -32,6 +36,9 @@ angular.module('biggraph').directive('dropTooltip', function() {
         });
       };
       function updateTooltip() {
+        if (!dropTooltipConfig.enabled) {
+          return;
+        }
         var enabled = scope.dropTooltipEnable ||
           scope.dropTooltipEnable === undefined;
         if (!enabled || !scope.dropTooltip) {
@@ -59,4 +66,4 @@ angular.module('biggraph').directive('dropTooltip', function() {
       });
     },
   };
-});
+}]);
