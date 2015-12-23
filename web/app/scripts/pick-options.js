@@ -7,6 +7,7 @@ angular.module('biggraph').directive('pickOptions', function() {
     templateUrl: 'pick-options.html',
     link: function(scope) {
       scope.count = '1';
+      scope.editedOffset = '';
       scope.reset = function() {
         scope.filters = [];
         // pickOptions is stored in "side" to survive even when the picker is recreated.
@@ -47,18 +48,55 @@ angular.module('biggraph').directive('pickOptions', function() {
         return angular.equals(scope.side.pickOptions.lastCenterRequestParameters, resolvedParams);
       };
 
+      scope.getCurrentPickOffset = function() {
+        return (scope.side.pickOptions.offset || 0).toString();
+      };
+
+      scope.togglePickByIdMode = function() {
+        if (!scope.pickByIdMode) {
+          scope.editedOffset = scope.getCurrentPickOffset();
+          scope.pickByIdMode = true;
+        } else {
+          scope.pickByIdMode = false;
+        }
+      };
+
+      scope.pickByIdWasEdited = function() {
+        if (!scope.pickByIdMode) {
+          return false;
+        }
+        if (scope.unchanged()) {
+          return scope.editedOffset !== scope.getCurrentPickOffset();
+        } else {
+          return scope.editedOffset !== '0';
+        }
+      };
+
       scope.requestNewCenters = function() {
+        var unchanged = scope.unchanged();
         var params = centerRequestParams();
-        if (scope.unchanged()) { // "Next"
-          scope.side.pickOptions.offset += params.count;
+        var offset = 0;
+        // Compute offset.
+        if (scope.pickByIdWasEdited()) {  // "Pick by #ID"
+          offset = parseInt(scope.editedOffset) || 0;
+        } else if (unchanged) { // "Next"
+          offset = scope.side.pickOptions.offset + params.count;
+        } else {
+          offset = 0;
+        }
+        // Configure and send request.
+        if (unchanged) { // "Next" or "Pick by #ID"
+          scope.side.pickOptions.offset = offset;
           params.offset = scope.side.pickOptions.offset;
-        } else { // "Pick"
+        } else { // "Pick" or "Pick by #ID"
           scope.side.pickOptions = {
-            offset: 0,
+            offset: offset,
             lastCenterRequestParameters: scope.side.resolveCenterRequestParams(params),
           };
         }
         scope.side.sendCenterRequest(params);
+        // Update "Pick by #ID" input field value.
+        scope.editedOffset = scope.getCurrentPickOffset();
       };
 
       scope.addFilter = function() {
