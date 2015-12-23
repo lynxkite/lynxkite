@@ -62,6 +62,7 @@ angular.module('biggraph')
       scope.$on('$destroy', function() {
         if (drop) {
           drop.destroy();
+          drop = undefined;
         }
       });
     },
