@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
 
 import java.io.File
@@ -409,6 +410,8 @@ For convenience, we've set up some Kite specific bindings for you:
  fakeAdmin: A fake admin user object. Useful if you want to directly interact with controllers.
  dataManager: The DataManager instance used by Kite.
  metaManager: The MetaManager instance used by Kite.
+ batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
+   for running a batch script on the running Kite instance.
 
 Remember, any of the above can be used to easily destroy the running server or even any data.
 Drive responsibly.""")
@@ -433,7 +436,8 @@ println("${help}")
         Bind("sc", BigGraphProductionEnvironment.sparkContext),
         Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
         Bind("dataManager", BigGraphProductionEnvironment.dataManager),
-        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext)))
+        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext),
+        Bind("batch", groovy.GroovyContext)))
   }
 
   def maybeStart() = {
