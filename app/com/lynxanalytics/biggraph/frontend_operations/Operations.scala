@@ -634,7 +634,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.clusters, idAttr = "id")
-      segmentation.notes = title
+      segmentation.notes =
+        if (weightsName == FEOption.noWeight.id) "Modular clustering"
+        else s"Modular clustering by $weightsName"
       segmentation.belongsTo = result.belongsTo
       segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
 
