@@ -70,7 +70,7 @@ abstract class DeriveJS[T](
     defaultScalarValues: Seq[Any]): Unit = {
     val testNamedValues =
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
-    val result = expr.evaluate(testNamedValues)
+    val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
       convert(result)
     }
@@ -123,6 +123,7 @@ case class DeriveJSString(
     "expr" -> expr.expression,
     "attrNames" -> attrNames,
     "scalarNames" -> scalarNames)
+  val desiredClass = classOf[String]
   def convert(v: Any): String = v match {
     case v: String => v
     case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
