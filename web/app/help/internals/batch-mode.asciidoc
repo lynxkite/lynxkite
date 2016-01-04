@@ -1,22 +1,30 @@
 [[batch-mode]]
 ## Batch processing API
 
-LynxKite can be run in two modes. The first is a long-running server that offers an interactive
-user interface. (This is documented in the rest of this guide.) The other is *batch mode* wherein
-LynxKite executes a script and terminates when it is finished. This is useful for running periodic
-tasks and for integrating with other systems.
+You can do programmatic graph manipulation in LynxKite using batch scripts.
 
-The batch mode cannot be run at the same time as interactive mode. The two modes operate on the
-same data. So a batch script could apply changes to a graph created in interactive mode, or
-conversely interactive mode could be used to explore a graph created in batch mode, simply by
-using the same project names.
+The first option to do that is to start LynxKite in *batch mode* (instead of the normal way,
+as a long-running web server that offers an interactive user interface).
+In this mode LynxKite executes a script and terminates when it is finished. This is useful for running periodic
+tasks without holding on to resources continuously.
 
-Usage:
+To run Kite in batch mode, do:
 
 [subs=normal]
  ./run-kite.sh batch _script_file_ [_parameters_]
 
 Where `_parameters_` is a list of `key:value` pairs.
+
+The same scripts that can be run in batch mode can also be run on a Kite instance in interactive mode. To
+do that, login with the Ammonite ssh interface (see kiterc for docs) and run the following command:
+
+ batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...)
+
+Whichever way you use to run a batch script, the script and the web interface operate on the
+same data. So a batch script could apply changes to a graph created in interactive mode, or
+conversely interactive mode could be used to explore a graph created in batch mode, simply by
+using the same project names.
+
 
 ### Script file syntax
 
