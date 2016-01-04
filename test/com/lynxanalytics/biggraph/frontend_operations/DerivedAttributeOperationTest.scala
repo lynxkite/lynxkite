@@ -22,6 +22,20 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
   }
 
+  test("Multi-line expression and utility function") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        var rnd = util.rnd(income);
+        rnd.nextDouble() + rnd.nextDouble();"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    def rndSumScala(income: Double) = {
+      val rnd = new scala.util.Random(income.toLong)
+      rnd.nextDouble + rnd.nextDouble
+    }
+    assert(attr.rdd.collect.toMap == Map(0 -> rndSumScala(1000.0), 2 -> rndSumScala(2000.0)))
+  }
+
   test("Vector attribute") {
     run("Example Graph")
     run("Aggregate on neighbors",
@@ -31,6 +45,41 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
         (function() { neighbor_name_vector.sort(); return neighbor_name_vector[0]; })()"""))
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
     assert(attr.rdd.collect.toMap == Map(0 -> "Bob", 1 -> "Adam", 2 -> "Adam"))
+  }
+
+  test("Primitive vector attribute") {
+    run("Example Graph")
+    run("Aggregate on neighbors",
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        (function() {
+           if (neighbor_age_vector.length > 0) {
+             neighbor_age_vector.sort();
+             return neighbor_age_vector[0] * 1;
+           }
+           return undefined;
+         })()"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 18.2, 1 -> 20.3, 2 -> 18.2))
+  }
+
+  test("Vector of vector attribute") {
+    run("Example Graph")
+    run("Aggregate on neighbors",
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
+    run("Aggregate on neighbors",
+      Map(
+        "prefix" -> "neighbor",
+        "direction" -> "all edges",
+        "aggregate-neighbor_age_vector" -> "vector"))
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        neighbor_neighbor_age_vector_vector.map(function(subarray) {
+          return subarray.reduce(function(a, b) { return a + b; }, 0);
+        }).reduce(function(a, b) { return a + b; }, 0)"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 220.3, 1 -> 211.89999999999998, 2 -> 177.6))
   }
 
   test("Vector length") {
@@ -47,10 +96,6 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     intercept[AssertionError] {
       run("Derived vertex attribute",
         Map("type" -> "double", "output" -> "output", "expr" -> "'hello'"))
-    }
-    intercept[AssertionError] {
-      run("Derived vertex attribute",
-        Map("type" -> "string", "output" -> "output", "expr" -> "123"))
     }
   }
 

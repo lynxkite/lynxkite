@@ -8,9 +8,8 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
   test("Fingerprinting between project and segmentation") {
     run("Example Graph")
-    saveAsFrame("ExampleGraph2")
     run("Import project as segmentation", Map(
-      "them" -> "ExampleGraph2"))
+      "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
     val seg = project.segmentation("ExampleGraph2")
     run("Load segmentation links from CSV", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-example-connections.csv",
@@ -67,7 +66,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "aggregate-dst" -> "",
       "aggregate-src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
-    saveAsFrame("other")
+    val otherCp = project.checkpoint.get
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
       "header" -> "src,dst",
@@ -78,7 +77,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "allow_corrupt_lines" -> "no",
       "filter" -> ""))
     run("Import project as segmentation", Map(
-      "them" -> "other"))
+      "them" -> s"!checkpoint($otherCp,other)"))
     val seg = project.segmentation("other")
     run("Define segmentation links from matching attributes", Map(
       "base-id-attr" -> "stringID",

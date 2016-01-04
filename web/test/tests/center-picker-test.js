@@ -72,6 +72,10 @@ module.exports = function(fw) {
       // Center count.
       centerCount.clear();
       centerCount.sendKeys('2');
+
+      // At this point a tooltip is opened accidentally. It is preventing us from clicking on the pick
+      // button. So first we click on the project name to make the tooltip close.
+      lib.left.side.element(by.css('div.project-name')).click();
       advancedPickButton.click();
       expect(centers.getAttribute('value')).toBe('0, 1');
 

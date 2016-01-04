@@ -72,13 +72,7 @@ abstract class DeriveJS[T](
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues)
     if (result != null) {
-      val converted =
-        try convert(expr.evaluate(testNamedValues))
-        catch { case t: Throwable => t }
-      val classOfResult = ClassUtils.primitiveToWrapper(converted.getClass)
-      val classOfT = ClassUtils.primitiveToWrapper(
-        RuntimeSafeCastable.classTagFromTypeTag[T].runtimeClass)
-      assert(classOfResult == classOfT, s"Cannot convert $result to $classOfT")
+      convert(result)
     }
   }
 
@@ -103,11 +97,12 @@ abstract class DeriveJS[T](
       case values =>
         val namedValues = attrNames.zip(values).toMap.mapValues(_.value)
         // JavaScript's "undefined" is returned as a Java "null".
-        Option(expr.evaluate(namedValues)).map(convert(_))
+        Option(expr.evaluate(namedValues, desiredClass)).map(convert(_))
     }
     output(o.attr, derived)
   }
 
+  protected val desiredClass: Class[_]
   protected def convert(v: Any): T
 }
 
@@ -128,7 +123,10 @@ case class DeriveJSString(
     "expr" -> expr.expression,
     "attrNames" -> attrNames,
     "scalarNames" -> scalarNames)
-  def convert(v: Any): String = v.asInstanceOf[String]
+  def convert(v: Any): String = v match {
+    case v: String => v
+    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
+  }
 }
 
 object DeriveJSDouble extends OpFromJson {
@@ -146,8 +144,12 @@ case class DeriveJSDouble(
     "expr" -> expr.expression,
     "attrNames" -> attrNames,
     "scalarNames" -> scalarNames)
+  val desiredClass = classOf[java.lang.Double]
   def convert(v: Any): Double = v match {
-    case v: Int => v // Convert ints to doubles.
-    case v: Double => v
+    case v: Double => {
+      assert(!v.isNaN(), s"$expr did not return a valid number")
+      v
+    }
+    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
   }
 }

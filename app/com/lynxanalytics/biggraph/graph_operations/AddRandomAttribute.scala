@@ -49,6 +49,7 @@ object AddRandomAttribute extends OpFromJson {
 import AddRandomAttribute._
 case class AddRandomAttribute(seed: Int,
                               distribution: String) extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

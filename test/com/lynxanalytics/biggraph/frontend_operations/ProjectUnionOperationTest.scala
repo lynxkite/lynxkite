@@ -9,8 +9,11 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     val otherEditor = clone(project)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = otherEditor)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = otherEditor)
-    saveAsFrame("ExampleGraph2", otherEditor)
-    run("Union with another project", Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
+    run(
+      "Union with another project",
+      Map(
+        "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
+        "id-attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 8)
     assert(project.edgeBundle.rdd.count == 8)
@@ -37,8 +40,11 @@ class ProjectUnionOperationTest extends OperationsTestBase {
 
   test("Project union on vertex sets") {
     run("New vertex set", Map("size" -> "10"))
-    saveAsFrame("Copy")
-    run("Union with another project", Map("other" -> "Copy", "id-attr" -> "new_id"))
+    run(
+      "Union with another project",
+      Map(
+        "other" -> s"!checkpoint(${project.checkpoint.get},Copy)",
+        "id-attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 20)
     assert(project.edgeBundle == null)
@@ -51,11 +57,12 @@ class ProjectUnionOperationTest extends OperationsTestBase {
       Map("from" -> "age", "to" -> "newage"), on = otherEditor)
     run("Add constant vertex attribute",
       Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = otherEditor)
-    saveAsFrame("ExampleGraph2", otherEditor)
 
     val ex = intercept[java.lang.AssertionError] {
       run("Union with another project",
-        Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
+        Map(
+          "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
+          "id-attr" -> "new_id"))
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))

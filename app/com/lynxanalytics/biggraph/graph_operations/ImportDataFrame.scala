@@ -35,6 +35,7 @@ object ImportDataFrame extends OpFromJson {
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
       case _: types.TimestampType => typeTag[java.sql.Timestamp]
+      case x => throw new AssertionError(s"Unsupported type in DataFrame: $x")
     }
   }
 

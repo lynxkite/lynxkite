@@ -40,14 +40,14 @@ project.derivedVertexAttribute(
 )
 
 project.exportVertexAttributesToFile(
-  path: 'DATA$exports/' + output + '_vertices',
+  path: 'DATA$/exports/' + output + '_vertices',
   link: 'vertices_csv',
   attrs: 'id,peripheral',
   format: 'CSV'
 )
 
 project.exportEdgeAttributesToFile(
-  path: 'DATA$exports/' + output + '_edges',
+  path: 'DATA$/exports/' + output + '_edges',
   link: 'edges_csv',
   attrs: 'originalCalls',
   id_attr: 'id',

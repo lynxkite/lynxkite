@@ -28,6 +28,16 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     // TODO
   }
 
+  test("example graph: cons string gets converted back to String correctly") {
+    val expr = "var res = 'a'; res += 'b'; res;"
+    val g = ExampleGraph()().result
+    val op = DeriveJSString(
+      JavaScript(expr),
+      Seq(), Seq())
+    val derived = op(op.vs, g.vertices)(op.attrs, Seq()).result.attr
+    assert(derived.rdd.collect.toSet == Set(0 -> "ab", 1 -> "ab", 2 -> "ab", 3 -> "ab"))
+  }
+
   test("example graph: \"gender == 'Male' ? 'Mr ' + name : 'Ms ' + name\"") {
     val expr = "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"
     val g = ExampleGraph()().result
@@ -72,4 +82,38 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
   }
 
+  test("Random weird types are not supported as input") {
+    val g = ExampleGraph()().result
+    intercept[AssertionError] {
+      DeriveJS.deriveFromAttributes[Double](
+        "location ? 1.0 : 2.0", Seq("location" -> g.location), g.vertices).attr
+    }
+  }
+
+  test("We cannot simply access java stuff from JS") {
+    val js = JavaScript("java.lang.System.out.println(3)")
+    intercept[org.mozilla.javascript.EcmaError] {
+      js.evaluate(Map(), classOf[Object])
+    }
+  }
+
+  test("Utility methods") {
+    val g = ExampleGraph()().result
+    val nameHash = DeriveJS.deriveFromAttributes[Double](
+      "util.hash(name)", Seq("name" -> g.name), g.vertices).attr
+    assert(nameHash.rdd.collect.toSeq.sorted ==
+      Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
+        2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
+
+    val rndSum = DeriveJS.deriveFromAttributes[Double](
+      "var rnd = util.rnd(income); rnd.nextDouble() + rnd.nextDouble();",
+      Seq("income" -> g.income),
+      g.vertices).attr
+    def rndSumScala(income: Double) = {
+      val rnd = new scala.util.Random(income.toLong)
+      rnd.nextDouble + rnd.nextDouble
+    }
+    assert(rndSum.rdd.collect.toSeq.sorted ==
+      Seq(0 -> rndSumScala(1000.0), 2 -> rndSumScala(2000.0)))
+  }
 }
