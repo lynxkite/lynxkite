@@ -59,17 +59,18 @@
   <help-popup href="pick-button"></help-popup>
   <div class="btn-group">
     <label class="btn btn-default" id="pick-button" ng-click="requestNewCenters()">
-      {{ pickByIdWasEdited() ? 'Pick by #ID:' : (unchanged() ? 'Next' : 'Pick') }}
+      {{ pickByOffsetWasEdited() ? 'Pick by offset:' : (unchanged() ? 'Next' : 'Pick') }}
     </label>
     <input
-      class="btn btn-default" ng-show="pickByIdMode"
+      id="pick-offset"
+      class="btn btn-default" ng-show="pickByOffsetMode"
       style="text-align: right; width: 90px;"
       type="text"
       ng-model="editedOffset">
     </input>
-    <label class="btn btn-default" ng-click="togglePickByIdMode()">
-      <i class="glyphicon glyphicon-menu-right" ng-if="!pickByIdMode"></i>
-      <i class="glyphicon glyphicon-menu-left" ng-if="pickByIdMode"></i>
+    <label class="btn btn-default" id="pick-expand-button" ng-click="togglePickByOffsetMode()">
+      <i class="glyphicon glyphicon-menu-right" ng-if="!pickByOffsetMode"></i>
+      <i class="glyphicon glyphicon-menu-left" ng-if="pickByOffsetMode"></i>
     </label>
   </div>
 </div>

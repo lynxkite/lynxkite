@@ -7,6 +7,8 @@ var K = protractor.Key;
 module.exports = function(fw) {
   var centers = lib.left.side.element(by.id('centers'));
   var pickButton = lib.left.side.element(by.id('pick-button'));
+  var pickExpandButton = lib.left.side.element(by.id('pick-expand-button'));
+  var pickOffset = lib.left.side.element(by.id('pick-offset'));
   var customFiltersToggleOnButton =
     lib.left.side.element(by.id('custom-filters-toggle-on-button'));
   var customFiltersToggleOffButton =
@@ -98,5 +100,29 @@ module.exports = function(fw) {
       lib.left.close();
       lib.splash.openProject('test-example');
       lib.left.toggleSampledVisualization();
+    });
+
+  fw.statePreservingTest(
+    'test-example project in sampled view',
+    'pick by offset',
+    function() {
+      centerCount.clear();
+      centerCount.sendKeys('2');
+
+      pickButton.click();
+      pickButton.click();
+      pickButton.click();
+      pickExpandButton.click();
+      expect(pickOffset.getAttribute("value")).toBe('4');
+      pickOffset.clear();
+      pickOffset.sendKeys('40');
+      pickButton.click();
+      pickButton.click();
+      expect(pickOffset.getAttribute("value")).toBe('42');
+      pickExpandButton.click();
+
+      // Restore original state.
+      centerCount.clear();
+      centerCount.sendKeys('1');
     });
 };

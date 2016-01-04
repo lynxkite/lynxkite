@@ -14,6 +14,13 @@
 //  scope.side.pickOptions.offset  (not persisted)
 //    - Number of times "Pick"/"Next" button was pushed without changing
 //      parameters.
+//  scope.pickByOffsetMode (not persisted)
+//    - UI bound boolean toggle. If true, then the user can see and modify
+//      the offset in a text input field.
+//  scope.editedOffset  (not persisted)
+//    - A copy of scope.side.pickOptions.offset, bound to the UI. If this is changed by the
+//      user and pickByOffsetMode is true, then the Pick/Next button will turn into a
+//      "Pick by offset" button.
 //  scope.side.pickOptions.lastCenterRequestParameters   (not persisted)
 //    - last pick request generated from the UI. This is used to detect
 //      changes of the parameters by the user on the UI and then to decide
@@ -101,17 +108,17 @@ angular.module('biggraph').directive('pickOptions', function() {
         return (scope.side.pickOptions.offset || 0).toString();
       };
 
-      scope.togglePickByIdMode = function() {
-        if (!scope.pickByIdMode) {
+      scope.togglePickByOffsetMode = function() {
+        if (!scope.pickByOffsetMode) {
           scope.editedOffset = scope.getCurrentPickOffset();
-          scope.pickByIdMode = true;
+          scope.pickByOffsetMode = true;
         } else {
-          scope.pickByIdMode = false;
+          scope.pickByOffsetMode = false;
         }
       };
 
-      scope.pickByIdWasEdited = function() {
-        if (!scope.pickByIdMode) {
+      scope.pickByOffsetWasEdited = function() {
+        if (!scope.pickByOffsetMode) {
           return false;
         }
         if (scope.unchanged()) {
@@ -126,7 +133,7 @@ angular.module('biggraph').directive('pickOptions', function() {
         var params = centerRequestParams();
         var offset = 0;
         // Compute offset.
-        if (scope.pickByIdWasEdited()) {  // "Pick by #ID"
+        if (scope.pickByOffsetWasEdited()) {  // "Pick by offset"
           offset = parseInt(scope.editedOffset) || 0;
         } else if (unchanged) { // "Next"
           offset = scope.side.pickOptions.offset + params.count;
@@ -134,17 +141,17 @@ angular.module('biggraph').directive('pickOptions', function() {
           offset = 0;
         }
         // Configure and send request.
-        if (unchanged) { // "Next" or "Pick by #ID"
+        if (unchanged) { // "Next" or "Pick by offset"
           scope.side.pickOptions.offset = offset;
           params.offset = scope.side.pickOptions.offset;
-        } else { // "Pick" or "Pick by #ID"
+        } else { // "Pick" or "Pick by offset"
           scope.side.pickOptions = {
             offset: offset,
             lastCenterRequestParameters: scope.side.resolveCenterRequestParams(params),
           };
         }
         scope.side.sendCenterRequest(params);
-        // Update "Pick by #ID" input field value.
+        // Update "Pick by offset" input field value.
         scope.editedOffset = scope.getCurrentPickOffset();
       };
 
