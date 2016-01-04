@@ -122,7 +122,8 @@ case class FEAttribute(
   canBucket: Boolean,
   canFilter: Boolean,
   isNumeric: Boolean,
-  isInternal: Boolean)
+  isInternal: Boolean,
+  computeProgress: Double)
 
 case class FEProjectListElement(
   name: String,
@@ -292,6 +293,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
     val nonUtilities = categories.filter(_.icon != "wrench")
+    implicit val dm = env.dataManager
     p.toFE.copy(opCategories = nonUtilities)
   }
 

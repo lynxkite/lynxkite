@@ -641,7 +641,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(user: User, request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    if (!request.calculate && !dataManager.isCalculated(scalar)) {
+    if (!request.calculate && dataManager.computeProgress(scalar) != 1.0) {
       throw new FlyingResult(play.api.mvc.Results.NotFound("Value is not calculated yet"))
     }
     dynamicValue(scalar)

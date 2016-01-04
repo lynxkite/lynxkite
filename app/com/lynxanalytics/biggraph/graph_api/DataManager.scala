@@ -228,8 +228,15 @@ class DataManager(sc: spark.SparkContext,
     instanceOutputCache(gUID)
   }
 
-  def isCalculated(entity: MetaGraphEntity): Boolean =
-    hasEntity(entity) || hasEntityOnDisk(entity)
+  // Returns an indication of whether the entity has already been computed.
+  // 0 means it is not computed. 1 means it is computed. 0.5 is used to indicated that the
+  // computation is in progress. (Of course it would be great to be more specific in the future.)
+  def computeProgress(entity: MetaGraphEntity): Double = {
+    val guid = entity.gUID
+    if (entityCache.contains(guid) && !entityCache(guid).isCompleted) 0.5
+    else if (hasEntity(entity) || hasEntityOnDisk(entity)) 1.0
+    else 0.0
+  }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {

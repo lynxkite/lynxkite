@@ -58,4 +58,6 @@ class SafeFuture[+T] private (val future: Future[T]) {
     future.foreach(f)
 
   def value = future.value
+
+  def isCompleted = future.isCompleted
 }

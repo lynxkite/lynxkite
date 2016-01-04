@@ -152,7 +152,7 @@ sealed trait ProjectViewer {
   def sortedSegmentations: List[SegmentationViewer] =
     segmentationMap.toList.sortBy(_._1).map(_._2)
 
-  def toFE(projectName: String): FEProject = {
+  def toFE(projectName: String)(implicit dataManager: DataManager): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(
@@ -189,7 +189,12 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feEntity[T](e: TypedEntity[T], name: String, note: String, isInternal: Boolean = false) = {
+  def feEntity[T](
+    e: TypedEntity[T],
+    name: String,
+    note: String,
+    isInternal: Boolean = false)(implicit dataManager: DataManager = null): FEAttribute = {
+    val dm = Option(dataManager)
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -202,7 +207,9 @@ object ProjectViewer {
       canBucket,
       canFilter,
       isNumeric,
-      isInternal)
+      isInternal,
+      // The compute progress is only reported if we are in an environment that has a DataManager.
+      dm.map(_.computeProgress(e)).getOrElse(0.0))
   }
 }
 
@@ -810,7 +817,7 @@ object ProjectFrame {
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
-  def toFE: FEProject = {
+  def toFE()(implicit dataManager: DataManager): FEProject = {
     val raw = viewer.toFE(fullName)
     if (path.isEmpty) {
       raw.copy(
