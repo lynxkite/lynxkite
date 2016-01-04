@@ -8,6 +8,7 @@ set -ue
 echo "Starting LynxKite installation..."
 
 . config.sh
+. common_config.sh
 
 DVD_ROOT="$(dirname $0)"
 
@@ -33,7 +34,7 @@ sudo mkdir -p /opt/cloudera/parcels
 # Config the services to start automatically
 sudo cp "/opt/cm-$CLOUDERA_VERSION/etc/init.d/cloudera-scm-agent" /etc/init.d/cloudera-scm-agent
 sudo sed -i 's/CMF_DEFAULTS=.*/CMF_DEFAULTS=\/opt\/cm-'$CLOUDERA_VERSION'\/etc\/default/' /etc/init.d/cloudera-scm-agent
-sudo update-rc.d cloudera-scm-agent defaults
+AddService cloudera-scm-agent
 sudo service cloudera-scm-agent start
 echo "Cloudera installed successfully."
 
