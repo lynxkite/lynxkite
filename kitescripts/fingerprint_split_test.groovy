@@ -152,9 +152,6 @@ split.derivedEdgeAttribute(
       next: function() {
         return rnd.nextDouble();
       },
-      seed: function() {
-        return seed;
-      },
     }
   }
 
