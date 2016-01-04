@@ -12,7 +12,6 @@
 // Parameters
 furtherUndefinedAttr1 = params.fa1 ?: '5'
 furtherUndefinedAttr2 = params.fa2 ?: '5'
-splitProb = params.splitProb ?: '0.3'
 splits = params.splits ?: '10'
 input =  params.input ?: 'fprandom'
 seed = params.seed ?: '31415'
@@ -162,7 +161,6 @@ split.derivedEdgeAttribute(
   var srcIdx = src\$index;
   var dstIdx = dst\$index;
   var edgeCnt = originalCalls
-  var prob = $splitProb
 
   var total = srcCount * dstCount;
   var myId = dstCount * srcIdx + dstIdx;
@@ -204,7 +202,7 @@ split.derivedEdgeAttribute(
 
     var countForOneEdge = 0;
     for (var j = 0; j < edgeCnt; j++) {
-      if (rnd.next() < prob) {
+      if (rnd.next() < 0.5) {
         countForOneEdge++;
       }
     }
