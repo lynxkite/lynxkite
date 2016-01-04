@@ -24,6 +24,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Batch scripts can now access projects and files as Apache Spark DataFrames and run SQL queries
    on them.
  - Workflows and batch scripts can run workflows.
+ - Improved center picker experience.
 
 ### 1.5.8
 
