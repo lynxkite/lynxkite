@@ -32,6 +32,7 @@ wget --directory-prefix="$BUILD/" \
 
 # Get Cloudera.
 . $CONFIG_DIR/config.sh
+. common_config.sh
 
 wget --directory-prefix="$BUILD/" $CLOUDERA_MANAGER_URL
 wget --directory-prefix="$BUILD/" $CLOUDERA_CDH_PARCEL_URL
