@@ -1,5 +1,5 @@
 <!---
-Please add changes to "master". When releasing a version add a new header for that release.
+Please add changes to "master", preferably ordered by their significance. (Most significant on top.)
 -->
 
 # Changes
