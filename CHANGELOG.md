@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.6.0
+
  - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port and do
    batch.runScript(...). See Ammonite's welcome message for details.
  - Fingerprinting between project and segmentation made more general: it can now add new
