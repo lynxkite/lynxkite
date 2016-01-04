@@ -47,7 +47,7 @@ object JsonMigration {
   val current = new JsonMigration(
     Map(
       className(graph_operations.ComputeVertexNeighborhoodFromTriplets) -> 1,
-      className(graph_operations.CreateUIStatusScalar) -> 1,
+      className(graph_operations.CreateUIStatusScalar) -> 2,
       className(graph_operations.CreateVertexSet) -> 1,
       className(graph_operations.DoubleBucketing) -> 1,
       className(graph_operations.FastRandomEdgeBundle) -> 1,
@@ -61,6 +61,13 @@ object JsonMigration {
       ("com.lynxanalytics.biggraph.graph_api.ProjectFrame", 0) -> identity,
       (className(graph_operations.ComputeVertexNeighborhoodFromTriplets), 0) -> {
         j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
+      },
+      (className(graph_operations.CreateUIStatusScalar), 1) -> {
+        j =>
+          val value = JsonMigration.replaceJson(
+            j \ "value",
+            "customVisualizationFilters" -> Json.toJson(true))
+          JsonMigration.replaceJson(j, "value" -> value)
       },
       (className(graph_operations.CreateUIStatusScalar), 0) -> {
         j =>
