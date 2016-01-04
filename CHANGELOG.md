@@ -1,11 +1,13 @@
 <!---
-Please add changes to "master". When releasing a version add a new header for that release.
+Please add changes to "master", preferably ordered by their significance. (Most significant on top.)
 -->
 
 # Changes
 
 ### master
 
+ - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port and do
+   batch.runScript(...). See Ammonite's welcome message for details.
  - Fingerprinting between project and segmentation made more general: it can now add new
    connections, not only select from existing ones.
  - Reintroduced project search on the project selector UI.
