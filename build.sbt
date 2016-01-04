@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.7",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
-  "com.lihaoyi" % "ammonite-sshd" % "0.4.8" cross CrossVersion.full,
+  "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,
   // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
   "com.databricks" % "spark-csv_2.10" % "1.2.0")
 
