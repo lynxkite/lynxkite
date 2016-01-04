@@ -505,11 +505,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       NonNegInt("min", "Minimum clique size", default = 3))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
+      val minCliques = params("min").toInt
+      val bothDir = params("bothdir").toBoolean
+      val op = graph_operations.FindMaxCliques(minCliques, bothDir)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.segments, idAttr = "id")
-      segmentation.notes = title
+      segmentation.notes =
+        s"Maximal cliques (edges in both directions: $bothDir, minimum clique size: $minCliques)"
       segmentation.belongsTo = result.belongsTo
       segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
@@ -539,7 +542,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         options = FEOption.list("ignore directions", "require both directions")))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val symmetric = params("directions") match {
+      val directions = params("directions")
+      val symmetric = directions match {
         case "ignore directions" => project.edgeBundle.addReversed
         case "require both directions" => project.edgeBundle.makeSymmetric
       }
@@ -547,7 +551,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = op(op.es, symmetric).result
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.segments, idAttr = "id")
-      segmentation.notes = title
+      segmentation.notes = s"Connected components (edges: $directions)"
       segmentation.belongsTo = result.belongsTo
       segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
@@ -564,20 +568,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Ratio("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      val minCliques = params("min_cliques").toInt
+      val bothDir = params("bothdir").toBoolean
+      val adjacencyThreshold = params("adjacency_threshold").toDouble
+
       val cliquesResult = {
-        val op = graph_operations.FindMaxCliques(
-          params("min_cliques").toInt, params("bothdir").toBoolean)
+        val op = graph_operations.FindMaxCliques(minCliques, bothDir)
         op(op.es, project.edgeBundle).result
       }
 
       val cliquesSegmentation = project.segmentation(params("cliques_name"))
       cliquesSegmentation.setVertexSet(cliquesResult.segments, idAttr = "id")
-      cliquesSegmentation.notes = "Maximal cliques"
+      cliquesSegmentation.notes =
+        s"Maximal cliques (edges in both directions: $bothDir, minimum clique size: $minCliques)"
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
       cliquesSegmentation.newVertexAttribute("size", computeSegmentSizes(cliquesSegmentation))
 
       val cedges = {
-        val op = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
+        val op = graph_operations.InfocomOverlapForCC(adjacencyThreshold)
         op(op.belongsTo, cliquesResult.belongsTo).result.overlaps
       }
 
@@ -600,7 +608,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
       communitiesSegmentation.setVertexSet(ccResult.segments, idAttr = "id")
-      communitiesSegmentation.notes = "Infocom Communities"
+      communitiesSegmentation.notes =
+        s"Infocom communities (edges in both directions: $bothDir, minimum clique size:" +
+          s" $minCliques, adjacency threshold: $adjacencyThreshold)"
       communitiesSegmentation.belongsTo = vertexToCommunity
       communitiesSegmentation.newVertexAttribute(
         "size", computeSegmentSizes(communitiesSegmentation))
