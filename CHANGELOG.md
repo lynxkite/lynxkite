@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - If an attribute has already been calculated, a small checkmark indicates this.
+
 ### 1.6.0
 
  - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port and do
