@@ -521,18 +521,21 @@ sealed trait EntityData {
 sealed trait EntityRDDData[T] extends EntityData {
   val rdd: SortedRDD[ID, T]
   val count: Option[Long]
+  def cached: EntityRDDData[T]
   rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
 }
 class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD,
                     val count: Option[Long] = None) extends EntityRDDData[Unit] {
   val vertexSet = entity
+  def cached = new VertexSetData(entity, rdd.cached, count)
 }
 
 class EdgeBundleData(val entity: EdgeBundle,
                      val rdd: EdgeBundleRDD,
                      val count: Option[Long] = None) extends EntityRDDData[Edge] {
   val edgeBundle = entity
+  def cached = new EdgeBundleData(entity, rdd.cached, count)
 }
 
 class AttributeData[T](val entity: Attribute[T],
@@ -541,6 +544,7 @@ class AttributeData[T](val entity: Attribute[T],
     extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
   val attribute = entity
   val typeTag = attribute.typeTag
+  def cached = new AttributeData[T](entity, rdd.cached, count)
 }
 
 class ScalarData[T](val entity: Scalar[T],

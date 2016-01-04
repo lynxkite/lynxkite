@@ -27,7 +27,8 @@ private object SparkStageJars {
     classOf[com.univocity.parsers.csv.CsvParserSettings],
     classOf[org.apache.commons.csv.CSVParser],
     classOf[ch.qos.logback.classic.Logger],
-    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]])
+    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]],
+    classOf[org.mozilla.javascript.Context])
   val extraJarsToBundle =
     scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
       .split(":", -1)
