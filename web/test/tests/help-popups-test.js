@@ -6,10 +6,12 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  fw.statePreservingTest(
-    'empty test-example project',
+  fw.transitionTest(
+    'empty splash',
     'can open a help popup on the page by hovering',
     function() {
+      lib.setEnablePopups(true);
+      lib.splash.openNewProject('test-example');
       var helpIcon = element(by.css('help-popup[href="project-header-buttons"]'));
       lib.expectNotElement(lib.helpPopup('project-header-buttons'));
       browser.actions().mouseMove(helpIcon).perform();  // hover mouse over icon
@@ -20,6 +22,9 @@ module.exports = function(fw) {
         return lib.helpPopup('project-header-buttons').isPresent().then(
           function(present) { return !present; });
       });
+      lib.setEnablePopups(false);
+    },
+    function() {
     });
 
   fw.transitionTest(
