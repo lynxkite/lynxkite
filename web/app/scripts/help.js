@@ -99,21 +99,23 @@ angular.module('biggraph').directive('helpId',
 });
 
 // A button that displays a help snippet on hover/click.
-angular.module('biggraph').directive('helpPopup', function() {
+angular.module('biggraph')
+  .directive('helpPopup', ['dropTooltipConfig', function(dropTooltipConfig) {
+
   return {
     restrict: 'E',
     scope: { helpId: '@href' },
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
-      /* global Drop */
       var button = element.find('#help-button')[0];
       var popup = element.find('#help-popup')[0];
+      /* global Drop */
       var drop = new Drop({
         target: button,
         content: popup,
         position: 'bottom center',
         classes: 'drop-theme-help-popup',
-        openOn: 'hover',
+        openOn: dropTooltipConfig.enabled ? 'hover' : undefined,
         remove: true,
         tetherOptions: {
           // Keep within the page.
@@ -130,4 +132,4 @@ angular.module('biggraph').directive('helpPopup', function() {
       });
     }
   };
-});
+}]);

@@ -9,6 +9,10 @@ module.exports = {
         })
         .service('dropTooltipConfig', function() {
           this.enabled = false;
+
+          this.setEnabled = function(enabled) {
+            this.enabled = enabled;
+          }
         })
     });
   },
