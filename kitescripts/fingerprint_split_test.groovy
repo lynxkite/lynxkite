@@ -169,7 +169,7 @@ split.derivedEdgeAttribute(
 
   function splitCalls() {
     // First, let's consider some cases when it's possible
-    // to tell the return value without actually running
+    // to tell the return value without actually
     // computing edgeCnt random numbers.
 
     // 0) Pathalogical case: we're invoked from from validateJS
