@@ -72,23 +72,16 @@ split.edgeAttributeToDouble(
 
 // Create vertex attribute 'originalUniqueId' - this runs beteen 0 and number of vertices - 1
 // Low ids will be treated specially, e.g., splits, and further undefined will come from
-// the low regions of the id range. We don't want peripheral vertices to be treated
-// specially, so we make sure that they are assigned higher ids.
+// the low regions of the id range.
 split.addRandomVertexAttribute(
   name: 'urnd',
   dist: 'Standard Uniform',
   seed: seed
 )
 
-split.derivedVertexAttribute(
-  output: 'urndPeripheralHigh',
-  expr: 'peripheral == 0.0 ? urnd : urnd + 2.0',
-  type: 'double'
-)
-
 split.addRankAttribute(
   rankattr: 'originalUniqueId',
-  keyattr: 'urndPeripheralHigh',
+  keyattr: 'urnd',
   order: 'ascending'
 )
 
@@ -145,9 +138,6 @@ split.derivedEdgeAttribute(
     var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
     var rnd = util.rnd(seed);
     return {
-      flip: function() {
-        return rnd.nextDouble() < 0.5 ? true : false;
-      },
       next: function() {
         return rnd.nextDouble();
       },
@@ -200,27 +190,23 @@ split.derivedEdgeAttribute(
 
     var rnd = Rnd(srcSeed, dstSeed)
 
-    var countForOneEdge = 0;
+    var countForTheFirstEdge = 0;
     for (var j = 0; j < edgeCnt; j++) {
       if (rnd.next() < 0.5) {
-        countForOneEdge++;
+        countForTheFirstEdge++;
       }
     }
-    var countForAnotherEdge = edgeCnt - countForOneEdge;
+    var countForTheLastEdge = edgeCnt - countForTheFirstEdge;
 
     var thisIsTheFirstEdge = myId === 0;
-    var thisIsTheLastEdge = myId !== 0;
 
-    // We'll toss a coin in order to decide whether the first or the
-    // second (i.e., last) edge will receive the count just computed.
-
-    var heads = rnd.flip();
     var countForThisEdge = 0;
-    if ((thisIsTheFirstEdge && heads) || (thisIsTheLastEdge && !heads)) {
-      countForThisEdge = countForOneEdge;
+    if (thisIsTheFirstEdge)
+      countForThisEdge = countForTheFirstEdge;
     } else {
-      countForThisEdge = countForAnotherEdge;
+      countForThisEdge = countForTheLastEdge;
     }
+
     return countForThisEdge;
   }
 
