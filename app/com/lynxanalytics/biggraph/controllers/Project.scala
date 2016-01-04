@@ -124,6 +124,7 @@ sealed trait ProjectViewer {
     else segmentation(path.head).offspringViewer(path.tail)
 
   def editor: ProjectEditor
+  def checkpoint: String = rootState.checkpoint.get
 
   val isSegmentation: Boolean
   def asSegmentation: SegmentationViewer

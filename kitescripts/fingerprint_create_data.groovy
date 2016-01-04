@@ -7,7 +7,7 @@ ebSize = params.ebSize ?: '5'
 mostCallsPossible = params.mostCalls ?: '3'
 output = params.output ?: 'fprandom'
 
-project=lynx.newProject('random input graph for fp')
+project = lynx.newProject()
 
 project.newVertexSet(size: vertices)
 project.createRandomEdgeBundle(degree: ebSize, seed: seed)

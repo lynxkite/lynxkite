@@ -1,5 +1,5 @@
 // Demonstration for using the DataFrames API on project RDDs.
-p = lynx.newProject('df-test')
+p = lynx.newProject()
 p.exampleGraph()
 p.df.show()
 p.df.groupBy('gender').count().show()

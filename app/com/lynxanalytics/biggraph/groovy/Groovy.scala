@@ -102,24 +102,20 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
 
 // This is the interface that is visible from trustedShell as "lynx".
 class GroovyInterface(ctx: GroovyContext) {
-  def project(name: String): GroovyProject = getOrCreateProject(name, reset = false)
-  def newProject(name: String): GroovyProject = getOrCreateProject(name, reset = true)
-  private def getOrCreateProject(name: String, reset: Boolean): GroovyProject = {
+  def project(name: String): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
-    if (reset && project.exists) {
-      project.remove()
-    }
-    if (!project.exists) {
-      project.writeACL = ctx.user.email
-      project.readACL = ctx.user.email
-      project.initialize
-      ctx.ops.apply(
-        ctx.user,
-        project.subproject,
-        Operations.addNotesOperation(s"Created by batch job: ${ctx.commandLine.get}"))
-    }
-    new GroovyBatchProject(ctx, project.subproject)
+    assert(project.exists, s"Project '$name' not found.")
+    new GroovyBatchProject(ctx, project.viewer)
+  }
+
+  def newProject(): GroovyProject = {
+    import ctx.metaManager
+    val viewer = new RootProjectViewer(RootProjectState.emptyState)
+    val project = new GroovyBatchProject(ctx, viewer)
+    project.applyOperation(
+      "Change-project-notes", Map("notes" -> s"Created by batch job: ${ctx.commandLine.get}"))
+    project
   }
 
   def sql(s: String) = ctx.dataManager.sqlContext.sql(s)
@@ -131,7 +127,7 @@ class GroovyInterface(ctx: GroovyContext) {
 abstract class GroovyProject(ctx: GroovyContext)
     extends groovy.lang.GroovyObjectSupport {
 
-  protected def applyOperation(id: String, params: Map[String, String]): Unit
+  private[groovy] def applyOperation(id: String, params: Map[String, String]): Unit
   protected def getSegmentations: Map[String, GroovyProject]
 
   override def invokeMethod(name: String, args: AnyRef): AnyRef = {
@@ -178,7 +174,7 @@ abstract class GroovyProject(ctx: GroovyContext)
 }
 
 // Batch mode creates checkpoints and gives access to scalars/attributes.
-class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
+class GroovyBatchProject(ctx: GroovyContext, var viewer: ProjectViewer)
     extends GroovyProject(ctx) {
 
   override def getProperty(name: String): AnyRef = {
@@ -186,42 +182,55 @@ class GroovyBatchProject(ctx: GroovyContext, subproject: SubProject)
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
-      case "df" => ctx.env.get.dataFrame.load(subproject.fullName)
+      case "df" => ctx.env.get.dataFrame.option("checkpoint", viewer.checkpoint).load()
       case _ => super.getProperty(name)
     }
   }
 
-  def saveAs(newRootName: String): GroovyBatchProject = {
+  def copy() = new GroovyBatchProject(ctx, viewer)
+
+  def saveAs(newRootName: String): Unit = {
     import ctx.metaManager
-    val newFrame = ProjectFrame.fromName(newRootName)
-    subproject.frame.copy(newFrame)
-    new GroovyBatchProject(ctx, new SubProject(newFrame, subproject.path))
+    val project = ProjectFrame.fromName(newRootName)
+    if (!project.exists) {
+      project.writeACL = ctx.user.email
+      project.readACL = ctx.user.email
+      project.initialize
+    }
+    project.setCheckpoint(viewer.checkpoint)
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled
   // checkpoint. It will point to the checkpoint of the root project of this project.
   def rootCheckpointWithTitle(title: String): String =
-    FEOption.titledCheckpoint(subproject.frame.checkpoint, title).id
+    FEOption.titledCheckpoint(viewer.checkpoint, title).id
 
-  protected def applyOperation(id: String, params: Map[String, String]): Unit = {
-    ctx.ops.apply(ctx.user, subproject, FEOperationSpec(id, params))
+  override def applyOperation(id: String, params: Map[String, String]): Unit = {
+    val context = Operation.Context(ctx.user, viewer)
+    val spec = FEOperationSpec(id, params)
+    val result = ctx.ops.appliedOp(context, spec).project
+    val root = result.rootEditor
+    root.rootState = ctx.metaManager.checkpointRepo.checkpointState(
+      root.rootState, viewer.checkpoint)
+    viewer = result.viewer
   }
 
   protected def getScalars: Map[String, GroovyScalar] = {
-    subproject.viewer.scalars.mapValues(new GroovyScalar(ctx, _))
+    viewer.scalars.mapValues(new GroovyScalar(ctx, _))
   }
 
   protected def getVertexAttributes: Map[String, GroovyAttribute] = {
-    subproject.viewer.vertexAttributes.mapValues(new GroovyAttribute(ctx, _))
+    viewer.vertexAttributes.mapValues(new GroovyAttribute(ctx, _))
   }
 
   protected def getEdgeAttributes: Map[String, GroovyAttribute] = {
-    subproject.viewer.edgeAttributes.mapValues(new GroovyAttribute(ctx, _))
+    viewer.edgeAttributes.mapValues(new GroovyAttribute(ctx, _))
   }
 
   protected def getSegmentations: Map[String, GroovyProject] = {
-    subproject.viewer.segmentationMap.keys.map { seg =>
-      seg -> new GroovyBatchProject(ctx, new SubProject(subproject.frame, subproject.path :+ seg))
+    viewer.segmentationMap.map {
+      case (name, seg) =>
+        name -> new GroovyBatchProject(ctx, seg)
     }.toMap
   }
 }
@@ -258,7 +267,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 class GroovyWorkflowProject(
     ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
   protected def viewer = rootProject.offspringEditor(path).viewer
-  override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
+  override def applyOperation(id: String, params: Map[String, String]): Unit = {
     val opctx = Operation.Context(ctx.user, viewer)
     // Execute the operation.
     val op = ctx.ops.appliedOp(opctx, FEOperationSpec(id, params))
