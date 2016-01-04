@@ -146,15 +146,14 @@ split.derivedEdgeAttribute(
     var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
     var rnd = util.rnd(seed);
     return {
-      geomChoose: function(p, lastId) {
-        for (var i = 0; i <= lastId; i++) {
-            var q = rnd.nextDouble();
-            if (q < p) return i;
-        }
-        return lastId;
-      },
       flip: function() {
-            return rnd.nextDouble() < 0.5 ? true : false;
+        return rnd.nextDouble() < 0.5 ? true : false;
+      },
+      next: function() {
+        return rnd.nextDouble();
+      },
+      seed: function() {
+        return seed;
       },
     }
   }
@@ -172,25 +171,64 @@ split.derivedEdgeAttribute(
   var myId = dstCount * srcIdx + dstIdx;
 
   function splitCalls() {
-    if (total <= 1) { // total === 0, when called from validateJS
+    // First, let's consider some cases when it's possible
+    // to tell the return value without actually running
+    // computing edgeCnt random numbers.
+
+    // 0) Pathalogical case: we're invoked from from validateJS
+    if (total === 0) {
+      return 0;
+    }
+
+    // 1) Simplest case: neither the source, nor the destination is
+    // split: total === 1 and myId === 0. There is only one
+    // edge and it will carry the original count.
+    if (total === 1) {
       return edgeCnt;
     }
+
+    // 2) The next simplest case occurs when either the source,
+    // or the destination is split, but not both. Here, total === 2
+    // and myId falls between 0 and 1 inclusive.
+    // We'll need to split edgeCnt between the two edges. However, we cannot
+    // avoid generating all edgeCnt random numbers, so the computation
+    // must continue.
+    if (total === 2) {
+      ;
+    }
+
+    // 3) In the most complex case, both the source and the destination
+    // vertices are split, resulting in 4 edges. However, we want to
+    // devide the edgeCnt quantity between the first edge (myId: 0) and the last
+    // one (myId: 3). The two other edges get 0.
     if (total === 4 && (myId === 1 || myId === 2)) {
       return 0;
     }
 
     var rnd = Rnd(srcSeed, dstSeed)
-    var count = 0;
+
+    var countForOneEdge = 0;
     for (var j = 0; j < edgeCnt; j++) {
-      if (rnd.geomChoose(prob, 1) === 0) count++;
+      if (rnd.next() < prob) {
+        countForOneEdge++;
+      }
     }
+    var countForAnotherEdge = edgeCnt - countForOneEdge;
+
+    var thisIsTheFirstEdge = myId === 0;
+    var thisIsTheLastEdge = myId !== 0;
+
+    // We'll toss a coin in order to decide whether the first or the
+    // second (i.e., last) edge will receive the count just computed.
 
     var heads = rnd.flip();
-    if ((myId === 0 && heads) || (myId !== 0 && !heads)) {
-        count = edgeCnt - count;
+    var countForThisEdge = 0;
+    if ((thisIsTheFirstEdge && heads) || (thisIsTheLastEdge && !heads)) {
+      countForThisEdge = countForOneEdge;
+    } else {
+      countForThisEdge = countForAnotherEdge;
     }
-
-    return count;
+    return countForThisEdge;
   }
 
   splitCalls();
