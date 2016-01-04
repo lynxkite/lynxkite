@@ -66,7 +66,7 @@ object JsonMigration {
         j =>
           val value = JsonMigration.replaceJson(
             j \ "value",
-            "customVisualizationFilters" -> Json.toJson(false))
+            "customVisualizationFilters" -> Json.toJson(true))
           JsonMigration.replaceJson(j, "value" -> value)
       },
       (className(graph_operations.CreateUIStatusScalar), 0) -> {

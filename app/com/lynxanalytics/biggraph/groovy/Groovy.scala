@@ -12,7 +12,20 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving
 
+object GroovyContext {
+  def runScript(scriptFileName: String, params: (String, String)*): Unit = {
+    val env = biggraph.BigGraphProductionEnvironment
+    val ops = new Operations(env)
+    val user = serving.User("Batch User", isAdmin = true)
+    val formattedParams = params.map { case (name, value) => s"$name: $value" }.mkString(" ")
+    val commandLine = s"$scriptFileName $formattedParams"
+    val ctx = GroovyContext(user, ops, Some(env), Some(commandLine))
+    val shell = ctx.trustedShell("params" -> JavaConversions.mapAsJavaMap(params.toMap))
+    shell.evaluate(new java.io.File(scriptFileName))
+  }
+}
 case class GroovyContext(
     user: biggraph.serving.User,
     ops: OperationRepository,
