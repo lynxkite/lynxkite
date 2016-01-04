@@ -190,9 +190,7 @@ split.derivedEdgeAttribute(
     // We'll need to split edgeCnt between the two edges. However, we cannot
     // avoid generating all edgeCnt random numbers, so the computation
     // must continue.
-    if (total === 2) {
-      ;
-    }
+
 
     // 3) In the most complex case, both the source and the destination
     // vertices are split, resulting in 4 edges. However, we want to
