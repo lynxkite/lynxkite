@@ -1580,7 +1580,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Copy segmentation one level up", new StructureOperation(_, _) with SegOp {
+  register("Pull segmentation one level up", new StructureOperation(_, _) with SegOp {
     def segmentationParameters = List()
 
     def enabled =
