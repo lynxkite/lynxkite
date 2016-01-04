@@ -39,7 +39,8 @@ case class UIStatus(
   centers: Option[Seq[String]],
   // For centers set by a getCenter request, the following parameters will be set
   // so that we can redo the getCenter request.
-  lastCentersRequest: Option[UICenterRequest])
+  lastCentersRequest: Option[UICenterRequest],
+  customVisualizationFilters: Option[Boolean])
 object UIStatusSerialization {
   implicit val fUIFilterStatus = json.Json.format[UIFilterStatus]
   implicit val fUIAttributeAxisOptions = json.Json.format[UIAttributeAxisOptions]
