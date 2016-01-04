@@ -2,9 +2,11 @@
 //
 // The state of the picker is scattered around a few places. The state needs to be persisted
 // for two reasons: page reloads, visualizations save/load.
-//  scope.count   (persisted via scope.side.state.lastCentersRequest, see scope.reset())
+//  scope.count   (persisted via scope.side.state.lastCentersRequest,
+//                 see scope.updateFromLastCentersRequest())
 //    - UI-bound value of number of centers requested
-//  scope.filters   (persisted via scope.side.state.lastCentersRequest, see scope.reset())
+//  scope.filters   (persisted via scope.side.state.lastCentersRequest,
+//                   see scope.updateFromLastCentersRequest())
 //    - UI-bound value for filters.
 //  scope.side.state.customVisualizationFilters  (persisted via state, see UIStatus.scala)
 //    - UI-bound value of the toggle switch between custom or project restrictions.
@@ -13,8 +15,9 @@
 //    - Number of times "Pick"/"Next" button was pushed without changing
 //      parameters.
 //  scope.side.pickOptions.lastCenterRequestParameters   (not persisted)
-//    - last pick request generated from the UI. This is only used to detect
-//      changes of the parameters by the user on the UI.
+//    - last pick request generated from the UI. This is used to detect
+//      changes of the parameters by the user on the UI and then to decide
+//      whether to show a 'Pick' or a 'Next' button.
 //
 //  scope.side.state.lastCentersRequest   (persisted via state, see UIStatus.scala)
 //    - The last successful centers request
@@ -28,17 +31,19 @@
 //    on the UI.
 // 2. The params are sent to backend via side.sendCenterRequest(). In case of success,
 //    state.centers, state.lastCenterRequest and state.lastCentersResponse is updated.
-// 3. This also triggers scope.reset(), but in theory, it should not make any difference in
-//    this case.
+// 3. This also triggers scope.updateFromLastCentersRequest(), but in theory, it should
+//    not make any difference in this case.
 //
 // What happens when loading a visualization?
 // 1. side.state.* is updated by the load.
-// 2. scope.reset() is triggered and that updates the UI from scope.side.state.lastCenterRequest
+// 2. scope.updateFromLastCentersRequest() is triggered and that updates the UI from
+//    scope.side.state.lastCenterRequest
 //
 // What happens on a page reload?
 // 1. The DOM tree and angular controls are constructed from zero.
 // 2. side.state is restored from the URL
-// 3. scope.reset() is triggered and that updates the UI from scope.side.state.lastCenterRequest
+// 3. scope.updateFromLastCentersRequest() is triggered and that updates the UI from
+//    scope.side.state.lastCenterRequest
 //
 //
 // Have fun!
@@ -51,10 +56,11 @@ angular.module('biggraph').directive('pickOptions', function() {
     templateUrl: 'pick-options.html',
     link: function(scope) {
       scope.count = '1';
-      scope.reset = function() {
-        scope.filters = [];
+      scope.filters = [];
+      scope.side.pickOptions = scope.side.pickOptions || {};
+
+      scope.updateFromLastCentersRequest = function() {
         // pickOptions is stored in "side" to survive even when the picker is recreated.
-        scope.side.pickOptions = scope.side.pickOptions || {};
         var lastCentersRequest = scope.side.state.lastCentersRequest;
         if (lastCentersRequest) {
           if (lastCentersRequest.filters) {
@@ -65,7 +71,6 @@ angular.module('biggraph').directive('pickOptions', function() {
           }
         }
       };
-      scope.reset();
 
       scope.copyRestrictionsFromFilters = function() {
         scope.filters = scope.side.nonEmptyVertexFilterNames();
@@ -124,8 +129,13 @@ angular.module('biggraph').directive('pickOptions', function() {
         }
       };
 
+      scope.$watch('side.state.customVisualizationFilters', function(newValue, oldValue) {
+        if (newValue !== oldValue) {
+          scope.toggleCustomFilters(newValue);
+        }
+      });
       scope.$watch('side.state.lastCentersRequest', function() {
-        scope.reset();
+        scope.updateFromLastCentersRequest();
       });
       scope.$watch('side.state.graphMode', function() {
         var state = scope.side.state;
