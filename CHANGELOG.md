@@ -20,10 +20,13 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Created new operations _Add random vertex attribute_ and _Add random edge attribute_. You can
    specify the desired distribution (normal or uniform). These new operations obsolete _Add gaussian
    vertex attribute_, which is no longer accessible from the operations menu.
+ - New operations to support finding co-locations: _Sample edges from co-occurrence_,
+   _Segment by event sequence_.
  - Enable creating segmentations on top of other segmentations.
  - Batch scripts can now access projects and files as Apache Spark DataFrames and run SQL queries
    on them.
  - Workflows and batch scripts can run workflows.
+ - Added new operation: _Copy segmentation one level up_.
  - Improved center picker experience.
 
 ### 1.5.8
