@@ -1,35 +1,70 @@
 // A tooltip based on the "Drop" popup library.
 'use strict';
 
-angular.module('biggraph').directive('dropTooltip', function() {
+angular.module('biggraph')
+.service('dropTooltipConfig', function() {
+  this.enabled = true;
+})
+.directive('dropTooltip', ['dropTooltipConfig', function(dropTooltipConfig) {
   return {
     restrict: 'A',
     scope: {
+      dropTooltipPosition: '@',
       dropTooltip: '@',
+      dropTooltipEnable: '=',
     },
     link: function(scope, element) {
-      /* global Drop */
-      var drop = new Drop({
-        target: element[0],
-        content: scope.dropTooltip,
-        position: 'bottom center',
-        openOn: 'hover',
-        classes: 'drop-theme-tooltip',
-        remove: true, // Remove from DOM when closing.
-        tetherOptions: {
-          // Keep within the page.
-          constraints: [{
-            to: 'scrollParent',
-            pin: true,
-          }],
-        },
-      });
-      scope.$watch('dropTooltip', function(tooltip) {
-        drop.content.innerHTML = tooltip;
-      });
+      var drop;
+      var defaultPosition = 'bottom center';
+      scope.createDrop = function() {
+        /* global Drop */
+        return new Drop({
+          target: element[0],
+          content: scope.dropTooltip,
+          position: scope.dropTooltipPosition || defaultPosition,
+          openOn: 'hover',
+          classes: 'drop-theme-tooltip',
+          remove: true, // Remove from DOM when closing.
+          tetherOptions: {
+            // Keep within the page.
+            constraints: [{
+              to: 'window',
+              attachment: 'together',
+              pin: true,
+            }],
+          },
+        });
+      };
+      function updateTooltip() {
+        if (!dropTooltipConfig.enabled) {
+          return;
+        }
+        var enabled = scope.dropTooltipEnable ||
+          scope.dropTooltipEnable === undefined;
+        if (!enabled || !scope.dropTooltip) {
+          if (drop) {
+            drop.destroy();
+            drop = undefined;
+            return;
+          }
+        } else {
+          if (!drop) {
+            drop = scope.createDrop();
+          } else {
+            drop.content.innerHTML = scope.dropTooltip;
+            drop.position = scope.dropTooltipPosition || defaultPosition;
+          }
+        }
+      }
+      scope.$watch('dropTooltip', updateTooltip);
+      scope.$watch('dropTooltipEnable', updateTooltip);
+      scope.$watch('dropTooltipPosition', updateTooltip);
       scope.$on('$destroy', function() {
-        drop.destroy();
+        if (drop) {
+          drop.destroy();
+          drop = undefined;
+        }
       });
     },
   };
-});
+}]);

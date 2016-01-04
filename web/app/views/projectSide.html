@@ -108,8 +108,9 @@
       </div>
 
       <div class="btn-group pull-right" ng-if="side.hasFilters()">
-        <label class="btn btn-default"
-               ng-click="side.applyFilters()"
+        <label class="btn btn-default bypass-disabled"
+               ng-click="side.applyFiltersEnabled() && side.applyFilters()"
+               ng-disabled="!side.applyFiltersEnabled()"
                tooltip="Apply&nbsp;current&nbsp;filters: {{side.filterSummary()}}"
                tooltip-append-to-body="true"
                tooltip-placement="bottom"

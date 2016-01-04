@@ -254,9 +254,9 @@ module.exports = function(fw) {
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { pos: { x: '>560', y: '>200' } },
-          { pos: { x: '>560', y: '<200' } },
-          { pos: { x: '<560', y: '<100' } },
+          { pos: { x: '>550', y: '>200' } },
+          { pos: { x: '>550', y: '<200' } },
+          { pos: { x: '<550', y: '<100' } },
           ]);
       });
 

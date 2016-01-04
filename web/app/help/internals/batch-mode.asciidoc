@@ -28,25 +28,42 @@ namespace.
 The script can interact with LynxKite through the `lynx` object that is injected into its
 namespace.
 
- - `GroovyProject lynx.project(String name)` will return the given project,
+ - `GroovyProject **lynx.project**(String name)` will return the given project,
    creating it if it does not yet exist.
- - `GroovyProject lynx.newProject(String name)` will return the given project,
+ - `GroovyProject **lynx.newProject**(String name)` will return the given project,
    resetting it to an empty state if it has already existed.
+ - `DataFrameReader **lynx.sqlContext**` provides access to Spark SQL.
+   See the
+   http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
+   to learn more. (The Java examples also apply to Groovy.)
+ - `DataFrame **lynx.sql**(String query)` is a shortcut to `lynx.sqlContext.sql`. It executes a
+   Spark SQL query and returns the result as an Apache Spark DataFrame.
 
 The properties of `GroovyProject` are:
 
- - `Map<String, GroovyProject> segmentations` is the list of segmentations for the project.
- - `Map<String, GroovyScalar> scalars` is the list of scalars. `GroovyScalar` has a `toString()`
+ - `Map<String, GroovyProject> **segmentations**` is the list of segmentations for the project.
+ - `Map<String, GroovyScalar> **scalars**` is the list of scalars. `GroovyScalar` has a `toString()`
    and a `toDouble()` method, they return its value as a string/double respectively.
- - `Map<String, GroovyAttribute> vertexAttributes` and `Map<String, GroovyAttribute> edgeAttributes`
-   are the vertex and edge attributes. `GroovyAttribute` has a `histogram()` method that returns
-   a histogram of the attribute.
+ - `Map<String, GroovyAttribute> **vertexAttributes**` and
+   `Map<String, GroovyAttribute> **edgeAttributes**` are the vertex and edge attributes.
+   `GroovyAttribute` has a `histogram(Int n)` method that
+   returns a histogram of the attribute with `n` buckets.
+ - `DataFrame **df**` gives you access to the vertex set and vertex attributes of the project as an
+   Apache Spark DataFrame. See the
+   http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
+   to learn about working with DataFrames.
 
 `GroovyProject` has a method for every operation. These methods take named arguments for each
 operation parameter. Rather than documenting these methods in detail, the recommended approach is
 to run the operations in interactive mode, enter the <<project-history, history editor>> and the
 <<saving-a-workflow, workflow editor>> within. The correct Groovy code can then be copied from the
 workflow editor.
+
+Workflows can be run with the `GroovyProject.runWorkflow()` method. Workflows are internally
+identified by their creation timestamps in addition to their names. The first argument of
+`runWorkflow` is the workflow name either with or without the timestamp. If the timestamp is
+omitted, the latest version of the workflow is used. The workflow parameters can be passed as
+named arguments to `runWorkflow`, same as other operations.
 
 `GroovyProject` also has a method `saveAs`. You can use this to save a project by a new name. It
 returns a `GroovyProject` object pointing to the project with the new name.
@@ -84,6 +101,16 @@ project.exportVertexAttributesToFile(
 count = project.scalars['vertex_count']
 time = (System.currentTimeMillis() - start_time) / 1000
 println "$count vertices processed in $time seconds."
+
+// Example of Spark SQL integration.
+project.df.printSchema()
+project.df.groupBy('gender').count().show()
+project.df.registerTempTable('example')
+df = lynx.sql('select * from example where gender = "Male"')
+df.show()
+df.write().format('com.databricks.spark.csv').option('header', 'true').save('males.csv')
+df.write().format('parquet').save('males.parquet')
+df.write().format('json').save('males.json')
 ----
 
 When running the script we must use <<prefixed-paths>> for the file names. For example:

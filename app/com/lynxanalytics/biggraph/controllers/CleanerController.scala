@@ -114,8 +114,9 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def transitivelyReferredFromProject(): Set[String] = {
     var operations = operationsFromAllProjects()
     val toExpand = new Queue[UUID] ++ operations.keys
+    val ops = manager.getOperationInstances()
     while (!toExpand.isEmpty) {
-      val op = manager.getOperationInstances()(toExpand.dequeue)
+      val op = ops(toExpand.dequeue)
       for (input <- op.inputs.all.values) {
         val dependentOp = input.source
         val dependentID = dependentOp.gUID
