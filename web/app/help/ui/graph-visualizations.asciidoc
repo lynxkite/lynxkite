@@ -93,7 +93,11 @@ Manually enter restrictions. When switching to this mode, the project filters
 are automatically copied into the custom restriction list, which can be edited then.
 
 After picking one set of centers with the _Pick_ button the button is replaced by the _Next_ button.
-Clicking this button will iterate over samples that match the conditions.
+Clicking this button will iterate over samples that match the conditions. The samples will show up
+in a deterministic order. You can skip to an arbitrary sample by clicking on the
++++<label class="btn btn-default"><i class="glyphicon glyphicon-menu-right"></i></label>+++
+button. There you can manually enter a position in the sequence and pick it by clicking on
+ _Pick by offset:_
 
 #### Context menu
 When clicking a vertex in Concrete Vertex View you can see a context menu with possible operations
