@@ -761,6 +761,13 @@ testLib = {
   closeModal: function() {
     element(by.id('close-modal-button')).click();
   },
+
+  setEnablePopups: function(enable) {
+    browser.executeScript(
+      "angular.element(document.body).injector()" +
+      ".get('dropTooltipConfig').enabled = " + enable);
+
+  }
 };
 
 module.exports = testLib;
