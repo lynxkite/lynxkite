@@ -100,7 +100,7 @@ angular.module('biggraph').directive('helpId',
 
 // A button that displays a help snippet on hover/click.
 angular.module('biggraph')
-  .directive('helpPopup', ['dropTooltipConfig', function(dropTooltipConfig) {
+  .directive('helpPopup', function(dropTooltipConfig) {
 
   return {
     restrict: 'E',
@@ -132,4 +132,4 @@ angular.module('biggraph')
       });
     }
   };
-}]);
+});
