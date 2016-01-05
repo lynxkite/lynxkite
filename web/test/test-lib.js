@@ -633,7 +633,6 @@ testLib = {
         }
       });
     browser.controlFlow().execute(function() { return defer.promise; });
-    browser.executeScript("window.localStorage.removeItem('last_selector_path')");
   },
 
   navigateToProject: function(name) {
