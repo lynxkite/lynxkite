@@ -182,7 +182,9 @@ class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
-      case "df" => ctx.env.get.dataFrame.option("checkpoint", viewer.rootCheckpoint).load()
+      case "df" =>
+        assert(!viewer.isSegmentation, "You cannot access a segmentation as a DataFrame.")
+        ctx.env.get.dataFrame.option("checkpoint", viewer.rootCheckpoint).load()
       case _ => super.getProperty(name)
     }
   }
@@ -190,6 +192,7 @@ class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
   def copy() = new GroovyBatchProject(ctx, viewer)
 
   def saveAs(newRootName: String): Unit = {
+    assert(!viewer.isSegmentation, "You cannot save a segmentation as a top-level project.")
     import ctx.metaManager
     val project = ProjectFrame.fromName(newRootName)
     if (!project.exists) {
