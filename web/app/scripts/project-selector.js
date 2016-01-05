@@ -154,7 +154,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         // Ignore clicks on errored projects.
         if (p.error) { return; }
         scope.name = p.name;
-        scope.saveLastSelectorPath();
       };
 
       scope.enterDirectory = function(event, d) {
