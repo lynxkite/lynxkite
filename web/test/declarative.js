@@ -172,5 +172,42 @@ for (var i = 0; i < testFiles.length; ++i) {
   }
 }
 
+
+var startDate = (new Date()).toString();
+
+// This screenshots once per failed spec.
+// It's necessary in case the error is not in an expectation.
+jasmine.getEnv().addReporter(new function() {
+  this.specDone = function(result) {
+    if (result.failedExpectations.length >0) {
+      browser.takeScreenshot().then(function(png) {
+        var stream = fs.createWriteStream(
+          '/tmp/protractor-' + startDate + '-' + result.fullName + '.png');
+        stream.write(new Buffer(png, 'base64'));
+        stream.end();
+      });
+    }
+  };
+});
+
+// This screenshots once per failed expectation.
+var originalAddExpectationResult = jasmine.Spec.prototype.addExpectationResult;
+jasmine.Spec.prototype.addExpectationResult = function() {
+  if (!arguments[0]) {
+    var that = this
+    browser.takeScreenshot().then(function(png) {
+      var failureIdx = that.failedExpectations || 0;
+      that.failedExpectations = failureIdx + 1;
+      var stream = fs.createWriteStream(
+        '/tmp/protractor-' + startDate + '-' + that.getFullName() + '-' + failureIdx + '.png');
+      stream.write(new Buffer(png, 'base64'));
+      stream.end();
+    });
+  }
+  return originalAddExpectationResult.apply(this, arguments);
+};
+
+console.log('Starting tests at: ' + startDate);
+
 fw.runAll();
 fw.cleanup();
