@@ -82,10 +82,11 @@ module.exports = function(fw) {
       lib.splash.newDirectory('plum');
       lib.splash.openNewProject('grape');
       lib.left.close();
-      lib.splash.openDirectory('plum');
       lib.splash.newDirectory('orange');
       lib.splash.openNewProject('kiwi');
       lib.left.close();
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
     },
     function() {
       lib.splash.expectProjectListed('apple');
