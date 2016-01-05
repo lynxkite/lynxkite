@@ -25,6 +25,9 @@ class DefaultSource extends sql.sources.RelationProvider {
     val env = DefaultSource.envs(parameters("environment"))
     val path = parameters.getOrElse("path", "")
     val checkpoint = parameters.getOrElse("checkpoint", "")
+    assert(
+      path.isEmpty || checkpoint.isEmpty,
+      s"You cannot define both a path ($path) and a checkpoint ($checkpoint).")
     val project = {
       implicit val metaManager = env.metaGraphManager
       if (path.nonEmpty) {
