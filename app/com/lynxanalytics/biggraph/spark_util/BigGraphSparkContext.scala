@@ -46,6 +46,7 @@ private object SparkStageJars {
 class DeadClass1
 class DeadClass2
 class DeadClass3
+class DeadClass4
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
@@ -117,8 +118,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // === #1518 / SPARK-5949 ===
     kryo.register(classOf[org.roaringbitmap.RoaringBitmap])
     kryo.register(classOf[org.roaringbitmap.RoaringArray])
-    kryo.register(classOf[org.roaringbitmap.RoaringArray.Element])
-    kryo.register(classOf[Array[org.roaringbitmap.RoaringArray.Element]])
+    kryo.register(classOf[DeadClass4])
+    kryo.register(classOf[Array[DeadClass4]])
     kryo.register(classOf[org.roaringbitmap.BitmapContainer])
     kryo.register(classOf[org.roaringbitmap.ArrayContainer])
     kryo.register(classOf[Array[Short]])
@@ -184,6 +185,12 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[org.apache.spark.sql.Row]])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema])
     kryo.register(classOf[graph_operations.SegmentByEventSequence.EventListSegmentId])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.UnsafeRow])
+    kryo.register(classOf[Array[org.apache.spark.mllib.tree.model.Split]])
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.model.Bin"))
+    kryo.register(Class.forName("[Lorg.apache.spark.mllib.tree.model.Bin;"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyLowSplit"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyHighSplit"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
