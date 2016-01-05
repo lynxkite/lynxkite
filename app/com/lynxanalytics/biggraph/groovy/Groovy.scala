@@ -174,7 +174,7 @@ abstract class GroovyProject(ctx: GroovyContext)
 }
 
 // Batch mode creates checkpoints and gives access to scalars/attributes.
-class GroovyBatchProject(ctx: GroovyContext, var viewer: ProjectViewer)
+class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
     extends GroovyProject(ctx) {
 
   override def getProperty(name: String): AnyRef = {
@@ -182,7 +182,7 @@ class GroovyBatchProject(ctx: GroovyContext, var viewer: ProjectViewer)
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
-      case "df" => ctx.env.get.dataFrame.option("checkpoint", viewer.checkpoint).load()
+      case "df" => ctx.env.get.dataFrame.option("checkpoint", viewer.rootCheckpoint).load()
       case _ => super.getProperty(name)
     }
   }
@@ -197,21 +197,21 @@ class GroovyBatchProject(ctx: GroovyContext, var viewer: ProjectViewer)
       project.readACL = ctx.user.email
       project.initialize
     }
-    project.setCheckpoint(viewer.checkpoint)
+    project.setCheckpoint(viewer.rootCheckpoint)
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled
   // checkpoint. It will point to the checkpoint of the root project of this project.
   def rootCheckpointWithTitle(title: String): String =
-    FEOption.titledCheckpoint(viewer.checkpoint, title).id
+    FEOption.titledCheckpoint(viewer.rootCheckpoint, title).id
 
-  override def applyOperation(id: String, params: Map[String, String]): Unit = {
+  private[groovy] override def applyOperation(id: String, params: Map[String, String]): Unit = {
     val context = Operation.Context(ctx.user, viewer)
     val spec = FEOperationSpec(id, params)
     val result = ctx.ops.appliedOp(context, spec).project
     val root = result.rootEditor
     root.rootState = ctx.metaManager.checkpointRepo.checkpointState(
-      root.rootState, viewer.checkpoint)
+      root.rootState, viewer.rootCheckpoint)
     viewer = result.viewer
   }
 
@@ -267,7 +267,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 class GroovyWorkflowProject(
     ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
   protected def viewer = rootProject.offspringEditor(path).viewer
-  override def applyOperation(id: String, params: Map[String, String]): Unit = {
+  private[groovy] override def applyOperation(id: String, params: Map[String, String]): Unit = {
     val opctx = Operation.Context(ctx.user, viewer)
     // Execute the operation.
     val op = ctx.ops.appliedOp(opctx, FEOperationSpec(id, params))
