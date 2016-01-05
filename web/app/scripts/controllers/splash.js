@@ -7,6 +7,12 @@ angular.module('biggraph')
     $scope.$watch('name', function(name) {
       if (name !== undefined) {
         $location.url('/project/' + name);
+        var lastIndex = name.lastIndexOf('/');
+        if (lastIndex > -1) {
+          window.localStorage.setItem('path', name.slice(0, lastIndex));
+        } else {
+          window.localStorage.removeItem('path');
+        }
       }
     });
   });
