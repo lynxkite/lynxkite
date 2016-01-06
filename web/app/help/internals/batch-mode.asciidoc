@@ -36,10 +36,9 @@ namespace.
 The script can interact with LynxKite through the `lynx` object that is injected into its
 namespace.
 
- - `GroovyProject **lynx.project**(String name)` will return the given project,
-   creating it if it does not yet exist.
- - `GroovyProject **lynx.newProject**(String name)` will return the given project,
-   resetting it to an empty state if it has already existed.
+ - `GroovyProject **lynx.loadProject**(String name)` loads an existing project. Use
+   `GroovyProject.saveAs()` if you want to save your changes.
+ - `GroovyProject **lynx.newProject**()` creates a new project.
  - `DataFrameReader **lynx.sqlContext**` provides access to Spark SQL.
    See the
    http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
@@ -67,14 +66,17 @@ to run the operations in interactive mode, enter the <<project-history, history 
 <<saving-a-workflow, workflow editor>> within. The correct Groovy code can then be copied from the
 workflow editor.
 
-Workflows can be run with the `GroovyProject.runWorkflow()` method. Workflows are internally
-identified by their creation timestamps in addition to their names. The first argument of
-`runWorkflow` is the workflow name either with or without the timestamp. If the timestamp is
-omitted, the latest version of the workflow is used. The workflow parameters can be passed as
-named arguments to `runWorkflow`, same as other operations.
+Additional methods of `GroovyProject` are:
 
-`GroovyProject` also has a method `saveAs`. You can use this to save a project by a new name. It
-returns a `GroovyProject` object pointing to the project with the new name.
+ - Workflows can be run with the `**runWorkflow**()` method. Workflows are internally
+   identified by their creation timestamps in addition to their names. The first argument of
+   `runWorkflow` is the workflow name either with or without the timestamp. If the timestamp is
+   omitted, the latest version of the workflow is used. The workflow parameters can be passed as
+   named arguments to `runWorkflow`, same as other operations.
+ - `**saveAs**(String name)` can be used to save a project into LynxKite. Until `saveAs` is called,
+   the persistent state in LynxKite is not affected by the batch script.
+ - `**copy**()` returns a copy of the `GroovyProject` object that can be manipulated independently
+   from the original.
 
 ### Full example
 
@@ -84,7 +86,7 @@ PageRank to another CSV, and prints the number of vertices and the time the whol
 ----
 start_time = System.currentTimeMillis()
 // Import input, calculate PageRank, export output.
-project = lynx.project('Batch PageRank')
+project = lynx.newProject()
 project.importVerticesAndEdgesFromSingleCSVFileset(
   files: params['input'],
   header: '<read first line>',
@@ -119,6 +121,9 @@ df.show()
 df.write().format('com.databricks.spark.csv').option('header', 'true').save('males.csv')
 df.write().format('parquet').save('males.parquet')
 df.write().format('json').save('males.json')
+
+// Save the project into LynxKite so it can be explored via the web interface.
+project.saveAs('Batch PageRank')
 ----
 
 When running the script we must use <<prefixed-paths>> for the file names. For example:
