@@ -2,7 +2,7 @@
 //  https://drive.google.com/a/lynxanalytics.com/file/d/0B4_SBhzYAJK8VnJqLUNJdnoyalk/view?usp=sharing
 
 // ========= Preparing the LinkedIn graph ==================
-linkedin = lynx.newProject('linkedin for FP')
+linkedin = lynx.newProject()
 
 // Import linkedin vertices
 linkedin.importVerticesFromCSVFiles(
@@ -91,7 +91,7 @@ fb.addReversedEdges()
 fb.copyVertexAttribute(from: 'fb_name', to: 'merge_key_name')
 
 // ================== Take the union, merge and fingerprint =======================
-union = linkedin.saveAs('linkedin facebook FP')
+union = linkedin.copy()
 union.unionWithAnotherProject(
   'id-attr': 'new_id',
   other: fb.rootCheckpointWithTitle('facebook for FP'))
@@ -155,7 +155,7 @@ println "Test set size: $testSetSize"
 
 
 // Import linkedin as segmentation, connect by attribute, fingerprint.
-segmentationFP = fb.saveAs('linkedin facebook segmentation FP')
+segmentationFP = fb.copy()
 
 // Import as segmentation, connect based on merge key.
 segmentationFP.importProjectAsSegmentation(
@@ -266,8 +266,16 @@ def drawPR(pr) {
   println "Maximal fScore: $maxFScore"
 }
 
-prSeg = segmentationFP.saveAs('linkedin facebook segmentation PR curve')
+prSeg = segmentationFP.copy()
 drawPR(prSeg)
 
-prAttr = union.saveAs('linkedin facebook PR curve')
+prAttr = union.copy()
 drawPR(prAttr)
+
+// Save projects for manual inspection.
+linkedin.saveAs('linkedin for FP')
+fp.saveAs('facebook for FP')
+union.saveAs('linkedin facebook FP')
+segmentationFP.saveAs('linkedin facebook segmentation FP')
+prSeg.saveAs('linkedin facebook segmentation PR curve')
+prAttr.saveAs('linkedin facebook PR curve')

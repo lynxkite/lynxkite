@@ -1,5 +1,5 @@
 // A benchmark script for creating histograms (with focus on attribute caching).
-project = lynx.newProject('random stuff')
+project = lynx.newProject()
 project.newVertexSet(size: 4000000)
 project.addRandomVertexAttribute(name: 'random', dist: 'Standard Normal', seed: 13)
 

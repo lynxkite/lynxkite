@@ -22,19 +22,34 @@ object DefaultSource {
 }
 class DefaultSource extends sql.sources.RelationProvider {
   def createRelation(sqlContext: sql.SQLContext, parameters: Map[String, String]) = {
-    val path = parameters("path")
     val env = DefaultSource.envs(parameters("environment"))
-    new ProjectRelation(env, sqlContext, path)
+    val path = parameters.getOrElse("path", "")
+    val checkpoint = parameters.getOrElse("checkpoint", "")
+    assert(
+      path.isEmpty || checkpoint.isEmpty,
+      s"You cannot define both a path ($path) and a checkpoint ($checkpoint).")
+    val project = {
+      implicit val metaManager = env.metaGraphManager
+      if (path.nonEmpty) {
+        controllers.ProjectFrame.fromName(path).viewer
+      } else {
+        val cp = env.metaGraphManager.checkpointRepo.readCheckpoint(checkpoint)
+        new controllers.RootProjectViewer(cp)
+      }
+    }
+    new ProjectRelation(env, sqlContext, project)
   }
 }
 
 // TODO: Only vertex attributes are exposed at the moment.
-class ProjectRelation(env: BigGraphEnvironment, val sqlContext: sql.SQLContext, projectName: String)
+class ProjectRelation(
+  env: BigGraphEnvironment,
+  val sqlContext: sql.SQLContext,
+  project: controllers.ProjectViewer)
     extends sql.sources.BaseRelation with sql.sources.TableScan with sql.sources.PrunedScan {
 
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
-  val project = controllers.ProjectFrame.fromName(projectName).viewer
 
   // BaseRelation
   val schema: sql.types.StructType = {
