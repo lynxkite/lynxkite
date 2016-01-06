@@ -4,54 +4,11 @@ var fw = (function UIDescription() {
   var states = {};
   var statePreservingTests = {};
   var hasChild = {};
+  var hanSoloMode = false;
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
   browser.driver.manage().window().setSize(1100, 600);
-
-  // If any tests are tagged with "solo", disables all other tests.
-  function handleSolo() {
-    // Adds "solo" to itself and all ancestors of a state.
-    function soloAncestors(s) {
-      s.tags.push('solo');
-      if (s.parent !== undefined) {
-        soloAncestors(states[s.parent]);
-      }
-    }
-
-    var i, j, state, tests;
-    var haveSolo = false;
-    var stateNames = Object.keys(states);
-    for (i = 0; i < stateNames.length; ++i) {
-      state = states[stateNames[i]];
-      if (state.tags.indexOf('solo') !== -1) {
-        haveSolo = true;
-        soloAncestors(state);
-      }
-      tests = statePreservingTests[stateNames[i]] || [];
-      for (j = 0; j < tests.length; ++j) {
-        if (tests[j].tags.indexOf('solo') !== -1) {
-          haveSolo = true;
-          soloAncestors(state);
-        }
-      }
-    }
-
-    if (haveSolo) {
-      for (i = 0; i < stateNames.length; ++i) {
-        state = states[stateNames[i]];
-        if (state.tags.indexOf('solo') === -1) {
-          state.tags.push('disabled');
-        }
-        tests = statePreservingTests[stateNames[i]] || [];
-        for (j = 0; j < tests.length; ++j) {
-          if (tests[j].tags.indexOf('solo') === -1) {
-            tests[j].tags.push('disabled');
-          }
-        }
-      }
-    }
-  }
 
   return {
     transitionTest: function(
@@ -60,14 +17,18 @@ var fw = (function UIDescription() {
       transitionFunction,  // JS function that goes to this state from prev state.
       checks,  // Tests confirming we are indeed in this state. Should be very fast stuff only,
                // like looking at the DOM.
-      tags) {  // Space-separated list of tags to associate with the test.
+      hanSolo) {  // Set to true if you want to run only this test.
+      if (hanSolo) {
+        hanSoloMode = true;
+      }
       var testingDone = false;
+      var implicitlyReached = false;
       if (previousStateName !== undefined) {
         hasChild[previousStateName] = true;
       }
 
       function runStatePreservingTest(currentTest) {
-        if (currentTest.tags.indexOf('disabled') !== -1) {
+        if (hanSoloMode && !currentTest.hanSolo) {
           return;
         }
         it('-- ' + currentTest.name, function() {
@@ -78,14 +39,33 @@ var fw = (function UIDescription() {
       }
 
       states[stateName] = {
-        tags: tags ? tags.split(' ') : [],
         parent: previousStateName,
-        reachAndTest: function() {
-          if (this.tags.indexOf('disabled') !== -1) {
-            return;
+        isHanSolo: function() {
+          if (hanSolo) return true;
+          var tests = statePreservingTests[stateName] || [];
+          for (var j = 0; j < tests.length; ++j) {
+            if (tests[j].hanSolo) return true;
           }
+          return false;
+        },
+        needsExplicitReach: function() {
+          if (implicitlyReached) return false;
+          return !hanSoloMode || this.isHanSolo();
+        },
+        reportReach: function() {
           if (previousStateName !== undefined) {
-            states[previousStateName].reachAndTest();
+            states[previousStateName].reportImplicitReach();
+          }
+        },
+        reportImplicitReach: function() {
+          implicitlyReached = true;
+          if (previousStateName !== undefined) {
+            states[previousStateName].reportImplicitReach();
+          }
+        },
+        reachAndTest: function() {
+          if (previousStateName !== undefined) {
+            states[previousStateName].reachAndTest(true);
           }
           describe(stateName, function() {
             it('can be reached', function() {
@@ -105,14 +85,17 @@ var fw = (function UIDescription() {
     },
 
     // These tests need to preserve the UI state or restore it when they are finished.
-    statePreservingTest: function(stateToRunAt, name, body, tags) {
+    statePreservingTest: function(stateToRunAt, name, body, hanSolo) {
+      if (hanSolo) {
+        hanSoloMode = true;
+      }
       if (statePreservingTests[stateToRunAt] === undefined) {
         statePreservingTests[stateToRunAt] = [];
       }
       statePreservingTests[stateToRunAt].push({
         name: name,
         runTest: body,
-        tags: tags ? tags.split(' ') : [],
+        hanSolo: hanSolo,
       });
     },
 
@@ -126,13 +109,24 @@ var fw = (function UIDescription() {
           }
         });
       });
-      handleSolo();
+
+      // We don't want to reach any state more times than necessary. That is, if a state is
+      // reached because we had to reach one of its offsprings, then we won't need to explicitly
+      // reach that state again. To achieve this we mark all ancestors of states that we need to
+      // reach and don't try to reach them explicitly in the following loop.
+      for (var i = 0; i < stateNames.length; i++) {
+        var stateName = stateNames[i];
+        var state = states[stateName];
+        if (state.needsExplicitReach()) {
+          state.reportReach(state.parent);
+        }
+      }
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
         // We only need to directly trigger testing for leaf nodes of the dependency trees as
         // states with children will be triggered by their children.
-        if (!hasChild[stateName]) {
+        if (state.needsExplicitReach()) {
           state.reachAndTest();
         }
       }
