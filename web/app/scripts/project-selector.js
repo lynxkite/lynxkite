@@ -10,7 +10,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
-      scope.path = (scope.path || window.localStorage.getItem('last_selector_path')) || '';
+      scope.path = scope.path || window.localStorage.getItem('last_selector_path') || '';
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
@@ -52,6 +52,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
               query: scope.searchQuery,
             });
         }
+        window.localStorage.setItem('last_selector_path', scope.path);
       }
 
       scope.$watch('path', refresh);
@@ -91,9 +92,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       }
       scope.$on('$destroy', abandonScalars);
 
-      scope.saveLastSelectorPath = function() {
-        window.localStorage.setItem('last_selector_path', scope.path);
-      };
       scope.createProject = function() {
         scope.newProject.sending = true;
         var name = scope.newProject.name;
@@ -126,7 +124,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             scope.path = name;
             scope.searchQuery = '';
             scope.newDirectory = {};
-            scope.saveLastSelectorPath();
           }).finally(function() {
             scope.newDirectory.sending = false;
           });
@@ -161,13 +158,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         if (event.originalEvent.alreadyHandled) { return; }
         scope.path = d;
         scope.searchQuery = '';
-        scope.saveLastSelectorPath();
       };
 
       scope.popDirectory = function() {
         scope.path = scope.path.split('/').slice(0, -1).join('/');
         scope.searchQuery = '';
-        scope.saveLastSelectorPath();
       };
 
       scope.pathElements = function() {
