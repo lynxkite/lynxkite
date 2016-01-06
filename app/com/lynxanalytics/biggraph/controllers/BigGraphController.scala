@@ -165,7 +165,7 @@ case class OperationCategory(
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
-case class CreateDirectoryRequest(name: String)
+case class CreateDirectoryRequest(name: String, privacy: String)
 case class DiscardDirectoryRequest(name: String)
 
 // A request for the execution of a FE operation on a specific project. The project might be
@@ -299,10 +299,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(!ProjectDirectory.fromName(name).exists, s"Project $name already exists.")
   }
 
-  def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
-    assertNameNotExists(request.name)
-    val p = ProjectFrame.fromName(request.name)
-    request.privacy match {
+  private def setupACL(privacy: String, user: serving.User, p: ProjectDirectory): Unit = {
+    privacy match {
       case "private" =>
         p.writeACL = user.email
         p.readACL = user.email
@@ -313,6 +311,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
         p.writeACL = "*"
         p.readACL = "*"
     }
+  }
+
+  def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
+    assertNameNotExists(request.name)
+    val p = ProjectFrame.fromName(request.name)
+    setupACL(request.privacy, user, p)
     p.initialize
     if (request.notes != "") {
       ops.apply(user, p.subproject, Operations.addNotesOperation(request.notes))
@@ -322,8 +326,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
     val d = ProjectDirectory.fromName(request.name)
-    d.readACL = "*"
-    d.writeACL = "*"
+    setupACL(request.privacy, user, d)
   }
 
   def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
