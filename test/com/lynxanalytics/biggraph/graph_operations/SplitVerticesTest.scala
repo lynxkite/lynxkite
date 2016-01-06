@@ -37,7 +37,7 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSDouble(
       JavaScript(expr),
-      Seq("name"), Seq())
+      Seq("name"))
     val derived = op(
       op.attrs,
       VertexAttributeToJSValue.seq(g.name.entity)).result.attr

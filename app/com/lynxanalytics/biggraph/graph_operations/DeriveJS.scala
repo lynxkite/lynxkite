@@ -19,15 +19,15 @@ object DeriveJS {
   }
   def negative(x: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
     import Scripting._
-    val op = DeriveJSDouble(JavaScript("-x"), Seq("x"), Seq())
+    val op = DeriveJSDouble(JavaScript("-x"), Seq("x"))
     op(op.attrs, Seq(x).map(VertexAttributeToJSValue.run[Double])).result.attr
   }
 
   def deriveFromAttributes[T: TypeTag](
     exprString: String,
     namedAttributes: Seq[(String, Attribute[_])],
-    namedScalars: Seq[(String, Scalar[_])],
-    vertexSet: VertexSet)(implicit manager: MetaGraphManager): Output[T] = {
+    vertexSet: VertexSet,
+    namedScalars: Seq[(String, Scalar[_])] = Seq())(implicit manager: MetaGraphManager): Output[T] = {
 
     val js = JavaScript(exprString)
 
@@ -116,7 +116,7 @@ object DeriveJSString extends OpFromJson {
 case class DeriveJSString(
   expr: JavaScript,
   attrNames: Seq[String],
-  scalarNames: Seq[String])
+  scalarNames: Seq[String] = Seq())
     extends DeriveJS[String](expr, attrNames, scalarNames) {
   @transient lazy val resultTypeTag = typeTag[String]
   override def toJson = Json.obj(
@@ -138,7 +138,7 @@ object DeriveJSDouble extends OpFromJson {
 }
 case class DeriveJSDouble(
   expr: JavaScript,
-  attrNames: Seq[String], scalarNames: Seq[String])
+  attrNames: Seq[String], scalarNames: Seq[String] = Seq())
     extends DeriveJS[Double](expr, attrNames, scalarNames) {
   @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj(

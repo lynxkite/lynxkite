@@ -12,7 +12,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSDouble(
       JavaScript(expr),
-      Seq("age", "name"), Seq())
+      Seq("age", "name"))
     val derived = op(
       op.attrs,
       VertexAttributeToJSValue.seq(g.age.entity, g.name.entity)).result.attr
@@ -23,8 +23,8 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val expr = "global$greeting"
     val g = ExampleGraph()().result
     val op = DeriveJSString(
-      JavaScript(expr), Seq(),
-      Seq("global$greeting"))
+      JavaScript(expr), Seq() /* ,
+      Seq("global$greeting") */ )
     // TODO
   }
 
@@ -33,7 +33,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSString(
       JavaScript(expr),
-      Seq(), Seq())
+      Seq())
     val derived = op(op.vs, g.vertices)(op.attrs, Seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> "ab", 1 -> "ab", 2 -> "ab", 3 -> "ab"))
   }
@@ -43,7 +43,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSString(
       JavaScript(expr),
-      Seq("gender", "name"), Seq())
+      Seq("gender", "name"))
     val derived = op(
       op.attrs,
       VertexAttributeToJSValue.seq(g.gender.entity, g.name.entity)).result.attr
@@ -56,7 +56,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSDouble(
       JavaScript(expr),
-      Seq(), Seq())
+      Seq())
     val derived = op(op.vs, g.vertices.entity)(
       op.attrs,
       Seq()).result.attr
@@ -66,7 +66,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("JS integers become Scala doubles") {
     val g = ExampleGraph()().result
 
-    val derived = DeriveJS.deriveFromAttributes[Double]("2", Seq(), Seq(), g.vertices).attr
+    val derived = DeriveJS.deriveFromAttributes[Double]("2", Seq(), g.vertices).attr
     assert(derived.rdd.collect.toSet == Set(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 2.0))
   }
 
@@ -75,7 +75,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSString(
       JavaScript(expr),
-      Seq(), Seq())
+      Seq())
     val derived = op(op.vs, g.edges.idSet)(
       op.attrs,
       Seq()).result.attr
@@ -86,7 +86,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     intercept[AssertionError] {
       DeriveJS.deriveFromAttributes[Double](
-        "location ? 1.0 : 2.0", Seq("location" -> g.location), Seq(), g.vertices).attr
+        "location ? 1.0 : 2.0", Seq("location" -> g.location), g.vertices).attr
     }
   }
 
@@ -100,14 +100,14 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("Utility methods") {
     val g = ExampleGraph()().result
     val nameHash = DeriveJS.deriveFromAttributes[Double](
-      "util.hash(name)", Seq("name" -> g.name), Seq(), g.vertices).attr
+      "util.hash(name)", Seq("name" -> g.name), g.vertices).attr
     assert(nameHash.rdd.collect.toSeq.sorted ==
       Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
         2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
 
     val rndSum = DeriveJS.deriveFromAttributes[Double](
       "var rnd = util.rnd(income); rnd.nextDouble() + rnd.nextDouble();",
-      Seq("income" -> g.income), Seq(),
+      Seq("income" -> g.income),
       g.vertices).attr
     def rndSumScala(income: Double) = {
       val rnd = new scala.util.Random(income.toLong)

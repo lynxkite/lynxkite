@@ -24,7 +24,6 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       DeriveJS.deriveFromAttributes[String](
         s"(personAttr * ${numPersons}).toFixed()",
         Seq("personAttr" -> personAttr),
-        Seq(),
         vs1).attr
     }
     val segmentation1 = {

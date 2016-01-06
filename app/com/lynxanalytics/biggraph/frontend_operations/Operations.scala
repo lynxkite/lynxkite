@@ -1106,7 +1106,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val normalizedDispersion = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
-          Seq("disp", "emb"), Seq())
+          Seq("disp", "emb"))
         op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(
           dispersion, embeddedness)).result.attr.entity
       }
@@ -1352,9 +1352,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         .toIndexedSeq
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, namedScalars, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, namedScalars, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
       }
       project.newVertexAttribute(params("output"), result.attr, expr + help)
     }
@@ -1400,9 +1400,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, namedScalars, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, namedScalars, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
       }
       project.edgeAttributes(params("output")) = result.attr
     }
@@ -1538,7 +1538,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val sizeSquare: Attribute[Double] = {
       val op = graph_operations.DeriveJSDouble(
         JavaScript("size * size"),
-        Seq("size"), Seq())
+        Seq("size"))
       op(
         op.attrs,
         graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
@@ -2671,7 +2671,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
       var timeOfDefinition = {
-        val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"), Seq())
+        val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
         op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
       }
 
@@ -2703,7 +2703,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 defined >= ${params("min_num_defined")}
                 ? deviation
                 : undefined"""),
-            Seq("deviation", "ids", "defined"), Seq())
+            Seq("deviation", "ids", "defined"))
           op(
             op.attrs,
             graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
@@ -2728,7 +2728,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
         val error = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript("Math.abs(test - train)"), Seq("test", "train"), Seq())
+            JavaScript("Math.abs(test - train)"), Seq("test", "train"))
           val mae = op(
             op.attrs,
             graph_operations.VertexAttributeToJSValue.seq(
@@ -2747,7 +2747,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         timeOfDefinition = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript(i.toString), Seq("attr"), Seq())
+            JavaScript(i.toString), Seq("attr"))
           val newDefinitions = op(
             op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
           unifyAttributeT(timeOfDefinition, newDefinitions)
