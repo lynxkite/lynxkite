@@ -102,7 +102,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
 
 // This is the interface that is visible from trustedShell as "lynx".
 class GroovyInterface(ctx: GroovyContext) {
-  def project(name: String): GroovyProject = {
+  def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
     assert(project.exists, s"Project '$name' not found.")
