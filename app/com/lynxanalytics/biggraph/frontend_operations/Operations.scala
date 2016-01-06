@@ -2776,6 +2776,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       } ++
         project.segmentations.toList.map {
           seg =>
+            import EntityProgressManager.dummy
             Param(
               s"filterva-${seg.viewer.equivalentUIAttribute.title}",
               seg.segmentationName,

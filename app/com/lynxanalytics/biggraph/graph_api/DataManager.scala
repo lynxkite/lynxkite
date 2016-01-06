@@ -17,6 +17,19 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api.{ SafeFuture => Future }
 
+object EntityProgressManager {
+  implicit val dummy = new EntityProgressManager {
+    def computeProgress(entity: MetaGraphEntity) = 0.0
+  }
+}
+
+trait EntityProgressManager {
+  // Returns an indication of whether the entity has already been computed.
+  // 0 means it is not computed. 1 means it is computed. Anything in between indicates that the
+  // computation is in progress.
+  def computeProgress(entity: MetaGraphEntity): Double
+}
+
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
@@ -49,7 +62,7 @@ object DataManager {
 
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
-                  val ephemeralPath: Option[HadoopFile] = None) {
+                  val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
     DataManager.limitedExecutionContext(DataManager.maxParallelSparkStages)
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
@@ -228,11 +241,10 @@ class DataManager(sc: spark.SparkContext,
     instanceOutputCache(gUID)
   }
 
-  // Returns an indication of whether the entity has already been computed.
-  // 0 means it is not computed. 1 means it is computed. 0.5 is used to indicate that the
-  // computation is in progress. (Of course it would be great to be more specific in the future.)
-  def computeProgress(entity: MetaGraphEntity): Double = {
+  override def computeProgress(entity: MetaGraphEntity): Double = {
     val guid = entity.gUID
+    // It would be great if we could be more granular, but for now we just return 0.5 if the
+    // computation is running.
     if (entityCache.contains(guid) && !entityCache(guid).isCompleted) 0.5
     else if (hasEntity(entity) || hasEntityOnDisk(entity)) 1.0
     else 0.0
