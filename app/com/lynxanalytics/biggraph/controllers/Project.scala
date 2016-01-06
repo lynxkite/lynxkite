@@ -131,7 +131,7 @@ sealed trait ProjectViewer {
   def asSegmentation: SegmentationViewer
 
   // Methods for conversion to FE objects.
-  private def feScalar(name: String): Option[FEAttribute] = {
+  private def feScalar(name: String)(implicit epm: EntityProgressManager): Option[FEAttribute] = {
     if (scalars.contains(name)) {
       Some(ProjectViewer.feEntity(scalars(name), name, getScalarNote(name)))
     } else {
@@ -139,7 +139,7 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String): FEProjectListElement = {
+  def toListElementFE(projectName: String)(implicit epm: EntityProgressManager): FEProjectListElement = {
     FEProjectListElement(
       projectName,
       state.notes,
@@ -149,7 +149,7 @@ sealed trait ProjectViewer {
 
   // Returns the FE attribute representing the seq of members for
   // each segment in a segmentation. None in root projects.
-  protected def getFEMembers: Option[FEAttribute]
+  protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute]
 
   def sortedSegmentations: List[SegmentationViewer] =
     segmentationMap.toList.sortBy(_._1).map(_._2)
@@ -182,7 +182,8 @@ sealed trait ProjectViewer {
   }
 
   def allOffspringFESegmentations(
-    rootName: String, rootRelativePath: String = ""): List[FESegmentation] = {
+    rootName: String, rootRelativePath: String = "")(
+      implicit epm: EntityProgressManager): List[FESegmentation] = {
     sortedSegmentations.flatMap { segmentation =>
       segmentation.toFESegmentation(rootName, rootRelativePath) +:
         segmentation.allOffspringFESegmentations(
@@ -195,8 +196,7 @@ object ProjectViewer {
     e: TypedEntity[T],
     name: String,
     note: String,
-    isInternal: Boolean = false)(implicit dataManager: DataManager = null): FEAttribute = {
-    val dm = Option(dataManager)
+    isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -210,8 +210,7 @@ object ProjectViewer {
       canFilter,
       isNumeric,
       isInternal,
-      // The compute progress is only reported if we are in an environment that has a DataManager.
-      dm.map(_.computeProgress(e)).getOrElse(0.0))
+      epm.computeProgress(e))
   }
 }
 
@@ -225,7 +224,7 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   def asSegmentation: SegmentationViewer = ???
   def offspringPath: Seq[String] = Nil
 
-  protected lazy val getFEMembers: Option[FEAttribute] = None
+  protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -259,13 +258,15 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr
   }
 
-  override protected lazy val getFEMembers: Option[FEAttribute] =
+  override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
     Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
 
-  lazy val equivalentUIAttribute =
+  def equivalentUIAttribute()(implicit epm: EntityProgressManager): FEAttribute =
     ProjectViewer.feEntity(belongsToAttribute, s"segmentation[$segmentationName]", note = "")
 
-  def toFESegmentation(rootName: String, rootRelativePath: String = ""): FESegmentation = {
+  def toFESegmentation(
+    rootName: String,
+    rootRelativePath: String = "")(implicit epm: EntityProgressManager): FESegmentation = {
     val bt =
       if (belongsTo == null) null
       else belongsTo.gUID.toString
@@ -779,7 +780,7 @@ class ProjectFrame(path: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
 
-  def toListElementFE = {
+  def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
       viewer.toListElementFE(projectName)
     } catch {

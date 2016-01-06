@@ -252,6 +252,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val (dirs, projects) = dir.listDirectoriesAndProjects
     val visibleDirs = dirs.filter(_.readAllowedFrom(user))
     val visible = projects.filter(_.readAllowedFrom(user))
+    implicit val dataManager = env.dataManager
     ProjectList(
       request.path,
       visibleDirs.map(_.path.toString).toList,
@@ -278,6 +279,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         terms.forall(term => baseName.contains(term) || notes.contains(term))
       }
 
+    implicit val dataManager = env.dataManager
     ProjectList(
       request.basePath,
       dirs.map(_.path.toString).toList,
@@ -470,6 +472,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val opCategoriesBefore = ops.categories(context, includeDeprecated = true)
+    import EntityProgressManager.dummy
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
