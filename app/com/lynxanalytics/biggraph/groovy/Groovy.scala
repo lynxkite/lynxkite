@@ -209,13 +209,12 @@ class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
     FEOption.titledCheckpoint(viewer.rootCheckpoint, title).id
 
   private[groovy] override def applyOperation(id: String, params: Map[String, String]): Unit = {
+    import ctx.metaManager
     val context = Operation.Context(ctx.user, viewer)
     val spec = FEOperationSpec(id, params)
-    val result = ctx.ops.appliedOp(context, spec).project
-    val root = result.rootEditor
-    root.rootState = ctx.metaManager.checkpointRepo.checkpointState(
-      root.rootState, viewer.rootCheckpoint)
-    viewer = result.viewer
+    val newRootState = ctx.ops.applyAndCheckpoint(context, spec)
+    val newRootViewer = new RootProjectViewer(newRootState)
+    viewer = newRootViewer.offspringViewer(viewer.offspringPath)
   }
 
   protected def getScalars: Map[String, GroovyScalar] = {
