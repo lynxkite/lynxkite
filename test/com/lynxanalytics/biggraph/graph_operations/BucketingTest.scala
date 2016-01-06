@@ -41,7 +41,7 @@ class BucketingTest extends FunSuite with TestGraphOp {
     val ageMinus20 = {
       val op = DeriveJSDouble(
         JavaScript("age - 20"),
-        Seq("age"), Seq())
+        Seq("age"))
       op(
         op.attrs,
         VertexAttributeToJSValue.seq(g.age)).result.attr
@@ -79,7 +79,7 @@ class BucketingTest extends FunSuite with TestGraphOp {
     val ageTimes1_5 = {
       val op = DeriveJSDouble(
         JavaScript("age * 1.5"),
-        Seq("age"), Seq())
+        Seq("age"))
       op(
         op.attrs,
         VertexAttributeToJSValue.seq(g.age)).result.attr
@@ -104,7 +104,7 @@ class BucketingTest extends FunSuite with TestGraphOp {
     val ageTimes1_5 = {
       val op = DeriveJSDouble(
         JavaScript("age * 1.5"),
-        Seq("age"), Seq())
+        Seq("age"))
       op(
         op.attrs,
         VertexAttributeToJSValue.seq(g.age)).result.attr
