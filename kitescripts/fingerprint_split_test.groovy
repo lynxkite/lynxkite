@@ -122,9 +122,15 @@ split.vertexAttributeToDouble(
   attr: 'index'
 )
 
-// We should not let [d-] people from calling [-d] people and vice versa.
-// So, for [d-], we set split to 2.0 and index to 0.
-// For [-d], we set split to 2.0 and index to 1.
+// Some notation:
+// [d-] A vertex whose first attribute is defined, but the second one isn't.
+// [-d] A vertex whose second attribute is defined, but the first one isn't.
+// [--] A vertex whose both attributes are undefined.
+// [dd] A vertex whose both attributes are defined.
+//
+// We should not let [-d] people call [d-] people and vice versa.
+// So, for [-d], we set split to 2.0 and index to 0.
+// For [d-], we set split to 2.0 and index to 1.
 // This will have the effect that such calls will have
 // a splitCalls of 0; and will get deleted subsequently.
 split.derivedVertexAttribute(
@@ -144,7 +150,7 @@ split.derivedVertexAttribute(
 )
 
 // Peripheral vertices have both their attributes undefined to stop them from making it into
-// the candidate set.
+// the candidate set. (We'll turn them to [--].)
 
 split.derivedVertexAttribute(
   output: 'attr1',
