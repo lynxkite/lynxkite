@@ -140,7 +140,7 @@ object MetaRepositoryManager {
           supported match {
             case Some(supported) =>
               s"The repository data in ${newest.dir} is newer than the current version." +
-                s" The first supported version is in ${supported.dir}."
+                s" The most recent supported version is in ${supported.dir}."
             case None =>
               s"All repository data in $repo has a newer version than the current version."
           })
