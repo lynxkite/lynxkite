@@ -91,7 +91,7 @@ function splitCalls() {
 splitCalls();
 """
 
-split=lynx.newProject('split test for FP')
+split = lynx.newProject()
 split.importVerticesFromCSVFiles(
   files: 'DATA$/exports/' + input + '_vertices/data/part*',
   header: '"id","peripheral"',
