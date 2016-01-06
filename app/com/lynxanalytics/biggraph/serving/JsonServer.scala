@@ -443,7 +443,7 @@ println("${help}")
   def maybeStart() = {
     replServer.foreach { s =>
       s.start()
-      log.info("Ammonite sshd started.")
+      log.info(s"Ammonite sshd started on port ${s.port}.")
     }
   }
 
