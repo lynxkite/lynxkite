@@ -88,11 +88,7 @@ class JsonServer extends mvc.Controller {
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
     action(parse.anyContent) { (user, request) =>
       jsonQuery(user, request) { (user: User, i: I) =>
-        try {
-          Ok(json.Json.toJson(handler(user, i)))
-        } catch {
-          case flying: FlyingResult => flying.result
-        }
+        Ok(json.Json.toJson(handler(user, i)))
       }
     }
   }
@@ -101,11 +97,7 @@ class JsonServer extends mvc.Controller {
   def jsonPublicGet[O: json.Writes](handler: => O) = {
     action(parse.anyContent, withAuth = false) { (user, request) =>
       log.info(s"GET ${request.path}")
-      try {
-        Ok(json.Json.toJson(handler))
-      } catch {
-        case flying: FlyingResult => flying.result
-      }
+      Ok(json.Json.toJson(handler))
     }
   }
 
@@ -454,6 +446,3 @@ println("${help}")
     }
   }
 }
-
-// Throw FlyingResult anywhere to generate non-200 HTTP responses.
-class FlyingResult(val result: mvc.Result) extends Exception(result.toString)

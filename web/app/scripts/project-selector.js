@@ -58,8 +58,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.$watch('path', refresh);
       scope.$watch('searchQuery', refresh);
       function getScalar(title, scalar) {
+        if (scalar.computeProgress !== 1.0) {
+          return NOT_CALCULATED;
+        }
         var res = util.get('/ajax/scalarValue', {
-          scalarId: scalar.id, calculate: false
+          scalarId: scalar.id
         });
         res.details = { project: title, scalar: scalar };
         return res;
@@ -67,6 +70,13 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       // Fake scalar for projects with no vertices/edges.
       var NO = { string: 'no', $abandon: function() {} };
+
+      // Placeholder when the scalar has not been calculated yet.
+      var NOT_CALCULATED = {
+        $statusCode: 404,
+        $error: 'Not calculated yet',
+        $abandon: function() {},
+      };
 
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved || scope.data.$error) { return; }
