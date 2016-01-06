@@ -836,7 +836,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
 
   def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
     val opResult = appliedOp(context, opSpec).project.rootState
-    manager.checkpointRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
+    manager.checkpointRepo.checkpointState(opResult, context.project.rootCheckpoint)
   }
 
   def apply(

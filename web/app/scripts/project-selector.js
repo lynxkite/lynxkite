@@ -10,7 +10,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
-      scope.path = scope.path || '';
+      scope.path = scope.path || window.localStorage.getItem('last_selector_path') || '';
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
@@ -52,6 +52,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
               query: scope.searchQuery,
             });
         }
+        window.localStorage.setItem('last_selector_path', scope.path);
       }
 
       scope.$watch('path', refresh);

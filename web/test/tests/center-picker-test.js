@@ -6,7 +6,7 @@ var K = protractor.Key;
 
 module.exports = function(fw) {
   var centers = lib.left.side.element(by.id('centers'));
-  var pickButton = lib.left.side.element(by.id('pick-button'));
+  var pickButton = lib.left.side.element(by.id('pick-and-next-button'));
   var pickExpandButton = lib.left.side.element(by.id('pick-expand-button'));
   var pickOffset = lib.left.side.element(by.id('pick-offset'));
   var customFiltersToggleOnButton =
