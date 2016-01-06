@@ -1,3 +1,5 @@
+// Creates example data for a colocation problem.
+project = lynx.newProject()
 project.newVertexSet(size: '100000')
 project.addRandomVertexAttribute(dist: 'Standard Uniform', name: 'timeRnd', seed: '-699856464')
 project.addRandomVertexAttribute(dist: 'Standard Uniform', name: 'locationRnd', seed: '1065087263')
@@ -17,3 +19,4 @@ project.segmentations['golden'].discardLoopEdges()
 project.segmentations['golden'].addConstantEdgeAttribute(name: 'weight', type: 'Double', value: '1')
 project.segmentations['golden'].mergeParallelEdges('aggregate-cellSeg_id': '', 'aggregate-cellSeg_locationSeg_id': '', 'aggregate-cellSeg_locationSeg_locationId': '', 'aggregate-cellSeg_locationSeg_size': '', 'aggregate-cellSeg_size': '', 'aggregate-cellSeg_timeSeg_bottom': '', 'aggregate-cellSeg_timeSeg_id': '', 'aggregate-cellSeg_timeSeg_size': '', 'aggregate-cellSeg_timeSeg_top': '', 'aggregate-weight': 'sum')
 project.segmentations['golden'].filterByAttributes('filterea-weight_sum': '> 1', 'filterva-id': '', 'filterva-personId': '')
+project.saveAs('Colocation test data')

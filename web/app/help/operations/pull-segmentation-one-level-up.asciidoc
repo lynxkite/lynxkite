@@ -1,4 +1,4 @@
-### Copy segmentation one level up
+### Pull segmentation one level up
 
 Creates a copy of a segmentation in the parent of its parent segmentation.
 In the created segmentation, the set of segments will be the same as in the

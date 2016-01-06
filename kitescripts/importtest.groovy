@@ -1,5 +1,5 @@
 // A benchmark script for importing multiple vertex attributes.
-project = lynx.newProject('for export')
+project = lynx.newProject()
 size = 10000000
 project.newVertexSet(size: size)
 project.addGaussianVertexAttribute(name: 'random1', seed: 1)
@@ -13,7 +13,7 @@ project.exportVertexAttributesToFile(
 
 println "exported $size vertices"
 
-project = lynx.newProject('imported')
+project = lynx.newProject()
 project.importVerticesFromCSVFiles(
   files: 'UPLOAD$/importtest/data/part*',
   filter: '',

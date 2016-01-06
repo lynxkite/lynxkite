@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
 
-  test("Copy segmentation one level up") {
+  test("Pull segmentation one level up") {
     run("Import vertices from CSV files", Map(
       "files" -> ("OPERATIONSTEST$/copy-segmentation-one-level-up-vertices.csv"),
       "header" -> "num",
@@ -40,7 +40,7 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
       on = segmentation1)
     val segmentation2 = segmentation1.segmentation("segmentation2")
 
-    run("Copy segmentation one level up", on = segmentation2)
+    run("Pull segmentation one level up", on = segmentation2)
 
     assert(project.segmentationNames.contains("segmentation2"))
     val segmentation2Copy = project.segmentation("segmentation2")
