@@ -107,11 +107,12 @@ abstract class DeriveJS[T](
 }
 
 object DeriveJSString extends OpFromJson {
+  private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
   def fromJson(j: JsValue) =
     DeriveJSString(JavaScript(
       (j \ "expr").as[String]),
       (j \ "attrNames").as[Seq[String]],
-      (j \ "scalarNames").as[Seq[String]])
+      scalarNamesParameter.fromJson(j))
 }
 case class DeriveJSString(
   expr: JavaScript,
@@ -121,8 +122,8 @@ case class DeriveJSString(
   @transient lazy val resultTypeTag = typeTag[String]
   override def toJson = Json.obj(
     "expr" -> expr.expression,
-    "attrNames" -> attrNames,
-    "scalarNames" -> scalarNames)
+    "attrNames" -> attrNames) ++
+    DeriveJSString.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[String]
   def convert(v: Any): String = v match {
     case v: String => v
@@ -131,10 +132,12 @@ case class DeriveJSString(
 }
 
 object DeriveJSDouble extends OpFromJson {
+  private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
   def fromJson(j: JsValue) =
-    DeriveJSDouble(JavaScript((j \ "expr").as[String]),
+    DeriveJSDouble(JavaScript(
+      (j \ "expr").as[String]),
       (j \ "attrNames").as[Seq[String]],
-      (j \ "scalarNames").as[Seq[String]])
+      scalarNamesParameter.fromJson(j))
 }
 case class DeriveJSDouble(
   expr: JavaScript,
@@ -143,8 +146,8 @@ case class DeriveJSDouble(
   @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj(
     "expr" -> expr.expression,
-    "attrNames" -> attrNames,
-    "scalarNames" -> scalarNames)
+    "attrNames" -> attrNames) ++
+    DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[java.lang.Double]
   def convert(v: Any): Double = v match {
     case v: Double => {
