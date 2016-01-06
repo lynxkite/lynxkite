@@ -29,9 +29,9 @@ module.exports = function(fw) {
       lib.left.expectCurrentProjectIs('pear/apple');
       // We also kept the contents of the project.
       expect(lib.left.vertexCount()).toEqual(4);
-      expect(lib.left.edgeCount()).toEqual(3);
+      expect(lib.left.edgeCount()).toEqual(4);
       expect(lib.left.attributeCount()).toEqual(8);
-    }, 'solo');
+    });
 
   fw.statePreservingTest(
     'test-example project with example graph saved as apple',
