@@ -472,7 +472,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val opCategoriesBefore = ops.categories(context, includeDeprecated = true)
-    import EntityProgressManager.dummy
+    implicit val dm = env.dataManager
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.

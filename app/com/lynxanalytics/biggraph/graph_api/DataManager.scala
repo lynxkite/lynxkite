@@ -17,12 +17,6 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api.{ SafeFuture => Future }
 
-object EntityProgressManager {
-  implicit val dummy = new EntityProgressManager {
-    def computeProgress(entity: MetaGraphEntity) = 0.0
-  }
-}
-
 trait EntityProgressManager {
   // Returns an indication of whether the entity has already been computed.
   // 0 means it is not computed. 1 means it is computed. Anything in between indicates that the

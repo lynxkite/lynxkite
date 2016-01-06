@@ -2776,9 +2776,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       } ++
         project.segmentations.toList.map {
           seg =>
-            import EntityProgressManager.dummy
             Param(
-              s"filterva-${seg.viewer.equivalentUIAttribute.title}",
+              s"filterva-${seg.viewer.equivalentUIAttributeTitle}",
               seg.segmentationName,
               mandatory = false)
         } ++
@@ -2802,8 +2801,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val vertexFilters = params.collect {
         case (vaFilter(name), filter) if filter.nonEmpty =>
           // The filter may be for a segmentation's equivalent attribute or for a vertex attribute.
-          val segAttrs = project.segmentations.map(_.viewer.equivalentUIAttribute)
-          val segGUIDOpt = segAttrs.find(_.title == name).map(_.id)
+          val segs = project.segmentations.map(_.viewer)
+          val segGUIDOpt =
+            segs.find(_.equivalentUIAttributeTitle == name).map(_.belongsToAttribute.gUID)
           val gUID = segGUIDOpt.getOrElse(project.vertexAttributes(name).gUID)
           FEVertexAttributeFilter(gUID.toString, filter)
       }.toSeq

@@ -261,8 +261,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
     Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
 
+  val equivalentUIAttributeTitle = s"segmentation[$segmentationName]"
+
   def equivalentUIAttribute()(implicit epm: EntityProgressManager): FEAttribute =
-    ProjectViewer.feEntity(belongsToAttribute, s"segmentation[$segmentationName]", note = "")
+    ProjectViewer.feEntity(belongsToAttribute, equivalentUIAttributeTitle, note = "")
 
   def toFESegmentation(
     rootName: String,
