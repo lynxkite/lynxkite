@@ -66,8 +66,6 @@ include::copy-scalar.asciidoc[]
 
 include::copy-segmentation.asciidoc[]
 
-include::copy-segmentation-one-level-up.asciidoc[]
-
 include::copy-vertex-attribute.asciidoc[]
 
 include::copy-vertex-attributes-from-segmentation.asciidoc[]
@@ -197,6 +195,8 @@ include::no-operation.asciidoc[]
 include::pagerank.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
+
+include::pull-segmentation-one-level-up.asciidoc[]
 
 include::rename-edge-attribute.asciidoc[]
 

@@ -119,11 +119,13 @@ sealed trait ProjectViewer {
   def getElementNote(kind: ElementKind, name: String) =
     state.elementNotes.getOrElse(Map()).getOrElse(kind / name, "")
 
+  def offspringPath: Seq[String]
   def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
     else segmentation(path.head).offspringViewer(path.tail)
 
   def editor: ProjectEditor
+  def rootCheckpoint: String = rootState.checkpoint.get
 
   val isSegmentation: Boolean
   def asSegmentation: SegmentationViewer
@@ -214,6 +216,7 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
 
   val isSegmentation = false
   def asSegmentation: SegmentationViewer = ???
+  def offspringPath: Seq[String] = Nil
 
   protected lazy val getFEMembers: Option[FEAttribute] = None
 }
@@ -229,6 +232,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   override val isSegmentation = true
   override val asSegmentation = this
+  def offspringPath: Seq[String] = parent.offspringPath :+ segmentationName
 
   def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 
