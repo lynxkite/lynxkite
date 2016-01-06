@@ -5,7 +5,7 @@ angular.module('biggraph')
 .service('dropTooltipConfig', function() {
   this.enabled = true;
 })
-.directive('dropTooltip', ['dropTooltipConfig', function(dropTooltipConfig) {
+.directive('dropTooltip', function(dropTooltipConfig) {
   return {
     restrict: 'A',
     scope: {
@@ -67,4 +67,4 @@ angular.module('biggraph')
       });
     },
   };
-}]);
+});

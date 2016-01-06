@@ -41,7 +41,9 @@ furtherUndefinedAttr2Expr =
         ' > originalUniqueId) ? 1.0 : 0.0'
 
 
-split=lynx.newProject('split test for FP')
+
+split = lynx.newProject()
+
 split.importVerticesFromCSVFiles(
   files: 'DATA$/exports/' + input + '_vertices/data/part*',
   header: '"id","peripheral"',
