@@ -175,32 +175,34 @@ for (var i = 0; i < testFiles.length; ++i) {
 
 
 var startDate = (new Date()).toString();
+var screenshots = [];
+var screenshotDir = '/tmp/';
+var userVisiblePrefix = screenshotDir;
+try {
+  var userContentDir = process.env.HOME + '/userContent';
+  // This throws an exception is the fs entry does not exist at all.
+  var stats = fs.lstatSync(userContentDir);
+  if (stats.isDirectory()) {
+    screenshotDir = userContentDir + '/';
+    userVisiblePrefix = 'http://' + require("os").hostname() + ':8888/userContent/';
+  }
+} catch (e) {
+}
 
-// This screenshots once per failed spec.
-// It's necessary in case the error is not in an expectation.
-jasmine.getEnv().addReporter(new function() {
-  this.specDone = function(result) {
-    if (result.failedExpectations.length >0) {
-      browser.takeScreenshot().then(function(png) {
-        var stream = fs.createWriteStream(
-          '/tmp/protractor-' + startDate + '-' + result.fullName + '.png');
-        stream.write(new Buffer(png, 'base64'));
-        stream.end();
-      });
-    }
-  };
-});
-
-// This screenshots once per failed expectation.
+// Makes a screenshot if an expectation fails.
 var originalAddExpectationResult = jasmine.Spec.prototype.addExpectationResult;
 jasmine.Spec.prototype.addExpectationResult = function() {
   if (!arguments[0]) {
-    var that = this
+    var that = this;
     browser.takeScreenshot().then(function(png) {
       var failureIdx = that.failedExpectations || 0;
       that.failedExpectations = failureIdx + 1;
-      var stream = fs.createWriteStream(
-        '/tmp/protractor-' + startDate + '-' + that.getFullName() + '-' + failureIdx + '.png');
+      var filename = (
+        ('protractor-' + startDate + '-' + that.getFullName() + '-' + failureIdx + '.png')
+        .replace(/[^a-z0-9.-]/gi, '_')
+        .toLowerCase());
+      screenshots.push(userVisiblePrefix + filename);
+      var stream = fs.createWriteStream(screenshotDir + filename);
       stream.write(new Buffer(png, 'base64'));
       stream.end();
     });
@@ -211,4 +213,16 @@ jasmine.Spec.prototype.addExpectationResult = function() {
 console.log('Starting tests at: ' + startDate);
 
 fw.runAll();
+
 fw.cleanup();
+
+describe('The test framework ', function() {
+  it('now prints all screenshots', function() {
+    if (screenshots) {
+      console.log('\nError screenshots:');
+      for (i = 0; i < screenshots.length; ++i) {
+        console.log(screenshots[i]);
+      }
+    }
+  });
+});
