@@ -120,6 +120,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         util.post('/ajax/createDirectory',
           {
             name: name,
+            privacy: scope.newDirectory.privacy,
           }).then(function() {
             scope.path = name;
             scope.searchQuery = '';
