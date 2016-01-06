@@ -229,7 +229,7 @@ class DataManager(sc: spark.SparkContext,
   }
 
   // Returns an indication of whether the entity has already been computed.
-  // 0 means it is not computed. 1 means it is computed. 0.5 is used to indicated that the
+  // 0 means it is not computed. 1 means it is computed. 0.5 is used to indicate that the
   // computation is in progress. (Of course it would be great to be more specific in the future.)
   def computeProgress(entity: MetaGraphEntity): Double = {
     val guid = entity.gUID
