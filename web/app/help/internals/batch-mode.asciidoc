@@ -28,7 +28,8 @@ namespace.
 The script can interact with LynxKite through the `lynx` object that is injected into its
 namespace.
 
- - `GroovyProject **lynx.loadProject**(String name)` loads an existing project.
+ - `GroovyProject **lynx.loadProject**(String name)` loads an existing project. Use
+   `GroovyProject.saveAs()` if you want to save your changes.
  - `GroovyProject **lynx.newProject**()` creates a new project.
  - `DataFrameReader **lynx.sqlContext**` provides access to Spark SQL.
    See the
