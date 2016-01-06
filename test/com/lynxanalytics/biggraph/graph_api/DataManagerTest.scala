@@ -123,8 +123,8 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
         sparkContext, dataManager1.repositoryPath,
         ephemeralPath = Some(tmpDM.repositoryPath))
     }
-    assert(dataManager2.isCalculated(names))
-    assert(dataManager2.isCalculated(greeting))
+    assert(dataManager2.computeProgress(names) == 1.0)
+    assert(dataManager2.computeProgress(greeting) == 1.0)
   }
 
   test("Ephemeral repo writes to ephemeral directory") {
@@ -143,11 +143,11 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
     val dataManagerMain = new DataManager(sparkContext, dataManager1.repositoryPath)
-    assert(!dataManagerMain.isCalculated(names))
-    assert(!dataManagerMain.isCalculated(greeting))
+    assert(dataManagerMain.computeProgress(names) == 0.0)
+    assert(dataManagerMain.computeProgress(greeting) == 0.0)
     val dataManagerEphemeral = new DataManager(sparkContext, dataManager1.ephemeralPath.get)
-    assert(dataManagerEphemeral.isCalculated(names))
-    assert(dataManagerEphemeral.isCalculated(greeting))
+    assert(dataManagerEphemeral.computeProgress(names) == 1.0)
+    assert(dataManagerEphemeral.computeProgress(greeting) == 1.0)
   }
 
 }
