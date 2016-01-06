@@ -91,6 +91,12 @@ split.derivedVertexAttribute(
   type: 'double'
 )
 
+// Save split, because we're going to modify it.
+split.copyVertexAttribute(
+  from: 'split',
+  to: 'splitSave'
+)
+
 split.derivedVertexAttribute(
   output: 'furtherUndefinedAttr1',
   type: 'double',
@@ -115,6 +121,7 @@ split.splitVertices(
 split.vertexAttributeToDouble(
   attr: 'index'
 )
+
 
 split.derivedVertexAttribute(
   output: 'attr1',
@@ -200,14 +207,11 @@ split.derivedEdgeAttribute(
 
     var thisIsTheFirstEdge = myId === 0;
 
-    var countForThisEdge = 0;
-    if (thisIsTheFirstEdge)
-      countForThisEdge = countForTheFirstEdge;
+    if (thisIsTheFirstEdge) {
+      return countForTheFirstEdge;
     } else {
-      countForThisEdge = countForTheLastEdge;
+      return countForTheLastEdge;
     }
-
-    return countForThisEdge;
   }
 
   splitCalls();
