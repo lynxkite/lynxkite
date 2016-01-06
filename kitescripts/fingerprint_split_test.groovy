@@ -122,16 +122,39 @@ split.vertexAttributeToDouble(
   attr: 'index'
 )
 
+// We should not let [d-] people from calling [-d] people and vice versa.
+// So, for [d-], we set split to 2.0 and index to 0.
+// For [-d], we set split to 2.0 and index to 1.
+// This will have the effect that such calls will have
+// a splitCalls of 0; and will get deleted subsequently.
+split.derivedVertexAttribute(
+  output: 'split',
+  type: 'double',
+  expr: 'furtherUndefinedAttr1 == 1.0 ? 2.0 : split'
+)
+split.derivedVertexAttribute(
+  output: 'split',
+  type: 'double',
+  expr: 'furtherUndefinedAttr2 == 1.0 ? 2.0 : split'
+)
+split.derivedVertexAttribute(
+  output: 'index',
+  type: 'double',
+  expr: 'furtherUndefinedAttr2 == 1.0 ? 1.0 : index'
+)
+
+// Peripheral vertices have both their attributes undefined to stop them from making it into
+// the candidate set.
 
 split.derivedVertexAttribute(
   output: 'attr1',
-  expr: '(furtherUndefinedAttr1 == 1.0 || (split == 2.0 && index == 0)) ? undefined : originalUniqueId',
+  expr: '(peripheral == 1.0 || furtherUndefinedAttr1 == 1.0 || (split == 2.0 && index == 0)) ? undefined : originalUniqueId',
   type: 'string'
 )
 
 split.derivedVertexAttribute(
   output: 'attr2',
-  expr: '(furtherUndefinedAttr2 == 1.0 || (split == 2.0 && index == 1)) ? undefined : originalUniqueId',
+  expr: '(peripheral == 1.0 || furtherUndefinedAttr2 == 1.0 || (split == 2.0 && index == 1)) ? undefined : originalUniqueId',
   type: 'string'
 )
 
@@ -255,7 +278,7 @@ split.derivedVertexAttribute(
 split.derivedVertexAttribute(
   output: 'normal',
   type: 'double',
-  expr: '(split == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
+  expr: '(splitSave == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
@@ -273,19 +296,19 @@ split.derivedVertexAttribute(
 split.derivedVertexAttribute(
   output: 'churnerFound',
   type: 'double',
-  expr: '(split == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
+  expr: '(splitSave == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerNoMatch',
   type: 'double',
-  expr: '(split == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
+  expr: '(splitSave == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerMisMatch',
   type: 'double',
-  expr: '(split == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
+  expr: '(splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
