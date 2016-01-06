@@ -24,5 +24,18 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
       project.scalars("edge_count").value
     }
   }
+
+  test("Filtering by segment ID") {
+    run("Example Graph")
+    run("Connected components",
+      Map("name" -> "cc", "directions" -> "ignore directions"))
+    run("Filter by attributes",
+      Map("filterva-size" -> "3"),
+      on = project.segmentation("cc"))
+    val c1 = project.segmentation("cc").vertexSet.rdd.keys.take(1).head
+    run("Filter by attributes",
+      Map("filterva-segmentation[cc]" -> s"any($c1)"))
+    assert(project.vertexSet.rdd.count == 3)
+  }
 }
 
