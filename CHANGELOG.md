@@ -9,6 +9,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - `run-kite.sh start` now waits for the web server to be initialized - previously it returned
    immediately after starting the initialization process. This may take minutes on
    certain instances, but at least you know when the server is ready.
+ - A home folder is created for every user automatically. Every user has exclusive read and write
+   access to his own home folder by default.
 
 ### 1.6.0
 

@@ -22,6 +22,7 @@ class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
+  // UserController is initialized later but referred in asyncAction().
   def userController: UserController = ???
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
