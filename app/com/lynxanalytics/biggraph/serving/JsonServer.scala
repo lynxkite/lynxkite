@@ -359,14 +359,14 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
 
-  def getUsers = jsonGet(userController.getUsers)
-  def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
-  def createUser = jsonPost(userController.createUser, logRequest = false)
-
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
   def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
+
+  def getUsers = jsonGet(userController.getUsers)
+  def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def createUser = jsonPost(userController.createUser, logRequest = false)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
