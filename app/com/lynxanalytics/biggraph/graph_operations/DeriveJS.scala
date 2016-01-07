@@ -29,11 +29,24 @@ object DeriveJS {
     vertexSet: VertexSet,
     namedScalars: Seq[(String, Scalar[_])] = Seq())(implicit manager: MetaGraphManager): Output[T] = {
 
+    // Check name collision between scalars and attributes
+    val common =
+      namedAttributes.map(_._1).toSet & namedScalars.map(_._1).toSet
+    assert(common.isEmpty,
+      {
+        val firstCollision = common.head
+        s"Identical scalar and attribute name: $firstCollision. " +
+          "Please rename either the scalar or the attribute."
+      })
+
     val js = JavaScript(exprString)
 
     // Good to go, let's prepare the attributes for DeriveJS.
     val jsValueAttributes =
       namedAttributes.map { case (_, attr) => VertexAttributeToJSValue.run(attr) }
+
+    val jsValueScalars =
+      namedScalars.map { case (_, sclr) => ScalarToJSValue.run(sclr) }
 
     val op: DeriveJS[T] =
       if (typeOf[T] =:= typeOf[String]) {
@@ -49,7 +62,7 @@ object DeriveJS {
     op.validateJS[T](defaultAttributeValues, defaultScalarValues)
 
     import Scripting._
-    op(op.vs, vertexSet)(op.attrs, jsValueAttributes).result
+    op(op.vs, vertexSet)(op.attrs, jsValueAttributes)(op.scalars, jsValueScalars).result
   }
 }
 import DeriveJS._
