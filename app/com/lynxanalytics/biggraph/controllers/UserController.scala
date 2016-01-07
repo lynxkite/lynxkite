@@ -9,7 +9,7 @@ import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.controllers._
 
 object User {
@@ -63,7 +63,8 @@ object SignedToken {
   }
 }
 
-object UserProvider extends mvc.Controller {
+class UserController(val env: BigGraphEnvironment) extends mvc.Controller {
+  implicit val metaManager = env.metaGraphManager
   implicit val fUserOnDisk = json.Json.format[UserOnDisk]
 
   def get(request: mvc.Request[_]): Option[User] = synchronized {
@@ -184,7 +185,7 @@ object UserProvider extends mvc.Controller {
   }
 
   private def createHomeDirectoryIfNotExists(u: User) {
-    val d = ProjectDirectory.fromName(u.email)(BigGraphProductionEnvironment.metaGraphManager)
+    val d = ProjectDirectory.fromName(u.email)
     if (d.exists) {
       d.assertReadAllowedFrom(u)
       d.assertWriteAllowedFrom(u)
