@@ -7,15 +7,15 @@ angular.module('biggraph').directive('aclSettings', function(util) {
     scope: {
       reload: '&',
       path: '=',
-      acl: '=',
+      entity: '=',
     },
     replace: false,
     templateUrl: 'acl-settings.html',
     link: function(scope) {
-      scope.$watch('acl.readACL', function(value) {
+      scope.$watch('entity.readACL', function(value) {
         scope.readACL = value;
       });
-      scope.$watch('acl.writeACL', function(value) {
+      scope.$watch('entity.writeACL', function(value) {
         scope.writeACL = value;
       });
 
@@ -33,8 +33,8 @@ angular.module('biggraph').directive('aclSettings', function(util) {
 
       scope.changed = function() {
         return (
-            scope.acl.readACL !== scope.readACL ||
-            scope.acl.writeACL !== scope.writeACL);
+            scope.entity.readACL !== scope.readACL ||
+            scope.entity.writeACL !== scope.writeACL);
       };
     },
   };
