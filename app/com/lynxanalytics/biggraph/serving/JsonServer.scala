@@ -22,6 +22,11 @@ class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
+  val userController = new UserController(BigGraphProductionEnvironment)
+  val passwordLogin = userController.passwordLogin
+  val googleLogin = userController.googleLogin
+  val logout = userController.logout
+
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
 
@@ -35,7 +40,7 @@ class JsonServer extends mvc.Controller {
     if (withAuth) {
       // TODO: Redirect HTTP to HTTPS. (#1400)
       mvc.Action.async(parser) { request =>
-        UserProvider.get(request) match {
+        userController.get(request) match {
           case Some(user) => block(user, request)
           case None => Future.successful(Unauthorized)
         }
@@ -354,14 +359,14 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
 
+  def getUsers = jsonGet(userController.getUsers)
+  def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def createUser = jsonPost(userController.createUser, logRequest = false)
+
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
   def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
-
-  def getUsers = jsonGet(UserProvider.getUsers)
-  def changeUserPassword = jsonPost(UserProvider.changeUserPassword, logRequest = false)
-  def createUser = jsonPost(UserProvider.createUser, logRequest = false)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
