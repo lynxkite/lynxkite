@@ -1,7 +1,6 @@
 // Creates a new attribute by evaluating a JavaScript expression over other attributes.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.commons.lang.ClassUtils
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.JavaScript
