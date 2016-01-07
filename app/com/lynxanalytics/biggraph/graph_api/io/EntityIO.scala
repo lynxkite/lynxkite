@@ -104,6 +104,8 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     val count = sparkContext.accumulator[Long](0L, "Line count")
     val unitSerializer = EntitySerializer.forType[Unit]
     val serializers = attributes.map(EntitySerializer.forAttribute(_))
+    // writeShard is the function that runs on the executors. It writes out one partition of the
+    // RDD into one part-xxxx file per column, plus one for the vertex set.
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
       val collection = new IOContext.TaskFileCollection(
         trackerID, rddID, IOContext.TaskType.REDUCE, task.partitionId, task.attemptNumber)
