@@ -4,14 +4,18 @@
 angular.module('biggraph').directive('projectSettings', function(util) {
   return {
     restrict: 'E',
-    scope: { side: '=' },
+    scope: {
+      view: '=',
+      path: '=',
+      acl: '=',
+    },
     replace: false,
     templateUrl: 'project-settings.html',
     link: function(scope) {
-      scope.$watch('side.project.readACL', function(value) {
+      scope.$watch('acl.readACL', function(value) {
         scope.readACL = value;
       });
-      scope.$watch('side.project.writeACL', function(value) {
+      scope.$watch('acl.writeACL', function(value) {
         scope.writeACL = value;
       });
 
@@ -19,18 +23,19 @@ angular.module('biggraph').directive('projectSettings', function(util) {
         scope.saving = true;
         util.post('/ajax/changeProjectSettings',
         {
-          project: scope.side.state.projectName,
+          project: scope.path,
           readACL: scope.readACL,
           writeACL: scope.writeACL,
         }).then(function() {
-          scope.side.reload();
+          console.log(scope.view);
+          scope.view();
         });
       };
 
       scope.changed = function() {
         return (
-            scope.side.project.readACL !== scope.readACL ||
-            scope.side.project.writeACL !== scope.writeACL);
+            scope.acl.readACL !== scope.readACL ||
+            scope.acl.writeACL !== scope.writeACL);
       };
     },
   };
