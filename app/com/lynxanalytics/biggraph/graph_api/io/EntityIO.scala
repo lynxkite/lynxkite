@@ -16,9 +16,16 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 
 object IOContext {
+  object TaskType {
+    val MAP = TaskType(isMap = true)
+    val REDUCE = TaskType(isMap = false)
+  }
+  case class TaskType(isMap: Boolean)
+
   // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
   private class TaskFile(
-      tracker: String, stage: Int, task: Int, attempt: Int, file: HadoopFile,
+      tracker: String, stage: Int, taskType: TaskType,
+      task: Int, attempt: Int, file: HadoopFile,
       collection: TaskFileCollection) {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
     val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
@@ -34,7 +41,8 @@ object IOContext {
         file.resolvedNameWithNoCredentials)
       config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
       config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
-      spark.EntityIOHelper.createTaskAttemptContext(config, tracker, stage, task, attempt)
+      spark.EntityIOHelper.createTaskAttemptContext(
+        config, tracker, stage, taskType.isMap, task, attempt)
     }
     val committer = fmt.getOutputCommitter(context)
     lazy val writer = {
@@ -44,9 +52,12 @@ object IOContext {
     }
   }
 
-  private class TaskFileCollection(tracker: String, stage: Int, task: Int, attempt: Int) {
+  private class TaskFileCollection(
+      tracker: String, stage: Int, taskType: TaskType, task: Int, attempt: Int) {
     val toClose = new collection.mutable.ListBuffer[TaskFile]()
-    def createTaskFile(path: HadoopFile) = new TaskFile(tracker, stage, task, attempt, path, this)
+    def createTaskFile(path: HadoopFile) = {
+      new TaskFile(tracker, stage, taskType, task, attempt, path, this)
+    }
     def registerForClosing(file: TaskFile) = {
       toClose += file
     }
@@ -95,7 +106,7 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     val serializers = attributes.map(EntitySerializer.forAttribute(_))
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
       val collection = new IOContext.TaskFileCollection(
-        trackerID, rddID, task.partitionId, task.attemptNumber)
+        trackerID, rddID, IOContext.TaskType.REDUCE, task.partitionId, task.attemptNumber)
       try {
         val files = paths.map(collection.createTaskFile(_))
         val verticesWriter = files.last.writer
@@ -113,18 +124,21 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
         for (file <- files) file.committer.commitTask(file.context)
       } finally collection.close()
     }
-    val collection = new IOContext.TaskFileCollection(trackerID, rddID, 0, 0)
+    // The jobs are committed under the guise of MAP tasks, so they don't collide with the
+    // REDUCE tasks used to commit tasks. (#2804)
+    val collection =
+      new IOContext.TaskFileCollection(trackerID, rddID, IOContext.TaskType.MAP, 0, 0)
     try {
       val files = paths.map(collection.createTaskFile(_))
       for (file <- files) file.committer.setupJob(file.context)
       sparkContext.runJob(data, writeShard)
       for (file <- files) file.committer.commitJob(file.context)
-      // Write metadata files.
-      val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
-      vertexSetMeta.write(partitionedPath(vs).forWriting)
-      for ((attr, serializer) <- attributes zip serializers)
-        EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
     } finally collection.close()
+    // Write metadata files.
+    val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
+    vertexSetMeta.write(partitionedPath(vs).forWriting)
+    for ((attr, serializer) <- attributes zip serializers)
+      EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
   }
 }
 
