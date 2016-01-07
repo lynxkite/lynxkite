@@ -134,8 +134,8 @@
     <div class="list-group">
 
       <!-- Project settings. -->
-      <div class="list-group-item project-settings" ng-if="side.showSettings">
-        <project-settings side="side"></project-settings>
+      <div class="list-group-item acl-settings" ng-if="side.showSettings">
+        <acl-settings reload="side.reload()" path="side.state.projectName" entity="side.project"></acl-settings>
       </div>
 
       <!-- Extra controls for visualizations. -->

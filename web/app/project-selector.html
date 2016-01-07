@@ -48,14 +48,21 @@
       </form>
     </div>
 
-    <div id="current-directory" class="path" ng-show="path">
-      <div class="description">Current folder:</div>
-      <span class="lead">
+    <div id="current-directory" class="path">
+      <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
+      <span class="lead" ng-show="path">
         <!-- Make sure there is no whitespace around the slash, so it can still be copied. -->
         <span ng-repeat="dir in pathElements() track by $index"
           >{{ dir }}<span ng-hide="$last" class="slash">/</span></span>
       </span>
-      <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon"></span>
+      <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon" ng-show="path"></span>
+      <span class="clicky glyphicon glyphicon-cog" ng-click="scope.showSettings = !scope.showSettings"
+            id="directory-settings-icon"></span>
+    </div>
+
+    <!-- Directory settings. -->
+    <div class="acl-settings" ng-if="scope.showSettings">
+      <acl-settings reload="reload()" path="path" entity="data"></acl-settings>
     </div>
 
     <div class="entry">
