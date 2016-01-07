@@ -40,7 +40,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       });
 
       scope.util = util;
-      function refresh() {
+      scope.reload = function() {
         abandonScalars();
         if (!scope.searchQuery) {
           scope.data = util.nocache('/ajax/projectList', { path: scope.path });
@@ -53,10 +53,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             });
         }
         window.localStorage.setItem('last_selector_path', scope.path);
-      }
+      };
 
-      scope.$watch('path', refresh);
-      scope.$watch('searchQuery', refresh);
+      scope.$watch('path', scope.reload);
+      scope.$watch('searchQuery', scope.reload);
       function getScalar(title, scalar) {
         var res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id, calculate: false
@@ -120,6 +120,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         util.post('/ajax/createDirectory',
           {
             name: name,
+            privacy: scope.newDirectory.privacy,
           }).then(function() {
             scope.path = name;
             scope.searchQuery = '';
@@ -181,17 +182,20 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
           util.post('/ajax/renameDirectory',
-              { from: oldName, to: newName }).then(refresh);
+              { from: oldName, to: newName }).then(scope.reload);
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkDirectory',
-              { from: p, to: scope.dirName(p) + 'Copy of ' + scope.baseName(p) }).then(refresh);
+              { 
+                from: p,
+                to: scope.dirName(p) + 'Copy of ' + scope.baseName(p)
+              }).then(scope.reload);
         },
         discard: function(kind, p) {
           var message = 'Permanently delete ' + kind + ' ' + p + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardDirectory', { name: p }).then(refresh);
+            util.post('/ajax/discardDirectory', { name: p }).then(scope.reload);
           }
         },
       };

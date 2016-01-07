@@ -12,7 +12,6 @@
 // Parameters
 furtherUndefinedAttr1 = params.fa1 ?: '5'
 furtherUndefinedAttr2 = params.fa2 ?: '5'
-splitProb = params.splitProb ?: '0.3'
 splits = params.splits ?: '10'
 input =  params.input ?: 'fprandom'
 seed = params.seed ?: '31415'
@@ -43,55 +42,8 @@ furtherUndefinedAttr2Expr =
 
 
 
-jsprogram =
-"""
-function Rnd(seedFirst, seedSecond) {
-  var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
-  var rnd = util.rnd(seed);
-  return {
-    geomChoose: function(p, lastId) {
-      for (var i = 0; i <= lastId; i++) {
-          var q = rnd.nextDouble();
-          if (q < p) return i;
-      }
-      return lastId;
-    },
-  }
-}
-
-var srcSeed = src\$originalUniqueId
-var dstSeed =  dst\$originalUniqueId
-var srcCount = src\$split;
-var dstCount = dst\$split;
-var srcIdx = src\$index;
-var dstIdx = dst\$index;
-var edgeCnt = originalCalls
-var prob = $splitProb
-
-var total = srcCount * dstCount;
-var myId = dstCount * srcIdx + dstIdx;
-var lastId = total - 1;
-
-function splitCalls() {
-  if (total === 1) {
-    return edgeCnt;
-  }
-
-  var randomFunc = Rnd(srcSeed, dstSeed).geomChoose
-
-  var count = 0;
-
-  for (var j = 0; j < edgeCnt; j++) {
-    if (randomFunc(prob, lastId) === myId) count++;
-  }
-
-  return count;
-}
-
-splitCalls();
-"""
-
 split = lynx.newProject()
+
 split.importVerticesFromCSVFiles(
   files: 'DATA$/exports/' + input + '_vertices/data/part*',
   header: '"id","peripheral"',
@@ -122,23 +74,16 @@ split.edgeAttributeToDouble(
 
 // Create vertex attribute 'originalUniqueId' - this runs beteen 0 and number of vertices - 1
 // Low ids will be treated specially, e.g., splits, and further undefined will come from
-// the low regions of the id range. We don't want peripheral vertices to be treated
-// specially, so we make sure that they are assigned higher ids.
+// the low regions of the id range.
 split.addRandomVertexAttribute(
   name: 'urnd',
   dist: 'Standard Uniform',
   seed: seed
 )
 
-split.derivedVertexAttribute(
-  output: 'urndPeripheralHigh',
-  expr: 'peripheral == 0.0 ? urnd : urnd + 2.0',
-  type: 'double'
-)
-
 split.addRankAttribute(
   rankattr: 'originalUniqueId',
-  keyattr: 'urndPeripheralHigh',
+  keyattr: 'urnd',
   order: 'ascending'
 )
 
@@ -146,6 +91,12 @@ split.derivedVertexAttribute(
   output: 'split',
   expr: '(originalUniqueId < ' + splits + ') ? 2.0 : 1.0',
   type: 'double'
+)
+
+// Save split, because we're going to modify it.
+split.copyVertexAttribute(
+  from: 'split',
+  to: 'splitSave'
 )
 
 split.derivedVertexAttribute(
@@ -173,25 +124,135 @@ split.vertexAttributeToDouble(
   attr: 'index'
 )
 
+// Some notation:
+// [d-] A vertex whose first attribute is defined, but the second one isn't.
+// [-d] A vertex whose second attribute is defined, but the first one isn't.
+// [--] A vertex whose both attributes are undefined.
+// [dd] A vertex whose both attributes are defined.
+//
+// We should not let [-d] people call [d-] people and vice versa.
+// So, for [-d], we set split to 2.0 and index to 0.
+// For [d-], we set split to 2.0 and index to 1.
+// This will have the effect that such calls will have
+// a splitCalls of 0; and will get deleted subsequently.
+split.derivedVertexAttribute(
+  output: 'split',
+  type: 'double',
+  expr: 'furtherUndefinedAttr1 == 1.0 ? 2.0 : split'
+)
+split.derivedVertexAttribute(
+  output: 'split',
+  type: 'double',
+  expr: 'furtherUndefinedAttr2 == 1.0 ? 2.0 : split'
+)
+split.derivedVertexAttribute(
+  output: 'index',
+  type: 'double',
+  expr: 'furtherUndefinedAttr2 == 1.0 ? 1.0 : index'
+)
+
+// Peripheral vertices have both their attributes undefined to stop them from making it into
+// the candidate set. (We'll turn them to [--].)
+
 split.derivedVertexAttribute(
   output: 'attr1',
-  expr: '(furtherUndefinedAttr1 == 1.0 || (split == 2.0 && index == 0)) ? undefined : originalUniqueId',
+  expr: '(peripheral == 1.0 || furtherUndefinedAttr1 == 1.0 || (split == 2.0 && index == 0)) ? undefined : originalUniqueId',
   type: 'string'
 )
 
 split.derivedVertexAttribute(
   output: 'attr2',
-  expr: '(furtherUndefinedAttr2 == 1.0 || (split == 2.0 && index == 1)) ? undefined : originalUniqueId',
+  expr: '(peripheral == 1.0 || furtherUndefinedAttr2 == 1.0 || (split == 2.0 && index == 1)) ? undefined : originalUniqueId',
   type: 'string'
 )
 
+
 split.derivedEdgeAttribute(
   output: 'splitCalls',
-  type: double,
-  expr: jsprogram
+  type: 'double',
+  expr:
+  """
+  function Rnd(seedFirst, seedSecond) {
+    var seed = util.hash(seedFirst.toString() + '_' + seedSecond.toString());
+    var rnd = util.rnd(seed);
+    return {
+      next: function() {
+        return rnd.nextDouble();
+      },
+    }
+  }
+
+  var srcSeed = src\$originalUniqueId
+  var dstSeed =  dst\$originalUniqueId
+  var srcCount = src\$split;
+  var dstCount = dst\$split;
+  var srcIdx = src\$index;
+  var dstIdx = dst\$index;
+  var edgeCnt = originalCalls
+
+  var total = srcCount * dstCount;
+  var myId = dstCount * srcIdx + dstIdx;
+
+  function splitCalls() {
+    // First, let's consider some cases when it's possible
+    // to tell the return value without actually
+    // computing edgeCnt random numbers.
+
+    // 0) Pathalogical case: we're invoked from from validateJS
+    if (total === 0) {
+      return 0;
+    }
+
+    // 1) Simplest case: neither the source, nor the destination is
+    // split: total === 1 and myId === 0. There is only one
+    // edge and it will carry the original count.
+    if (total === 1) {
+      return edgeCnt;
+    }
+
+    // 2) The next simplest case occurs when either the source,
+    // or the destination is split, but not both. Here, total === 2
+    // and myId falls between 0 and 1 inclusive.
+    // We'll need to split edgeCnt between the two edges. However, we cannot
+    // avoid generating all edgeCnt random numbers, so the computation
+    // must continue.
+
+
+    // 3) In the most complex case, both the source and the destination
+    // vertices are split, resulting in 4 edges. However, we want to
+    // devide the edgeCnt quantity between the first edge (myId: 0) and the last
+    // one (myId: 3). The two other edges get 0.
+    if (total === 4 && (myId === 1 || myId === 2)) {
+      return 0;
+    }
+
+    var rnd = Rnd(srcSeed, dstSeed)
+
+    var countForTheFirstEdge = 0;
+    for (var j = 0; j < edgeCnt; j++) {
+      if (rnd.next() < 0.5) {
+        countForTheFirstEdge++;
+      }
+    }
+    var countForTheLastEdge = edgeCnt - countForTheFirstEdge;
+
+    var thisIsTheFirstEdge = myId === 0;
+
+    if (thisIsTheFirstEdge) {
+      return countForTheFirstEdge;
+    } else {
+      return countForTheLastEdge;
+    }
+  }
+
+  splitCalls();
+  """
 )
 
-split.filterByAttributes('filterea-splitCalls': '> 0.0')
+
+split.filterByAttributes(
+'filterea-splitCalls': '> 0.0',
+)
 
 
 // Do fingerprinting
@@ -200,7 +261,6 @@ split.fingerprintingBasedOnAttributes(
   rightName: 'attr2',
   weights: 'splitCalls',
   mo: '2',
-  extra: '"weightingMode": "InDegree", "multiNeighborsPreference": 5.0, "alpha": -1.0',
   ms: '0.0'
 )
 
@@ -226,7 +286,7 @@ split.derivedVertexAttribute(
 split.derivedVertexAttribute(
   output: 'normal',
   type: 'double',
-  expr: '(split == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
+  expr: '(splitSave == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
@@ -244,19 +304,19 @@ split.derivedVertexAttribute(
 split.derivedVertexAttribute(
   output: 'churnerFound',
   type: 'double',
-  expr: '(split == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
+  expr: '(splitSave == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerNoMatch',
   type: 'double',
-  expr: '(split == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
+  expr: '(splitSave == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerMisMatch',
   type: 'double',
-  expr: '(split == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
+  expr: '(splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(

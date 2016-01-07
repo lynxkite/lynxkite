@@ -148,8 +148,12 @@ startKite () {
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
   fi
+  export KITE_READY_PIPE=/tmp/kite_pipe_${KITE_RANDOM_SECRET}
+  mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
-  >&2 echo "Kite server started (PID $!)."
+  PID=$!
+  read < ${KITE_READY_PIPE}
+  >&2 echo "Kite server started (PID ${PID})."
 }
 
 stopByPIDFile () {
