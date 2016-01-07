@@ -71,7 +71,6 @@ trait TestTempDir {
 private object SparkContextContainer {
   lazy val sparkContext = BigGraphSparkContext(
     "BigGraphTests",
-    useJars = false,
     forceRegistration = true,
     master = "local")
 }
