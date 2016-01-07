@@ -9,6 +9,8 @@ import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
+import com.lynxanalytics.biggraph.controllers._
 
 object User {
   val fake = User("fake", isAdmin = true)
@@ -17,7 +19,9 @@ case class User(email: String, isAdmin: Boolean) {
   override def toString = email
 }
 case class UserList(users: List[User])
-case class UserOnDisk(email: String, hash: String, isAdmin: Boolean)
+case class UserOnDisk(email: String, hash: String, isAdmin: Boolean) {
+  def toUser(): User = { User(email, isAdmin) }
+}
 case class CreateUserRequest(email: String, password: String, isAdmin: Boolean)
 case class ChangeUserPasswordRequest(oldPassword: String, newPassword: String, newPassword2: String)
 
@@ -173,6 +177,21 @@ object UserProvider extends mvc.Controller {
     } else {
       log.info(s"$usersFile does not exist. Starting with empty user registry.")
     }
+    // Create home directories for users who don't have it
+    for (u <- users.values) {
+      createHomeDirectoryIfNotExists(u.toUser())
+    }
+  }
+
+  private def createHomeDirectoryIfNotExists(u: User) {
+    val d = ProjectDirectory.fromName(u.email)(BigGraphProductionEnvironment.metaGraphManager)
+    if (d.exists) {
+      d.assertReadAllowedFrom(u)
+      d.assertWriteAllowedFrom(u)
+    } else {
+      d.readACL = u.email
+      d.writeACL = u.email
+    }
   }
 
   // Saves user data to usersFile.
@@ -209,6 +228,7 @@ object UserProvider extends mvc.Controller {
     assert(req.email.forall(allowed.contains(_)), "User name contains disallowed characters.")
     assert(!users.contains(req.email), s"User name ${req.email} is already taken.")
     users(req.email) = UserOnDisk(req.email, hash(req.password), req.isAdmin)
+    createHomeDirectoryIfNotExists(users(req.email).toUser())
     saveUsers()
     log.info(s"Successfully created user ${req.email}.")
   }
