@@ -24,6 +24,11 @@ object IOContext {
     val fmt = new SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]()
     val context = {
       val config = new hadoop.mapred.JobConf(file.hadoopConfiguration)
+      // Set path for Hadoop 1.
+      config.set(
+        "mapred.output.dir",
+        file.resolvedNameWithNoCredentials)
+      // Set path for Hadoop 2.
       config.set(
         hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR,
         file.resolvedNameWithNoCredentials)

@@ -207,7 +207,7 @@ object FrontendJson {
   implicit val rForkDirectoryRequest = json.Json.reads[ForkDirectoryRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
-  implicit val rProjectSettingsRequest = json.Json.reads[ProjectSettingsRequest]
+  implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
   implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
   implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
   implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
@@ -336,7 +336,7 @@ object ProductionJsonServer extends JsonServer {
   def forkDirectory = jsonPost(bigGraphController.forkDirectory)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
-  def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
+  def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
   def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
