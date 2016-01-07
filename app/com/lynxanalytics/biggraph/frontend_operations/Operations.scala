@@ -418,6 +418,36 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Import vertices and edges from single database table",
     new ImportVerticesAndEdgesOperation(_, _) with SQLRowReader)
 
+  register("Import vertices and edges from table", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "table",
+        "Table to import from",
+        options = readableGlobalTablePaths,
+        allowUnknownOption = true),
+      Param("src", "Source ID field"),
+      Param("dst", "Destination ID field"))
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val src = params("src")
+      val dst = params("dst")
+      assert(src.nonEmpty, "The Source ID field parameter must be set.")
+      assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
+      val table = Table.fromCanonicalPath(params("table"), project.viewer)
+      val eg = {
+        val op = graph_operations.VerticesToEdges()
+        op(op.srcAttr, table.columns(src).runtimeSafeCast[String])(
+          op.dstAttr, table.columns(dst).runtimeSafeCast[String]).result
+      }
+      project.setVertexSet(eg.vs, idAttr = "id")
+      project.newVertexAttribute("stringID", eg.stringID)
+      project.edgeBundle = eg.es
+      for ((name, attr) <- table.columns) {
+        project.edgeAttributes(name) = attr.pullVia(eg.embedding)
+      }
+    }
+  })
+
   register("Convert vertices into edges", new StructureOperation(_, _) {
     def parameters = List(
       Choice("src", "Source", options = vertexAttributes[String]),
@@ -2173,15 +2203,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         allowUnknownOption = true))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
-      val (cp, title) = FEOption.unpackTitledCheckpoint(params("them"))
+      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("them"))
       s"Import $title as segmentation"
     }
     def apply(params: Map[String, String]) = {
       val themId = params("them")
-      val (cp, title) = FEOption.unpackTitledCheckpoint(
+      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
         themId,
         customError =
           s"Obsolete project reference: $themId. Please select a new project from the dropdown.")
+      assert(suffix == "", s"Invalid project reference $themId with suffix $suffix")
       val baseName = SymbolPath.parse(title).last.name
       val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(them.vertexSet != null, s"No vertex set in $them")
@@ -2306,7 +2337,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
-      val (cp, title) = FEOption.unpackTitledCheckpoint(params("other"))
+      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("other"))
       s"Union with $title"
     }
 
@@ -2325,10 +2356,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]): Unit = {
       val otherId = params("other")
-      val (cp, _) = FEOption.unpackTitledCheckpoint(
+      val (cp, _, suffix) = FEOption.unpackTitledCheckpoint(
         otherId,
         customError =
           s"Obsolete project reference: $otherId. Please select a new project from the dropdown.")
+      assert(suffix == "", s"Invalid project reference $otherId with suffix $suffix")
       val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       if (other.vertexSet == null) {
         // Nothing to do
