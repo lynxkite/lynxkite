@@ -7,10 +7,11 @@ import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 
 object DeriveJS {
-  class Input(attrCount: Int)
+  class Input(attrCount: Int, scalarCount: Int)
       extends MagicInputSignature {
     val vs = vertexSet
     val attrs = (0 until attrCount).map(i => vertexAttribute[JSValue](vs, Symbol("attr-" + i)))
+    val scalars = (0 until scalarCount).map(i => scalar[JSValue](Symbol("scalar-" + i)))
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
                            inputs: Input) extends MagicOutput(instance) {
@@ -59,7 +60,7 @@ abstract class DeriveJS[T](
     extends TypedMetaGraphOp[Input, Output[T]] {
   implicit def resultTypeTag: TypeTag[T]
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(attrNames.size + scalarNames.size)
+  @transient override lazy val inputs = new Input(attrNames.size, scalarNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(resultTypeTag, instance, inputs)
 
@@ -92,9 +93,14 @@ abstract class DeriveJS[T](
           }
       }
     }
+
+    // TODO: spore?
+    val scalars = inputs.scalars.map { _.value }.toArray
+    val allNames = attrNames ++ scalarNames
+
     val derived = joined.flatMapOptionalValues {
       case values =>
-        val namedValues = attrNames.zip(values).toMap.mapValues(_.value)
+        val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
         // JavaScript's "undefined" is returned as a Java "null".
         Option(expr.evaluate(namedValues, desiredClass)).map(convert(_))
     }

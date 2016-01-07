@@ -9,6 +9,10 @@ package object graph_operations {
     val attr = vertexAttribute[T](vs)
   }
 
+  class ScalarInput[T] extends MagicInputSignature {
+    val sc = scalar[T]
+  }
+
   class GraphInput extends MagicInputSignature {
     val vs = vertexSet
     val es = edgeBundle(vs, vs)

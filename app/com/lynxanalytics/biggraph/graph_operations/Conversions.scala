@@ -391,3 +391,40 @@ case class VertexAttributeToJSValue[T]()
   }
 }
 
+object ScalarToJSValue extends OpFromJson {
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: ScalarInput[T])
+      extends MagicOutput(instance) {
+    val sc = scalar[JSValue]
+  }
+  def run[T](scalar: Scalar[T])(
+    implicit manager: MetaGraphManager): Scalar[JSValue] = {
+
+    import Scripting._
+    val op = ScalarToJSValue[T]()
+    op(op.sc, scalar).result.sc
+  }
+  def seq(scalars: Scalar[_]*)(
+    implicit manager: MetaGraphManager): Seq[Scalar[JSValue]] = {
+
+    scalars.map(run(_))
+  }
+  def fromJson(j: JsValue) = ScalarToJSValue()
+}
+case class ScalarToJSValue[T]()
+    extends TypedMetaGraphOp[ScalarInput[T], ScalarToJSValue.Output[T]] {
+  import ScalarToJSValue._
+  @transient override lazy val inputs = new ScalarInput[T]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val tt = inputs.sc.data.typeTag
+    val scalar = inputs.sc.value
+    output(o.sc, JSValue.convert(scalar))
+  }
+}
+
