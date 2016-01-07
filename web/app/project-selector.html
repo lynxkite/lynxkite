@@ -60,8 +60,8 @@
     </div>
 
     <!-- Directory settings. -->
-    <div class="project-settings" ng-if="scope.showSettings && path">
-      <project-settings view="reload" path="path" acl="data"></project-settings>
+    <div class="acl-settings" ng-if="scope.showSettings && path">
+      <acl-settings reload="reload()" path="path" acl="data"></acl-settings>
     </div>
 
     <div class="entry">
