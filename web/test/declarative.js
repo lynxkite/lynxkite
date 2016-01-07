@@ -4,7 +4,6 @@ var fw = (function UIDescription() {
   var states = {};
   var statePreservingTests = {};
   var hasChild = {};
-  var reached = {};
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
@@ -85,9 +84,6 @@ var fw = (function UIDescription() {
           if (this.tags.indexOf('disabled') !== -1) {
             return;
           }
-          if (reached[stateName]) {
-            return;
-          }
           if (previousStateName !== undefined) {
             states[previousStateName].reachAndTest();
           }
@@ -104,7 +100,6 @@ var fw = (function UIDescription() {
               testingDone = true;
             }
           });
-          reached[stateName] = true;
         },
       };
     },
@@ -135,7 +130,11 @@ var fw = (function UIDescription() {
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
-        state.reachAndTest();
+        // We only need to directly trigger testing for leaf nodes of the dependency trees as
+        // states with children will be triggered by their children.
+        if (!hasChild[stateName]) {
+          state.reachAndTest();
+        }
       }
     },
 
