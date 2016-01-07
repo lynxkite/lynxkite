@@ -61,8 +61,8 @@ object IOContext {
     def registerForClosing(file: TaskFile) = {
       toClose += file
     }
-    // Call this if you accessed any RecordWriters.
-    def close() = for (file <- toClose) file.writer.close(file.context)
+    // Closes any writers that were created.
+    def closeWriters() = for (file <- toClose) file.writer.close(file.context)
   }
 }
 
@@ -107,8 +107,8 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
       val collection = new IOContext.TaskFileCollection(
         trackerID, rddID, IOContext.TaskType.REDUCE, task.partitionId, task.attemptNumber)
+      val files = paths.map(collection.createTaskFile(_))
       try {
-        val files = paths.map(collection.createTaskFile(_))
         val verticesWriter = files.last.writer
         for (file <- files) file.committer.setupTask(file.context)
         val filesAndSerializers = files zip serializers
@@ -121,19 +121,17 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
           }
           verticesWriter.write(key, unitSerializer.serialize(()))
         }
-        for (file <- files) file.committer.commitTask(file.context)
-      } finally collection.close()
+      } finally collection.closeWriters()
+      for (file <- files) file.committer.commitTask(file.context)
     }
     // The jobs are committed under the guise of MAP tasks, so they don't collide with the
     // REDUCE tasks used to commit tasks. (#2804)
     val collection =
       new IOContext.TaskFileCollection(trackerID, rddID, IOContext.TaskType.MAP, 0, 0)
-    try {
-      val files = paths.map(collection.createTaskFile(_))
-      for (file <- files) file.committer.setupJob(file.context)
-      sparkContext.runJob(data, writeShard)
-      for (file <- files) file.committer.commitJob(file.context)
-    } finally collection.close()
+    val files = paths.map(collection.createTaskFile(_))
+    for (file <- files) file.committer.setupJob(file.context)
+    sparkContext.runJob(data, writeShard)
+    for (file <- files) file.committer.commitJob(file.context)
     // Write metadata files.
     val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
     vertexSetMeta.write(partitionedPath(vs).forWriting)
