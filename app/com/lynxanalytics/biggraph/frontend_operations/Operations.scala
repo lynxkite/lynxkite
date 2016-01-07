@@ -1330,7 +1330,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  def collectIdentifiers[T <: com.lynxanalytics.biggraph.graph_api.MetaGraphEntity](
+  def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
     whatToPrependToNames: String = ""): IndexedSeq[(String, T)] = {
