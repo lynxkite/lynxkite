@@ -20,7 +20,7 @@ POST /ajax/forkDirectory   com.lynxanalytics.biggraph.serving.ProductionJsonServ
 POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
 POST /ajax/renameDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameDirectory
-POST /ajax/changeProjectSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeProjectSettings
+POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo

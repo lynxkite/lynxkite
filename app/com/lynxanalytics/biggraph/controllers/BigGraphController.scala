@@ -159,7 +159,12 @@ case class ProjectListRequest(path: String)
 case class ProjectSearchRequest(
   basePath: String, // We only search for projects/directories contained (recursively) in this.
   query: String)
-case class ProjectList(path: String, directories: List[String], projects: List[FEProjectListElement])
+case class ProjectList(
+  path: String,
+  readACL: String,
+  writeACL: String,
+  directories: List[String],
+  projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -187,7 +192,7 @@ case class ForkDirectoryRequest(from: String, to: String)
 case class RenameDirectoryRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
-case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
+case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
 
 case class HistoryRequest(project: String)
 case class AlternateHistory(
@@ -253,6 +258,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
       request.path,
+      dir.readACL,
+      dir.writeACL,
       visibleDirs.map(_.path.toString).toList,
       visible.map(_.toListElementFE).toList)
   }
@@ -279,6 +286,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     ProjectList(
       request.basePath,
+      dir.readACL,
+      dir.writeACL,
       dirs.map(_.path.toString).toList,
       projects.map(_.toListElementFE).toList)
   }
@@ -394,14 +403,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.redo()
   }
 
-  def changeProjectSettings(user: serving.User, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.project)
-    p.assertWriteAllowedFrom(user)
+  def changeACLSettings(user: serving.User, request: ACLSettingsRequest): Unit = metaManager.synchronized {
+    val d = ProjectDirectory.fromName(request.project)
+    d.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
-    assert(user.isAdmin || p.aclContains(request.writeACL, user),
-      s"You cannot forfeit your write access to project $p.")
-    p.readACL = request.readACL
-    p.writeACL = request.writeACL
+    assert(user.isAdmin || d.aclContains(request.writeACL, user),
+      s"You cannot forfeit your write access to project $d.")
+    d.readACL = request.readACL
+    d.writeACL = request.writeACL
   }
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = {
