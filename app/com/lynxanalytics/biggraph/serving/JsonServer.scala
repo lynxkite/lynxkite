@@ -22,10 +22,7 @@ class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
-  val userController = new UserController(BigGraphProductionEnvironment)
-  val passwordLogin = userController.passwordLogin
-  val googleLogin = userController.googleLogin
-  val logout = userController.logout
+  def userController: UserController = ???
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
@@ -364,6 +361,10 @@ object ProductionJsonServer extends JsonServer {
   def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
+  override val userController = new UserController(BigGraphProductionEnvironment)
+  val passwordLogin = userController.passwordLogin
+  val googleLogin = userController.googleLogin
+  val logout = userController.logout
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
