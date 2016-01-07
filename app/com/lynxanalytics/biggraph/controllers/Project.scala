@@ -860,10 +860,10 @@ class ProjectDirectory(val path: SymbolPath)(
   def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
 
   def assertReadAllowedFrom(user: User): Unit = {
-    assert(readAllowedFrom(user), s"User $user does not have read access to $this.")
+    assert(readAllowedFrom(user), s"User $user does not have read access to the $this folder.")
   }
   def assertWriteAllowedFrom(user: User): Unit = {
-    assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
+    assert(writeAllowedFrom(user), s"User $user does not have write access to the $this folder.")
   }
   def readAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
