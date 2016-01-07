@@ -6,6 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - `run-kite.sh start` now waits for the web server to be initialized - previously it returned
+   immediately after starting the initialization process. This may take minutes on
+   certain instances, but at least you know when the server is ready.
+
 ### 1.6.0
 
  - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port and do
