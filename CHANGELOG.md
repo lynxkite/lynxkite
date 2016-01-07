@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - The JavaScript code can now access scalars.
  - `run-kite.sh start` now waits for the web server to be initialized - previously it returned
    immediately after starting the initialization process. This may take minutes on
    certain instances, but at least you know when the server is ready.
