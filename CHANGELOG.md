@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Upgraded to Apache Spark 1.6.0.
+ - Project directories can be created as private or public, just like projects.
+ - The project browser now remembers the last directory you browsed.
  - `run-kite.sh start` now waits for the web server to be initialized - previously it returned
    immediately after starting the initialization process. This may take minutes on
    certain instances, but at least you know when the server is ready.
