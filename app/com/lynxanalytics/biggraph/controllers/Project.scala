@@ -88,6 +88,8 @@ sealed trait ProjectViewer {
   val state: CommonProjectState
   implicit val manager: MetaGraphManager
 
+  def rootViewer: RootProjectViewer
+
   lazy val vertexSet: VertexSet =
     state.vertexSetGUID.map(manager.vertexSet(_)).getOrElse(null)
   lazy val vertexAttributes: Map[String, Attribute[_]] =
@@ -189,6 +191,14 @@ sealed trait ProjectViewer {
           rootName, rootRelativePath + segmentation.segmentationName + ProjectFrame.separator)
     }
   }
+
+  def implicitTableNames: Iterable[String]
+  def allRelativeTablePaths: Seq[String] = {
+    val childTables = sortedSegmentations.flatMap(segmentation =>
+      segmentation.allRelativeTablePaths.map(
+        childPath => s"${segmentation.segmentationName}|$childPath"))
+    implicitTableNames.toSeq ++ childTables
+  }
 }
 object ProjectViewer {
   def feEntity[T](e: TypedEntity[T], name: String, note: String, isInternal: Boolean = false) = {
@@ -212,6 +222,7 @@ object ProjectViewer {
 class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: MetaGraphManager)
     extends ProjectViewer {
   val state = rootState.state
+  def rootViewer = this
   def editor: RootProjectEditor = new RootProjectEditor(rootState)
 
   val isSegmentation = false
@@ -219,6 +230,12 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   def offspringPath: Seq[String] = Nil
 
   protected lazy val getFEMembers: Option[FEAttribute] = None
+
+  def implicitTableNames =
+    Option(vertexSet).map(_ => Table.VERTEX_TABLE_NAME) ++
+      Option(edgeBundle).map(_ => Table.EDGE_TABLE_NAME)
+
+  def allAbsoluteTablePaths: Seq[String] = allRelativeTablePaths.map("|" + _)
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -229,6 +246,8 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   val rootState = parent.rootState
   val segmentationState: SegmentationState = parent.state.segmentations(segmentationName)
   val state = segmentationState.state
+
+  def rootViewer = parent.rootViewer
 
   override val isSegmentation = true
   override val asSegmentation = this
@@ -268,6 +287,11 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
       bt,
       equivalentUIAttribute)
   }
+
+  def implicitTableNames =
+    Option(vertexSet).map(_ => Table.VERTEX_TABLE_NAME) ++
+      Option(edgeBundle).map(_ => Table.EDGE_TABLE_NAME) ++
+      Option(belongsTo).map(_ => Table.BELONGS_TO_TABLE_NAME)
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.
@@ -826,8 +850,9 @@ case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   }
 }
 object SubProject {
+  def splitPipedPath(pipedPath: String) = pipedPath.split(ProjectFrame.quotedSeparator, -1)
   def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
-    val nameElements = projectName.split(ProjectFrame.quotedSeparator, -1)
+    val nameElements = splitPipedPath(projectName)
     new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
   }
 }

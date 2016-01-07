@@ -33,7 +33,7 @@ case class FEOption(
 object FEOption {
   def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
   def special(specialID: String): FEOption = specialOpt(specialID).get
-  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),(.*)\)".r
+  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),([^|]*)\)(|.*)?".r
   private def specialOpt(specialID: String): Option[FEOption] = {
     Option(specialID match {
       case "!unset" => ""
@@ -41,19 +41,20 @@ object FEOption {
       case "!unit distances" => "unit distances"
       case "!internal id (default)" => "internal id (default)"
       // TODO: human readable timestamp formatting
-      case TitledCheckpointRE(cp, title) => s"$title@$cp"
+      case TitledCheckpointRE(cp, title, suffix) => s"$title@$cp$suffix"
       case _ => null
     }).map(FEOption(specialID, _))
   }
-  def titledCheckpoint(cp: String, title: String): FEOption =
-    special(s"!checkpoint($cp,$title)")
-  def unpackTitledCheckpoint(id: String): (String, String) =
+  def titledCheckpoint(cp: String, title: String, suffix: String = ""): FEOption =
+    special(s"!checkpoint($cp,$title)$suffix")
+  def unpackTitledCheckpoint(id: String): (String, String, String) =
     unpackTitledCheckpoint(id, "$id does not look like a project checkpoint identifier")
-  def unpackTitledCheckpoint(id: String, customError: String): (String, String) =
+  def unpackTitledCheckpoint(id: String, customError: String): (String, String, String) =
+    maybeUnpackTitledCheckpoint(id).getOrElse(throw new AssertionError(customError))
+  def maybeUnpackTitledCheckpoint(id: String): Option[(String, String, String)] =
     id match {
-      case TitledCheckpointRE(cp, title) => (cp, title)
-      case _ =>
-        throw new AssertionError(customError)
+      case TitledCheckpointRE(cp, title, suffix) => Some((cp, title, suffix))
+      case _ => None
     }
 
   def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
@@ -692,6 +693,18 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     Operation.allProjects(user)
       .map(project => FEOption.titledCheckpoint(project.checkpoint, project.projectName))
       .toList
+  }
+
+  // All tables that the user has read access to.
+  protected def readableGlobalTablePaths(implicit manager: MetaGraphManager): List[FEOption] = {
+    Operation.allProjects(user)
+      .flatMap {
+        case project =>
+          project.viewer
+            .allAbsoluteTablePaths
+            .map(tablePath =>
+              FEOption.titledCheckpoint(project.checkpoint, project.projectName, tablePath))
+      }.toList
   }
 }
 object Operation {
