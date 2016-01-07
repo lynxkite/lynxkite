@@ -56,6 +56,12 @@
           >{{ dir }}<span ng-hide="$last" class="slash">/</span></span>
       </span>
       <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon"></span>
+      <span class="clicky glyphicon glyphicon-cog" ng-click="scope.showSettings = !scope.showSettings" id="directory-settings-icon"></span>
+    </div>
+
+    <!-- Directory settings. -->
+    <div class="project-settings" ng-if="scope.showSettings && path">
+      <project-settings view="reload" path="path" acl="data"></project-settings>
     </div>
 
     <div class="entry">

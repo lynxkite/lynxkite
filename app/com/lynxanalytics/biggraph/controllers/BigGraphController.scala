@@ -159,7 +159,12 @@ case class ProjectListRequest(path: String)
 case class ProjectSearchRequest(
   basePath: String, // We only search for projects/directories contained (recursively) in this.
   query: String)
-case class ProjectList(path: String, directories: List[String], projects: List[FEProjectListElement])
+case class ProjectList(
+  path: String,
+  readACL: String,
+  writeACL: String,
+  directories: List[String],
+  projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -253,6 +258,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
       request.path,
+      dir.readACL,
+      dir.writeACL,
       visibleDirs.map(_.path.toString).toList,
       visible.map(_.toListElementFE).toList)
   }
@@ -279,6 +286,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     ProjectList(
       request.basePath,
+      dir.readACL,
+      dir.writeACL,
       dirs.map(_.path.toString).toList,
       projects.map(_.toListElementFE).toList)
   }

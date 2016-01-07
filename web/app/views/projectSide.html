@@ -135,7 +135,7 @@
 
       <!-- Project settings. -->
       <div class="list-group-item project-settings" ng-if="side.showSettings">
-        <project-settings side="side"></project-settings>
+        <project-settings view="side.reload" path="side.state.projectName" acl="side.project"></project-settings>
       </div>
 
       <!-- Extra controls for visualizations. -->
