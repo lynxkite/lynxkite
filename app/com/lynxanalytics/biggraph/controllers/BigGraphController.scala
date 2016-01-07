@@ -35,16 +35,15 @@ object FEOption {
   def special(specialID: String): FEOption = specialOpt(specialID).get
   val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),(.*)\)".r
   private def specialOpt(specialID: String): Option[FEOption] = {
-    specialID match {
-      case "!unset" => Some(FEOption(specialID, ""))
-      case "!no weight" => Some(FEOption(specialID, "no weight"))
-      case "!unit distances" => Some(FEOption(specialID, "unit distances"))
-      case "!internal id (default)" => Some(FEOption(specialID, "internal id (default)"))
-      case TitledCheckpointRE(cp, title) =>
-        // TODO: human readable timestamp formatting
-        Some(FEOption(specialID, s"$title@$cp"))
-      case _ => None
-    }
+    Option(specialID match {
+      case "!unset" => ""
+      case "!no weight" => "no weight"
+      case "!unit distances" => "unit distances"
+      case "!internal id (default)" => "internal id (default)"
+      // TODO: human readable timestamp formatting
+      case TitledCheckpointRE(cp, title) => s"$title@$cp"
+      case _ => null
+    }).map(FEOption(specialID, _))
   }
   def titledCheckpoint(cp: String, title: String): FEOption =
     special(s"!checkpoint($cp,$title)")
