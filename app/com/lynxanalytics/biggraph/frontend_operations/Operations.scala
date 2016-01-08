@@ -477,7 +477,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Import vertices and edges from single database table",
     new ImportVerticesAndEdgesOperation(_, _) with SQLRowReader)
 
-  register("Import vertices and edges from table", new ImportOperation(_, _) {
+  register("Import vertices and edges from a single table", new ImportOperation(_, _) {
     def parameters = List(
       Choice(
         "table",
