@@ -386,7 +386,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
     val pFrom = ProjectDirectory.fromName(request.from)
-    // TODO(gsvigruha): should we check read access on the parent dir as well?
     pFrom.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
     val pTo = ProjectDirectory.fromName(request.to)

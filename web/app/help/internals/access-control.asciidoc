@@ -10,10 +10,10 @@ is enabled.
 
 Access rights are controlled at the project and the folder level. A project or a folder
 has two access control lists: one for reading and one for writing. A user have read
-access to a project or a folder if he is on it's access control list and has read access
-to the parent folders recursively. Similarly, write access requires being on the write
-access control list plus _read_ access for all parents. Being on the write access control
-list implies being on the read access list on every local level.
+access to a project or a folder if he is on it's access control list and has read
+access to the parent folders recursively. Similarly, write access requires being on the
+writeaccess control list plus _read_ access for all parents. Being on the write access
+control list implies being on the read access list on every local level.
 
 - The users with read access to a folder can view it's contents.
 - The users with write access to a folder can create, delete and rename projects and
