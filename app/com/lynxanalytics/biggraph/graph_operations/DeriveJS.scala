@@ -34,8 +34,8 @@ object DeriveJS {
       namedAttributes.map(_._1).toSet & namedScalars.map(_._1).toSet
     assert(common.isEmpty, {
       val collisions = common.mkString(",")
-      s"Identical scalar and attribute name: $collisions" +
-        s" .Please rename either the scalar or the attribute."
+      s"Identical scalar and attribute name: $collisions." +
+        s" Please rename either the scalar or the attribute."
     })
 
     val js = JavaScript(exprString)
