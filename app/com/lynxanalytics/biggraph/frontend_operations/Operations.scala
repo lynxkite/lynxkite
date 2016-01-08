@@ -1333,9 +1333,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
-    whatToPrependToNames: String = ""): IndexedSeq[(String, T)] = {
+    prefix: String = ""): IndexedSeq[(String, T)] = {
     holder.filter {
-      case (name, _) => containsIdentifierJS(expr, whatToPrependToNames + name)
+      case (name, _) => containsIdentifierJS(expr, prefix + name)
     }.toIndexedSeq
   }
 
