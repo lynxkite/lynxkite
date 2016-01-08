@@ -90,7 +90,8 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
   }
 
   test("create directory") {
-    controller.createDirectory(user, CreateDirectoryRequest(name = "foo/bar"))
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo/bar", privacy = "private"))
     assert(list("").directories == Seq("foo"))
     assert(list("foo").projects.isEmpty)
     assert(list("foo").directories == Seq("foo/bar"))
@@ -101,7 +102,8 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
   test("create directory inside project") {
     run("Example Graph")
     intercept[AssertionError] {
-      controller.createDirectory(user, CreateDirectoryRequest(name = projectName + "/bar"))
+      controller.createDirectory(user, CreateDirectoryRequest(
+        name = projectName + "/bar", privacy = "private"))
     }
   }
 
