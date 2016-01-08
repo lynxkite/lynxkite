@@ -34,7 +34,7 @@ object Table {
   //  !edges
   //  !belongsTo - only defined for segmentations
   //
-  // The last two formats are only meaningful in the context of a project viewer. Global paths
+  // The first two formats are only meaningful in the context of a project viewer. Global paths
   // can be resolved out of context as well, so there is a specialized function just for those.
   def fromGlobalPath(globalPath: String)(implicit metaManager: MetaGraphManager): Table = {
     val (checkpoint, _, suffix) = FEOption.unpackTitledCheckpoint(
@@ -105,7 +105,7 @@ class EdgeTable(project: ProjectViewer) extends Table {
           "src$" + name ->
             graph_operations.VertexToEdgeAttribute.srcAttribute(attr, project.edgeBundle),
           "dst$" + name ->
-            graph_operations.VertexToEdgeAttribute.srcAttribute(attr, project.edgeBundle))
+            graph_operations.VertexToEdgeAttribute.dstAttribute(attr, project.edgeBundle))
     }
     project.edgeAttributes ++ fromVertexAttributes
   }
