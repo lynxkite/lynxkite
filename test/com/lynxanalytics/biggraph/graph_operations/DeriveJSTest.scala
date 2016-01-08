@@ -26,8 +26,8 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       JavaScript(expr),
       Seq(), Seq("greeting"))
     val derived = op(
-      op.vs, g.vertices
-    )(op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
+      op.vs, g.vertices)(
+        op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
     val elements = derived.rdd.collect()
     assert(elements.size == 4 && elements.forall(_._2 == "Hello world!"))
   }
@@ -40,8 +40,8 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       Seq("age", "name"), Seq("greeting"))
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.age.entity, g.name.entity)
-    )(op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
+      VertexAttributeToJSValue.seq(g.age.entity, g.name.entity))(
+        op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
     assert(derived.rdd.collect.sorted.toList == List(0 -> 72.3, 1 -> 60.2, 2 -> 92.3, 3 -> 134.0))
   }
 
