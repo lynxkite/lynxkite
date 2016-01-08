@@ -82,7 +82,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       });
 
       function abandonScalars() {
-        if (scope.data && scope.data.$resolved) {
+        if (scope.data && scope.data.$resolved && !scope.data.$error) {
           for (var i = 0; i < scope.data.projects.length; ++i) {
             var p = scope.data.projects[i];
             scope.vertexCounts[p.name].$abandon();
