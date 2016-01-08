@@ -24,6 +24,7 @@ object GroovyContext {
     val ctx = GroovyContext(user, ops, Some(env), Some(commandLine))
     val shell = ctx.trustedShell("params" -> JavaConversions.mapAsJavaMap(params.toMap))
     shell.evaluate(new java.io.File(scriptFileName))
+    env.dataManager.waitAllFutures() // Finish any writes before shutting down.
   }
 }
 case class GroovyContext(
