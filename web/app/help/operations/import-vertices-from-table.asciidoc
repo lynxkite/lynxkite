@@ -1,0 +1,12 @@
+### Import vertices from CSV files
+
+Imports vertices (no edges) from a table.
+Each column in the table will be accessible as a vertex attribute.
+An extra vertex attribute is generated to hold the internal vertex ID.
+
+====
+include::{g}[tag=table-import]
+
+[[id-attr]] Vertex ID attribute::
+The name of the extra vertex attribute that is generated for the internal vertex ID.
+====

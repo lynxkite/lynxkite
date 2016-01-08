@@ -88,6 +88,11 @@ a line that does not match the header. When set to `yes`, erroneous lines will b
 silently skipped.
 end::csv-import[]
 
+tag::table-import[]
+[[table]] Table::
+The table to import from.
+end::table-import[]
+
 tag::random-seed[]
 =====
 LynxKite operations are typically deterministic. If you re-run an operation with
