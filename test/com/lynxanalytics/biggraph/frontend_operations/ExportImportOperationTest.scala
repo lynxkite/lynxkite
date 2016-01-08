@@ -154,7 +154,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     run("Discard vertices")
 
     // Import belongs to as edges
-    run("Import vertices and edges from table",
+    run("Import vertices and edges from a single table",
       Map(
         "table" -> (project2Checkpoint + "|cc|!belongsTo"),
         "src" -> "base$name",
