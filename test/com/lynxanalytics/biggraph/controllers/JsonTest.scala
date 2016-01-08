@@ -23,7 +23,7 @@ class TestController {
 }
 
 object TestJsonServer extends JsonServer {
-  override val userController = null
+  def userController = ???
   implicit val rTest = Json.reads[TestRequest]
   implicit val wTest = Json.writes[TestResponse]
 
