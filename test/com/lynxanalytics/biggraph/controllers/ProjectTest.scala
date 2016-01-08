@@ -72,10 +72,10 @@ class ProjectTest extends FunSuite with TestGraphOp {
   def user(email: String) = User(email, isAdmin = false)
 
   def assertReaders(yes: String*)(no: String*): Unit = {
-    assertProjectReaders(projectFrame, yes, no)
+    assertProjectReaders(projectFrame)(yes: _*)(no: _*)
   }
 
-  def assertProjectReaders(p: ProjectDirectory, yes: Seq[String], no: Seq[String]): Unit = {
+  def assertProjectReaders(p: ProjectDirectory)(yes: String*)(no: String*): Unit = {
     for (email <- yes) {
       assert(p.readAllowedFrom(user(email)), s"$email cannot read $p")
     }
@@ -85,10 +85,10 @@ class ProjectTest extends FunSuite with TestGraphOp {
   }
 
   def assertWriters(yes: String*)(no: String*): Unit = {
-    assertProjectWriters(projectFrame, yes, no)
+    assertProjectWriters(projectFrame)(yes: _*)(no: _*)
   }
 
-  def assertProjectWriters(p: ProjectDirectory, yes: Seq[String], no: Seq[String]): Unit = {
+  def assertProjectWriters(p: ProjectDirectory)(yes: String*)(no: String*): Unit = {
     for (email <- yes) {
       assert(p.writeAllowedFrom(user(email)), s"$email cannot write $p")
     }
@@ -141,8 +141,8 @@ class ProjectTest extends FunSuite with TestGraphOp {
     val p = ProjectDirectory.fromName("p")
     p.readACL = "x"
     p.writeACL = "*"
-    assertProjectReaders(p, Seq("x", "y"), Seq())
-    assertProjectWriters(p, Seq("x", "y"), Seq())
+    assertProjectReaders(p)("x", "y")()
+    assertProjectWriters(p)("x", "y")()
   }
 
   test("Access control with folders - parents checked") {
@@ -152,13 +152,13 @@ class ProjectTest extends FunSuite with TestGraphOp {
     val p2 = ProjectDirectory.fromName("p1/p2")
     p2.readACL = "y"
     p2.writeACL = "y"
-    assertProjectReaders(p2, Seq(), Seq("x", "y"))
-    assertProjectWriters(p2, Seq(), Seq("x", "y"))
+    assertProjectReaders(p2)()("x", "y")
+    assertProjectWriters(p2)()("x", "y")
 
     // In parents read access is enough
     p1.readACL = "*"
-    assertProjectReaders(p2, Seq("y"), Seq("x"))
-    assertProjectWriters(p2, Seq("y"), Seq("x"))
+    assertProjectReaders(p2)("y")("x")
+    assertProjectWriters(p2)("y")("x")
   }
 
   test("Access control with folders - grandparents checked") {
@@ -171,12 +171,12 @@ class ProjectTest extends FunSuite with TestGraphOp {
     val p3 = ProjectDirectory.fromName("p1/p2/p3")
     p3.readACL = "y"
     p3.writeACL = "y"
-    assertProjectReaders(p3, Seq(), Seq("x", "y"))
-    assertProjectWriters(p3, Seq(), Seq("x", "y"))
+    assertProjectReaders(p3)()("x", "y")
+    assertProjectWriters(p3)()("x", "y")
 
     // Write access should imply read access in parents too
     p1.writeACL = "*"
-    assertProjectReaders(p3, Seq("y"), Seq("x"))
-    assertProjectWriters(p3, Seq("y"), Seq("x"))
+    assertProjectReaders(p3)("y")("x")
+    assertProjectWriters(p3)("y")("x")
   }
 }
