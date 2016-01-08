@@ -17,6 +17,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - A home folder is created for every user automatically. Every user has exclusive read and write
    access to his own home folder by default.
  - The JavaScript code can now access scalars.
+ - Fixed critical bug with batch workflows.
 
 ### 1.6.0
 
