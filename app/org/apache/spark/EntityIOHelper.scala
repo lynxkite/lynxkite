@@ -6,9 +6,10 @@ object EntityIOHelper extends mapreduce.SparkHadoopMapReduceUtil {
     config: org.apache.hadoop.conf.Configuration,
     jobtracker: String,
     stage: Int,
+    isMap: Boolean,
     partition: Int,
     attempt: Int) = {
-    val attemptID = newTaskAttemptID(jobtracker, stage, isMap = false, partition, attempt)
+    val attemptID = newTaskAttemptID(jobtracker, stage, isMap, partition, attempt)
     newTaskAttemptContext(config, attemptID)
   }
 }

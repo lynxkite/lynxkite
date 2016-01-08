@@ -192,6 +192,7 @@ trait FieldNaming {
 trait EntityTemplate[T <: MetaGraphEntity] {
   def set(target: MetaDataSet, entity: T): MetaDataSet
   def entity(implicit instance: MetaGraphOperationInstance): T
+  val name: Symbol
 }
 object EntityTemplate {
   import scala.language.implicitConversions

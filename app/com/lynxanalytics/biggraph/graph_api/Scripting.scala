@@ -41,7 +41,10 @@ object Scripting {
     def apply[T <: MetaGraphEntity](
       adders: Seq[EntityTemplate[T]],
       entities: Seq[T]): InstanceBuilder[IS, OMDS] = {
-      assert(adders.size == entities.size)
+      assert(adders.size == entities.size, {
+        val adderNames = adders.map(_.name)
+        s"Input sequence mismatch: $adderNames vs $entities"
+      })
       for ((adder, entity) <- adders.zip(entities)) {
         currentInput = adder.set(currentInput, entity)
       }
