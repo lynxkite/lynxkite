@@ -871,11 +871,21 @@ class ProjectDirectory(val path: SymbolPath)(
     }
   }
   def readAllowedFrom(user: User): Boolean = {
-    // Write access also implies read access.
-    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
+    user.isAdmin || (localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
   }
   def writeAllowedFrom(user: User): Boolean = {
-    user.isAdmin || aclContains(writeACL, user)
+    user.isAdmin || (localWriteAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
+  }
+
+  private def transitiveReadAllowedFrom(user: User, p: Option[ProjectDirectory]): Boolean = {
+    p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
+  }
+  private def localReadAllowedFrom(user: User): Boolean = {
+    // Write access also implies read access.
+    localWriteAllowedFrom(user) || aclContains(readACL, user)
+  }
+  private def localWriteAllowedFrom(user: User): Boolean = {
+    aclContains(writeACL, user)
   }
 
   def aclContains(acl: String, user: User): Boolean = {
