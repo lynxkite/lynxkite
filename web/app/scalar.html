@@ -13,8 +13,5 @@
 
 <div class="entry-bottom" ng-if="asValue">
   <span class="type-name">{{scalar.typeName}}</span>
-  <span ng-if="scalar.computeProgress === 1.0" class="compute-progress">
-    <i class="glyphicon glyphicon-ok" drop-tooltip="already computed"></i></span>
-  <span ng-if="scalar.computeProgress === 0.5" class="compute-progress">
-    <i class="glyphicon glyphicon-flash" drop-tooltip="computation started"></i></span>
+  <compute-progress model="scalar.computeProgress"></compute-progress>
 </div>

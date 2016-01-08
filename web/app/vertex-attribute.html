@@ -98,10 +98,7 @@
 <div class="entry-bottom">
   <span class="type-name">{{attr.typeName}}</span>
   <span class="pull-right" trusted-html="attr.note"></span>
-  <span ng-if="attr.computeProgress === 1.0" class="compute-progress">
-    <i class="glyphicon glyphicon-ok" drop-tooltip="already computed"></i></span>
-  <span ng-if="attr.computeProgress === 0.5" class="compute-progress">
-    <i class="glyphicon glyphicon-flash" drop-tooltip="computation started"></i></span>
+  <compute-progress model="attr.computeProgress"></compute-progress>
 </div>
 <div class="clearfix"></div>
 <histogram ng-show="histogram" model="histogram" attr-name="{{attr.title}}"></histogram>
