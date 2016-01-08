@@ -74,10 +74,11 @@
       Loading...
     </progressbar>
 
-    <p class="alert alert-danger" ng-if="data.$error">
+    <div class="alert alert-danger" ng-if="data.$error">
       Could not load project list.
       <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
-    </p>
+      <p class="alert-details">{{ data.$error }}</p>
+    </div>
 
     <div ng-repeat="directory in data.directories"
       id="directory-{{ pathInside(directory) | id }}"

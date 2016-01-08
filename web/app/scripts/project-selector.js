@@ -171,7 +171,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       };
 
       scope.reportListError = function() {
-        util.reportRequestError(scope.data, 'Project list could not be loaded.');
+        util.reportRequestError(scope.data, 'Project list could not be loaded');
       };
 
       scope.reportProjectError = function(project) {
