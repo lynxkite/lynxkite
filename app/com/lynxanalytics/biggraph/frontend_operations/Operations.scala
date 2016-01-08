@@ -288,6 +288,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  // TODO: remove this and all subclasses, subtraits once tables are fully
+  // operational.
   trait RowReader {
     def sourceParameters: List[OperationParameterMeta]
     def source(params: Map[String, String]): graph_operations.RowInput
@@ -359,6 +361,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Import vertices from a database",
     new ImportVerticesOperation(_, _) with SQLRowReader)
 
+  register("Import vertices from table", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "table",
+        "Table to import from",
+        options = readableGlobalTablePaths,
+        allowUnknownOption = true),
+      Param("id-attr", "ID attribute name", defaultValue = "id"))
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val table = Table.fromCanonicalPath(params("table"), project.viewer)
+      project.vertexSet = table.idSet
+      for ((name, attr) <- table.columns) {
+        project.newVertexAttribute(name, attr, "imported")
+      }
+      val idAttr = params("id-attr")
+      assert(
+        !project.vertexAttributes.contains(idAttr),
+        s"The input also contains a field called '$idAttr'. Please pick a different name.")
+      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
+    }
+  })
+
   abstract class ImportEdgesForExistingVerticesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
@@ -388,6 +413,40 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     new ImportEdgesForExistingVerticesOperation(_, _) with CSVRowReader)
   register("Import edges for existing vertices from a database",
     new ImportEdgesForExistingVerticesOperation(_, _) with SQLRowReader)
+
+  register("Import edges for existing vertices from table", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "table",
+        "Table to import from",
+        options = readableGlobalTablePaths,
+        allowUnknownOption = true),
+      Choice("attr", "Vertex ID attribute",
+        options = FEOption.unset +: vertexAttributes[String]),
+      Param("src", "Source ID column"),
+      Param("dst", "Destination ID column"))
+    def enabled =
+      hasNoEdgeBundle &&
+        hasVertexSet &&
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+    def apply(params: Map[String, String]) = {
+      val table = Table.fromCanonicalPath(params("table"), project.viewer)
+      val src = params("src")
+      val dst = params("dst")
+      assert(src.nonEmpty, "The Source ID column parameter must be set.")
+      assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
+      val attrName = params("attr")
+      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
+      // TODO: implement this. It needs a new backend operation and I don't want to delay
+      // the merging on this with implementing of that.
+      //val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
+      //val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
+      //project.edgeBundle = imp.edges
+      //project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      ???
+    }
+  })
 
   abstract class ImportVerticesAndEdgesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
@@ -425,14 +484,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "Table to import from",
         options = readableGlobalTablePaths,
         allowUnknownOption = true),
-      Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"))
+      Param("src", "Source ID column"),
+      Param("dst", "Destination ID column"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val src = params("src")
       val dst = params("dst")
-      assert(src.nonEmpty, "The Source ID field parameter must be set.")
-      assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
+      assert(src.nonEmpty, "The Source ID column parameter must be set.")
+      assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
       val table = Table.fromCanonicalPath(params("table"), project.viewer)
       val eg = {
         val op = graph_operations.VerticesToEdges()
@@ -448,6 +507,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  // TODO: remove this once we have tables fully operational.
   register("Convert vertices into edges", new StructureOperation(_, _) {
     def parameters = List(
       Choice("src", "Source", options = vertexAttributes[String]),
@@ -498,6 +558,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Import vertex attributes from a database",
     new ImportVertexAttributesOperation(_, _) with SQLRowReader)
 
+  register("Import vertex attributes from table", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "table",
+        "Table to import from",
+        options = readableGlobalTablePaths,
+        allowUnknownOption = true),
+      Choice("id-attr", "Vertex ID attribute",
+        options = FEOption.unset +: vertexAttributes[String]),
+      Param("id-column", "ID column"),
+      Param("prefix", "Name prefix for the imported vertex attributes"))
+    def enabled =
+      hasVertexSet &&
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+    def apply(params: Map[String, String]) = {
+      val table = Table.fromCanonicalPath(params("table"), project.viewer)
+      val attrName = params("id-attr")
+      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+      val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
+      // TODO: implement this. It needs a new backend operation and I don't want to delay
+      // the merging on this with implementing of that.
+      // val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-column"))
+      // val res = op(op.idAttr, idAttr).result
+      // val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      // for ((name, attr) <- res.attrs) {
+      //   project.newVertexAttribute(prefix + name, attr, "imported")
+      // }
+      ???
+    }
+  })
+
   abstract class ImportEdgeAttributesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
@@ -526,6 +617,39 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     new ImportEdgeAttributesOperation(_, _) with CSVRowReader)
   register("Import edge attributes from a database",
     new ImportEdgeAttributesOperation(_, _) with SQLRowReader)
+
+  register("Import edge attributes from table", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "table",
+        "Table to import from",
+        options = readableGlobalTablePaths,
+        allowUnknownOption = true),
+      Choice("id-attr", "Edge ID attribute",
+        options = FEOption.unset +: edgeAttributes[String]),
+      Param("id-column", "ID column"),
+      Param("prefix", "Name prefix for the imported edge attributes"))
+    def enabled =
+      hasEdgeBundle &&
+        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
+    def apply(params: Map[String, String]) = {
+      val table = Table.fromCanonicalPath(params("table"), project.viewer)
+      val columnName = params("id-column")
+      assert(columnName.nonEmpty, "The ID column parameter must be set.")
+      val attrName = params("attr")
+      assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
+      val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
+      // TODO: implement this. It needs a new backend operation and I don't want to delay
+      // the merging on this with implementing of that.
+      // val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), columnName)
+      // val res = op(op.idAttr, idAttr).result
+      // val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      // for ((name, attr) <- res.attrs) {
+      //   project.edgeAttributes(prefix + name) = attr
+      // }
+      ???
+    }
+  })
 
   register("Maximal cliques", new CreateSegmentationOperation(_, _) {
     def parameters = List(
