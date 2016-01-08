@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.6.1
+
  - Fixed critical bugs with importing files.
  - Upgraded to Apache Spark 1.6.0.
  - Project directories now have access control (can be private or public), just like projects.
