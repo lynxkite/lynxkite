@@ -876,12 +876,27 @@ class ProjectDirectory(val path: SymbolPath)(
   def assertWriteAllowedFrom(user: User): Unit = {
     assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
   }
+  def assertParentWriteAllowedFrom(user: User): Unit = {
+    if (!parent.isEmpty) {
+      parent.get.assertWriteAllowedFrom(user)
+    }
+  }
   def readAllowedFrom(user: User): Boolean = {
-    // Write access also implies read access.
-    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
+    user.isAdmin || (localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
   }
   def writeAllowedFrom(user: User): Boolean = {
-    user.isAdmin || aclContains(writeACL, user)
+    user.isAdmin || (localWriteAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
+  }
+
+  private def transitiveReadAllowedFrom(user: User, p: Option[ProjectDirectory]): Boolean = {
+    p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
+  }
+  private def localReadAllowedFrom(user: User): Boolean = {
+    // Write access also implies read access.
+    localWriteAllowedFrom(user) || aclContains(readACL, user)
+  }
+  private def localWriteAllowedFrom(user: User): Boolean = {
+    aclContains(writeACL, user)
   }
 
   def aclContains(acl: String, user: User): Boolean = {
