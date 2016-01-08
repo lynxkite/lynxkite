@@ -865,6 +865,11 @@ class ProjectDirectory(val path: SymbolPath)(
   def assertWriteAllowedFrom(user: User): Unit = {
     assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
   }
+  def assertParentWriteAllowedFrom(user: User): Unit = {
+    if (!parent.isEmpty) {
+      parent.get.assertWriteAllowedFrom(user)
+    }
+  }
   def readAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
     user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
