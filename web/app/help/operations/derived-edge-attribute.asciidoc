@@ -10,6 +10,7 @@ expression are defined.
 
 For example you can write `weight * Math.abs(src$age - dst$age)` to generate a new
 attribute that is the weighted age difference of the two endpoints of the edge.
+For more details see <<javascript-guide>>.
 
 ====
 [[output]] Save as::
