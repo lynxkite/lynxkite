@@ -362,7 +362,7 @@ object ProductionJsonServer extends JsonServer {
   def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
-  override val userController = new UserController(BigGraphProductionEnvironment)
+  val userController = new UserController(BigGraphProductionEnvironment)
   val passwordLogin = userController.passwordLogin
   val googleLogin = userController.googleLogin
   val logout = userController.logout
