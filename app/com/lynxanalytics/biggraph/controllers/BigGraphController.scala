@@ -347,7 +347,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
     val p = ProjectDirectory.fromName(request.name)
     assertParentWriteAllowedFrom(user, p)
-    p.assertWriteAllowedFrom(user)
     p.remove()
   }
 
