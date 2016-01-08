@@ -322,14 +322,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
-  private def assertParentWriteAllowedFrom(user: serving.User, ProjectDirectory p): Unit = {
-    p.parent.assertWriteAllowedFrom(user)
-  }
-
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
     val p = ProjectFrame.fromName(request.name)
-    assertParentWriteAllowedFrom(user, p)
+    p.assertParentWriteAllowedFrom(user)
     setupACL(request.privacy, user, p)
     p.initialize
     if (request.notes != "") {
@@ -340,22 +336,22 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
     val p = ProjectDirectory.fromName(request.name)
-    assertParentWriteAllowedFrom(user, p)
+    p.assertParentWriteAllowedFrom(user)
     setupACL(request.privacy, user, p)
   }
 
   def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
     val p = ProjectDirectory.fromName(request.name)
-    assertParentWriteAllowedFrom(user, p)
+    p.assertParentWriteAllowedFrom(user)
     p.remove()
   }
 
   def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
-    val pFrom = ProjectDirectory.fromName(request.from)
     assertNameNotExists(request.to)
-    assertParentWriteAccess(pFrom, user)
+    val pFrom = ProjectDirectory.fromName(request.from)
+    pFrom.assertParentWriteAllowedFrom(user)
     val pTo = ProjectDirectory.fromName(request.to)
-    assertParentWriteAccess(pTo, user)
+    pTo.assertParentWriteAllowedFrom(user)
     pFrom.copy(pTo)
     pFrom.remove()
   }
@@ -389,13 +385,15 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
-    val p1 = ProjectDirectory.fromName(request.from)
-    p1.assertReadAllowedFrom(user)
+    val pFrom = ProjectDirectory.fromName(request.from)
+    // TODO(gsvigruha): should we check read access on the parent dir as well?
+    pFrom.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
-    val p2 = ProjectDirectory.fromName(request.to)
-    p1.copy(p2)
-    if (!p2.writeAllowedFrom(user)) {
-      p2.writeACL += "," + user.email
+    val pTo = ProjectDirectory.fromName(request.to)
+    pTo.assertParentWriteAllowedFrom(user)
+    pFrom.copy(pTo)
+    if (!pTo.writeAllowedFrom(user)) {
+      pTo.writeACL += "," + user.email
     }
   }
 
