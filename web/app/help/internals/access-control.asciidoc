@@ -13,9 +13,9 @@ has two access control lists: one for reading and one for writing.
 
 - The users on the reading list of a folder can view the contents of the folder.
 - The users on the writing list of a folder can create, delete and rename projects and
-subfolders. Note that renaming requires write access on both the original and the target
-folder if those two are different. Similarly, copying (duplicating) a project or a folder
-requires write access on the target folder.
+subfolders. Note that renaming requires write access on both the original and the
+target folder if those two are different. Similarly, copying (duplicating) a project or
+a folder requires write access on the target folder.
 - The users on the reading list of a project can see everything in the project but
 cannot make changes.
 - The users on the writing list of a project can see everything and make any change
