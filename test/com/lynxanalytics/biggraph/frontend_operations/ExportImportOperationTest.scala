@@ -95,4 +95,93 @@ class ExportImportOperationTest extends OperationsTestBase {
   test("Allow ill-formed csv") {
     assert(runImport(true) == Seq("good", "good", "good"))
   }
+
+  test("Imports from implicit tables") {
+    val project2 = clone(project)
+    run("Example Graph", on = project2)
+    run(
+      "Connected components",
+      Map(
+        "name" -> "cc",
+        "directions" -> "ignore directions"),
+      on = project2)
+    run(
+      "Vertex attribute to string",
+      Map("attr" -> "id"),
+      on = project2.segmentation("cc"))
+    val project2Checkpoint = s"!checkpoint(${project2.checkpoint.get},ExampleGraph)"
+
+    // Import vertices as vertices
+    run(
+      "Import vertices from table",
+      Map(
+        "table" -> (project2Checkpoint + "|!vertices"),
+        "id-attr" -> "new_id"))
+    assert(project.vertexSet.rdd.count == 4)
+    assert(project.edgeBundle == null)
+
+    {
+      val vAttrs = project.vertexAttributes.toMap
+      // 6 original +1 new_id
+      assert(vAttrs.size == 7)
+      assert(vAttrs("id") == vAttrs("new_id"))
+      assert(
+        vAttrs("name").rdd.map(_._2).collect.toSet == Set("Adam", "Eve", "Bob", "Isolated Joe"))
+    }
+    run("Discard vertices")
+
+    // Import edges as vertices
+    run(
+      "Import vertices from table",
+      Map(
+        "table" -> (project2Checkpoint + "|!edges"),
+        "id-attr" -> "id"))
+    assert(project.vertexSet.rdd.count == 4)
+    assert(project.edgeBundle == null)
+
+    {
+      val vAttrs = project.vertexAttributes.toMap
+      // 2 original edge attr, 2 * 6 src and dst attributes + 1 id
+      assert(vAttrs.size == 15)
+      assert(vAttrs("weight").rdd.map(_._2).collect.toSet == Set(1.0, 2.0, 3.0, 4.0))
+      assert(
+        vAttrs("src$name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
+          Seq("Adam", "Bob", "Bob", "Eve"))
+      assert(
+        vAttrs("dst$name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
+          Seq("Adam", "Adam", "Eve", "Eve"))
+    }
+    run("Discard vertices")
+
+    // Import belongs to as edges
+    run("Import vertices and edges from table",
+      Map(
+        "table" -> (project2Checkpoint + "|cc|!belongsTo"),
+        "src" -> "base$name",
+        "dst" -> "segment$id"))
+    // 4 nodes in 2 segments
+    assert(project.vertexSet.rdd.count == 6)
+    assert(project.edgeBundle.rdd.count == 4)
+
+    {
+      val vAttrs = project.vertexAttributes.toMap
+      val eAttrs = project.edgeAttributes.toMap
+      // id, stringId
+      assert(vAttrs.size == 2)
+      // 6 from base vertices, 2 from connected components
+      assert(eAttrs.size == 8)
+
+      val baseName = eAttrs("base$name").runtimeSafeCast[String].rdd
+      val segmentId = eAttrs("segment$id").runtimeSafeCast[String].rdd
+      val compnentMap = baseName.sortedJoin(segmentId).values.collect.toMap
+      assert(compnentMap.size == 4)
+      assert(compnentMap("Adam") == compnentMap("Eve"))
+      assert(compnentMap("Adam") == compnentMap("Bob"))
+      assert(compnentMap("Adam") != compnentMap("Isolated Joe"))
+      assert(
+        vAttrs("stringID").rdd.map(_._2).collect.toSet ==
+          Set("Adam", "Eve", "Bob", "Isolated Joe", "0", "3"))
+    }
+    run("Discard vertices")
+  }
 }
