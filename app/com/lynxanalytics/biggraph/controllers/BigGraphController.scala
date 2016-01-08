@@ -33,7 +33,7 @@ case class FEOption(
 object FEOption {
   def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
   def special(specialID: String): FEOption = specialOpt(specialID).get
-  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),([^|]*)\)(|.*)?".r
+  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),([^|]*)\)(|\|.*)".r
   private def specialOpt(specialID: String): Option[FEOption] = {
     Option(specialID match {
       case "!unset" => ""
