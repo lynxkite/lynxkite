@@ -144,9 +144,13 @@ include::import-edge-attributes-from-a-database.asciidoc[]
 
 include::import-edge-attributes-from-csv-files.asciidoc[]
 
+include::import-edge-attributes-from-table.asciidoc[]
+
 include::import-edges-for-existing-vertices-from-a-database.asciidoc[]
 
 include::import-edges-for-existing-vertices-from-csv-files.asciidoc[]
+
+include::import-edges-for-existing-vertices-from-table.asciidoc[]
 
 include::import-project-as-segmentation.asciidoc[]
 
@@ -158,13 +162,19 @@ include::import-vertex-attributes-from-a-database.asciidoc[]
 
 include::import-vertex-attributes-from-csv-files.asciidoc[]
 
+include::import-vertex-attributes-from-table.asciidoc[]
+
 include::import-vertices-and-edges-from-a-single-csv-fileset.asciidoc[]
 
 include::import-vertices-and-edges-from-a-single-database-table.asciidoc[]
 
+include::import-vertices-and-edges-from-a-single-table.asciidoc[]
+
 include::import-vertices-from-a-database.asciidoc[]
 
 include::import-vertices-from-csv-files.asciidoc[]
+
+include::import-vertices-from-table.asciidoc[]
 
 include::internal-vertex-id-as-attribute.asciidoc[]
 
