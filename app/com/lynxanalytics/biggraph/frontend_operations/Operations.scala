@@ -1330,6 +1330,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  def collectIdentifiers[T <: MetaGraphEntity](
+    holder: StateMapHolder[T],
+    expr: String,
+    prefix: String = ""): IndexedSeq[(String, T)] = {
+    holder.filter {
+      case (name, _) => containsIdentifierJS(expr, prefix + name)
+    }.toIndexedSeq
+  }
+
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
@@ -1344,14 +1353,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = project.vertexAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, name) }
-        .toIndexedSeq
+      val namedAttributes = collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
       }
       project.newVertexAttribute(params("output"), result.attr, expr + help)
     }
@@ -1371,32 +1380,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
-      val namedEdgeAttributes = project.edgeAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, name) }
-        .toIndexedSeq
-      val namedSrcVertexAttributes = project.vertexAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, "src$" + name) }
-        .toIndexedSeq
-        .map {
-          case (name, attr) =>
-            "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
-        }
-      val namedDstVertexAttributes = project.vertexAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, "dst$" + name) }
-        .toIndexedSeq
-        .map {
-          case (name, attr) =>
-            "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
-        }
+      val namedEdgeAttributes = collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
+      val namedSrcVertexAttributes =
+        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
+          .map {
+            case (name, attr) =>
+              "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
+          }
+      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedDstVertexAttributes =
+        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
+          .map {
+            case (name, attr) =>
+              "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
+          }
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
       }
       project.edgeAttributes(params("output")) = result.attr
     }

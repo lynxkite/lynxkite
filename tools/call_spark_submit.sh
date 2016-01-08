@@ -124,6 +124,12 @@ else
   className="play.core.server.NettyServer"
 fi
 
+SPARK_JARS_REPLACE_FROM=":/"
+SPARK_JARS_REPLACE_TO=",file:/"
+# This list will become the spark.jars Spark property. (Unless it is overwritten later
+# in SparkConfig.)
+SPARK_JARS="file:"${FULL_CLASSPATH//$SPARK_JARS_REPLACE_FROM/$SPARK_JARS_REPLACE_TO}
+
 command=(
     ${SPARK_HOME}/bin/spark-submit \
     --class "${className}" \
@@ -132,6 +138,7 @@ command=(
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
+    --jars "${SPARK_JARS}" \
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     "${fake_application_jar}" \
@@ -148,8 +155,12 @@ startKite () {
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
   fi
+  export KITE_READY_PIPE=/tmp/kite_pipe_${KITE_RANDOM_SECRET}
+  mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
-  >&2 echo "Kite server started (PID $!)."
+  PID=$!
+  read < ${KITE_READY_PIPE}
+  >&2 echo "Kite server started (PID ${PID})."
 }
 
 stopByPIDFile () {

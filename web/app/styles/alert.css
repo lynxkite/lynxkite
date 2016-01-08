@@ -26,3 +26,7 @@
   color: black;
   opacity: 0.6;
 }
+
+.alert-details {
+  padding-top: 10px;
+}

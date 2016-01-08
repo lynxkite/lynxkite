@@ -19,6 +19,32 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> 60.3, 1 -> 48.2, 2 -> 80.3, 3 -> 122.0))
   }
 
+  test("Spread out scalar to vertices") {
+    val expr = "greeting"
+    val g = ExampleGraph()().result
+    val op = DeriveJSString(
+      JavaScript(expr),
+      Seq(), Seq("greeting"))
+    val derived = op(
+      op.vs, g.vertices)(
+        op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
+    val elements = derived.rdd.collect()
+    assert(elements.size == 4 && elements.forall(_._2 == "Hello world!"))
+  }
+
+  test("example graph: 'name.length * 10 + age + greeting.length'") {
+    val expr = "name.length * 10 + age + greeting.length"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("age", "name"), Seq("greeting"))
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.age.entity, g.name.entity))(
+        op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
+    assert(derived.rdd.collect.sorted.toList == List(0 -> 72.3, 1 -> 60.2, 2 -> 92.3, 3 -> 134.0))
+  }
+
   test("example graph: cons string gets converted back to String correctly") {
     val expr = "var res = 'a'; res += 'b'; res;"
     val g = ExampleGraph()().result
@@ -56,6 +82,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
 
   test("JS integers become Scala doubles") {
     val g = ExampleGraph()().result
+
     val derived = DeriveJS.deriveFromAttributes[Double]("2", Seq(), g.vertices).attr
     assert(derived.rdd.collect.toSet == Set(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 2.0))
   }

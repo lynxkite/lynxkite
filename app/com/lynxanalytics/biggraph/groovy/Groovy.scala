@@ -24,6 +24,7 @@ object GroovyContext {
     val ctx = GroovyContext(user, ops, Some(env), Some(commandLine))
     val shell = ctx.trustedShell("params" -> JavaConversions.mapAsJavaMap(params.toMap))
     shell.evaluate(new java.io.File(scriptFileName))
+    env.dataManager.waitAllFutures() // Finish any writes before shutting down.
   }
 }
 case class GroovyContext(
@@ -119,13 +120,14 @@ class GroovyInterface(ctx: GroovyContext) {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
     assert(project.exists, s"Project '$name' not found.")
-    new GroovyBatchProject(ctx, project.viewer)
+    new GroovyBatchProject(ctx, project.viewer.editor)
   }
 
   def newProject(): GroovyProject = {
     import ctx.metaManager
-    val viewer = new RootProjectViewer(RootProjectState.emptyState)
-    val project = new GroovyBatchProject(ctx, viewer)
+    val editor = new RootProjectEditor(RootProjectState.emptyState)
+    editor.checkpoint = Some("") // Start with blank checkpoint.
+    val project = new GroovyBatchProject(ctx, editor)
     project.applyOperation(
       "Change-project-notes", Map("notes" -> s"Created by batch job: ${ctx.commandLine.get}"))
     project
@@ -187,7 +189,7 @@ abstract class GroovyProject(ctx: GroovyContext)
 }
 
 // Batch mode creates checkpoints and gives access to scalars/attributes.
-class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
+class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     extends GroovyProject(ctx) {
 
   override def getProperty(name: String): AnyRef = {
@@ -196,16 +198,19 @@ class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
       case "df" =>
-        assert(!viewer.isSegmentation, "You cannot access a segmentation as a DataFrame.")
-        ctx.env.get.dataFrame.option("checkpoint", viewer.rootCheckpoint).load()
+        assert(!editor.isSegmentation, "You cannot access a segmentation as a DataFrame.")
+        ctx.env.get.dataFrame.option("checkpoint", editor.rootCheckpoint).load()
       case _ => super.getProperty(name)
     }
   }
 
-  def copy() = new GroovyBatchProject(ctx, viewer)
+  def copy() = {
+    assert(!editor.isSegmentation, "You can only create copies of top-level projects.")
+    new GroovyBatchProject(ctx, editor.viewer.editor)
+  }
 
   def saveAs(newRootName: String): Unit = {
-    assert(!viewer.isSegmentation, "You cannot save a segmentation as a top-level project.")
+    assert(!editor.isSegmentation, "You cannot save a segmentation as a top-level project.")
     import ctx.metaManager
     val project = ProjectFrame.fromName(newRootName)
     if (!project.exists) {
@@ -213,39 +218,36 @@ class GroovyBatchProject(ctx: GroovyContext, private var viewer: ProjectViewer)
       project.readACL = ctx.user.email
       project.initialize
     }
-    project.setCheckpoint(viewer.rootCheckpoint)
+    project.setCheckpoint(editor.rootCheckpoint)
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled
   // checkpoint. It will point to the checkpoint of the root project of this project.
   def rootCheckpointWithTitle(title: String): String =
-    FEOption.titledCheckpoint(viewer.rootCheckpoint, title).id
+    FEOption.titledCheckpoint(editor.rootCheckpoint, title).id
 
   private[groovy] override def applyOperation(id: String, params: Map[String, String]): Unit = {
     import ctx.metaManager
-    val context = Operation.Context(ctx.user, viewer)
+    val context = Operation.Context(ctx.user, editor.viewer)
     val spec = FEOperationSpec(id, params)
-    val newRootState = ctx.ops.applyAndCheckpoint(context, spec)
-    val newRootViewer = new RootProjectViewer(newRootState)
-    viewer = newRootViewer.offspringViewer(viewer.offspringPath)
+    editor.rootEditor.rootState = ctx.ops.applyAndCheckpoint(context, spec)
   }
 
   protected def getScalars: Map[String, GroovyScalar] = {
-    viewer.scalars.mapValues(new GroovyScalar(ctx, _))
+    editor.scalars.toMap.mapValues(new GroovyScalar(ctx, _))
   }
 
   protected def getVertexAttributes: Map[String, GroovyAttribute] = {
-    viewer.vertexAttributes.mapValues(new GroovyAttribute(ctx, _))
+    editor.vertexAttributes.toMap.mapValues(new GroovyAttribute(ctx, _))
   }
 
   protected def getEdgeAttributes: Map[String, GroovyAttribute] = {
-    viewer.edgeAttributes.mapValues(new GroovyAttribute(ctx, _))
+    editor.edgeAttributes.toMap.mapValues(new GroovyAttribute(ctx, _))
   }
 
   protected def getSegmentations: Map[String, GroovyProject] = {
-    viewer.segmentationMap.map {
-      case (name, seg) =>
-        name -> new GroovyBatchProject(ctx, seg)
+    editor.segmentationNames.map { name =>
+      name -> new GroovyBatchProject(ctx, editor.segmentation(name))
     }.toMap
   }
 }
