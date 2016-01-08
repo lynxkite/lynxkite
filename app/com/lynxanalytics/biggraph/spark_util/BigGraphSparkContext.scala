@@ -13,35 +13,6 @@ import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
 
-private object SparkStageJars {
-  val classesToBundle: Seq[Class[_]] = Seq(
-    getClass(),
-    classOf[com.mysql.jdbc.Driver],
-    classOf[org.postgresql.Driver],
-    classOf[org.sqlite.JDBC],
-    classOf[gcs.GoogleHadoopFileSystem],
-    classOf[play.api.libs.json.JsValue],
-    classOf[com.twitter.algebird.SparseHLL],
-    classOf[com.databricks.spark.csv.CsvParser],
-    // Dependencies of spark-csv.
-    classOf[com.univocity.parsers.csv.CsvParserSettings],
-    classOf[org.apache.commons.csv.CSVParser],
-    classOf[ch.qos.logback.classic.Logger],
-    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]],
-    classOf[org.mozilla.javascript.Context])
-  val extraJarsToBundle =
-    scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
-      .split(":", -1)
-      .map(_.trim)
-      .filter(_ != "")
-  val jars =
-    classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath()) ++
-      extraJarsToBundle
-  require(
-    jars.forall(_.endsWith(".jar")),
-    "You need to run this from a jar. Use 'sbt stage' to get one.")
-}
-
 // Placeholders for deleted classes.
 class DeadClass1
 class DeadClass2
@@ -215,7 +186,6 @@ object BigGraphSparkContext {
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
-    useJars: Boolean = true,
     master: String = ""): spark.SparkContext = {
     val versionFound = org.apache.spark.SPARK_VERSION
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
@@ -261,9 +231,6 @@ object BigGraphSparkContext {
           if (forceRegistration)
             "com.lynxanalytics.biggraph.spark_util.BigGraphKryoForcedRegistrator"
           else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
-    }
-    if (useJars) {
-      sparkConf = sparkConf.setJars(SparkStageJars.jars)
     }
     if (master != "") {
       sparkConf = sparkConf.setMaster(master)

@@ -124,6 +124,12 @@ else
   className="play.core.server.NettyServer"
 fi
 
+SPARK_JARS_REPLACE_FROM=":/"
+SPARK_JARS_REPLACE_TO=",file:/"
+# This list will become the spark.jars Spark property. (Unless it is overwritten later
+# in SparkConfig.)
+SPARK_JARS="file:"${FULL_CLASSPATH//$REMOTE_JARS_REPLACE_FROM/$REMOTE_JARS_REPLACE_TO}
+
 command=(
     ${SPARK_HOME}/bin/spark-submit \
     --class "${className}" \
@@ -132,6 +138,7 @@ command=(
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
+    --jars "${SPARK_JARS}" \
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     "${fake_application_jar}" \
