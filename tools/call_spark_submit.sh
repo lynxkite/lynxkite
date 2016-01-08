@@ -128,7 +128,7 @@ SPARK_JARS_REPLACE_FROM=":/"
 SPARK_JARS_REPLACE_TO=",file:/"
 # This list will become the spark.jars Spark property. (Unless it is overwritten later
 # in SparkConfig.)
-SPARK_JARS="file:"${FULL_CLASSPATH//$REMOTE_JARS_REPLACE_FROM/$REMOTE_JARS_REPLACE_TO}
+SPARK_JARS="file:"${FULL_CLASSPATH//$SPARK_JARS_REPLACE_FROM/$SPARK_JARS_REPLACE_TO}
 
 command=(
     ${SPARK_HOME}/bin/spark-submit \
