@@ -154,7 +154,7 @@ sealed trait ProjectViewer {
   def sortedSegmentations: List[SegmentationViewer] =
     segmentationMap.toList.sortBy(_._1).map(_._2)
 
-  def toFE(projectName: String)(implicit dataManager: DataManager): FEProject = {
+  def toFE(projectName: String)(implicit epm: EntityProgressManager): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(
@@ -824,7 +824,7 @@ object ProjectFrame {
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
-  def toFE()(implicit dataManager: DataManager): FEProject = {
+  def toFE()(implicit epm: EntityProgressManager): FEProject = {
     val raw = viewer.toFE(fullName)
     if (path.isEmpty) {
       raw.copy(

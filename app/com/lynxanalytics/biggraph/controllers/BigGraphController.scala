@@ -243,6 +243,7 @@ object BigGraphController {
 }
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
+  implicit val entityProgressManager: EntityProgressManager = env.dataManager
 
   val ops = new Operations(env)
 
@@ -252,7 +253,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val (dirs, projects) = dir.listDirectoriesAndProjects
     val visibleDirs = dirs.filter(_.readAllowedFrom(user))
     val visible = projects.filter(_.readAllowedFrom(user))
-    implicit val dataManager = env.dataManager
     ProjectList(
       request.path,
       visibleDirs.map(_.path.toString).toList,
@@ -279,7 +279,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
         terms.forall(term => baseName.contains(term) || notes.contains(term))
       }
 
-    implicit val dataManager = env.dataManager
     ProjectList(
       request.basePath,
       dirs.map(_.path.toString).toList,
@@ -295,7 +294,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
     val nonUtilities = categories.filter(_.icon != "wrench")
-    implicit val dm = env.dataManager
     p.toFE.copy(opCategories = nonUtilities)
   }
 
@@ -472,7 +470,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val opCategoriesBefore = ops.categories(context, includeDeprecated = true)
-    implicit val dm = env.dataManager
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
