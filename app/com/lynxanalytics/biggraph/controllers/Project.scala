@@ -395,6 +395,7 @@ sealed trait ProjectEditor {
   def viewer: ProjectViewer
 
   def rootState: RootProjectState
+  def rootCheckpoint: String = rootState.checkpoint.get
 
   def vertexSet = viewer.vertexSet
   def vertexSet_=(e: VertexSet): Unit = {
