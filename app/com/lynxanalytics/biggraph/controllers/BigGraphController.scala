@@ -327,6 +327,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
     val p = ProjectFrame.fromName(request.name)
+    p.assertParentWriteAllowedFrom(user)
     setupACL(request.privacy, user, p)
     p.initialize
     if (request.notes != "") {
@@ -336,22 +337,25 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
-    val d = ProjectDirectory.fromName(request.name)
-    setupACL(request.privacy, user, d)
+    val p = ProjectDirectory.fromName(request.name)
+    p.assertParentWriteAllowedFrom(user)
+    setupACL(request.privacy, user, p)
   }
 
   def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
     val p = ProjectDirectory.fromName(request.name)
-    p.assertWriteAllowedFrom(user)
+    p.assertParentWriteAllowedFrom(user)
     p.remove()
   }
 
   def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
-    val p = ProjectDirectory.fromName(request.from)
-    p.assertWriteAllowedFrom(user)
     assertNameNotExists(request.to)
-    p.copy(ProjectDirectory.fromName(request.to))
-    p.remove()
+    val pFrom = ProjectDirectory.fromName(request.from)
+    pFrom.assertParentWriteAllowedFrom(user)
+    val pTo = ProjectDirectory.fromName(request.to)
+    pTo.assertParentWriteAllowedFrom(user)
+    pFrom.copy(pTo)
+    pFrom.remove()
   }
 
   def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
@@ -383,13 +387,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
-    val p1 = ProjectDirectory.fromName(request.from)
-    p1.assertReadAllowedFrom(user)
+    val pFrom = ProjectDirectory.fromName(request.from)
+    pFrom.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
-    val p2 = ProjectDirectory.fromName(request.to)
-    p1.copy(p2)
-    if (!p2.writeAllowedFrom(user)) {
-      p2.writeACL += "," + user.email
+    val pTo = ProjectDirectory.fromName(request.to)
+    pTo.assertParentWriteAllowedFrom(user)
+    pFrom.copy(pTo)
+    if (!pTo.writeAllowedFrom(user)) {
+      pTo.writeACL += "," + user.email
     }
   }
 
@@ -406,13 +411,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def changeACLSettings(user: serving.User, request: ACLSettingsRequest): Unit = metaManager.synchronized {
-    val d = ProjectDirectory.fromName(request.project)
-    d.assertWriteAllowedFrom(user)
+    val p = ProjectDirectory.fromName(request.project)
+    p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
-    assert(user.isAdmin || d.aclContains(request.writeACL, user),
-      s"You cannot forfeit your write access to project $d.")
-    d.readACL = request.readACL
-    d.writeACL = request.writeACL
+    assert(user.isAdmin || p.aclContains(request.writeACL, user),
+      s"You cannot forfeit your write access to project $p.")
+    p.readACL = request.readACL
+    p.writeACL = request.writeACL
   }
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = {
