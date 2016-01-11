@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.serving.{ FlyingResult, User }
+import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.spark_util
 
 import scala.collection.mutable
@@ -155,8 +155,7 @@ case class HistogramResponse(
 }
 
 case class ScalarValueRequest(
-  val scalarId: String,
-  val calculate: Boolean)
+  val scalarId: String)
 
 case class CenterRequest(
   vertexSetId: String,
@@ -641,9 +640,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(user: User, request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    if (!request.calculate && !dataManager.isCalculated(scalar)) {
-      throw new FlyingResult(play.api.mvc.Results.NotFound("Value is not calculated yet"))
-    }
     dynamicValue(scalar)
   }
 

@@ -4,11 +4,23 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
+### master
+
+### 1.6.1
+
+ - Fixed critical bugs with importing files.
+ - Upgraded to Apache Spark 1.6.0.
+ - Project directories now have access control (can be private or public), just like projects.
+ - Operation _Modular clustering_ stops crashing.
+ - The project browser now remembers the last directory you browsed.
  - `run-kite.sh start` now waits for the web server to be initialized - previously it returned
    immediately after starting the initialization process. This may take minutes on
    certain instances, but at least you know when the server is ready.
-
-### master
+ - A home folder is created for every user automatically. Every user has exclusive read and write
+   access to his own home folder by default.
+ - The JavaScript code can now access scalars.
+ - If an attribute has already been calculated, a small checkmark indicates this.
+ - Fixed critical bug with batch workflows.
 
 ### 1.6.0
 

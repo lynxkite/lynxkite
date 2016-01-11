@@ -133,7 +133,7 @@ sealed trait ProjectViewer {
   def asSegmentation: SegmentationViewer
 
   // Methods for conversion to FE objects.
-  private def feScalar(name: String): Option[FEAttribute] = {
+  private def feScalar(name: String)(implicit epm: EntityProgressManager): Option[FEAttribute] = {
     if (scalars.contains(name)) {
       Some(ProjectViewer.feEntity(scalars(name), name, getScalarNote(name)))
     } else {
@@ -141,7 +141,7 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String): FEProjectListElement = {
+  def toListElementFE(projectName: String)(implicit epm: EntityProgressManager): FEProjectListElement = {
     FEProjectListElement(
       projectName,
       state.notes,
@@ -151,12 +151,12 @@ sealed trait ProjectViewer {
 
   // Returns the FE attribute representing the seq of members for
   // each segment in a segmentation. None in root projects.
-  protected def getFEMembers: Option[FEAttribute]
+  protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute]
 
   def sortedSegmentations: List[SegmentationViewer] =
     segmentationMap.toList.sortBy(_._1).map(_._2)
 
-  def toFE(projectName: String): FEProject = {
+  def toFE(projectName: String)(implicit epm: EntityProgressManager): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(
@@ -184,7 +184,8 @@ sealed trait ProjectViewer {
   }
 
   def allOffspringFESegmentations(
-    rootName: String, rootRelativePath: String = ""): List[FESegmentation] = {
+    rootName: String, rootRelativePath: String = "")(
+      implicit epm: EntityProgressManager): List[FESegmentation] = {
     sortedSegmentations.flatMap { segmentation =>
       segmentation.toFESegmentation(rootName, rootRelativePath) +:
         segmentation.allOffspringFESegmentations(
@@ -201,7 +202,11 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feEntity[T](e: TypedEntity[T], name: String, note: String, isInternal: Boolean = false) = {
+  def feEntity[T](
+    e: TypedEntity[T],
+    name: String,
+    note: String,
+    isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -214,7 +219,8 @@ object ProjectViewer {
       canBucket,
       canFilter,
       isNumeric,
-      isInternal)
+      isInternal,
+      epm.computeProgress(e))
   }
 }
 
@@ -229,7 +235,7 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   def asSegmentation: SegmentationViewer = ???
   def offspringPath: Seq[String] = Nil
 
-  protected lazy val getFEMembers: Option[FEAttribute] = None
+  protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VERTEX_TABLE_NAME) ++
@@ -271,13 +277,17 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr
   }
 
-  override protected lazy val getFEMembers: Option[FEAttribute] =
+  override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
     Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
 
-  lazy val equivalentUIAttribute =
-    ProjectViewer.feEntity(belongsToAttribute, s"segmentation[$segmentationName]", note = "")
+  val equivalentUIAttributeTitle = s"segmentation[$segmentationName]"
 
-  def toFESegmentation(rootName: String, rootRelativePath: String = ""): FESegmentation = {
+  def equivalentUIAttribute()(implicit epm: EntityProgressManager): FEAttribute =
+    ProjectViewer.feEntity(belongsToAttribute, equivalentUIAttributeTitle, note = "")
+
+  def toFESegmentation(
+    rootName: String,
+    rootRelativePath: String = "")(implicit epm: EntityProgressManager): FESegmentation = {
     val bt =
       if (belongsTo == null) null
       else belongsTo.gUID.toString
@@ -419,6 +429,7 @@ sealed trait ProjectEditor {
   def viewer: ProjectViewer
 
   def rootState: RootProjectState
+  def rootCheckpoint: String = rootState.checkpoint.get
 
   def vertexSet = viewer.vertexSet
   def vertexSet_=(e: VertexSet): Unit = {
@@ -796,7 +807,7 @@ class ProjectFrame(path: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
 
-  def toListElementFE = {
+  def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
       viewer.toListElementFE(projectName)
     } catch {
@@ -838,7 +849,7 @@ object ProjectFrame {
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
-  def toFE: FEProject = {
+  def toFE()(implicit epm: EntityProgressManager): FEProject = {
     val raw = viewer.toFE(fullName)
     if (path.isEmpty) {
       raw.copy(
@@ -890,12 +901,27 @@ class ProjectDirectory(val path: SymbolPath)(
   def assertWriteAllowedFrom(user: User): Unit = {
     assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
   }
+  def assertParentWriteAllowedFrom(user: User): Unit = {
+    if (!parent.isEmpty) {
+      parent.get.assertWriteAllowedFrom(user)
+    }
+  }
   def readAllowedFrom(user: User): Boolean = {
-    // Write access also implies read access.
-    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
+    user.isAdmin || (localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
   }
   def writeAllowedFrom(user: User): Boolean = {
-    user.isAdmin || aclContains(writeACL, user)
+    user.isAdmin || (localWriteAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
+  }
+
+  private def transitiveReadAllowedFrom(user: User, p: Option[ProjectDirectory]): Boolean = {
+    p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
+  }
+  private def localReadAllowedFrom(user: User): Boolean = {
+    // Write access also implies read access.
+    localWriteAllowedFrom(user) || aclContains(readACL, user)
+  }
+  private def localWriteAllowedFrom(user: User): Boolean = {
+    aclContains(writeACL, user)
   }
 
   def aclContains(acl: String, user: User): Boolean = {

@@ -435,9 +435,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   test("scalar") {
     val g = graph_operations.ExampleGraph()().result
     val scalar = graph_operations.Count.run(g.vertices)
-    val req = ScalarValueRequest(
-      scalarId = scalar.gUID.toString,
-      calculate = true)
+    val req = ScalarValueRequest(scalarId = scalar.gUID.toString)
     val res = controller.getScalarValue(user, req)
     assert(res.defined == true)
     assert(res.string == "4")

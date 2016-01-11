@@ -15,6 +15,15 @@
      <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
        <level>ERROR</level>
      </filter>
+     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+       <evaluator>
+         <!-- This error is spammed in Apache Spark 1.6.0.
+              See https://issues.apache.org/jira/browse/SPARK-11293. -->
+         <expression>return message.contains("Managed memory leak detected");</expression>
+       </evaluator>
+       <OnMismatch>NEUTRAL</OnMismatch>
+       <OnMatch>DENY</OnMatch>
+     </filter>
      <target>System.err</target>
      <encoder>
        <pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>

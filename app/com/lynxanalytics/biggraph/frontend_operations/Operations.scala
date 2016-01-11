@@ -1484,6 +1484,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  def collectIdentifiers[T <: MetaGraphEntity](
+    holder: StateMapHolder[T],
+    expr: String,
+    prefix: String = ""): IndexedSeq[(String, T)] = {
+    holder.filter {
+      case (name, _) => containsIdentifierJS(expr, prefix + name)
+    }.toIndexedSeq
+  }
+
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
@@ -1498,14 +1507,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = project.vertexAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, name) }
-        .toIndexedSeq
+      val namedAttributes = collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
       }
       project.newVertexAttribute(params("output"), result.attr, expr + help)
     }
@@ -1525,32 +1534,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
-      val namedEdgeAttributes = project.edgeAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, name) }
-        .toIndexedSeq
-      val namedSrcVertexAttributes = project.vertexAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, "src$" + name) }
-        .toIndexedSeq
-        .map {
-          case (name, attr) =>
-            "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
-        }
-      val namedDstVertexAttributes = project.vertexAttributes
-        .filter { case (name, attr) => containsIdentifierJS(expr, "dst$" + name) }
-        .toIndexedSeq
-        .map {
-          case (name, attr) =>
-            "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
-        }
+      val namedEdgeAttributes = collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
+      val namedSrcVertexAttributes =
+        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
+          .map {
+            case (name, attr) =>
+              "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
+          }
+      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedDstVertexAttributes =
+        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
+          .map {
+            case (name, attr) =>
+              "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
+          }
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
       }
       project.edgeAttributes(params("output")) = result.attr
     }
@@ -2933,7 +2939,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.segmentations.toList.map {
           seg =>
             Param(
-              s"filterva-${seg.viewer.equivalentUIAttribute.title}",
+              s"filterva-${seg.viewer.equivalentUIAttributeTitle}",
               seg.segmentationName,
               mandatory = false)
         } ++
@@ -2957,8 +2963,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val vertexFilters = params.collect {
         case (vaFilter(name), filter) if filter.nonEmpty =>
           // The filter may be for a segmentation's equivalent attribute or for a vertex attribute.
-          val segAttrs = project.segmentations.map(_.viewer.equivalentUIAttribute)
-          val segGUIDOpt = segAttrs.find(_.title == name).map(_.id)
+          val segs = project.segmentations.map(_.viewer)
+          val segGUIDOpt =
+            segs.find(_.equivalentUIAttributeTitle == name).map(_.belongsToAttribute.gUID)
           val gUID = segGUIDOpt.getOrElse(project.vertexAttributes(name).gUID)
           FEVertexAttributeFilter(gUID.toString, filter)
       }.toSeq
@@ -3017,8 +3024,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               val op = s"$guid,Operation,${shortClass(inst.operation)},"
               val outputs = inst.outputs.all.map {
                 case (name, entity) =>
-                  val calc = env.dataManager.isCalculated(entity)
-                  s"${entity.gUID},${shortClass(entity)},${name.name},$calc"
+                  val progress = env.dataManager.computeProgress(entity)
+                  s"${entity.gUID},${shortClass(entity)},${name.name},$progress"
               }
               op +: outputs.toSeq
           }
@@ -3028,7 +3035,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val csv = graph_operations.CSV(
           file,
           delimiter = ",",
-          header = "guid,kind,name,is_calculated")
+          header = "guid,kind,name,progress")
         graph_operations.ImportVertexList(csv)().result
       }
       project.vertexSet = vertices.vertices
