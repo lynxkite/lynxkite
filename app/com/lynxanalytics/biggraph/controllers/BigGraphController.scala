@@ -256,15 +256,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val entry = DirectoryEntry.fromName(request.path)
     entry.assertReadAllowedFrom(user)
     val dir = entry.asDirectory
-    val (dirs, projects) = dir.listDirectoriesAndProjects
-    val visibleDirs = dirs.filter(_.readAllowedFrom(user))
-    val visible = projects.filter(_.readAllowedFrom(user))
+    val entries = dir.list
+    val (dirs, objects) = entries.partition(_.isDirectory)
+    val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
+    val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
     ProjectList(
       request.path,
       dir.readACL,
       dir.writeACL,
       visibleDirs.map(_.path.toString).toList,
-      visible.map(_.toListElementFE).toList)
+      visibleObjectFrames.map(_.toListElementFE).toList)
   }
 
   def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
@@ -280,7 +281,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         terms.forall(term => baseName.contains(term))
       }
     val projects = dir
-      .listProjectsRecursively
+      .listObjectsRecursively
       .filter(_.readAllowedFrom(user))
       .filter { project =>
         val baseName = project.path.last.name
@@ -709,20 +710,22 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
   protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
-    Operation.allProjects(user)
-      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.projectName))
+    Operation.allObjects(user)
+      .filter(_.isProject)
+      .map(_.asProjectFrame)
+      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.name))
       .toList
   }
 
   // All tables that the user has read access to.
   protected def readableGlobalTablePaths(implicit manager: MetaGraphManager): List[FEOption] = {
-    Operation.allProjects(user)
+    Operation.allObjects(user)
       .flatMap {
         case project =>
           project.viewer
             .allAbsoluteTablePaths
             .map(tablePath =>
-              FEOption.titledCheckpoint(project.checkpoint, project.projectName, tablePath))
+              FEOption.titledCheckpoint(project.checkpoint, project.name, tablePath))
       }.toList
   }
 }
@@ -743,11 +746,11 @@ object Operation {
 
   case class Context(user: serving.User, project: ProjectViewer)
 
-  def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val projects = DirectoryEntry.rootDirectory.listProjectsRecursively
-    val readable = projects.filter(_.readAllowedFrom(user))
+  def allObjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
+    val objects = DirectoryEntry.rootDirectory.listObjectsRecursively
+    val readable = objects.filter(_.readAllowedFrom(user))
     // Do not list internal project names (starting with "!").
-    readable.filterNot(_.projectName.startsWith("!"))
+    readable.filterNot(_.name.startsWith("!"))
   }
 }
 
