@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - New _Derive scalar_ operation. (Most useful for presenting results from user-defined workflows.)
+
 ### 1.6.1
 
  - Fixed critical bugs with importing files.

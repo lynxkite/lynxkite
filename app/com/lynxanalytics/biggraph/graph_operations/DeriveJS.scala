@@ -57,7 +57,7 @@ object DeriveJS {
     val defaultAttributeValues =
       namedAttributes.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
     val defaultScalarValues =
-      namedScalars.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
+      namedScalars.map { case (_, sc) => JSValue.defaultValue(sc.typeTag).value }
     op.validateJS[T](defaultAttributeValues, defaultScalarValues)
 
     import Scripting._
@@ -106,7 +106,6 @@ abstract class DeriveJS[T](
       }
     }
 
-    // TODO: spore?
     val scalars = inputs.scalars.map { _.value }.toArray
     val allNames = attrNames ++ scalarNames
 
@@ -158,7 +157,8 @@ object DeriveJSDouble extends OpFromJson {
 }
 case class DeriveJSDouble(
   expr: JavaScript,
-  attrNames: Seq[String], scalarNames: Seq[String] = Seq())
+  attrNames: Seq[String],
+  scalarNames: Seq[String] = Seq())
     extends DeriveJS[Double](expr, attrNames, scalarNames) {
   @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj(
