@@ -42,6 +42,7 @@ object Table {
       s"$globalPath does not seem to be a valid global table path")
     fromCheckpointAndPath(checkpoint, suffix)
   }
+
   def fromCanonicalPath(path: String, context: ProjectViewer)(
     implicit metaManager: MetaGraphManager): Table = {
 
@@ -49,14 +50,15 @@ object Table {
       .map { case (checkpoint, _, suffix) => fromCheckpointAndPath(checkpoint, suffix) }
       .getOrElse(fromPath(path, context))
   }
-  val VERTEX_TABLE_NAME = "!vertices"
-  val EDGE_TABLE_NAME = "!edges"
-  val BELONGS_TO_TABLE_NAME = "!belongsTo"
+
+  val VertexTableName = "!vertices"
+  val EdgeTableName = "!edges"
+  val BelongsToTableName = "!belongsTo"
   def fromTableName(tableName: String, viewer: ProjectViewer): Table = {
     tableName match {
-      case VERTEX_TABLE_NAME => new VertexTable(viewer)
-      case EDGE_TABLE_NAME => new EdgeTable(viewer)
-      case BELONGS_TO_TABLE_NAME => {
+      case VertexTableName => new VertexTable(viewer)
+      case EdgeTableName => new EdgeTable(viewer)
+      case BelongsToTableName => {
         assert(
           viewer.isInstanceOf[SegmentationViewer],
           "The !belongsTo table is only defined on segmentations")
@@ -68,10 +70,12 @@ object Table {
       }
     }
   }
+
   def fromRelativePath(relativePath: String, viewer: ProjectViewer): Table = {
     val splitPath = SubProject.splitPipedPath(relativePath)
     fromTableName(splitPath.last, viewer.offspringViewer(splitPath.dropRight(1)))
   }
+
   def fromPath(path: String, viewer: ProjectViewer): Table = {
     if (path(0) == '|') {
       fromRelativePath(path.drop(1), viewer.rootViewer)
@@ -79,6 +83,7 @@ object Table {
       fromRelativePath(path, viewer)
     }
   }
+
   def fromCheckpointAndPath(checkpoint: String, path: String)(
     implicit manager: MetaGraphManager): Table = {
     val rootViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(checkpoint))
