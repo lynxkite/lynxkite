@@ -368,7 +368,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "Table to import from",
         options = readableGlobalTablePaths,
         allowUnknownOption = true),
-      Param("id-attr", "ID attribute name", defaultValue = "id"))
+      Param("id-attr", "Save internal ID as", defaultValue = "id"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val table = Table.fromCanonicalPath(params("table"), project.viewer)
@@ -377,10 +377,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.newVertexAttribute(name, attr, "imported")
       }
       val idAttr = params("id-attr")
-      assert(
-        !project.vertexAttributes.contains(idAttr),
-        s"The input also contains a field called '$idAttr'. Please pick a different name.")
-      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
+      if (idAttr.nonEmpty) {
+        assert(
+          !project.vertexAttributes.contains(idAttr),
+          s"The input also contains a column called '$idAttr'. Please pick a different name.")
+        project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
+      }
     }
   })
 
