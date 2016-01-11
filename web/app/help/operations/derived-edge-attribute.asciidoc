@@ -10,6 +10,7 @@ expression are defined.
 
 For example you can write `weight * Math.abs(src$age - dst$age)` to generate a new
 attribute that is the weighted age difference of the two endpoints of the edge.
+For more details see <<javascript-guide>>.
 
 You can also refer to graph attributes (aka scalars) in the JS expression. For example,
 assuming that you have a graph attribute _age_average_, you can use the expression
