@@ -6,6 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Default home directory is moved under the 'Users' folder.
+ - Root folder is default readable by everyone and writable by only admin users for
+   bare new Kite installations.
+
 ### 1.6.1
 
  - Fixed critical bugs with importing files.
