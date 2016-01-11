@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Default home directory is moved under the 'user' folder.
+
 ### 1.6.1
 
  - Fixed critical bugs with importing files.
