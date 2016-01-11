@@ -253,8 +253,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
-    val dir = ProjectDirectory.fromName(request.path)
-    dir.assertReadAllowedFrom(user)
+    val entry = DirectoryEntry.fromName(request.path)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
     val (dirs, projects) = dir.listDirectoriesAndProjects
     val visibleDirs = dirs.filter(_.readAllowedFrom(user))
     val visible = projects.filter(_.readAllowedFrom(user))
@@ -267,8 +268,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
-    val dir = ProjectDirectory.fromName(request.basePath)
-    dir.assertReadAllowedFrom(user)
+    val entry = DirectoryEntry.fromName(request.basePath)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
     val terms = request.query.split(" ")
     val dirs = dir
       .listDirectoriesRecursively
@@ -307,10 +309,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   private def assertNameNotExists(name: String) = {
-    assert(!ProjectDirectory.fromName(name).exists, s"Project $name already exists.")
+    assert(!DirectoryEntry.fromName(name).exists, s"$name already exists.")
   }
 
-  private def setupACL(privacy: String, user: serving.User, p: ProjectDirectory): Unit = {
+  private def setupACL(privacy: String, user: serving.User, p: DirectoryEntry): Unit = {
     privacy match {
       case "private" =>
         p.writeACL = user.email
@@ -326,10 +328,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
-    val p = ProjectFrame.fromName(request.name)
-    p.assertParentWriteAllowedFrom(user)
+    val entry = DirectoryEntry.fromName(request.name)
+    entry.assertParentWriteAllowedFrom(user)
+    val p = entry.asNewProjectFrame()
     setupACL(request.privacy, user, p)
-    p.initialize
     if (request.notes != "") {
       ops.apply(user, p.subproject, Operations.addNotesOperation(request.notes))
     }
@@ -337,22 +339,23 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
-    val p = ProjectDirectory.fromName(request.name)
-    p.assertParentWriteAllowedFrom(user)
-    setupACL(request.privacy, user, p)
+    val entry = DirectoryEntry.fromName(request.name)
+    entry.assertParentWriteAllowedFrom(user)
+    val dir = entry.asNewDirectory()
+    setupACL(request.privacy, user, dir)
   }
 
   def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
-    val p = ProjectDirectory.fromName(request.name)
+    val p = DirectoryEntry.fromName(request.name).asDirectory
     p.assertParentWriteAllowedFrom(user)
     p.remove()
   }
 
   def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.to)
-    val pFrom = ProjectDirectory.fromName(request.from)
+    val pFrom = DirectoryEntry.fromName(request.from).asDirectory
     pFrom.assertParentWriteAllowedFrom(user)
-    val pTo = ProjectDirectory.fromName(request.to)
+    val pTo = DirectoryEntry.fromName(request.to)
     pTo.assertParentWriteAllowedFrom(user)
     pFrom.copy(pTo)
     pFrom.remove()
@@ -360,7 +363,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
     assert(user.isAdmin, "Only admins can delete all projects and directories")
-    ProjectDirectory.rootDirectory.remove()
+    DirectoryEntry.rootDirectory.remove()
     if (metaManager.tagExists(BigGraphController.workflowsRoot)) {
       metaManager.rmTag(BigGraphController.workflowsRoot)
     }
@@ -387,10 +390,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
-    val pFrom = ProjectDirectory.fromName(request.from)
+    val pFrom = DirectoryEntry.fromName(request.from).asDirectory
     pFrom.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
-    val pTo = ProjectDirectory.fromName(request.to)
+    val pTo = DirectoryEntry.fromName(request.to)
     pTo.assertParentWriteAllowedFrom(user)
     pFrom.copy(pTo)
     if (!pTo.writeAllowedFrom(user)) {
@@ -399,19 +402,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.project)
-    p.assertWriteAllowedFrom(user)
-    p.undo()
+    val entry = DirectoryEntry.fromName(request.project)
+    entry.assertWriteAllowedFrom(user)
+    entry.asProjectFrame.undo()
   }
 
   def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.project)
-    p.assertWriteAllowedFrom(user)
-    p.redo()
+    val entry = DirectoryEntry.fromName(request.project)
+    entry.assertWriteAllowedFrom(user)
+    entry.asProjectFrame.redo()
   }
 
   def changeACLSettings(user: serving.User, request: ACLSettingsRequest): Unit = metaManager.synchronized {
-    val p = ProjectDirectory.fromName(request.project)
+    val p = DirectoryEntry.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
     assert(user.isAdmin || p.aclContains(request.writeACL, user),
@@ -422,9 +425,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = {
     val checkpoint = metaManager.synchronized {
-      val p = ProjectFrame.fromName(request.project)
-      p.assertReadAllowedFrom(user)
-      p.checkpoint
+      val entry = DirectoryEntry.fromName(request.project)
+      entry.assertReadAllowedFrom(user)
+      entry.asProjectFrame.checkpoint
     }
     validateHistory(user, AlternateHistory(checkpoint, List()))
   }
@@ -571,21 +574,21 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     metaManager.tagBatch {
       // Create/check target project.
-      val p = ProjectFrame.fromName(request.newProject)
+      val entry = DirectoryEntry.fromName(request.newProject)
       if (request.newProject != request.oldProject) {
         // Saving under a new name.
         assertNameNotExists(request.newProject)
         // Copying old ProjectFrame level data.
-        ProjectFrame.fromName(request.oldProject).copy(p)
+        DirectoryEntry.fromName(request.oldProject).asProjectFrame.copy(entry)
         // But adding user as writer if necessary.
-        if (!p.writeAllowedFrom(user)) {
-          p.writeACL += "," + user.email
+        if (!entry.writeAllowedFrom(user)) {
+          entry.writeACL += "," + user.email
         }
       } else {
-        p.assertWriteAllowedFrom(user)
+        entry.assertWriteAllowedFrom(user)
       }
-      // Set the new history.
-      p.setCheckpoint(finalCheckpoint)
+      // Now we have a project in the tag tree. Set the new history.
+      DirectoryEntry.fromName(request.newProject).asProjectFrame.setCheckpoint(finalCheckpoint)
     }
   }
 
@@ -741,8 +744,7 @@ object Operation {
   case class Context(user: serving.User, project: ProjectViewer)
 
   def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val root = new SymbolPath(Nil)
-    val projects = new ProjectDirectory(root).listProjectsRecursively
+    val projects = DirectoryEntry.rootDirectory.listProjectsRecursively
     val readable = projects.filter(_.readAllowedFrom(user))
     // Do not list internal project names (starting with "!").
     readable.filterNot(_.projectName.startsWith("!"))

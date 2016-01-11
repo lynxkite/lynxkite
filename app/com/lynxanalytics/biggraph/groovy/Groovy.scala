@@ -118,8 +118,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
 class GroovyInterface(ctx: GroovyContext) {
   def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
-    val project = ProjectFrame.fromName(name)
-    assert(project.exists, s"Project '$name' not found.")
+    val project = DirectoryEntry.fromName(name).asProjectFrame
     new GroovyBatchProject(ctx, project.viewer.editor)
   }
 
@@ -212,13 +211,15 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
   def saveAs(newRootName: String): Unit = {
     assert(!editor.isSegmentation, "You cannot save a segmentation as a top-level project.")
     import ctx.metaManager
-    val project = ProjectFrame.fromName(newRootName)
-    if (!project.exists) {
+    val entry = DirectoryEntry.fromName(newRootName)
+    if (!entry.exists) {
+      val project = entry.asNewProjectFrame()
       project.writeACL = ctx.user.email
       project.readACL = ctx.user.email
-      project.initialize
+    } else {
+      val project = entry.asProjectFrame
+      project.setCheckpoint(editor.rootCheckpoint)
     }
-    project.setCheckpoint(editor.rootCheckpoint)
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled
