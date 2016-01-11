@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.table._
 
 import org.apache.spark
 
@@ -11,8 +12,12 @@ trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
 
-  def asDataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = ???
-  def dataFrameSchema(implicit dataManager: DataManager): spark.sql.types.StructType = ???
+  def toDF(implicit dataManager: DataManager): spark.sql.DataFrame =
+    tableRelation.toDF
+  def dataFrameSchema(implicit dataManager: DataManager): spark.sql.types.StructType =
+    tableRelation.schema
+
+  private def tableRelation(implicit dataManager: DataManager) = new TableRelation(this)
 }
 object Table {
   // A canonical table path is what's used by operations to reference a table. It's always meant to
