@@ -77,14 +77,28 @@ http://www.scala-lang.org/api/current/index.html#scala.util.Random
 
 ### Types and conversions
 
-* LynxKite's strings are automatically converted to and from JavaScript strings.
-* LynxKite's doubles are automatically converted to and from JavaScript numbers.
-* The problems start when it comes to LynxKite's `long` numeric type. For example, such
-values are the vertex IDs and the `ordinal` attributes of new vertex sets. These cannot be
-converted safely to JavaScript, because precision may be lost. If such values
-are needed in JavaScript, you will need to explicitly convert them using
-<<vertex-attribute-to-string>> or <<vertex-attribute-to-double>> before. Converting to
-double will of course cause precision loss for large numbers, but converting to string won't.
+The following LynxKite data types are automatically converted to and from corresponding
+JavaScript types. Each below list item has the form of LynxKite type &harr; corresponding
+JavaScript type:
+
+* Boolean &harr; boolean
+* Byte &harr; number
+* Short &harr; number
+* Int &harr; number
+* Float &harr; number
+* Double &harr; number
+* Char &harr; string
+* String &harr; string
+* Iterable collection containing instances of the below LynxKite types &harr; JavaScript array
+containing the converted instances:
+** Boolean, Short,  Int, Float, Double, Char, String
+
+Values of other types need to be manually converted before passing to or from JavaScript. In
+particular, long numeric types need these conversions. You can use for example one of
+the following operations to achieve that:
+<<vertex-attribute-to-string>> or <<vertex-attribute-to-double>>.
+Converting to double will of course cause precision loss for large numbers, but
+converting to string won't.
 
 ### JavaScript engine
 
