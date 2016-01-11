@@ -132,7 +132,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def operationsFromAllProjects()(
     implicit manager: MetaGraphManager): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
-    for (project <- Operation.allProjects(serving.User.fake)) {
+    for (project <- Operation.allObjects(serving.User.fake)) {
       operations ++= operationsFromProject(project.viewer)
     }
     operations.toMap
