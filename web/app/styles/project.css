@@ -79,6 +79,11 @@ input.save-as {
   font-size: 10px;
 }
 
+.compute-progress {
+  margin-right: 6px;
+  float: right;
+}
+
 .scalar-value {
   min-width: 60px;
   display: inline-block;
@@ -143,7 +148,7 @@ input.save-as {
   padding-top: 10px;
 }
 
-.project-settings {
+.acl-settings {
   background-color: whitesmoke;
 }
 

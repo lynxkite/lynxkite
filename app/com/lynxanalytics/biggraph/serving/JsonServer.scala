@@ -18,9 +18,12 @@ import com.lynxanalytics.biggraph.protection.Limitations
 
 import java.io.File
 
-class JsonServer extends mvc.Controller {
+abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
+
+  // UserController is initialized later but referred in asyncAction().
+  def userController: UserController
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
@@ -35,7 +38,7 @@ class JsonServer extends mvc.Controller {
     if (withAuth) {
       // TODO: Redirect HTTP to HTTPS. (#1400)
       mvc.Action.async(parser) { request =>
-        UserProvider.get(request) match {
+        userController.get(request) match {
           case Some(user) => block(user, request)
           case None => Future.successful(Unauthorized)
         }
@@ -88,11 +91,7 @@ class JsonServer extends mvc.Controller {
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
     action(parse.anyContent) { (user, request) =>
       jsonQuery(user, request) { (user: User, i: I) =>
-        try {
-          Ok(json.Json.toJson(handler(user, i)))
-        } catch {
-          case flying: FlyingResult => flying.result
-        }
+        Ok(json.Json.toJson(handler(user, i)))
       }
     }
   }
@@ -101,11 +100,7 @@ class JsonServer extends mvc.Controller {
   def jsonPublicGet[O: json.Writes](handler: => O) = {
     action(parse.anyContent, withAuth = false) { (user, request) =>
       log.info(s"GET ${request.path}")
-      try {
-        Ok(json.Json.toJson(handler))
-      } catch {
-        case flying: FlyingResult => flying.result
-      }
+      Ok(json.Json.toJson(handler))
     }
   }
 
@@ -207,7 +202,7 @@ object FrontendJson {
   implicit val rForkDirectoryRequest = json.Json.reads[ForkDirectoryRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
-  implicit val rProjectSettingsRequest = json.Json.reads[ProjectSettingsRequest]
+  implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
   implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
   implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
   implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
@@ -336,7 +331,7 @@ object ProductionJsonServer extends JsonServer {
   def forkDirectory = jsonPost(bigGraphController.forkDirectory)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
-  def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
+  def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
   def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
@@ -359,9 +354,13 @@ object ProductionJsonServer extends JsonServer {
   def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
-  def getUsers = jsonGet(UserProvider.getUsers)
-  def changeUserPassword = jsonPost(UserProvider.changeUserPassword, logRequest = false)
-  def createUser = jsonPost(UserProvider.createUser, logRequest = false)
+  val userController = new UserController(BigGraphProductionEnvironment)
+  val passwordLogin = userController.passwordLogin
+  val googleLogin = userController.googleLogin
+  val logout = userController.logout
+  def getUsers = jsonGet(userController.getUsers)
+  def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def createUser = jsonPost(userController.createUser, logRequest = false)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
@@ -454,6 +453,3 @@ println("${help}")
     }
   }
 }
-
-// Throw FlyingResult anywhere to generate non-200 HTTP responses.
-class FlyingResult(val result: mvc.Result) extends Exception(result.toString)

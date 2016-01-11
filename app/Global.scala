@@ -28,6 +28,7 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
         new java.io.File(pipeName),
         "ready\n",
         "utf8"))
+    println("LynxKite is running.")
   }
 
   private def rootCause(t: Throwable): Throwable = Option(t.getCause).map(rootCause(_)).getOrElse(t)
