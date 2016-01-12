@@ -86,6 +86,8 @@ object Table {
   }
 }
 
+case class RawTable(idSet: VertexSet, columns: Map[String, Attribute[_]]) extends Table
+
 class VertexTable(project: ProjectViewer) extends Table {
   assert(project.vertexSet != null, "Cannot define a VertexTable on a project w/o vertices")
 

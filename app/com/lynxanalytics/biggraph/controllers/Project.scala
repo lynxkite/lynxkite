@@ -141,9 +141,11 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String)(implicit epm: EntityProgressManager): FEProjectListElement = {
+  def toListElementFE(projectName: String, objectType: String)(
+    implicit epm: EntityProgressManager): FEProjectListElement = {
     FEProjectListElement(
       projectName,
+      objectType,
       state.notes,
       feScalar("vertex_count"),
       feScalar("edge_count"))
@@ -789,6 +791,8 @@ class ProjectFrame(path: SymbolPath)(
   def nextState: Option[RootProjectState] = nextCheckpoint.map(getCheckpointState(_))
 
   def subproject = SubProject(this, Seq())
+
+  val objectType = "project"
 }
 object ProjectFrame {
   val separator = "|"
@@ -802,6 +806,9 @@ object ProjectFrame {
     assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
     assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
   }
+
+  def fromName(name: String)(implicit manager: MetaGraphManager) =
+    DirectoryEntry.fromName(name).asProjectFrame
 }
 
 // Represents a named but not necessarily root project. A SubProject is identifed by a ProjectFrame
@@ -845,9 +852,10 @@ class TableFrame(path: SymbolPath)(
       manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
     checkpoint = checkpointedState.checkpoint.get
   }
+  val objectType = "table"
 }
 
-class ObjectFrame(path: SymbolPath)(
+abstract class ObjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
   assert(!name.contains(ProjectFrame.separator), s"Invalid project name: $name")
@@ -866,14 +874,17 @@ class ObjectFrame(path: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
 
+  def objectType: String
+
   def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
-      viewer.toListElementFE(name)
+      viewer.toListElementFE(name, objectType)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
         FEProjectListElement(
           name = name,
+          objectType = objectType,
           error = Some(ex.getMessage)
         )
     }
@@ -900,9 +911,13 @@ class Directory(path: SymbolPath)(
     if (manager.tagExists(rooted)) {
       val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
       val unrooted = tags.map(path => new SymbolPath(path.drop(DirectoryEntry.root.size)))
-      unrooted.map(new DirectoryEntry(_))
+      unrooted.map(DirectoryEntry.fromPath(_))
     } else Nil
   }
+}
+object Directory {
+  def fromName(name: String)(implicit manager: MetaGraphManager) =
+    DirectoryEntry.fromName(name).asDirectory
 }
 
 // May be a directory a project frame or a table.
@@ -989,7 +1004,7 @@ class DirectoryEntry(val path: SymbolPath)(
   def isDirectory = exists && !hasCheckpoint
 
   def asProjectFrame: ProjectFrame = {
-    assert(isInstanceOf[ProjectFrame], "$path is not a project")
+    assert(isInstanceOf[ProjectFrame], s"$path is not a project")
     asInstanceOf[ProjectFrame]
   }
   def asNewProjectFrame(): ProjectFrame = {
@@ -1000,7 +1015,7 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def asTableFrame: TableFrame = {
-    assert(isInstanceOf[TableFrame], "$path is not a table")
+    assert(isInstanceOf[TableFrame], s"$path is not a table")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table): TableFrame = {
@@ -1010,12 +1025,12 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def asObjectFrame: ObjectFrame = {
-    assert(isInstanceOf[ObjectFrame], "$path is not an object")
+    assert(isInstanceOf[ObjectFrame], s"$path is not an object")
     asInstanceOf[ObjectFrame]
   }
 
   def asDirectory: Directory = {
-    assert(isInstanceOf[Directory], "$path is not a directory")
+    assert(isInstanceOf[Directory], s"$path is not a directory")
     asInstanceOf[Directory]
   }
   def asNewDirectory(): Directory = {
@@ -1033,7 +1048,11 @@ object DirectoryEntry {
 
   def fromName(path: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     ProjectFrame.validateName(path, "Name", allowSlash = true, allowEmpty = true)
-    val entry = new DirectoryEntry(SymbolPath.parse(path))
+    fromPath(SymbolPath.parse(path))
+  }
+
+  def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
+    val entry = new DirectoryEntry(path)
     assert(
       !entry.parents.exists(_.hasCheckpoint),
       s"Cannot have entries inside projects or tables: $path")

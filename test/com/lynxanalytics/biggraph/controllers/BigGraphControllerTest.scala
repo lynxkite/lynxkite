@@ -10,8 +10,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
   val projectName = "Test_Project"
-  val projectFrame = ProjectFrame.fromName(projectName)
-  val subProject = projectFrame.subproject
+  def projectFrame = ProjectFrame.fromName(projectName)
+  def subProject = projectFrame.subproject
   val user = com.lynxanalytics.biggraph.serving.User.fake
 
   def run(op: String, params: Map[String, String] = Map(), on: String = projectName) =
@@ -75,7 +75,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
 
   test("project list with scalars") {
     run("Example Graph")
-    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "new_project"))
+    controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "new_project"))
     val pl = list("")
     assert(pl.projects.size == 2)
     assert(pl.projects(1).name == "new_project")
@@ -85,7 +85,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
 
   test("fork project") {
     run("Example Graph")
-    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "forked"))
+    controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "forked"))
     assert(list("").projects.size == 2)
   }
 
