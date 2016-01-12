@@ -354,14 +354,14 @@
       </li>
       <li class="sublist list-group-item segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
 
-      <li class="list-group-item">
-      <span class="lead de-emph">SQL</span>
-      <div class="pull-right">
-        <i class="glyphicon glyphicon-plus btn" ng-click="side.showSQL = !side.showSQL"></i>
-      </div>
-      <div class="list-group-item" ng-if="side.showSQL">
-        <sql-box side="side"></sql-box>
-      </div>
+      <li class="list-group-item" ng-if="!side.isSegmentation()">
+        <span class="lead de-emph">SQL</span>
+          <div class="pull-right">
+            <i class="glyphicon glyphicon-plus btn" ng-click="side.showSQL = !side.showSQL"></i>
+          </div>
+        <div class="list-group-item" ng-if="side.showSQL">
+          <sql-box side="side"></sql-box>
+        </div>
       </i>
     </div>
   </div>

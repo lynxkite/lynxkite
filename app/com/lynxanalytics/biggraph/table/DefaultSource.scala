@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.table
 
 import org.apache.spark.rdd
 import org.apache.spark.sql
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SQLContext
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.controllers
@@ -25,18 +27,20 @@ class DefaultSource extends sql.sources.RelationProvider {
     val env = DefaultSource.envs(parameters("environment"))
     val path = parameters("path")
     val table = controllers.Table.fromGlobalPath(path)(env.metaGraphManager)
-    new TableRelation(table)(env.dataManager)
+    new TableRelation(table)(env.dataManager, sqlContext)
   }
 }
 
 class TableRelation(
-  table: controllers.Table)(implicit dataManager: DataManager)
+  table: controllers.Table)(implicit dataManager: DataManager, sc: SQLContext)
     extends sql.sources.BaseRelation with sql.sources.TableScan with sql.sources.PrunedScan {
 
-  def toDF = sqlContext.baseRelationToDataFrame(this)
+  def toDF = {
+    sqlContext.baseRelationToDataFrame(this)
+  }
 
   // BaseRelation
-  val sqlContext = dataManager.sqlContext
+  val sqlContext = sc
   val schema = table.dataFrameSchema
 
   // TableScan

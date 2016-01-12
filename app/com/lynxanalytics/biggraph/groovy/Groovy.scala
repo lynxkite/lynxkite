@@ -133,9 +133,9 @@ class GroovyInterface(ctx: GroovyContext) {
     project
   }
 
-  def sql(s: String) = ctx.dataManager.sqlContext.sql(s)
+  def sql(s: String) = ctx.dataManager.masterSQLContext.sql(s)
 
-  val sqlContext = ctx.dataManager.sqlContext
+  val sqlContext = ctx.dataManager.masterSQLContext
 }
 
 // The basic interface for running operations against a project.
@@ -194,6 +194,7 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
 
   override def getProperty(name: String): AnyRef = {
     implicit val dm = ctx.dataManager
+    implicit val sqlContext = dm.masterSQLContext
     name match {
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
