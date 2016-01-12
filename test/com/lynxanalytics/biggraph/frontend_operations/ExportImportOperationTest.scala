@@ -1,8 +1,12 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.graph_api.Edge
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.TestDataManager
+import com.lynxanalytics.biggraph.table.TableImport
 
-class ExportImportOperationTest extends OperationsTestBase {
+class ExportImportOperationTest extends OperationsTestBase with TestDataManager {
   test("SQL import & export vertices") {
     run("Example Graph")
     val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
@@ -183,5 +187,31 @@ class ExportImportOperationTest extends OperationsTestBase {
           Set("Adam", "Eve", "Bob", "Isolated Joe", "0", "3"))
     }
     run("Discard vertices")
+  }
+
+  test("Import edges for existing vertices from table") {
+    val rows = Seq(
+      ("Adam", "Eve", "value1"),
+      ("Isolated Joe", "Bob", "value2"),
+      ("Eve", "Alice", "value3"))
+    val sql = cleanDataManager.newSQLContext
+    val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
+    val table = TableImport.importDataFrame(dataFrame)
+    val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table)
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
+    run("Example Graph")
+    run("Import edges for existing vertices from table", Map(
+      "table" -> tablePath,
+      "attr" -> "name",
+      "src" -> "src",
+      "dst" -> "dst"
+    ))
+    assert(Seq(Edge(0, 1), Edge(3, 2)) ==
+      project.edgeBundle.rdd.collect.toSeq.map(_._2))
+    val valueAttr = project.edgeBundle.rdd
+      .join(project.edgeAttributes("value").runtimeSafeCast[String].rdd)
+      .values
+    assert(Seq((Edge(0, 1), "value1"), (Edge(3, 2), "value2")) ==
+      valueAttr.collect.toSeq.sorted)
   }
 }
