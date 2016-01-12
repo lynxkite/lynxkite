@@ -342,7 +342,7 @@ object ProductionJsonServer extends JsonServer {
   def workflow = jsonGet(bigGraphController.workflow)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
-  def runQuery = jsonGet(sqlController.runQuery)
+  def runSQLQuery = jsonGet(sqlController.runSQLQuery)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

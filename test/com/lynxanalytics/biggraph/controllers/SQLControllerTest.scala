@@ -22,10 +22,10 @@ class SQLControllerTest extends FunSuite with TestGraphOp with BeforeAndAfterEac
 
   test("sql on vertices") {
     run("Example Graph")
-    val result = sqlController.runQuery(user, SQLRequest(project = projectName,
+    val result = sqlController.runSQLQuery(user, SQLRequest(project = projectName,
       sql = "select name from `!vertices` where age < 40"))
-    assert(result.header == Array("name"))
-    assert(result.data == Array(Seq("Adam"), Seq("Eve"), Seq("Isolated Joe")))
+    assert(result.header.sameElements(Array("name")))
+    assert(result.data.sameElements(Array(Seq("Adam"), Seq("Eve"), Seq("Isolated Joe"))))
   }
 
   override def beforeEach() = {

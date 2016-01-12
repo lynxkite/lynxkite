@@ -62,7 +62,7 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  private val sqlContext = new SQLContext(sc)
+  val masterSQLContext = new SQLContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -356,8 +356,6 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def newSQLContext(): SQLContext = {
-    sqlContext.newSession()
+    masterSQLContext.newSession()
   }
-
-  def masterSQLContext = sqlContext
 }

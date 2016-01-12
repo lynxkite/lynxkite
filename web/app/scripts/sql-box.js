@@ -7,9 +7,9 @@ angular.module('biggraph').directive('sqlBox', function(side, util) {
     scope: { side: '=' },
     templateUrl: 'sql-box.html',
     link: function(scope) {
-      scope.runQuery = function() {
+      scope.runSQLQuery = function() {
         scope.result = util.nocache(
-          '/ajax/runQuery',
+          '/ajax/runSQLQuery',
           {
             project: scope.side.state.projectName,
             sql: scope.sql,
