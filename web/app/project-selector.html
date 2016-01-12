@@ -94,7 +94,7 @@
       </span>
     </div>
 
-    <div ng-repeat="project in data.projects">
+    <div ng-repeat="project in data.objects">
       <div
         ng-if="project.objectType === 'project'"
         id="project-{{ pathInside(project.name) | id }}"

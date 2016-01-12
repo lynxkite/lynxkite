@@ -173,7 +173,7 @@ case class ProjectList(
   readACL: String,
   writeACL: String,
   directories: List[String],
-  projects: List[FEProjectListElement])
+  objects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -288,7 +288,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val baseName = dir.path.last.name
         terms.forall(term => baseName.contains(term))
       }
-    val projects = dir
+    val objects = dir
       .listObjectsRecursively
       .filter(_.readAllowedFrom(user))
       .filter { project =>
@@ -302,7 +302,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       dir.readACL,
       dir.writeACL,
       dirs.map(_.path.toString).toList,
-      projects.map(_.toListElementFE).toList)
+      objects.map(_.toListElementFE).toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
@@ -374,7 +374,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
-    assert(user.isAdmin, "Only admins can delete all projects and directories")
+    assert(user.isAdmin, "Only admins can delete all objects and directories")
     DirectoryEntry.rootDirectory.remove()
     if (metaManager.tagExists(BigGraphController.workflowsRoot)) {
       metaManager.rmTag(BigGraphController.workflowsRoot)
