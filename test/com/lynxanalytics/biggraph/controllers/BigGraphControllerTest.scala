@@ -67,33 +67,33 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
 
   test("project list") {
     val pl = list("")
-    assert(pl.projects.size == 1)
-    assert(pl.projects(0).name == "Test_Project")
-    assert(pl.projects(0).vertexCount.isEmpty)
-    assert(pl.projects(0).edgeCount.isEmpty)
+    assert(pl.objects.size == 1)
+    assert(pl.objects(0).name == "Test_Project")
+    assert(pl.objects(0).vertexCount.isEmpty)
+    assert(pl.objects(0).edgeCount.isEmpty)
   }
 
   test("project list with scalars") {
     run("Example Graph")
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "new_project"))
     val pl = list("")
-    assert(pl.projects.size == 2)
-    assert(pl.projects(1).name == "new_project")
-    assert(!pl.projects(1).vertexCount.isEmpty)
-    assert(!pl.projects(1).edgeCount.isEmpty)
+    assert(pl.objects.size == 2)
+    assert(pl.objects(1).name == "new_project")
+    assert(!pl.objects(1).vertexCount.isEmpty)
+    assert(!pl.objects(1).edgeCount.isEmpty)
   }
 
   test("fork project") {
     run("Example Graph")
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "forked"))
-    assert(list("").projects.size == 2)
+    assert(list("").objects.size == 2)
   }
 
   test("create directory") {
     controller.createDirectory(user, CreateDirectoryRequest(
       name = "foo/bar", privacy = "private"))
     assert(list("").directories == Seq("foo"))
-    assert(list("foo").projects.isEmpty)
+    assert(list("foo").objects.isEmpty)
     assert(list("foo").directories == Seq("foo/bar"))
     controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
