@@ -793,6 +793,8 @@ class ProjectFrame(path: SymbolPath)(
   def subproject = SubProject(this, Seq())
 
   val objectType = "project"
+
+  override def copy(to: DirectoryEntry): ProjectFrame = super.copy(to).asProjectFrame
 }
 object ProjectFrame {
   val separator = "|"
@@ -853,6 +855,8 @@ class TableFrame(path: SymbolPath)(
     checkpoint = checkpointedState.checkpoint.get
   }
   val objectType = "table"
+
+  override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
@@ -889,6 +893,8 @@ abstract class ObjectFrame(path: SymbolPath)(
         )
     }
   }
+
+  override def copy(to: DirectoryEntry): ObjectFrame = super.copy(to).asObjectFrame
 }
 
 class Directory(path: SymbolPath)(
@@ -914,6 +920,8 @@ class Directory(path: SymbolPath)(
       unrooted.map(DirectoryEntry.fromPath(_))
     } else Nil
   }
+
+  override def copy(to: DirectoryEntry): Directory = super.copy(to).asDirectory
 }
 object Directory {
   def fromName(name: String)(implicit manager: MetaGraphManager) =
@@ -993,7 +1001,11 @@ class DirectoryEntry(val path: SymbolPath)(
     existing(to).foreach(manager.rmTag(_))
     manager.cpTag(from, to)
   }
-  def copy(to: DirectoryEntry): Unit = cp(rootDir, to.rootDir)
+  def copy(to: DirectoryEntry): DirectoryEntry = {
+    cp(rootDir, to.rootDir)
+    // We "reread" the path, as now it may have a more specific type.
+    DirectoryEntry.fromPath(to.path)
+  }
 
   def parent = if (path.size > 1) Some(new Directory(path.init)) else None
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
