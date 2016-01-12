@@ -7,6 +7,7 @@ import org.scalatest.{ FunSuite, BeforeAndAfterEach }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
+// TODO(gsvigruha): refactor this and BigrGraphControllerTest to get rid of code duplication
 class SQLControllerTest extends FunSuite with TestGraphOp with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
   val sqlController = new SQLController(this)

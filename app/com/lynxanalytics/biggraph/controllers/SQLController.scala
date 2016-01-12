@@ -31,7 +31,13 @@ class SQLController(val env: BigGraphEnvironment) {
 
     SQLResult(
       header = result.columns,
-      data = result.head(ReportedRowNum).map { row => row.toSeq.map { item => item.toString } }
+      data = result.head(ReportedRowNum).map {
+        row =>
+          row.toSeq.map {
+            case null => "null"
+            case item => item.toString
+          }
+      }
     )
   }
 }
