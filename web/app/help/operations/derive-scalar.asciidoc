@@ -4,8 +4,8 @@ Generates a new scalar (<<graph attribute, graph-attributes>>) based on existing
 The value expression can be an arbitrary JavaScript expression, and it can refer to existing
 scalars as if they were local variables.
 
-This operation is most useful as part of a user-defined workflow. For example you could derive a
-new scalar as `something_sum / something_count` to get the average of something.
+For example you could derive a new scalar as `something_sum / something_count` to get the average
+of something.
 
 ====
 [[output]] Save as::
