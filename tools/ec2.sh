@@ -78,6 +78,8 @@ start)
     --instance-type ${TYPE} \
     --ebs-vol-type gp2 \
     --no-ganglia \
+    --ami ami-3009535a \
+    --hadoop-major-version 2 \
     --region=${REGION} launch ${CLUSTER_NAME}
 
   MASTER=`GetMasterHostName`
