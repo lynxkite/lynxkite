@@ -238,8 +238,8 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
   def implicitTableNames =
-    Option(vertexSet).map(_ => Table.VERTEX_TABLE_NAME) ++
-      Option(edgeBundle).map(_ => Table.EDGE_TABLE_NAME)
+    Option(vertexSet).map(_ => Table.VertexTableName) ++
+      Option(edgeBundle).map(_ => Table.EdgeTableName)
 
   def allAbsoluteTablePaths: Seq[String] = allRelativeTablePaths.map("|" + _)
 }
@@ -299,9 +299,9 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   def implicitTableNames =
-    Option(vertexSet).map(_ => Table.VERTEX_TABLE_NAME) ++
-      Option(edgeBundle).map(_ => Table.EDGE_TABLE_NAME) ++
-      Option(belongsTo).map(_ => Table.BELONGS_TO_TABLE_NAME)
+    Option(vertexSet).map(_ => Table.VertexTableName) ++
+      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(belongsTo).map(_ => Table.BelongsToTableName)
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.

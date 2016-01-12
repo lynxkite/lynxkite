@@ -9,6 +9,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Default home directory is moved under the 'Users' folder.
  - Root folder is default readable by everyone and writable by only admin users for
    bare new Kite installations.
+ - Edges and segmentation links can now also be accessed as DataFrames from batch scripts.
+ - New _Derive scalar_ operation.
 
 ### 1.6.1
 
@@ -28,8 +30,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.6.0
 
- - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port and do
-   batch.runScript(...). See Ammonite's welcome message for details.
+ - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port
+   and do `batch.runScript(...)`. See Ammonite's welcome message for details.
  - Fingerprinting between project and segmentation made more general: it can now add new
    connections, not only select from existing ones.
  - Reintroduced project search on the project selector UI.
