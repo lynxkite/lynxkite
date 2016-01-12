@@ -1564,6 +1564,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Derive scalar", new GlobalOperation(_, _) {
+    def parameters = List(
+      Param("output", "Save as"),
+      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Code("expr", "Value", defaultValue = "1 + 1"))
+    def enabled = FEStatus.enabled
+    override def summary(params: Map[String, String]) = {
+      val name = params("output")
+      s"Derive scalar ($name)"
+    }
+    def apply(params: Map[String, String]) = {
+      val expr = params("expr")
+      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val result = params("type") match {
+        case "string" =>
+          graph_operations.DeriveJSScalar.deriveFromScalars[String](expr, namedScalars)
+        case "double" =>
+          graph_operations.DeriveJSScalar.deriveFromScalars[Double](expr, namedScalars)
+      }
+      project.scalars(params("output")) = result.sc
+    }
+  })
+
   register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),

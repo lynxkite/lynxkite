@@ -1,5 +1,7 @@
 {
   "path": "",
+  "readACL": "*",
+  "writeACL": "*",
   "directories": ["My Subdirectory"],
   "projects": [
     { "name": "Project Strawberry", "notes": "Subscribers and calls.", "vertexCount": { "id": "vc1" }, "edgeCount": { "id": "ec1" } },
