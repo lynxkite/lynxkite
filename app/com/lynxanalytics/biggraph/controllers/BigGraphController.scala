@@ -130,13 +130,15 @@ case class FEAttribute(
   computeProgress: Double)
 
 case class FEProjectListElement(
-  name: String,
-  // One of "table" or "project".
-  objectType: String,
-  notes: String = "",
-  vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
-  edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
-  error: Option[String] = None) // If set the project could not be opened.
+    name: String,
+    objectType: String,
+    notes: String = "",
+    vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
+    edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
+    error: Option[String] = None) { // If set the project could not be opened.
+
+  assert(objectType == "table" || objectType == "project")
+}
 
 case class FEProject(
   name: String,
