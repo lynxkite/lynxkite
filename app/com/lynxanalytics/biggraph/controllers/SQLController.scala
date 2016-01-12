@@ -15,7 +15,7 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
 
-  def runQuery(user: serving.User, request: SQLRequest): SQLResult = metaManager.synchronized {
+  def runSQLQuery(user: serving.User, request: SQLRequest): SQLResult = metaManager.synchronized {
     val p = SubProject.parsePath(request.project)
     assert(p.frame.exists, s"Project ${request.project} does not exist.")
     p.frame.assertReadAllowedFrom(user)
