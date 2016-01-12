@@ -1,4 +1,4 @@
-// Presents the parameters for saving an operation.
+// Presents the parameters for running SQL scripts.
 'use strict';
 
 angular.module('biggraph').directive('sqlBox', function(side, util) {
