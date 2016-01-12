@@ -13,11 +13,17 @@ trait Table {
   def columns: Map[String, Attribute[_]]
 
   def toDF(implicit dataManager: DataManager): spark.sql.DataFrame =
-    tableRelation.toDF
-  def dataFrameSchema(implicit dataManager: DataManager): spark.sql.types.StructType =
-    tableRelation.schema
+    new TableRelation(this).toDF
 
-  private def tableRelation(implicit dataManager: DataManager) = new TableRelation(this)
+  def dataFrameSchema: spark.sql.types.StructType = {
+    val fields = columns.toSeq.sortBy(_._1).map {
+      case (name, attr) =>
+        spark.sql.types.StructField(
+          name = name,
+          dataType = spark.sql.catalyst.ScalaReflection.schemaFor(attr.typeTag).dataType)
+    }
+    spark.sql.types.StructType(fields)
+  }
 }
 object Table {
   // A canonical table path is what's used by operations to reference a table. It's always meant to

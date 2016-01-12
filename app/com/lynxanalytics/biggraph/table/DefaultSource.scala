@@ -37,15 +37,7 @@ class TableRelation(
 
   // BaseRelation
   val sqlContext = dataManager.sqlContext
-  val schema: sql.types.StructType = {
-    val fields = table.columns.toSeq.sortBy(_._1).map {
-      case (name, attr) =>
-        sql.types.StructField(
-          name = name,
-          dataType = sql.catalyst.ScalaReflection.schemaFor(attr.typeTag).dataType)
-    }
-    sql.types.StructType(fields)
-  }
+  val schema = table.dataFrameSchema
 
   // TableScan
   def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
