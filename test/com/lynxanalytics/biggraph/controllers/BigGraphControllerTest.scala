@@ -95,7 +95,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
     assert(list("").directories == Seq("foo"))
     assert(list("foo").projects.isEmpty)
     assert(list("foo").directories == Seq("foo/bar"))
-    controller.discardDirectory(user, DiscardDirectoryRequest(name = "foo"))
+    controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
   }
 
