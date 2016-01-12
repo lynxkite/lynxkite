@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.table._
 
 import org.apache.spark
 
@@ -11,8 +12,18 @@ trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
 
-  def asDataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = ???
-  def dataFrameSchema(implicit dataManager: DataManager): spark.sql.types.StructType = ???
+  def toDF(implicit dataManager: DataManager): spark.sql.DataFrame =
+    new TableRelation(this).toDF
+
+  def dataFrameSchema: spark.sql.types.StructType = {
+    val fields = columns.toSeq.sortBy(_._1).map {
+      case (name, attr) =>
+        spark.sql.types.StructField(
+          name = name,
+          dataType = spark.sql.catalyst.ScalaReflection.schemaFor(attr.typeTag).dataType)
+    }
+    spark.sql.types.StructType(fields)
+  }
 }
 object Table {
   // A canonical table path is what's used by operations to reference a table. It's always meant to
@@ -42,6 +53,7 @@ object Table {
       s"$globalPath does not seem to be a valid global table path")
     fromCheckpointAndPath(checkpoint, suffix)
   }
+
   def fromCanonicalPath(path: String, context: ProjectViewer)(
     implicit metaManager: MetaGraphManager): Table = {
 
@@ -49,14 +61,15 @@ object Table {
       .map { case (checkpoint, _, suffix) => fromCheckpointAndPath(checkpoint, suffix) }
       .getOrElse(fromPath(path, context))
   }
-  val VERTEX_TABLE_NAME = "!vertices"
-  val EDGE_TABLE_NAME = "!edges"
-  val BELONGS_TO_TABLE_NAME = "!belongsTo"
+
+  val VertexTableName = "!vertices"
+  val EdgeTableName = "!edges"
+  val BelongsToTableName = "!belongsTo"
   def fromTableName(tableName: String, viewer: ProjectViewer): Table = {
     tableName match {
-      case VERTEX_TABLE_NAME => new VertexTable(viewer)
-      case EDGE_TABLE_NAME => new EdgeTable(viewer)
-      case BELONGS_TO_TABLE_NAME => {
+      case VertexTableName => new VertexTable(viewer)
+      case EdgeTableName => new EdgeTable(viewer)
+      case BelongsToTableName => {
         assert(
           viewer.isInstanceOf[SegmentationViewer],
           "The !belongsTo table is only defined on segmentations")
@@ -68,10 +81,12 @@ object Table {
       }
     }
   }
+
   def fromRelativePath(relativePath: String, viewer: ProjectViewer): Table = {
     val splitPath = SubProject.splitPipedPath(relativePath)
     fromTableName(splitPath.last, viewer.offspringViewer(splitPath.dropRight(1)))
   }
+
   def fromPath(path: String, viewer: ProjectViewer): Table = {
     if (path(0) == '|') {
       fromRelativePath(path.drop(1), viewer.rootViewer)
@@ -79,6 +94,7 @@ object Table {
       fromRelativePath(path, viewer)
     }
   }
+
   def fromCheckpointAndPath(checkpoint: String, path: String)(
     implicit manager: MetaGraphManager): Table = {
     val rootViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(checkpoint))
