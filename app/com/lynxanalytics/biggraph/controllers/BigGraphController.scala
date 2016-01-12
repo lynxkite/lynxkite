@@ -585,7 +585,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         // Saving under a new name.
         assertNameNotExists(request.newProject)
         // Copying old ProjectFrame level data.
-        DirectoryEntry.fromName(request.oldProject).asProjectFrame.copy(entry)
+        ProjectFrame.fromName(request.oldProject).copy(entry)
         // But adding user as writer if necessary.
         if (!entry.writeAllowedFrom(user)) {
           entry.writeACL += "," + user.email
@@ -594,7 +594,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         entry.assertWriteAllowedFrom(user)
       }
       // Now we have a project in the tag tree. Set the new history.
-      DirectoryEntry.fromName(request.newProject).asProjectFrame.setCheckpoint(finalCheckpoint)
+      ProjectFrame.fromName(request.newProject).setCheckpoint(finalCheckpoint)
     }
   }
 

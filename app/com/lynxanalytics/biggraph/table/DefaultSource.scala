@@ -31,7 +31,7 @@ class DefaultSource extends sql.sources.RelationProvider {
     val project = {
       implicit val metaManager = env.metaGraphManager
       if (path.nonEmpty) {
-        controllers.DirectoryEntry.fromName(path).asProjectFrame.viewer
+        controllers.ProjectFrame.fromName(path).viewer
       } else {
         val cp = env.metaGraphManager.checkpointRepo.readCheckpoint(checkpoint)
         new controllers.RootProjectViewer(cp)

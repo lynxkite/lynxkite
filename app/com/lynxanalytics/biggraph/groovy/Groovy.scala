@@ -118,7 +118,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
 class GroovyInterface(ctx: GroovyContext) {
   def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
-    val project = DirectoryEntry.fromName(name).asProjectFrame
+    val project = ProjectFrame.fromName(name)
     new GroovyBatchProject(ctx, project.viewer.editor)
   }
 
