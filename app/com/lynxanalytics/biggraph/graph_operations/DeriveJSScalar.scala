@@ -61,7 +61,7 @@ abstract class DeriveJSScalar[T](
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val scalars = inputs.scalars.map { _.value.value }.toArray
+    val scalars = inputs.scalars.map(_.value.value)
     val bindings = scalarNames.zip(scalars).toMap
     val derived = convert(expr.evaluate(bindings, desiredClass))
     output(o.sc, derived)
