@@ -1564,7 +1564,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Derive scalar", new EdgeAttributesOperation(_, _) {
+  register("Derive scalar", new GlobalOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
