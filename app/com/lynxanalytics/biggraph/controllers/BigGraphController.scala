@@ -585,20 +585,21 @@ class BigGraphController(val env: BigGraphEnvironment) {
     metaManager.tagBatch {
       // Create/check target project.
       val entry = DirectoryEntry.fromName(request.newProject)
-      if (request.newProject != request.oldProject) {
+      val project = if (request.newProject != request.oldProject) {
         // Saving under a new name.
         assertNameNotExists(request.newProject)
-        // Copying old ProjectFrame level data.
-        ProjectFrame.fromName(request.oldProject).copy(entry)
         // But adding user as writer if necessary.
         if (!entry.writeAllowedFrom(user)) {
           entry.writeACL += "," + user.email
         }
+        // Copying old ProjectFrame level data.
+        ProjectFrame.fromName(request.oldProject).copy(entry)
       } else {
         entry.assertWriteAllowedFrom(user)
+        entry.asProjectFrame
       }
       // Now we have a project in the tag tree. Set the new history.
-      ProjectFrame.fromName(request.newProject).setCheckpoint(finalCheckpoint)
+      project.setCheckpoint(finalCheckpoint)
     }
   }
 
