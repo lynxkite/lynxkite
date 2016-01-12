@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.controllers.Table
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
@@ -426,6 +427,70 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
       .sortUnique(partitioner)
 
     output(o.edges, edges)
+  }
+}
+
+object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val rows = vertexSet
+    val srcVidColumn = vertexAttribute[String](rows)
+    val dstVidColumn = vertexAttribute[String](rows)
+    val sources = vertexSet
+    val destinations = vertexSet
+    val srcVidAttr = vertexAttribute[String](sources)
+    val dstVidAttr = vertexAttribute[String](destinations)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input,
+               fields: Seq[String])
+      extends MagicOutput(instance) {
+    val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
+    val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
+  }
+  def fromJson(j: JsValue) =
+    ImportEdgeListForExistingVertexSetFromTable()
+}
+import ImportEdgeListForExistingVertexSetFromTable._
+case class ImportEdgeListForExistingVertexSetFromTable()
+    extends TypedMetaGraphOp[ImportEdgeListForExistingVertexSetFromTable.Input, ImportEdgeListForExistingVertexSetFromTable.Output] {
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, null) //input.fields)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val partitioner = inputs.srcVidAttr.rdd.partitioner.get
+
+    val unresolvedEdges = inputs.srcVidColumn.rdd
+      .join(inputs.dstVidColumn.rdd)
+
+    val srcToId =
+      ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
+    val dstToId = {
+      if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
+        srcToId
+      else
+        ImportCommon.checkIdMapping(
+          inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
+    }
+    val srcResolvedByDst = RDDUtils.hybridLookup(
+      unresolvedEdges.map {
+        case (edgeId, (src, dst)) => src -> (edgeId, dst)
+      },
+      srcToId)
+      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
+
+    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
+      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
+      .sortUnique(partitioner)
+
+    val embedding = edges.mapValuesWithKeys { case (id, _) => Edge(id, id) }
+
+    output(o.edges, edges)
+    output(o.embedding, embedding)
   }
 }
 
