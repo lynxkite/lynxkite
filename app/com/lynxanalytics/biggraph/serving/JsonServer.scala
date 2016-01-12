@@ -441,7 +441,7 @@ println("${help}")
         Bind("sc", BigGraphProductionEnvironment.sparkContext),
         Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
         Bind("dataManager", BigGraphProductionEnvironment.dataManager),
-        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext),
+        Bind("sql", BigGraphProductionEnvironment.dataManager.masterSQLContext),
         Bind("batch", groovy.GroovyContext)))
   }
 

@@ -21,7 +21,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
   }
 
   test("We can run a simple SparkSQL workflow using our internal spark context") {
-    val sqlContext = cleanDataManager.sqlContext
+    val sqlContext = cleanDataManager.newSQLContext()
     val resDir = getClass.getResource("/graph_api/SparkSQLTest").toString
     val df = sqlContext.read.json(resDir + "/people.json")
     df.show()
@@ -33,7 +33,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
   }
 
   test("We can run do SQL on dataframes and reuse results as normal RDD") {
-    val sqlContext = cleanDataManager.sqlContext
+    val sqlContext = cleanDataManager.newSQLContext()
     val resDir = getClass.getResource("/graph_api/SparkSQLTest").toString
     val df = sqlContext.read.json(resDir + "/people.json")
     df.registerTempTable("people")
@@ -54,7 +54,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
   }
 
   test("We can create a DataFrame from a normal RDD and a programmatically created schema") {
-    val sqlContext = cleanDataManager.sqlContext
+    val sqlContext = cleanDataManager.newSQLContext()
     val resDir = getClass.getResource("/graph_api/SparkSQLTest").toString
 
     val people = sparkContext.textFile(resDir + "/people.txt")
@@ -104,6 +104,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
 
     run("Example Graph", Map())
     implicit val dm = env.dataManager
+    implicit val sqlContext = dm.newSQLContext()
     val df = Table.fromTableName("!vertices", subProject.viewer).toDF
     df.printSchema()
     df.show()

@@ -28,7 +28,7 @@ class ImportDataFrameTest extends FunSuite with TestGraphOp {
     connection.close()
 
     val df =
-      dataManager.sqlContext.read.format("jdbc")
+      dataManager.newSQLContext().read.format("jdbc")
         .options(Map("url" -> url, "dbtable" -> "manytypes"))
         .load()
 
