@@ -4,7 +4,7 @@ POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.j
 
 POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.createProject
 POST /ajax/createDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
-POST /ajax/discardDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardDirectory
+POST /ajax/discardEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardEntry
 POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardAll
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
@@ -16,10 +16,10 @@ GET  /ajax/workflow       com.lynxanalytics.biggraph.serving.ProductionJsonServe
 GET  /ajax/projectList   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectList
 GET  /ajax/projectSearch   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectSearch
 POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.filterProject
-POST /ajax/forkDirectory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkDirectory
+POST /ajax/forkEntry   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkEntry
 POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
-POST /ajax/renameDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameDirectory
+POST /ajax/renameEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameEntry
 POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView

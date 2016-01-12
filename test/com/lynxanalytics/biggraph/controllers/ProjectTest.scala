@@ -40,8 +40,8 @@ class ProjectTest extends FunSuite with TestGraphOp {
     assert(undoRedo(projectFrame) == ("C", ""))
     projectFrame.undo()
     assert(undoRedo(projectFrame) == ("A", "C"))
+    projectFrame.copy(DirectoryEntry.fromName("Test_Project_Copy"))
     val copy = ProjectFrame.fromName("Test_Project_Copy")
-    projectFrame.copy(copy)
     assert(undoRedo(copy) == ("A", "C"))
     addFakeCheckpoint(projectFrame, "D")
     assert(undoRedo(projectFrame) == ("D", ""))
@@ -54,7 +54,7 @@ class ProjectTest extends FunSuite with TestGraphOp {
   }
 
   test("Segmentations") {
-    val frame = ProjectFrame.fromName("1")
+    val frame = DirectoryEntry.fromName("1").asNewProjectFrame()
     frame.initialize
     val p1 = frame.viewer.editor
     val p2 = p1.segmentation("2")
@@ -75,7 +75,7 @@ class ProjectTest extends FunSuite with TestGraphOp {
     assertProjectReaders(projectFrame)(yes: _*)(no: _*)
   }
 
-  def assertProjectReaders(p: ProjectDirectory)(yes: String*)(no: String*): Unit = {
+  def assertProjectReaders(p: DirectoryEntry)(yes: String*)(no: String*): Unit = {
     for (email <- yes) {
       assert(p.readAllowedFrom(user(email)), s"$email cannot read $p")
     }
@@ -88,7 +88,7 @@ class ProjectTest extends FunSuite with TestGraphOp {
     assertProjectWriters(projectFrame)(yes: _*)(no: _*)
   }
 
-  def assertProjectWriters(p: ProjectDirectory)(yes: String*)(no: String*): Unit = {
+  def assertProjectWriters(p: DirectoryEntry)(yes: String*)(no: String*): Unit = {
     for (email <- yes) {
       assert(p.writeAllowedFrom(user(email)), s"$email cannot write $p")
     }
@@ -138,7 +138,7 @@ class ProjectTest extends FunSuite with TestGraphOp {
   }
 
   test("Access control with folders - write implies read") {
-    val p = ProjectDirectory.fromName("p")
+    val p = DirectoryEntry.fromName("p").asNewDirectory()
     p.readACL = "x"
     p.writeACL = "*"
     assertProjectReaders(p)("x", "y")()
@@ -146,10 +146,10 @@ class ProjectTest extends FunSuite with TestGraphOp {
   }
 
   test("Access control with folders - parents checked") {
-    val p1 = ProjectDirectory.fromName("p1")
+    val p1 = DirectoryEntry.fromName("p1").asNewDirectory()
     p1.readACL = "x"
     p1.writeACL = "x"
-    val p2 = ProjectDirectory.fromName("p1/p2")
+    val p2 = DirectoryEntry.fromName("p1/p2").asNewDirectory()
     p2.readACL = "y"
     p2.writeACL = "y"
     assertProjectReaders(p2)()("x", "y")
@@ -162,13 +162,13 @@ class ProjectTest extends FunSuite with TestGraphOp {
   }
 
   test("Access control with folders - grandparents checked") {
-    val p1 = ProjectDirectory.fromName("p1")
+    val p1 = Directory.fromName("p1")
     p1.readACL = "x"
     p1.writeACL = "x"
-    val p2 = ProjectDirectory.fromName("p1/p2")
+    val p2 = Directory.fromName("p1/p2")
     p2.readACL = "y"
     p2.writeACL = "y"
-    val p3 = ProjectDirectory.fromName("p1/p2/p3")
+    val p3 = DirectoryEntry.fromName("p1/p2/p3").asNewDirectory()
     p3.readACL = "y"
     p3.writeACL = "y"
     assertProjectReaders(p3)()("x", "y")

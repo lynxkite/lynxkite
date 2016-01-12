@@ -397,7 +397,7 @@ angular.module('biggraph')
 
     Side.prototype.saveAs = function(newName) {
       var that = this;
-      util.post('/ajax/forkDirectory',
+      util.post('/ajax/forkEntry',
         {
           from: this.state.projectName,
           to: newName,

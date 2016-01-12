@@ -127,6 +127,8 @@ case class FEAttribute(
 
 case class FEProjectListElement(
   name: String,
+  // One of "table" or "project".
+  objectType: String,
   notes: String = "",
   vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
   edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
@@ -172,7 +174,7 @@ case class OperationCategory(
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class CreateDirectoryRequest(name: String, privacy: String)
-case class DiscardDirectoryRequest(name: String)
+case class DiscardEntryRequest(name: String)
 
 // A request for the execution of a FE operation on a specific project. The project might be
 // a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
@@ -189,8 +191,8 @@ case class ProjectFilterRequest(
   project: String,
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
-case class ForkDirectoryRequest(from: String, to: String)
-case class RenameDirectoryRequest(from: String, to: String)
+case class ForkEntryRequest(from: String, to: String)
+case class RenameEntryRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
@@ -346,15 +348,18 @@ class BigGraphController(val env: BigGraphEnvironment) {
     setupACL(request.privacy, user, dir)
   }
 
-  def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
-    val p = DirectoryEntry.fromName(request.name).asDirectory
+  def discardEntry(
+    user: serving.User, request: DiscardEntryRequest): Unit = metaManager.synchronized {
+
+    val p = DirectoryEntry.fromName(request.name)
     p.assertParentWriteAllowedFrom(user)
     p.remove()
   }
 
-  def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
+  def renameEntry(
+    user: serving.User, request: RenameEntryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.to)
-    val pFrom = DirectoryEntry.fromName(request.from).asDirectory
+    val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertParentWriteAllowedFrom(user)
     val pTo = DirectoryEntry.fromName(request.to)
     pTo.assertParentWriteAllowedFrom(user)
@@ -390,8 +395,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
         parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
-  def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
-    val pFrom = DirectoryEntry.fromName(request.from).asDirectory
+  def forkEntry(user: serving.User, request: ForkEntryRequest): Unit = metaManager.synchronized {
+    val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
     val pTo = DirectoryEntry.fromName(request.to)

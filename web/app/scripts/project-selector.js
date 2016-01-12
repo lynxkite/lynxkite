@@ -191,11 +191,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
-          util.post('/ajax/renameDirectory',
+          util.post('/ajax/renameEntry',
               { from: oldName, to: newName }).then(scope.reload);
         },
         duplicate: function(kind, p) {
-          util.post('/ajax/forkDirectory',
+          util.post('/ajax/forkEntry',
               { 
                 from: p,
                 to: scope.dirName(p) + 'Copy of ' + scope.baseName(p)
@@ -205,7 +205,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           var message = 'Permanently delete ' + kind + ' ' + p + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardDirectory', { name: p }).then(scope.reload);
+            util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           }
         },
       };

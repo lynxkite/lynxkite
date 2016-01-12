@@ -15,8 +15,10 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
+import com.lynxanalytics.biggraph.table
 
 import java.io.File
+import org.apache.spark
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -192,14 +194,14 @@ object FrontendJson {
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
-  implicit val rDiscardDirectoryRequest = json.Json.reads[DiscardDirectoryRequest]
-  implicit val rRenameDirectoryRequest = json.Json.reads[RenameDirectoryRequest]
+  implicit val rDiscardEntryRequest = json.Json.reads[DiscardEntryRequest]
+  implicit val rRenameEntryRequest = json.Json.reads[RenameEntryRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
-  implicit val rForkDirectoryRequest = json.Json.reads[ForkDirectoryRequest]
+  implicit val rForkEntryRequest = json.Json.reads[ForkEntryRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
@@ -320,15 +322,15 @@ object ProductionJsonServer extends JsonServer {
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def createProject = jsonPost(bigGraphController.createProject)
   def createDirectory = jsonPost(bigGraphController.createDirectory)
-  def discardDirectory = jsonPost(bigGraphController.discardDirectory)
-  def renameDirectory = jsonPost(bigGraphController.renameDirectory)
+  def discardEntry = jsonPost(bigGraphController.discardEntry)
+  def renameEntry = jsonPost(bigGraphController.renameEntry)
   def discardAll = jsonPost(bigGraphController.discardAll)
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)
   def projectSearch = jsonGet(bigGraphController.projectSearch)
   def filterProject = jsonPost(bigGraphController.filterProject)
-  def forkDirectory = jsonPost(bigGraphController.forkDirectory)
+  def forkEntry = jsonPost(bigGraphController.forkEntry)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
@@ -387,6 +389,14 @@ object ProductionJsonServer extends JsonServer {
 }
 
 object Ammonite {
+  val env = BigGraphProductionEnvironment
+  implicit val metaGraphManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
+
+  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String): Unit = {
+    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df))
+  }
+
   // Starting Ammonite if requested.
   val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
     """
@@ -411,6 +421,7 @@ For convenience, we've set up some Kite specific bindings for you:
  metaManager: The MetaManager instance used by Kite.
  batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
    for running a batch script on the running Kite instance.
+ saveDataFrameAsTable(dataFrame, "tablePath"): Saves the given data frame as a top level Kite table.
 
 Remember, any of the above can be used to easily destroy the running server or even any data.
 Drive responsibly.""")
@@ -432,11 +443,12 @@ println("${help}")
       replArgs = Seq(
         Bind("server", this),
         Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
-        Bind("sc", BigGraphProductionEnvironment.sparkContext),
-        Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
-        Bind("dataManager", BigGraphProductionEnvironment.dataManager),
-        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext),
-        Bind("batch", groovy.GroovyContext)))
+        Bind("sc", env.sparkContext),
+        Bind("metaManager", metaGraphManager),
+        Bind("dataManager", dataManager),
+        Bind("sql", dataManager.sqlContext),
+        Bind("batch", groovy.GroovyContext),
+        Bind("saveDataFrameAsTable", saveDataFrameAsTable _)))
   }
 
   def maybeStart() = {
