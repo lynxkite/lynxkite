@@ -86,6 +86,8 @@ include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
 include::degree.asciidoc[]
 
+include::derive-scalar.asciidoc[]
+
 include::derived-edge-attribute.asciidoc[]
 
 include::derived-vertex-attribute.asciidoc[]
