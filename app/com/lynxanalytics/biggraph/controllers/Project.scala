@@ -834,7 +834,7 @@ object SubProject {
   def splitPipedPath(pipedPath: String) = pipedPath.split(ProjectFrame.quotedSeparator, -1)
   def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
     val nameElements = splitPipedPath(projectName)
-    new SubProject(DirectoryEntry.fromName(nameElements.head).asProjectFrame, nameElements.tail)
+    new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
   }
 }
 
