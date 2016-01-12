@@ -354,4 +354,8 @@ class DataManager(sc: spark.SparkContext,
       ioContext = io.IOContext(dataRoot, sc),
       broadcastDirectory = broadcastDirectory)
   }
+
+  def newSQLContext(): SQLContext = {
+    sqlContext.newSession()
+  }
 }
