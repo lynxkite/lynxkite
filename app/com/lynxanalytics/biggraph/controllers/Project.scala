@@ -792,8 +792,6 @@ class ProjectFrame(path: SymbolPath)(
 
   def subproject = SubProject(this, Seq())
 
-  val objectType = "project"
-
   override def copy(to: DirectoryEntry): ProjectFrame = super.copy(to).asProjectFrame
 }
 object ProjectFrame {
@@ -844,7 +842,7 @@ class TableFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromTable(table: Table): Unit = manager.synchronized {
     // Marking this as a table.
-    set(rootDir / "table", "")
+    set(rootDir / "objectType", "table")
     val editor = new RootProjectEditor(manager.checkpointRepo.readCheckpoint(""))
     editor.vertexSet = table.idSet
     for ((name, attr) <- table.columns) {
@@ -854,8 +852,6 @@ class TableFrame(path: SymbolPath)(
       manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
     checkpoint = checkpointedState.checkpoint.get
   }
-  val objectType = "table"
-
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
 }
 
@@ -878,7 +874,7 @@ abstract class ObjectFrame(path: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
 
-  def objectType: String
+  def objectType: String = get(rootDir / "objectType", "project")
 
   def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
@@ -1011,7 +1007,7 @@ class DirectoryEntry(val path: SymbolPath)(
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
-  def isTable = manager.tagExists(rootDir / "table")
+  def isTable = get(rootDir / "objectType", "") == "table"
   def isProject = hasCheckpoint && !isTable
   def isDirectory = exists && !hasCheckpoint
 

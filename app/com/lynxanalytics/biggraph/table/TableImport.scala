@@ -17,7 +17,7 @@ object TableImport {
     val columnEntities = importMetaResult.columns.mapValues(_.entity)
 
     // Enfore the actual import.
-    columnEntities.values.foreach(attr => dataManager.get(attr))
+    for (attr <- columnEntities.values) dataManager.get(attr)
 
     controllers.RawTable(importMetaResult.ids, columnEntities)
   }
