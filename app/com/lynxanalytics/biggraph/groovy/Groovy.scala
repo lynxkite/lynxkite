@@ -217,14 +217,14 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     assert(!editor.isSegmentation, "You cannot save a segmentation as a top-level project.")
     import ctx.metaManager
     val entry = DirectoryEntry.fromName(newRootName)
-    if (!entry.exists) {
-      val project = entry.asNewProjectFrame()
-      project.writeACL = ctx.user.email
-      project.readACL = ctx.user.email
+    val project = if (!entry.exists) {
+      entry.writeACL = ctx.user.email
+      entry.readACL = ctx.user.email
+      entry.asNewProjectFrame()
     } else {
-      val project = entry.asProjectFrame
-      project.setCheckpoint(editor.rootCheckpoint)
+      entry.asProjectFrame
     }
+    project.setCheckpoint(editor.rootCheckpoint)
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled
