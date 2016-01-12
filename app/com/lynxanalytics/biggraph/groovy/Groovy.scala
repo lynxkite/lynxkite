@@ -192,13 +192,18 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     extends GroovyProject(ctx) {
 
   override def getProperty(name: String): AnyRef = {
+    implicit val dm = ctx.dataManager
     name match {
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
-      case "df" =>
-        assert(!editor.isSegmentation, "You cannot access a segmentation as a DataFrame.")
-        ctx.env.get.dataFrame.option("checkpoint", editor.rootCheckpoint).load()
+      case "vertexDF" =>
+        Table.fromTableName(Table.VertexTableName, editor.viewer).toDF
+      case "edgeDF" =>
+        Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF
+      case "belongsToDF" =>
+        assert(editor.isSegmentation, "belongsToDF is only defined for segmentations.")
+        Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF
       case _ => super.getProperty(name)
     }
   }

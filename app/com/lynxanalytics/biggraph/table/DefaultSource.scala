@@ -23,53 +23,29 @@ object DefaultSource {
 class DefaultSource extends sql.sources.RelationProvider {
   def createRelation(sqlContext: sql.SQLContext, parameters: Map[String, String]) = {
     val env = DefaultSource.envs(parameters("environment"))
-    val path = parameters.getOrElse("path", "")
-    val checkpoint = parameters.getOrElse("checkpoint", "")
-    assert(
-      path.isEmpty || checkpoint.isEmpty,
-      s"You cannot define both a path ($path) and a checkpoint ($checkpoint).")
-    val project = {
-      implicit val metaManager = env.metaGraphManager
-      if (path.nonEmpty) {
-        controllers.ProjectFrame.fromName(path).viewer
-      } else {
-        val cp = env.metaGraphManager.checkpointRepo.readCheckpoint(checkpoint)
-        new controllers.RootProjectViewer(cp)
-      }
-    }
-    new ProjectRelation(env, sqlContext, project)
+    val path = parameters("path")
+    val table = controllers.Table.fromGlobalPath(path)(env.metaGraphManager)
+    new TableRelation(table)(env.dataManager)
   }
 }
 
-// TODO: Only vertex attributes are exposed at the moment.
-class ProjectRelation(
-  env: BigGraphEnvironment,
-  val sqlContext: sql.SQLContext,
-  project: controllers.ProjectViewer)
+class TableRelation(
+  table: controllers.Table)(implicit dataManager: DataManager)
     extends sql.sources.BaseRelation with sql.sources.TableScan with sql.sources.PrunedScan {
 
-  implicit val metaManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
+  def toDF = sqlContext.baseRelationToDataFrame(this)
 
   // BaseRelation
-  val schema: sql.types.StructType = {
-    val fields = project.vertexAttributes.toSeq.map {
-      case (name, attr) =>
-        sql.types.StructField(
-          name = name,
-          dataType = sql.catalyst.ScalaReflection.schemaFor(attr.typeTag).dataType)
-      // TODO: Use ScalaReflection.dataTypeFor when it's released.
-    }
-    sql.types.StructType(fields)
-  }
+  val sqlContext = dataManager.sqlContext
+  val schema = table.dataFrameSchema
 
   // TableScan
-  def buildScan(): rdd.RDD[sql.Row] = buildScan(project.vertexAttributeNames.toArray)
+  def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
 
   // PrunedScan
   def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row] = {
-    val rdds = requiredColumns.toSeq.map(name => project.vertexAttributes(name).rdd)
-    val emptyRows = project.vertexSet.rdd.mapValues(_ => Seq[Any]())
+    val rdds = requiredColumns.toSeq.map(name => table.columns(name).rdd)
+    val emptyRows = table.idSet.rdd.mapValues(_ => Seq[Any]())
     val seqRows = rdds.foldLeft(emptyRows) { (seqs, rdd) =>
       seqs.sortedLeftOuterJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }
     }

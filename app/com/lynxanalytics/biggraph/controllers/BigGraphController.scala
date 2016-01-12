@@ -40,8 +40,12 @@ object FEOption {
       case "!no weight" => "no weight"
       case "!unit distances" => "unit distances"
       case "!internal id (default)" => "internal id (default)"
-      // TODO: human readable timestamp formatting
-      case TitledCheckpointRE(cp, title, suffix) => s"$title@$cp$suffix"
+      case TitledCheckpointRE(cp, title, suffix) =>
+        val time = {
+          val df = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm z")
+          df.format(new java.util.Date(cp.toLong))
+        }
+        s"$title$suffix ($time)"
       case _ => null
     }).map(FEOption(specialID, _))
   }
@@ -717,6 +721,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
     Operation.allObjects(user)
       .filter(_.isProject)
+      .filter(_.checkpoint.nonEmpty)
       .map(_.asProjectFrame)
       .map(project => FEOption.titledCheckpoint(project.checkpoint, project.name))
       .toList
@@ -725,13 +730,14 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // All tables that the user has read access to.
   protected def readableGlobalTablePaths(implicit manager: MetaGraphManager): List[FEOption] = {
     Operation.allObjects(user)
+      .filter(_.checkpoint.nonEmpty)
       .flatMap {
         case project =>
           project.viewer
             .allAbsoluteTablePaths
             .map(tablePath =>
               FEOption.titledCheckpoint(project.checkpoint, project.name, tablePath))
-      }.toList
+      }.toList.sortBy(_.title)
   }
 }
 object Operation {
