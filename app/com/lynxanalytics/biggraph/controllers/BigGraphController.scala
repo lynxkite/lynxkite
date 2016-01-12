@@ -42,11 +42,10 @@ object FEOption {
       case "!internal id (default)" => "internal id (default)"
       case TitledCheckpointRE(cp, title, suffix) =>
         val time = {
-          val df = new java.text.SimpleDateFormat("yyyy MMM d HH:mm z")
+          val df = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm z")
           df.format(new java.util.Date(cp.toLong))
         }
-        val checkpoint = s"$title ($time)"
-        if (suffix.isEmpty) checkpoint else s"$suffix in $checkpoint"
+        s"$title$suffix ($time)"
       case _ => null
     }).map(FEOption(specialID, _))
   }
