@@ -296,7 +296,7 @@ object ObsoleteProject {
     val oldCps = oldCheckpoints(source)
     val lastCp = lastNewCheckpoint(oldCps, targetManager.checkpointRepo)
     oldCps.foreach(_.remove())
-    val frame = ProjectFrame.fromName(source.projectName)(targetManager)
+    val frame = DirectoryEntry.fromName(source.projectName)(targetManager).asNewProjectFrame
     frame.setCheckpoint(lastCp)
     (0 until (source.checkpointCount - source.checkpointIndex - 1)).foreach {
       i => frame.undo()

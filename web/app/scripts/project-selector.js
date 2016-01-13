@@ -82,8 +82,8 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         if (!resolved || scope.data.$error) { return; }
         scope.vertexCounts = {};
         scope.edgeCounts = {};
-        for (var i = 0; i < scope.data.projects.length; ++i) {
-          var p = scope.data.projects[i];
+        for (var i = 0; i < scope.data.objects.length; ++i) {
+          var p = scope.data.objects[i];
           scope.vertexCounts[p.name] =
             p.vertexCount ? getScalar(p.title, p.vertexCount) : NO;
           scope.edgeCounts[p.name] =
@@ -93,8 +93,8 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       function abandonScalars() {
         if (scope.data && scope.data.$resolved && !scope.data.$error) {
-          for (var i = 0; i < scope.data.projects.length; ++i) {
-            var p = scope.data.projects[i];
+          for (var i = 0; i < scope.data.objects.length; ++i) {
+            var p = scope.data.objects[i];
             scope.vertexCounts[p.name].$abandon();
             scope.edgeCounts[p.name].$abandon();
           }
@@ -191,11 +191,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
-          util.post('/ajax/renameDirectory',
+          util.post('/ajax/renameEntry',
               { from: oldName, to: newName }).then(scope.reload);
         },
         duplicate: function(kind, p) {
-          util.post('/ajax/forkDirectory',
+          util.post('/ajax/forkEntry',
               { 
                 from: p,
                 to: scope.dirName(p) + 'Copy of ' + scope.baseName(p)
@@ -205,7 +205,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           var message = 'Permanently delete ' + kind + ' ' + p + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardDirectory', { name: p }).then(scope.reload);
+            util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           }
         },
       };

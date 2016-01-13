@@ -130,11 +130,15 @@ case class FEAttribute(
   computeProgress: Double)
 
 case class FEProjectListElement(
-  name: String,
-  notes: String = "",
-  vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
-  edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
-  error: Option[String] = None) // If set the project could not be opened.
+    name: String,
+    objectType: String,
+    notes: String = "",
+    vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
+    edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
+    error: Option[String] = None) { // If set the project could not be opened.
+
+  assert(objectType == "table" || objectType == "project", s"Unrecognized objectType: $objectType")
+}
 
 case class FEProject(
   name: String,
@@ -169,14 +173,14 @@ case class ProjectList(
   readACL: String,
   writeACL: String,
   directories: List[String],
-  projects: List[FEProjectListElement])
+  objects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class CreateDirectoryRequest(name: String, privacy: String)
-case class DiscardDirectoryRequest(name: String)
+case class DiscardEntryRequest(name: String)
 
 // A request for the execution of a FE operation on a specific project. The project might be
 // a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
@@ -193,8 +197,8 @@ case class ProjectFilterRequest(
   project: String,
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
-case class ForkDirectoryRequest(from: String, to: String)
-case class RenameDirectoryRequest(from: String, to: String)
+case class ForkEntryRequest(from: String, to: String)
+case class RenameEntryRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
@@ -257,22 +261,25 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
-    val dir = ProjectDirectory.fromName(request.path)
-    dir.assertReadAllowedFrom(user)
-    val (dirs, projects) = dir.listDirectoriesAndProjects
-    val visibleDirs = dirs.filter(_.readAllowedFrom(user))
-    val visible = projects.filter(_.readAllowedFrom(user))
+    val entry = DirectoryEntry.fromName(request.path)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
+    val entries = dir.list
+    val (dirs, objects) = entries.partition(_.isDirectory)
+    val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
+    val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
     ProjectList(
       request.path,
       dir.readACL,
       dir.writeACL,
       visibleDirs.map(_.path.toString).toList,
-      visible.map(_.toListElementFE).toList)
+      visibleObjectFrames.map(_.toListElementFE).toList)
   }
 
   def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
-    val dir = ProjectDirectory.fromName(request.basePath)
-    dir.assertReadAllowedFrom(user)
+    val entry = DirectoryEntry.fromName(request.basePath)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
     val terms = request.query.split(" ")
     val dirs = dir
       .listDirectoriesRecursively
@@ -281,8 +288,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val baseName = dir.path.last.name
         terms.forall(term => baseName.contains(term))
       }
-    val projects = dir
-      .listProjectsRecursively
+    val objects = dir
+      .listObjectsRecursively
       .filter(_.readAllowedFrom(user))
       .filter { project =>
         val baseName = project.path.last.name
@@ -295,7 +302,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       dir.readACL,
       dir.writeACL,
       dirs.map(_.path.toString).toList,
-      projects.map(_.toListElementFE).toList)
+      objects.map(_.toListElementFE).toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
@@ -311,10 +318,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   private def assertNameNotExists(name: String) = {
-    assert(!ProjectDirectory.fromName(name).exists, s"Project $name already exists.")
+    assert(!DirectoryEntry.fromName(name).exists, s"$name already exists.")
   }
 
-  private def setupACL(privacy: String, user: serving.User, p: ProjectDirectory): Unit = {
+  private def setupACL(privacy: String, user: serving.User, p: DirectoryEntry): Unit = {
     privacy match {
       case "private" =>
         p.writeACL = user.email
@@ -330,10 +337,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
-    val p = ProjectFrame.fromName(request.name)
-    p.assertParentWriteAllowedFrom(user)
+    val entry = DirectoryEntry.fromName(request.name)
+    entry.assertParentWriteAllowedFrom(user)
+    val p = entry.asNewProjectFrame()
     setupACL(request.privacy, user, p)
-    p.initialize
     if (request.notes != "") {
       ops.apply(user, p.subproject, Operations.addNotesOperation(request.notes))
     }
@@ -341,30 +348,34 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
-    val p = ProjectDirectory.fromName(request.name)
-    p.assertParentWriteAllowedFrom(user)
-    setupACL(request.privacy, user, p)
+    val entry = DirectoryEntry.fromName(request.name)
+    entry.assertParentWriteAllowedFrom(user)
+    val dir = entry.asNewDirectory()
+    setupACL(request.privacy, user, dir)
   }
 
-  def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
-    val p = ProjectDirectory.fromName(request.name)
+  def discardEntry(
+    user: serving.User, request: DiscardEntryRequest): Unit = metaManager.synchronized {
+
+    val p = DirectoryEntry.fromName(request.name)
     p.assertParentWriteAllowedFrom(user)
     p.remove()
   }
 
-  def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
+  def renameEntry(
+    user: serving.User, request: RenameEntryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.to)
-    val pFrom = ProjectDirectory.fromName(request.from)
+    val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertParentWriteAllowedFrom(user)
-    val pTo = ProjectDirectory.fromName(request.to)
+    val pTo = DirectoryEntry.fromName(request.to)
     pTo.assertParentWriteAllowedFrom(user)
     pFrom.copy(pTo)
     pFrom.remove()
   }
 
   def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
-    assert(user.isAdmin, "Only admins can delete all projects and directories")
-    ProjectDirectory.rootDirectory.remove()
+    assert(user.isAdmin, "Only admins can delete all objects and directories")
+    DirectoryEntry.rootDirectory.remove()
     if (metaManager.tagExists(BigGraphController.workflowsRoot)) {
       metaManager.rmTag(BigGraphController.workflowsRoot)
     }
@@ -390,11 +401,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
         parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
-  def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
-    val pFrom = ProjectDirectory.fromName(request.from)
+  def forkEntry(user: serving.User, request: ForkEntryRequest): Unit = metaManager.synchronized {
+    val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
-    val pTo = ProjectDirectory.fromName(request.to)
+    val pTo = DirectoryEntry.fromName(request.to)
     pTo.assertParentWriteAllowedFrom(user)
     pFrom.copy(pTo)
     if (!pTo.writeAllowedFrom(user)) {
@@ -403,19 +414,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.project)
-    p.assertWriteAllowedFrom(user)
-    p.undo()
+    val entry = DirectoryEntry.fromName(request.project)
+    entry.assertWriteAllowedFrom(user)
+    entry.asProjectFrame.undo()
   }
 
   def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.project)
-    p.assertWriteAllowedFrom(user)
-    p.redo()
+    val entry = DirectoryEntry.fromName(request.project)
+    entry.assertWriteAllowedFrom(user)
+    entry.asProjectFrame.redo()
   }
 
   def changeACLSettings(user: serving.User, request: ACLSettingsRequest): Unit = metaManager.synchronized {
-    val p = ProjectDirectory.fromName(request.project)
+    val p = DirectoryEntry.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
     assert(user.isAdmin || p.aclContains(request.writeACL, user),
@@ -426,9 +437,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = {
     val checkpoint = metaManager.synchronized {
-      val p = ProjectFrame.fromName(request.project)
-      p.assertReadAllowedFrom(user)
-      p.checkpoint
+      val entry = DirectoryEntry.fromName(request.project)
+      entry.assertReadAllowedFrom(user)
+      entry.asProjectFrame.checkpoint
     }
     validateHistory(user, AlternateHistory(checkpoint, List()))
   }
@@ -575,21 +586,22 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     metaManager.tagBatch {
       // Create/check target project.
-      val p = ProjectFrame.fromName(request.newProject)
-      if (request.newProject != request.oldProject) {
+      val entry = DirectoryEntry.fromName(request.newProject)
+      val project = if (request.newProject != request.oldProject) {
         // Saving under a new name.
         assertNameNotExists(request.newProject)
-        // Copying old ProjectFrame level data.
-        ProjectFrame.fromName(request.oldProject).copy(p)
         // But adding user as writer if necessary.
-        if (!p.writeAllowedFrom(user)) {
-          p.writeACL += "," + user.email
+        if (!entry.writeAllowedFrom(user)) {
+          entry.writeACL += "," + user.email
         }
+        // Copying old ProjectFrame level data.
+        ProjectFrame.fromName(request.oldProject).copy(entry)
       } else {
-        p.assertWriteAllowedFrom(user)
+        entry.assertWriteAllowedFrom(user)
+        entry.asProjectFrame
       }
-      // Set the new history.
-      p.setCheckpoint(finalCheckpoint)
+      // Now we have a project in the tag tree. Set the new history.
+      project.setCheckpoint(finalCheckpoint)
     }
   }
 
@@ -710,22 +722,24 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
   protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
-    Operation.allProjects(user)
+    Operation.allObjects(user)
+      .filter(_.isProject)
       .filter(_.checkpoint.nonEmpty)
-      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.projectName))
+      .map(_.asProjectFrame)
+      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.name))
       .toList
   }
 
   // All tables that the user has read access to.
   protected def readableGlobalTablePaths(implicit manager: MetaGraphManager): List[FEOption] = {
-    Operation.allProjects(user)
+    Operation.allObjects(user)
       .filter(_.checkpoint.nonEmpty)
       .flatMap {
         case project =>
           project.viewer
             .allAbsoluteTablePaths
             .map(tablePath =>
-              FEOption.titledCheckpoint(project.checkpoint, project.projectName, tablePath))
+              FEOption.titledCheckpoint(project.checkpoint, project.name, tablePath))
       }.toList.sortBy(_.title)
   }
 }
@@ -746,12 +760,11 @@ object Operation {
 
   case class Context(user: serving.User, project: ProjectViewer)
 
-  def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val root = new SymbolPath(Nil)
-    val projects = new ProjectDirectory(root).listProjectsRecursively
-    val readable = projects.filter(_.readAllowedFrom(user))
+  def allObjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
+    val objects = DirectoryEntry.rootDirectory.listObjectsRecursively
+    val readable = objects.filter(_.readAllowedFrom(user))
     // Do not list internal project names (starting with "!").
-    readable.filterNot(_.projectName.startsWith("!"))
+    readable.filterNot(_.name.startsWith("!"))
   }
 }
 
