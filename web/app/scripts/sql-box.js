@@ -8,12 +8,16 @@ angular.module('biggraph').directive('sqlBox', function(side, util) {
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.runSQLQuery = function() {
-        scope.result = util.nocache(
+        scope.inProgress = true;
+        util.nocache(
           '/ajax/runSQLQuery',
           {
             project: scope.side.state.projectName,
             sql: scope.sql,
             rownum: 10,
+          }).then(function(result){
+            scope.inProgress = false;
+            scope.result = result;
           });
       };
 
