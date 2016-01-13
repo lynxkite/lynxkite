@@ -32,7 +32,7 @@ class DefaultSource extends sql.sources.RelationProvider {
 }
 
 class TableRelation(
-  table: controllers.Table, sc: SQLContext)(implicit dataManager: DataManager)
+  table: controllers.Table, val sqlContext: SQLContext)(implicit dataManager: DataManager)
     extends sql.sources.BaseRelation with sql.sources.TableScan with sql.sources.PrunedScan {
 
   def toDF = {
@@ -41,7 +41,6 @@ class TableRelation(
 
   // BaseRelation
   val schema = table.dataFrameSchema
-  def sqlContext = sc
 
   // TableScan
   def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
