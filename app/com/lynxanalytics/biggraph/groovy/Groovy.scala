@@ -135,6 +135,8 @@ class GroovyInterface(ctx: GroovyContext) {
   }
 
   def sql(s: String) = ctx.sqlContext.sql(s)
+
+  val sqlContext = ctx.sqlContext
 }
 
 // The basic interface for running operations against a project.
