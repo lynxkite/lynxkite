@@ -21,10 +21,14 @@ class SQLController(val env: BigGraphEnvironment) {
     p.frame.assertReadAllowedFrom(user)
 
     // Every query runs in its own SQLContext for isolation.
-    implicit val sqlContext = dataManager.newSQLContext()
+    val sqlContext = dataManager.newSQLContext()
     val v = p.viewer
     v.allRelativeTablePaths.foreach {
-      tableName => Table.fromCanonicalPath(tableName, v).toDF.registerTempTable(tableName)
+      tableName =>
+        Table
+          .fromCanonicalPath(tableName, v)
+          .toDF(sqlContext)
+          .registerTempTable(tableName)
     }
     log.info(s"Trying to execute query: ${request.sql}")
     val result = sqlContext.sql(request.sql)

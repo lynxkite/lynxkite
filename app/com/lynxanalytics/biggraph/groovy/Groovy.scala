@@ -194,18 +194,18 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
 
   override def getProperty(name: String): AnyRef = {
     implicit val dm = ctx.dataManager
-    implicit val sqlContext = dm.masterSQLContext
+    val sqlContext = dm.masterSQLContext
     name match {
       case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
       case "vertexDF" =>
-        Table.fromTableName(Table.VertexTableName, editor.viewer).toDF
+        Table.fromTableName(Table.VertexTableName, editor.viewer).toDF(sqlContext)
       case "edgeDF" =>
-        Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF
+        Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF(sqlContext)
       case "belongsToDF" =>
         assert(editor.isSegmentation, "belongsToDF is only defined for segmentations.")
-        Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF
+        Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF(sqlContext)
       case _ => super.getProperty(name)
     }
   }

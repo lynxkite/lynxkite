@@ -13,8 +13,8 @@ trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
 
-  def toDF(implicit dataManager: DataManager, sqlContext: SQLContext): spark.sql.DataFrame =
-    new TableRelation(this).toDF
+  def toDF(sqlContext: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    new TableRelation(this, sqlContext).toDF
 
   def dataFrameSchema: spark.sql.types.StructType = {
     val fields = columns.toSeq.sortBy(_._1).map {
