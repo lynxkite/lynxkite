@@ -90,8 +90,6 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     implicit val mm = env.metaGraphManager
     val controller = new BigGraphController(env)
     val projectName = "df-test"
-    val projectFrame = ProjectFrame.fromName(projectName)
-    val subProject = projectFrame.subproject
     val user = com.lynxanalytics.biggraph.serving.User.fake
     controller.createProject(
       user,
@@ -101,7 +99,8 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
         user,
         ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
     }
-
+    val projectFrame = ProjectFrame.fromName(projectName)
+    val subProject = projectFrame.subproject
     run("Example Graph", Map())
     implicit val dm = env.dataManager
     val df = Table.fromTableName("!vertices", subProject.viewer).toDF(dm.newSQLContext())

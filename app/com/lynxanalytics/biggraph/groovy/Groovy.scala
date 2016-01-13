@@ -119,7 +119,6 @@ class GroovyInterface(ctx: GroovyContext) {
   def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
-    assert(project.exists, s"Project '$name' not found.")
     new GroovyBatchProject(ctx, project.viewer.editor)
   }
 
@@ -218,11 +217,13 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
   def saveAs(newRootName: String): Unit = {
     assert(!editor.isSegmentation, "You cannot save a segmentation as a top-level project.")
     import ctx.metaManager
-    val project = ProjectFrame.fromName(newRootName)
-    if (!project.exists) {
-      project.writeACL = ctx.user.email
-      project.readACL = ctx.user.email
-      project.initialize
+    val entry = DirectoryEntry.fromName(newRootName)
+    val project = if (!entry.exists) {
+      entry.writeACL = ctx.user.email
+      entry.readACL = ctx.user.email
+      entry.asNewProjectFrame()
+    } else {
+      entry.asProjectFrame
     }
     project.setCheckpoint(editor.rootCheckpoint)
   }

@@ -141,9 +141,11 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String)(implicit epm: EntityProgressManager): FEProjectListElement = {
+  def toListElementFE(projectName: String, objectType: String)(
+    implicit epm: EntityProgressManager): FEProjectListElement = {
     FEProjectListElement(
       projectName,
+      objectType,
       state.notes,
       feScalar("vertex_count"),
       feScalar("edge_count"))
@@ -745,17 +747,7 @@ class SegmentationEditor(
 // Represents a mutable, named project. It can be seen as a modifiable pointer into the
 // checkpoint tree with some additional metadata. ProjectFrame's data is persisted using tags.
 class ProjectFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ProjectDirectory(path) {
-  val projectName = path.toString
-  assert(!projectName.contains(ProjectFrame.separator), s"Invalid project name: $projectName")
-
-  // Current checkpoint of the project
-  def checkpoint: String = {
-    assert(exists, s"$this does not exist.")
-    get(rootDir / "checkpoint")
-  }
-  private def checkpoint_=(x: String): Unit = set(rootDir / "checkpoint", x)
-
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   // The farthest checkpoint available in the current redo sequence
   private def farthestCheckpoint: String = get(rootDir / "farthestCheckpoint")
   private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "farthestCheckpoint", x)
@@ -767,8 +759,6 @@ class ProjectFrame(path: SymbolPath)(
   }
   private def nextCheckpoint_=(x: Option[String]): Unit =
     set(rootDir / "nextCheckpoint", x.getOrElse(""))
-
-  override def exists = manager.tagExists(rootDir / "checkpoint")
 
   def undo(): Unit = manager.synchronized {
     nextCheckpoint = Some(checkpoint)
@@ -792,44 +782,21 @@ class ProjectFrame(path: SymbolPath)(
 
   // Initializes a new project. One needs to call this to make the initial preparations
   // for a project in the tag tree.
-  def initialize: Unit = manager.synchronized {
+  def initialize(): Unit = manager.synchronized {
     checkpoint = ""
     nextCheckpoint = None
     farthestCheckpoint = ""
   }
 
-  private def getCheckpointState(checkpoint: String): RootProjectState =
-    manager.checkpointRepo.readCheckpoint(checkpoint)
-
-  def currentState: RootProjectState = getCheckpointState(checkpoint)
-
   def nextState: Option[RootProjectState] = nextCheckpoint.map(getCheckpointState(_))
 
-  def viewer = new RootProjectViewer(currentState)
-
-  def toListElementFE()(implicit epm: EntityProgressManager) = {
-    try {
-      viewer.toListElementFE(projectName)
-    } catch {
-      case ex: Throwable =>
-        log.warn(s"Could not list $projectName:", ex)
-        FEProjectListElement(
-          name = projectName,
-          error = Some(ex.getMessage)
-        )
-    }
-  }
-
   def subproject = SubProject(this, Seq())
+
+  override def copy(to: DirectoryEntry): ProjectFrame = super.copy(to).asProjectFrame
 }
 object ProjectFrame {
   val separator = "|"
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
-
-  def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
-    validateName(rootProjectName, "Project name", allowSlash = true)
-    new ProjectFrame(SymbolPath.parse(rootProjectName))
-  }
 
   def validateName(name: String, what: String = "Name",
                    allowSlash: Boolean = false,
@@ -839,6 +806,9 @@ object ProjectFrame {
     assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
     assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
   }
+
+  def fromName(name: String)(implicit manager: MetaGraphManager) =
+    DirectoryEntry.fromName(name).asProjectFrame
 }
 
 // Represents a named but not necessarily root project. A SubProject is identifed by a ProjectFrame
@@ -848,7 +818,7 @@ object ProjectFrame {
 //   RootProjectName|Seg1Name|Seg2Name|...
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
-  def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
+  def fullName = (frame.name +: path).mkString(ProjectFrame.separator)
   def toFE()(implicit epm: EntityProgressManager): FEProject = {
     val raw = viewer.toFE(fullName)
     if (path.isEmpty) {
@@ -868,14 +838,101 @@ object SubProject {
   }
 }
 
-// May be a directory or a project frame.
-class ProjectDirectory(val path: SymbolPath)(
+class TableFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  def initializeFromTable(table: Table): Unit = manager.synchronized {
+    // Marking this as a table.
+    set(rootDir / "objectType", "table")
+    val editor = new RootProjectEditor(manager.checkpointRepo.readCheckpoint(""))
+    editor.vertexSet = table.idSet
+    for ((name, attr) <- table.columns) {
+      editor.vertexAttributes(name) = attr
+    }
+    val checkpointedState =
+      manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
+    checkpoint = checkpointedState.checkpoint.get
+  }
+  override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
+}
+
+abstract class ObjectFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
+  val name = path.toString
+  assert(!name.contains(ProjectFrame.separator), s"Invalid project name: $name")
+
+  // Current checkpoint of the project
+  def checkpoint: String = {
+    assert(exists, s"$this does not exist.")
+    get(rootDir / "checkpoint")
+  }
+  protected def checkpoint_=(x: String): Unit = set(rootDir / "checkpoint", x)
+
+  protected def getCheckpointState(checkpoint: String): RootProjectState =
+    manager.checkpointRepo.readCheckpoint(checkpoint)
+
+  def currentState: RootProjectState = getCheckpointState(checkpoint)
+
+  def viewer = new RootProjectViewer(currentState)
+
+  def objectType: String = get(rootDir / "objectType", "project")
+
+  def toListElementFE()(implicit epm: EntityProgressManager) = {
+    try {
+      viewer.toListElementFE(name, objectType)
+    } catch {
+      case ex: Throwable =>
+        log.warn(s"Could not list $name:", ex)
+        FEProjectListElement(
+          name = name,
+          objectType = objectType,
+          error = Some(ex.getMessage)
+        )
+    }
+  }
+
+  override def copy(to: DirectoryEntry): ObjectFrame = super.copy(to).asObjectFrame
+}
+
+class Directory(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
+  // Returns the list of all directories contained in this directory.
+  def listDirectoriesRecursively: Seq[Directory] = {
+    val dirs = list.filter(_.isDirectory).map(_.asDirectory)
+    dirs ++ dirs.flatMap(_.listDirectoriesRecursively)
+  }
+
+  // Returns the list of all projects contained in this directory.
+  def listObjectsRecursively: Seq[ObjectFrame] = {
+    val (dirs, objects) = list.partition(_.isDirectory)
+    objects.map(_.asObjectFrame) ++ dirs.map(_.asDirectory).flatMap(_.listObjectsRecursively)
+  }
+
+  // Lists directories and projects inside this directory.
+  def list: Seq[DirectoryEntry] = {
+    val rooted = DirectoryEntry.root / path
+    if (manager.tagExists(rooted)) {
+      val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
+      val unrooted = tags.map(path => new SymbolPath(path.drop(DirectoryEntry.root.size)))
+      unrooted.map(DirectoryEntry.fromPath(_))
+    } else Nil
+  }
+
+  override def copy(to: DirectoryEntry): Directory = super.copy(to).asDirectory
+}
+object Directory {
+  def fromName(name: String)(implicit manager: MetaGraphManager) =
+    DirectoryEntry.fromName(name).asDirectory
+}
+
+// May be a directory a project frame or a table.
+class DirectoryEntry(val path: SymbolPath)(
     implicit manager: MetaGraphManager) {
+
   override def toString = path.toString
   override def equals(p: Any) =
-    p.isInstanceOf[ProjectDirectory] && toString == p.asInstanceOf[ProjectDirectory].toString
+    p.isInstanceOf[DirectoryEntry] && toString == p.asInstanceOf[DirectoryEntry].toString
   override def hashCode = toString.hashCode
-  val rootDir: SymbolPath = ProjectDirectory.root / path
+  val rootDir: SymbolPath = DirectoryEntry.root / path
 
   def exists = manager.tagExists(rootDir)
 
@@ -913,7 +970,7 @@ class ProjectDirectory(val path: SymbolPath)(
     user.isAdmin || (localWriteAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
   }
 
-  private def transitiveReadAllowedFrom(user: User, p: Option[ProjectDirectory]): Boolean = {
+  private def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
     p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
   }
   private def localReadAllowedFrom(user: User): Boolean = {
@@ -940,47 +997,83 @@ class ProjectDirectory(val path: SymbolPath)(
     existing(to).foreach(manager.rmTag(_))
     manager.cpTag(from, to)
   }
-  def copy(to: ProjectDirectory): Unit = cp(rootDir, to.rootDir)
-
-  def parent = if (path.size > 1) Some(new ProjectDirectory(path.init)) else None
-  def parents: Iterable[ProjectDirectory] = parent ++ parent.toSeq.flatMap(_.parents)
-  def isProject = new ProjectFrame(path).exists
-
-  // Returns the list of all directories contained in this directory.
-  def listDirectoriesRecursively: Seq[ProjectDirectory] = {
-    assert(!isProject, s"$this is not a directory.")
-    val (dirs, projects) = listDirectoriesAndProjects
-    dirs ++ dirs.flatMap(_.listDirectoriesRecursively)
+  def copy(to: DirectoryEntry): DirectoryEntry = {
+    cp(rootDir, to.rootDir)
+    // We "reread" the path, as now it may have a more specific type.
+    DirectoryEntry.fromPath(to.path)
   }
 
-  // Returns the list of all projects contained in this directory.
-  def listProjectsRecursively: Seq[ProjectFrame] = {
-    assert(!isProject, s"$this is not a directory.")
-    val (dirs, projects) = listDirectoriesAndProjects
-    projects ++ dirs.flatMap(_.listProjectsRecursively)
+  def parent = if (path.size > 1) Some(new Directory(path.init)) else None
+  def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
+
+  def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
+  def isTable = get(rootDir / "objectType", "") == "table"
+  def isProject = hasCheckpoint && !isTable
+  def isDirectory = exists && !hasCheckpoint
+
+  def asProjectFrame: ProjectFrame = {
+    assert(isInstanceOf[ProjectFrame], s"$path is not a project")
+    asInstanceOf[ProjectFrame]
+  }
+  def asNewProjectFrame(): ProjectFrame = {
+    assert(!exists, s"Directory entry $path already exists")
+    val res = new ProjectFrame(path)
+    res.initialize()
+    res
   }
 
-  // Lists directories and projects inside this directory.
-  def listDirectoriesAndProjects: (Seq[ProjectDirectory], Seq[ProjectFrame]) = {
-    assert(!isProject, s"$this is not a directory.")
-    val rooted = ProjectDirectory.root / path
-    if (manager.tagExists(rooted)) {
-      val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
-      val unrooted = tags.map(path => new SymbolPath(path.drop(ProjectDirectory.root.size)))
-      val (projects, dirs) = unrooted.partition(tag => new ProjectFrame(tag).exists)
-      (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
-    } else (Nil, Nil)
+  def asTableFrame: TableFrame = {
+    assert(isInstanceOf[TableFrame], s"$path is not a table")
+    asInstanceOf[TableFrame]
+  }
+  def asNewTableFrame(table: Table): TableFrame = {
+    val res = new TableFrame(path)
+    res.initializeFromTable(table)
+    res
+  }
+
+  def asObjectFrame: ObjectFrame = {
+    assert(isInstanceOf[ObjectFrame], s"$path is not an object")
+    asInstanceOf[ObjectFrame]
+  }
+
+  def asDirectory: Directory = {
+    assert(isInstanceOf[Directory], s"$path is not a directory")
+    asInstanceOf[Directory]
+  }
+  def asNewDirectory(): Directory = {
+    assert(!exists, s"Directory entry $path already exists")
+    val res = new Directory(path)
+    res.readACL = "*"
+    res.writeACL = ""
+    res
   }
 }
-object ProjectDirectory {
+object DirectoryEntry {
   val root = SymbolPath("projects")
 
-  def rootDirectory(implicit metaManager: MetaGraphManager) = new ProjectDirectory(SymbolPath())
+  def rootDirectory(implicit metaManager: MetaGraphManager) = new Directory(SymbolPath())
 
-  def fromName(path: String)(implicit metaManager: MetaGraphManager): ProjectDirectory = {
+  def fromName(path: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     ProjectFrame.validateName(path, "Name", allowSlash = true, allowEmpty = true)
-    val dir = new ProjectDirectory(SymbolPath.parse(path))
-    assert(!dir.parents.exists(_.isProject), s"Cannot create directories inside projects: $path")
-    dir
+    fromPath(SymbolPath.parse(path))
+  }
+
+  def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
+    val entry = new DirectoryEntry(path)
+    assert(
+      !entry.parents.exists(_.hasCheckpoint),
+      s"Cannot have entries inside projects or tables: $path")
+    if (entry.exists) {
+      if (entry.isProject) {
+        new ProjectFrame(entry.path)
+      } else if (entry.isTable) {
+        new TableFrame(entry.path)
+      } else {
+        new Directory(entry.path)
+      }
+    } else {
+      entry
+    }
   }
 }
