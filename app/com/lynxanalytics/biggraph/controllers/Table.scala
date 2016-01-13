@@ -7,13 +7,14 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.table._
 
 import org.apache.spark
+import org.apache.spark.sql.SQLContext
 
 trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
 
-  def toDF(implicit dataManager: DataManager): spark.sql.DataFrame =
-    new TableRelation(this).toDF
+  def toDF(sqlContext: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    new TableRelation(this, sqlContext).toDF
 
   def dataFrameSchema: spark.sql.types.StructType = {
     val fields = columns.toSeq.sortBy(_._1).map {
