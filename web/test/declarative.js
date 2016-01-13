@@ -3,7 +3,6 @@
 var fw = (function UIDescription() {
   var states = {};
   var statePreservingTests = {};
-  var hasChild = {};
   var hanSoloMode = false;
 
   var mocks = require('./mocks.js');
@@ -22,10 +21,6 @@ var fw = (function UIDescription() {
         hanSoloMode = true;
       }
       var testingDone = false;
-      var implicitlyReached = false;
-      if (previousStateName !== undefined) {
-        hasChild[previousStateName] = true;
-      }
 
       function runStatePreservingTest(currentTest) {
         if (hanSoloMode && !currentTest.hanSolo) {
@@ -48,24 +43,9 @@ var fw = (function UIDescription() {
           }
           return false;
         },
-        needsExplicitReach: function() {
-          if (implicitlyReached) return false;
-          return !hanSoloMode || this.isHanSolo();
-        },
-        reportReach: function() {
-          if (previousStateName !== undefined) {
-            states[previousStateName].reportImplicitReach();
-          }
-        },
-        reportImplicitReach: function() {
-          implicitlyReached = true;
-          if (previousStateName !== undefined) {
-            states[previousStateName].reportImplicitReach();
-          }
-        },
         reachAndTest: function() {
           if (previousStateName !== undefined) {
-            states[previousStateName].reachAndTest(true);
+            states[previousStateName].reachAndTest();
           }
           describe(stateName, function() {
             it('can be reached', function() {
@@ -101,33 +81,35 @@ var fw = (function UIDescription() {
 
     runAll: function() {
       var stateNames = Object.keys(states);
-      describe('Test setup', function() {
-        it('defines all referenced test states', function() {
-          var references = Object.keys(statePreservingTests).concat(Object.keys(hasChild));
-          for (var i = 0; i < references.length; ++i) {
-            expect(stateNames).toContain(references[i]);
-          }
-        });
-      });
 
-      // We don't want to reach any state more times than necessary. That is, if a state is
-      // reached because we had to reach one of its offsprings, then we won't need to explicitly
-      // reach that state again. To achieve this we mark all ancestors of states that we need to
-      // reach and don't try to reach them explicitly in the following loop.
-      for (var i = 0; i < stateNames.length; i++) {
-        var stateName = stateNames[i];
-        var state = states[stateName];
-        if (state.needsExplicitReach()) {
-          state.reportReach(state.parent);
+      // We will enumerate all states we want to visit here.
+      var statesToReach = [];
+      // We put here all states that we visit inevitably, that is parents if states in
+      // statesToReach.
+      var statesAutomaticallyReached = {};
+      function markParentsAutomaticallyReached(stateName) {
+        var state = states[stateName]
+        var parent = state.parent
+        if (parent !== undefined) {
+          if (!statesAutomaticallyReached[parent]) {
+            statesAutomaticallyReached[parent] = true;
+            markParentsAutomaticallyReached(parent);
+          }
         }
       }
+
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
-        // We only need to directly trigger testing for leaf nodes of the dependency trees as
-        // states with children will be triggered by their children.
-        if (state.needsExplicitReach()) {
-          state.reachAndTest();
+        if (!hanSoloMode || state.isHanSolo()) {
+          statesToReach.push(stateName);
+          markParentsAutomaticallyReached(stateName);
+        }
+      }
+      for (var i = 0; i < statesToReach.length; i++) {
+        var stateName = statesToReach[i];
+        if (!statesAutomaticallyReached[stateName]) {
+          states[stateName].reachAndTest();
         }
       }
     },
