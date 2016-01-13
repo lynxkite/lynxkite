@@ -356,12 +356,10 @@
 
       <li class="list-group-item" ng-if="!side.isSegmentation()">
         <span class="lead de-emph">SQL</span>
-          <div class="pull-right">
-            <i class="glyphicon glyphicon-plus btn" ng-click="side.showSQL = !side.showSQL"></i>
-          </div>
-        <div class="list-group-item" ng-if="side.showSQL">
-          <sql-box side="side"></sql-box>
+        <div class="pull-right">
+          <i class="glyphicon glyphicon-plus btn" ng-click="side.showSQL = !side.showSQL"></i>
         </div>
+        <sql-box side="side" ng-if="side.showSQL"></sql-box>
       </i>
     </div>
   </div>
