@@ -137,7 +137,7 @@ case class FEProjectListElement(
     edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
     error: Option[String] = None) { // If set the project could not be opened.
 
-  assert(objectType == "table" || objectType == "project")
+  assert(objectType == "table" || objectType == "project", s"Unrecognized objectType: $objectType")
 }
 
 case class FEProject(
