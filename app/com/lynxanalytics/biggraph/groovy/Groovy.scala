@@ -36,7 +36,7 @@ case class GroovyContext(
   implicit lazy val metaManager = env.get.metaGraphManager
   implicit lazy val dataManager = env.get.dataManager
   // Every Groovy script execution should have its own SQLContext for isolation.
-  val sqlContext = dataManager.newSQLContext()
+  lazy val sqlContext = dataManager.newSQLContext()
   def normalize(name: String) = name.replace("-", "").toLowerCase
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
