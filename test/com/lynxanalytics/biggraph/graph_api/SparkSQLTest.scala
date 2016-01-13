@@ -104,8 +104,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
 
     run("Example Graph", Map())
     implicit val dm = env.dataManager
-    implicit val sqlContext = dm.newSQLContext()
-    val df = Table.fromTableName("!vertices", subProject.viewer).toDF
+    val df = Table.fromTableName("!vertices", subProject.viewer).toDF(dm.newSQLContext())
     df.printSchema()
     df.show()
   }
