@@ -1,0 +1,7 @@
+{
+  "header" : ["fruit", "vegetable"],
+  "data": [
+    ["apple", "tomato"],
+    ["orange", "celery"]
+  ]
+}

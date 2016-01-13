@@ -35,6 +35,8 @@ case class GroovyContext(
 
   implicit lazy val metaManager = env.get.metaGraphManager
   implicit lazy val dataManager = env.get.dataManager
+  // Every Groovy script execution should have its own SQLContext for isolation.
+  lazy val sqlContext = dataManager.newSQLContext()
   def normalize(name: String) = name.replace("-", "").toLowerCase
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
@@ -132,9 +134,9 @@ class GroovyInterface(ctx: GroovyContext) {
     project
   }
 
-  def sql(s: String) = ctx.dataManager.sqlContext.sql(s)
+  def sql(s: String) = ctx.sqlContext.sql(s)
 
-  val sqlContext = ctx.dataManager.sqlContext
+  val sqlContext = ctx.sqlContext
 }
 
 // The basic interface for running operations against a project.
@@ -198,12 +200,12 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
       case "vertexAttributes" => JavaConversions.mapAsJavaMap(getVertexAttributes)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
       case "vertexDF" =>
-        Table.fromTableName(Table.VertexTableName, editor.viewer).toDF
+        Table.fromTableName(Table.VertexTableName, editor.viewer).toDF(ctx.sqlContext)
       case "edgeDF" =>
-        Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF
+        Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF(ctx.sqlContext)
       case "belongsToDF" =>
         assert(editor.isSegmentation, "belongsToDF is only defined for segmentations.")
-        Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF
+        Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF(ctx.sqlContext)
       case _ => super.getProperty(name)
     }
   }

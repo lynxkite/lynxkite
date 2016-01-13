@@ -1,0 +1,32 @@
+<div class="form-horizontal">
+  <div class="form-group">
+    <div
+      ui-ace="{
+        mode: 'sql',
+        rendererOptions: {fontSize: '14px'},
+        advanced: {behavioursEnabled: false},
+      }"
+      class="form-control" style="height: 100px;"
+      ng-model="sql" id="sql-editor"></div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-4 col-sm-4">
+        <button type="submit" class="btn btn-primary" ng-click="runSQLQuery()">Run SQL query</button>
+      </div>
+    </div>
+    <div class="form-group" ng-if="result && !result.$error">
+      <table class="table table-striped">
+        <tr>
+          <th ng-repeat="col in result.header">{{ col }}</th>
+        </tr>
+        <tr ng-repeat="rows in result.data">
+          <td ng-repeat="item in rows">{{ item }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="alert alert-danger" ng-if="result.$error">
+      {{ result.$error }}
+      <i class="pull-right"><a href ng-click="reportSQLError()">report problem</a></i>
+    </div>
+  </div>
+</div>
