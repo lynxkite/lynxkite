@@ -13,6 +13,7 @@ angular.module('biggraph').directive('sqlBox', function(side, util) {
           {
             project: scope.side.state.projectName,
             sql: scope.sql,
+            rownum: 10,
           });
       };
 

@@ -7,13 +7,12 @@ import org.scalatest.{ FunSuite, BeforeAndAfterEach }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-// TODO(gsvigruha): refactor this and BigGraphControllerTest to get rid of code duplication
 class SQLControllerTest extends FunSuite with TestGraphOp with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
   val sqlController = new SQLController(this)
   val projectName = "Test_Project"
-  val projectFrame = ProjectFrame.fromName(projectName)
-  val subProject = projectFrame.subproject
+  def projectFrame = ProjectFrame.fromName(projectName)
+  def subProject = projectFrame.subproject
   val user = com.lynxanalytics.biggraph.serving.User.fake
 
   def run(op: String, params: Map[String, String] = Map(), on: String = projectName) =
@@ -23,10 +22,12 @@ class SQLControllerTest extends FunSuite with TestGraphOp with BeforeAndAfterEac
 
   test("sql on vertices") {
     run("Example Graph")
-    val result = sqlController.runSQLQuery(user, SQLRequest(project = projectName,
-      sql = "select name from `!vertices` where age < 40"))
-    assert(result.header.sameElements(Array("name")))
-    assert(result.data.sameElements(Array(Seq("Adam"), Seq("Eve"), Seq("Isolated Joe"))))
+    val result = sqlController.runSQLQuery(user, SQLRequest(
+      project = projectName,
+      sql = "select name from `!vertices` where age < 40",
+      rownum = 10))
+    assert(result.header == List("name"))
+    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   override def beforeEach() = {
