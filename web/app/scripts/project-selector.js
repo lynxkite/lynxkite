@@ -82,8 +82,8 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         if (!resolved || scope.data.$error) { return; }
         scope.vertexCounts = {};
         scope.edgeCounts = {};
-        for (var i = 0; i < scope.data.projects.length; ++i) {
-          var p = scope.data.projects[i];
+        for (var i = 0; i < scope.data.objects.length; ++i) {
+          var p = scope.data.objects[i];
           scope.vertexCounts[p.name] =
             p.vertexCount ? getScalar(p.title, p.vertexCount) : NO;
           scope.edgeCounts[p.name] =
@@ -93,8 +93,8 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       function abandonScalars() {
         if (scope.data && scope.data.$resolved && !scope.data.$error) {
-          for (var i = 0; i < scope.data.projects.length; ++i) {
-            var p = scope.data.projects[i];
+          for (var i = 0; i < scope.data.objects.length; ++i) {
+            var p = scope.data.objects[i];
             scope.vertexCounts[p.name].$abandon();
             scope.edgeCounts[p.name].$abandon();
           }
