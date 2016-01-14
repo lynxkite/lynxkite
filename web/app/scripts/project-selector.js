@@ -157,6 +157,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       };
 
       scope.projectClick = function(event, p) {
+        if (!scope.isProject(p)) { return; }
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
@@ -208,6 +209,13 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           }
         },
+      };
+
+      scope.isProject = function(object) {
+        return object.objectType === 'project';
+      };
+      scope.isTable = function(object) {
+        return object.objectType === 'table';
       };
     },
   };

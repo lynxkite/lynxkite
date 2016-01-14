@@ -94,53 +94,43 @@
       </span>
     </div>
 
-    <div ng-repeat="project in data.objects">
-      <div
-        ng-if="project.objectType === 'project'"
-        id="project-{{ pathInside(project.name) | id }}"
-        class="entry project-entry clearfix"
-        href
-        ng-click="projectClick($event, project)"
-        ng-class="{ error: project.error }">
+    <div
+      ng-repeat="object in data.objects"
+      id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
+      class="entry project-entry clearfix"
+      href
+      ng-click="projectClick($event, object)"
+      ng-class="{ error: object.error }">
 
-        <span class="icon glyphicon glyphicon-file pull-left"></span>
-        <span class="lead">
-          <item-name-and-menu
-            menu="menu"
-            name="{{project.name}}"
-            short-name="{{pathInside(project.name)}}"
-            type="project">
-          </item-name-and-menu>
-          <a href="#/project/{{project.name}}" target="_blank" ng-hide="project.error"
-              ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
-            <span class="icon glyphicon glyphicon-new-window"></span>
-          </a>
-        </span>
+      <span
+        ng-if="isProject(object)"
+        class="icon glyphicon glyphicon-file pull-left">
+      </span>
+      <span
+        ng-if="isTable(object)"
+        class="icon glyphicon glyphicon-align-justify pull-left">
+      </span>
+      <span class="lead">
+        <item-name-and-menu
+          menu="menu"
+          name="{{object.name}}"
+          short-name="{{pathInside(object.name)}}"
+          type="{{object.objectType}}">
+        </item-name-and-menu>
+        <a ng-if="isProject(object)" href="#/project/{{object.name}}" target="_blank"
+          ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
+          <span class="icon glyphicon glyphicon-new-window"></span>
+        </a>
+      </span>
 
-        <div ng-if="project.error">
-          {{project.error}}
-          <i class="pull-right"><a ng-click="reportProjectError(project)">report problem</a></i>
-        </div>
-        <div ng-if="!project.error">
-          <value ref="vertexCounts[project.name]"></value> vertices,
-          <value ref="edgeCounts[project.name]"></value> edges.
-          {{project.notes}}
-        </div>
+      <div ng-if="object.error">
+        {{object.error}}
+        <i class="pull-right"><a ng-click="reportProjectError(object)">report problem</a></i>
       </div>
-      <div
-        ng-if="project.objectType === 'table'"
-        id="project-{{ pathInside(project.name) | id }}"
-        class="entry project-entry clearfix"
-        href>
-        <span class="icon glyphicon glyphicon-align-justify pull-left"></span>
-        <span class="lead">
-          <item-name-and-menu
-            menu="menu"
-            name="{{project.name}}"
-            short-name="{{pathInside(project.name)}}"
-            type="table">
-          </item-name-and-menu>
-        </span>
+      <div ng-if="!object.error">
+        <value ng-if="isProject(object)" ref="vertexCounts[object.name]"></value> vertices,
+        <value ng-if="isProject(object)" ref="edgeCounts[object.name]"></value> edges.
+        {{object.notes}}
       </div>
     </div>
   </div>
