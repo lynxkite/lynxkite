@@ -1,21 +1,23 @@
 <div class="form-horizontal">
   <div class="form-group">
+    <div class="form control" id="sql-editor-div">
     <div
       ui-ace="{
         mode: 'sql',
         rendererOptions: {fontSize: '14px'},
         advanced: {behavioursEnabled: false},
       }"
-      class="form-control" style="height: 100px;"
-      ng-model="sql" id="sql-editor"></div>
+      class="form-control" style="height: 100px;" id="sql-editor"
+      ng-model="sql"></div>
+    </div>
     </div>
     <div class="form-group">
       <span class="col-sm-offset-4 col-sm-4">
         <button type="submit" class="btn btn-primary" ng-click="runSQLQuery()">Run SQL query</button>
       </span>
-      <span class="glyphicon glyphicon-cog sql-box-spinner" ng-if="inProgress"></span>
+      <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
     </div>
-    <div class="form-group" ng-if="result && !result.$error">
+    <div class="form-group" ng-if="result && !result.$error" id="sql-result">
       <table class="table table-striped table-bordered">
         <thead>
           <tr>
@@ -28,6 +30,10 @@
           </tr>
         </tbody>
       </table>
+    </div>
+    <div id="sql-error" ng-if="result.$error">
+      {{ result.$error }}
+      <i class="pull-right"><a href ng-click="reportSQLError()">report problem</a></i>
     </div>
   </div>
 </div>

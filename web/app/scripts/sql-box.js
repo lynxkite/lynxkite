@@ -9,9 +9,8 @@ angular.module('biggraph').directive('sqlBox', function(side, util) {
     link: function(scope) {
       scope.runSQLQuery = function() {
         if (!scope.sql) {
-          util.reportError({ message: 'SQL script must be specified.' });
+          scope.result = { $error: 'SQL script must be specified.' };
         } else {
-
           scope.inProgress = true;
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
@@ -26,11 +25,9 @@ angular.module('biggraph').directive('sqlBox', function(side, util) {
         }
       };
 
-      scope.$watch('result.$error', function(error) {
-        if (error) {
-          util.reportRequestError(scope.result, error);
-        }
-      });
+      scope.reportSQLError = function() {
+        util.reportRequestError(scope.result, 'Error executing query.');
+      };
     }
   };
 });
