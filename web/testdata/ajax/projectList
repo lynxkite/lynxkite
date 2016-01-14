@@ -5,8 +5,9 @@
   "directories": ["My Subdirectory"],
   "objects": [
     { "name": "Project Strawberry", "objectType": "project", "notes": "Subscribers and calls.", "vertexCount": { "id": "vc1" }, "edgeCount": { "id": "ec1" } },
-    { "name": "Table Melon", "objectType": "table", "notes": "Phone numbers and texts.", "vertexCount": { "id": "vc2" }, "edgeCount": { "id": "ec2" } },
+    { "name": "Table Melon", "objectType": "table", "notes": "Phone numbers and texts." },
     { "name": "Project Avocado", "objectType": "project", "notes": "Pets and owners.\nBipartite.", "vertexCount": { "id": "vc3" }, "edgeCount": { "id": "ec3" } },
-    { "name": "Project Tofu", "error": "I'm not sure what tofu is." }
+    { "name": "Project Tofu", "objectType": "project", "error": "I'm not sure what tofu is." },
+    { "name": "Project Natto", "objectType": "table", "error": "I'd rather not know what natto is." }
   ]
 }
