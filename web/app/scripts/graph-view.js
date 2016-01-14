@@ -1030,7 +1030,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     // How much to wait after pan/zoom events before requesting a new map.
     this.NAVIGATION_DELAY = 100;  // Milliseconds.
     this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
-    this.style = 'feature:all|gamma:0.1|saturation:-80';
+    this.style = 'feature:all|gamma:1|saturation:0';
     this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4';  // big-graph-gc1 API key.
     this.images = [];
     this.vertices.offsetter.rule(this);
