@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class SQLControllerTest extends ControllerTestBase {
+class SQLControllerTest extends BigGraphControllerTestBase {
   val sqlController = new SQLController(this)
 
   test("sql on vertices") {

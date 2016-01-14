@@ -7,7 +7,7 @@ import org.scalatest.{ FunSuite, BeforeAndAfterEach }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class ControllerTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEach {
+class BigGraphControllerTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
   val projectName = "Test_Project"
   def projectFrame = ProjectFrame.fromName(projectName)

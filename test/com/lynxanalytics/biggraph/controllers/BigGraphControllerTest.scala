@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class BigGraphControllerTest extends ControllerTestBase {
+class BigGraphControllerTest extends BigGraphControllerTestBase {
   test("filtering by vertex attribute") {
     run("Example Graph")
     val filter = ProjectAttributeFilter("age", "<40")
