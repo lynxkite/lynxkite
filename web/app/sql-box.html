@@ -16,18 +16,18 @@
       <span class="glyphicon glyphicon-cog sql-box-spinner" ng-if="inProgress"></span>
     </div>
     <div class="form-group" ng-if="result && !result.$error">
-      <table class="table table-striped">
-        <tr>
-          <th ng-repeat="col in result.header">{{ col }}</th>
-        </tr>
-        <tr ng-repeat="rows in result.data">
-          <td ng-repeat="item in rows">{{ item }}</td>
-        </tr>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th ng-repeat="col in result.header">{{ col }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="rows in result.data">
+            <td ng-repeat="item in rows">{{ item }}</td>
+          </tr>
+        </tbody>
       </table>
-    </div>
-    <div class="alert alert-danger" ng-if="result.$error">
-      {{ result.$error }}
-      <i class="pull-right"><a href ng-click="reportSQLError()">report problem</a></i>
     </div>
   </div>
 </div>
