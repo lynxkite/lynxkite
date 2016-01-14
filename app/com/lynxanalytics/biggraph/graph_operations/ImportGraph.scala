@@ -1,6 +1,8 @@
 // Operations and other classes for importing data in general and from CSV files.
 package com.lynxanalytics.biggraph.graph_operations
 
+import java.util.UUID
+
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.controllers.Table
 import com.lynxanalytics.biggraph.graph_api._
@@ -370,6 +372,38 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   }
 }
 
+object ImportEdgeListForExistingVertexSetCommon {
+  def resolveEdges(
+    unresolvedEdges: UniqueSortedRDD[ID, (String, String)],
+    srcVidAttr: UniqueSortedRDD[ID, String],
+    dstVidAttr: UniqueSortedRDD[ID, String],
+    srcVidAttrGUID: UUID,
+    dstVidAttrGUID: UUID): UniqueSortedRDD[ID, Edge] = {
+
+    val partitioner = unresolvedEdges.partitioner.get
+
+    val srcToId =
+      ImportCommon.checkIdMapping(srcVidAttr.map { case (k, v) => v -> k }, partitioner)
+    val dstToId = {
+      if (srcVidAttrGUID == dstVidAttrGUID)
+        srcToId
+      else
+        ImportCommon.checkIdMapping(
+          dstVidAttr.map { case (k, v) => v -> k }, partitioner)
+    }
+    val srcResolvedByDst = RDDUtils.hybridLookup(
+      unresolvedEdges.map {
+        case (edgeId, (src, dst)) => src -> (edgeId, dst)
+      },
+      srcToId)
+      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
+
+    RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
+      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
+      .sortUnique(partitioner)
+  }
+}
+
 object ImportEdgeListForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val sources = vertexSet
@@ -404,27 +438,14 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val columns = readColumns(rc, input)
-    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
-    val srcToId =
-      ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
-    val dstToId = {
-      if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
-        srcToId
-      else
-        ImportCommon.checkIdMapping(
-          inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
-    }
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      edgeSrcDst(columns).map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      },
-      srcToId)
-      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
-      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .sortUnique(partitioner)
+    val edges = ImportEdgeListForExistingVertexSetCommon.resolveEdges(
+      edgeSrcDst(columns),
+      inputs.srcVidAttr.rdd,
+      inputs.dstVidAttr.rdd,
+      inputs.srcVidAttr.data.gUID,
+      inputs.dstVidAttr.data.gUID)
 
     output(o.edges, edges)
   }
@@ -462,30 +483,16 @@ case class ImportEdgeListForExistingVertexSetFromTable()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = inputs.srcVidAttr.rdd.partitioner.get
 
     val unresolvedEdges = inputs.srcVidColumn.rdd
-      .join(inputs.dstVidColumn.rdd)
+      .sortedJoin(inputs.dstVidColumn.rdd)
 
-    val srcToId =
-      ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
-    val dstToId = {
-      if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
-        srcToId
-      else
-        ImportCommon.checkIdMapping(
-          inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
-    }
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      unresolvedEdges.map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      },
-      srcToId)
-      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
-
-    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
-      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .sortUnique(partitioner)
+    val edges = ImportEdgeListForExistingVertexSetCommon.resolveEdges(
+      unresolvedEdges,
+      inputs.srcVidAttr.rdd,
+      inputs.dstVidAttr.rdd,
+      inputs.srcVidAttr.data.gUID,
+      inputs.dstVidAttr.data.gUID)
 
     val embedding = edges.mapValuesWithKeys { case (id, _) => Edge(id, id) }
 
