@@ -3,10 +3,9 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 import com.lynxanalytics.biggraph.graph_api.Edge
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.TestDataManager
 import com.lynxanalytics.biggraph.table.TableImport
 
-class ExportImportOperationTest extends OperationsTestBase with TestDataManager {
+class ExportImportOperationTest extends OperationsTestBase {
   test("SQL import & export vertices") {
     run("Example Graph")
     val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
@@ -194,6 +193,8 @@ class ExportImportOperationTest extends OperationsTestBase with TestDataManager 
       ("Adam", "Eve", "value1"),
       ("Isolated Joe", "Bob", "value2"),
       ("Eve", "Alice", "value3"))
+    // The string "Alice" in the last edge does not match any vertices in the Example Graph.
+    // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
     val table = TableImport.importDataFrame(dataFrame)

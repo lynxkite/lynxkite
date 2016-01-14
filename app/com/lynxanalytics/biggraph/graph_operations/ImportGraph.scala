@@ -372,38 +372,6 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   }
 }
 
-object ImportEdgeListForExistingVertexSetCommon {
-  def resolveEdges(
-    unresolvedEdges: UniqueSortedRDD[ID, (String, String)],
-    srcVidAttr: UniqueSortedRDD[ID, String],
-    dstVidAttr: UniqueSortedRDD[ID, String],
-    srcVidAttrGUID: UUID,
-    dstVidAttrGUID: UUID): UniqueSortedRDD[ID, Edge] = {
-
-    val partitioner = unresolvedEdges.partitioner.get
-
-    val srcToId =
-      ImportCommon.checkIdMapping(srcVidAttr.map { case (k, v) => v -> k }, partitioner)
-    val dstToId = {
-      if (srcVidAttrGUID == dstVidAttrGUID)
-        srcToId
-      else
-        ImportCommon.checkIdMapping(
-          dstVidAttr.map { case (k, v) => v -> k }, partitioner)
-    }
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      unresolvedEdges.map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      },
-      srcToId)
-      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
-
-    RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
-      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .sortUnique(partitioner)
-  }
-}
-
 object ImportEdgeListForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val sources = vertexSet
@@ -437,67 +405,15 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val columns = readColumns(rc, input)
+    val columns = readColumns(rc, input, Set(src, dst))
     putEdgeAttributes(columns, o.attrs, output)
 
-    val edges = ImportEdgeListForExistingVertexSetCommon.resolveEdges(
+    val edges = ImportEdgeListForExistingVertexSetFromTable.resolveEdges(
       edgeSrcDst(columns),
-      inputs.srcVidAttr.rdd,
-      inputs.dstVidAttr.rdd,
-      inputs.srcVidAttr.data.gUID,
-      inputs.dstVidAttr.data.gUID)
+      inputs.srcVidAttr.data,
+      inputs.dstVidAttr.data)
 
     output(o.edges, edges)
-  }
-}
-
-object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
-  class Input extends MagicInputSignature {
-    val rows = vertexSet
-    val srcVidColumn = vertexAttribute[String](rows)
-    val dstVidColumn = vertexAttribute[String](rows)
-    val sources = vertexSet
-    val destinations = vertexSet
-    val srcVidAttr = vertexAttribute[String](sources)
-    val dstVidAttr = vertexAttribute[String](destinations)
-  }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input,
-               fields: Seq[String])
-      extends MagicOutput(instance) {
-    val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
-    val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
-  }
-  def fromJson(j: JsValue) =
-    ImportEdgeListForExistingVertexSetFromTable()
-}
-import ImportEdgeListForExistingVertexSetFromTable._
-case class ImportEdgeListForExistingVertexSetFromTable()
-    extends TypedMetaGraphOp[ImportEdgeListForExistingVertexSetFromTable.Input, ImportEdgeListForExistingVertexSetFromTable.Output] {
-  override val isHeavy = true
-  @transient override lazy val inputs = new Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, null) //input.fields)
-
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
-
-    val unresolvedEdges = inputs.srcVidColumn.rdd
-      .sortedJoin(inputs.dstVidColumn.rdd)
-
-    val edges = ImportEdgeListForExistingVertexSetCommon.resolveEdges(
-      unresolvedEdges,
-      inputs.srcVidAttr.rdd,
-      inputs.dstVidAttr.rdd,
-      inputs.srcVidAttr.data.gUID,
-      inputs.dstVidAttr.data.gUID)
-
-    val embedding = edges.mapValuesWithKeys { case (id, _) => Edge(id, id) }
-
-    output(o.edges, edges)
-    output(o.embedding, embedding)
   }
 }
 
