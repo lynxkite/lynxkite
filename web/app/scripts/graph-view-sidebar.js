@@ -7,7 +7,6 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
     scope: {
       graph: '=',      // The graph to visualize.
       mapFilters: '=', // (Output) Filter settings for the map tiles.
-      update: '&',     // A callback function if rerendering is needed.
     },
     templateUrl: 'graph-view-sidebar.html',
     link: function(scope, element) {
@@ -173,7 +172,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         angular.extend(scope.mapFilters, JSON.parse(loadedMapFilters));
       }
       util.deepWatch(scope, 'filters', function() { saveFilters(); updateFilters(); });
-      util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); scope.update(); });
+      util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); });
     },
   };
 });

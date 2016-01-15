@@ -1033,6 +1033,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4';  // big-graph-gc1 API key.
     this.images = [];
     this.vertices.offsetter.rule(this);
+    var that = this;
+    var unwatch = util.deepWatch(this.gv.scope, 'mapFilters', function() { that.update(); });
+    this.gv.unregistration.push(function() {
+      unwatch();
+    });
   }
   Map.prototype.lon2x = function(lon) {
     return this.GLOBE_SIZE * lon / 360;
