@@ -1122,7 +1122,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var map;
     if (geoAttr !== undefined) {
       map = new Map(this, vertices);
-      this.scope.graph.mapViewEnabled = true;
     }
     for (var i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];
