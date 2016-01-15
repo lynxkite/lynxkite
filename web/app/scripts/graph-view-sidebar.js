@@ -5,8 +5,9 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
   return {
     restrict: 'E',
     scope: {
-      graph: '=',   // The graph to visualize.
-      update: '&',  // A callback function if rerendering is needed.
+      graph: '=',      // The graph to visualize.
+      mapFilters: '=', // (Output) Filter settings for the map tiles.
+      update: '&',     // A callback function if rerendering is needed.
     },
     templateUrl: 'graph-view-sidebar.html',
     link: function(scope, element) {
