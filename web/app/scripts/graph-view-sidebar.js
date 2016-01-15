@@ -4,7 +4,11 @@
 angular.module('biggraph').directive('graphViewSidebar', function (util) {
   return {
     restrict: 'E',
-    scope: { graph: '=' },
+    scope: {
+      graph: '=',
+      gv: '=',
+      update: '&',
+    },
     templateUrl: 'graph-view-sidebar.html',
     link: function(scope, element) {
       scope.$watch('graph.view', updateTSV);
@@ -143,21 +147,39 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         }
         svg.css({ filter: filter, '-webkit-filter': filter });
       }
+      function updateMapFilters() {
+        scope.gv.mapGamma = Math.pow(10, (scope.mapFilters.contrast - 100) / 100);
+        scope.gv.mapSaturation = (scope.mapFilters.saturation - 100);
+        scope.gv.mapBrightness = (scope.mapFilters.brightness - 100);
+        scope.update();
+      }
       function saveFilters() {
         window.localStorage.setItem('graph-filters', JSON.stringify(scope.filters));
+      }
+      function saveMapFilters() {
+        window.localStorage.setItem('map-filters', JSON.stringify(scope.mapFilters));
       }
       function noFilters() {
         return { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
       }
+      function baseMapFilters() {
+        return { contrast: 0, saturation: 20, brightness: 100 };
+      }
       scope.resetFilters = function() {
         scope.filters = noFilters();
+        scope.mapFilters = baseMapFilters();
       };
       scope.resetFilters();
       var loadedFilters = window.localStorage.getItem('graph-filters');
       if (loadedFilters) {
         angular.extend(scope.filters, JSON.parse(loadedFilters));
       }
+      var loadedMapFilters = window.localStorage.getItem('map-filters');
+      if (loadedMapFilters) {
+        angular.extend(scope.mapFilters, JSON.parse(loadedMapFilters));
+      }
       util.deepWatch(scope, 'filters', function() { saveFilters(); updateFilters(); });
+      util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); updateMapFilters(); });
     },
   };
 });

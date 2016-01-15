@@ -1030,7 +1030,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     // How much to wait after pan/zoom events before requesting a new map.
     this.NAVIGATION_DELAY = 100;  // Milliseconds.
     this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
-    this.style = 'feature:all|gamma:1|saturation:0';
     this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4';  // big-graph-gc1 API key.
     this.images = [];
     this.vertices.offsetter.rule(this);
@@ -1083,10 +1082,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var clat = this.y2lat(y);
     var clon = this.x2lon(x);
     var image = svg.create('image');
+    var style = 'feature:all' +
+      '|gamma:' + this.gv.mapGamma +
+      '|saturation:' + this.gv.mapSaturation +
+      '|lightness:' + this.gv.mapBrightness;
     var href = (
       this.root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
       '&key=' + this.key +
-      '&size=640x640&scale=2&style=' + this.style);
+      '&size=640x640&scale=2&style=' + style);
     image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
     image.x = x - image.size / 2;
@@ -1112,6 +1115,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var map;
     if (geoAttr !== undefined) {
       map = new Map(this, vertices);
+      this.map = true;
     }
     for (var i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];
