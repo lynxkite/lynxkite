@@ -1082,7 +1082,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var clat = this.y2lat(y);
     var clon = this.x2lon(x);
     var image = svg.create('image');
-    var filters = angular.element('graph-view-sidebar').isolateScope().mapFilters;
+    var filters = this.gv.scope.mapFilters;
     var style = 'feature:all' +
       // Map gamma to the [0.1, 10] range using an exponential scale.
       '|gamma:' + Math.pow(10, filters.gamma / 100) +
