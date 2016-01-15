@@ -3,7 +3,7 @@
 var fw = (function UIDescription() {
   var states = {};
   var statePreservingTests = {};
-  var hanSoloMode = false;
+  var soloMode = false;
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
@@ -16,14 +16,14 @@ var fw = (function UIDescription() {
       transitionFunction,  // JS function that goes to this state from prev state.
       checks,  // Tests confirming we are indeed in this state. Should be very fast stuff only,
                // like looking at the DOM.
-      hanSolo) {  // Set to true if you want to run only this test.
-      if (hanSolo) {
-        hanSoloMode = true;
+      solo) {  // Set to true if you want to run only this test.
+      if (solo) {
+        soloMode = true;
       }
       var testingDone = false;
 
       function runStatePreservingTest(currentTest) {
-        if (hanSoloMode && !currentTest.hanSolo) {
+        if (soloMode && !currentTest.solo) {
           return;
         }
         it('-- ' + currentTest.name, function() {
@@ -35,11 +35,12 @@ var fw = (function UIDescription() {
 
       states[stateName] = {
         parent: previousStateName,
-        isHanSolo: function() {
-          if (hanSolo) return true;
+        mustBeReached: function() {
+          if (!soloMode) return true;
+          if (solo) return true;
           var tests = statePreservingTests[stateName] || [];
           for (var j = 0; j < tests.length; ++j) {
-            if (tests[j].hanSolo) return true;
+            if (tests[j].solo) return true;
           }
           return false;
         },
@@ -65,9 +66,9 @@ var fw = (function UIDescription() {
     },
 
     // These tests need to preserve the UI state or restore it when they are finished.
-    statePreservingTest: function(stateToRunAt, name, body, hanSolo) {
-      if (hanSolo) {
-        hanSoloMode = true;
+    statePreservingTest: function(stateToRunAt, name, body, solo) {
+      if (solo) {
+        soloMode = true;
       }
       if (statePreservingTests[stateToRunAt] === undefined) {
         statePreservingTests[stateToRunAt] = [];
@@ -75,7 +76,7 @@ var fw = (function UIDescription() {
       statePreservingTests[stateToRunAt].push({
         name: name,
         runTest: body,
-        hanSolo: hanSolo,
+        solo: solo,
       });
     },
 
@@ -84,7 +85,7 @@ var fw = (function UIDescription() {
 
       // We will enumerate all states we want to visit here.
       var statesToReach = [];
-      // We put here all states that we visit inevitably, that is parents if states in
+      // We put here all states that we visit inevitably, that is parents of states in
       // statesToReach.
       var statesAutomaticallyReached = {};
       function markParentsAutomaticallyReached(stateName) {
@@ -101,7 +102,7 @@ var fw = (function UIDescription() {
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
-        if (!hanSoloMode || state.isHanSolo()) {
+        if (state.mustBeReached()) {
           statesToReach.push(stateName);
           markParentsAutomaticallyReached(stateName);
         }
