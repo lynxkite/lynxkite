@@ -5,9 +5,8 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
   return {
     restrict: 'E',
     scope: {
-      graph: '=',
-      gv: '=',
-      update: '&',
+      graph: '=',   // The graph to visualize.
+      update: '&',  // A callback function if rerendering is needed.
     },
     templateUrl: 'graph-view-sidebar.html',
     link: function(scope, element) {
@@ -147,13 +146,6 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         }
         svg.css({ filter: filter, '-webkit-filter': filter });
       }
-      function updateMapFilters() {
-        // Map gamma to the [0.1, 10] range using an exponential scale.
-        scope.gv.mapContrast = Math.pow(10, (scope.mapFilters.contrast - 100) / 100);
-        scope.gv.mapSaturation = (scope.mapFilters.saturation - 100);
-        scope.gv.mapBrightness = (scope.mapFilters.brightness - 100);
-        scope.update();
-      }
       function saveFilters() {
         window.localStorage.setItem('graph-filters', JSON.stringify(scope.filters));
       }
@@ -164,7 +156,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         return { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
       }
       function baseMapFilters() {
-        return { contrast: 0, saturation: 20, brightness: 100 };
+        return { gamma: -100, saturation: -80, brightness: 0 };
       }
       scope.resetFilters = function() {
         scope.filters = noFilters();
@@ -180,7 +172,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         angular.extend(scope.mapFilters, JSON.parse(loadedMapFilters));
       }
       util.deepWatch(scope, 'filters', function() { saveFilters(); updateFilters(); });
-      util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); updateMapFilters(); });
+      util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); scope.update(); });
     },
   };
 });
