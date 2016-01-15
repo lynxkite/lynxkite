@@ -1,4 +1,4 @@
-// Operations and other classes for importing data in general and from CSV files.
+// Operations and other classes for importing data from tables.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -17,8 +17,7 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
     val dstVidAttr = vertexAttribute[String](destinations)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input,
-               fields: Seq[String])
+               inputs: Input)
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
@@ -59,7 +58,7 @@ case class ImportEdgeListForExistingVertexSetFromTable()
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, null) //input.fields)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -67,6 +66,10 @@ case class ImportEdgeListForExistingVertexSetFromTable()
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
+    // Join the source and destination columns of the table to import.
+    // If there were null values in the original DataFrame, then those
+    // will end up as missing keys in srcVidColumn and dstVidColumns,
+    // and this join will just discard any rows having those.
     val unresolvedEdges = inputs.srcVidColumn.rdd
       .sortedJoin(inputs.dstVidColumn.rdd)
 
