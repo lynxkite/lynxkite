@@ -1,15 +1,11 @@
 // Operations and other classes for importing data in general and from CSV files.
 package com.lynxanalytics.biggraph.graph_operations
 
-import java.util.UUID
-
 import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.controllers.Table
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
