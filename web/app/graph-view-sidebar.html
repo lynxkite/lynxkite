@@ -15,23 +15,23 @@
         <i tooltip="Saturation" tooltip-placement="right" class="glyphicon glyphicon-tint"></i>
         <input type="range" max="200" step="1" ng-model="filters.saturation">
       </div>
-      <div ng-show="mapViewEnabled()">
-        Map filters
-        <div>
-          <i tooltip="Map Brightness" tooltip-placement="right" class="glyphicon glyphicon-certificate"></i>
-          <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.brightness">
-        </div>
-        <div>
-          <i tooltip="Map Gamma" tooltip-placement="right" class="glyphicon glyphicon-adjust"></i>
-          <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.gamma">
-        </div>
-        <div>
-          <i tooltip="Map Saturation" tooltip-placement="right" class="glyphicon glyphicon-tint"></i>
-          <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.saturation">
-        </div>
-      </div>
-      <div><button ng-click="resetFilters()" class="btn btn-default btn-xs">Reset</button></div>
     </div>
+    <div class="filters" ng-show="mapViewEnabled()">
+      Map colors
+      <div>
+        <i tooltip="Map Brightness" tooltip-placement="right" class="glyphicon glyphicon-certificate"></i>
+        <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.brightness">
+      </div>
+      <div>
+        <i tooltip="Map Gamma" tooltip-placement="right" class="glyphicon glyphicon-adjust"></i>
+        <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.gamma">
+      </div>
+      <div>
+        <i tooltip="Map Saturation" tooltip-placement="right" class="glyphicon glyphicon-tint"></i>
+        <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.saturation">
+      </div>
+    </div>
+    <div><button ng-click="resetFilters()" class="btn btn-default btn-xs">Reset</button></div>
   </div>
   <div class="handle" ng-click="sidebarOpen = !sidebarOpen">
   </div>
