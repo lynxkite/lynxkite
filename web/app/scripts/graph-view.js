@@ -1083,7 +1083,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var clon = this.x2lon(x);
     var image = svg.create('image');
     var style = 'feature:all' +
-      '|gamma:' + this.gv.mapGamma +
+      '|gamma:' + this.gv.mapContrast +
       '|saturation:' + this.gv.mapSaturation +
       '|lightness:' + this.gv.mapBrightness;
     var href = (
@@ -1115,7 +1115,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var map;
     if (geoAttr !== undefined) {
       map = new Map(this, vertices);
-      this.map = true;
+      this.mapViewEnabled = true;
     }
     for (var i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];

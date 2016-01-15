@@ -148,7 +148,8 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         svg.css({ filter: filter, '-webkit-filter': filter });
       }
       function updateMapFilters() {
-        scope.gv.mapGamma = Math.pow(10, (scope.mapFilters.contrast - 100) / 100);
+        // Map gamma to the [0.1, 10] range using an exponential scale.
+        scope.gv.mapContrast = Math.pow(10, (scope.mapFilters.contrast - 100) / 100);
         scope.gv.mapSaturation = (scope.mapFilters.saturation - 100);
         scope.gv.mapBrightness = (scope.mapFilters.brightness - 100);
         scope.update();
