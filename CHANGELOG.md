@@ -11,6 +11,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    bare new Kite installations.
  - Edges and segmentation links can now also be accessed as DataFrames from batch scripts.
  - New _Derive scalar_ operation.
+ - Possible to create visualizations with lighter Google Maps as a background thanks to
+   adjustable map filters.
 
 ### 1.6.1
 
