@@ -220,9 +220,10 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     import ctx.metaManager
     val entry = DirectoryEntry.fromName(newRootName)
     val project = if (!entry.exists) {
-      entry.writeACL = ctx.user.email
-      entry.readACL = ctx.user.email
-      entry.asNewProjectFrame()
+      val p = entry.asNewProjectFrame()
+      p.writeACL = ctx.user.email
+      p.readACL = ctx.user.email
+      p
     } else {
       entry.asProjectFrame
     }
