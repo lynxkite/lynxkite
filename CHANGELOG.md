@@ -13,6 +13,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - New _Derive scalar_ operation.
  - Possible to create visualizations with lighter Google Maps as a background thanks to
    adjustable map filters.
+ - Upgrade to Hadoop 2 in our default Amazon EC2 setup.
 
 ### 1.6.1
 
