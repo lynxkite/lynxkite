@@ -1,0 +1,43 @@
+# Name of the cluster.
+CLUSTER_NAME=${USER}-cluster
+
+# Number of worker instances in the cluster.
+NUM_INSTANCES=4
+
+# The id of the ssh key that you want to use to connect to the cluster.
+SSH_ID=lynx-cli
+
+# The private key file for the ID above.
+SSH_KEY=~/.ssh/lynx-cli.pem
+
+# Which region to run in.
+REGION=us-east-1
+
+# Which instance type to create.
+TYPE=m3.2xlarge
+# These are determined by the instance type above. You still need to fill these. Sorry. :)
+# See http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/TaskConfiguration_H2.html
+# for memory limits and
+# https://aws.amazon.com/ec2/instance-types/
+# for number of cores.
+CORES=8
+USE_RAM_GB=19 # yarn limit minus 1GB so that the application master fits somewhere
+
+# Use for testing scripts:
+# TYPE=m1.large
+# CORES=2
+# USE_RAM_GB=3
+
+# Use for LynxKite computations:
+# TYPE=m3.2xlarge
+# CORES=8
+# USE_RAM_GB=19
+
+LOCAL_TMP_DIR=/mnt/tmp
+
+# The S3 directory to store graph data in without the s3:// prefix. It must use the same credentials
+# as the user starting the cluster. Used as the backup location with the "s3copy" command.
+S3_DATAREPO=lynx-bnw-data/${USER}-cluster
+
+# Spark installation to use for this cluster.
+SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
