@@ -173,6 +173,17 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       }
       util.deepWatch(scope, 'filters', function() { saveFilters(); updateFilters(); });
       util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); });
+
+      // Whether there is a side with a map view.
+      scope.mapViewEnabled = function() {
+        var sides = [scope.graph.left, scope.graph.right];
+        for (var i = 0; i < sides.length; ++i) {
+          if (sides[i] && sides[i].vertexAttrs.geo) {
+            return true;
+          }
+        }
+        return false;
+      };
     },
   };
 });
