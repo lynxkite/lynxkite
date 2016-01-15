@@ -1,0 +1,26 @@
+#sql-box-spinner {
+  animation: spinner 4s infinite linear;
+  font-size: 30px;
+  opacity: 0.8;
+}
+
+#sql-editor {
+  border-radius: 0;
+}
+
+#sql-editor-div {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+#sql-error {
+  color: DarkRed;
+}
+
+#sql-result {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 200px;
+  margin-left: -10px;
+  margin-right: -10px;
+}
