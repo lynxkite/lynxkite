@@ -16,7 +16,7 @@ case class SQLResult(header: List[String], data: List[List[String]])
 
 case class CSVImportRequest(
     files: String,
-    // Name of columns. Empty string means to take column names from the first line of the file.
+    // Name of columns. Empty list means to take column names from the first line of the file.
     columnNames: List[String],
     delimiter: String,
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
