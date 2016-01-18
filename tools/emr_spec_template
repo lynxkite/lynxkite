@@ -2,7 +2,7 @@
 CLUSTER_NAME=${USER}-cluster
 
 # Number of worker instances in the cluster.
-NUM_INSTANCES=4
+NUM_INSTANCES=3
 
 # The id of the ssh key that you want to use to connect to the cluster.
 SSH_ID=lynx-cli
@@ -23,16 +23,20 @@ TYPE=m3.2xlarge
 CORES=8
 USE_RAM_GB=19 # yarn limit minus 1GB so that the application master fits somewhere
 
-# Use for testing scripts:
+# Find some working configurations below:
 # TYPE=m1.large
 # CORES=2
 # USE_RAM_GB=3
-
-# Use for LynxKite computations:
+#
 # TYPE=m3.2xlarge
 # CORES=8
 # USE_RAM_GB=19
 
+# A local path that exists on all workers and the master and will be used for storing
+# temporary spark/hadoop files. This can get big, so if you have a small root filesystem
+# and an extra large drive mounted somewhere then you need to point this to somewhere on
+# the large drive. On the other hand performance of this drive has big effect on overal speed,
+# so SSD is a nice option here.
 LOCAL_TMP_DIR=/mnt/tmp
 
 # The S3 directory to store graph data in without the s3:// prefix. It must use the same credentials
