@@ -1,0 +1,102 @@
+<form class="form-horizontal">
+  <div class="form-group">
+    <label for="datatype" class="col-sm-4 control-label">
+      Type of data to import
+    </label>
+    <div class="col-sm-8" id="datatype">
+      <select
+       class="form-control"
+       ng-disabled="inputsDisabled"
+       ng-model="datatype">
+        <option value="csv">CSV file(s)</option>
+        <option value="db">Relational DB Table (via JDBC)</option>
+      </select>
+    </div>
+  </div>
+  <div ng-show="datatype === 'csv'">
+    <div class="form-group">
+      <label for="csv-filename" class="col-sm-4 control-label">
+        Name of CSV file(s) to import
+      </label>
+      <div class="col-sm-8" id="csv-filename">
+        <input class="form-control"
+               ng-disabled="inputsDisabled"
+               ng-model="csv.filename">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="csv-column-names" class="col-sm-4 control-label">
+        CSV columns
+      </label>
+      <div class="col-sm-8" id="csv-column-names">
+        <input class="form-control"
+               ng-model="csv.columnNames"
+               ng-disabled="inputsDisabled"
+               placeholder="Comma separated. Leave empty to read from first line." >
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="csv-delimiter" class="col-sm-4 control-label">
+        Delimiter
+      </label>
+      <div class="col-sm-8" id="csv-delimiter">
+        <input class="form-control"
+               ng-disabled="inputsDisabled"
+               ng-model="csv.delimiter">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="csv-import-mode" class="col-sm-4 control-label">
+        Format error handling
+      </label>
+      <div class="col-sm-8" id="csv-import-mode">
+        <select
+          class="form-control"
+          ng-disabled="inputsDisabled"
+          ng-model="csv.mode">
+          <option value="FAILFAST">Fail on any malformed line</option>
+          <option value="DROPMALFORMED">Ignore malformed lines</option>
+          <option value="PERMISSIVE">Salvage malformed lines: truncate or fill with nulls</option>  
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="form-group" ng-show="importInProgress">
+    <div class="col-sm-offset-4 col-sm-8">
+      <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
+    </div>
+  </div>
+  <div ng-show="importResult && !importResult.$error">
+    <div class="form-group">
+      <div class="col-sm-offset-4 col-sm-8">
+        Table successfully imported
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="table-name" class="col-sm-4 control-label">
+        Save table as
+      </label>
+      <div class="col-sm-8" id="table-name">
+        <input class="form-control"
+               ng-model="tableName">
+      </div>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-4 col-sm-8" id="csv-import-mode">
+      <div
+        ng-show="(datatype === 'csv') && csv.filename && !inputsDisabled"
+        ng-click="importCSV()"
+        class="btn btn-default">
+        Import CSV file
+      </div>
+      <div
+        ng-show="importResult && !importResult.$error && tableName"
+        ng-click="saveTable()"
+        class="btn btn-default">
+        Save table
+      </div>
+      <div ng-click="cancel($event)" class="btn btn-default">Cancel</div>
+    </div>
+  </div>
+</form>

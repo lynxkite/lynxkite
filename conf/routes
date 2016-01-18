@@ -21,6 +21,7 @@ POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
 POST /ajax/renameEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameEntry
 POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
+POST /ajax/saveTable com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveTable
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
@@ -28,6 +29,7 @@ GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
+POST /ajax/importCSV        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importCSV
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
