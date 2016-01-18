@@ -15,7 +15,7 @@ if [ "$#" -ne 2 ]; then
   echo " Command can be one of:"
   echo "   start     - starts a new EMR cluster"
   echo "   terminate - stops, but does not destroy a running cluster"
-  echo "   s3save    - copies the data directory to s3 persistent storage"
+  echo "   s3copy    - copies the data directory to s3 persistent storage"
   echo "   connect   - redirects the kite web interface to http://localhost:4044"
   echo "               from behind the Amazon firewall"
   echo "   kite      - (re)starts the kite server"
@@ -53,7 +53,7 @@ GetClusterId() {
 
 GetMasterAccessParams() {
   CLUSTER_ID=$(GetClusterId)
-  echo "--cluster-id $(GetClusterId) --key-pair-file ${HOME}/.ssh/lynx-cli.pem "
+  echo "--cluster-id $(GetClusterId) --key-pair-file ${SSH_KEY} "
 }
 
 function ConfirmDataLoss {
@@ -82,18 +82,19 @@ case $1 in
 start)
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
-    --ec2-attributes '{"KeyName":"lynx-cli","InstanceProfile":"EMR_EC2_DefaultRole","AvailabilityZone":"us-east-1c","EmrManagedSlaveSecurityGroup":"sg-ec0e4984","EmrManagedMasterSecurityGroup":"sg-ea0e4982"}' \
+    --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole","AvailabilityZone":"us-east-1c","EmrManagedSlaveSecurityGroup":"sg-ec0e4984","EmrManagedMasterSecurityGroup":"sg-ea0e4982"}' \
     --service-role EMR_DefaultRole \
     --enable-debugging \
     --release-label emr-4.2.0 \
     --log-uri 's3n://aws-logs-122496820890-us-east-1/elasticmapreduce/' \
     --name "${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
-    --region us-east-1)
+    --region us-east-1
+  )
   ;&
 
 # ====== fall-through
-redeploy)
+reconfigure)
   MASTER_ACCESS=$(GetMasterAccessParams)
 
   # Prepare a config file.
@@ -137,6 +138,8 @@ EOF
 
   aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
 
+  # Unpack Spark on the master and add the locally installed hadoop into its classpath.
+  # (This way we get s3 consistent view.)
   SPARK_NAME="spark-${SPARK_VERSION}-bin-without-hadoop"
   aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
     curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
@@ -169,10 +172,13 @@ kite)
 # ======
 connect)
   MASTER_HOSTNAME=$(GetMasterHostName)
-  echo "LynxKite will be available at http://localhost:4044 and at "
-  echo "http://${MASTER_HOSTNAME}:4044 if you have your proxy settings configured, see: "
-  echo "https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-master-node-proxy.html"
+  echo "LynxKite will be available at http://localhost:4044 and a SOCKS proxy will "
+  echo "be available at http://localhost:8157 to access your cluster."
   echo "Press Ctrl-C to exit."
+  echo
+  echo "Remote LynxKite access: http://${MASTER_HOSTNAME}:4044"
+  echo "See below for SOCKS proxy configuration instructions:"
+  echo "https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-master-node-proxy.html"
   $SSH hadoop@${MASTER_HOSTNAME} -N -L 4044:localhost:4044 -D 8157
   ;;
 
@@ -190,7 +196,8 @@ terminate)
 
 # ======
 s3copy)
-  curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral" && echo "Copy successful."
+  curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral"
+  echo "Copy successful."
   ;;
 
 # ======
