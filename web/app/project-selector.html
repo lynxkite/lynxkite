@@ -48,6 +48,12 @@
       </form>
     </div>
 
+    <div class="entry" id="import-table" ng-click="console.log('click');importTable.expanded = true;console.log('click2')">
+      <span class="icon glyphicon glyphicon-plus"></span>
+      <span class="lead">Import table</span>
+      <import-wizard class="entry" expanded="importTable.expanded" ng-if="importTable.expanded">
+    </div>
+
     <div id="current-directory" class="path">
       <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
       <span class="lead" ng-show="path">
