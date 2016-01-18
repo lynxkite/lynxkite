@@ -1,3 +1,13 @@
+.section-button {
+  cursor: pointer;
+  padding: 6px;
+  font-size: 14px;
+}
+
+sql-box > div {
+  margin-bottom: 10px; /* Separate subsections. */
+}
+
 #sql-box-spinner {
   animation: spinner 4s infinite linear;
   font-size: 30px;
@@ -5,12 +15,9 @@
 }
 
 #sql-editor {
-  border-radius: 0;
-}
-
-#sql-editor-div {
-  margin-left: 5px;
-  margin-right: 5px;
+  height: 100px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
 }
 
 #sql-error {
@@ -18,9 +25,5 @@
 }
 
 #sql-result {
-  overflow-x: auto;
-  overflow-y: auto;
-  max-height: 200px;
-  margin-left: -10px;
-  margin-right: -10px;
+  overflow-x: auto; /* Scroll if there are many columns. */
 }
