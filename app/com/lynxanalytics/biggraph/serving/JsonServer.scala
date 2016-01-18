@@ -93,7 +93,11 @@ abstract class JsonServer extends mvc.Controller {
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
     action(parse.anyContent) { (user, request) =>
       jsonQuery(user, request) { (user: User, i: I) =>
-        Ok(json.Json.toJson(handler(user, i)))
+        try {
+          Ok(json.Json.toJson(handler(user, i)))
+        } catch {
+          case flying: FlyingResult => flying.result
+        }
       }
     }
   }
@@ -345,6 +349,7 @@ object ProductionJsonServer extends JsonServer {
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonGet(sqlController.runSQLQuery)
+  def exportSQLQuery = jsonGet(sqlController.exportSQLQuery)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -393,3 +398,6 @@ object ProductionJsonServer extends JsonServer {
 
   Ammonite.maybeStart()
 }
+
+// Throw FlyingResult anywhere to generate non-200 HTTP responses.
+class FlyingResult(val result: mvc.Result) extends Exception(result.toString)
