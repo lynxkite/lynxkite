@@ -53,9 +53,9 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
       .sortUnique(partitioner)
   }
 }
-import ImportEdgeListForExistingVertexSetFromTable._
 case class ImportEdgeListForExistingVertexSetFromTable()
-    extends TypedMetaGraphOp[Input, Output] {
+    extends TypedMetaGraphOp[ImportEdgeListForExistingVertexSetFromTable.Input, ImportEdgeListForExistingVertexSetFromTable.Output] {
+  import ImportEdgeListForExistingVertexSetFromTable._
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -81,5 +81,57 @@ case class ImportEdgeListForExistingVertexSetFromTable()
     output(o.edges, edges)
     output(o.embedding, embedding)
   }
+}
 
+object ImportAttributesForExistingVertexSetFromTable extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val tableVs = vertexSet
+    val idColumn = vertexAttribute[String](tableVs)
+    val graphVs = vertexSet
+    val idAttr = vertexAttribute[String](graphVs)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input)
+      extends MagicOutput(instance) {
+    val pullFunction = edgeBundle(
+      inputs.graphVs.entity,
+      inputs.tableVs.entity,
+      EdgeBundleProperties.partialFunction)
+  }
+  def fromJson(j: JsValue) =
+    ImportAttributesForExistingVertexSetFromTable()
+}
+case class ImportAttributesForExistingVertexSetFromTable()
+    extends TypedMetaGraphOp[ImportAttributesForExistingVertexSetFromTable.Input, ImportAttributesForExistingVertexSetFromTable.Output] {
+  import ImportAttributesForExistingVertexSetFromTable._
+
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val partitioner = inputs.tableVs.rdd.partitioner.get
+    // We assumes that the ID column in the table and the ID attribute of the
+    // graph both have unique values. If not, then for each ID with multiplicity,
+    // sortedJoin will keep pairing rows with vertices until one of the runs out
+    // first.
+    val tableStringToId = inputs.idColumn.rdd
+      .map { case (id, string) => (string, id) }
+      .sortUnique(partitioner)
+    val graphStringToId = inputs.idAttr.rdd
+      .map { case (id, string) => (string, id) }
+      .sortUnique(partitioner)
+    val mapping = tableStringToId
+      .sortedJoin(graphStringToId)
+      .values
+      .map { case (tableVid, graphVid) => Edge(graphVid, tableVid) }
+      .randomNumbered(partitioner)
+
+    output(o.pullFunction, mapping)
+  }
 }
