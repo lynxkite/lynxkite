@@ -17,7 +17,7 @@ angular.module('biggraph').directive('sqlBox', function(side, util) {
             {
               project: scope.side.state.projectName,
               sql: scope.sql,
-              rownum: 10,
+              maxRows: 10,
             });
           scope.result.finally(function() {
               scope.inProgress = false;
