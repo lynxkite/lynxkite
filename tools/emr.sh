@@ -80,16 +80,18 @@ case $1 in
 
 # ======
 start)
+
+  aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
-    --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole","AvailabilityZone":"us-east-1c","EmrManagedSlaveSecurityGroup":"sg-ec0e4984","EmrManagedMasterSecurityGroup":"sg-ea0e4982"}' \
+    --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole"}' \
     --service-role EMR_DefaultRole \
     --enable-debugging \
     --release-label emr-4.2.0 \
-    --log-uri 's3n://aws-logs-122496820890-us-east-1/elasticmapreduce/' \
+    --log-uri "s3n://lynx-bnw-data/${CLUSTER_NAME}/emr-logs/" \
     --name "${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
-    --region us-east-1
+    --region ${REGION}
   )
   ;&
 
