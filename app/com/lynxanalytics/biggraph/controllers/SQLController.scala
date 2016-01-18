@@ -1,14 +1,16 @@
 // SQLController includes the request handlers for SQL in Kite.
 package com.lynxanalytics.biggraph.controllers
 
+import org.apache.spark
+
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class SQLRequest(project: String, sql: String, maxRows: Int)
-case class SQLResult(header: List[String], data: List[List[String]])
+case class SQLQueryRequest(project: String, sql: String, maxRows: Int)
+case class SQLQueryResult(header: List[String], data: List[List[String]])
 
 case class SQLExportRequest(
   project: String,
@@ -16,12 +18,13 @@ case class SQLExportRequest(
   format: String,
   path: String,
   options: Map[String, String])
+case class SQLExportResult(download: Option[String])
 
 class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
 
-  private def projectSQL(user: serving.User, project: String, sql: String): DataFrame = {
+  private def projectSQL(user: serving.User, project: String, sql: String): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
       val p = SubProject.parsePath(project)
       assert(p.frame.exists, s"Project ${project} does not exist.")
@@ -42,11 +45,11 @@ class SQLController(val env: BigGraphEnvironment) {
     sqlContext.sql(sql)
   }
 
-  def runSQLQuery(user: serving.User, request: SQLExportRequest): Unit = {
+  def runSQLQuery(user: serving.User, request: SQLQueryRequest): SQLQueryResult = {
     val df = projectSQL(user, request.project, request.sql)
 
-    SQLResult(
-      header = result.columns.toList,
+    SQLQueryResult(
+      header = df.columns.toList,
       data = df.head(request.maxRows).map {
         row =>
           row.toSeq.map {
@@ -57,21 +60,19 @@ class SQLController(val env: BigGraphEnvironment) {
     )
   }
 
-  def exportSQLQuery(user: serving.User, request: SQLExportRequest): Unit = {
+  def exportSQLQuery(user: serving.User, request: SQLExportRequest): SQLExportResult = {
     val df = projectSQL(user, request.project, request.sql)
     val path = if (request.path == "<download>") {
-        dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString
-      } else {
-        HadoopFile(request.path)
-      }
-    // Write out the data.
-    df.write.format(request.format).options(request.options).save(path.resolvedName)
-    // Redirect to the download link if necessary.
-    if (request.path == "<download>") {
-      val urlPath = java.net.URLEncoder.encode(path.symbolicName, "utf-8")                              
-      val urlName = java.net.URLEncoder.encode(path.path.getName, "utf-8")                                         
-      val url = s"/download?path=$urlPath&name=$urlName"   
-      throw new serving.FlyingResult(play.api.mvc.Results.Redirect(url))
+      dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString + "." + request.format
+    } else {
+      graph_util.HadoopFile(request.path)
     }
+    val format = request.format match {
+      case "csv" => "com.databricks.spark.csv"
+      case x => x
+    }
+    df.write.format(format).options(request.options).save(path.resolvedName)
+    SQLExportResult(
+      download = if (request.path == "<download>") Some(path.symbolicName) else None)
   }
 }
