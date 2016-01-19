@@ -43,7 +43,7 @@ libraryDependencies ++= Seq(
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,
   // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
-  "com.databricks" % "spark-csv_2.10" % "1.2.0")
+  "com.databricks" % "spark-csv_2.10" % "1.3.0")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
