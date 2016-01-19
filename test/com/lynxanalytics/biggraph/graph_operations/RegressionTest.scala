@@ -19,17 +19,17 @@ class RegressionTest extends FunSuite with TestGraphOp {
     assert(error.max <= maxError, s"$result is unlike $expectation")
   }
 
-  def predictFromAttr(
+  def predictLabelFromAttr(
     method: String,
     label: Map[Int, Double],
     attr: Map[Int, Double]): Map[Long, Double] = {
     // Create the graph from attr in case of missing labels.
     val g = SmallTestGraph(attr.map { case (k, _) => k -> Seq(0) }).result
-    val op1 = AddDoubleVertexAttribute(label)
-    val a1 = op1(op1.vs, g.vs).result.attr
-    val op2 = AddDoubleVertexAttribute(attr)
-    val a2 = op2(op2.vs, g.vs).result.attr
-    predict(method, a1, Seq(a2))
+    val labelOp = AddDoubleVertexAttribute(label)
+    val l = labelOp(labelOp.vs, g.vs).result.attr
+    val attrOp = AddDoubleVertexAttribute(attr)
+    val a = attrOp(attrOp.vs, g.vs).result.attr
+    predict(method, l, Seq(a))
   }
 
   def testRegressions(
@@ -40,7 +40,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     for (method <- Seq("Linear regression", "Ridge regression", "Lasso")) {
       println("       . " + method)
       assertRoughly(
-        predictFromAttr(method, label, attr),
+        predictLabelFromAttr(method, label, attr),
         expectation,
         maxError)
     }
