@@ -25,10 +25,8 @@ class RegressionTest extends FunSuite with TestGraphOp {
     attr: Map[Int, Double]): Map[Long, Double] = {
     // Create the graph from attr in case of missing labels.
     val g = SmallTestGraph(attr.mapValues(_ => Seq())).result
-    val labelOp = AddDoubleVertexAttribute(label)
-    val l = labelOp(labelOp.vs, g.vs).result.attr
-    val attrOp = AddDoubleVertexAttribute(attr)
-    val a = attrOp(attrOp.vs, g.vs).result.attr
+    val l = AddDoubleVertexAttribute.run(g.vs, label)
+    val a = AddDoubleVertexAttribute.run(g.vs, attr)
     predict(method, l, Seq(a))
   }
 
