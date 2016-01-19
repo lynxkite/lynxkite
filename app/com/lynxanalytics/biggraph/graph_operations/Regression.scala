@@ -104,7 +104,11 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
   private def scaleBack(
     result: rdd.RDD[Double],
     scaler: mllib.feature.StandardScalerModel): rdd.RDD[Double] = {
-    result.map { v => v * scaler.std(0) + scaler.mean(0) }
+    assert(scaler.mean.size == 1)
+    assert(scaler.std.size == 1)
+    val mean = scaler.mean(0)
+    val std = scaler.std(0)
+    result.map { v => v * std + mean }
   }
 
   // Creates the input for training and evaluation.
