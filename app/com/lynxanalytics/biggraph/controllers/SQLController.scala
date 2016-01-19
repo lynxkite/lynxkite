@@ -9,12 +9,12 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class SQLQueryRequest(project: String, sql: String, maxRows: Int)
+case class DataFrameSpec(project: String, sql: String)
+case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
 case class SQLExportRequest(
-  project: String,
-  sql: String,
+  df: DataFrameSpec,
   format: String,
   path: String,
   options: Map[String, String])
@@ -24,10 +24,10 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
 
-  private def projectSQL(user: serving.User, project: String, sql: String): spark.sql.DataFrame = {
+  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
-      val p = SubProject.parsePath(project)
-      assert(p.frame.exists, s"Project ${project} does not exist.")
+      val p = SubProject.parsePath(spec.project)
+      assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
 
       val v = p.viewer
@@ -41,12 +41,12 @@ class SQLController(val env: BigGraphEnvironment) {
       table.toDF(sqlContext).registerTempTable(tableName)
     }
 
-    log.info(s"Trying to execute query: ${sql}")
-    sqlContext.sql(sql)
+    log.info(s"Trying to execute query: ${spec.sql}")
+    sqlContext.sql(spec.sql)
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest): SQLQueryResult = {
-    val df = projectSQL(user, request.project, request.sql)
+    val df = dfFromSpec(user, request.df)
 
     SQLQueryResult(
       header = df.columns.toList,
@@ -61,7 +61,7 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   def exportSQLQuery(user: serving.User, request: SQLExportRequest): SQLExportResult = {
-    val df = projectSQL(user, request.project, request.sql)
+    val df = dfFromSpec(user, request.df)
     val path = if (request.path == "<download>") {
       dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString + "." + request.format
     } else {
