@@ -223,8 +223,11 @@ object FrontendJson {
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 
-  implicit val rSQLRequest = json.Json.reads[SQLRequest]
-  implicit val wSQLResult = json.Json.writes[SQLResult]
+  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
+  implicit val rSQLExportRequest = json.Json.reads[SQLExportRequest]
+  implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
+  implicit val wSQLExportResult = json.Json.writes[SQLExportResult]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -283,15 +286,17 @@ object ProductionJsonServer extends JsonServer {
     log.info(s"download: $user ${request.path}")
     val path = HadoopFile(request.getQueryString("path").get)
     val name = request.getQueryString("name").get
-    // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
-    val files = Seq(path / "header") ++ (path / "data" / "*").list
+    // For CSV downloads we want to read the "header" file and then the "data" directory.
+    val files: Seq[HadoopFile] =
+      if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
+      else (path / "*").list
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
     mvc.Result(
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
+        CONTENT_DISPOSITION -> s"attachment; filename=$name")),
       body = play.api.libs.iteratee.Enumerator.fromStream(stream)
     )
   }
@@ -345,6 +350,7 @@ object ProductionJsonServer extends JsonServer {
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonGet(sqlController.runSQLQuery)
+  def exportSQLQuery = jsonPost(sqlController.exportSQLQuery)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
