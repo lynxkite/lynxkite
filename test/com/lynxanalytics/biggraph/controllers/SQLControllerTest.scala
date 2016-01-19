@@ -23,4 +23,22 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val output = graph_util.HadoopFile(result.download.get).loadTextFile(sparkContext)
     assert(output.collect.sorted.mkString(", ") == "Adam, Eve, Isolated Joe")
   }
+
+  test("import from CSV") {
+    val res = getClass.getResource("/graph_operations/ImportGraphTest").toString
+    graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", res)
+    val csvFiles = "IMPORTGRAPHTEST$/testgraph/vertex-data/part*"
+    val cpResponse = sqlController.importCSV(
+      user, CSVImportRequest(csvFiles, List("vertexId", "name", "age"), ",", "FAILFAST"))
+    val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
+
+    run(
+      "Import vertices from table",
+      Map(
+        "table" -> s"${tableCheckpoint}|!vertices",
+        "id-attr" -> "new_id"))
+    assert(vattr[String]("vertexId") == Seq("0", "1", "2"))
+    assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
+    assert(vattr[String]("age") == Seq("18.2", "20.3", "50.3"))
+  }
 }

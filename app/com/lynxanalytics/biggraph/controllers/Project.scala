@@ -841,16 +841,12 @@ object SubProject {
 class TableFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromTable(table: Table): Unit = manager.synchronized {
+    initializeFromCheckpoint(table.saveAsCheckpoint)
+  }
+  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
     // Marking this as a table.
     set(rootDir / "objectType", "table")
-    val editor = new RootProjectEditor(manager.checkpointRepo.readCheckpoint(""))
-    editor.vertexSet = table.idSet
-    for ((name, attr) <- table.columns) {
-      editor.vertexAttributes(name) = attr
-    }
-    val checkpointedState =
-      manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
-    checkpoint = checkpointedState.checkpoint.get
+    checkpoint = cp
   }
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
 }
@@ -1029,6 +1025,11 @@ class DirectoryEntry(val path: SymbolPath)(
   def asNewTableFrame(table: Table): TableFrame = {
     val res = new TableFrame(path)
     res.initializeFromTable(table)
+    res
+  }
+  def asNewTableFrame(checkpoint: String): TableFrame = {
+    val res = new TableFrame(path)
+    res.initializeFromCheckpoint(checkpoint)
     res
   }
 
