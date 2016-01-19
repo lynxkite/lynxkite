@@ -24,7 +24,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     label: Map[Int, Double],
     attr: Map[Int, Double]): Map[Long, Double] = {
     // Create the graph from attr in case of missing labels.
-    val g = SmallTestGraph(attr.map { case (k, _) => k -> Seq(0) }).result
+    val g = SmallTestGraph(attr.mapValues(_ => Seq())).result
     val labelOp = AddDoubleVertexAttribute(label)
     val l = labelOp(labelOp.vs, g.vs).result.attr
     val attrOp = AddDoubleVertexAttribute(attr)
@@ -54,11 +54,11 @@ class RegressionTest extends FunSuite with TestGraphOp {
       predict(method, g.income, Seq(g.age))
     }
     assertRoughly(incomes("Linear regression"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 30)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 10)
     assertRoughly(incomes("Ridge regression"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 30)
+      Map(0L -> 1010.0, 1L -> 945.0, 2L -> 1985.0, 3L -> 420.0), maxError = 10)
     assertRoughly(incomes("Lasso"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 30)
+      Map(0L -> 1010.0, 1L -> 945.0, 2L -> 1985.0, 3L -> 420.0), maxError = 10)
     assertRoughly(incomes("Naive Bayes"),
       Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 1000.0, 3L -> 1000.0), maxError = 10)
     assertRoughly(incomes("Decision tree"),
@@ -98,49 +98,53 @@ class RegressionTest extends FunSuite with TestGraphOp {
 
   test("regression - age from year of birth") {
     testRegressions(
-      Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
-      Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955),
-      Map(0L -> 25, 1L -> 40, 2L -> 30, 3L -> 60),
+      label = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
+      attr = Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955),
+      expectation = Map(0L -> 25, 1L -> 40, 2L -> 30, 3L -> 60),
       maxError = 1)
   }
 
   test("regression - year of birth from age") {
     testRegressions(
-      Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955),
-      Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
-      Map(0L -> 1990, 1L -> 1975, 2L -> 1985, 3L -> 1955),
+      label = Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955),
+      attr = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
+      expectation = Map(0L -> 1990, 1L -> 1975, 2L -> 1985, 3L -> 1955),
       maxError = 1)
   }
 
-  test("regression - corner cases") {
-    // Predict constant
+  test("regression - corner cases - predict constant") {
     testRegressions(
-      Map(0 -> 5, 1 -> 5, 2 -> 5),
-      Map(0 -> 10, 1 -> 50, 2 -> 100),
-      Map(0L -> 5, 1L -> 5, 2L -> 5),
+      label = Map(0 -> 5, 1 -> 5, 2 -> 5),
+      attr = Map(0 -> 10, 1 -> 50, 2 -> 100),
+      expectation = Map(0L -> 5, 1L -> 5, 2L -> 5),
       maxError = 0.1)
+  }
 
-    // Predict from constant. Should not throw an error.
+  test("regression - corner cases - predict from constant") {
+    // Should not throw an error.
     testRegressions(
-      Map(0 -> 1, 1 -> 2, 2 -> 3),
-      Map(0 -> 5, 1 -> 5, 2 -> 5),
-      Map(0L -> 2, 1L -> 2, 2L -> 2),
+      label = Map(0 -> 1, 1 -> 2, 2 -> 3),
+      attr = Map(0 -> 5, 1 -> 5, 2 -> 5),
+      expectation = Map(0L -> 2, 1L -> 2, 2L -> 2),
       maxError = 1)
+  }
 
-    // Noisy data - y ~= 100 - 10x.
+  test("regression - corner cases - noisy data") {
+    // y ~= 100 - 10x.
     testRegressions(
-      Map(0 -> 91, 1 -> 79, 2 -> 72),
+      label = Map(0 -> 91, 1 -> 79, 2 -> 72),
       // Significantly different means and stddev.
-      Map(0 -> 1, 1 -> 2, 2 -> 3),
-      Map(0L -> 90, 1L -> 80, 2L -> 70),
+      attr = Map(0 -> 1, 1 -> 2, 2 -> 3),
+      expectation = Map(0L -> 90, 1L -> 80, 2L -> 70),
       maxError = 5)
+  }
 
-    // Missing labels.
+  test("regression - corner cases - missing labels") {
     testRegressions(
-      Map(0 -> 10, 1 -> 20, 2 -> 30),
+      label = Map(0 -> 10, 1 -> 20, 2 -> 30),
       // Significantly different means and stddev with and without the extra labels.
-      Map(0 -> 1, 1 -> 2, 2 -> 3, 3 -> 10, 4 -> 20),
-      Map(0L -> 10, 1L -> 20, 2L -> 30, 3L -> 100, 4L -> 200),
+      attr = Map(0 -> 1, 1 -> 2, 2 -> 3, 3 -> 10, 4 -> 20),
+      expectation = Map(0L -> 10, 1L -> 20, 2L -> 30, 3L -> 100, 4L -> 200),
       maxError = 10)
   }
 }
