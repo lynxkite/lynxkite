@@ -227,6 +227,7 @@ object FrontendJson {
   implicit val rSQLRequest = json.Json.reads[SQLRequest]
   implicit val wSQLResult = json.Json.writes[SQLResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
+  implicit val rJDBCImportRequest = json.Json.reads[JDBCImportRequest]
   implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
@@ -350,6 +351,7 @@ object ProductionJsonServer extends JsonServer {
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonGet(sqlController.runSQLQuery)
   def importCSV = jsonPost(sqlController.importCSV)
+  def importJDBC = jsonPost(sqlController.importJDBC)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
