@@ -249,6 +249,8 @@ object SavedWorkflow {
   def fromJson(js: String): SavedWorkflow = json.Json.parse(js).as[SavedWorkflow]
 }
 
+case class SaveCheckpointAsTableRequest(tableName: String, checkpoint: String, privacy: String)
+
 object BigGraphController {
   val workflowsRoot: SymbolPath = SymbolPath("workflows")
 
@@ -634,6 +636,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
       workflow.description,
       workflow.stepsAsGroovy)
   }
+
+  def saveTable(user: serving.User, request: SaveCheckpointAsTableRequest): Unit =
+    metaManager.synchronized {
+      assertNameNotExists(request.tableName)
+      val entry = DirectoryEntry.fromName(request.tableName)
+      entry.assertParentWriteAllowedFrom(user)
+      val table = entry.asNewTableFrame(request.checkpoint)
+      setupACL(request.privacy, user, table)
+    }
+
 }
 
 abstract class OperationParameterMeta {

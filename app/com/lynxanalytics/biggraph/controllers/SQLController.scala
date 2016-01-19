@@ -5,8 +5,10 @@ import org.apache.spark
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.table
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class DataFrameSpec(project: String, sql: String)
@@ -20,9 +22,46 @@ case class SQLExportRequest(
   options: Map[String, String])
 case class SQLExportResult(download: Option[String])
 
+case class CSVImportRequest(
+    files: String,
+    // Name of columns. Empty list means to take column names from the first line of the file.
+    columnNames: List[String],
+    delimiter: String,
+    // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
+    mode: String) {
+  assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
+}
+object CSVImportRequest {
+  val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
+}
+case class TableImportResponse(checkpoint: String)
+
 class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
+
+  def importCSV(user: serving.User, request: CSVImportRequest): TableImportResponse = {
+    val reader = dataManager.masterSQLContext
+      .read
+      .format("com.databricks.spark.csv")
+      .option("mode", request.mode)
+      .option("delimiter", request.delimiter)
+      // We don't want to skip lines starting with #
+      .option("comment", null)
+    val readerWithSchema = if (request.columnNames.nonEmpty) {
+      reader.schema(SQLController.stringOnlySchema(request.columnNames))
+    } else {
+      // Read column names from header.
+      reader.option("header", "true")
+    }
+    val hadoopFile = HadoopFile(request.files)
+    // TODO: this will break for s3 paths if the id or password contains a /. Would be
+    // nicer to create an RDD[String] ourselves using HadoopFile.loadTextFile and stuff that
+    // into the CSV library. It seems possible via creating a CSVRelation ourselves and turn
+    // that into a DataFrame. But both steps seem to require non-public API access. :(
+    // So leaving this as is for a first version.
+    SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
+  }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
@@ -63,9 +102,9 @@ class SQLController(val env: BigGraphEnvironment) {
   def exportSQLQuery(user: serving.User, request: SQLExportRequest): SQLExportResult = {
     val df = dfFromSpec(user, request.df)
     val path = if (request.path == "<download>") {
-      dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString + "." + request.format
+      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + request.format
     } else {
-      graph_util.HadoopFile(request.path)
+      HadoopFile(request.path)
     }
     val format = request.format match {
       case "csv" => "com.databricks.spark.csv"
@@ -75,4 +114,14 @@ class SQLController(val env: BigGraphEnvironment) {
     SQLExportResult(
       download = if (request.path == "<download>") Some(path.symbolicName) else None)
   }
+}
+object SQLController {
+  def stringOnlySchema(columns: Seq[String]) = {
+    import spark.sql.types._
+    StructType(columns.map(StructField(_, StringType, true)))
+  }
+
+  def importFromDF(df: spark.sql.DataFrame)(
+    implicit metaManager: MetaGraphManager, dataManager: DataManager) =
+    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint)
 }

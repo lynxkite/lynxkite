@@ -25,6 +25,17 @@ trait Table {
     }
     spark.sql.types.StructType(fields)
   }
+
+  def saveAsCheckpoint(implicit manager: MetaGraphManager): String = manager.synchronized {
+    val editor = new RootProjectEditor(RootProjectState.emptyState)
+    editor.vertexSet = idSet
+    for ((name, attr) <- columns) {
+      editor.vertexAttributes(name) = attr
+    }
+    val checkpointedState =
+      manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
+    checkpointedState.checkpoint.get
+  }
 }
 object Table {
   // A canonical table path is what's used by operations to reference a table. It's always meant to
