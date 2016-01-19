@@ -357,7 +357,8 @@
       <li class="list-group-item" ng-if="!side.isSegmentation()">
         <span class="lead de-emph">SQL</span>
         <div class="pull-right">
-          <i class="glyphicon glyphicon-plus section-button" ng-click="showSQL = !showSQL"></i>
+          <i class="glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }} section-button"
+            ng-click="showSQL = !showSQL"></i>
         </div>
         <div class="clearfix"></div>
         <sql-box side="side" ng-if="showSQL"></sql-box>
