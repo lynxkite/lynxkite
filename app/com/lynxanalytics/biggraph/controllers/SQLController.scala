@@ -55,11 +55,7 @@ class SQLController(val env: BigGraphEnvironment) {
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(request.files)
-    // TODO: this will break for s3 paths if the id or password contains a /. Would be
-    // nicer to create an RDD[String] ourselves using HadoopFile.loadTextFile and stuff that
-    // into the CSV library. It seems possible via creating a CSVRelation ourselves and turn
-    // that into a DataFrame. But both steps seem to require non-public API access. :(
-    // So leaving this as is for a first version.
+    // TODO: #2889
     SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
   }
 
@@ -110,6 +106,7 @@ class SQLController(val env: BigGraphEnvironment) {
       case "csv" => "com.databricks.spark.csv"
       case x => x
     }
+    // TODO: #2889
     df.write.format(format).options(request.options).save(path.resolvedName)
     SQLExportResult(
       download = if (request.path == "<download>") Some(path.symbolicName) else None)
