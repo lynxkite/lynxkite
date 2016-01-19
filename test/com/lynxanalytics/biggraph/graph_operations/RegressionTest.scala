@@ -26,11 +26,11 @@ class RegressionTest extends FunSuite with TestGraphOp {
       predict(method, g.income, Seq(g.age))
     }
     assertRoughly(incomes("Linear regression"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 10)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 30)
     assertRoughly(incomes("Ridge regression"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 10)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 30)
     assertRoughly(incomes("Lasso"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 10)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 400.0), maxError = 30)
     assertRoughly(incomes("Naive Bayes"),
       Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 1000.0, 3L -> 1000.0), maxError = 10)
     assertRoughly(incomes("Decision tree"),
