@@ -14,6 +14,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Possible to create visualizations with lighter Google Maps as a background thanks to
    adjustable map filters.
  - Upgrade to Hadoop 2 in our default Amazon EC2 setup.
+ - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
+   now the recommended way to run Kite clusters on Amazon.
  - Batch scripts can save DataFrames as tables.
 
 ### 1.6.1

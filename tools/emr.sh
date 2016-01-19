@@ -13,12 +13,15 @@ if [ "$#" -ne 2 ]; then
   echo "Usage: emr.sh command CLUSTER_SPECIFICATION_FILE"
   echo " For a cluster specification file template, see $DIR/emr_spec_template"
   echo " Command can be one of:"
-  echo "   start     - starts a new EMR cluster"
-  echo "   terminate - stops, but does not destroy a running cluster"
-  echo "   s3copy    - copies the data directory to s3 persistent storage"
-  echo "   connect   - redirects the kite web interface to http://localhost:4044"
-  echo "               from behind the Amazon firewall"
-  echo "   kite      - (re)starts the kite server"
+  echo "   start       - starts a new EMR cluster"
+  echo "   terminate   - stops and destroys a running cluster. Use s3copy and metacopy"
+  echo "                 to save state."
+  echo "   s3copy      - copies the data directory to s3 persistent storage"
+  echo "   metacopy    - copies the meta directory to your local machine"
+  echo "   metarestore - copies the meta directory from your local machines to the cluster"
+  echo "   connect     - redirects the kite web interface to http://localhost:4044"
+  echo "                 from behind the Amazon firewall"
+  echo "   kite        - (re)starts the kite server"
   echo
   echo " E.g. a typical workflow: "
   echo "   emr.sh start my_cluster_spec    # starts up the EMR cluster"
@@ -67,6 +70,27 @@ function ConfirmDataLoss {
   esac
 }
 
+CheckDataRepo() {
+  S3_DATAREPO_BUCKET=$(echo ${S3_DATAREPO} | cut -d'/' -f 1)
+  S3_DATAREPO_LOCATION=$(\
+    aws s3api get-bucket-location --bucket ${S3_DATAREPO_BUCKET} | \
+    grep '"LocationConstraint"' | \
+    cut -d':' -f 2 | \
+    xargs
+  )
+
+  if [ "${S3_DATAREPO_LOCATION}" = "null" ]; then
+    S3_DATAREPO_LOCATION="us-east-1"  # populate Amazon's default region
+  fi
+
+  if [ "${S3_DATAREPO_LOCATION}" != "${REGION}" ]; then
+    echo "S3_DATAREPO should be in the same region as REGION."
+    echo "S3_DATAREPO is in ${S3_DATAREPO_LOCATION}"
+    echo "REGION is ${REGION}"
+    exit 1
+  fi
+}
+
 if [ ! -f "${SSH_KEY}" ]; then
   echo "${SSH_KEY} does not exist."
   exit 1
@@ -80,7 +104,7 @@ case $1 in
 
 # ======
 start)
-
+  CheckDataRepo
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
@@ -88,8 +112,9 @@ start)
     --service-role EMR_DefaultRole \
     --enable-debugging \
     --release-label emr-4.2.0 \
-    --log-uri "s3n://lynx-bnw-data/${CLUSTER_NAME}/emr-logs/" \
+    --log-uri "s3n://${S3_DATAREPO}/emr-logs/" \
     --name "${CLUSTER_NAME}" \
+    --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
     --region ${REGION}
   )
@@ -97,6 +122,7 @@ start)
 
 # ====== fall-through
 reconfigure)
+  CheckDataRepo
   MASTER_ACCESS=$(GetMasterAccessParams)
 
   # Prepare a config file.
@@ -187,7 +213,21 @@ connect)
 # ======
 ssh)
   MASTER_HOSTNAME=$(GetMasterHostName)
-  $SSH hadoop@${MASTER_HOSTNAME}
+  $SSH -A hadoop@${MASTER_HOSTNAME}
+  ;;
+
+metacopy)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  rsync -ave "$SSH" -r \
+    hadoop@${MASTER_HOSTNAME}:kite_meta \
+    ${CLUSTER_NAME}.kite_meta/
+  ;;
+
+metarestore)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  rsync -ave "$SSH" -r \
+    ${CLUSTER_NAME}.kite_meta/ \
+    hadoop@${MASTER_HOSTNAME}:kite_meta
   ;;
 
 # ======
