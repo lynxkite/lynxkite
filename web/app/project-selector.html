@@ -48,10 +48,15 @@
       </form>
     </div>
 
-    <div class="entry" id="import-table" ng-click="console.log('click');importTable.expanded = true;console.log('click2')">
+    <div class="entry" id="import-table" ng-click="startTableImport()">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead">Import table</span>
-      <import-wizard class="entry" expanded="importTable.expanded" ng-if="importTable.expanded">
+      <import-wizard
+       class="entry"
+       expanded="importTable.expanded"
+       current-directory="path"
+       ng-if="importTable.expanded"
+       table-imported="importTable.tableImported">
     </div>
 
     <div id="current-directory" class="path">

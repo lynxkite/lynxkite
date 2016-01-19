@@ -3,7 +3,7 @@
 
 angular.module('biggraph').directive('importWizard', function(util) {
   return {
-    scope: { expanded: '=' },
+    scope: { expanded: '=', tableImported: '=', currentDirectory: '=' },
     templateUrl: 'import-wizard.html',
     link: function(scope) {
       scope.csv = {
@@ -14,34 +14,41 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.expanded = false;
         event.stopPropagation();
       };
-      scope.reportError = function() {
-        util.reportRequestError(scope.importResult, 'Error importing table.');
-      };
       scope.importCSV = function() {
         scope.inputsDisabled = true;
         scope.importInProgress = true;
-        scope.importResult = util.post(
+        util.post(
           '/ajax/importCSV',
           {
             files: scope.csv.filename,
-            columnNames: scope.csv.columnNames ? [] : [],
+            columnNames: scope.csv.columnNames ? scope.csv.columnNames.split(',') : [],
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
+          }).catch(function() {
+            scope.inputsDisabled = false;
+          }).finally(function() {
+            scope.importInProgress = false;
+          }).then(function(importResult) {
+            scope.checkpoint = importResult.checkpoint;
           });
-        scope.importResult.catch(function() {
-          scope.inputsDisabled = false;
-        });
-        scope.importResult.finally(function() {
-          scope.importInProgress = false;
-        });
       };
-      scope.saveTable = function() {
+      scope.saveTable = function(event) {
+        event.stopPropagation();
+        scope.savingTable = true;
+        var tableName = scope.tableName;
+        if (scope.currentDirectory) {
+          tableName = scope.currentDirectory + '/' + tableName;
+        }
         util.post(
           '/ajax/saveTable',
           {
-            'tableName': scope.tableName,
-            'checkpoint': scope.importResult.checkpoint,
+            'tableName': tableName,
+            'checkpoint': scope.checkpoint,
             'privacy': 'public-read',
+          }).then(function(result) {
+            scope.tableImported = result;
+          }).finally(function() {
+            scope.savingTable = false;
           });
       };
     },
