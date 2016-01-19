@@ -18,8 +18,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
             {
-              project: scope.side.state.projectName,
-              sql: scope.sql,
+              df: {
+                project: scope.side.state.projectName,
+                sql: scope.sql,
+              },
               maxRows: 10,
             });
           scope.result.finally(function() {
@@ -42,8 +44,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.result = util.post(
             '/ajax/exportSQLQuery',
             {
-              project: scope.side.state.projectName,
-              sql: scope.sql,
+              df: {
+                project: scope.side.state.projectName,
+                sql: scope.sql,
+              },
               format: scope.exportFormat,
               path: scope.exportPath,
               options: {},
