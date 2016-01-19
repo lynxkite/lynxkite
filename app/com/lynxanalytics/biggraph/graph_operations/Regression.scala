@@ -11,12 +11,12 @@ import org.apache.spark.rdd
 
 case class RegressionParams(
   // Labeled training data points.
-  val points: rdd.RDD[mllib.regression.LabeledPoint],
+  points: rdd.RDD[mllib.regression.LabeledPoint],
   // All data points for the model to evaluate.
-  val vectors: AttributeRDD[mllib.linalg.Vector],
+  vectors: AttributeRDD[mllib.linalg.Vector],
   // An optional scaler if it was used to scale the labels. It can be used
   // to scale back the results.
-  val scaler: Option[mllib.feature.StandardScalerModel])
+  scaler: Option[mllib.feature.StandardScalerModel])
 
 object Regression extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -107,7 +107,7 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     result.map { v => v * scaler.std(0) + scaler.mean(0) }
   }
 
-  // Creates the input for trainign and evaluation.
+  // Creates the input for training and evaluation.
   private def getParams(
     forSGD: Boolean // Whether the data should be prepared for an SGD method.
     )(implicit id: DataSet): RegressionParams = {
@@ -138,8 +138,8 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     }
 
     val (labels, labelScaler) = if (forSGD) {
-      // For SGD methods the labels need to be scaled too. Otherwise the optimal stepSize can
-      // vary greatly.
+      // For SGD methods the labels need to be scaled too. Otherwise the optimal
+      // stepSize can vary greatly.
       val labelVector = labelRDD.mapValues {
         a => new mllib.linalg.DenseVector(Array(a)): mllib.linalg.Vector
       }
