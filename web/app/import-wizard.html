@@ -66,7 +66,7 @@
       <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
     </div>
   </div>
-  <div ng-show="importResult && !importResult.$error">
+  <div ng-show="checkpoint">
     <div class="form-group">
       <div class="col-sm-offset-4 col-sm-8">
         Table successfully imported
@@ -78,6 +78,7 @@
       </label>
       <div class="col-sm-8" id="table-name">
         <input class="form-control"
+               ng-disabled="savingTable"
                ng-model="tableName">
       </div>
     </div>
@@ -91,8 +92,9 @@
         Import CSV file
       </div>
       <div
-        ng-show="importResult && !importResult.$error && tableName"
-        ng-click="saveTable()"
+        ng-show="checkpoint && tableName"
+        ng-click="saveTable($event)"
+        ng-disabled="savingTable"
         class="btn btn-default">
         Save table
       </div>
