@@ -133,7 +133,6 @@ class RegressionTest extends FunSuite with TestGraphOp {
     // y ~= 100 - 10x.
     testRegressions(
       label = Map(0 -> 91, 1 -> 79, 2 -> 72),
-      // Significantly different means and stddev.
       attr = Map(0 -> 1, 1 -> 2, 2 -> 3),
       expectation = Map(0L -> 90, 1L -> 80, 2L -> 70),
       maxError = 5)
