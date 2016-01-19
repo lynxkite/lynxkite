@@ -28,3 +28,30 @@ class EdgesFromBipartiteAttributeMatchesTest extends FunSuite with TestGraphOp {
     assert(res.edges.toPairSeq == Seq(0 -> 0, 1 -> 1, 2 -> 0, 3 -> 0))
   }
 }
+
+class EdgesFromUniqueBipartiteAttributeMatchesTest extends FunSuite with TestGraphOp {
+  test("import attributes for existing vertex set from table") {
+    val table = SmallTestGraph(
+      Map(1 -> Seq(), 2 -> Seq(), 3 -> Seq(), 4 -> Seq()))().result
+    val idColumn = {
+      val op = AddVertexAttribute(
+        Map(1 -> "Eve", 2 -> "Adam", 5 -> "Isolated Joe", 6 -> "John"))
+      op(op.vs, table.vs).result.attr
+    }
+
+    val graph = {
+      // 0: Adam
+      // 1: Eve
+      // 2: Bob
+      // 3: Isolated Joe
+      val op = ExampleGraph()
+      op.result
+    }
+
+    val op = EdgesFromUniqueBipartiteAttributeMatches()
+    val result = op(op.toAttr, idColumn)(
+      op.fromAttr, graph.name).result
+    assert(Seq(Edge(0, 2), Edge(1, 1), Edge(3, 5)) ==
+      result.edges.rdd.values.collect.toSeq)
+  }
+}

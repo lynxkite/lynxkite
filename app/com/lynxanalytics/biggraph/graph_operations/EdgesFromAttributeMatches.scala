@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.apache.spark.Partitioner
 
 object EdgesFromAttributeMatches extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[T])
@@ -47,6 +48,9 @@ object EdgesFromBipartiteAttributeMatches extends OpFromJson {
     val edges = edgeBundle(inputs.from.entity, inputs.to.entity)
   }
   def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
+  def getLargerPartitioner(p1: Partitioner, p2: Partitioner): Partitioner =
+    if (p1.numPartitions > p2.numPartitions) p1
+    else p2
 }
 case class EdgesFromBipartiteAttributeMatches[T]()
     extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
@@ -70,11 +74,65 @@ case class EdgesFromBipartiteAttributeMatches[T]()
     val edges = fromByAttr.join(toByAttr).flatMap {
       case (attr, (fromIds, toIds)) => for { a <- fromIds; b <- toIds } yield Edge(a, b)
     }
-    val fromPartitioner = inputs.from.rdd.partitioner.get
-    val toPartitioner = inputs.to.rdd.partitioner.get
-    val partitioner =
-      if (fromPartitioner.numPartitions > toPartitioner.numPartitions) fromPartitioner
-      else toPartitioner
+    val partitioner = getLargerPartitioner(
+      inputs.from.rdd.partitioner.get,
+      inputs.to.rdd.partitioner.get)
     output(o.edges, edges.randomNumbered(partitioner))
+  }
+}
+
+// Generates edges between vertices that match on an attribute.
+// If fromAttr on A matches toAttr on B, an A -> B edge is generated.
+// Is is assumed that the values of both fromAttr and toAttr are unique.
+// For attribute values with multiplicity over one, some edges will be created
+// but the output is not defined. (See the implementation of sortedJoin.)
+object EdgesFromUniqueBipartiteAttributeMatches extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val from = vertexSet
+    val fromAttr = vertexAttribute[String](from)
+    val to = vertexSet
+    val toAttr = vertexAttribute[String](to)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input)
+      extends MagicOutput(instance) {
+    val edges = edgeBundle(
+      inputs.from.entity,
+      inputs.to.entity,
+      EdgeBundleProperties.partialFunction)
+  }
+  def fromJson(j: JsValue) =
+    EdgesFromUniqueBipartiteAttributeMatches()
+}
+case class EdgesFromUniqueBipartiteAttributeMatches()
+    extends TypedMetaGraphOp[EdgesFromUniqueBipartiteAttributeMatches.Input, EdgesFromUniqueBipartiteAttributeMatches.Output] {
+  import EdgesFromUniqueBipartiteAttributeMatches._
+
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val partitioner = EdgesFromBipartiteAttributeMatches.getLargerPartitioner(
+      inputs.from.rdd.partitioner.get,
+      inputs.to.rdd.partitioner.get)
+    val fromStringToId = inputs.fromAttr.rdd
+      .map { case (fromId, fromString) => (fromString, fromId) }
+      .checkIdMapping(partitioner)
+    val toStringToId = inputs.toAttr.rdd
+      .map { case (toId, toString) => (toString, toId) }
+      .checkIdMapping(partitioner)
+    val mapping = fromStringToId
+      .sortedJoin(toStringToId)
+      .values
+      .map { case (fromId, toId) => (fromId, Edge(fromId, toId)) }
+      .sortUnique(partitioner)
+
+    output(o.edges, mapping)
   }
 }

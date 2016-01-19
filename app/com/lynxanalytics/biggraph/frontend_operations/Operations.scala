@@ -585,11 +585,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSetFromTable()
-      val res = op(op.idAttr, idAttr)(op.idColumn, idColumn).result
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
-        project.newVertexAttribute(prefix + name, attr.pullVia(res.pullFunction), "imported")
+        project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
       }
     }
   })
@@ -645,11 +645,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSetFromTable()
-      val res = op(op.idAttr, idAttr)(op.idColumn, idColumn).result
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
-        project.newEdgeAttribute(prefix + name, attr.pullVia(res.pullFunction), "imported")
+        project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
       }
     }
   })
