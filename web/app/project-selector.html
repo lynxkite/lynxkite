@@ -53,9 +53,9 @@
       <span class="lead">Import table</span>
       <import-wizard
        class="entry"
-       expanded="importTable.expanded"
        current-directory="path"
        ng-if="importTable.expanded"
+       on-cancel="importTable.expanded = false"
        table-imported="importTable.tableImported">
     </div>
 

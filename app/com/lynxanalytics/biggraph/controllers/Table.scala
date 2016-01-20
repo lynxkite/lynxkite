@@ -27,7 +27,7 @@ trait Table {
   }
 
   def saveAsCheckpoint(implicit manager: MetaGraphManager): String = manager.synchronized {
-    val editor = new RootProjectEditor(manager.checkpointRepo.readCheckpoint(""))
+    val editor = new RootProjectEditor(RootProjectState.emptyState)
     editor.vertexSet = idSet
     for ((name, attr) <- columns) {
       editor.vertexAttributes(name) = attr

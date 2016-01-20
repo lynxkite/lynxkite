@@ -3,6 +3,7 @@
 package com.lynxanalytics.biggraph.groovy
 
 import groovy.lang.{ Binding, GroovyShell }
+import org.apache.spark
 import org.kohsuke.groovy.sandbox
 import play.api.libs.json
 import scala.collection.JavaConversions
@@ -13,6 +14,7 @@ import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.table
 
 object GroovyContext {
   def runScript(scriptFileName: String, params: (String, String)*): Unit = {
@@ -137,6 +139,12 @@ class GroovyInterface(ctx: GroovyContext) {
   def sql(s: String) = ctx.sqlContext.sql(s)
 
   val sqlContext = ctx.sqlContext
+
+  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String): Unit = {
+    import ctx.metaManager
+    import ctx.dataManager
+    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df))
+  }
 }
 
 // The basic interface for running operations against a project.
@@ -236,7 +244,6 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     FEOption.titledCheckpoint(editor.rootCheckpoint, title).id
 
   private[groovy] override def applyOperation(id: String, params: Map[String, String]): Unit = {
-    import ctx.metaManager
     val context = Operation.Context(ctx.user, editor.viewer)
     val spec = FEOperationSpec(id, params)
     editor.rootEditor.rootState = ctx.ops.applyAndCheckpoint(context, spec)
