@@ -193,7 +193,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       ("Adam", "Eve", "value1"),
       ("Isolated Joe", "Bob", "value2"),
       ("Eve", "Alice", "value3"))
-    // The string "Alice" in the last edge does not match any vertices in the Example Graph.
+    // The string "Alice" in the last row does not match any vertices in the Example Graph.
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
@@ -214,5 +214,51 @@ class ExportImportOperationTest extends OperationsTestBase {
       .values
     assert(Seq((Edge(0, 1), "value1"), (Edge(3, 2), "value2")) ==
       valueAttr.collect.toSeq.sorted)
+  }
+
+  test("Import vertex attributes from table") {
+    val rows = Seq(
+      ("Adam", "value1"),
+      ("Isolated Joe", "value2"),
+      ("Alice", "value3"))
+    // The string "Alice" in the last row does not match any vertices in the Example Graph.
+    // Therefore we expect it to be discarded.
+    val sql = cleanDataManager.newSQLContext
+    val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
+    val table = TableImport.importDataFrame(dataFrame)
+    val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table)
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
+    run("Example Graph")
+    run("Import vertex attributes from table", Map(
+      "table" -> tablePath,
+      "id-attr" -> "name",
+      "id-column" -> "row_id",
+      "prefix" -> "imported"
+    ))
+    val valueAttr = project.vertexAttributes("imported_value").runtimeSafeCast[String].rdd
+    assert(Seq((0, "value1"), (3, "value2")) == valueAttr.collect.toSeq.sorted)
+  }
+
+  test("Import edge attributes from table") {
+    val rows = Seq(
+      ("Adam loves Eve", "value1"),
+      ("Bob envies Adam", "value2"),
+      ("Squirrell loves Peanuts", "value3"))
+    // The last row does not match any edges in the Example Graph.
+    // Therefore we expect it to be discarded.
+    val sql = cleanDataManager.newSQLContext
+    val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
+    val table = TableImport.importDataFrame(dataFrame)
+    val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table)
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
+    run("Example Graph")
+    run("Import edge attributes from table", Map(
+      "table" -> tablePath,
+      "id-attr" -> "comment",
+      "id-column" -> "row_id",
+      "prefix" -> "imported"
+    ))
+    val valueAttr = project.edgeAttributes("imported_value").runtimeSafeCast[String].rdd
+    assert(Seq((0, "value1"), (2, "value2")) == valueAttr.collect.toSeq.sorted)
   }
 }

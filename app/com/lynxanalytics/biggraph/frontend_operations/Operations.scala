@@ -584,15 +584,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      // TODO: implement this. It needs a new backend operation and I don't want to delay
-      // the merging on this with implementing of that.
-      // val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-column"))
-      // val res = op(op.idAttr, idAttr).result
-      // val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      // for ((name, attr) <- res.attrs) {
-      //   project.newVertexAttribute(prefix + name, attr, "imported")
-      // }
-      ???
+      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- table.columns) {
+        project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+      }
     }
   })
 
@@ -643,18 +641,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val table = Table.fromCanonicalPath(params("table"), project.viewer)
       val columnName = params("id-column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
-      val attrName = params("attr")
+      val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      // TODO: implement this. It needs a new backend operation and I don't want to delay
-      // the merging on this with implementing of that.
-      // val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), columnName)
-      // val res = op(op.idAttr, idAttr).result
-      // val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      // for ((name, attr) <- res.attrs) {
-      //   project.edgeAttributes(prefix + name) = attr
-      // }
-      ???
+      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- table.columns) {
+        project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+      }
     }
   })
 

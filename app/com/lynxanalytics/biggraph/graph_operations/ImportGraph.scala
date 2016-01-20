@@ -251,14 +251,6 @@ trait ImportCommon {
 }
 object ImportCommon {
   def toSymbol(field: String) = Symbol("imported_field_" + field)
-  def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): UniqueSortedRDD[String, ID] =
-    rdd.groupBySortedKey(partitioner)
-      .mapValuesWithKeys {
-        case (key, id) =>
-          assert(id.size == 1,
-            s"The ID attribute must contain unique keys. $key appears ${id.size} times.")
-          id.head
-      }
 }
 
 object ImportVertexList extends OpFromJson {
@@ -450,9 +442,10 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
     val partitioner = inputs.vs.rdd.partitioner.get
     val lines = input.lines(rc).values
     val idFieldIdx = input.fields.indexOf(idField)
-    val externalIdToInternalId = ImportCommon.checkIdMapping(
-      inputs.idAttr.rdd.map { case (internal, external) => (external, internal) },
-      partitioner)
+    val externalIdToInternalId =
+      inputs.idAttr.rdd
+        .map { case (internal, external) => (external, internal) }
+        .assertUniqueKeys(partitioner)
     val linesByExternalId = lines
       .map(line => (line(idFieldIdx), line))
       .sortUnique(partitioner)
