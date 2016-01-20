@@ -445,7 +445,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
     val externalIdToInternalId =
       inputs.idAttr.rdd
         .map { case (internal, external) => (external, internal) }
-        .checkIdMapping(partitioner)
+        .assertUniqueKeys(partitioner)
     val linesByExternalId = lines
       .map(line => (line(idFieldIdx), line))
       .sortUnique(partitioner)

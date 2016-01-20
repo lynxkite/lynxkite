@@ -123,10 +123,10 @@ case class EdgesFromUniqueBipartiteAttributeMatches()
       inputs.to.rdd.partitioner.get)
     val fromStringToId = inputs.fromAttr.rdd
       .map { case (fromId, fromString) => (fromString, fromId) }
-      .checkIdMapping(partitioner)
+      .assertUniqueKeys(partitioner)
     val toStringToId = inputs.toAttr.rdd
       .map { case (toId, toString) => (toString, toId) }
-      .checkIdMapping(partitioner)
+      .assertUniqueKeys(partitioner)
     val mapping = fromStringToId
       .sortedJoin(toStringToId)
       .values
