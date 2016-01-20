@@ -11,8 +11,7 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
   private val age = {
     val range = 0 until 100
     val everybody = SmallTestGraph(range.map { id => (id, Seq[Int]()) }.toMap).result
-    val op = AddDoubleVertexAttribute(range.map { a => (a, a.toDouble) }.toMap)
-    op(op.vs, everybody.vs).result.attr
+    AddDoubleVertexAttribute.run(everybody.vs, range.map { a => (a, a.toDouble) }.toMap)
   }
 
   def agedBetween(lo: Double, hi: Double) = {
