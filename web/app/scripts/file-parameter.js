@@ -1,7 +1,7 @@
 // Operation parameter for kind=file. Supports file upload.
 'use strict';
 
-angular.module('biggraph').directive('fileParameter', function(util) {
+angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
   return {
     restrict: 'E',
     scope: {
@@ -16,7 +16,7 @@ angular.module('biggraph').directive('fileParameter', function(util) {
     link: function(scope, element) {
       var input = angular.element(element).find('input[type="file"]');
       scope.dialog = function() {
-        input.click();
+        $timeout(function() { input.click(); });
       };
       scope.uploading = false;
       scope.progress = 0;

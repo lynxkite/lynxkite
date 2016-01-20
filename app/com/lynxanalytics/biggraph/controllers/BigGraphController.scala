@@ -637,13 +637,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
       workflow.stepsAsGroovy)
   }
 
-  def saveTable(user: serving.User, request: SaveCheckpointAsTableRequest): Unit =
+  def saveTable(user: serving.User, request: SaveCheckpointAsTableRequest): FEOption =
     metaManager.synchronized {
       assertNameNotExists(request.tableName)
       val entry = DirectoryEntry.fromName(request.tableName)
       entry.assertParentWriteAllowedFrom(user)
       val table = entry.asNewTableFrame(request.checkpoint)
       setupACL(request.privacy, user, table)
+      FEOption.titledCheckpoint(table.checkpoint, table.name, s"|${Table.VertexTableName}")
     }
 
 }

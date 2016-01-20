@@ -217,6 +217,20 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.isTable = function(object) {
         return object.objectType === 'table';
       };
+
+      scope.importTable = {};
+      scope.startTableImport = function() {
+        if (!scope.importTable.expanded) {
+          scope.importTable.expanded = true;
+          scope.importTable.tableImported = undefined;
+        }
+      };
+      scope.$watch('importTable.tableImported', function(table) {
+        if (table !== undefined) {
+          scope.importTable.expanded = false;
+          scope.reload();
+        }
+      });
     },
   };
 });
