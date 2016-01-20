@@ -47,20 +47,23 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     val (predictions, vectors) = method match {
       case "Linear regression" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
+        val model = checkRegressionModel(
+          new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points))
         (scaleBack(model.predict(p.vectors.values), p.scaler.get), p.vectors)
       case "Ridge regression" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
+        val model = checkRegressionModel(
+          new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points))
         (scaleBack(model.predict(p.vectors.values), p.scaler.get), p.vectors)
       case "Lasso" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
+        val model = checkRegressionModel(
+          new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points))
         (scaleBack(model.predict(p.vectors.values), p.scaler.get), p.vectors)
       case "Logistic regression" =>
         val p = getParams(forSGD = false)
-        val model =
-          new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(p.points)
+        val model = checkRegressionModel(
+          new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(p.points))
         (model.predict(p.vectors.values), p.vectors)
       case "Naive Bayes" =>
         val p = getParams(forSGD = false)
@@ -97,7 +100,9 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
         (model.predict(p.vectors.values), p.vectors)
     }
     val ids = vectors.keys // We just put back the keys with a zip.
-    output(o.prediction, ids.zip(predictions).asUniqueSortedRDD(vectors.partitioner.get))
+    output(o.prediction, ids.zip(predictions.filter {
+      !_.isNaN
+    }).asUniqueSortedRDD(vectors.partitioner.get))
   }
 
   // Transforms the result RDD using the inverse transformation of the original scaling.
@@ -159,5 +164,14 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     }
     points.cache
     RegressionParams(points, vectors, labelScaler)
+  }
+
+  private def checkRegressionModel(
+    model: mllib.regression.GeneralizedLinearModel): mllib.regression.GeneralizedLinearModel = {
+    // A linear model with at least one NaN parameter will always predict NaN.
+    (model.weights.toArray :+ model.intercept).foreach {
+      w => assert(!w.isNaN, "Invalid regression model.")
+    }
+    model
   }
 }
