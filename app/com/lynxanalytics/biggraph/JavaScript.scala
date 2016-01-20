@@ -17,22 +17,35 @@ case class JavaScript(expression: String) {
   }
 
   def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
-    val cx = javascript.Context.enter()
-    try {
-      val scope = cx.initSafeStandardObjects()
-      mapping.foreach {
-        case (name, value) =>
-          val jsValue = javascript.Context.javaToJS(value, scope)
-          javascript.ScriptableObject.putProperty(scope, name, jsValue)
-      }
-      javascript.ScriptableObject.putProperty(scope, "util", JavaScriptUtilities)
-      val jsResult = cx.evaluateString(scope, expression, "derivation script", 1, null)
-      jsResult match {
-        case _: javascript.Undefined => null
-        case definedValue => javascript.Context.jsToJava(definedValue, desiredClass)
-      }
-    } finally {
-      javascript.Context.exit()
+    evaluator.evaluate(mapping, desiredClass)
+  }
+
+  def evaluator = new JavaScriptEvaluator(expression)
+}
+
+// JavaScriptEvaluator maintains a Rhino context. So it's not thread-safe and not Serializable.
+class JavaScriptEvaluator private[biggraph] (expression: String) {
+  // We need a Context object to compile an expression and to run it.
+  // Since JavaScriptEvaluator is used on RDD iterators, it is hard to clean up the Context object.
+  // We could do it at the end of the iterator, but that may never be reached. We could also do it
+  // in finalize() on GC, but at that point we will be in a different thread.
+  // At most one Context object is created per thread, so we simply leave them around. (Until we
+  // figure out a proper solution.) Each enter() call after the first just increments a reference
+  // counter.
+  val cx = javascript.Context.enter()
+  val script = cx.compileString(expression, "derivation script", 1, null)
+  val scope = cx.initSafeStandardObjects()
+  javascript.ScriptableObject.putProperty(scope, "util", JavaScriptUtilities)
+
+  def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
+    for ((name, value) <- mapping) {
+      val jsValue = javascript.Context.javaToJS(value, scope)
+      javascript.ScriptableObject.putProperty(scope, name, jsValue)
+    }
+    val jsResult = script.exec(cx, scope)
+    jsResult match {
+      case _: javascript.Undefined => null
+      case definedValue => javascript.Context.jsToJava(definedValue, desiredClass)
     }
   }
 }
