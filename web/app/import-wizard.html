@@ -16,12 +16,14 @@
   <div ng-show="datatype === 'csv'">
     <div class="form-group">
       <label for="csv-filename" class="col-sm-4 control-label">
-        Name of CSV file(s) to import
+        Name of CSV files to import
       </label>
       <div class="col-sm-8" id="csv-filename">
-        <input class="form-control"
-               ng-disabled="inputsDisabled"
-               ng-model="csv.filename">
+        <file-parameter
+          editable="!inputsDisabled"
+          model="csv.filename"
+          file-uploads="csv.fileUploadCount">
+        </file-parameter>
       </div>
     </div>
     <div class="form-group">

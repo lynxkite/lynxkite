@@ -224,8 +224,11 @@ object FrontendJson {
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
   implicit val rSaveCheckpointAsTableRequest = json.Json.reads[SaveCheckpointAsTableRequest]
 
-  implicit val rSQLRequest = json.Json.reads[SQLRequest]
-  implicit val wSQLResult = json.Json.writes[SQLResult]
+  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
+  implicit val rSQLExportRequest = json.Json.reads[SQLExportRequest]
+  implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
+  implicit val wSQLExportResult = json.Json.writes[SQLExportResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
   implicit val rJDBCImportRequest = json.Json.reads[JDBCImportRequest]
   implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
@@ -287,15 +290,17 @@ object ProductionJsonServer extends JsonServer {
     log.info(s"download: $user ${request.path}")
     val path = HadoopFile(request.getQueryString("path").get)
     val name = request.getQueryString("name").get
-    // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
-    val files = Seq(path / "header") ++ (path / "data" / "*").list
+    // For CSV downloads we want to read the "header" file and then the "data" directory.
+    val files: Seq[HadoopFile] =
+      if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
+      else (path / "*").list
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
     mvc.Result(
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
+        CONTENT_DISPOSITION -> s"attachment; filename=$name")),
       body = play.api.libs.iteratee.Enumerator.fromStream(stream)
     )
   }
@@ -350,6 +355,7 @@ object ProductionJsonServer extends JsonServer {
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonGet(sqlController.runSQLQuery)
+  def exportSQLQuery = jsonPost(sqlController.exportSQLQuery)
   def importCSV = jsonPost(sqlController.importCSV)
   def importJDBC = jsonPost(sqlController.importJDBC)
 
@@ -399,82 +405,4 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
-}
-
-object Ammonite {
-  val env = BigGraphProductionEnvironment
-  implicit val metaGraphManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
-
-  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String): Unit = {
-    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df))
-  }
-
-  // Starting Ammonite if requested.
-  val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
-    """
-============================================================
-Welcome to the bellies of LynxKite! Please don't hurt her...
-============================================================
-
-This is an Ammonite Scala REPL running in the JVM of the LynxKite server. For generic help
-on Ammonite, look here:
-https://lihaoyi.github.io/Ammonite/
-
-For convenience, we've set up some Kite specific bindings for you:
- sql: The SqlContext used by Kite. Use it if you want to run some SparkSQL computations
-   using Kite's resources. See http://spark.apache.org/docs/latest/sql-programming-guide.html
-   for SparkSQL documentation.
- sc: The SparkContext used by Kite. Use it if you want to run some arbitrary spark computation
-   using Kite's resources. See http://spark.apache.org/docs/latest/programming-guide.html
-   for a good Spark intro.
- server: A reference to the ProductionJsonServer used to serve http requests.
- fakeAdmin: A fake admin user object. Useful if you want to directly interact with controllers.
- dataManager: The DataManager instance used by Kite.
- metaManager: The MetaManager instance used by Kite.
- batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
-   for running a batch script on the running Kite instance.
- saveDataFrameAsTable(dataFrame, "tablePath"): Saves the given data frame as a top level Kite table.
-
-Remember, any of the above can be used to easily destroy the running server or even any data.
-Drive responsibly.""")
-
-  private val replServer = scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map { ammonitePort =>
-    import ammonite.repl.Bind
-    new ammonite.sshd.SshdRepl(
-      ammonite.sshd.SshServerConfig(
-        // We only listen on the local interface.
-        address = "localhost",
-        port = ammonitePort.toInt,
-        username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
-        password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
-      predef = s"""
-import com.lynxanalytics.biggraph._
-Console.setOut(System.out)
-println("${help}")
-""",
-      replArgs = Seq(
-        Bind("server", this),
-        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
-        Bind("sc", env.sparkContext),
-        Bind("metaManager", metaGraphManager),
-        Bind("dataManager", dataManager),
-        Bind("sql", dataManager.masterSQLContext),
-        Bind("batch", groovy.GroovyContext),
-        Bind("saveDataFrameAsTable", saveDataFrameAsTable _)))
-  }
-
-  def maybeStart() = {
-    replServer.foreach { s =>
-      s.start()
-      log.info(s"Ammonite sshd started on port ${s.port}.")
-    }
-  }
-
-  def maybeStop() = {
-    replServer.foreach { s =>
-      s.stop()
-      log.info("Ammonite sshd stopped.")
-    }
-  }
 }

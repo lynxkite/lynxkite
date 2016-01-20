@@ -3,16 +3,17 @@
 
 angular.module('biggraph').directive('importWizard', function(util) {
   return {
-    scope: { expanded: '=', tableImported: '=', currentDirectory: '=' },
+    scope: { tableImported: '=', currentDirectory: '=', onCancel: '&' },
     templateUrl: 'import-wizard.html',
     link: function(scope) {
       scope.csv = {
         delimiter: ',',
         mode: 'FAILFAST',
+        fileUploadCount: 0,
       };
       scope.cancel = function(event) {
-        scope.expanded = false;
         event.stopPropagation();
+        scope.onCancel();
       };
       scope.importCSV = function() {
         scope.inputsDisabled = true;
