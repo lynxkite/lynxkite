@@ -193,6 +193,7 @@ object BigGraphSparkContext {
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
+      .set("spark.io.compression.codec", "lz4")
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
       .set("spark.akka.threads",
