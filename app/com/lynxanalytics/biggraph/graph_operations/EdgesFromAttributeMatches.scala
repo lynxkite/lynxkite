@@ -83,9 +83,8 @@ case class EdgesFromBipartiteAttributeMatches[T]()
 
 // Generates edges between vertices that match on an attribute.
 // If fromAttr on A matches toAttr on B, an A -> B edge is generated.
-// Is is assumed that the values of both fromAttr and toAttr are unique.
-// For attribute values with multiplicity over one, some edges will be created
-// but the output is not defined. (See the implementation of sortedJoin.)
+// The values of both fromAttr and toAttr have to be unique, otherwise
+// this operation fails.
 object EdgesFromUniqueBipartiteAttributeMatches extends OpFromJson {
   class Input extends MagicInputSignature {
     val from = vertexSet
