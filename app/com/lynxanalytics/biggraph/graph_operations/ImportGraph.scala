@@ -6,7 +6,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -402,28 +401,13 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val columns = readColumns(rc, input)
-    val partitioner = columns(src).partitioner.get
+    val columns = readColumns(rc, input, Set(src, dst))
     putEdgeAttributes(columns, o.attrs, output)
-    val srcToId =
-      ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
-    val dstToId = {
-      if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
-        srcToId
-      else
-        ImportCommon.checkIdMapping(
-          inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
-    }
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      edgeSrcDst(columns).map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      },
-      srcToId)
-      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
-      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .sortUnique(partitioner)
+    val edges = ImportEdgeListForExistingVertexSetFromTable.resolveEdges(
+      edgeSrcDst(columns),
+      inputs.srcVidAttr.data,
+      inputs.dstVidAttr.data)
 
     output(o.edges, edges)
   }

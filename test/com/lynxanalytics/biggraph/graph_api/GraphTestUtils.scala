@@ -274,6 +274,13 @@ object AddDoubleVertexAttribute extends OpFromJson {
   }
   def fromJson(j: JsValue) =
     AddDoubleVertexAttribute((j \ "values").as[Map[String, Double]].map { case (k, v) => k.toInt -> v })
+
+  def run(
+    vs: VertexSet, values: Map[Int, Double])(implicit m: MetaGraphManager): Attribute[Double] = {
+    import Scripting._
+    val op = AddDoubleVertexAttribute(values)
+    op(op.vs, vs).result.attr
+  }
 }
 case class AddDoubleVertexAttribute(values: Map[Int, Double])
     extends TypedMetaGraphOp[AddDoubleVertexAttribute.Input, AddDoubleVertexAttribute.Output] {

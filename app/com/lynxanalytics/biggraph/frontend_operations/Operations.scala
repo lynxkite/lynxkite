@@ -440,13 +440,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val attrName = params("attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      // TODO: implement this. It needs a new backend operation and I don't want to delay
-      // the merging on this with implementing of that.
-      //val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
-      //val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
-      //project.edgeBundle = imp.edges
-      //project.edgeAttributes = imp.attrs.mapValues(_.entity)
-      ???
+      val srcVidColumn = table.columns(src).runtimeSafeCast[String]
+      val dstVidColumn = table.columns(dst).runtimeSafeCast[String]
+      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
+      val imp = op(
+        op.srcVidColumn, srcVidColumn)(
+          op.dstVidColumn, dstVidColumn)(
+            op.srcVidAttr, attr)(
+              op.dstVidAttr, attr).result
+      project.edgeBundle = imp.edges
+      for (edgeAttrName <- table.columns.keys) {
+        project.edgeAttributes(edgeAttrName) = table.columns(edgeAttrName).pullVia(imp.embedding)
+      }
     }
   })
 

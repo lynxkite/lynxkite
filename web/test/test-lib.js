@@ -653,7 +653,7 @@ testLib = {
     var aceInput = e.element(by.css('textarea.ace_text-input'));
     // The double click on the text area focuses it properly.
     browser.actions().doubleClick(aceContent).perform();
-    aceInput.sendKeys(keys);
+    aceInput.sendKeys(testLib.selectAllKey + keys);
   },
 
   setParameter: function(e, value) {
