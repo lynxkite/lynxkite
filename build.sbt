@@ -28,6 +28,10 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4",
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
+  // The below dep is needed to avoid jar version conflict when running in Amazon EMR.
+  // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
+  // This way we get s3 consistent view support.)
+  "org.apache.httpcomponents" % "httpclient" % "4.5.1",
   "org.apache.commons" % "commons-lang3" % "3.3",
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
