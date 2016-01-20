@@ -4,7 +4,10 @@
 angular.module('biggraph').directive('graphViewSidebar', function (util) {
   return {
     restrict: 'E',
-    scope: { graph: '=' },
+    scope: {
+      graph: '=',      // The graph to visualize.
+      mapFilters: '=', // (Output) Filter settings for the map tiles.
+    },
     templateUrl: 'graph-view-sidebar.html',
     link: function(scope, element) {
       scope.$watch('graph.view', updateTSV);
@@ -146,18 +149,41 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       function saveFilters() {
         window.localStorage.setItem('graph-filters', JSON.stringify(scope.filters));
       }
+      function saveMapFilters() {
+        window.localStorage.setItem('map-filters', JSON.stringify(scope.mapFilters));
+      }
       function noFilters() {
         return { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
       }
+      function baseMapFilters() {
+        return { gamma: -100, saturation: -80, brightness: 0 };
+      }
       scope.resetFilters = function() {
         scope.filters = noFilters();
+        scope.mapFilters = baseMapFilters();
       };
       scope.resetFilters();
       var loadedFilters = window.localStorage.getItem('graph-filters');
       if (loadedFilters) {
         angular.extend(scope.filters, JSON.parse(loadedFilters));
       }
+      var loadedMapFilters = window.localStorage.getItem('map-filters');
+      if (loadedMapFilters) {
+        angular.extend(scope.mapFilters, JSON.parse(loadedMapFilters));
+      }
       util.deepWatch(scope, 'filters', function() { saveFilters(); updateFilters(); });
+      util.deepWatch(scope, 'mapFilters', function() { saveMapFilters(); });
+
+      // Whether there is a side with a map view.
+      scope.mapViewEnabled = function() {
+        var sides = [scope.graph.left, scope.graph.right];
+        for (var i = 0; i < sides.length; ++i) {
+          if (sides[i] && sides[i].vertexAttrs.geo) {
+            return true;
+          }
+        }
+        return false;
+      };
     },
   };
 });

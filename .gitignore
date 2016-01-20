@@ -20,6 +20,7 @@ project/plugins/project/
 
 *~
 .*.swp
+.*.swo
 /.target
 /bin
 

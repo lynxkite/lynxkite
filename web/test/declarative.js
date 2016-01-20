@@ -194,7 +194,7 @@ fw.cleanup();
 
 describe('The test framework ', function() {
   it('now prints all screenshots', function() {
-    if (screenshots) {
+    if (screenshots.length > 0) {
       console.log('\nError screenshots:');
       for (i = 0; i < screenshots.length; ++i) {
         console.log(screenshots[i]);

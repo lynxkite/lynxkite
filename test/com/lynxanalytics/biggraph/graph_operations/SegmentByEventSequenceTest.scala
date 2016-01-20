@@ -79,13 +79,10 @@ class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
         (2, 6), (2, 7), (2, 8)))
       op(op.vsA, personVs)(op.vsB, eventVs).result.esAB
     }
-    val eventTimes = {
-      val op = AddDoubleVertexAttribute(Map(
-        0 -> 0, 1 -> 1, 2 -> 2,
-        3 -> 0, 4 -> 1, 5 -> 2,
-        6 -> 0, 7 -> 1, 8 -> 2))
-      op(op.vs, eventVs).result.attr
-    }
+    val eventTimes = AddDoubleVertexAttribute.run(eventVs, Map(
+      0 -> 0, 1 -> 1, 2 -> 2,
+      3 -> 0, 4 -> 1, 5 -> 2,
+      6 -> 0, 7 -> 1, 8 -> 2))
     val eventBelongsToLocation = {
       val op = AddEdgeBundle(Seq(
         (0, 0), (1, 0), (2, 1),

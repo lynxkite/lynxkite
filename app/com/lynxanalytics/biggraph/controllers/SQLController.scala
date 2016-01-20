@@ -1,6 +1,8 @@
 // SQLController includes the request handlers for SQL in Kite.
 package com.lynxanalytics.biggraph.controllers
 
+import org.apache.spark
+
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -9,10 +11,16 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-import org.apache.spark.sql
+case class DataFrameSpec(project: String, sql: String)
+case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
+case class SQLQueryResult(header: List[String], data: List[List[String]])
 
-case class SQLRequest(project: String, sql: String, rownum: Int)
-case class SQLResult(header: List[String], data: List[List[String]])
+case class SQLExportRequest(
+  df: DataFrameSpec,
+  format: String,
+  path: String,
+  options: Map[String, String])
+case class SQLExportResult(download: Option[String])
 
 case class CSVImportRequest(
     files: String,
@@ -47,18 +55,14 @@ class SQLController(val env: BigGraphEnvironment) {
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(request.files)
-    // TODO: this will break for s3 paths if the id or password contains a /. Would be
-    // nicer to create an RDD[String] ourselves using HadoopFile.loadTextFile and stuff that
-    // into the CSV library. It seems possible via creating a CSVRelation ourselves and turn
-    // that into a DataFrame. But both steps seem to require non-public API access. :(
-    // So leaving this as is for a first version.
+    // TODO: #2889
     SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
   }
 
-  def runSQLQuery(user: serving.User, request: SQLRequest): SQLResult = {
+  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
-      val p = SubProject.parsePath(request.project)
-      assert(p.frame.exists, s"Project ${request.project} does not exist.")
+      val p = SubProject.parsePath(spec.project)
+      assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
 
       val v = p.viewer
@@ -72,12 +76,16 @@ class SQLController(val env: BigGraphEnvironment) {
       table.toDF(sqlContext).registerTempTable(tableName)
     }
 
-    log.info(s"Trying to execute query: ${request.sql}")
-    val result = sqlContext.sql(request.sql)
+    log.info(s"Trying to execute query: ${spec.sql}")
+    sqlContext.sql(spec.sql)
+  }
 
-    SQLResult(
-      header = result.columns.toList,
-      data = result.head(request.rownum).map {
+  def runSQLQuery(user: serving.User, request: SQLQueryRequest): SQLQueryResult = {
+    val df = dfFromSpec(user, request.df)
+
+    SQLQueryResult(
+      header = df.columns.toList,
+      data = df.head(request.maxRows).map {
         row =>
           row.toSeq.map {
             case null => "null"
@@ -86,14 +94,31 @@ class SQLController(val env: BigGraphEnvironment) {
       }.toList
     )
   }
+
+  def exportSQLQuery(user: serving.User, request: SQLExportRequest): SQLExportResult = {
+    val df = dfFromSpec(user, request.df)
+    val path = if (request.path == "<download>") {
+      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + request.format
+    } else {
+      HadoopFile(request.path)
+    }
+    val format = request.format match {
+      case "csv" => "com.databricks.spark.csv"
+      case x => x
+    }
+    // TODO: #2889
+    df.write.format(format).options(request.options).save(path.resolvedName)
+    SQLExportResult(
+      download = if (request.path == "<download>") Some(path.symbolicName) else None)
+  }
 }
 object SQLController {
   def stringOnlySchema(columns: Seq[String]) = {
-    import org.apache.spark.sql.types._
+    import spark.sql.types._
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def importFromDF(df: sql.DataFrame)(
+  def importFromDF(df: spark.sql.DataFrame)(
     implicit metaManager: MetaGraphManager, dataManager: DataManager) =
     TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint)
 }
