@@ -34,10 +34,12 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   // counter.
   val cx = javascript.Context.enter()
   val script = cx.compileString(expression, "derivation script", 1, null)
-  val scope = cx.initSafeStandardObjects()
-  javascript.ScriptableObject.putProperty(scope, "util", JavaScriptUtilities)
+  val sharedScope = cx.initSafeStandardObjects()
+  javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
+  sharedScope.sealObject()
 
   def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
+    val scope = cx.newObject(sharedScope);
     for ((name, value) <- mapping) {
       val jsValue = javascript.Context.javaToJS(value, scope)
       javascript.ScriptableObject.putProperty(scope, name, jsValue)
