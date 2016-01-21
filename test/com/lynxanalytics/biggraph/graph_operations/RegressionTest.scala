@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class RegressionTest extends FunSuite with TestGraphOp {
   def predict(method: String, label: Attribute[Double], features: Seq[Attribute[Double]]) = {
-    val op = Regression(method, 1)
+    val op = Regression(method, features.size)
     val prediction = op(op.features, features)(op.label, label).result.prediction
     prediction.rdd.collect.toMap
   }
@@ -22,23 +22,23 @@ class RegressionTest extends FunSuite with TestGraphOp {
   def predictLabelFromAttr(
     method: String,
     label: Map[Int, Double],
-    attr: Map[Int, Double]): Map[Long, Double] = {
+    attrs: Seq[Map[Int, Double]]): Map[Long, Double] = {
     // Create the graph from attr in case of missing labels.
-    val g = SmallTestGraph(attr.mapValues(_ => Seq())).result
+    val g = SmallTestGraph(attrs(0).mapValues(_ => Seq())).result
     val l = AddDoubleVertexAttribute.run(g.vs, label)
-    val a = AddDoubleVertexAttribute.run(g.vs, attr)
-    predict(method, l, Seq(a))
+    val a = attrs.map(attr => AddDoubleVertexAttribute.run(g.vs, attr))
+    predict(method, l, a)
   }
 
   def testRegressions(
     label: Map[Int, Double],
-    attr: Map[Int, Double],
+    attrs: Seq[Map[Int, Double]],
     expectation: Map[Long, Double],
     maxError: Double) {
     for (method <- Seq("Linear regression", "Ridge regression", "Lasso")) {
       println("       . " + method)
       assertRoughly(
-        predictLabelFromAttr(method, label, attr),
+        predictLabelFromAttr(method, label, attrs),
         expectation,
         maxError)
     }
@@ -97,7 +97,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
   test("regression - age from year of birth") {
     testRegressions(
       label = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
-      attr = Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955),
+      attrs = Seq(Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955)),
       expectation = Map(0L -> 25, 1L -> 40, 2L -> 30, 3L -> 60),
       maxError = 1)
   }
@@ -105,7 +105,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
   test("regression - year of birth from age") {
     testRegressions(
       label = Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955),
-      attr = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
+      attrs = Seq(Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60)),
       expectation = Map(0L -> 1990, 1L -> 1975, 2L -> 1985, 3L -> 1955),
       maxError = 1)
   }
@@ -113,7 +113,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
   test("regression - corner cases - predict constant") {
     testRegressions(
       label = Map(0 -> 5, 1 -> 5, 2 -> 5),
-      attr = Map(0 -> 10, 1 -> 50, 2 -> 100),
+      attrs = Seq(Map(0 -> 10, 1 -> 50, 2 -> 100)),
       expectation = Map(0L -> 5, 1L -> 5, 2L -> 5),
       maxError = 0.1)
   }
@@ -122,7 +122,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     // Should not throw an error.
     testRegressions(
       label = Map(0 -> 1, 1 -> 2, 2 -> 3),
-      attr = Map(0 -> 5, 1 -> 5, 2 -> 5),
+      attrs = Seq(Map(0 -> 5, 1 -> 5, 2 -> 5)),
       expectation = Map(0L -> 2, 1L -> 2, 2L -> 2),
       maxError = 1)
   }
@@ -131,7 +131,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     // y ~= 100 - 10x.
     testRegressions(
       label = Map(0 -> 91, 1 -> 79, 2 -> 72),
-      attr = Map(0 -> 1, 1 -> 2, 2 -> 3),
+      attrs = Seq(Map(0 -> 1, 1 -> 2, 2 -> 3)),
       expectation = Map(0L -> 90, 1L -> 80, 2L -> 70),
       maxError = 5)
   }
@@ -140,8 +140,30 @@ class RegressionTest extends FunSuite with TestGraphOp {
     testRegressions(
       label = Map(0 -> 10, 1 -> 20, 2 -> 30),
       // Significantly different means and stddev with and without the extra labels.
-      attr = Map(0 -> 1, 1 -> 2, 2 -> 3, 3 -> 10, 4 -> 20),
+      attrs = Seq(Map(0 -> 1, 1 -> 2, 2 -> 3, 3 -> 10, 4 -> 20)),
       expectation = Map(0L -> 10, 1L -> 20, 2L -> 30, 3L -> 100, 4L -> 200),
       maxError = 10)
+  }
+
+  test("regression - two dimensions") {
+    // z = 2x - y + 10.
+    testRegressions(
+      label = Map(0 -> 20, 1 -> 10, 2 -> 40, 3 -> 30),
+      attrs = Seq(
+        Map(0 -> 10, 1 -> 10, 2 -> 20, 3 -> 20),
+        Map(0 -> 10, 1 -> 20, 2 -> 10, 3 -> 20)),
+      expectation = Map(0L -> 20, 1L -> 10, 2L -> 40, 3L -> 30),
+      maxError = 1)
+  }
+
+  test("regression - missing value") {
+    // We only predict for points where every feature is defined.
+    testRegressions(
+      label = Map(0 -> 20, 1 -> 10, 2 -> 40, 3 -> 30),
+      attrs = Seq(
+        Map(0 -> 10, 1 -> 10, 2 -> 20, 3 -> 20),
+        Map(0 -> 10, 1 -> 20, 2 -> 10)),
+      expectation = Map(0L -> 20, 1L -> 10, 2L -> 40),
+      maxError = 1)
   }
 }
