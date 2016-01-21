@@ -61,6 +61,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.5.8
 
+ - Fixed a critical issue with health checking.
+
 ### 1.5.7
 
  - New aggregator added for all non-global aggregation operations: you can collect all unique
