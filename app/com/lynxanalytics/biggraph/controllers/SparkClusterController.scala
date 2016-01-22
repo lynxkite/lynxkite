@@ -274,10 +274,12 @@ class KiteMonitorThread(
               testsDone,
               concurrent.duration.Duration(coreTimeoutMillis, "millisecond"))
           } catch {
-            case e: Throwable => {
+            case e: java.util.concurrent.TimeoutException =>
+              log.error("Kite core test timed out. Thread dump:\n" + threadDump())
+              false
+            case e: Throwable =>
               log.error("Error while testing kite core", e)
               false
-            }
           })
         kiteCoreLastChecked = System.currentTimeMillis
       } else if (now > nextSparkCheck) {
@@ -295,6 +297,15 @@ class KiteMonitorThread(
       val untilNextCheck = 0L max (nextCheck - System.currentTimeMillis)
       Thread.sleep(untilNextCheck)
     }
+  }
+
+  def threadDump(): String = {
+    val mxbean = java.lang.management.ManagementFactory.getThreadMXBean
+    val threadInfos = mxbean.getThreadInfo(mxbean.getAllThreadIds, 1000)
+    threadInfos.flatMap { info =>
+      s"\n\n${info.getThreadName} (${info.getThreadState}):" +:
+        info.getStackTrace.map(line => s"\n  at $line")
+    }.mkString
   }
 
   setDaemon(true)
