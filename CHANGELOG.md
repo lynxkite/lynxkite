@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Fixed a critical performance regression with derived attributes.
  - Default home directory is moved under the 'Users' folder.
  - Root folder is default readable by everyone and writable by only admin users for
    bare new Kite installations.
