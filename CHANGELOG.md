@@ -6,7 +6,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Fixed a critical performance regression with derived attributes.
  - Default home directory is moved under the 'Users' folder.
  - Root folder is default readable by everyone and writable by only admin users for
    bare new Kite installations.
@@ -19,6 +18,13 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
  - Batch scripts can save DataFrames as tables.
+
+### 1.6.1.1
+
+ - Fixed a critical performance regression with derived attributes.
+ - Fixed issues with _Predict vertex attribute_ operation.
+ - Switched `spark.io.compression.codec` from `snappy` to `lz4`.
+ - Added extra logging for health check failures.
 
 ### 1.6.1
 
