@@ -3114,6 +3114,31 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation &&
+      hasEdgeBundle &&
+      FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
+    def apply(params: Map[String, String]) = {
+      val seg = project.asSegmentation
+      val reverseBelongsTo = {
+        val op = graph_operations.ReverseEdges()
+        val res = op(op.esAB, seg.belongsTo).result
+        res.esBA
+      }
+      val induction = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, reverseBelongsTo)(
+          op.dstMapping, reverseBelongsTo)(
+            op.edges, seg.edgeBundle).result
+      }
+      parent.edgeBundle = induction.induced
+      for ((name, attr) <- seg.edgeAttributes) {
+        parent.edgeAttributes(name) = attr.pullVia(induction.embedding)
+      }
+    }
+  })
+
   { // "Dirty operations", that is operations that use a data manager. Think twice if you really
     // need this before putting an operation here.
     implicit lazy val dataManager = env.dataManager
