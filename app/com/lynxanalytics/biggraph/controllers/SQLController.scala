@@ -65,7 +65,9 @@ class SQLController(val env: BigGraphEnvironment) {
     }
     val hadoopFile = HadoopFile(request.files)
     // TODO: #2889
-    SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
+    SQLController.importFromDF(
+      readerWithSchema.load(hadoopFile.resolvedName),
+      s"Imported from CSV files ${request.files}.")
   }
 
   def importJDBC(user: serving.User, request: JDBCImportRequest): TableImportResponse = {
@@ -89,7 +91,8 @@ class SQLController(val env: BigGraphEnvironment) {
       val columns = request.columnsToImport.map(spark.sql.functions.column(_))
       fullTable.select(columns: _*)
     } else fullTable
-    SQLController.importFromDF(df)
+    val urlSafePart = request.jdbcUrl.takeWhile(_ != '?')
+    SQLController.importFromDF(df, s"Imported from table ${request.table} at ${urlSafePart}.")
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
@@ -151,7 +154,7 @@ object SQLController {
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def importFromDF(df: spark.sql.DataFrame)(
+  def importFromDF(df: spark.sql.DataFrame, notes: String)(
     implicit metaManager: MetaGraphManager, dataManager: DataManager) =
-    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint)
+    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint(notes))
 }
