@@ -53,6 +53,28 @@
           { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
           { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
+        { "id": "table import",
+          "category": "Vertex operations",
+          "description": "Imports vertices from a table.",
+          "title": "Import vertices from table",
+          "visibleScalars": [],
+          "parameters": [
+            { "id": "table",
+              "title": "Table",
+              "defaultValue": "",
+              "options": [
+                { "id": "!checkpoint[123,p1]|t1", "title": "p1|t1" },
+                { "id": "!checkpoint[124,p2/p3]|s1|t4", "title": "p2/p3|s1|t4" }
+              ],
+              "kind": "table" },
+            { "id": "idfield",
+              "title": "New id field",
+              "defaultValue": "id",
+              "options": [],
+              "kind": "default" }
+          ],
+          "status": { "enabled": true, "disabledReason": "" }
+        },
         { "id": "Discard-vertices", "title": "Discard all vertices", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "10", "title": "Select attributes", "status": { "enabled": true, "disabledReason": "" }, "parameters": [
           { "id": "11",
