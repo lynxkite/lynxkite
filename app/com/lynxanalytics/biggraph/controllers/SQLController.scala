@@ -86,7 +86,8 @@ class SQLController(val env: BigGraphEnvironment) {
         numPartitions,
         new java.util.Properties)
     val df = if (request.columnsToImport.nonEmpty) {
-      fullTable.select(request.columnsToImport.map(spark.sql.functions.column(_)): _*)
+      val columns = request.columnsToImport.map(spark.sql.functions.column(_))
+      fullTable.select(columns: _*)
     } else fullTable
     SQLController.importFromDF(df)
   }

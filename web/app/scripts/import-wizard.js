@@ -29,8 +29,6 @@ angular.module('biggraph').directive('importWizard', function(util) {
       }
 
       scope.importCSV = function() {
-        scope.inputsDisabled = true;
-        scope.importInProgress = true;
         importStuff(
           '/ajax/importCSV',
           {
@@ -41,8 +39,6 @@ angular.module('biggraph').directive('importWizard', function(util) {
           });
       };
       scope.importJDBC = function() {
-        scope.inputsDisabled = true;
-        scope.importInProgress = true;
         var columnsToImport =
           scope.jdbc.columnsToImport ? scope.jdbc.columnsToImport.split(',') : [];
         importStuff(
