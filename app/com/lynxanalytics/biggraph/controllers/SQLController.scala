@@ -71,8 +71,10 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   def importJDBC(user: serving.User, request: JDBCImportRequest): TableImportResponse = {
+    val jdbcUrl = request.jdbcUrl
+    assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
-      val connection = java.sql.DriverManager.getConnection(request.jdbcUrl)
+      val connection = java.sql.DriverManager.getConnection(jdbcUrl)
       try TableStats(request.table, request.keyColumn)(connection)
       finally connection.close()
     }
@@ -80,7 +82,7 @@ class SQLController(val env: BigGraphEnvironment) {
     val fullTable = dataManager.masterSQLContext
       .read
       .jdbc(
-        request.jdbcUrl,
+        jdbcUrl,
         request.table,
         request.keyColumn,
         stats.minKey,
@@ -91,7 +93,9 @@ class SQLController(val env: BigGraphEnvironment) {
       val columns = request.columnsToImport.map(spark.sql.functions.column(_))
       fullTable.select(columns: _*)
     } else fullTable
-    val urlSafePart = request.jdbcUrl.takeWhile(_ != '?')
+    // We don't want to put passwords and the likes in the notes.
+    val uri = new java.net.URI(jdbcUrl.drop(5))
+    val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
     SQLController.importFromDF(df, s"Imported from table ${request.table} at ${urlSafePart}.")
   }
 
