@@ -245,9 +245,12 @@ object FrontendJson {
 
   implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
-  implicit val rSQLExportRequest = json.Json.reads[SQLExportRequest]
+  implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
+  implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
+  implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
+  implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
-  implicit val wSQLExportResult = json.Json.writes[SQLExportResult]
+  implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
   implicit val rJDBCImportRequest = json.Json.reads[JDBCImportRequest]
   implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
@@ -374,7 +377,10 @@ object ProductionJsonServer extends JsonServer {
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
-  def exportSQLQuery = jsonFuturePost(sqlController.exportSQLQuery)
+  def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
+  def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
+  def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
+  def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def importCSV = jsonFuturePost(sqlController.importCSV)
   def importJDBC = jsonFuturePost(sqlController.importJDBC)
 
