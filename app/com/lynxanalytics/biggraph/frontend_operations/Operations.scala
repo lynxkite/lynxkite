@@ -3121,11 +3121,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
     def apply(params: Map[String, String]) = {
       val seg = project.asSegmentation
-      val reverseBelongsTo = {
-        val op = graph_operations.ReverseEdges()
-        val res = op(op.esAB, seg.belongsTo).result
-        res.esBA
-      }
+      val reverseBelongsTo = seg.belongsTo.reverse
       val induction = {
         val op = graph_operations.InducedEdgeBundle()
         op(op.srcMapping, reverseBelongsTo)(
