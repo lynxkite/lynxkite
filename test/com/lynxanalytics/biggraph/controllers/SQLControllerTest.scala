@@ -6,20 +6,23 @@ import com.lynxanalytics.biggraph.graph_util
 class SQLControllerTest extends BigGraphControllerTestBase {
   val sqlController = new SQLController(this)
 
+  def await[T](f: concurrent.Future[T]): T =
+    concurrent.Await.result(f, concurrent.duration.Duration.Inf)
+
   test("sql on vertices") {
     run("Example Graph")
-    val result = sqlController.runSQLQuery(user, SQLQueryRequest(
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec(project = projectName, sql = "select name from `!vertices` where age < 40"),
-      maxRows = 10))
+      maxRows = 10)))
     assert(result.header == List("name"))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("sql export") {
     run("Example Graph")
-    val result = sqlController.exportSQLQuery(user, SQLExportRequest(
+    val result = await(sqlController.exportSQLQuery(user, SQLExportRequest(
       DataFrameSpec(project = projectName, sql = "select name from `!vertices` where age < 40"),
-      format = "csv", path = "<download>", options = Map()))
+      format = "csv", path = "<download>", options = Map())))
     val output = graph_util.HadoopFile(result.download.get).loadTextFile(sparkContext)
     assert(output.collect.sorted.mkString(", ") == "Adam, Eve, Isolated Joe")
   }
@@ -28,8 +31,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val res = getClass.getResource("/graph_operations/ImportGraphTest").toString
     graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", res)
     val csvFiles = "IMPORTGRAPHTEST$/testgraph/vertex-data/part*"
-    val cpResponse = sqlController.importCSV(
-      user, CSVImportRequest(csvFiles, List("vertexId", "name", "age"), ",", "FAILFAST"))
+    val cpResponse = await(sqlController.importCSV(
+      user, CSVImportRequest(csvFiles, List("vertexId", "name", "age"), ",", "FAILFAST")))
     val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
 
     run(
@@ -58,10 +61,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val cpResponse = sqlController.importJDBC(
+    val cpResponse = await(sqlController.importJDBC(
       user,
       JDBCImportRequest(
-        url, "subscribers", "id", List("n", "id", "name", "race condition", "level")))
+        url, "subscribers", "id", List("n", "id", "name", "race condition", "level"))))
     val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
 
     run(
