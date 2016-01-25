@@ -97,7 +97,8 @@ case class FEOperationParameterMeta(
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
-    "code") // code
+    "code", // code
+    "table") // A table.
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
