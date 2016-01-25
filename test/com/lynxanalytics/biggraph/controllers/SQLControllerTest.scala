@@ -61,10 +61,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val cpResponse = sqlController.importJDBC(
+    val cpResponse = await(sqlController.importJDBC(
       user,
       JDBCImportRequest(
-        url, "subscribers", "id", List("n", "id", "name", "race condition", "level")))
+        url, "subscribers", "id", List("n", "id", "name", "race condition", "level"))))
     val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
 
     run(
