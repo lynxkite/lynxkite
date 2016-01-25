@@ -21,3 +21,7 @@ tag-list div[dropdown] {
   background: transparent;
   color: inherit;
 }
+
+table-kind import-wizard form {
+  margin-top: 15px;
+}
