@@ -31,6 +31,7 @@ GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
 POST /ajax/exportSQLQuery   com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQuery
 POST /ajax/importCSV        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importCSV
+POST /ajax/importJDBC        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJDBC
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode

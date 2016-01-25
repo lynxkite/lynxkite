@@ -15,22 +15,39 @@ angular.module('biggraph').directive('importWizard', function(util) {
         event.stopPropagation();
         scope.onCancel();
       };
-      scope.importCSV = function() {
+
+      function importStuff(endpoint, parameters) {
         scope.inputsDisabled = true;
         scope.importInProgress = true;
-        util.post(
+        util.post(endpoint, parameters).catch(function() {
+          scope.inputsDisabled = false;
+        }).finally(function() {
+          scope.importInProgress = false;
+        }).then(function(importResult) {
+          scope.checkpoint = importResult.checkpoint;
+        });
+      }
+
+      scope.importCSV = function() {
+        importStuff(
           '/ajax/importCSV',
           {
             files: scope.csv.filename,
             columnNames: scope.csv.columnNames ? scope.csv.columnNames.split(',') : [],
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
-          }).catch(function() {
-            scope.inputsDisabled = false;
-          }).finally(function() {
-            scope.importInProgress = false;
-          }).then(function(importResult) {
-            scope.checkpoint = importResult.checkpoint;
+          });
+      };
+      scope.importJDBC = function() {
+        var columnsToImport =
+          scope.jdbc.columnsToImport ? scope.jdbc.columnsToImport.split(',') : [];
+        importStuff(
+          '/ajax/importJDBC',
+          {
+            jdbcUrl: scope.jdbc.url,
+            table: scope.jdbc.table,
+            keyColumn: scope.jdbc.keyColumn,
+            columnsToImport: columnsToImport,
           });
       };
       scope.saveTable = function(event) {

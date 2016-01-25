@@ -41,4 +41,40 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
     assert(vattr[String]("age") == Seq("18.2", "20.3", "50.3"))
   }
+
+  test("import from SQLite") {
+    val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+    val connection = java.sql.DriverManager.getConnection(url)
+    val statement = connection.createStatement()
+    statement.executeUpdate("""
+    DROP TABLE IF EXISTS subscribers;
+    CREATE TABLE subscribers
+      (n TEXT, id INTEGER, name TEXT, gender TEXT, "race condition" TEXT, level DOUBLE PRECISION);
+    INSERT INTO subscribers VALUES
+      ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0),
+      ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
+      ('C', 3, 'Felix', 'Male', 'Gnome', NULL),
+      (NULL, 4, NULL, NULL, NULL, NULL);
+    """)
+    connection.close()
+
+    val cpResponse = sqlController.importJDBC(
+      user,
+      JDBCImportRequest(
+        url, "subscribers", "id", List("n", "id", "name", "race condition", "level")))
+    val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
+
+    run(
+      "Import vertices from table",
+      Map(
+        "table" -> s"${tableCheckpoint}|!vertices",
+        "id-attr" -> "new_id"))
+    assert(vattr[String]("n") == Seq("A", "B", "C"))
+    assert(vattr[Long]("id") == Seq(1, 2, 3, 4))
+    assert(vattr[String]("name") == Seq("Beata", "Daniel", "Felix"))
+    assert(vattr[String]("race condition") == Seq("Dwarf", "Gnome", "Halfling"))
+    assert(vattr[Double]("level") == Seq(10.0, 20.0))
+    assert(subProject.viewer.vertexAttributes.keySet ==
+      Set("new_id", "n", "id", "name", "race condition", "level"))
+  }
 }

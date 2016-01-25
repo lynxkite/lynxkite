@@ -6,6 +6,7 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.TableStats
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
@@ -34,6 +35,14 @@ case class CSVImportRequest(
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
 }
+
+case class JDBCImportRequest(
+  jdbcUrl: String,
+  table: String,
+  keyColumn: String,
+  // Empty list means all columns.
+  columnsToImport: List[String])
+
 case class TableImportResponse(checkpoint: String)
 
 class SQLController(val env: BigGraphEnvironment) {
@@ -57,6 +66,30 @@ class SQLController(val env: BigGraphEnvironment) {
     val hadoopFile = HadoopFile(request.files)
     // TODO: #2889
     SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
+  }
+
+  def importJDBC(user: serving.User, request: JDBCImportRequest): TableImportResponse = {
+    val stats = {
+      val connection = java.sql.DriverManager.getConnection(request.jdbcUrl)
+      try TableStats(request.table, request.keyColumn)(connection)
+      finally connection.close()
+    }
+    val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
+    val fullTable = dataManager.masterSQLContext
+      .read
+      .jdbc(
+        request.jdbcUrl,
+        request.table,
+        request.keyColumn,
+        stats.minKey,
+        stats.maxKey,
+        numPartitions,
+        new java.util.Properties)
+    val df = if (request.columnsToImport.nonEmpty) {
+      val columns = request.columnsToImport.map(spark.sql.functions.column(_))
+      fullTable.select(columns: _*)
+    } else fullTable
+    SQLController.importFromDF(df)
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
