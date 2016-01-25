@@ -56,6 +56,7 @@ Drive responsibly.""")
         username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
         password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
       predef = s"""
+repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineUnix
 import com.lynxanalytics.biggraph._
 Console.setOut(System.out)
 println("${help}")
