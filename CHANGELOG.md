@@ -18,7 +18,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
  - Batch scripts can save DataFrames as tables.
- - Introduce operation `Copy edges to base project`.
+ - Introduce operation _Copy edges to base project_.
 
 ### 1.6.1.1
 
