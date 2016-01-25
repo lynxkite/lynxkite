@@ -33,6 +33,14 @@
         file-uploads="fileUploads.count"
         class="operation-attribute-entry">
     </file-parameter>
+    <table-kind
+      ng-if="param.kind === 'table'"
+      editable="editable"
+      model="output[param.id]"
+      tables="param.options"
+      file-uploads="fileUploads.count"
+      class="operation-attribute-entry">
+    </table-kind>
     <select
       ng-disabled="!editable"
       ng-if="param.kind === 'choice' && !param.multipleChoice"
