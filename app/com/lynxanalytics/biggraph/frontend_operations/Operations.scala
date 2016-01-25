@@ -366,7 +366,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
+        options = accessibleTableOptions,
         allowUnknownOption = true),
       Param("id-attr", "Save internal ID as", defaultValue = "id"))
     def enabled = hasNoVertexSet
@@ -421,7 +421,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
+        options = accessibleTableOptions,
         allowUnknownOption = true),
       Choice("attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
@@ -489,7 +489,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
+        options = accessibleTableOptions,
         allowUnknownOption = true),
       Param("src", "Source ID column"),
       Param("dst", "Destination ID column"))
@@ -570,7 +570,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
+        options = accessibleTableOptions,
         allowUnknownOption = true),
       Choice("id-attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
@@ -628,7 +628,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
+        options = accessibleTableOptions,
         allowUnknownOption = true),
       Choice("id-attr", "Edge ID attribute",
         options = FEOption.unset +: edgeAttributes[String]),
