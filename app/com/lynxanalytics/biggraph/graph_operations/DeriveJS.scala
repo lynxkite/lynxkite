@@ -5,6 +5,7 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object DeriveJS {
   class Input(attrCount: Int, scalarCount: Int)
@@ -71,6 +72,7 @@ abstract class DeriveJS[T](
   scalarNames: Seq[String])
     extends TypedMetaGraphOp[Input, Output[T]] {
   implicit def resultTypeTag: TypeTag[T]
+  implicit def resultClassTag: reflect.ClassTag[T]
   override val isHeavy = true
   @transient override lazy val inputs = new Input(attrNames.size, scalarNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -109,12 +111,15 @@ abstract class DeriveJS[T](
     val scalars = inputs.scalars.map { _.value }.toArray
     val allNames = attrNames ++ scalarNames
 
-    val derived = joined.flatMapOptionalValues {
-      case values =>
-        val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
-        // JavaScript's "undefined" is returned as a Java "null".
-        Option(expr.evaluate(namedValues, desiredClass)).map(convert(_))
-    }
+    val derived = joined.mapPartitions({ it =>
+      val evaluator = expr.evaluator
+      it.flatMap {
+        case (key, values) =>
+          val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
+          // JavaScript's "undefined" is returned as a Java "null".
+          Option(evaluator.evaluate(namedValues, desiredClass)).map(result => key -> convert(result))
+      }
+    }, preservesPartitioning = true).asUniqueSortedRDD
     output(o.attr, derived)
   }
 
@@ -136,6 +141,7 @@ case class DeriveJSString(
   scalarNames: Seq[String] = Seq())
     extends DeriveJS[String](expr, attrNames, scalarNames) {
   @transient lazy val resultTypeTag = typeTag[String]
+  @transient lazy val resultClassTag = reflect.classTag[String]
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
@@ -161,6 +167,7 @@ case class DeriveJSDouble(
   scalarNames: Seq[String] = Seq())
     extends DeriveJS[Double](expr, attrNames, scalarNames) {
   @transient lazy val resultTypeTag = typeTag[Double]
+  @transient lazy val resultClassTag = reflect.classTag[Double]
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++

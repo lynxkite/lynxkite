@@ -9,7 +9,7 @@
        ng-disabled="inputsDisabled"
        ng-model="datatype">
         <option value="csv">CSV file(s)</option>
-        <option value="db">Relational DB Table (via JDBC)</option>
+        <option value="jdbc">Relational DB Table (via JDBC)</option>
       </select>
     </div>
   </div>
@@ -63,6 +63,52 @@
       </div>
     </div>
   </div>
+
+  <div ng-show="datatype === 'jdbc'">
+    <div class="form-group">
+      <label for="jdbc-url" class="col-sm-4 control-label">
+        JDBC URL
+      </label>
+      <div class="col-sm-8" id="jdbc-url">
+        <input class="form-control"
+               ng-disabled="inputsDisabled"
+               ng-model="jdbc.url">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="jdbc-table" class="col-sm-4 control-label">
+        Table name
+      </label>
+      <div class="col-sm-8" id="jdbc-table">
+        <input class="form-control"
+               ng-disabled="inputsDisabled"
+               ng-model="jdbc.table">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="jdbc-key-column" class="col-sm-4 control-label">
+        Column used for data partitioning
+      </label>
+      <div class="col-sm-8" id="jdbc-key-column">
+        <input class="form-control"
+               ng-disabled="inputsDisabled"
+               ng-model="jdbc.keyColumn"
+               placeholder="Enter the name of a column of an integer type">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="jdbc-columns-to-import" class="col-sm-4 control-label">
+        Columns to import
+      </label>
+      <div class="col-sm-8" id="jdbc-columns-to-import">
+        <input class="form-control"
+               ng-model="jdbc.columnsToImport"
+               ng-disabled="inputsDisabled"
+               placeholder="Comma separated, leave empty to import all">
+      </div>
+    </div>
+  </div>
+
   <div class="form-group" ng-show="importInProgress">
     <div class="col-sm-offset-4 col-sm-8">
       <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
@@ -86,12 +132,18 @@
     </div>
   </div>
   <div class="form-group">
-    <div class="col-sm-offset-4 col-sm-8" id="csv-import-mode">
+    <div class="col-sm-offset-4 col-sm-8">
       <div
         ng-show="(datatype === 'csv') && csv.filename && !inputsDisabled"
         ng-click="importCSV()"
         class="btn btn-default">
         Import CSV file
+      </div>
+      <div
+        ng-show="(datatype === 'jdbc') && jdbc.url && jdbc.table && jdbc.keyColumn && !inputsDisabled"
+        ng-click="importJDBC()"
+        class="btn btn-default">
+        Import JDBC table
       </div>
       <div
         ng-show="checkpoint && tableName"

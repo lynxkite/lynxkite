@@ -52,22 +52,41 @@ abstract class JsonServer extends mvc.Controller {
     }
   }
 
+  def jsonPostCommon[I: json.Reads, R](
+    user: User,
+    request: mvc.Request[json.JsValue], logRequest: Boolean = true)(
+      handler: (User, I) => R): R = {
+    val t0 = System.currentTimeMillis
+    if (logRequest) {
+      log.info(s"$user POST ${request.path} ${request.body}")
+    } else {
+      log.info(s"$user POST ${request.path} (request body logging supressed)")
+    }
+    val i = request.body.as[I]
+    val result = util.Try(handler(user, i))
+    val dt = System.currentTimeMillis - t0
+    val status = if (result.isSuccess) "success" else "failure"
+    log.info(s"$dt ms to respond with $status to $user POST ${request.path}")
+    result.get
+  }
+
   def jsonPost[I: json.Reads, O: json.Writes](
     handler: (User, I) => O,
     logRequest: Boolean = true) = {
-    val t0 = System.currentTimeMillis
     action(parse.json) { (user, request) =>
-      if (logRequest) {
-        log.info(s"$user POST ${request.path} ${request.body}")
-      } else {
-        log.info(s"$user POST ${request.path} (request body logging supressed)")
+      jsonPostCommon(user, request, logRequest) { (user: User, i: I) =>
+        Ok(json.Json.toJson(handler(user, i)))
       }
-      val i = request.body.as[I]
-      val result = util.Try(Ok(json.Json.toJson(handler(user, i))))
-      val dt = System.currentTimeMillis - t0
-      val status = if (result.isSuccess) "success" else "failure"
-      log.info(s"$dt ms to respond with $status to $user POST ${request.path}")
-      result.get
+    }
+  }
+
+  def jsonFuturePost[I: json.Reads, O: json.Writes](
+    handler: (User, I) => Future[O],
+    logRequest: Boolean = true) = {
+    asyncAction(parse.json) { (user, request) =>
+      jsonPostCommon(user, request, logRequest) { (user: User, i: I) =>
+        handler(user, i).map(o => Ok(json.Json.toJson(o)))
+      }
     }
   }
 
@@ -232,6 +251,7 @@ object FrontendJson {
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportResult = json.Json.writes[SQLExportResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
+  implicit val rJDBCImportRequest = json.Json.reads[JDBCImportRequest]
   implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
@@ -355,9 +375,10 @@ object ProductionJsonServer extends JsonServer {
   def saveTable = jsonPost(bigGraphController.saveTable)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
-  def runSQLQuery = jsonGet(sqlController.runSQLQuery)
-  def exportSQLQuery = jsonPost(sqlController.exportSQLQuery)
-  def importCSV = jsonPost(sqlController.importCSV)
+  def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
+  def exportSQLQuery = jsonFuturePost(sqlController.exportSQLQuery)
+  def importCSV = jsonFuturePost(sqlController.importCSV)
+  def importJDBC = jsonFuturePost(sqlController.importJDBC)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

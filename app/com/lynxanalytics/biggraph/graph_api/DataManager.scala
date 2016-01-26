@@ -24,41 +24,12 @@ trait EntityProgressManager {
   def computeProgress(entity: MetaGraphEntity): Double
 }
 
-object DataManager {
-  val maxParallelSparkStages =
-    scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
-
-  def limitedExecutionContext(maxParallelism: Int) = {
-    concurrent.ExecutionContext.fromExecutorService(
-      java.util.concurrent.Executors.newFixedThreadPool(
-        maxParallelism,
-        new java.util.concurrent.ThreadFactory() {
-          private var nextIndex = 1
-          private val uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler {
-            def uncaughtException(thread: Thread, cause: Throwable): Unit = {
-              // SafeFuture should catch everything but this is still here to be sure.
-              log.error("DataManager thread failed:", cause)
-              throw cause
-            }
-          }
-          def newThread(r: Runnable) = synchronized {
-            val t = new Thread(r)
-            t.setDaemon(true)
-            t.setName(s"DataManager-$nextIndex")
-            t.setUncaughtExceptionHandler(uncaughtExceptionHandler)
-            nextIndex += 1
-            t
-          }
-        }
-      ))
-  }
-}
-
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
-    DataManager.limitedExecutionContext(DataManager.maxParallelSparkStages)
+    ThreadUtil.limitedExecutionContext("DataManager",
+      maxParallelism = util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()

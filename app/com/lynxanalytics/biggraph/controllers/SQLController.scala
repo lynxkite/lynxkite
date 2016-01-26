@@ -2,10 +2,12 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
+import scala.concurrent.Future
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.TableStats
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
@@ -34,13 +36,25 @@ case class CSVImportRequest(
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
 }
+
+case class JDBCImportRequest(
+  jdbcUrl: String,
+  table: String,
+  keyColumn: String,
+  // Empty list means all columns.
+  columnsToImport: List[String])
+
 case class TableImportResponse(checkpoint: String)
 
 class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
+  // We don't want to block the HTTP threads -- we want to return Futures instead. But the DataFrame
+  // API is not Future-based, so we need to block some threads. This also avoids #2906.
+  implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
+  def async[T](func: => T): Future[T] = Future(func)
 
-  def importCSV(user: serving.User, request: CSVImportRequest): TableImportResponse = {
+  def importCSV(user: serving.User, request: CSVImportRequest) = async[TableImportResponse] {
     val reader = dataManager.masterSQLContext
       .read
       .format("com.databricks.spark.csv")
@@ -55,8 +69,39 @@ class SQLController(val env: BigGraphEnvironment) {
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(request.files)
-    // TODO: #2889
-    SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
+    // TODO: #2889 (special characters in S3 passwords).
+    SQLController.importFromDF(
+      readerWithSchema.load(hadoopFile.resolvedName),
+      s"Imported from CSV files ${request.files}.")
+  }
+
+  def importJDBC(user: serving.User, request: JDBCImportRequest) = async[TableImportResponse] {
+    val jdbcUrl = request.jdbcUrl
+    assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
+    val stats = {
+      val connection = java.sql.DriverManager.getConnection(jdbcUrl)
+      try TableStats(request.table, request.keyColumn)(connection)
+      finally connection.close()
+    }
+    val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
+    val fullTable = dataManager.masterSQLContext
+      .read
+      .jdbc(
+        jdbcUrl,
+        request.table,
+        request.keyColumn,
+        stats.minKey,
+        stats.maxKey,
+        numPartitions,
+        new java.util.Properties)
+    val df = if (request.columnsToImport.nonEmpty) {
+      val columns = request.columnsToImport.map(spark.sql.functions.column(_))
+      fullTable.select(columns: _*)
+    } else fullTable
+    // We don't want to put passwords and the likes in the notes.
+    val uri = new java.net.URI(jdbcUrl.drop(5))
+    val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
+    SQLController.importFromDF(df, s"Imported from table ${request.table} at ${urlSafePart}.")
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
@@ -80,7 +125,7 @@ class SQLController(val env: BigGraphEnvironment) {
     sqlContext.sql(spec.sql)
   }
 
-  def runSQLQuery(user: serving.User, request: SQLQueryRequest): SQLQueryResult = {
+  def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = dfFromSpec(user, request.df)
 
     SQLQueryResult(
@@ -95,7 +140,7 @@ class SQLController(val env: BigGraphEnvironment) {
     )
   }
 
-  def exportSQLQuery(user: serving.User, request: SQLExportRequest): SQLExportResult = {
+  def exportSQLQuery(user: serving.User, request: SQLExportRequest) = async[SQLExportResult] {
     val df = dfFromSpec(user, request.df)
     val path = if (request.path == "<download>") {
       dataManager.repositoryPath / "exports" / Timestamp.toString + "." + request.format
@@ -106,7 +151,7 @@ class SQLController(val env: BigGraphEnvironment) {
       case "csv" => "com.databricks.spark.csv"
       case x => x
     }
-    // TODO: #2889
+    // TODO: #2889 (special characters in S3 passwords).
     df.write.format(format).options(request.options).save(path.resolvedName)
     SQLExportResult(
       download = if (request.path == "<download>") Some(path.symbolicName) else None)
@@ -118,7 +163,7 @@ object SQLController {
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def importFromDF(df: spark.sql.DataFrame)(
+  def importFromDF(df: spark.sql.DataFrame, notes: String)(
     implicit metaManager: MetaGraphManager, dataManager: DataManager) =
-    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint)
+    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint(notes))
 }
