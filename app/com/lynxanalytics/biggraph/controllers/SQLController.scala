@@ -34,7 +34,7 @@ case class SQLExportToORCRequest(
   path: String)
 case class SQLExportToJdbcRequest(
     df: DataFrameSpec,
-    database: String,
+    jdbcUrl: String,
     table: String,
     mode: String) {
   val validModes = Seq( // Save as the save modes accepted by DataFrameWriter.
@@ -58,7 +58,7 @@ object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
 }
 
-case class JDBCImportRequest(
+case class JdbcImportRequest(
   jdbcUrl: String,
   table: String,
   keyColumn: String,
@@ -94,7 +94,7 @@ class SQLController(val env: BigGraphEnvironment) {
     SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
   }
 
-  def importJDBC(user: serving.User, request: JDBCImportRequest) = async[TableImportResponse] {
+  def importJdbc(user: serving.User, request: JdbcImportRequest) = async[TableImportResponse] {
     val stats = {
       val connection = java.sql.DriverManager.getConnection(request.jdbcUrl)
       try TableStats(request.table, request.keyColumn)(connection)
@@ -186,7 +186,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
     val df = dfFromSpec(user, request.df)
-    df.write.mode(request.mode).jdbc(request.database, request.table, new java.util.Properties)
+    df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
   private def downloadableExportToFile(
