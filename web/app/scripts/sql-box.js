@@ -66,7 +66,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             req.path = scope.exportPath;
             scope.result = util.post('/ajax/exportSQLQueryToORC', req);
           } else if (scope.exportFormat === 'jdbc') {
-            req.database = scope.exportDatabase;
+            req.jdbcUrl = scope.exportJdbcUrl;
             req.table = scope.exportTable;
             req.mode = scope.exportMode;
             scope.result = util.post('/ajax/exportSQLQueryToJdbc', req);
