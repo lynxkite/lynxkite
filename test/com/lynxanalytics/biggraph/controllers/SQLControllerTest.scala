@@ -18,13 +18,17 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
-  test("sql export") {
+  test("sql export to csv") {
     run("Example Graph")
-    val result = await(sqlController.exportSQLQuery(user, SQLExportRequest(
-      DataFrameSpec(project = projectName, sql = "select name from `!vertices` where age < 40"),
-      format = "csv", path = "<download>", options = Map())))
+    val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
+      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      path = "<download>",
+      delimiter = ";",
+      quote = "\"",
+      header = true)))
     val output = graph_util.HadoopFile(result.download.get).loadTextFile(sparkContext)
-    assert(output.collect.sorted.mkString(", ") == "Adam, Eve, Isolated Joe")
+    assert(output.collect.sorted.mkString(", ") ==
+      "Adam;20.3, Eve;18.2, Isolated Joe;2.0, name;age")
   }
 
   test("import from CSV") {
