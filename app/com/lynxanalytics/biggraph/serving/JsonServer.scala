@@ -16,6 +16,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.table
+import com.lynxanalytics.biggraph.model._
 
 import java.io.File
 import org.apache.spark
@@ -171,6 +172,7 @@ object FrontendJson {
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wFEModel = json.Json.writes[FEModel]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
 
@@ -367,6 +369,7 @@ object ProductionJsonServer extends JsonServer {
   def center = jsonGet(drawingController.getCenter)
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
+  def model = jsonGet(drawingController.getModel)
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)

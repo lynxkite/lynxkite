@@ -28,6 +28,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.serving.User
 
 import java.io.File
@@ -109,6 +110,12 @@ sealed trait ProjectViewer {
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
+  def models: List[String] = {
+    scalars
+      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[Model] }
+      .map { case (k, _) => k }
+      .toList
+  }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations

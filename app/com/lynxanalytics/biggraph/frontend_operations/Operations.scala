@@ -17,6 +17,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+
 import play.api.libs.json
 
 object OperationParams {
@@ -133,6 +134,15 @@ object OperationParams {
     def validate(value: String): Unit = {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
+  }
+
+  case class ModelParams(id: String, title: String, options: List[FEOption]) extends OperationParameterMeta {
+    val defaultValue = ""
+    val kind = "model"
+    val multipleChoice = false
+    val mandatory = true
+    val hasFixedOptions = false
+    def validate(value: String): Unit = {}
   }
 }
 
@@ -1612,7 +1622,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val method = params("method")
       val prediction = {
-        val op = graph_operations.Prediction(method, features.size)
+        val op = graph_operations.Regression(method, features.size)
         op(op.label, label)(op.features, features).result.prediction
       }
       project.newVertexAttribute(s"${labelName}_prediction", prediction, s"$method for $labelName")
@@ -1640,14 +1650,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
+      val name = params("name")
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val method = params("method")
       val model = {
-        val op = graph_operations.TrainRegressionModel(method, features.size)
+        val op = graph_operations.RegressionModelTrainer(name, method, features.size)
         op(op.label, label)(op.features, features).result.model
       }
-      project.scalars(params("name")) = model
+      project.scalars(name) = model
+    }
+  })
+
+  register("Predict from model", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      ModelParams("model", "The parameters of the model", options = project.viewer.models.map { v => FEOption(v, v) }))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      "model"
+    }
+    def apply(params: Map[String, String]) = {
+      assert(params("model").nonEmpty, "Please set the params of the model.")
+      println("model")
     }
   })
 
