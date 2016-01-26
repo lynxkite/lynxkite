@@ -65,6 +65,11 @@ case class JdbcImportRequest(
   // Empty list means all columns.
   columnsToImport: List[String])
 
+case class ParquetImportRequest(
+  files: String,
+  // Empty list means all columns.
+  columnsToImport: List[String])
+
 case class TableImportResponse(checkpoint: String)
 
 class SQLController(val env: BigGraphEnvironment) {
@@ -96,6 +101,14 @@ class SQLController(val env: BigGraphEnvironment) {
       s"Imported from CSV files ${request.files}.")
   }
 
+  def restrictToColumns(
+    full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
+    if (columnsToImport.nonEmpty) {
+      val columns = columnsToImport.map(spark.sql.functions.column(_))
+      full.select(columns: _*)
+    } else full
+  }
+
   def importJdbc(user: serving.User, request: JdbcImportRequest) = async[TableImportResponse] {
     val jdbcUrl = request.jdbcUrl
     assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
@@ -115,14 +128,19 @@ class SQLController(val env: BigGraphEnvironment) {
         stats.maxKey,
         numPartitions,
         new java.util.Properties)
-    val df = if (request.columnsToImport.nonEmpty) {
-      val columns = request.columnsToImport.map(spark.sql.functions.column(_))
-      fullTable.select(columns: _*)
-    } else fullTable
+    val df = restrictToColumns(fullTable, request.columnsToImport)
     // We don't want to put passwords and the likes in the notes.
     val uri = new java.net.URI(jdbcUrl.drop(5))
     val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
     SQLController.importFromDF(df, s"Imported from table ${request.table} at ${urlSafePart}.")
+  }
+
+  def importParquet(
+    user: serving.User, request: ParquetImportRequest) = async[TableImportResponse] {
+    SQLController.importFromDF(
+      restrictToColumns(
+        dataManager.masterSQLContext.read.parquet(request.files), request.columnsToImport),
+      s"Imported from parquet files ${request.files}.")
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
