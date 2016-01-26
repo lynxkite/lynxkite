@@ -33,6 +33,7 @@ POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.Production
 POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson
 POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToParquet
 POST /ajax/exportSQLQueryToORC     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToORC
+POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJdbc
 POST /ajax/importCSV        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importCSV
 POST /ajax/importJDBC        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJDBC
 

@@ -249,6 +249,7 @@ object FrontendJson {
   implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
   implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
+  implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
@@ -381,6 +382,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
+  def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importCSV = jsonFuturePost(sqlController.importCSV)
   def importJDBC = jsonFuturePost(sqlController.importJDBC)
 

@@ -31,6 +31,27 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       "Adam;20.3, Eve;18.2, Isolated Joe;2.0, name;age")
   }
 
+  test("sql export to database") {
+    val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+    run("Example Graph")
+    val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
+      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      database = url,
+      table = "export_test",
+      mode = "error")))
+    val connection = java.sql.DriverManager.getConnection(url)
+    val statement = connection.createStatement()
+    val results = {
+      val rs = statement.executeQuery("select * from export_test;")
+      new Iterator[String] {
+        def hasNext = rs.next
+        def next = s"${rs.getString(1)};${rs.getDouble(2)}"
+      }.toIndexedSeq
+    }
+    connection.close()
+    assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
+  }
+
   test("import from CSV") {
     val res = getClass.getResource("/graph_operations/ImportGraphTest").toString
     graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", res)
