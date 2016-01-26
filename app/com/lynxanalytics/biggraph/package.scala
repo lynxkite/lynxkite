@@ -34,7 +34,7 @@ package object biggraph {
     frameworkPackages.add("play.api.Logger")
     frameworkPackages.add("org.apache.spark.Logging")
 
-    bigGraphLogger.info("Staring to initialize production Kite environment")
+    bigGraphLogger.info("Starting to initialize production Kite environment")
     val repoDirs =
       scala.util.Properties.envOrNone("REPOSITORY_MODE") match {
         case Some(staticRepoPattern(metaDir, dataDir, "")) =>
