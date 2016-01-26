@@ -245,11 +245,15 @@ object FrontendJson {
 
   implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
-  implicit val rSQLExportRequest = json.Json.reads[SQLExportRequest]
+  implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
+  implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
+  implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
+  implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
+  implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
-  implicit val wSQLExportResult = json.Json.writes[SQLExportResult]
+  implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
-  implicit val rJDBCImportRequest = json.Json.reads[JDBCImportRequest]
+  implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
   implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
@@ -374,9 +378,13 @@ object ProductionJsonServer extends JsonServer {
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
-  def exportSQLQuery = jsonFuturePost(sqlController.exportSQLQuery)
+  def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
+  def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
+  def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
+  def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
+  def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importCSV = jsonFuturePost(sqlController.importCSV)
-  def importJDBC = jsonFuturePost(sqlController.importJDBC)
+  def importJdbc = jsonFuturePost(sqlController.importJdbc)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

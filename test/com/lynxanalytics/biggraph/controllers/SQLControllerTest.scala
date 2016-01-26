@@ -18,13 +18,38 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
-  test("sql export") {
+  test("sql export to csv") {
     run("Example Graph")
-    val result = await(sqlController.exportSQLQuery(user, SQLExportRequest(
-      DataFrameSpec(project = projectName, sql = "select name from `!vertices` where age < 40"),
-      format = "csv", path = "<download>", options = Map())))
+    val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
+      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      path = "<download>",
+      delimiter = ";",
+      quote = "\"",
+      header = true)))
     val output = graph_util.HadoopFile(result.download.get).loadTextFile(sparkContext)
-    assert(output.collect.sorted.mkString(", ") == "Adam, Eve, Isolated Joe")
+    assert(output.collect.sorted.mkString(", ") ==
+      "Adam;20.3, Eve;18.2, Isolated Joe;2.0, name;age")
+  }
+
+  test("sql export to database") {
+    val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+    run("Example Graph")
+    val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
+      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      jdbcUrl = url,
+      table = "export_test",
+      mode = "error")))
+    val connection = java.sql.DriverManager.getConnection(url)
+    val statement = connection.createStatement()
+    val results = {
+      val rs = statement.executeQuery("select * from export_test;")
+      new Iterator[String] {
+        def hasNext = rs.next
+        def next = s"${rs.getString(1)};${rs.getDouble(2)}"
+      }.toIndexedSeq
+    }
+    connection.close()
+    assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
 
   test("import from CSV") {
@@ -61,9 +86,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val cpResponse = await(sqlController.importJDBC(
+    val cpResponse = await(sqlController.importJdbc(
       user,
-      JDBCImportRequest(
+      JdbcImportRequest(
         url, "subscribers", "id", List("n", "id", "name", "race condition", "level"))))
     val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
 
