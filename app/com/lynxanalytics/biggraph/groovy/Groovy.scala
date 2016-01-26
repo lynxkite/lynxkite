@@ -44,7 +44,7 @@ case class GroovyContext(
 
   def trustedShell(bindings: (String, AnyRef)*) = {
     val binding = new Binding()
-    binding.setProperty("lynx", new GroovyInterface(this))
+    binding.setProperty("lynx", new LynxGroovyInterface(this))
     for ((k, v) <- bindings) {
       binding.setProperty(k, v)
     }
@@ -119,7 +119,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
 }
 
 // This is the interface that is visible from trustedShell as "lynx".
-class GroovyInterface(ctx: GroovyContext) {
+class LynxGroovyInterface(ctx: GroovyContext) {
   def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
@@ -140,10 +140,86 @@ class GroovyInterface(ctx: GroovyContext) {
 
   val sqlContext = ctx.sqlContext
 
+  val drawing = new DrawingGroovyInterface()
+
   def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
     import ctx.metaManager
     import ctx.dataManager
     DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df), notes)
+  }
+
+}
+
+// This is the interface that is visible from trustedShell as "lynx.drawing". This is
+// intended for testing only.
+class DrawingGroovyInterface {
+  private def toList[T](list: AnyRef): Seq[T] = {
+    if (list == null) {
+      Seq()
+    } else {
+      import scala.collection.JavaConverters._
+      list.asInstanceOf[java.util.List[T]].asScala
+    }
+  }
+
+  def newVertexAttributeFilter(params: java.util.Map[String, AnyRef]): FEVertexAttributeFilter = {
+    FEVertexAttributeFilter(
+      attributeId = params.get("attributeId").asInstanceOf[String],
+      valueSpec = params.get("valueSpec").asInstanceOf[String])
+  }
+
+  def newVertexDiagramSpec(paramsMap: java.util.Map[String, AnyRef]): VertexDiagramSpec = {
+    import scala.collection.JavaConverters._
+    val params = paramsMap.asScala.toMap
+    VertexDiagramSpec(
+      vertexSetId = params("vertexSetId").asInstanceOf[String],
+      sampleSmearEdgeBundleId = params
+        .getOrElse("sampleSmearEdgeBundleId", "")
+        .asInstanceOf[String],
+      mode = params("mode")
+        .asInstanceOf[String],
+      filters = toList[FEVertexAttributeFilter](paramsMap.get("filters")),
+      centralVertexIds = params
+        .getOrElse("centralVertexIds", Seq())
+        .asInstanceOf[Seq[String]],
+      attrs = toList[String](paramsMap.get("attrs")),
+      xBucketingAttributeId = params
+        .getOrElse("xBucketingAttributeId", "")
+        .asInstanceOf[String],
+      yBucketingAttributeId = params
+        .getOrElse("yBucketingAttributeId", "")
+        .asInstanceOf[String],
+      xNumBuckets = params
+        .getOrElse("xNumBuckets", 1)
+        .asInstanceOf[Int],
+      yNumBuckets = params
+        .getOrElse("yNumBuckets", 1)
+        .asInstanceOf[Int]
+    )
+  }
+
+  def newEdgeDiagramSpec(paramsMap: java.util.Map[String, AnyRef]): EdgeDiagramSpec = {
+    import scala.collection.JavaConverters._
+    val params = paramsMap.asScala.toMap
+    val srcIdx = params.getOrElse("srcIdx", "0").asInstanceOf[Int]
+    val dstIdx = params.getOrElse("dstIdx", "0").asInstanceOf[Int]
+    EdgeDiagramSpec(
+      srcDiagramId = s"idx[${srcIdx}]",
+      dstDiagramId = s"idx[${dstIdx}]",
+      srcIdx = srcIdx,
+      dstIdx = dstIdx,
+      edgeBundleId = params("edgeBundleId").asInstanceOf[String],
+      filters = toList[FEVertexAttributeFilter](paramsMap.get("filters")),
+      layout3D = params.getOrElse("layout3D", false).asInstanceOf[Boolean])
+  }
+
+  def newFEGraphRequest(paramsMap: java.util.Map[String, AnyRef]): FEGraphRequest = {
+    import scala.collection.JavaConverters._
+    val params = paramsMap.asScala.toMap
+    FEGraphRequest(
+      vertexSets = toList(paramsMap.get("vertexSets")),
+      edgeBundles = toList(paramsMap.get("edgeBundles"))
+    )
   }
 }
 
@@ -266,6 +342,32 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
       name -> new GroovyBatchProject(ctx, editor.segmentation(name))
     }.toMap
   }
+
+  def getVertexSetId(): String =
+    editor.vertexSet.gUID.toString
+
+  def getEdgeBundleId(): String =
+    editor.edgeBundle.gUID.toString
+
+  def getBelongsToId(): String =
+    editor.asSegmentation.belongsTo.gUID.toString
+
+  // Intended for testing only.
+  def getCenters(count: Int): Seq[String] = {
+    val drawing = new GraphDrawingController(ctx.env.get)
+    val req = CenterRequest(
+      vertexSetId = editor.vertexSet.gUID.toString,
+      count = count,
+      filters = Seq())
+    val res = drawing.getCenter(ctx.user, req)
+    res.centers
+  }
+
+  // Intended for testing only.
+  def getComplexView(req: FEGraphRequest): FEGraphResponse = {
+    val drawing = new GraphDrawingController(ctx.env.get)
+    drawing.getComplexView(ctx.user, req)
+  }
 }
 
 class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
@@ -279,6 +381,8 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 }
 
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
+  val id = attr.gUID.toString
+
   def histogram: String = histogram(10)
 
   def histogram(numBuckets: Int): String = {
