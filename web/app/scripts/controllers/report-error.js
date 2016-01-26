@@ -7,14 +7,12 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
 
   var support = 'support@lynxanalytics.freshdesk.com';
   var time = alert.time || (new Date().toString());
-  var body = 'Happened at ' + window.location.href + ' on ' + time;
-  body += '\n\nPlease advise.';
-  body += '\n\nError message:';
-  body += '\n\n' + $scope.message;
+  var body = $scope.message;
   if ($scope.details) {
     body += '\n\nExtra info:';
     body += '\n\n' + $scope.details;
   }
+  body += '\n\nHappened at ' + window.location.href + ' on ' + time + '. Please advise.';
   // Limit body length to 800 characters to avoid hitting mailto limitations.
   body = body.slice(0, 800);
 
