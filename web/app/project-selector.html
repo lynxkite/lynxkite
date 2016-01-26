@@ -139,8 +139,10 @@
         <i class="pull-right"><a ng-click="reportProjectError(object)">report problem</a></i>
       </div>
       <div ng-if="!object.error">
-        <value ng-if="isProject(object)" ref="vertexCounts[object.name]"></value> vertices,
-        <value ng-if="isProject(object)" ref="edgeCounts[object.name]"></value> edges.
+        <span ng-if="isProject(object)">
+          <value ref="vertexCounts[object.name]"></value> vertices,
+          <value ref="edgeCounts[object.name]"></value> edges.
+        </span>
         {{object.notes}}
       </div>
     </div>

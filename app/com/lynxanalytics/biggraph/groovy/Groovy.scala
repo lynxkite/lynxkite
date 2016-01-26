@@ -140,10 +140,10 @@ class GroovyInterface(ctx: GroovyContext) {
 
   val sqlContext = ctx.sqlContext
 
-  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String): Unit = {
+  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
     import ctx.metaManager
     import ctx.dataManager
-    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df))
+    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df), notes)
   }
 }
 
