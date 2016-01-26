@@ -36,7 +36,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
       DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
-      database = url,
+      jdbcUrl = url,
       table = "export_test",
       mode = "error")))
     val connection = java.sql.DriverManager.getConnection(url)
@@ -86,9 +86,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val cpResponse = await(sqlController.importJDBC(
+    val cpResponse = await(sqlController.importJdbc(
       user,
-      JDBCImportRequest(
+      JdbcImportRequest(
         url, "subscribers", "id", List("n", "id", "name", "race condition", "level"))))
     val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
 
