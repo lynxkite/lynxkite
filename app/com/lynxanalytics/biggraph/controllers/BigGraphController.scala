@@ -745,7 +745,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   }
 
   // All tables that the user has read access to.
-  protected def readableGlobalTablePaths(implicit manager: MetaGraphManager): List[FEOption] = {
+  private def readableGlobalTableOptions(implicit manager: MetaGraphManager): List[FEOption] = {
     Operation.allObjects(user)
       .filter(_.checkpoint.nonEmpty)
       .flatMap {
@@ -755,6 +755,17 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
             .map(tablePath =>
               FEOption.titledCheckpoint(project.checkpoint, project.name, tablePath))
       }.toList.sortBy(_.title)
+  }
+
+  protected def accessibleTableOptions(implicit manager: MetaGraphManager): List[FEOption] = {
+    val viewer = project.viewer
+    val localPaths = viewer.allRelativeTablePaths
+    val segmentationAbsolutePath = "|" + viewer.offspringPath.map(_ + "|").mkString
+    val locallyAccessibleAbsolutePaths = localPaths.map(segmentationAbsolutePath + _).toSet
+    val absolutePaths =
+      viewer.rootViewer.allAbsoluteTablePaths.filter(!locallyAccessibleAbsolutePaths.contains(_))
+    (localPaths ++ absolutePaths).toList.map(path => FEOption.regular(path)) ++
+      readableGlobalTableOptions
   }
 }
 object Operation {
