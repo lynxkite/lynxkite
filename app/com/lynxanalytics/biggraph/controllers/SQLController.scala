@@ -32,6 +32,17 @@ case class SQLExportToParquetRequest(
 case class SQLExportToORCRequest(
   df: DataFrameSpec,
   path: String)
+case class SQLExportToJdbcRequest(
+    df: DataFrameSpec,
+    database: String,
+    table: String,
+    mode: String) {
+  val validModes = Seq( // Save as the save modes accepted by DataFrameWriter.
+    "error", // The table will be created and must not already exist.
+    "overwrite", // The table will be dropped (if it exists) and created.
+    "append") // The table must already exist.
+  assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
+}
 case class SQLExportToFileResult(download: Option[String])
 
 case class CSVImportRequest(
@@ -170,6 +181,12 @@ class SQLController(val env: BigGraphEnvironment) {
   def exportSQLQueryToORC(
     user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
     exportToFile(user, request.df, HadoopFile(request.path), "orc")
+  }
+
+  def exportSQLQueryToJdbc(
+    user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
+    val df = dfFromSpec(user, request.df)
+    df.write.mode(request.mode).jdbc(request.database, request.table, new java.util.Properties)
   }
 
   private def downloadableExportToFile(
