@@ -18,6 +18,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
  - Batch scripts can save DataFrames as tables.
+ - Introduce operation _Copy edges to base project_.
+
+### 1.6.1.1
+
+ - Fixed a critical performance regression with derived attributes.
+ - Fixed issues with _Predict vertex attribute_ operation.
+ - Switched `spark.io.compression.codec` from `snappy` to `lz4`.
+ - Added extra logging for health check failures.
 
 ### 1.6.1
 

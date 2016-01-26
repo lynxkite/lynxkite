@@ -26,8 +26,11 @@ trait Table {
     spark.sql.types.StructType(fields)
   }
 
-  def saveAsCheckpoint(implicit manager: MetaGraphManager): String = manager.synchronized {
+  def saveAsCheckpoint(notes: String)(
+    implicit manager: MetaGraphManager): String = manager.synchronized {
+
     val editor = new RootProjectEditor(RootProjectState.emptyState)
+    editor.notes = notes
     editor.vertexSet = idSet
     for ((name, attr) <- columns) {
       editor.vertexAttributes(name) = attr

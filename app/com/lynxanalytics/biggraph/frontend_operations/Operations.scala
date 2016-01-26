@@ -56,6 +56,17 @@ object OperationParams {
       }
     }
   }
+  case class TableParam(
+      id: String,
+      title: String,
+      options: List[FEOption]) extends OperationParameterMeta {
+    val kind = "table"
+    val multipleChoice = false
+    val defaultValue = ""
+    val mandatory = true
+    val hasFixedOptions = true
+    def validate(value: String): Unit = {}
+  }
   case class TagList(
       id: String,
       title: String,
@@ -373,11 +384,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import vertices from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        readableGlobalTablePaths),
       Param("id-attr", "Save internal ID as", defaultValue = "id"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
@@ -428,11 +438,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import edges for existing vertices from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        readableGlobalTablePaths),
       Choice("attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("src", "Source ID column"),
@@ -496,11 +505,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import vertices and edges from a single table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        readableGlobalTablePaths),
       Param("src", "Source ID column"),
       Param("dst", "Destination ID column"))
     def enabled = hasNoVertexSet
@@ -577,11 +585,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import vertex attributes from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        readableGlobalTablePaths),
       Choice("id-attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("id-column", "ID column"),
@@ -635,11 +642,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import edge attributes from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        readableGlobalTablePaths),
       Choice("id-attr", "Edge ID attribute",
         options = FEOption.unset +: edgeAttributes[String]),
       Param("id-column", "ID column"),
@@ -3167,6 +3173,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.edgeBundle = induction.induced
       for ((name, attr) <- parent.edgeAttributes) {
         project.edgeAttributes(name) = attr.pullVia(induction.embedding)
+      }
+    }
+  })
+
+  register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation &&
+      hasEdgeBundle &&
+      FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
+    def apply(params: Map[String, String]) = {
+      val seg = project.asSegmentation
+      val reverseBelongsTo = seg.belongsTo.reverse
+      val induction = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, reverseBelongsTo)(
+          op.dstMapping, reverseBelongsTo)(
+            op.edges, seg.edgeBundle).result
+      }
+      parent.edgeBundle = induction.induced
+      for ((name, attr) <- seg.edgeAttributes) {
+        parent.edgeAttributes(name) = attr.pullVia(induction.embedding)
       }
     }
   })
