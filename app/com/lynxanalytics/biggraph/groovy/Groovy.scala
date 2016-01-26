@@ -150,7 +150,8 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
 }
 
-// This is the interface that is visible from trustedShell as "lynx.drawing".
+// This is the interface that is visible from trustedShell as "lynx.drawing". This is
+// intended for testing only.
 class DrawingGroovyInterface {
   private def toList[T](list: AnyRef): Seq[T] = {
     if (list == null) {
@@ -172,7 +173,8 @@ class DrawingGroovyInterface {
     val params = paramsMap.asScala.toMap
     VertexDiagramSpec(
       vertexSetId = params("vertexSetId").asInstanceOf[String],
-      sampleSmearEdgeBundleId = params("sampleSmearEdgeBundleId")
+      sampleSmearEdgeBundleId = params
+        .getOrElse("sampleSmearEdgeBundleId", "")
         .asInstanceOf[String],
       mode = params("mode")
         .asInstanceOf[String],
@@ -350,7 +352,8 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
   def getBelongsToId(): String =
     editor.asSegmentation.belongsTo.gUID.toString
 
-  protected def getCenters(count: Int): Seq[String] = {
+  // Intended for testing only.
+  def getCenters(count: Int): Seq[String] = {
     val drawing = new GraphDrawingController(ctx.env.get)
     val req = CenterRequest(
       vertexSetId = editor.vertexSet.gUID.toString,
@@ -360,7 +363,8 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     res.centers
   }
 
-  protected def getComplexView(req: FEGraphRequest): FEGraphResponse = {
+  // Intended for testing only.
+  def getComplexView(req: FEGraphRequest): FEGraphResponse = {
     val drawing = new GraphDrawingController(ctx.env.get)
     drawing.getComplexView(ctx.user, req)
   }
@@ -377,6 +381,8 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 }
 
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
+  val id = attr.gUID.toString
+
   def histogram: String = histogram(10)
 
   def histogram(numBuckets: Int): String = {
@@ -391,8 +397,6 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
     import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(res).toString
   }
-
-  def getId(): String = attr.gUID.toString
 }
 
 // No checkpointing or entity access in workflow mode.

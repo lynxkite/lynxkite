@@ -35,12 +35,16 @@ def testComplexView(title, project, request) {
   println title
   result = project.getComplexView(request)
   println "  vertex sets:"
-  for (i = 0; i < result.vertexSets.size(); ++i) {
-    println "    ${i}: size= ${result.vertexSets.apply(i).size()}"
+  i = 0
+  for (vs in scala.collection.JavaConversions.seqAsJavaList(result.vertexSets)) {
+    println "    ${i}: size= ${vs.size()}"
+    ++i
   }
   println "  edge bundles:"
-  for (i = 0; i < result.edgeBundles.size(); ++i) {
-    println "    ${i}: size= ${result.edgeBundles.apply(i).size()}"
+  i = 0
+  for (es in scala.collection.JavaConversions.seqAsJavaList(result.edgeBundles)) {
+    println "    ${i}: size= ${es.size()}"
+    ++i
   }
 }
 
@@ -78,11 +82,11 @@ testComplexView(
         centralVertexIds: project.getCenters(3),
         filters: [
           lynx.drawing.newVertexAttributeFilter(
-            attributeId: project.vertexAttributes['randomV'].getId(),
+            attributeId: project.vertexAttributes['randomV'].id,
             valueSpec: "> 0.2"),
         ],
         attrs: [
-          project.vertexAttributes['randomV'].getId()
+          project.vertexAttributes['randomV'].id
         ]
       )
     ],
@@ -144,9 +148,9 @@ testComplexView(
         sampleSmearEdgeBundleId: project.getEdgeBundleId(),
         mode: "bucketed",
         xBucketingAttributeId:
-          project.vertexAttributes['randomV'].getId(),
+          project.vertexAttributes['randomV'].id,
         yBucketingAttributeId:
-          project.vertexAttributes['randomV2'].getId(),
+          project.vertexAttributes['randomV2'].id,
         xNumBuckets: 10,
         yNumBuckets: 10
       )
