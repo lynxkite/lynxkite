@@ -198,7 +198,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
     val table = TableImport.importDataFrame(dataFrame)
-    val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table)
+    val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
     run("Example Graph")
     run("Import edges for existing vertices from table", Map(
@@ -226,7 +226,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
     val table = TableImport.importDataFrame(dataFrame)
-    val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table)
+    val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
     run("Example Graph")
     run("Import vertex attributes from table", Map(
@@ -249,7 +249,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
     val table = TableImport.importDataFrame(dataFrame)
-    val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table)
+    val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
     run("Example Graph")
     run("Import edge attributes from table", Map(

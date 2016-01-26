@@ -13,8 +13,10 @@ object Ammonite {
   implicit val metaGraphManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
 
-  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String): Unit = {
-    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df))
+  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
+    DirectoryEntry.fromName(tableName).asNewTableFrame(
+      table.TableImport.importDataFrame(df),
+      notes)
   }
 
   // Starting Ammonite if requested.
@@ -41,7 +43,8 @@ For convenience, we've set up some Kite specific bindings for you:
  metaManager: The MetaManager instance used by Kite.
  batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
    for running a batch script on the running Kite instance.
- saveDataFrameAsTable(dataFrame, "tablePath"): Saves the given data frame as a top level Kite table.
+ saveDataFrameAsTable(dataFrame, "tablePath"[, "notes"]): Saves the given data frame as
+   a top level Kite table.
 
 Remember, any of the above can be used to easily destroy the running server or even any data.
 Drive responsibly.""")
@@ -56,6 +59,7 @@ Drive responsibly.""")
         username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
         password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
       predef = s"""
+repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineUnix
 import com.lynxanalytics.biggraph._
 Console.setOut(System.out)
 println("${help}")
