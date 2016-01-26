@@ -91,12 +91,16 @@ class SQLController(val env: BigGraphEnvironment) {
     }
     val hadoopFile = HadoopFile(request.files)
     // TODO: #2889 (special characters in S3 passwords).
-    SQLController.importFromDF(readerWithSchema.load(hadoopFile.resolvedName))
+    SQLController.importFromDF(
+      readerWithSchema.load(hadoopFile.resolvedName),
+      s"Imported from CSV files ${request.files}.")
   }
 
   def importJdbc(user: serving.User, request: JdbcImportRequest) = async[TableImportResponse] {
+    val jdbcUrl = request.jdbcUrl
+    assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
-      val connection = java.sql.DriverManager.getConnection(request.jdbcUrl)
+      val connection = java.sql.DriverManager.getConnection(jdbcUrl)
       try TableStats(request.table, request.keyColumn)(connection)
       finally connection.close()
     }
@@ -104,7 +108,7 @@ class SQLController(val env: BigGraphEnvironment) {
     val fullTable = dataManager.masterSQLContext
       .read
       .jdbc(
-        request.jdbcUrl,
+        jdbcUrl,
         request.table,
         request.keyColumn,
         stats.minKey,
@@ -115,7 +119,10 @@ class SQLController(val env: BigGraphEnvironment) {
       val columns = request.columnsToImport.map(spark.sql.functions.column(_))
       fullTable.select(columns: _*)
     } else fullTable
-    SQLController.importFromDF(df)
+    // We don't want to put passwords and the likes in the notes.
+    val uri = new java.net.URI(jdbcUrl.drop(5))
+    val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
+    SQLController.importFromDF(df, s"Imported from table ${request.table} at ${urlSafePart}.")
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
@@ -223,7 +230,7 @@ object SQLController {
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def importFromDF(df: spark.sql.DataFrame)(
+  def importFromDF(df: spark.sql.DataFrame, notes: String)(
     implicit metaManager: MetaGraphManager, dataManager: DataManager) =
-    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint)
+    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint(notes))
 }

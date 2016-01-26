@@ -840,8 +840,8 @@ object SubProject {
 
 class TableFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  def initializeFromTable(table: Table): Unit = manager.synchronized {
-    initializeFromCheckpoint(table.saveAsCheckpoint)
+  def initializeFromTable(table: Table, notes: String): Unit = manager.synchronized {
+    initializeFromCheckpoint(table.saveAsCheckpoint(notes))
   }
   def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
     // Marking this as a table.
@@ -1022,9 +1022,9 @@ class DirectoryEntry(val path: SymbolPath)(
     assert(isInstanceOf[TableFrame], s"$path is not a table")
     asInstanceOf[TableFrame]
   }
-  def asNewTableFrame(table: Table): TableFrame = {
+  def asNewTableFrame(table: Table, notes: String): TableFrame = {
     val res = new TableFrame(path)
-    res.initializeFromTable(table)
+    res.initializeFromTable(table, notes)
     res
   }
   def asNewTableFrame(checkpoint: String): TableFrame = {
