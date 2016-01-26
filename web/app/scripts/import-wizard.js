@@ -38,11 +38,11 @@ angular.module('biggraph').directive('importWizard', function(util) {
             mode: scope.csv.mode,
           });
       };
-      scope.importJDBC = function() {
+      scope.importJdbc = function() {
         var columnsToImport =
           scope.jdbc.columnsToImport ? scope.jdbc.columnsToImport.split(',') : [];
         importStuff(
-          '/ajax/importJDBC',
+          '/ajax/importJdbc',
           {
             jdbcUrl: scope.jdbc.url,
             table: scope.jdbc.table,
