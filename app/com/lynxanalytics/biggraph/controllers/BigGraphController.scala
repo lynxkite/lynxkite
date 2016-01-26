@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
+import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
 
@@ -97,7 +98,8 @@ case class FEOperationParameterMeta(
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
-    "code") // code
+    "code", // code
+    "model")
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
