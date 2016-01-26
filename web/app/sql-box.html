@@ -23,15 +23,43 @@
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
+        <option value="parquet">Parquet</option>
+        <option value="orc">ORC</option>
       </select>
     </div>
   </div>
+
   <div class="form-group">
     <label for="exportPath" class="col-sm-4 control-label">Path</label>
     <div class="col-sm-8">
       <input class="form-control" id="exportPath" ng-model="exportPath" value="<download>">
     </div>
   </div>
+
+  <div class="form-group" ng-show="exportFormat === 'csv'">
+    <label for="exportDelimiter" class="col-sm-4 control-label">Delimiter</label>
+    <div class="col-sm-8">
+      <input class="form-control" id="exportDelimiter" ng-model="exportDelimiter" value=",">
+    </div>
+  </div>
+
+  <div class="form-group" ng-show="exportFormat === 'csv'">
+    <label for="exportQuote" class="col-sm-4 control-label">Quote</label>
+    <div class="col-sm-8">
+      <input class="form-control" id="exportQuote" ng-model="exportQuote" value="&quot;">
+    </div>
+  </div>
+
+  <div class="form-group" ng-show="exportFormat === 'csv'">
+    <div class="col-sm-offset-4 col-sm-8">
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" ng-model="exportHeader"> Include header
+        </label>
+      </div>
+    </div>
+  </div>
+
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
     <button class="btn btn-primary" ng-click="export()">Save results</button>

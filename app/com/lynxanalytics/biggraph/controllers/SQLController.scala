@@ -17,12 +17,22 @@ case class DataFrameSpec(project: String, sql: String)
 case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
-case class SQLExportRequest(
+case class SQLExportToCSVRequest(
   df: DataFrameSpec,
-  format: String,
   path: String,
-  options: Map[String, String])
-case class SQLExportResult(download: Option[String])
+  header: Boolean,
+  delimiter: String,
+  quote: String)
+case class SQLExportToJsonRequest(
+  df: DataFrameSpec,
+  path: String)
+case class SQLExportToParquetRequest(
+  df: DataFrameSpec,
+  path: String)
+case class SQLExportToORCRequest(
+  df: DataFrameSpec,
+  path: String)
+case class SQLExportToFileResult(download: Option[String])
 
 case class CSVImportRequest(
     files: String,
@@ -140,22 +150,62 @@ class SQLController(val env: BigGraphEnvironment) {
     )
   }
 
-  def exportSQLQuery(user: serving.User, request: SQLExportRequest) = async[SQLExportResult] {
-    val df = dfFromSpec(user, request.df)
-    val path = if (request.path == "<download>") {
-      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + request.format
-    } else {
-      HadoopFile(request.path)
-    }
-    val format = request.format match {
-      case "csv" => "com.databricks.spark.csv"
-      case x => x
-    }
-    // TODO: #2889 (special characters in S3 passwords).
-    df.write.format(format).options(request.options).save(path.resolvedName)
-    SQLExportResult(
-      download = if (request.path == "<download>") Some(path.symbolicName) else None)
+  def exportSQLQueryToCSV(
+    user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
+    downloadableExportToFile(
+      user,
+      request.df,
+      request.path,
+      "csv",
+      Map(
+        "delimiter" -> request.delimiter,
+        "quote" -> request.quote,
+        "nullValue" -> "",
+        "header" -> (if (request.header) "true" else "false")))
   }
+
+  def exportSQLQueryToJson(
+    user: serving.User, request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
+    downloadableExportToFile(user, request.df, request.path, "json")
+  }
+
+  def exportSQLQueryToParquet(
+    user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
+    exportToFile(user, request.df, HadoopFile(request.path), "parquet")
+  }
+
+  def exportSQLQueryToORC(
+    user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
+    exportToFile(user, request.df, HadoopFile(request.path), "orc")
+  }
+
+  private def downloadableExportToFile(
+    user: serving.User,
+    dfSpec: DataFrameSpec,
+    path: String,
+    format: String,
+    options: Map[String, String] = Map()): SQLExportToFileResult = {
+    val file = if (path == "<download>") {
+      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format
+    } else {
+      HadoopFile(path)
+    }
+    exportToFile(user, dfSpec, file, format, options)
+    SQLExportToFileResult(
+      download = if (path == "<download>") Some(file.symbolicName) else None)
+  }
+
+  private def exportToFile(
+    user: serving.User,
+    dfSpec: DataFrameSpec,
+    file: HadoopFile,
+    format: String,
+    options: Map[String, String] = Map()): Unit = {
+    val df = dfFromSpec(user, dfSpec)
+    // TODO: #2889 (special characters in S3 passwords).
+    df.write.format(format).options(options).save(file.resolvedName)
+  }
+
 }
 object SQLController {
   def stringOnlySchema(columns: Seq[String]) = {
