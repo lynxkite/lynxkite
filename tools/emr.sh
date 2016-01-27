@@ -17,7 +17,7 @@ if [ "$#" -ne 2 ]; then
   echo "   terminate   - stops and destroys a running cluster. Use s3copy and metacopy"
   echo "                 to save state."
   echo "   s3copy      - copies the data directory to s3 persistent storage"
-  echo "                 You need to have "connect" running for this. See below."
+  echo "                 You need to have \"connect\" running for this. See below."
   echo "   metacopy    - copies the meta directory to your local machine"
   echo "   metarestore - copies the meta directory from your local machines to the cluster"
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
@@ -191,7 +191,7 @@ kite)
   MASTER_HOSTNAME=$(GetMasterHostName)
   MASTER_ACCESS=$(GetMasterAccessParams)
 
-  rsync -ave "$SSH" -r --copy-dirlinks --exclude /logs --exclude RUNNING_PID --exclude /tools/*.kite_meta.tgz \
+  rsync -ave "$SSH" -r --copy-dirlinks --exclude /logs --exclude RUNNING_PID \
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
 
@@ -224,14 +224,15 @@ ssh)
 # ======
 metacopy)
   MASTER_ACCESS=$(GetMasterAccessParams)
+  mkdir -p ${HOME}/kite_meta_backups
   aws emr ssh $MASTER_ACCESS --command 'tar cvfz kite_meta.tgz kite_meta'
-  aws emr get $MASTER_ACCESS --src kite_meta.tgz --dest "${CLUSTER_NAME}.kite_meta.tgz"
+  aws emr get $MASTER_ACCESS --src kite_meta.tgz --dest "${HOME}/kite_meta_backups/${CLUSTER_NAME}.kite_meta.tgz"
   ;;
 
 # ======
 metarestore)
   MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr put $MASTER_ACCESS --dest kite_meta.tgz --src "${CLUSTER_NAME}.kite_meta.tgz"
+  aws emr put $MASTER_ACCESS --dest kite_meta.tgz --src "${HOME}/kite_meta_backups/${CLUSTER_NAME}.kite_meta.tgz"
   aws emr ssh $MASTER_ACCESS --command 'rm -Rf kite_meta && tar xf kite_meta.tgz'
   ;;
 
