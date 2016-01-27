@@ -17,11 +17,16 @@ angular.module('biggraph').directive('importWizard', function(util) {
       };
 
       function importStuff(endpoint, parameters) {
+        parameters.table = scope.tableName;
+        parameters.privacy = 'public-read';
         scope.inputsDisabled = true;
-        util.post(endpoint, parameters).catch(function() {
-          scope.inputsDisabled = false;
-        }).then(function(result) {
+        scope.requestInProgress = true;
+        util.post(endpoint, parameters).then(function onSuccess(result) {
+          scope.requestInProgress = false;
           scope.tableImported = result;
+        }, function onError() {
+          scope.requestInProgress = false;
+          scope.inputsDisabled = false;
         });
       }
 
@@ -29,8 +34,6 @@ angular.module('biggraph').directive('importWizard', function(util) {
         importStuff(
           '/ajax/importCSV',
           {
-            table: scope.tableName,
-            privacy: 'public-read',
             files: scope.csv.filename,
             columnNames: scope.csv.columnNames ? scope.csv.columnNames.split(',') : [],
             delimiter: scope.csv.delimiter,
@@ -43,8 +46,6 @@ angular.module('biggraph').directive('importWizard', function(util) {
         importStuff(
           '/ajax/importJdbc',
           {
-            table: scope.tableName,
-            privacy: 'public-read',
             jdbcUrl: scope.jdbc.url,
             jdbcTable: scope.jdbc.table,
             keyColumn: scope.jdbc.keyColumn,
