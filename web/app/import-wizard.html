@@ -5,7 +5,7 @@
     </label>
     <div class="col-sm-8" id="table-name">
       <input class="form-control"
-             ng-disabled="inputsDisabled"
+             ng-disabled="requestInProgress"
              ng-model="tableName">
     </div>
   </div>
@@ -16,7 +16,7 @@
     <div class="col-sm-8" id="datatype">
       <select
        class="form-control"
-       ng-disabled="inputsDisabled"
+       ng-disabled="requestInProgress"
        ng-model="datatype">
         <option value="csv">CSV files</option>
         <option value="jdbc">Database table (via JDBC)</option>
@@ -30,7 +30,7 @@
       </label>
       <div class="col-sm-8" id="csv-filename">
         <file-parameter
-          editable="!inputsDisabled"
+          editable="!requestInProgress"
           model="csv.filename"
           file-uploads="csv.fileUploadCount">
         </file-parameter>
@@ -43,7 +43,7 @@
       <div class="col-sm-8" id="csv-column-names">
         <input class="form-control"
                ng-model="csv.columnNames"
-               ng-disabled="inputsDisabled"
+               ng-disabled="requestInProgress"
                placeholder="Comma separated. Leave empty to read from first line." >
       </div>
     </div>
@@ -53,7 +53,7 @@
       </label>
       <div class="col-sm-8" id="csv-delimiter">
         <input class="form-control"
-               ng-disabled="inputsDisabled"
+               ng-disabled="requestInProgress"
                ng-model="csv.delimiter">
       </div>
     </div>
@@ -64,7 +64,7 @@
       <div class="col-sm-8" id="csv-import-mode">
         <select
           class="form-control"
-          ng-disabled="inputsDisabled"
+          ng-disabled="requestInProgress"
           ng-model="csv.mode">
           <option value="FAILFAST">Fail on any malformed line</option>
           <option value="DROPMALFORMED">Ignore malformed lines</option>
@@ -81,7 +81,7 @@
       </label>
       <div class="col-sm-8" id="jdbc-url">
         <input class="form-control"
-               ng-disabled="inputsDisabled"
+               ng-disabled="requestInProgress"
                ng-model="jdbc.url">
       </div>
     </div>
@@ -91,7 +91,7 @@
       </label>
       <div class="col-sm-8" id="jdbc-table">
         <input class="form-control"
-               ng-disabled="inputsDisabled"
+               ng-disabled="requestInProgress"
                ng-model="jdbc.table">
       </div>
     </div>
@@ -101,7 +101,7 @@
       </label>
       <div class="col-sm-8" id="jdbc-key-column">
         <input class="form-control"
-               ng-disabled="inputsDisabled"
+               ng-disabled="requestInProgress"
                ng-model="jdbc.keyColumn"
                placeholder="Enter the name of a column of an integer type">
       </div>
@@ -113,13 +113,13 @@
       <div class="col-sm-8" id="jdbc-columns-to-import">
         <input class="form-control"
                ng-model="jdbc.columnsToImport"
-               ng-disabled="inputsDisabled"
+               ng-disabled="requestInProgress"
                placeholder="Comma separated, leave empty to import all">
       </div>
     </div>
   </div>
 
-  <div class="form-group" ng-show="inputsDisabled">
+  <div class="form-group" ng-show="requestInProgress">
     <div class="col-sm-offset-4 col-sm-8">
       <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
     </div>
@@ -128,13 +128,13 @@
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
       <div
-        ng-show="(datatype === 'csv') && csv.filename && !inputsDisabled"
+        ng-show="(datatype === 'csv') && csv.filename && !requestInProgress"
         ng-click="importCSV()"
         class="btn btn-default">
         Import CSV file
       </div>
       <div
-        ng-show="(datatype === 'jdbc') && jdbc.url && jdbc.table && jdbc.keyColumn && !inputsDisabled"
+        ng-show="(datatype === 'jdbc') && jdbc.url && jdbc.table && jdbc.keyColumn && !requestInProgress"
         ng-click="importJDBC()"
         class="btn btn-default">
         Import JDBC table

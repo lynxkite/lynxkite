@@ -16,14 +16,17 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.onCancel();
       };
 
+      scope.requestInProgress = 0;
       function importStuff(endpoint, parameters) {
         parameters.table = scope.tableName;
         parameters.privacy = 'public-read';
-        scope.inputsDisabled = true;
-        util.post(endpoint, parameters).then(function onSuccess(result) {
+        scope.requestInProgress += 1;
+        var request = util.post(endpoint, parameters);
+        request.then(function(result) {
           scope.tableImported = result;
-        }, function onError() {
-          scope.inputsDisabled = false;
+        });
+        request.finally(function() {
+          scope.requestInProgress -= 1;
         });
       }
 
