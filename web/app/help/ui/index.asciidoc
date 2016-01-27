@@ -16,6 +16,8 @@ include::javascript-guide.asciidoc[]
 
 include::project-history.asciidoc[]
 
+include::sql-box.asciidoc[]
+
 include::spark-ui.asciidoc[]
 
 include::hotkeys.asciidoc[]
