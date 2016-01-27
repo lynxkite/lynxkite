@@ -239,29 +239,29 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
+  def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
     loadOrExecuteIfNecessary(vertexSet)
     entityCache(vertexSet.gUID).map(_.asInstanceOf[VertexSetData])
   }
 
-  private def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
+  def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
     loadOrExecuteIfNecessary(edgeBundle)
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
-  private def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
+  def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
     loadOrExecuteIfNecessary(attribute)
     implicit val tagForT = attribute.typeTag
     entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
   }
 
-  private def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
+  def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
     loadOrExecuteIfNecessary(scalar)
     implicit val tagForT = scalar.typeTag
     entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
   }
 
-  private def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
+  def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
