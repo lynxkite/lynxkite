@@ -1,5 +1,15 @@
 <form class="form-horizontal">
   <div class="form-group">
+    <label for="table-name" class="col-sm-4 control-label">
+      Save table as
+    </label>
+    <div class="col-sm-8" id="table-name">
+      <input class="form-control"
+             ng-disabled="inputsDisabled"
+             ng-model="tableName">
+    </div>
+  </div>
+  <div class="form-group">
     <label for="datatype" class="col-sm-4 control-label">
       Type of data to import
     </label>
@@ -109,28 +119,6 @@
     </div>
   </div>
 
-  <div class="form-group" ng-show="importInProgress">
-    <div class="col-sm-offset-4 col-sm-8">
-      <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
-    </div>
-  </div>
-  <div ng-show="checkpoint">
-    <div class="form-group">
-      <div class="col-sm-offset-4 col-sm-8">
-        Table successfully imported
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="table-name" class="col-sm-4 control-label">
-        Save table as
-      </label>
-      <div class="col-sm-8" id="table-name">
-        <input class="form-control"
-               ng-disabled="savingTable"
-               ng-model="tableName">
-      </div>
-    </div>
-  </div>
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
       <div
@@ -144,13 +132,6 @@
         ng-click="importJDBC()"
         class="btn btn-default">
         Import JDBC table
-      </div>
-      <div
-        ng-show="checkpoint && tableName"
-        ng-click="saveTable($event)"
-        ng-disabled="savingTable"
-        class="btn btn-default">
-        Save table
       </div>
       <div ng-click="cancel($event)" class="btn btn-default">Cancel</div>
     </div>
