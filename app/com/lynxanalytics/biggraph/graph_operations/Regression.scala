@@ -40,22 +40,22 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
       case "Linear regression" =>
         val p = getParams(forSGD = true)
         val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
-        Model.checkRegressionModel(model)
+        Model.checkLinearModel(model)
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Ridge regression" =>
         val p = getParams(forSGD = true)
         val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
-        Model.checkRegressionModel(model)
+        Model.checkLinearModel(model)
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Lasso" =>
         val p = getParams(forSGD = true)
         val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
-        Model.checkRegressionModel(model)
+        Model.checkLinearModel(model)
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Logistic regression" =>
         val p = getParams(forSGD = false)
         val model = new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(p.points)
-        Model.checkRegressionModel(model)
+        Model.checkLinearModel(model)
         (model.predict(p.vectors.values), p.vectors)
       case "Naive Bayes" =>
         val p = getParams(forSGD = false)

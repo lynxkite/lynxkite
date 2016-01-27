@@ -159,18 +159,29 @@ object OperationParams {
     }
   }
 
-  case class ModelParams(id: String, title: String, val payload: Option[json.JsValue]) extends OperationParameterMeta {
+  case class ModelParams(
+      id: String,
+      title: String,
+      models: List[ModelMeta],
+      attrs: List[FEOption]) extends OperationParameterMeta {
+    implicit val wFEOption = json.Json.writes[FEOption]
+    implicit val wFEModel = json.Json.writes[FEModel]
+    implicit val wModels = json.Json.writes[ModelsPayload]
     val defaultValue = ""
     val kind = "model"
     val multipleChoice = false
     val mandatory = true
     val hasFixedOptions = false
     val options = List()
+    val payload = Some(json.Json.toJson(ModelsPayload(
+      models = models.map(m => m.toFE),
+      attrs = attrs)))
     def validate(value: String): Unit = {}
   }
 }
 
-case class Models(
+// A special parameter payload to describe applicable models on the UI.
+case class ModelsPayload(
   val models: List[FEModel],
   val attrs: List[FEOption])
 
@@ -1664,7 +1675,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val method = params("method").capitalize
       val label = params("label")
-      s"$method for $label"
+      s"build a model using $method for $label"
     }
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
@@ -1686,29 +1697,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Predict from model", new VertexAttributesOperation(_, _) {
-    implicit val wFEOption = json.Json.writes[FEOption]
-    implicit val wFEModel = json.Json.writes[FEModel]
-    implicit val wModels = json.Json.writes[Models]
-
     val models = project.viewer.models
     def parameters = List(
       Param("name", "The name of the attribute of the predictions"),
-      ModelParams("model", "The parameters of the model",
-        payload = Some(json.Json.toJson(Models(
-          models = models.map(m => m.toFE),
-          attrs = vertexAttributes[Double])))))
+      ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
     def enabled =
-      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+      FEStatus.assert(models.nonEmpty, "No models.") &&
+        FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary(params: Map[String, String]) = {
-      "model"
+      val modelName = params("model").split(",", -1)(0)
+      "prediction made by $modelName"
     }
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
-      val featureNames = params("model").split(",", -1)
-      val model = project.scalars(featureNames(0)).runtimeSafeCast[Model]
-      val features = featureNames.drop(1).map {
+      val modelParams = params("model").split(",", -1)
+      val model = project.scalars(modelParams(0)).runtimeSafeCast[Model]
+      val features = modelParams.drop(1).map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
       val predictedAttribute = {

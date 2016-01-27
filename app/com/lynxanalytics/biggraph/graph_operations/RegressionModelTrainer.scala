@@ -1,3 +1,4 @@
+// Trains a linear regression model.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -18,10 +19,14 @@ object RegressionModelTrainer extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
-  def fromJson(j: JsValue) = RegressionModelTrainer((j \ "name").as[String], (j \ "method").as[String], (j \ "numFeatures").as[Int])
+  def fromJson(j: JsValue) = RegressionModelTrainer(
+    (j \ "name").as[String],
+    (j \ "method").as[String],
+    (j \ "numFeatures").as[Int])
 }
 import RegressionModelTrainer._
-case class RegressionModelTrainer(val name: String, method: String, numFeatures: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+case class RegressionModelTrainer(val name: String, method: String, numFeatures: Int)
+    extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   @transient override lazy val inputs = new Input(numFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("name" -> name, "method" -> method, "numFeatures" -> numFeatures)
@@ -45,7 +50,7 @@ case class RegressionModelTrainer(val name: String, method: String, numFeatures:
       case "Lasso" =>
         new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
     }
-    Model.checkRegressionModel(model)
+    Model.checkLinearModel(model)
     val path = "models/" + name
     model.save(rc.sparkContext, path)
     output(o.model, Model(

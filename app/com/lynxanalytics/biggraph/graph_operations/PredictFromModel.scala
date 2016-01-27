@@ -1,3 +1,4 @@
+// Creates a prediction attribute from a machine learning model.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -33,12 +34,12 @@ case class PredictFromModel(numFeatures: Int)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val model = inputs.model.value
-    val scaled = Model.unscaledFeatures(
+    val scaled = Model.transformFeatures(
       inputs.features.toArray.map { v => v.rdd },
       inputs.vertices.rdd,
       numFeatures).mapValues(v => model.featureScaler.transform(v))
 
-    val predictions = model.scaleBack(model.model(rc).predict(scaled.values))
+    val predictions = model.scaleBack(model.load(rc).predict(scaled.values))
     val ids = scaled.keys // We just put back the keys with a zip.
     output(
       o.prediction,
