@@ -15,7 +15,7 @@ object Ammonite {
 
   def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
     DirectoryEntry.fromName(tableName).asNewTableFrame(
-      table.TableImport.importDataFrame(df),
+      table.TableImport.importDataFrameAsync(df),
       notes)
   }
 
