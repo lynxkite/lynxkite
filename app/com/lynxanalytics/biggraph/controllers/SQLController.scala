@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.TableStats
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.table
+import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class DataFrameSpec(project: String, sql: String)
@@ -46,6 +46,8 @@ case class SQLExportToJdbcRequest(
 case class SQLExportToFileResult(download: Option[String])
 
 case class CSVImportRequest(
+    table: String,
+    privacy: String,
     files: String,
     // Name of columns. Empty list means to take column names from the first line of the file.
     columnNames: List[String],
@@ -59,18 +61,20 @@ object CSVImportRequest {
 }
 
 case class JdbcImportRequest(
-  jdbcUrl: String,
   table: String,
+  privacy: String,
+  jdbcUrl: String,
+  jdbcTable: String,
   keyColumn: String,
   // Empty list means all columns.
   columnsToImport: List[String])
 
 case class ParquetImportRequest(
+  table: String,
+  privacy: String,
   files: String,
   // Empty list means all columns.
   columnsToImport: List[String])
-
-case class TableImportResponse(checkpoint: String)
 
 class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -80,7 +84,7 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def importCSV(user: serving.User, request: CSVImportRequest) = async[TableImportResponse] {
+  def importCSV(user: serving.User, request: CSVImportRequest) = async[FEOption] {
     val reader = dataManager.masterSQLContext
       .read
       .format("com.databricks.spark.csv")
@@ -96,9 +100,10 @@ class SQLController(val env: BigGraphEnvironment) {
     }
     val hadoopFile = HadoopFile(request.files)
     // TODO: #2889 (special characters in S3 passwords).
-    SQLController.importFromDF(
-      readerWithSchema.load(hadoopFile.resolvedName),
-      s"Imported from CSV files ${request.files}.")
+    val df = readerWithSchema.load(hadoopFile.resolvedName)
+    SQLController.saveTable(
+      df, s"Imported from CSV files ${request.files}.",
+      user, request.table, request.privacy)
   }
 
   def restrictToColumns(
@@ -109,12 +114,12 @@ class SQLController(val env: BigGraphEnvironment) {
     } else full
   }
 
-  def importJdbc(user: serving.User, request: JdbcImportRequest) = async[TableImportResponse] {
+  def importJdbc(user: serving.User, request: JdbcImportRequest) = async[FEOption] {
     val jdbcUrl = request.jdbcUrl
     assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
       val connection = java.sql.DriverManager.getConnection(jdbcUrl)
-      try TableStats(request.table, request.keyColumn)(connection)
+      try TableStats(request.jdbcTable, request.keyColumn)(connection)
       finally connection.close()
     }
     val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
@@ -122,7 +127,7 @@ class SQLController(val env: BigGraphEnvironment) {
       .read
       .jdbc(
         jdbcUrl,
-        request.table,
+        request.jdbcTable,
         request.keyColumn,
         stats.minKey,
         stats.maxKey,
@@ -132,15 +137,18 @@ class SQLController(val env: BigGraphEnvironment) {
     // We don't want to put passwords and the likes in the notes.
     val uri = new java.net.URI(jdbcUrl.drop(5))
     val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
-    SQLController.importFromDF(df, s"Imported from table ${request.table} at ${urlSafePart}.")
+    SQLController.saveTable(
+      df, s"Imported from table ${request.jdbcTable} at ${urlSafePart}.",
+      user, request.table, request.privacy)
   }
 
   def importParquet(
-    user: serving.User, request: ParquetImportRequest) = async[TableImportResponse] {
-    SQLController.importFromDF(
-      restrictToColumns(
-        dataManager.masterSQLContext.read.parquet(request.files), request.columnsToImport),
-      s"Imported from parquet files ${request.files}.")
+    user: serving.User, request: ParquetImportRequest) = async[FEOption] {
+    val df = restrictToColumns(
+      dataManager.masterSQLContext.read.parquet(request.files), request.columnsToImport)
+    SQLController.saveTable(
+      df, s"Imported from parquet files ${request.files}.",
+      user, request.table, request.privacy)
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
@@ -248,7 +256,21 @@ object SQLController {
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def importFromDF(df: spark.sql.DataFrame, notes: String)(
-    implicit metaManager: MetaGraphManager, dataManager: DataManager) =
-    TableImportResponse(table.TableImport.importDataFrame(df).saveAsCheckpoint(notes))
+  def saveTable(
+    df: spark.sql.DataFrame,
+    notes: String,
+    user: serving.User,
+    tableName: String,
+    privacy: String)(
+      implicit metaManager: MetaGraphManager,
+      dataManager: DataManager): FEOption = metaManager.synchronized {
+    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
+    val entry = DirectoryEntry.fromName(tableName)
+    entry.assertParentWriteAllowedFrom(user)
+    val table = TableImport.importDataFrameAsync(df)
+    val checkpoint = table.saveAsCheckpoint(notes)
+    val frame = entry.asNewTableFrame(checkpoint)
+    frame.setupACL(privacy, user)
+    FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
+  }
 }

@@ -948,6 +948,21 @@ class DirectoryEntry(val path: SymbolPath)(
   def writeACL: String = get(rootDir / "writeACL", "*")
   def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
 
+  // Some simple ACL definitions for object creation.
+  def setupACL(privacy: String, user: User): Unit = {
+    privacy match {
+      case "private" =>
+        writeACL = user.email
+        readACL = user.email
+      case "public-read" =>
+        writeACL = user.email
+        readACL = "*"
+      case "public-write" =>
+        writeACL = "*"
+        readACL = "*"
+    }
+  }
+
   def assertReadAllowedFrom(user: User): Unit = {
     assert(readAllowedFrom(user), s"User $user does not have read access to $this.")
   }
