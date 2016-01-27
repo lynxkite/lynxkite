@@ -86,5 +86,8 @@ class ConversionsTest extends FunSuite with TestGraphOp {
 
     val mapOfIntString = Map(1 -> "one", 2 -> "two", 3 -> "three")
     testTag(TagTester(mapOfIntString))
+
+    val mapOfStringDouble = Map("one" -> 1.0, "twenty" -> 20.0, "minuspi" -> -3.1415)
+    testTag((TagTester(mapOfStringDouble)))
   }
 }
