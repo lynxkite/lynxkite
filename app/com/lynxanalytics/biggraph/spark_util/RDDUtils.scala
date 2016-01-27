@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.
+// TODO: ToJson, FromJson
 class IDBuckets[T] extends Serializable {
   val counts = mutable.Map[T, Long]().withDefaultValue(0)
   var sample = mutable.Map[ID, T]() // May be null!

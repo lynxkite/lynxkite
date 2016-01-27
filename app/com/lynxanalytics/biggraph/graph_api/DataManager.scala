@@ -126,7 +126,10 @@ class DataManager(sc: spark.SparkContext,
       try {
         func
       } catch {
-        case t: Throwable => log.error("future failed:", t)
+        case t: Throwable => {
+          log.error("future failed:", t)
+          println(s"future failed: $t")
+        }
       }
     }
     loggedFutures.put(f, ())
@@ -154,8 +157,9 @@ class DataManager(sc: spark.SparkContext,
       concurrent.blocking {
         if (instance.operation.isHeavy) {
           saveOutputs(instance, outputDatas.values)
-        } else {
-          // We still save all scalars even for non-heavy operations.
+        } else if (!instance.operation.neverSerialize) {
+          // We still save all scalars even for non-heavy operations,
+          // unless they are explicitly say 'never serialize'.
           // This can happen asynchronously though.
           loggedFuture {
             saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })

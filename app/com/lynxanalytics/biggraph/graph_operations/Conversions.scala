@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
+import play.api.libs.json.JsValue
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -11,12 +12,28 @@ import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
 // The combined type helps us joining arbitrary number of different typed attributes.
 case class DynamicValue(
-  string: String = "",
-  defined: Boolean = true,
-  double: Option[Double] = None,
-  x: Option[Double] = None,
-  y: Option[Double] = None)
-object DynamicValue {
+    string: String = "",
+    defined: Boolean = true,
+    double: Option[Double] = None,
+    x: Option[Double] = None,
+    y: Option[Double] = None) extends ToJson {
+  override def toJson = Json.obj(
+    "string" -> string,
+    "defined" -> defined,
+    "double" -> double,
+    "x" -> x,
+    "y" -> y)
+}
+
+object DynamicValue extends FromJson[DynamicValue] {
+  def fromJson(j: json.JsValue) =
+    DynamicValue(
+      (j \ "string").as[String],
+      (j \ "defined").as[Boolean],
+      (j \ "double").as[Option[Double]],
+      (j \ "x").as[Option[Double]],
+      (j \ "y").as[Option[Double]])
+
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
     if (typeOf[T] =:= typeOf[Double]) value => {
@@ -415,6 +432,7 @@ case class ScalarToJSValue[T]()
     extends TypedMetaGraphOp[ScalarInput[T], ScalarToJSValue.Output[T]] {
   import ScalarToJSValue._
   @transient override lazy val inputs = new ScalarInput[T]
+  override val neverSerialize = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -428,3 +446,117 @@ case class ScalarToJSValue[T]()
   }
 }
 
+object TypeTagToFormat {
+
+  implicit object ToJsonFormat extends json.Format[ToJson] {
+    def writes(t: ToJson): JsValue = {
+      t.toTypedJson
+    }
+    def reads(j: json.JsValue): json.JsResult[ToJson] = {
+      json.JsSuccess(TypedJson.read(j))
+    }
+  }
+
+  def optionToFormat[T](t: TypeTag[T]): json.Format[Option[T]] = {
+    implicit val innerFormat = typeTagToFormat(t)
+    implicitly[json.Format[Option[T]]]
+  }
+
+  def tupleToFormat[A, B](a: TypeTag[A], b: TypeTag[B]): json.Format[(A, B)] = {
+    implicit val innerFormat1 = typeTagToFormat(a)
+    implicit val innerFormat2 = typeTagToFormat(b)
+    new TupleFormat[A, B]
+  }
+
+  class TupleFormat[A: json.Format, B: json.Format] extends json.Format[(A, B)] {
+    def reads(j: json.JsValue): json.JsSuccess[(A, B)] = {
+      json.JsSuccess(((j \ "first").as[A], (j \ "second").as[B]))
+    }
+    def writes(v: (A, B)): json.JsValue = {
+      json.Json.obj(
+        "first" -> v._1,
+        "second" -> v._2
+      )
+    }
+  }
+
+  class MapFormat[A: json.Format, B: json.Format] extends json.Format[Map[A, B]] {
+    def reads(jv: json.JsValue): json.JsSuccess[Map[A, B]] = {
+      val ooo = jv match {
+        case json.JsArray(m) =>
+          m.map { xx =>
+            {
+              val j = xx \ ""
+              val a = (j \ "first").as[A]
+              val b = (j \ "second").as[B]
+              val c = (a, b)
+              c
+            }
+          }.toMap[A, B]
+        case _ => ???
+      }
+      json.JsSuccess(ooo)
+    }
+    def writes(v: Map[A, B]): json.JsValue = {
+      val tmp = v.map {
+        case (a, b) => json.Json.obj("" -> json.Json.obj(
+          "first" -> a,
+          "second" -> b))
+      }
+      val tmp2 = tmp.toSeq
+      json.JsArray(tmp2)
+    }
+  }
+
+  def mapToFormat[A, B](a: TypeTag[A], b: TypeTag[B]): json.Format[Map[A, B]] = {
+    implicit val innerFormat1 = typeTagToFormat(a)
+    implicit val innerFormat2 = typeTagToFormat(b)
+    new MapFormat[A, B]
+  }
+
+  def seqToFormat[T](t: TypeTag[T]): json.Format[Seq[T]] = {
+    implicit val innerFormat = typeTagToFormat(t)
+    implicitly[json.Format[Seq[T]]]
+  }
+
+  def setToFormat[T](t: TypeTag[T]): json.Format[Set[T]] = {
+    implicit val innerFormat = typeTagToFormat(t)
+    implicitly[json.Format[Set[T]]]
+  }
+
+  def typeTagToFormat[T](tag: TypeTag[T]): json.Format[T] = {
+
+    val t = tag.tpe
+    if (t =:= typeOf[String]) implicitly[json.Format[String]].asInstanceOf[json.Format[T]]
+    else if (t =:= typeOf[Double]) implicitly[json.Format[Double]].asInstanceOf[json.Format[T]]
+    else if (t =:= typeOf[Long]) implicitly[json.Format[Long]].asInstanceOf[json.Format[T]]
+    else if (t =:= typeOf[Boolean]) implicitly[json.Format[Boolean]].asInstanceOf[json.Format[T]]
+    else if (t =:= typeOf[Int]) implicitly[json.Format[Int]].asInstanceOf[json.Format[T]]
+    else if (t =:= typeOf[Float]) implicitly[json.Format[Float]].asInstanceOf[json.Format[T]]
+    else if (t <:< typeOf[ToJson]) ToJsonFormat.asInstanceOf[json.Format[T]]
+    else if (t <:< typeOf[Option[_]]) {
+      val innerType = TypeTagUtil.typeArgs(tag).head
+      optionToFormat(innerType).asInstanceOf[json.Format[T]]
+    } else if (t <:< typeOf[(_, _)]) {
+      val firstInnerType = TypeTagUtil.typeArgs(tag).head
+      val secondInnerType = TypeTagUtil.typeArgs(tag).drop(1).head
+      tupleToFormat(firstInnerType, secondInnerType).asInstanceOf[json.Format[T]]
+    } else if (t <:< typeOf[Seq[(_, _)]]) {
+      val innerType = TypeTagUtil.typeArgs(tag).head
+      seqToFormat(innerType).asInstanceOf[json.Format[T]]
+    } else if (t <:< typeOf[Seq[_]]) {
+      val innerType = TypeTagUtil.typeArgs(tag).head
+      seqToFormat(innerType).asInstanceOf[json.Format[T]]
+    } else if (t <:< typeOf[Set[_]]) {
+      val innerType = TypeTagUtil.typeArgs(tag).head
+      setToFormat(innerType).asInstanceOf[json.Format[T]]
+    } else if (t <:< typeOf[Map[_, _]]) {
+      val firstInnerType = TypeTagUtil.typeArgs(tag).head
+      val secondInnerType = TypeTagUtil.typeArgs(tag).drop(1).head
+      mapToFormat(firstInnerType, secondInnerType).asInstanceOf[json.Format[T]]
+    } else {
+      assert(false, s"Unsupported type: $t")
+      ???
+    }
+  }
+}

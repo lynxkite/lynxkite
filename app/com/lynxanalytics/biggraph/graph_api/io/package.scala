@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 package object io {
   val BroadcastsDir = "broadcasts"
-  val ScalarsDir = "scalars"
+  val ScalarsDir = "scalars.json"
   val EntitiesDir = "entities"
   val PartitionedDir = "partitioned"
   val OperationsDir = "operations"
