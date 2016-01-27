@@ -1,3 +1,4 @@
+// A helper class to handle machine learning models.
 package com.lynxanalytics.biggraph.model
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -5,6 +6,7 @@ import org.apache.spark.mllib
 import org.apache.spark.rdd.RDD
 import org.apache.spark
 
+// A unified interface for different tpyes of MLLIB models.
 trait ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
 }
@@ -14,15 +16,16 @@ case class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) 
 }
 
 case class Model(
-    val name: String,
-    val method: String,
-    val path: String,
-    val labelName: String,
-    val featureNames: List[String],
-    val labelScaler: Option[mllib.feature.StandardScalerModel],
-    val featureScaler: mllib.feature.StandardScalerModel) {
+    name: String,
+    method: String,
+    path: String,
+    labelName: String,
+    featureNames: List[String],
+    labelScaler: Option[mllib.feature.StandardScalerModel],
+    featureScaler: mllib.feature.StandardScalerModel) {
 
-  def model(rc: RuntimeContext): ModelImplementation = {
+  // Loads the previously created model from the file system.
+  def load(rc: RuntimeContext): ModelImplementation = {
     val sc = rc.sparkContext
     method match {
       case "Linear regression" =>
@@ -30,6 +33,7 @@ case class Model(
     }
   }
 
+  // Scales back the labels if needed.
   def scaleBack(result: RDD[Double]): RDD[Double] = {
     if (labelScaler.isEmpty) {
       result
@@ -39,8 +43,9 @@ case class Model(
   }
 }
 
+// Helper methods to transform and scale training and prediction data.
 object Model {
-  def checkRegressionModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
+  def checkLinearModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
     // A linear model with at least one NaN parameter will always predict NaN.
     for (w <- model.weights.toArray :+ model.intercept) {
       assert(!w.isNaN, "Failed to train a valid regression model.")
@@ -58,7 +63,8 @@ object Model {
     result.map { v => v * std + mean }
   }
 
-  def unscaledFeatures(
+  // Transforms features to an MLLIB compatible format.
+  def transformFeatures(
     features: Array[AttributeRDD[Double]],
     vertices: VertexSetRDD,
     numFeatures: Int): AttributeRDD[mllib.linalg.Vector] = {
@@ -104,7 +110,7 @@ case class Scaler(
     vertices: VertexSetRDD,
     numFeatures: Int)(implicit id: DataSet): ScaledParams = {
 
-    val unscaled = Model.unscaledFeatures(features, vertices, numFeatures)
+    val unscaled = Model.transformFeatures(features, vertices, numFeatures)
     // All scaled data points.
     val (vectors, featureScaler) = {
 

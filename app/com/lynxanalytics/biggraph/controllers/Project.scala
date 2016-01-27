@@ -112,8 +112,8 @@ sealed trait ProjectViewer {
   }.toSeq.sorted
   def models: List[ModelMeta] = {
     scalars
-      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[Model] }
       .values
+      .filter { v => typeOf(v.typeTag) =:= typeOf[Model] }
       .map {
         v => v.source.operation.asInstanceOf[ModelMeta]
       }

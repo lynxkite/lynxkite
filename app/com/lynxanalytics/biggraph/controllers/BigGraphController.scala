@@ -92,7 +92,7 @@ case class FEOperationParameterMeta(
     options: List[FEOption],
     multipleChoice: Boolean,
     hasFixedOptions: Boolean,
-    payload: Option[json.JsValue]) {
+    payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
 
   val validKinds = Seq(
     "default", // A simple textbox.
@@ -100,7 +100,7 @@ case class FEOperationParameterMeta(
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
     "code", // JavaScript code
-    "model",
+    "model", // A special kind to set model parameters.
     "table") // A table.
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
