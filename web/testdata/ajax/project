@@ -145,28 +145,6 @@
             "disabledReason":""
           }
         },
-        {
-          "id":"Predict-from-model",
-          "title":"Predict from model",
-          "visibleScalars": [],
-          "parameters":[
-            {
-              "id":"model",
-              "title":"Model",
-              "kind":"model",
-              "defaultValue":"model1",
-              "options": [
-                { "id": "abc", "title": "Model" }
-              ],
-              "multipleChoice":false
-            }
-          ],
-          "category":"Vertex operations",
-          "status":{
-            "enabled":true,
-            "disabledReason":""
-          }
-        }
       ]
     },
 
