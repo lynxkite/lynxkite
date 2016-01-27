@@ -40,13 +40,6 @@ LOCAL_TMP_DIR=/mnt/tmp
 # USE_RAM_GB=19
 # LOCAL_TMP_DIR=/mnt/tmp
 
-# A local path that exists on all workers and the master and will be used for storing
-# temporary spark/hadoop files. This can get big, so if you have a small root filesystem
-# and an extra large drive mounted somewhere then you need to point this to somewhere on
-# the large drive. On the other hand performance of this drive has big effect on overal speed,
-# so SSD is a nice option here.
-LOCAL_TMP_DIR=/mnt/tmp
-
 # The S3 directory to store graph data in without the s3:// prefix. It must use the same credentials
 # as the user starting the cluster. Used as the backup location with the "s3copy" command.
 # This needs to be in the same region as REGION. Or  you get charged by Amazon.
