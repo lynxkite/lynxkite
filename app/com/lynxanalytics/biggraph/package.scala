@@ -26,7 +26,6 @@ package object biggraph {
 
   def registerStandardPrefixes() = {
     PrefixRepository.registerPrefix("UPLOAD$", standardDataPrefix + "/uploads")
-    PrefixRepository.registerPrefix(io.Models, standardDataPrefix + "/models")
   }
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {

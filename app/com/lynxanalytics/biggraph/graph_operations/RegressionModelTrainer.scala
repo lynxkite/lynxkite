@@ -44,8 +44,7 @@ case class RegressionModelTrainer(
     val p = new Scaler(forSGD = true).scale(
       inputs.label.rdd,
       inputs.features.toArray.map { v => v.rdd },
-      inputs.vertices.rdd,
-      featureNames.size)
+      inputs.vertices.rdd)
 
     val model = method match {
       case "Linear regression" =>
@@ -57,7 +56,7 @@ case class RegressionModelTrainer(
     }
     Model.checkLinearModel(model)
 
-    val path = Model.modelName
+    val path = Model.newModelPath
     model.save(rc.sparkContext, path)
     output(o.model, Model(
       method = "Linear regression",

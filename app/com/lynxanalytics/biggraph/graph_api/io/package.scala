@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_api
 package object io {
   val BroadcastsDir = "broadcasts"
   val ScalarsDir = "scalars"
+  val ModelsDir = "models"
   val EntitiesDir = "entities"
   val PartitionedDir = "partitioned"
   val OperationsDir = "operations"
@@ -11,5 +12,4 @@ package object io {
   val Success = "_SUCCESS"
   val Metadata = "metadata"
   val MetadataCreate = "metadata.create"
-  val Models = "MODEL$"
 }
