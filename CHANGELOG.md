@@ -19,6 +19,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    now the recommended way to run Kite clusters on Amazon.
  - Batch scripts can save DataFrames as tables.
  - Introduce operation _Copy edges to base project_.
+ - emr.sh can now invoke groovy scripts on a remote cluster.
 
 ### 1.6.1.1
 

@@ -1,0 +1,16 @@
+CLUSTER_NAME=${USER}-batch-cluster
+NUM_INSTANCES=1
+SSH_ID=lynx-cli
+SSH_KEY=~/.ssh/lynx-cli.pem
+REGION=us-east-1
+
+TYPE=m1.large
+CORES=2
+USE_RAM_GB=3
+LOCAL_TMP_DIR=/mnt/tmp
+# TYPE=m3.2xlarge
+# CORES=8
+# USE_RAM_GB=19
+# LOCAL_TMP_DIR=/mnt/tmp
+
+SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)

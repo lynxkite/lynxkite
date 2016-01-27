@@ -9,8 +9,8 @@ pushd $DIR/.. > /dev/null
 export KITE_BASE=`pwd`
 popd > /dev/null
 
-if [ "$#" -ne 2 ]; then
-  echo "Usage: emr.sh command CLUSTER_SPECIFICATION_FILE"
+if [ "$#" -lt 2 ]; then
+  echo "Usage: emr.sh command CLUSTER_SPECIFICATION_FILE [optional command arguments]"
   echo " For a cluster specification file template, see $DIR/emr_spec_template"
   echo " Command can be one of:"
   echo "   start       - starts a new EMR cluster"
@@ -23,6 +23,12 @@ if [ "$#" -ne 2 ]; then
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
   echo "                 from behind the Amazon firewall"
   echo "   kite        - (re)starts the kite server"
+  echo "   batch       - Takes a space-separated list of groovy scripts and executes them "
+  echo "                 on a running cluster. The scripts have to be already uploaded to "
+  echo "                 the master. The path of each script should be relative to the kitescripts "
+  echo "                 directory on the master."
+  echo "   ssh         - Logs in to the master."
+  echo "   cmd         - Executes a command on the master."
   echo
   echo " E.g. a typical workflow: "
   echo "   emr.sh start my_cluster_spec    # starts up the EMR cluster"
@@ -32,6 +38,20 @@ if [ "$#" -ne 2 ]; then
   echo "   .... use Kite ...."
   echo
   echo "   emr.sh terminate my_cluster_spec"
+  echo
+  echo " Example batch workflow:"
+  echo "   emr.sh start my_cluster_spec"
+  echo "   emr.sh kite my_cluster_spec"
+  echo "   emr.sh batch my_cluster_spec visualization_perf.groovy jsperf.groovy"
+  echo
+  echo "   .... analyze results, debug ...."
+  echo
+  echo "   # Don't forget to nuke data if you want to rerun performance tests:"
+  echo "   emr.sh cmd batch_emr_spec_template hadoop fs -rmr /data"
+  echo "   emr.sh cmd batch_emr_spec_template ./biggraphstage/bin/biggraph restart"
+  echo
+  echo "   emr.sh terminate my_cluster_spec"
+
   exit 1
 fi
 
@@ -159,6 +179,9 @@ export KITE_MASTER_MEMORY_MB=$((1024 * (USE_RAM_GB)))
 export KITE_HTTP_PORT=4044
 export KITE_LOCAL_TMP=${LOCAL_TMP_DIR}
 export KITE_PREFIX_DEFINITIONS=/home/hadoop/prefix_definitions.txt
+export KITE_AMMONITE_PORT=2203
+export KITE_AMMONITE_USER=lynx
+export KITE_AMMONITE_PASSWD=kite
 EOF
 
   aws emr put ${MASTER_ACCESS} --src ${CONFIG_FILE} --dest .kiterc
@@ -177,7 +200,8 @@ EOF
   aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
     curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
     tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION} && \
-    echo \"export SPARK_DIST_CLASSPATH=\\\$(hadoop classpath)\" >~/${SPARK_NAME}/conf/spark-env.sh"
+    echo \"export SPARK_DIST_CLASSPATH=\\\$(hadoop classpath)\" >~/${SPARK_NAME}/conf/spark-env.sh && \
+    sudo yum install -y expect"
   ;;
 
 # ======
@@ -222,6 +246,12 @@ ssh)
   ;;
 
 # ======
+cmd)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  $SSH -A hadoop@${MASTER_HOSTNAME} ${@:3}
+  ;;
+
+# ======
 metacopy)
   MASTER_ACCESS=$(GetMasterAccessParams)
   mkdir -p ${HOME}/kite_meta_backups
@@ -246,6 +276,40 @@ terminate)
 s3copy)
   curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral"
   echo "Copy successful."
+  ;;
+
+batch)
+  MASTER_ACCESS=$(GetMasterAccessParams)
+
+  # 1. First we build a script that logs in to Ammonite via SSH and
+  # invokes the user-specified Groovy scripts.
+  BATCH_SCRIPT="/tmp/${CLUSTER_NAME}_batch-job.sh"
+  # 1.1. SSH login:
+  cat >${BATCH_SCRIPT} <<EOF
+#!/usr/bin/expect -f
+set timeout 1800
+spawn ssh -oStrictHostKeyChecking=no -p 2203 lynx@localhost
+expect "Password:"
+send "kite\r"
+EOF
+
+  # 1.2. Invoke each groovy script:
+  for GROOVY_SCRIPT in ${@:3}; do
+    cat >>${BATCH_SCRIPT} <<EOF
+expect "@ "
+send "batch.runScript(\"/home/hadoop/biggraphstage/kitescripts/${GROOVY_SCRIPT}\")\r"
+EOF
+  done
+  # 1.3. SSH logout:
+  cat >>${BATCH_SCRIPT} <<EOF
+expect "@ "
+send "exit\r"
+EOF
+
+  # 2. Upload and execute the script:
+  aws emr put ${MASTER_ACCESS} --src ${BATCH_SCRIPT} --dest kite_batch_job.sh
+  aws emr ssh ${MASTER_ACCESS} --command "chmod a+x kite_batch_job.sh && \
+    ./kite_batch_job.sh"
   ;;
 
 # ======
