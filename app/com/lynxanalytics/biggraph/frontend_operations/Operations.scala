@@ -1708,10 +1708,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(models.nonEmpty, "No models.") &&
         FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
-    override def summary(params: Map[String, String]) = {
-      val modelName = params("model").split(",", -1)(0)
-      "prediction made by $modelName"
-    }
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")
@@ -1723,7 +1719,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val predictedAttribute = {
         val op = graph_operations.PredictFromModel(features.size)
-        op(op.vertices, project.vertexSet)(op.model, model)(op.features, features).result.prediction
+        op(op.model, model)(op.features, features).result.prediction
       }
       project.newVertexAttribute(name, predictedAttribute, s"predicted from ${model.name}")
     }
