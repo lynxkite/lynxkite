@@ -20,12 +20,9 @@ angular.module('biggraph').directive('importWizard', function(util) {
         parameters.table = scope.tableName;
         parameters.privacy = 'public-read';
         scope.inputsDisabled = true;
-        scope.requestInProgress = true;
         util.post(endpoint, parameters).then(function onSuccess(result) {
-          scope.requestInProgress = false;
           scope.tableImported = result;
         }, function onError() {
-          scope.requestInProgress = false;
           scope.inputsDisabled = false;
         });
       }
