@@ -11,14 +11,19 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {
-      scope.binding = [];
+      scope.$watch('activeModel', function() {
+        scope.binding = [];
+      });
       util.deepWatch(scope, 'binding', function(binding) {
         if (scope.activeModel && binding) {
-          var featureList = [scope.activeModel.name];
+          var featureList = [];
           for (var i = 0; i  < scope.activeModel.featureNames.length; ++i) {
             featureList.push(binding[i]);
           }
-          scope.model = featureList.join(',');
+          var modelParams = {};
+          modelParams.modelName = scope.activeModel.name;
+          modelParams.features = featureList;
+          scope.model = JSON.stringify(modelParams);
         }
       });
     },

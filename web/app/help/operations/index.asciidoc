@@ -208,6 +208,8 @@ include::no-operation.asciidoc[]
 
 include::pagerank.asciidoc[]
 
+include::predict-from-model.asciidoc[]
+
 include::predict-vertex-attribute.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
@@ -237,6 +239,8 @@ include::segment-by-string-attribute.asciidoc[]
 include::shortest-path.asciidoc[]
 
 include::split-vertices.asciidoc[]
+
+include::train-linear-regression-model.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 

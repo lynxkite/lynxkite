@@ -159,14 +159,17 @@ object OperationParams {
     }
   }
 
+  object ModelParams {
+    implicit val wFEOption = json.Json.writes[FEOption]
+    implicit val wFEModel = json.Json.writes[FEModel]
+    implicit val wModels = json.Json.writes[ModelsPayload]
+  }
   case class ModelParams(
       id: String,
       title: String,
       models: Map[String, ModelMeta],
       attrs: List[FEOption]) extends OperationParameterMeta {
-    implicit val wFEOption = json.Json.writes[FEOption]
-    implicit val wFEModel = json.Json.writes[FEModel]
-    implicit val wModels = json.Json.writes[ModelsPayload]
+    import ModelParams._
     val defaultValue = ""
     val kind = "model"
     val multipleChoice = false
@@ -174,7 +177,7 @@ object OperationParams {
     val hasFixedOptions = false
     val options = List()
     val payload = Some(json.Json.toJson(ModelsPayload(
-      models = models.toList.map { case (k, v) => v.toFE(k) },
+      models = models.toList.map { case (k, v) => Model.toFE(k, v) },
       attrs = attrs)))
     def validate(value: String): Unit = {}
   }
@@ -1680,7 +1683,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1)
+      val featureNames = params("features").split(",", -1).sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1713,9 +1716,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
-      val modelParams = params("model").split(",", -1)
-      val model = project.scalars(modelParams(0)).runtimeSafeCast[Model]
-      val features = modelParams.drop(1).map {
+      val p = json.Json.parse(params("model"))
+      val model = project.scalars((p \ "modelName").as[String]).runtimeSafeCast[Model]
+      val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
       val predictedAttribute = {

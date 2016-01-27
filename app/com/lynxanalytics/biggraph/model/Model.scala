@@ -26,8 +26,7 @@ case class Model(
     featureScaler: mllib.feature.StandardScalerModel) {
 
   // Loads the previously created model from the file system.
-  def load(rc: RuntimeContext): ModelImplementation = {
-    val sc = rc.sparkContext
+  def load(sc: spark.SparkContext): ModelImplementation = {
     method match {
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
@@ -46,8 +45,10 @@ case class Model(
 
 // Helper methods to transform and scale training and prediction data.
 object Model {
-  def modelName: String = {
-    (HadoopFile(io.Models) / Timestamp.toString).resolvedName
+  def toFE(modelName: String, modelMeta: ModelMeta): FEModel = FEModel(modelName, modelMeta.featureNames)
+
+  def newModelPath: String = {
+    (HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString).resolvedName
   }
 
   def checkLinearModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
@@ -69,11 +70,10 @@ object Model {
   }
 
   // Transforms features to an MLLIB compatible format.
-  def transformFeatures(
+  def toLinalgVector(
     features: Array[AttributeRDD[Double]],
-    vertices: VertexSetRDD,
-    numFeatures: Int): AttributeRDD[mllib.linalg.Vector] = {
-    val emptyArrays = vertices.mapValues(l => new Array[Double](numFeatures))
+    vertices: VertexSetRDD): AttributeRDD[mllib.linalg.Vector] = {
+    val emptyArrays = vertices.mapValues(l => new Array[Double](features.size))
     val numberedFeatures = features.zipWithIndex
     val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
       case (a, (f, i)) =>
@@ -91,7 +91,6 @@ case class FEModel(
 
 trait ModelMeta {
   def featureNames: List[String]
-  def toFE(modelName: String): FEModel = FEModel(modelName, featureNames)
 }
 
 case class ScaledParams(
@@ -105,16 +104,16 @@ case class ScaledParams(
   featureScaler: mllib.feature.StandardScalerModel)
 
 class Scaler(
-    val forSGD: Boolean) { // Whether the data should be prepared for an SGD method.
+    // Whether the data should be prepared for a Stochastic Gradient Descent method.
+    val forSGD: Boolean) {
 
   // Creates the input for training and evaluation.
   def scale(
     labelRDD: AttributeRDD[Double],
     features: Array[AttributeRDD[Double]],
-    vertices: VertexSetRDD,
-    numFeatures: Int)(implicit id: DataSet): ScaledParams = {
+    vertices: VertexSetRDD)(implicit id: DataSet): ScaledParams = {
 
-    val unscaled = Model.transformFeatures(features, vertices, numFeatures)
+    val unscaled = Model.toLinalgVector(features, vertices)
     // All scaled data points.
     val (vectors, featureScaler) = {
 
