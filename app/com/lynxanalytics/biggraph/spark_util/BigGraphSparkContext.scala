@@ -165,6 +165,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
 
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.regression.impl.GLMRegressionModel$SaveLoadV1_0$Data;"))
     kryo.register(Class.forName("org.apache.spark.mllib.regression.impl.GLMRegressionModel$SaveLoadV1_0$Data"))
+    kryo.register(Class.forName("[Lorg.apache.spark.sql.types.StructType;"))
+    kryo.register(Class.forName("org.apache.spark.mllib.linalg.VectorUDT"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
