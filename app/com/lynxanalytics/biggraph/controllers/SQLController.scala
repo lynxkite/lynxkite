@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.TableStats
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.table
+import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class DataFrameSpec(project: String, sql: String)
@@ -100,10 +100,10 @@ class SQLController(val env: BigGraphEnvironment) {
     }
     val hadoopFile = HadoopFile(request.files)
     // TODO: #2889 (special characters in S3 passwords).
-    val cp = SQLController.checkpointFromDF(
-      readerWithSchema.load(hadoopFile.resolvedName),
-      s"Imported from CSV files ${request.files}.")
-    SQLController.saveTable(user, request.table, request.privacy, cp)
+    val df = readerWithSchema.load(hadoopFile.resolvedName)
+    SQLController.saveTable(
+      df, s"Imported from CSV files ${request.files}.",
+      user, request.table, request.privacy)
   }
 
   def restrictToColumns(
@@ -137,18 +137,18 @@ class SQLController(val env: BigGraphEnvironment) {
     // We don't want to put passwords and the likes in the notes.
     val uri = new java.net.URI(jdbcUrl.drop(5))
     val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
-    val cp = SQLController.checkpointFromDF(
-      df, s"Imported from table ${request.jdbcTable} at ${urlSafePart}.")
-    SQLController.saveTable(user, request.table, request.privacy, cp)
+    SQLController.saveTable(
+      df, s"Imported from table ${request.jdbcTable} at ${urlSafePart}.",
+      user, request.table, request.privacy)
   }
 
   def importParquet(
     user: serving.User, request: ParquetImportRequest) = async[FEOption] {
-    val cp = SQLController.checkpointFromDF(
-      restrictToColumns(
-        dataManager.masterSQLContext.read.parquet(request.files), request.columnsToImport),
-      s"Imported from parquet files ${request.files}.")
-    SQLController.saveTable(user, request.table, request.privacy, cp)
+    val df = restrictToColumns(
+      dataManager.masterSQLContext.read.parquet(request.files), request.columnsToImport)
+    SQLController.saveTable(
+      df, s"Imported from parquet files ${request.files}.",
+      user, request.table, request.privacy)
   }
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
@@ -256,18 +256,21 @@ object SQLController {
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def checkpointFromDF(df: spark.sql.DataFrame, notes: String)(
-    implicit metaManager: MetaGraphManager, dataManager: DataManager) = {
-    table.TableImport.importDataFrame(df).saveAsCheckpoint(notes)
-  }
-
-  def saveTable(user: serving.User, tableName: String, privacy: String, checkpoint: String)(
-    implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
+  def saveTable(
+    df: spark.sql.DataFrame,
+    notes: String,
+    user: serving.User,
+    tableName: String,
+    privacy: String)(
+      implicit metaManager: MetaGraphManager,
+      dataManager: DataManager): FEOption = metaManager.synchronized {
     assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
-    val table = entry.asNewTableFrame(checkpoint)
-    table.setupACL(privacy, user)
-    FEOption.titledCheckpoint(checkpoint, table.name, s"|${Table.VertexTableName}")
+    val table = TableImport.importDataFrameAsync(df)
+    val checkpoint = table.saveAsCheckpoint(notes)
+    val frame = entry.asNewTableFrame(checkpoint)
+    frame.setupACL(privacy, user)
+    FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 }
