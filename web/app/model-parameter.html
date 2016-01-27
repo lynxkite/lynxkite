@@ -1,11 +1,13 @@
+<div class="model-parameter">The name of the model</div>
 <select
       ng-disabled="!editable"
       class="form-control operation-attribute-entry"
       ng-model="activeModel"
       ng-options="model as model.name for model in param.payload.models"></select>
 <div ng-if="activeModel">
-  <table>
-    <tr ng-repeat="feature in activeModel.featureNames track by $index">
+  <div class="model-parameter">Bind the features of the model</div>
+  <table style="width: 100%;">
+    <tr ng-repeat="feature in activeModel.featureNames track by $index" class="model-parameter">
       <td>Attribute {{ feature }}:</td>
       <td>
         <select

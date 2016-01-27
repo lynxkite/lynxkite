@@ -110,14 +110,12 @@ sealed trait ProjectViewer {
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
-  def models: List[ModelMeta] = {
+  def models: Map[String, ModelMeta] = {
     scalars
-      .values
-      .filter { v => typeOf(v.typeTag) =:= typeOf[Model] }
+      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[Model] }
       .map {
-        v => v.source.operation.asInstanceOf[ModelMeta]
+        case (k, v) => k -> v.source.operation.asInstanceOf[ModelMeta]
       }
-      .toList
   }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =

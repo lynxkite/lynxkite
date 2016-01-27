@@ -11,4 +11,5 @@ package object io {
   val Success = "_SUCCESS"
   val Metadata = "metadata"
   val MetadataCreate = "metadata.create"
+  val Models = "MODEL$"
 }
