@@ -91,7 +91,8 @@ case class FEOperationParameterMeta(
     defaultValue: String,
     options: List[FEOption],
     multipleChoice: Boolean,
-    hasFixedOptions: Boolean) {
+    hasFixedOptions: Boolean,
+    payload: Option[json.JsValue]) {
 
   val validKinds = Seq(
     "default", // A simple textbox.
@@ -661,11 +662,12 @@ abstract class OperationParameterMeta {
   val multipleChoice: Boolean
   val mandatory: Boolean
   val hasFixedOptions: Boolean
+  val payload: Option[json.JsValue]
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions)
+    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions, payload)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {

@@ -110,10 +110,13 @@ sealed trait ProjectViewer {
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
-  def models: List[String] = {
+  def models: List[ModelMeta] = {
     scalars
       .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[Model] }
-      .map { case (k, _) => k }
+      .values
+      .map {
+        v => v.source.operation.asInstanceOf[ModelMeta]
+      }
       .toList
   }
 
