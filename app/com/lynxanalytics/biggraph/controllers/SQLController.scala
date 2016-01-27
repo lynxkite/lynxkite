@@ -194,9 +194,9 @@ class SQLController(val env: BigGraphEnvironment) {
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
     val df = dfFromSpec(user, request.df)
-    val cp = SQLController.checkpointFromDF(
-      df, s"From ${request.df.project} by running ${request.df.sql}")
-    SQLController.saveTable(user, request.table, request.privacy, cp)
+    SQLController.saveTable(
+      df, s"From ${request.df.project} by running ${request.df.sql}",
+      user, request.table, request.privacy)
   }
 
   def exportSQLQueryToCSV(

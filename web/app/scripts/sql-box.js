@@ -63,7 +63,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           };
           scope.inProgress += 1;
           if (scope.exportFormat === 'table') {
-            req.table = scope.exportPath;
+            req.table = scope.exportTable;
             req.privacy = 'public-read';
             scope.result = util.post('/ajax/exportSQLQueryToTable', req);
           } else if (scope.exportFormat === 'csv') {
