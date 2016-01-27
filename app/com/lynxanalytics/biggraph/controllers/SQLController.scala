@@ -17,6 +17,10 @@ case class DataFrameSpec(project: String, sql: String)
 case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
+case class SQLExportToTableRequest(
+  df: DataFrameSpec,
+  table: String,
+  privacy: String)
 case class SQLExportToCSVRequest(
   df: DataFrameSpec,
   path: String,
@@ -185,6 +189,14 @@ class SQLController(val env: BigGraphEnvironment) {
           }.toList
       }.toList
     )
+  }
+
+  def exportSQLQueryToTable(
+    user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
+    val df = dfFromSpec(user, request.df)
+    val cp = SQLController.checkpointFromDF(
+      df, s"From ${request.df.project} by running ${request.df.sql}")
+    SQLController.saveTable(user, request.table, request.privacy, cp)
   }
 
   def exportSQLQueryToCSV(
