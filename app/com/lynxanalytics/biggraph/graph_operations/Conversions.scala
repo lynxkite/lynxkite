@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
-import play.api.libs.json.JsValue
+import play.api.libs.json.{ JsArray, JsValue }
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -482,29 +482,19 @@ object TypeTagToFormat {
 
   class MapFormat[A: json.Format, B: json.Format] extends json.Format[Map[A, B]] {
     def reads(jv: json.JsValue): json.JsSuccess[Map[A, B]] = {
-      val ooo = jv match {
-        case json.JsArray(m) =>
-          m.map { xx =>
-            {
-              val j = xx \ ""
-              val a = (j \ "first").as[A]
-              val b = (j \ "second").as[B]
-              val c = (a, b)
-              c
-            }
-          }.toMap[A, B]
-        case _ => ???
-      }
-      json.JsSuccess(ooo)
+      val keys = (jv \ "keys").as[Seq[A]]
+      val values = (jv \ "values").as[Seq[B]]
+      assert(keys.size == values.size)
+      val res = keys.zip(values).toMap
+      json.JsSuccess(res)
     }
     def writes(v: Map[A, B]): json.JsValue = {
-      val tmp = v.map {
-        case (a, b) => json.Json.obj("" -> json.Json.obj(
-          "first" -> a,
-          "second" -> b))
-      }
-      val tmp2 = tmp.toSeq
-      json.JsArray(tmp2)
+      val keys = v.keys.map { x => json.Json.toJson(x) }
+      val values = v.values.map { x => json.Json.toJson(x) }
+      json.Json.obj(
+        "keys" -> json.JsArray(keys.toSeq),
+        "values" -> json.JsArray(values.toSeq)
+      )
     }
   }
 
