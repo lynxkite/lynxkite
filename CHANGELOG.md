@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Import and export through tables.
+ - Run SQL queries on graphs.
  - Default home directory is moved under the 'Users' folder.
  - Root folder is default readable by everyone and writable by only admin users for
    bare new Kite installations.
@@ -17,7 +19,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Remove support of Hadoop 1.
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
- - Batch scripts can save DataFrames as tables.
  - Introduce operation _Copy edges to base project_.
 
 ### 1.6.1.1
@@ -160,7 +161,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    and the batch API gets more flexible too.
  - Users can now configure better the stopping condition for modular clustering.
  - Improved format for the graph storage. Note that this breaks compatibility of the data directory with 1.5.0.
-   Compatibility is retained with all version before 1.5. One way to fix a data directory created/touched by Kite 
+   Compatibility is retained with all version before 1.5. One way to fix a data directory created/touched by Kite
    1.5.0 is to delete the directory `$KITE_DATA_DIR/partitioned`.
 
 ### 1.5.0
