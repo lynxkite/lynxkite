@@ -17,6 +17,8 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.serving.FrontendJson
 
 import play.api.libs.json
 
@@ -30,6 +32,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {}
   }
   case class Choice(
@@ -42,6 +45,7 @@ object OperationParams {
     val defaultValue = ""
     val mandatory = true
     val hasFixedOptions = true
+    val payload = None
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
@@ -65,6 +69,7 @@ object OperationParams {
     val defaultValue = ""
     val mandatory = true
     val hasFixedOptions = true
+    val payload = None
     def validate(value: String): Unit = {}
   }
   case class TagList(
@@ -76,6 +81,7 @@ object OperationParams {
     val multipleChoice = true
     val defaultValue = ""
     val hasFixedOptions = true
+    val payload = None
     def validate(value: String): Unit = {}
   }
   case class File(id: String, title: String) extends OperationParameterMeta {
@@ -85,6 +91,7 @@ object OperationParams {
     val options = List()
     val mandatory = true
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {}
   }
   case class Ratio(id: String, title: String, defaultValue: String = "")
@@ -94,6 +101,7 @@ object OperationParams {
     val multipleChoice = false
     val mandatory = true
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
@@ -107,6 +115,7 @@ object OperationParams {
     val multipleChoice = false
     val mandatory = true
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
@@ -118,6 +127,7 @@ object OperationParams {
     val multipleChoice = false
     val mandatory = true
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
@@ -131,6 +141,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {}
   }
 
@@ -142,20 +153,26 @@ object OperationParams {
     val multipleChoice = false
     val mandatory = true
     val hasFixedOptions = false
+    val payload = None
     def validate(value: String): Unit = {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
   }
 
-  case class ModelParams(id: String, title: String, options: List[FEOption]) extends OperationParameterMeta {
+  case class ModelParams(id: String, title: String, val payload: Option[json.JsValue]) extends OperationParameterMeta {
     val defaultValue = ""
     val kind = "model"
     val multipleChoice = false
     val mandatory = true
     val hasFixedOptions = false
+    val options = List()
     def validate(value: String): Unit = {}
   }
 }
+
+case class Models(
+  val models: List[FEModel],
+  val attrs: List[FEOption])
 
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import Operation.Category
@@ -1669,16 +1686,36 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Predict from model", new VertexAttributesOperation(_, _) {
+    implicit val wFEOption = json.Json.writes[FEOption]
+    implicit val wFEModel = json.Json.writes[FEModel]
+    implicit val wModels = json.Json.writes[Models]
+
+    val models = project.viewer.models
     def parameters = List(
-      ModelParams("model", "The parameters of the model", options = project.viewer.models.map { v => FEOption(v, v) }))
+      Param("name", "The name of the attribute of the predictions"),
+      ModelParams("model", "The parameters of the model",
+        payload = Some(json.Json.toJson(Models(
+          models = models.map(m => m.toFE),
+          attrs = vertexAttributes[Double])))))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary(params: Map[String, String]) = {
       "model"
     }
     def apply(params: Map[String, String]) = {
-      assert(params("model").nonEmpty, "Please set the params of the model.")
-      println("model")
+      assert(params("name").nonEmpty, "Please set the name of attribute.")
+      assert(params("model").nonEmpty, "Please select a model.")
+      val name = params("name")
+      val featureNames = params("model").split(",", -1)
+      val model = project.scalars(featureNames(0)).runtimeSafeCast[Model]
+      val features = featureNames.drop(1).map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val predictedAttribute = {
+        val op = graph_operations.PredictFromModel(features.size)
+        op(op.vertices, project.vertexSet)(op.model, model)(op.features, features).result.prediction
+      }
+      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${model.name}")
     }
   })
 

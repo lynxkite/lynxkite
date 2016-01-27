@@ -30,7 +30,13 @@ case class Model(
     }
   }
 
-  def toFE: FEModel = { FEModel(name, method, labelName, featureNames) }
+  def scaleBack(result: RDD[Double]): RDD[Double] = {
+    if (labelScaler.isEmpty) {
+      result
+    } else {
+      Model.scaleBack(result, labelScaler.get)
+    }
+  }
 }
 
 object Model {
@@ -51,13 +57,32 @@ object Model {
     val std = scaler.std(0)
     result.map { v => v * std + mean }
   }
+
+  def unscaledFeatures(
+    features: Array[AttributeRDD[Double]],
+    vertices: VertexSetRDD,
+    numFeatures: Int): AttributeRDD[mllib.linalg.Vector] = {
+    val emptyArrays = vertices.mapValues(l => new Array[Double](numFeatures))
+    val numberedFeatures = features.zipWithIndex
+    val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
+      case (a, (f, i)) =>
+        a.sortedJoin(f).mapValues {
+          case (a, f) => a(i) = f; a
+        }
+    }
+    fullArrays.mapValues(a => new mllib.linalg.DenseVector(a): mllib.linalg.Vector)
+  }
 }
 
 case class FEModel(
   val name: String,
-  val method: String,
-  val labelName: String,
   val featureNames: List[String])
+
+trait ModelMeta {
+  def modelName: String
+  def featureNames: List[String]
+  def toFE: FEModel = { FEModel(modelName, featureNames) }
+}
 
 case class ScaledParams(
   // Labeled training data points.
@@ -79,17 +104,10 @@ case class Scaler(
     vertices: VertexSetRDD,
     numFeatures: Int)(implicit id: DataSet): ScaledParams = {
 
+    val unscaled = Model.unscaledFeatures(features, vertices, numFeatures)
     // All scaled data points.
     val (vectors, featureScaler) = {
-      val emptyArrays = vertices.mapValues(l => new Array[Double](numFeatures))
-      val numberedFeatures = features.zipWithIndex
-      val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
-        case (a, (f, i)) =>
-          a.sortedJoin(f).mapValues {
-            case (a, f) => a(i) = f; a
-          }
-      }
-      val unscaled = fullArrays.mapValues(a => new mllib.linalg.DenseVector(a): mllib.linalg.Vector)
+
       // Must scale the features or we get NaN predictions. (SPARK-1859)
       val scaler = new mllib.feature.StandardScaler(
         withMean = forSGD, // Center the vectors for SGD training methods.

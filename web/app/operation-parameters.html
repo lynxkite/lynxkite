@@ -35,7 +35,8 @@
     </file-parameter>
     <model-parameter ng-if="param.kind === 'model'"
         param="param"
-        editable="editable">
+        editable="editable"
+        model="output[param.id]">
     </model-parameter>
     <table-kind
       ng-if="param.kind === 'table'"
