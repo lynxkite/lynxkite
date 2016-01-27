@@ -1,4 +1,4 @@
-// Operation parameter for kind=file. Supports file upload.
+// Operation parameter for kind=model.
 'use strict';
 
 angular.module('biggraph').directive('modelParameter', function(util) {
@@ -11,11 +11,11 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {
-      scope.binding = {};
+      scope.binding = [];
       util.deepWatch(scope, 'binding', function(binding) {
         if (scope.activeModel && binding) {
           var featureList = [scope.activeModel.name];
-          for (var i = 0; i < Object.keys(binding).length; ++i) {
+          for (var i = 0; i  < scope.activeModel.featureNames.length; ++i) {
             featureList.push(binding[i]);
           }
           scope.model = featureList.join(',');

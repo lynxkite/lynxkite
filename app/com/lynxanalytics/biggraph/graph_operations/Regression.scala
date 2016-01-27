@@ -101,6 +101,10 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
   private def getParams(
     forSGD: Boolean // Whether the data should be prepared for an SGD method.
     )(implicit id: DataSet): ScaledParams = {
-    Scaler(forSGD).scale(inputs.label.rdd, inputs.features.toArray.map { v => v.rdd }, inputs.vertices.rdd, numFeatures)
+    new Scaler(forSGD).scale(
+      inputs.label.rdd,
+      inputs.features.toArray.map { v => v.rdd },
+      inputs.vertices.rdd,
+      numFeatures)
   }
 }

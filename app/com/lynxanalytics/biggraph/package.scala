@@ -2,6 +2,7 @@
 package com.lynxanalytics
 
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import com.lynxanalytics.biggraph.graph_api.io
 import ch.qos.logback.classic.LoggerContext
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
@@ -25,6 +26,7 @@ package object biggraph {
 
   def registerStandardPrefixes() = {
     PrefixRepository.registerPrefix("UPLOAD$", standardDataPrefix + "/uploads")
+    PrefixRepository.registerPrefix(io.Models, standardDataPrefix + "/models")
   }
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {

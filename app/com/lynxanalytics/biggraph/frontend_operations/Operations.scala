@@ -162,7 +162,7 @@ object OperationParams {
   case class ModelParams(
       id: String,
       title: String,
-      models: List[ModelMeta],
+      models: Map[String, ModelMeta],
       attrs: List[FEOption]) extends OperationParameterMeta {
     implicit val wFEOption = json.Json.writes[FEOption]
     implicit val wFEModel = json.Json.writes[FEModel]
@@ -174,7 +174,7 @@ object OperationParams {
     val hasFixedOptions = false
     val options = List()
     val payload = Some(json.Json.toJson(ModelsPayload(
-      models = models.map(m => m.toFE),
+      models = models.toList.map { case (k, v) => v.toFE(k) },
       attrs = attrs)))
     def validate(value: String): Unit = {}
   }
@@ -1689,7 +1689,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val method = params("method")
       val model = {
-        val op = graph_operations.RegressionModelTrainer(name, method, features.size)
+        val op = graph_operations.RegressionModelTrainer(
+          method, labelName, featureNames.toList)
         op(op.label, label)(op.features, features).result.model
       }
       project.scalars(name) = model

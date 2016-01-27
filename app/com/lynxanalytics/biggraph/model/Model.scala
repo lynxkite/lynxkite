@@ -1,22 +1,23 @@
 // A helper class to handle machine learning models.
 package com.lynxanalytics.biggraph.model
 
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.rdd.RDD
 import org.apache.spark
 
-// A unified interface for different tpyes of MLLIB models.
+// A unified interface for different types of MLlib models.
 trait ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
 }
 
-case class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
+class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
 }
 
 case class Model(
-    name: String,
     method: String,
     path: String,
     labelName: String,
@@ -29,7 +30,7 @@ case class Model(
     val sc = rc.sparkContext
     method match {
       case "Linear regression" =>
-        LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
+        new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
     }
   }
 
@@ -45,6 +46,10 @@ case class Model(
 
 // Helper methods to transform and scale training and prediction data.
 object Model {
+  def modelName: String = {
+    (HadoopFile(io.Models) / Timestamp.toString).resolvedName
+  }
+
   def checkLinearModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
     // A linear model with at least one NaN parameter will always predict NaN.
     for (w <- model.weights.toArray :+ model.intercept) {
@@ -56,8 +61,8 @@ object Model {
   def scaleBack(
     result: RDD[Double],
     scaler: mllib.feature.StandardScalerModel): RDD[Double] = {
-    assert(scaler.mean.size == 1)
-    assert(scaler.std.size == 1)
+    assert(scaler.mean.size == 1, s"Invalid scaler mean size (${scaler.mean.size} instead of 1)")
+    assert(scaler.std.size == 1, s"Invalid scaler std size (${scaler.std.size} instead of 1)")
     val mean = scaler.mean(0)
     val std = scaler.std(0)
     result.map { v => v * std + mean }
@@ -85,9 +90,8 @@ case class FEModel(
   val featureNames: List[String])
 
 trait ModelMeta {
-  def modelName: String
   def featureNames: List[String]
-  def toFE: FEModel = { FEModel(modelName, featureNames) }
+  def toFE(modelName: String): FEModel = FEModel(modelName, featureNames)
 }
 
 case class ScaledParams(
@@ -100,7 +104,7 @@ case class ScaledParams(
   labelScaler: Option[mllib.feature.StandardScalerModel],
   featureScaler: mllib.feature.StandardScalerModel)
 
-case class Scaler(
+class Scaler(
     val forSGD: Boolean) { // Whether the data should be prepared for an SGD method.
 
   // Creates the input for training and evaluation.

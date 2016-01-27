@@ -20,27 +20,32 @@ object RegressionModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
-    (j \ "name").as[String],
     (j \ "method").as[String],
-    (j \ "numFeatures").as[Int])
+    (j \ "labelName").as[String],
+    (j \ "featureNames").as[List[String]])
 }
 import RegressionModelTrainer._
-case class RegressionModelTrainer(val name: String, method: String, numFeatures: Int)
-    extends TypedMetaGraphOp[Input, Output] with ModelMeta {
-  @transient override lazy val inputs = new Input(numFeatures)
+case class RegressionModelTrainer(
+    method: String,
+    labelName: String,
+    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+  @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("name" -> name, "method" -> method, "numFeatures" -> numFeatures)
+  override def toJson = Json.obj(
+    "method" -> method,
+    "labelName" -> labelName,
+    "featureNames" -> featureNames)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val p = Scaler(forSGD = true).scale(
+    val p = new Scaler(forSGD = true).scale(
       inputs.label.rdd,
       inputs.features.toArray.map { v => v.rdd },
       inputs.vertices.rdd,
-      numFeatures)
+      featureNames.size)
 
     val model = method match {
       case "Linear regression" =>
@@ -51,10 +56,10 @@ case class RegressionModelTrainer(val name: String, method: String, numFeatures:
         new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
     }
     Model.checkLinearModel(model)
-    val path = "models/" + name
+
+    val path = Model.modelName
     model.save(rc.sparkContext, path)
     output(o.model, Model(
-      name = name,
       method = "Linear regression",
       path = path,
       labelName = labelName,
@@ -62,8 +67,4 @@ case class RegressionModelTrainer(val name: String, method: String, numFeatures:
       labelScaler = p.labelScaler,
       featureScaler = p.featureScaler))
   }
-
-  def modelName: String = { name }
-  def labelName: String = { inputs.label.name.name }
-  def featureNames: List[String] = inputs.features.toList.map { f => f.name.name }
 }

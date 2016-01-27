@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_api.io
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.table
@@ -293,6 +294,8 @@ object ProductionJsonServer extends JsonServer {
         val finalName = s"$baseName.$digest"
         val uploadsDir = HadoopFile("UPLOAD$")
         uploadsDir.mkdirs() // Create the directory if it does not already exist.
+        val modelsDir = HadoopFile(io.Models)
+        modelsDir.mkdirs() // Create the directory if it does not already exist.
         val finalFile = uploadsDir / finalName
         if (finalFile.exists) {
           log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
