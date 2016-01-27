@@ -107,7 +107,7 @@ start)
   CheckDataRepo
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
-    --applications Name=Hadoop \
+    --applications Name=Hadoop Name=Hive \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole"}' \
     --service-role EMR_DefaultRole \
     --enable-debugging \
