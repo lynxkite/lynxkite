@@ -250,8 +250,6 @@ object SavedWorkflow {
   def fromJson(js: String): SavedWorkflow = json.Json.parse(js).as[SavedWorkflow]
 }
 
-case class SaveCheckpointAsTableRequest(tableName: String, checkpoint: String, privacy: String)
-
 object BigGraphController {
   val workflowsRoot: SymbolPath = SymbolPath("workflows")
 
@@ -324,26 +322,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(!DirectoryEntry.fromName(name).exists, s"$name already exists.")
   }
 
-  private def setupACL(privacy: String, user: serving.User, p: DirectoryEntry): Unit = {
-    privacy match {
-      case "private" =>
-        p.writeACL = user.email
-        p.readACL = user.email
-      case "public-read" =>
-        p.writeACL = user.email
-        p.readACL = "*"
-      case "public-write" =>
-        p.writeACL = "*"
-        p.readACL = "*"
-    }
-  }
-
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val p = entry.asNewProjectFrame()
-    setupACL(request.privacy, user, p)
+    p.setupACL(request.privacy, user)
     if (request.notes != "") {
       ops.apply(user, p.subproject, Operations.addNotesOperation(request.notes))
     }
@@ -354,7 +338,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val dir = entry.asNewDirectory()
-    setupACL(request.privacy, user, dir)
+    dir.setupACL(request.privacy, user)
   }
 
   def discardEntry(
@@ -637,16 +621,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
       workflow.description,
       workflow.stepsAsGroovy)
   }
-
-  def saveTable(user: serving.User, request: SaveCheckpointAsTableRequest): FEOption =
-    metaManager.synchronized {
-      assertNameNotExists(request.tableName)
-      val entry = DirectoryEntry.fromName(request.tableName)
-      entry.assertParentWriteAllowedFrom(user)
-      val table = entry.asNewTableFrame(request.checkpoint)
-      setupACL(request.privacy, user, table)
-      FEOption.titledCheckpoint(table.checkpoint, table.name, s"|${Table.VertexTableName}")
-    }
 
 }
 

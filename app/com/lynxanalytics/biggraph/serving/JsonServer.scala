@@ -241,7 +241,6 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
-  implicit val rSaveCheckpointAsTableRequest = json.Json.reads[SaveCheckpointAsTableRequest]
 
   implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
@@ -255,7 +254,6 @@ object FrontendJson {
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
   implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
   implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
-  implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -375,7 +373,6 @@ object ProductionJsonServer extends JsonServer {
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
   def workflow = jsonGet(bigGraphController.workflow)
-  def saveTable = jsonPost(bigGraphController.saveTable)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
