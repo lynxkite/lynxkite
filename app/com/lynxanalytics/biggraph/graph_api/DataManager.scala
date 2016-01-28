@@ -126,10 +126,7 @@ class DataManager(sc: spark.SparkContext,
       try {
         func
       } catch {
-        case t: Throwable => {
-          log.error("future failed:", t)
-          println(s"future failed: $t")
-        }
+        case t: Throwable => log.error("future failed:", t)
       }
     }
     loggedFutures.put(f, ())

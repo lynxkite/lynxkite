@@ -12,28 +12,12 @@ import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
 // The combined type helps us joining arbitrary number of different typed attributes.
 case class DynamicValue(
-    string: String = "",
-    defined: Boolean = true,
-    double: Option[Double] = None,
-    x: Option[Double] = None,
-    y: Option[Double] = None) extends ToJson {
-  override def toJson = Json.obj(
-    "string" -> string,
-    "defined" -> defined,
-    "double" -> double,
-    "x" -> x,
-    "y" -> y)
-}
-
-object DynamicValue extends FromJson[DynamicValue] {
-  def fromJson(j: json.JsValue) =
-    DynamicValue(
-      (j \ "string").as[String],
-      (j \ "defined").as[Boolean],
-      (j \ "double").as[Option[Double]],
-      (j \ "x").as[Option[Double]],
-      (j \ "y").as[Option[Double]])
-
+  string: String = "",
+  defined: Boolean = true,
+  double: Option[Double] = None,
+  x: Option[Double] = None,
+  y: Option[Double] = None)
+object DynamicValue {
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
     if (typeOf[T] =:= typeOf[Double]) value => {
@@ -448,6 +432,9 @@ case class ScalarToJSValue[T]()
 
 object TypeTagToFormat {
 
+  implicit val formatDynamicFormat = json.Json.format[DynamicValue]
+  implicit val formatEdge = json.Json.format[Edge]
+
   implicit object ToJsonFormat extends json.Format[ToJson] {
     def writes(t: ToJson): JsValue = {
       t.toTypedJson
@@ -462,13 +449,13 @@ object TypeTagToFormat {
     implicitly[json.Format[Option[T]]]
   }
 
-  def tupleToFormat[A, B](a: TypeTag[A], b: TypeTag[B]): json.Format[(A, B)] = {
+  def pairToFormat[A, B](a: TypeTag[A], b: TypeTag[B]): json.Format[(A, B)] = {
     implicit val innerFormat1 = typeTagToFormat(a)
     implicit val innerFormat2 = typeTagToFormat(b)
-    new TupleFormat[A, B]
+    new PairFormat[A, B]
   }
 
-  class TupleFormat[A: json.Format, B: json.Format] extends json.Format[(A, B)] {
+  class PairFormat[A: json.Format, B: json.Format] extends json.Format[(A, B)] {
     def reads(j: json.JsValue): json.JsSuccess[(A, B)] = {
       json.JsSuccess(((j \ "first").as[A], (j \ "second").as[B]))
     }
@@ -482,19 +469,23 @@ object TypeTagToFormat {
 
   class MapFormat[A: json.Format, B: json.Format] extends json.Format[Map[A, B]] {
     def reads(jv: json.JsValue): json.JsSuccess[Map[A, B]] = {
-      val keys = (jv \ "keys").as[Seq[A]]
-      val values = (jv \ "values").as[Seq[B]]
-      assert(keys.size == values.size)
-      val res = keys.zip(values).toMap
-      json.JsSuccess(res)
+      val extracted = jv match {
+        case JsArray(arr) => arr.map {
+          element => (element \ "key").as[A] -> (element \ "val").as[B]
+        }
+        case _ => ???
+      }
+      json.JsSuccess(extracted.toMap)
     }
     def writes(v: Map[A, B]): json.JsValue = {
-      val keys = v.keys.map { x => json.Json.toJson(x) }
-      val values = v.values.map { x => json.Json.toJson(x) }
-      json.Json.obj(
-        "keys" -> json.JsArray(keys.toSeq),
-        "values" -> json.JsArray(values.toSeq)
-      )
+      val sss = v.map {
+        case (key, value) =>
+          json.Json.obj(
+            "key" -> json.Json.toJson(key),
+            "val" -> json.Json.toJson(value)
+          )
+      }.toSeq
+      JsArray(sss)
     }
   }
 
@@ -516,37 +507,44 @@ object TypeTagToFormat {
 
   def typeTagToFormat[T](tag: TypeTag[T]): json.Format[T] = {
 
-    val t = tag.tpe
-    if (t =:= typeOf[String]) implicitly[json.Format[String]].asInstanceOf[json.Format[T]]
-    else if (t =:= typeOf[Double]) implicitly[json.Format[Double]].asInstanceOf[json.Format[T]]
-    else if (t =:= typeOf[Long]) implicitly[json.Format[Long]].asInstanceOf[json.Format[T]]
-    else if (t =:= typeOf[Boolean]) implicitly[json.Format[Boolean]].asInstanceOf[json.Format[T]]
-    else if (t =:= typeOf[Int]) implicitly[json.Format[Int]].asInstanceOf[json.Format[T]]
-    else if (t =:= typeOf[Float]) implicitly[json.Format[Float]].asInstanceOf[json.Format[T]]
-    else if (t <:< typeOf[ToJson]) ToJsonFormat.asInstanceOf[json.Format[T]]
-    else if (t <:< typeOf[Option[_]]) {
-      val innerType = TypeTagUtil.typeArgs(tag).head
-      optionToFormat(innerType).asInstanceOf[json.Format[T]]
-    } else if (t <:< typeOf[(_, _)]) {
-      val firstInnerType = TypeTagUtil.typeArgs(tag).head
-      val secondInnerType = TypeTagUtil.typeArgs(tag).drop(1).head
-      tupleToFormat(firstInnerType, secondInnerType).asInstanceOf[json.Format[T]]
-    } else if (t <:< typeOf[Seq[(_, _)]]) {
-      val innerType = TypeTagUtil.typeArgs(tag).head
-      seqToFormat(innerType).asInstanceOf[json.Format[T]]
-    } else if (t <:< typeOf[Seq[_]]) {
-      val innerType = TypeTagUtil.typeArgs(tag).head
-      seqToFormat(innerType).asInstanceOf[json.Format[T]]
-    } else if (t <:< typeOf[Set[_]]) {
-      val innerType = TypeTagUtil.typeArgs(tag).head
-      setToFormat(innerType).asInstanceOf[json.Format[T]]
-    } else if (t <:< typeOf[Map[_, _]]) {
-      val firstInnerType = TypeTagUtil.typeArgs(tag).head
-      val secondInnerType = TypeTagUtil.typeArgs(tag).drop(1).head
-      mapToFormat(firstInnerType, secondInnerType).asInstanceOf[json.Format[T]]
-    } else {
-      assert(false, s"Unsupported type: $t")
-      ???
+    case class TypeWrapper(t: Type) {
+      def isASimple(other: Type) = t =:= other
+      def isA(other: Type) = t.typeConstructor =:= other.typeConstructor
+      def isASubtypeOf(other: Type) = t <:< other
     }
+
+    val t = TypeWrapper(tag.tpe)
+    val fmt = {
+      if (t isASimple typeOf[String]) implicitly[json.Format[String]]
+      else if (t isASimple typeOf[Double]) implicitly[json.Format[Double]]
+      else if (t isASimple typeOf[Long]) implicitly[json.Format[Long]]
+      else if (t isASimple typeOf[Boolean]) implicitly[json.Format[Boolean]]
+      else if (t isASimple typeOf[Int]) implicitly[json.Format[Int]]
+      else if (t isASimple typeOf[Float]) implicitly[json.Format[Float]]
+      else if (t isASimple typeOf[DynamicValue]) implicitly[json.Format[DynamicValue]]
+      else if (t isASimple typeOf[Edge]) implicitly[json.Format[Edge]]
+      else if (t isASubtypeOf typeOf[ToJson]) ToJsonFormat
+      else if (t isA typeOf[Option[_]]) {
+        val innerType = TypeTagUtil.typeArgs(tag).head
+        optionToFormat(innerType)
+      } else if (t isA typeOf[(_, _)]) {
+        val firstInnerType = TypeTagUtil.typeArgs(tag).head
+        val secondInnerType = TypeTagUtil.typeArgs(tag).drop(1).head
+        pairToFormat(firstInnerType, secondInnerType)
+      } else if (t isA typeOf[Seq[_]]) {
+        val innerType = TypeTagUtil.typeArgs(tag).head
+        seqToFormat(innerType)
+      } else if (t isA typeOf[Set[_]]) {
+        val innerType = TypeTagUtil.typeArgs(tag).head
+        setToFormat(innerType)
+      } else if (t isA typeOf[Map[_, _]]) {
+        val firstInnerType = TypeTagUtil.typeArgs(tag).head
+        val secondInnerType = TypeTagUtil.typeArgs(tag).drop(1).head
+        mapToFormat(firstInnerType, secondInnerType)
+      } else {
+        throw new AssertionError(s"Unsupported type: $t")
+      }
+    }.asInstanceOf[json.Format[T]]
+    fmt
   }
 }
