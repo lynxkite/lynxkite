@@ -14,7 +14,7 @@ sources in doc in Compile := List()  // Disable doc generation.
 
 publishArtifact in packageSrc := false  // Don't package source.
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.3"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
 
@@ -38,6 +38,7 @@ libraryDependencies ++= Seq(
   "org.mozilla" % "rhino" % "1.7.7",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
+  "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
   "com.twitter" % "algebird-core_2.10" % "0.9.0",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
