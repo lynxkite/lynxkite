@@ -90,7 +90,8 @@ case class FEOperationParameterMeta(
     defaultValue: String,
     options: List[FEOption],
     multipleChoice: Boolean,
-    hasFixedOptions: Boolean) {
+    hasFixedOptions: Boolean,
+    payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
 
   val validKinds = Seq(
     "default", // A simple textbox.
@@ -98,6 +99,7 @@ case class FEOperationParameterMeta(
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
     "code", // JavaScript code
+    "model", // A special kind to set model parameters.
     "table") // A table.
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
@@ -633,11 +635,12 @@ abstract class OperationParameterMeta {
   val multipleChoice: Boolean
   val mandatory: Boolean
   val hasFixedOptions: Boolean
+  val payload: Option[json.JsValue]
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions)
+    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions, payload)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
