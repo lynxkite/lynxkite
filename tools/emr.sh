@@ -60,7 +60,7 @@ fi
 COMMAND=$1
 SPEC=$2
 shift 2
-COMMAND_ARGS=$@
+COMMAND_ARGS=( "$@" )
 source ${SPEC}
 
 # Spark installation to use for this cluster.
@@ -279,10 +279,11 @@ metarestore)
 
 # ======
 reset)
+  ConfirmDataLoss
   MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop && \
-    rm -Rf kite_meta && \
-    hadoop fs -rm -r /data && \
+  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop; \
+    rm -Rf kite_meta; \
+    hadoop fs -rm -r /data; \
     ./biggraphstage/bin/biggraph start"
   ;;
 
@@ -316,15 +317,17 @@ send "kite\r"
 EOF
 
   # 1.2. Invoke each groovy script:
-  for GROOVY_SCRIPT in ${COMMAND_ARGS}; do
-    # Let's hope the scripts have unique names!
-    GROOVY_SCRIPT_NAME=$(basename $GROOVY_SCRIPT)
+  CNT=1
+  for GROOVY_SCRIPT in "${COMMAND_ARGS[@]}"; do
+    GROOVY_SCRIPT_BASENAME=$(basename "$GROOVY_SCRIPT")
+    REMOTE_GROOVY_SCRIPT_PATH="${REMOTE_BATCH_DIR}/script${CNT}_${GROOVY_SCRIPT_BASENAME}"
+    CNT=$((CNT + 1))
     # 1.2.1. Copy Groovy script to master
-    aws emr put ${MASTER_ACCESS} --src ${GROOVY_SCRIPT} --dest "${REMOTE_BATCH_DIR}/${GROOVY_SCRIPT_NAME}"
+    aws emr put ${MASTER_ACCESS} --src "${GROOVY_SCRIPT}" --dest "\"${REMOTE_GROOVY_SCRIPT_PATH}\""
     # 1.2.2. Add Groovy script invocation into our master script.
     cat >>${MASTER_SCRIPT} <<EOF
 expect "@ "
-send "batch.runScript(\"${REMOTE_BATCH_DIR}/${GROOVY_SCRIPT_NAME}\")\r"
+send "batch.runScript(\"${REMOTE_GROOVY_SCRIPT_PATH}\")\r"
 EOF
   done
   # 1.3. SSH logout:
