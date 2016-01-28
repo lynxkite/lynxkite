@@ -13,11 +13,10 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.graph_api.io
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.table
-import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.model
 
 import java.io.File
 import org.apache.spark
@@ -192,7 +191,7 @@ object FrontendJson {
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
-  implicit val wFEModel = json.Json.writes[FEModel]
+  implicit val wFEModel = json.Json.writes[model.FEModel]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
 
