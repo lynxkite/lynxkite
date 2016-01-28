@@ -15,7 +15,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
         scope.binding = [];
         if (activeModel) {
           for (var i = 0; i < activeModel.featureNames.length; ++i) {
-            for (var j in scope.param.payload.attrs) {
+            for (var j = 0; j < scope.param.payload.attrs.length; ++j) {
               var attr = scope.param.payload.attrs[j];
               if (attr.id === activeModel.featureNames[i]) {
                 scope.binding[i] = attr.id;
