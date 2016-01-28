@@ -696,17 +696,6 @@ testLib = {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
           } else if (kind === 'file') {
             testLib.uploadIntoFileParameter(e, value)
-            var input = e.element(by.id('file'));
-            // Need to unhide flowjs's secret file uploader.
-            browser.executeScript(
-              function(input) {
-                input.style.visibility = 'visible';
-                input.style.height = '1px';
-                input.style.width = '1px';
-                input.style.opacity = 1;
-              },
-              input.getWebElement());
-            input.sendKeys(value);
           } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
