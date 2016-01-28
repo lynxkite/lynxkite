@@ -39,6 +39,7 @@ output file format or database then press the
 The supported output formats and their respective options are described in the following sections.
 LynxKite fully interoperates with all of these formats. (Both import and export is supported.)
 
+[[export-csv]]
 ### CSV
 
 CSV stands for comma-separated values. It is a common human-readable file format where each record
@@ -63,6 +64,7 @@ the header will be included in each of them. When such a data set is directly do
 will appear multiple times in the resulting file.
 ====
 
+[[export-json]]
 ### JSON
 
 JSON is a rich human-readable data format. It produces larger files than CSV but can represent
@@ -75,6 +77,7 @@ The distributed file-system path of the output file. It defaults to `<download>`
 output file will be downloaded through the browser. This is the simplest option for small data sets.
 ====
 
+[[export-parquet]]
 ### Apache Parquet
 
 https://parquet.apache.org/[Apache Parquet] is a columnar data storage format.
@@ -84,6 +87,7 @@ https://parquet.apache.org/[Apache Parquet] is a columnar data storage format.
 The distributed file-system path of the output file.
 ====
 
+[[export-orc]]
 ### Apache ORC
 
 https://orc.apache.org/[Apache ORC] is a columnar data storage format.
@@ -93,6 +97,7 @@ https://orc.apache.org/[Apache ORC] is a columnar data storage format.
 The distributed file-system path of the output file.
 ====
 
+[[export-jdbc]]
 ### JDBC
 
 JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
@@ -119,6 +124,7 @@ it already exists. Use this mode with great care.
 table to already exist and it will add the exported data at the end of the existing table.
 ====
 
+[[export-lynxkite-table]]
 ### LynxKite table
 
 The results of a query can also be saved as a LynxKite table. This makes it possible to make further

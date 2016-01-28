@@ -34,7 +34,7 @@
 
   <div class="form-group" ng-show="exportFormat !== 'jdbc'">
     <label for="exportPath" class="col-sm-4 control-label">
-      Path <help-popup href="csv-path"></help-popup>
+      Path <help-popup href="export-csv-path"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportPath" ng-model="exportPath" value="<download>">
@@ -43,7 +43,7 @@
 
   <div class="form-group" ng-show="exportFormat === 'csv'">
     <label for="exportDelimiter" class="col-sm-4 control-label">
-      Delimiter <help-popup href="csv-delimiter"></help-popup>
+      Delimiter <help-popup href="export-csv-delimiter"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportDelimiter" ng-model="exportDelimiter" value=",">
@@ -52,7 +52,7 @@
 
   <div class="form-group" ng-show="exportFormat === 'csv'">
     <label for="exportQuote" class="col-sm-4 control-label">
-      Quote <help-popup href="csv-quote"></help-popup>
+      Quote <help-popup href="export-csv-quote"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportQuote" ng-model="exportQuote" value="&quot;">
@@ -64,7 +64,7 @@
       <div class="checkbox">
         <label>
           <input type="checkbox" ng-model="exportHeader"> Include header
-          <help-popup href="csv-header"></help-popup>
+          <help-popup href="export-csv-header"></help-popup>
         </label>
       </div>
     </div>
@@ -72,7 +72,7 @@
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
     <label for="exportJdbcUrl" class="col-sm-4 control-label">
-      JDBC URL <help-popup href="jdbc-url"></help-popup>
+      JDBC URL <help-popup href="export-jdbc-url"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportJdbcUrl" ng-model="exportJdbcUrl" placeholder="jdbc:...">
@@ -81,7 +81,7 @@
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
     <label for="exportTable" class="col-sm-4 control-label">
-      Table <help-popup href="jdbc-table"></help-popup>
+      Table <help-popup href="export-jdbc-table"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportTable" ng-model="exportTable">
@@ -90,7 +90,7 @@
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
     <label for="exportMode" class="col-sm-4 control-label">
-      <help-popup href="jdbc-mode"></help-popup>
+      <help-popup href="export-jdbc-mode"></help-popup>
     </label>
     <div class="col-sm-8">
       <select class="form-control" id="exportMode" ng-model="exportMode">
