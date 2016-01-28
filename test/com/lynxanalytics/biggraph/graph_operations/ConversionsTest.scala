@@ -82,7 +82,7 @@ class ConversionsTest extends FunSuite with TestGraphOp {
 
   test("TypeTag -> json conversions (Scala collections)") {
     val seqOfTuples = (1 to 10).zip(11 to 20).seq
-    testTag(TagTester(seqOfTuples))
+    testTag(TagTester[Seq[(Int, Int)]](seqOfTuples))
 
     val mapOfIntString = Map(1 -> "one", 2 -> "two", 3 -> "three")
     testTag(TagTester(mapOfIntString))
