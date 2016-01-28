@@ -2,9 +2,12 @@ import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 
 name := "biggraph"
 
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:PermSize=512M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+
 javaOptions in Test := Seq(
   "-Dsun.io.serialization.extendedDebugInfo=true",
-  "-Dbiggraph.default.partitions.per.core=1")
+  "-Dbiggraph.default.partitions.per.core=1",
+  "-Xmx2048M", "-XX:PermSize=512M", "-XX:MaxPermSize=2048M")
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked", "-Xfatal-warnings")
 
