@@ -256,7 +256,7 @@ ssh)
 # ======
 cmd)
   MASTER_HOSTNAME=$(GetMasterHostName)
-  $SSH -A hadoop@${MASTER_HOSTNAME} ${COMMAND_ARGS}
+  $SSH -A hadoop@${MASTER_HOSTNAME} "${COMMAND_ARGS[@]}"
   ;;
 
 # ======
