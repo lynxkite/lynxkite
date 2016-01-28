@@ -145,7 +145,9 @@ class LynxGroovyInterface(ctx: GroovyContext) {
   def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
     import ctx.metaManager
     import ctx.dataManager
-    DirectoryEntry.fromName(tableName).asNewTableFrame(table.TableImport.importDataFrame(df), notes)
+    DirectoryEntry.fromName(tableName).asNewTableFrame(
+      table.TableImport.importDataFrameAsync(df),
+      notes)
   }
 
 }

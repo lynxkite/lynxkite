@@ -20,6 +20,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Batch scripts can save DataFrames as tables.
  - Introduce operation _Copy edges to base project_.
  - emr.sh can now invoke groovy scripts on a remote cluster.
+ - Introduce Explicit models, create them with the _Train linear regression model_
+   operation and use them for predictions with _Predict from model_.
 
 ### 1.6.1.1
 
