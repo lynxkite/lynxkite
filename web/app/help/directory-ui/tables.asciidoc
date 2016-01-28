@@ -1,0 +1,21 @@
+## Tables
+
+Tables represent simple record-oriented data in LynxKite. Tables can be imported from external data
+sources like files or databases, or they can be created from SQL queries on graphs. Tables are very
+much like files: they just sit there and store the data. A table has to be imported into a project
+to start working with it. See the import operations on projects for more details.
+
+Access the dropdown menu for a table in the project browser
+(+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
+to discard, duplicate, or rename the table. The rename command also makes it possible to move the
+table to a different path.
+
+The import operations also allow creating tables, but a table can also be created from the project
+browser. Click +++
+<span class="project-list" style="display: inline-block;">
+  <span class="entry" style="display: block;">
+    <span style="display: block;" class="icon glyphicon glyphicon-plus"></span>
+    <span class="lead">Import table</span>
+  </span>
+</span>
++++ to create a table inside the current folder.
