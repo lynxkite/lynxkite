@@ -17,6 +17,7 @@ if [ "$#" -ne 2 ]; then
   echo "   terminate   - stops and destroys a running cluster. Use s3copy and metacopy"
   echo "                 to save state."
   echo "   s3copy      - copies the data directory to s3 persistent storage"
+  echo "                 You need to have \"connect\" running for this. See below."
   echo "   metacopy    - copies the meta directory to your local machine"
   echo "   metarestore - copies the meta directory from your local machines to the cluster"
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
@@ -104,31 +105,35 @@ case $1 in
 
 # ======
 start)
-  CheckDataRepo
+  if [ -n "${S3_DATAREPO:-}" ]; then
+    CheckDataRepo
+    EMR_LOG_URI="--log-uri s3n://${S3_DATAREPO}/emr-logs/ --enable-debugging"
+  else
+    EMR_LOG_URI=""
+  fi
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole"}' \
     --service-role EMR_DefaultRole \
-    --enable-debugging \
     --release-label emr-4.2.0 \
-    --log-uri "s3n://${S3_DATAREPO}/emr-logs/" \
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
-    --region ${REGION}
+    --region ${REGION} \
+    ${EMR_LOG_URI} \
   )
   ;&
 
 # ====== fall-through
 reconfigure)
-  CheckDataRepo
   MASTER_ACCESS=$(GetMasterAccessParams)
 
   # Prepare a config file.
   CONFIG_FILE="/tmp/${CLUSTER_NAME}.kiterc"
   HDFS_DATA='hdfs://$(hostname):8020/data'
   if [ -n "${S3_DATAREPO:-}" ]; then
+    CheckDataRepo
     KITE_DATA_DIR="s3://${S3_DATAREPO}"
     KITE_EPHEMERAL_DATA_DIR="$HDFS_DATA"
   else
@@ -216,18 +221,19 @@ ssh)
   $SSH -A hadoop@${MASTER_HOSTNAME}
   ;;
 
+# ======
 metacopy)
-  MASTER_HOSTNAME=$(GetMasterHostName)
-  rsync -ave "$SSH" -r \
-    hadoop@${MASTER_HOSTNAME}:kite_meta \
-    ${CLUSTER_NAME}.kite_meta/
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  mkdir -p ${HOME}/kite_meta_backups
+  aws emr ssh $MASTER_ACCESS --command 'tar cvfz kite_meta.tgz kite_meta'
+  aws emr get $MASTER_ACCESS --src kite_meta.tgz --dest "${HOME}/kite_meta_backups/${CLUSTER_NAME}.kite_meta.tgz"
   ;;
 
+# ======
 metarestore)
-  MASTER_HOSTNAME=$(GetMasterHostName)
-  rsync -ave "$SSH" -r \
-    ${CLUSTER_NAME}.kite_meta/ \
-    hadoop@${MASTER_HOSTNAME}:kite_meta
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr put $MASTER_ACCESS --dest kite_meta.tgz --src "${HOME}/kite_meta_backups/${CLUSTER_NAME}.kite_meta.tgz"
+  aws emr ssh $MASTER_ACCESS --command 'rm -Rf kite_meta && tar xf kite_meta.tgz'
   ;;
 
 # ======

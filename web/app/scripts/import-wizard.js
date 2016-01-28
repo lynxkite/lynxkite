@@ -16,15 +16,17 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.onCancel();
       };
 
+      scope.requestInProgress = 0;
       function importStuff(endpoint, parameters) {
-        scope.inputsDisabled = true;
-        scope.importInProgress = true;
-        util.post(endpoint, parameters).catch(function() {
-          scope.inputsDisabled = false;
-        }).finally(function() {
-          scope.importInProgress = false;
-        }).then(function(importResult) {
-          scope.checkpoint = importResult.checkpoint;
+        parameters.table = scope.tableName;
+        parameters.privacy = 'public-read';
+        scope.requestInProgress += 1;
+        var request = util.post(endpoint, parameters);
+        request.then(function(result) {
+          scope.tableImported = result;
+        });
+        request.finally(function() {
+          scope.requestInProgress -= 1;
         });
       }
 
@@ -45,28 +47,9 @@ angular.module('biggraph').directive('importWizard', function(util) {
           '/ajax/importJdbc',
           {
             jdbcUrl: scope.jdbc.url,
-            table: scope.jdbc.table,
+            jdbcTable: scope.jdbc.table,
             keyColumn: scope.jdbc.keyColumn,
             columnsToImport: columnsToImport,
-          });
-      };
-      scope.saveTable = function(event) {
-        event.stopPropagation();
-        scope.savingTable = true;
-        var tableName = scope.tableName;
-        if (scope.currentDirectory) {
-          tableName = scope.currentDirectory + '/' + tableName;
-        }
-        util.post(
-          '/ajax/saveTable',
-          {
-            'tableName': tableName,
-            'checkpoint': scope.checkpoint,
-            'privacy': 'public-read',
-          }).then(function(result) {
-            scope.tableImported = result;
-          }).finally(function() {
-            scope.savingTable = false;
           });
       };
     },

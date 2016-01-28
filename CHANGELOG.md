@@ -20,6 +20,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
  - Introduce operation _Copy edges to base project_.
+ - Introduce Explicit models, create them with the _Train linear regression model_
+   operation and use them for predictions with _Predict from model_.
 
 ### 1.6.1.1
 

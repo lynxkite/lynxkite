@@ -13,9 +13,11 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_api.io
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.table
+import com.lynxanalytics.biggraph.model._
 
 import java.io.File
 import org.apache.spark
@@ -190,6 +192,7 @@ object FrontendJson {
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wFEModel = json.Json.writes[FEModel]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
 
@@ -241,10 +244,10 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
-  implicit val rSaveCheckpointAsTableRequest = json.Json.reads[SaveCheckpointAsTableRequest]
 
   implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
+  implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
   implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
@@ -255,7 +258,6 @@ object FrontendJson {
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
   implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
   implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
-  implicit val wTableImportResponse = json.Json.writes[TableImportResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -375,10 +377,10 @@ object ProductionJsonServer extends JsonServer {
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
   def workflow = jsonGet(bigGraphController.workflow)
-  def saveTable = jsonPost(bigGraphController.saveTable)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
+  def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
   def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)

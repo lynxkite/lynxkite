@@ -21,7 +21,6 @@ POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
 POST /ajax/renameEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameEntry
 POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
-POST /ajax/saveTable com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveTable
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
@@ -29,6 +28,7 @@ GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
+POST /ajax/exportSQLQueryToTable   com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToTable
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
 POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson
 POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToParquet

@@ -30,14 +30,26 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         }
       };
 
-      scope.openExportOptions = function() {
-        scope.showExportOptions = true;
-        scope.exportFormat = 'csv';
-        scope.exportPath = '<download>';
-        scope.exportDelimiter = ',';
-        scope.exportQuote = '"';
-        scope.exportHeader = false;
-      };
+      scope.$watch('exportFormat', function(exportFormat) {
+        if (exportFormat === 'table') {
+          scope.exportTable = '';
+        } else if (exportFormat === 'csv') {
+          scope.exportPath = '<download>';
+          scope.exportDelimiter = ',';
+          scope.exportQuote = '"';
+          scope.exportHeader = false;
+        } else if (exportFormat === 'json') {
+          scope.exportPath = '<download>';
+        } else if (exportFormat === 'parquet') {
+          scope.exportPath = '';
+        } else if (exportFormat === 'orc') {
+          scope.exportPath = '';
+        } else if (exportFormat === 'jdbc') {
+          scope.exportJdbcUrl = '';
+          scope.exportTable = '';
+          scope.exportMode = 'error';
+        }
+      });
 
       scope.export = function() {
         if (!scope.sql) {
@@ -50,7 +62,11 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             },
           };
           scope.inProgress += 1;
-          if (scope.exportFormat === 'csv') {
+          if (scope.exportFormat === 'table') {
+            req.table = scope.exportTable;
+            req.privacy = 'public-read';
+            scope.result = util.post('/ajax/exportSQLQueryToTable', req);
+          } else if (scope.exportFormat === 'csv') {
             req.path = scope.exportPath;
             req.delimiter = scope.exportDelimiter;
             req.quote = scope.exportQuote;
