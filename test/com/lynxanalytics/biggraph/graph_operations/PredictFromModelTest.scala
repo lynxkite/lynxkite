@@ -1,0 +1,22 @@
+package com.lynxanalytics.biggraph.graph_operations
+
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.model._
+
+class PredictFromModelTest extends ModelTestBase {
+  test("test prediction from model") {
+    val g = graph(4)
+    val m = model(
+      method = "Linear regression",
+      labelName = "age",
+      label = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
+      featureNames = List("yob"),
+      attrs = Seq(Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955)),
+      graph = g)
+
+    val f = Seq(AddDoubleVertexAttribute.run(g.vs, Map(0 -> 2000)))
+    val p = predict(m, f).rdd.map { case (_, v) => v }.collect
+    assertRoughlyEquals(p(0), 15, 0.1)
+  }
+}
