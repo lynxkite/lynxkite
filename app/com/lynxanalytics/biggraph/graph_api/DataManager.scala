@@ -9,6 +9,7 @@ import java.util.UUID
 import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -33,7 +34,7 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  val masterSQLContext = new SQLContext(sc)
+  val masterSQLContext = new HiveContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
