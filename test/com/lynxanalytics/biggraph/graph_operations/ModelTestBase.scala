@@ -1,3 +1,4 @@
+// A base class for model related tests with utility methods.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.FunSuite
@@ -32,12 +33,8 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     SmallTestGraph((0 until numVertices).map(v => v -> Seq()).toMap).result
   }
 
-  def assertRoughlyEquals(x: Double, y: Double, precision: Double): Unit = {
-    assert(Math.abs(x - y) < precision, s"$x does not equal to $y with $precision precision")
-  }
-
-  def doubleRDD(v: Double): rdd.RDD[Double] = {
-    sparkContext.parallelize(Array(v))
+  def assertRoughlyEquals(x: Double, y: Double, maxDifference: Double): Unit = {
+    assert(Math.abs(x - y) < maxDifference, s"$x does not equal to $y with $maxDifference precision")
   }
 
   def vectorRDD(v: Array[Double]): rdd.RDD[mllib.linalg.Vector] = {

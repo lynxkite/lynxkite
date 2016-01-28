@@ -15,8 +15,8 @@ class PredictFromModelTest extends ModelTestBase {
       attrs = Seq(Map(0 -> 1990, 1 -> 1975, 2 -> 1985, 3 -> 1955)),
       graph = g)
 
-    val f = Seq(AddDoubleVertexAttribute.run(g.vs, Map(0 -> 2000)))
-    val p = predict(m, f).rdd.map { case (_, v) => v }.collect
-    assertRoughlyEquals(p(0), 15, 0.1)
+    val yob = Seq(AddDoubleVertexAttribute.run(g.vs, Map(0 -> 2000)))
+    val age = predict(m, yob).rdd.values.collect()(0)
+    assertRoughlyEquals(age, 15, 0.1)
   }
 }
