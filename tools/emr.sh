@@ -80,7 +80,11 @@ GetMasterHostName() {
 }
 
 GetClusterId() {
-  aws emr list-clusters --active | grep -B 1 "\"Name\": \"${CLUSTER_NAME}\"" | head -1 | grep '"Id":' | cut -d'"' -f 4
+  aws emr list-clusters --cluster-states STARTING BOOTSTRAPPING RUNNING WAITING | \
+    grep -B 1 "\"Name\": \"${CLUSTER_NAME}\"" | \
+    head -1 | \
+    grep '"Id":' | \
+    cut -d'"' -f 4
 }
 
 GetMasterAccessParams() {
@@ -280,6 +284,10 @@ metarestore)
 # ======
 reset)
   ConfirmDataLoss
+  ;&
+
+# ====== fal-through
+reset-yes)
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
@@ -290,7 +298,16 @@ reset)
 # ======
 terminate)
   ConfirmDataLoss
+  ;&
+
+# ===== fall-through
+terminate-yes)
   aws emr terminate-clusters --cluster-ids $(GetClusterId)
+  ;;
+
+# ======
+clusterid)
+  echo $(GetClusterId)
   ;;
 
 # ======
