@@ -197,7 +197,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
-    val table = TableImport.importDataFrame(dataFrame)
+    val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
     run("Example Graph")
@@ -225,7 +225,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
-    val table = TableImport.importDataFrame(dataFrame)
+    val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
     run("Example Graph")
@@ -248,7 +248,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
-    val table = TableImport.importDataFrame(dataFrame)
+    val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
     run("Example Graph")

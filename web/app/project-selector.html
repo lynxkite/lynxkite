@@ -143,6 +143,9 @@
           <value ref="vertexCounts[object.name]"></value> vertices,
           <value ref="edgeCounts[object.name]"></value> edges.
         </span>
+        <span ng-if="isTable(object)">
+          <value ref="vertexCounts[object.name]"></value> rows.
+        </span>
         {{object.notes}}
       </div>
     </div>

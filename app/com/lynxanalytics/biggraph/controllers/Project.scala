@@ -28,6 +28,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.serving.User
 
 import java.io.File
@@ -109,6 +110,13 @@ sealed trait ProjectViewer {
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
+  def models: Map[String, ModelMeta] = {
+    scalars
+      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[Model] }
+      .map {
+        case (k, v) => k -> v.source.operation.asInstanceOf[ModelMeta]
+      }
+  }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations
@@ -947,6 +955,21 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def writeACL: String = get(rootDir / "writeACL", "*")
   def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
+
+  // Some simple ACL definitions for object creation.
+  def setupACL(privacy: String, user: User): Unit = {
+    privacy match {
+      case "private" =>
+        writeACL = user.email
+        readACL = user.email
+      case "public-read" =>
+        writeACL = user.email
+        readACL = "*"
+      case "public-write" =>
+        writeACL = "*"
+        readACL = "*"
+    }
+  }
 
   def assertReadAllowedFrom(user: User): Unit = {
     assert(readAllowedFrom(user), s"User $user does not have read access to $this.")
