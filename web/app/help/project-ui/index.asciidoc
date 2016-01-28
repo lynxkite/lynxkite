@@ -1,4 +1,7 @@
-# User interface reference
+# Project user interface
+
+A project can be opened from the project browser. This section describes the user interface of a
+project.
 
 include::project-header.asciidoc[]
 
@@ -7,8 +10,6 @@ include::graph-attributes.asciidoc[]
 include::attributes.asciidoc[]
 
 include::segmentations.asciidoc[]
-
-include::graph-visualizations.asciidoc[]
 
 include::filter-syntax.asciidoc[]
 
@@ -21,5 +22,3 @@ include::sql-box.asciidoc[]
 include::spark-ui.asciidoc[]
 
 include::hotkeys.asciidoc[]
-
-include::color-customization.asciidoc[]

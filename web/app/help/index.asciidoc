@@ -24,7 +24,9 @@ toc::[]
 
 include::intro/index.asciidoc[]
 
-include::ui/index.asciidoc[]
+include::project-ui/index.asciidoc[]
+
+include::visualization/index.asciidoc[]
 
 include::internals/index.asciidoc[]
 
