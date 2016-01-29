@@ -657,18 +657,21 @@ testLib = {
 
   // Deletes all projects and directories.
   discardAll: function() {
-    var defer = protractor.promise.defer();
-    request.post(
-      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-      { json: { fake: 1 } },
-      function(error, message) {
-        if (error || message.statusCode >= 400) {
-          defer.reject({ error : error, message : message });
-        } else {
-          defer.fulfill();
-        }
-      });
-    browser.controlFlow().execute(function() { return defer.promise; });
+    function sendRequest() {
+      var defer = protractor.promise.defer();
+      request.post(
+        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+        { json: { fake: 1 } },
+        function(error, message) {
+          if (error || message.statusCode >= 400) {
+            defer.reject({ error : error, message : message });
+          } else {
+            defer.fulfill();
+          }
+        });
+      return defer.promise;
+    }
+    browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
