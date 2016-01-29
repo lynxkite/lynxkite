@@ -162,6 +162,12 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.tree.model.Bin;"))
     kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyLowSplit"))
     kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyHighSplit"))
+
+    kryo.register(Class.forName("[Lorg.apache.spark.mllib.regression.impl.GLMRegressionModel$SaveLoadV1_0$Data;"))
+    kryo.register(Class.forName("org.apache.spark.mllib.regression.impl.GLMRegressionModel$SaveLoadV1_0$Data"))
+    kryo.register(Class.forName("[Lorg.apache.spark.sql.types.StructType;"))
+    kryo.register(Class.forName("org.apache.spark.mllib.linalg.VectorUDT"))
+    kryo.register(Class.forName("org.apache.spark.sql.catalyst.util.GenericArrayData"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -193,6 +199,7 @@ object BigGraphSparkContext {
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
+      .set("spark.io.compression.codec", "lz4")
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
       .set("spark.akka.threads",

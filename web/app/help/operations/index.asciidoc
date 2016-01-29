@@ -58,6 +58,8 @@ include::convert-vertices-into-edges.asciidoc[]
 
 include::copy-edge-attribute.asciidoc[]
 
+include::copy-edges-to-base-project.asciidoc[]
+
 include::copy-edges-to-segmentation.asciidoc[]
 
 include::copy-graph-into-a-segmentation.asciidoc[]
@@ -85,6 +87,8 @@ include::create-scale-free-random-edge-bundle.asciidoc[]
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
 include::degree.asciidoc[]
+
+include::derive-scalar.asciidoc[]
 
 include::derived-edge-attribute.asciidoc[]
 
@@ -204,6 +208,8 @@ include::no-operation.asciidoc[]
 
 include::pagerank.asciidoc[]
 
+include::predict-from-model.asciidoc[]
+
 include::predict-vertex-attribute.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
@@ -233,6 +239,8 @@ include::segment-by-string-attribute.asciidoc[]
 include::shortest-path.asciidoc[]
 
 include::split-vertices.asciidoc[]
+
+include::train-linear-regression-model.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 

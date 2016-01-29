@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.JDBCQuoting.quoteIdentifier
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
@@ -17,13 +18,6 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types
 
 object SQLExport {
-  private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
-  def quoteIdentifier(s: String) = {
-    s match {
-      case SimpleIdentifier() => s
-      case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
-    }
-  }
   private def addRDDs(base: UniqueSortedRDD[ID, Seq[_]], rdds: Seq[UniqueSortedRDD[ID, _]]): RDD[Row] = {
     rdds.foldLeft(base) { (seqs, rdd) =>
       seqs
@@ -59,7 +53,7 @@ object SQLExport {
     for ((name, attr) <- attributes) {
       assert(attr.vertexSet == vertexSet, s"Attribute $name is not for vertex set $vertexSet")
     }
-    new SQLExport(dataManager.sqlContext, table, vertexSet.rdd, attributes.toSeq.sortBy(_._1).map {
+    new SQLExport(dataManager.masterSQLContext, table, vertexSet.rdd, attributes.toSeq.sortBy(_._1).map {
       case (name, attr) => sqlAttribute(name, attr)
     })
   }
@@ -74,7 +68,7 @@ object SQLExport {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Attribute $name is not for edge bundle $edgeBundle")
     }
-    new SQLExport(dataManager.sqlContext, table, edgeBundle.idSet.rdd, Seq(
+    new SQLExport(dataManager.masterSQLContext, table, edgeBundle.idSet.rdd, Seq(
       // The src and dst vertex ids are mandatory.
       SQLColumn(srcColumnName, types.LongType, edgeBundle.rdd.mapValues(_.src), nullable = false),
       SQLColumn(dstColumnName, types.LongType, edgeBundle.rdd.mapValues(_.dst), nullable = false)

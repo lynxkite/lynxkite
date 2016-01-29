@@ -12,12 +12,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
-  def saveAsFrame(name: String, editor: RootProjectEditor = project): ProjectFrame = {
-    val frame = ProjectFrame.fromName(name)
-    frame.initialize
-    frame.setCheckpoint(editor.rootState.checkpoint.get)
-    frame
-  }
+
   def clone(original: RootProjectEditor): RootProjectEditor = {
     val res = original.viewer.editor
     res.checkpoint = original.checkpoint

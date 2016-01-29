@@ -33,7 +33,7 @@ trait BigGraphEnvironment {
 
   private lazy val uniqueId = table.DefaultSource.register(this)
   def dataFrame: spark.sql.DataFrameReader = {
-    dataManager.sqlContext.read
+    dataManager.masterSQLContext.read
       .format("com.lynxanalytics.biggraph.table")
       .option("environment", uniqueId)
   }

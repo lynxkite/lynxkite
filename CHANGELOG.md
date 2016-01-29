@@ -6,9 +6,44 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Major changes to importing and exporting data. We introduce the concept of tables to improve
+   clarity and performance when working with external data.
+
+   Projects no longer depend on the input files. (They can be deleted after importing.) It becomes
+   easier to share raw data between projects. We have fewer operations (just _Import vertices from
+   table_ instead of _Import vertices from CSV files_ and _Import vertices from database_), but
+   support more formats (JSON, Parquet, ORC, and Hive are added) with a unified interface.
+
+   Tables are built on Apache Spark DataFrames. As a result, you can run SQL queries on graphs. (See
+   the SQL section at the bottom of a project.) Plus DataFrame-based data manipulation is now
+   possible from Groovy scripts.
+
+   Export operations are gone. Data can be exported in various formats through the SQL interface.
+   SQL results can also be saved as tables and re-imported as parts of a project.
+
+   For more details about the new features see the documentation.
  - Default home directory is moved under the 'Users' folder.
  - Root folder is default readable by everyone and writable by only admin users for
    bare new Kite installations.
+ - Edges and segmentation links can now also be accessed as DataFrames from batch scripts.
+ - New _Derive scalar_ operation.
+ - Possible to create visualizations with lighter Google Maps as a background thanks to
+   adjustable map filters.
+ - Upgrade to Hadoop 2 in our default Amazon EC2 setup.
+ - Remove support of Hadoop 1.
+ - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
+   now the recommended way to run Kite clusters on Amazon.
+ - Introduce operation _Copy edges to base project_.
+ - emr.sh can now invoke groovy scripts on a remote cluster.
+ - Introduce Explicit models, create them with the _Train linear regression model_
+   operation and use them for predictions with _Predict from model_.
+
+### 1.6.1.1
+
+ - Fixed a critical performance regression with derived attributes.
+ - Fixed issues with _Predict vertex attribute_ operation.
+ - Switched `spark.io.compression.codec` from `snappy` to `lz4`.
+ - Added extra logging for health check failures.
 
 ### 1.6.1
 
@@ -28,8 +63,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.6.0
 
- - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port and do
-   batch.runScript(...). See Ammonite's welcome message for details.
+ - One can now run batch workflows on a running Kite using Ammonite. Just SSH into the ammonite port
+   and do `batch.runScript(...)`. See Ammonite's welcome message for details.
  - Fingerprinting between project and segmentation made more general: it can now add new
    connections, not only select from existing ones.
  - Reintroduced project search on the project selector UI.
@@ -52,6 +87,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Improved center picker experience.
 
 ### 1.5.8
+
+ - Fixed a critical issue with health checking.
 
 ### 1.5.7
 
@@ -141,7 +178,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    and the batch API gets more flexible too.
  - Users can now configure better the stopping condition for modular clustering.
  - Improved format for the graph storage. Note that this breaks compatibility of the data directory with 1.5.0.
-   Compatibility is retained with all version before 1.5. One way to fix a data directory created/touched by Kite 
+   Compatibility is retained with all version before 1.5. One way to fix a data directory created/touched by Kite
    1.5.0 is to delete the directory `$KITE_DATA_DIR/partitioned`.
 
 ### 1.5.0

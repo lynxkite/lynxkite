@@ -1,0 +1,20 @@
+<table style="width: 100%;" class="table-selector">
+  <tr>
+    <td style="width: 100%;">
+      <select
+         ng-disabled="!editable"
+         class="form-control operation-attribute-entry"
+         ng-model="selected"
+         ng-options="option.id as option.title for option in tables"></select>
+    </td>
+    <td>
+      <span class="clicky glyphicon glyphicon-import"
+            ng-show="editable" tooltip="Import new table" ng-click="openWizard()"></span>
+    </td>
+  </tr>
+</table>
+<import-wizard
+  current-directory="currentDirectory"
+  ng-if="wizard.visible"
+  on-cancel="closeWizard()"
+  table-imported="wizard.tableImported">

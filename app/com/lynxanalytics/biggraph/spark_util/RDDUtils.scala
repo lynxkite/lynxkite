@@ -496,5 +496,20 @@ object Implicits {
     private def makeShuffledRDDSorted[T: Ordering](rawRDD: ShuffledRDD[T, _, _]): Unit = {
       rawRDD.setKeyOrdering(implicitly[Ordering[T]])
     }
+
+    // Returns the RDD unchanged. Fails if the RDD does not have unique
+    // keys.
+    def assertUniqueKeys(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
+      self.groupBySortedKey(partitioner)
+        .mapValuesWithKeys {
+          case (key, id) =>
+            assert(id.size == 1,
+              s"The ID attribute must contain unique keys. $key appears ${
+                id.size
+              } times.")
+            id.head
+        }
+
   }
 }

@@ -353,6 +353,17 @@
         <help-popup href="segmentations" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
+
+      <li class="list-group-item">
+        <span class="lead de-emph">SQL</span>
+        <div class="pull-right">
+          <i class="glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }} section-button"
+            id="sql-toggle"
+            ng-click="showSQL = !showSQL"></i>
+        </div>
+        <div class="clearfix"></div>
+        <sql-box side="side" ng-if="showSQL"></sql-box>
+      </i>
     </div>
   </div>
 </div>

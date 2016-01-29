@@ -17,6 +17,9 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.serving.FrontendJson
+
 import play.api.libs.json
 
 object OperationParams {
@@ -54,6 +57,17 @@ object OperationParams {
             s" (Possibilities: ${possibleValues.mkString(", ")})")
       }
     }
+  }
+  case class TableParam(
+      id: String,
+      title: String,
+      options: List[FEOption]) extends OperationParameterMeta {
+    val kind = "table"
+    val multipleChoice = false
+    val defaultValue = ""
+    val mandatory = true
+    val hasFixedOptions = true
+    def validate(value: String): Unit = {}
   }
   case class TagList(
       id: String,
@@ -134,7 +148,32 @@ object OperationParams {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
   }
+
+  case class ModelParams(
+      id: String,
+      title: String,
+      models: Map[String, model.ModelMeta],
+      attrs: List[FEOption]) extends OperationParameterMeta {
+    val defaultValue = ""
+    val kind = "model"
+    val multipleChoice = false
+    val mandatory = true
+    val hasFixedOptions = false
+    val options = List()
+    import FrontendJson.wFEModel
+    import FrontendJson.wFEOption
+    implicit val wModelsPayload = json.Json.writes[ModelsPayload]
+    override val payload = Some(json.Json.toJson(ModelsPayload(
+      models = models.toList.map { case (k, v) => model.Model.toFE(k, v) },
+      attrs = attrs)))
+    def validate(value: String): Unit = {}
+  }
 }
+
+// A special parameter payload to describe applicable models on the UI.
+case class ModelsPayload(
+  models: List[model.FEModel],
+  attrs: List[FEOption])
 
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import Operation.Category
@@ -363,11 +402,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import vertices from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        accessibleTableOptions),
       Param("id-attr", "Save internal ID as", defaultValue = "id"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
@@ -418,11 +456,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import edges for existing vertices from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        accessibleTableOptions),
       Choice("attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("src", "Source ID column"),
@@ -440,13 +477,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val attrName = params("attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      // TODO: implement this. It needs a new backend operation and I don't want to delay
-      // the merging on this with implementing of that.
-      //val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
-      //val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
-      //project.edgeBundle = imp.edges
-      //project.edgeAttributes = imp.attrs.mapValues(_.entity)
-      ???
+      val srcVidColumn = table.columns(src).runtimeSafeCast[String]
+      val dstVidColumn = table.columns(dst).runtimeSafeCast[String]
+      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
+      val imp = op(
+        op.srcVidColumn, srcVidColumn)(
+          op.dstVidColumn, dstVidColumn)(
+            op.srcVidAttr, attr)(
+              op.dstVidAttr, attr).result
+      project.edgeBundle = imp.edges
+      for (edgeAttrName <- table.columns.keys) {
+        project.edgeAttributes(edgeAttrName) = table.columns(edgeAttrName).pullVia(imp.embedding)
+      }
     }
   })
 
@@ -481,11 +523,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import vertices and edges from a single table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        accessibleTableOptions),
       Param("src", "Source ID column"),
       Param("dst", "Destination ID column"))
     def enabled = hasNoVertexSet
@@ -562,11 +603,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import vertex attributes from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        accessibleTableOptions),
       Choice("id-attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("id-column", "ID column"),
@@ -579,15 +619,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      // TODO: implement this. It needs a new backend operation and I don't want to delay
-      // the merging on this with implementing of that.
-      // val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-column"))
-      // val res = op(op.idAttr, idAttr).result
-      // val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      // for ((name, attr) <- res.attrs) {
-      //   project.newVertexAttribute(prefix + name, attr, "imported")
-      // }
-      ???
+      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- table.columns) {
+        project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+      }
     }
   })
 
@@ -622,11 +660,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import edge attributes from table", new ImportOperation(_, _) {
     def parameters = List(
-      Choice(
+      TableParam(
         "table",
         "Table to import from",
-        options = readableGlobalTablePaths,
-        allowUnknownOption = true),
+        accessibleTableOptions),
       Choice("id-attr", "Edge ID attribute",
         options = FEOption.unset +: edgeAttributes[String]),
       Param("id-column", "ID column"),
@@ -638,18 +675,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val table = Table.fromCanonicalPath(params("table"), project.viewer)
       val columnName = params("id-column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
-      val attrName = params("attr")
+      val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      // TODO: implement this. It needs a new backend operation and I don't want to delay
-      // the merging on this with implementing of that.
-      // val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), columnName)
-      // val res = op(op.idAttr, idAttr).result
-      // val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      // for ((name, attr) <- res.attrs) {
-      //   project.edgeAttributes(prefix + name) = attr
-      // }
-      ???
+      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- table.columns) {
+        project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+      }
     }
   })
 
@@ -1564,6 +1599,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Derive scalar", new GlobalOperation(_, _) {
+    def parameters = List(
+      Param("output", "Save as"),
+      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Code("expr", "Value", defaultValue = "1 + 1"))
+    def enabled = FEStatus.enabled
+    override def summary(params: Map[String, String]) = {
+      val name = params("output")
+      s"Derive scalar ($name)"
+    }
+    def apply(params: Map[String, String]) = {
+      val expr = params("expr")
+      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val result = params("type") match {
+        case "string" =>
+          graph_operations.DeriveJSScalar.deriveFromScalars[String](expr, namedScalars)
+        case "double" =>
+          graph_operations.DeriveJSScalar.deriveFromScalars[Double](expr, namedScalars)
+      }
+      project.scalars(params("output")) = result.sc
+    }
+  })
+
   register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
@@ -1592,6 +1650,65 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.label, label)(op.features, features).result.prediction
       }
       project.newVertexAttribute(s"${labelName}_prediction", prediction, s"$method for $labelName")
+    }
+  })
+
+  register("Train linear regression model", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("method", "Method", options = FEOption.list(
+        "Linear regression", "Ridge regression", "Lasso")))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val method = params("method").capitalize
+      val label = params("label")
+      s"build a model using $method for $label"
+    }
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one predictor.")
+      val featureNames = params("features").split(",", -1).sorted
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val name = params("name")
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val method = params("method")
+      val model = {
+        val op = graph_operations.RegressionModelTrainer(
+          method, labelName, featureNames.toList)
+        op(op.label, label)(op.features, features).result.model
+      }
+      project.scalars(name) = model
+    }
+  })
+
+  register("Predict from model", new VertexAttributesOperation(_, _) {
+    val models = project.viewer.models
+    def parameters = List(
+      Param("name", "The name of the attribute of the predictions"),
+      ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
+    def enabled =
+      FEStatus.assert(models.nonEmpty, "No models.") &&
+        FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of attribute.")
+      assert(params("model").nonEmpty, "Please select a model.")
+      val name = params("name")
+      val p = json.Json.parse(params("model"))
+      val modelValue = project.scalars((p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val features = (p \ "features").as[List[String]].map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val predictedAttribute = {
+        val op = graph_operations.PredictFromModel(features.size)
+        op(op.model, modelValue)(op.features, features).result.prediction
+      }
+      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelValue.name}")
     }
   })
 
@@ -3086,6 +3203,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.edgeBundle = induction.induced
       for ((name, attr) <- parent.edgeAttributes) {
         project.edgeAttributes(name) = attr.pullVia(induction.embedding)
+      }
+    }
+  })
+
+  register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation &&
+      hasEdgeBundle &&
+      FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
+    def apply(params: Map[String, String]) = {
+      val seg = project.asSegmentation
+      val reverseBelongsTo = seg.belongsTo.reverse
+      val induction = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, reverseBelongsTo)(
+          op.dstMapping, reverseBelongsTo)(
+            op.edges, seg.edgeBundle).result
+      }
+      parent.edgeBundle = induction.induced
+      for ((name, attr) <- seg.edgeAttributes) {
+        parent.edgeAttributes(name) = attr.pullVia(induction.embedding)
       }
     }
   })

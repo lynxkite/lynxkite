@@ -15,8 +15,11 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
+import com.lynxanalytics.biggraph.table
+import com.lynxanalytics.biggraph.model
 
 import java.io.File
+import org.apache.spark
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -49,22 +52,41 @@ abstract class JsonServer extends mvc.Controller {
     }
   }
 
+  def jsonPostCommon[I: json.Reads, R](
+    user: User,
+    request: mvc.Request[json.JsValue], logRequest: Boolean = true)(
+      handler: (User, I) => R): R = {
+    val t0 = System.currentTimeMillis
+    if (logRequest) {
+      log.info(s"$user POST ${request.path} ${request.body}")
+    } else {
+      log.info(s"$user POST ${request.path} (request body logging supressed)")
+    }
+    val i = request.body.as[I]
+    val result = util.Try(handler(user, i))
+    val dt = System.currentTimeMillis - t0
+    val status = if (result.isSuccess) "success" else "failure"
+    log.info(s"$dt ms to respond with $status to $user POST ${request.path}")
+    result.get
+  }
+
   def jsonPost[I: json.Reads, O: json.Writes](
     handler: (User, I) => O,
     logRequest: Boolean = true) = {
-    val t0 = System.currentTimeMillis
     action(parse.json) { (user, request) =>
-      if (logRequest) {
-        log.info(s"$user POST ${request.path} ${request.body}")
-      } else {
-        log.info(s"$user POST ${request.path} (request body logging supressed)")
+      jsonPostCommon(user, request, logRequest) { (user: User, i: I) =>
+        Ok(json.Json.toJson(handler(user, i)))
       }
-      val i = request.body.as[I]
-      val result = util.Try(Ok(json.Json.toJson(handler(user, i))))
-      val dt = System.currentTimeMillis - t0
-      val status = if (result.isSuccess) "success" else "failure"
-      log.info(s"$dt ms to respond with $status to $user POST ${request.path}")
-      result.get
+    }
+  }
+
+  def jsonFuturePost[I: json.Reads, O: json.Writes](
+    handler: (User, I) => Future[O],
+    logRequest: Boolean = true) = {
+    asyncAction(parse.json) { (user, request) =>
+      jsonPostCommon(user, request, logRequest) { (user: User, i: I) =>
+        handler(user, i).map(o => Ok(json.Json.toJson(o)))
+      }
     }
   }
 
@@ -146,6 +168,7 @@ object FrontendJson {
    * json.Json.toJson needs one for every incepted case class,
    * they need to be ordered so that everything is declared before use.
    */
+  import model.FEModel
 
   // TODO: do this without a fake field, e.g. by not using inception.
   implicit val rEmpty = json.Json.reads[Empty]
@@ -169,6 +192,7 @@ object FrontendJson {
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wFEModel = json.Json.writes[FEModel]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
 
@@ -192,14 +216,14 @@ object FrontendJson {
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
-  implicit val rDiscardDirectoryRequest = json.Json.reads[DiscardDirectoryRequest]
-  implicit val rRenameDirectoryRequest = json.Json.reads[RenameDirectoryRequest]
+  implicit val rDiscardEntryRequest = json.Json.reads[DiscardEntryRequest]
+  implicit val rRenameEntryRequest = json.Json.reads[RenameEntryRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
-  implicit val rForkDirectoryRequest = json.Json.reads[ForkDirectoryRequest]
+  implicit val rForkEntryRequest = json.Json.reads[ForkEntryRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
@@ -220,6 +244,20 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
+
+  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
+  implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
+  implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
+  implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
+  implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
+  implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
+  implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
+  implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
+  implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
+  implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
+  implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
+  implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -278,15 +316,17 @@ object ProductionJsonServer extends JsonServer {
     log.info(s"download: $user ${request.path}")
     val path = HadoopFile(request.getQueryString("path").get)
     val name = request.getQueryString("name").get
-    // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
-    val files = Seq(path / "header") ++ (path / "data" / "*").list
+    // For CSV downloads we want to read the "header" file and then the "data" directory.
+    val files: Seq[HadoopFile] =
+      if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
+      else (path / "*").list
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
     mvc.Result(
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
+        CONTENT_DISPOSITION -> s"attachment; filename=$name")),
       body = play.api.libs.iteratee.Enumerator.fromStream(stream)
     )
   }
@@ -320,15 +360,15 @@ object ProductionJsonServer extends JsonServer {
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def createProject = jsonPost(bigGraphController.createProject)
   def createDirectory = jsonPost(bigGraphController.createDirectory)
-  def discardDirectory = jsonPost(bigGraphController.discardDirectory)
-  def renameDirectory = jsonPost(bigGraphController.renameDirectory)
+  def discardEntry = jsonPost(bigGraphController.discardEntry)
+  def renameEntry = jsonPost(bigGraphController.renameEntry)
   def discardAll = jsonPost(bigGraphController.discardAll)
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)
   def projectSearch = jsonGet(bigGraphController.projectSearch)
   def filterProject = jsonPost(bigGraphController.filterProject)
-  def forkDirectory = jsonPost(bigGraphController.forkDirectory)
+  def forkEntry = jsonPost(bigGraphController.forkEntry)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
@@ -337,6 +377,18 @@ object ProductionJsonServer extends JsonServer {
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
   def workflow = jsonGet(bigGraphController.workflow)
+
+  val sqlController = new SQLController(BigGraphProductionEnvironment)
+  def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
+  def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
+  def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
+  def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
+  def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
+  def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
+  def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
+  def importCSV = jsonFuturePost(sqlController.importCSV)
+  def importJdbc = jsonFuturePost(sqlController.importJdbc)
+  def importParquet = jsonFuturePost(sqlController.importParquet)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -384,72 +436,4 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
-}
-
-object Ammonite {
-  // Starting Ammonite if requested.
-  val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
-    """
-============================================================
-Welcome to the bellies of LynxKite! Please don't hurt her...
-============================================================
-
-This is an Ammonite Scala REPL running in the JVM of the LynxKite server. For generic help
-on Ammonite, look here:
-https://lihaoyi.github.io/Ammonite/
-
-For convenience, we've set up some Kite specific bindings for you:
- sql: The SqlContext used by Kite. Use it if you want to run some SparkSQL computations
-   using Kite's resources. See http://spark.apache.org/docs/latest/sql-programming-guide.html
-   for SparkSQL documentation.
- sc: The SparkContext used by Kite. Use it if you want to run some arbitrary spark computation
-   using Kite's resources. See http://spark.apache.org/docs/latest/programming-guide.html
-   for a good Spark intro.
- server: A reference to the ProductionJsonServer used to serve http requests.
- fakeAdmin: A fake admin user object. Useful if you want to directly interact with controllers.
- dataManager: The DataManager instance used by Kite.
- metaManager: The MetaManager instance used by Kite.
- batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
-   for running a batch script on the running Kite instance.
-
-Remember, any of the above can be used to easily destroy the running server or even any data.
-Drive responsibly.""")
-
-  private val replServer = scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map { ammonitePort =>
-    import ammonite.repl.Bind
-    new ammonite.sshd.SshdRepl(
-      ammonite.sshd.SshServerConfig(
-        // We only listen on the local interface.
-        address = "localhost",
-        port = ammonitePort.toInt,
-        username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
-        password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
-      predef = s"""
-import com.lynxanalytics.biggraph._
-Console.setOut(System.out)
-println("${help}")
-""",
-      replArgs = Seq(
-        Bind("server", this),
-        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
-        Bind("sc", BigGraphProductionEnvironment.sparkContext),
-        Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
-        Bind("dataManager", BigGraphProductionEnvironment.dataManager),
-        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext),
-        Bind("batch", groovy.GroovyContext)))
-  }
-
-  def maybeStart() = {
-    replServer.foreach { s =>
-      s.start()
-      log.info(s"Ammonite sshd started on port ${s.port}.")
-    }
-  }
-
-  def maybeStop() = {
-    replServer.foreach { s =>
-      s.stop()
-      log.info("Ammonite sshd stopped.")
-    }
-  }
 }
