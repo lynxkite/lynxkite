@@ -43,13 +43,18 @@ module.exports = function(fw) {
       lib.left.populateInput('model-parameters-model-name', 'age_from_yob');
       lib.left.populateInput('model-parameters-model-yob', 'yob');
       lib.left.submitOperation(lib.left.toolbox);
+      // Convert the predictions to a more convenient format to test.
+      lib.left.runOperation('Derived vertex attribute', {
+        output: 'age_prediction',
+        type: 'double',
+        expr: 'age_prediction | 0'});
       lib.left.runOperation('Vertex attribute to string', {attr: 'age_prediction'});
       expect(lib.left.getHistogramValues('age_prediction')).toEqual([
-        { title: '59.954595992875994', size: 100, value: 1 },
-        { title: '40.00504488968044', size: 100, value: 1 },
-        { title: '35.017657113881555', size: 100, value: 1 },
-        { title: '49.97982044127822', size: 100, value: 1 },
-        { title: '25.04288156228378', size: 100, value: 1 }
+        { title: '25.0', size: 100, value: 1 },
+        { title: '35.0', size: 100, value: 1 },
+        { title: '40.0', size: 100, value: 1 },
+        { title: '49.0', size: 100, value: 1 },
+        { title: '59.0', size: 100, value: 1 }
     ])},
     function() {},'solo'
   );
