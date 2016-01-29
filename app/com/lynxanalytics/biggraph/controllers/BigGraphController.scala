@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
 import java.util.regex.Pattern
 import play.api.libs.json
@@ -76,7 +77,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: List[FEOperationParameterMeta],
-  visibleScalars: List[FEOperationScalarMeta],
+  visibleScalars: List[FEScalar],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "",
@@ -105,10 +106,6 @@ case class FEOperationParameterMeta(
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
 
-case class FEOperationScalarMeta(
-  id: String,
-  guid: String)
-
 case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
@@ -132,12 +129,23 @@ case class FEAttribute(
   isInternal: Boolean,
   computeProgress: Double)
 
+case class FEScalar(
+  id: String,
+  title: String,
+  typeName: String,
+  note: String,
+  isNumeric: Boolean,
+  isInternal: Boolean,
+  computeProgress: Double,
+  errorMessage: Option[String],
+  computedValue: Option[DynamicValue])
+
 case class FEProjectListElement(
     name: String,
     objectType: String,
     notes: String = "",
-    vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
-    edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
+    vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
+    edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
     error: Option[String] = None) { // If set the project could not be opened.
 
   assert(objectType == "table" || objectType == "project", s"Unrecognized objectType: $objectType")
@@ -152,7 +160,7 @@ case class FEProject(
   vertexSet: String = "",
   edgeBundle: String = "",
   notes: String = "",
-  scalars: List[FEAttribute] = List(),
+  scalars: List[FEScalar] = List(),
   vertexAttributes: List[FEAttribute] = List(),
   edgeAttributes: List[FEAttribute] = List(),
   segmentations: List[FESegmentation] = List(),
@@ -650,7 +658,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
-  def visibleScalars: List[FEOperationScalarMeta] = List()
+  def visibleScalars: List[FEScalar] = List()
   def enabled: FEStatus
   def isWorkflow: Boolean = false
   def workflowAuthor: String = ""

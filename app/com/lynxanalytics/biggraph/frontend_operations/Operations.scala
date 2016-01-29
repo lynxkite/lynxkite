@@ -1820,12 +1820,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
-
     def segmentationParameters = List()
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        List(FEOperationScalarMeta("num_created_edges", scalar.gUID.toString))
+        implicit val dataManager = env.dataManager
+        List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
       } else {
         List()
       }
@@ -1851,7 +1851,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        List(FEOperationScalarMeta("num_total_edges", scalar.gUID.toString))
+        implicit val dataManager = env.dataManager
+        List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
       } else {
         List()
       }

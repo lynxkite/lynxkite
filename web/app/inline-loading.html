@@ -1,5 +1,14 @@
 <span ng-if="ref.$resolved === false" class="value spinner">|</span>
 <span ng-if="ref.$error && ref.$statusCode < 500" tooltip="{{ref.$error}}">?</span>
 <span ng-if="ref.$error && ref.$statusCode >= 500"
-  class="value-error" tooltip="Click to report error" ng-click="reportError()">&times;</span>
-<span ng-if="ref === undefined" class="value-error" ng-click="reportError()">&times;</span>
+  class="value-error"
+  drop-tooltip="Click to report error"
+  ng-click="reportError(); $event.preventDefault(); $event.stopPropagation();">&times;</span>
+<span ng-if="ref === undefined"
+  class="value-error"
+  drop-tooltip="Click to report error"
+  ng-click="reportError(); $event.preventDefault(); $event.stopPropagation();">&times;</span>
+<span ng-if="ref.$resolved !== false && ref.retryFunction"
+  class="value-retry"
+  drop-tooltip="Click to retry"
+  ng-click="ref.retryFunction(); $event.preventDefault(); $event.stopPropagation();">&#8635;</span>

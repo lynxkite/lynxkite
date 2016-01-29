@@ -22,6 +22,8 @@ trait EntityProgressManager {
   // 0 means it is not computed. 1 means it is computed. Anything in between indicates that the
   // computation is in progress.
   def computeProgress(entity: MetaGraphEntity): Double
+  def getComputedScalarValue[T](entity: Scalar[T]): Option[T]
+  def getErrorMessage(entity: MetaGraphEntity): Option[Throwable]
 }
 
 class DataManager(sc: spark.SparkContext,
@@ -32,6 +34,11 @@ class DataManager(sc: spark.SparkContext,
       maxParallelism = util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
+  // If computing an entity has failed, then it is not put into
+  // entityCache, but we store the exception in failedEntityCache.
+  // An entity should not be present in both of these at the same
+  // time.
+  private val failedEntityCache = TrieMap[UUID, Throwable]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   val masterSQLContext = new SQLContext(sc)
 
@@ -83,9 +90,16 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
+    failedEntityCache.remove(entity.gUID)
     entityCache(entity.gUID) = data
     data.onFailure {
-      case _ => synchronized { entityCache.remove(entity.gUID) }
+      case _ => synchronized {
+        failedEntityCache(entity.gUID) = data.value match {
+          case Some(scala.util.Failure(t: Throwable)) => t
+          case _ => ???
+        }
+        entityCache.remove(entity.gUID)
+      }
     }
   }
 
@@ -212,10 +226,29 @@ class DataManager(sc: spark.SparkContext,
     // computation is running.
     if (entityCache.contains(guid) && !entityCache(guid).isCompleted) 0.5
     else if (hasEntity(entity) || hasEntityOnDisk(entity)) 1.0
+    else if (failedEntityCache.contains(guid)) -1.0
     else 0.0
   }
 
-  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
+  override def getComputedScalarValue[T](entity: Scalar[T]): Option[T] = {
+    val guid = entity.gUID
+    if (computeProgress(entity) == 1.0) {
+      Some(get(entity).value)
+    } else {
+      None
+    }
+  }
+
+  override def getErrorMessage(entity: MetaGraphEntity): Option[Throwable] = {
+    val guid = entity.gUID
+    if (failedEntityCache.contains(guid)) {
+      Some(failedEntityCache(guid))
+    } else {
+      None
+    }
+  }
+
+  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity, recomputeIfUnavailable: Boolean = true): Unit = synchronized {
     if (!hasEntity(entity)) {
       if (hasEntityOnDisk(entity)) {
         // If on disk already, we just load it.
