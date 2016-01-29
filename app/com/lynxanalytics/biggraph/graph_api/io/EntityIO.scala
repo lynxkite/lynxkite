@@ -2,7 +2,7 @@
 
 package com.lynxanalytics.biggraph.graph_api.io
 
-import com.lynxanalytics.biggraph.graph_operations.TypeTagToFormat
+import com.lynxanalytics.biggraph.graph_api.TypeTagToFormat
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.HashPartitioner

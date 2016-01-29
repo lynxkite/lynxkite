@@ -12,9 +12,9 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.
-// TODO: ToJson, FromJson
-class IDBuckets[T] extends Serializable {
-  val counts = mutable.Map[T, Long]().withDefaultValue(0)
+class IDBuckets[T](
+  val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
+    extends Serializable with Equals {
   var sample = mutable.Map[ID, T]() // May be null!
   def add(id: ID, t: T) = {
     counts(t) += 1
@@ -30,6 +30,18 @@ class IDBuckets[T] extends Serializable {
       addSample(id, t)
     }
   }
+
+  override def equals(that: Any): Boolean = {
+    if (that.isInstanceOf[IDBuckets[T]]) {
+      val other = that.asInstanceOf[IDBuckets[T]]
+      counts == other.counts && sample == other.sample
+    } else
+      false
+  }
+  override def canEqual(that: Any): Boolean = {
+    that.isInstanceOf[IDBuckets[T]]
+  }
+
   private def addSample(id: ID, t: T) = {
     if (sample != null) {
       sample(id) = t

@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import scala.reflect.runtime.universe._
+import scala.language.higherKinds
 
 object TypeTagUtil {
   // Returns TypeTags for the type parameters of T.
@@ -24,4 +25,10 @@ object TypeTagUtil {
   // Call mapTypeTag with explicit parameters to make sure the key and value are not switched.
   def mapTypeTag[K, V](implicit kt: TypeTag[K], vt: TypeTag[V]) = typeTag[Map[K, V]]
   def setTypeTag[T: TypeTag] = typeTag[Set[T]]
+  def isType[T: TypeTag](t: Type) = t =:= typeOf[T]
+  def isSubtypeOf[T: TypeTag](t: Type) = t <:< typeOf[T]
+  def isOfKind1[T[_]](t: Type)(implicit tt: TypeTag[T[Any]]) =
+    t.typeConstructor =:= typeOf[T[Any]].typeConstructor
+  def isOfKind2[T[_, _]](t: Type)(implicit tt: TypeTag[T[Any, Any]]) =
+    t.typeConstructor =:= typeOf[T[Any, Any]].typeConstructor
 }
