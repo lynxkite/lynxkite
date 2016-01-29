@@ -35,7 +35,7 @@ button.
 ### Supported data formats
 
 The supported table input formats and their respective options are described in the following
-sections. LynxKite fully interoperates with all of these formats. (Both import and export is
+sections. LynxKite fully interoperates with all of these formats. (Both import and export are
 supported.)
 
 [[import-csv]]
