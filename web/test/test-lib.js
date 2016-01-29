@@ -703,6 +703,9 @@ testLib = {
               e.element(by.css('.dropdown-menu #' + values[i])).click();
             }
           } else if (kind === 'table') {
+            // Table name options look like 'name of table (date of table creation)'.
+            // The date is unpredictable, but we are going to match to the ' (' part
+            // to minimize the chance of mathcing an other table.
             var optionLabelPattern = value + ' (';
             e.element(by.cssContainingText('option', optionLabelPattern)).click();
           } else {
