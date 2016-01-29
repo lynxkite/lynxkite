@@ -1,6 +1,6 @@
 # Project user interface
 
-A project can be opened from the project browser. This section describes the user interface of a
+A project can be opened from the <<project-browser>>. This section describes the user interface of a
 project.
 
 include::project-header.asciidoc[]

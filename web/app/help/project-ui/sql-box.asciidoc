@@ -3,7 +3,7 @@
 
 There is a SQL interface at the bottom of project pages that can be expanded with the plus button
 (+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++). The SQL
-box makes it possible to run SQL queries over the data in LynxKite.
+box makes it possible to run SQL queries over the data in the project.
 
 The following tables are available for SQL access:
 
@@ -27,7 +27,9 @@ the connected pairs of base and segmentation vertices prefixed with `src_` and `
 Example: `select src_name from {backtick}communities|belongsTo{backtick} where dst_name = "COOKING"`
 
 The tables of segmentations can be accessed using the
-`{backtick}_segmentation name_|_table name_{backtick}` syntax.
+`{backtick}segmentation name|table name{backtick}` syntax.
+For example: `select count(*) from {backtick}communities|belongsTo{backtick} group by dst_id` (Note
+the backticks used for escaping the table name with special characters.)
 
 Click the +++<label class="btn btn-primary">Show results</label>+++ button to run the query.
 The result will be limited to the first 10 lines, so you do not have to worry about limiting the
@@ -48,8 +50,8 @@ LynxKite fully interoperates with all of these formats. (Both import and export 
 ### CSV
 
 CSV stands for comma-separated values. It is a common human-readable file format where each record
-is on a separate line and fields of the record are simply separated with a comma. CSV does not store
-data types, so all fields become strings when exporting to this format.
+is on a separate line and fields of the record are simply separated with a comma or other delimiter.
+CSV does not store data types, so all fields become strings when exporting to this format.
 
 ====
 [[path]] Path::
