@@ -160,8 +160,9 @@ object OperationParams {
     val mandatory = true
     val hasFixedOptions = false
     val options = List()
-    import FrontendJson._
-    implicit val wModels = json.Json.writes[ModelsPayload]
+    import FrontendJson.wFEModel
+    import FrontendJson.wFEOption
+    implicit val wModelsPayload = json.Json.writes[ModelsPayload]
     override val payload = Some(json.Json.toJson(ModelsPayload(
       models = models.toList.map { case (k, v) => model.Model.toFE(k, v) },
       attrs = attrs)))
