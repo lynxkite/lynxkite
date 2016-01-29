@@ -26,10 +26,10 @@ module.exports = function(fw) {
         name: 'age_from_yob',
         label: 'age',
         features: 'yob',
-        method: 'R' // Typing in a combo box doesn't work. Select Ridge regression by first character.
+        // method: 'Linear regression' - use default.
       });
       expect(lib.left.scalar('age_from_yob').getText())
-       .toBe('Ridge regression model predicting age');
+       .toBe('Linear regression model predicting age');
     },
     function() {}
   );
@@ -43,8 +43,14 @@ module.exports = function(fw) {
       lib.left.populateInput('model-parameters-model-name', 'age_from_yob');
       lib.left.populateInput('model-parameters-model-yob', 'yob');
       lib.left.submitOperation(lib.left.toolbox);
-      expect(lib.left.getHistogramValues('age_prediction')).toEqual('abc');
-    },
+      lib.left.runOperation('Vertex attribute to string', {attr: 'age_prediction'});
+      expect(lib.left.getHistogramValues('age_prediction')).toEqual([
+        { title: '59.954595992875994', size: 100, value: 1 },
+        { title: '40.00504488968044', size: 100, value: 1 },
+        { title: '35.017657113881555', size: 100, value: 1 },
+        { title: '49.97982044127822', size: 100, value: 1 },
+        { title: '25.04288156228378', size: 100, value: 1 }
+    ])},
     function() {},'solo'
   );
  };
