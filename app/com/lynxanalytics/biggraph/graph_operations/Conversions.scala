@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.controllers.UIStatus
 import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
-import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.model
 
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
 // The combined type helps us joining arbitrary number of different typed attributes.
@@ -49,9 +49,9 @@ object DynamicValue {
       val set = value.asInstanceOf[Set[Any]]
       DynamicValue(string = set.toSeq.map(_.toString).sorted.mkString(", "))
     }
-    else if (typeOf[T] =:= typeOf[Model]) value => {
-      val model = value.asInstanceOf[Model]
-      DynamicValue(string = s"${model.method} model predicting ${model.labelName}")
+    else if (typeOf[T] =:= typeOf[model.Model]) value => {
+      val m = value.asInstanceOf[model.Model]
+      DynamicValue(string = s"${m.method} model predicting ${m.labelName}")
     }
     else if (typeOf[T] =:= typeOf[UIStatus]) value => {
       import UIStatusSerialization._

@@ -28,7 +28,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.User
 
 import java.io.File
@@ -110,11 +110,11 @@ sealed trait ProjectViewer {
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
-  def models: Map[String, ModelMeta] = {
+  def models: Map[String, model.ModelMeta] = {
     scalars
-      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[Model] }
+      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[model.Model] }
       .map {
-        case (k, v) => k -> v.source.operation.asInstanceOf[ModelMeta]
+        case (k, v) => k -> v.source.operation.asInstanceOf[model.ModelMeta]
       }
   }
 
