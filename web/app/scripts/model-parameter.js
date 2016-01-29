@@ -37,6 +37,6 @@ angular.module('biggraph').directive('modelParameter', function(util) {
           scope.model = JSON.stringify(modelParams);
         }
       });
-    }
+    },
   };
 });

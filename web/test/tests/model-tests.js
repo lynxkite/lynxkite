@@ -39,7 +39,7 @@ module.exports = function(fw) {
     'prediction from regression model',
     function() {
       lib.left.openOperation('Predict from model');
-      lib.left.populateOperationParameter(lib.left.toolbox, 'name', 'age_prediction');
+      lib.left.populateOperation(lib.left.toolbox, { name: 'age_prediction'} );
       lib.left.populateInput('Predict-from-model-model-name', 'age_from_yob');
       lib.left.populateInput('Predict-from-model-model-yob', 'yob');
       lib.left.submitOperation(lib.left.toolbox);
@@ -56,6 +56,6 @@ module.exports = function(fw) {
         { title: '49.0', size: 100, value: 1 },
         { title: '59.0', size: 100, value: 1 }
     ])},
-    function() {},
+    function() {}
   );
  };
