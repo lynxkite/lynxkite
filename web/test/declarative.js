@@ -4,6 +4,7 @@ var fw = (function UIDescription() {
   var states = {};
   var statePreservingTests = {};
   var soloMode = false;
+  var verboseMode = process.env.VERBOSE || false;
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
@@ -27,6 +28,7 @@ var fw = (function UIDescription() {
           return;
         }
         it('-- ' + currentTest.name, function() {
+          if (verboseMode) { console.log(' - ' + currentTest.name); }
           currentTest.runTest();
           // Checking that it was indeed statePreserving.
           checks();
@@ -50,6 +52,7 @@ var fw = (function UIDescription() {
           }
           describe(stateName, function() {
             it('can be reached', function() {
+              if (verboseMode) { console.log(stateName); }
               transitionFunction();
               checks();
             });
@@ -135,6 +138,10 @@ var fw = (function UIDescription() {
               }
             }
           });
+        });
+
+        it('fails in solo mode so it is not accidentally committed', function() {
+          expect(soloMode).toBe(false);
         });
       });
     },
