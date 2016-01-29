@@ -59,7 +59,7 @@ case class RegressionModelTrainer(
     val path = Model.newModelPath
     model.save(rc.sparkContext, path)
     output(o.model, Model(
-      method = "Linear regression",
+      method = method,
       path = path,
       labelName = labelName,
       featureNames = featureNames,

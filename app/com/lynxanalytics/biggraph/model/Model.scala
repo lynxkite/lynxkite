@@ -13,7 +13,7 @@ trait ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
 }
 
-class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
+class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
 }
 
@@ -30,6 +30,10 @@ case class Model(
     method match {
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
+      case "Ridge regression" =>
+        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
+      case "Lasso" =>
+        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
     }
   }
 
@@ -86,8 +90,8 @@ object Model {
 }
 
 case class FEModel(
-  val name: String,
-  val featureNames: List[String])
+  name: String,
+  featureNames: List[String])
 
 trait ModelMeta {
   def featureNames: List[String]
@@ -105,7 +109,7 @@ case class ScaledParams(
 
 class Scaler(
     // Whether the data should be prepared for a Stochastic Gradient Descent method.
-    val forSGD: Boolean) {
+    forSGD: Boolean) {
 
   // Creates the input for training and evaluation.
   def scale(

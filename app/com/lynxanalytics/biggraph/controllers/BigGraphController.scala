@@ -635,7 +635,7 @@ abstract class OperationParameterMeta {
   val multipleChoice: Boolean
   val mandatory: Boolean
   val hasFixedOptions: Boolean
-  val payload: Option[json.JsValue]
+  val payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit

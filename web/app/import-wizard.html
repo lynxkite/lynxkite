@@ -137,12 +137,14 @@
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
       <div
+        id="import-csv-button"
         ng-show="(datatype === 'csv') && csv.filename && !requestInProgress"
         ng-click="importCSV()"
         class="btn btn-default">
         Import CSV file
       </div>
       <div
+        id="import-jdbc-button"
         ng-show="(datatype === 'jdbc') && jdbc.url && jdbc.table && jdbc.keyColumn && !requestInProgress"
         ng-click="importJDBC()"
         class="btn btn-default">
