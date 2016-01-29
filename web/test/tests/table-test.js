@@ -23,7 +23,7 @@ module.exports = function(fw) {
     'Project vertices imported from a table',
     function() {
       lib.splash.openNewProject('csv imported project');
-      lib.left.runOperation('Import vertices from table', {table: 'csv imported|!vertices'});
+      lib.left.runOperation('Import vertices from table', {table: 'csv imported|vertices'});
     },
     function() {
       expect(lib.left.vertexCount()).toEqual(3);
