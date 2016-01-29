@@ -13,7 +13,7 @@ trait ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
 }
 
-class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
+class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
 }
 
@@ -30,6 +30,10 @@ case class Model(
     method match {
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
+      case "Ridge regression" =>
+        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
+      case "Lasso" =>
+        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
     }
   }
 
