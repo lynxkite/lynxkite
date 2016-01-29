@@ -41,6 +41,10 @@ trait Table {
   }
 }
 object Table {
+  val VertexTableName = "!vertices"
+  val EdgeTableName = "!edges"
+  val BelongsToTableName = "!belongsTo"
+
   // A canonical table path is what's used by operations to reference a table. It's always meant to
   // be a valid id for an FEOption.
   // A canonical table path can be in one of the follow formats:
@@ -77,9 +81,6 @@ object Table {
       .getOrElse(fromPath(path, context))
   }
 
-  val VertexTableName = "!vertices"
-  val EdgeTableName = "!edges"
-  val BelongsToTableName = "!belongsTo"
   def fromTableName(tableName: String, viewer: ProjectViewer): Table = {
     tableName match {
       case VertexTableName => new VertexTable(viewer)

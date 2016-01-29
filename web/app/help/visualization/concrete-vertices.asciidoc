@@ -1,40 +1,8 @@
-## Graph visualizations
-
-When some kind of visualization is turned on a visualization screen opens above the
-<<project-header>>.
-
-There are multiple types of visualizations, but in every case you see some objects connected by
-some arcs.
-
-Visualized objects can represent vertices or groups of vertices of the graph.
-The same way arcs on the screen might represent multiple edges in the graph.
-E.g. if there are multiple parallel edges A{to}B it will still be represented by a single visualized
-arc. Also, when we display groups of vertices then a single arc going from one group to another
-represents all the edges in the graph going from one group to the other.
-
-You can visualize graph attributes in various ways, see details in section
-<<Concrete visualization options>>.
-
-Regardless of the visualization mode you can do the same basic adjustments on the visualization
-screen:
-
-Zooming in/out::
-Use your mouse wheel or scroll gesture to zoom in and out. Left doubleclick and right
-doubleclick can also be used for this.
-
-Panning::
-Hold down your left mouse button anywhere on the visualizaton screen and drag the graph around.
-
-Zooming objects in/out::
-Hold down the Shift button while zooming in and out to only change the size of objects
-(vertices, edges).
-
-
-### Concrete vertices view
+## Concrete vertices view
 
 Shows some selected [[center-vertices]]center vertices and their neighborhood with all the edges
- among these vertices. The set of the center vertices and the size of the neighborhood can be
- selected by the user.
+among these vertices. The set of the center vertices and the size of the neighborhood can be
+selected by the user.
 
 When this mode is selected the user is presented with a set of extra controls below the
 <<project-header>>:
@@ -74,7 +42,7 @@ Show neighborhood::
 You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
 vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
 
-#### Pick button
+### Pick button
 This button is used to populate the contents of the _Show vertices_ box. The vertex
 placed there will be one that satisfies all the currently set restrictions (see
 below).
@@ -99,7 +67,7 @@ in a deterministic order. You can skip to an arbitrary sample by clicking on the
 button. There you can manually enter a position in the sequence and pick it by clicking on
  _Pick by offset:_
 
-#### Context menu
+### Context menu
 When clicking a vertex in Concrete Vertex View you can see a context menu with possible operations
 related to the vertex. Here are the possible menu elements:
 
@@ -118,34 +86,3 @@ a segmentation is open on the right side.
 Freeze/unfreeze::
 If using layout animation, freeze fixes the position of this particular vertex. Unfreeze lets
 the vertex move free again.
-
-### Bucketed view
-
-Shows a consolidated view of all the vertices of the graph. Vertices can be grouped by up to two
-attributes and the system visualizes the sizes of the groups and the amount of edges going among
-the groups.
-
-For `String` attributes, the created buckets will correspond to the possible values of the
-attribute.
-If the attribute has more possible values than the number of buckets selected by the user then the
-program will show buckets for the most frequent values and creates an extra `Other` bucket for the
-rest.
-
-For `Double` attributes buckets will correspond to intervals. We split the interval `[min, max]`
-(where `min` and `max` are the minimum and maximum values of the attribute respectively)
-into subintervals of the same length. E.g. we might end up with buckets `[0, 10)`,
-`[10, 20)`, `[20, 30]`.
-
-If _logarithmic mode_ is selected for the attribute then the subintervals are
-selected so that they have the same length on the logarithmic scale. E.g. a possible
-bucketing is `[1, 2)`, `[2, 4)`, `[4, 8]`. In logarithmic mode, if the attribute has any
-non-positive values, then an extra bucket will be created which will contain all non-positive values.
-
-### Saving visualizations
-
-You can save your current visualization settings using the `Save Visualization` button (only visible when visualization is enabled). Just type a name, press `Save Visualization` again and a new
-entry with the name you've given will show up in the `Attributes of the graph` section.
-
-You can reload the saved visualization options by pressing on the
-+++<label class="btn btn-default"><i class="glyphicon glyphicon-eye-open"></i></label>+++
- button next to the newly created graph attribute.
