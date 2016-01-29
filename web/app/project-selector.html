@@ -108,7 +108,7 @@
     <div
       ng-repeat="object in data.objects"
       id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
-      class="entry project-entry clearfix"
+      class="entry {{ object.objectType }}-entry clearfix"
       href
       ng-click="projectClick($event, object)"
       ng-class="{ error: object.error }">
