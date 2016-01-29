@@ -139,6 +139,10 @@ var fw = (function UIDescription() {
             }
           });
         });
+
+        it('fails in solo mode so it is not accidentally committed', function() {
+          expect(soloMode).toBe(false);
+        });
       });
     },
   };
