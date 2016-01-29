@@ -13,7 +13,7 @@ module.exports = function(fw) {
       var runButton = lib.left.side.element(by.id('run-sql-button'));
       toggleButton.click();
 
-      // Run the default (select * from `!vertices`) query.
+      // Run the default (select * from vertices) query.
       runButton.click();
       expect(editor.evaluate('result.header')).toEqual(
         ['age', 'gender', 'id', 'income', 'location', 'name']);
@@ -25,9 +25,10 @@ module.exports = function(fw) {
       ]);
 
       // Query some edge attributes.
-      lib.sendKeysToACE(editor, 'select comment, `src$name` from `!edges` order by comment');
+      lib.sendKeysToACE(
+          editor, 'select edge_comment, src_name from triplets order by edge_comment');
       runButton.click();
-      expect(editor.evaluate('result.header')).toEqual(['comment', 'src$name']);
+      expect(editor.evaluate('result.header')).toEqual(['edge_comment', 'src_name']);
       expect(editor.evaluate('result.data')).toEqual([
         [ 'Adam loves Eve', 'Adam' ],
         [ 'Bob envies Adam', 'Bob' ],

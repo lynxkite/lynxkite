@@ -41,28 +41,32 @@ trait Table {
   }
 }
 object Table {
-  val VertexTableName = "!vertices"
-  val EdgeTableName = "!edges"
-  val BelongsToTableName = "!belongsTo"
+  val VertexTableName = "vertices"
+  val EdgeTableName = "edges"
+  val TripletTableName = "triplets"
+  val BelongsToTableName = "belongsTo"
+  val ReservedTableNames =
+    Set(VertexTableName, EdgeTableName, TripletTableName, BelongsToTableName)
 
   // A canonical table path is what's used by operations to reference a table. It's always meant to
   // be a valid id for an FEOption.
   // A canonical table path can be in one of the follow formats:
   // 1. sub-project relative reference:
   //    RELATIVE_REFERENCE := (SEGMENTATION_NAME|)*TABLE_NAME
-  //    e.g.: connected components|!vertices
+  //    e.g.: connected components|vertices
   // 2. project frame relative reference:
   //    ABSOLUTE_REFERENCE := |RELATIVE_REFERENCE
-  //    e.g.: |events|connected components|!edges
+  //    e.g.: |events|connected components|edges
   // 3. global reference:
   //    !checkpoint(CHECKPOINT,CHECKPOINT_NOTE)ABSOLUTE_REFERENCE
-  //    e.g.: !checkpoint(1234,"My Favorite Project")|!vertices
+  //    e.g.: !checkpoint(1234,"My Favorite Project")|vertices
   //
   // TABLE_NAME either points to a user defined table within the root project/segmentation
   // or can be one of the following implicitly defined tables:
-  //  !vertices
-  //  !edges
-  //  !belongsTo - only defined for segmentations
+  //  vertices
+  //  edges
+  //  triplets
+  //  belongsTo - only defined for segmentations
   //
   // The first two formats are only meaningful in the context of a project viewer. Global paths
   // can be resolved out of context as well, so there is a specialized function just for those.
@@ -85,10 +89,11 @@ object Table {
     tableName match {
       case VertexTableName => new VertexTable(viewer)
       case EdgeTableName => new EdgeTable(viewer)
+      case TripletTableName => new TripletTable(viewer)
       case BelongsToTableName => {
         assert(
           viewer.isInstanceOf[SegmentationViewer],
-          "The !belongsTo table is only defined on segmentations")
+          s"The $BelongsToTableName table is only defined on segmentations.")
         new BelongsToTable(viewer.asInstanceOf[SegmentationViewer])
       }
       case customTableName: String => {
@@ -131,36 +136,40 @@ class EdgeTable(project: ProjectViewer) extends Table {
   assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o vertices")
 
   def idSet = project.edgeBundle.idSet
+  def columns = project.edgeAttributes
+}
+
+class TripletTable(project: ProjectViewer) extends Table {
+  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o vertices")
+
+  def idSet = project.edgeBundle.idSet
   def columns = {
+    import graph_operations.VertexToEdgeAttribute._
     implicit val metaManager = project.vertexSet.source.manager
-    val fromVertexAttributes = project.vertexAttributes.flatMap {
-      case (name, attr) =>
-        Iterator[(String, Attribute[_])](
-          "src$" + name ->
-            graph_operations.VertexToEdgeAttribute.srcAttribute(attr, project.edgeBundle),
-          "dst$" + name ->
-            graph_operations.VertexToEdgeAttribute.dstAttribute(attr, project.edgeBundle))
-    }
-    project.edgeAttributes ++ fromVertexAttributes
+    val edgeAttrs = project.edgeAttributes.map {
+      case (name, attr) => s"edge_$name" -> attr
+    }.toMap[String, Attribute[_]]
+    val srcAttrs = project.vertexAttributes.map {
+      case (name, attr) => s"src_$name" -> srcAttribute(attr, project.edgeBundle)
+    }.toMap[String, Attribute[_]]
+    val dstAttrs = project.vertexAttributes.map {
+      case (name, attr) => s"dst_$name" -> dstAttribute(attr, project.edgeBundle)
+    }.toMap[String, Attribute[_]]
+    edgeAttrs ++ srcAttrs ++ dstAttrs
   }
 }
 
 class BelongsToTable(segmentation: SegmentationViewer) extends Table {
   def idSet = segmentation.belongsTo.idSet
   def columns = {
+    import graph_operations.VertexToEdgeAttribute._
     implicit val metaManager = segmentation.vertexSet.source.manager
     val baseProjectAttributes = segmentation.parent.vertexAttributes.map {
-      case (name, attr) =>
-        ("base$" + name ->
-          graph_operations.VertexToEdgeAttribute.srcAttribute(
-            attr, segmentation.belongsTo)): (String, Attribute[_])
-    }
+      case (name, attr) => s"base_$name" -> srcAttribute(attr, segmentation.belongsTo)
+    }.toMap[String, Attribute[_]]
     val segmentationAttributes = segmentation.vertexAttributes.map {
-      case (name, attr) =>
-        ("segment$" + name ->
-          graph_operations.VertexToEdgeAttribute.dstAttribute(
-            attr, segmentation.belongsTo)): (String, Attribute[_])
-    }
+      case (name, attr) => s"segment_$name" -> dstAttribute(attr, segmentation.belongsTo)
+    }.toMap[String, Attribute[_]]
     baseProjectAttributes ++ segmentationAttributes
   }
 }
