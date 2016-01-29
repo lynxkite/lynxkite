@@ -84,19 +84,12 @@ object TypeTagToFormat {
     def reads(j: json.JsValue): json.JsSuccess[IDBuckets[T]] = {
       val immutableCounts = (j \ "counts").as[Map[T, Long]]
       val counts = mutable.Map[T, Long]().withDefaultValue(0) ++ immutableCounts
-      val bucket = (j \ "sample") match {
-        case JsNull => {
-          val bck = new IDBuckets[T](counts)
-          bck.sample = null
-          bck
-        }
-        case JsArray(arr) => {
-          val bck = new IDBuckets[T](counts)
-          val sample = (j \ "sample").as[Map[ID, T]]
-          bck.sample = mutable.Map[ID, T]() ++ sample
-          bck
-        }
-        case _ => ???
+      val bucket = new IDBuckets[T](counts)
+      (j \ "sample") match {
+        case JsArray(_) =>
+          val immutableSample = (j \ "sample").as[Map[ID, T]]
+          bucket.sample = mutable.Map[ID, T]() ++ immutableSample
+        case _ => bucket.sample = null
       }
       json.JsSuccess(bucket)
     }
