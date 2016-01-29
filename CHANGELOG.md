@@ -6,8 +6,22 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Import and export through tables.
- - Run SQL queries on graphs.
+ - Major changes to importing and exporting data. We introduce the concept of tables to improve
+   clarity and performance when working with external data.
+
+   Projects no longer depend on the input files. (They can be deleted after importing.) It becomes
+   easier to share raw data between projects. We have fewer operations (just _Import vertices from
+   table_ instead of _Import vertices from CSV files_ and _Import vertices from database_), but
+   support more formats (JSON, Parquet, ORC, and Hive are added) with a unified interface.
+
+   Tables are built on Apache Spark DataFrames. As a result you can run SQL queries on graphs. (See
+   the SQL section at the bottom of a project.) Plus DataFrame-based data manipulation is now
+   possible from Groovy scripts.
+
+   Export operations are gone. Data can be exported in various formats through the SQL interface.
+   SQL results can also be saved as tables and re-imported as parts of a project.
+
+   For more details about the new features see the documentation.
  - Default home directory is moved under the 'Users' folder.
  - Root folder is default readable by everyone and writable by only admin users for
    bare new Kite installations.
