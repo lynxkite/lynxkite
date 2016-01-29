@@ -77,8 +77,8 @@ http://www.scala-lang.org/api/current/index.html#scala.util.Random
 
 ### Types and conversions
 
-The following LynxKite data types are automatically converted to and from corresponding
-JavaScript types. Each below list item has the form of LynxKite type &harr; corresponding
+LynxKite uses Scala data types internally. These are automatically converted to and from corresponding
+JavaScript types. Each below list item has the form of Scala type &harr; corresponding
 JavaScript type:
 
 * Boolean &harr; boolean
@@ -89,7 +89,7 @@ JavaScript type:
 * Double &harr; number
 * Char &harr; string
 * String &harr; string
-* Iterable collection containing instances of the below LynxKite types &harr; JavaScript array
+* Iterable collection containing instances of the below Scala types &harr; JavaScript array
 containing the converted instances:
 ** Boolean, Short,  Int, Float, Double, Char, String
 
@@ -98,7 +98,7 @@ particular, long numeric types need these conversions. You can use for example o
 the following operations to achieve that:
 <<vertex-attribute-to-string>> or <<vertex-attribute-to-double>>.
 Converting to double will of course cause precision loss for large numbers, but
-converting to string won't.
+converting to string will not.
 
 ### JavaScript engine
 

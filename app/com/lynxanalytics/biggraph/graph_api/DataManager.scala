@@ -24,45 +24,16 @@ trait EntityProgressManager {
   def computeProgress(entity: MetaGraphEntity): Double
 }
 
-object DataManager {
-  val maxParallelSparkStages =
-    scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
-
-  def limitedExecutionContext(maxParallelism: Int) = {
-    concurrent.ExecutionContext.fromExecutorService(
-      java.util.concurrent.Executors.newFixedThreadPool(
-        maxParallelism,
-        new java.util.concurrent.ThreadFactory() {
-          private var nextIndex = 1
-          private val uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler {
-            def uncaughtException(thread: Thread, cause: Throwable): Unit = {
-              // SafeFuture should catch everything but this is still here to be sure.
-              log.error("DataManager thread failed:", cause)
-              throw cause
-            }
-          }
-          def newThread(r: Runnable) = synchronized {
-            val t = new Thread(r)
-            t.setDaemon(true)
-            t.setName(s"DataManager-$nextIndex")
-            t.setUncaughtExceptionHandler(uncaughtExceptionHandler)
-            nextIndex += 1
-            t
-          }
-        }
-      ))
-  }
-}
-
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
-    DataManager.limitedExecutionContext(DataManager.maxParallelSparkStages)
+    ThreadUtil.limitedExecutionContext("DataManager",
+      maxParallelism = util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  val sqlContext = new SQLContext(sc)
+  val masterSQLContext = new SQLContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -269,29 +240,29 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
+  def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
     loadOrExecuteIfNecessary(vertexSet)
     entityCache(vertexSet.gUID).map(_.asInstanceOf[VertexSetData])
   }
 
-  private def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
+  def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
     loadOrExecuteIfNecessary(edgeBundle)
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
-  private def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
+  def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
     loadOrExecuteIfNecessary(attribute)
     implicit val tagForT = attribute.typeTag
     entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
   }
 
-  private def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
+  def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
     loadOrExecuteIfNecessary(scalar)
     implicit val tagForT = scalar.typeTag
     entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
   }
 
-  private def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
+  def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
@@ -354,5 +325,9 @@ class DataManager(sc: spark.SparkContext,
       sparkContext = sc,
       ioContext = io.IOContext(dataRoot, sc),
       broadcastDirectory = broadcastDirectory)
+  }
+
+  def newSQLContext(): SQLContext = {
+    masterSQLContext.newSession()
   }
 }

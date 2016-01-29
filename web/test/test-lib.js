@@ -198,6 +198,10 @@ Side.prototype = {
     }
   },
 
+  populateOperationInput: function(parameterId, param) {
+    this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
+  },
+
   submitOperation: function(parentElement) {
     var button = parentElement.element(by.css('.ok-button'));
     // Wait for uploads or whatever.
@@ -493,6 +497,10 @@ var splash = {
     return element(by.id('directory-' + toID(name)));
   },
 
+  table: function(name) {
+    return element(by.id('table-' + toID(name)));
+  },
+
   expectNumProjects: function(n) {
     return expect(element.all(by.css('.project-entry')).count()).toEqual(n);
   },
@@ -501,10 +509,30 @@ var splash = {
     return expect(element.all(by.css('.directory-entry')).count()).toEqual(n);
   },
 
+  expectNumTables: function(n) {
+    return expect(element.all(by.css('.table-entry')).count()).toEqual(n);
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     this.hideSparkStatus();
+  },
+
+  startTableImport: function(tableName) {
+    element(by.id('import-table')).click();
+    element(by.css('#import-table #table-name input')).sendKeys(tableName);
+  },
+
+  importLocalCSVFile: function(tableName, localCsvFile) {
+    this.startTableImport(tableName);
+    element(by.css('#datatype select option[value="csv"]')).click();
+    var csvFileParameter = element(by.css('#csv-filename file-parameter'));
+    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
+    var importCsvButton = element(by.id('import-csv-button'));
+    // Wait for the upload to finish.
+    testLib.wait(protractor.until.elementIsVisible(importCsvButton));
+    importCsvButton.click();
   },
 
   newDirectory: function(name) {
@@ -578,6 +606,14 @@ var splash = {
     testLib.expectNotElement(this.directory(name));
   },
 
+  expectTableListed: function(name) {
+    testLib.expectElement(this.table(name));
+  },
+
+  expectTableNotListed: function(name) {
+    testLib.expectNotElement(this.table(name));
+  },
+
   enterSearchQuery: function(query) {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
   },
@@ -621,18 +657,21 @@ testLib = {
 
   // Deletes all projects and directories.
   discardAll: function() {
-    var defer = protractor.promise.defer();
-    request.post(
-      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-      { json: { fake: 1 } },
-      function(error, message) {
-        if (error || message.statusCode >= 400) {
-          defer.reject({ error : error, message : message });
-        } else {
-          defer.fulfill();
-        }
-      });
-    browser.controlFlow().execute(function() { return defer.promise; });
+    function sendRequest() {
+      var defer = protractor.promise.defer();
+      request.post(
+        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+        { json: { fake: 1 } },
+        function(error, message) {
+          if (error || message.statusCode >= 400) {
+            defer.reject({ error : error, message : message });
+          } else {
+            defer.fulfill();
+          }
+        });
+      return defer.promise;
+    }
+    browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
@@ -653,7 +692,7 @@ testLib = {
     var aceInput = e.element(by.css('textarea.ace_text-input'));
     // The double click on the text area focuses it properly.
     browser.actions().doubleClick(aceContent).perform();
-    aceInput.sendKeys(keys);
+    aceInput.sendKeys(testLib.selectAllKey + keys);
   },
 
   setParameter: function(e, value) {
@@ -663,23 +702,19 @@ testLib = {
           if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
           } else if (kind === 'file') {
-            var input = e.element(by.id('file'));
-            // Need to unhide flowjs's secret file uploader.
-            browser.executeScript(
-              function(input) {
-                input.style.visibility = 'visible';
-                input.style.height = '1px';
-                input.style.width = '1px';
-                input.style.opacity = 1;
-              },
-              input.getWebElement());
-            input.sendKeys(value);
+            testLib.uploadIntoFileParameter(e, value)
           } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
               e.element(by.css('.dropdown-toggle')).click();
               e.element(by.css('.dropdown-menu #' + values[i])).click();
             }
+          } else if (kind === 'table') {
+            // Table name options look like 'name of table (date of table creation)'.
+            // The date is unpredictable, but we are going to match to the ' (' part
+            // to minimize the chance of mathcing an other table.
+            var optionLabelPattern = value + ' (';
+            e.element(by.cssContainingText('option', optionLabelPattern)).click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -767,7 +802,21 @@ testLib = {
       "angular.element(document.body).injector()" +
       ".get('dropTooltipConfig').enabled = " + enable);
 
-  }
+  },
+
+  uploadIntoFileParameter: function(fileParameterElement, fileName) {
+    var input = fileParameterElement.element(by.id('file'));
+    // Need to unhide flowjs's secret file uploader.
+    browser.executeScript(
+      function(input) {
+        input.style.visibility = 'visible';
+        input.style.height = '1px';
+        input.style.width = '1px';
+        input.style.opacity = 1;
+      },
+      input.getWebElement());
+    input.sendKeys(fileName);
+  },
 };
 
 module.exports = testLib;

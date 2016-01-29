@@ -33,7 +33,8 @@
       "main": [
         "src-min-noconflict/ace.js",
         "src-min-noconflict/mode-groovy.js",
-        "src-min-noconflict/mode-javascript.js"
+        "src-min-noconflict/mode-javascript.js",
+        "src-min-noconflict/mode-sql.js"
       ]
     }
   }

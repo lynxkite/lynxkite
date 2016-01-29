@@ -1,0 +1,25 @@
+<div class="model-parameter">The name of the model</div>
+<select
+      id="model-name"
+      ng-disabled="!editable"
+      class="form-control operation-attribute-entry"
+      ng-model="activeModel"
+      ng-options="model as model.name for model in param.payload.models"></select>
+<div ng-if="activeModel">
+  <div class="model-parameter">Bind the features of the model</div>
+  <table style="width: 100%;">
+    <tr ng-repeat="feature in activeModel.featureNames track by $index" class="model-parameter">
+      <td>Attribute {{ feature }}:</td>
+      <td>
+        <select
+          id="model-feature-{{feature}}"
+          ng-disabled="!editable"
+          class="form-control operation-attribute-entry"
+          ng-model="binding[$index]"
+          ng-options="attr.id as attr.title for attr in param.payload.attrs">
+        </select>
+      </td>
+    </tr>
+  </table>
+</div>
+

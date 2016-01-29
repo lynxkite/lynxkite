@@ -286,37 +286,37 @@ split.derivedVertexAttribute(
 split.derivedVertexAttribute(
   output: 'normal',
   type: 'double',
-  expr: '(splitSave == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && splitSave == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'furtherOk',
   type: 'double',
-  expr: '((furtherUndefinedAttr1 == 1.0 && attr1 == -1) || (furtherUndefinedAttr2 == 1.0 && attr2 == -1)) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && (furtherUndefinedAttr1 == 1.0 && attr1 == -1) || (furtherUndefinedAttr2 == 1.0 && attr2 == -1)) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'furtherBad',
   type: 'double',
-  expr: '((furtherUndefinedAttr1 == 1.0 && attr1 != -1) || (furtherUndefinedAttr2 == 1.0 && attr2 != -1)) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && (furtherUndefinedAttr1 == 1.0 && attr1 != -1) || (furtherUndefinedAttr2 == 1.0 && attr2 != -1)) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerFound',
   type: 'double',
-  expr: '(splitSave == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && splitSave == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerNoMatch',
   type: 'double',
-  expr: '(splitSave == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && splitSave == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
   output: 'churnerMisMatch',
   type: 'double',
-  expr: '(splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(

@@ -4,7 +4,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.graph_util.SQLExport.quoteIdentifier
+import com.lynxanalytics.biggraph.graph_util.TableStats
+import com.lynxanalytics.biggraph.graph_util.JDBCQuoting.quoteIdentifier
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import anorm.SQL
 import java.sql
@@ -31,26 +32,11 @@ case class DBTable(
     "fields" -> fields,
     "key" -> key)
 
-  case class Stats(table: String)(implicit val connection: sql.Connection) {
-    val (minKey, maxKey) = {
-      val query = s"SELECT MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable"
-      log.info(s"Executing query: $query")
-      val q = SQL(query)
-      q().map(r => (r[Long]("min"), r[Long]("max"))).head
-    }
-    val count = {
-      val query = s"SELECT COUNT(*) AS count FROM $quotedTable"
-      log.info(s"Executing query: $query")
-      val q = SQL(query)
-      q().map(r => r[Long]("count")).head
-    }
-  }
-
   def lines(rc: RuntimeContext): UniqueSortedRDD[ID, Seq[String]] = {
     val fieldsStr = fields.map(quoteIdentifier(_)).mkString(", ")
     val stats = {
       val connection = sql.DriverManager.getConnection("jdbc:" + db)
-      try Stats(table)(connection)
+      try TableStats(table, key)(connection)
       finally connection.close()
     }
     val numPartitions = rc.partitionerForNRows(stats.count).numPartitions

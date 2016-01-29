@@ -8,19 +8,13 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 
 class CopyController(environment: BigGraphEnvironment) {
-
-  // isDir is deprecated in Hadoop 2, isDirectory is not present in Hadoop 1.
-  // Suppressing deprecation warning per SI-7934.
-  @deprecated("", "") class Deprecated { def isDir(s: hadoop.fs.FileStatus) = s.isDir }
-  object Deprecated extends Deprecated
-
   private def lsRec(root: HadoopFile): Seq[HadoopFile] = {
     val fs = root.fs
     def ls(dirs: Seq[hadoop.fs.Path]): Stream[hadoop.fs.Path] = {
       if (dirs.isEmpty) Stream.empty
       else {
         val statuses = fs.listStatus(dirs.toArray)
-        val (ds, files) = statuses.partition(s => Deprecated.isDir(s))
+        val (ds, files) = statuses.partition(s => s.isDirectory)
         files.map(_.getPath).toStream #::: ls(ds.map(_.getPath))
       }
     }

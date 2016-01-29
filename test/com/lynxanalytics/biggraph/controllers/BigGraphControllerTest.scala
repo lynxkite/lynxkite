@@ -1,34 +1,8 @@
 package com.lynxanalytics.biggraph.controllers
 
-import scala.reflect.runtime.universe.TypeTag
-import scala.reflect.ClassTag
-import org.scalatest.{ FunSuite, BeforeAndAfterEach }
-
-import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAfterEach {
-  val controller = new BigGraphController(this)
-  val projectName = "Test_Project"
-  val projectFrame = ProjectFrame.fromName(projectName)
-  val subProject = projectFrame.subproject
-  val user = com.lynxanalytics.biggraph.serving.User.fake
-
-  def run(op: String, params: Map[String, String] = Map(), on: String = projectName) =
-    controller.projectOp(
-      user,
-      ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
-
-  def vattr[T: TypeTag: ClassTag: Ordering](name: String) = {
-    val attr = subProject.viewer.vertexAttributes(name).runtimeSafeCast[T]
-    attr.rdd.values.collect.toSeq.sorted
-  }
-
-  def eattr[T: TypeTag: ClassTag: Ordering](name: String) = {
-    val attr = subProject.viewer.edgeAttributes(name).runtimeSafeCast[T]
-    attr.rdd.values.collect.toSeq.sorted
-  }
-
+class BigGraphControllerTest extends BigGraphControllerTestBase {
   test("filtering by vertex attribute") {
     run("Example Graph")
     val filter = ProjectAttributeFilter("age", "<40")
@@ -67,35 +41,35 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
 
   test("project list") {
     val pl = list("")
-    assert(pl.projects.size == 1)
-    assert(pl.projects(0).name == "Test_Project")
-    assert(pl.projects(0).vertexCount.isEmpty)
-    assert(pl.projects(0).edgeCount.isEmpty)
+    assert(pl.objects.size == 1)
+    assert(pl.objects(0).name == "Test_Project")
+    assert(pl.objects(0).vertexCount.isEmpty)
+    assert(pl.objects(0).edgeCount.isEmpty)
   }
 
   test("project list with scalars") {
     run("Example Graph")
-    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "new_project"))
+    controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "new_project"))
     val pl = list("")
-    assert(pl.projects.size == 2)
-    assert(pl.projects(1).name == "new_project")
-    assert(!pl.projects(1).vertexCount.isEmpty)
-    assert(!pl.projects(1).edgeCount.isEmpty)
+    assert(pl.objects.size == 2)
+    assert(pl.objects(1).name == "new_project")
+    assert(!pl.objects(1).vertexCount.isEmpty)
+    assert(!pl.objects(1).edgeCount.isEmpty)
   }
 
   test("fork project") {
     run("Example Graph")
-    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "forked"))
-    assert(list("").projects.size == 2)
+    controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "forked"))
+    assert(list("").objects.size == 2)
   }
 
   test("create directory") {
     controller.createDirectory(user, CreateDirectoryRequest(
       name = "foo/bar", privacy = "private"))
     assert(list("").directories == Seq("foo"))
-    assert(list("foo").projects.isEmpty)
+    assert(list("foo").objects.isEmpty)
     assert(list("foo").directories == Seq("foo/bar"))
-    controller.discardDirectory(user, DiscardDirectoryRequest(name = "foo"))
+    controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
   }
 
@@ -105,17 +79,5 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BeforeAndAft
       controller.createDirectory(user, CreateDirectoryRequest(
         name = projectName + "/bar", privacy = "private"))
     }
-  }
-
-  override def beforeEach() = {
-    val path = SymbolPath("projects")
-    if (metaGraphManager.tagExists(path)) {
-      for (t <- metaGraphManager.lsTag(path)) {
-        metaGraphManager.rmTag(t)
-      }
-    }
-    controller.createProject(
-      user,
-      CreateProjectRequest(name = projectName, notes = "test project", privacy = "private"))
   }
 }

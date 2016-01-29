@@ -7,6 +7,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.mllib
+import org.apache.spark.rdd
+import com.lynxanalytics.biggraph.model._
 
 object Regression extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -33,72 +35,75 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vertices = inputs.vertices.rdd
-    val labels = inputs.label.rdd
-    val vectors = {
-      val emptyArrays = vertices.mapValues(l => new Array[Double](numFeatures))
-      val numberedFeatures = inputs.features.zipWithIndex
-      val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
-        case (a, (f, i)) =>
-          a.sortedJoin(f.rdd).mapValues {
-            case (a, f) => a(i) = f; a
-          }
-      }
-      val unscaled = fullArrays.mapValues(a => new mllib.linalg.DenseVector(a): mllib.linalg.Vector)
-      // Must scale the features or we get NaN predictions. (SPARK-1859)
-      val scaler = new mllib.feature.StandardScaler().fit(unscaled.values)
-      unscaled.mapValues(v => scaler.transform(v))
-    }
-    val points = labels.sortedJoin(vectors).values.map {
-      case (l, v) => new mllib.regression.LabeledPoint(l, v)
-    }
-    points.cache
 
-    val predictions = method match {
+    val (predictions, vectors) = method match {
       case "Linear regression" =>
-        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(points)
-        model.predict(vectors.values)
+        val p = getParams(forSGD = true)
+        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
+        Model.checkLinearModel(model)
+        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Ridge regression" =>
-        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(points)
-        model.predict(vectors.values)
+        val p = getParams(forSGD = true)
+        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
+        Model.checkLinearModel(model)
+        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Lasso" =>
-        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(points)
-        model.predict(vectors.values)
+        val p = getParams(forSGD = true)
+        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
+        Model.checkLinearModel(model)
+        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Logistic regression" =>
-        val model =
-          new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(points)
-        model.predict(vectors.values)
+        val p = getParams(forSGD = false)
+        val model = new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(p.points)
+        Model.checkLinearModel(model)
+        (model.predict(p.vectors.values), p.vectors)
       case "Naive Bayes" =>
-        val model = mllib.classification.NaiveBayes.train(points)
-        model.predict(vectors.values)
+        val p = getParams(forSGD = false)
+        val model = mllib.classification.NaiveBayes.train(p.points)
+        (model.predict(p.vectors.values), p.vectors)
       case "Decision tree" =>
+        val p = getParams(forSGD = false)
         val model = mllib.tree.DecisionTree.trainRegressor(
-          input = points,
+          input = p.points,
           categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
-          impurity = "variance", // This is the only option at the moment.
+          impurity = "variance", // Options: gini, entropy, variance as of Spark 1.6.0.
           maxDepth = 5,
           maxBins = 32)
-        model.predict(vectors.values)
+        (model.predict(p.vectors.values), p.vectors)
       case "Random forest" =>
+        val p = getParams(forSGD = false)
         val model = mllib.tree.RandomForest.trainRegressor(
-          input = points,
+          input = p.points,
           categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
           numTrees = 10,
           featureSubsetStrategy = "onethird",
-          impurity = "variance", // This is the only option at the moment.
+          impurity = "variance", // Options: gini, entropy, variance as of Spark 1.6.0.
           maxDepth = 4,
           maxBins = 100,
           seed = 0)
-        model.predict(vectors.values)
+        (model.predict(p.vectors.values), p.vectors)
       case "Gradient-boosted trees" =>
+        val p = getParams(forSGD = false)
         val boostingStrategy = mllib.tree.configuration.BoostingStrategy.defaultParams("Regression")
         boostingStrategy.numIterations = 10
         boostingStrategy.treeStrategy.maxDepth = 5
         boostingStrategy.treeStrategy.categoricalFeaturesInfo = Map[Int, Int]() // All continuous.
-        val model = mllib.tree.GradientBoostedTrees.train(points, boostingStrategy)
-        model.predict(vectors.values)
+        val model = mllib.tree.GradientBoostedTrees.train(p.points, boostingStrategy)
+        (model.predict(p.vectors.values), p.vectors)
     }
     val ids = vectors.keys // We just put back the keys with a zip.
-    output(o.prediction, ids.zip(predictions).asUniqueSortedRDD(vectors.partitioner.get))
+    output(
+      o.prediction,
+      ids.zip(predictions).filter(!_._2.isNaN).asUniqueSortedRDD(vectors.partitioner.get))
+  }
+
+  // Creates the input for training and evaluation.
+  private def getParams(
+    forSGD: Boolean // Whether the data should be prepared for an SGD method.
+    )(implicit id: DataSet): ScaledParams = {
+    new Scaler(forSGD).scale(
+      inputs.label.rdd,
+      inputs.features.toArray.map { v => v.rdd },
+      inputs.vertices.rdd)
   }
 }

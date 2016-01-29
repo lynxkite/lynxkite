@@ -27,7 +27,7 @@ project-graph #help-button {
   background: white;
   text-align: center;
   border-radius: 0 5px 5px 0;
-  height: 160px;
+  padding-bottom: 5px;
 }
 
 .graph-sidebar .handle {

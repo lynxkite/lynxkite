@@ -1030,10 +1030,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     // How much to wait after pan/zoom events before requesting a new map.
     this.NAVIGATION_DELAY = 100;  // Milliseconds.
     this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
-    this.style = 'feature:all|gamma:0.1|saturation:-80';
     this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4';  // big-graph-gc1 API key.
     this.images = [];
     this.vertices.offsetter.rule(this);
+    var that = this;
+    var unwatch = util.deepWatch(this.gv.scope, 'mapFilters', function() { that.update(); });
+    this.gv.unregistration.push(function() {
+      unwatch();
+    });
   }
   Map.prototype.lon2x = function(lon) {
     return this.GLOBE_SIZE * lon / 360;
@@ -1083,10 +1087,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var clat = this.y2lat(y);
     var clon = this.x2lon(x);
     var image = svg.create('image');
+    var filters = this.gv.scope.mapFilters;
+    var style = 'feature:all' +
+      // Map gamma to the [0.1, 10] range using an exponential scale.
+      '|gamma:' + Math.pow(10, filters.gamma / 100) +
+      '|saturation:' + filters.saturation +
+      '|lightness:' + filters.brightness;
     var href = (
       this.root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
       '&key=' + this.key +
-      '&size=640x640&scale=2&style=' + this.style);
+      '&size=640x640&scale=2&style=' + style);
     image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
     image.x = x - image.size / 2;

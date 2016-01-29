@@ -1,0 +1,29 @@
+.section-button {
+  cursor: pointer;
+  padding: 6px;
+  font-size: 14px;
+}
+
+sql-box > * {
+  margin-bottom: 10px; /* Separate subsections. */
+}
+
+#sql-box-spinner {
+  animation: spinner 4s infinite linear;
+  font-size: 30px;
+  opacity: 0.8;
+}
+
+#sql-editor {
+  height: 100px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+}
+
+#sql-error {
+  color: DarkRed;
+}
+
+#sql-result {
+  overflow-x: auto; /* Scroll if there are many columns. */
+}
