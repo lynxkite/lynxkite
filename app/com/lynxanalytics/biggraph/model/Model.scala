@@ -90,8 +90,8 @@ object Model {
 }
 
 case class FEModel(
-  val name: String,
-  val featureNames: List[String])
+  name: String,
+  featureNames: List[String])
 
 trait ModelMeta {
   def featureNames: List[String]
@@ -109,7 +109,7 @@ case class ScaledParams(
 
 class Scaler(
     // Whether the data should be prepared for a Stochastic Gradient Descent method.
-    val forSGD: Boolean) {
+    forSGD: Boolean) {
 
   // Creates the input for training and evaluation.
   def scale(
