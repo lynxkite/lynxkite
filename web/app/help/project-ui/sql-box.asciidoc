@@ -11,10 +11,15 @@ The following tables are available for SQL access:
 +
 Example: `select count(*) from vertices where age < 30`
 
- - All the edge attributes can be accessed in the `edges` table. This table also contains the source
-and destination vertex attributes prefixed with `src_` and `dst_` respectively.
+ - All the edge attributes can be accessed in the `edges` table.
 +
-Example: `select max(weight) from edges where src_age < dst_age`
+Example: `select max(weight) from edges`
+
+ - All the edge and vertex attributes can be accessed in the `triplets` table. Each row of this
+table represents an edge. The attributes of the edge are prefixed with `edge_` while the attributes
+of the source and destination vertices are prefixed with `src_` and `dst_` respectively.
++
+Example: `select max(edge_weight) from triplets where src_age < dst_age`
 
  - The `belongsTo` table is only defined for segmentations. It contains the vertex attributes for
 the connected pairs of base and segmentation vertices prefixed with `src_` and `dst_` respectively.
