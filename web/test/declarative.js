@@ -122,14 +122,14 @@ var fw = (function UIDescription() {
           var fs = require('fs');
           var pattern = lib.theRandomPattern;
 
-          fs.readdir('/tmp', function (error, files) {
+          fs.readdir(lib.protractorDownloads, function (error, files) {
             if (error) {
               throw error;
             }
             for (var i = 0; i < files.length; i++) {
               var f = files[i];
               if (f.indexOf(pattern) > -1) {
-                var full = '/tmp/' + f;
+                var full = lib.protractorDownloads + '/' + f;
                 console.log('Deleting: ' + full);
                 fs.unlink(full);
               }
