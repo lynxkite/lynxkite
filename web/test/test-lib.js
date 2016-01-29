@@ -712,6 +712,8 @@ testLib = {
             // to minimize the chance of mathcing an other table.
             var optionLabelPattern = value + ' (';
             e.element(by.cssContainingText('option', optionLabelPattern)).click();
+          } else if (kind === 'choice') {
+            e.element(by.cssContainingText('option', value)).click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
