@@ -32,7 +32,7 @@ class IDBuckets[T](
   }
 
   override def equals(that: Any): Boolean = {
-    if (that.isInstanceOf[IDBuckets[T]]) {
+    if (canEqual(that)) {
       val other = that.asInstanceOf[IDBuckets[T]]
       counts == other.counts && sample == other.sample
     } else
