@@ -16,7 +16,7 @@ Example: `select count(*) from vertices where age < 30`
 Example: `select max(weight) from edges`
 
  - All the edge and vertex attributes can be accessed in the `triplets` table. Each row of this
-table represents an edge. The attributes of the edge are prefixed with `edge_` while the attributes
+table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes
 of the source and destination vertices are prefixed with `src_` and `dst_` respectively.
 +
 Example: `select max(edge_weight) from triplets where src_age < dst_age`
@@ -44,7 +44,7 @@ output file format or database then press the
 +++<label class="btn btn-primary">Save results</label>+++ button.
 
 The supported output formats and their respective options are described in the following sections.
-LynxKite fully interoperates with all of these formats. (Both import and export is supported.)
+LynxKite fully interoperates with all of these formats. (Both import and export are supported.)
 
 [[export-csv]]
 ### CSV
@@ -139,5 +139,5 @@ use of the data via any of the import operations in a project.
 
 ====
 [[table]] Table::
-The name of the created table. A full path can be specified here to place the table inside a folder.
+The full path of the table to be created.
 ====
