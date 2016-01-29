@@ -198,6 +198,14 @@ Side.prototype = {
     }
   },
 
+  populateOperationParameter: function(parentElement, key, param) {
+    testLib.setParameter(this.operationParameter(parentElement, key), param);
+  },
+
+  populateInput: function(elementId, param) {
+    element(by.id(elementId)).sendKeys(testLib.selectAllKey + param);
+  },
+
   submitOperation: function(parentElement) {
     var button = parentElement.element(by.css('.ok-button'));
     // Wait for uploads or whatever.
