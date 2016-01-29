@@ -7,11 +7,8 @@ inside the `Users` folder.
 
 Folders can have access control settings. A list of users who can read or write the folder contents
 can be specified by opening the settings panel
-(+++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++). A user can
-only read a project if they have read access to the project and to all the folders that contain the
-project. To create a project in a directory the user needs write access to the directory and read
-access to all the containing directories. (This is essentially the same arrangement used by all
-common file systems.) See the section on <<access-control>> for more details.
+(+++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++).
+See the section on <<access-control>> for more details.
 
 Administrator users have access to everything and can fine-tune the access control settings to set
 up any desired system of permissions. This is recommended as part of the LynxKite installation
