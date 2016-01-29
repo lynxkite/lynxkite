@@ -14,7 +14,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    table_ instead of _Import vertices from CSV files_ and _Import vertices from database_), but
    support more formats (JSON, Parquet, ORC, and Hive are added) with a unified interface.
 
-   Tables are built on Apache Spark DataFrames. As a result you can run SQL queries on graphs. (See
+   Tables are built on Apache Spark DataFrames. As a result, you can run SQL queries on graphs. (See
    the SQL section at the bottom of a project.) Plus DataFrame-based data manipulation is now
    possible from Groovy scripts.
 
