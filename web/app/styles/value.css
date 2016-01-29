@@ -26,6 +26,12 @@
   cursor: pointer;
 }
 
+.value-retry {
+  font-weight: bold;
+  color: #005b99;
+  cursor: pointer;
+}
+
 .value-error + .tooltip > .tooltip-inner {
   background: darkred;
 }

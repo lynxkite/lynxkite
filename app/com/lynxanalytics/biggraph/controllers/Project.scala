@@ -30,6 +30,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.User
+import com.lynxanalytics.biggraph.serving.Utils
 
 import java.io.File
 import java.util.UUID
@@ -141,9 +142,9 @@ sealed trait ProjectViewer {
   def asSegmentation: SegmentationViewer
 
   // Methods for conversion to FE objects.
-  private def feScalar(name: String)(implicit epm: EntityProgressManager): Option[FEAttribute] = {
+  private def feScalar(name: String)(implicit epm: EntityProgressManager): Option[FEScalar] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feEntity(scalars(name), name, getScalarNote(name)))
+      Some(ProjectViewer.feScalar(scalars(name), name, getScalarNote(name)))
     } else {
       None
     }
@@ -173,7 +174,8 @@ sealed trait ProjectViewer {
       things: Iterable[(String, TypedEntity[_])],
       kind: ElementKind) = {
       things.toSeq.sortBy(_._1).map {
-        case (name, e) => ProjectViewer.feEntity(e, name, getElementNote(kind, name))
+        case (name, e: Scalar[_]) => ProjectViewer.feScalar(e, name, getElementNote(kind, name))
+        case (name, e: Attribute[_]) => ProjectViewer.feAttribute(e, name, getElementNote(kind, name))
       }.toList
     }
 
@@ -182,9 +184,10 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feList(scalars, ScalarKind),
-      vertexAttributes = feList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
-      edgeAttributes = feList(edgeAttributes, EdgeAttributeKind),
+      scalars = feList(scalars, ScalarKind).asInstanceOf[List[FEScalar]],
+      vertexAttributes =
+        feList(vertexAttributes, VertexAttributeKind).asInstanceOf[List[FEAttribute]] ++ getFEMembers,
+      edgeAttributes = feList(edgeAttributes, EdgeAttributeKind).asInstanceOf[List[FEAttribute]],
       segmentations = sortedSegmentations.map(_.toFESegmentation(projectName)),
       // To be set by the ProjectFrame for root projects.
       undoOp = "",
@@ -212,8 +215,8 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feEntity[T](
-    e: TypedEntity[T],
+  def feAttribute[T](
+    e: Attribute[T],
     name: String,
     note: String,
     isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
@@ -231,6 +234,27 @@ object ProjectViewer {
       isNumeric,
       isInternal,
       epm.computeProgress(e))
+  }
+
+  def feScalar[T](
+    e: Scalar[T],
+    name: String,
+    note: String,
+    isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEScalar = {
+    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+    implicit val tt = e.typeTag
+    FEScalar(
+      e.gUID.toString,
+      name,
+      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      note,
+      isNumeric,
+      isInternal,
+      epm.computeProgress(e),
+      epm.getErrorMessage(e).map(Utils.formatThrowable(_)),
+      epm.getComputedScalarValue(e).map(
+        graph_operations.DynamicValue.convert(_))
+    )
   }
 }
 
@@ -288,12 +312,12 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
-    Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
+    Some(ProjectViewer.feAttribute(membersAttribute, "#members", note = "", isInternal = true))
 
   val equivalentUIAttributeTitle = s"segmentation[$segmentationName]"
 
   def equivalentUIAttribute()(implicit epm: EntityProgressManager): FEAttribute =
-    ProjectViewer.feEntity(belongsToAttribute, equivalentUIAttributeTitle, note = "")
+    ProjectViewer.feAttribute(belongsToAttribute, equivalentUIAttributeTitle, note = "")
 
   def toFESegmentation(
     rootName: String,

@@ -155,7 +155,7 @@ case class HistogramResponse(
 }
 
 case class ScalarValueRequest(
-  val scalarId: String)
+  scalarId: String)
 
 case class CenterRequest(
   vertexSetId: String,
@@ -645,6 +645,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   private def dynamicValue[T](scalar: Scalar[T]) = {
     implicit val tt = scalar.typeTag
-    graph_operations.DynamicValue.convert(scalar.value)
+    graph_operations.DynamicValue.convert(scalar.value) // implicitly invokes Scripting.getData
   }
 }

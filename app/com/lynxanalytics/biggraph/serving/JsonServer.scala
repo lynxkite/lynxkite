@@ -179,7 +179,8 @@ object FrontendJson {
   implicit val wFEStatus = json.Json.writes[FEStatus]
   implicit val wFEOption = json.Json.writes[FEOption]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
-  implicit val wFEOperationScalarMeta = json.Json.writes[FEOperationScalarMeta]
+  implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wFEScalar = json.Json.writes[FEScalar]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
@@ -191,7 +192,6 @@ object FrontendJson {
   implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
-  implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wFEModel = json.Json.writes[FEModel]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]

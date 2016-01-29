@@ -14,7 +14,8 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
   }
 
   override def onError(request: RequestHeader, throwable: Throwable) = {
-    concurrent.Future.successful(InternalServerError(escape(format(throwable))))
+    concurrent.Future.successful(InternalServerError(escape(
+      serving.Utils.formatThrowable(throwable))))
   }
 
   override def onHandlerNotFound(request: RequestHeader) = {
@@ -29,15 +30,5 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
         "ready\n",
         "utf8"))
     println("LynxKite is running.")
-  }
-
-  private def rootCause(t: Throwable): Throwable = Option(t.getCause).map(rootCause(_)).getOrElse(t)
-
-  private val assertionFailed = "^assertion failed: ".r
-
-  private def format(t: Throwable): String = rootCause(t) match {
-    // Trim "assertion failed: " from AssertionErrors.
-    case e: AssertionError => assertionFailed.replaceFirstIn(e.getMessage, "")
-    case e => e.toString
   }
 }
