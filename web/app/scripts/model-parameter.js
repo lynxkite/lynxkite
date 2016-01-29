@@ -5,9 +5,10 @@ angular.module('biggraph').directive('modelParameter', function(util) {
   return {
     restrict: 'E',
     scope: {
-      param: '=',
-      editable: '=',
-      model: '=',
+      param: '=', // Parameters of the available models.
+      editable: '=', // Whether this input is editable.
+      model: '=', // Output: arguments to run the model with.
+      op: '=?', // The id of the operation of this parameter.
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {

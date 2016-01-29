@@ -1,6 +1,6 @@
 <div class="model-parameter">The name of the model</div>
 <select
-      id="model-parameters-model-name"
+      id="{{op}}-model-name"
       ng-disabled="!editable"
       class="form-control operation-attribute-entry"
       ng-model="activeModel"
@@ -12,7 +12,7 @@
       <td>Attribute {{ feature }}:</td>
       <td>
         <select
-          id="model-parameters-model-{{feature}}"
+          id="{{op}}-model-{{feature}}"
           ng-disabled="!editable"
           class="form-control operation-attribute-entry"
           ng-model="binding[$index]"
