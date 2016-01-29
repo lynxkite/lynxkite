@@ -26,7 +26,7 @@ module.exports = function(fw) {
         name: 'age_from_yob',
         label: 'age',
         features: 'yob',
-        // method: 'Linear regression' - use default.
+        method: 'Linear regression',
       });
       expect(lib.left.scalar('age_from_yob').getText())
        .toBe('Linear regression model predicting age');
@@ -56,6 +56,6 @@ module.exports = function(fw) {
         { title: '49.0', size: 100, value: 1 },
         { title: '59.0', size: 100, value: 1 }
     ])},
-    function() {}, 'solo'
+    function() {}
   );
  };
