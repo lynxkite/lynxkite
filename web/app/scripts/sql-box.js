@@ -8,7 +8,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      scope.sql = 'select * from `!vertices`';
+      scope.sql = 'select * from vertices';
 
       scope.runSQLQuery = function() {
         if (!scope.sql) {
