@@ -51,8 +51,8 @@ echo Machine settings: %VM_CPUS% CPUs with %VM_MEMORY%Mb RAM  >> %LOGFILE%
 ( echo # vi: set ft=ruby :) >> Vagrantfile
 ( echo Vagrant^.configure(2^) do ^|config^|) >> Vagrantfile
 ( echo   config.vm.box = "zskatona/kitebase%BOX_BITS%") >> Vagrantfile
-( echo   config.vm.network "forwarded_port", guest: 9000, host: 9000) >> Vagrantfile
-( echo   config.vm.network "forwarded_port", guest: 4040, host: 4040) >> Vagrantfile
+( echo   config.vm.network "forwarded_port", guest: 2200, host: 9000) >> Vagrantfile
+( echo   config.vm.network "forwarded_port", guest: 2200, host: 2200) >> Vagrantfile
 ( echo   config.vm.synced_folder "uploads", "/home/vagrant/kite_data/uploads", create: true) >> Vagrantfile
 ( echo   config.vm.provider "virtualbox" do ^|vb^|) >> Vagrantfile
 ( echo      vb.name = "lynxkite-%KITE_VERSION%-%KITE_SIZE%-%BOX_BITS%bit-" + Time.now.to_i.to_s) >> Vagrantfile
@@ -103,7 +103,7 @@ IF [%MODE%] == [install] (
 		exit /b 1
 	) ELSE (
 		color A
-		echo Install successful. You should be able to access kite by going to localhost:9000
+		echo Install successful. You should be able to access kite by going to localhost:2200
 		echo Press any key to exit
 		echo Installation successful >> %LOGFILE%
 		pause > nul
@@ -125,7 +125,7 @@ IF [%MODE%] == [install] (
 		exit /b 1
 	) ELSE (
 		color A
-		echo Update successful. You should be able to access kite by going to localhost:9000
+		echo Update successful. You should be able to access kite by going to localhost:2200
 		echo If there is problem try to run the upgrade script again.
 		echo Press any key to exit
 		echo Upgrade successful >> %LOGFILE%
