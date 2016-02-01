@@ -18,15 +18,16 @@ class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) exte
 }
 
 case class Model(
-    method: String,
-    path: String,
-    labelName: String,
-    featureNames: List[String],
-    labelScaler: Option[mllib.feature.StandardScalerModel],
-    featureScaler: mllib.feature.StandardScalerModel) {
+    method: String, // The training method used to create this model.
+    symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
+    labelName: String, // Name of the label attribute used to train this model.
+    featureNames: List[String], // The name of the feature attributes used to train this model.
+    labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
+    featureScaler: mllib.feature.StandardScalerModel) { // The scaler used to scale the features.
 
   // Loads the previously created model from the file system.
   def load(sc: spark.SparkContext): ModelImplementation = {
+    val path = HadoopFile(symbolicPath).resolvedName
     method match {
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
@@ -51,8 +52,8 @@ case class Model(
 object Model {
   def toFE(modelName: String, modelMeta: ModelMeta): FEModel = FEModel(modelName, modelMeta.featureNames)
 
-  def newModelPath: String = {
-    (HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString).resolvedName
+  def newModelFile: HadoopFile = {
+    HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
   }
 
   def checkLinearModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
