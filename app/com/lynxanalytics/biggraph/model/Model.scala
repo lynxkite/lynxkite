@@ -5,7 +5,6 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
-import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.rdd.RDD
 import org.apache.spark
 import play.api.libs.json
