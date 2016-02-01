@@ -70,20 +70,6 @@ object Table {
   //
   // The first two formats are only meaningful in the context of a project viewer. Global paths
   // can be resolved out of context as well, so there is a specialized function just for those.
-  def fromGlobalPath(globalPath: String)(implicit metaManager: MetaGraphManager): Table = {
-    val (checkpoint, _, suffix) = FEOption.unpackTitledCheckpoint(
-      globalPath,
-      s"$globalPath does not seem to be a valid global table path")
-    fromCheckpointAndPath(checkpoint, suffix)
-  }
-
-  def fromCanonicalPath(path: String, context: ProjectViewer)(
-    implicit metaManager: MetaGraphManager): Table = {
-
-    FEOption.maybeUnpackTitledCheckpoint(path)
-      .map { case (checkpoint, _, suffix) => fromCheckpointAndPath(checkpoint, suffix) }
-      .getOrElse(fromPath(path, context))
-  }
 
   def fromTableName(tableName: String, viewer: ProjectViewer): Table = {
     tableName match {
@@ -97,29 +83,68 @@ object Table {
         new BelongsToTable(viewer.asInstanceOf[SegmentationViewer])
       }
       case customTableName: String => {
-        println(customTableName)
-        ???
+        throw new AssertionError(s"Table $customTableName not found.")
       }
     }
   }
+}
 
-  def fromRelativePath(relativePath: String, viewer: ProjectViewer): Table = {
-    val splitPath = SubProject.splitPipedPath(relativePath)
-    fromTableName(splitPath.last, viewer.offspringViewer(splitPath.dropRight(1)))
+sealed trait TablePath {
+  def toFE: FEOption
+  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table
+}
+object TablePath {
+  def parse(path: String): TablePath = {
+    val cp = FEOption.maybeUnpackTitledCheckpoint(path)
+    if (cp.nonEmpty) GlobalTablePath.parse(path)
+    else if (path.head == '|') AbsoluteTablePath(split(path.tail))
+    else RelativeTablePath(split(path))
   }
 
-  def fromPath(path: String, viewer: ProjectViewer): Table = {
-    if (path(0) == '|') {
-      fromRelativePath(path.drop(1), viewer.rootViewer)
-    } else {
-      fromRelativePath(path, viewer)
-    }
+  def split(path: String) = SubProject.splitPipedPath(path)
+}
+
+case class RelativeTablePath(path: Seq[String]) extends TablePath {
+  override def toString = path.mkString("|")
+  def toFE = FEOption.regular(toString)
+
+  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table = {
+    Table.fromTableName(path.last, viewer.offspringViewer(path.init))
   }
 
-  def fromCheckpointAndPath(checkpoint: String, path: String)(
-    implicit manager: MetaGraphManager): Table = {
+  def toAbsolute(prefix: Seq[String]) = AbsoluteTablePath(prefix ++ path)
+
+  def /:(prefix: String) = RelativeTablePath(prefix +: path)
+}
+
+case class AbsoluteTablePath(path: Seq[String]) extends TablePath {
+  override def toString = "|" + RelativeTablePath(path).toString
+  def toFE = FEOption.regular(toString)
+
+  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table = {
+    RelativeTablePath(path).table(viewer.rootViewer)
+  }
+
+  def toGlobal(checkpoint: String, name: String) = GlobalTablePath(checkpoint, name, path)
+}
+
+case class GlobalTablePath(checkpoint: String, name: String, path: Seq[String]) extends TablePath {
+  override def toString = toFE.id
+  def toFE = FEOption.titledCheckpoint(checkpoint, name, AbsoluteTablePath(path).toString)
+
+  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table = table
+
+  def table()(implicit manager: MetaGraphManager): Table = {
     val rootViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(checkpoint))
-    fromPath(path, rootViewer)
+    AbsoluteTablePath(path).table(rootViewer)
+  }
+}
+object GlobalTablePath {
+  def parse(path: String): GlobalTablePath = {
+    val (checkpoint, name, suffix) = FEOption.unpackTitledCheckpoint(
+      path,
+      s"$path does not seem to be a valid global table path.")
+    GlobalTablePath(checkpoint, name, TablePath.split(suffix.tail))
   }
 }
 
