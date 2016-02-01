@@ -1,6 +1,7 @@
 'use strict';
 
 var lib = require('../test-lib.js');
+var fs = require('fs');
 
 module.exports = function(fw) {
   fw.transitionTest(
@@ -8,6 +9,13 @@ module.exports = function(fw) {
     'empty splash',
     function() {
       lib.discardAll();
+      if (fs.existsSync(lib.protractorDownloads)) {
+        fs.readdirSync(lib.protractorDownloads).map(function(file) {
+          fs.unlinkSync(lib.protractorDownloads + '/' + file);
+        });
+        fs.rmdirSync(lib.protractorDownloads);
+      }
+      fs.mkdirSync(lib.protractorDownloads);
       browser.get('/');
     },
     function() {
