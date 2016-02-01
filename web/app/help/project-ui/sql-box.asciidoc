@@ -22,14 +22,16 @@ of the source and destination vertices are prefixed with `src_` and `dst_` respe
 Example: `select max(edge_weight) from triplets where src_age < dst_age`
 
  - The `belongsTo` table is only defined for segmentations. It contains the vertex attributes for
-the connected pairs of base and segmentation vertices prefixed with `src_` and `dst_` respectively.
+the connected pairs of base and segmentation vertices prefixed with `base_` and `segment_`
+respectively.
 +
-Example: `select src_name from {backtick}communities|belongsTo{backtick} where dst_name = "COOKING"`
+Example:
+`select base_name from {backtick}communities|belongsTo{backtick} where segment_name = "COOKING"`
 
 The tables of segmentations can be accessed using the
 `{backtick}segmentation name|table name{backtick}` syntax.
-For example: `select count(*) from {backtick}communities|belongsTo{backtick} group by dst_id` (Note
-the backticks used for escaping the table name with special characters.)
+For example: `select count(*) from {backtick}communities|belongsTo{backtick} group by segment_id`
+(Note the backticks used for escaping the table name with special characters.)
 
 Click the +++<label class="btn btn-primary">Show results</label>+++ button to run the query.
 The result will be limited to the first 10 lines, so you do not have to worry about limiting the
