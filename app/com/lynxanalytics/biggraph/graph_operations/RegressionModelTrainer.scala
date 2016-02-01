@@ -57,11 +57,11 @@ case class RegressionModelTrainer(
     }
     Model.checkLinearModel(model)
 
-    val path = Model.newModelPath
-    model.save(rc.sparkContext, path)
+    val file = Model.newModelFile
+    model.save(rc.sparkContext, file.resolvedName)
     output(o.model, Model(
       method = method,
-      path = path,
+      symbolicPath = file.symbolicName,
       labelName = labelName,
       featureNames = featureNames,
       labelScaler = p.labelScaler,
