@@ -12,6 +12,7 @@
   <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
   <button class="btn btn-primary"
     ng-disabled="showExportOptions"
+    id="save-results-opener"
     ng-click="showExportOptions = true">Save results...</button>
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 </div>
@@ -118,7 +119,10 @@
 
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
-    <button class="btn btn-primary" ng-disabled="inProgress" ng-click="export()">Save results</button>
+    <button
+      id="save-results" class="btn btn-primary" ng-disabled="inProgress" ng-click="export()">
+      Save results
+    </button>
     <button class="btn btn-primary" ng-click="showExportOptions = false">Cancel</button>
     </div>
   </div>

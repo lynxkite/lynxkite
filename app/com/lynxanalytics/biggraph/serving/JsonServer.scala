@@ -319,7 +319,7 @@ object ProductionJsonServer extends JsonServer {
     // For CSV downloads we want to read the "header" file and then the "data" directory.
     val files: Seq[HadoopFile] =
       if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
-      else (path / "*").list
+      else (path / "*").list.sortBy(_.symbolicName)
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
