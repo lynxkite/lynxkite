@@ -31,8 +31,8 @@ case class Model(
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
     if (model.isDefined) {
       json.Json.obj(
-        "std" -> model.get.std.toJson,
-        "mean" -> model.get.mean.toJson,
+        "std" -> json.Json.parse(model.get.std.toJson),
+        "mean" -> json.Json.parse(model.get.mean.toJson),
         "withStd" -> model.get.withStd,
         "withMean" -> model.get.withMean)
     } else {
@@ -104,8 +104,8 @@ object Model extends FromJson[Model] {
     j match {
       case JsNull => None
       case _ => {
-        val std = org.apache.spark.mllib.linalg.Vectors.fromJson((j \ "std").as[String])
-        val mean = org.apache.spark.mllib.linalg.Vectors.fromJson((j \ "mean").as[String])
+        val std = org.apache.spark.mllib.linalg.Vectors.fromJson(json.Json.stringify(j \ "std"))
+        val mean = org.apache.spark.mllib.linalg.Vectors.fromJson(json.Json.stringify(j \ "mean"))
         val withStd = (j \ "withStd").as[Boolean]
         val withMean = (j \ "withMean").as[Boolean]
         Some(new mllib.feature.StandardScalerModel(std, mean, withStd, withMean))
