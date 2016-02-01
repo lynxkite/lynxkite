@@ -396,6 +396,8 @@ trait MetaGraphOp extends Serializable with ToJson {
   // An operation is heavy if it is faster to load its results than it is to recalculate them.
   // Heavy operation outputs are written out and loaded back on completion.
   val isHeavy: Boolean = false
+  val neverSerialize: Boolean = false
+  assert(!isHeavy || !neverSerialize, "$this cannot be heavy and never serialize at the same time")
   // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
   // instead of putting them in the OutputBuilder in execute().
   val hasCustomSaving: Boolean = false
