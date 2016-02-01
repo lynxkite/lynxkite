@@ -16,7 +16,7 @@ object EntitySerializer {
       else if (tt =:= typeOf[String]) new StringSerializer
       else if (tt =:= typeOf[Double]) new DoubleSerializer
       else if (tt =:= typeOf[Edge]) new EdgeSerializer
-      else if (tt.typeConstructor =:= typeOf[Set[_]].typeConstructor) new SetSerializer
+      else if (TypeTagUtil.isOfKind1[Set](tt)) new SetSerializer
       else new KryoSerializer[T]
     s.asInstanceOf[EntitySerializer[T]]
   }
