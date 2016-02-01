@@ -30,10 +30,10 @@ module.exports = function(fw) {
     function() {
       left.toggleSqlBox();
 
-      left.runSql('select comment, `src$name` from `!edges` order by comment');
+      left.runSql('select edge_comment, src_name from triplets order by edge_comment');
 
       left.expectSqlResult(
-        ['comment', 'src$name'],
+        ['edge_comment', 'src_name'],
         [
           [ 'Adam loves Eve', 'Adam' ],
           [ 'Bob envies Adam', 'Bob' ],
@@ -51,7 +51,7 @@ module.exports = function(fw) {
     function() {
       left.toggleSqlBox();
 
-      left.setSql('select name, age, income from `!vertices` order by name');
+      left.setSql('select name, age, income from vertices order by name');
 
       left.startSqlSaving();
 
@@ -68,5 +68,5 @@ module.exports = function(fw) {
 
       // Reset state.
       left.toggleSqlBox();
-    }, "solo");
+    });
 };
