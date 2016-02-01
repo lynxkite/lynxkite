@@ -16,7 +16,8 @@ echo debug_kite.cmd log at time %UNIX_TIME% > %LOGFILE%
 ( echo # vi: set ft=ruby :) >> Vagrantfile
 ( echo Vagrant^.configure(2^) do ^|config^|) >> Vagrantfile
 findstr "config.vm.box" Vagrantfile.kite >> Vagrantfile
-( echo   config.vm.network "forwarded_port", guest: 9000, host: 9000) >> Vagrantfile
+( echo   config.vm.network "forwarded_port", guest: 2200, host: 9000) >> Vagrantfile
+( echo   config.vm.network "forwarded_port", guest: 2200, host: 2200) >> Vagrantfile
 ( echo   config.vm.network "forwarded_port", guest: 4040, host: 4040) >> Vagrantfile
 ( echo   config.vm.synced_folder "uploads", "/home/vagrant/kite_data/uploads", create: true) >> Vagrantfile
 ( echo   config.vm.provider "virtualbox" do ^|vb^|) >> Vagrantfile
