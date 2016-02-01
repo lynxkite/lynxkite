@@ -1,4 +1,4 @@
-### Import vertices from table
+### Import vertices
 
 Imports vertices (no edges) from a table.
 Each column in the table will be accessible as a vertex attribute.

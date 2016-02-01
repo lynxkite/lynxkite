@@ -6,99 +6,6 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.table.TableImport
 
 class ExportImportOperationTest extends OperationsTestBase {
-  test("SQL import & export vertices") {
-    run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    run("Export vertex attributes to database", Map(
-      "db" -> db,
-      "table" -> "example_graph",
-      "delete" -> "yes",
-      "attrs" -> "id,name,age,income,gender"))
-    run("Import vertices from a database", Map(
-      "db" -> db,
-      "table" -> "example_graph",
-      "columns" -> "name,age,income,gender",
-      "key" -> "id",
-      "id-attr" -> "x"))
-    val name = project.vertexAttributes("name").runtimeSafeCast[String]
-    val income = project.vertexAttributes("income").runtimeSafeCast[String]
-    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
-    assert(income.rdd.values.collect.toSeq.sorted == Seq("1000.0", "2000.0"))
-  }
-
-  test("SQL import & export edges") {
-    run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    run("Export edge attributes to database", Map(
-      "db" -> db,
-      "table" -> "example_graph_edges",
-      "delete" -> "yes",
-      "attrs" -> "weight,comment"))
-    run("Import vertices and edges from single database table", Map(
-      "db" -> db,
-      "table" -> "example_graph_edges",
-      "columns" -> "srcVertexId,dstVertexId,weight,comment",
-      "key" -> "srcVertexId",
-      "src" -> "srcVertexId",
-      "dst" -> "dstVertexId"))
-    assert(project.vertexSet.rdd.count == 3) // Isolated Joe is lost.
-    val weight = project.edgeAttributes("weight").runtimeSafeCast[String]
-    val comment = project.edgeAttributes("comment").runtimeSafeCast[String]
-    assert(weight.rdd.values.collect.toSeq.sorted == Seq("1.0", "2.0", "3.0", "4.0"))
-    assert(comment.rdd.values.collect.toSeq.sorted == Seq("Adam loves Eve", "Bob envies Adam", "Bob loves Eve", "Eve loves Adam"))
-  }
-
-  test("CSV import & export vertices") {
-    run("Example Graph")
-    val path = dataManager.repositoryPath + "/csv-export-test"
-    run("Export vertex attributes to file", Map(
-      "path" -> path.symbolicName,
-      "link" -> "link",
-      "attrs" -> "id,name,age,income,gender",
-      "format" -> "CSV"))
-    val header = (path + "/header").readAsString
-    run("Import vertices from CSV files", Map(
-      "files" -> (path + "/data/*").symbolicName,
-      "header" -> header,
-      "delimiter" -> ",",
-      "filter" -> "",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "id-attr" -> "x"))
-    val name = project.vertexAttributes("name").runtimeSafeCast[String]
-    val income = project.vertexAttributes("income").runtimeSafeCast[String]
-    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
-    assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
-  }
-
-  def runImport(allowCorruptLines: Boolean) = {
-    val allow =
-      if (allowCorruptLines) "yes"
-      else "no"
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "OPERATIONSTEST$/bad-lines.csv",
-      "header" -> "src,dst,attr",
-      "delimiter" -> ",",
-      "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> allow,
-      "filter" -> ""))
-
-    project.edgeAttributes("attr").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
-
-  }
-
-  test("Assert ill-formed csv") {
-    intercept[org.apache.spark.SparkException] {
-      runImport(false)
-    }
-  }
-
-  test("Allow ill-formed csv") {
-    assert(runImport(true) == Seq("good", "good", "good"))
-  }
-
   test("Imports from implicit tables") {
     val project2 = clone(project)
     run("Example Graph", on = project2)
@@ -116,7 +23,7 @@ class ExportImportOperationTest extends OperationsTestBase {
 
     // Import vertices as vertices
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
         "table" -> (project2Checkpoint + "|vertices"),
         "id-attr" -> "new_id"))
@@ -135,7 +42,7 @@ class ExportImportOperationTest extends OperationsTestBase {
 
     // Import edges as vertices
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
         "table" -> (project2Checkpoint + "|triplets"),
         "id-attr" -> "id"))
@@ -176,19 +83,18 @@ class ExportImportOperationTest extends OperationsTestBase {
 
       val baseName = eAttrs("base_name").runtimeSafeCast[String].rdd
       val segmentId = eAttrs("segment_id").runtimeSafeCast[String].rdd
-      val compnentMap = baseName.sortedJoin(segmentId).values.collect.toMap
-      assert(compnentMap.size == 4)
-      assert(compnentMap("Adam") == compnentMap("Eve"))
-      assert(compnentMap("Adam") == compnentMap("Bob"))
-      assert(compnentMap("Adam") != compnentMap("Isolated Joe"))
+      val componentMap = baseName.sortedJoin(segmentId).values.collect.toMap
+      assert(componentMap.size == 4)
+      assert(componentMap("Adam") == componentMap("Eve"))
+      assert(componentMap("Adam") == componentMap("Bob"))
+      assert(componentMap("Adam") != componentMap("Isolated Joe"))
       assert(
         vAttrs("stringID").rdd.map(_._2).collect.toSet ==
           Set("Adam", "Eve", "Bob", "Isolated Joe", "0", "3"))
     }
-    run("Discard vertices")
   }
 
-  test("Import edges for existing vertices from table") {
+  test("Import edges for existing vertices") {
     val rows = Seq(
       ("Adam", "Eve", "value1"),
       ("Isolated Joe", "Bob", "value2"),
@@ -201,7 +107,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
     run("Example Graph")
-    run("Import edges for existing vertices from table", Map(
+    run("Import edges for existing vertices", Map(
       "table" -> tablePath,
       "attr" -> "name",
       "src" -> "src",
@@ -216,7 +122,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       valueAttr.collect.toSeq.sorted)
   }
 
-  test("Import vertex attributes from table") {
+  test("Import vertex attributes") {
     val rows = Seq(
       ("Adam", "value1"),
       ("Isolated Joe", "value2"),
@@ -229,7 +135,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
     run("Example Graph")
-    run("Import vertex attributes from table", Map(
+    run("Import vertex attributes", Map(
       "table" -> tablePath,
       "id-attr" -> "name",
       "id-column" -> "row_id",
@@ -239,7 +145,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     assert(Seq((0, "value1"), (3, "value2")) == valueAttr.collect.toSeq.sorted)
   }
 
-  test("Import edge attributes from table") {
+  test("Import edge attributes") {
     val rows = Seq(
       ("Adam loves Eve", "value1"),
       ("Bob envies Adam", "value2"),
@@ -252,7 +158,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
     run("Example Graph")
-    run("Import edge attributes from table", Map(
+    run("Import edge attributes", Map(
       "table" -> tablePath,
       "id-attr" -> "comment",
       "id-column" -> "row_id",
