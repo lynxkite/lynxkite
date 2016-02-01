@@ -420,6 +420,7 @@ case class ScalarToJSValue[T]()
     extends TypedMetaGraphOp[ScalarInput[T], ScalarToJSValue.Output[T]] {
   import ScalarToJSValue._
   @transient override lazy val inputs = new ScalarInput[T]
+  override val neverSerialize = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
   def execute(inputDatas: DataSet,
