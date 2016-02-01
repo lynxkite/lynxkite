@@ -100,7 +100,7 @@ case class Model(
 
 // Helper methods to transform and scale training and prediction data.
 object Model extends FromJson[Model] {
-  private def standardScalerModelToJson(j: json.JsValue): Option[mllib.feature.StandardScalerModel] = {
+  private def standardScalerModelFromJson(j: json.JsValue): Option[mllib.feature.StandardScalerModel] = {
     j match {
       case JsNull => None
       case _ => {
@@ -119,8 +119,8 @@ object Model extends FromJson[Model] {
       (j \ "path").as[String],
       (j \ "labelName").as[String],
       (j \ "featureNames").as[List[String]],
-      standardScalerModelToJson(j \ "labelScaler"),
-      standardScalerModelToJson(j \ "featureScaler").get
+      standardScalerModelFromJson(j \ "labelScaler"),
+      standardScalerModelFromJson(j \ "featureScaler").get
     )
   }
   def toFE(modelName: String, modelMeta: ModelMeta): FEModel = FEModel(modelName, modelMeta.featureNames)
