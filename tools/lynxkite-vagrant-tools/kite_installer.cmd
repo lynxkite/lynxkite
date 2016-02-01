@@ -53,6 +53,7 @@ echo Machine settings: %VM_CPUS% CPUs with %VM_MEMORY%Mb RAM  >> %LOGFILE%
 ( echo   config.vm.box = "zskatona/kitebase%BOX_BITS%") >> Vagrantfile
 ( echo   config.vm.network "forwarded_port", guest: 2200, host: 9000) >> Vagrantfile
 ( echo   config.vm.network "forwarded_port", guest: 2200, host: 2200) >> Vagrantfile
+( echo   config.vm.network "forwarded_port", guest: 4040, host: 4040) >> Vagrantfile
 ( echo   config.vm.synced_folder "uploads", "/home/vagrant/kite_data/uploads", create: true) >> Vagrantfile
 ( echo   config.vm.provider "virtualbox" do ^|vb^|) >> Vagrantfile
 ( echo      vb.name = "lynxkite-%KITE_VERSION%-%KITE_SIZE%-%BOX_BITS%bit-" + Time.now.to_i.to_s) >> Vagrantfile
