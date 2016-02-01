@@ -90,31 +90,6 @@ module.exports = function(fw) {
       left.toggleSqlBox();
     });
 
-  fw.statePreservingTest(
-    'test-example project with example graph',
-    'Save SQL result as CSV works',
-    function() {
-      left.toggleSqlBox();
-
-      left.setSql('select name, age, income from vertices order by name');
-
-      left.startSqlSaving();
-
-      // Choose csv format.
-      left.side.element(by.css('#exportFormat option[value="csv"]')).click();
-
-      // And go.
-      lib.startDownloadWatch();
-      left.executeSqlSaving();
-      var downloadedFileName = lib.waitForNewDownload(/\.csv$/);
-      lib.expectFileContents(
-        downloadedFileName,
-        'Adam,20.3,1000.0\nBob,50.3,2000.0\nEve,18.2,\nIsolated Joe,2.0,\n');
-
-      // Reset state.
-      left.toggleSqlBox();
-    });
-
   fw.transitionTest(
     'empty test-example project',
     'table export and reimport',
