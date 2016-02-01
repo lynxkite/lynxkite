@@ -1,10 +1,7 @@
 // All operations related to converting between attribute types.
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import play.api.libs.json
-import play.api.libs.json.{ JsObject, JsNull, JsArray, JsValue }
-import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
