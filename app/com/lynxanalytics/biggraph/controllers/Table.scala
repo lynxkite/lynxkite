@@ -133,14 +133,14 @@ class VertexTable(project: ProjectViewer) extends Table {
 }
 
 class EdgeTable(project: ProjectViewer) extends Table {
-  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o vertices")
+  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o edges")
 
   def idSet = project.edgeBundle.idSet
   def columns = project.edgeAttributes
 }
 
 class TripletTable(project: ProjectViewer) extends Table {
-  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o vertices")
+  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o edges")
 
   def idSet = project.edgeBundle.idSet
   def columns = {
