@@ -13,11 +13,10 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.graph_api.io
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.table
-import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.model
 
 import java.io.File
 import org.apache.spark
@@ -169,6 +168,7 @@ object FrontendJson {
    * json.Json.toJson needs one for every incepted case class,
    * they need to be ordered so that everything is declared before use.
    */
+  import model.FEModel
 
   // TODO: do this without a fake field, e.g. by not using inception.
   implicit val rEmpty = json.Json.reads[Empty]
@@ -319,7 +319,7 @@ object ProductionJsonServer extends JsonServer {
     // For CSV downloads we want to read the "header" file and then the "data" directory.
     val files: Seq[HadoopFile] =
       if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
-      else (path / "*").list
+      else (path / "*").list.sortBy(_.symbolicName)
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)

@@ -2,10 +2,12 @@
 
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
-  <timestamp key="byDay" datePattern="yyyyMMdd"/>
-
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-     <file>${LOGGER_HOME:-${application.home}}/logs/application-${byDay}.log</file>
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+       <fileNamePattern>${LOGGER_HOME:-${application.home}}/logs/application-%d{yyyyMMdd}.log</fileNamePattern>
+       <maxHistory>60</maxHistory>
+       <cleanHistoryOnStart>true</cleanHistoryOnStart>
+     </rollingPolicy>
      <encoder>
        <pattern>%.-1level%date %logger{0}:[%thread] %message%n%xException</pattern>
      </encoder>

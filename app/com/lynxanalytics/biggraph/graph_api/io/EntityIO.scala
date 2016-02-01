@@ -2,6 +2,7 @@
 
 package com.lynxanalytics.biggraph.graph_api.io
 
+import com.lynxanalytics.biggraph.graph_api.TypeTagToFormat
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.HashPartitioner
@@ -185,8 +186,9 @@ class ScalarIO[T](entity: Scalar[T], context: IOContext)
   def read(parent: Option[VertexSetData]): ScalarData[T] = {
     assert(parent == None, s"Scalar read called with parent $parent")
     log.info(s"PERF Loading scalar $entity from disk")
-    val ois = new java.io.ObjectInputStream(serializedScalarFileName.forReading.open())
-    val value = try ois.readObject.asInstanceOf[T] finally ois.close()
+    val jsonString = serializedScalarFileName.forReading.readAsString()
+    val format = TypeTagToFormat.typeTagToFormat(entity.typeTag)
+    val value = format.reads(json.Json.parse(jsonString)).get
     log.info(s"PERF Loaded scalar $entity from disk")
     new ScalarData[T](entity, value)
   }
@@ -194,10 +196,11 @@ class ScalarIO[T](entity: Scalar[T], context: IOContext)
   def write(data: EntityData): Unit = {
     val scalarData = data.asInstanceOf[ScalarData[T]]
     log.info(s"PERF Writing scalar $entity to disk")
+    val format = TypeTagToFormat.typeTagToFormat(entity.typeTag)
+    val output = format.writes(scalarData.value)
     val targetDir = path.forWriting
     targetDir.mkdirs
-    val oos = new java.io.ObjectOutputStream(serializedScalarFileName.forWriting.create())
-    try oos.writeObject(scalarData.value) finally oos.close()
+    serializedScalarFileName.forWriting.createFromStrings(json.Json.prettyPrint(output))
     successPath.forWriting.createFromStrings("")
     log.info(s"PERF Written scalar $entity to disk")
   }

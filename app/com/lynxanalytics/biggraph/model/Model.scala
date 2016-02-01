@@ -7,29 +7,84 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.rdd.RDD
 import org.apache.spark
+import play.api.libs.json
+import play.api.libs.json.JsNull
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
 }
 
-class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
+class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
 }
 
 case class Model(
-    method: String,
-    path: String,
-    labelName: String,
-    featureNames: List[String],
-    labelScaler: Option[mllib.feature.StandardScalerModel],
-    featureScaler: mllib.feature.StandardScalerModel) {
+  method: String,
+  path: String,
+  labelName: String,
+  featureNames: List[String],
+  labelScaler: Option[mllib.feature.StandardScalerModel],
+  featureScaler: mllib.feature.StandardScalerModel)
+    extends ToJson with Equals {
+
+  private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
+    if (model.isDefined) {
+      json.Json.obj(
+        "std" -> json.Json.parse(model.get.std.toJson),
+        "mean" -> json.Json.parse(model.get.mean.toJson),
+        "withStd" -> model.get.withStd,
+        "withMean" -> model.get.withMean)
+    } else {
+      JsNull
+    }
+  }
+
+  private def standardScalerModelEquals(left: mllib.feature.StandardScalerModel,
+                                        right: mllib.feature.StandardScalerModel): Boolean = {
+    left.mean == right.mean &&
+      left.std == right.std &&
+      left.withMean == right.withMean &&
+      left.withStd == right.withStd
+  }
+
+  override def equals(other: Any) = {
+    if (canEqual(other)) {
+      val o = other.asInstanceOf[Model]
+      method == o.method &&
+        path == o.path &&
+        labelName == o.labelName &&
+        featureNames == o.featureNames &&
+        ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
+          standardScalerModelEquals(labelScaler.get, o.labelScaler.get)) &&
+          standardScalerModelEquals(featureScaler, o.featureScaler)
+    } else {
+      false
+    }
+  }
+
+  override def canEqual(other: Any) = other.isInstanceOf[Model]
+
+  override def toJson: json.JsValue = {
+    json.Json.obj(
+      "method" -> method,
+      "path" -> path,
+      "labelName" -> labelName,
+      "featureNames" -> featureNames,
+      "labelScaler" -> standardScalerModelToJson(labelScaler),
+      "featureScaler" -> standardScalerModelToJson(Some(featureScaler))
+    )
+  }
 
   // Loads the previously created model from the file system.
   def load(sc: spark.SparkContext): ModelImplementation = {
     method match {
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
+      case "Ridge regression" =>
+        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
+      case "Lasso" =>
+        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
     }
   }
 
@@ -44,7 +99,30 @@ case class Model(
 }
 
 // Helper methods to transform and scale training and prediction data.
-object Model {
+object Model extends FromJson[Model] {
+  private def standardScalerModelFromJson(j: json.JsValue): Option[mllib.feature.StandardScalerModel] = {
+    j match {
+      case JsNull => None
+      case _ => {
+        val std = org.apache.spark.mllib.linalg.Vectors.fromJson(json.Json.stringify(j \ "std"))
+        val mean = org.apache.spark.mllib.linalg.Vectors.fromJson(json.Json.stringify(j \ "mean"))
+        val withStd = (j \ "withStd").as[Boolean]
+        val withMean = (j \ "withMean").as[Boolean]
+        Some(new mllib.feature.StandardScalerModel(std, mean, withStd, withMean))
+      }
+    }
+  }
+
+  override def fromJson(j: json.JsValue): Model = {
+    Model(
+      (j \ "method").as[String],
+      (j \ "path").as[String],
+      (j \ "labelName").as[String],
+      (j \ "featureNames").as[List[String]],
+      standardScalerModelFromJson(j \ "labelScaler"),
+      standardScalerModelFromJson(j \ "featureScaler").get
+    )
+  }
   def toFE(modelName: String, modelMeta: ModelMeta): FEModel = FEModel(modelName, modelMeta.featureNames)
 
   def newModelPath: String = {
@@ -86,8 +164,8 @@ object Model {
 }
 
 case class FEModel(
-  val name: String,
-  val featureNames: List[String])
+  name: String,
+  featureNames: List[String])
 
 trait ModelMeta {
   def featureNames: List[String]
@@ -105,7 +183,7 @@ case class ScaledParams(
 
 class Scaler(
     // Whether the data should be prepared for a Stochastic Gradient Descent method.
-    val forSGD: Boolean) {
+    forSGD: Boolean) {
 
   // Creates the input for training and evaluation.
   def scale(
