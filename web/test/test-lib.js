@@ -200,6 +200,10 @@ Side.prototype = {
     }
   },
 
+  populateOperationInput: function(parameterId, param) {
+    this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
+  },
+
   submitOperation: function(parentElement) {
     var button = parentElement.element(by.css('.ok-button'));
     // Wait for uploads or whatever.
@@ -690,18 +694,21 @@ testLib = {
 
   // Deletes all projects and directories.
   discardAll: function() {
-    var defer = protractor.promise.defer();
-    request.post(
-      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-      { json: { fake: 1 } },
-      function(error, message) {
-        if (error || message.statusCode >= 400) {
-          defer.reject({ error : error, message : message });
-        } else {
-          defer.fulfill();
-        }
-      });
-    browser.controlFlow().execute(function() { return defer.promise; });
+    function sendRequest() {
+      var defer = protractor.promise.defer();
+      request.post(
+        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+        { json: { fake: 1 } },
+        function(error, message) {
+          if (error || message.statusCode >= 400) {
+            defer.reject({ error : error, message : message });
+          } else {
+            defer.fulfill();
+          }
+        });
+      return defer.promise;
+    }
+    browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
@@ -745,6 +752,8 @@ testLib = {
             // to minimize the chance of mathcing an other table.
             var optionLabelPattern = value + ' (';
             e.element(by.cssContainingText('option', optionLabelPattern)).click();
+          } else if (kind === 'choice') {
+            e.element(by.cssContainingText('option', value)).click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
