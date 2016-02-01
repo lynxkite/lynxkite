@@ -118,7 +118,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     run(
       "Import vertices from table",
       Map(
-        "table" -> (project2Checkpoint + "|!vertices"),
+        "table" -> (project2Checkpoint + "|vertices"),
         "id-attr" -> "new_id"))
     assert(project.vertexSet.rdd.count == 4)
     assert(project.edgeBundle == null)
@@ -137,7 +137,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     run(
       "Import vertices from table",
       Map(
-        "table" -> (project2Checkpoint + "|!edges"),
+        "table" -> (project2Checkpoint + "|triplets"),
         "id-attr" -> "id"))
     assert(project.vertexSet.rdd.count == 4)
     assert(project.edgeBundle == null)
@@ -146,12 +146,12 @@ class ExportImportOperationTest extends OperationsTestBase {
       val vAttrs = project.vertexAttributes.toMap
       // 2 original edge attr, 2 * 6 src and dst attributes + 1 id
       assert(vAttrs.size == 15)
-      assert(vAttrs("weight").rdd.map(_._2).collect.toSet == Set(1.0, 2.0, 3.0, 4.0))
+      assert(vAttrs("edge_weight").rdd.map(_._2).collect.toSet == Set(1.0, 2.0, 3.0, 4.0))
       assert(
-        vAttrs("src$name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
+        vAttrs("src_name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
           Seq("Adam", "Bob", "Bob", "Eve"))
       assert(
-        vAttrs("dst$name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
+        vAttrs("dst_name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
           Seq("Adam", "Adam", "Eve", "Eve"))
     }
     run("Discard vertices")
@@ -159,9 +159,9 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import belongs to as edges
     run("Import vertices and edges from a single table",
       Map(
-        "table" -> (project2Checkpoint + "|cc|!belongsTo"),
-        "src" -> "base$name",
-        "dst" -> "segment$id"))
+        "table" -> (project2Checkpoint + "|cc|belongsTo"),
+        "src" -> "base_name",
+        "dst" -> "segment_id"))
     // 4 nodes in 2 segments
     assert(project.vertexSet.rdd.count == 6)
     assert(project.edgeBundle.rdd.count == 4)
@@ -174,8 +174,8 @@ class ExportImportOperationTest extends OperationsTestBase {
       // 6 from base vertices, 2 from connected components
       assert(eAttrs.size == 8)
 
-      val baseName = eAttrs("base$name").runtimeSafeCast[String].rdd
-      val segmentId = eAttrs("segment$id").runtimeSafeCast[String].rdd
+      val baseName = eAttrs("base_name").runtimeSafeCast[String].rdd
+      val segmentId = eAttrs("segment_id").runtimeSafeCast[String].rdd
       val compnentMap = baseName.sortedJoin(segmentId).values.collect.toMap
       assert(compnentMap.size == 4)
       assert(compnentMap("Adam") == compnentMap("Eve"))
@@ -199,7 +199,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table, "")
-    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
     run("Example Graph")
     run("Import edges for existing vertices from table", Map(
       "table" -> tablePath,
@@ -227,7 +227,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
-    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
     run("Example Graph")
     run("Import vertex attributes from table", Map(
       "table" -> tablePath,
@@ -250,7 +250,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
-    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|!vertices"
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
     run("Example Graph")
     run("Import edge attributes from table", Map(
       "table" -> tablePath,

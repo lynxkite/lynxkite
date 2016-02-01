@@ -12,13 +12,16 @@
   <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
   <button class="btn btn-primary"
     ng-disabled="showExportOptions"
+    id="save-results-opener"
     ng-click="showExportOptions = true">Save results...</button>
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 </div>
 
 <form ng-show="showExportOptions" class="form-horizontal">
   <div class="form-group">
-    <label for="exportFormat" class="col-sm-4 control-label">Format</label>
+    <label for="exportFormat" class="col-sm-4 control-label">
+      Format <help-popup href="exporting-data"></help-popup>
+    </label>
     <div class="col-sm-8">
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
         <option value="table">LynxKite table</option>
@@ -32,30 +35,40 @@
   </div>
 
   <div class="form-group" ng-show="exportFormat === 'table'">
-    <label for="exportTable" class="col-sm-4 control-label">Table name</label>
+    <label for="exportTable" class="col-sm-4 control-label">
+      Table name <help-popup href="export-lynxkite-table-table"></help-popup>
+    </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportTable" ng-model="exportTable">
     </div>
   </div>
 
-  <div class="form-group" ng-show="'csv json parquet orc'.split(' ').indexOf(exportFormat) !== -1">
-    <label for="exportPath" class="col-sm-4 control-label">Path</label>
-    <div class="col-sm-8">
-      <input
-        class="form-control" id="exportPath" ng-model="exportPath" value="<download>"
-        placeholder="Distributed file system path">
+  <div ng-repeat="format in 'csv json parquet orc'.split(' ')">
+    <div class="form-group" ng-show="exportFormat === format">
+      <label for="exportPath" class="col-sm-4 control-label">
+        Path <help-popup href="export-{{ format }}-path"></help-popup>
+      </label>
+      <div class="col-sm-8">
+        <input
+          class="form-control" id="exportPath" ng-model="exportPath" value="<download>"
+          placeholder="Distributed file system path">
+      </div>
     </div>
   </div>
 
   <div class="form-group" ng-show="exportFormat === 'csv'">
-    <label for="exportDelimiter" class="col-sm-4 control-label">Delimiter</label>
+    <label for="exportDelimiter" class="col-sm-4 control-label">
+      Delimiter <help-popup href="export-csv-delimiter"></help-popup>
+    </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportDelimiter" ng-model="exportDelimiter" value=",">
     </div>
   </div>
 
   <div class="form-group" ng-show="exportFormat === 'csv'">
-    <label for="exportQuote" class="col-sm-4 control-label">Quote</label>
+    <label for="exportQuote" class="col-sm-4 control-label">
+      Quote <help-popup href="export-csv-quote"></help-popup>
+    </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportQuote" ng-model="exportQuote" value="&quot;">
     </div>
@@ -66,38 +79,50 @@
       <div class="checkbox">
         <label>
           <input type="checkbox" ng-model="exportHeader"> Include header
+          <help-popup href="export-csv-header"></help-popup>
         </label>
       </div>
     </div>
   </div>
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
-    <label for="exportJdbcUrl" class="col-sm-4 control-label">JDBC URL</label>
+    <label for="exportJdbcUrl" class="col-sm-4 control-label">
+      JDBC URL <help-popup href="export-jdbc-url"></help-popup>
+    </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportJdbcUrl" ng-model="exportJdbcUrl" placeholder="jdbc:...">
     </div>
   </div>
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
-    <label for="exportTable" class="col-sm-4 control-label">Table</label>
+    <label for="exportTable" class="col-sm-4 control-label">
+      Table <help-popup href="export-jdbc-table"></help-popup>
+    </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportTable" ng-model="exportTable">
     </div>
   </div>
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
-    <div class="col-sm-offset-4 col-sm-8">
+    <label for="exportMode" class="col-sm-4 control-label">
+      <help-popup href="export-jdbc-mode"></help-popup>
+    </label>
+    <div class="col-sm-8">
       <select class="form-control" id="exportMode" ng-model="exportMode">
         <option value="error">The table must not exist</option>
         <option value="overwrite">Drop the table if it already exists</option>
         <option value="append">Insert into an existing table</option>
       </select>
+    </label>
     </div>
   </div>
 
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
-    <button class="btn btn-primary" ng-disabled="inProgress" ng-click="export()">Save results</button>
+    <button
+      id="save-results" class="btn btn-primary" ng-disabled="inProgress" ng-click="export()">
+      Save results
+    </button>
     <button class="btn btn-primary" ng-click="showExportOptions = false">Cancel</button>
     </div>
   </div>

@@ -354,7 +354,7 @@
       </li>
       <li class="sublist list-group-item segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
 
-      <li class="list-group-item" ng-if="!side.isSegmentation()">
+      <li class="list-group-item">
         <span class="lead de-emph">SQL</span>
         <div class="pull-right">
           <i class="glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }} section-button"

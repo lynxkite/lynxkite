@@ -22,24 +22,24 @@
   padding: 0 5px;
 }
 
-.project-list div.entry > .icon {
+.project-list .entry > .icon {
   position: absolute;
   padding: 10px;
   margin-left: -40px;
   margin-top: 6px;
 }
 
-.project-list div.entry .open-in-new-tab-icon {
+.project-list .entry .open-in-new-tab-icon {
   font-size: 60%;
   vertical-align: super;
 }
 
-.project-list div.entry:hover .open-in-new-tab-icon,
-.project-list div.entry:focus .open-in-new-tab-icon {
+.project-list .entry:hover .open-in-new-tab-icon,
+.project-list .entry:focus .open-in-new-tab-icon {
   color: white;
 }
 
-.project-list div.entry {
+.project-list .entry {
   position: relative;
   padding: 10px;
   padding-left: 40px;
@@ -47,17 +47,17 @@
   color: #428BCA;
   cursor: pointer;
 }
-.project-list div.entry:hover,
-.project-list div.entry:focus {
+.project-list .entry:hover,
+.project-list .entry:focus {
   text-decoration: none;
   background: #428BCA;
   color: white;
 }
-.project-list div.entry.error {
+.project-list .entry.error {
   color: maroon;
   background: white;
   cursor: not-allowed;
 }
-.project-list div.entry.error a {
+.project-list .entry.error a {
   cursor: pointer;
 }
