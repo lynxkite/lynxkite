@@ -30,7 +30,6 @@ module.exports = function(fw) {
     function() {
       left.toggleSqlBox();
 
-      // Query some edge attributes.
       left.runSql('select comment, `src$name` from `!edges` order by comment');
 
       left.expectSqlResult(
@@ -52,7 +51,6 @@ module.exports = function(fw) {
     function() {
       left.toggleSqlBox();
 
-      // Query some edge attributes.
       left.setSql('select name, age, income from `!vertices` order by name');
 
       left.startSqlSaving();
@@ -63,12 +61,12 @@ module.exports = function(fw) {
       // And go.
       lib.startDownloadWatch();
       left.executeSqlSaving();
-      var downloadedFileName = lib.waitForNewDownload(/^.*\.csv$/);
+      var downloadedFileName = lib.waitForNewDownload(/\.csv$/);
       lib.expectFileContents(
         downloadedFileName,
         'Adam,20.3,1000.0\nBob,50.3,2000.0\nEve,18.2,\nIsolated Joe,2.0,\n');
 
       // Reset state.
       left.toggleSqlBox();
-    });
+    }, "solo");
 };

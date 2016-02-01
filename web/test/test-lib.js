@@ -678,7 +678,7 @@ testLib = {
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
-  protractorDownloads: '/tmp/protractordownloads',
+  protractorDownloads: '/tmp/protractorDownloads',
 
   expectElement: function(e) {
     expect(e.isDisplayed()).toBe(true);
@@ -814,7 +814,7 @@ testLib = {
   // WebDriver 2.45 changed browser.wait() to default to a 0 timeout. This was reverted in 2.46.
   // But the current Protractor version uses 2.45, so we have this wrapper.
   wait: function(condition) {
-    browser.wait(condition, 99999999);
+    return browser.wait(condition, 99999999);
   },
 
   expectModal: function(title) {
@@ -858,7 +858,7 @@ testLib = {
   // Waits for a new downloaded file matching regex and returns its name.
   // Pattern match is needed as chrome first creates some weird temp file.
   waitForNewDownload: function(regex) {
-    return browser.driver.wait(function() {
+    return testLib.wait(function() {
       var newList = fs.readdirSync(testLib.protractorDownloads).filter(function(fn) {
         return fn.match(regex);
       });
@@ -870,7 +870,7 @@ testLib = {
       } else {
         return false;
       }
-    }, 10000);   
+    });
   },
 
   expectFileContents: function(filename, expectedContents) {
