@@ -18,12 +18,13 @@ closing the shell session will terminate the program.
 
 In the default configuration user authentication is turned off. To enable user authentication, you have to
 enable HTTPS (see next section). To securely set up user authentication:
- - Make sure LynxKite is not accessible externally.
- - Start LynxKite without authentication. Go to `http://<lynxkite_url>/#/users` and add at least one new
-   administrator user. (Administrator users can create more users later.)
- - Enable HTTPS in the `.kiterc` file.
- - Restart LynxKite with authentication. Confirm that user credentials are now required for login.
- - You can now make LynxKite externally accessible.
+
+- Make sure LynxKite is not accessible externally.
+- Start LynxKite without authentication. Go to http://<lynxkite_url>/#/users and add at least one new
+  administrator user. (Administrator users can create more users later.)
+- Enable HTTPS in the `.kiterc` file.
+- Restart LynxKite with authentication. Confirm that user credentials are now required for login.
+- You can now make LynxKite externally accessible.
 
 ### HTTPS setup
 
@@ -32,7 +33,9 @@ To enable HTTPS, a certificate is required. For testing purposes a self-signed c
 (Lacking a trusted CA, the self-signed certificate can easily be spoofed.) Using it will trigger a certificate warning
 in the user’s browser. It is recommended to install a real certificate in its place.
 
-The file specified in `.kiterc` as `KITE_HTTPS_KEYSTORE` is a Tomcat-style keystore. If you have your own intranet CA or a wildcard certificate, you can generate a certificate for LynxKite that the browsers can validate. Follow the instructions at `http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html` for creating a keystore file.
+The file specified in `.kiterc` as `KITE_HTTPS_KEYSTORE` is a Tomcat-style keystore. If you have your own intranet
+CA or a wildcard certificate, you can generate a certificate for LynxKite that the browsers can validate. Follow
+the instructions at http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
 The following settings need to be set in `.kiterc` to enable HTTPS:
 
 - `KITE_APPLICATION_SECRET`: A secret string, used to prevent auth cookie forgery.
