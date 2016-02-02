@@ -72,7 +72,7 @@ split.edgeAttributeToDouble(
   attr: 'originalCalls'
 )
 
-// Create vertex attribute 'originalUniqueId' - this runs beteen 0 and number of vertices - 1
+// Create vertex attribute 'originalUniqueId' - this runs between 0 and number of vertices - 1
 // Low ids will be treated specially, e.g., splits, and further undefined will come from
 // the low regions of the id range.
 split.addRandomVertexAttribute(
@@ -288,17 +288,35 @@ split.derivedVertexAttribute(
   type: 'double',
   expr: '(peripheral == 0.0 && splitSave == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
 )
+split.derivedVertexAttribute(
+  output: 'pnormal',
+  type: 'double',
+  expr: '(peripheral == 1.0 && splitSave == 1.0 && furtherUndefinedAttr1 == 0.0 && furtherUndefinedAttr2 == 0.0) ? 1.0 : 0.0'
+)
 
 split.derivedVertexAttribute(
   output: 'furtherOk',
   type: 'double',
-  expr: '(peripheral == 0.0 && (furtherUndefinedAttr1 == 1.0 && attr1 == -1) || (furtherUndefinedAttr2 == 1.0 && attr2 == -1)) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && ((furtherUndefinedAttr1 == 1.0 && attr1 == -1) || (furtherUndefinedAttr2 == 1.0 && attr2 == -1))) ? 1.0 : 0.0'
 )
+
+split.derivedVertexAttribute(
+  output: 'pfurtherOk',
+  type: 'double',
+  expr: '(peripheral == 1.0 && ((furtherUndefinedAttr1 == 1.0 && attr1 == -1) || (furtherUndefinedAttr2 == 1.0 && attr2 == -1))) ? 1.0 : 0.0'
+)
+
 
 split.derivedVertexAttribute(
   output: 'furtherBad',
   type: 'double',
-  expr: '(peripheral == 0.0 && (furtherUndefinedAttr1 == 1.0 && attr1 != -1) || (furtherUndefinedAttr2 == 1.0 && attr2 != -1)) ? 1.0 : 0.0'
+  expr: '(peripheral == 0.0 && ((furtherUndefinedAttr1 == 1.0 && attr1 != -1) || (furtherUndefinedAttr2 == 1.0 && attr2 != -1))) ? 1.0 : 0.0'
+)
+
+split.derivedVertexAttribute(
+  output: 'pfurtherBad',
+  type: 'double',
+  expr: '(peripheral == 1.0 && ((furtherUndefinedAttr1 == 1.0 && attr1 != -1) || (furtherUndefinedAttr2 == 1.0 && attr2 != -1))) ? 1.0 : 0.0'
 )
 
 split.derivedVertexAttribute(
@@ -306,6 +324,12 @@ split.derivedVertexAttribute(
   type: 'double',
   expr: '(peripheral == 0.0 && splitSave == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
 )
+split.derivedVertexAttribute( // This must be 0, see assert at end of file
+  output: 'pchurnerFound',
+  type: 'double',
+  expr: '(peripheral == 1.0 && splitSave == 2.0 && attr1 == attr2 && attr1 != -1) ? 1.0 : 0.0'
+)
+
 
 split.derivedVertexAttribute(
   output: 'churnerNoMatch',
@@ -314,10 +338,23 @@ split.derivedVertexAttribute(
 )
 
 split.derivedVertexAttribute(
-  output: 'churnerMisMatch',
+  output: 'pchurnerNoMatch',
+  type: 'double',
+  expr: '(peripheral == 1.0 && splitSave == 2.0 && (attr1 == -1 || attr2 == -1)) ? 1.0 : 0.0'
+)
+
+split.derivedVertexAttribute(
+  output: 'churnerMisMatch', // This must be 0, see assert at end of file
   type: 'double',
   expr: '(peripheral == 0.0 && splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
 )
+
+split.derivedVertexAttribute(
+  output: 'pchurnerMisMatch',
+  type: 'double',
+  expr: '(peripheral == 1.0 && splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
+)
+
 
 split.derivedVertexAttribute(
   output: 'labelType',
@@ -341,10 +378,20 @@ split.aggregateVertexAttributeGlobally(
   prefix: "",
   "aggregate-normal": "sum"
 )
+split.aggregateVertexAttributeGlobally(
+  prefix: "",
+  "aggregate-pnormal": "sum"
+)
+
 
 split.aggregateVertexAttributeGlobally(
   prefix: "",
   "aggregate-furtherOk": "sum"
+)
+
+split.aggregateVertexAttributeGlobally(
+  prefix: "",
+  "aggregate-pfurtherOk": "sum"
 )
 
 split.aggregateVertexAttributeGlobally(
@@ -354,7 +401,17 @@ split.aggregateVertexAttributeGlobally(
 
 split.aggregateVertexAttributeGlobally(
   prefix: "",
+  "aggregate-pfurtherBad": "sum"
+)
+
+split.aggregateVertexAttributeGlobally(
+  prefix: "",
   "aggregate-churnerFound": "sum"
+)
+
+split.aggregateVertexAttributeGlobally(
+  prefix: "",
+  "aggregate-pchurnerFound": "sum"
 )
 
 split.aggregateVertexAttributeGlobally(
@@ -362,26 +419,53 @@ split.aggregateVertexAttributeGlobally(
   "aggregate-churnerNoMatch": "sum"
 )
 
+
+split.aggregateVertexAttributeGlobally(
+  prefix: "",
+  "aggregate-pchurnerNoMatch": "sum"
+)
+
 split.aggregateVertexAttributeGlobally(
   prefix: "",
   "aggregate-churnerMisMatch": "sum"
 )
 
-vertices=split.scalars['vertex_count']
-edges=split.scalars['edge_count']
-normal=split.scalars['normal_sum']
-furtherOk=split.scalars['furtherOk_sum']
-furtherBad=split.scalars['furtherBad_sum']
-churnerFound =split.scalars['churnerFound_sum']
-churnerNoMatch =split.scalars['churnerNoMatch_sum']
-churnerMisMatch =split.scalars['churnerMisMatch_sum']
+split.aggregateVertexAttributeGlobally(
+  prefix: "",
+  "aggregate-pchurnerMisMatch": "sum"
+)
 
-println "vertices: $vertices"
-println "edges: $edges"
 
-println "normal $normal"
-println "furtherOk $furtherOk"
-println "furtherBad $furtherBad"
-println "churnerFound $churnerFound"
-println "churnerNoMatch $churnerNoMatch"
-println "churnerMisMatch $churnerMisMatch"
+
+vertices=split.scalars['vertex_count'].toString().toDouble()
+edges=split.scalars['edge_count'].toString().toDouble()
+normal=split.scalars['normal_sum'].toString().toDouble()
+furtherOk=split.scalars['furtherOk_sum'].toString().toDouble()
+furtherBad=split.scalars['furtherBad_sum'].toString().toDouble()
+churnerFound=split.scalars['churnerFound_sum'].toString().toDouble()
+churnerNoMatch=split.scalars['churnerNoMatch_sum'].toString().toDouble()
+churnerMisMatch=split.scalars['churnerMisMatch_sum'].toString().toDouble()
+
+
+
+pnormal = split.scalars['pnormal_sum'].toString().toDouble()
+pfurtherOk = split.scalars['pfurtherOk_sum'].toString().toDouble()
+pfurtherBad = split.scalars['pfurtherBad_sum'].toString().toDouble()
+pchurnerFound = split.scalars['pchurnerFound_sum'].toString().toDouble()
+pchurnerNoMatch = split.scalars['pchurnerNoMatch_sum'].toString().toDouble()
+pchurnerMisMatch = split.scalars['pchurnerMisMatch_sum'].toString().toDouble()
+
+assert pchurnerMisMatch == 0 : "pchurnerMisMatch should be 0, but it is " + pchurnerMisMatch.toString()
+assert pchurnerFound == 0 : "pchurnerFound should be 0, but it is " + pchurnerFound.toString()
+
+
+System.out.printf("%-20s %15s %15s\n",      "",               'INNER',        'PERIPHERAL');
+System.out.printf("%-20s %15.0f %15.0f\n", 'normal',          normal,          pnormal)
+System.out.printf("%-20s %15.0f %15.0f\n", 'furtherOk',       furtherOk,       pfurtherOk)
+System.out.printf("%-20s %15.0f %15.0f\n", 'furtherBad',      furtherBad,      pfurtherBad)
+System.out.printf("%-20s %15.0f %15.0f\n", 'churnerFound',    churnerFound,    pchurnerFound)
+System.out.printf("%-20s %15.0f %15.0f\n", 'churnerNoMatch',  churnerNoMatch,  pchurnerNoMatch)
+System.out.printf("%-20s %15.0f %15.0f\n", 'churnerMisMatch', churnerMisMatch, pchurnerMisMatch)
+System.out.printf("\n");
+System.out.printf("%-20s %.0f\n", 'edges', edges)
+System.out.printf("%-20s %.0f\n", 'vertices', vertices)
