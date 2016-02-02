@@ -4,24 +4,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
   test("Fingerprinting based on attributes") {
-    run("Import vertices from CSV files", Map(
-      "files" -> "OPERATIONSTEST$/fingerprint-100-vertices.csv",
-      "header" -> "id,email,name",
-      "delimiter" -> ",",
-      "id-attr" -> "delete me",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
-    run("Import edges for existing vertices from CSV files", Map(
-      "files" -> "OPERATIONSTEST$/fingerprint-100-edges.csv",
-      "header" -> "src,dst",
-      "delimiter" -> ",",
+    run("Import vertices", Map(
+      "table" -> importCSV("OPERATIONSTEST$/fingerprint-100-vertices.csv"),
+      "id-attr" -> "delete me"))
+    run("Import edges for existing vertices", Map(
+      "table" -> importCSV("OPERATIONSTEST$/fingerprint-100-edges.csv"),
       "attr" -> "id",
       "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
+      "dst" -> "dst"))
     // Turn empty strings into "undefined".
     run("Derived vertex attribute", Map(
       "output" -> "email",
