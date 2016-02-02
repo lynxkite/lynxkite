@@ -20,12 +20,12 @@ class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) exte
 }
 
 case class Model(
-  method: String,
-  path: String,
-  labelName: String,
-  featureNames: List[String],
-  labelScaler: Option[mllib.feature.StandardScalerModel],
-  featureScaler: mllib.feature.StandardScalerModel)
+  method: String, // The training method used to create this model.
+  symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
+  labelName: String, // Name of the label attribute used to train this model.
+  featureNames: List[String], // The name of the feature attributes used to train this model.
+  labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
+  featureScaler: mllib.feature.StandardScalerModel) // The scaler used to scale the features.
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -52,7 +52,7 @@ case class Model(
     if (canEqual(other)) {
       val o = other.asInstanceOf[Model]
       method == o.method &&
-        path == o.path &&
+        symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
         ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
@@ -68,7 +68,7 @@ case class Model(
   override def toJson: json.JsValue = {
     json.Json.obj(
       "method" -> method,
-      "path" -> path,
+      "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "featureNames" -> featureNames,
       "labelScaler" -> standardScalerModelToJson(labelScaler),
@@ -78,6 +78,7 @@ case class Model(
 
   // Loads the previously created model from the file system.
   def load(sc: spark.SparkContext): ModelImplementation = {
+    val path = HadoopFile(symbolicPath).resolvedName
     method match {
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
@@ -116,7 +117,7 @@ object Model extends FromJson[Model] {
   override def fromJson(j: json.JsValue): Model = {
     Model(
       (j \ "method").as[String],
-      (j \ "path").as[String],
+      (j \ "symbolicPath").as[String],
       (j \ "labelName").as[String],
       (j \ "featureNames").as[List[String]],
       standardScalerModelFromJson(j \ "labelScaler"),
@@ -125,8 +126,8 @@ object Model extends FromJson[Model] {
   }
   def toFE(modelName: String, modelMeta: ModelMeta): FEModel = FEModel(modelName, modelMeta.featureNames)
 
-  def newModelPath: String = {
-    (HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString).resolvedName
+  def newModelFile: HadoopFile = {
+    HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
   }
 
   def checkLinearModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
