@@ -55,30 +55,30 @@ findstr "vb.cpus" Vagrantfile.kite >> Vagrantfile
 
 
 vagrant up --provision
-	IF ERRORLEVEL 1 (
-		color C
-		echo.
-		echo ---------------------------------------------------------------
-		echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		echo.
-		echo Something went wrong. Cannot run debugging.
-		echo Press any key to exit
-		echo Debug failed >> %LOGFILE%
-        copy Vagrantfile.kite Vagrantfile > nul
-        del /F Vagrantfile.kite > nul
-		pause > nul
-		exit /b 1
-	) ELSE (
-		color A
-		echo Debugging Finished.
-		echo Check the log folder for log files starting with vagrant_log_debug
-		echo Press any key to exit
-		echo Debug successful >> %LOGFILE%
-        copy Vagrantfile.kite Vagrantfile > nul
-        del /F Vagrantfile.kite > nul
-		pause > nul
-		exit /b 0
-	)
+  IF ERRORLEVEL 1 (
+    color C
+    echo.
+    echo ---------------------------------------------------------------
+    echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    echo.
+    echo Something went wrong. Cannot run debugging.
+    echo Press any key to exit
+    echo Debug failed >> %LOGFILE%
+    copy Vagrantfile.kite Vagrantfile > nul
+    del /F Vagrantfile.kite > nul
+    pause > nul
+    exit /b 1
+  ) ELSE (
+    color A
+    echo Debugging Finished.
+    echo Check the log folder for log files starting with vagrant_log_debug
+    echo Press any key to exit
+    echo Debug successful >> %LOGFILE%
+    copy Vagrantfile.kite Vagrantfile > nul
+    del /F Vagrantfile.kite > nul
+    pause > nul
+    exit /b 0
+  )
 )
 
 :GetUnixTime

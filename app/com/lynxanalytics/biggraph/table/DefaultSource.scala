@@ -24,7 +24,7 @@ class DefaultSource extends sql.sources.RelationProvider {
   def createRelation(sqlContext: sql.SQLContext, parameters: Map[String, String]) = {
     val env = DefaultSource.envs(parameters("environment"))
     val path = parameters("path")
-    val table = controllers.Table.fromGlobalPath(path)(env.metaGraphManager)
+    val table = controllers.Table(controllers.GlobalTablePath.parse(path))(env.metaGraphManager)
     new TableRelation(table, sqlContext)(env.dataManager)
   }
 }
