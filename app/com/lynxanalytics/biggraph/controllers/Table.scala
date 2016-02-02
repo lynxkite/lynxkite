@@ -95,8 +95,8 @@ sealed trait TablePath {
 }
 object TablePath {
   def parse(path: String): TablePath = {
-    val cp = FEOption.maybeUnpackTitledCheckpoint(path)
-    if (cp.nonEmpty) GlobalTablePath.parse(path)
+    val g = GlobalTablePath.maybeParse(path)
+    if (g.nonEmpty) g.get
     else if (path.head == '|') AbsoluteTablePath(split(path.tail))
     else RelativeTablePath(split(path))
   }
@@ -141,10 +141,16 @@ case class GlobalTablePath(checkpoint: String, name: String, path: Seq[String]) 
 }
 object GlobalTablePath {
   def parse(path: String): GlobalTablePath = {
-    val (checkpoint, name, suffix) = FEOption.unpackTitledCheckpoint(
-      path,
-      s"$path does not seem to be a valid global table path.")
-    GlobalTablePath(checkpoint, name, TablePath.split(suffix.tail))
+    val p = maybeParse(path)
+    assert(p.nonEmpty, s"$path does not seem to be a valid global table path.")
+    p.get
+  }
+
+  def maybeParse(path: String): Option[GlobalTablePath] = {
+    FEOption.maybeUnpackTitledCheckpoint(path).map {
+      case (checkpoint, name, suffix) =>
+        GlobalTablePath(checkpoint, name, TablePath.split(suffix.tail))
+    }
   }
 }
 
