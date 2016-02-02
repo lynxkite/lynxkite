@@ -3,6 +3,7 @@
 /* global element, by */
 var lib = require('../test-lib.js');
 var left = lib.left;
+var right = lib.right;
 
 module.exports = function(fw) {
   fw.statePreservingTest(
@@ -45,6 +46,25 @@ module.exports = function(fw) {
       left.toggleSqlBox();
     });
 
+  fw.transitionTest(
+    'empty test-example project',
+    'SQL runs nice on belongs to reached from project and segmentation',
+    function() {
+      left.runOperation('New vertex set', { size: '100' });
+      left.runOperation('Add random vertex attribute', { seed: '1' });
+      left.runOperation('Copy graph into a segmentation');
+      left.openSegmentation('self_as_segmentation');
+      left.toggleSqlBox();
+      left.runSql(
+        'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongsTo`');
+      right.toggleSqlBox();
+      right.runSql('select sum(base_random - segment_random) as error from belongsTo');
+    },
+    function() {
+      left.expectSqlResult(['sum'], [['100.0']]);
+      right.expectSqlResult(['error'], [['0.0']]);
+    });
+
   fw.statePreservingTest(
     'test-example project with example graph',
     'Save SQL result as CSV works',
@@ -69,4 +89,46 @@ module.exports = function(fw) {
       // Reset state.
       left.toggleSqlBox();
     });
+
+  fw.transitionTest(
+    'empty test-example project',
+    'table export and reimport',
+    function() {
+      left.runOperation('New vertex set', { size: '100' });
+      left.runOperation('Add random vertex attribute', { name: 'random1', seed: '1' });
+      left.runOperation('Add random vertex attribute', { name: 'random2', seed: '2' });
+      left.runOperation('Add rank attribute', { keyattr: 'random1', rankattr: 'rank1' });
+      left.runOperation('Add rank attribute', { keyattr: 'random2', rankattr: 'rank2' });
+
+      left.toggleSqlBox();
+      left.setSql(
+        'select cast(rank1 as string), cast(rank2 as string) from vertices');
+      left.startSqlSaving();
+      left.side.element(by.css('#exportFormat option[value="table"]')).click();
+      left.side.element(by.css('#exportKiteTable')).sendKeys('Random Edges');
+      left.executeSqlSaving();
+
+      left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
+      left.runOperation('Vertex attribute to string', { attr: 'ordinal' });
+      left.runOperation(
+        'Import edges for existing vertices from table',
+        {
+          table: 'Random Edges',
+          attr: 'ordinal',
+          src: 'rank1',
+          dst: 'rank2',
+        });
+
+      left.toggleSqlBox();
+
+      left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edges');
+      left.expectSqlResult(['r1sum', 'r2sum'], [['4950.0', '4950.0']]);
+
+      left.runSql(
+        'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from triplets');
+      left.expectSqlResult(['srcgood', 'dstgood'], [['true', 'true']]);
+    },
+    function() {
+    });
+
 };
