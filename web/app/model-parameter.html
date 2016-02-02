@@ -2,7 +2,7 @@
 <select
       id="model-name"
       ng-disabled="!editable"
-      class="form-control operation-attribute-entry"
+      class="form-control"
       ng-model="activeModel"
       ng-options="model as model.name for model in param.payload.models"></select>
 <div ng-if="activeModel">
@@ -14,7 +14,7 @@
         <select
           id="model-feature-{{feature}}"
           ng-disabled="!editable"
-          class="form-control operation-attribute-entry"
+          class="form-control"
           ng-model="binding[$index]"
           ng-options="attr.id as attr.title for attr in param.payload.attrs">
         </select>

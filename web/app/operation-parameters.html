@@ -36,14 +36,16 @@
     <model-parameter ng-if="param.kind === 'model'"
         param="param"
         editable="editable"
-        model="output[param.id]">
+        model="output[param.id]"
+        class="operation-attribute-entry">
     </model-parameter>
     <table-kind
       ng-if="param.kind === 'table'"
       editable="editable"
       model="output[param.id]"
       tables="param.options"
-      file-uploads="fileUploads.count">
+      file-uploads="fileUploads.count"
+      class="operation-attribute-entry">
     </table-kind>
     <select
       ng-disabled="!editable"

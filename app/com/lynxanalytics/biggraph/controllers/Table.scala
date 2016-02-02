@@ -103,6 +103,7 @@ sealed trait TablePath {
 }
 object TablePath {
   def parse(path: String): TablePath = {
+    assert(path.nonEmpty, "Empty table path.")
     val g = GlobalTablePath.maybeParse(path)
     if (g.nonEmpty) g.get
     else if (path.head == '|') AbsoluteTablePath(split(path.tail))
