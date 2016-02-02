@@ -327,8 +327,8 @@ batch)
   # 1.1. SSH login:
   cat >${MASTER_SCRIPT} <<EOF
 #!/usr/bin/expect -f
-set timeout 1800
-spawn ssh -oStrictHostKeyChecking=no -p 2203 lynx@localhost
+set timeout 86400
+spawn ssh -oStrictHostKeyChecking=no -oServerAliveInterval=30 -p 2203 lynx@localhost
 expect "Password:"
 send "kite\r"
 EOF
