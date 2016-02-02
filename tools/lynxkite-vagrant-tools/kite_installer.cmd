@@ -5,9 +5,9 @@ call :GetUnixTime UNIX_TIME
 IF NOT EXIST logs mkdir logs
 
 IF [%1] == [install] (
-	SET MODE=install
+  SET MODE=install
 ) ELSE IF [%1] == [upgrade] (
-	SET MODE=upgrade
+  SET MODE=upgrade
 ) ELSE (
 echo Usage: kite_installer mode version size
 exit /b 1
@@ -84,55 +84,55 @@ echo Machine settings: %VM_CPUS% CPUs with %VM_MEMORY%Mb RAM  >> %LOGFILE%
 color E
 
 IF [%MODE%] == [install] (
-    vagrant box update
-	vagrant up
-	IF ERRORLEVEL 1 (
-		color C
-		echo.
-		echo ---------------------------------------------------------------
-		echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		echo.
-		echo Something went wrong. Try the troubleshooting methods described in the instructions.
-		echo.
-		echo If you see a lot of unsuccessful attempts to connect to the virtual machine,
-		echo there is a good chance your computer does not support a 64-bit virtual machine.
-		echo To install a 32-bit machine, first run destroy_kite.cmd then run the 32bit install script.
-		echo.
-		echo Press any key to exit
-		echo Installation failed >> %LOGFILE%
-		pause > nul
-		exit /b 1
-	) ELSE (
-		color A
-		echo Install successful. You should be able to access kite by going to localhost:2200
-		echo Press any key to exit
-		echo Installation successful >> %LOGFILE%
-		pause > nul
-		exit /b 0
-	)
+  vagrant box update
+  vagrant up
+  IF ERRORLEVEL 1 (
+    color C
+    echo.
+    echo ---------------------------------------------------------------
+    echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    echo.
+    echo Something went wrong. Try the troubleshooting methods described in the instructions.
+    echo.
+    echo If you see a lot of unsuccessful attempts to connect to the virtual machine,
+    echo there is a good chance your computer does not support a 64-bit virtual machine.
+    echo To install a 32-bit machine, first run destroy_kite.cmd then run the 32bit install script.
+    echo.
+    echo Press any key to exit
+    echo Installation failed >> %LOGFILE%
+    pause > nul
+    exit /b 1
+  ) ELSE (
+    color A
+    echo Install successful. You should be able to access kite by going to localhost:2200
+    echo Press any key to exit
+    echo Installation successful >> %LOGFILE%
+    pause > nul
+    exit /b 0
+  )
 ) ELSE IF [%MODE%] == [upgrade] (
-	vagrant halt
-	vagrant up --provision
-	IF ERRORLEVEL 1 (
-		color C
-		echo.
-		echo ---------------------------------------------------------------
-		echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		echo.
-		echo Something went wrong. Try the troubleshooting methods described in the instructions.
-		echo Press any key to exit
-		echo Upgrade failed >> %LOGFILE%
-		pause > nul
-		exit /b 1
-	) ELSE (
-		color A
-		echo Update successful. You should be able to access kite by going to localhost:2200
-		echo If there is problem try to run the upgrade script again.
-		echo Press any key to exit
-		echo Upgrade successful >> %LOGFILE%
-		pause > nul
-		exit /b 0
-	)
+  vagrant halt
+  vagrant up --provision
+  IF ERRORLEVEL 1 (
+    color C
+    echo.
+    echo ---------------------------------------------------------------
+    echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    echo.
+    echo Something went wrong. Try the troubleshooting methods described in the instructions.
+    echo Press any key to exit
+    echo Upgrade failed >> %LOGFILE%
+    pause > nul
+    exit /b 1
+  ) ELSE (
+    color A
+    echo Update successful. You should be able to access kite by going to localhost:2200
+    echo If there is problem try to run the upgrade script again.
+    echo Press any key to exit
+    echo Upgrade successful >> %LOGFILE%
+    pause > nul
+    exit /b 0
+  )
 )
 
 :GetUnixTime
