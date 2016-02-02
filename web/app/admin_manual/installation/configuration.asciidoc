@@ -34,22 +34,24 @@ in the user’s browser. It is recommended to install a real certificate in its 
 
 The file specified in `.kiterc` as `KITE_HTTPS_KEYSTORE` is a Tomcat-style keystore. If you have your own intranet CA or a wildcard certificate, you can generate a certificate for LynxKite that the browsers can validate. Follow the instructions at `http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html` for creating a keystore file.
 The following settings need to be set in `.kiterc` to enable HTTPS:
- - `KITE_APPLICATION_SECRET`: A secret string, used to prevent auth cookie forgery.
- - `KITE_HTTPS_PORT`: The port number for HTTPS.
- - `KITE_HTTPS_KEYSTORE`: The Tomcat-style keystore file.
- - `KITE_HTTPS_KEYSTORE_PWD`: Password for the keystore file.
+
+- `KITE_APPLICATION_SECRET`: A secret string, used to prevent auth cookie forgery.
+- `KITE_HTTPS_PORT`: The port number for HTTPS.
+- `KITE_HTTPS_KEYSTORE`: The Tomcat-style keystore file.
+- `KITE_HTTPS_KEYSTORE_PWD`: Password for the keystore file.
 
 ### Backups
 
 Once LynxKite is up and running, take a moment to think about backups. The solution is entirely dependent on the site and
 purpose of the installation. But consider that LynxKite deals with the following data:
- - *Import/export.*
- - *Graph data in `KITE_DATA_DIR`.* The vertices, edges and attributes of the graph. This data is stored on a distributed
-   file system. This typically provides resilience against data loss. As long as the imported files still exist, this data
-   can be automatically regenerated if it goes missing.
- - *Project metadata in `KITE_META_DIR`.* The operations that have been executed on the project and their parameters. This
-   data is small, and contains everything required to regenerate the graph data, assuming that the imported files are still
-   available. This data is critical, and backups are recommended.
+
+- *Import/export.*
+- *Graph data in `KITE_DATA_DIR`.* The vertices, edges and attributes of the graph. This data is stored on a distributed
+  file system. This typically provides resilience against data loss. As long as the imported files still exist, this data
+  can be automatically regenerated if it goes missing.
+- *Project metadata in `KITE_META_DIR`.* The operations that have been executed on the project and their parameters. This
+  data is small, and contains everything required to regenerate the graph data, assuming that the imported files are still
+  available. This data is critical, and backups are recommended.
 
 ### Extra libraries
 
