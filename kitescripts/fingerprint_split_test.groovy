@@ -324,7 +324,7 @@ split.derivedVertexAttribute(
   type: 'double',
   expr: '(peripheral == 0.0 && splitSave == 2.0 && attr1 == attr2) ? 1.0 : 0.0'
 )
-split.derivedVertexAttribute(
+split.derivedVertexAttribute( // This must be 0, see assert at end of file
   output: 'pchurnerFound',
   type: 'double',
   expr: '(peripheral == 1.0 && splitSave == 2.0 && attr1 == attr2 && attr1 != -1) ? 1.0 : 0.0'
@@ -344,7 +344,7 @@ split.derivedVertexAttribute(
 )
 
 split.derivedVertexAttribute(
-  output: 'churnerMisMatch',
+  output: 'churnerMisMatch', // This must be 0, see assert at end of file
   type: 'double',
   expr: '(peripheral == 0.0 && splitSave == 2.0 && attr1 != -1 && attr2 != -1 && attr2 != attr1) ? 1.0 : 0.0'
 )
@@ -454,6 +454,9 @@ pfurtherBad = split.scalars['pfurtherBad_sum'].toString().toDouble()
 pchurnerFound = split.scalars['pchurnerFound_sum'].toString().toDouble()
 pchurnerNoMatch = split.scalars['pchurnerNoMatch_sum'].toString().toDouble()
 pchurnerMisMatch = split.scalars['pchurnerMisMatch_sum'].toString().toDouble()
+
+assert pchurnerMisMatch == 0 : "pchurnerMisMatch should be 0, but it is " + pchurnerMisMatch.toString()
+assert pchurnerFound == 0 : "pchurnerFound should be 0, but it is " + pchurnerFound.toString()
 
 
 System.out.printf("%-20s %15s %15s\n",      "",               'INNER',        'PERIPHERAL');
