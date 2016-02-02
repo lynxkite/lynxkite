@@ -64,8 +64,8 @@ vagrant up --provision
     echo Something went wrong. Cannot run debugging.
     echo Press any key to exit
     echo Debug failed >> %LOGFILE%
-      copy Vagrantfile.kite Vagrantfile > nul
-      del /F Vagrantfile.kite > nul
+    copy Vagrantfile.kite Vagrantfile > nul
+    del /F Vagrantfile.kite > nul
     pause > nul
     exit /b 1
   ) ELSE (
@@ -74,8 +74,8 @@ vagrant up --provision
     echo Check the log folder for log files starting with vagrant_log_debug
     echo Press any key to exit
     echo Debug successful >> %LOGFILE%
-        copy Vagrantfile.kite Vagrantfile > nul
-        del /F Vagrantfile.kite > nul
+    copy Vagrantfile.kite Vagrantfile > nul
+    del /F Vagrantfile.kite > nul
     pause > nul
     exit /b 0
   )
