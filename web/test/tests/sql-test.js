@@ -111,9 +111,9 @@ module.exports = function(fw) {
       left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
       left.runOperation('Vertex attribute to string', { attr: 'ordinal' });
       left.runOperation(
-        'Import edges for existing vertices from table',
+        'Import edges for existing vertices',
         {
-          table: 'Random Edges',
+          table: 'Random Edges|vertices',
           attr: 'ordinal',
           src: 'rank1',
           dst: 'rank2',

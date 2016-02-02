@@ -523,7 +523,11 @@ var visualization = {
   },
 };
 
-var splash = {
+function Selector(root) {
+  this.root = root;
+}
+
+Selector.prototype = {
   project: function(name) {
     return element(by.id('project-' + toID(name)));
   },
@@ -554,14 +558,13 @@ var splash = {
     this.hideSparkStatus();
   },
 
-  startTableImport: function(tableName) {
+  startTableImport: function() {
     element(by.id('import-table')).click();
-    element(by.css('#import-table #table-name input')).sendKeys(tableName);
   },
 
   importLocalCSVFile: function(tableName, localCsvFile) {
-    this.startTableImport(tableName);
-    element(by.css('#datatype select option[value="csv"]')).click();
+    this.root.element(by.css('import-wizard #table-name input')).sendKeys(tableName);
+    this.root.element(by.css('#datatype select option[value="csv"]')).click();
     var csvFileParameter = element(by.css('#csv-filename file-parameter'));
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     var importCsvButton = element(by.id('import-csv-button'));
@@ -658,6 +661,8 @@ var splash = {
   },
 };
 
+var splash = new Selector(element(by.id('splash')));
+
 function randomPattern () {
   /* jshint bitwise: false */
   var crypto = require('crypto');
@@ -682,7 +687,7 @@ testLib = {
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
-  protractorDownloads: '/tmp/protractorDownloads',
+  protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
 
   expectElement: function(e) {
     expect(e.isDisplayed()).toBe(true);
@@ -747,11 +752,18 @@ testLib = {
               e.element(by.css('.dropdown-menu #' + values[i])).click();
             }
           } else if (kind === 'table') {
-            // Table name options look like 'name of table (date of table creation)'.
-            // The date is unpredictable, but we are going to match to the ' (' part
-            // to minimize the chance of mathcing an other table.
-            var optionLabelPattern = value + ' (';
-            e.element(by.cssContainingText('option', optionLabelPattern)).click();
+            // You can specify a CSV file to be uploaded, or the name of an existing table.
+            if (value.indexOf('.csv') !== -1) { // CSV file.
+              e.element(by.id('import-new-table-button')).click();
+              var s = new Selector(e.element(by.id('import-wizard')));
+              s.importLocalCSVFile('test-table', value);
+            } else { // Table name.
+              // Table name options look like 'name of table (date of table creation)'.
+              // The date is unpredictable, but we are going to match to the ' (' part
+              // to minimize the chance of mathcing an other table.
+              var optionLabelPattern = value + ' (';
+              e.element(by.cssContainingText('option', optionLabelPattern)).click();
+            }
           } else if (kind === 'choice') {
             e.element(by.cssContainingText('option', value)).click();
           } else {
