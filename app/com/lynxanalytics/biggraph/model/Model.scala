@@ -20,12 +20,12 @@ class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) exte
 }
 
 case class Model(
-    method: String, // The training method used to create this model.
-    symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
-    labelName: String, // Name of the label attribute used to train this model.
-    featureNames: List[String], // The name of the feature attributes used to train this model.
-    labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
-    featureScaler: mllib.feature.StandardScalerModel)  // The scaler used to scale the features.
+  method: String, // The training method used to create this model.
+  symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
+  labelName: String, // Name of the label attribute used to train this model.
+  featureNames: List[String], // The name of the feature attributes used to train this model.
+  labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
+  featureScaler: mllib.feature.StandardScalerModel) // The scaler used to scale the features.
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -117,7 +117,7 @@ object Model extends FromJson[Model] {
   override def fromJson(j: json.JsValue): Model = {
     Model(
       (j \ "method").as[String],
-      (j \ "path").as[String],
+      (j \ "symbolicPath").as[String],
       (j \ "labelName").as[String],
       (j \ "featureNames").as[List[String]],
       standardScalerModelFromJson(j \ "labelScaler"),
