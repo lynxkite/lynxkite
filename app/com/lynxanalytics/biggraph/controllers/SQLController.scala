@@ -163,7 +163,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
       val v = p.viewer
       v.allRelativeTablePaths.map {
-        path => (path.toString -> path.table(v))
+        path => (path.toString -> Table(path, v))
       }
     }
     // Every query runs in its own SQLContext for isolation.
