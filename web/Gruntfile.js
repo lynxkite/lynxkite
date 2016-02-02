@@ -54,6 +54,10 @@ module.exports = function (grunt) {
         files: ['<%= yeoman.app %>/help/{,*/}*.asciidoc'],
         tasks: ['asciidoctor']
       },
+      adminManual: {
+        files: ['<%= yeoman.app %>/admin_manual/{,*/}*.asciidoc'],
+        tasks: ['asciidoctor']
+      },
       gruntfile: {
         files: ['Gruntfile.js']
       },
@@ -209,6 +213,7 @@ module.exports = function (grunt) {
       dist: {
         files: {
           '.tmp/help.html': ['<%= yeoman.app %>/help/index.asciidoc'],
+          '.tmp/adminManual.html': ['<%= yeoman.app %>/admin_manual/index.asciidoc'],
         },
       },
     },
