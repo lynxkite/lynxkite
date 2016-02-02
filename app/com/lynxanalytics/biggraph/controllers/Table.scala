@@ -70,6 +70,12 @@ object Table {
   //
   // The first two formats are only meaningful in the context of a project viewer. Global paths
   // can be resolved out of context as well, so there is a specialized function just for those.
+  def apply(path: TablePath, context: ProjectViewer)(implicit m: MetaGraphManager): Table = {
+    fromTableName(path.tableName, path.containingViewer(context))
+  }
+  def apply(path: GlobalTablePath)(implicit m: MetaGraphManager): Table = {
+    fromTableName(path.tableName, path.containingViewer)
+  }
 
   def fromTableName(tableName: String, viewer: ProjectViewer): Table = {
     tableName match {
@@ -91,7 +97,9 @@ object Table {
 
 sealed trait TablePath {
   def toFE: FEOption
-  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table
+  // Returns the final ProjectViewer which directly contains the table.
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager): ProjectViewer
+  def tableName: String
 }
 object TablePath {
   def parse(path: String): TablePath = {
@@ -107,9 +115,10 @@ object TablePath {
 case class RelativeTablePath(path: Seq[String]) extends TablePath {
   override def toString = path.mkString("|")
   def toFE = FEOption.regular(toString)
+  def tableName = path.last
 
-  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table = {
-    Table.fromTableName(path.last, viewer.offspringViewer(path.init))
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = {
+    viewer.offspringViewer(path.init)
   }
 
   def toAbsolute(prefix: Seq[String]) = AbsoluteTablePath(prefix ++ path)
@@ -120,9 +129,10 @@ case class RelativeTablePath(path: Seq[String]) extends TablePath {
 case class AbsoluteTablePath(path: Seq[String]) extends TablePath {
   override def toString = "|" + RelativeTablePath(path).toString
   def toFE = FEOption.regular(toString)
+  def tableName = RelativeTablePath(path).tableName
 
-  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table = {
-    RelativeTablePath(path).table(viewer.rootViewer)
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = {
+    RelativeTablePath(path).containingViewer(viewer.rootViewer)
   }
 
   def toGlobal(checkpoint: String, name: String) = GlobalTablePath(checkpoint, name, path)
@@ -131,12 +141,13 @@ case class AbsoluteTablePath(path: Seq[String]) extends TablePath {
 case class GlobalTablePath(checkpoint: String, name: String, path: Seq[String]) extends TablePath {
   override def toString = toFE.id
   def toFE = FEOption.titledCheckpoint(checkpoint, name, AbsoluteTablePath(path).toString)
+  def tableName = AbsoluteTablePath(path).tableName
 
-  def table(viewer: ProjectViewer)(implicit manager: MetaGraphManager): Table = table
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = containingViewer
 
-  def table()(implicit manager: MetaGraphManager): Table = {
+  def containingViewer()(implicit manager: MetaGraphManager): ProjectViewer = {
     val rootViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(checkpoint))
-    AbsoluteTablePath(path).table(rootViewer)
+    AbsoluteTablePath(path).containingViewer(rootViewer)
   }
 }
 object GlobalTablePath {

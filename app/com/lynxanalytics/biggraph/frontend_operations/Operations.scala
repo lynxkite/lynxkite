@@ -409,7 +409,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("id-attr", "Save internal ID as", defaultValue = "id"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
-      val table = TablePath.parse(params("table")).table(project.viewer)
+      val table = Table(TablePath.parse(params("table")), project.viewer)
       project.vertexSet = table.idSet
       for ((name, attr) <- table.columns) {
         project.newVertexAttribute(name, attr, "imported")
@@ -469,7 +469,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val table = TablePath.parse(params("table")).table(project.viewer)
+      val table = Table(TablePath.parse(params("table")), project.viewer)
       val src = params("src")
       val dst = params("dst")
       assert(src.nonEmpty, "The Source ID column parameter must be set.")
@@ -535,7 +535,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val dst = params("dst")
       assert(src.nonEmpty, "The Source ID column parameter must be set.")
       assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
-      val table = TablePath.parse(params("table")).table(project.viewer)
+      val table = Table(TablePath.parse(params("table")), project.viewer)
       val eg = {
         val op = graph_operations.VerticesToEdges()
         op(op.srcAttr, table.columns(src).runtimeSafeCast[String])(
@@ -615,7 +615,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val table = TablePath.parse(params("table")).table(project.viewer)
+      val table = Table(TablePath.parse(params("table")), project.viewer)
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
@@ -672,7 +672,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       hasEdgeBundle &&
         FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val table = TablePath.parse(params("table")).table(project.viewer)
+      val table = Table(TablePath.parse(params("table")), project.viewer)
       val columnName = params("id-column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
       val attrName = params("id-attr")
