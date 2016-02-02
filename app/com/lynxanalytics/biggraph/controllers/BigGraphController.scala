@@ -726,23 +726,19 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     Operation.allObjects(user)
       .filter(_.checkpoint.nonEmpty)
       .flatMap {
-        case project =>
-          project.viewer
-            .allAbsoluteTablePaths
-            .map(tablePath =>
-              FEOption.titledCheckpoint(project.checkpoint, project.name, tablePath))
+        project =>
+          project.viewer.allAbsoluteTablePaths
+            .map(_.toGlobal(project.checkpoint, project.name).toFE)
       }.toList.sortBy(_.title)
   }
 
   protected def accessibleTableOptions(implicit manager: MetaGraphManager): List[FEOption] = {
     val viewer = project.viewer
     val localPaths = viewer.allRelativeTablePaths
-    val segmentationAbsolutePath = "|" + viewer.offspringPath.map(_ + "|").mkString
-    val locallyAccessibleAbsolutePaths = localPaths.map(segmentationAbsolutePath + _).toSet
+    val localAbsolutePaths = localPaths.map(_.toAbsolute(viewer.offspringPath)).toSet
     val absolutePaths =
-      viewer.rootViewer.allAbsoluteTablePaths.filter(!locallyAccessibleAbsolutePaths.contains(_))
-    (localPaths ++ absolutePaths).toList.map(path => FEOption.regular(path)) ++
-      readableGlobalTableOptions
+      viewer.rootViewer.allAbsoluteTablePaths.filter(!localAbsolutePaths.contains(_))
+    (localPaths ++ absolutePaths).toList.map(_.toFE) ++ readableGlobalTableOptions
   }
 }
 object Operation {

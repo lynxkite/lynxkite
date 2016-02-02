@@ -3,6 +3,9 @@
 
 seed = params.seed ?: '31415'
 vertices = params.vertices ?: '30'
+peripheralPct = params.peripheral ?: 50
+peripheral = ((vertices.toInteger() * peripheralPct.toInteger()) / 100).toString()
+
 ebSize = params.ebSize ?: '5'
 mostCallsPossible = params.mostCalls ?: '3'
 output = params.output ?: 'fprandom'
@@ -26,16 +29,14 @@ project.derivedEdgeAttribute(
   expr: 'Math.floor(originalCallsUnif * ' + mostCallsPossible + ');'
 )
 
-// Create a peripheral attribute. In this case, no real peripheral
-// attributes exist, so we use a constant 0 almost everywhere.
-// The only exception is id 0; we can use this to check
-// if the peripheral property is treated correctly in fingerprint_split_test.groovy
+// Create a peripheral attribute.
 project.vertexAttributeToDouble(
   attr: 'ordinal'
 )
+
 project.derivedVertexAttribute(
   output: 'peripheral',
-  expr: 'ordinal == 0.0 ? 1.0 : 0.0',
+  expr: 'ordinal < ' + peripheral.toString() + ' ? 1.0 : 0.0',
   type: 'double'
 )
 
