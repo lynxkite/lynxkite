@@ -2,5 +2,5 @@
 
 LynxKite from http://lynxanalytics.com/[Lynx Analytics] is a graph analytics platform.
 It is built on top of https://spark.apache.org/[Apache Spark], so it can scale up to
-any size of data. It is a Big Data tool, so it's compatible with popular Big Data platforms
+any size of data. It is a Big Data tool, so it is compatible with popular Big Data platforms
 such as Hadoop or Amazon EC2.
