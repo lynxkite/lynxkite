@@ -3,9 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.mllib
-import org.apache.spark.rdd
 
 object RegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {

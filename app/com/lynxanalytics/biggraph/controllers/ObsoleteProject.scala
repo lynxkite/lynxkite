@@ -9,15 +9,10 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.serving.User
 
 import java.util.UUID
 import play.api.libs.json.Json
-import scala.util.{ Failure, Success, Try }
-import scala.reflect.runtime.universe._
 
 class ObsoleteProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot) {
   val projectName = projectPath.toString

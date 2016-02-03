@@ -8,7 +8,6 @@ import com.lynxanalytics.biggraph.protection.Limitations
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types
 import scala.reflect.runtime.universe.TypeTag
-import scala.reflect.runtime.universe.typeTag
 
 object ImportDataFrame extends OpFromJson {
   type SomeAttribute = Attribute[_]
