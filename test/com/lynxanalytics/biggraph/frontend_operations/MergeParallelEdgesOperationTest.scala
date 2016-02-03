@@ -5,15 +5,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class MergeParallelEdgesOperationTest extends OperationsTestBase {
 
   def load(filename: String) = {
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> ("OPERATIONSTEST$/" + filename),
-      "header" -> "src,dst,call",
-      "delimiter" -> ",",
+    run("Import vertices and edges from a single table", Map(
+      "table" -> importCSV("OPERATIONSTEST$/" + filename),
       "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
+      "dst" -> "dst"))
   }
 
   test("merge parallel edges by attribute works for String") {

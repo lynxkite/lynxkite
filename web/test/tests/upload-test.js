@@ -9,7 +9,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'example graph vertex set names imported',
     function() {
-      lib.left.runOperation('Import vertices from CSV files', {files: importPath});
+      lib.left.runOperation('Import vertices', { table: importPath });
     },
     function() {
       expect(lib.left.vertexCount()).toEqual(4);

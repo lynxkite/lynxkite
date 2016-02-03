@@ -144,47 +144,23 @@ include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
 
-include::import-edge-attributes-from-a-database.asciidoc[]
+include::import-edge-attributes.asciidoc[]
 
-include::import-edge-attributes-from-csv-files.asciidoc[]
-
-include::import-edge-attributes-from-table.asciidoc[]
-
-include::import-edges-for-existing-vertices-from-a-database.asciidoc[]
-
-include::import-edges-for-existing-vertices-from-csv-files.asciidoc[]
-
-include::import-edges-for-existing-vertices-from-table.asciidoc[]
+include::import-edges-for-existing-vertices.asciidoc[]
 
 include::import-project-as-segmentation.asciidoc[]
 
-include::import-segmentation-from-a-database.asciidoc[]
+include::import-segmentation-links.asciidoc[]
 
-include::import-segmentation-from-csv.asciidoc[]
+include::import-segmentation.asciidoc[]
 
-include::import-vertex-attributes-from-a-database.asciidoc[]
-
-include::import-vertex-attributes-from-csv-files.asciidoc[]
-
-include::import-vertex-attributes-from-table.asciidoc[]
-
-include::import-vertices-and-edges-from-a-single-csv-fileset.asciidoc[]
-
-include::import-vertices-and-edges-from-a-single-database-table.asciidoc[]
+include::import-vertex-attributes.asciidoc[]
 
 include::import-vertices-and-edges-from-a-single-table.asciidoc[]
 
-include::import-vertices-from-a-database.asciidoc[]
-
-include::import-vertices-from-csv-files.asciidoc[]
-
-include::import-vertices-from-table.asciidoc[]
+include::import-vertices.asciidoc[]
 
 include::internal-vertex-id-as-attribute.asciidoc[]
-
-include::load-segmentation-links-from-a-database.asciidoc[]
-
-include::load-segmentation-links-from-csv.asciidoc[]
 
 include::maximal-cliques.asciidoc[]
 
