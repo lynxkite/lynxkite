@@ -38,6 +38,7 @@ module.exports = function(fw) {
       // It stays the same after a retry.
       lib.left.scalar('empty_average').element(by.css('.value-retry')).click();
       expect(lib.left.scalar('empty_average').getText()).toBe('× \u21bb');
+      lib.left.scalar('empty_average').element(by.css('.value-error')).click();
       lib.expectModal('Error details');
       lib.closeModal();
     }, function() {});
