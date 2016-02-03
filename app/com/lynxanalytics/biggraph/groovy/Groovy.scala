@@ -143,9 +143,9 @@ class LynxGroovyInterface(ctx: GroovyContext) {
   val drawing = new DrawingGroovyInterface()
 
   // Returns the table checkpoint name.
-  def saveTable(df: spark.sql.DataFrame, tableName: String): String =
-    saveTable(df, tableName, notes = "")
-  def saveTable(df: spark.sql.DataFrame, tableName: String, notes: String): String = {
+  def saveAsTable(df: spark.sql.DataFrame, tableName: String): String =
+    saveAsTable(df, tableName, notes = "")
+  def saveAsTable(df: spark.sql.DataFrame, tableName: String, notes: String): String = {
     import ctx.metaManager
     import ctx.dataManager
     val f = DirectoryEntry.fromName(tableName).asNewTableFrame(

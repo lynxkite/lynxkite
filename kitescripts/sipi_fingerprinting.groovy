@@ -7,7 +7,7 @@ linkedin = lynx.newProject()
 String loadCSV(String file) {
   df = lynx.sqlContext.read().format('com.databricks.spark.csv')
     .option('header', 'true').load(file)
-  return lynx.saveTable(df, file)
+  return lynx.saveAsTable(df, file)
 }
 
 

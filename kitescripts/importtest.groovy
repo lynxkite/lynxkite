@@ -16,7 +16,7 @@ project = lynx.newProject()
 df = lynx.sqlContext.read()
   .format('com.databricks.spark.csv').option('header', 'true').load('importtest')
 project.importVertices(
-  table: lynx.saveTable(df, 'importtest'),
+  table: lynx.saveAsTable(df, 'importtest'),
   'id-attr': 'id')
 
 start_time = System.currentTimeMillis()
