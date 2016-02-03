@@ -272,6 +272,7 @@ class HadoopFile private (
     val serializer = graph_api.io.EntitySerializer.forType(tt)
     implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(tt)
     val raw = data.mapValues(serializer.serialize(_))
+    raw.setName(data.name)
     val lines = saveEntityRawRDD(raw)
     (lines, serializer.name)
   }
