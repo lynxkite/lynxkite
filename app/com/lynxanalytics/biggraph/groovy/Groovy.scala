@@ -302,7 +302,10 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
 
   def copy() = {
     assert(!editor.isSegmentation, "You can only create copies of top-level projects.")
-    new GroovyBatchProject(ctx, editor.viewer.editor)
+    val re = editor.asInstanceOf[RootProjectEditor]
+    val newEditor = editor.viewer.editor.asInstanceOf[RootProjectEditor]
+    newEditor.checkpoint = re.checkpoint
+    new GroovyBatchProject(ctx, newEditor)
   }
 
   def saveAs(newRootName: String): Unit = {
