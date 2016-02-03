@@ -36,12 +36,9 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
         scope.scalars = {};
         for (var i = 0; i < scope.op.visibleScalars.length; ++i) {
           var scalar = scope.op.visibleScalars[i];
-          util.lazyFetchScalar(
+          scope.scalars[scalar.title] = util.lazyFetchScalarValue(
             scalar,
-            scope.scalars,
-            scalar.title,
-            false,
-            false);
+            false /* Don't initiate computation if the scalar is not yet computed. */);
         }
       });
 

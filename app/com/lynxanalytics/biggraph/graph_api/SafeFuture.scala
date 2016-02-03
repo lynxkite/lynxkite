@@ -60,5 +60,4 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def value = future.value
 
   def isCompleted = future.isCompleted
-
 }

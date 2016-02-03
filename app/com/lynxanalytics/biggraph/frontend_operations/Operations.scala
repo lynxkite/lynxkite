@@ -1824,7 +1824,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        implicit val dataManager = env.dataManager
+        implicit val entityProgressManager: EntityProgressManager = env.dataManager
         List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
       } else {
         List()
@@ -1851,7 +1851,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        implicit val dataManager = env.dataManager
+        implicit val entityProgressManager: EntityProgressManager = env.dataManager
         List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
       } else {
         List()

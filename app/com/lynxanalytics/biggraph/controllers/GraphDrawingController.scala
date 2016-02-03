@@ -645,6 +645,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   private def dynamicValue[T](scalar: Scalar[T]) = {
     implicit val tt = scalar.typeTag
-    graph_operations.DynamicValue.convert(scalar.value) // implicitly invokes Scripting.getData
+    graph_operations.DynamicValue.convert(scalar.value)
   }
 }
