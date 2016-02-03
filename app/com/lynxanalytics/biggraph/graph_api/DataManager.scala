@@ -18,12 +18,20 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api.{ SafeFuture => Future }
 
 trait EntityProgressManager {
+  case class ScalarComputationState[T](
+    computeProgress: Double,
+    value: Option[T],
+    error: Option[Throwable])
+
   // Returns an indication of whether the entity has already been computed.
-  // 0 means it is not computed. 1 means it is computed. Anything in between indicates that the
-  // computation is in progress.
+  // 0 means it is not computed.
+  // 1 means it is computed.
+  // Anything in between indicates that the computation is in progress.
+  // -1.0 indicates that an error has occured during computation.
+  // These constants need to be kept in sync with the ones in:
+  // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
-  def getComputedScalarValue[T](entity: Scalar[T]): Option[T]
-  def getErrorMessage(entity: MetaGraphEntity): Option[Throwable]
+  def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
 class DataManager(sc: spark.SparkContext,
@@ -93,11 +101,8 @@ class DataManager(sc: spark.SparkContext,
     failedEntityCache.remove(entity.gUID)
     entityCache(entity.gUID) = data
     data.onFailure {
-      case _ => synchronized {
-        failedEntityCache(entity.gUID) = data.value match {
-          case Some(scala.util.Failure(t: Throwable)) => t
-          case _ => ???
-        }
+      case t: Throwable => synchronized {
+        failedEntityCache(entity.gUID) = t
         entityCache.remove(entity.gUID)
       }
     }
@@ -220,7 +225,7 @@ class DataManager(sc: spark.SparkContext,
     instanceOutputCache(gUID)
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = {
+  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
     val guid = entity.gUID
     // It would be great if we could be more granular, but for now we just return 0.5 if the
     // computation is running.
@@ -230,25 +235,15 @@ class DataManager(sc: spark.SparkContext,
     else 0.0
   }
 
-  override def getComputedScalarValue[T](entity: Scalar[T]): Option[T] = {
-    val guid = entity.gUID
-    if (computeProgress(entity) == 1.0) {
-      Some(get(entity).value)
-    } else {
-      None
-    }
+  override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
+    val progress = computeProgress(entity)
+    ScalarComputationState(
+      progress,
+      if (progress == 1.0) Some(get(entity).value) else None,
+      failedEntityCache.get(entity.gUID))
   }
 
-  override def getErrorMessage(entity: MetaGraphEntity): Option[Throwable] = {
-    val guid = entity.gUID
-    if (failedEntityCache.contains(guid)) {
-      Some(failedEntityCache(guid))
-    } else {
-      None
-    }
-  }
-
-  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity, recomputeIfUnavailable: Boolean = true): Unit = synchronized {
+  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
       if (hasEntityOnDisk(entity)) {
         // If on disk already, we just load it.

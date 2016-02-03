@@ -632,12 +632,9 @@ angular.module('biggraph')
       var scalars = this.project.scalars;
       for (var i = 0; i < scalars.length; ++i) {
         var scalar = scalars[i];
-        util.lazyFetchScalar(
+        this.scalars[scalar.title] = util.lazyFetchScalarValue(
           scalar,
-          this.scalars,
-          scalar.title,
-          true,
-          false);
+          true);
       }
     };
 

@@ -64,17 +64,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         scope.edgeCounts = {};
         for (var i = 0; i < scope.data.objects.length; ++i) {
           var p = scope.data.objects[i];
-          util.lazyFetchScalar(
+          scope.vertexCounts[p.name] = util.lazyFetchScalarValue(
             p.vertexCount,
-            scope.vertexCounts,
-            p.name,
-            false,
             false);
-          util.lazyFetchScalar(
+          scope.edgeCounts[p.name] = util.lazyFetchScalarValue(
             p.edgeCount,
-            scope.edgeCounts,
-            p.name,
-            false,
             false);
         }
       });

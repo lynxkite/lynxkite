@@ -170,12 +170,18 @@ sealed trait ProjectViewer {
   def toFE(projectName: String)(implicit epm: EntityProgressManager): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feList(
-      things: Iterable[(String, TypedEntity[_])],
-      kind: ElementKind) = {
+
+    def feAttributeList(
+      things: Iterable[(String, Attribute[_])],
+      kind: ElementKind): List[FEAttribute] = {
       things.toSeq.sortBy(_._1).map {
-        case (name, e: Scalar[_]) => ProjectViewer.feScalar(e, name, getElementNote(kind, name))
-        case (name, e: Attribute[_]) => ProjectViewer.feAttribute(e, name, getElementNote(kind, name))
+        case (name, attr) => ProjectViewer.feAttribute(attr, name, getElementNote(kind, name))
+      }.toList
+    }
+
+    def feScalarList(things: Iterable[(String, Scalar[_])]): List[FEScalar] = {
+      things.toSeq.sortBy(_._1).map {
+        case (name, scalar) => ProjectViewer.feScalar(scalar, name, getScalarNote(name))
       }.toList
     }
 
@@ -184,10 +190,9 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feList(scalars, ScalarKind).asInstanceOf[List[FEScalar]],
-      vertexAttributes =
-        feList(vertexAttributes, VertexAttributeKind).asInstanceOf[List[FEAttribute]] ++ getFEMembers,
-      edgeAttributes = feList(edgeAttributes, EdgeAttributeKind).asInstanceOf[List[FEAttribute]],
+      scalars = feScalarList(scalars),
+      vertexAttributes = feAttributeList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
+      edgeAttributes = feAttributeList(edgeAttributes, EdgeAttributeKind),
       segmentations = sortedSegmentations.map(_.toFESegmentation(projectName)),
       // To be set by the ProjectFrame for root projects.
       undoOp = "",
@@ -215,6 +220,14 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
+  private def feTypeName[T](e: TypedEntity[T]): String = {
+    implicit val tt = e.typeTag
+    e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", "")
+  }
+
+  private def feIsNumeric[T](e: TypedEntity[T]): Boolean =
+    Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+
   def feAttribute[T](
     e: Attribute[T],
     name: String,
@@ -223,15 +236,14 @@ object ProjectViewer {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
-    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
     FEAttribute(
       e.gUID.toString,
       name,
-      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      feTypeName(e),
       note,
       canBucket,
       canFilter,
-      isNumeric,
+      feIsNumeric(e),
       isInternal,
       epm.computeProgress(e))
   }
@@ -241,19 +253,18 @@ object ProjectViewer {
     name: String,
     note: String,
     isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEScalar = {
-    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
     implicit val tt = e.typeTag
+    val state = epm.getComputedScalarValue(e)
     FEScalar(
       e.gUID.toString,
       name,
-      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      feTypeName(e),
       note,
-      isNumeric,
+      feIsNumeric(e),
       isInternal,
-      epm.computeProgress(e),
-      epm.getErrorMessage(e).map(Utils.formatThrowable(_)),
-      epm.getComputedScalarValue(e).map(
-        graph_operations.DynamicValue.convert(_))
+      state.computeProgress,
+      state.error.map(Utils.formatThrowable(_)),
+      state.value.map(graph_operations.DynamicValue.convert(_))
     )
   }
 }

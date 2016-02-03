@@ -251,35 +251,65 @@ angular.module('biggraph').factory('util', function utilFactory(
       }
     },
 
-    // Puts scalar into destination[destinationKey] with data lazily fetched.
-    // The result is an HTTP response holding a DynamicValue, or something that
-    // mimicks it.
-    lazyFetchScalar: function(
+    // TODO: investigate and unify with the above function.
+    stopEventPropagation: function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+
+    // Gets the value of the scalar. If the value (or an error message is embdedded
+    // in the scalar, then just takes it. Otherwise it fetches it from the server.
+    // The return value is an object containing a 'value' property and a '$abandon'
+    // function.
+    // '$abandon' cancels any ongoing requests.
+    // 'value' is a promise or an object that may be updated later by the user.
+    //   It contains '$error', '$resolved', '$statusCode' and all the fields of
+    //   DynamicValues from the Scala backend.
+    // The content of 'value' may change after this function has returned in two cases:
+    // 1. If a new value is fetched from the server initiated by this call.
+    // 2. If a new value is fetched from the server initiated by calling
+    //   value.retryFunction().
+    lazyFetchScalarValue: function(
       scalar,  // An FEScalar returned from the backend. May or may not hold computed value.
-      destination,  // The computed value will be copied into destination[destinationKey].
-      destinationKey,
-      fetchNotReady,  // Send backend request if scalar computation is in progress on not started.
-      fetchFailed  // Send backend request if scalar computation is failed.
+      fetchNotReady  // Send backend request if scalar computation is in progress on not started.
       ) {
+
+      var scalarValue = {
+        value: undefined,
+        $abandon: function() {
+          if (scalarValue.value && scalarValue.value.$abandon) {
+            scalarValue.value.$abandon();
+          }
+        }
+      };  // result to return
+
       // This function can be exposed to the UI as 'click here to retry'.
       var retryFunction = function() {
-        destination[destinationKey] = computeScalar(scalar);
+        fetchScalarAndConstructValue();
       };
+
+      // All the below sub-functions read scalar and write into scalarValue.
 
       // Fake scalar for non-existent scalars, e.g. projects with no vertices/edges.
-      var NO = { string: 'no', $abandon: function() {} };
-
+      function constructValueForNoScalar() {
+        scalarValue.value = {
+          string: 'no',
+        };
+      }
       // Placeholder when the scalar has not been calculated yet.
-      var NOT_CALCULATED = {
-        $statusCode: 404,
-        $error: 'Not calculated yet',
-        $abandon: function() {},
-        retryFunction: retryFunction,
-      };
-
+      function constructValueForNotCalculated() {
+        scalarValue.value = {
+          $statusCode: 404,
+          $error: 'Not calculated yet',
+          retryFunction: retryFunction
+        };
+      }
       // Constructs scalar placeholder for an error message.
-      function constructError(scalar) {
-        return {
+      function constructValueForError() {
+        scalarValue.value = {
+          $resolved: true,
           $statusCode: 500,
           $error: scalar.errorMessage,
           $config: {
@@ -291,55 +321,56 @@ angular.module('biggraph').factory('util', function utilFactory(
             },
           },
           retryFunction: retryFunction,
-          $abandon: function() {}
         };
       }
       // Constructs a scalar placeholder when scalar already holds
       // the computed value.
-      function getAlreadyComputedScalar(scalar) {
-        var res = scalar.computedValue;
-        res.$abandon = function() {};
-        return res;
+      function constructValueForComputedScalar() {
+        scalarValue.value = scalar.computedValue;
       }
       // Fetches a new value for the scalar.
-      function computeScalar(scalar) {
+      function fetchScalarAndConstructValue() {
         var res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id,
         });
-        res.then(function() {
-          scalar.computedValue = res;
-          scalar.computeProgress = COMPUTE_PROGRESS_COMPLETED;
-        });
-        res.retryFunction = retryFunction;
-        return res;
+        scalarValue.value = res;
+        res.then(
+          function() {  // Success.
+            // Store status data in original scalar. (Currently
+            // only used in operation.js.)
+            scalar.computeProgress = COMPUTE_PROGRESS_COMPLETED;
+            scalar.computedValue = res;
+          },
+          function() {  // Error.
+            // Store status data in original scalar. (Currently
+            // only used in operation.js.)
+            scalar.computeProgress = COMPUTE_PROGRESS_ERROR;
+            scalar.errorMessage = scalarValue.$error;
+            // Enable retry icon for user.
+            scalarValue.value.retryFunction = retryFunction;
+          });
       }
 
-      // Fetches or constructs the value of scalar.
-      function getScalar(scalar) {
-        if (scalar.computeProgress === COMPUTE_PROGRESS_COMPLETED) {
-          // Server has sent us the computed value of this
-          // scalar upfront with metadata.
-          return getAlreadyComputedScalar(scalar);
-        } else if (scalar.computeProgress === COMPUTE_PROGRESS_NOT_STARTED ||
-            scalar.computeProgress === COMPUTE_PROGRESS_IN_PROGRESS) {
-          if (fetchNotReady) {
-            return computeScalar(scalar);
-          } else {
-            return NOT_CALCULATED;
-          }
-        } else if (scalar.computeProgress === COMPUTE_PROGRESS_ERROR) {
-          if (fetchFailed) {
-            return computeScalar(scalar);
-          } else {
-            return constructError(scalar);
-          }
+      if (!scalar) {
+        constructValueForNoScalar();
+      } else if (scalar.computeProgress === COMPUTE_PROGRESS_COMPLETED) {
+        // Server has sent us the computed value of this
+        // scalar upfront with metadata.
+        constructValueForComputedScalar();
+      } else if (scalar.computeProgress === COMPUTE_PROGRESS_NOT_STARTED ||
+          scalar.computeProgress === COMPUTE_PROGRESS_IN_PROGRESS) {
+        if (fetchNotReady) {
+          fetchScalarAndConstructValue();
         } else {
-          console.error('Unknown computation state for scalar in ', scalar);
+          constructValueForNotCalculated();
         }
+      } else if (scalar.computeProgress === COMPUTE_PROGRESS_ERROR) {
+        constructValueForError();
+      } else {
+        console.error('Unknown computation state for scalar in ', scalar);
       }
 
-      destination[destinationKey] =
-        scalar ? getScalar(scalar, fetchNotReady, fetchFailed) : NO;
+      return scalarValue;
     },
 
     slowQueue: new RequestQueue(2),

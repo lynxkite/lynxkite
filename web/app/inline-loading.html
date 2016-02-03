@@ -3,12 +3,12 @@
 <span ng-if="ref.$error && ref.$statusCode >= 500"
   class="value-error"
   drop-tooltip="Click to report error"
-  ng-click="reportError(); $event.preventDefault(); $event.stopPropagation();">&times;</span>
+  ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
 <span ng-if="ref === undefined"
   class="value-error"
   drop-tooltip="Click to report error"
-  ng-click="reportError(); $event.preventDefault(); $event.stopPropagation();">&times;</span>
-<span ng-if="ref.$resolved !== false && ref.retryFunction"
+  ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
+<span ng-if="ref.retryFunction"
   class="value-retry"
   drop-tooltip="Click to retry"
-  ng-click="ref.retryFunction(); $event.preventDefault(); $event.stopPropagation();">&#8635;</span>
+  ng-click="util.stopEventPropagation($event); ref.retryFunction();">&#8635;</span>
