@@ -15,7 +15,6 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.util.IdentityHashMap
 import java.util.UUID
-import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
