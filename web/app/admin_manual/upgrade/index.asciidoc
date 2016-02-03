@@ -8,10 +8,9 @@ already installed binaries.
 
 ## Install new Spark version if needed
 
-You can download the spark version matching your hadoop setup from here:
-https://spark.apache.org/downloads.html
-Your Lynx contact can tell you which version you need, or you can find it in the file
-`kite_x.y.z/conf/SPARK_VERSION`.
+You can download the spark version matching your hadoop setup from the
+https://spark.apache.org/downloads.html[Spark webpage]. Your Lynx contact can tell you which
+version you need, or you can find it in the file `kite_x.y.z/conf/SPARK_VERSION`.
 
 ## Make a backup copy of your `.kiterc` file and metadata directory
 
@@ -42,7 +41,7 @@ Use the command `./run-kite-x.y.z.sh stop` where `x.y.z` is the version of your 
 
 As migration can take a lot of time, it is possible that the watchdog decides to restart
 LynxKite in the middle of it. To avoid it, it is best to start the new version of LynxKite
-for the first time in interactive mode with: `./run-kite-x.y.z.sh interactive`, where `x.y.z`
+for the first time in interactive mode with `./run-kite-x.y.z.sh interactive`, where `x.y.z`
 is the version of your _new_ LynxKite, i.e. the new runner script unpacked at the beginning of
 this upgrade.
 
