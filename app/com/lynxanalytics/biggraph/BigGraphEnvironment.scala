@@ -1,7 +1,6 @@
 // BigGraphEnvironment creates and holds the MetaGraphManager and DataManager.
 package com.lynxanalytics.biggraph
 
-import java.io.File
 import org.apache.spark
 import scala.concurrent._
 import scala.concurrent.duration.Duration
