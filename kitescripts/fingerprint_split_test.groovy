@@ -47,14 +47,14 @@ split = lynx.newProject()
 df = lynx.sqlContext.read()
   .format('com.databricks.spark.csv').option('header', 'true').load(input + '_vertices')
 split.importVertices(
-  table: lynx.saveTable(df, input + '_vertices'),
+  table: lynx.saveAsTable(df, input + '_vertices'),
   "id-attr": 'newId'
 )
 
 df = lynx.sqlContext.read()
   .format('com.databricks.spark.csv').option('header', 'true').load(input + '_edges')
 split.importEdgesForExistingVertices(
-  table: lynx.saveTable(df, input + '_edges'),
+  table: lynx.saveAsTable(df, input + '_edges'),
   attr: 'id',
   src: 'src_id',
   dst: 'dst_id'

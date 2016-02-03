@@ -12,7 +12,7 @@ df.write().format('com.databricks.spark.csv')
 project = lynx.newProject()
 df = lynx.sqlContext.read().format('com.databricks.spark.csv')
   .option('header', 'true').load('randomgraph')
-table = lynx.saveTable(df, 'randomgraph_table')
+table = lynx.saveAsTable(df, 'randomgraph_table')
 project.importVerticesAndEdgesFromASingleTable(
   table: table,
   dst: 'dst_id',
