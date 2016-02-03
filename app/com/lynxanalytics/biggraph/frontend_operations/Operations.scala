@@ -210,11 +210,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class GlobalOperation(t: String, c: Context)
     extends Operation(t, c, Category("Global operations", "magenta", icon = "globe"))
 
-  abstract class ExportOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Export operations", "yellow", icon = "export", sortKey = "IO, export"))
-
   abstract class ImportOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Import operations", "yellow", icon = "import", sortKey = "IO, import"))
+    extends Operation(t, c, Category("Import operations", "yellow", icon = "import"))
 
   abstract class MetricsOperation(t: String, c: Context)
     extends Operation(t, c, Category("Graph metrics", "green", icon = "stats"))
@@ -327,80 +324,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  // TODO: remove this and all subclasses, subtraits once tables are fully
-  // operational.
-  trait RowReader {
-    def sourceParameters: List[OperationParameterMeta]
-    def source(params: Map[String, String]): graph_operations.RowInput
-  }
-
-  trait CSVRowReader extends RowReader {
-    def sourceParameters = List(
-      File("files", "Files"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("omitted", "(optional) Comma separated list of columns to omit"),
-      Param("filter", "(optional) Filtering expression"),
-      Choice("allow_corrupt_lines", "Tolerate ill-formed lines",
-        options = FEOption.noyes))
-
-    def source(params: Map[String, String]) = {
-      val files = HadoopFile(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-
-      val allowCorruptLines = params("allow_corrupt_lines") == "yes"
-
-      graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header,
-        params("omitted").split(",").map(_.trim).filter(_.nonEmpty).toSet,
-        JavaScript(params("filter")),
-        allowCorruptLines)
-    }
-  }
-
-  trait SQLRowReader extends RowReader {
-    def sourceParameters = List(
-      Param("db", "Database"),
-      Param("table", "Table or view"),
-      Param("columns", "Columns"),
-      Param("key", "Key column"))
-    def source(params: Map[String, String]) = {
-      val columns = params("columns").split(",", -1).map(_.trim).filter(_.nonEmpty)
-      graph_operations.DBTable(
-        params("db"),
-        params("table"),
-        (columns.toSet + params("key")).toSeq, // Always include "key".
-        params("key"))
-    }
-  }
-
-  abstract class ImportVerticesOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader {
-    def parameters = sourceParameters ++ List(
-      Param("id-attr", "ID attribute name", defaultValue = "id"))
-    def enabled = hasNoVertexSet
-    def apply(params: Map[String, String]) = {
-      val imp = graph_operations.ImportVertexList(source(params))().result
-      project.vertexSet = imp.vertices
-      for ((name, attr) <- imp.attrs) {
-        project.newVertexAttribute(name, attr.entity, "imported")
-      }
-      val idAttr = params("id-attr")
-      assert(
-        !project.vertexAttributes.contains(idAttr),
-        s"The input also contains a field called '$idAttr'. Please pick a different name.")
-      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
-    }
-  }
-  register("Import vertices from CSV files",
-    new ImportVerticesOperation(_, _) with CSVRowReader)
-  register("Import vertices from a database",
-    new ImportVerticesOperation(_, _) with SQLRowReader)
-
-  register("Import vertices from table", new ImportOperation(_, _) {
+  register("Import vertices", new ImportOperation(_, _) {
     def parameters = List(
       TableParam(
         "table",
@@ -424,37 +348,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  abstract class ImportEdgesForExistingVerticesOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader {
-    def parameters = sourceParameters ++ List(
-      Choice("attr", "Vertex ID attribute",
-        options = FEOption.unset +: vertexAttributes[String]),
-      Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"))
-    def enabled =
-      hasNoEdgeBundle &&
-        hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
-    def apply(params: Map[String, String]) = {
-      val src = params("src")
-      val dst = params("dst")
-      assert(src.nonEmpty, "The Source ID field parameter must be set.")
-      assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
-      val attrName = params("attr")
-      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
-      val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
-      project.edgeBundle = imp.edges
-      project.edgeAttributes = imp.attrs.mapValues(_.entity)
-    }
-  }
-  register("Import edges for existing vertices from CSV files",
-    new ImportEdgesForExistingVerticesOperation(_, _) with CSVRowReader)
-  register("Import edges for existing vertices from a database",
-    new ImportEdgesForExistingVerticesOperation(_, _) with SQLRowReader)
-
-  register("Import edges for existing vertices from table", new ImportOperation(_, _) {
+  register("Import edges for existing vertices", new ImportOperation(_, _) {
     def parameters = List(
       TableParam(
         "table",
@@ -492,35 +386,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  abstract class ImportVerticesAndEdgesOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader {
-    def parameters = sourceParameters ++ List(
-      Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"))
-    def enabled = hasNoVertexSet
-    def apply(params: Map[String, String]) = {
-      val src = params("src")
-      val dst = params("dst")
-      assert(src.nonEmpty, "The Source ID field parameter must be set.")
-      assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
-      val vg = graph_operations.ImportVertexList(source(params))().result
-      val eg = {
-        val op = graph_operations.VerticesToEdges()
-        op(op.srcAttr, vg.attrs(src))(op.dstAttr, vg.attrs(dst)).result
-      }
-      project.setVertexSet(eg.vs, idAttr = "id")
-      project.newVertexAttribute("stringID", eg.stringID)
-      project.edgeBundle = eg.es
-      for ((name, attr) <- vg.attrs) {
-        project.edgeAttributes(name) = attr.pullVia(eg.embedding)
-      }
-    }
-  }
-  register("Import vertices and edges from single CSV fileset",
-    new ImportVerticesAndEdgesOperation(_, _) with CSVRowReader)
-  register("Import vertices and edges from single database table",
-    new ImportVerticesAndEdgesOperation(_, _) with SQLRowReader)
-
   register("Import vertices and edges from a single table", new ImportOperation(_, _) {
     def parameters = List(
       TableParam(
@@ -550,58 +415,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  // TODO: remove this once we have tables fully operational.
-  register("Convert vertices into edges", new StructureOperation(_, _) {
-    def parameters = List(
-      Choice("src", "Source", options = vertexAttributes[String]),
-      Choice("dst", "Destination", options = vertexAttributes[String]))
-    def enabled = hasNoEdgeBundle &&
-      FEStatus.assert(vertexAttributes[String].size > 2, "Two string attributes are needed.")
-    def apply(params: Map[String, String]) = {
-      val srcAttr = project.vertexAttributes(params("src")).runtimeSafeCast[String]
-      val dstAttr = project.vertexAttributes(params("dst")).runtimeSafeCast[String]
-      val newGraph = {
-        val op = graph_operations.VerticesToEdges()
-        op(op.srcAttr, srcAttr)(op.dstAttr, dstAttr).result
-      }
-      val oldAttrs = project.vertexAttributes.toMap
-      project.vertexSet = newGraph.vs
-      project.edgeBundle = newGraph.es
-      project.newVertexAttribute("stringID", newGraph.stringID)
-      for ((name, attr) <- oldAttrs) {
-        project.edgeAttributes(name) = attr.pullVia(newGraph.embedding)
-      }
-    }
-  })
-
-  abstract class ImportVertexAttributesOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader {
-    def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Vertex ID attribute",
-        options = FEOption.unset +: vertexAttributes[String]),
-      Param("id-field", "ID field"),
-      Param("prefix", "Name prefix for the imported vertex attributes"))
-    def enabled =
-      hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
-    def apply(params: Map[String, String]) = {
-      val attrName = params("id-attr")
-      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-      val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
-      val res = op(op.idAttr, idAttr).result
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((name, attr) <- res.attrs) {
-        project.newVertexAttribute(prefix + name, attr, "imported")
-      }
-    }
-  }
-  register("Import vertex attributes from CSV files",
-    new ImportVertexAttributesOperation(_, _) with CSVRowReader)
-  register("Import vertex attributes from a database",
-    new ImportVertexAttributesOperation(_, _) with SQLRowReader)
-
-  register("Import vertex attributes from table", new ImportOperation(_, _) {
+  register("Import vertex attributes", new ImportOperation(_, _) {
     def parameters = List(
       TableParam(
         "table",
@@ -629,36 +443,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  abstract class ImportEdgeAttributesOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader {
-    def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Edge ID attribute",
-        options = FEOption.unset +: edgeAttributes[String]),
-      Param("id-field", "ID field"),
-      Param("prefix", "Name prefix for the imported edge attributes"))
-    def enabled =
-      hasEdgeBundle &&
-        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
-    def apply(params: Map[String, String]) = {
-      val fieldName = params("id-field")
-      assert(fieldName.nonEmpty, "The ID field parameter must be set.")
-      val attrName = params("attr")
-      assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
-      val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), fieldName)
-      val res = op(op.idAttr, idAttr).result
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((name, attr) <- res.attrs) {
-        project.edgeAttributes(prefix + name) = attr
-      }
-    }
-  }
-  register("Import edge attributes from CSV files",
-    new ImportEdgeAttributesOperation(_, _) with CSVRowReader)
-  register("Import edge attributes from a database",
-    new ImportEdgeAttributesOperation(_, _) with SQLRowReader)
-
-  register("Import edge attributes from table", new ImportOperation(_, _) {
+  register("Import edge attributes", new ImportOperation(_, _) {
     def parameters = List(
       TableParam(
         "table",
@@ -2472,19 +2257,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  abstract class LoadSegmentationLinksOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader with SegOp {
-    def segmentationParameters = sourceParameters ++ List(
+  register("Import segmentation links", new ImportOperation(_, _) with SegOp {
+    def segmentationParameters = List(
+      TableParam(
+        "table",
+        "Table to import from",
+        accessibleTableOptions),
       Choice(
         "base-id-attr",
         s"Identifying vertex attribute in base project",
         options = FEOption.list(parent.vertexAttributeNames[String].toList)),
-      Param("base-id-field", s"Identifying field for base project"),
+      Param("base-id-column", s"Identifying column for base project"),
       Choice(
         "seg-id-attr",
         s"Identifying vertex attribute in segmentation",
         options = vertexAttributes[String]),
-      Param("seg-id-field", s"Identifying field for segmentation"))
+      Param("seg-id-column", s"Identifying column for segmentation"))
     def enabled =
       isSegmentation &&
         FEStatus.assert(
@@ -2492,64 +2280,83 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           FEStatus.assert(
             parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
     def apply(params: Map[String, String]) = {
-      val baseIdAttr = parent.vertexAttributes(params("base-id-attr")).runtimeSafeCast[String]
-      val segIdAttr = project.vertexAttributes(params("seg-id-attr")).runtimeSafeCast[String]
-      val op = graph_operations.ImportEdgeListForExistingVertexSet(
-        source(params), params("base-id-field"), params("seg-id-field"))
-      seg.belongsTo = op(op.srcVidAttr, baseIdAttr)(op.dstVidAttr, segIdAttr).result.edges
+      val table = Table(TablePath.parse(params("table")), project.viewer)
+      val baseColumnName = params("base-id-column")
+      val segColumnName = params("seg-id-column")
+      val baseAttrName = params("base-id-attr")
+      val segAttrName = params("seg-id-attr")
+      assert(baseColumnName.nonEmpty,
+        "The identifying column parameter must be set for the base project.")
+      assert(segColumnName.nonEmpty,
+        "The identifying column parameter must be set for the segmentation.")
+      assert(baseAttrName != FEOption.unset.id,
+        "The base ID attribute parameter must be set.")
+      assert(segAttrName != FEOption.unset.id,
+        "The segmentation ID attribute parameter must be set.")
+      val baseColumn = table.columns(baseColumnName).runtimeSafeCast[String]
+      val segColumn = table.columns(segColumnName).runtimeSafeCast[String]
+      val baseAttr = parent.vertexAttributes(baseAttrName).runtimeSafeCast[String]
+      val segAttr = project.vertexAttributes(segAttrName).runtimeSafeCast[String]
+      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
+      val imp = op(
+        op.srcVidColumn, baseColumn)(
+          op.dstVidColumn, segColumn)(
+            op.srcVidAttr, baseAttr)(
+              op.dstVidAttr, segAttr).result
+      seg.belongsTo = imp.edges
     }
-  }
-  register("Load segmentation links from CSV",
-    new LoadSegmentationLinksOperation(_, _) with CSVRowReader)
-  register("Load segmentation links from a database",
-    new LoadSegmentationLinksOperation(_, _) with SQLRowReader)
+  })
 
-  abstract class ImportSegmentationOperation(t: String, c: Context)
-      extends ImportOperation(t, c) with RowReader {
-    def parameters = sourceParameters ++ List(
+  register("Import segmentation", new ImportOperation(_, _) {
+    def parameters = List(
+      TableParam(
+        "table",
+        "Table to import from",
+        accessibleTableOptions),
       Param("name", s"Name of new segmentation"),
-      Choice("attr", "Vertex ID attribute",
+      Choice("base-id-attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
-      Param("base-id-field", "Vertex ID field"),
-      Param("seg-id-field", "Segment ID field"))
+      Param("base-id-column", "Vertex ID column"),
+      Param("seg-id-column", "Segment ID column"))
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes")
     def apply(params: Map[String, String]) = {
-      val baseAttrName = params("attr")
-      assert(baseAttrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+      val table = Table(TablePath.parse(params("table")), project.viewer)
+      val baseColumnName = params("base-id-column")
+      val segColumnName = params("seg-id-column")
+      val baseAttrName = params("base-id-attr")
+      assert(baseColumnName.nonEmpty,
+        "The identifying column parameter must be set for the base project.")
+      assert(segColumnName.nonEmpty,
+        "The identifying column parameter must be set for the segmentation.")
+      assert(baseAttrName != FEOption.unset.id,
+        "The base ID attribute parameter must be set.")
+      val baseColumn = table.columns(baseColumnName).runtimeSafeCast[String]
+      val segColumn = table.columns(segColumnName).runtimeSafeCast[String]
       val baseAttr = project.vertexAttributes(baseAttrName).runtimeSafeCast[String]
-      val baseId = params("base-id-field")
-      assert(baseId.nonEmpty, "The Vertex ID field parameter must be set.")
-      val segId = params("seg-id-field")
-      assert(segId.nonEmpty, "The Segment ID field parameter must be set.")
 
-      // Import belongs-to relationship as vertices.
-      val vertexImport = graph_operations.ImportVertexList(source(params))().result
       // Merge by segment ID to create the segments.
       val merge = {
         val op = graph_operations.MergeVertices[String]()
-        op(op.attr, vertexImport.attrs(segId)).result
+        op(op.attr, segColumn).result
       }
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(merge.segments, idAttr = "id")
       // Move segment ID to the segments.
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
-        AttributeWithLocalAggregator(vertexImport.attrs(segId), "most_common"))
+        AttributeWithLocalAggregator(segColumn, "most_common"))
         .runtimeSafeCast[String]
-      segmentation.newVertexAttribute(segId, segAttr)
+      segmentation.newVertexAttribute(segColumnName, segAttr)
       // Import belongs-to relationship as edges between the base and the segmentation.
-      val edgeImport = {
-        val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), baseId, segId)
-        op(op.srcVidAttr, baseAttr)(op.dstVidAttr, segAttr).result
-      }
+      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
+      val edgeImport = op(
+        op.srcVidColumn, baseColumn)(
+          op.dstVidColumn, segColumn)(
+            op.srcVidAttr, baseAttr)(
+              op.dstVidAttr, segAttr).result
       segmentation.belongsTo = edgeImport.edges
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
-  }
-  register("Import segmentation from CSV",
-    new ImportSegmentationOperation(_, _) with CSVRowReader)
-  register("Import segmentation from a database",
-    new ImportSegmentationOperation(_, _) with SQLRowReader)
+  })
 
   register("Define segmentation links from matching attributes",
     new StructureOperation(_, _) with SegOp {
@@ -3227,207 +3034,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     }
   })
-
-  { // "Dirty operations", that is operations that use a data manager. Think twice if you really
-    // need this before putting an operation here.
-    implicit lazy val dataManager = env.dataManager
-
-    register("Export vertex attributes to file", new ExportOperation(_, _) {
-      override val dirty = true
-      def parameters = List(
-        Param("path", "Destination path", defaultValue = "<auto>"),
-        Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
-        Choice("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
-        Choice("format", "File format", options = FEOption.list("CSV")))
-      def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-      def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
-        val labels = params("attrs").split(",", -1)
-        val attrs: Map[String, Attribute[_]] = labels.map {
-          label => label -> project.vertexAttributes(label)
-        }.toMap
-        val path = getExportFilename(params("path"))
-        params("format") match {
-          case "CSV" =>
-            val csv = graph_util.CSVExport.exportVertexAttributes(project.vertexSet, attrs)
-            csv.saveToDir(path)
-        }
-        project.scalars(params("link")) =
-          downloadLink(path, "export_" + params("link"))
-      }
-    })
-
-    register("Export vertex attributes to database", new ExportOperation(_, _) {
-      override val dirty = true
-      def parameters = List(
-        Param("db", "Database"),
-        Param("table", "Table"),
-        Choice("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
-        Choice("delete", "Overwrite table if it exists", options = FEOption.noyes))
-      def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-      def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
-        val labels = params("attrs").split(",", -1)
-        val attrs: Seq[(String, Attribute[_])] = labels.map {
-          label => label -> project.vertexAttributes(label)
-        }
-        val export = graph_util.SQLExport(params("table"), project.vertexSet, attrs.toMap)
-        export.insertInto(
-          params("db"),
-          if (params("delete") == "yes") "overwrite" else "error")
-      }
-    })
-
-    def getExportFilename(param: String): HadoopFile = {
-      assert(param.nonEmpty, "No export path specified.")
-      if (param == "<auto>") {
-        dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString
-      } else {
-        HadoopFile(param)
-      }
-    }
-
-    case class NameAndAttr[T](name: String, attr: Attribute[T]) {
-      def asPair: (String, Attribute[_]) = {
-        (name, attr)
-      }
-    }
-
-    def getNameAndVertexAttr(
-      paramID: String,
-      pe: ProjectEditor): NameAndAttr[_] = {
-
-      if (paramID == FEOption.internalId.id) {
-        NameAndAttr("id", pe.vertexSet.idAttribute)
-      } else {
-        NameAndAttr(paramID, pe.vertexAttributes(paramID))
-      }
-    }
-
-    def getPrefixedNameAndEdgeAttribute(
-      nameAndVertexAttr: NameAndAttr[_],
-      targetEb: EdgeBundle,
-      isSrc: Boolean): NameAndAttr[_] = {
-
-      if (isSrc) {
-        NameAndAttr(
-          "src_" + nameAndVertexAttr.name,
-          graph_operations.VertexToEdgeAttribute.srcAttribute(nameAndVertexAttr.attr, targetEb)
-        )
-      } else {
-        NameAndAttr(
-          "dst_" + nameAndVertexAttr.name,
-          graph_operations.VertexToEdgeAttribute.dstAttribute(nameAndVertexAttr.attr, targetEb)
-        )
-      }
-    }
-
-    register("Export edge attributes to file", new ExportOperation(_, _) {
-      override val dirty = true
-      def parameters = List(
-        Param("path", "Destination path", defaultValue = "<auto>"),
-        Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
-        Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("id_attr", "Vertex id attribute",
-          options = FEOption.internalId +: vertexAttributes),
-        Choice("format", "File format", options = FEOption.list("CSV")))
-      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
-      def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
-        val labels = params("attrs").split(",", -1)
-        val attrs: Seq[(String, Attribute[_])] = labels.map {
-          label => label -> project.edgeAttributes(label)
-        }.sortBy(_._1)
-
-        val path = getExportFilename(params("path"))
-        val idNameAndVertexAttr = getNameAndVertexAttr(params("id_attr"), project)
-        val srcNameAndEdgeAttr =
-          getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = true)
-        val dstNameAndEdgeAttr =
-          getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = false)
-
-        params("format") match {
-          case "CSV" =>
-            val csv =
-              graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle,
-                srcNameAndEdgeAttr.asPair +: dstNameAndEdgeAttr.asPair +: attrs)
-            csv.saveToDir(path)
-        }
-        project.scalars(params("link")) =
-          downloadLink(path, "export_" + params("link"))
-      }
-    })
-
-    register("Export edge attributes to database", new ExportOperation(_, _) {
-      override val dirty = true
-      def parameters = List(
-        Param("db", "Database"),
-        Param("table", "Table"),
-        Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("delete", "Overwrite table if it exists", options = FEOption.noyes))
-      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
-      def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
-        val labels = params("attrs").split(",", -1)
-        val attrs: Map[String, Attribute[_]] = labels.map {
-          label => label -> project.edgeAttributes(label)
-        }.toMap
-        val export = graph_util.SQLExport(params("table"), project.edgeBundle, attrs)
-        export.insertInto(
-          params("db"),
-          if (params("delete") == "yes") "overwrite" else "error")
-      }
-    })
-
-    register("Export segmentation to file", new ExportOperation(_, _) with SegOp {
-      override val dirty = true
-      def segmentationParameters = List(
-        Param("path", "Destination path", defaultValue = "<auto>"),
-        Param("link", "Download link name", defaultValue = "segmentation_csv"),
-        Choice("base_id_attr", "Project vertex id attribute",
-          options = FEOption.internalId +:
-            FEOption.list(parent.vertexAttributeNames.toList)),
-        Choice("seg_id_attr", "Segmentation vertex id attribute",
-          options = FEOption.internalId +: vertexAttributes),
-        Choice("format", "File format", options = FEOption.list("CSV")))
-      def enabled = isSegmentation && FEStatus.enabled
-      def apply(params: Map[String, String]) = {
-        val path = getExportFilename(params("path"))
-        val name = project.asSegmentation.segmentationName
-
-        val srcNameAndVertexAttr = getNameAndVertexAttr(params("base_id_attr"), parent)
-        val dstNameAndVertexAttr = getNameAndVertexAttr(params("seg_id_attr"), project)
-        val srcNameAndEdgeAttr =
-          getPrefixedNameAndEdgeAttribute(srcNameAndVertexAttr, seg.belongsTo, isSrc = true)
-        val dstNameAndEdgeAttr =
-          getPrefixedNameAndEdgeAttribute(dstNameAndVertexAttr, seg.belongsTo, isSrc = false)
-
-        params("format") match {
-          case "CSV" =>
-            val csv = graph_util.CSVExport.exportEdgeAttributes(
-              seg.belongsTo, Seq(srcNameAndEdgeAttr.asPair, dstNameAndEdgeAttr.asPair))
-            csv.saveToDir(path)
-        }
-        project.scalars(params("link")) =
-          downloadLink(path, "export_" + params("link"))
-      }
-    })
-
-    register("Export segmentation to database", new ExportOperation(_, _) with SegOp {
-      override val dirty = true
-      def segmentationParameters = List(
-        Param("db", "Database"),
-        Param("table", "Table"),
-        Choice("delete", "Overwrite table if it exists", options = FEOption.noyes))
-      def enabled = isSegmentation && FEStatus.enabled
-      def apply(params: Map[String, String]) = {
-        val export = graph_util.SQLExport(params("table"), seg.belongsTo, Map[String, Attribute[_]]())
-        export.insertInto(
-          params("db"),
-          if (params("delete") == "yes") "overwrite" else "error")
-      }
-    })
-  }
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()

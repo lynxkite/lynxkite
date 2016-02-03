@@ -68,7 +68,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val tablePath = response.id
 
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
         "table" -> tablePath,
         "id-attr" -> "new_id"))
@@ -105,7 +105,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val tablePath = response.id
 
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
         "table" -> tablePath,
         "id-attr" -> "new_id"))

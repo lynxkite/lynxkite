@@ -6,37 +6,22 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
 
   test("Pull segmentation one level up") {
-    run("Import vertices from CSV files", Map(
-      "files" -> ("OPERATIONSTEST$/copy-segmentation-one-level-up-vertices.csv"),
-      "header" -> "num",
-      "delimiter" -> ",",
-      "id-attr" -> "id",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
-    run("Import segmentation from CSV", Map(
-      "files" -> "OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv",
-      "header" -> "base_num,seg_num",
-      "delimiter" -> ",",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> "",
+    run("Import vertices", Map(
+      "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-vertices.csv"),
+      "id-attr" -> "id"))
+    run("Import segmentation", Map(
+      "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
       "name" -> "segmentation1",
-      "attr" -> "num",
-      "base-id-field" -> "base_num",
-      "seg-id-field" -> "seg_num"))
+      "base-id-attr" -> "num",
+      "base-id-column" -> "base_num",
+      "seg-id-column" -> "seg_num"))
     val segmentation1 = project.segmentation("segmentation1")
-    run("Import segmentation from CSV", Map(
-      "files" -> "OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv",
-      "header" -> "base_num,seg_num",
-      "delimiter" -> ",",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> "",
+    run("Import segmentation", Map(
+      "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
       "name" -> "segmentation2",
-      "attr" -> "seg_num",
-      "base-id-field" -> "base_num",
-      "seg-id-field" -> "seg_num"),
+      "base-id-attr" -> "seg_num",
+      "base-id-column" -> "base_num",
+      "seg-id-column" -> "seg_num"),
       on = segmentation1)
     val segmentation2 = segmentation1.segmentation("segmentation2")
 
