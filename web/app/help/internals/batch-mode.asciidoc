@@ -45,8 +45,9 @@ namespace.
    to learn more. (The Java examples also apply to Groovy.)
  - `DataFrame **lynx.sql**(String query)` is a shortcut to `lynx.sqlContext.sql`. It executes a
    Spark SQL query and returns the result as an Apache Spark DataFrame.
- - `**lynx.saveDataFrameAsTable**(DataFrame df, String tableName, String notes = "")` saves an
-   Apache Spark DataFrame as a LynxKite table.
+ - `String **lynx.saveTable**(DataFrame df, String tableName, String notes = "")` saves an
+   Apache Spark DataFrame as a LynxKite table. It returns the table identifier that can be used
+   as a parameter for import operations.
 
 The properties of `GroovyProject` are:
 

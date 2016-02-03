@@ -5,22 +5,18 @@ project.newVertexSet(size: size)
 project.addGaussianVertexAttribute(name: 'random1', seed: 1)
 project.addGaussianVertexAttribute(name: 'random2', seed: 2)
 project.addGaussianVertexAttribute(name: 'random3', seed: 3)
-project.exportVertexAttributesToFile(
-  path: 'UPLOAD$/importtest',
-  link: 'csv',
-  attrs: 'random1,random2,random3',
-  format: 'CSV')
+
+df = project.sql('select random1, random2, random3 from vertices')
+df.write().format('com.databricks.spark.csv')
+  .option('header', 'true').mode('overwrite').save('importtest')
 
 println "exported $size vertices"
 
 project = lynx.newProject()
-project.importVerticesFromCSVFiles(
-  files: 'UPLOAD$/importtest/data/part*',
-  filter: '',
-  header: 'random1,random2,random3',
-  omitted: '',
-  allow_corrupt_lines: 'no',
-  delimiter: ',',
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv').option('header', 'true').load('importtest')
+project.importVertices(
+  table: lynx.saveTable(df, 'importtest'),
   'id-attr': 'id')
 
 start_time = System.currentTimeMillis()

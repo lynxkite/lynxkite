@@ -44,22 +44,17 @@ furtherUndefinedAttr2Expr =
 
 split = lynx.newProject()
 
-split.importVerticesFromCSVFiles(
-  files: 'DATA$/exports/' + input + '_vertices/data/part*',
-  header: '"id","peripheral"',
-  delimiter: ',',
-  omitted: '',
-  filter: '',
-  "id-attr": 'newId',
-  allow_corrupt_lines: 'no'
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv').option('header', 'true').load(input + '_vertices')
+split.importVertices(
+  table: lynx.saveTable(df, input + '_vertices'),
+  "id-attr": 'newId'
 )
-split.importEdgesForExistingVerticesFromCSVFiles(
-  files: 'DATA$/exports/' + input + '_edges/data/part*',
-  header: '"src_id","dst_id","originalCalls"',
-  delimiter: ',',
-  omitted: '',
-  filter: '',
-  allow_corrupt_lines: 'no',
+
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv').option('header', 'true').load(input + '_edges')
+split.importEdgesForExistingVertices(
+  table: lynx.saveTable(df, input + '_edges'),
   attr: 'id',
   src: 'src_id',
   dst: 'dst_id'
