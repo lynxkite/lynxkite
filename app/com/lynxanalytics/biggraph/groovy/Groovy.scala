@@ -142,12 +142,16 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   val drawing = new DrawingGroovyInterface()
 
-  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
+  // Returns the table checkpoint name.
+  def saveAsTable(df: spark.sql.DataFrame, tableName: String): String =
+    saveAsTable(df, tableName, notes = "")
+  def saveAsTable(df: spark.sql.DataFrame, tableName: String, notes: String): String = {
     import ctx.metaManager
     import ctx.dataManager
-    DirectoryEntry.fromName(tableName).asNewTableFrame(
+    val f = DirectoryEntry.fromName(tableName).asNewTableFrame(
       table.TableImport.importDataFrameAsync(df),
       notes)
+    new GlobalTablePath(f.checkpoint, f.name, Seq(Table.VertexTableName)).toString
   }
 
 }
@@ -298,7 +302,10 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
 
   def copy() = {
     assert(!editor.isSegmentation, "You can only create copies of top-level projects.")
-    new GroovyBatchProject(ctx, editor.viewer.editor)
+    val re = editor.asInstanceOf[RootProjectEditor]
+    val newEditor = editor.viewer.editor.asInstanceOf[RootProjectEditor]
+    newEditor.checkpoint = re.checkpoint
+    new GroovyBatchProject(ctx, newEditor)
   }
 
   def saveAs(newRootName: String): Unit = {
@@ -314,6 +321,16 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
       entry.asProjectFrame
     }
     project.setCheckpoint(editor.rootCheckpoint)
+  }
+
+  def sql(query: String): spark.sql.DataFrame = {
+    import ctx.metaManager
+    import ctx.dataManager
+    val sqlContext = ctx.dataManager.newSQLContext()
+    for (path <- editor.viewer.allRelativeTablePaths) {
+      Table(path, editor.viewer).toDF(sqlContext).registerTempTable(path.toString)
+    }
+    sqlContext.sql(query)
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled

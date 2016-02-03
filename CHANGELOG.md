@@ -34,9 +34,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
  - Introduce operation _Copy edges to base project_.
- - emr.sh can now invoke groovy scripts on a remote cluster.
- - Introduce Explicit models, create them with the _Train linear regression model_
+ - `emr.sh` can now invoke groovy scripts on a remote cluster.
+ - Introduce explicit machine learning models. Create them with the _Train linear regression model_
    operation and use them for predictions with _Predict from model_.
+ - The _Convert vertices into edges_ operation has been removed. The same functionality is now
+   available via tables. You can simply import the `vertices` table of one project as edges in
+   another project.
 
 ### 1.6.1.1
 
