@@ -48,6 +48,7 @@ this upgrade.
 ## Restore original LynxKite
 
 If anything goes wrong and the new version does not work, you can always go back by
+
 - Stopping the new version of LynxKite
 - Restoring the original metadata directory and `.kiterc` file
 - Starting the old version of LynxKite
