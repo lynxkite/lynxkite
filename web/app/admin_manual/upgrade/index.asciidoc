@@ -41,7 +41,8 @@ Use the command `./run-kite-x.y.z.sh stop` where `x.y.z` is the version of your 
 
 Start the new version of LynxKite with `./run-kite-x.y.z.sh start`, where `x.y.z` is the version
 of your _new_ LynxKite, i.e. the new runner script unpacked at the beginning of this upgrade. Note
-that the migration can take a lot of time when the upgraded LynxKite is started for the first time.
+that the migration can take several minutes when the upgraded LynxKite is started for the first
+time.
 
 ## Restore original LynxKite
 
