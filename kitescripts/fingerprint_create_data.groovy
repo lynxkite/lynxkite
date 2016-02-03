@@ -40,17 +40,8 @@ project.derivedVertexAttribute(
   type: 'double'
 )
 
-project.exportVertexAttributesToFile(
-  path: 'DATA$/exports/' + output + '_vertices',
-  link: 'vertices_csv',
-  attrs: 'id,peripheral',
-  format: 'CSV'
-)
+df = project.sql('select id, peripheral from vertices')
+df.write().format('com.databricks.spark.csv').option('header', 'true').save(output + '_vertices')
 
-project.exportEdgeAttributesToFile(
-  path: 'DATA$/exports/' + output + '_edges',
-  link: 'edges_csv',
-  attrs: 'originalCalls',
-  id_attr: 'id',
-  format: 'CSV'
-)
+df = project.sql('select src_id, dst_id, edge_originalCalls as originalCalls from triplets')
+df.write().format('com.databricks.spark.csv').option('header', 'true').save(output + '_edges')
