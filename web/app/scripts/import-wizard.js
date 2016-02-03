@@ -65,7 +65,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       };
       scope.importJdbc = function() {
         var columnsToImport =
-          scope.jdbc.columnsToImport ? scope.jdbc.columnsToImport.split(',') : [];
+          splitCSVLine(scope.jdbc.columnsToImport);
         importStuff(
           '/ajax/importJdbc',
           {
