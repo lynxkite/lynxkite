@@ -7,9 +7,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.graph_util.TableStats
 import com.lynxanalytics.biggraph.graph_util.JDBCQuoting.quoteIdentifier
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-import anorm.SQL
 import java.sql
-import org.apache.spark.rdd.RDD
 
 object DBTable extends FromJson[DBTable] {
   def fromJson(j: JsValue) = DBTable(
