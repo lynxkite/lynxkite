@@ -1,30 +1,27 @@
-// Before running this script, untar this archive into the uploads dir:
-//  https://drive.google.com/a/lynxanalytics.com/file/d/0B4_SBhzYAJK8VnJqLUNJdnoyalk/view?usp=sharing
+// Before running this script, unzip this archive into the stage dir:
+//  https://github.com/biggraph/biggraph/files/115915/sipi_fb_linkedin.zip
 
 // ========= Preparing the LinkedIn graph ==================
 linkedin = lynx.newProject()
 
+String loadCSV(String file) {
+  df = lynx.sqlContext.read().format('com.databricks.spark.csv')
+    .option('header', 'true').load(file)
+  return lynx.saveAsTable(df, file)
+}
+
+
 // Import linkedin vertices
-linkedin.importVerticesFromCSVFiles(
-  allow_corrupt_lines: 'no',
-  delimiter: ',',
-  files: 'UPLOAD$/linkedin_vertices.csv',
-  filter: '',
-  header: '<read first line>',
-  'id-attr': 'id',
-  omitted: '')
+linkedin.importVertices(
+  table: loadCSV('linkedin_vertices.csv'),
+  'id-attr': 'id')
 
 // Import linkedin edges
-linkedin.importEdgesForExistingVerticesFromCSVFiles(
-  allow_corrupt_lines: 'no',
+linkedin.importEdgesForExistingVertices(
   attr: 'linkedin_id',
-  delimiter: ',',
   src: 'Source',
   dst: 'Target',
-  files: 'UPLOAD$/linkedin_edges.csv',
-  filter: '',
-  header: '<read first line>',
-  omitted: '')
+  table: loadCSV('linkedin_edges.csv'))
 linkedin.discardEdgeAttribute(name: 'Source')
 linkedin.discardEdgeAttribute(name: 'Target')
 linkedin.addReversedEdges()
@@ -33,15 +30,10 @@ linkedin.addReversedEdges()
 linkedin.filterByAttributes('filterva-linkedin_name': '!Attila Szabó,Damokos László,Gábor Bóna,Mátyás Krizsák,Peter Varga')
 
 // Load edit distance matched facebook names.
-linkedin.importVertexAttributesFromCSVFiles(
-  allow_corrupt_lines: 'no',
-  delimiter: ',',
-  files: 'UPLOAD$/facebook_linkedin_name_pairs.csv',
-  filter: '',
-  header: 'matched_fb_name,matched_linkedin_name',
+linkedin.importVertexAttributes(
+  table: loadCSV('facebook_linkedin_name_pairs.csv'),
   'id-attr': 'linkedin_name',
-  'id-field': 'matched_linkedin_name',
-  omitted: '',
+  'id-column': 'matched_linkedin_name',
   prefix: '')
 
 // Somewhat hacky way to split to test/train sets.
@@ -66,25 +58,15 @@ linkedin.mergeTwoAttributes(
 
 
 // ========= Preparing the FaceBook graph ==================
-fb = lynx.newProject('facebook for FP')
-fb.importVerticesFromCSVFiles(
-  allow_corrupt_lines: 'no',
-  delimiter: ',',
-  files: 'UPLOAD$/facebook_vertices.csv',
-  filter: '',
-  header: '<read first line>',
-  'id-attr': 'id',
-  omitted: '')
-fb.importEdgesForExistingVerticesFromCSVFiles(
-  allow_corrupt_lines: 'no',
+fb = lynx.newProject()
+fb.importVertices(
+  table: loadCSV('facebook_vertices.csv'),
+  'id-attr': 'id')
+fb.importEdgesForExistingVertices(
   attr: 'fb_id',
-  delimiter: ',',
   src: 'node_from',
   dst: 'node_to',
-  files: 'UPLOAD$/facebook_edges.csv',
-  filter: '',
-  header: '<read first line>',
-  omitted: '')
+  table: loadCSV('facebook_edges.csv'))
 fb.discardEdgeAttribute(name: 'node_from')
 fb.discardEdgeAttribute(name: 'node_to')
 fb.addReversedEdges()
@@ -274,7 +256,7 @@ drawPR(prAttr)
 
 // Save projects for manual inspection.
 linkedin.saveAs('linkedin for FP')
-fp.saveAs('facebook for FP')
+fb.saveAs('facebook for FP')
 union.saveAs('linkedin facebook FP')
 segmentationFP.saveAs('linkedin facebook segmentation FP')
 prSeg.saveAs('linkedin facebook segmentation PR curve')

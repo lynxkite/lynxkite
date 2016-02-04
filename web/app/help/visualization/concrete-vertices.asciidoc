@@ -1,0 +1,88 @@
+## Concrete vertices view
+
+Shows some selected [[center-vertices]]center vertices and their neighborhood with all the edges
+among these vertices. The set of the center vertices and the size of the neighborhood can be
+selected by the user.
+
+When this mode is selected the user is presented with a set of extra controls below the
+<<project-header>>:
+
+[[concrete-view-settings]]
+Display::
+You can select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but
+that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
+move around vertices.
+
+Layout animation::
+(Only in 2D mode) If enabled, layout animation will continuously do a physical simulation on the
+displayed graph as if edges were springs. You can move vertices around and the graph will
+reorganize itself.
+
+Label attraction::
+When animation is enabled, this will make vertices with the same label attract each other, which
+results in same label vertices being grouped together.
+
+Layout style::
+When animation is enabled, this option determines the exact physics of the simulation.
+The different options can be useful depending on the structure of the network that is visualized.
++
+The available options are:
++
+Centralize::: High-degree nodes in the center, low-degree nodes on the periphery.
+Decentralize::: Low-degree nodes in the center, high-degree nodes on the periphery.
+Neutral::: Degree is not factored into the layout.
+
+Show vertices::
+Lists "center" vertices, that is the vertices whose neighborhood we are displaying. You can change
+this list manually, using the <<pick-button,Pick button>> or using the
+<<context-menu,context menu>> of already displayed vertices. Setting an asterisk (`+*+`) here will
+result in the visualization of all the vertices (up to a certain limit).
+
+Show neighborhood::
+You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
+vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
+
+### Pick button
+This button is used to populate the contents of the _Show vertices_ box. The vertex
+placed there will be one that satisfies all the currently set restrictions (see
+below).
+The available options are:
+
+Center count:: The number of vertices placed in the _Show vertices_ box (default: 1).
+
+Restrictions narrow down the potential set of candidates that will be
+placed in the _Show vertices_ box when you click on the _Pick_ button. They have the same syntax as
+filters (see  <<attribute-filter-syntax>>). There are two ways to specify them:
+
+Use project attribute filters::
+(Default.) Use the currently set vertex attribute filters as restrictions.
+Use custom restrictions::
+Manually enter restrictions. When switching to this mode, the project filters
+are automatically copied into the custom restriction list, which can be edited then.
+
+After picking one set of centers with the _Pick_ button the button is replaced by the _Next_ button.
+Clicking this button will iterate over samples that match the conditions. The samples will show up
+in a deterministic order. You can skip to an arbitrary sample by clicking on the
++++<label class="btn btn-default"><i class="glyphicon glyphicon-menu-right"></i></label>+++
+button. There you can manually enter a position in the sequence and pick it by clicking on
+ _Pick by offset:_
+
+### Context menu
+When clicking a vertex in Concrete Vertex View you can see a context menu with possible operations
+related to the vertex. Here are the possible menu elements:
+
+Add to centers::
+This action will add the selected vertex to the centers.
+
+Set as only center::
+This action will set this vertex as the only center so that only this vertex and its neigborhood
+will be shown.
+
+Filter segmentation to this vertex::
+It will setup a filter on the segmentation
+graph such that only segments that contain this vertex are selected. This menu is only available if
+a segmentation is open on the right side.
+
+Freeze/unfreeze::
+If using layout animation, freeze fixes the position of this particular vertex. Unfreeze lets
+the vertex move free again.

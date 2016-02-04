@@ -19,7 +19,7 @@ exports.config = {
         prefs: {
           download: {
             prompt_for_download: false,
-            default_directory: '/tmp',
+            default_directory: '/tmp/protractorDownloads.' + process.pid,
           },
         },
      },

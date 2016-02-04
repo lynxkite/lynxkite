@@ -28,6 +28,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.User
 
 import java.io.File
@@ -109,6 +110,13 @@ sealed trait ProjectViewer {
   def scalarNames[T: TypeTag] = scalars.collect {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
+  def models: Map[String, model.ModelMeta] = {
+    scalars
+      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[model.Model] }
+      .map {
+        case (k, v) => k -> v.source.operation.asInstanceOf[model.ModelMeta]
+      }
+  }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations
@@ -196,11 +204,12 @@ sealed trait ProjectViewer {
   }
 
   def implicitTableNames: Iterable[String]
-  def allRelativeTablePaths: Seq[String] = {
+  def allRelativeTablePaths: Seq[RelativeTablePath] = {
+    val localTables = implicitTableNames.toSeq.map(name => RelativeTablePath(Seq(name)))
     val childTables = sortedSegmentations.flatMap(segmentation =>
       segmentation.allRelativeTablePaths.map(
-        childPath => s"${segmentation.segmentationName}|$childPath"))
-    implicitTableNames.toSeq ++ childTables
+        childPath => segmentation.segmentationName /: childPath))
+    localTables ++ childTables
   }
 }
 object ProjectViewer {
@@ -241,9 +250,10 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
 
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeTableName)
+      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(edgeBundle).map(_ => Table.TripletTableName)
 
-  def allAbsoluteTablePaths: Seq[String] = allRelativeTablePaths.map("|" + _)
+  def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -303,6 +313,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(edgeBundle).map(_ => Table.TripletTableName) ++
       Option(belongsTo).map(_ => Table.BelongsToTableName)
 }
 
@@ -947,6 +958,21 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def writeACL: String = get(rootDir / "writeACL", "*")
   def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
+
+  // Some simple ACL definitions for object creation.
+  def setupACL(privacy: String, user: User): Unit = {
+    privacy match {
+      case "private" =>
+        writeACL = user.email
+        readACL = user.email
+      case "public-read" =>
+        writeACL = user.email
+        readACL = "*"
+      case "public-write" =>
+        writeACL = "*"
+        readACL = "*"
+    }
+  }
 
   def assertReadAllowedFrom(user: User): Unit = {
     assert(readAllowedFrom(user), s"User $user does not have read access to $this.")

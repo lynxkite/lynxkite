@@ -41,79 +41,128 @@ trait Table {
   }
 }
 object Table {
+  val VertexTableName = "vertices"
+  val EdgeTableName = "edges"
+  val TripletTableName = "triplets"
+  val BelongsToTableName = "belongsTo"
+  val ReservedTableNames =
+    Set(VertexTableName, EdgeTableName, TripletTableName, BelongsToTableName)
+
   // A canonical table path is what's used by operations to reference a table. It's always meant to
   // be a valid id for an FEOption.
   // A canonical table path can be in one of the follow formats:
   // 1. sub-project relative reference:
   //    RELATIVE_REFERENCE := (SEGMENTATION_NAME|)*TABLE_NAME
-  //    e.g.: connected components|!vertices
+  //    e.g.: connected components|vertices
   // 2. project frame relative reference:
   //    ABSOLUTE_REFERENCE := |RELATIVE_REFERENCE
-  //    e.g.: |events|connected components|!edges
+  //    e.g.: |events|connected components|edges
   // 3. global reference:
   //    !checkpoint(CHECKPOINT,CHECKPOINT_NOTE)ABSOLUTE_REFERENCE
-  //    e.g.: !checkpoint(1234,"My Favorite Project")|!vertices
+  //    e.g.: !checkpoint(1234,"My Favorite Project")|vertices
   //
   // TABLE_NAME either points to a user defined table within the root project/segmentation
   // or can be one of the following implicitly defined tables:
-  //  !vertices
-  //  !edges
-  //  !belongsTo - only defined for segmentations
+  //  vertices
+  //  edges
+  //  triplets
+  //  belongsTo - only defined for segmentations
   //
   // The first two formats are only meaningful in the context of a project viewer. Global paths
   // can be resolved out of context as well, so there is a specialized function just for those.
-  def fromGlobalPath(globalPath: String)(implicit metaManager: MetaGraphManager): Table = {
-    val (checkpoint, _, suffix) = FEOption.unpackTitledCheckpoint(
-      globalPath,
-      s"$globalPath does not seem to be a valid global table path")
-    fromCheckpointAndPath(checkpoint, suffix)
+  def apply(path: TablePath, context: ProjectViewer)(implicit m: MetaGraphManager): Table = {
+    fromTableName(path.tableName, path.containingViewer(context))
+  }
+  def apply(path: GlobalTablePath)(implicit m: MetaGraphManager): Table = {
+    fromTableName(path.tableName, path.containingViewer)
   }
 
-  def fromCanonicalPath(path: String, context: ProjectViewer)(
-    implicit metaManager: MetaGraphManager): Table = {
-
-    FEOption.maybeUnpackTitledCheckpoint(path)
-      .map { case (checkpoint, _, suffix) => fromCheckpointAndPath(checkpoint, suffix) }
-      .getOrElse(fromPath(path, context))
-  }
-
-  val VertexTableName = "!vertices"
-  val EdgeTableName = "!edges"
-  val BelongsToTableName = "!belongsTo"
   def fromTableName(tableName: String, viewer: ProjectViewer): Table = {
     tableName match {
       case VertexTableName => new VertexTable(viewer)
       case EdgeTableName => new EdgeTable(viewer)
+      case TripletTableName => new TripletTable(viewer)
       case BelongsToTableName => {
         assert(
           viewer.isInstanceOf[SegmentationViewer],
-          "The !belongsTo table is only defined on segmentations")
+          s"The $BelongsToTableName table is only defined on segmentations.")
         new BelongsToTable(viewer.asInstanceOf[SegmentationViewer])
       }
       case customTableName: String => {
-        println(customTableName)
-        ???
+        throw new AssertionError(s"Table $customTableName not found.")
       }
     }
   }
+}
 
-  def fromRelativePath(relativePath: String, viewer: ProjectViewer): Table = {
-    val splitPath = SubProject.splitPipedPath(relativePath)
-    fromTableName(splitPath.last, viewer.offspringViewer(splitPath.dropRight(1)))
+sealed trait TablePath {
+  def toFE: FEOption
+  // Returns the final ProjectViewer which directly contains the table.
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager): ProjectViewer
+  def tableName: String
+}
+object TablePath {
+  def parse(path: String): TablePath = {
+    assert(path.nonEmpty, "Empty table path.")
+    val g = GlobalTablePath.maybeParse(path)
+    if (g.nonEmpty) g.get
+    else if (path.head == '|') AbsoluteTablePath(split(path.tail))
+    else RelativeTablePath(split(path))
   }
 
-  def fromPath(path: String, viewer: ProjectViewer): Table = {
-    if (path(0) == '|') {
-      fromRelativePath(path.drop(1), viewer.rootViewer)
-    } else {
-      fromRelativePath(path, viewer)
-    }
+  def split(path: String) = SubProject.splitPipedPath(path)
+}
+
+case class RelativeTablePath(path: Seq[String]) extends TablePath {
+  override def toString = path.mkString("|")
+  def toFE = FEOption.regular(toString)
+  def tableName = path.last
+
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = {
+    viewer.offspringViewer(path.init)
   }
 
-  def fromCheckpointAndPath(checkpoint: String, path: String)(
-    implicit manager: MetaGraphManager): Table = {
+  def toAbsolute(prefix: Seq[String]) = AbsoluteTablePath(prefix ++ path)
+
+  def /:(prefix: String) = RelativeTablePath(prefix +: path)
+}
+
+case class AbsoluteTablePath(path: Seq[String]) extends TablePath {
+  override def toString = "|" + RelativeTablePath(path).toString
+  def toFE = FEOption.regular(toString)
+  def tableName = RelativeTablePath(path).tableName
+
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = {
+    RelativeTablePath(path).containingViewer(viewer.rootViewer)
+  }
+
+  def toGlobal(checkpoint: String, name: String) = GlobalTablePath(checkpoint, name, path)
+}
+
+case class GlobalTablePath(checkpoint: String, name: String, path: Seq[String]) extends TablePath {
+  override def toString = toFE.id
+  def toFE = FEOption.titledCheckpoint(checkpoint, name, AbsoluteTablePath(path).toString)
+  def tableName = AbsoluteTablePath(path).tableName
+
+  def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = containingViewer
+
+  def containingViewer()(implicit manager: MetaGraphManager): ProjectViewer = {
     val rootViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(checkpoint))
-    fromPath(path, rootViewer)
+    AbsoluteTablePath(path).containingViewer(rootViewer)
+  }
+}
+object GlobalTablePath {
+  def parse(path: String): GlobalTablePath = {
+    val p = maybeParse(path)
+    assert(p.nonEmpty, s"$path does not seem to be a valid global table path.")
+    p.get
+  }
+
+  def maybeParse(path: String): Option[GlobalTablePath] = {
+    FEOption.maybeUnpackTitledCheckpoint(path).map {
+      case (checkpoint, name, suffix) =>
+        GlobalTablePath(checkpoint, name, TablePath.split(suffix.tail))
+    }
   }
 }
 
@@ -127,39 +176,43 @@ class VertexTable(project: ProjectViewer) extends Table {
 }
 
 class EdgeTable(project: ProjectViewer) extends Table {
-  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o vertices")
+  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o edges")
+
+  def idSet = project.edgeBundle.idSet
+  def columns = project.edgeAttributes
+}
+
+class TripletTable(project: ProjectViewer) extends Table {
+  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o edges")
 
   def idSet = project.edgeBundle.idSet
   def columns = {
+    import graph_operations.VertexToEdgeAttribute._
     implicit val metaManager = project.vertexSet.source.manager
-    val fromVertexAttributes = project.vertexAttributes.flatMap {
-      case (name, attr) =>
-        Iterator[(String, Attribute[_])](
-          "src$" + name ->
-            graph_operations.VertexToEdgeAttribute.srcAttribute(attr, project.edgeBundle),
-          "dst$" + name ->
-            graph_operations.VertexToEdgeAttribute.dstAttribute(attr, project.edgeBundle))
-    }
-    project.edgeAttributes ++ fromVertexAttributes
+    val edgeAttrs = project.edgeAttributes.map {
+      case (name, attr) => s"edge_$name" -> attr
+    }.toMap[String, Attribute[_]]
+    val srcAttrs = project.vertexAttributes.map {
+      case (name, attr) => s"src_$name" -> srcAttribute(attr, project.edgeBundle)
+    }.toMap[String, Attribute[_]]
+    val dstAttrs = project.vertexAttributes.map {
+      case (name, attr) => s"dst_$name" -> dstAttribute(attr, project.edgeBundle)
+    }.toMap[String, Attribute[_]]
+    edgeAttrs ++ srcAttrs ++ dstAttrs
   }
 }
 
 class BelongsToTable(segmentation: SegmentationViewer) extends Table {
   def idSet = segmentation.belongsTo.idSet
   def columns = {
+    import graph_operations.VertexToEdgeAttribute._
     implicit val metaManager = segmentation.vertexSet.source.manager
     val baseProjectAttributes = segmentation.parent.vertexAttributes.map {
-      case (name, attr) =>
-        ("base$" + name ->
-          graph_operations.VertexToEdgeAttribute.srcAttribute(
-            attr, segmentation.belongsTo)): (String, Attribute[_])
-    }
+      case (name, attr) => s"base_$name" -> srcAttribute(attr, segmentation.belongsTo)
+    }.toMap[String, Attribute[_]]
     val segmentationAttributes = segmentation.vertexAttributes.map {
-      case (name, attr) =>
-        ("segment$" + name ->
-          graph_operations.VertexToEdgeAttribute.dstAttribute(
-            attr, segmentation.belongsTo)): (String, Attribute[_])
-    }
+      case (name, attr) => s"segment_$name" -> dstAttribute(attr, segmentation.belongsTo)
+    }.toMap[String, Attribute[_]]
     baseProjectAttributes ++ segmentationAttributes
   }
 }

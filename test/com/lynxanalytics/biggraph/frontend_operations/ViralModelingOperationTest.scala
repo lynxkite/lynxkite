@@ -4,24 +4,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ViralModelingOperationTest extends OperationsTestBase {
   test("Viral modeling segment logic") {
-    run("Import vertices from CSV files", Map(
-      "files" -> "OPERATIONSTEST$/viral-vertices-1.csv",
-      "header" -> "id,num",
-      "delimiter" -> ",",
-      "id-attr" -> "internalID",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
-    run("Import edges for existing vertices from CSV files", Map(
-      "files" -> "OPERATIONSTEST$/viral-edges-1.csv",
-      "header" -> "src,dst",
-      "delimiter" -> ",",
+    run("Import vertices", Map(
+      "table" -> importCSV("OPERATIONSTEST$/viral-vertices-1.csv"),
+      "id-attr" -> "internalID"))
+    run("Import edges for existing vertices", Map(
+      "table" -> importCSV("OPERATIONSTEST$/viral-edges-1.csv"),
       "attr" -> "id",
       "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
+      "dst" -> "dst"))
     run("Maximal cliques", Map(
       "name" -> "cliques",
       "bothdir" -> "false",

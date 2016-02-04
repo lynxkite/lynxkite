@@ -7,16 +7,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.mllib
-import org.apache.spark.rdd
-
-case class RegressionParams(
-  // Labeled training data points.
-  points: rdd.RDD[mllib.regression.LabeledPoint],
-  // All data points for the model to evaluate.
-  vectors: AttributeRDD[mllib.linalg.Vector],
-  // An optional scaler if it was used to scale the labels. It can be used
-  // to scale back the results.
-  scaler: Option[mllib.feature.StandardScalerModel])
+import com.lynxanalytics.biggraph.model._
 
 object Regression extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -48,22 +39,22 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
       case "Linear regression" =>
         val p = getParams(forSGD = true)
         val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
-        checkRegressionModel(model)
-        (scaleBack(model.predict(p.vectors.values), p.scaler.get), p.vectors)
+        Model.checkLinearModel(model)
+        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Ridge regression" =>
         val p = getParams(forSGD = true)
         val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
-        checkRegressionModel(model)
-        (scaleBack(model.predict(p.vectors.values), p.scaler.get), p.vectors)
+        Model.checkLinearModel(model)
+        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Lasso" =>
         val p = getParams(forSGD = true)
         val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
-        checkRegressionModel(model)
-        (scaleBack(model.predict(p.vectors.values), p.scaler.get), p.vectors)
+        Model.checkLinearModel(model)
+        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Logistic regression" =>
         val p = getParams(forSGD = false)
         val model = new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(p.points)
-        checkRegressionModel(model)
+        Model.checkLinearModel(model)
         (model.predict(p.vectors.values), p.vectors)
       case "Naive Bayes" =>
         val p = getParams(forSGD = false)
@@ -105,71 +96,13 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
       ids.zip(predictions).filter(!_._2.isNaN).asUniqueSortedRDD(vectors.partitioner.get))
   }
 
-  // Transforms the result RDD using the inverse transformation of the original scaling.
-  private def scaleBack(
-    result: rdd.RDD[Double],
-    scaler: mllib.feature.StandardScalerModel): rdd.RDD[Double] = {
-    assert(scaler.mean.size == 1)
-    assert(scaler.std.size == 1)
-    val mean = scaler.mean(0)
-    val std = scaler.std(0)
-    result.map { v => v * std + mean }
-  }
-
   // Creates the input for training and evaluation.
   private def getParams(
     forSGD: Boolean // Whether the data should be prepared for an SGD method.
-    )(implicit id: DataSet): RegressionParams = {
-    val vertices = inputs.vertices.rdd
-    val labelRDD = inputs.label.rdd
-
-    // All scaled data points.
-    val vectors = {
-      val emptyArrays = vertices.mapValues(l => new Array[Double](numFeatures))
-      val numberedFeatures = inputs.features.zipWithIndex
-      val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
-        case (a, (f, i)) =>
-          a.sortedJoin(f.rdd).mapValues {
-            case (a, f) => a(i) = f; a
-          }
-      }
-      val unscaled = fullArrays.mapValues(a => new mllib.linalg.DenseVector(a): mllib.linalg.Vector)
-      // Must scale the features or we get NaN predictions. (SPARK-1859)
-      val scaler = new mllib.feature.StandardScaler(
-        withMean = forSGD, // Center the vectors for SGD training methods.
-        withStd = true).fit(
-        // Set the scaler based on only the training vectors, i.e. where we have a label.
-        labelRDD.sortedJoin(unscaled).values.map {
-          case (_, v) => v
-        })
-      // Scale all vectors using the scaler created from the training vectors.
-      unscaled.mapValues(v => scaler.transform(v))
-    }
-
-    val (labels, labelScaler) = if (forSGD) {
-      // For SGD methods the labels need to be scaled too. Otherwise the optimal
-      // stepSize can vary greatly.
-      val labelVector = labelRDD.mapValues {
-        a => new mllib.linalg.DenseVector(Array(a)): mllib.linalg.Vector
-      }
-      val labelScaler = new mllib.feature.StandardScaler(withMean = true, withStd = true)
-        .fit(labelVector.values)
-      (labelVector.mapValues(v => labelScaler.transform(v)(0)), Some(labelScaler))
-    } else {
-      (labelRDD, None)
-    }
-
-    val points = labels.sortedJoin(vectors).values.map {
-      case (l, v) => new mllib.regression.LabeledPoint(l, v)
-    }
-    points.cache
-    RegressionParams(points, vectors, labelScaler)
-  }
-
-  private def checkRegressionModel(model: mllib.regression.GeneralizedLinearModel): Unit = {
-    // A linear model with at least one NaN parameter will always predict NaN.
-    for (w <- model.weights.toArray :+ model.intercept) {
-      assert(!w.isNaN, "Failed to train a valid regression model.")
-    }
+    )(implicit id: DataSet): ScaledParams = {
+    new Scaler(forSGD).scale(
+      inputs.label.rdd,
+      inputs.features.toArray.map { v => v.rdd },
+      inputs.vertices.rdd)
   }
 }

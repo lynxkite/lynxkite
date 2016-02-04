@@ -8,7 +8,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      scope.sql = 'select * from `!vertices`';
+      scope.sql = 'select * from vertices';
 
       scope.runSQLQuery = function() {
         if (!scope.sql) {
@@ -30,14 +30,26 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         }
       };
 
-      scope.openExportOptions = function() {
-        scope.showExportOptions = true;
-        scope.exportFormat = 'csv';
-        scope.exportPath = '<download>';
-        scope.exportDelimiter = ',';
-        scope.exportQuote = '"';
-        scope.exportHeader = false;
-      };
+      scope.$watch('exportFormat', function(exportFormat) {
+        if (exportFormat === 'table') {
+          scope.exportKiteTable = '';
+        } else if (exportFormat === 'csv') {
+          scope.exportPath = '<download>';
+          scope.exportDelimiter = ',';
+          scope.exportQuote = '"';
+          scope.exportHeader = false;
+        } else if (exportFormat === 'json') {
+          scope.exportPath = '<download>';
+        } else if (exportFormat === 'parquet') {
+          scope.exportPath = '';
+        } else if (exportFormat === 'orc') {
+          scope.exportPath = '';
+        } else if (exportFormat === 'jdbc') {
+          scope.exportJdbcUrl = '';
+          scope.exportJdbcTable = '';
+          scope.exportMode = 'error';
+        }
+      });
 
       scope.export = function() {
         if (!scope.sql) {
@@ -50,7 +62,11 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             },
           };
           scope.inProgress += 1;
-          if (scope.exportFormat === 'csv') {
+          if (scope.exportFormat === 'table') {
+            req.table = scope.exportKiteTable;
+            req.privacy = 'public-read';
+            scope.result = util.post('/ajax/exportSQLQueryToTable', req);
+          } else if (scope.exportFormat === 'csv') {
             req.path = scope.exportPath;
             req.delimiter = scope.exportDelimiter;
             req.quote = scope.exportQuote;
@@ -67,7 +83,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             scope.result = util.post('/ajax/exportSQLQueryToORC', req);
           } else if (scope.exportFormat === 'jdbc') {
             req.jdbcUrl = scope.exportJdbcUrl;
-            req.table = scope.exportTable;
+            req.table = scope.exportJdbcTable;
             req.mode = scope.exportMode;
             scope.result = util.post('/ajax/exportSQLQueryToJdbc', req);
           }
