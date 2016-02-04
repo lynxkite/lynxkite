@@ -5,7 +5,7 @@
 // the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -175,7 +175,7 @@ case class ModelsPayload(
   models: List[model.FEModel],
   attrs: List[FEOption])
 
-class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
+class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   import Operation.Category
   import Operation.Context
   abstract class UtilityOperation(t: String, c: Context)
@@ -2950,7 +2950,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               val op = s"$guid,Operation,${shortClass(inst.operation)},"
               val outputs = inst.outputs.all.map {
                 case (name, entity) =>
-                  val progress = env.dataManager.computeProgress(entity)
+                  val progress = env.entityProgressManager.computeProgress(entity)
                   s"${entity.gUID},${shortClass(entity)},${name.name},$progress"
               }
               op +: outputs.toSeq
