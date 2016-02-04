@@ -11,6 +11,9 @@ angular.module('biggraph').directive('importWizard', function(util) {
         mode: 'FAILFAST',
         fileUploadCount: 0,
       };
+      scope.files = {
+        fileUploadCount: 0,
+      };
       scope.cancel = function(event) {
         event.stopPropagation();
         scope.onCancel();
@@ -30,19 +33,39 @@ angular.module('biggraph').directive('importWizard', function(util) {
         });
       }
 
+      function splitCSVLine(csv) {
+        return csv ? csv.split(',') : [];
+      }
+
       scope.importCSV = function() {
         importStuff(
           '/ajax/importCSV',
           {
             files: scope.csv.filename,
-            columnNames: scope.csv.columnNames ? scope.csv.columnNames.split(',') : [],
+            columnNames: splitCSVLine(scope.csv.columnNames),
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
           });
       };
+
+      function importFilesWith(request) {
+        importStuff(
+          request,
+          {
+            files: scope.files.filename,
+            columnsToImport: splitCSVLine(scope.files.columnsToImport),
+          });
+      }
+
+      scope.importParquet = function() {
+        importFilesWith('/ajax/importParquet');
+      };
+      scope.importORC = function() {
+        importFilesWith('/ajax/importORC');
+      };
       scope.importJdbc = function() {
         var columnsToImport =
-          scope.jdbc.columnsToImport ? scope.jdbc.columnsToImport.split(',') : [];
+          splitCSVLine(scope.jdbc.columnsToImport);
         importStuff(
           '/ajax/importJdbc',
           {

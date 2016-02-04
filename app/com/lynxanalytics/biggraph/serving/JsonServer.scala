@@ -255,6 +255,7 @@ object FrontendJson {
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
   implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
   implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
+  implicit val rORCImportRequest = json.Json.reads[ORCImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -386,6 +387,7 @@ object ProductionJsonServer extends JsonServer {
   def importCSV = jsonFuturePost(sqlController.importCSV)
   def importJdbc = jsonFuturePost(sqlController.importJdbc)
   def importParquet = jsonFuturePost(sqlController.importParquet)
+  def importORC = jsonFuturePost(sqlController.importORC)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
