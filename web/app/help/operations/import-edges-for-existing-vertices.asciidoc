@@ -1,4 +1,4 @@
-### Import edges for existing vertices from table
+### Import edges for existing vertices
 
 Imports edges from a table. Your vertices must have an identifying attribute, by which
 the edges can be attached to them.

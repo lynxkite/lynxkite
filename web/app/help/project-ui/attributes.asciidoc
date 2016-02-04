@@ -147,13 +147,13 @@ Position::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
 coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
 (You can create a `(Double, Double)` attribute from two double attributes using the
-<<vertex-attribute-to-position>> operation.)
+<<vertex-attributes-to-position>> operation.)
 
 Geo coordinates::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a 
 latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate. 
 (You can create a `(Double, Double)` attribute from two double attributes using the
-<<vertex-attribute-to-position>> operation.)
+<<vertex-attributes-to-position>> operation.)
 
 #### Edge visualizations
 

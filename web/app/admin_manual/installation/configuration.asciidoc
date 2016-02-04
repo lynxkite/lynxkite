@@ -1,0 +1,68 @@
+## Configuring LynxKite
+
+### The `.kiterc` file
+
+You need to create a site configuration to be able to run LynxKite. If you don’t have a config file
+created yet, running the runner script will warn you and point you to a template config file. Just
+copy that template to your home directory with name `.kiterc` and edit the settings as necessary.
+Comments in the template file should be sufficient to understand the settings.
+
+### Running LynxKite
+
+LynxKite can be started with its runner script (e.g., `run-kite-stable.sh`). You can use the
+`start` / `stop` / `restart` commands if you want to run it as a daemon. Or, you can use the
+interactive command which starts up the program tied to your current shell session, so its output
+will appear in the shell and pressing Ctrl-C or closing the shell session will terminate the
+program.
+
+### User authentication
+
+In the default configuration user authentication is turned off. To enable user authentication,
+you have to enable HTTPS (see next section). To securely set up user authentication:
+
+- Make sure LynxKite is not accessible externally.
+- Start LynxKite without authentication. Go to http://<lynxkite_url>/#/users and add at
+  least one new administrator user. (Administrator users can create more users later.)
+- Enable HTTPS in the `.kiterc` file.
+- Restart LynxKite with authentication. Confirm that user credentials are now required for login.
+- You can now make LynxKite externally accessible.
+
+### HTTPS setup
+
+To enable HTTPS, a certificate is required. For testing purposes a self-signed certificate is
+included (`conf/localhost.self-signed.cert`). Its password is “asdasd”. This certificate does
+not provide proper protection. (Lacking a trusted CA, the self-signed certificate can easily
+be spoofed.) Using it will trigger a certificate warning in the user’s browser. It is recommended
+to install a real certificate in its place.
+
+The file specified in `.kiterc` as `KITE_HTTPS_KEYSTORE` is a Tomcat-style keystore. If you have
+your own intranet CA or a wildcard certificate, you can generate a certificate for LynxKite that
+the browsers can validate. Follow the instructions at
+http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
+The following settings need to be set in `.kiterc` to enable HTTPS:
+
+- `KITE_APPLICATION_SECRET`: A secret string, used to prevent auth cookie forgery.
+- `KITE_HTTPS_PORT`: The port number for HTTPS.
+- `KITE_HTTPS_KEYSTORE`: The Tomcat-style keystore file.
+- `KITE_HTTPS_KEYSTORE_PWD`: Password for the keystore file.
+
+### Backups
+
+Once LynxKite is up and running, take a moment to think about backups. The solution is entirely
+dependent on the site and purpose of the installation. But consider that LynxKite deals with the
+following data:
+
+- *Import/export.*
+- *Graph data in `KITE_DATA_DIR`.* The vertices, edges and attributes of the graph. This data
+  is stored on a distributed file system. This typically provides resilience against data loss.
+- *Project metadata in `KITE_META_DIR`.* The operations that have been executed on the project
+  and their parameters. This data is small, and contains everything required to regenerate the
+  graph data, assuming that the imported files are still available. This data is critical, and
+  backups are recommended.
+
+### Extra libraries
+
+You can provide extra jar files that will be added to the `CLASSPATH` of LynxKite server by
+setting the `KITE_EXTRA_JARS` option in `.kiterc`. A typical use case is installing JDBC drivers.
+Just add the JAR file of the driver to `KITE_EXTRA_JARS` and you should be good to go.
+

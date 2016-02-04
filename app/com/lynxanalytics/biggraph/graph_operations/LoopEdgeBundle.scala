@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object LoopEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {

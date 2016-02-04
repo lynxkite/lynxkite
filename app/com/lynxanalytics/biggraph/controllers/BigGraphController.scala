@@ -1,7 +1,7 @@
 // BigGraphController includes the request handlers that operate on projects at the metagraph level.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
@@ -265,9 +265,9 @@ object BigGraphController {
 
   val dirtyOperationError = "Dirty operations are not allowed in history"
 }
-class BigGraphController(val env: BigGraphEnvironment) {
+class BigGraphController(val env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
-  implicit val entityProgressManager: EntityProgressManager = env.dataManager
+  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
 
   val ops = new Operations(env)
 
@@ -734,23 +734,19 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     Operation.allObjects(user)
       .filter(_.checkpoint.nonEmpty)
       .flatMap {
-        case project =>
-          project.viewer
-            .allAbsoluteTablePaths
-            .map(tablePath =>
-              FEOption.titledCheckpoint(project.checkpoint, project.name, tablePath))
+        project =>
+          project.viewer.allAbsoluteTablePaths
+            .map(_.toGlobal(project.checkpoint, project.name).toFE)
       }.toList.sortBy(_.title)
   }
 
   protected def accessibleTableOptions(implicit manager: MetaGraphManager): List[FEOption] = {
     val viewer = project.viewer
     val localPaths = viewer.allRelativeTablePaths
-    val segmentationAbsolutePath = "|" + viewer.offspringPath.map(_ + "|").mkString
-    val locallyAccessibleAbsolutePaths = localPaths.map(segmentationAbsolutePath + _).toSet
+    val localAbsolutePaths = localPaths.map(_.toAbsolute(viewer.offspringPath)).toSet
     val absolutePaths =
-      viewer.rootViewer.allAbsoluteTablePaths.filter(!locallyAccessibleAbsolutePaths.contains(_))
-    (localPaths ++ absolutePaths).toList.map(path => FEOption.regular(path)) ++
-      readableGlobalTableOptions
+      viewer.rootViewer.allAbsoluteTablePaths.filter(!localAbsolutePaths.contains(_))
+    (localPaths ++ absolutePaths).toList.map(_.toFE) ++ readableGlobalTableOptions
   }
 }
 object Operation {
@@ -830,7 +826,7 @@ case class WorkflowOperation(
   }
 }
 
-abstract class OperationRepository(env: BigGraphEnvironment) {
+abstract class OperationRepository(env: SparkFreeEnvironment) {
   implicit lazy val manager = env.metaGraphManager
 
   // The registry maps operation IDs to their constructors.

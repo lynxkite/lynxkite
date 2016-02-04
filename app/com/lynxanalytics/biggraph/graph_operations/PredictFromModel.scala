@@ -4,8 +4,6 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import org.apache.spark.mllib
-import org.apache.spark.rdd
 
 object PredictFromModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -25,6 +23,7 @@ import PredictFromModel._
 case class PredictFromModel(numFeatures: Int)
     extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
+  override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("numFeatures" -> numFeatures)
 

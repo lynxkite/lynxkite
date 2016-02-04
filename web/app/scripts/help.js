@@ -73,6 +73,12 @@ angular.module('biggraph').directive('helpId',
           content.find('a[href]').each(function(i, a) {
             a.setAttribute('target', '_blank');
           });
+          // Collapse sections marked with ====.
+          var details = content.find('.exampleblock');
+          var readMore = angular.element('<a class="read-more">read more</a>');
+          readMore.click(expander(readMore, details));
+          details.before(readMore);
+          details.hide();
         }
         function expander(e, what) {
           return function() {
@@ -80,11 +86,7 @@ angular.module('biggraph').directive('helpId',
             what.show();
           };
         }
-        var details = content.children('.exampleblock');
-        var readMore = angular.element('<a class="read-more">read more</a>');
-        readMore.click(expander(readMore, details));
-        details.before(readMore);
-        details.hide();
+
         element.empty();
         element.append(content);
         // Activate Angular contents.
