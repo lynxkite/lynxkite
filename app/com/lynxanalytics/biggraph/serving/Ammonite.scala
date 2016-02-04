@@ -13,9 +13,9 @@ object Ammonite {
   implicit val metaGraphManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
 
-  def saveDataFrameAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
+  def saveAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
     DirectoryEntry.fromName(tableName).asNewTableFrame(
-      table.TableImport.importDataFrame(df),
+      table.TableImport.importDataFrameAsync(df),
       notes)
   }
 
@@ -43,7 +43,7 @@ For convenience, we've set up some Kite specific bindings for you:
  metaManager: The MetaManager instance used by Kite.
  batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
    for running a batch script on the running Kite instance.
- saveDataFrameAsTable(dataFrame, "tablePath"[, "notes"]): Saves the given data frame as
+ saveAsTable(dataFrame, "tablePath"[, "notes"]): Saves the given data frame as
    a top level Kite table.
 
 Remember, any of the above can be used to easily destroy the running server or even any data.
@@ -72,7 +72,7 @@ println("${help}")
         Bind("dataManager", dataManager),
         Bind("sql", dataManager.masterSQLContext),
         Bind("batch", groovy.GroovyContext),
-        Bind("saveDataFrameAsTable", saveDataFrameAsTable _)))
+        Bind("saveAsTable", saveAsTable _)))
   }
 
   def maybeStart() = {

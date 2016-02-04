@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.HashPartitioner
-import scala.collection.mutable.ArrayBuffer
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._

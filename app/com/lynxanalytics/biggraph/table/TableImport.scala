@@ -8,17 +8,14 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 
 object TableImport {
-  // This is a blocking operation that imports the given dataframe as
-  // LynxKite entities. The imported entities are returned as a Table.
-  def importDataFrame(df: sql.DataFrame)(
+  // Imports the given DataFrame as LynxKite entities wrapped in a Table.
+  // The DataManager is used to start the actual import asynchronously.
+  def importDataFrameAsync(df: sql.DataFrame)(
     implicit metaManager: MetaGraphManager, dataManager: DataManager): controllers.Table = {
     import Scripting._
     val importMetaResult = graph_operations.ImportDataFrame(df).result
     val columnEntities = importMetaResult.columns.mapValues(_.entity)
-
-    // Enfore the actual import.
-    for (attr <- columnEntities.values) dataManager.get(attr)
-
+    for (attr <- columnEntities.values) dataManager.getFuture(attr)
     controllers.RawTable(importMetaResult.ids, columnEntities)
   }
 }

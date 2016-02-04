@@ -4,6 +4,7 @@ var fw = (function UIDescription() {
   var states = {};
   var statePreservingTests = {};
   var soloMode = false;
+  var verboseMode = process.env.VERBOSE || false;
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
@@ -27,6 +28,7 @@ var fw = (function UIDescription() {
           return;
         }
         it('-- ' + currentTest.name, function() {
+          if (verboseMode) { console.log(' - ' + currentTest.name); }
           currentTest.runTest();
           // Checking that it was indeed statePreserving.
           checks();
@@ -50,6 +52,7 @@ var fw = (function UIDescription() {
           }
           describe(stateName, function() {
             it('can be reached', function() {
+              if (verboseMode) { console.log(stateName); }
               transitionFunction();
               checks();
             });
@@ -122,19 +125,23 @@ var fw = (function UIDescription() {
           var fs = require('fs');
           var pattern = lib.theRandomPattern;
 
-          fs.readdir('/tmp', function (error, files) {
+          fs.readdir(lib.protractorDownloads, function (error, files) {
             if (error) {
               throw error;
             }
             for (var i = 0; i < files.length; i++) {
               var f = files[i];
               if (f.indexOf(pattern) > -1) {
-                var full = '/tmp/' + f;
+                var full = lib.protractorDownloads + '/' + f;
                 console.log('Deleting: ' + full);
                 fs.unlink(full);
               }
             }
           });
+        });
+
+        it('fails in solo mode so it is not accidentally committed', function() {
+          expect(soloMode).toBe(false);
         });
       });
     },

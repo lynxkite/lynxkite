@@ -12,7 +12,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql on vertices") {
     run("Example Graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec(project = projectName, sql = "select name from `!vertices` where age < 40"),
+      DataFrameSpec(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
     assert(result.header == List("name"))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
@@ -21,7 +21,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql export to csv") {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
-      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      DataFrameSpec(project = projectName, sql = "select name, age from vertices where age < 40"),
       path = "<download>",
       delimiter = ";",
       quote = "\"",
@@ -35,7 +35,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
-      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      DataFrameSpec(project = projectName, sql = "select name, age from vertices where age < 40"),
       jdbcUrl = url,
       table = "export_test",
       mode = "error")))
@@ -56,14 +56,21 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val res = getClass.getResource("/graph_operations/ImportGraphTest").toString
     graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", res)
     val csvFiles = "IMPORTGRAPHTEST$/testgraph/vertex-data/part*"
-    val cpResponse = await(sqlController.importCSV(
-      user, CSVImportRequest(csvFiles, List("vertexId", "name", "age"), ",", "FAILFAST")))
-    val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
+    val response = await(sqlController.importCSV(
+      user,
+      CSVImportRequest(
+        table = "csv-import-test",
+        privacy = "public-read",
+        files = csvFiles,
+        columnNames = List("vertexId", "name", "age"),
+        delimiter = ",",
+        mode = "FAILFAST")))
+    val tablePath = response.id
 
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
-        "table" -> s"${tableCheckpoint}|!vertices",
+        "table" -> tablePath,
         "id-attr" -> "new_id"))
     assert(vattr[String]("vertexId") == Seq("0", "1", "2"))
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
@@ -86,16 +93,21 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val cpResponse = await(sqlController.importJdbc(
+    val response = await(sqlController.importJdbc(
       user,
       JdbcImportRequest(
-        url, "subscribers", "id", List("n", "id", "name", "race condition", "level"))))
-    val tableCheckpoint = s"!checkpoint(${cpResponse.checkpoint},)"
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = url,
+        jdbcTable = "subscribers",
+        keyColumn = "id",
+        columnsToImport = List("n", "id", "name", "race condition", "level"))))
+    val tablePath = response.id
 
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
-        "table" -> s"${tableCheckpoint}|!vertices",
+        "table" -> tablePath,
         "id-attr" -> "new_id"))
     assert(vattr[String]("n") == Seq("A", "B", "C"))
     assert(vattr[Long]("id") == Seq(1, 2, 3, 4))

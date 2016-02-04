@@ -108,7 +108,7 @@
     <div
       ng-repeat="object in data.objects"
       id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
-      class="entry project-entry clearfix"
+      class="entry {{ object.objectType }}-entry clearfix"
       href
       ng-click="projectClick($event, object)"
       ng-class="{ error: object.error }">
@@ -142,6 +142,9 @@
         <span ng-if="isProject(object)">
           <value ref="vertexCounts[object.name]"></value> vertices,
           <value ref="edgeCounts[object.name]"></value> edges.
+        </span>
+        <span ng-if="isTable(object)">
+          <value ref="vertexCounts[object.name]"></value> rows.
         </span>
         {{object.notes}}
       </div>

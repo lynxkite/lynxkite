@@ -1,8 +1,7 @@
 // A convenient interface for evaluating JavaScript expressions.
 package com.lynxanalytics.biggraph
 
-import scala.util.{ Failure, Success, Try }
-import org.mozilla.javascript;
+import org.mozilla.javascript
 
 case class JavaScript(expression: String) {
   def isEmpty = expression.isEmpty

@@ -44,6 +44,3 @@ LOCAL_TMP_DIR=/mnt/tmp
 # as the user starting the cluster. Used as the backup location with the "s3copy" command.
 # This needs to be in the same region as REGION. Or  you get charged by Amazon.
 S3_DATAREPO=lynx-bnw-data/${USER}-cluster
-
-# Spark installation to use for this cluster.
-SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)

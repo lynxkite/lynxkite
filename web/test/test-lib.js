@@ -5,6 +5,8 @@
 var testLib; // Forward declarations.
 var History; // Forward declarations.
 var request = require('request');
+var fs = require('fs');
+
 var K = protractor.Key;  // Short alias.
 
 // Mirrors the "id" filter.
@@ -198,6 +200,10 @@ Side.prototype = {
     }
   },
 
+  populateOperationInput: function(parameterId, param) {
+    this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
+  },
+
   submitOperation: function(parentElement) {
     var button = parentElement.element(by.css('.ok-button'));
     // Wait for uploads or whatever.
@@ -291,6 +297,39 @@ Side.prototype = {
     this.side.element(by.id('save-as-starter-button')).click();
     this.side.element(by.id('save-as-input')).sendKeys(testLib.selectAllKey + newName);
     this.side.element(by.id('save-as-button')).click();
+  },
+
+  sqlEditor: function() {
+    return this.side.element(by.id('sql-editor'));
+  },
+
+  toggleSqlBox: function() {
+    this.side.element(by.id('sql-toggle')).click();
+  },
+
+  setSql: function(sql) {
+    testLib.sendKeysToACE(this.sqlEditor(), sql);
+  },
+
+  // If sql is left undefined then we run whatever is already in the query box.
+  runSql: function(sql) {
+    if (sql !== undefined) {
+      this.setSql(sql);
+    }
+    this.side.element(by.id('run-sql-button')).click();
+  },
+
+  expectSqlResult: function(header, rows) {
+    expect(this.sqlEditor().evaluate('result.header')).toEqual(header);
+    expect(this.sqlEditor().evaluate('result.data')).toEqual(rows);
+  },
+
+  startSqlSaving: function() {
+    this.side.element(by.id('save-results-opener')).click();
+  },
+
+  executeSqlSaving: function() {
+    this.side.element(by.id('save-results')).click();
   },
 };
 
@@ -484,13 +523,21 @@ var visualization = {
   },
 };
 
-var splash = {
+function Selector(root) {
+  this.root = root;
+}
+
+Selector.prototype = {
   project: function(name) {
     return element(by.id('project-' + toID(name)));
   },
 
   directory: function(name) {
     return element(by.id('directory-' + toID(name)));
+  },
+
+  table: function(name) {
+    return element(by.id('table-' + toID(name)));
   },
 
   expectNumProjects: function(n) {
@@ -501,10 +548,29 @@ var splash = {
     return expect(element.all(by.css('.directory-entry')).count()).toEqual(n);
   },
 
+  expectNumTables: function(n) {
+    return expect(element.all(by.css('.table-entry')).count()).toEqual(n);
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     this.hideSparkStatus();
+  },
+
+  startTableImport: function() {
+    element(by.id('import-table')).click();
+  },
+
+  importLocalCSVFile: function(tableName, localCsvFile) {
+    this.root.element(by.css('import-wizard #table-name input')).sendKeys(tableName);
+    this.root.element(by.css('#datatype select option[value="csv"]')).click();
+    var csvFileParameter = element(by.css('#csv-filename file-parameter'));
+    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
+    var importCsvButton = element(by.id('import-csv-button'));
+    // Wait for the upload to finish.
+    testLib.wait(protractor.until.elementIsVisible(importCsvButton));
+    importCsvButton.click();
   },
 
   newDirectory: function(name) {
@@ -578,6 +644,14 @@ var splash = {
     testLib.expectNotElement(this.directory(name));
   },
 
+  expectTableListed: function(name) {
+    testLib.expectElement(this.table(name));
+  },
+
+  expectTableNotListed: function(name) {
+    testLib.expectNotElement(this.table(name));
+  },
+
   enterSearchQuery: function(query) {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
   },
@@ -586,6 +660,8 @@ var splash = {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 };
+
+var splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
   /* jshint bitwise: false */
@@ -602,6 +678,7 @@ function randomPattern () {
   return r;
 }
 
+var lastDownloadList = undefined
 
 testLib = {
   theRandomPattern: randomPattern(),
@@ -610,6 +687,7 @@ testLib = {
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
+  protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
 
   expectElement: function(e) {
     expect(e.isDisplayed()).toBe(true);
@@ -621,18 +699,21 @@ testLib = {
 
   // Deletes all projects and directories.
   discardAll: function() {
-    var defer = protractor.promise.defer();
-    request.post(
-      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-      { json: { fake: 1 } },
-      function(error, message) {
-        if (error || message.statusCode >= 400) {
-          defer.reject({ error : error, message : message });
-        } else {
-          defer.fulfill();
-        }
-      });
-    browser.controlFlow().execute(function() { return defer.promise; });
+    function sendRequest() {
+      var defer = protractor.promise.defer();
+      request.post(
+        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+        { json: { fake: 1 } },
+        function(error, message) {
+          if (error || message.statusCode >= 400) {
+            defer.reject({ error : error, message : message });
+          } else {
+            defer.fulfill();
+          }
+        });
+      return defer.promise;
+    }
+    browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
@@ -663,23 +744,28 @@ testLib = {
           if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
           } else if (kind === 'file') {
-            var input = e.element(by.id('file'));
-            // Need to unhide flowjs's secret file uploader.
-            browser.executeScript(
-              function(input) {
-                input.style.visibility = 'visible';
-                input.style.height = '1px';
-                input.style.width = '1px';
-                input.style.opacity = 1;
-              },
-              input.getWebElement());
-            input.sendKeys(value);
+            testLib.uploadIntoFileParameter(e, value)
           } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
               e.element(by.css('.dropdown-toggle')).click();
               e.element(by.css('.dropdown-menu #' + values[i])).click();
             }
+          } else if (kind === 'table') {
+            // You can specify a CSV file to be uploaded, or the name of an existing table.
+            if (value.indexOf('.csv') !== -1) { // CSV file.
+              e.element(by.id('import-new-table-button')).click();
+              var s = new Selector(e.element(by.id('import-wizard')));
+              s.importLocalCSVFile('test-table', value);
+            } else { // Table name.
+              // Table name options look like 'name of table (date of table creation)'.
+              // The date is unpredictable, but we are going to match to the ' (' part
+              // to minimize the chance of mathcing an other table.
+              var optionLabelPattern = value + ' (';
+              e.element(by.cssContainingText('option', optionLabelPattern)).click();
+            }
+          } else if (kind === 'choice') {
+            e.element(by.cssContainingText('option', value)).click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -749,7 +835,7 @@ testLib = {
   // WebDriver 2.45 changed browser.wait() to default to a 0 timeout. This was reverted in 2.46.
   // But the current Protractor version uses 2.45, so we have this wrapper.
   wait: function(condition) {
-    browser.wait(condition, 99999999);
+    return browser.wait(condition, 99999999);
   },
 
   expectModal: function(title) {
@@ -767,7 +853,52 @@ testLib = {
       "angular.element(document.body).injector()" +
       ".get('dropTooltipConfig').enabled = " + enable);
 
-  }
+  },
+
+  uploadIntoFileParameter: function(fileParameterElement, fileName) {
+    var input = fileParameterElement.element(by.id('file'));
+    // Need to unhide flowjs's secret file uploader.
+    browser.executeScript(
+      function(input) {
+        input.style.visibility = 'visible';
+        input.style.height = '1px';
+        input.style.width = '1px';
+        input.style.opacity = 1;
+      },
+      input.getWebElement());
+    input.sendKeys(fileName);
+  },
+
+  startDownloadWatch: function() {
+    browser.controlFlow().execute(function() {
+      expect(lastDownloadList).toBe(undefined);
+      lastDownloadList = fs.readdirSync(testLib.protractorDownloads);
+    });
+  },
+
+  // Waits for a new downloaded file matching regex and returns its name.
+  // Pattern match is needed as chrome first creates some weird temp file.
+  waitForNewDownload: function(regex) {
+    return testLib.wait(function() {
+      var newList = fs.readdirSync(testLib.protractorDownloads).filter(function(fn) {
+        return fn.match(regex);
+      });
+      // this will be undefined if no new element was found.
+      var result = newList.filter(function(f) { return lastDownloadList.indexOf(f) < 0; })[0];
+      if (result) {
+        lastDownloadList = undefined;
+        return testLib.protractorDownloads + '/' + result;
+      } else {
+        return false;
+      }
+    });
+  },
+
+  expectFileContents: function(filename, expectedContents) {
+    filename.then(function(fn) {
+      expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
+    });
+  },
 };
 
 module.exports = testLib;
