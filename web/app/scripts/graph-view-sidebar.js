@@ -156,7 +156,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         return { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
       }
       function baseMapFilters() {
-        return { gamma: -100, saturation: -80, brightness: 0 };
+        return { gamma: 0, saturation: 0, brightness: 0 };
       }
       scope.resetFilters = function() {
         scope.filters = noFilters();
