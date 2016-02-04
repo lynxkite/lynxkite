@@ -1,7 +1,7 @@
 // BigGraphController includes the request handlers that operate on projects at the metagraph level.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
@@ -257,9 +257,9 @@ object BigGraphController {
 
   val dirtyOperationError = "Dirty operations are not allowed in history"
 }
-class BigGraphController(val env: BigGraphEnvironment) {
+class BigGraphController(val env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
-  implicit val entityProgressManager: EntityProgressManager = env.dataManager
+  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
 
   val ops = new Operations(env)
 
@@ -818,7 +818,7 @@ case class WorkflowOperation(
   }
 }
 
-abstract class OperationRepository(env: BigGraphEnvironment) {
+abstract class OperationRepository(env: SparkFreeEnvironment) {
   implicit lazy val manager = env.metaGraphManager
 
   // The registry maps operation IDs to their constructors.
