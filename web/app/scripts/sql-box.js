@@ -9,7 +9,6 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     link: function(scope) {
       scope.inProgress = 0;
       scope.sql = 'select * from vertices';
-      scope.exportPath = {};
 
       scope.runSQLQuery = function() {
         if (!scope.sql) {
@@ -35,16 +34,16 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         if (exportFormat === 'table') {
           scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
-          scope.exportPath.value = '<download>';
+          scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
           scope.exportQuote = '"';
           scope.exportHeader = false;
         } else if (exportFormat === 'json') {
-          scope.exportPath.value = '<download>';
+          scope.exportPath = '<download>';
         } else if (exportFormat === 'parquet') {
-          scope.exportPath.value = '';
+          scope.exportPath = '';
         } else if (exportFormat === 'orc') {
-          scope.exportPath.value = '';
+          scope.exportPath = '';
         } else if (exportFormat === 'jdbc') {
           scope.exportJdbcUrl = '';
           scope.exportJdbcTable = '';
@@ -68,19 +67,19 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             req.privacy = 'public-read';
             scope.result = util.post('/ajax/exportSQLQueryToTable', req);
           } else if (scope.exportFormat === 'csv') {
-            req.path = scope.exportPath.value;
+            req.path = scope.exportPath;
             req.delimiter = scope.exportDelimiter;
             req.quote = scope.exportQuote;
             req.header = scope.exportHeader;
             scope.result = util.post('/ajax/exportSQLQueryToCSV', req);
           } else if (scope.exportFormat === 'json') {
-            req.path = scope.exportPath.value;
+            req.path = scope.exportPath;
             scope.result = util.post('/ajax/exportSQLQueryToJson', req);
           } else if (scope.exportFormat === 'parquet') {
-            req.path = scope.exportPath.value;
+            req.path = scope.exportPath;
             scope.result = util.post('/ajax/exportSQLQueryToParquet', req);
           } else if (scope.exportFormat === 'orc') {
-            req.path = scope.exportPath.value;
+            req.path = scope.exportPath;
             scope.result = util.post('/ajax/exportSQLQueryToORC', req);
           } else if (scope.exportFormat === 'jdbc') {
             req.jdbcUrl = scope.exportJdbcUrl;
