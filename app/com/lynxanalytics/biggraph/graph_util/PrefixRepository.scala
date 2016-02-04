@@ -60,7 +60,7 @@ object PrefixRepository {
         else tryToSplitBasedOnTheAvailablePrefixes(fullyQualify(str))
       case _ =>
         throw new AssertionError(
-          "File name specifications should always start with a registered prefix (XYZ$)")
+          s"File name specification ${str} should start with a registered prefix (XYZ$$)")
     }
   }
 

@@ -131,4 +131,32 @@ module.exports = function(fw) {
     function() {
     });
 
+  fw.transitionTest(
+    'test-example project with example graph',
+    'parquet export and reimport right from the operation',
+    function() {
+      left.toggleSqlBox();
+      left.setSql(
+        'select name, age, gender, income from vertices');
+      left.startSqlSaving();
+      left.side.element(by.css('#exportFormat option[value="parquet"]')).click();
+      var fileName = 'UPLOAD$/example.' + process.pid + '.parquet'
+      left.side.element(by.css('#export-parquet-path')).sendKeys(fileName);
+      left.executeSqlSaving();
+
+      left.runOperation('Discard vertices');
+      left.openOperation('Import vertices');
+      var tableKind = left.operationParameter(left.toolbox, 'table');
+      tableKind.element(by.id('import-new-table-button')).click();
+      tableKind.element(by.css('#table-name input')).sendKeys('example reloaded as parquet');
+      tableKind.element(by.cssContainingText('#datatype option', 'Parquet files')).click();
+      tableKind.element(by.css('#parquet-filename input[ng-model="filename"]')).sendKeys(fileName);
+      tableKind.element(by.id('import-parquet-button')).click();
+      left.submitOperation(left.toolbox);
+    },
+    function() {
+      expect(lib.left.vertexCount()).toEqual(4);
+      // id, name, age, gender, income
+      expect(lib.left.attributeCount()).toEqual(5);
+    });
 };
