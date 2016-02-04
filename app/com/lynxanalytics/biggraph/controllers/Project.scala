@@ -172,15 +172,15 @@ sealed trait ProjectViewer {
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
 
     def feAttributeList(
-      things: Iterable[(String, Attribute[_])],
+      attributes: Iterable[(String, Attribute[_])],
       kind: ElementKind): List[FEAttribute] = {
-      things.toSeq.sortBy(_._1).map {
+      attributes.toSeq.sortBy(_._1).map {
         case (name, attr) => ProjectViewer.feAttribute(attr, name, getElementNote(kind, name))
       }.toList
     }
 
-    def feScalarList(things: Iterable[(String, Scalar[_])]): List[FEScalar] = {
-      things.toSeq.sortBy(_._1).map {
+    def feScalarList(scalars: Iterable[(String, Scalar[_])]): List[FEScalar] = {
+      scalars.toSeq.sortBy(_._1).map {
         case (name, scalar) => ProjectViewer.feScalar(scalar, name, getScalarNote(name))
       }.toList
     }
