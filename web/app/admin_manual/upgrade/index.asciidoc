@@ -1,0 +1,54 @@
+# Upgrade
+
+## Install new binaries
+
+Just untar the tarball given by your Lynx Analytics contact, preferably to the same location
+as you have your previous version. The newly created files/directories will not collide with
+already installed binaries.
+
+## Install new Spark version if needed
+
+You can download the Spark version matching your Hadoop setup from the
+https://spark.apache.org/downloads.html[Spark webpage]. Your Lynx contact can tell you which
+version you need, or you can find it in the file `kite_x.y.z/conf/SPARK_VERSION`.
+
+## Make a backup copy of your `.kiterc` file and metadata directory
+
+The location of the metadata directory is configured in `.kiterc`. If your system is configured to
+perform automated backups of `.kiterc` and the metadata directory you may skip this step.
+
+## Update configuration
+
+You need to upgrade your `.kiterc` file to reflect changed and new configuration options.
+All these changes are listed in the release notes, but you can in most cases perform this
+update via a 3-way merge of the old configuration template, the new configuration template
+and your existing config file. Assume your old LynxKite base directory is `kite_OLD`, your new
+LynxKite base directory is `kite_NEW` and your current config file is `.kiterc`. Then you can
+update the configuration via the following steps:
+
+- Backup your current config file: `cp .kiterc .kiterc.old`
+- Perform an automatic 3-way merge (you might need to install the `rcs` package to have the merge
+  command available): `merge .kiterc kite_OLD/conf/kiterc_template kite_NEW/conf/kiterc_template`.
+- Review the new version of `.kiterc`. Look for merge conflicts (blocks surrounded by `<<<<<<<`
+  and `>>>>>>>`). Make sure you understand all options and their values. Please contact the Lynx
+  support team if you have any questions or doubt.
+
+## Stop currently running LynxKite version
+
+Use the command `./run-kite-x.y.z.sh stop` where `x.y.z` is the version of your _original_ LynxKite.
+
+## Run the new version of LynxKite
+
+Start the new version of LynxKite with `./run-kite-x.y.z.sh start`, where `x.y.z` is the version
+of your _new_ LynxKite, i.e. the new runner script unpacked at the beginning of this upgrade. Note
+that the migration can take several minutes when the upgraded LynxKite is started for the first
+time.
+
+## Restore original LynxKite
+
+If anything goes wrong and the new version does not work, you can always go back by
+
+- Stopping the new version of LynxKite
+- Restoring the original metadata directory and `.kiterc` file
+- Starting the old version of LynxKite
+
