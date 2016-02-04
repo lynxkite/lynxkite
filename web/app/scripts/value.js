@@ -7,9 +7,6 @@ angular.module('biggraph').directive('value', function(util) {
     scope: { ref: '=', details: '=' },
     templateUrl: 'value.html',
     link: function(scope) {
-      scope.$watch('ref.value', function() {
-        scope.value = scope.ref.value;
-      });
       scope.util = util;
       scope.human = true;
       scope.humanized = function(ref) {

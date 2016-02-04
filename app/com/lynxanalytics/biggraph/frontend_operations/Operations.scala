@@ -1609,7 +1609,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        implicit val entityProgressManager: EntityProgressManager = env.dataManager
+        implicit val entityProgressManager = env.entityProgressManager
         List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
       } else {
         List()
@@ -1636,7 +1636,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        implicit val entityProgressManager: EntityProgressManager = env.dataManager
+        implicit val entityProgressManager = env.entityProgressManager
         List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
       } else {
         List()

@@ -336,17 +336,9 @@ angular.module('biggraph').factory('util', function utilFactory(
         scalarValue.value = res;
         res.then(
           function() {  // Success.
-            // Store status data in original scalar. (Currently
-            // only used in operation.js.)
-            scalar.computeProgress = COMPUTE_PROGRESS_COMPLETED;
-            scalar.computedValue = res;
           },
-          function() {  // Error.
-            // Store status data in original scalar. (Currently
-            // only used in operation.js.)
-            scalar.computeProgress = COMPUTE_PROGRESS_ERROR;
-            scalar.errorMessage = scalarValue.$error;
-            // Enable retry icon for user.
+          function() {  // Failure.
+            // Enable retry icon for the user user.
             scalarValue.value.retryFunction = retryFunction;
           });
       }
