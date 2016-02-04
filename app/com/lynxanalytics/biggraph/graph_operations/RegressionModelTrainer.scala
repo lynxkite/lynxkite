@@ -3,9 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.mllib
-import org.apache.spark.rdd
 
 object RegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -30,6 +28,7 @@ case class RegressionModelTrainer(
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   @transient override lazy val inputs = new Input(featureNames.size)
+  override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "method" -> method,
@@ -56,11 +55,11 @@ case class RegressionModelTrainer(
     }
     Model.checkLinearModel(model)
 
-    val path = Model.newModelPath
-    model.save(rc.sparkContext, path)
+    val file = Model.newModelFile
+    model.save(rc.sparkContext, file.resolvedName)
     output(o.model, Model(
       method = method,
-      path = path,
+      symbolicPath = file.symbolicName,
       labelName = labelName,
       featureNames = featureNames,
       labelScaler = p.labelScaler,

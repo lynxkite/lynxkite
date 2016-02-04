@@ -12,7 +12,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql on vertices") {
     run("Example Graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec(project = projectName, sql = "select name from `!vertices` where age < 40"),
+      DataFrameSpec(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
     assert(result.header == List("name"))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
@@ -21,7 +21,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql export to csv") {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
-      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      DataFrameSpec(project = projectName, sql = "select name, age from vertices where age < 40"),
       path = "<download>",
       delimiter = ";",
       quote = "\"",
@@ -35,7 +35,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
-      DataFrameSpec(project = projectName, sql = "select name, age from `!vertices` where age < 40"),
+      DataFrameSpec(project = projectName, sql = "select name, age from vertices where age < 40"),
       jdbcUrl = url,
       table = "export_test",
       mode = "error")))
@@ -68,7 +68,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val tablePath = response.id
 
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
         "table" -> tablePath,
         "id-attr" -> "new_id"))
@@ -105,7 +105,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val tablePath = response.id
 
     run(
-      "Import vertices from table",
+      "Import vertices",
       Map(
         "table" -> tablePath,
         "id-attr" -> "new_id"))

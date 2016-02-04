@@ -11,17 +11,12 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     run("Import project as segmentation", Map(
       "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
     val seg = project.segmentation("ExampleGraph2")
-    run("Load segmentation links from CSV", Map(
-      "files" -> "OPERATIONSTEST$/fingerprint-example-connections.csv",
-      "header" -> "src,dst",
-      "delimiter" -> ",",
-      "omitted" -> "",
-      "filter" -> "",
-      "allow_corrupt_lines" -> "no",
+    run("Import segmentation links", Map(
+      "table" -> importCSV("OPERATIONSTEST$/fingerprint-example-connections.csv"),
       "base-id-attr" -> "name",
-      "base-id-field" -> "src",
+      "base-id-column" -> "src",
       "seg-id-attr" -> "name",
-      "seg-id-field" -> "dst"),
+      "seg-id-column" -> "dst"),
       on = seg)
     run("Fingerprinting between project and segmentation", Map(
       "mo" -> "1",
@@ -50,15 +45,10 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
   }
 
   test("Fingerprinting between project and segmentation by attribute") {
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "OPERATIONSTEST$/fingerprint-edges-2.csv",
-      "header" -> "src,dst,src_link",
-      "delimiter" -> ",",
+    run("Import vertices and edges from a single table", Map(
+      "table" -> importCSV("OPERATIONSTEST$/fingerprint-edges-2.csv"),
       "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
+      "dst" -> "dst"))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
       "direction" -> "outgoing edges",
@@ -67,15 +57,10 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "aggregate-src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
     val otherCp = project.checkpoint.get
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
-      "header" -> "src,dst",
-      "delimiter" -> ",",
+    run("Import vertices and edges from a single table", Map(
+      "table" -> importCSV("OPERATIONSTEST$/fingerprint-edges-1.csv"),
       "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "allow_corrupt_lines" -> "no",
-      "filter" -> ""))
+      "dst" -> "dst"))
     run("Import project as segmentation", Map(
       "them" -> s"!checkpoint($otherCp,other)"))
     val seg = project.segmentation("other")

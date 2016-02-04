@@ -73,12 +73,31 @@ case class JdbcImportRequest(
   // Empty list means all columns.
   columnsToImport: List[String])
 
+trait FilesWithSchemaImportRequest {
+  val table: String
+  val privacy: String
+  val files: String
+  val columnsToImport: List[String]
+  val format: String
+}
+
 case class ParquetImportRequest(
-  table: String,
-  privacy: String,
-  files: String,
-  // Empty list means all columns.
-  columnsToImport: List[String])
+    table: String,
+    privacy: String,
+    files: String,
+    // Empty list means all columns.
+    columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
+  val format = "parquet"
+}
+
+case class ORCImportRequest(
+    table: String,
+    privacy: String,
+    files: String,
+    // Empty list means all columns.
+    columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
+  val format = "orc"
+}
 
 class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -146,14 +165,27 @@ class SQLController(val env: BigGraphEnvironment) {
       user, request.table, request.privacy)
   }
 
-  def importParquet(
-    user: serving.User, request: ParquetImportRequest) = async[FEOption] {
-    val df = restrictToColumns(
-      dataManager.masterSQLContext.read.parquet(request.files), request.columnsToImport)
-    SQLController.saveTable(
-      df, s"Imported from parquet files ${request.files}.",
-      user, request.table, request.privacy)
-  }
+  def importFromFilesWithSchema(
+    user: serving.User,
+    request: FilesWithSchemaImportRequest) =
+    async[FEOption] {
+      val hadoopFile = HadoopFile(request.files)
+      val df = restrictToColumns(
+        dataManager.masterSQLContext.read.format(request.format).load(hadoopFile.resolvedName),
+        request.columnsToImport)
+      SQLController.saveTable(
+        df,
+        s"Imported from ${request.format} files ${request.files}.",
+        user,
+        request.table,
+        request.privacy)
+    }
+
+  def importParquet(user: serving.User, request: ParquetImportRequest) =
+    importFromFilesWithSchema(user, request)
+
+  def importORC(user: serving.User, request: ORCImportRequest) =
+    importFromFilesWithSchema(user, request)
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
@@ -163,7 +195,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
       val v = p.viewer
       v.allRelativeTablePaths.map {
-        tableName => (tableName -> Table.fromCanonicalPath(tableName, v))
+        path => (path.toString -> Table(path, v))
       }
     }
     // Every query runs in its own SQLContext for isolation.

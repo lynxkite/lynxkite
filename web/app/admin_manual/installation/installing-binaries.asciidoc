@@ -1,0 +1,11 @@
+## Installing the LynxKite binaries
+
+The LynxKite archive contains the following:
+
+- *kite_<version_number>*: This directory contains the LynxKite binary and libraries.
+- *run-kite-<version_number>.sh*: This is a symlink for starting the program.
+- *spark-<version_number>*: This directory contains the version of Apache Spark used by LynxKite.
+
+Simply uncompress the archive to a directory. Make sure to unpack the archive on the target
+Linux platform. Unpacking on Windows then copying is known to cause problems.
+

@@ -212,11 +212,12 @@ sealed trait ProjectViewer {
   }
 
   def implicitTableNames: Iterable[String]
-  def allRelativeTablePaths: Seq[String] = {
+  def allRelativeTablePaths: Seq[RelativeTablePath] = {
+    val localTables = implicitTableNames.toSeq.map(name => RelativeTablePath(Seq(name)))
     val childTables = sortedSegmentations.flatMap(segmentation =>
       segmentation.allRelativeTablePaths.map(
-        childPath => s"${segmentation.segmentationName}|$childPath"))
-    implicitTableNames.toSeq ++ childTables
+        childPath => segmentation.segmentationName /: childPath))
+    localTables ++ childTables
   }
 }
 object ProjectViewer {
@@ -284,9 +285,10 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
 
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeTableName)
+      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(edgeBundle).map(_ => Table.TripletTableName)
 
-  def allAbsoluteTablePaths: Seq[String] = allRelativeTablePaths.map("|" + _)
+  def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -346,6 +348,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(edgeBundle).map(_ => Table.TripletTableName) ++
       Option(belongsTo).map(_ => Table.BelongsToTableName)
 }
 

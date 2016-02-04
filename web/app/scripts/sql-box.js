@@ -8,7 +8,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      scope.sql = 'select * from `!vertices`';
+      scope.sql = 'select * from vertices';
 
       scope.runSQLQuery = function() {
         if (!scope.sql) {
@@ -32,7 +32,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
 
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table') {
-          scope.exportTable = '';
+          scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
@@ -46,7 +46,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.exportPath = '';
         } else if (exportFormat === 'jdbc') {
           scope.exportJdbcUrl = '';
-          scope.exportTable = '';
+          scope.exportJdbcTable = '';
           scope.exportMode = 'error';
         }
       });
@@ -63,7 +63,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           };
           scope.inProgress += 1;
           if (scope.exportFormat === 'table') {
-            req.table = scope.exportTable;
+            req.table = scope.exportKiteTable;
             req.privacy = 'public-read';
             scope.result = util.post('/ajax/exportSQLQueryToTable', req);
           } else if (scope.exportFormat === 'csv') {
@@ -83,7 +83,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             scope.result = util.post('/ajax/exportSQLQueryToORC', req);
           } else if (scope.exportFormat === 'jdbc') {
             req.jdbcUrl = scope.exportJdbcUrl;
-            req.table = scope.exportTable;
+            req.table = scope.exportJdbcTable;
             req.mode = scope.exportMode;
             scope.result = util.post('/ajax/exportSQLQueryToJdbc', req);
           }

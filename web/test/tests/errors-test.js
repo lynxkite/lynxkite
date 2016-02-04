@@ -7,9 +7,8 @@ module.exports = function(fw) {
     'empty test-example project',
     'error in an operation',
     function() {
-      lib.left.runOperation('Import vertices from CSV files'); // Missing filename.
-      expect(lib.error()).toEqual(
-        'File name specifications should always start with a registered prefix (XYZ$)');
+      lib.left.runOperation('Import vertices'); // Missing table name.
+      expect(lib.error()).toEqual('Empty table path.');
       // Check that we can press OK again. (#2529) (It will give the same error.)
       lib.left.submitOperation(lib.left.toolbox);
       lib.closeErrors();

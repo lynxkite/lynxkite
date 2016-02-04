@@ -18,7 +18,7 @@ echo Press any key to exit
 echo Startup failed >> %LOGFILE%
 ) ELSE (
 color A
-echo Startup successful. You should be able to access kite by going to localhost:9000
+echo Startup successful. You should be able to access kite by going to localhost:2200
 echo Startup successful >> %LOGFILE%
 )
 echo Press any key to close this window.

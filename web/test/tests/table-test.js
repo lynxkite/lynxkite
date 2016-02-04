@@ -9,6 +9,7 @@ module.exports = function(fw) {
     'CSV file imported as table',
     function() {
       var importPath = path.resolve(__dirname, 'import_csv_test.csv');
+      lib.splash.startTableImport();
       lib.splash.importLocalCSVFile('csv imported', importPath);
     },
     function() {
@@ -23,7 +24,7 @@ module.exports = function(fw) {
     'Project vertices imported from a table',
     function() {
       lib.splash.openNewProject('csv imported project');
-      lib.left.runOperation('Import vertices from table', {table: 'csv imported|!vertices'});
+      lib.left.runOperation('Import vertices', {table: 'csv imported|vertices'});
     },
     function() {
       expect(lib.left.vertexCount()).toEqual(3);

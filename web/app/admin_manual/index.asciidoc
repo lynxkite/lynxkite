@@ -1,0 +1,19 @@
+// Main structure file that builds the full documentation from its parts.
+
+= LynxKite Administrator Manual
+Lynx Analytics
+
+:sectlinks:
+:sectanchors:
+:toc: macro
+:toc-placement: macro
+
+toc::[]
+
+:leveloffset: +1
+
+include::intro/index.asciidoc[]
+
+include::installation/index.asciidoc[]
+
+include::upgrade/index.asciidoc[]

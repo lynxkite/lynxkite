@@ -1,0 +1,15 @@
+## Recommendations
+
+### Hardware
+
+It is recommended to have at least 16 GB RAM per machine. It is optimal to have around 4 GB RAM
+per CPU core. It is common to use 32 GB RAM machines with 8 CPU cores. LynxKite needs a lot of
+storage for computed data, so we recommend to have a sufficiently large distributed file system
+(e.g., HDFS). The needed capacity depends heavily on the way LynxKite is used, but it is recommended
+to plan with at least 5x of the initial data size. For temporary computation files it is
+recommended to use a smaller but faster drive (e.g. a partition on an SSD with at least 100 GB).
+
+### Software
+
+LynxKite runs on any modern Linux distributions. We recommend using Ubuntu Server 14.04 LTS or
+CentOS/Redhat 6.7, because LynxKite has been tested on those systems.

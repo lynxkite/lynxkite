@@ -144,8 +144,9 @@ class DataManager(sc: spark.SparkContext,
       concurrent.blocking {
         if (instance.operation.isHeavy) {
           saveOutputs(instance, outputDatas.values)
-        } else {
-          // We still save all scalars even for non-heavy operations.
+        } else if (!instance.operation.neverSerialize) {
+          // We still save all scalars even for non-heavy operations,
+          // unless they are explicitly say 'never serialize'.
           // This can happen asynchronously though.
           loggedFuture {
             saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })

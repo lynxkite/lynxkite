@@ -12,6 +12,7 @@
   <div class="form-group">
     <label for="datatype" class="col-sm-4 control-label">
       Type of data to import
+      <help-popup href="import-formats"></help-popup>
     </label>
     <div class="col-sm-8" id="datatype">
       <select
@@ -19,6 +20,9 @@
        ng-disabled="requestInProgress"
        ng-model="datatype">
         <option value="csv">CSV files</option>
+        <option value="parquet">Parquet files</option>
+        <!-- ORC only works with a Hive context. Maybe one day..
+             <option value="orc">ORC files</option> -->
         <option value="jdbc">Database table (via JDBC)</option>
       </select>
     </div>
@@ -27,6 +31,7 @@
     <div class="form-group">
       <label for="csv-filename" class="col-sm-4 control-label">
         Name of CSV files to import
+        <help-popup href="import-csv-path"></help-popup>
       </label>
       <div class="col-sm-8" id="csv-filename">
         <file-parameter
@@ -39,6 +44,7 @@
     <div class="form-group">
       <label for="csv-column-names" class="col-sm-4 control-label">
         CSV columns
+        <help-popup href="import-csv-columns"></help-popup>
       </label>
       <div class="col-sm-8" id="csv-column-names">
         <input class="form-control"
@@ -50,6 +56,7 @@
     <div class="form-group">
       <label for="csv-delimiter" class="col-sm-4 control-label">
         Delimiter
+        <help-popup href="import-csv-delimiter"></help-popup>
       </label>
       <div class="col-sm-8" id="csv-delimiter">
         <input class="form-control"
@@ -60,6 +67,7 @@
     <div class="form-group">
       <label for="csv-import-mode" class="col-sm-4 control-label">
         Format error handling
+        <help-popup href="import-csv-mode"></help-popup>
       </label>
       <div class="col-sm-8" id="csv-import-mode">
         <select
@@ -74,10 +82,39 @@
     </div>
   </div>
 
+  <div ng-repeat="format in 'parquet orc'.split(' ')">
+    <div class="form-group" ng-show="datatype === format">
+      <label for="{{ format }}-filename" class="col-sm-4 control-label">
+        Name of {{ format }} files to import
+        <help-popup href="import-{{ format }}-path"></help-popup>
+      </label>
+      <div class="col-sm-8" id="{{ format }}-filename">
+        <file-parameter
+          editable="!requestInProgress"
+          model="files.filename"
+          file-uploads="files.fileUploadCount">
+        </file-parameter>
+      </div>
+    </div>
+    <div class="form-group" ng-show="datatype === format">
+      <label for="{{ format }}-columns-to-import" class="col-sm-4 control-label">
+        Columns to import
+        <help-popup href="{{ format }}-columns-to-import"></help-popup>
+      </label>
+      <div class="col-sm-8" id="{{ format }}-columns-to-import">
+        <input class="form-control"
+               ng-model="files.columnsToImport"
+               ng-disabled="requestInProgress"
+               placeholder="Comma separated, leave empty to import all" >
+      </div>
+    </div>
+  </div>
+
   <div ng-show="datatype === 'jdbc'">
     <div class="form-group">
       <label for="jdbc-url" class="col-sm-4 control-label">
         JDBC URL
+        <help-popup href="import-jdbc-url"></help-popup>
       </label>
       <div class="col-sm-8" id="jdbc-url">
         <input class="form-control"
@@ -88,6 +125,7 @@
     <div class="form-group">
       <label for="jdbc-table" class="col-sm-4 control-label">
         Table name
+        <help-popup href="import-jdbc-table"></help-popup>
       </label>
       <div class="col-sm-8" id="jdbc-table">
         <input class="form-control"
@@ -98,6 +136,7 @@
     <div class="form-group">
       <label for="jdbc-key-column" class="col-sm-4 control-label">
         Column used for data partitioning
+        <help-popup href="import-jdbc-key-column"></help-popup>
       </label>
       <div class="col-sm-8" id="jdbc-key-column">
         <input class="form-control"
@@ -109,6 +148,7 @@
     <div class="form-group">
       <label for="jdbc-columns-to-import" class="col-sm-4 control-label">
         Columns to import
+        <help-popup href="import-jdbc-columns-to-import"></help-popup>
       </label>
       <div class="col-sm-8" id="jdbc-columns-to-import">
         <input class="form-control"
@@ -132,7 +172,21 @@
         ng-show="(datatype === 'csv') && csv.filename && !requestInProgress"
         ng-click="importCSV()"
         class="btn btn-default">
-        Import CSV file
+        Import CSV files
+      </div>
+      <div
+        id="import-parquet-button"
+        ng-show="(datatype === 'parquet') && files.filename && !requestInProgress"
+        ng-click="importParquet()"
+        class="btn btn-default">
+        Import Parquet files
+      </div>
+      <div
+        id="import-orc-button"
+        ng-show="(datatype === 'orc') && orc.filename && !requestInProgress"
+        ng-click="importORC()"
+        class="btn btn-default">
+        Import ORC files
       </div>
       <div
         id="import-jdbc-button"
