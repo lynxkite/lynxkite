@@ -3201,14 +3201,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op.result.created
   }
 
-  def downloadLink(fn: HadoopFile, name: String) = {
-    val urlPath = java.net.URLEncoder.encode(fn.symbolicName, "utf-8")
-    val urlName = java.net.URLEncoder.encode(name, "utf-8")
-    val url = s"/download?path=$urlPath&name=$urlName"
-    val quoted = '"' + url + '"'
-    newScalar(s"<a href=$quoted>download</a>")
-  }
-
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
