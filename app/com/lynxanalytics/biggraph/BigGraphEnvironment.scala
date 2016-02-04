@@ -26,7 +26,7 @@ class StaticSparkContextProvider() extends SparkContextProvider {
 }
 
 // An environment that does not allow its holder to do any actual spark computations,
-// it only allow for meta level manipulations.
+// it only allows for meta level manipulations.
 trait SparkFreeEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def entityProgressManager: graph_api.EntityProgressManager
