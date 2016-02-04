@@ -55,7 +55,10 @@ libraryDependencies ++= Seq(
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   // For SPARK-10306.
-  "org.scala-lang" % "scala-library" % "2.10.3")
+  "org.scala-lang" % "scala-library" % "2.10.3",
+  // Fast linear algebra.
+  "org.scalanlp" %% "breeze" % "0.12",
+  "org.scalanlp" %% "breeze-natives" % "0.12")
 
 resolvers += "Twitter Repository" at "http://maven.twttr.com"
 

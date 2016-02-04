@@ -60,7 +60,7 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
     val nonLoopEdges = edges.filter { case (_, e) => e.src != e.dst }
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val fullGraph = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections = false)
+    val fullGraph = CompactUndirectedGraph(rc, inputs.es.rdd, needsBothDirections = false)
     val dispersion = nonLoopEdges.mapValues {
       case (edge) =>
         val srcNeighbors = fullGraph.getNeighbors(edge.src).filter(_ != edge.dst)
