@@ -228,6 +228,7 @@ object BigGraphSparkContext {
       // partitions gets into the hundreds of thousands the map output statuses exceed this limit.
       .setIfMissing(
         "spark.akka.frameSize", "1000")
+      .set("spark.sql.runSQLOnFiles", "false")
     if (useKryo) {
       sparkConf = sparkConf
         .set(
