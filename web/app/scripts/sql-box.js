@@ -37,7 +37,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
           scope.exportQuote = '"';
-          scope.exportHeader = false;
+          scope.exportHeader = true;
         } else if (exportFormat === 'json') {
           scope.exportPath = '<download>';
         } else if (exportFormat === 'parquet') {
@@ -86,11 +86,15 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             req.table = scope.exportJdbcTable;
             req.mode = scope.exportMode;
             scope.result = util.post('/ajax/exportSQLQueryToJdbc', req);
+          } else {
+            throw new Error('Unexpected export format: ' + scope.exportFormat);
           }
           scope.result.finally(function() {
             scope.inProgress -= 1;
           });
           scope.result.then(function(result) {
+            scope.showExportOptions = false;
+            scope.result.success = 'Results exported.';
             if (result.download) {
               var path = encodeURIComponent(result.download);
               var name = encodeURIComponent(result.download.split('/').slice(-1)[0]);
