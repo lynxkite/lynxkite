@@ -19,6 +19,7 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
+import com.lynxanalytics.biggraph.table.TableImport
 
 import play.api.libs.json
 
@@ -2940,59 +2941,61 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
     private def shortClass(o: Any) = o.getClass.getName.split('.').last
     def apply(params: Map[String, String]) = {
+      val sc = env.dataManager.runtimeContext.sparkContext
       val t = params("timestamp")
-      val directory = HadoopFile("UPLOAD$") / s"metagraph-$t"
+      val directory = SymbolPath("!metagraph", "$t")
       val ops = env.metaGraphManager.getOperationInstances
       val vertices = {
-        val file = directory / "vertices"
-        if (!file.exists) {
-          val lines = ops.flatMap {
+        val frame = DirectoryEntry.fromPath(directory / "vertices")
+        if (!frame.exists) {
+          val rdd = sc.parallelize(ops.flatMap {
             case (guid, inst) =>
-              val op = s"$guid,Operation,${shortClass(inst.operation)},"
+              val op = (guid.toString, "Operation", shortClass(inst.operation), null)
               val outputs = inst.outputs.all.map {
                 case (name, entity) =>
                   val progress = env.entityProgressManager.computeProgress(entity)
-                  s"${entity.gUID},${shortClass(entity)},${name.name},$progress"
+                  (entity.gUID.toString, shortClass(entity), name.name, progress)
               }
               op +: outputs.toSeq
-          }
-          log.info(s"Writing metagraph vertices to $file.")
-          file.createFromStrings(lines.mkString("\n"))
-        }
-        val csv = graph_operations.CSV(
-          file,
-          delimiter = ",",
-          header = "guid,kind,name,progress")
-        graph_operations.ImportVertexList(csv)().result
+          })
+          log.info(s"Writing metagraph vertices to $table.")
+          val df = rdd.toDF("guid", "kind", "name", "progress")
+          val table = TableImport.importDataFrameAsync(df)
+          frame.asNewTableFrame(table)
+          table
+        } else frame.asTableFrame.table
       }
-      project.vertexSet = vertices.vertices
-      for ((name, attr) <- vertices.attrs) {
+      project.vertexSet = vertices.idSet
+      for ((name, attr) <- vertices.columns) {
         project.newVertexAttribute(name, attr)
       }
       project.newVertexAttribute("id", project.vertexSet.idAttribute)
       val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
       val edges = {
-        val file = directory / "edges"
-        if (!file.exists) {
-          val lines = ops.flatMap {
+        val frame = DirectoryEntry.fromPath(directory / "edges")
+        val table = if (!frame.exists) {
+          val rdd = sc.parallelize(ops.flatMap {
             case (guid, inst) =>
               val inputs = inst.inputs.all.map {
-                case (name, entity) => s"${entity.gUID},$guid,Input,${name.name}"
+                case (name, entity) => (entity.gUID.toString, guid.toString, "Input", name.name)
               }
               val outputs = inst.outputs.all.map {
-                case (name, entity) => s"$guid,${entity.gUID},Output,${name.name}"
+                case (name, entity) => (guid.toString, entity.gUID.toString, "Output", name.name)
               }
               inputs ++ outputs
-          }
+          })
           log.info(s"Writing metagraph edges to $file.")
-          file.createFromStrings(lines.mkString("\n"))
-        }
-        val csv = graph_operations.CSV(
-          file,
-          delimiter = ",",
-          header = "src,dst,kind,name")
-        val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, "src", "dst")
-        op(op.srcVidAttr, guids)(op.dstVidAttr, guids).result
+          val df = rdd.toDF("src", "dst", "kind", "name")
+          val table = TableImport.importDataFrameAsync(df)
+          frame.asNewTableFrame(table)
+          table
+        } else frame.asTableFrame.table
+        val op = graph_operations.ImportEdgeListForExistingVertexSetFromTable()
+        op(
+          op.srcVidColumn, table.columns("src"))(
+            op.dstVidColumn, table.columns("dst"))(
+              op.srcVidAttr, guids)(
+                op.dstVidAttr, guids).result
       }
       project.edgeBundle = edges.edges
       project.edgeAttributes = edges.attrs.mapValues(_.entity)
