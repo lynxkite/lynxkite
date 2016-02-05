@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringEscapeUtils
 
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportUtil {
   def header(file: HadoopFile): String = {
     // TODO: we don't check here if all the files begin with the same header!
@@ -67,12 +68,14 @@ object ImportUtil {
   }
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 trait RowInput extends ToJson {
   def fields: Seq[String]
   def lines(rc: RuntimeContext): UniqueSortedRDD[ID, Seq[String]]
   val mayHaveNulls: Boolean
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object CSV extends FromJson[CSV] {
   private val omitFieldsParameter = NewParameter("omitFields", Set[String]())
   private val allowCorruptLinesParameter = NewParameter("allowCorruptLines", true)
@@ -120,6 +123,7 @@ object CSV extends FromJson[CSV] {
     new CSV(file, delimiter, header, fields, omitFields, filter, allowCorruptLines)
   }
 }
+@deprecated("Replaced by table-based importing.", "1.7.0")
 case class CSV private (file: HadoopFile,
                         delimiter: String,
                         header: String,
@@ -180,6 +184,7 @@ case class CSV private (file: HadoopFile,
   }
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 trait ImportCommon {
   class Columns(
       allNumberedLines: UniqueSortedRDD[ID, Seq[String]],
@@ -247,10 +252,12 @@ trait ImportCommon {
     return new Columns(numberedLines(rc, input), input.fields, input.mayHaveNulls, requiredFields)
   }
 }
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportCommon {
   def toSymbol(field: String) = Symbol("imported_field_" + field)
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportVertexList extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String]) extends MagicOutput(instance) {
@@ -261,6 +268,7 @@ object ImportVertexList extends OpFromJson {
   }
   def fromJson(j: JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
 }
+@deprecated("Replaced by table-based importing.", "1.7.0")
 case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
@@ -285,6 +293,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
   }
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 trait ImportEdges extends ImportCommon {
   val src: String
   val dst: String
@@ -302,6 +311,7 @@ trait ImportEdges extends ImportCommon {
   def edgeSrcDst(columns: Columns) = columns.columnPair(src, dst)
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportEdgeList extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String])
@@ -315,6 +325,7 @@ object ImportEdgeList extends OpFromJson {
   def fromJson(j: JsValue) =
     ImportEdgeList(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
+@deprecated("Replaced by table-based importing.", "1.7.0")
 case class ImportEdgeList(input: RowInput, src: String, dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
@@ -358,6 +369,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   }
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportEdgeListForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val sources = vertexSet
@@ -377,6 +389,7 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
   def fromJson(j: JsValue) =
     ImportEdgeListForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
+@deprecated("Replaced by table-based importing.", "1.7.0")
 case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
@@ -403,6 +416,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
   }
 }
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportAttributesForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
@@ -419,6 +433,7 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
   def fromJson(j: JsValue) =
     ImportAttributesForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "idField").as[String])
 }
+@deprecated("Replaced by table-based importing.", "1.7.0")
 case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)
     extends ImportCommon
     with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output] {

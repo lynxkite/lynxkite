@@ -44,7 +44,7 @@ case class CountVertices()
   }
 }
 
-// CountEdges is deprecated. Use Count.run(eb) instead.
+@deprecated("Use Count.run(eb) instead.", "1.7.0")
 object CountEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val srcVS = vertexSet
@@ -56,6 +56,7 @@ object CountEdges extends OpFromJson {
   }
   def fromJson(j: JsValue) = CountEdges()
 }
+@deprecated("Use Count.run(eb) instead.", "1.7.0")
 case class CountEdges()
     extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] {
   import CountEdges._
@@ -182,6 +183,7 @@ object ComputeMinMaxDouble extends OpFromJson {
     val max = scalar[Double]
   }
 }
+@deprecated("Use ComputeMinMaxMinPositive instead.", since = "1.6.0")
 case class ComputeMinMaxDouble()
     extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output] {
   @transient override lazy val inputs = new ComputeMinMaxDouble.Input
