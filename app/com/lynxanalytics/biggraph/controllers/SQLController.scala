@@ -49,6 +49,26 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[String])
 
+trait GenericImportRequest {
+  val table: String
+  val privacy: String
+  def columnsToImport: List[String]
+
+  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame
+  def notes: String
+
+  def restrictedDataFrame(implicit dataManager: DataManager): spark.sql.DataFrame =
+    restrictToColumns(dataFrame, columnsToImport)
+
+  private def restrictToColumns(
+    full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
+    if (columnsToImport.nonEmpty) {
+      val columns = columnsToImport.map(spark.sql.functions.column(_))
+      full.select(columns: _*)
+    } else full
+  }
+}
+
 case class CSVImportRequest(
     table: String,
     privacy: String,
@@ -57,28 +77,84 @@ case class CSVImportRequest(
     columnNames: List[String],
     delimiter: String,
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
-    mode: String) {
+    mode: String) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
+
+  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    val reader = dataManager.masterSQLContext
+      .read
+      .format("com.databricks.spark.csv")
+      .option("mode", mode)
+      .option("delimiter", delimiter)
+      // We don't want to skip lines starting with #
+      .option("comment", null)
+    val readerWithSchema = if (columnNames.nonEmpty) {
+      reader.schema(SQLController.stringOnlySchema(columnNames))
+    } else {
+      // Read column names from header.
+      reader.option("header", "true")
+    }
+    val hadoopFile = HadoopFile(files)
+    // TODO: #2889 (special characters in S3 passwords).
+    readerWithSchema.load(hadoopFile.resolvedName)
+  }
+
+  // We deal with restricting to certain columns specially above, so we instruct
+  // GenericImportRequest to keep all columns.
+  def columnsToImport = List()
+
+  def notes = s"Imported from CSV files ${files}."
 }
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
 }
 
 case class JdbcImportRequest(
-  table: String,
-  privacy: String,
-  jdbcUrl: String,
-  jdbcTable: String,
-  keyColumn: String,
-  // Empty list means all columns.
-  columnsToImport: List[String])
+    table: String,
+    privacy: String,
+    jdbcUrl: String,
+    jdbcTable: String,
+    keyColumn: String,
+    // Empty list means all columns.
+    columnsToImport: List[String]) extends GenericImportRequest {
 
-trait FilesWithSchemaImportRequest {
-  val table: String
-  val privacy: String
+  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
+    val stats = {
+      val connection = java.sql.DriverManager.getConnection(jdbcUrl)
+      try TableStats(jdbcTable, keyColumn)(connection)
+      finally connection.close()
+    }
+    val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
+    dataManager.masterSQLContext
+      .read
+      .jdbc(
+        jdbcUrl,
+        jdbcTable,
+        keyColumn,
+        stats.minKey,
+        stats.maxKey,
+        numPartitions,
+        new java.util.Properties)
+  }
+
+  def notes: String = {
+    val uri = new java.net.URI(jdbcUrl.drop(5))
+    val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
+    s"Imported from table ${jdbcTable} at ${urlSafePart}."
+  }
+}
+
+trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
-  val columnsToImport: List[String]
   val format: String
+
+  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    val hadoopFile = HadoopFile(files)
+    dataManager.masterSQLContext.read.format(format).load(hadoopFile.resolvedName)
+  }
+
+  def notes = s"Imported from ${format} files ${files}."
 }
 
 case class ParquetImportRequest(
@@ -99,6 +175,17 @@ case class ORCImportRequest(
   val format = "orc"
 }
 
+case class HiveImportRequest(
+    table: String,
+    privacy: String,
+    hiveTable: String,
+    // Empty list means all columns.
+    columnsToImport: List[String]) extends GenericImportRequest {
+
+  def dataFrame(implicit dataManager: DataManager) = ???
+  def notes = s"Imported from Hive table ${hiveTable}."
+}
+
 class SQLController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
@@ -107,85 +194,19 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def importCSV(user: serving.User, request: CSVImportRequest) = async[FEOption] {
-    val reader = dataManager.masterSQLContext
-      .read
-      .format("com.databricks.spark.csv")
-      .option("mode", request.mode)
-      .option("delimiter", request.delimiter)
-      // We don't want to skip lines starting with #
-      .option("comment", null)
-    val readerWithSchema = if (request.columnNames.nonEmpty) {
-      reader.schema(SQLController.stringOnlySchema(request.columnNames))
-    } else {
-      // Read column names from header.
-      reader.option("header", "true")
-    }
-    val hadoopFile = HadoopFile(request.files)
-    // TODO: #2889 (special characters in S3 passwords).
-    val df = readerWithSchema.load(hadoopFile.resolvedName)
+  def doImport(user: serving.User, request: GenericImportRequest) = async[FEOption] {
     SQLController.saveTable(
-      df, s"Imported from CSV files ${request.files}.",
-      user, request.table, request.privacy)
+      request.restrictedDataFrame,
+      request.notes,
+      user,
+      request.table,
+      request.privacy)
   }
 
-  def restrictToColumns(
-    full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
-    if (columnsToImport.nonEmpty) {
-      val columns = columnsToImport.map(spark.sql.functions.column(_))
-      full.select(columns: _*)
-    } else full
-  }
-
-  def importJdbc(user: serving.User, request: JdbcImportRequest) = async[FEOption] {
-    val jdbcUrl = request.jdbcUrl
-    assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
-    val stats = {
-      val connection = java.sql.DriverManager.getConnection(jdbcUrl)
-      try TableStats(request.jdbcTable, request.keyColumn)(connection)
-      finally connection.close()
-    }
-    val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
-    val fullTable = dataManager.masterSQLContext
-      .read
-      .jdbc(
-        jdbcUrl,
-        request.jdbcTable,
-        request.keyColumn,
-        stats.minKey,
-        stats.maxKey,
-        numPartitions,
-        new java.util.Properties)
-    val df = restrictToColumns(fullTable, request.columnsToImport)
-    // We don't want to put passwords and the likes in the notes.
-    val uri = new java.net.URI(jdbcUrl.drop(5))
-    val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
-    SQLController.saveTable(
-      df, s"Imported from table ${request.jdbcTable} at ${urlSafePart}.",
-      user, request.table, request.privacy)
-  }
-
-  def importFromFilesWithSchema(
-    user: serving.User,
-    request: FilesWithSchemaImportRequest) =
-    async[FEOption] {
-      val hadoopFile = HadoopFile(request.files)
-      val df = restrictToColumns(
-        dataManager.masterSQLContext.read.format(request.format).load(hadoopFile.resolvedName),
-        request.columnsToImport)
-      SQLController.saveTable(
-        df,
-        s"Imported from ${request.format} files ${request.files}.",
-        user,
-        request.table,
-        request.privacy)
-    }
-
-  def importParquet(user: serving.User, request: ParquetImportRequest) =
-    importFromFilesWithSchema(user, request)
-
-  def importORC(user: serving.User, request: ORCImportRequest) =
-    importFromFilesWithSchema(user, request)
+  def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
+  def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
+  def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
+  def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
