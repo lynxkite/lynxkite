@@ -84,7 +84,7 @@ module.exports = function(fw) {
       var downloadedFileName = lib.waitForNewDownload(/\.csv$/);
       lib.expectFileContents(
         downloadedFileName,
-        'Adam,20.3,1000.0\nBob,50.3,2000.0\nEve,18.2,\nIsolated Joe,2.0,\n');
+        'name,age,income\nAdam,20.3,1000.0\nBob,50.3,2000.0\nEve,18.2,\nIsolated Joe,2.0,\n');
 
       // Reset state.
       left.toggleSqlBox();

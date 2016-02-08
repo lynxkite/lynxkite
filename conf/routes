@@ -53,7 +53,8 @@ POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJs
 POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
-GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
+GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload
+GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadFile
 
 GET  /logs             com.lynxanalytics.biggraph.serving.ProductionJsonServer.logs
 

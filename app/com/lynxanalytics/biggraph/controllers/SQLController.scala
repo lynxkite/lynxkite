@@ -47,7 +47,7 @@ case class SQLExportToJdbcRequest(
     "append") // The table must already exist.
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
-case class SQLExportToFileResult(download: Option[String])
+case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 
 trait GenericImportRequest {
   val table: String
@@ -269,7 +269,8 @@ class SQLController(val env: BigGraphEnvironment) {
         "delimiter" -> request.delimiter,
         "quote" -> request.quote,
         "nullValue" -> "",
-        "header" -> (if (request.header) "true" else "false")))
+        "header" -> (if (request.header) "true" else "false")),
+      stripHeaders = request.header)
   }
 
   def exportSQLQueryToJson(
@@ -298,15 +299,18 @@ class SQLController(val env: BigGraphEnvironment) {
     dfSpec: DataFrameSpec,
     path: String,
     format: String,
-    options: Map[String, String] = Map()): SQLExportToFileResult = {
+    options: Map[String, String] = Map(),
+    stripHeaders: Boolean = false): SQLExportToFileResult = {
     val file = if (path == "<download>") {
       dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format
     } else {
       HadoopFile(path)
     }
     exportToFile(user, dfSpec, file, format, options)
-    SQLExportToFileResult(
-      download = if (path == "<download>") Some(file.symbolicName) else None)
+    val download =
+      if (path == "<download>") Some(serving.DownloadFileRequest(file.symbolicName, stripHeaders))
+      else None
+    SQLExportToFileResult(download)
   }
 
   private def exportToFile(

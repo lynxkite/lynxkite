@@ -32,8 +32,10 @@ module.exports = function(fw) {
       // segment sizes now: [3, 3, 2, 2]
       lib.left.openSegmentation('seg');
       lib.right.openOperation('Create edges from co-occurrence');
+      lib.right.expectOperationScalar('num_created_edges', '? \u21bb');
+      lib.right.toolbox.element(by.css('.value-retry')).click();
+      lib.right.expectOperationScalar('num_created_edges', '26');
     },
     function() {
-      lib.right.expectOperationScalar('num_created_edges', '26');
     });
 };

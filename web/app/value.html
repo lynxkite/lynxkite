@@ -1,13 +1,13 @@
 <!-- If the data is present. -->
-<span ng-if="ref.string !== undefined">
-  <span ng-if="humanized(ref)" class="value human"
-    ng-click="setHuman(false); $event.preventDefault(); $event.stopPropagation();">
-    {{format(ref)}}
+<span ng-if="ref.value.string !== undefined">
+  <span ng-if="humanized(ref.value)" class="value human"
+    ng-click="setHuman(false); util.stopEventPropagation($event);">
+    {{format(ref.value)}}
   </span>
-  <span ng-if="!humanized(ref)" class="value"
-    ng-bind-html="ref.string | trustAsHtml"></span>
+  <span ng-if="!humanized(ref.value)" class="value"
+    ng-bind-html="ref.value.string | trustAsHtml"></span>
 </span>
 <!-- If the data is not present. -->
-<span ng-if="ref.string === undefined">
-  <inline-loading ref="ref" details="details"></inline-loading>
+<span ng-if="ref.value.string === undefined">
+  <inline-loading ref="ref.value" details="details"></inline-loading>
 </span>

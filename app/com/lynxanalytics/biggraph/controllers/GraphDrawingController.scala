@@ -155,7 +155,7 @@ case class HistogramResponse(
 }
 
 case class ScalarValueRequest(
-  val scalarId: String)
+  scalarId: String)
 
 case class CenterRequest(
   vertexSetId: String,
