@@ -60,7 +60,7 @@ object Downloads extends play.api.http.HeaderNames {
 
 class HeaderSkippingStreamIterator(path: String, streams: Iterator[InputStream])
     extends Iterator[InputStream] {
-  var header: String = null
+  var header: Array[Byte] = null
 
   def hasNext = streams.hasNext
 
@@ -70,25 +70,26 @@ class HeaderSkippingStreamIterator(path: String, streams: Iterator[InputStream])
     if (header == null) {
       header = firstLine
       // Now we have to "put back" the header into the stream.
-      new SequenceInputStream(Iterator(
-        new ByteArrayInputStream((firstLine + "\n").getBytes("utf-8")),
-        f))
+      new SequenceInputStream(Iterator(new ByteArrayInputStream(firstLine), f))
     } else {
       assert(
-        firstLine == header,
-        s"Unexpected first line ($firstLine) in $path. (Expected $header.)")
+        java.util.Arrays.equals(firstLine, header),
+        {
+          val firstLineStr = new String(firstLine, "utf-8")
+          val headerStr = new String(header, "utf-8")
+          s"Unexpected first line ($firstLineStr) in $path. (Expected $headerStr.)"
+        })
       f
     }
   }
 
-  def readLine(in: InputStream): String = {
+  def readLine(in: InputStream): Array[Byte] = {
     val bytes = new collection.mutable.ArrayBuffer[Byte]
     while (true) {
       val b = in.read()
-      if (b == -1 || b == 0x0a) {
-        return new String(bytes.toArray, "utf-8")
-      }
+      if (b == -1) return bytes.toArray
       bytes += b.toByte
+      if (b == 0x0a) return bytes.toArray
     }
     ???
   }
