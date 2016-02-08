@@ -172,6 +172,7 @@ object FrontendJson {
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
   }
+  implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
   implicit val wFEStatus = json.Json.writes[FEStatus]
   implicit val wFEOption = json.Json.writes[FEOption]
@@ -308,25 +309,10 @@ object ProductionJsonServer extends JsonServer {
     }
   }
 
-  def download = action(parse.anyContent) { (user, request) =>
-    import play.api.libs.concurrent.Execution.Implicits._
-    import scala.collection.JavaConversions._
-    log.info(s"download: $user ${request.path}")
-    val path = HadoopFile(request.getQueryString("path").get)
-    val name = request.getQueryString("name").get
-    // For CSV downloads we want to read the "header" file and then the "data" directory.
-    val files: Seq[HadoopFile] =
-      if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
-      else (path / "*").list.sortBy(_.symbolicName)
-    val length = files.map(_.length).sum
-    log.info(s"downloading $length bytes: $files")
-    val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
-    mvc.Result(
-      header = mvc.ResponseHeader(200, Map(
-        CONTENT_LENGTH -> length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=$name")),
-      body = play.api.libs.iteratee.Enumerator.fromStream(stream)
-    )
+  def oldCSVDownload = action(parse.anyContent)(Downloads.oldCSVDownload)
+
+  def downloadFile = action(parse.anyContent) {
+    (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
   }
 
   def logs = action(parse.anyContent) { (user, request) =>

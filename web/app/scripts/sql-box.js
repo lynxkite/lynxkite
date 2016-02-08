@@ -98,10 +98,9 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.showExportOptions = false;
           scope.success = 'Results exported.';
           if (result.download) {
-            var path = encodeURIComponent(result.download);
-            var name = encodeURIComponent(result.download.split('/').slice(-1)[0]);
             // Fire off the download.
-            $window.location = '/download?path=' + path + '&name=' + name;
+            $window.location =
+              '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
           }
         });
       };
