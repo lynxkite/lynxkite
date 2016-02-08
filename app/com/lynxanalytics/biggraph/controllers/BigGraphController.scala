@@ -84,16 +84,7 @@ case class FEOperationMeta(
   isWorkflow: Boolean = false,
   workflowAuthor: String = "")
 
-case class FEOperationParameterMeta(
-    id: String,
-    title: String,
-    kind: String, // Special rendering on the UI.
-    defaultValue: String,
-    options: List[FEOption],
-    multipleChoice: Boolean,
-    hasFixedOptions: Boolean,
-    payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
-
+object FEOperationParameterMeta {
   val validKinds = Seq(
     "default", // A simple textbox.
     "choice", // A drop down box.
@@ -102,7 +93,22 @@ case class FEOperationParameterMeta(
     "code", // JavaScript code
     "model", // A special kind to set model parameters.
     "table") // A table.
-  require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
+
+  val choiceKinds = Set("choice", "tag-list")
+}
+
+case class FEOperationParameterMeta(
+    id: String,
+    title: String,
+    kind: String, // Special rendering on the UI.
+    defaultValue: String,
+    options: List[FEOption],
+    multipleChoice: Boolean,
+    payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
+
+  require(
+    kind.isEmpty || FEOperationParameterMeta.validKinds.contains(kind),
+    s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
 
@@ -476,10 +482,21 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     params: Map[String, String],
     meta: FEOperationMeta): FEOperationMeta = {
     meta.copy(parameters = meta.parameters.map { parameter =>
-      if (parameter.hasFixedOptions &&
+      if (!FEOperationParameterMeta.choiceKinds.contains(parameter.kind)) {
+        parameter
+      } else if (!parameter.multipleChoice &&
         params.contains(parameter.id) &&
         !parameter.options.map(_.id).contains(params(parameter.id))) {
         parameter.copy(options = FEOption.fromID(params(parameter.id)) +: parameter.options)
+      } else if (parameter.multipleChoice && params.contains(parameter.id)) {
+        val selectedIds = params(parameter.id).split(",", -1).toList
+        val knownAllowedIds = parameter.options.map(_.id).toSet
+        val missingSelectedIds = selectedIds.filter(!knownAllowedIds.contains(_))
+        if (missingSelectedIds.nonEmpty) {
+          parameter.copy(options = missingSelectedIds.map(FEOption.fromID(_)) ++ parameter.options)
+        } else {
+          parameter
+        }
       } else {
         parameter
       }
@@ -642,13 +659,12 @@ abstract class OperationParameterMeta {
   val options: List[FEOption]
   val multipleChoice: Boolean
   val mandatory: Boolean
-  val hasFixedOptions: Boolean
   val payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions, payload)
+    id, title, kind, defaultValue, options, multipleChoice, payload)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
