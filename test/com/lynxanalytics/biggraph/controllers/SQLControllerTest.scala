@@ -18,6 +18,17 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
+  test("sql file reading is disabled") {
+    val file = getClass.getResource("/controllers/noread.csv").toString
+    intercept[Throwable] {
+      await(sqlController.runSQLQuery(user, SQLQueryRequest(
+        DataFrameSpec(
+          project = projectName,
+          sql = s"select * from csv.`$file`"),
+        maxRows = 10)))
+    }
+  }
+
   test("sql export to csv") {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
