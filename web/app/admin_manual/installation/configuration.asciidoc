@@ -66,3 +66,13 @@ You can provide extra jar files that will be added to the `CLASSPATH` of LynxKit
 setting the `KITE_EXTRA_JARS` option in `.kiterc`. A typical use case is installing JDBC drivers.
 Just add the JAR file of the driver to `KITE_EXTRA_JARS` and you should be good to go.
 
+### Integration with Hive
+
+To enable direct integration with Apache Hive running on the same Hadoop cluster you need to
+tell Spark about your Hive configuration. The simplest way to do this is to create a symbolic link
+from the `conf` directory under your Spark installation directory to your hive-site.xml file. E.g.,
+depending on your Hadoop distribution, something like this would do:
+
+```
+ln -s /etc/hive/conf/hive-site.xml ~/spark-1.6.0/conf/
+```
