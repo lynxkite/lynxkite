@@ -490,8 +490,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
         parameter.copy(options = FEOption.fromID(params(parameter.id)) +: parameter.options)
       } else if (parameter.multipleChoice && params.contains(parameter.id)) {
         val selectedIds = params(parameter.id).split(",", -1).toList
-        val knownAllowdIds = parameter.options.map(_.id).toSet
-        val missingSelectedIds = selectedIds.filter(!knownAllowdIds.contains(_))
+        val knownAllowedIds = parameter.options.map(_.id).toSet
+        val missingSelectedIds = selectedIds.filter(!knownAllowedIds.contains(_))
         if (missingSelectedIds.nonEmpty) {
           parameter.copy(options = missingSelectedIds.map(FEOption.fromID(_)) ++ parameter.options)
         } else {
