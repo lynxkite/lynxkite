@@ -26,7 +26,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       delimiter = ";",
       quote = "\"",
       header = true)))
-    val output = graph_util.HadoopFile(result.download.get).loadTextFile(sparkContext)
+    val output = graph_util.HadoopFile(result.download.get.path).loadTextFile(sparkContext)
     assert(output.collect.sorted.mkString(", ") ==
       "Adam;20.3, Eve;18.2, Isolated Joe;2.0, name;age")
   }
