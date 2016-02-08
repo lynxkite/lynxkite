@@ -127,6 +127,9 @@
     </div>
   </div>
 </fieldset></form>
+<div id="sql-success" ng-show="success">
+  &#x2713; {{ success }}
+</div>
 
 <div ng-show="result.header && !result.$error" id="sql-result">
   <table class="table table-striped table-bordered">
@@ -145,7 +148,4 @@
 <div id="sql-error" ng-show="result.$error">
   {{ result.$error }}
   <i class="pull-right"><a href ng-click="reportSQLError()">report problem</a></i>
-</div>
-<div id="sql-success" ng-show="!result.$error && result.success">
-  &#x2713; {{ result.success }}
 </div>
