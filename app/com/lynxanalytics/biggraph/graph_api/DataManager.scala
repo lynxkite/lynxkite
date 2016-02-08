@@ -34,7 +34,9 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  val masterSQLContext = new HiveContext(sc)
+  lazy val masterSQLContext = new SQLContext(sc)
+  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
+  lazy val masterHiveContext = new HiveContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true

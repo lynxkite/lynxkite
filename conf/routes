@@ -38,6 +38,7 @@ POST /ajax/importCSV         com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/importJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJdbc
 POST /ajax/importParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.importParquet
 POST /ajax/importORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importORC
+POST /ajax/importHive         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importHive
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
