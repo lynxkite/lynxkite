@@ -57,26 +57,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       scope.$watch('path', scope.reload);
       scope.$watch('searchQuery', scope.reload);
-      function getScalar(title, scalar) {
-        if (scalar.computeProgress !== 1.0) {
-          return NOT_CALCULATED;
-        }
-        var res = util.get('/ajax/scalarValue', {
-          scalarId: scalar.id
-        });
-        res.details = { project: title, scalar: scalar };
-        return res;
-      }
-
-      // Fake scalar for projects with no vertices/edges.
-      var NO = { string: 'no', $abandon: function() {} };
-
-      // Placeholder when the scalar has not been calculated yet.
-      var NOT_CALCULATED = {
-        $statusCode: 404,
-        $error: 'Not calculated yet',
-        $abandon: function() {},
-      };
 
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved || scope.data.$error) { return; }
@@ -84,10 +64,12 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         scope.edgeCounts = {};
         for (var i = 0; i < scope.data.objects.length; ++i) {
           var p = scope.data.objects[i];
-          scope.vertexCounts[p.name] =
-            p.vertexCount ? getScalar(p.title, p.vertexCount) : NO;
-          scope.edgeCounts[p.name] =
-            p.edgeCount ? getScalar(p.title, p.edgeCount) : NO;
+          scope.vertexCounts[p.name] = util.lazyFetchScalarValue(
+            p.vertexCount,
+            false);
+          scope.edgeCounts[p.name] = util.lazyFetchScalarValue(
+            p.edgeCount,
+            false);
         }
       });
 
