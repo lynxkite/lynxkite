@@ -75,6 +75,13 @@ angular.module('biggraph').directive('importWizard', function(util) {
             columnsToImport: columnsToImport,
           });
       };
+      scope.importHive = function() {
+        importStuff(
+          '/ajax/importHive', {
+            hiveTable: scope.hive.tableName,
+            columnsToImport: splitCSVLine(scope.hive.columnsToImport),
+          });
+      };
     },
   };
 });

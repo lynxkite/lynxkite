@@ -151,7 +151,7 @@ trait FilesWithSchemaImportRequest extends GenericImportRequest {
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
-    dataManager.masterSQLContext.read.format(format).load(hadoopFile.resolvedName)
+    dataManager.masterHiveContext.read.format(format).load(hadoopFile.resolvedName)
   }
 
   def notes = s"Imported from ${format} files ${files}."
@@ -182,7 +182,12 @@ case class HiveImportRequest(
     // Empty list means all columns.
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(implicit dataManager: DataManager) = ???
+  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    assert(
+      dataManager.hiveConfigured,
+      "Hive is not configured for this Kite instance. Contact your system administrator.")
+    dataManager.masterHiveContext.table(hiveTable)
+  }
   def notes = s"Imported from Hive table ${hiveTable}."
 }
 
@@ -207,6 +212,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
   def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
+  def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
