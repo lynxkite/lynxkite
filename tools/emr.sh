@@ -145,7 +145,7 @@ start)
   fi
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
-    --applications Name=Hadoop Name=Hive Name=Hue \
+    --applications Name=Hadoop \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole"}' \
     --service-role EMR_DefaultRole \
     --release-label emr-4.2.0 \
@@ -208,10 +208,11 @@ EOF
 
   # Unpack Spark on the master and add the locally installed hadoop into its classpath.
   # (This way we get s3 consistent view.)
-  SPARK_NAME="spark-${SPARK_VERSION}-bin-hadoop2.6"
+  SPARK_NAME="spark-${SPARK_VERSION}-bin-without-hadoop"
   aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
     curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
     tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION} && \
+    echo \"export SPARK_DIST_CLASSPATH=\\\$(hadoop classpath)\" >~/${SPARK_NAME}/conf/spark-env.sh && \
     sudo yum install -y expect"
   ;;
 
