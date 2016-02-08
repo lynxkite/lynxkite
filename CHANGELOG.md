@@ -37,6 +37,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - `emr.sh` can now invoke groovy scripts on a remote cluster.
  - Introduce explicit machine learning models. Create them with the _Train linear regression model_
    operation and use them for predictions with _Predict from model_.
+ - Added a new centrality measure, the _average distance_.
  - The _Convert vertices into edges_ operation has been removed. The same functionality is now
    available via tables. You can simply import the `vertices` table of one project as edges in
    another project.
