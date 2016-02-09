@@ -63,6 +63,9 @@ angular.module('biggraph').directive('importWizard', function(util) {
       scope.importORC = function() {
         importFilesWith('/ajax/importORC');
       };
+      scope.importJson = function() {
+        importFilesWith('/ajax/importJson');
+      };
       scope.importJdbc = function() {
         importStuff(
           '/ajax/importJdbc',
