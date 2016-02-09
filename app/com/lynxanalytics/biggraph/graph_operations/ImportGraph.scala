@@ -273,6 +273,8 @@ object ImportVertexList extends OpFromJson {
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportVertexList(val input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
+  override def equals(o: Any) =
+    o.isInstanceOf[ImportVertexList] && o.asInstanceOf[ImportVertexList].input == input
   import ImportVertexList._
   override val isHeavy = true
   override val hasCustomSaving = true // Single-pass import.
@@ -333,6 +335,12 @@ object ImportEdgeList extends OpFromJson {
 class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
+  override def equals(o: Any) = {
+    o.isInstanceOf[ImportEdgeList] && {
+      val other = o.asInstanceOf[ImportEdgeList]
+      other.input == input && other.src == src && other.dst == dst
+    }
+  }
   import ImportEdgeList._
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
@@ -400,6 +408,12 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
 class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, val dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
+  override def equals(o: Any) = {
+    o.isInstanceOf[ImportEdgeListForExistingVertexSet] && {
+      val other = o.asInstanceOf[ImportEdgeListForExistingVertexSet]
+      other.input == input && other.src == src && other.dst == dst
+    }
+  }
   import ImportEdgeListForExistingVertexSet._
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
@@ -444,9 +458,15 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
     new ImportAttributesForExistingVertexSet(input, idField)
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
-class ImportAttributesForExistingVertexSet(val input: RowInput, idField: String)
+class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: String)
     extends ImportCommon
     with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output] {
+  override def equals(o: Any) = {
+    o.isInstanceOf[ImportAttributesForExistingVertexSet] && {
+      val other = o.asInstanceOf[ImportAttributesForExistingVertexSet]
+      other.input == input && other.idField == idField
+    }
+  }
   import ImportAttributesForExistingVertexSet._
 
   mustHaveField(idField)

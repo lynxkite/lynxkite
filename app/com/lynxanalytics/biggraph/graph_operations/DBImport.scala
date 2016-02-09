@@ -22,8 +22,14 @@ object DBTable extends FromJson[DBTable] {
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class DBTable(
-    db: String, table: String, val fields: Seq[String],
-    key: String) extends RowInput {
+    val db: String, val table: String, val fields: Seq[String],
+    val key: String) extends RowInput {
+  override def equals(o: Any) = {
+    o.isInstanceOf[DBTable] && {
+      val other = o.asInstanceOf[DBTable]
+      other.db == db && other.table == table && other.fields == fields && other.key == key
+    }
+  }
   assert(fields.contains(key), s"$key not found in $fields")
 
   val quotedTable = quoteIdentifier(table)
