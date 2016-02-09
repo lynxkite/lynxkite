@@ -16,10 +16,13 @@ object DBTable extends FromJson[DBTable] {
     (j \ "table").as[String],
     (j \ "fields").as[Seq[String]],
     (j \ "key").as[String])
+  // SI-9650
+  def apply(db: String, table: String, fields: Seq[String], key: String) =
+    new DBTable(db, table, fields, key)
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
-case class DBTable(
-    db: String, table: String, fields: Seq[String],
+class DBTable(
+    db: String, table: String, val fields: Seq[String],
     key: String) extends RowInput {
   assert(fields.contains(key), s"$key not found in $fields")
 

@@ -267,9 +267,11 @@ object ImportVertexList extends OpFromJson {
     }.toMap
   }
   def fromJson(j: JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
+  // SI-9650
+  def apply(input: RowInput) = new ImportVertexList(input)
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
-case class ImportVertexList(input: RowInput) extends ImportCommon
+class ImportVertexList(val input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
   override val isHeavy = true
@@ -324,9 +326,11 @@ object ImportEdgeList extends OpFromJson {
   }
   def fromJson(j: JsValue) =
     ImportEdgeList(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
+  // SI-9650
+  def apply(input: RowInput, src: String, dst: String) = new ImportEdgeList(input, src, dst)
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
-case class ImportEdgeList(input: RowInput, src: String, dst: String)
+class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
   import ImportEdgeList._
@@ -388,9 +392,12 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
   }
   def fromJson(j: JsValue) =
     ImportEdgeListForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
+  // SI-9650
+  def apply(input: RowInput, src: String, dst: String) =
+    new ImportEdgeListForExistingVertexSet(input, src, dst)
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
-case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
+class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, val dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
   import ImportEdgeListForExistingVertexSet._
@@ -432,9 +439,12 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
   }
   def fromJson(j: JsValue) =
     ImportAttributesForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "idField").as[String])
+  // SI-9650
+  def apply(input: RowInput, idField: String) =
+    new ImportAttributesForExistingVertexSet(input, idField)
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
-case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)
+class ImportAttributesForExistingVertexSet(val input: RowInput, idField: String)
     extends ImportCommon
     with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output] {
   import ImportAttributesForExistingVertexSet._

@@ -16,10 +16,12 @@ object AddGaussianVertexAttribute extends OpFromJson {
     val attr = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = AddGaussianVertexAttribute((j \ "seed").as[Int])
+  // SI-9650
+  def apply(seed: Int) = new AddGaussianVertexAttribute(seed)
 }
 import AddGaussianVertexAttribute._
 @deprecated("Use AddRandomAttribute instead.", "1.7.0")
-case class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input, Output] {
+class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
