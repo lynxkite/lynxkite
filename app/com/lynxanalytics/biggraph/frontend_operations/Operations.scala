@@ -867,9 +867,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Normal")
       project.newVertexAttribute(
-        params("name"), op(op.vertices, project.vertexSet).result.attr, help)
+        params("name"), op(op.vs, project.vertexSet).result.attr, help)
     }
   })
 
