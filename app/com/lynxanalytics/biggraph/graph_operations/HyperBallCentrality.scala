@@ -83,13 +83,12 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           vertexPartitioner,
           edges)
         finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
-          case (vid, (sumDistance, size)) => {
+          case (vid, (sumDistance, size)) =>
             if (sumDistance == 0) {
               1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
             } else {
               size.toDouble * size.toDouble / sumDistance.toDouble
             }
-          }
         }
 
       case "Average distance" =>
@@ -101,11 +100,10 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           vertexPartitioner,
           edges)
         finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
-          case (vid, (sumDistance, size)) => {
+          case (vid, (sumDistance, size)) =>
             val others = size - 1 // size includes the vertex itself
             if (others == 0) 0.0
             else sumDistance.toDouble / others.toDouble
-          }
         }
     }
 
@@ -131,9 +129,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     val newSumDistances = sumDistances
       .sortedJoin(newHyperBallSizes)
       .mapValues {
-        case (original, (oldSize, newSize)) => {
+        case (original, (oldSize, newSize)) =>
           original + ((newSize - oldSize) * diameter)
-        }
       }
 
     if (diameter < maxDiameter) {
@@ -162,9 +159,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     val newHarmonicCentralities = harmonicCentralities
       .sortedJoin(newHyperBallSizes)
       .mapValues {
-        case (original, (oldSize, newSize)) => {
+        case (original, (oldSize, newSize)) =>
           original + ((newSize - oldSize).toDouble / diameter)
-        }
       }
 
     if (diameter < maxDiameter) {
