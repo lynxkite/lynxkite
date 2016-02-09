@@ -230,8 +230,12 @@ class DataManager(sc: spark.SparkContext,
     val guid = entity.gUID
     // It would be great if we could be more granular, but for now we just return 0.5 if the
     // computation is running.
-    if (entityCache.contains(guid) && !entityCache(guid).isCompleted) 0.5
-    else if (hasEntity(entity) || hasEntityOnDisk(entity)) 1.0
+    if (entityCache.contains(guid)) {
+      val cachedEntity = entityCache(guid)
+      if (cachedEntity.isFailed) -1.0 // failed, but onFailure was not yet invoked
+      else if (!cachedEntity.isCompleted) 0.5
+      else 1.0
+    } else if (hasEntityOnDisk(entity)) 1.0
     else if (failedEntityCache.contains(guid)) -1.0
     else 0.0
   }
