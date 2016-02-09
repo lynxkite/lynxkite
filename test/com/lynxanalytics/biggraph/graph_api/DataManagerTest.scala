@@ -90,24 +90,26 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     import Scripting._
 
     val testfile = HadoopFile(myTempDirPrefix) / "test.csv"
-    // Create the file as the operation constuctor checks for its existence.
-    testfile.createFromStrings("src,dst\n1,2\n")
-    val imported = graph_operations.ImportEdgeList(
-      graph_operations.CSV(testfile, ",", "src,dst"), "src", "dst")().result
+    // Create the file so the schema can be read from it.
+    testfile.createFromStrings("a,b\n1,2\n")
+    val df = dataManager.masterSQLContext.read
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .load(testfile.resolvedName)
+    val imported = graph_operations.ImportDataFrame(df).result
 
     // Delete file, so that the actual computation fails.
     testfile.delete()
     // The file does not exist, so the import fails.
     val e = intercept[Exception] {
-      dataManager.get(imported.edges)
+      dataManager.get(imported.ids)
     }
-    assert(-1.0 == dataManager.computeProgress(imported.edges))
+    assert(-1.0 == dataManager.computeProgress(imported.ids))
     // Create the file.
-    testfile.createFromStrings("src,dst\n1,2\n")
+    testfile.createFromStrings("a,b\n3,4\n")
     // The result can be accessed now.
-    assert(TestUtils.RDDToSortedString(
-      dataManager.get(imported.stringID).rdd.values) == "1\n2")
-    assert(1.0 == dataManager.computeProgress(imported.edges))
+    assert(dataManager.get(imported.columns("a").entity).rdd.values.collect.toSeq == Seq("3"))
+    assert(1.0 == dataManager.computeProgress(imported.ids))
   }
 
   test("Ephemeral repo can read main repo") {
