@@ -57,7 +57,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     // Hll counters are used to estimate set sizes.
     val globalHll = new HyperLogLogMonoid(bits)
     val hyperBallCounters = vertices.mapValuesWithKeys {
-      // Initialize a counter for every vertex 
+      // Initialize a counter for every vertex
       case (vid, _) => globalHll(vid)
     }
     // We have to keep track of the HyperBall sizes for the actual
@@ -102,8 +102,9 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           edges)
         finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
           case (vid, (sumDistance, size)) => {
-            if (size == 1) 0.0
-            else sumDistance.toDouble / (size - 1).toDouble // size includes itself
+            val others = size - 1 // size includes the vertex itself
+            if (others == 0) 0.0
+            else sumDistance.toDouble / others.toDouble
           }
         }
     }
