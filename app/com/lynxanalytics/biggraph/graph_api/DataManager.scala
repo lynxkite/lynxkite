@@ -75,19 +75,21 @@ class DataManager(sc: spark.SparkContext,
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
-    assert(!hasEntity(eio.entity), s"${eio}")
+    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio}")
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
       eio.exists
   }
-  private def hasEntity(entity: MetaGraphEntity): Boolean = {
+  private def isEntityInProgressOrComputed(
+    entity: MetaGraphEntity): Boolean = {
+
     entityCache.contains(entity.gUID) &&
       (entityCache(entity.gUID).value match {
-        case Some(Success(_)) => true
-        case None => true
-        case _ => false
+        case None => true // in progress
+        case Some(Failure(_)) => false
+        case Some(Success(_)) => true // computed
       })
   }
 
@@ -250,7 +252,7 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
-    if (!hasEntity(entity)) {
+    if (!isEntityInProgressOrComputed(entity)) {
       if (hasEntityOnDisk(entity)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
