@@ -23,7 +23,7 @@ object DBTable extends FromJson[DBTable] {
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class DBTable(
     val db: String, val table: String, val fields: Seq[String],
-    val key: String) extends RowInput {
+    val key: String) extends RowInput with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[DBTable] && {
       val other = o.asInstanceOf[DBTable]
