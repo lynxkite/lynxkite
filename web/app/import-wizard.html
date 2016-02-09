@@ -22,6 +22,7 @@
         <option value="csv">CSV files</option>
         <option value="parquet">Parquet files</option>
         <option value="orc">ORC files</option>
+        <option value="json">JSON files</option>
         <option value="jdbc">Database table (via JDBC)</option>
         <option value="hive">Hive table</option>
       </select>
@@ -82,7 +83,7 @@
     </div>
   </div>
 
-  <div ng-repeat="format in 'parquet orc'.split(' ')">
+  <div ng-repeat="format in 'parquet orc json'.split(' ')">
     <div class="form-group" ng-show="datatype === format">
       <label for="{{ format }}-filename" class="col-sm-4 control-label">
         Name of {{ format }} files to import
@@ -189,6 +190,13 @@
         ng-click="importORC()"
         class="btn btn-default">
         Import ORC files
+      </div>
+      <div
+        id="import-json-button"
+        ng-show="(datatype === 'json') && files.filename && !requestInProgress"
+        ng-click="importJson()"
+        class="btn btn-default">
+        Import JSON files
       </div>
       <div
         id="import-jdbc-button"
