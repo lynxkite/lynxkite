@@ -125,9 +125,8 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
         val rng = new JDKRandomGenerator()
         rng.setSeed(pSeed)
         it.flatMap {
-          case (_, members) => {
+          case (_, members) =>
             sampleVertexPairs(members, rng)
-          }
         }
     }
   }
@@ -173,13 +172,12 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     edgeToSrcSeg
       .cogroup(edgeToDstSeg)
       .map {
-        case (keyEdge, (srcSegs, dstSegs)) => {
+        case (keyEdge, (srcSegs, dstSegs)) =>
           // Consistency-check: both endpoint of each edge should be in at least
           // one segment of vsToSegRestricted.
           assert(srcSegs.size > 0 && dstSegs.size > 0)
           val intersectionSize = (srcSegs.toSet & dstSegs.toSet).size
           (keyEdge, intersectionSize)
-        }
       }
   }
 
@@ -192,12 +190,12 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     seed: Long): UniqueSortedRDD[ID, ((ID, ID), Int)] = {
     preSelectedEdgesWithCounts
       .mapPartitionsWithIndex {
-        case (pidx, it) => {
+        case (pidx, it) =>
           val pSeed = new Random((pidx << 16) + seed).nextLong()
           val rng = new JDKRandomGenerator()
           rng.setSeed(pSeed)
           it.flatMap {
-            case (edge, count) => {
+            case (edge, count) =>
               val roll = rng.nextDouble()
               val limit = prob / (1.0 - Math.pow(1.0 - prob, count))
               if (roll < limit) {
@@ -205,9 +203,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
               } else {
                 None
               }
-            }
           }
-        }
       }.randomNumbered(partitioner)
   }
 

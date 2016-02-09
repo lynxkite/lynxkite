@@ -120,7 +120,7 @@ object FEFilters {
           case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
           case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
           case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
-          case boundRE(comparator, valueString) => {
+          case boundRE(comparator, valueString) =>
             val value = valueString.toDouble
             comparator match {
               case "=" => DoubleEQ(value)
@@ -130,7 +130,6 @@ object FEFilters {
               case "<=" => DoubleLE(value)
               case ">=" => DoubleGE(value)
             }
-          }
         }
         doubleFilter.asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
