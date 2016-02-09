@@ -2939,66 +2939,18 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
     def enabled =
       FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
-    private def shortClass(o: Any) = o.getClass.getName.split('.').last
     def apply(params: Map[String, String]) = {
-      val sc = env.dataManager.runtimeContext.sparkContext
       val t = params("timestamp")
-      val directory = SymbolPath("!metagraph", "$t")
-      val ops = env.metaGraphManager.getOperationInstances
-      val vertices = {
-        val frame = DirectoryEntry.fromPath(directory / "vertices")
-        if (!frame.exists) {
-          val rdd = sc.parallelize(ops.flatMap {
-            case (guid, inst) =>
-              val op = (guid.toString, "Operation", shortClass(inst.operation), null)
-              val outputs = inst.outputs.all.map {
-                case (name, entity) =>
-                  val progress = env.entityProgressManager.computeProgress(entity)
-                  (entity.gUID.toString, shortClass(entity), name.name, progress)
-              }
-              op +: outputs.toSeq
-          })
-          log.info(s"Writing metagraph vertices to $table.")
-          val df = rdd.toDF("guid", "kind", "name", "progress")
-          val table = TableImport.importDataFrameAsync(df)
-          frame.asNewTableFrame(table)
-          table
-        } else frame.asTableFrame.table
-      }
-      project.vertexSet = vertices.idSet
-      for ((name, attr) <- vertices.columns) {
-        project.newVertexAttribute(name, attr)
-      }
+      val mg = graph_operations.MetaGraph(t, Some(env)).result
+      project.vertexSet = mg.vs
+      project.newVertexAttribute("GUID", mg.vGUID)
+      project.newVertexAttribute("kind", mg.vKind)
+      project.newVertexAttribute("name", mg.vName)
+      project.newVertexAttribute("progress", mg.vProgress)
       project.newVertexAttribute("id", project.vertexSet.idAttribute)
-      val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
-      val edges = {
-        val frame = DirectoryEntry.fromPath(directory / "edges")
-        val table = if (!frame.exists) {
-          val rdd = sc.parallelize(ops.flatMap {
-            case (guid, inst) =>
-              val inputs = inst.inputs.all.map {
-                case (name, entity) => (entity.gUID.toString, guid.toString, "Input", name.name)
-              }
-              val outputs = inst.outputs.all.map {
-                case (name, entity) => (guid.toString, entity.gUID.toString, "Output", name.name)
-              }
-              inputs ++ outputs
-          })
-          log.info(s"Writing metagraph edges to $file.")
-          val df = rdd.toDF("src", "dst", "kind", "name")
-          val table = TableImport.importDataFrameAsync(df)
-          frame.asNewTableFrame(table)
-          table
-        } else frame.asTableFrame.table
-        val op = graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-        op(
-          op.srcVidColumn, table.columns("src"))(
-            op.dstVidColumn, table.columns("dst"))(
-              op.srcVidAttr, guids)(
-                op.dstVidAttr, guids).result
-      }
-      project.edgeBundle = edges.edges
-      project.edgeAttributes = edges.attrs.mapValues(_.entity)
+      project.edgeBundle = mg.es
+      project.newEdgeAttribute("kind", mg.eKind)
+      project.newEdgeAttribute("name", mg.eName)
     }
   })
 
