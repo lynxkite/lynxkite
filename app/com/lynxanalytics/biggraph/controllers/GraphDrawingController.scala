@@ -444,7 +444,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val smallEdgeSetOption = getSmallEdgeSet(edgeBundle, srcView, dstView)
     val feEdges = smallEdgeSetOption match {
-      case Some(smallEdgeSet) => {
+      case Some(smallEdgeSet) =>
         log.info("PERF Small edge set mode for request: " + request)
         val smallEdgeSetMap = smallEdgeSet.toMap
         val filteredEdgeSetIDs = FEFilters.localFilter(smallEdgeSetMap.keySet, request.filters)
@@ -493,8 +493,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
                   _.getOrElse((s, d), DynamicValue(defined = false))))
           }
           .toSeq
-      }
-      case None => {
+
+      case None =>
         log.info("PERF Huge edge set mode for request: " + request)
         val edgeFilters = request.filters.map(_.toFilteredAttribute)
         val filtered = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters, edgeFilters)
@@ -513,7 +513,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
                 countOp.weights, weights)(
                   countOp.originalCount, originalEdgeCount).result.counts.value
         counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq
-      }
     }
     log.info("PERF edge counts computed")
     EdgeDiagramResponse(

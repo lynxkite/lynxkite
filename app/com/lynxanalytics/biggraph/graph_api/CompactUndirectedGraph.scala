@@ -46,12 +46,11 @@ object CompactUndirectedGraph {
     }.groupBySortedKey(edgesRDD.partitioner.get)
     val adjList = outEdges.fullOuterJoin(inEdges)
       .mapValuesWithKeys {
-        case (v, (outs, ins)) => {
+        case (v, (outs, ins)) =>
           val outSet = outs.getOrElse(Seq()).toSet
           val inSet = ins.getOrElse(Seq()).toSet
           val combined = if (needsBothDirections) (outSet & inSet) else (outSet | inSet)
           (combined - v).toArray.sorted
-        }
       }
     // We need to generate filenames here, on the master as prefix repository is not available
     // on the workers.

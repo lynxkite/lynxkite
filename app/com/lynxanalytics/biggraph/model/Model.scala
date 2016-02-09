@@ -104,13 +104,12 @@ object Model extends FromJson[Model] {
   private def standardScalerModelFromJson(j: json.JsValue): Option[mllib.feature.StandardScalerModel] = {
     j match {
       case JsNull => None
-      case _ => {
+      case _ =>
         val std = org.apache.spark.mllib.linalg.Vectors.fromJson(json.Json.stringify(j \ "std"))
         val mean = org.apache.spark.mllib.linalg.Vectors.fromJson(json.Json.stringify(j \ "mean"))
         val withStd = (j \ "withStd").as[Boolean]
         val withMean = (j \ "withMean").as[Boolean]
         Some(new mllib.feature.StandardScalerModel(std, mean, withStd, withMean))
-      }
     }
   }
 

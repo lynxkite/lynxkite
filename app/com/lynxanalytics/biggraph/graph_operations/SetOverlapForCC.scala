@@ -110,20 +110,18 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
           val other = idxa(readIdx)
           if (current != other) {
             minimalElementInIs(current, other) match {
-              case Some(minimal) => {
+              case Some(minimal) =>
                 todo.enqueue(other)
                 // If minimal < vid, then this edge (or some other path between the two end nodes)
                 // will be added in the sets with smaller vid.
                 if (minimal >= vid) addEdges(current, other)
                 // We found the component of this vertex, no need to check for edges going into
                 // it anymore.
-              }
-              case None => {
+              case None =>
                 // We still need to consider this vertex, so we copy it over to the start of the
                 // array.
                 idxa(writeIdx) = other
                 writeIdx += 1
-              }
             }
           }
         }

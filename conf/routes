@@ -38,6 +38,8 @@ POST /ajax/importCSV         com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/importJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJdbc
 POST /ajax/importParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.importParquet
 POST /ajax/importORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importORC
+POST /ajax/importJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJson
+POST /ajax/importHive         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importHive
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
@@ -52,7 +54,8 @@ POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJs
 POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
-GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
+GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload
+GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadFile
 
 GET  /logs             com.lynxanalytics.biggraph.serving.ProductionJsonServer.logs
 
