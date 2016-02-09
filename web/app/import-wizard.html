@@ -96,18 +96,6 @@
         </file-parameter>
       </div>
     </div>
-    <div class="form-group" ng-show="datatype === format">
-      <label for="{{ format }}-columns-to-import" class="col-sm-4 control-label">
-        Columns to import
-        <help-popup href="import-{{ format }}-columns-to-import"></help-popup>
-      </label>
-      <div class="col-sm-8" id="{{ format }}-columns-to-import">
-        <input class="form-control"
-               ng-model="files.columnsToImport"
-               ng-disabled="requestInProgress"
-               placeholder="Comma separated, leave empty to import all" >
-      </div>
-    </div>
   </div>
 
   <div ng-show="datatype === 'jdbc'">
@@ -145,18 +133,6 @@
                placeholder="Enter the name of a column of an integer type">
       </div>
     </div>
-    <div class="form-group">
-      <label for="jdbc-columns-to-import" class="col-sm-4 control-label">
-        Columns to import
-        <help-popup href="import-jdbc-columns-to-import"></help-popup>
-      </label>
-      <div class="col-sm-8" id="jdbc-columns-to-import">
-        <input class="form-control"
-               ng-model="jdbc.columnsToImport"
-               ng-disabled="requestInProgress"
-               placeholder="Comma separated, leave empty to import all">
-      </div>
-    </div>
   </div>
 
   <div ng-show="datatype === 'hive'">
@@ -171,17 +147,17 @@
                ng-disabled="requestInProgress">
       </div>
     </div>
-    <div class="form-group">
-      <label for="hive-columns-to-import" class="col-sm-4 control-label">
-        Columns to import
-        <help-popup href="import-hive-columns-to-import"></help-popup>
-      </label>
-      <div class="col-sm-8" id="hive-columns-to-import">
-        <input class="form-control"
-               ng-model="hive.columnsToImport"
-               ng-disabled="requestInProgress"
-               placeholder="Comma separated, leave empty to import all" >
-      </div>
+  </div>
+
+  <div class="form-group">
+    <label for="columns-to-import" class="col-sm-4 control-label">
+      Columns to import
+    </label>
+    <div class="col-sm-8" id="columns-to-import">
+      <input class="form-control"
+             ng-model="columnsToImport"
+             ng-disabled="requestInProgress"
+             placeholder="Comma separated, leave empty to import all columns" >
     </div>
   </div>
 
@@ -209,7 +185,7 @@
       </div>
       <div
         id="import-orc-button"
-        ng-show="(datatype === 'orc') && orc.filename && !requestInProgress"
+        ng-show="(datatype === 'orc') && files.filename && !requestInProgress"
         ng-click="importORC()"
         class="btn btn-default">
         Import ORC files

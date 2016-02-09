@@ -17,6 +17,7 @@ publishArtifact in packageSrc := false  // Don't package source.
 
 // Somehow the hive dependency only works like this. :( There are quite a few people seeing this,
 // but no clear solution. As we plan to move to 2.11 anyways, I think we can live with this for now.
+// See: https://issues.apache.org/jira/browse/SPARK-10306
 scalaVersion := "2.10.3"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
