@@ -21,7 +21,8 @@ object AddGaussianVertexAttribute extends OpFromJson {
 }
 import AddGaussianVertexAttribute._
 @deprecated("Use AddRandomAttribute instead.", "1.7.0")
-class AddGaussianVertexAttribute(val seed: Int) extends TypedMetaGraphOp[Input, Output] {
+class AddGaussianVertexAttribute(val seed: Int)
+    extends TypedMetaGraphOp[Input, Output] with Serializable {
   override def equals(o: Any) =
     o.isInstanceOf[AddGaussianVertexAttribute] &&
       o.asInstanceOf[AddGaussianVertexAttribute].seed == seed

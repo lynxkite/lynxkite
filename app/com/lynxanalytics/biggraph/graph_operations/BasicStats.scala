@@ -59,7 +59,7 @@ object CountEdges extends OpFromJson {
   def apply() = new CountEdges
 }
 @deprecated("Use Count.run(eb) instead.", "1.7.0")
-class CountEdges extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] {
+class CountEdges extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] with Serializable {
   override def equals(o: Any) = o.isInstanceOf[CountEdges]
   import CountEdges._
   override val isHeavy = true
@@ -189,7 +189,8 @@ object ComputeMinMaxDouble extends OpFromJson {
 }
 @deprecated("Use ComputeMinMaxMinPositive instead.", since = "1.6.0")
 class ComputeMinMaxDouble
-    extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output] {
+    extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
+    with Serializable {
   override def equals(o: Any) = o.isInstanceOf[ComputeMinMaxDouble]
   @transient override lazy val inputs = new ComputeMinMaxDouble.Input
   def outputMeta(instance: MetaGraphOperationInstance) =
