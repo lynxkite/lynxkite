@@ -107,8 +107,8 @@ class ImportDataFrame private (
               rc: RuntimeContext): Unit = {
     assert(
       inputFrame.nonEmpty,
-      "You cannot rerun an ImportDataFrame operation. If the result is not in the data directory" +
-        " then you have to reimport the data using a new instance of ImportDataFrame")
+      "Import failed or imported data have been lost (if this table was successfully imported" +
+        " before then contact your system administrator)")
 
     val sc = rc.sparkContext
 
