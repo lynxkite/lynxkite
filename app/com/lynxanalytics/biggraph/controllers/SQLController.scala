@@ -170,6 +170,14 @@ case class ORCImportRequest(
   val format = "orc"
 }
 
+case class JsonImportRequest(
+    table: String,
+    privacy: String,
+    files: String,
+    columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
+  val format = "json"
+}
+
 case class HiveImportRequest(
     table: String,
     privacy: String,
@@ -206,6 +214,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
   def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
+  def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
