@@ -107,6 +107,8 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     // The result can be accessed now.
     assert(TestUtils.RDDToSortedString(
       dataManager.get(imported.stringID).rdd.values) == "1\n2")
+    // The compute progress of edges is also updated.
+    dataManager.get(imported.edges)
     assert(1.0 == dataManager.computeProgress(imported.edges))
   }
 
