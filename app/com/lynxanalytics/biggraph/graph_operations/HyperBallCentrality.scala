@@ -57,25 +57,24 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     // Hll counters are used to estimate set sizes.
     val globalHll = new HyperLogLogMonoid(bits)
     val hyperBallCounters = vertices.mapValuesWithKeys {
-      // Initialize a counter for every vertex 
+      // Initialize a counter for every vertex
       case (vid, _) => globalHll(vid)
     }
     // We have to keep track of the HyperBall sizes for the actual
     // and the previous diameter.
     val hyperBallSizes = vertices.mapValues { _ => (1, 1) }
 
-    algorithm match {
-      case "Harmonic" => {
-        val centralities = getHarmonicCentralities(
+    val centralities = algorithm match {
+      case "Harmonic" =>
+        getHarmonicCentralities(
           diameter = 1,
           harmonicCentralities = vertices.mapValues { _ => 0.0 },
           hyperBallCounters = hyperBallCounters,
           hyperBallSizes = hyperBallSizes,
           vertexPartitioner,
           edges)
-        output(o.centrality, centralities)
-      }
-      case "Lin" => {
+
+      case "Lin" =>
         val (finalSumDistances, sizes) = getMeasures(
           diameter = 1,
           sumDistances = vertices.mapValues { _ => 0 },
@@ -83,7 +82,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           hyperBallSizes = hyperBallSizes,
           vertexPartitioner,
           edges)
-        val centralities = finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
+        finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
           case (vid, (sumDistance, size)) => {
             if (sumDistance == 0) {
               1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
@@ -92,9 +91,25 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
             }
           }
         }
-        output(o.centrality, centralities)
-      }
+
+      case "Average distance" =>
+        val (finalSumDistances, sizes) = getMeasures(
+          diameter = 1,
+          sumDistances = vertices.mapValues { _ => 0 },
+          hyperBallCounters = hyperBallCounters,
+          hyperBallSizes = hyperBallSizes,
+          vertexPartitioner,
+          edges)
+        finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
+          case (vid, (sumDistance, size)) => {
+            val others = size - 1 // size includes the vertex itself
+            if (others == 0) 0.0
+            else sumDistance.toDouble / others.toDouble
+          }
+        }
     }
+
+    output(o.centrality, centralities)
   }
 
   /* For every vertex A returns the sum of the distances to A and

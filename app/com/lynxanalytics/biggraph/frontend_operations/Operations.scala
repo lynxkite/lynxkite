@@ -1146,7 +1146,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "centrality"),
       NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
-      Choice("algorithm", "Centrality type", options = FEOption.list("Harmonic", "Lin")),
+      Choice("algorithm", "Centrality type",
+        options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
