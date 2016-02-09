@@ -21,7 +21,10 @@ object AddGaussianVertexAttribute extends OpFromJson {
 }
 import AddGaussianVertexAttribute._
 @deprecated("Use AddRandomAttribute instead.", "1.7.0")
-class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input, Output] {
+class AddGaussianVertexAttribute(val seed: Int) extends TypedMetaGraphOp[Input, Output] {
+  override def equals(o: Any) =
+    o.isInstanceOf[AddGaussianVertexAttribute] &&
+      o.asInstanceOf[AddGaussianVertexAttribute].seed == seed
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
