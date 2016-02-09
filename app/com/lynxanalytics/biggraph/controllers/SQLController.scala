@@ -52,7 +52,8 @@ case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 trait GenericImportRequest {
   val table: String
   val privacy: String
-  def columnsToImport: List[String]
+  // Empty list means all columns.
+  val columnsToImport: List[String]
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
@@ -77,7 +78,8 @@ case class CSVImportRequest(
     columnNames: List[String],
     delimiter: String,
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
-    mode: String) extends GenericImportRequest {
+    mode: String,
+    columnsToImport: List[String]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
@@ -99,10 +101,6 @@ case class CSVImportRequest(
     readerWithSchema.load(hadoopFile.resolvedName)
   }
 
-  // We deal with restricting to certain columns specially above, so we instruct
-  // GenericImportRequest to keep all columns.
-  def columnsToImport = List()
-
   def notes = s"Imported from CSV files ${files}."
 }
 object CSVImportRequest {
@@ -115,7 +113,6 @@ case class JdbcImportRequest(
     jdbcUrl: String,
     jdbcTable: String,
     keyColumn: String,
-    // Empty list means all columns.
     columnsToImport: List[String]) extends GenericImportRequest {
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
@@ -139,7 +136,7 @@ case class JdbcImportRequest(
   }
 
   def notes: String = {
-    val uri = new java.net.URI(jdbcUrl.drop(5))
+    val uri = new java.net.URI(jdbcUrl.drop("jdbc:".size))
     val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
     s"Imported from table ${jdbcTable} at ${urlSafePart}."
   }
@@ -161,7 +158,6 @@ case class ParquetImportRequest(
     table: String,
     privacy: String,
     files: String,
-    // Empty list means all columns.
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "parquet"
 }
@@ -170,7 +166,6 @@ case class ORCImportRequest(
     table: String,
     privacy: String,
     files: String,
-    // Empty list means all columns.
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "orc"
 }
@@ -179,7 +174,6 @@ case class HiveImportRequest(
     table: String,
     privacy: String,
     hiveTable: String,
-    // Empty list means all columns.
     columnsToImport: List[String]) extends GenericImportRequest {
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {

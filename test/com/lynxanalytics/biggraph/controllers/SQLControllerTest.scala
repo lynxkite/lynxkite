@@ -75,7 +75,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         files = csvFiles,
         columnNames = List("vertexId", "name", "age"),
         delimiter = ",",
-        mode = "FAILFAST")))
+        mode = "FAILFAST",
+        columnsToImport = List())))
     val tablePath = response.id
 
     run(
