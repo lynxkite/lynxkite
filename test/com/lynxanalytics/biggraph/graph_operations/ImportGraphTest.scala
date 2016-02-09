@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
+@deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportGraphTest extends FunSuite with TestGraphOp {
   val resDir = "/graph_operations/ImportGraphTest"
   val res = getClass.getResource(resDir).toString
