@@ -60,10 +60,4 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def value = future.value
 
   def isCompleted = future.isCompleted
-
-  def isFailed =
-    value match {
-      case Some(Failure(_)) => true
-      case _ => false
-    }
 }

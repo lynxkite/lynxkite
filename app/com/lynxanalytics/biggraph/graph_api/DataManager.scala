@@ -12,10 +12,11 @@ import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.util.Failure
+import scala.util.Success
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_api.{ SafeFuture => Future }
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -40,13 +41,8 @@ class DataManager(sc: spark.SparkContext,
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext("DataManager",
       maxParallelism = util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
-  private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
-  private val entityCache = TrieMap[UUID, Future[EntityData]]()
-  // If computing an entity has failed, then it is not put into
-  // entityCache, but we store the exception in failedEntityCache.
-  // An entity should not be present in both of these at the same
-  // time.
-  private val failedEntityCache = TrieMap[UUID, Throwable]()
+  private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
+  private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   val masterSQLContext = new SQLContext(sc)
 
@@ -86,33 +82,33 @@ class DataManager(sc: spark.SparkContext,
       // Slow check for _SUCCESS file.
       eio.exists
   }
-  private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
+  private def hasEntity(entity: MetaGraphEntity): Boolean = {
+    entityCache.contains(entity.gUID) &&
+      (entityCache(entity.gUID).value match {
+        case Some(Success(_)) => true
+        case None => true
+        case _ => false
+      })
+  }
 
   // For edge bundles and attributes we need to load the base vertex set first
-  private def load(entity: MetaGraphEntity): Future[EntityData] = {
+  private def load(entity: MetaGraphEntity): SafeFuture[EntityData] = {
     val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
     val vsOpt: Option[VertexSet] = eio.correspondingVertexSet
-    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(Future.successful(None))
+    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(SafeFuture.successful(None))
     baseFuture.map(bf => eio.read(bf))
   }
 
-  private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
-    failedEntityCache.remove(entity.gUID)
+  private def set(entity: MetaGraphEntity, data: SafeFuture[EntityData]) = synchronized {
     entityCache(entity.gUID) = data
-    data.onFailure {
-      case t: Throwable => synchronized {
-        failedEntityCache(entity.gUID) = t
-        entityCache.remove(entity.gUID)
-      }
-    }
   }
 
   // This is for asynchronous tasks. We store them in a WeakHashMap so that waitAllFutures can wait
   // for them, but the data structure does not grow indefinitely.
-  private val loggedFutures = new java.util.WeakHashMap[Future[Unit], Unit]
+  private val loggedFutures = new java.util.WeakHashMap[SafeFuture[Unit], Unit]
   private def loggedFuture(func: => Unit): Unit = {
-    val f = Future {
+    val f = SafeFuture {
       try {
         func
       } catch {
@@ -122,9 +118,9 @@ class DataManager(sc: spark.SparkContext,
     loggedFutures.put(f, ())
   }
 
-  private def execute(instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = {
+  private def execute(instance: MetaGraphOperationInstance): SafeFuture[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
-    val futureInputs = Future.sequence(
+    val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
         case (name, entity) =>
           getFuture(entity).map(data => (name, data))
@@ -201,7 +197,7 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def getInstanceFuture(
-    instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = synchronized {
+    instance: MetaGraphOperationInstance): SafeFuture[Map[UUID, EntityData]] = synchronized {
 
     val gUID = instance.gUID
     if (!instanceOutputCache.contains(gUID)) {
@@ -231,12 +227,12 @@ class DataManager(sc: spark.SparkContext,
     // It would be great if we could be more granular, but for now we just return 0.5 if the
     // computation is running.
     if (entityCache.contains(guid)) {
-      val cachedEntity = entityCache(guid)
-      if (cachedEntity.isFailed) -1.0 // failed, but onFailure was not yet invoked
-      else if (!cachedEntity.isCompleted) 0.5
-      else 1.0
+      entityCache(guid).value match {
+        case None => 0.5
+        case Some(Failure(_)) => -1.0
+        case Some(Success(_)) => 1.0
+      }
     } else if (hasEntityOnDisk(entity)) 1.0
-    else if (failedEntityCache.contains(guid)) -1.0
     else 0.0
   }
 
@@ -245,7 +241,12 @@ class DataManager(sc: spark.SparkContext,
     ScalarComputationState(
       progress,
       if (progress == 1.0) Some(get(entity).value) else None,
-      failedEntityCache.get(entity.gUID))
+      if (progress == -1.0) {
+        entityCache(entity.gUID).value match {
+          case Some(Failure(throwable)) => Some(throwable)
+          case _ => None
+        }
+      } else None)
   }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
@@ -272,29 +273,29 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  def getFuture(vertexSet: VertexSet): Future[VertexSetData] = {
+  def getFuture(vertexSet: VertexSet): SafeFuture[VertexSetData] = {
     loadOrExecuteIfNecessary(vertexSet)
     entityCache(vertexSet.gUID).map(_.asInstanceOf[VertexSetData])
   }
 
-  def getFuture(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
+  def getFuture(edgeBundle: EdgeBundle): SafeFuture[EdgeBundleData] = {
     loadOrExecuteIfNecessary(edgeBundle)
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
-  def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
+  def getFuture[T](attribute: Attribute[T]): SafeFuture[AttributeData[T]] = {
     loadOrExecuteIfNecessary(attribute)
     implicit val tagForT = attribute.typeTag
     entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
   }
 
-  def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
+  def getFuture[T](scalar: Scalar[T]): SafeFuture[ScalarData[T]] = {
     loadOrExecuteIfNecessary(scalar)
     implicit val tagForT = scalar.typeTag
     entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
   }
 
-  def getFuture(entity: MetaGraphEntity): Future[EntityData] = {
+  def getFuture(entity: MetaGraphEntity): SafeFuture[EntityData] = {
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
@@ -304,9 +305,9 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def waitAllFutures(): Unit = {
-    Future.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
+    SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     import collection.JavaConversions.mapAsScalaMap
-    Future.sequence(loggedFutures.keys.toSeq).awaitReady(Duration.Inf)
+    SafeFuture.sequence(loggedFutures.keys.toSeq).awaitReady(Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
