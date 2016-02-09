@@ -109,6 +109,8 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     testfile.createFromStrings("a,b\n3,4\n")
     // The result can be accessed now.
     assert(dataManager.get(imported.columns("a").entity).rdd.values.collect.toSeq == Seq("3"))
+    // The compute progress of ids is also updated.
+    dataManager.get(imported.ids)
     assert(1.0 == dataManager.computeProgress(imported.ids))
   }
 

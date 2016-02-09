@@ -23,6 +23,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       function importStuff(endpoint, parameters) {
         parameters.table = scope.tableName;
         parameters.privacy = 'public-read';
+        parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
         scope.requestInProgress += 1;
         var request = util.post(endpoint, parameters);
         request.then(function(result) {
@@ -53,7 +54,6 @@ angular.module('biggraph').directive('importWizard', function(util) {
           request,
           {
             files: scope.files.filename,
-            columnsToImport: splitCSVLine(scope.files.columnsToImport),
           });
       }
 
@@ -63,16 +63,22 @@ angular.module('biggraph').directive('importWizard', function(util) {
       scope.importORC = function() {
         importFilesWith('/ajax/importORC');
       };
+      scope.importJson = function() {
+        importFilesWith('/ajax/importJson');
+      };
       scope.importJdbc = function() {
-        var columnsToImport =
-          splitCSVLine(scope.jdbc.columnsToImport);
         importStuff(
           '/ajax/importJdbc',
           {
             jdbcUrl: scope.jdbc.url,
             jdbcTable: scope.jdbc.table,
             keyColumn: scope.jdbc.keyColumn,
-            columnsToImport: columnsToImport,
+          });
+      };
+      scope.importHive = function() {
+        importStuff(
+          '/ajax/importHive', {
+            hiveTable: scope.hive.tableName,
           });
       };
     },

@@ -109,10 +109,9 @@ case class DeriveJSScalarDouble(
     "scalarNames" -> scalarNames)
   val desiredClass = classOf[java.lang.Double]
   def convert(v: Any): Double = v match {
-    case v: Double => {
+    case v: Double =>
       assert(!v.isNaN(), s"$expr did not return a valid number")
       v
-    }
     case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
   }
 }

@@ -183,10 +183,9 @@ object ObsoleteProject {
     try {
       Some(op)
     } catch {
-      case e: Throwable => {
+      case e: Throwable =>
         log.error(message, e)
         None
-      }
     }
   }
 

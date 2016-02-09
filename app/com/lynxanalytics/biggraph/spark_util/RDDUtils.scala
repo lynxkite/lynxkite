@@ -97,11 +97,10 @@ object RDDUtils {
     try {
       threadLocalKryo.get.writeClassAndObject(oos, obj)
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         log.error(
           s"Serialization error. We were trying to serialize: $obj of class ${obj.getClass}")
         throw e
-      }
     }
     oos.close
     bos.toByteArray
