@@ -13,10 +13,21 @@ import play.api.libs.json.JsNull
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
+  def details: String
 }
 
-class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
+// Helper classes to provide a common abstraction for various types of models.
+private class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  def details = m.toPMML()
+}
+private class RidgeRegressionModelImpl(m: mllib.regression.RidgeRegressionModel) extends ModelImplementation {
+  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  def details = m.toPMML()
+}
+private class LassoModelImpl(m: mllib.regression.LassoModel) extends ModelImplementation {
+  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  def details = m.toPMML()
 }
 
 case class Model(
@@ -83,9 +94,9 @@ case class Model(
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
       case "Ridge regression" =>
-        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
+        new RidgeRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
       case "Lasso" =>
-        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
+        new LassoModelImpl(mllib.regression.LassoModel.load(sc, path))
     }
   }
 
@@ -123,7 +134,13 @@ object Model extends FromJson[Model] {
       standardScalerModelFromJson(j \ "featureScaler").get
     )
   }
-  def toFE(modelName: String, modelMeta: ModelMeta): FEModel = FEModel(modelName, modelMeta.featureNames)
+  def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(modelName, modelMeta.featureNames)
+
+  def toFE(m: Model, sc: spark.SparkContext): FEModel = FEModel(
+    method = m.method,
+    labelName = m.labelName,
+    featureNames = m.featureNames,
+    details = m.load(sc).details)
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
@@ -163,9 +180,15 @@ object Model extends FromJson[Model] {
   }
 }
 
-case class FEModel(
+case class FEModelMeta(
   name: String,
   featureNames: List[String])
+
+case class FEModel(
+  method: String,
+  labelName: String,
+  featureNames: List[String],
+  details: String)
 
 trait ModelMeta {
   def featureNames: List[String]

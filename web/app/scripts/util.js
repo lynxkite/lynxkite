@@ -79,6 +79,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       '/ajax/scalarValue',
       '/ajax/center',
       '/ajax/getDataFilesStatus',
+      '/ajax/model',
       ];
     // Some requests may trigger substantial calculation on the backend. If we
     // make many slow requests in parallel we can easily exhaust the browser's

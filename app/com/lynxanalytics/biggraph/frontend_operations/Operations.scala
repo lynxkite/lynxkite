@@ -149,11 +149,11 @@ object OperationParams {
     val multipleChoice = false
     val mandatory = true
     val options = List()
-    import FrontendJson.wFEModel
+    import FrontendJson.wFEModelMeta
     import FrontendJson.wFEOption
     implicit val wModelsPayload = json.Json.writes[ModelsPayload]
     override val payload = Some(json.Json.toJson(ModelsPayload(
-      models = models.toList.map { case (k, v) => model.Model.toFE(k, v) },
+      models = models.toList.map { case (k, v) => model.Model.toMetaFE(k, v) },
       attrs = attrs)))
     def validate(value: String): Unit = {}
   }
@@ -161,7 +161,7 @@ object OperationParams {
 
 // A special parameter payload to describe applicable models on the UI.
 case class ModelsPayload(
-  models: List[model.FEModel],
+  models: List[model.FEModelMeta],
   attrs: List[FEOption])
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
