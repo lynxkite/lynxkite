@@ -17,17 +17,12 @@ trait ModelImplementation {
 }
 
 // Helper classes to provide a common abstraction for various types of models.
-private class LinearRegressionModelImpl(m: mllib.regression.LinearRegressionModel) extends ModelImplementation {
+private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
-  def details = m.toPMML()
-}
-private class RidgeRegressionModelImpl(m: mllib.regression.RidgeRegressionModel) extends ModelImplementation {
-  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
-  def details = m.toPMML()
-}
-private class LassoModelImpl(m: mllib.regression.LassoModel) extends ModelImplementation {
-  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
-  def details = m.toPMML()
+  def details: String = {
+    val weights = m.weights.toArray.mkString(", ")
+    s"intercept: ${m.intercept}\nweights: $weights"
+  }
 }
 
 case class Model(
@@ -94,9 +89,9 @@ case class Model(
       case "Linear regression" =>
         new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
       case "Ridge regression" =>
-        new RidgeRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
+        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
       case "Lasso" =>
-        new LassoModelImpl(mllib.regression.LassoModel.load(sc, path))
+        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
     }
   }
 
