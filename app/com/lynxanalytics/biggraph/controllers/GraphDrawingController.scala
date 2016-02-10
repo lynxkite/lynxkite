@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.spark_util
 
@@ -640,6 +641,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getScalarValue(user: User, request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
     dynamicValue(scalar)
+  }
+
+  def getModel(user: User, request: ScalarValueRequest): model.FEModel = {
+    val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model].value
+    model.Model.toFE(m, dataManager.runtimeContext.sparkContext)
   }
 
   private def dynamicValue[T](scalar: Scalar[T]) = {
