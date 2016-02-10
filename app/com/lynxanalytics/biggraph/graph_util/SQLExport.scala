@@ -2,16 +2,12 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import java.sql
-import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
-import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.JDBCQuoting.quoteIdentifier
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-import org.apache.spark.SparkContext
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.ScalaReflection

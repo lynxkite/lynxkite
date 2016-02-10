@@ -62,11 +62,10 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
       // Increase prefix length.
       long = long.flatMap {
         case (prefix, sets) => sets.flatMap {
-          case (setId, set) => {
+          case (setId, set) =>
             set
               .filter(node => node > prefix.last)
               .map(next => (prefix :+ next, (setId, set)))
-          }
         }
       }.groupByKey(partitioner)
     }

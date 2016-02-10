@@ -15,7 +15,10 @@ sources in doc in Compile := List()  // Disable doc generation.
 
 publishArtifact in packageSrc := false  // Don't package source.
 
-scalaVersion := "2.10.4"
+// Somehow the hive dependency only works like this. :( There are quite a few people seeing this,
+// but no clear solution. As we plan to move to 2.11 anyways, I think we can live with this for now.
+// See: https://issues.apache.org/jira/browse/SPARK-10306
+scalaVersion := "2.10.3"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
 
@@ -39,6 +42,7 @@ libraryDependencies ++= Seq(
   "org.mozilla" % "rhino" % "1.7.7",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
+  "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
   "com.twitter" % "algebird-core_2.10" % "0.9.0",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
@@ -48,7 +52,11 @@ libraryDependencies ++= Seq(
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,
   // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
-  "com.databricks" % "spark-csv_2.10" % "1.3.0")
+  "com.databricks" % "spark-csv_2.10" % "1.3.0",
+  // Hive import seems to need this.
+  "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17")
+
+resolvers += "Twitter Repository" at "http://maven.twttr.com"
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>

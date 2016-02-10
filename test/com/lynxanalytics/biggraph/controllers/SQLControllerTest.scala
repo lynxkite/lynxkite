@@ -18,6 +18,17 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
+  test("sql file reading is disabled") {
+    val file = getClass.getResource("/controllers/noread.csv").toString
+    intercept[Throwable] {
+      await(sqlController.runSQLQuery(user, SQLQueryRequest(
+        DataFrameSpec(
+          project = projectName,
+          sql = s"select * from csv.`$file`"),
+        maxRows = 10)))
+    }
+  }
+
   test("sql export to csv") {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
@@ -26,7 +37,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       delimiter = ";",
       quote = "\"",
       header = true)))
-    val output = graph_util.HadoopFile(result.download.get).loadTextFile(sparkContext)
+    val output = graph_util.HadoopFile(result.download.get.path).loadTextFile(sparkContext)
     assert(output.collect.sorted.mkString(", ") ==
       "Adam;20.3, Eve;18.2, Isolated Joe;2.0, name;age")
   }
@@ -64,7 +75,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         files = csvFiles,
         columnNames = List("vertexId", "name", "age"),
         delimiter = ",",
-        mode = "FAILFAST")))
+        mode = "FAILFAST",
+        columnsToImport = List())))
     val tablePath = response.id
 
     run(

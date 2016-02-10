@@ -7,6 +7,7 @@ angular.module('biggraph').directive('value', function(util) {
     scope: { ref: '=', details: '=' },
     templateUrl: 'value.html',
     link: function(scope) {
+      scope.util = util;
       scope.human = true;
       scope.humanized = function(ref) {
         return scope.human && ref.double && ref.double.toString() !== util.human(ref.double);

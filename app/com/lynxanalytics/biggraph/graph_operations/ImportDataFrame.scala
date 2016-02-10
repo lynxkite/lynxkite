@@ -8,7 +8,6 @@ import com.lynxanalytics.biggraph.protection.Limitations
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types
 import scala.reflect.runtime.universe.TypeTag
-import scala.reflect.runtime.universe.typeTag
 
 object ImportDataFrame extends OpFromJson {
   type SomeAttribute = Attribute[_]
@@ -108,8 +107,8 @@ class ImportDataFrame private (
               rc: RuntimeContext): Unit = {
     assert(
       inputFrame.nonEmpty,
-      "You cannot rerun an ImportDataFrame operation. If the result is not in the data directory" +
-        " then you have to reimport the data using a new instance of ImportDataFrame")
+      "Import failed or imported data have been lost (if this table was successfully imported" +
+        " before then contact your system administrator)")
 
     val sc = rc.sparkContext
 

@@ -11,6 +11,9 @@ angular.module('biggraph').directive('importWizard', function(util) {
         mode: 'FAILFAST',
         fileUploadCount: 0,
       };
+      scope.files = {
+        fileUploadCount: 0,
+      };
       scope.cancel = function(event) {
         event.stopPropagation();
         scope.onCancel();
@@ -20,6 +23,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       function importStuff(endpoint, parameters) {
         parameters.table = scope.tableName;
         parameters.privacy = 'public-read';
+        parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
         scope.requestInProgress += 1;
         var request = util.post(endpoint, parameters);
         request.then(function(result) {
@@ -30,26 +34,51 @@ angular.module('biggraph').directive('importWizard', function(util) {
         });
       }
 
+      function splitCSVLine(csv) {
+        return csv ? csv.split(',') : [];
+      }
+
       scope.importCSV = function() {
         importStuff(
           '/ajax/importCSV',
           {
             files: scope.csv.filename,
-            columnNames: scope.csv.columnNames ? scope.csv.columnNames.split(',') : [],
+            columnNames: splitCSVLine(scope.csv.columnNames),
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
           });
       };
+
+      function importFilesWith(request) {
+        importStuff(
+          request,
+          {
+            files: scope.files.filename,
+          });
+      }
+
+      scope.importParquet = function() {
+        importFilesWith('/ajax/importParquet');
+      };
+      scope.importORC = function() {
+        importFilesWith('/ajax/importORC');
+      };
+      scope.importJson = function() {
+        importFilesWith('/ajax/importJson');
+      };
       scope.importJdbc = function() {
-        var columnsToImport =
-          scope.jdbc.columnsToImport ? scope.jdbc.columnsToImport.split(',') : [];
         importStuff(
           '/ajax/importJdbc',
           {
             jdbcUrl: scope.jdbc.url,
             jdbcTable: scope.jdbc.table,
             keyColumn: scope.jdbc.keyColumn,
-            columnsToImport: columnsToImport,
+          });
+      };
+      scope.importHive = function() {
+        importStuff(
+          '/ajax/importHive', {
+            hiveTable: scope.hive.tableName,
           });
       };
     },

@@ -1,12 +1,13 @@
 // BigGraphController includes the request handlers that operate on projects at the metagraph level.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
 import java.util.regex.Pattern
 import play.api.libs.json
@@ -76,23 +77,14 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: List[FEOperationParameterMeta],
-  visibleScalars: List[FEOperationScalarMeta],
+  visibleScalars: List[FEScalar],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "",
   isWorkflow: Boolean = false,
   workflowAuthor: String = "")
 
-case class FEOperationParameterMeta(
-    id: String,
-    title: String,
-    kind: String, // Special rendering on the UI.
-    defaultValue: String,
-    options: List[FEOption],
-    multipleChoice: Boolean,
-    hasFixedOptions: Boolean,
-    payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
-
+object FEOperationParameterMeta {
   val validKinds = Seq(
     "default", // A simple textbox.
     "choice", // A drop down box.
@@ -101,13 +93,24 @@ case class FEOperationParameterMeta(
     "code", // JavaScript code
     "model", // A special kind to set model parameters.
     "table") // A table.
-  require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
-  if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
+
+  val choiceKinds = Set("choice", "tag-list")
 }
 
-case class FEOperationScalarMeta(
-  id: String,
-  guid: String)
+case class FEOperationParameterMeta(
+    id: String,
+    title: String,
+    kind: String, // Special rendering on the UI.
+    defaultValue: String,
+    options: List[FEOption],
+    multipleChoice: Boolean,
+    payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
+
+  require(
+    kind.isEmpty || FEOperationParameterMeta.validKinds.contains(kind),
+    s"'$kind' is not a valid parameter type")
+  if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
+}
 
 case class FEOperationSpec(
   id: String,
@@ -132,12 +135,23 @@ case class FEAttribute(
   isInternal: Boolean,
   computeProgress: Double)
 
+case class FEScalar(
+  id: String,
+  title: String,
+  typeName: String,
+  note: String,
+  isNumeric: Boolean,
+  isInternal: Boolean,
+  computeProgress: Double,
+  errorMessage: Option[String],
+  computedValue: Option[DynamicValue])
+
 case class FEProjectListElement(
     name: String,
     objectType: String,
     notes: String = "",
-    vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
-    edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
+    vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
+    edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
     error: Option[String] = None) { // If set the project could not be opened.
 
   assert(objectType == "table" || objectType == "project", s"Unrecognized objectType: $objectType")
@@ -152,7 +166,7 @@ case class FEProject(
   vertexSet: String = "",
   edgeBundle: String = "",
   notes: String = "",
-  scalars: List[FEAttribute] = List(),
+  scalars: List[FEScalar] = List(),
   vertexAttributes: List[FEAttribute] = List(),
   edgeAttributes: List[FEAttribute] = List(),
   segmentations: List[FESegmentation] = List(),
@@ -257,9 +271,9 @@ object BigGraphController {
 
   val dirtyOperationError = "Dirty operations are not allowed in history"
 }
-class BigGraphController(val env: BigGraphEnvironment) {
+class BigGraphController(val env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
-  implicit val entityProgressManager: EntityProgressManager = env.dataManager
+  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
 
   val ops = new Operations(env)
 
@@ -468,10 +482,21 @@ class BigGraphController(val env: BigGraphEnvironment) {
     params: Map[String, String],
     meta: FEOperationMeta): FEOperationMeta = {
     meta.copy(parameters = meta.parameters.map { parameter =>
-      if (parameter.hasFixedOptions &&
+      if (!FEOperationParameterMeta.choiceKinds.contains(parameter.kind)) {
+        parameter
+      } else if (!parameter.multipleChoice &&
         params.contains(parameter.id) &&
         !parameter.options.map(_.id).contains(params(parameter.id))) {
         parameter.copy(options = FEOption.fromID(params(parameter.id)) +: parameter.options)
+      } else if (parameter.multipleChoice && params.contains(parameter.id)) {
+        val selectedIds = params(parameter.id).split(",", -1).toList
+        val knownAllowedIds = parameter.options.map(_.id).toSet
+        val missingSelectedIds = selectedIds.filter(!knownAllowedIds.contains(_))
+        if (missingSelectedIds.nonEmpty) {
+          parameter.copy(options = missingSelectedIds.map(FEOption.fromID(_)) ++ parameter.options)
+        } else {
+          parameter
+        }
       } else {
         parameter
       }
@@ -634,13 +659,12 @@ abstract class OperationParameterMeta {
   val options: List[FEOption]
   val multipleChoice: Boolean
   val mandatory: Boolean
-  val hasFixedOptions: Boolean
   val payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, hasFixedOptions, payload)
+    id, title, kind, defaultValue, options, multipleChoice, payload)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
@@ -650,7 +674,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
-  def visibleScalars: List[FEOperationScalarMeta] = List()
+  def visibleScalars: List[FEScalar] = List()
   def enabled: FEStatus
   def isWorkflow: Boolean = false
   def workflowAuthor: String = ""
@@ -818,7 +842,7 @@ case class WorkflowOperation(
   }
 }
 
-abstract class OperationRepository(env: BigGraphEnvironment) {
+abstract class OperationRepository(env: SparkFreeEnvironment) {
   implicit lazy val manager = env.metaGraphManager
 
   // The registry maps operation IDs to their constructors.

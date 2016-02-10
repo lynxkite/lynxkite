@@ -30,8 +30,14 @@ module.exports = function(fw) {
       expect(lib.left.scalar('income_average').getText()).toBe('1500');
       expect(lib.left.scalar('empty_sum').getText()).toBe('0');
       // Check error.
-      expect(lib.left.scalar('empty_average').getText()).toBe('×');
-      lib.left.scalar('empty_average').click();
+      expect(lib.left.scalar('empty_average').getText()).toBe('× \u21bb');
+      lib.left.scalar('empty_average').element(by.css('.value-error')).click();
+      lib.expectModal('Error details');
+      lib.closeModal();
+      // It stays the same after a retry.
+      lib.left.scalar('empty_average').element(by.css('.value-retry')).click();
+      expect(lib.left.scalar('empty_average').getText()).toBe('× \u21bb');
+      lib.left.scalar('empty_average').element(by.css('.value-error')).click();
       lib.expectModal('Error details');
       lib.closeModal();
     }, function() {});

@@ -1,7 +1,6 @@
 // BigGraphEnvironment creates and holds the MetaGraphManager and DataManager.
 package com.lynxanalytics.biggraph
 
-import java.io.File
 import org.apache.spark
 import scala.concurrent._
 import scala.concurrent.duration.Duration
@@ -26,10 +25,18 @@ class StaticSparkContextProvider() extends SparkContextProvider {
   }
 }
 
-trait BigGraphEnvironment {
+// An environment that does not allow its holder to do any actual spark computations,
+// it only allows for meta level manipulations.
+trait SparkFreeEnvironment {
+  def metaGraphManager: graph_api.MetaGraphManager
+  def entityProgressManager: graph_api.EntityProgressManager
+}
+
+trait BigGraphEnvironment extends SparkFreeEnvironment {
   def sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
+  def entityProgressManager = dataManager
 
   private lazy val uniqueId = table.DefaultSource.register(this)
   def dataFrame: spark.sql.DataFrameReader = {

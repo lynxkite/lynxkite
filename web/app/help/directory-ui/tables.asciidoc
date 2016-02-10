@@ -128,7 +128,14 @@ will be split into a sub-range for each Spark worker, so they can each query a p
 parallel.
 +
 Pick a column that is uniformly distributed. Numerical identifiers are ideal.
+====
 
-[[columns-to-import]] Columns to import::
-The list of columns to import from the table. Leave empty to simply import all columns.
+[[import-hive]]
+#### Apache Hive
+
+Import an https://hive.apache.org/[Apache Hive] table directly to LynxKite.
+
+====
+[[table-name]] Hive table::
+The name of the Hive table to import.
 ====

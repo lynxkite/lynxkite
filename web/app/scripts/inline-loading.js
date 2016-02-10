@@ -11,6 +11,7 @@ angular.module('biggraph').directive('inlineLoading', function(util) {
     },
     templateUrl: 'inline-loading.html',
     link: function(scope) {
+      scope.util = util;
       scope.reportError = function() {
         util.reportRequestError(scope.ref, scope.details);
       };
