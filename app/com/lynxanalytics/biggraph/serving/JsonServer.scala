@@ -13,13 +13,10 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.protection.Limitations
-import com.lynxanalytics.biggraph.table
 import com.lynxanalytics.biggraph.model
 
 import java.io.File
-import org.apache.spark
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -175,11 +172,13 @@ object FrontendJson {
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
   }
+  implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
   implicit val wFEStatus = json.Json.writes[FEStatus]
   implicit val wFEOption = json.Json.writes[FEOption]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
-  implicit val wFEOperationScalarMeta = json.Json.writes[FEOperationScalarMeta]
+  implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wFEScalar = json.Json.writes[FEScalar]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
@@ -191,7 +190,6 @@ object FrontendJson {
   implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
-  implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wFEModel = json.Json.writes[FEModel]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
@@ -258,6 +256,9 @@ object FrontendJson {
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
   implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
   implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
+  implicit val rORCImportRequest = json.Json.reads[ORCImportRequest]
+  implicit val rJsonImportRequest = json.Json.reads[JsonImportRequest]
+  implicit val rHiveImportRequest = json.Json.reads[HiveImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -310,25 +311,10 @@ object ProductionJsonServer extends JsonServer {
     }
   }
 
-  def download = action(parse.anyContent) { (user, request) =>
-    import play.api.libs.concurrent.Execution.Implicits._
-    import scala.collection.JavaConversions._
-    log.info(s"download: $user ${request.path}")
-    val path = HadoopFile(request.getQueryString("path").get)
-    val name = request.getQueryString("name").get
-    // For CSV downloads we want to read the "header" file and then the "data" directory.
-    val files: Seq[HadoopFile] =
-      if ((path / "header").exists) Seq(path / "header") ++ (path / "data" / "*").list
-      else (path / "*").list.sortBy(_.symbolicName)
-    val length = files.map(_.length).sum
-    log.info(s"downloading $length bytes: $files")
-    val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
-    mvc.Result(
-      header = mvc.ResponseHeader(200, Map(
-        CONTENT_LENGTH -> length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=$name")),
-      body = play.api.libs.iteratee.Enumerator.fromStream(stream)
-    )
+  def oldCSVDownload = action(parse.anyContent)(Downloads.oldCSVDownload)
+
+  def downloadFile = action(parse.anyContent) {
+    (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
   }
 
   def logs = action(parse.anyContent) { (user, request) =>
@@ -389,6 +375,9 @@ object ProductionJsonServer extends JsonServer {
   def importCSV = jsonFuturePost(sqlController.importCSV)
   def importJdbc = jsonFuturePost(sqlController.importJdbc)
   def importParquet = jsonFuturePost(sqlController.importParquet)
+  def importORC = jsonFuturePost(sqlController.importORC)
+  def importJson = jsonFuturePost(sqlController.importJson)
+  def importHive = jsonFuturePost(sqlController.importHive)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

@@ -5,7 +5,7 @@
 // the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -31,7 +31,6 @@ object OperationParams {
     val kind = "default"
     val options = List()
     val multipleChoice = false
-    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
   case class Choice(
@@ -43,7 +42,6 @@ object OperationParams {
     val kind = "choice"
     val defaultValue = ""
     val mandatory = true
-    val hasFixedOptions = true
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
@@ -66,7 +64,6 @@ object OperationParams {
     val multipleChoice = false
     val defaultValue = ""
     val mandatory = true
-    val hasFixedOptions = true
     def validate(value: String): Unit = {}
   }
   case class TagList(
@@ -77,7 +74,6 @@ object OperationParams {
     val kind = "tag-list"
     val multipleChoice = true
     val defaultValue = ""
-    val hasFixedOptions = true
     def validate(value: String): Unit = {}
   }
   case class File(id: String, title: String) extends OperationParameterMeta {
@@ -86,7 +82,6 @@ object OperationParams {
     val defaultValue = ""
     val options = List()
     val mandatory = true
-    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
   case class Ratio(id: String, title: String, defaultValue: String = "")
@@ -95,7 +90,6 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
-    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
@@ -108,7 +102,6 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
-    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
@@ -119,7 +112,6 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
-    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
@@ -132,7 +124,6 @@ object OperationParams {
     val kind = "code"
     val options = List()
     val multipleChoice = false
-    val hasFixedOptions = false
     def validate(value: String): Unit = {}
   }
 
@@ -143,7 +134,6 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val mandatory = true
-    val hasFixedOptions = false
     def validate(value: String): Unit = {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
@@ -158,7 +148,6 @@ object OperationParams {
     val kind = "model"
     val multipleChoice = false
     val mandatory = true
-    val hasFixedOptions = false
     val options = List()
     import FrontendJson.wFEModel
     import FrontendJson.wFEOption
@@ -175,7 +164,7 @@ case class ModelsPayload(
   models: List[model.FEModel],
   attrs: List[FEOption])
 
-class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
+class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   import Operation.Category
   import Operation.Context
   abstract class UtilityOperation(t: String, c: Context)
@@ -812,7 +801,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     def apply(params: Map[String, String]) = {
-      val segmentations = params("segmentations").split(",").map(project.segmentation(_))
+      val segmentations = params("segmentations").split(",", -1).map(project.segmentation(_))
       assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
@@ -1157,7 +1146,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "centrality"),
       NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
-      Choice("algorithm", "Centrality type", options = FEOption.list("Harmonic", "Lin")),
+      Choice("algorithm", "Centrality type",
+        options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -1605,12 +1595,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   register("Create edges from co-occurrence", new StructureOperation(_, _) with SegOp {
-
     def segmentationParameters = List()
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        List(FEOperationScalarMeta("num_created_edges", scalar.gUID.toString))
+        implicit val entityProgressManager = env.entityProgressManager
+        List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
       } else {
         List()
       }
@@ -1636,7 +1626,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
-        List(FEOperationScalarMeta("num_total_edges", scalar.gUID.toString))
+        implicit val entityProgressManager = env.entityProgressManager
+        List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
       } else {
         List()
       }
@@ -2950,7 +2941,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               val op = s"$guid,Operation,${shortClass(inst.operation)},"
               val outputs = inst.outputs.all.map {
                 case (name, entity) =>
-                  val progress = env.dataManager.computeProgress(entity)
+                  val progress = env.entityProgressManager.computeProgress(entity)
                   s"${entity.gUID},${shortClass(entity)},${name.name},$progress"
               }
               op +: outputs.toSeq
@@ -3199,14 +3190,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def newScalar(data: String): Scalar[String] = {
     val op = graph_operations.CreateStringScalar(data)
     op.result.created
-  }
-
-  def downloadLink(fn: HadoopFile, name: String) = {
-    val urlPath = java.net.URLEncoder.encode(fn.symbolicName, "utf-8")
-    val urlName = java.net.URLEncoder.encode(name, "utf-8")
-    val url = s"/download?path=$urlPath&name=$urlName"
-    val quoted = '"' + url + '"'
-    newScalar(s"<a href=$quoted>download</a>")
   }
 
   // Whether a JavaScript expression contains a given identifier.

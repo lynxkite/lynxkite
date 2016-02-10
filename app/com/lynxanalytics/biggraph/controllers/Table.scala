@@ -82,15 +82,13 @@ object Table {
       case VertexTableName => new VertexTable(viewer)
       case EdgeTableName => new EdgeTable(viewer)
       case TripletTableName => new TripletTable(viewer)
-      case BelongsToTableName => {
+      case BelongsToTableName =>
         assert(
           viewer.isInstanceOf[SegmentationViewer],
           s"The $BelongsToTableName table is only defined on segmentations.")
         new BelongsToTable(viewer.asInstanceOf[SegmentationViewer])
-      }
-      case customTableName: String => {
+      case customTableName: String =>
         throw new AssertionError(s"Table $customTableName not found.")
-      }
     }
   }
 }

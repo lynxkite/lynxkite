@@ -31,14 +31,14 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
           }
         }
       });
+
       scope.$watch('op.visibleScalars', function() {
         scope.scalars = {};
-        var calculateScalars = !scope.historyMode;
         for (var i = 0; i < scope.op.visibleScalars.length; ++i) {
           var scalar = scope.op.visibleScalars[i];
-          scope.scalars[scalar.id] = util.get(
-            '/ajax/scalarValue',
-            { scalarId: scalar.guid, calculate: calculateScalars });
+          scope.scalars[scalar.title] = util.lazyFetchScalarValue(
+            scalar,
+            false /* Don't initiate computation if the scalar is not yet computed. */);
         }
       });
 

@@ -3,10 +3,6 @@
 
 package com.lynxanalytics.biggraph
 
-import scala.collection.JavaConversions
-
-import com.lynxanalytics.biggraph.frontend_operations.Operations
-
 object BatchMain extends App {
   if (args.size < 1) {
     System.err.println("""

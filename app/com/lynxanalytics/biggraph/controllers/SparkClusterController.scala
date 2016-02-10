@@ -154,9 +154,8 @@ class SparkCheckThread(
           // We don't care about errors here, we just want to start some Spark job
           // that can be observed by the listener to succeed (or not). So we just catch all
           // possible error and let the thread live regardless.
-          case e: Throwable => {
+          case e: Throwable =>
             log.error("Error in running the Spark check job in SparkCheckThread", e)
-          }
         }
         synchronized {
           shouldRun = false

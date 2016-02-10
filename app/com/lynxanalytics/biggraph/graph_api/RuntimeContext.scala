@@ -2,11 +2,8 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark
-import scala.util.Random
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           ioContext: io.IOContext,

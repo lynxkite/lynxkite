@@ -118,12 +118,11 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
                 // We found the component of this vertex, no need to check for edges going into
                 // it anymore.
               }
-              case None => {
+              case None =>
                 // We still need to consider this vertex, so we copy it over to the start of the
                 // array.
                 idxa(writeIdx) = other
                 writeIdx += 1
-              }
             }
           }
         }

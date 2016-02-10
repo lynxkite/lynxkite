@@ -12,7 +12,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    Projects no longer depend on the input files. (They can be deleted after importing.) It becomes
    easier to share raw data between projects. We have fewer operations (just _Import vertices from
    table_ instead of _Import vertices from CSV files_ and _Import vertices from database_), but
-   support more formats (JSON, Parquet, ORC, and Hive are added) with a unified interface.
+   support more formats (JSON, Parquet and ORC are added) with a unified interface. We
+   also support direct import from Hive.
 
    Tables are built on Apache Spark DataFrames. As a result, you can run SQL queries on graphs. (See
    the SQL section at the bottom of a project.) Plus DataFrame-based data manipulation is now
@@ -34,9 +35,13 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Introduce `tools/emr.sh` which starts up an Amazon Elastic MapReduce cluster. This is
    now the recommended way to run Kite clusters on Amazon.
  - Introduce operation _Copy edges to base project_.
- - emr.sh can now invoke groovy scripts on a remote cluster.
- - Introduce Explicit models, create them with the _Train linear regression model_
+ - `emr.sh` can now invoke groovy scripts on a remote cluster.
+ - Introduce explicit machine learning models. Create them with the _Train linear regression model_
    operation and use them for predictions with _Predict from model_.
+ - Added a new centrality measure, the _average distance_.
+ - The _Convert vertices into edges_ operation has been removed. The same functionality is now
+   available via tables. You can simply import the `vertices` table of one project as edges in
+   another project.
 
 ### 1.6.1.1
 

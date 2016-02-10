@@ -631,10 +631,10 @@ angular.module('biggraph')
       this.scalars = {};
       var scalars = this.project.scalars;
       for (var i = 0; i < scalars.length; ++i) {
-        var s = scalars[i];
-        var res = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
-        res.details = { project: this.state.projectName, scalar: s };
-        this.scalars[s.title] = res;
+        var scalar = scalars[i];
+        this.scalars[scalar.title] = util.lazyFetchScalarValue(
+          scalar,
+          true);
       }
     };
 

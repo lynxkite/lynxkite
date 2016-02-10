@@ -15,3 +15,5 @@ toc::[]
 include::intro/index.asciidoc[]
 
 include::installation/index.asciidoc[]
+
+include::upgrade/index.asciidoc[]

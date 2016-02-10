@@ -100,10 +100,9 @@ abstract class DeriveJS[T](
       inputs.attrs.zipWithIndex.foldLeft(noAttrs) {
         case (rdd, (attr, idx)) =>
           rdd.sortedJoin(attr.rdd).mapValues {
-            case (attrs, attr) => {
+            case (attrs, attr) =>
               attrs(idx) = attr
               attrs
-            }
           }
       }
     }
@@ -174,10 +173,9 @@ case class DeriveJSDouble(
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[java.lang.Double]
   def convert(v: Any): Double = v match {
-    case v: Double => {
+    case v: Double =>
       assert(!v.isNaN(), s"$expr did not return a valid number")
       v
-    }
     case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
   }
 }
