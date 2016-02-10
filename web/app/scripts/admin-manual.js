@@ -10,28 +10,26 @@ angular.module('biggraph').directive('adminManualContent', function($http) {
         /* global $ */
         var dom = $($.parseHTML(response.data));
 
-        // Make cross-references relative to #/adminManual.
         dom.find('a[href]').each(function(i, a) {
           a = angular.element(a);
-          var href = a.attr('href');
-          if (href[0] === '#') {
-            a.attr('href', '#/adminManual' + href);
+          // Remove empty links.
+          if (a.text() === '') {
+            a.remove();
+          } else {
+            var href = a.attr('href');
+            // Make cross-references relative to #/adminManual.
+            if (href[0] === '#') {
+              a.attr('href', '#/adminManual' + href);
+            }
           }
         });
 
-        // Remove empty links.
-        dom.find('a[href]').each(function(i, a) {
-          a = angular.element(a);
-          if (a.text() === '') {
-            a.remove();
-          }
-        });
         scope.dom = dom;
       });
 
       scope.$watch('dom', function(dom) {
         if (dom !== undefined) {
-          $('#admin-manual-content').html(dom);
+          $('admin-manual-content').html(dom);
         }
       });      
     }
