@@ -4,7 +4,7 @@
 
 <inline-loading ng-if="!asValue && !value.$resolved" ref="value"></inline-loading>
 
-<div class="pull-right" ng-show="scalar.typeName == 'Model'">
+<div class="pull-right" ng-show="scalar.typeName === 'Model'">
   <i class="glyphicon glyphicon-{{ showModel ? 'minus' : 'plus' }} section-button"
      ng-click="showModel = !showModel"></i>
 </div>
@@ -16,7 +16,7 @@
   <i class="glyphicon glyphicon-eye-open"></i>
 </label>
 
-<model-details ng-if="showModel" scalar-id="scalar.id" onLoad="loadModel()"></model-details>
+<model-details ng-if="showModel" scalar-id="scalar.id"></model-details>
 
 <div class="entry-bottom" ng-if="asValue">
   <span class="type-name">{{scalar.typeName}}</span>
