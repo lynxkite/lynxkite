@@ -19,7 +19,7 @@ angular.module('biggraph').directive('inlineLoading', function(util) {
       scope.iconForStatus = function(status) {
         // Use custom icon for some status codes.
         return {
-          202: '\u2026', // 202 Accepted: ...
+          202: '\u2026', // 202 Accepted: ... (ellipsis)
         }[status] || '?';
       };
     },
