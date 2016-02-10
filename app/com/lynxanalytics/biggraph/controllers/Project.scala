@@ -895,6 +895,7 @@ class TableFrame(path: SymbolPath)(
     checkpoint = cp
   }
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
+  def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
 }
 
 abstract class ObjectFrame(path: SymbolPath)(

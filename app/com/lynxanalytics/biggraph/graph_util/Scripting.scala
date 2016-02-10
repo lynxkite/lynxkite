@@ -24,6 +24,12 @@ object Scripting {
     def idAttribute: Attribute[ID] =
       graph_operations.IdAsAttribute.run(self)
 
+    // A random attribute with a standard normal distribution.
+    def randomAttribute(seed: Int): Attribute[Double] = {
+      val op = graph_operations.AddRandomAttribute(seed, "Standard Normal")
+      op(op.vs, self).result.attr
+    }
+
     def loops: EdgeBundle = {
       val op = graph_operations.LoopEdgeBundle()
       op(op.vs, self).result.eb

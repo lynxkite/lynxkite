@@ -19,6 +19,7 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
+import com.lynxanalytics.biggraph.table.TableImport
 
 import play.api.libs.json
 
@@ -855,9 +856,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
+      val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Normal")
       project.newVertexAttribute(
-        params("name"), op(op.vertices, project.vertexSet).result.attr, help)
+        params("name"), op(op.vs, project.vertexSet).result.attr, help)
     }
   })
 
@@ -2928,64 +2929,18 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
     def enabled =
       FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
-    private def shortClass(o: Any) = o.getClass.getName.split('.').last
     def apply(params: Map[String, String]) = {
       val t = params("timestamp")
-      val directory = HadoopFile("UPLOAD$") / s"metagraph-$t"
-      val ops = env.metaGraphManager.getOperationInstances
-      val vertices = {
-        val file = directory / "vertices"
-        if (!file.exists) {
-          val lines = ops.flatMap {
-            case (guid, inst) =>
-              val op = s"$guid,Operation,${shortClass(inst.operation)},"
-              val outputs = inst.outputs.all.map {
-                case (name, entity) =>
-                  val progress = env.entityProgressManager.computeProgress(entity)
-                  s"${entity.gUID},${shortClass(entity)},${name.name},$progress"
-              }
-              op +: outputs.toSeq
-          }
-          log.info(s"Writing metagraph vertices to $file.")
-          file.createFromStrings(lines.mkString("\n"))
-        }
-        val csv = graph_operations.CSV(
-          file,
-          delimiter = ",",
-          header = "guid,kind,name,progress")
-        graph_operations.ImportVertexList(csv)().result
-      }
-      project.vertexSet = vertices.vertices
-      for ((name, attr) <- vertices.attrs) {
-        project.newVertexAttribute(name, attr)
-      }
+      val mg = graph_operations.MetaGraph(t, Some(env)).result
+      project.vertexSet = mg.vs
+      project.newVertexAttribute("GUID", mg.vGUID)
+      project.newVertexAttribute("kind", mg.vKind)
+      project.newVertexAttribute("name", mg.vName)
+      project.newVertexAttribute("progress", mg.vProgress)
       project.newVertexAttribute("id", project.vertexSet.idAttribute)
-      val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
-      val edges = {
-        val file = directory / "edges"
-        if (!file.exists) {
-          val lines = ops.flatMap {
-            case (guid, inst) =>
-              val inputs = inst.inputs.all.map {
-                case (name, entity) => s"${entity.gUID},$guid,Input,${name.name}"
-              }
-              val outputs = inst.outputs.all.map {
-                case (name, entity) => s"$guid,${entity.gUID},Output,${name.name}"
-              }
-              inputs ++ outputs
-          }
-          log.info(s"Writing metagraph edges to $file.")
-          file.createFromStrings(lines.mkString("\n"))
-        }
-        val csv = graph_operations.CSV(
-          file,
-          delimiter = ",",
-          header = "src,dst,kind,name")
-        val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, "src", "dst")
-        op(op.srcVidAttr, guids)(op.dstVidAttr, guids).result
-      }
-      project.edgeBundle = edges.edges
-      project.edgeAttributes = edges.attrs.mapValues(_.entity)
+      project.edgeBundle = mg.es
+      project.newEdgeAttribute("kind", mg.eKind)
+      project.newEdgeAttribute("name", mg.eName)
     }
   })
 
