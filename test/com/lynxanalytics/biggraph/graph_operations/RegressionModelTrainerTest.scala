@@ -17,8 +17,6 @@ class RegressionModelTrainerTest extends ModelTestBase {
     assert(m.labelName == "age")
     assert(m.featureNames == List("yob"))
     val impl = m.load(sparkContext)
-    assert(impl.isInstanceOf[LinearRegressionModelImpl])
-
     val yob = vectorRDD(Array(2000))
     val age = m.scaleBack(impl.predict(
       yob.map(v => m.featureScaler.transform(v)))).collect()(0)

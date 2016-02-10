@@ -1,0 +1,23 @@
+<div class="model-parameter">
+  <span id="model-details-spinner" class="glyphicon glyphicon-cog" ng-show="!model.$resolved"></span>
+
+  <div ng-show="model.$resolved && !model.$error">
+    Method:
+    <label class="form-control" disabled>{{ model.method }}</label>
+    Label:
+    <label class="form-control" disabled>{{ model.labelName }}</label>
+    Features:
+    <div class="form-control" disabled>
+      <span ng-repeat="featureName in model.featureNames">
+        {{ featureName }}{{ $last ? '': ', ' }}
+      </span>
+    </div>
+    Details:
+    <textarea class="form-control" rows="2" disabled>{{ model.details }}</textarea>
+  </div>
+
+  <div id="model-details-error" ng-show="model.$error">
+    {{ model.$error }}
+    <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
+  </div>
+</div>
