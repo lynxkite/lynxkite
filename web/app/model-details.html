@@ -13,9 +13,9 @@
       </span>
     </div>
     Details:
-    <textarea class="form-control" style="height: 54px;" disabled>{{ model.details }}</textarea>
+    <textarea class="form-control" rows="2" disabled>{{ model.details }}</textarea>
   </div>
-  
+
   <div id="model-details-error" ng-show="model.$error">
     {{ model.$error }}
     <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
