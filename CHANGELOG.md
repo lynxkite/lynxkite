@@ -43,6 +43,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    available via tables. You can simply import the `vertices` table of one project as edges in
    another project.
 
+### 1.6.1.2
+
+ - Fixed edge attribute import.
+
 ### 1.6.1.1
 
  - Fixed a critical performance regression with derived attributes.
