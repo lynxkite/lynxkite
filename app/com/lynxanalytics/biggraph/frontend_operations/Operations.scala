@@ -1403,7 +1403,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
       Choice("method", "Method", options = FEOption.list(
-        "Linear regression", "Ridge regression", "Lasso", "Logistic regression", "Naive Bayes",
+        "Linear regression", "Ridge regression", "Lasso", "Naive Bayes",
         "Decision tree", "Random forest", "Gradient-boosted trees")))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
