@@ -562,13 +562,14 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        attributes: Map[Symbol, Attribute[_]] = Map(),
                        scalars: Map[Symbol, Scalar[_]] = Map())
     extends ToJson {
+  val nonScalars: Map[Symbol, MetaGraphEntity] =
+    vertexSets ++ edgeBundles ++ attributes
   val all: Map[Symbol, MetaGraphEntity] =
-    vertexSets ++ edgeBundles ++ attributes ++ scalars
+    nonScalars ++ scalars
   assert(all.size ==
     vertexSets.size + edgeBundles.size + attributes.size + scalars.size,
     "Cross type collision %s %s %s".format(
       vertexSets, edgeBundles, attributes))
-
   def asStringMap: Map[String, String] =
     all.toSeq.sortBy(_._1.name).map {
       case (name, entity) => name.name -> entity.gUID.toString
