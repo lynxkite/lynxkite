@@ -7,6 +7,24 @@ created yet, running the runner script will warn you and point you to a template
 copy that template to your home directory with name `.kiterc` and edit the settings as necessary.
 Comments in the template file should be sufficient to understand the settings.
 
+[[configure-directories]]
+### Configure directories
+
+This is a best practices section on how to configure various directories properly. The default
+configuration provided by Hadoop may be suboptimal.
+
+- DataNode directories should be on a large drive. Set `dfs.data.dir` and `dfs.datanode.data.dir`
+  on every DataNode accordingly.
+- NameNode and DataNode directories are better to not exist or at least be empty before you start
+  the HDFS service the first time / deploy a new node. Check `dfs.name.dir`,
+  `dfs.namenode.name.dir`, `dfs.data.dir` and `dfs.datanode.data.dir`.
+- Datanode directories have to be owned by `hdfs:hadoop`.
+- YARN log dirs should be on a large drive. Check `yarn.nodemanager.log-dirs` and `hadoop.log.dir`
+  in the NodeManager and `hadoop.log.dir` in the ResourceManager configuration.
+- YARN log dir has to be owned by `yarn:hadoop`
+- Set the `yarn.nodemanager.local-dirs` (YARN app cache and file cache) to be on the appropriate
+  drive. It should be sufficiently large (typically at least 100GB).
+
 ### Running LynxKite
 
 LynxKite can be started with its runner script (e.g., `run-kite-stable.sh`). You can use the

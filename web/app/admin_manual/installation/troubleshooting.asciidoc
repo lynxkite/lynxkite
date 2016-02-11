@@ -1,0 +1,17 @@
+## Troubleshooting
+
+### YARN memory limit
+
+When trying to start LynxKite on YARN, you may hit the YARN per-application memory limit. LynxKite
+will log an error message, such as:
+```
+Required executor memory (12288+384 MB) is above the max threshold (7003 MB) of this cluster!
+```
+See <<yarn-memory-limit>> for the fix.
+
+### Disk runs out of space
+
+This can be due to many reasons such as various logs, Spark shuffle files, the LynxKite data files
+etc. See <<configure-directories>> for more details and fixes.
+
+
