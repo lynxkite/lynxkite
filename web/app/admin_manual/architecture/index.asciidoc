@@ -6,8 +6,8 @@
 image::images/lynxkite-overview.png[LynxKite overview]
 
 Like a typical web application, the backend runs in a datacenter (in a single Java VM) and serves
-a rich frontend running in the user’s browser. The server only serves static files (`HTML`,
-`JavaScript`, `CSS` and images) and dynamic `JSON` responses. Avoiding dynamically generated HTML
+a rich frontend running in the user’s browser. The server only serves static files (HTML,
+JavaScript, CSS and images) and dynamic JSON responses. Avoiding dynamically generated HTML
 eliminates a large class of security issues.
 
 The following sections go into more detail about the architecture of both the backend and the
@@ -15,8 +15,9 @@ frontend.
 
 ## The Backend
 
-The two technologies underpinning the LynxKite backend are Apache Spark, a distributed computation
-framework, and Play! Framework, a web application framework.
+The two technologies underpinning the LynxKite backend are http://spark.apache.org[Apache Spark],
+a distributed computation framework, and https://www.playframework.com[Play! Framework], a web
+application framework.
 
 [.text-center]
 image::images/lynxkite-backend.png[The backend]
@@ -28,23 +29,19 @@ HTTP Server, serving static files and dynamic JSON content to the frontend.
 
 ### LynxKite installation modes
 
-There are many ways for scheduling/hosting the Spark Workers.
+There are two ways for scheduling/hosting the Spark executors.
 
 - In `local` mode, there is only one worker which runs as part of the main LynxKite process, this is
   ideal for single machine installations.
 
-- In `standalone` mode, a single Spark master and multiple Spark worker processes are started on the
-  machines we want to use for data processing. There is specialized support to set up such standalone
-  Spark cluster on Amazon EMR easily.
-
 - In `yarn-client` mode we use the built-in support of Apache Spark for running as a Hadoop YARN
-  application. In this case the Spark Driver also acts as the YARN Application Master and starts the
-  Spark Executors on YARN.
+  application. In this case the Spark driver runs outside of YARN, starts a simple application
+  master on YARN and asks it to start the executors.
 
 ### Storage
 
 Apache Spark includes the Hadoop client libraries. This gives LynxKite the capability to access
-file systems supported by Hadoop, such as `HDFS`, `S3`, and `GCS`. Data files can be imported from
+file systems supported by Hadoop, such as HDFS, S3, and GCS. Data files can be imported from
 and exported to these file systems. JDBC is used to import from and export to SQL databases.
 JDBC drivers for some popular database vendors are included.
 
