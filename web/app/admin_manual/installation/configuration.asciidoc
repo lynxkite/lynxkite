@@ -15,16 +15,15 @@ configuration provided by Hadoop may be suboptimal.
 
 - DataNode directories should be on a large drive. Set `dfs.data.dir` and `dfs.datanode.data.dir`
   on every DataNode accordingly.
-- NameNode and DataNode directoires are better to not exist or at least be empty before you start
+- NameNode and DataNode directories are better to not exist or at least be empty before you start
   the HDFS service the first time / deploy a new node. Check `dfs.name.dir`,
   `dfs.namenode.name.dir`, `dfs.data.dir` and `dfs.datanode.data.dir`.
 - Datanode directories have to be owned by `hdfs:hadoop`.
-- Yarn log dirs should be on a large drive. Check `yarn.nodemanager.log-dirs` and `hadoop.log.dir`
+- YARN log dirs should be on a large drive. Check `yarn.nodemanager.log-dirs` and `hadoop.log.dir`
   in the NodeManager and `hadoop.log.dir` in the ResourceManager configuration.
-- Yarn log dir has to be owned by `yarn:hadoop`
+- YARN log dir has to be owned by `yarn:hadoop`
 - Set the `yarn.nodemanager.local-dirs` (YARN app cache and file cache) to be on the appropriate
-  drive. It should be sufficiently large (typically at least 100GB). It may also make sense to put
-  it on an SSD to make LynxKite faster.
+  drive. It should be sufficiently large (typically at least 100GB).
 
 ### Running LynxKite
 
