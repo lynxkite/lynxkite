@@ -293,6 +293,8 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
         Table.fromTableName(Table.VertexTableName, editor.viewer).toDF(ctx.sqlContext)
       case "edgeDF" =>
         Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF(ctx.sqlContext)
+      case "tripletDF" =>
+        Table.fromTableName(Table.TripletTableName, editor.viewer).toDF(ctx.sqlContext)
       case "belongsToDF" =>
         assert(editor.isSegmentation, "belongsToDF is only defined for segmentations.")
         Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF(ctx.sqlContext)
