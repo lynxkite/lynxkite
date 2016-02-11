@@ -2,6 +2,7 @@
 p = lynx.newProject()
 p.exampleGraph()
 p.edgeDF.show()
+p.tripletDF.show()
 p.vertexDF.printSchema()
 p.vertexDF.show()
 p.vertexDF.groupBy('gender').count().show()
