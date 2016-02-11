@@ -2,6 +2,8 @@
 
 include::recommendations.asciidoc[]
 
-include::installing_binaries.asciidoc[]
+include::installing-binaries.asciidoc[]
 
 include::configuration.asciidoc[]
+
+include::common-problems.asciidoc[]
