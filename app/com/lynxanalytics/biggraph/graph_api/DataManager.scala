@@ -263,13 +263,16 @@ class DataManager(sc: spark.SparkContext,
         assert(computationAllowed, "DEMO MODE, you cannot start new computations")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
+
+        val logger = OperationLogger.get(instance, executionContext)
         val instanceFuture = getInstanceFuture(instance)
+
         for (output <- instance.outputs.all.values) {
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => load(output))
+              instanceFuture.flatMap(_ => logger.addOutput(load(output)))
             } else {
               instanceFuture.map(_(output.gUID))
             })
