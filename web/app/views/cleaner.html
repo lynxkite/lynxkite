@@ -6,14 +6,14 @@
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>
         <td>All entities</td>
-        <td>{{ fileStatus.total.fileCount }}</td>
-        <td>{{ fileStatus.total.totalSize }}</td>
+        <td><value ref="asScalar(fileStatus.total.fileCount)"></value></td>
+        <td><value ref="asScalar(fileStatus.total.totalSize)"></value></td>
         <td/>
       </tr>
       <tr ng-repeat="method in fileStatus.methods">
         <td title="{{ method.desc }}">{{ method.name }}</td>
-        <td>{{ method.fileCount }}</td>
-        <td>{{ method.totalSize }}</td>
+        <td><value ref="asScalar(method.fileCount)"></value></td>
+        <td><value ref="asScalar(method.totalSize)"></value></td>
         <td>
           <input name="selectedMethod" type="radio"
                  ng-model="$parent.selectedMethod" value="{{ method.id }}"/>

@@ -1,0 +1,32 @@
+{
+   "total":{
+      "id":"",
+      "name":"",
+      "desc":"",
+      "fileCount":2843,
+      "totalSize":1038949592
+   },
+   "methods":[
+      {
+         "id":"notMetaGraphContents",
+         "name":"Entities which do not exist in the meta-graph",
+         "desc":"Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory is deleted or during a Kite version upgrade. Deleting these should not have any side effects.",
+         "fileCount":0,
+         "totalSize":0
+      },
+      {
+         "id":"notReferredFromProjectTransitively",
+         "name":"Entities not associated with any project",
+         "desc":"We consider an entity associated with a project if it's either directly referred to from the project or it is used as an input to calculate another assoicated entity",
+         "fileCount":2764,
+         "totalSize":848317456
+      },
+      {
+         "id":"notReferredFromProject",
+         "name":"Entities not referenced by any project",
+         "desc":"All entities except those that are vertex sets, edge bundles, attributes or scalars of a current project or segmentation",
+         "fileCount":2775,
+         "totalSize":848459130
+      }
+   ]
+}
