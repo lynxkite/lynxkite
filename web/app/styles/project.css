@@ -86,7 +86,7 @@ input.save-as {
 
 .entity-note {
   /* Constrain notes to the right half of the line, so they don't overlap with everything. */
-  width: 50%;
+  max-width: 50%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
