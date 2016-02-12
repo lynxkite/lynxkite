@@ -2,7 +2,7 @@
 
 Copies another project into a new segmentation for this one. There will be no
 connections between the segments and the base vertices. You can import/create those via
-other operations (see <<load-segmentation-links-from-csv>> and
+other operations (see <<import-segmentation-links>> and
 <<define-segmentation-links-from-matching-attributes>>).
 
 Note that it is possible to import the project itself as segmentation. But even in this
