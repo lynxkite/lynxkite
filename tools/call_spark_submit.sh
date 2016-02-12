@@ -93,6 +93,24 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
 
   # TODO: we may not actually need this as we set spark.executor.cores in BiggraphSparkContext.
   YARN_SETTINGS="--executor-cores ${NUM_CORES_PER_EXECUTOR}"
+
+  # Override memory overhead.
+  if [ -n "${YARN_EXECUTOR_MEMORY_OVERHEAD_MB}" ]; then
+    COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB="${YARN_EXECUTOR_MEMORY_OVERHEAD_MB}"
+  else
+    RATIO_PERCENT=15
+    LAST_CHAR=${EXECUTOR_MEMORY: -1}
+    if [ "${LAST_CHAR}" == "m" ]; then
+      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * $RATIO_PERCENT / 100))
+    elif [ "${LAST_CHAR}" == "g" ]; then
+      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * 1024 * $RATIO_PERCENT / 100))
+    else
+      <&2 echo "Cannot parse: EXECUTOR_MEMORY=${EXECUTOR_MEMORY}. Should be NNNg or NNNm"
+      exit 1
+    fi
+  fi
+  YARN_SETTINGS="$YARN_SETTINGS \
+    --conf spark.yarn.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
 fi
 
 if [ -n "${NUM_EXECUTORS}" ]; then

@@ -43,6 +43,12 @@ export KITE_USERS_FILE=$HOME/kite_users
 # The directory with the YARN configuration.
 # export YARN_CONF_DIR=/etc/hadoop/...
 
+# By default, we are specifying 15% of executor memory to be the amount allocated for
+# overhead in YARN executor containers. You can set a higher value here if YARN is
+# killing your executors for exceeding size, but the executors themselves are not
+# reporting out of memory errors.
+# export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000
+
 # Specify how much memory is available for Kite on a single worker machine.
 # Ignored for single machine installs, see KITE_MASTER_MEMORY_MB for that case.
 export EXECUTOR_MEMORY=1g
