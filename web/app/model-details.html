@@ -1,7 +1,8 @@
 <div class="model-parameter">
   <span id="model-details-spinner" class="glyphicon glyphicon-cog" ng-show="!model.$resolved"></span>
+  <help-popup href="model-details" class="pull-right"></help-popup>
 
-  <div ng-show="model.$resolved && !model.$error">
+  <div ng-show="model.$resolved && !model.$error" id="model-details-parameters">
     Method:
     <label class="form-control" disabled>{{ model.method }}</label>
     Label:

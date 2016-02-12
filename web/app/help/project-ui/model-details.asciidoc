@@ -1,0 +1,25 @@
+[[model-details]]
+## Model details
+
+Models are special kinds of graph attributes. They are created by a machine learning algorithm
+and used for predictions.
+
+### Method
+
+The machine learning algorithm used to create this model.
+
+### Label
+
+The name of the attribute used to train this model for (what this model is trying to predict).
+
+### Features
+
+This list of the names of the feature attributes (the attributes this model uses for predictions).
+
+### Details
+
+Internal details (semantics) of the model.
+
+* For linear regression models:
+** `intercept` is the constant parameter in the linear equation the model uses to predict.
+** `weights` is the vector of the regression coefficients.
