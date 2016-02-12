@@ -15,16 +15,16 @@ of how much memory is needed for that depending on your graph data, see the sect
 How much RAM does LynxKite need in the cluster to be able to work with a data set in memory?
 The following formula is easy to remember and gives a rough estimation.
 
-To import a CSV of `L` lines and `N` columns as vertices, LynxKite needs `B~v` bytes.
-```
-B~v = L × 200 × (N + 1)
-```
+To import a CSV of `L` lines and `N` columns as vertices, LynxKite needs `B~v~` bytes.
+
+`B~v~ = L × 200 × (N + 1)`
+
 Each column needs 200 bytes, and one more column, the vertex ID, is generated.
 
-To import the same CSV of `L` lines and `N` columns as edges, LynxKite needs `B~e` bytes.
-```
-B~e = L × 200 × (N + 3)
-```
+To import the same CSV of `L` lines and `N` columns as edges, LynxKite needs `B~e~` bytes.
+
+`B~e~ = L × 200 × (N + 3)`
+
 The edges also get an ID, plus they store the source and destination vertex ID.
 
 These formulas assume columns of around 10 characters. If a column contains significantly more
@@ -45,11 +45,10 @@ worker machines. One extra machine is needed which serves as the master and the 
 
 If you need `B` bytes of RAM and have `C` bytes of RAM per machine, you need `M` machines
 (rounded up).
-```
-M ≥ B / C + 1
-```
 
-See the <<32-bit-rule>> for more tips.
+`M ≥ B / C + 1`
+
+See the <<the-32-gb-rule>> for more tips.
 
 ### Disk space
 
