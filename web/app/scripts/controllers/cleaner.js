@@ -27,7 +27,7 @@ angular.module('biggraph')
     $scope.asScalar = function(value) {
       if (scalarCache[value] === undefined) {
         scalarCache[value] = { value: {
-          string: value.toString(),
+          string: value !== undefined ? value.toString() : '',
           double: value,
         }};
       }
