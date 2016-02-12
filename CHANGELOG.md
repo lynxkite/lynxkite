@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.7.0
+
  - Major changes to importing and exporting data. We introduce the concept of tables to improve
    clarity and performance when working with external data.
 
