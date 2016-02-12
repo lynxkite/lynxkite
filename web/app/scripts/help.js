@@ -22,6 +22,7 @@ angular.module('biggraph').factory('helpContent', function($http) {
       var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6');
       var id = section.attr('id') + '-' + a.attr('id');
       dd.attr('id', id);
+      a.attr('id', id);
     });
     // Make cross-references relative to #/help.
     dom.find('a[href]').each(function(i, a) {
