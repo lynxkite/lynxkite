@@ -9,3 +9,5 @@ include::installing-binaries.asciidoc[]
 include::configuration.asciidoc[]
 
 include::troubleshooting.asciidoc[]
+
+include::emr.asciidoc[]

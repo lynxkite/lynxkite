@@ -1,0 +1,60 @@
+## Running on Amazon Elastic MapReduce (EMR)
+
+There is specialized support for running Kite on EMR. There is a script which takes care of basic cluster
+management, deployment and configuration of Kite on the cluster and remote restarts. To use Kite on EMR,
+follow these steps:
+
+. Install Kite as explained in (
+include::installing-binaries.asciidoc[]
+) to a local linux machine.
+I will use `INSTALL_DIR` below to refer to the installation directory of Kite.
+
+. Export `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables with your AWS credentials
+
+. Make a copy of `INSTALL_DIR/tools/emr_spec_template` somewhere. Let’s say your copy’s name is
+`my_cluster_spec`.
+
+. Edit `my_cluster_spec`. You will give a name to your cluster and provide some configuration.
+Comments in the file should be enough to guide you, let support know if something is unclear.
+
+. Start your cluster by:
+`INSTALL_DIR/tools/emr.sh start my_cluster_spec`
+
+. Start kite on the cluster:
+`INSTALL_DIR/tools/emr.sh kite my_cluster_spec`
+By default, Kite is running behind a firewall to prevent unauthorized access.
+
+. Open a connection to your Kite instance:
+`INSTALL_DIR/tools/emr.sh connect my_cluster_spec`
+Now you can access your Kite instance by entering http://localhost:4044 in your
+browser. If you want to access YARN and Spark diagnostic tools, or more Kite instances
+at the same time, then you need to update your Proxy Settings according to
+https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-master-node-proxy.html
+You can stop this script by hitting Ctrl+C and restart it any number of times without affecting
+your cluster.
+
+. You can suspend your work any time. Note that this will destroy the cluster's storage so the data
+created by Kite needs to be backed up.
+
+  .. Make a copy of the metadata:
+`INSTALL_DIR/tools/emr.sh metacopy my_cluster_spec`
+This will create a small file in your home directory in `~/kite_meta_backups`. This will contain your
+list of projects and the history of executed operations in the projects.
+
+  .. Make the copy of the data to S3 (this only works if S3_DATAREPO is configured properly):
+`INSTALL_DIR/tools/emr.sh s3copy my_cluster_spec`
+
+  .. Then terminate Kite:
+`INSTALL_DIR/tools/emr.sh terminate my_cluster_spec`
+
+  .. And then resume by:
+    ... `INSTALL_DIR/tools/emr.sh start my_cluster_spec`
+    ... `INSTALL_DIR/tools/emr.sh metarestore my_cluster_spec`
+    ... `INSTALL_DIR/tools/emr.sh kite my_cluster_spec`
+    ... As you can see, stored data in S3 will be automatically used, but the stored matedata needs
+        to be taken from your local machine manually.
+
+. Once you are all done, you can permanently destroy your cluster by:
+`INSTALL_DIR/tools/emr.sh terminate my_cluster_spec`
+Note that this will delete everything except for the raw data backed up in s3. Projects and
+configurations will be gone.
