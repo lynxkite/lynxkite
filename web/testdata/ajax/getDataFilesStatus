@@ -17,7 +17,7 @@
       {
          "id":"notReferredFromProjectTransitively",
          "name":"Entities not associated with any project",
-         "desc":"We consider an entity associated with a project if it's either directly referred to from the project or it is used as an input to calculate another assoicated entity",
+         "desc":"We consider an entity associated with a project if it's either directly referred to from the project or it is used as an input to calculate another associated entity",
          "fileCount":2764,
          "totalSize":848317456
       },
