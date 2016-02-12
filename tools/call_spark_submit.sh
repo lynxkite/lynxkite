@@ -105,7 +105,7 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
     elif [ "${LAST_CHAR}" == "g" ]; then
       COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * 1024 * $RATIO_PERCENT / 100))
     else
-      <&2 echo "Cannot parse: EXECUTOR_MEMORY=${EXECUTOR_MEMORY}. Shoulb be NNNg or NNNm"
+      <&2 echo "Cannot parse: EXECUTOR_MEMORY=${EXECUTOR_MEMORY}. Should be NNNg or NNNm"
       exit 1
     fi
   fi
