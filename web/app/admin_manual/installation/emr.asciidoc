@@ -6,7 +6,7 @@ EMR, follow these steps:
 
 . Install LynxKite as explained in (
 include::installing-binaries.asciidoc[]
-) to a local linux machine.
+) to a local Linux machine.
 In what follows, `INSTALL_DIR` will refer to the installation directory of LynxKite.
 
 . Export `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables with your AWS credentials.
