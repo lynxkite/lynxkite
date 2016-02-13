@@ -80,8 +80,12 @@ following data:
 
 There is a backup tool for Hadoop deployments shipped with LynxKite under
 `tools/kite_meta_hdfs_backup.sh`. It is recommended to create a cron job running this tool on
-a daily bases (or more frequently if needed). The tool creates a copy of the full `KITE_META_DIR`
+a daily basis (or more frequently if needed). The tool creates a copy of the full `KITE_META_DIR`
 and the `.kiterc` file in HDFS.
+
+To back up an earlier version of LynxKite simply copy back the `.kiterc` file and the meta
+directory from HDFS to overwrite the current versions, then restart LynxKite.
+
 
 ### Extra libraries
 
