@@ -5,21 +5,21 @@ directory of the application.
 
 ### The application log
 
-The main log of LynxKite is the application log. LynxKite creates a new log file every day it when
-it is used. It automatically deletes the log files older than 60 days.
+The main log of LynxKite is the application log. LynxKite creates a new log file every day (except
+for those days when it is not used). It automatically deletes the log files older than 60 days.
 
 The application logs the following activites (among other things):
 
 - User login attempts, successful logins and logouts.
-- All HTTP requests arrived to the web server including the user and the URL.
+- All HTTP requests received by the web server including the user and the URL.
 - Accesses of files in the `KITE_DATA_DIR`.
 
 It is possible for admin users to access the most current version of these logs from a browser via
 *<LynxKite_URL>/logs*.
 
-### STDERR and STDOUR
+### STDERR and STDOUT
 
 Every time LynxKite is started a log is created for STDERR and STDOUT with the process ID of the
-application. These logs generally do not contain many information unless something went wrong
+application. These logs generally do not contain much information unless something went wrong
 during the startup process.
 
