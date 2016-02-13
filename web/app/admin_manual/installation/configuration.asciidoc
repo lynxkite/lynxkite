@@ -83,8 +83,8 @@ There is a backup tool for Hadoop deployments shipped with LynxKite under
 a daily basis (or more frequently if needed). The tool creates a copy of the full `KITE_META_DIR`
 and the `.kiterc` file in HDFS.
 
-To back up an earlier version of LynxKite simply copy back the `.kiterc` file and the meta
-directory from HDFS to overwrite the current versions, then restart LynxKite.
+To restore an earlier version of LynxKite simply copy the `.kiterc` file and the meta
+directory back from HDFS to overwrite the current versions of them, then restart LynxKite.
 
 
 ### Extra libraries
