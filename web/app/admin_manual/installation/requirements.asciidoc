@@ -26,6 +26,17 @@ Set the executor memory (`EXECUTOR_MEMORY`) lower than the YARN NodeManager memo
 with the `yarn.nodemanager.resource.memory-mb` and `yarn.scheduler.maximum-allocation-mb` settings
 in the YARN configurations.
 
+[[the-32-gb-rule]]
+### The 32 GB rule
+
+The Java Virtual Machine can be configured to use practically any amount of RAM on a 64 bit system.
+However its efficiency breaks down after 32 GB. Therefore a JVM with 40GB RAM is actually worse
+than a JVM with 32 GB RAM. For that reason it is not recommended to set the `EXECUTOR_MEMORY` above
+32 GB. It makes more sense to create multiple executors with less amount of RAM per executor.
+
+This https://blogs.oracle.com/jrockit/entry/understanding_compressed_refer[article] explains the
+issue in detail.
+
 ### Spark JVM overhead
 
 By default Spark does not allocate enough memory overhead on top of the heap size for the JVM
