@@ -1,9 +1,10 @@
-# ### The .kiterc file
 
-# Set to the directory containing your spark installation.
+# This file contains various configurations used when launching a LynxKite instance.
+
+# Set to the directory containing your Spark installation like this:
 export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 
-# Specifies what cluster we use. Options are:
+# Specifies what cluster we use. Options are the following:
 # - local - for single machine installs
 # - yarn-client - for using YARN (Hadoop v2). Please also set YARN_* settings below.
 export SPARK_MASTER=local
@@ -52,7 +53,7 @@ export KITE_USERS_FILE=$HOME/kite_users
 
 # Specify how much memory is available for Kite on a single worker machine.
 # Ignored for single machine installs, see KITE_MASTER_MEMORY_MB for that case.
-# export EXECUTOR_MEMORY=1g
+export EXECUTOR_MEMORY=1g
 
 # Number of executors. For standalone cluster it defaults to as many as possible. For YARN
 # cluster, this options is mandatory.
@@ -60,7 +61,7 @@ export KITE_USERS_FILE=$HOME/kite_users
 
 # Number of cores per executor Kite should use. (For a YARN deployment, use this instead of
 # the YARN_CORES_PER_EXECUTOR option that was available in pre-1.2 versions.)
-# export NUM_CORES_PER_EXECUTOR=4
+export NUM_CORES_PER_EXECUTOR=4
 
 # Specify how much memory is available for Kite on the master machine in megabytes.
 # For single machine installs this also determines executor memory and EXECUTOR_MEMORY is
@@ -101,7 +102,11 @@ export KITE_EXTRA_JARS=
 # export KITE_AMMONITE_PASSWD=kite
 # Options needed if you want to use authentication and https.
 
-# Application secret.
+# Just use the following configurations with default values for a simple, fake certificate setup.
+
+# ===========================================================
+# Application secret used by Play! framework for various tasks, such as signing cookies and
+# encryption. More details https://playframework.com/documentation/latest/ApplicationSecret[here].
 # export KITE_APPLICATION_SECRET=${KITE_RANDOM_SECRET}
 
 # Port for the Kite HTTPS server to listen on. Must be >=1000.
@@ -111,6 +116,7 @@ export KITE_EXTRA_JARS=
 # For a real HTTPS setup, ask the Lynx R&D team for instructions.
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
 # export KITE_HTTPS_KEYSTORE_PWD=asdasd
+# ===========================================================
 
 # Only needed for Google Auth ask the Lynx R&D team for further instructions if you think you need
 # this.

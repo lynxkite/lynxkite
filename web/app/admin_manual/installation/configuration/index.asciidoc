@@ -1,4 +1,4 @@
-## Bash template files
+## LynxKite configuration files
 
 Starting or deploying LynxKite requires certain properly set environment variables. As explained
 before LynxKite ships with template files for these configurations. The following sections specify
