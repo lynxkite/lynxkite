@@ -12,4 +12,4 @@ include::emr.asciidoc[]
 
 include::troubleshooting.asciidoc[]
 
-include::bash_templates/index.asciidoc[]
+include::configuration/index.asciidoc[]
