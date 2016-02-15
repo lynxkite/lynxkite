@@ -1,6 +1,6 @@
 [[kiterc-file]]
 ### The `.kiterc` file
-
+abc
 This file contains various configurations used when launching a LynxKite instance.
 
 Set to the directory containing your Spark installation like this:
