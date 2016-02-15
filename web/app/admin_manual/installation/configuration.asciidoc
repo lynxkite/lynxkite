@@ -78,6 +78,15 @@ following data:
   graph data, assuming that the imported files are still available. This data is critical, and
   backups are recommended.
 
+There is a backup tool for Hadoop deployments shipped with LynxKite under
+`tools/kite_meta_hdfs_backup.sh`. It is recommended to create a cron job running this tool on
+a daily basis (or more frequently if needed). The tool creates a copy of the full `KITE_META_DIR`
+and the `.kiterc` file in HDFS.
+
+To restore an earlier version of LynxKite simply copy the `.kiterc` file and the meta
+directory back from HDFS to overwrite the current versions of them, then restart LynxKite.
+
+
 ### Extra libraries
 
 You can provide extra jar files that will be added to the `CLASSPATH` of LynxKite server by
