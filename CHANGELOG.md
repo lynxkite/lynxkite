@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.7.0
+
  - Major changes to importing and exporting data. We introduce the concept of tables to improve
    clarity and performance when working with external data.
 
@@ -42,6 +44,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - The _Convert vertices into edges_ operation has been removed. The same functionality is now
    available via tables. You can simply import the `vertices` table of one project as edges in
    another project.
+
+### 1.6.1.2
+
+ - Fixed edge attribute import.
 
 ### 1.6.1.1
 

@@ -21,7 +21,7 @@ TYPE=m3.2xlarge
 # https://aws.amazon.com/ec2/instance-types/
 # for number of cores.
 CORES=8
-USE_RAM_GB=19 # yarn limit minus 1GB so that the application master fits somewhere
+USE_RAM_GB=18 # yarn limit minus overhead minus 1GB so that the application master fits somewhere
 # A local path that exists on all workers and the master and will be used for storing
 # temporary spark/hadoop files. This can get big, so if you have a small root filesystem
 # and an extra large drive mounted somewhere then you need to point this to somewhere on

@@ -6,6 +6,7 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+@deprecated("Use AddRandomAttribute instead.", "1.7.0")
 object AddGaussianVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
@@ -15,9 +16,16 @@ object AddGaussianVertexAttribute extends OpFromJson {
     val attr = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = AddGaussianVertexAttribute((j \ "seed").as[Int])
+  // SI-9650
+  def apply(seed: Int) = new AddGaussianVertexAttribute(seed)
 }
 import AddGaussianVertexAttribute._
-case class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input, Output] {
+@deprecated("Use AddRandomAttribute instead.", "1.7.0")
+class AddGaussianVertexAttribute(val seed: Int)
+    extends TypedMetaGraphOp[Input, Output] with Serializable {
+  override def equals(o: Any) =
+    o.isInstanceOf[AddGaussianVertexAttribute] &&
+      o.asInstanceOf[AddGaussianVertexAttribute].seed == seed
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

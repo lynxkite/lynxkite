@@ -12,10 +12,11 @@ You can download the Spark version matching your Hadoop setup from the
 https://spark.apache.org/downloads.html[Spark webpage]. Your Lynx contact can tell you which
 version you need, or you can find it in the file `kite_x.y.z/conf/SPARK_VERSION`.
 
-## Make a backup copy of your `.kiterc` file and metadata directory
+## Create backups
 
-The location of the metadata directory is configured in `.kiterc`. If your system is configured to
-perform automated backups of `.kiterc` and the metadata directory you may skip this step.
+Make a backup copy of your `.kiterc` file and metadata directory. The location of the metadata
+directory is configured in `.kiterc`. If your system is configured to perform automated backups
+of `.kiterc` and the metadata directory you may skip this step.
 
 ## Update configuration
 
