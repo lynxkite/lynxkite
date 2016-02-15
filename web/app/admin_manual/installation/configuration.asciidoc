@@ -5,7 +5,8 @@
 You need to create a site configuration to be able to run LynxKite. If you don’t have a config file
 created yet, running the runner script will warn you and point you to a template config file. Just
 copy that template to your home directory with name `.kiterc` and edit the settings as necessary.
-Comments in the template file should be sufficient to understand the settings.
+Cheack out the settings of <<kiterc-file>>. This information is also available in the template file
+as comments.
 
 [[configure-directories]]
 ### Configure directories

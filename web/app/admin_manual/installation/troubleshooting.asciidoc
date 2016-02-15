@@ -14,4 +14,3 @@ See <<yarn-memory-limit>> for the fix.
 This can be due to many reasons such as various logs, Spark shuffle files, the LynxKite data files
 etc. See <<configure-directories>> for more details and fixes.
 
-
