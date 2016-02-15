@@ -113,7 +113,9 @@ export KITE_EXTRA_JARS=
 # export KITE_HTTPS_PORT=2201
 
 # Keystore file and passwd with the HTTPS keys. Just leave as is for fake HTTPS certificate.
-# For a real HTTPS setup, ask the Lynx R&D team for instructions.
+# If you have your own intranet CA or a wildcard certificate, you can generate a certificate for
+# LynxKite that the browsers can validate. Follow the instructions at
+# http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
 # export KITE_HTTPS_KEYSTORE_PWD=asdasd
 # ===========================================================
