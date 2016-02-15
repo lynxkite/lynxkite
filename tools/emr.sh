@@ -9,6 +9,8 @@ pushd $DIR/.. > /dev/null
 export KITE_BASE=`pwd`
 popd > /dev/null
 
+echoerr() { echo "$@" 1>&2; }
+
 if [ "$#" -lt 2 ]; then
   echo "Usage: emr.sh command CLUSTER_SPECIFICATION_FILE [optional command arguments]"
   echo " For a cluster specification file template, see $DIR/emr_spec_template"
@@ -67,8 +69,8 @@ source ${SPEC}
 SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
 
 if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
-  echo "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
-  echo "to work."
+  echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
+  echoerr "to work."
   exit 1
 fi
 
@@ -117,15 +119,15 @@ CheckDataRepo() {
   fi
 
   if [ "${S3_DATAREPO_LOCATION}" != "${REGION}" ]; then
-    echo "S3_DATAREPO should be in the same region as REGION."
-    echo "S3_DATAREPO is in ${S3_DATAREPO_LOCATION}"
-    echo "REGION is ${REGION}"
+    echoerr "S3_DATAREPO should be in the same region as REGION."
+    echoerr "S3_DATAREPO is in ${S3_DATAREPO_LOCATION}"
+    echoerr "REGION is ${REGION}"
     exit 1
   fi
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
-  echo "${SSH_KEY} does not exist."
+  echoerr "${SSH_KEY} does not exist."
   exit 1
 fi
 
@@ -220,7 +222,7 @@ EOF
 kite)
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
-    echo "You must run this script from inside a stage, not from the source tree!"
+    echoerr "You must run this script from inside a stage, not from the source tree!"
     exit 1
   fi
 
@@ -361,7 +363,7 @@ EOF
 
 # ======
 *)
-  echo "Unrecognized option: ${COMMAND}"
+  echoerr "Unrecognized option: ${COMMAND}"
   exit 1
   ;;
 

@@ -44,6 +44,9 @@ angular
       .when('/help', {
         templateUrl: 'views/help.html',
       })
+      .when('/adminManual', {
+        templateUrl: 'views/adminManual.html',
+      })
       .otherwise({
         redirectTo: '/',
       });

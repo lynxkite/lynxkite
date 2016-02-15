@@ -166,6 +166,7 @@ object FrontendJson {
    * they need to be ordered so that everything is declared before use.
    */
   import model.FEModel
+  import model.FEModelMeta
 
   // TODO: do this without a fake field, e.g. by not using inception.
   implicit val rEmpty = json.Json.reads[Empty]
@@ -191,6 +192,7 @@ object FrontendJson {
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wFEModel = json.Json.writes[FEModel]
+  implicit val wFEModelMeta = json.Json.writes[FEModelMeta]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
 
@@ -389,6 +391,7 @@ object ProductionJsonServer extends JsonServer {
   def center = jsonGet(drawingController.getCenter)
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
+  def model = jsonGet(drawingController.getModel)
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)

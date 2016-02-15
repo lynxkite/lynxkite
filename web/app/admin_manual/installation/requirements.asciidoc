@@ -1,0 +1,45 @@
+## Requirements
+
+### Java version
+
+You need Java 7 or higher on the system.
+
+### Write permission
+
+You need write permission to the directory configured as `KITE_DATA_DIR`. On HDFS a home directory
+is also required for the user that starts LynxKite. Example commands to create these directories:
+
+- `sudo -u hdfs hadoop fs -mkdir hdfs://$NAMENODE:8020/kite_data`
+- `sudo -u hdfs hadoop fs -mkdir hdfs://$NAMENODE:8020/user/$USER`
+- `sudo -u hdfs hadoop fs -chown $USER hdfs://$NAMENODE:8020/kite_data`
+- `sudo -u hdfs hadoop fs -chown $USER hdfs://$NAMENODE:8020/user/$USER`
+
+### Port collision
+
+By default LynxKite runs on port 2200. If this is used by another process, move LynxKite to a
+different port (by changing the `KITE_HTTP_PORT` setting in `.kiterc`).
+
+[[yarn-memory-limit]]
+### YARN memory limit
+
+Set the executor memory (`EXECUTOR_MEMORY`) lower than the YARN NodeManager memory limit defined
+with the `yarn.nodemanager.resource.memory-mb` and `yarn.scheduler.maximum-allocation-mb` settings
+in the YARN configurations.
+
+[[the-32-gb-rule]]
+### The 32 GB rule
+
+The Java Virtual Machine can be configured to use practically any amount of RAM on a 64 bit system.
+However its efficiency breaks down after 32 GB. Therefore a JVM with 40GB RAM is actually worse
+than a JVM with 32 GB RAM. For that reason it is not recommended to set the `EXECUTOR_MEMORY` above
+32 GB. It makes more sense to create multiple executors with less amount of RAM per executor.
+
+This https://blogs.oracle.com/jrockit/entry/understanding_compressed_refer[article] explains the
+issue in detail.
+
+### Spark JVM overhead
+
+By default Spark does not allocate enough memory overhead on top of the heap size for the JVM
+itself. LynxKite by default asks for 15% overhead which should be enough. If not, then add
+`export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000` into your `.kiterc` file.
+

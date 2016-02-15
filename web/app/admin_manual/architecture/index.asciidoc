@@ -1,0 +1,7 @@
+# LynxKite Architecture Summary
+
+include::software-architecture.asciidoc[]
+
+include::sizing-the-cluster.asciidoc[]
+
+include::logging.asciidoc[]

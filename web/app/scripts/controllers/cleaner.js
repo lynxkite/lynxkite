@@ -22,4 +22,15 @@ angular.module('biggraph')
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
         });
     };
+
+    var scalarCache = {}; // Need to return the same object every time to avoid digest hell.
+    $scope.asScalar = function(value) {
+      if (scalarCache[value] === undefined) {
+        scalarCache[value] = { value: {
+          string: value !== undefined ? value.toString() : '',
+          double: value,
+        }};
+      }
+      return scalarCache[value];
+    };
   });

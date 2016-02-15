@@ -1,0 +1,30 @@
+[[model-details]]
+## Machine learning models
+
+Machine learning models are one of the graph attribute types.
+They are created by a machine learning operation (for example <<train-linear-regression-model>>)
+and used for prediction with the <<predict-from-model>> operation.
+
+Press the plus button
+(+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++)
+to access detailed information about a machine learning model.
+
+### Method
+
+The machine learning algorithm used to create this model.
+
+### Label
+
+The name of the attribute that this model is trained to predict. (The dependent variable.)
+
+### Features
+
+The list of the feature attributes that this model uses for predictions.
+(The independent variables.)
+
+### Details
+
+For linear regression models:
+
+* `intercept` is the constant parameter in the linear equation the model uses to predict.
+* `weights` is the vector of the regression coefficients.
