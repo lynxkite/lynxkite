@@ -15,8 +15,8 @@ fi
 grep "future failed" -A1 logs/test-*
 if [ "$?" == "0" ]; then
     thelogfile=logs/test-*
-    failedlog=`echo $thefile | sed s:logs/test:logs/failed:`
-    mv $thefile $failedlog
+    failedlog=`echo $thelogfile | sed s:logs/test:logs/failed:`
+    mv $thelogfile $failedlog
     exit 1
 else
     exit 0
