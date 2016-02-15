@@ -1,8 +1,23 @@
-#!/bin/sh -xue
+#!/bin/bash -xu
 
 cd `dirname $0`
+if [ "$?" != "0" ]; then
+    exit 1
+fi
 
-mkdir logs || true
-rm -f logs/* || true
+mkdir logs
+rm -f logs/test-*
 sbt test
-! cat logs/test-* | grep "future failed" -A1
+if [ "$?" != "0" ]; then
+    exit 1
+fi
+
+grep "future failed" -A1 logs/test-*
+if [ "$?" == "0" ]; then
+    thelogfile=logs/test-*
+    failedlog=`echo $thefile | sed s:logs/test:logs/failed:`
+    mv $thefile $failedlog
+    exit 1
+else
+    exit 0
+fi
