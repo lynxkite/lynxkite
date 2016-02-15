@@ -272,11 +272,14 @@ class DataManager(sc: spark.SparkContext,
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => logger.addOutput(load(output)))
+              val futureEntityData = instanceFuture.flatMap(_ => load(output))
+              logger.addOutput(futureEntityData)
+              futureEntityData
             } else {
               instanceFuture.map(_(output.gUID))
             })
         }
+        logger.close()
       }
     }
   }

@@ -7,7 +7,8 @@ import scala.concurrent.ExecutionContextExecutorService
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 trait OpLogger {
-  def addOutput(output: SafeFuture[EntityData]): SafeFuture[EntityData]
+  def addOutput(output: SafeFuture[EntityData])
+  def close(): Unit
 }
 object OperationLogger {
   var cnt = 0
@@ -23,7 +24,7 @@ object OperationLogger {
 case class OutputInfo(name: String, count: Option[Long], executionTimeInSeconds: Long)
 
 class OperationLogger(instance: MetaGraphOperationInstance, ec: ExecutionContextExecutorService) extends OpLogger {
-  val outputInfoList = new mutable.MutableList[OutputInfo]
+  var outputInfoList = new mutable.MutableList[SafeFuture[OutputInfo]]()
   implicit val executionContext = ec
   private def outputsLoggedSoFar = outputInfoList.length
   private var closed = false
@@ -43,28 +44,36 @@ class OperationLogger(instance: MetaGraphOperationInstance, ec: ExecutionContext
       s" numOutputs: $numOutput written: $outputsLoggedSoFar" +
       s" elasped: ${elapsedMs()}"
 
-  override def addOutput(output: SafeFuture[EntityData]): SafeFuture[EntityData] = {
-    output.map {
+  override def addOutput(output: SafeFuture[EntityData]) = {
+    outputInfoList += output.map {
       o =>
         synchronized {
           val rddData = o.asInstanceOf[EntityRDDData[_]]
-          assert(!closed, s"${info()}  output $o  was added after close!")
           val oi = OutputInfo(rddData.entity.toString, rddData.count, elapsedMs() / 1000)
-          outputInfoList += oi
-          if (outputsLoggedSoFar == numOutput) {
-            close()
-          }
-          o
+          assert(!closed, s"${info()}  output $o  was added after close!")
+          oi
         }
     }
   }
 
-  private def close() = {
-    implicit val formatOutput = json.Json.format[OutputInfo]
-    val formatter = implicitly[json.Format[List[OutputInfo]]]
-    println(formatter.writes(outputInfoList.toList))
-    closed = true
+  override def close(): Unit = {
+    val lst = SafeFuture.sequence(outputInfoList)
+    lst.onSuccess {
+      case y =>
+        if (y.nonEmpty) {
+          implicit val formatOutput = json.Json.format[OutputInfo]
+          val formatter = implicitly[json.Format[Seq[OutputInfo]]]
+          println(formatter.writes(y))
+        }
+        closed = true
+    }
+    lst.onFailure {
+      case y =>
+        println(s"FAILURE: ${info()}")
+        closed = true
+    }
   }
+
   override def finalize() = {
     if (!closed && numOutput != 0) {
       val msg = s"${info()}  ***NOT CLOSED***"
