@@ -11,3 +11,5 @@ include::configuration.asciidoc[]
 include::emr.asciidoc[]
 
 include::troubleshooting.asciidoc[]
+
+include::bash_templates/index.asciidoc[]
