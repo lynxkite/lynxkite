@@ -54,16 +54,7 @@ not provide proper protection. (Lacking a trusted CA, the self-signed certificat
 be spoofed.) Using it will trigger a certificate warning in the user’s browser. It is recommended
 to install a real certificate in its place.
 
-The file specified in `.kiterc` as `KITE_HTTPS_KEYSTORE` is a Tomcat-style keystore. If you have
-your own intranet CA or a wildcard certificate, you can generate a certificate for LynxKite that
-the browsers can validate. Follow the instructions at
-http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
-The following settings need to be set in `.kiterc` to enable HTTPS:
-
-- `KITE_APPLICATION_SECRET`: A secret string, used to prevent auth cookie forgery.
-- `KITE_HTTPS_PORT`: The port number for HTTPS.
-- `KITE_HTTPS_KEYSTORE`: The Tomcat-style keystore file.
-- `KITE_HTTPS_KEYSTORE_PWD`: Password for the keystore file.
+Please refer to the <<kiterc-https>> setup for more details.
 
 ### Backups
 
