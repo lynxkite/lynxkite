@@ -475,8 +475,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     }
   }
 
-  private def extendGivenOpWithSelectedOption(
-    opId: String,
+  private def extendOpWithSelectedOption(
     params: Map[String, String],
     meta: FEOperationMeta): FEOperationMeta = {
     meta.copy(parameters = meta.parameters.map { parameter =>
@@ -532,7 +531,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
         .map { category =>
           category.copy(
             ops = category.ops.map { op =>
-              extendGivenOpWithSelectedOption(op.id, request.op.parameters, op)
+              if (op.id == request.op.id) extendOpWithSelectedOption(request.op.parameters, op)
+              else op
             })
         }
       extended
