@@ -10,7 +10,7 @@ def asciidocToTemplate(src, dst):
   with open(src, 'r') as s:
     with open(dst, 'w') as d:
       for line in s:
-        if line == '\`\`\`\n':
+        if line == '```\n':
           codeBlock = not codeBlock
         else:
           if codeBlock:
