@@ -431,6 +431,7 @@ module.exports = function (grunt) {
       'sass',
       'autoprefixer',
       'asciidoctor',
+      'genTemplates',
       'connect:livereload',
       'watch'
     ]);
