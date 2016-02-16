@@ -54,7 +54,7 @@ not provide proper protection. (Lacking a trusted CA, the self-signed certificat
 be spoofed.) Using it will trigger a certificate warning in the user’s browser. It is recommended
 to install a real certificate in its place.
 
-Please refer to the <<kiterc-https>> setup for more details.
+Please refer to the <<kiterc-https,HTTPS setup>> in the `.kiterc` file for more details.
 
 ### Backups
 
@@ -72,9 +72,8 @@ following data:
 
 ### Extra libraries
 
-You can provide extra jar files that will be added to the `CLASSPATH` of LynxKite server by
-setting the `KITE_EXTRA_JARS` option in `.kiterc`. A typical use case is installing JDBC drivers.
-Just add the JAR file of the driver to `KITE_EXTRA_JARS` and you should be good to go.
+You can provide extra jar files that will be added to the `CLASSPATH` of LynxKite server if needed,
+as specified <<kiterc-extra-jars,here>>.
 
 ### Integration with Hive
 
