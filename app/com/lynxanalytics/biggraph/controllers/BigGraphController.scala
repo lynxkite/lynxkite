@@ -500,6 +500,38 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     })
   }
 
+  // Returns the list of operation categories (including the operations) for a historical request.
+  // If the requested operation is a deprecated workflow operation, it is added in an extra
+  // category. If the parameters used in the request are not available on the operation, they are
+  // added back.
+  private def opCategoriesForRequest(
+    ops: Operations,
+    context: Operation.Context,
+    request: SubProjectOperation): List[OperationCategory] = {
+    val opOpt = ops.maybeOpById(context, request.op.id)
+    val base = ops.categories(context, includeDeprecated = true)
+    // If it's a deprecated workflow operation, display it in a special category.
+    val withOp =
+      if (opOpt.isDefined &&
+        base.find(_.containsOperation(opOpt.get)).isEmpty &&
+        opOpt.get.isInstanceOf[WorkflowOperation]) {
+        val deprCat = WorkflowOperation.deprecatedCategory
+        val deprCatFE = deprCat.toFE(List(opOpt.get.toFE.copy(category = deprCat.title)))
+        base :+ deprCatFE
+      } else {
+        base
+      }
+    // Add the selected options if they are not present.
+    val extended = withOp.map { category =>
+      category.copy(
+        ops = category.ops.map { op =>
+          if (op.id == request.op.id) extendOpWithSelectedOption(request.op.parameters, op)
+          else op
+        })
+    }
+    extended
+  }
+
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
@@ -512,37 +544,15 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
+    val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
+
     val opOpt = ops.maybeOpById(context, request.op.id)
-
-    val opCategoriesBefore = {
-      val base = ops.categories(context, includeDeprecated = true)
-      // If it's a deprecated workflow operation, display it in a special category.
-      val withOp =
-        if (opOpt.isDefined &&
-          base.find(_.containsOperation(opOpt.get)).isEmpty &&
-          opOpt.get.isInstanceOf[WorkflowOperation]) {
-          val deprCat = WorkflowOperation.deprecatedCategory
-          val deprCatFE = deprCat.toFE(List(opOpt.get.toFE.copy(category = deprCat.title)))
-          base :+ deprCatFE
-        } else {
-          base
-        }
-      val extended = withOp
-        .map { category =>
-          category.copy(
-            ops = category.ops.map { op =>
-              if (op.id == request.op.id) extendOpWithSelectedOption(request.op.parameters, op)
-              else op
-            })
-        }
-      extended
-    }
-
     val restrictedRequest = opOpt.map { op =>
       val validParameterIds = op.parameters.map(_.id).toSet
       val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
       request.copy(op = request.op.copy(parameters = restrictedParameters))
     }.getOrElse(request)
+
     val status = opOpt.map { op =>
       if (op.enabled.enabled) {
         try {
