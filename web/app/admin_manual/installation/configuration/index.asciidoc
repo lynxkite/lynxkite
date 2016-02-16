@@ -1,0 +1,8 @@
+## LynxKite configuration files
+
+Starting or deploying LynxKite requires certain properly set environment variables. As explained
+before LynxKite ships with template files for these configurations. The following sections specify
+these variables in specific setups. If the example code starts with the `#` sign it means the
+variable is disabled by default in the shipped corresponding template file.
+
+include::kiterc.asciidoc[]
