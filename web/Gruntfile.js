@@ -22,7 +22,8 @@ module.exports = function (grunt) {
     yeoman: {
       // configurable paths
       app: require('./bower.json').appPath || 'app',
-      dist: 'dist'
+      dist: 'dist',
+      tools: '../tools',
     },
 
     // Watches files for changes and runs tasks based on the changed files
@@ -56,7 +57,7 @@ module.exports = function (grunt) {
       },
       adminManual: {
         files: ['<%= yeoman.app %>/admin_manual/**/*.asciidoc'],
-        tasks: ['asciidoctor']
+        tasks: ['asciidoctor', 'genTemplates']
       },
       gruntfile: {
         files: ['Gruntfile.js']
@@ -409,8 +410,14 @@ module.exports = function (grunt) {
       },
     },
 
+    exec: {
+      genTemplates: {
+        cmd: '<%= yeoman.tools %>/gen_templates.sh',
+      },
+    },
   });
 
+  grunt.registerTask('genTemplates', ['exec:genTemplates']);
 
   grunt.registerTask('serve', function (target) {
     if (target === 'dist') {
@@ -452,7 +459,8 @@ module.exports = function (grunt) {
     'uglify',
     'rev',
     'usemin',
-    'htmlmin'
+    'htmlmin',
+    'genTemplates'
   ]);
 
   grunt.registerTask('quick', [

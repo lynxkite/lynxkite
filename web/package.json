@@ -37,7 +37,8 @@
     "load-grunt-tasks": "0.4.0",
     "protractor": "2.5.1",
     "request": "2.62.0",
-    "time-grunt": "1.2.1"
+    "time-grunt": "1.2.1",
+    "grunt-exec": "~0.4.6"
   },
   "engines": {
     "node": "0.10.0"
