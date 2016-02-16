@@ -64,6 +64,13 @@ object DeriveJS {
     import Scripting._
     op(op.vs, vertexSet)(op.attrs, jsValueAttributes)(op.scalars, jsValueScalars).result
   }
+  def printJS(expr: JavaScript, namedValues: Option[Map[String, Any]]): String = {
+    if (namedValues.isEmpty) {
+      s"$expr"
+    } else {
+      s"$expr with values: {" + namedValues.get.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
+    }
+  }
 }
 import DeriveJS._
 abstract class DeriveJS[T](
@@ -86,7 +93,7 @@ abstract class DeriveJS[T](
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
-      convert(result)
+      convert(result, None)
     }
   }
 
@@ -116,14 +123,14 @@ abstract class DeriveJS[T](
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
           // JavaScript's "undefined" is returned as a Java "null".
-          Option(evaluator.evaluate(namedValues, desiredClass)).map(result => key -> convert(result))
+          Option(evaluator.evaluate(namedValues, desiredClass)).map(result => key -> convert(result, Some(namedValues)))
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
     output(o.attr, derived)
   }
 
   protected val desiredClass: Class[_]
-  protected def convert(v: Any): T
+  protected def convert(v: Any, nv: Option[Map[String, Any]]): T
 }
 
 object DeriveJSString extends OpFromJson {
@@ -146,9 +153,10 @@ case class DeriveJSString(
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[String]
-  def convert(v: Any): String = v match {
+  def convert(v: Any, nv: Option[Map[String, Any]]): String = v match {
     case v: String => v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
+    case _ => throw new AssertionError(
+      s"$v of ${v.getClass} cannot be converted to String\n" + printJS(expr, nv))
   }
 }
 
@@ -172,10 +180,13 @@ case class DeriveJSDouble(
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any): Double = v match {
+  def convert(v: Any, nv: Option[Map[String, Any]]): Double = v match {
     case v: Double =>
-      assert(!v.isNaN(), s"$expr did not return a valid number")
+      assert(!v.isNaN() && !v.isInfinite(),
+        "Expression did not return a valid number\n" + printJS(expr, nv))
       v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
+    case _ =>
+      throw new AssertionError(
+        s"$v of ${v.getClass} cannot be converted to Double\n" + printJS(expr, nv))
   }
 }
