@@ -24,10 +24,7 @@ END
   sed -e 's/`//g' > $2
 }
 
-echo "running this shit"
-
 APP_HOME=$(dirname $(dirname $(readlink -f $0)))
 
 asciidoc_to_template $APP_HOME/web/app/admin_manual/installation/configuration/kiterc.asciidoc $APP_HOME/conf/kiterc_template
-git add $APP_HOME/conf/kiterc_template
-echo " DONE\n\n"
+
