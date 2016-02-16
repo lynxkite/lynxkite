@@ -6,8 +6,8 @@ export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 
 # To specify which cluster to use choose one of the following options:
 
-# - `local` - for single machine installs
-# - `yarn-client` - for using YARN (Hadoop v2). Please also set `YARN_*` settings below.
+# - local - for single machine installs
+# - yarn-client - for using YARN (Hadoop v2). Please also set YARN_* settings below.
 
 export SPARK_MASTER=local
 
@@ -16,24 +16,24 @@ export SPARK_MASTER=local
 export KITE_META_DIR=$HOME/kite_meta
 
 # Specify the directory of the data where graph data is stored. Should be on a distributed fs
-# (HDFS, S3, etc) unless this is a `local` setup. Please note that giving the full
-# URI (e.g., `file:/...`) is mandatory.
+# (HDFS, S3, etc) unless this is a local setup. Please note that giving the full
+# URI (e.g., file:/...) is mandatory.
 export KITE_DATA_DIR=file:$HOME/kite_data/
 
 # LynxKite can use a faster ephemeral file system for data storage, with reading from the main
-# file system specified by `KITE_DATA_DIR` as a fallback. The primary use case for this is using
+# file system specified by KITE_DATA_DIR as a fallback. The primary use case for this is using
 # SSD-backed HDFS on EC2 while using S3 for the permanent storage.
 
-# If `KITE_EPHEMERAL_DATA_DIR` is set, all data writes go to this directory. `KITE_DATA_DIR will` be
+# If KITE_EPHEMERAL_DATA_DIR is set, all data writes go to this directory. KITE_DATA_DIR will be
 # used only for uploaded files.
 # export KITE_EPHEMERAL_DATA_DIR=
 
 # Optionally set the configuration file to specify what file paths users are allowed to access using
-# what prefixes. Use `kite_x.y.z/conf/prefix_definitions_template.txt` as a template when creating
+# what prefixes. Use kite_x.y.z/conf/prefix_definitions_template.txt as a template when creating
 # your custom prefix configuration file. Make sure you put the config file to a LynxKite version
-# independent location (not inside the `kite_x.y.z` directory, e.g. `$HOME/kite_conf`). Then set
-# `KITE_PREFIX_DEFINITIONS` to point to your newly created config file (e.g. the recommended
-# `$HOME/kite_conf/prefix_definitions.txt`).
+# independent location (not inside the kite_x.y.z directory, e.g. $HOME/kite_conf). Then set
+# KITE_PREFIX_DEFINITIONS to point to your newly created config file (e.g. the recommended
+# $HOME/kite_conf/prefix_definitions.txt).
 export KITE_PREFIX_DEFINITIONS=
 
 # Specify the PID file for LynxKite servers.
@@ -51,18 +51,18 @@ export KITE_USERS_FILE=$HOME/kite_users
 # export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000
 
 # Specify how much memory is available for LynxKite on a single worker machine.
-# Ignored for `local` setups, use `KITE_MASTER_MEMORY_MB` for that case.
+# Ignored for local setups, use KITE_MASTER_MEMORY_MB for that case.
 export EXECUTOR_MEMORY=1g
 
 # Specify the number of executors. For standalone cluster it defaults to as many as possible.
-# For a `yarn-client` setup, this options is mandatory.
+# For a yarn-client setup, this options is mandatory.
 # export NUM_EXECUTORS=5
 
 # Specify the number of cores per executor LynxKite should use.
 export NUM_CORES_PER_EXECUTOR=4
 
 # Specify how much memory is available for LynxKite on the master machine in megabytes.
-# For `local` setups this also determines executor memory and `EXECUTOR_MEMORY` is
+# For local setups this also determines executor memory and EXECUTOR_MEMORY is
 # ignored in that case.
 export KITE_MASTER_MEMORY_MB=1024
 
@@ -81,7 +81,7 @@ export KITE_HTTP_PORT=2200
 export KITE_LOCAL_TMP=/tmp
 
 # The LynxKite extra JARS is a colon (:) delimited list of JAR files that should be loaded on the
-# LynxKite `CLASSPATH`. (It will be loaded on the master and distributed to the workers.)
+# LynxKite CLASSPATH. (It will be loaded on the master and distributed to the workers.)
 
 # - Wildcards are not supported.
 # - Filenames have to be absolute paths.
@@ -92,11 +92,11 @@ export KITE_EXTRA_JARS=
 
 # You can enable an interactive Scala interpreter able to access LynxKite internals by using
 # the below exports. You can access the interpreter by SSHing from the host running LynxKite as:
-# `ssh ${KITE_AMMONITE_USER}@localhost -p ${KITE_AMMONITE_PORT}`
-# and use `KITE_AMMONITE_PASSWD` as password.
+# ssh ${KITE_AMMONITE_USER}@localhost -p ${KITE_AMMONITE_PORT}
+# and use KITE_AMMONITE_PASSWD as password.
 
 # If you do this and do not trust all users who can SSH into this machine (the typical case!)
-# then make sure to modify the file system permissions of `.kiterc` to be only readable by the
+# then make sure to modify the file system permissions of .kiterc to be only readable by the
 # user running LynxKite and change the password below.
 # export KITE_AMMONITE_PORT=2203
 # export KITE_AMMONITE_USER=lynx
