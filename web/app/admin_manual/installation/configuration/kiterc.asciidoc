@@ -3,7 +3,7 @@
 
 This file contains various configurations used when launching a LynxKite instance.
 
-Set the directory containing your Spark installation.
+Specify the directory containing your Spark installation.
 ```
 export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 ```
@@ -17,14 +17,14 @@ To specify which cluster to use choose one of the following options:
 export SPARK_MASTER=local
 ```
 
-Set the directory where LynxKite stores metadata about projects. The directory must be on
+Specify the directory where LynxKite stores metadata about projects. The directory must be on
 the local file system. Do not forget to set up backups.
 ```
 export KITE_META_DIR=$HOME/kite_meta
 ```
 
-Set the direcotry of the data where graph data is stored. Should be on a distributed fs
-(HDFS, S3, etc) unless this is a single machine install. Please note that giving the full
+Specify the directory of the data where graph data is stored. Should be on a distributed fs
+(HDFS, S3, etc) unless this is a `local` setup. Please note that giving the full
 URI (e.g., `file:/...`) is mandatory.
 ```
 export KITE_DATA_DIR=file:$HOME/kite_data/
@@ -90,7 +90,7 @@ export NUM_CORES_PER_EXECUTOR=4
 ```
 
 Specify how much memory is available for LynxKite on the master machine in megabytes.
-For single machine installs this also determines executor memory and `EXECUTOR_MEMORY` is
+For `local` setups this also determines executor memory and `EXECUTOR_MEMORY` is
 ignored in that case.
 ```
 export KITE_MASTER_MEMORY_MB=1024
