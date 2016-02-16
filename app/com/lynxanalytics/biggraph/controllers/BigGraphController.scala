@@ -268,8 +268,6 @@ object SavedWorkflow {
 
 object BigGraphController {
   val workflowsRoot: SymbolPath = SymbolPath("workflows")
-
-  val dirtyOperationError = "Dirty operations are not allowed in history"
 }
 class BigGraphController(val env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -506,7 +504,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
-  // Won't ever execute dirty operation, for those it sets a special error status.
   private def historyStep(
     user: serving.User,
     startState: RootProjectState,
@@ -547,7 +544,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       request.copy(op = request.op.copy(parameters = restrictedParameters))
     }.getOrElse(request)
     val status = opOpt.map { op =>
-      if (op.enabled.enabled && !op.dirty) {
+      if (op.enabled.enabled) {
         try {
           op.validateAndApply(restrictedRequest.op.parameters)
           FEStatus.enabled
@@ -555,8 +552,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
           case t: Throwable =>
             FEStatus.disabled(t.getMessage)
         }
-      } else if (op.dirty) {
-        FEStatus.disabled(BigGraphController.dirtyOperationError)
       } else {
         op.enabled
       }
@@ -583,11 +578,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val startingState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
     val checkpointHistory = stateHistory(user, startingState)
     val historyExtension = extendedHistory(user, startingState, request.requests)
-    val cleanCheckpointHistory =
-      checkpointHistory
-        .filter(step => step.status.disabledReason != BigGraphController.dirtyOperationError)
     ProjectHistory(
-      cleanCheckpointHistory ++ historyExtension.map(_._2))
+      checkpointHistory ++ historyExtension.map(_._2))
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = {
@@ -714,8 +706,6 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
   }
 
-  // "Dirty" operations have side-effects, such as writing files. (See #1564.)
-  val dirty = false
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
     title,
