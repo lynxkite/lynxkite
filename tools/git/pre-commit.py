@@ -14,8 +14,6 @@ def warn(msg):
   else:
     print(msg, file=sys.stderr)
 
-subprocess.call('tools/gen_documentation.sh')
-
 protected_branches = ['master', 'brave-new-world']
 branch = subprocess.check_output('git rev-parse --abbrev-ref=strict HEAD'.split()).strip()
 if branch in protected_branches:
