@@ -55,7 +55,7 @@ module.exports = function (grunt) {
         tasks: ['asciidoctor']
       },
       adminManual: {
-        files: ['<%= yeoman.app %>/admin_manual/{,*/}*.asciidoc'],
+        files: ['<%= yeoman.app %>/admin_manual/**/*.asciidoc'],
         tasks: ['asciidoctor']
       },
       gruntfile: {
