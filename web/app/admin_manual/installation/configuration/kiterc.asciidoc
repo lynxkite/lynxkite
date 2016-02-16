@@ -3,163 +3,166 @@
 
 This file contains various configurations used when launching a LynxKite instance.
 
-Set to the directory containing your Spark installation like this:
+Set the directory containing your Spark installation.
 ```
 export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 ```
 
 To specify which cluster to use choose one of the following options:
+
 - `local` - for single machine installs
 - `yarn-client` - for using YARN (Hadoop v2). Please also set `YARN_*` settings below.
+
 ```
 export SPARK_MASTER=local
 ```
 
-The directory where LynxKite stores metadata about projects. Must be on the local file system.
-Do not forget to set up backups.
+Set the directory where LynxKite stores metadata about projects. The directory must be on
+the local file system. Do not forget to set up backups.
 ```
 export KITE_META_DIR=$HOME/kite_meta
 ```
 
-The data where graph data is stored. Should be on a distributed fs (HDFS, S3, etc) unless
-this is a single machine install. Please note that giving the full URI (e.g., file:/...)
-is now mandatory.
+Set the direcotry of the data where graph data is stored. Should be on a distributed fs
+(HDFS, S3, etc) unless this is a single machine install. Please note that giving the full
+URI (e.g., `file:/...`) is mandatory.
 ```
 export KITE_DATA_DIR=file:$HOME/kite_data/
 ```
 
 LynxKite can use a faster ephemeral file system for data storage, with reading from the main
-file system specified by KITE_DATA_DIR as a fallback. The primary use case for this is using
+file system specified by `KITE_DATA_DIR` as a fallback. The primary use case for this is using
 SSD-backed HDFS on EC2 while using S3 for the permanent storage.
 
-If KITE_EPHEMERAL_DATA_DIR is set, all data writes go to this directory. KITE_DATA_DIR will be
+If `KITE_EPHEMERAL_DATA_DIR` is set, all data writes go to this directory. `KITE_DATA_DIR will` be
 used only for uploaded files.
 ```
 # export KITE_EPHEMERAL_DATA_DIR=
 ```
 
-Configuration file to specify what file paths users are allowed to access using
-what prefixes. If you need to define custom prefix definitions, you need to
-set this. Use kite_???/conf/prefix_definitions_template.txt as a template when
-creating your custom prefix configuration file. Make sure you put the config
-file to a Kite version independent location (not inside the kite_??? directory,
-e.g. $HOME/kite_conf). Then set KITE_PREFIX_DEFINITIONS to point to your newly
-created config file (e.g. $HOME/kite_conf/prefix_definitions.txt).
+Optionally set the configuration file to specify what file paths users are allowed to access using
+what prefixes. Use `kite_x.y.z/conf/prefix_definitions_template.txt` as a template when creating
+your custom prefix configuration file. Make sure you put the config file to a LynxKite version
+independent location (not inside the `kite_x.y.z` directory, e.g. `$HOME/kite_conf`). Then set
+`KITE_PREFIX_DEFINITIONS` to point to your newly created config file (e.g. the recommended
+`$HOME/kite_conf/prefix_definitions.txt`).
 ```
 export KITE_PREFIX_DEFINITIONS=
 ```
 
-The PID file for Kite servers.
+Specify the PID file for LynxKite servers.
 ```
 export KITE_PID_FILE=$HOME/kite.pid
 ```
 
-The user registry file for Kite servers.
+Specify the user registry file for LynxKite servers.
 ```
 export KITE_USERS_FILE=$HOME/kite_users
 ```
 
-Needed if you want to run against yarn.
-The directory with the YARN configuration.
+Specify the YARN configuration directory. It is needed if you want to run against YARN.
 ```
 # export YARN_CONF_DIR=/etc/hadoop/...
 ```
 
-By default, we are specifying 15% of executor memory to be the amount allocated for
-overhead in YARN executor containers. You can set a higher value here if YARN is
-killing your executors for exceeding size, but the executors themselves are not
-reporting out of memory errors.
+By default, LynxKite specifies 15% of executor memory to be the amount allocated for overhead
+in YARN executor containers. You can set a higher value if YARN is killing your executors for
+exceeding size, but the executors themselves are not reporting out of memory errors.
 ```
 # export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000
 ```
 
-Specify how much memory is available for Kite on a single worker machine.
-Ignored for single machine installs, see `KITE_MASTER_MEMORY_MB` for that case.
+Specify how much memory is available for LynxKite on a single worker machine.
+Ignored for `local` setups, use `KITE_MASTER_MEMORY_MB` for that case.
 ```
 export EXECUTOR_MEMORY=1g
 ```
 
-Number of executors. For standalone cluster it defaults to as many as possible. For YARN
-cluster, this options is mandatory.
+Specify the number of executors. For standalone cluster it defaults to as many as possible.
+For a `yarn-client` setup, this options is mandatory.
 ```
 # export NUM_EXECUTORS=5
 ```
 
-Number of cores per executor Kite should use. (For a YARN deployment, use this instead of
-the `YARN_CORES_PER_EXECUTOR` option that was available in pre-1.2 versions.)
+Specify the number of cores per executor LynxKite should use.
 ```
 export NUM_CORES_PER_EXECUTOR=4
 ```
 
-Specify how much memory is available for Kite on the master machine in megabytes.
+Specify how much memory is available for LynxKite on the master machine in megabytes.
 For single machine installs this also determines executor memory and `EXECUTOR_MEMORY` is
 ignored in that case.
 ```
 export KITE_MASTER_MEMORY_MB=1024
 ```
 
-Port for the Kite HTTP server to listen on. Must be >=1000.
+Specify the port for the LynxKite HTTP server to listen on. Must be >=1000.
 ```
 export KITE_HTTP_PORT=2200
 ```
 
-HTTP port for the watchdog. If this is set, the startup script will start a watchdog as well
-which will automatically restart the Kite server if it detects any problem.
+Specify the HTTP port for the watchdog. If this is set, the startup script will start a watchdog
+as well which will automatically restart the LynxKite server if it detects any problem.
 ```
 # export KITE_WATCHDOG_PORT=2202
 ```
 
-A local path that exists on all workers and the master and will be used for storing
-temporary Spark/Hadoop files. This can get big, so if you have a small root filesystem
-and an extra large drive mounted somewhere then you need to point this to somewhere on
-the large drive. On the other hand performance of this drive has big effect on overal speed,
-so SSD is a nice option here.
+The LynxKite local temp directory is local path that exists on all workers and the master and will
+be used for storing temporary Spark/Hadoop files. This directory can potentially use a lot of
+space, so if you have a small root filesystem and an extra large drive mounted somewhere then you
+need to point this to somewhere on the large drive. On the other hand performance of this drive has
+a significant effect on overal speed, so using an SSD is a nice option here.
 ```
 export KITE_LOCAL_TMP=/tmp
 ```
 
-A colon (:) delimited list of JAR files that should be loaded on Kite CLASSPATH. (Will be loaded
-on the master and distributed to the workers.)
-Wildcards are not supported.
-Filenames have to be absolute paths.
-Typical use case is to configure additional JDBC drivers, all you need to do is to add the
-jar file here.
+The LynxKite extra JARS is a colon (:) delimited list of JAR files that should be loaded on the
+LynxKite CLASSPATH. (It will be loaded on the master and distributed to the workers.)
+
+- Wildcards are not supported.
+- Filenames have to be absolute paths.
+
+One typical use case is to configure additional JDBC drivers. To do that, all you need to do is to
+add the jar file here.
 ```
 export KITE_EXTRA_JARS=
 ```
 
-You can enable an interactive Scala interpreter able to access Kite internals by uncommenting
-the below exports. You can access the interpreter by sshing from the host running kite as:
+You can enable an interactive Scala interpreter able to access LynxKite internals by using
+the below exports. You can access the interpreter by SSHing from the host running LynxKite as:
 `ssh ${KITE_AMMONITE_USER}@localhost -p ${KITE_AMMONITE_PORT}`
 and use `KITE_AMMONITE_PASSWD` as password.
-If you do this and don't trust all users who can ssh into this machine (the typical case!)
-then make sure to chown .kiterc to be only readable by the user running kite and
-change the password below.
+
+If you do this and do not trust all users who can SSH into this machine (the typical case!)
+then make sure to modify the file system permissions of `.kiterc` to be only readable by the
+user running LynxKite and change the password below.
 ```
 # export KITE_AMMONITE_PORT=2203
 # export KITE_AMMONITE_USER=lynx
 # export KITE_AMMONITE_PASSWD=kite
 ```
+
 [[kiterc-https]]
-Options needed if you want to use authentication and https.
+Options needed if you want to use authentication and HTTPS.
 
 Just use the following configurations with default values for a simple, fake certificate setup.
 
 ===========================================================
 Application secret used by Play! framework for various tasks, such as signing cookies and
-encryption. More details https://playframework.com/documentation/latest/ApplicationSecret[here].
+encryption. More details can be found
+https://playframework.com/documentation/latest/ApplicationSecret[here].
 ```
 # export KITE_APPLICATION_SECRET=${KITE_RANDOM_SECRET}
 ```
 
-Port for the Kite HTTPS server to listen on. Must be >=1000.
+Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 ```
 # export KITE_HTTPS_PORT=2201
 ```
 
-Keystore file and passwd with the HTTPS keys. Just leave as is for fake HTTPS certificate.
-If you have your own intranet CA or a wildcard certificate, you can generate a certificate for
-LynxKite that the browsers can validate. Follow the instructions at
+Set the keystore file and password with the HTTPS keys. Use the default values for a fake HTTPS
+certificate. If you have your own intranet CA or a wildcard certificate, you can generate a
+certificate for LynxKite that the browsers can validate. Follow the instructions at
 http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
 ```
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
@@ -167,8 +170,8 @@ http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creati
 ```
 ===========================================================
 
-Only needed for Google Auth ask the Lynx R&D team for further instructions if you think you need
-this.
+The LynxKite Google client secret is only needed for Google Authenticator. Ask the Lynx R&D
+team for further instructions if you think you need this feature.
 ```
 # export KITE_GOOGLE_CLIENT_SECRET='???'
 ```
