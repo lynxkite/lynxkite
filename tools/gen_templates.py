@@ -1,4 +1,9 @@
 #!/usr/bin/python
+'''Generates configuration template files from AsciiDoc sources.
+
+The idea is that this way the same documentation can be present in the file, and also in the
+administrator's guide.
+'''
 import os
 import re
 
