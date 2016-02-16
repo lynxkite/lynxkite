@@ -52,7 +52,7 @@ abstract class DeriveJSScalar[T](
     val testNamedValues = scalarNames.zip(defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
-      convert(result)
+      convert(result, None)
     }
   }
 
@@ -63,12 +63,12 @@ abstract class DeriveJSScalar[T](
     implicit val id = inputDatas
     val scalars = inputs.scalars.map(_.value.value)
     val bindings = scalarNames.zip(scalars).toMap
-    val derived = convert(expr.evaluate(bindings, desiredClass))
+    val derived = convert(expr.evaluate(bindings, desiredClass), Some(bindings))
     output(o.sc, derived)
   }
 
   protected val desiredClass: Class[_]
-  protected def convert(v: Any): T
+  protected def convert(v: Any, nv: Option[Map[String, Any]]): T
 }
 
 object DeriveJSScalarString extends OpFromJson {
@@ -86,9 +86,10 @@ case class DeriveJSScalarString(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
   val desiredClass = classOf[String]
-  def convert(v: Any): String = v match {
+  def convert(v: Any, nv: Option[Map[String, Any]]): String = v match {
     case v: String => v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
+    case _ => throw new AssertionError(
+      s"$v of ${v.getClass} cannot be converted to String\n" + DeriveJS.printJS(expr, nv))
   }
 }
 
@@ -108,10 +109,12 @@ case class DeriveJSScalarDouble(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
   val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any): Double = v match {
+  def convert(v: Any, nv: Option[Map[String, Any]]): Double = v match {
     case v: Double =>
-      assert(!v.isNaN(), s"$expr did not return a valid number")
+      assert(!v.isNaN() && !v.isInfinite(),
+        "Expression did not return a valid number\n" + DeriveJS.printJS(expr, nv))
       v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
+    case _ => throw new AssertionError(
+      s"$v of ${v.getClass} cannot be converted to Double\n" + DeriveJS.printJS(expr, nv))
   }
 }
