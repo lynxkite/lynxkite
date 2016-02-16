@@ -116,8 +116,9 @@ a significant effect on overal speed, so using an SSD is a nice option here.
 export KITE_LOCAL_TMP=/tmp
 ```
 
+[[kiterc-extra-jars]]
 The LynxKite extra JARS is a colon (:) delimited list of JAR files that should be loaded on the
-LynxKite CLASSPATH. (It will be loaded on the master and distributed to the workers.)
+LynxKite `CLASSPATH`. (It will be loaded on the master and distributed to the workers.)
 
 - Wildcards are not supported.
 - Filenames have to be absolute paths.
