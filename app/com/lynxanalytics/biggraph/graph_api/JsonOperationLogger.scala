@@ -1,20 +1,20 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import com.google.cloud.hadoop.repackaged.com.google.common.io.BaseEncoding
-import java.io.{ FileInputStream, File }
 import play.api.libs.json
 import scala.concurrent.ExecutionContextExecutorService
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class OutputInfo(name: String, count: Option[Long], executionTimeInSeconds: Long)
-case class InputInfo(name: String, count: Option[Long])
-
-abstract class OpLogger {
+abstract class OperationLogger {
   def addOutput(output: SafeFuture[EntityData]): Unit
   def addInput(input: SafeFuture[EntityData]): Unit
   def close(): Unit
-  def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit
+}
+
+class NullOperationLogger extends OperationLogger {
+  def addOutput(output: SafeFuture[EntityData]): Unit = {}
+  def addInput(input: SafeFuture[EntityData]): Unit = {}
+  def close(): Unit = {}
 }
 
 object OperationLogger {
@@ -24,31 +24,21 @@ object OperationLogger {
     cnt
   }
 
-  def getAbsolutelyUniqueId(): String = {
-    val randomSource = new File("/dev/urandom")
-    assert(randomSource.exists, s"Can't open ${randomSource.getAbsolutePath}!")
-    val fis = new FileInputStream(randomSource)
-    val bytes = new Array[Byte](16)
-    try {
-      fis.read(bytes)
-    } catch {
-      case x: Throwable => throw x
-    } finally {
-      fis.close()
-    }
-    BaseEncoding.base16().encode(bytes)
-  }
+  val nullLogger = util.Properties.envOrNone("KITE_NO_OPERATION_LOGGER").isDefined
 
-  def get(instance: MetaGraphOperationInstance, ec: ExecutionContextExecutorService): OpLogger = {
-    new OperationLogger(instance, ec)
+  def apply(instance: MetaGraphOperationInstance, ec: ExecutionContextExecutorService): OperationLogger = {
+    if (nullLogger) new NullOperationLogger
+    else new JsonOperationLogger(instance, ec)
   }
 }
 
-class OperationLogger(instance: MetaGraphOperationInstance, implicit val ec: ExecutionContextExecutorService) extends OpLogger {
-  val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
-  val inputInfoList = scala.collection.mutable.Queue[SafeFuture[InputInfo]]()
+class JsonOperationLogger(instance: MetaGraphOperationInstance, implicit val ec: ExecutionContextExecutorService) extends OperationLogger {
+  private val marker = "JSON_OPERATION_LOGGER_MARKER"
+  case class OutputInfo(name: String, count: Option[Long], executionTimeInSeconds: Long)
+  case class InputInfo(name: String, count: Option[Long])
 
-  //  implicit val executionContext = ec
+  private val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
+  private val inputInfoList = scala.collection.mutable.Queue[SafeFuture[InputInfo]]()
   private def outputsLoggedSoFar = outputInfoList.length
   private var closed = false
   private val creationTime = System.currentTimeMillis
@@ -96,6 +86,10 @@ class OperationLogger(instance: MetaGraphOperationInstance, implicit val ec: Exe
   }
 
   override def close(): Unit = {
+    assert(outputInfoList.length == numOutput,
+      s"Output info list mismatch: ${outputInfoList.length} != $numOutput")
+    assert(inputInfoList.length == numInput,
+      s"Input info list mismatch: ${inputInfoList.length} != $numInput")
     val outputs = SafeFuture.sequence(outputInfoList)
     val inputs = SafeFuture.sequence(inputInfoList)
 
@@ -114,7 +108,7 @@ class OperationLogger(instance: MetaGraphOperationInstance, implicit val ec: Exe
     }
   }
 
-  override def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit = {
+  def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit = {
     val inputJson = {
       implicit val formatOutput = json.Json.format[InputInfo]
       val formatter = implicitly[json.Format[Seq[InputInfo]]]
@@ -128,11 +122,13 @@ class OperationLogger(instance: MetaGraphOperationInstance, implicit val ec: Exe
     }
     val out = json.Json.obj(
       "name" -> json.JsString(instance.operation.toString),
-      "time" -> json.JsNumber(elapsedMs() / 1000),
+      "guid" -> json.JsString(instance.operation.gUID.toString),
+      "executionTimeInSeconds" -> json.JsNumber(elapsedMs() / 1000),
       "inputs" -> inputJson,
       "outputs" -> outputJson
     )
-    println(json.Json.prettyPrint(out))
+    log.info(s"$marker $out")
+    println(s"$marker $out")
   }
 
   override def finalize() = {
