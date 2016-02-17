@@ -5,6 +5,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+ - Improve scalability and performance of the Centrality algorithm family.
 
 ### 1.7.0
 
