@@ -32,4 +32,7 @@ app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 asciidocToTemplate(
   app_home + '/web/app/admin_manual/installation/configuration/kiterc.asciidoc',
   app_home + '/conf/kiterc_template')
+asciidocToTemplate(
+  app_home + '/web/app/admin_manual/installation/configuration/emr.asciidoc',
+  app_home + '/tools/emr_spec_template')
 

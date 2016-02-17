@@ -16,7 +16,8 @@ for example with setting `$INSTALL_DIR=/path/to/kite/install/dir`.
 `my_cluster_spec`.
 
 . Edit `my_cluster_spec`. You will give a name to your cluster and provide some configuration.
-Comments in the file should be enough to guide you, let support know if something is unclear.
+The settings are documented inside the template file and in the <<emr-file>> section. This
+information is also available in the template file as comments.
 
 . Start your cluster by:
 `$INSTALL_DIR/tools/emr.sh start my_cluster_spec`
@@ -29,10 +30,10 @@ By default, LynxKite is running behind a firewall to prevent unauthorized access
 `$INSTALL_DIR/tools/emr.sh connect my_cluster_spec`
 Now you can access your LynxKite instance by entering http://localhost:4044 in your
 browser. If you want to access YARN and Spark diagnostic tools, or more LynxKite instances
-at the same time, then you need to update your Proxy Settings according to
-https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-master-node-proxy.html
-You can stop this script by hitting Ctrl+C and restart it any number of times without affecting
-your cluster.
+at the same time, then you need to update your Proxy Settings according to the EMR
+https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-master-node-proxy.html[Proxy Settings]
+documentation. You can stop this script by hitting Ctrl+C and restart it any number of times without
+affecting your cluster.
 
 . You can suspend your work any time. Note that this will destroy the cluster's storage so the data
 created by LynxKite needs to be backed up.
