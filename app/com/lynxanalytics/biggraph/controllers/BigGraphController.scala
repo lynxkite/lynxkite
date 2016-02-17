@@ -909,7 +909,8 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
       new Operation(id, context, Operation.Category("Removed operations", "red")) {
         def parameters = List()
         def enabled = FEStatus.disabled(s"$id no longer exists")
-        def apply(params: Map[String, String]) = ???
+        def apply(params: Map[String, String]) =
+          throw new AssertionError(s"Cannot find operation: $id")
       }
     }
   }
