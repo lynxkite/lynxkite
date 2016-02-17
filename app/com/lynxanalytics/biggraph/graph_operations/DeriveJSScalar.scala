@@ -52,7 +52,7 @@ abstract class DeriveJSScalar[T](
     val testNamedValues = scalarNames.zip(defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
-      convert(result, DeriveJS.printJS(expr, None))
+      convert(result, typeCheck = true, DeriveJS.printJS(expr, None))
     }
   }
 
@@ -65,6 +65,7 @@ abstract class DeriveJSScalar[T](
     val bindings = scalarNames.zip(scalars).toMap
     val derived = convert(
       expr.evaluate(bindings, desiredClass),
+      typeCheck = false,
       DeriveJS.printJS(expr, Some(bindings)))
     output(o.sc, derived)
   }
@@ -72,6 +73,7 @@ abstract class DeriveJSScalar[T](
   protected val desiredClass: Class[_]
   protected def convert(
     v: Any, // The value to convert.
+    typeCheck: Boolean, // True if the conversion is only meant for type checking.
     context: => String): T // The context of the conversion for detailed error messages.
 }
 
@@ -90,7 +92,7 @@ case class DeriveJSScalarString(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
   val desiredClass = classOf[String]
-  def convert(v: Any, context: => String): String = v match {
+  def convert(v: Any, typeCheck: Boolean, context: => String): String = v match {
     case v: String => v
     case _ => throw new AssertionError(
       s"$v of ${v.getClass} cannot be converted to String in $context")
@@ -113,10 +115,12 @@ case class DeriveJSScalarDouble(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
   val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any, context: => String): Double = v match {
+  def convert(v: Any, typeCheck: Boolean, context: => String): Double = v match {
     case v: Double =>
-      assert(!v.isNaN() && !v.isInfinite(),
-        s"$context did not return a valid number")
+      if (!typeCheck) {
+        assert(!v.isNaN() && !v.isInfinite(),
+          s"$context did not return a valid number")
+      }
       v
     case _ => throw new AssertionError(
       s"$v of ${v.getClass} cannot be converted to Double in $context")

@@ -338,18 +338,16 @@ object JSValue {
     c(value)
   }
 
-  private def defaultJavaValue[T: TypeTag]: T = {
-    // Use default values with which it's harder to trigger a special case
-    // like division by zero.
+  def defaultJavaValue[T: TypeTag]: T = {
     val res =
-      if (typeOf[T] =:= typeOf[Byte]) 2.toByte
-      else if (typeOf[T] =:= typeOf[Short]) 2.toShort
-      else if (typeOf[T] =:= typeOf[Int]) 2
-      else if (typeOf[T] =:= typeOf[Float]) 2.toFloat
-      else if (typeOf[T] =:= typeOf[Double]) 2.0
+      if (typeOf[T] =:= typeOf[Byte]) 0.toByte
+      else if (typeOf[T] =:= typeOf[Short]) 0.toShort
+      else if (typeOf[T] =:= typeOf[Int]) 0
+      else if (typeOf[T] =:= typeOf[Float]) 0.toFloat
+      else if (typeOf[T] =:= typeOf[Double]) 0.0
       else if (typeOf[T] =:= typeOf[Char]) 'a'
       else if (typeOf[T] =:= typeOf[Boolean]) false
-      else if (typeOf[T] =:= typeOf[String]) "abc"
+      else if (typeOf[T] =:= typeOf[String]) ""
       else if (typeOf[T] <:< typeOf[Iterable[_]]) Iterable()
       else throw new AssertionError(s"Type ${typeOf[T]} is not supported as input for Javascript")
     res.asInstanceOf[T]
