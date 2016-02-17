@@ -264,7 +264,7 @@ class DataManager(sc: spark.SparkContext,
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
 
-        val logger = OperationLogger.get(instance, executionContext)
+        val logger = OperationLogger(instance, executionContext)
         val instanceFuture = getInstanceFuture(instance)
 
         for (input <- instance.inputs.all.values) {
