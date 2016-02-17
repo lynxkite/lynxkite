@@ -9,6 +9,7 @@ import re
 
 header = re.compile(r'\[\[.*\]\]')
 anchor = re.compile(r'\#\#\#')
+link = re.compile(r'(http.*)\[(.*)\]')
 
 def asciidocToTemplate(src, dst):
   codeBlock = False
@@ -25,7 +26,9 @@ def asciidocToTemplate(src, dst):
               d.write(line)
             else:
               if not header.match(line) and not anchor.match(line):
-                d.write('# ' + line.replace('`', ''))
+                line = line.replace('`', '')
+                line = link.sub(r'\2 (\1)', line)
+                d.write('# ' + line)
 
 app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
