@@ -6,3 +6,5 @@ these variables in specific setups. If the example code starts with the `#` sign
 variable is disabled by default in the shipped corresponding template file.
 
 include::kiterc.asciidoc[]
+
+include::emr.asciidoc[]
