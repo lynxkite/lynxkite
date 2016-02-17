@@ -508,15 +508,14 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     ops: Operations,
     context: Operation.Context,
     request: SubProjectOperation): List[OperationCategory] = {
-    val opOpt = ops.maybeOpById(context, request.op.id)
+    val op = ops.opById(context, request.op.id)
     val base = ops.categories(context, includeDeprecated = true)
     // If it's a deprecated workflow operation, display it in a special category.
     val withOp =
-      if (opOpt.isDefined &&
-        base.find(_.containsOperation(opOpt.get)).isEmpty &&
-        opOpt.get.isInstanceOf[WorkflowOperation]) {
+      if (base.find(_.containsOperation(op)).isEmpty &&
+        op.isInstanceOf[WorkflowOperation]) {
         val deprCat = WorkflowOperation.deprecatedCategory
-        val deprCatFE = deprCat.toFE(List(opOpt.get.toFE.copy(category = deprCat.title)))
+        val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
         base :+ deprCatFE
       } else {
         base
@@ -546,14 +545,14 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
     val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
 
-    val opOpt = ops.maybeOpById(context, request.op.id)
-    val restrictedRequest = opOpt.map { op =>
+    val op = ops.opById(context, request.op.id)
+    val restrictedRequest = {
       val validParameterIds = op.parameters.map(_.id).toSet
       val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
       request.copy(op = request.op.copy(parameters = restrictedParameters))
-    }.getOrElse(request)
+    }
 
-    val status = opOpt.map { op =>
+    val status = {
       if (op.enabled.enabled) {
         try {
           op.validateAndApply(restrictedRequest.op.parameters)
@@ -565,12 +564,12 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       } else {
         op.enabled
       }
-    }.getOrElse(FEStatus.disabled(s"${request.op.id} no longer exists"))
+    }
 
     // For the next state, we take it if it's given, otherwise take the end result of the
     // operation if it succeeded or we fall back to the state before the operation.
     val nextState = nextStateOpt.getOrElse(
-      if (status.enabled) opOpt.get.project.rootState
+      if (status.enabled) op.project.rootState
       else startState)
     val nextStateRootViewer = new RootProjectViewer(nextState)
     val segmentationsAfter = nextStateRootViewer.allOffspringFESegmentations("dummy")
@@ -893,7 +892,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def operationIds = operations.keys.toSeq
 
-  def maybeOpById(context: Operation.Context, id: String): Option[Operation] = {
+  private def maybeOpById(context: Operation.Context, id: String): Option[Operation] = {
     if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
       // Oho, a workflow operation!
       Some(workflowOpFromTag(SymbolPath.parse(id), context))
@@ -902,7 +901,15 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     }
   }
 
-  def opById(context: Operation.Context, id: String): Operation = maybeOpById(context, id).get
+  def opById(context: Operation.Context, id: String): Operation = {
+    maybeOpById(context, id).getOrElse {
+      new Operation(id, context, Operation.Category("Removed operations", "red")) {
+        def parameters = List()
+        def enabled = FEStatus.disabled(s"$id no longer exists")
+        def apply(params: Map[String, String]) = ???
+      }
+    }
+  }
 
   // Applies the operation specified by op in the given context and returns the
   // applied operation.
