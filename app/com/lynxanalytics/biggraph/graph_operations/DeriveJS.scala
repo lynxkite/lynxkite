@@ -93,7 +93,7 @@ abstract class DeriveJS[T](
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
-      convert(result, None)
+      convert(result, printJS(expr, None))
     }
   }
 
@@ -123,14 +123,18 @@ abstract class DeriveJS[T](
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
           // JavaScript's "undefined" is returned as a Java "null".
-          Option(evaluator.evaluate(namedValues, desiredClass)).map(result => key -> convert(result, Some(namedValues)))
+          Option(evaluator.evaluate(namedValues, desiredClass)).map {
+            result => key -> convert(result, printJS(expr, Some(namedValues)))
+          }
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
     output(o.attr, derived)
   }
 
   protected val desiredClass: Class[_]
-  protected def convert(v: Any, nv: Option[Map[String, Any]]): T
+  protected def convert(
+    v: Any, // The value to convert.
+    context: => String): T // The context of the conversion for detailed error messages.
 }
 
 object DeriveJSString extends OpFromJson {
@@ -153,10 +157,10 @@ case class DeriveJSString(
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[String]
-  def convert(v: Any, nv: Option[Map[String, Any]]): String = v match {
+  def convert(v: Any, context: => String): String = v match {
     case v: String => v
     case _ => throw new AssertionError(
-      s"$v of ${v.getClass} cannot be converted to String\n" + printJS(expr, nv))
+      s"$v of ${v.getClass} cannot be converted to String in $context")
   }
 }
 
@@ -180,13 +184,13 @@ case class DeriveJSDouble(
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any, nv: Option[Map[String, Any]]): Double = v match {
+  def convert(v: Any, context: => String): Double = v match {
     case v: Double =>
       assert(!v.isNaN() && !v.isInfinite(),
-        "Expression did not return a valid number\n" + printJS(expr, nv))
+        context + " did not return a valid number")
       v
     case _ =>
       throw new AssertionError(
-        s"$v of ${v.getClass} cannot be converted to Double\n" + printJS(expr, nv))
+        s"$v of ${v.getClass} cannot be converted to Double in " + context)
   }
 }
