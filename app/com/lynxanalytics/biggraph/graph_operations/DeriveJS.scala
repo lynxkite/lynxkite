@@ -188,7 +188,7 @@ case class DeriveJSDouble(
   def convert(v: Any, typeCheck: Boolean, context: => String): Double = v match {
     case v: Double =>
       // A JavaScript expression with default values may return infinity.
-      // That is only a problem with actual values.
+      // Infinity is only a problem with actual values.
       assert(!v.isNaN() && (typeCheck || !v.isInfinite()),
         s"$context did not return a valid number")
       v
