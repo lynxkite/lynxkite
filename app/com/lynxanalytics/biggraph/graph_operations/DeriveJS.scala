@@ -160,7 +160,7 @@ case class DeriveJSString(
   def convert(v: Any, context: => String): String = v match {
     case v: String => v
     case _ => throw new AssertionError(
-      s"$v of ${v.getClass} cannot be converted to String in $context")
+      s"$v of ${v.getClass} cannot be converted to String in " + context)
   }
 }
 
