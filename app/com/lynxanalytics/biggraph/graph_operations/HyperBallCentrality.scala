@@ -61,8 +61,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           vs = inputs.vs.rdd,
           es = inputs.es.rdd,
           measureFunction = {
-            (oldCentrality, diffSize, diameter) =>
-              oldCentrality + (diffSize.toDouble / diameter)
+            (oldCentrality, diffSize, distance) =>
+              oldCentrality + (diffSize.toDouble / distance)
           })
           .mapValues(_._2)
 
@@ -72,8 +72,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           inputs.vs.rdd,
           inputs.es.rdd,
           measureFunction = {
-            (oldCentrality, diffSize, diameter) =>
-              oldCentrality + diffSize * diameter // the measure is sum of distances
+            (sumDistance, diffSize, distance) =>
+              sumDistance + diffSize * distance
           })
           .mapValues {
             case (size, sumDistance) =>
@@ -90,8 +90,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
           vs = inputs.vs.rdd,
           es = inputs.es.rdd,
           measureFunction = {
-            (oldCentrality, diffSize, diameter) =>
-              oldCentrality + diffSize * diameter // the measure is sum of distances
+            (sumDistance, diffSize, distance) =>
+              sumDistance + diffSize * distance
           })
           .mapValues {
             case (size, sumDistance) =>
@@ -105,7 +105,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
   }
 
   // A function to compute a new centrality measure:
-  // (oldCentrality: Double, hyperBallDiffSizeAtDiameter: Int, diamter: Int) =>
+  // (oldCentrality: Double, hyperBallDiffSizeAtDiameter: Int, distance: Int) =>
   //   newCentrality: Int
   type MeasureFunction = (Double, Int, Int) => Double
 
@@ -124,10 +124,16 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     val partitioner = rc.partitionerForNRows(numEffectiveRows)
 
     val vertices = vs.sortedRepartition(partitioner)
-    val edges = es
-      .map { case (id, edge) => (edge.src, edge.dst) }
+    val originalEdges = es.map { case (id, edge) => (edge.src, edge.dst) }
+    val loopEdges = vs.map { case (id, _) => (id, id) }
+    val edges = (originalEdges ++ loopEdges)
       .groupBySortedKey(partitioner)
-      .cache()
+      .mapValuesWithKeys {
+        // Remove parallel edges because they would be ignored
+        // later anyways.
+        case (id, neighbors) => neighbors.toSeq.distinct: Iterable[ID]
+      }
+      .persist(StorageLevel.MEMORY_AND_DISK)
     // Hll counters are used to estimate set sizes.
     val globalHll = new HyperLogLogMonoid(bits)
     val hyperBallCounters = vertices.mapValuesWithKeys {
@@ -136,7 +142,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     }
 
     val result = getMeasures(
-      diameter = 1,
+      distance = 1,
       hyperBallCounters = hyperBallCounters,
       measures = vertices.mapValues { _ => (1, 0.0) },
       measureFunction = measureFunction,
@@ -145,9 +151,9 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     result.sortedRepartition(vs.partitioner.get)
   }
 
-  /* Recursive helper function for the above getMeasures function. */
+  // Recursive helper function for the above getMeasures function.
   @tailrec private def getMeasures(
-    diameter: Int, // Current diameter being checked.
+    distance: Int, // Current diameter being checked.
     hyperBallCounters: UniqueSortedRDD[ID, HLL], // Coreachable sets of size `diameter` for each vertex.
     measures: UniqueSortedRDD[ID, (Int, Double)], // (coreachable set size, centrality) at `diameter - 1`
     measureFunction: MeasureFunction,
@@ -161,14 +167,14 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
         case (hll, (oldSize, oldCentrality)) => {
           val newSize = hll.estimatedSize.toInt
           val diffSize = newSize - oldSize
-          val newCentrality = measureFunction(oldCentrality, diffSize, diameter)
+          val newCentrality = measureFunction(oldCentrality, diffSize, distance)
           (newSize, newCentrality)
         }
       }
 
-    if (diameter < maxDiameter) {
+    if (distance < maxDiameter) {
       getMeasures(
-        diameter + 1,
+        distance + 1,
         newHyperBallCounters,
         newMeasures,
         measureFunction,
@@ -186,15 +192,16 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HLL] = {
     // For each vertex, add the HLL counter of every neighbor to the HLL counter
     // of the vertex.
+    //
+    // We don't need outer join because each vertex has a loop edge. It is important
+    // in this logic that the hyperBallCounters in each iteration are a result of a single
+    // shuffle. This way the Spark DAG is simpler and there is no need for multiple
+    // computations of the same HLL or caching them.
     hyperBallCounters
-      .sortedLeftOuterJoin(edges)
+      .sortedJoin(edges)
       .flatMap {
         case (id, (hll, neighbors)) =>
-          // Implementation note: it looks counter-intuitive that we shuffle the own counter of
-          // the vertex to the vertex itself, instead of joining it in later. But this is in fact
-          // useful, because it ensures that the counters are entirely defined by shuffle files,
-          // and therefore there is no need to recompute things to read them more than once.
-          Seq((id, hll)) ++ neighbors.getOrElse(Seq()).map(nid => (nid, hll))
+          neighbors.map(nid => (nid, hll))
       }
       .reduceBySortedKey(partitioner, _ + _) // operator + invokes HLL add
   }
