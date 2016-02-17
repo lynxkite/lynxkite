@@ -21,9 +21,9 @@ SSH_KEY=${HOME}/.ssh/lynx-cli.pem
 REGION=us-east-1
 
 # The configurations below are determined by the instance type above, however it is still required
-# to fill there. See the EMR
-# http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/TaskConfiguration_H2.html[task configuration]
-# documentation for memory limits and the EC2 https://aws.amazon.com/ec2/instance-types/[instance types]
+# to fill them. See the EMR
+# task configuration (http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/TaskConfiguration_H2.html)
+# documentation for memory limits and the EC2 instance types (https://aws.amazon.com/ec2/instance-types/)
 # documentation for number of cores.
 CORES=8
 # YARN limit minus overhead minus 1GB so that the application master fits on one machine.
