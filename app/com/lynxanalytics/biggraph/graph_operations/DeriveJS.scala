@@ -160,7 +160,7 @@ case class DeriveJSString(
   def convert(v: Any, context: => String): String = v match {
     case v: String => v
     case _ => throw new AssertionError(
-      s"$v of ${v.getClass} cannot be converted to String in " + context)
+      s"$v of ${v.getClass} cannot be converted to String in $context")
   }
 }
 
@@ -187,10 +187,10 @@ case class DeriveJSDouble(
   def convert(v: Any, context: => String): Double = v match {
     case v: Double =>
       assert(!v.isNaN() && !v.isInfinite(),
-        context + " did not return a valid number")
+        s"$context did not return a valid number")
       v
     case _ =>
       throw new AssertionError(
-        s"$v of ${v.getClass} cannot be converted to Double in " + context)
+        s"$v of ${v.getClass} cannot be converted to Double in $context")
   }
 }
