@@ -546,12 +546,15 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
 
     val op = ops.opById(context, request.op.id)
+
+    // Remove parameters from the request that no longer exist.
     val restrictedRequest = {
       val validParameterIds = op.parameters.map(_.id).toSet
       val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
       request.copy(op = request.op.copy(parameters = restrictedParameters))
     }
 
+    // Try to apply the operation and get the success state.
     val status = {
       if (op.enabled.enabled) {
         try {
