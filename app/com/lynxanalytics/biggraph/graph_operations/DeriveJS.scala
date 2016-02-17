@@ -93,7 +93,7 @@ abstract class DeriveJS[T](
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
     val result = expr.evaluate(testNamedValues, desiredClass)
     if (result != null) {
-      convert(result, printJS(expr, None))
+      convert(result, typeCheck = true, printJS(expr, None))
     }
   }
 
@@ -124,7 +124,7 @@ abstract class DeriveJS[T](
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
           // JavaScript's "undefined" is returned as a Java "null".
           Option(evaluator.evaluate(namedValues, desiredClass)).map {
-            result => key -> convert(result, printJS(expr, Some(namedValues)))
+            result => key -> convert(result, typeCheck = false, printJS(expr, Some(namedValues)))
           }
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
@@ -134,6 +134,7 @@ abstract class DeriveJS[T](
   protected val desiredClass: Class[_]
   protected def convert(
     v: Any, // The value to convert.
+    typeCheck: Boolean, // True if the conversion is only meant for type checking.
     context: => String): T // The context of the conversion for detailed error messages.
 }
 
@@ -157,7 +158,7 @@ case class DeriveJSString(
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[String]
-  def convert(v: Any, context: => String): String = v match {
+  def convert(v: Any, typeCheck: Boolean, context: => String): String = v match {
     case v: String => v
     case _ => throw new AssertionError(
       s"$v of ${v.getClass} cannot be converted to String in $context")
@@ -184,10 +185,12 @@ case class DeriveJSDouble(
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
   val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any, context: => String): Double = v match {
+  def convert(v: Any, typeCheck: Boolean, context: => String): Double = v match {
     case v: Double =>
-      assert(!v.isNaN() && !v.isInfinite(),
-        s"$context did not return a valid number")
+      if (!typeCheck) {
+        assert(!v.isNaN() && !v.isInfinite(),
+          s"$context did not return a valid number")
+      }
       v
     case _ =>
       throw new AssertionError(
