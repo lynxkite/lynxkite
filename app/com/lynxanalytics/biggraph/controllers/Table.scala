@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.table._
 
+import scala.reflect.runtime.universe._
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 
@@ -21,7 +22,7 @@ trait Table {
       case (name, attr) =>
         spark.sql.types.StructField(
           name = name,
-          dataType = spark.sql.catalyst.ScalaReflection.schemaFor(attr.typeTag).dataType)
+          dataType = dfType(attr.typeTag))
     }
     spark.sql.types.StructType(fields)
   }
@@ -38,6 +39,28 @@ trait Table {
     val checkpointedState =
       manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
     checkpointedState.checkpoint.get
+  }
+
+  private def supportedDFType[T: TypeTag]: Option[spark.sql.types.DataType] = {
+    try {
+      Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
+    } catch {
+      case _: UnsupportedOperationException => None
+    }
+  }
+
+  private def dfType[T: TypeTag]: spark.sql.types.DataType = {
+    // Convert unsupported types to string.
+    supportedDFType[T].getOrElse(spark.sql.types.StringType)
+  }
+
+  // Returns the RDD for the attribute, if it is a supported DataFrame type.
+  // Unsupported types are converted to string.
+  def columnForDF(name: String)(implicit dm: DataManager): AttributeRDD[_] = {
+    import com.lynxanalytics.biggraph.graph_api.Scripting._
+    val col = columns(name)
+    if (supportedDFType(col.typeTag).isDefined) col.rdd
+    else col.rdd.mapValues(_.toString)
   }
 }
 object Table {
