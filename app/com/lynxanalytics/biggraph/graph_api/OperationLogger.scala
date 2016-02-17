@@ -73,7 +73,7 @@ class JsonOperationLogger(instance: MetaGraphOperationInstance, implicit val ec:
     }
   }
 
-  def addInput(input: SafeFuture[EntityData]): Unit = {
+  override def addInput(input: SafeFuture[EntityData]): Unit = {
     inputInfoList += input.map {
       i =>
         synchronized {
@@ -108,7 +108,7 @@ class JsonOperationLogger(instance: MetaGraphOperationInstance, implicit val ec:
     }
   }
 
-  def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit = {
+  private def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit = {
     val inputJson = {
       implicit val formatOutput = json.Json.format[InputInfo]
       val formatter = implicitly[json.Format[Seq[InputInfo]]]
