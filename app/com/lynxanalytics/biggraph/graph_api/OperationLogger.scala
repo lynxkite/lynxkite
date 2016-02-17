@@ -128,7 +128,6 @@ class JsonOperationLogger(instance: MetaGraphOperationInstance, implicit val ec:
       "outputs" -> outputJson
     )
     log.info(s"$marker $out")
-    println(s"$marker $out")
   }
 
   override def finalize() = {
