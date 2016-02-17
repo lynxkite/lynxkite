@@ -117,10 +117,10 @@ case class DeriveJSScalarDouble(
   val desiredClass = classOf[java.lang.Double]
   def convert(v: Any, typeCheck: Boolean, context: => String): Double = v match {
     case v: Double =>
-      if (!typeCheck) {
-        assert(!v.isNaN() && !v.isInfinite(),
-          s"$context did not return a valid number")
-      }
+      // A JavaScript expression with default values may return infinity.
+      // That is only a problem with actual values.
+      assert(!v.isNaN() && (typeCheck || !v.isInfinite()),
+        s"$context did not return a valid number")
       v
     case _ => throw new AssertionError(
       s"$v of ${v.getClass} cannot be converted to Double in $context")

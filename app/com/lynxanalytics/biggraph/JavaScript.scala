@@ -15,6 +15,9 @@ case class JavaScript(expression: String) {
     return evaluate(mapping, classOf[Boolean]).asInstanceOf[Boolean]
   }
 
+  // Evaluates the JavaScript expression and returns the result converted to the
+  // desiredClass. Note that for example if the expression results in a string this
+  // still returns it as NaN (type of Double).
   def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
     evaluator.evaluate(mapping, desiredClass)
   }
