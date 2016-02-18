@@ -116,6 +116,13 @@ a significant effect on overal speed, so using an SSD is a nice option here.
 export KITE_LOCAL_TMP=/tmp
 ```
 
+[[kiterc-logging]]
+Configure the directory LynxKite uses for logging. Defaults to `logs` under the LynxKite
+installation directory if not specified.
+```
+# export KITE_LOG_DIR=
+```
+
 [[kiterc-extra-jars]]
 The LynxKite extra JARS is a colon (:) delimited list of JAR files that should be loaded on the
 LynxKite `CLASSPATH`. (It will be loaded on the master and distributed to the workers.)

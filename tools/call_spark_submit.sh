@@ -15,7 +15,7 @@ KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 pushd ${lib_dir}/.. > /dev/null
 stage_dir=`pwd`
 conf_dir=${stage_dir}/conf
-log_dir=${stage_dir}/logs
+log_dir=${KITE_LOG_DIR:-${stage_dir/logs}}
 mkdir -p ${log_dir}
 tools_dir=${stage_dir}/tools
 popd > /dev/null
@@ -26,6 +26,7 @@ export KITE_RANDOM_SECRET=$(python -c \
   'import random, string; print "".join(random.choice(string.letters) for i in range(32))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
+export KITE_LOG_DIR=${log_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
   >&2 echo "Loading configuration from: ${KITE_SITE_CONFIG}"
   source ${KITE_SITE_CONFIG}
