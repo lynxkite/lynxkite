@@ -269,12 +269,7 @@ class DataManager(sc: spark.SparkContext,
 
         for (input <- instance.inputs.all.values) {
           if (instance.operation.isHeavy && !input.isInstanceOf[Scalar[_]]) {
-            if (entityCache.contains(input.gUID)) {
-              val r = entityCache(input.gUID)
-              logger.addInput(r)
-            } else {
-              logger.addInput(getFuture(input))
-            }
+            logger.addInput(getFuture(input))
           }
         }
 
