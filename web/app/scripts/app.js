@@ -11,6 +11,15 @@ angular
   ])
 
   .config(function ($routeProvider) {
+    if (location.pathname.indexOf('/pdf-') === 0) {
+      var page = location.pathname.replace('/pdf-', '');
+      $routeProvider.otherwise({
+        templateUrl: 'views/' + page + '.html',
+        reloadOnSearch: false,
+      });
+      return;
+    }
+
     $routeProvider
       .when('/', {
         templateUrl: 'views/splash.html',

@@ -109,6 +109,9 @@ module.exports = function (grunt) {
                 return;
               }
             }
+            if (req.url.indexOf('/pdf-') === 0) {
+              req.url = '/index.html';
+            }
             next();
           });
           return mws;
