@@ -32,7 +32,8 @@ object OperationLogger {
   }
 }
 
-class JsonOperationLogger(instance: MetaGraphOperationInstance, implicit val ec: ExecutionContextExecutorService) extends OperationLogger {
+class JsonOperationLogger(instance: MetaGraphOperationInstance,
+                          implicit val ec: ExecutionContextExecutorService) extends OperationLogger {
   private val marker = "JSON_OPERATION_LOGGER_MARKER"
   case class OutputInfo(name: String, count: Option[Long], executionTimeInSeconds: Long)
   case class InputInfo(name: String, count: Option[Long])
