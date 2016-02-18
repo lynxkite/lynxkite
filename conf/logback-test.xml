@@ -6,7 +6,7 @@
     <encoder>
       <pattern>%.-1level%date %logger{0}:[%thread] %message%n%xException</pattern>
     </encoder>
-    <file>logs/test-${bySecond}.log</file>
+    <file>${log.dir}/test-${bySecond}.log</file>
   </appender>
 
   <root level="info">
