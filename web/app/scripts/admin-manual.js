@@ -5,7 +5,7 @@ angular.module('biggraph').directive('adminManualContent', function($http) {
   return {
     restrict: 'E',
     link: function(scope) {
-      var html = $http.get('/adminManual.html', { cache: true });
+      var html = $http.get('/admin-manual.html', { cache: true });
       html.then(function success(response) {
         /* global $ */
         var dom = $($.parseHTML(response.data));
@@ -17,9 +17,9 @@ angular.module('biggraph').directive('adminManualContent', function($http) {
             a.remove();
           } else {
             var href = a.attr('href');
-            // Make cross-references relative to #/adminManual.
+            // Make cross-references relative to #/admin-manual.
             if (href[0] === '#') {
-              a.attr('href', '#/adminManual' + href);
+              a.attr('href', '#/admin-manual' + href);
             }
           }
         });

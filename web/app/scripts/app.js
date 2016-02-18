@@ -53,8 +53,8 @@ angular
       .when('/help', {
         templateUrl: 'views/help.html',
       })
-      .when('/adminManual', {
-        templateUrl: 'views/adminManual.html',
+      .when('/admin-manual', {
+        templateUrl: 'views/admin-manual.html',
       })
       .otherwise({
         redirectTo: '/',

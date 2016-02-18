@@ -16,10 +16,12 @@ while ! nc -z localhost 9090; do sleep 1; done
 echo
 
 echo "Generating User Guide..."
-"$WKHTMLTOPDF" $WKHTML_OPT 'http://localhost:9090/pdf-help' 'LynxKite-User-Manual.pdf'
+"$WKHTMLTOPDF" $WKHTML_OPT \
+  'http://localhost:9090/pdf-help' 'LynxKite-User-Manual.pdf'
 
 echo "Generating Admin Manual..."
-"$WKHTMLTOPDF" $WKHTML_OPT 'http://localhost:9090/pdf-admin' 'LynxKite-Administrator-Manual.pdf'
+"$WKHTMLTOPDF" $WKHTML_OPT \
+  'http://localhost:9090/pdf-admin-manual' 'LynxKite-Administrator-Manual.pdf'
 
 echo "LynxKite documentation generated successfully."
 
