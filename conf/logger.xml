@@ -4,7 +4,7 @@
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-       <fileNamePattern>${LOGGER_HOME:-${application.home}}/logs/application-%d{yyyyMMdd}.log</fileNamePattern>
+       <fileNamePattern>${KITE_LOG_DIR}/application-%d{yyyyMMdd}.log</fileNamePattern>
        <maxHistory>60</maxHistory>
        <cleanHistoryOnStart>true</cleanHistoryOnStart>
      </rollingPolicy>

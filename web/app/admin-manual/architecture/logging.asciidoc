@@ -1,7 +1,7 @@
 ## Logging
 
-LynxKite logs various activities. The logs are found in the `log` directory under the installation
-directory of the application.
+LynxKite logs various activities. The log directory can be configured in
+<<kiterc-logging,the .kiterc file>>.
 
 ### The application log
 
