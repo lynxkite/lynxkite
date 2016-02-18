@@ -1,3 +1,6 @@
+// OperationLogger will log useful performance data about an operation, including information about
+// the inputs and the outputs.
+
 package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
