@@ -110,23 +110,16 @@ class JsonOperationLogger(instance: MetaGraphOperationInstance,
   }
 
   private def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit = {
-    val inputJson = {
-      implicit val formatOutput = json.Json.format[InputInfo]
-      val formatter = implicitly[json.Format[Seq[InputInfo]]]
-      formatter.writes(inputs)
-    }
 
-    val outputJson = {
-      implicit val formatOutput = json.Json.format[OutputInfo]
-      val formatter = implicitly[json.Format[Seq[OutputInfo]]]
-      formatter.writes(outputs)
-    }
+    implicit val formatInput = json.Json.format[InputInfo]
+    implicit val formatOutput = json.Json.format[OutputInfo]
+
     val out = json.Json.obj(
-      "name" -> json.JsString(instance.operation.toString),
-      "guid" -> json.JsString(instance.operation.gUID.toString),
+      "name" -> instance.operation.toString,
+      "guid" -> instance.operation.gUID.toString,
       "executionTimeInSeconds" -> json.JsNumber(elapsedMs() / 1000),
-      "inputs" -> inputJson,
-      "outputs" -> outputJson
+      "inputs" -> inputs,
+      "outputs" -> outputs
     )
     log.info(s"$marker $out")
   }
