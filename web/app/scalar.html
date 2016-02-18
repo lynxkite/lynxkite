@@ -6,7 +6,8 @@
 
 <div class="pull-right" ng-show="scalar.typeName === 'Model'">
   <i class="glyphicon glyphicon-{{ showModel ? 'minus' : 'plus' }} section-button"
-     ng-click="showModel = !showModel"></i>
+     ng-click="showModel = !showModel"
+     tooltip="Show model details"></i>
 </div>
 
 <label ng-if="asSavedStatus && value.$resolved"
