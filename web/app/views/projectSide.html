@@ -359,8 +359,10 @@
         <div class="pull-right">
           <i class="glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }} section-button"
             id="sql-toggle"
-            ng-click="showSQL = !showSQL"></i>
+            ng-click="showSQL = !showSQL"
+            tooltip="Open SQL interface"></i>
         </div>
+        <help-popup href="sql-box" class="pull-right"></help-popup>
         <div class="clearfix"></div>
         <sql-box side="side" ng-if="showSQL"></sql-box>
       </i>
