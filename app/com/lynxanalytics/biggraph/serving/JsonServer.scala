@@ -321,7 +321,7 @@ object ProductionJsonServer extends JsonServer {
 
   def logs = action(parse.anyContent) { (user, request) =>
     assert(user.isAdmin, "Only admins can access the server logs")
-    val logDir = new File(System.getProperty("log.dir"))
+    val logDir = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"))
     assert(logDir.exists, s"Application log directory not found at $logDir")
     assert(logDir.isDirectory, s"$logDir is not a directory")
     val logFileNames = logDir.listFiles

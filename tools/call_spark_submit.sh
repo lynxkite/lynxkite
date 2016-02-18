@@ -56,7 +56,6 @@ addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
-addJPropIfNonEmpty log.dir "${KITE_LOG_DIR}"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
 
