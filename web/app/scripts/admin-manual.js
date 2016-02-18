@@ -17,9 +17,11 @@ angular.module('biggraph').directive('adminManualContent', function($http) {
             a.remove();
           } else {
             var href = a.attr('href');
-            // Make cross-references relative to #/admin-manual.
-            if (href[0] === '#') {
-              a.attr('href', '#/admin-manual' + href);
+            // Make cross-references relative to #/admin-manual. (Except in PDF mode.)
+            if (location.pathname.indexOf('/pdf-') !== 0) {
+              if (href[0] === '#') {
+                a.attr('href', '#/admin-manual' + href);
+              }
             }
           }
         });
@@ -31,7 +33,7 @@ angular.module('biggraph').directive('adminManualContent', function($http) {
         if (dom !== undefined) {
           $('admin-manual-content').html(dom);
         }
-      });      
+      });
     }
   };
 });
