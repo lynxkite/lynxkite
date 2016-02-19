@@ -14,9 +14,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
-import com.twitter.algebird.HyperLogLogMonoid
-import com.twitter.algebird.HLL
-import com.twitter.algebird.HyperLogLog._
+import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -135,10 +133,13 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
       }
       .persist(StorageLevel.MEMORY_AND_DISK)
     // Hll counters are used to estimate set sizes.
-    val globalHll = new HyperLogLogMonoid(bits)
     val hyperBallCounters = vertices.mapValuesWithKeys {
       // Initialize a counter for every vertex
-      case (vid, _) => globalHll(vid)
+      case (vid, _) => {
+        val hll = new HyperLogLogPlus(bits)
+        hll.offer(vid)
+        hll
+      }
     }
 
     val result = getMeasures(
@@ -154,7 +155,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
   // Recursive helper function for the above getMeasures function.
   @tailrec private def getMeasures(
     distance: Int, // Current diameter being checked.
-    hyperBallCounters: UniqueSortedRDD[ID, HLL], // Coreachable sets of size `diameter` for each vertex.
+    hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus], // Coreachable sets of size `diameter` for each vertex.
     measures: UniqueSortedRDD[ID, (Int, Double)], // (coreachable set size, centrality) at `diameter - 1`
     measureFunction: MeasureFunction,
     partitioner: Partitioner,
@@ -165,7 +166,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
       .sortedJoin(measures)
       .mapValues {
         case (hll, (oldSize, oldCentrality)) => {
-          val newSize = hll.estimatedSize.toInt
+          val newSize = hll.cardinality.toInt
           val diffSize = newSize - oldSize
           val newCentrality = measureFunction(oldCentrality, diffSize, distance)
           (newSize, newCentrality)
@@ -187,9 +188,9 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
 
   /** Returns hyperBallCounters for a diameter increased with 1.*/
   private def getNextHyperBalls(
-    hyperBallCounters: UniqueSortedRDD[ID, HLL],
+    hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus],
     partitioner: Partitioner,
-    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HLL] = {
+    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
     // For each vertex, add the HLL counter of every neighbor to the HLL counter
     // of the vertex.
     //
@@ -203,7 +204,16 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
         case (id, (hll, neighbors)) =>
           neighbors.map(nid => (nid, hll))
       }
-      .reduceBySortedKey(partitioner, _ + _) // operator + invokes HLL add
+      .reduceBySortedKey(
+        partitioner,
+        {
+          case (hll1, hll2) => {
+            val hll3 = new HyperLogLogPlus(bits)
+            hll3.addAll(hll1)
+            hll3.addAll(hll2)
+            hll3
+          }
+        })
   }
 
 }

@@ -18,6 +18,9 @@ class DeadClass1
 class DeadClass2
 class DeadClass3
 class DeadClass4
+class DeadClass5
+class DeadClass6
+class DeadClass7
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
@@ -79,9 +82,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass3])
     kryo.register((0.0, 0.0).getClass)
     kryo.register(math.Numeric.LongIsIntegral.getClass) // For using NumericRanges with sc.parallelize.
-    kryo.register(classOf[com.twitter.algebird.SparseHLL])
-    kryo.register(classOf[com.twitter.algebird.DenseHLL])
-    kryo.register(classOf[com.twitter.algebird.Max[_]])
+    kryo.register(classOf[DeadClass5])
+    kryo.register(classOf[DeadClass6])
+    kryo.register(classOf[DeadClass7])
     // The next three are required by some operations after the Spark 1.3.0 upgrade. (SPARK-6497)
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$10])
     kryo.register(classOf[scala.reflect.ClassTag$$anon$1])
@@ -168,6 +171,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("[Lorg.apache.spark.sql.types.StructType;"))
     kryo.register(Class.forName("org.apache.spark.mllib.linalg.VectorUDT"))
     kryo.register(Class.forName("org.apache.spark.sql.catalyst.util.GenericArrayData"))
+    kryo.register(classOf[com.clearspring.analytics.stream.cardinality.HyperLogLogPlus])
+    kryo.register(classOf[com.clearspring.analytics.stream.cardinality.RegisterSet])
+    kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
