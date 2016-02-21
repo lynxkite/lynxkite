@@ -27,10 +27,10 @@ case class JavaScript(expression: String) {
     val jsResult = evaluator.evaluate(mapping)
     jsResult match {
       case _: javascript.Undefined => None
-      case v: java.lang.Number => Some(v.doubleValue)
+      case v: java.lang.Number => Some(v.doubleValue) // All numbers can be converted to Doubles.
       case v: String => {
         try {
-          Some(v.toDouble)
+          Some(v.toDouble) // Some Strings can be converted to Doubles.
         } catch {
           case e: java.lang.NumberFormatException => throw new IllegalArgumentException(
             s"${contextString(mapping)} did not return a valid number: $v")
