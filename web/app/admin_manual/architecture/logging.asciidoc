@@ -14,8 +14,7 @@ The application logs the following activites (among other things):
 - All HTTP requests received by the web server including the user and the URL.
 - Accesses of files in the `KITE_DATA_DIR`.
 
-It is possible for admin users to access the most current version of these logs from a browser via
-*<LynxKite_URL>/logs*.
+Admin users can browse and download these logs using the *<LynxKite_URL>/logs* URL.
 
 ### STDERR and STDOUT
 

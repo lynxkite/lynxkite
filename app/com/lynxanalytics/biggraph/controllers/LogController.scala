@@ -15,7 +15,7 @@ case class FileDescriptor(
   length: Long,
   lastModified: String)
 
-case class DownloadLogRequest(name: String)
+case class DownloadLogFileRequest(name: String)
 
 class LogController extends play.api.http.HeaderNames {
 
@@ -41,7 +41,7 @@ class LogController extends play.api.http.HeaderNames {
     logFiles.toList
   }
 
-  def getLogFile(user: serving.User, request: DownloadLogRequest) = {
+  def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {
     assert(user.isAdmin, "Only admins can access the server logs")
     val logFile = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"), request.name)
     assert(logFile.exists, s"Application log file not found at $logFile")

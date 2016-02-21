@@ -272,7 +272,7 @@ object FrontendJson {
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
-  implicit val rDownloadLogRequest = json.Json.reads[DownloadLogRequest]
+  implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
 
   implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
@@ -401,8 +401,8 @@ object ProductionJsonServer extends JsonServer {
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)
-  def getLogFile = action(parse.anyContent) {
-    (user, request) => jsonQuery(user, request)(logController.getLogFile)
+  def downloadLogFile = action(parse.anyContent) {
+    (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
   }
 
   lazy val version = try {
