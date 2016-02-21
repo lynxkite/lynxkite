@@ -110,7 +110,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("We cannot simply access java stuff from JS") {
     val js = JavaScript("java.lang.System.out.println(3)")
     intercept[org.mozilla.javascript.EcmaError] {
-      js.evaluate(Map(), classOf[Object])
+      js.evaluateString(Map())
     }
   }
 
