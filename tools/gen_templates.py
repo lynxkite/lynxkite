@@ -9,7 +9,9 @@ import re
 
 header = re.compile(r'\[\[.*\]\]')
 anchor = re.compile(r'\#\#\#')
-link = re.compile(r'(http.*)\[(.*)\]')
+url = re.compile(r'(http.*)\[(.*)\]')
+bold = re.compile(r'\*(.*)\*')
+link = re.compile(r'<<.*,(.*)>>')
 
 def asciidocToTemplate(src, dst):
   codeBlock = False
@@ -27,7 +29,9 @@ def asciidocToTemplate(src, dst):
             else:
               if not header.match(line) and not anchor.match(line):
                 line = line.replace('`', '')
-                line = link.sub(r'\2 (\1)', line)
+                line = url.sub(r'\2 (\1)', line)
+                line = bold.sub(r'\1', line)
+                line = link.sub(r'\1', line)
                 d.write('# ' + line)
 
 app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -38,4 +42,6 @@ asciidocToTemplate(
 asciidocToTemplate(
   app_home + '/web/app/admin_manual/installation/configuration/emr.asciidoc',
   app_home + '/tools/emr_spec_template')
-
+asciidocToTemplate(
+  app_home + '/web/app/admin_manual/installation/configuration/prefix_definitions.asciidoc',
+  app_home + '/conf/prefix_definitions_template.txt')
