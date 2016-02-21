@@ -5,28 +5,30 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.JavaScript
 
 class JavaScriptTest extends FunSuite {
-  test("test Boolean expressions") {
-    assert(JavaScript("true").isTrue(Map[String, String]()))
-    assert(JavaScript("1.0").isTrue(Map[String, String]()))
-    assert(JavaScript("'a'").isTrue(Map[String, String]()))
-    assert(JavaScript("").isTrue(Map[String, String]()))
+  val noArgs = Map[String, String]() // For nicer readability.
 
-    assert(!JavaScript("false").isTrue(Map[String, String]()))
-    assert(!JavaScript("0.0").isTrue(Map[String, String]()))
-    assert(!JavaScript("''").isTrue(Map[String, String]()))
-    assert(!JavaScript("undefined").isTrue(Map[String, String]())) // undefined -> false
+  test("test Boolean expressions") {
+    assert(JavaScript("true").isTrue(noArgs))
+    assert(JavaScript("1.0").isTrue(noArgs))
+    assert(JavaScript("'a'").isTrue(noArgs))
+    assert(JavaScript("").isTrue(noArgs))
+
+    assert(!JavaScript("false").isTrue(noArgs))
+    assert(!JavaScript("0.0").isTrue(noArgs))
+    assert(!JavaScript("''").isTrue(noArgs))
+    assert(!JavaScript("undefined").isTrue(noArgs)) // undefined -> false
   }
 
   test("test String expressions") {
-    assert(JavaScript("true").evaluateString(Map[String, String]()) == Some("true"))
-    assert(JavaScript("1.0").evaluateString(Map[String, String]()) == Some("1"))
-    assert(JavaScript("'a'").evaluateString(Map[String, String]()) == Some("a"))
-    assert(JavaScript("undefined").evaluateString(Map[String, String]()) == None)
+    assert(JavaScript("true").evaluateString(noArgs) == Some("true"))
+    assert(JavaScript("1.0").evaluateString(noArgs) == Some("1"))
+    assert(JavaScript("'a'").evaluateString(noArgs) == Some("a"))
+    assert(JavaScript("undefined").evaluateString(noArgs) == None)
   }
 
   def checkDoubleError(expr: String, msg: String): Unit = {
     try {
-      JavaScript(expr).evaluateDouble(Map[String, String]())
+      JavaScript(expr).evaluateDouble(noArgs)
       fail
     } catch {
       case e: IllegalArgumentException => assert(e.getMessage == msg)
@@ -34,12 +36,12 @@ class JavaScriptTest extends FunSuite {
   }
 
   test("test Double expressions") {
-    assert(JavaScript("1.0").evaluateDouble(Map[String, String]()) == Some(1.0))
-    assert(JavaScript("'1.0'").evaluateDouble(Map[String, String]()) == Some(1.0))
-    assert(JavaScript("undefined").evaluateDouble(Map[String, String]()) == None)
+    assert(JavaScript("1.0").evaluateDouble(noArgs) == Some(1.0))
+    assert(JavaScript("'1.0'").evaluateDouble(noArgs) == Some(1.0))
+    assert(JavaScript("undefined").evaluateDouble(noArgs) == None)
 
-    assert(JavaScript("1.0/0.0").evaluateDouble(Map[String, String]()).get.isInfinite)
-    assert(JavaScript("0.0/0.0").evaluateDouble(Map[String, String]()).get.isNaN)
+    assert(JavaScript("1.0/0.0").evaluateDouble(noArgs).get.isInfinite)
+    assert(JavaScript("0.0/0.0").evaluateDouble(noArgs).get.isNaN)
 
     checkDoubleError("'abc'", "JavaScript('abc') with values: {} did not return a valid number: abc")
     checkDoubleError("true", "JavaScript(true) with values: {} did not return a valid number: true")
