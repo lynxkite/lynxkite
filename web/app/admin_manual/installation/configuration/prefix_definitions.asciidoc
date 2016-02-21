@@ -30,7 +30,7 @@ The quotation marks are not part of the path, but they should still be supplied.
 1. Please note that local prefixes (the ones starting with `file:/`) only work on
    single-machine LynxKite installations. On distributed LynxKite installations, you will need
    to use a distributed file system, like HDFS or S3.
-2. Don not delete already-introduced prefixes. That makes LynxKite fail to start if there are
+2. Do not delete already introduced prefixes. That makes LynxKite fail to start if there are
    tables already using those prefixes.
 
 *Examples:*
