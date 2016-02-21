@@ -58,7 +58,8 @@ POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.u
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload
 GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadFile
 
-GET  /logs             com.lynxanalytics.biggraph.serving.ProductionJsonServer.logs
+GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
+GET  /getLogFile       com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFile
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin
