@@ -32,11 +32,11 @@ case class JavaScript(expression: String) {
         try {
           Some(v.toDouble) // Some Strings can be converted to Doubles.
         } catch {
-          case e: java.lang.NumberFormatException => throw new IllegalArgumentException(
+          case e: java.lang.NumberFormatException => throw new java.lang.AssertionError(
             s"${contextString(mapping)} did not return a valid number: $v")
         }
       }
-      case _ => throw new IllegalArgumentException(
+      case _ => throw new java.lang.AssertionError(
         s"${contextString(mapping)} did not return a valid number: $jsResult")
     }
   }

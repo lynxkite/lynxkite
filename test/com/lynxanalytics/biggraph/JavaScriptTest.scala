@@ -31,7 +31,7 @@ class JavaScriptTest extends FunSuite {
       JavaScript(expr).evaluateDouble(noArgs)
       fail
     } catch {
-      case e: IllegalArgumentException => assert(e.getMessage == msg)
+      case e: java.lang.AssertionError => assert(e.getMessage == msg)
     }
   }
 
