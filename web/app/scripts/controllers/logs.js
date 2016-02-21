@@ -8,7 +8,7 @@ angular.module('biggraph')
     $scope.downloadLogFile = function(fileName) {
       // Fire off the download.
       $window.location =
-        '/getLogFile?q=' + encodeURIComponent(JSON.stringify({'name': fileName}));
+        '/downloadLogFile?q=' + encodeURIComponent(JSON.stringify({'name': fileName}));
     };
 
     var scalarCache = {}; // Need to return the same object every time to avoid digest hell.

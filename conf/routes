@@ -59,7 +59,7 @@ GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.o
 GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadFile
 
 GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
-GET  /getLogFile       com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFile
+GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin
