@@ -42,6 +42,7 @@ class JavaScriptTest extends FunSuite {
 
     assert(JavaScript("1.0/0.0").evaluateDouble(noArgs).get.isInfinite)
     assert(JavaScript("0.0/0.0").evaluateDouble(noArgs).get.isNaN)
+    assert(JavaScript("Math.log(-1)").evaluateDouble(noArgs).get.isNaN)
 
     checkDoubleError("'abc'", "JavaScript('abc') with values: {} did not return a valid number: abc")
     checkDoubleError("true", "JavaScript(true) with values: {} did not return a valid number: true")
