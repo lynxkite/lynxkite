@@ -1,0 +1,18 @@
+<div class="col-sm-offset-3 col-sm-6">
+
+  <h1>LynxKite Logs</h1>
+  <form>
+    <div class="log-files-table">
+      <table class="table table-striped">
+        <tr><th>File name</th><th>File size</th><th>Last modification date</th></tr>
+        <tr ng-repeat="logFile in logFiles">
+          <td><a href="#" ng-click="downloadLogFile(logFile.name)">{{ logFile.name }}</a></td>
+          <td><value ref="asScalar(logFile.length)"></value></td>
+          <td>{{ logFile.lastModified }}</td>
+        </tr>
+      </table>
+    </div>
+  </form>
+
+  <bottom-links info="list"></bottom-links>
+</div>
