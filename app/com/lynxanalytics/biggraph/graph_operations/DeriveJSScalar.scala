@@ -50,10 +50,7 @@ abstract class DeriveJSScalar[T](
   def validateJS[T: TypeTag](
     defaultScalarValues: Seq[Any]): Unit = {
     val testNamedValues = scalarNames.zip(defaultScalarValues).toMap
-    val result = expr.evaluate(testNamedValues, desiredClass)
-    if (result != null) {
-      convert(result, typeCheck = true, DeriveJS.printJS(expr, None))
-    }
+    evaluate(testNamedValues)
   }
 
   def execute(inputDatas: DataSet,
@@ -63,17 +60,17 @@ abstract class DeriveJSScalar[T](
     implicit val id = inputDatas
     val scalars = inputs.scalars.map(_.value.value)
     val bindings = scalarNames.zip(scalars).toMap
-    val derived = convert(
-      expr.evaluate(bindings, desiredClass),
-      typeCheck = false,
-      DeriveJS.printJS(expr, Some(bindings)))
+    val result = evaluate(bindings)
+    assert(!result.isEmpty, s"${expr.contextString(bindings)} returned undefined for scalar")
+    val derived = check(
+      result.get,
+      expr.contextString(bindings))
     output(o.sc, derived)
   }
 
-  protected val desiredClass: Class[_]
-  protected def convert(
-    v: Any, // The value to convert.
-    typeCheck: Boolean, // True if the conversion is only meant for type checking.
+  protected def evaluate(mapping: Map[String, Any]): Option[T]
+  protected def check(
+    v: T, // The value to convert.
     context: => String): T // The context of the conversion for detailed error messages.
 }
 
@@ -91,11 +88,9 @@ case class DeriveJSScalarString(
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
-  val desiredClass = classOf[String]
-  def convert(v: Any, typeCheck: Boolean, context: => String): String = v match {
-    case v: String => v
-    case _ => throw new AssertionError(
-      s"$v of ${v.getClass} cannot be converted to String in $context")
+  def check(v: String, context: => String): String = v
+  def evaluate(mapping: Map[String, Any]): Option[String] = {
+    expr.evaluateString(mapping)
   }
 }
 
@@ -114,15 +109,13 @@ case class DeriveJSScalarDouble(
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
-  val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any, typeCheck: Boolean, context: => String): Double = v match {
-    case v: Double =>
-      // A JavaScript expression with default values may return infinity.
-      // Infinity is only a problem with actual values.
-      assert(!v.isNaN() && (typeCheck || !v.isInfinite()),
-        s"$context did not return a valid number")
-      v
-    case _ => throw new AssertionError(
-      s"$v of ${v.getClass} cannot be converted to Double in $context")
+  def check(v: Double, context: => String): Double = {
+    // A JavaScript expression with default values may return infinity.
+    // Infinity is only a problem with actual values.
+    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number")
+    v
+  }
+  def evaluate(mapping: Map[String, Any]): Option[Double] = {
+    expr.evaluateDouble(mapping)
   }
 }

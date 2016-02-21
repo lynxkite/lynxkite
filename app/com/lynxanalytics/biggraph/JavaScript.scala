@@ -12,14 +12,37 @@ case class JavaScript(expression: String) {
     if (isEmpty) {
       return true
     }
-    return evaluate(mapping, classOf[Boolean]).asInstanceOf[Boolean]
+    return javascript.Context.toBoolean(evaluator.evaluate(mapping))
   }
 
-  // Evaluates the JavaScript expression and returns the result converted to the desiredClass.
-  // Note that for example if the desiredClass is Double but the expression results in a String
-  // this returns a NaN - type of Double.
-  def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
-    evaluator.evaluate(mapping, desiredClass)
+  def evaluateString(mapping: Map[String, Any]): Option[String] = {
+    val jsResult = evaluator.evaluate(mapping)
+    jsResult match {
+      case _: javascript.Undefined => None
+      case v => Some(javascript.Context.toString(v)) // Everything can be converted to a String.
+    }
+  }
+
+  def evaluateDouble(mapping: Map[String, Any]): Option[Double] = {
+    val jsResult = evaluator.evaluate(mapping)
+    jsResult match {
+      case _: javascript.Undefined => None
+      case v: java.lang.Number => Some(v.doubleValue)
+      case v: String => {
+        try {
+          Some(v.toDouble)
+        } catch {
+          case e: java.lang.NumberFormatException => throw new IllegalArgumentException(
+            s"${contextString(mapping)} did not return a valid number: $v")
+        }
+      }
+      case _ => throw new IllegalArgumentException(
+        s"${contextString(mapping)} did not return a valid number: $jsResult")
+    }
+  }
+
+  def contextString(mapping: Map[String, Any]): String = {
+    s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
   }
 
   def evaluator = new JavaScriptEvaluator(expression)
@@ -40,7 +63,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
   sharedScope.sealObject()
 
-  def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
+  def evaluate(mapping: Map[String, Any]): AnyRef = {
     val scope = cx.newObject(sharedScope)
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
@@ -48,11 +71,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
       val jsValue = javascript.Context.javaToJS(value, scope)
       javascript.ScriptableObject.putProperty(scope, name, jsValue)
     }
-    val jsResult = script.exec(cx, scope)
-    jsResult match {
-      case _: javascript.Undefined => null
-      case definedValue => javascript.Context.jsToJava(definedValue, desiredClass)
-    }
+    script.exec(cx, scope)
   }
 }
 

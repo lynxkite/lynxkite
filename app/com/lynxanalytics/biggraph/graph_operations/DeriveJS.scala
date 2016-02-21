@@ -64,13 +64,6 @@ object DeriveJS {
     import Scripting._
     op(op.vs, vertexSet)(op.attrs, jsValueAttributes)(op.scalars, jsValueScalars).result
   }
-  def printJS(expr: JavaScript, namedValues: Option[Map[String, Any]]): String = {
-    if (namedValues.isEmpty) {
-      s"$expr"
-    } else {
-      s"$expr with values: {" + namedValues.get.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
-    }
-  }
 }
 import DeriveJS._
 abstract class DeriveJS[T](
@@ -91,10 +84,7 @@ abstract class DeriveJS[T](
     defaultScalarValues: Seq[Any]): Unit = {
     val testNamedValues =
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
-    val result = expr.evaluate(testNamedValues, desiredClass)
-    if (result != null) {
-      convert(result, typeCheck = true, printJS(expr, None))
-    }
+    evaluate(testNamedValues)
   }
 
   def execute(inputDatas: DataSet,
@@ -118,23 +108,20 @@ abstract class DeriveJS[T](
     val allNames = attrNames ++ scalarNames
 
     val derived = joined.mapPartitions({ it =>
-      val evaluator = expr.evaluator
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
-          // JavaScript's "undefined" is returned as a Java "null".
-          Option(evaluator.evaluate(namedValues, desiredClass)).map {
-            result => key -> convert(result, typeCheck = false, printJS(expr, Some(namedValues)))
+          evaluate(namedValues).map {
+            result => key -> check(result, expr.contextString(namedValues))
           }
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
     output(o.attr, derived)
   }
 
-  protected val desiredClass: Class[_]
-  protected def convert(
-    v: Any, // The value to convert.
-    typeCheck: Boolean, // True if the conversion is only meant for type checking.
+  protected def evaluate(mapping: Map[String, Any]): Option[T]
+  protected def check(
+    v: T, // The value to convert.
     context: => String): T // The context of the conversion for detailed error messages.
 }
 
@@ -157,11 +144,9 @@ case class DeriveJSString(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
-  val desiredClass = classOf[String]
-  def convert(v: Any, typeCheck: Boolean, context: => String): String = v match {
-    case v: String => v
-    case _ => throw new AssertionError(
-      s"$v of ${v.getClass} cannot be converted to String in $context")
+  def check(v: String, context: => String): String = v
+  def evaluate(mapping: Map[String, Any]): Option[String] = {
+    expr.evaluateString(mapping)
   }
 }
 
@@ -184,16 +169,13 @@ case class DeriveJSDouble(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
-  val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any, typeCheck: Boolean, context: => String): Double = v match {
-    case v: Double =>
-      // A JavaScript expression with default values may return infinity.
-      // Infinity is only a problem with actual values.
-      assert(!v.isNaN() && (typeCheck || !v.isInfinite()),
-        s"$context did not return a valid number")
-      v
-    case _ =>
-      throw new AssertionError(
-        s"$v of ${v.getClass} cannot be converted to Double in $context")
+  def check(v: Double, context: => String): Double = {
+    // A JavaScript expression with default values may return infinity.
+    // Infinity is only a problem with actual values.
+    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number")
+    v
+  }
+  def evaluate(mapping: Map[String, Any]): Option[Double] = {
+    expr.evaluateDouble(mapping)
   }
 }
