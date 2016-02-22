@@ -26,7 +26,7 @@ configuration provided by Hadoop may be suboptimal.
 - Set the `yarn.nodemanager.local-dirs` (YARN app cache and file cache) to be on the appropriate
   drive. It should be sufficiently large (typically at least 100GB).
 - Make sure that you have properly configured prefixes if you need them as described in the
-  <<prefix-definitions, Prefix definitions>> section.
+  <<prefix-definitions>> section.
 
 ### Running LynxKite
 
