@@ -111,4 +111,11 @@ angular
       if (x === undefined) { return x; }
       return x.toLowerCase().replace(/ /g, '-');
     };
+  })
+
+  .filter('urlencode', function() {
+    return function(x) {
+      if (x === undefined) { return x; }
+      return encodeURIComponent(x);
+    };
   });

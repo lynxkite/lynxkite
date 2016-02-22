@@ -5,7 +5,8 @@
     <table class="table table-striped">
       <tr><th>File name</th><th>File size</th><th>Last modification date</th></tr>
       <tr ng-repeat="logFile in logFiles.files">
-        <td><a href="#" ng-click="downloadLogFile(logFile.name)">{{ logFile.name }}</a></td>
+        <td><a href="/downloadLogFile?q={{ { name: logFile.name } | json | urlencode }}">
+            {{ logFile.name }}</a></td>
         <td><value ref="asScalar(logFile.length)"></value></td>
         <td>{{ logFile.lastModified }}</td>
       </tr>
