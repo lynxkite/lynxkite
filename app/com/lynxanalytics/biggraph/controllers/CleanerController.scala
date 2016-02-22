@@ -55,7 +55,7 @@ class CleanerController(environment: BigGraphEnvironment) {
       "notReferredFromProjectTransitively",
       "Entities not associated with any project",
       "We consider an entity associated with a project if it's either directly referred to from" +
-        " the project or it is used as an input to calculate another assoicated entity",
+        " the project or it is used as an input to calculate another associated entity",
       transitivelyReferredFromProject),
     CleanerMethod(
       "notReferredFromProject",

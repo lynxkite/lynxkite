@@ -79,6 +79,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       '/ajax/scalarValue',
       '/ajax/center',
       '/ajax/getDataFilesStatus',
+      '/ajax/model',
       ];
     // Some requests may trigger substantial calculation on the backend. If we
     // make many slow requests in parallel we can easily exhaust the browser's
@@ -144,6 +145,8 @@ angular.module('biggraph').factory('util', function utilFactory(
     return resource;
   }
 
+  var scalarCache = {}; // Need to return the same object every time to avoid digest hell.
+
   var util = {
     // This function is for code clarity, so we don't have a mysterious "true" argument.
     deepWatch: function(scope, expr, fun) {
@@ -176,6 +179,16 @@ angular.module('biggraph').factory('util', function utilFactory(
         }
         x = Math.round(x / 1000);
       }
+    },
+
+    asScalar: function(value) {
+      if (scalarCache[value] === undefined) {
+        scalarCache[value] = { value: {
+          string: value !== undefined ? value.toString() : '',
+          double: value,
+        }};
+      }
+      return scalarCache[value];
     },
 
     ajaxError: function(resp) {
@@ -299,11 +312,19 @@ angular.module('biggraph').factory('util', function utilFactory(
         };
       }
       // Placeholder when the scalar has not been calculated yet.
-      function constructValueForNotCalculated() {
+      function constructValueForCalculationInProgress() {
+        scalarValue.value = {
+          $statusCode: 202, // Accepted.
+          $error: 'Calculation in progress.',
+          retryFunction: retryFunction,
+        };
+      }
+      // Placeholder when the scalar has not been calculated yet.
+      function constructValueForCalculationNotStarted() {
         scalarValue.value = {
           $statusCode: 404,
           $error: 'Not calculated yet',
-          retryFunction: retryFunction
+          retryFunction: retryFunction,
         };
       }
       // Constructs scalar placeholder for an error message.
@@ -338,7 +359,7 @@ angular.module('biggraph').factory('util', function utilFactory(
           function() {  // Success.
           },
           function() {  // Failure.
-            // Enable retry icon for the user user.
+            // Enable retry icon for the user.
             scalarValue.value.retryFunction = retryFunction;
           });
       }
@@ -349,12 +370,17 @@ angular.module('biggraph').factory('util', function utilFactory(
         // Server has sent us the computed value of this
         // scalar upfront with metadata.
         constructValueForComputedScalar();
-      } else if (scalar.computeProgress === COMPUTE_PROGRESS_NOT_STARTED ||
-          scalar.computeProgress === COMPUTE_PROGRESS_IN_PROGRESS) {
+      } else if (scalar.computeProgress === COMPUTE_PROGRESS_NOT_STARTED) {
         if (fetchNotReady) {
           fetchScalarAndConstructValue();
         } else {
-          constructValueForNotCalculated();
+          constructValueForCalculationNotStarted();
+        }
+      } else if (scalar.computeProgress === COMPUTE_PROGRESS_IN_PROGRESS) {
+        if (fetchNotReady) {
+          fetchScalarAndConstructValue();
+        } else {
+          constructValueForCalculationInProgress();
         }
       } else if (scalar.computeProgress === COMPUTE_PROGRESS_ERROR) {
         constructValueForError();

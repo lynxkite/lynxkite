@@ -1,0 +1,70 @@
+## Sizing the cluster
+
+This section is about planning the size and hardware configuration of the cluster hosting
+LynxKite.
+
+### LynxKite RAM requirements
+
+LynxKite is able to complete operations even with a very small amount of memory compared
+to the size of the data. So there are no hard data size dependent RAM requirements. Of course,
+operations will be much faster if the data can be kept in memory continuously. To have an idea
+of how much memory is needed for that depending on your graph data, see the sections below.
+
+*The RAM Formula*
+
+How much RAM does LynxKite need in the cluster to be able to work with a data set in memory?
+The following formula is easy to remember and gives a rough estimation.
+
+To import a CSV of _L_ lines and _N_ columns as vertices, LynxKite needs _B~v~_ bytes.
+
+_B~v~ = L × 200 × (N + 1)_
+
+Each column needs 200 bytes, and one more column, the vertex ID, is generated.
+
+To import the same CSV of _L_ lines and _N_ columns as edges, LynxKite needs _B~e~_ bytes.
+
+_B~e~ = L × 200 × (N + 3)_
+
+The edges also get an ID, plus they store the source and destination vertex ID.
+
+These formulas assume columns of around 10 characters. If a column contains significantly more
+characters, add 2 bytes per character. For a less accurate estimate, we can say that LynxKite
+needs _X × 20 — X × 30_ bytes of RAM for working with data that is _X_ bytes on disk.
+
+*A Simple Example*
+
+Let us say we have a CSV with two columns, _src_ and _dst_: _N = 2_. It contains 100 million lines:
+_L = 100,000,000_. To import this graph, we need _Be = 100,000,000,000_ which is 100 GB of RAM.
+
+### Number of Machines
+
+Getting from the amount of RAM to the number of machines is mostly trivial. There is some overhead,
+but the formula is loose enough to accommodate that. So if we have 32 GB machines and need 100 GB
+of RAM, we can just say we need _100 / 32 = 3.125_ rounded up to 4 machines. This is the number of
+worker machines. One extra machine is needed which serves as the master and the web server.
+
+If you need _B_ bytes of RAM and have _C_ bytes of RAM per machine, you need _M_ machines
+(rounded up).
+
+_M ≥ B / C + 1_
+
+See the <<the-32-gb-rule>> for more tips.
+
+### Disk space
+
+LynxKite uses a lot of storage for processing and hosting data.
+
+*Storage capacity for data hosted by LynxKite*
+
+As a rule of thumb it is recommended to plan at least with 10 times of the storage capacity of
+the original data. So if you have 100 GB data to analyse in LynxKite have at least 500 GB set
+aside for permanent storage.
+
+*Storage capacity for temporary data*
+
+During computation Spark creates temporary files. These files are cleaned up by Spark (once they
+are not needed) or after restarting LynxKite. The size of these files depend on a lot of things
+but it is generally recommended to set aside at least 200 GB for them on each Spark executor.
+
+See <<configure-directories>> for more details.
+

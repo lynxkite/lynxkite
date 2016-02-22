@@ -21,7 +21,8 @@ angular.module('biggraph').directive('importWizard', function(util) {
 
       scope.requestInProgress = 0;
       function importStuff(endpoint, parameters) {
-        parameters.table = scope.tableName;
+        parameters.table =
+          (scope.currentDirectory ? scope.currentDirectory + '/' : '') + scope.tableName;
         parameters.privacy = 'public-read';
         parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
         scope.requestInProgress += 1;

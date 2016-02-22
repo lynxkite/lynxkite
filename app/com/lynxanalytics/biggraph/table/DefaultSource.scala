@@ -43,7 +43,7 @@ class TableRelation(
 
   // PrunedScan
   def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row] = {
-    val rdds = requiredColumns.toSeq.map(name => table.columns(name).rdd)
+    val rdds = requiredColumns.toSeq.map(name => table.columnForDF(name))
     val emptyRows = table.idSet.rdd.mapValues(_ => Seq[Any]())
     val seqRows = rdds.foldLeft(emptyRows) { (seqs, rdd) =>
       seqs.sortedLeftOuterJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }

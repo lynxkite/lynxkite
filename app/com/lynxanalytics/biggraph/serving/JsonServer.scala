@@ -166,6 +166,7 @@ object FrontendJson {
    * they need to be ordered so that everything is declared before use.
    */
   import model.FEModel
+  import model.FEModelMeta
 
   // TODO: do this without a fake field, e.g. by not using inception.
   implicit val rEmpty = json.Json.reads[Empty]
@@ -191,6 +192,7 @@ object FrontendJson {
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wFEModel = json.Json.writes[FEModel]
+  implicit val wFEModelMeta = json.Json.writes[FEModelMeta]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
 
@@ -269,6 +271,10 @@ object FrontendJson {
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
+  implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
+  implicit val wLogFiles = json.Json.writes[LogFiles]
+  implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
+
   implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
@@ -315,21 +321,6 @@ object ProductionJsonServer extends JsonServer {
 
   def downloadFile = action(parse.anyContent) {
     (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
-  }
-
-  def logs = action(parse.anyContent) { (user, request) =>
-    assert(user.isAdmin, "Only admins can access the server logs")
-    val logDir = Play.application.getFile("logs")
-    assert(logDir.exists, "Application log directory not found")
-    assert(logDir.isDirectory, "'logs' is not a directory")
-    val logFileNames = logDir.listFiles
-      .filter(_.isFile)
-      .map { file => file.getName }
-      .filter(_.startsWith("application"))
-    assert(logFileNames.size > 0, "No application log file found")
-    val logFile = new File(logDir, logFileNames.max)
-    log.info(s"$user has downloaded log file $logFile")
-    Ok.sendFile(logFile)
   }
 
   def jsError = mvc.Action(parse.json) { request =>
@@ -389,6 +380,7 @@ object ProductionJsonServer extends JsonServer {
   def center = jsonGet(drawingController.getCenter)
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
+  def model = jsonGet(drawingController.getModel)
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
@@ -407,6 +399,12 @@ object ProductionJsonServer extends JsonServer {
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
   def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
   def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
+
+  val logController = new LogController()
+  def getLogFiles = jsonGet(logController.getLogFiles)
+  def downloadLogFile = action(parse.anyContent) {
+    (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
+  }
 
   lazy val version = try {
     scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString

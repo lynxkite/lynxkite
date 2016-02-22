@@ -15,7 +15,7 @@ KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 pushd ${lib_dir}/.. > /dev/null
 stage_dir=`pwd`
 conf_dir=${stage_dir}/conf
-log_dir=${stage_dir}/logs
+log_dir=${KITE_LOG_DIR:-${stage_dir}/logs}
 mkdir -p ${log_dir}
 tools_dir=${stage_dir}/tools
 popd > /dev/null
@@ -26,6 +26,7 @@ export KITE_RANDOM_SECRET=$(python -c \
   'import random, string; print "".join(random.choice(string.letters) for i in range(32))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
+export KITE_LOG_DIR=${log_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
   >&2 echo "Loading configuration from: ${KITE_SITE_CONFIG}"
   source ${KITE_SITE_CONFIG}
@@ -87,12 +88,30 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
     exit 1
   fi
   if [ -z "${YARN_CONF_DIR}" ]; then
-    >&2 echo "Please define YARN_CONFIG_DIR in the kite config file ${KITE_SITE_CONFIG}."
+    >&2 echo "Please define YARN_CONF_DIR in the kite config file ${KITE_SITE_CONFIG}."
     exit 1
   fi
 
   # TODO: we may not actually need this as we set spark.executor.cores in BiggraphSparkContext.
   YARN_SETTINGS="--executor-cores ${NUM_CORES_PER_EXECUTOR}"
+
+  # Override memory overhead.
+  if [ -n "${YARN_EXECUTOR_MEMORY_OVERHEAD_MB}" ]; then
+    COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB="${YARN_EXECUTOR_MEMORY_OVERHEAD_MB}"
+  else
+    RATIO_PERCENT=15
+    LAST_CHAR=${EXECUTOR_MEMORY: -1}
+    if [ "${LAST_CHAR}" == "m" ]; then
+      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * $RATIO_PERCENT / 100))
+    elif [ "${LAST_CHAR}" == "g" ]; then
+      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * 1024 * $RATIO_PERCENT / 100))
+    else
+      <&2 echo "Cannot parse: EXECUTOR_MEMORY=${EXECUTOR_MEMORY}. Should be NNNg or NNNm"
+      exit 1
+    fi
+  fi
+  YARN_SETTINGS="$YARN_SETTINGS \
+    --conf spark.yarn.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
 fi
 
 if [ -n "${NUM_EXECUTORS}" ]; then
@@ -159,8 +178,14 @@ startKite () {
   mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   PID=$!
-  read < ${KITE_READY_PIPE}
-  >&2 echo "Kite server started (PID ${PID})."
+  read RESULT < ${KITE_READY_PIPE}
+  STATUS=`echo $RESULT | cut -f 1 -d " "`
+  if [[ "${STATUS}" == "ready" ]]; then
+    >&2 echo "Kite server started (PID ${PID})."
+  else
+    >&2 echo "Kite server failed: $RESULT"
+    exit 1
+  fi
 }
 
 stopByPIDFile () {

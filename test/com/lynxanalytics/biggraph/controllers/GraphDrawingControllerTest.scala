@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
@@ -188,10 +189,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   test("big bucketed view with buckets") {
     val vs = graph_operations.CreateVertexSet(100)().result.vs
     val eop = graph_operations.FastRandomEdgeBundle(0, 2)
-    val rnd = {
-      val op = graph_operations.AddGaussianVertexAttribute(1)
-      op(op.vertices, vs).result.attr
-    }
+    val rnd = vs.randomAttribute(1)
     val es = eop(eop.vs, vs).result.es
     val req = FEGraphRequest(
       vertexSets = Seq(VertexDiagramSpec(
@@ -227,14 +225,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       val op = graph_operations.FastRandomEdgeBundle(0, 2)
       op(op.vs, vs).result.es
     }
-    val rndVA = {
-      val op = graph_operations.AddGaussianVertexAttribute(1)
-      op(op.vertices, vs).result.attr
-    }
-    val rndEA = {
-      val op = graph_operations.AddGaussianVertexAttribute(2)
-      op(op.vertices, es.idSet).result.attr
-    }
+    val rndVA = vs.randomAttribute(1)
+    val rndEA = es.idSet.randomAttribute(2)
     val vf = FEVertexAttributeFilter(
       attributeId = rndVA.gUID.toString,
       valueSpec = ">0")
@@ -272,14 +264,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       val op = graph_operations.FastRandomEdgeBundle(0, 2)
       op(op.vs, vs).result.es
     }
-    val rndVA = {
-      val op = graph_operations.AddGaussianVertexAttribute(1)
-      op(op.vertices, vs).result.attr
-    }
-    val rndEA = {
-      val op = graph_operations.AddGaussianVertexAttribute(2)
-      op(op.vertices, es.idSet).result.attr
-    }
+    val rndVA = vs.randomAttribute(1)
+    val rndEA = es.idSet.randomAttribute(2)
     val vf = FEVertexAttributeFilter(
       attributeId = rndVA.gUID.toString,
       valueSpec = ">0")
@@ -404,10 +390,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
 
   test("histogram with smaller sample size as data size") {
     val vs = graph_operations.CreateVertexSet(100)().result.vs
-    val rndVA = {
-      val op = graph_operations.AddGaussianVertexAttribute(1)
-      op(op.vertices, vs).result.attr
-    }
+    val rndVA = vs.randomAttribute(1)
     val req = HistogramSpec(
       attributeId = rndVA.gUID.toString,
       vertexFilters = Seq(),

@@ -223,7 +223,9 @@ sealed trait ProjectViewer {
 object ProjectViewer {
   private def feTypeName[T](e: TypedEntity[T]): String = {
     implicit val tt = e.typeTag
-    e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", "")
+    e.typeTag.tpe.toString
+      .replace("com.lynxanalytics.biggraph.graph_api.", "")
+      .replace("com.lynxanalytics.biggraph.model.", "")
   }
 
   private def feIsNumeric[T](e: TypedEntity[T]): Boolean =
@@ -895,6 +897,7 @@ class TableFrame(path: SymbolPath)(
     checkpoint = cp
   }
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
+  def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
 }
 
 abstract class ObjectFrame(path: SymbolPath)(

@@ -22,4 +22,8 @@ angular.module('biggraph')
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
         });
     };
+
+    $scope.asScalar = function(value) {
+      return util.asScalar(value);
+    };
   });
