@@ -22,13 +22,24 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
     concurrent.Future.successful(NotFound(escape(request.toString)))
   }
 
-  override def onStart(app: Application) = {
-    serving.ProductionJsonServer
+  def notifyStarterScript(msg: String) = {
     scala.util.Properties.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
       org.apache.commons.io.FileUtils.writeStringToFile(
         new java.io.File(pipeName),
-        "ready\n",
+        msg + "\n",
         "utf8"))
+  }
+
+  override def onStart(app: Application) = {
+    try {
+      serving.ProductionJsonServer
+    } catch {
+      case t: Throwable =>
+        val exceptionMessage = t.getMessage.replace('\n', ' ')
+        notifyStarterScript("failed: " + exceptionMessage)
+        throw t
+    }
+    notifyStarterScript("ready")
     println("LynxKite is running.")
   }
 }
