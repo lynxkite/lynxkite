@@ -23,14 +23,7 @@ angular.module('biggraph')
         });
     };
 
-    var scalarCache = {}; // Need to return the same object every time to avoid digest hell.
     $scope.asScalar = function(value) {
-      if (scalarCache[value] === undefined) {
-        scalarCache[value] = { value: {
-          string: value !== undefined ? value.toString() : '',
-          double: value,
-        }};
-      }
-      return scalarCache[value];
+      return util.asScalar(value);
     };
   });
