@@ -19,7 +19,7 @@ function kill_grunt {
 trap kill_grunt EXIT
 # Wait until Grunt is up.
 while ! nc -z localhost 9090; do sleep 1; done
-echo
+echo # Add new-line after Grunt output.
 
 echo "Generating User Guide..."
 "$WKHTMLTOPDF" $WKHTML_OPT \

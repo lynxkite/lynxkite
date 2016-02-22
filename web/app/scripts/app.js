@@ -11,6 +11,7 @@ angular
   ])
 
   .config(function ($routeProvider) {
+    // One-page routing for PDF generation.
     if (location.pathname.indexOf('/pdf-') === 0) {
       var page = location.pathname.replace('/pdf-', '');
       $routeProvider.otherwise({
