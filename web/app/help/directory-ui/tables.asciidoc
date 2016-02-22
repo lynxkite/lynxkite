@@ -29,8 +29,8 @@ Click +++
 +++ in the project browser to import a table inside the current folder. The same interface for
 importing data into a table is also available in the import operations via the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-import"></i></label>+++
-button. In the second case the table is created in the root folder by default. To put the table
-somewhere else you have to specify its name as e.g. `Users/MyUser/MyTable`.
+button. In this case the table is created in the root folder by default. To put the table
+somewhere else you have to specify its full path, e.g. `Users/MyUser/MyTable`.
 
 
 [[import-formats]]
