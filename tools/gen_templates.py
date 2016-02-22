@@ -11,7 +11,6 @@ header = re.compile(r'\[\[.*\]\]')
 anchor = re.compile(r'\#\#\#')
 url = re.compile(r'(http.*)\[(.*)\]')
 bold = re.compile(r'\*(.*)\*')
-link = re.compile(r'<<.*,(.*)>>')
 
 def asciidocToTemplate(src, dst):
   codeBlock = False
@@ -31,7 +30,6 @@ def asciidocToTemplate(src, dst):
                 line = line.replace('`', '')
                 line = url.sub(r'\2 (\1)', line)
                 line = bold.sub(r'\1', line)
-                line = link.sub(r'\1', line)
                 d.write('# ' + line)
 
 app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
