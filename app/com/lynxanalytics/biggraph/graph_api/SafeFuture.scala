@@ -53,8 +53,7 @@ class SafeFuture[+T] private (val future: Future[T]) {
   // Simple forwarding for methods that do not create a new Future.
   def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: ExecutionContext) =
     future.onFailure(pf)
-  def onSuccess[U](pf: PartialFunction[T, U])(implicit ec: ExecutionContext) =
-    future.onSuccess(pf)
+
   def foreach[U](f: T => U)(implicit ec: ExecutionContext) =
     future.foreach(f)
 
