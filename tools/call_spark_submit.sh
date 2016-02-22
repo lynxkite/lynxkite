@@ -88,7 +88,7 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
     exit 1
   fi
   if [ -z "${YARN_CONF_DIR}" ]; then
-    >&2 echo "Please define YARN_CONFIG_DIR in the kite config file ${KITE_SITE_CONFIG}."
+    >&2 echo "Please define YARN_CONF_DIR in the kite config file ${KITE_SITE_CONFIG}."
     exit 1
   fi
 
