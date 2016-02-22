@@ -2,14 +2,8 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('LogsCtrl', function ($scope, util, $window) {
+  .controller('LogsCtrl', function ($scope, util) {
     $scope.logFiles = util.nocache('/getLogFiles');
-
-    $scope.downloadLogFile = function(fileName) {
-      // Fire off the download.
-      $window.location =
-        '/downloadLogFile?q=' + encodeURIComponent(JSON.stringify({'name': fileName}));
-    };
 
     $scope.asScalar = function(value) {
       return util.asScalar(value);
