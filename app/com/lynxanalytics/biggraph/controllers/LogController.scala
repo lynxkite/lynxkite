@@ -48,11 +48,6 @@ class LogController extends play.api.http.HeaderNames {
     val logFile = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"), request.name)
     assert(logFile.exists, s"Application log file not found at $logFile")
     log.info(s"$user has downloaded log file $logFile")
-    mvc.Result(
-      header = mvc.ResponseHeader(200, Map(
-        CONTENT_LENGTH -> logFile.length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=${request.name}")),
-      body = play.api.libs.iteratee.Enumerator.fromFile(logFile)
-    )
+    mvc.Results.Ok.sendFile(logFile)
   }
 }
