@@ -51,6 +51,10 @@ angular
         templateUrl: 'views/cleaner.html',
         controller: 'CleanerCtrl',
       })
+     .when('/logs', {
+        templateUrl: 'views/logs.html',
+        controller: 'LogsCtrl',
+      })
       .when('/help', {
         templateUrl: 'views/help.html',
       })
@@ -116,5 +120,12 @@ angular
     return function(x) {
       if (x === undefined) { return x; }
       return x.toLowerCase().replace(/ /g, '-');
+    };
+  })
+
+  .filter('urlencode', function() {
+    return function(x) {
+      if (x === undefined) { return x; }
+      return encodeURIComponent(x);
     };
   });
