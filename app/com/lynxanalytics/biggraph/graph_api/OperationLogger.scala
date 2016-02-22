@@ -12,6 +12,8 @@ abstract class OperationLogger {
   def addOutput(output: SafeFuture[EntityData]): Unit
   def addInput(input: SafeFuture[EntityData]): Unit
   def close(): Unit
+  def start(): Unit
+  def stop(): Unit
 }
 
 object OperationLogger {
@@ -23,15 +25,19 @@ object OperationLogger {
 class JsonOperationLogger(instance: MetaGraphOperationInstance,
                           implicit val ec: ExecutionContextExecutorService) extends OperationLogger {
   private val marker = "JSON_OPERATION_LOGGER_MARKER"
-  case class OutputInfo(name: String, count: Option[Long], executionTimeInSeconds: Long)
-  case class InputInfo(name: String, count: Option[Long])
+  case class OutputInfo(name: String, partitions: Int, count: Option[Long])
+  case class InputInfo(name: String, partitions: Int, count: Option[Long])
 
   private val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
   private val inputInfoList = scala.collection.mutable.Queue[SafeFuture[InputInfo]]()
-  private val creationTime = System.currentTimeMillis
+  private var startTime = -1L
+  private var stopTime = -1L
 
   private def elapsedMs(): Long = {
-    (System.currentTimeMillis() - creationTime)
+    assert(startTime != -1 && stopTime != -1)
+    val diff = stopTime - startTime
+    assert(diff >= 0)
+    diff
   }
 
   override def addOutput(output: SafeFuture[EntityData]): Unit = {
@@ -39,38 +45,39 @@ class JsonOperationLogger(instance: MetaGraphOperationInstance,
       o =>
         synchronized {
           val rddData = o.asInstanceOf[EntityRDDData[_]]
-          val oi = OutputInfo(rddData.entity.name.name, rddData.count, elapsedMs() / 1000)
-          oi
+          OutputInfo(rddData.entity.name.name, rddData.rdd.partitions.size, rddData.count)
         }
     }
   }
 
+  override def start(): Unit = {
+    assert(startTime == -1)
+    startTime = System.currentTimeMillis()
+  }
+
+  override def stop(): Unit = {
+    assert(stopTime == -1)
+    stopTime = System.currentTimeMillis()
+  }
   override def addInput(input: SafeFuture[EntityData]): Unit = {
     inputInfoList += input.map {
       i =>
         synchronized {
           val rddData = i.asInstanceOf[EntityRDDData[_]]
-          val count = rddData.count.getOrElse(rddData.rdd.count())
-          val ii = InputInfo(rddData.entity.toString, Some(count))
-          ii
+          InputInfo(rddData.entity.toString, rddData.rdd.partitions.size, rddData.count)
         }
     }
   }
 
   override def close(): Unit = {
-    val outputs = SafeFuture.sequence(outputInfoList)
-    val inputs = SafeFuture.sequence(inputInfoList)
+    val outputsFuture = SafeFuture.sequence(outputInfoList)
+    val inputsFuture = SafeFuture.sequence(inputInfoList)
 
-    val both = SafeFuture.sequence(List(outputs, inputs))
-    both.onSuccess {
-      case _ =>
-        if (instance.operation.isHeavy) {
-          dump(inputs.value.get.get, outputs.value.get.get)
+    outputsFuture.map {
+      outputs =>
+        inputsFuture.map {
+          inputs => dump(inputs, outputs)
         }
-    }
-    both.onFailure {
-      case _ =>
-        log.error("Error on closing OperationLog")
     }
   }
 
@@ -82,7 +89,7 @@ class JsonOperationLogger(instance: MetaGraphOperationInstance,
     val out = json.Json.obj(
       "name" -> instance.operation.toString,
       "guid" -> instance.operation.gUID.toString,
-      "executionTimeInSeconds" -> json.JsNumber(elapsedMs() / 1000),
+      "elapsedMs" -> json.JsNumber(elapsedMs()),
       "inputs" -> inputs,
       "outputs" -> outputs
     )

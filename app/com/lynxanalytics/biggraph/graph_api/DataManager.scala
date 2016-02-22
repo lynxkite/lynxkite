@@ -123,7 +123,8 @@ class DataManager(sc: spark.SparkContext,
     loggedFutures.put(f, ())
   }
 
-  private def execute(instance: MetaGraphOperationInstance): SafeFuture[Map[UUID, EntityData]] = {
+  private def execute(instance: MetaGraphOperationInstance,
+                      logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
     val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
@@ -133,6 +134,7 @@ class DataManager(sc: spark.SparkContext,
     futureInputs.map { inputs =>
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
+        logger.start()
       }
       val inputDatas = DataSet(inputs.toMap)
       for (scalar <- instance.outputs.scalars.values) {
@@ -159,6 +161,7 @@ class DataManager(sc: spark.SparkContext,
       }
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
+        logger.stop()
       }
       outputDatas
     }
@@ -202,12 +205,13 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def getInstanceFuture(
-    instance: MetaGraphOperationInstance): SafeFuture[Map[UUID, EntityData]] = synchronized {
+    instance: MetaGraphOperationInstance,
+    logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = synchronized {
 
     val gUID = instance.gUID
     if (!instanceOutputCache.contains(gUID)) {
       instanceOutputCache(gUID) = {
-        val output = execute(instance)
+        val output = execute(instance, logger)
         if (instance.operation.isHeavy) {
           // For heavy operations we want to avoid caching the RDDs. The RDD data will be reloaded
           // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
@@ -265,8 +269,7 @@ class DataManager(sc: spark.SparkContext,
         val instance = entity.source
 
         val logger = OperationLogger(instance, executionContext)
-        val instanceFuture = getInstanceFuture(instance)
-
+        val instanceFuture = getInstanceFuture(instance, logger)
         for (input <- instance.inputs.all.values) {
           if (instance.operation.isHeavy && !input.isInstanceOf[Scalar[_]]) {
             logger.addInput(getFuture(input))
