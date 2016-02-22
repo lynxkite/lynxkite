@@ -178,8 +178,14 @@ startKite () {
   mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   PID=$!
-  read < ${KITE_READY_PIPE}
-  >&2 echo "Kite server started (PID ${PID})."
+  read RESULT < ${KITE_READY_PIPE}
+  STATUS=`echo $RESULT | cut -f 1 -d " "`
+  if [[ "${STATUS}" == "ready" ]]; then
+    >&2 echo "Kite server started (PID ${PID})."
+  else
+    >&2 echo "Kite server failed: $RESULT"
+    exit 1
+  fi
 }
 
 stopByPIDFile () {
