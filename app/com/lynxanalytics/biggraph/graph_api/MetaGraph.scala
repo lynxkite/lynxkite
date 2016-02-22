@@ -562,10 +562,8 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        attributes: Map[Symbol, Attribute[_]] = Map(),
                        scalars: Map[Symbol, Scalar[_]] = Map())
     extends ToJson {
-  val nonScalars: Map[Symbol, MetaGraphEntity] =
-    vertexSets ++ edgeBundles ++ attributes
   val all: Map[Symbol, MetaGraphEntity] =
-    nonScalars ++ scalars
+    vertexSets ++ edgeBundles ++ attributes ++ scalars
   assert(all.size ==
     vertexSets.size + edgeBundles.size + attributes.size + scalars.size,
     "Cross type collision %s %s %s".format(
