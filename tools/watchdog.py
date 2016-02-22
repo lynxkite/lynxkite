@@ -10,6 +10,7 @@ import os
 import signal
 import socket
 import sys
+import logging
 
 flags = argparse.ArgumentParser(
   description='Runs a script if a URL is not responsive or when requested through a web UI.')
@@ -30,6 +31,12 @@ flags.add_argument('--pid_file',
     help='Where to put the PID file for this watchdof.', required=True)
 flags = flags.parse_args()
 
+
+logging.basicConfig(
+  destination = sys.stderr,
+  level = logging.DEBUG,
+  format = "%(asctime)s  %(message)s",
+  datefmt = "%d/%h/%Y %H:%M:%S")
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -60,6 +67,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.send_header('Location', '/')
     self.end_headers()
 
+  def log_message(self, format, *args):
+    client = self.client_address[0]
+    msg = "client: " + self.client_address[0] + " -- " + format % args
+    logging.info(msg)
 
 class Server(BaseHTTPServer.HTTPServer):
 
@@ -85,7 +96,9 @@ class Server(BaseHTTPServer.HTTPServer):
   def log_failure(self):
     self.log.append('X')
     self.worry += 1
+    logging.error('Failed %d time(s)', self.worry)
     if self.worry == flags.max_failures and self.enabled:
+      logging.error('Failure %d reached, I will restart', flags.max_failures)
       self.restart()
 
   def restart(self):

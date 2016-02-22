@@ -35,7 +35,7 @@ object SymbolPath {
   def check(symbol: Symbol, fullPath: SymbolPath) = {
     val str = symbol.name
     assert(!str.contains("/"), s"Name $str in $fullPath contains a slash ('/').")
-    assert(str.nonEmpty, s"$fullPath contains an empty name.")
+    assert(str.nonEmpty, s"Path '$fullPath' contains an empty name.")
   }
 
   def apply(first: Symbol, optional: Symbol*): SymbolPath = {
