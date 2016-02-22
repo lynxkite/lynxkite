@@ -72,3 +72,6 @@ the test code has to be modified. After the one or two `function` parameters add
 parameter to mark the test for solo running. (Multiple tests can be marked with `'solo'` at the same
 time.) Run `VERBOSE=true grunt test` to enable verbose mode, which prints the tests names as it
 goes.
+
+Another useful trick is to use `xvfb-run` (in Ubuntu, it is available in package `xvfb`) as this:
+`xvfb-run ./test_frontend.sh`. This will run the frontend tests in a virtual framebuffer.

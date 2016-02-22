@@ -6,16 +6,14 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
 
   def createColocationLikeSetup(numEvents: Int, numPersons: Int): (VertexSet, EdgeBundle) = {
     val vs1 = CreateVertexSet(numEvents).result.vs
-    val timeAttr = {
-      val op = AddGaussianVertexAttribute(42)
-      op(op.vertices, vs1).result.attr
-    }
+    val timeAttr = vs1.randomAttribute(42)
     val personAttr = {
       val op = AddRandomAttribute(1, "Standard Uniform")
       op(op.vs, vs1).result.attr

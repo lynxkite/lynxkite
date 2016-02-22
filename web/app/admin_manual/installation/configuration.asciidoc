@@ -5,7 +5,28 @@
 You need to create a site configuration to be able to run LynxKite. If you don’t have a config file
 created yet, running the runner script will warn you and point you to a template config file. Just
 copy that template to your home directory with name `.kiterc` and edit the settings as necessary.
-Comments in the template file should be sufficient to understand the settings.
+The settings are documented inside the template file and in the <kiterc-file> section. This
+information is also available in the template file as comments.
+
+[[configure-directories]]
+### Configure directories
+
+This is a best practices section on how to configure various directories properly. The default
+configuration provided by Hadoop may be suboptimal.
+
+- DataNode directories should be on a large drive. Set `dfs.data.dir` and `dfs.datanode.data.dir`
+  on every DataNode accordingly.
+- NameNode and DataNode directories are better to not exist or at least be empty before you start
+  the HDFS service the first time / deploy a new node. Check `dfs.name.dir`,
+  `dfs.namenode.name.dir`, `dfs.data.dir` and `dfs.datanode.data.dir`.
+- Datanode directories have to be owned by `hdfs:hadoop`.
+- YARN log dirs should be on a large drive. Check `yarn.nodemanager.log-dirs` and `hadoop.log.dir`
+  in the NodeManager and `hadoop.log.dir` in the ResourceManager configuration.
+- YARN log dir has to be owned by `yarn:hadoop`
+- Set the `yarn.nodemanager.local-dirs` (YARN app cache and file cache) to be on the appropriate
+  drive. It should be sufficiently large (typically at least 100GB).
+- Make sure that you have properly configured prefixes if you need them as described in the
+  <<prefix-definitions>> section.
 
 ### Running LynxKite
 
@@ -35,16 +56,7 @@ not provide proper protection. (Lacking a trusted CA, the self-signed certificat
 be spoofed.) Using it will trigger a certificate warning in the user’s browser. It is recommended
 to install a real certificate in its place.
 
-The file specified in `.kiterc` as `KITE_HTTPS_KEYSTORE` is a Tomcat-style keystore. If you have
-your own intranet CA or a wildcard certificate, you can generate a certificate for LynxKite that
-the browsers can validate. Follow the instructions at
-http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
-The following settings need to be set in `.kiterc` to enable HTTPS:
-
-- `KITE_APPLICATION_SECRET`: A secret string, used to prevent auth cookie forgery.
-- `KITE_HTTPS_PORT`: The port number for HTTPS.
-- `KITE_HTTPS_KEYSTORE`: The Tomcat-style keystore file.
-- `KITE_HTTPS_KEYSTORE_PWD`: Password for the keystore file.
+Please refer to the <<kiterc-https,HTTPS setup>> in the `.kiterc` file for more details.
 
 ### Backups
 
@@ -60,11 +72,19 @@ following data:
   graph data, assuming that the imported files are still available. This data is critical, and
   backups are recommended.
 
+There is a backup tool for Hadoop deployments shipped with LynxKite under
+`tools/kite_meta_hdfs_backup.sh`. It is recommended to create a cron job running this tool on
+a daily basis (or more frequently if needed). The tool creates a copy of the full `KITE_META_DIR`
+and the `.kiterc` file in HDFS.
+
+To restore an earlier version of LynxKite simply copy the `.kiterc` file and the meta
+directory back from HDFS to overwrite the current versions of them, then restart LynxKite.
+
+
 ### Extra libraries
 
-You can provide extra jar files that will be added to the `CLASSPATH` of LynxKite server by
-setting the `KITE_EXTRA_JARS` option in `.kiterc`. A typical use case is installing JDBC drivers.
-Just add the JAR file of the driver to `KITE_EXTRA_JARS` and you should be good to go.
+You can provide extra jar files that will be added to the `CLASSPATH` of LynxKite server if needed,
+as specified <<kiterc-extra-jars,here>>.
 
 ### Integration with Hive
 

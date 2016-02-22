@@ -1,46 +1,53 @@
-# Name of the cluster.
+
+# This file contains various configurations used when launching LynxKite on Amazon Elastic
+# MapReduce (EMR).
+
+# Specify the name of the cluster.
 CLUSTER_NAME=${USER}-cluster
 
-# Number of worker instances in the cluster.
+# Set the number of worker instances in the cluster.
 NUM_INSTANCES=3
 
-# The id of the ssh key that you want to use to connect to the cluster.
+# Specify the type of the instance to create.
+TYPE=m3.2xlarge
+
+# Specify the id of the SSH key that you want to use to connect to the cluster.
 SSH_ID=lynx-cli
 
-# The private key file for the ID above.
-SSH_KEY=~/.ssh/lynx-cli.pem
+# Specify the private key file for the ID above.
+SSH_KEY=${HOME}/.ssh/lynx-cli.pem
 
-# Which region to run in.
+# Specify in which region the cluster should run.
 REGION=us-east-1
 
-# Which instance type to create.
-TYPE=m3.2xlarge
-# These are determined by the instance type above. You still need to fill these. Sorry. :)
-# See http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/TaskConfiguration_H2.html
-# for memory limits and
-# https://aws.amazon.com/ec2/instance-types/
-# for number of cores.
+# The configurations below are determined by the instance type above, however it is still required
+# to fill them. See the EMR
+# task configuration (http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/TaskConfiguration_H2.html)
+# documentation for memory limits and the EC2 instance types (https://aws.amazon.com/ec2/instance-types/)
+# documentation for number of cores.
 CORES=8
-USE_RAM_GB=19 # yarn limit minus 1GB so that the application master fits somewhere
-# A local path that exists on all workers and the master and will be used for storing
-# temporary spark/hadoop files. This can get big, so if you have a small root filesystem
-# and an extra large drive mounted somewhere then you need to point this to somewhere on
-# the large drive. On the other hand performance of this drive has big effect on overal speed,
-# so SSD is a nice option here.
+# YARN limit minus overhead minus 1GB so that the application master fits on one machine.
+USE_RAM_GB=18
+
+# The local temp directory is a local path that exists on all workers and the master and will
+# be used for storing temporary Spark/Hadoop files. This directory can potentially use a lot of
+# space, so if you have a small root filesystem and an extra large drive mounted somewhere then you
+# need to point this to somewhere on the large drive. On the other hand performance of this drive has
+# a significant effect on overal speed, so using an SSD is a nice option here.
 LOCAL_TMP_DIR=/mnt/tmp
 
-# Find some working configurations below:
+# Find some working example configurations below:
 # TYPE=m1.large
 # CORES=2
 # USE_RAM_GB=3
 # LOCAL_TMP_DIR=/mnt/tmp
-#
+
 # TYPE=m3.2xlarge
 # CORES=8
 # USE_RAM_GB=19
 # LOCAL_TMP_DIR=/mnt/tmp
 
-# The S3 directory to store graph data in without the s3:// prefix. It must use the same credentials
-# as the user starting the cluster. Used as the backup location with the "s3copy" command.
-# This needs to be in the same region as REGION. Or  you get charged by Amazon.
+# Specify the S3 directory to store graph data in without the s3:// prefix. It must use the
+# same credentials as the user starting the cluster. Used as the backup location with the
+# s3copy command. This needs to be in the same region as REGION. Or you get charged by Amazon.
 S3_DATAREPO=lynx-bnw-data/${USER}-cluster

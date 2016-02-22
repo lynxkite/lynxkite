@@ -58,10 +58,13 @@ The properties of `GroovyProject` are:
    `Map<String, GroovyAttribute> **edgeAttributes**` are the vertex and edge attributes.
    `GroovyAttribute` has a `histogram(Int n)` method that
    returns a histogram of the attribute with `n` buckets.
- - `DataFrame **vertexDF**` gives you access to the vertex set and vertex attributes of the project
-   as an Apache Spark DataFrame. `DataFrame **edgeDF**` does the same for the edges (including all
-   source and destination vertex attributes). `DataFrame **belongsToDF**` (defined on segmentations)
-   does it for the links going between a project and its segmentation. See the
+ - `DataFrame **vertexDF**` gives you access to the vertex attributes of the project
+   as an Apache Spark DataFrame. `DataFrame **edgeDF**` does the same for the edges.
+   `DataFrame **tripletDF**` joins the two tables, giving access to the vertex attributes with
+   `src_` and `dst_` prefixes and to the edge attributes with the `edge_` prefix.
+   `DataFrame **belongsToDF**` (defined on segmentations)
+   does it for the links going between a project and its segmentation with vertex attributes
+   prefixed with `base_` and `segment_`. See the
    http://spark.apache.org/docs/latest/sql-programming-guide.html[Spark SQL and DataFrame Guide]
    to learn about working with DataFrames.
 

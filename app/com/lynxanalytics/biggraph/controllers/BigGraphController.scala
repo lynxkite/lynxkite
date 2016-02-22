@@ -268,8 +268,6 @@ object SavedWorkflow {
 
 object BigGraphController {
   val workflowsRoot: SymbolPath = SymbolPath("workflows")
-
-  val dirtyOperationError = "Dirty operations are not allowed in history"
 }
 class BigGraphController(val env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -477,8 +475,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     }
   }
 
-  private def extendGivenOpWithSelectedOption(
-    opId: String,
+  private def extendOpWithSelectedOption(
     params: Map[String, String],
     meta: FEOperationMeta): FEOperationMeta = {
     meta.copy(parameters = meta.parameters.map { parameter =>
@@ -503,10 +500,40 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     })
   }
 
+  // Returns the list of operation categories (including the operations) for a historical request.
+  // If the requested operation is a deprecated workflow operation, it is added in an extra
+  // category. If the parameters used in the request are not available on the operation, they are
+  // added back.
+  private def opCategoriesForRequest(
+    ops: Operations,
+    context: Operation.Context,
+    request: SubProjectOperation): List[OperationCategory] = {
+    val op = ops.opById(context, request.op.id)
+    val base = ops.categories(context, includeDeprecated = true)
+    // If it's a deprecated workflow operation, display it in a special category.
+    val withOp =
+      if (base.find(_.containsOperation(op)).isEmpty &&
+        op.isInstanceOf[WorkflowOperation]) {
+        val deprCat = WorkflowOperation.deprecatedCategory
+        val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
+        base :+ deprCatFE
+      } else {
+        base
+      }
+    // Add the selected options if they are not present.
+    val extended = withOp.map { category =>
+      category.copy(
+        ops = category.ops.map { op =>
+          if (op.id == request.op.id) extendOpWithSelectedOption(request.op.parameters, op)
+          else op
+        })
+    }
+    extended
+  }
+
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
-  // Won't ever execute dirty operation, for those it sets a special error status.
   private def historyStep(
     user: serving.User,
     startState: RootProjectState,
@@ -515,33 +542,21 @@ class BigGraphController(val env: SparkFreeEnvironment) {
 
     val startStateRootViewer = new RootProjectViewer(startState)
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
-    val opCategoriesBefore = ops.categories(context, includeDeprecated = true)
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
+    val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
+
     val op = ops.opById(context, request.op.id)
-    // If it's a deprecated workflow operation, display it in a special category.
-    val opCategoriesBeforeWithOp =
-      if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
-        op.isInstanceOf[WorkflowOperation]) {
-        val deprCat = WorkflowOperation.deprecatedCategory
-        val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
-        opCategoriesBefore :+ deprCatFE
-      } else {
-        opCategoriesBefore
-      }
 
-    val opCategoriesBeforeOptionsExtended = opCategoriesBeforeWithOp
-      .map { category =>
-        category.copy(
-          ops = category.ops.map { op =>
-            extendGivenOpWithSelectedOption(op.id, request.op.parameters, op)
-          })
-      }
+    // Remove parameters from the request that no longer exist.
+    val restrictedRequest = {
+      val validParameterIds = op.parameters.map(_.id).toSet
+      val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
+      request.copy(op = request.op.copy(parameters = restrictedParameters))
+    }
 
-    val validParameterIds = op.parameters.map(_.id).toSet
-    val restrictedParameters = request.op.parameters.filterKeys(validParameterIds.contains(_))
-    val restrictedRequest = request.copy(op = request.op.copy(parameters = restrictedParameters))
-    val status =
-      if (op.enabled.enabled && !op.dirty) {
+    // Try to apply the operation and get the success state.
+    val status = {
+      if (op.enabled.enabled) {
         try {
           op.validateAndApply(restrictedRequest.op.parameters)
           FEStatus.enabled
@@ -549,11 +564,10 @@ class BigGraphController(val env: SparkFreeEnvironment) {
           case t: Throwable =>
             FEStatus.disabled(t.getMessage)
         }
-      } else if (op.dirty) {
-        FEStatus.disabled(BigGraphController.dirtyOperationError)
       } else {
         op.enabled
       }
+    }
 
     // For the next state, we take it if it's given, otherwise take the end result of the
     // operation if it succeeded or we fall back to the state before the operation.
@@ -568,7 +582,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
         status,
         segmentationsBefore,
         segmentationsAfter,
-        opCategoriesBeforeOptionsExtended,
+        opCategoriesBefore,
         nextStateOpt.flatMap(_.checkpoint)))
   }
 
@@ -576,11 +590,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val startingState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
     val checkpointHistory = stateHistory(user, startingState)
     val historyExtension = extendedHistory(user, startingState, request.requests)
-    val cleanCheckpointHistory =
-      checkpointHistory
-        .filter(step => step.status.disabledReason != BigGraphController.dirtyOperationError)
     ProjectHistory(
-      cleanCheckpointHistory ++ historyExtension.map(_._2))
+      checkpointHistory ++ historyExtension.map(_._2))
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = {
@@ -707,8 +718,6 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
   }
 
-  // "Dirty" operations have side-effects, such as writing files. (See #1564.)
-  val dirty = false
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
     title,
@@ -886,13 +895,23 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def operationIds = operations.keys.toSeq
 
-  def opById(context: Operation.Context, id: String): Operation = {
+  private def maybeOpById(context: Operation.Context, id: String): Option[Operation] = {
     if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
       // Oho, a workflow operation!
-      workflowOpFromTag(SymbolPath.parse(id), context)
+      Some(workflowOpFromTag(SymbolPath.parse(id), context))
     } else {
-      assert(operations.contains(id), s"Cannot find operation: ${id}")
-      operations(id)(context)
+      operations.get(id).map(_(context))
+    }
+  }
+
+  def opById(context: Operation.Context, id: String): Operation = {
+    maybeOpById(context, id).getOrElse {
+      new Operation(id, context, Operation.Category("Removed operations", "red")) {
+        def parameters = List()
+        def enabled = FEStatus.disabled(s"$id no longer exists")
+        def apply(params: Map[String, String]) =
+          throw new AssertionError(s"Cannot find operation: $id")
+      }
     }
   }
 

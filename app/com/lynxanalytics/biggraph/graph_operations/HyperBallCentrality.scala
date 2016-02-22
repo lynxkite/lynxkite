@@ -14,9 +14,10 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
-import com.twitter.algebird.HyperLogLogMonoid
-import com.twitter.algebird.HLL
-import com.twitter.algebird.HyperLogLog._
+import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
+
+import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 object HyperBallCentrality extends OpFromJson {
   private val algorithmParameter = NewParameter("algorithm", "Harmonic")
@@ -50,141 +51,170 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vertices = inputs.vs.rdd
-    val vertexPartitioner = vertices.partitioner.get
-    val edges = inputs.es.rdd.map { case (id, edge) => (edge.src, edge.dst) }
-      .groupBySortedKey(vertexPartitioner).cache()
-    // Hll counters are used to estimate set sizes.
-    val globalHll = new HyperLogLogMonoid(bits)
-    val hyperBallCounters = vertices.mapValuesWithKeys {
-      // Initialize a counter for every vertex
-      case (vid, _) => globalHll(vid)
-    }
-    // We have to keep track of the HyperBall sizes for the actual
-    // and the previous diameter.
-    val hyperBallSizes = vertices.mapValues { _ => (1, 1) }
 
     val centralities = algorithm match {
       case "Harmonic" =>
-        getHarmonicCentralities(
-          diameter = 1,
-          harmonicCentralities = vertices.mapValues { _ => 0.0 },
-          hyperBallCounters = hyperBallCounters,
-          hyperBallSizes = hyperBallSizes,
-          vertexPartitioner,
-          edges)
+        getMeasures(
+          rc = rc,
+          vs = inputs.vs.rdd,
+          es = inputs.es.rdd,
+          measureFunction = {
+            (oldCentrality, diffSize, distance) =>
+              oldCentrality + (diffSize.toDouble / distance)
+          })
+          .mapValues(_._2)
 
       case "Lin" =>
-        val (finalSumDistances, sizes) = getMeasures(
-          diameter = 1,
-          sumDistances = vertices.mapValues { _ => 0 },
-          hyperBallCounters = hyperBallCounters,
-          hyperBallSizes = hyperBallSizes,
-          vertexPartitioner,
-          edges)
-        finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
-          case (vid, (sumDistance, size)) =>
-            if (sumDistance == 0) {
-              1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
-            } else {
-              size.toDouble * size.toDouble / sumDistance.toDouble
-            }
-        }
+        getMeasures(
+          rc = rc,
+          inputs.vs.rdd,
+          inputs.es.rdd,
+          measureFunction = {
+            (sumDistance, diffSize, distance) =>
+              sumDistance + diffSize * distance
+          })
+          .mapValues {
+            case (size, sumDistance) =>
+              if (sumDistance == 0) {
+                1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
+              } else {
+                size.toDouble * size.toDouble / sumDistance.toDouble
+              }
+          }
 
       case "Average distance" =>
-        val (finalSumDistances, sizes) = getMeasures(
-          diameter = 1,
-          sumDistances = vertices.mapValues { _ => 0 },
-          hyperBallCounters = hyperBallCounters,
-          hyperBallSizes = hyperBallSizes,
-          vertexPartitioner,
-          edges)
-        finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
-          case (vid, (sumDistance, size)) =>
-            val others = size - 1 // size includes the vertex itself
-            if (others == 0) 0.0
-            else sumDistance.toDouble / others.toDouble
-        }
+        getMeasures(
+          rc = rc,
+          vs = inputs.vs.rdd,
+          es = inputs.es.rdd,
+          measureFunction = {
+            (sumDistance, diffSize, distance) =>
+              sumDistance + diffSize * distance
+          })
+          .mapValues {
+            case (size, sumDistance) =>
+              val others = size - 1 // size includes the vertex itself
+              if (others == 0) 0.0
+              else sumDistance.toDouble / others.toDouble
+          }
     }
 
     output(o.centrality, centralities)
   }
 
-  /* For every vertex A returns the sum of the distances to A and
-     the size of the coreachable set of A.*/
-  @tailrec private def getMeasures(
-    diameter: Int, // Max diameter - iterations - to check
-    sumDistances: UniqueSortedRDD[ID, Int], // The sum of the distances to every vertex
-    hyperBallCounters: UniqueSortedRDD[ID, HLL], // HLLs counting the coreachable sets
-    hyperBallSizes: UniqueSortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
-    vertexPartitioner: Partitioner,
-    edges: UniqueSortedRDD[ID, Iterable[ID]]): (UniqueSortedRDD[ID, Int], UniqueSortedRDD[ID, Int]) = {
+  // A function to compute a new centrality measure:
+  // (oldCentrality: Double, hyperBallDiffSizeAtDiameter: Int, distance: Int) =>
+  //   newCentrality: Int
+  type MeasureFunction = (Double, Int, Int) => Double
 
-    val newHyperBallCounters = getNextHyperBalls(
-      hyperBallCounters, vertexPartitioner, edges).cache()
-    val newHyperBallSizes = hyperBallSizes.sortedJoin(newHyperBallCounters).mapValues {
-      case ((_, newValue), hll) =>
-        (newValue, hll.estimatedSize.toInt)
-    }
-    val newSumDistances = sumDistances
-      .sortedJoin(newHyperBallSizes)
-      .mapValues {
-        case (original, (oldSize, newSize)) =>
-          original + ((newSize - oldSize) * diameter)
+  // Computes a centrality-like measure for each vertex, defined by measureFunction.
+  // The result for each vertex is a pair of (coreachable set size, centrality measure).
+  private def getMeasures(
+    rc: RuntimeContext,
+    vs: UniqueSortedRDD[ID, Unit],
+    es: UniqueSortedRDD[ID, Edge],
+    measureFunction: MeasureFunction): UniqueSortedRDD[ID, (Int, Double)] = {
+
+    // Get a partitioner of suitable size:
+    val numEdges = es.count // edge data size is ~ 3 x Long = 24 bytes
+    val numVertices = vs.count // vertex data size is ~ 2^bits bytes
+    val numEffectiveRows = Math.max(numEdges, numVertices * (1 << bits) / 24)
+    val partitioner = rc.partitionerForNRows(numEffectiveRows)
+
+    val vertices = vs.sortedRepartition(partitioner)
+    val originalEdges = es.map { case (id, edge) => (edge.src, edge.dst) }
+    val loopEdges = vs.map { case (id, _) => (id, id) }
+    val edges = (originalEdges ++ loopEdges)
+      .groupBySortedKey(partitioner)
+      .mapValuesWithKeys {
+        // Remove parallel edges because they would be ignored
+        // later anyways.
+        case (id, neighbors) => neighbors.toSeq.distinct: Iterable[ID]
       }
-
-    if (diameter < maxDiameter) {
-      getMeasures(diameter + 1, newSumDistances,
-        newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges)
-    } else {
-      (newSumDistances, newHyperBallSizes.mapValuesWithKeys { case (_, (_, newSize)) => newSize })
+      .persist(StorageLevel.MEMORY_AND_DISK)
+    // Hll counters are used to estimate set sizes.
+    val hyperBallCounters = vertices.mapValuesWithKeys {
+      // Initialize a counter for every vertex
+      case (vid, _) => {
+        val hll = new HyperLogLogPlus(bits)
+        hll.offer(vid)
+        hll
+      }
     }
+
+    val result = getMeasures(
+      distance = 1,
+      hyperBallCounters = hyperBallCounters,
+      measures = vertices.mapValues { _ => (1, 0.0) },
+      measureFunction = measureFunction,
+      partitioner = partitioner,
+      edges = edges)
+    result.sortedRepartition(vs.partitioner.get)
   }
 
-  /* Returns the harmonic centrality of every vertex.*/
-  @tailrec private def getHarmonicCentralities(
-    diameter: Int, // Max diameter - iterations - to check
-    harmonicCentralities: UniqueSortedRDD[ID, Double],
-    hyperBallCounters: UniqueSortedRDD[ID, HLL], // HLLs counting the coreachable sets
-    hyperBallSizes: UniqueSortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
-    vertexPartitioner: Partitioner,
-    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, Double] = {
+  // Recursive helper function for the above getMeasures function.
+  @tailrec private def getMeasures(
+    distance: Int, // Current diameter being checked.
+    hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus], // Coreachable sets of size `diameter` for each vertex.
+    measures: UniqueSortedRDD[ID, (Int, Double)], // (coreachable set size, centrality) at `diameter - 1`
+    measureFunction: MeasureFunction,
+    partitioner: Partitioner,
+    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, (Int, Double)] = {
 
-    val newHyperBallCounters = getNextHyperBalls(
-      hyperBallCounters, vertexPartitioner, edges).cache()
-    val newHyperBallSizes = hyperBallSizes.sortedJoin(newHyperBallCounters).mapValues {
-      case ((_, newValue), hll) =>
-        (newValue, hll.estimatedSize.toInt)
-    }
-    val newHarmonicCentralities = harmonicCentralities
-      .sortedJoin(newHyperBallSizes)
+    val newHyperBallCounters = getNextHyperBalls(hyperBallCounters, partitioner, edges)
+    val newMeasures = newHyperBallCounters
+      .sortedJoin(measures)
       .mapValues {
-        case (original, (oldSize, newSize)) =>
-          original + ((newSize - oldSize).toDouble / diameter)
+        case (hll, (oldSize, oldCentrality)) => {
+          val newSize = hll.cardinality.toInt
+          val diffSize = newSize - oldSize
+          val newCentrality = measureFunction(oldCentrality, diffSize, distance)
+          (newSize, newCentrality)
+        }
       }
 
-    if (diameter < maxDiameter) {
-      getHarmonicCentralities(diameter + 1, newHarmonicCentralities,
-        newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges)
+    if (distance < maxDiameter) {
+      getMeasures(
+        distance + 1,
+        newHyperBallCounters,
+        newMeasures,
+        measureFunction,
+        partitioner,
+        edges)
     } else {
-      newHarmonicCentralities
+      newMeasures
     }
   }
 
   /** Returns hyperBallCounters for a diameter increased with 1.*/
   private def getNextHyperBalls(
-    hyperBallCounters: SortedRDD[ID, HLL],
-    vertexPartitioner: Partitioner,
-    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HLL] = {
-    // Aggregate the Hll counters for every neighbor.
-    (hyperBallCounters
+    hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus],
+    partitioner: Partitioner,
+    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
+    // For each vertex, add the HLL counter of every neighbor to the HLL counter
+    // of the vertex.
+    //
+    // We don't need outer join because each vertex has a loop edge. It is important
+    // in this logic that the hyperBallCounters in each iteration are a result of a single
+    // shuffle. This way the Spark DAG is simpler and there is no need for multiple
+    // computations of the same HLL or caching them.
+    hyperBallCounters
       .sortedJoin(edges)
       .flatMap {
-        case (id, (hll, neighbors)) => neighbors.map(nid => (nid, hll))
-        // Add the original Hlls.
-      } ++ hyperBallCounters)
-      // Note that the + operator is defined on Algebird's HLL.
-      .reduceBySortedKey(vertexPartitioner, _ + _)
+        case (id, (hll, neighbors)) =>
+          neighbors.map(nid => (nid, hll))
+      }
+      .reduceBySortedKey(
+        partitioner,
+        {
+          case (hll1, hll2) => {
+            val hll3 = new HyperLogLogPlus(bits)
+            hll3.addAll(hll1)
+            hll3.addAll(hll2)
+            hll3
+          }
+        })
   }
+
 }
 
