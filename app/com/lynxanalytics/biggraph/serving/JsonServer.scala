@@ -271,6 +271,10 @@ object FrontendJson {
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
+  implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
+  implicit val wLogFiles = json.Json.writes[LogFiles]
+  implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
+
   implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
@@ -317,21 +321,6 @@ object ProductionJsonServer extends JsonServer {
 
   def downloadFile = action(parse.anyContent) {
     (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
-  }
-
-  def logs = action(parse.anyContent) { (user, request) =>
-    assert(user.isAdmin, "Only admins can access the server logs")
-    val logDir = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"))
-    assert(logDir.exists, s"Application log directory not found at $logDir")
-    assert(logDir.isDirectory, s"$logDir is not a directory")
-    val logFileNames = logDir.listFiles
-      .filter(_.isFile)
-      .map { file => file.getName }
-      .filter(_.startsWith("application"))
-    assert(logFileNames.size > 0, "No application log file found")
-    val logFile = new File(logDir, logFileNames.max)
-    log.info(s"$user has downloaded log file $logFile")
-    Ok.sendFile(logFile)
   }
 
   def jsError = mvc.Action(parse.json) { request =>
@@ -410,6 +399,12 @@ object ProductionJsonServer extends JsonServer {
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
   def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
   def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
+
+  val logController = new LogController()
+  def getLogFiles = jsonGet(logController.getLogFiles)
+  def downloadLogFile = action(parse.anyContent) {
+    (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
+  }
 
   lazy val version = try {
     scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
