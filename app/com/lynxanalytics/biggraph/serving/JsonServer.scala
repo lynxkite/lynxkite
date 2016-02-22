@@ -272,6 +272,7 @@ object FrontendJson {
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
+  implicit val wLogFiles = json.Json.writes[LogFiles]
   implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
 
   implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]

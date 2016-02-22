@@ -15,13 +15,15 @@ case class FileDescriptor(
   length: Long,
   lastModified: String)
 
+case class LogFiles(files: List[FileDescriptor])
+
 case class DownloadLogFileRequest(name: String)
 
 class LogController extends play.api.http.HeaderNames {
 
   val dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-  def getLogFiles(user: serving.User, req: serving.Empty): List[FileDescriptor] = {
+  def getLogFiles(user: serving.User, req: serving.Empty): LogFiles = {
     assert(user.isAdmin, "Only admins can access the server logs")
     val logDir = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"))
     assert(logDir.exists, s"Application log directory not found at $logDir")
@@ -38,7 +40,7 @@ class LogController extends play.api.http.HeaderNames {
       }
     assert(logFiles.size > 0, "No application log file found")
     log.info(s"$user has downloaded the list of log files in $logDir")
-    logFiles.toList
+    LogFiles(logFiles.toList)
   }
 
   def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {
