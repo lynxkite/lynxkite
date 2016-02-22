@@ -15,7 +15,7 @@ KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 pushd ${lib_dir}/.. > /dev/null
 stage_dir=`pwd`
 conf_dir=${stage_dir}/conf
-log_dir=${KITE_LOG_DIR:-${stage_dir/logs}}
+log_dir=${KITE_LOG_DIR:-${stage_dir}/logs}
 mkdir -p ${log_dir}
 tools_dir=${stage_dir}/tools
 popd > /dev/null
