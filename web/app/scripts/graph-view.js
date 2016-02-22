@@ -1096,6 +1096,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var href = (
       this.root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
       '&key=' + this.key +
+      '&language=en' +
       '&size=640x640&scale=2&style=' + style);
     image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
