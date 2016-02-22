@@ -45,8 +45,7 @@ what prefixes. Use `kite_x.y.z/conf/prefix_definitions_template.txt` as a templa
 your custom prefix configuration file. Make sure you put the config file to a LynxKite version
 independent location (not inside the `kite_x.y.z` directory, e.g. `$HOME/kite_conf`). Then set
 `KITE_PREFIX_DEFINITIONS` to point to your newly created config file (e.g. the recommended
-`$HOME/kite_conf/prefix_definitions.txt`). See the <<prefix-definitions,Prefix definitions>>
-section for more details.
+`$HOME/kite_conf/prefix_definitions.txt`).
 ```
 export KITE_PREFIX_DEFINITIONS=
 ```
