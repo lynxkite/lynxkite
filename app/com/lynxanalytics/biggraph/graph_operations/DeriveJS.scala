@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -84,7 +85,7 @@ abstract class DeriveJS[T](
     defaultScalarValues: Seq[Any]): Unit = {
     val testNamedValues =
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
-    evaluate(testNamedValues)
+    evaluate(expr.evaluator, testNamedValues)
   }
 
   def execute(inputDatas: DataSet,
@@ -108,10 +109,11 @@ abstract class DeriveJS[T](
     val allNames = attrNames ++ scalarNames
 
     val derived = joined.mapPartitions({ it =>
+      val evaluator = expr.evaluator
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
-          evaluate(namedValues).map {
+          evaluate(evaluator, namedValues).map {
             result => key -> check(result, expr.contextString(namedValues))
           }
       }
@@ -119,7 +121,7 @@ abstract class DeriveJS[T](
     output(o.attr, derived)
   }
 
-  protected def evaluate(mapping: Map[String, Any]): Option[T]
+  protected def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[T]
   protected def check(
     v: T, // The value to convert.
     context: => String): T // The context of the conversion for detailed error messages.
@@ -145,8 +147,8 @@ case class DeriveJSString(
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
   def check(v: String, context: => String): String = v
-  def evaluate(mapping: Map[String, Any]): Option[String] = {
-    expr.evaluateString(mapping)
+  def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[String] = {
+    evaluator.evaluateString(mapping)
   }
 }
 
@@ -172,10 +174,10 @@ case class DeriveJSDouble(
   def check(v: Double, context: => String): Double = {
     // A JavaScript expression with default values may return infinity.
     // Infinity is only a problem with actual values.
-    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number")
+    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number: $v")
     v
   }
-  def evaluate(mapping: Map[String, Any]): Option[Double] = {
-    expr.evaluateDouble(mapping)
+  def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[Double] = {
+    evaluator.evaluateDouble(mapping)
   }
 }
