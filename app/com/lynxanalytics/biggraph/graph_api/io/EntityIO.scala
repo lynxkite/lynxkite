@@ -406,7 +406,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)],
                                                parent: VertexSetData): RDD[(Long, T)] = {
-    val vsRDD = parent.rdd.cached
+    val vsRDD = parent.rdd.cacheSortedAncestors
     // Enforcing colocation:
     assert(vsRDD.partitions.size == rawRDD.partitions.size,
       s"$vsRDD and $rawRDD should have the same number of partitions, " +

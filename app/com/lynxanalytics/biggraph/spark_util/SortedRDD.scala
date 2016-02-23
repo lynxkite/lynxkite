@@ -353,15 +353,30 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // Concrete implementing classes should override this one.
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V]
 
+  // Filters this RDD to only contain keys from a given set.
   // The ids seq needs to be sorted.
+  //
+  // Note, that this is done in an optimized way. It is more efficient to do the filtering
+  // as early as possible so that operations afterwards need to work on smaller amounts of
+  // data.
+  // Therefore this operation goes back in the dependency graph of this RDD as early as
+  // possible (until the last sort or shuffle) and does the filtering there.
+  // Therefore, the result of this method will not necessarily have the current RDD
+  // as a dependency. This can be a problem with Spark RDD caching. See the method
+  // cacheSortedAncestors() below for a solution.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] = restrictToIdSetRecipe(ids).asGeneral
 
   // Should return Some(this) with caching on if that's possible. If not, it should return None.
   protected def meCached: Option[this.type]
   // Will be only called if meCached returns None. In this case, it should return a recipe to
   // construct a cached version of this SortedRDD.
-  protected def cachedRecipe: SortedRDDRecipe[K, V]
-  def cached: SortedRDD[K, V] = meCached.getOrElse(cachedRecipe.asGeneral)
+  protected def cacheSortedAncestorsRecipe: SortedRDDRecipe[K, V]
+
+  // Caches all the earliest sorted ancestors of this RDD, but not this RDD itself.
+  // Use this if restrictToIdSet() was applied earlier.
+  // In theory, regular cache()/persist() should work in all the other cases.
+  def cacheSortedAncestors: SortedRDD[K, V] =
+    meCached.getOrElse(cacheSortedAncestorsRecipe.asGeneral)
 }
 
 trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
@@ -411,7 +426,8 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
   override def restrictToIdSet(ids: IndexedSeq[K]): UniqueSortedRDD[K, V] =
     restrictToIdSetRecipe(ids).trustedUnique
 
-  override def cached: UniqueSortedRDD[K, V] = meCached.getOrElse(cachedRecipe.trustedUnique)
+  override def cacheSortedAncestors: UniqueSortedRDD[K, V] =
+    meCached.getOrElse(cacheSortedAncestorsRecipe.trustedUnique)
 
   override def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
     mapValuesRecipe(f).trustedUnique
@@ -444,8 +460,8 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
     new DerivedSortedRDDRecipe(source.restrictToIdSet(ids), derivation)
 
   protected def meCached = None
-  protected def cachedRecipe(): SortedRDDRecipe[K, VNew] =
-    new DerivedSortedRDDRecipe(source.cached, derivation)
+  protected def cacheSortedAncestorsRecipe(): SortedRDDRecipe[K, VNew] =
+    new DerivedSortedRDDRecipe(source.cacheSortedAncestors, derivation)
 }
 
 // SortedRDD which was derived from two other sorted rdds without changing the id space.
@@ -464,9 +480,9 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
       source1.restrictToIdSet(ids), source2.restrictToIdSet(ids), derivation)
 
   protected def meCached = None
-  protected def cachedRecipe: SortedRDDRecipe[K, VNew] = {
+  protected def cacheSortedAncestorsRecipe: SortedRDDRecipe[K, VNew] = {
     new BiDerivedSortedRDDRecipe(
-      source1.cached, source2.cached, derivation)
+      source1.cacheSortedAncestors, source2.cacheSortedAncestors, derivation)
   }
 }
 
@@ -514,7 +530,7 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] =
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids)
   protected def meCached = None
-  protected def cachedRecipe: SortedRDDRecipe[K, V] = {
+  protected def cacheSortedAncestorsRecipe: SortedRDDRecipe[K, V] = {
     arrayRDD.cache()
     new ArrayBackedSortedRDDRecipe(arrayRDD)
   }
@@ -533,7 +549,7 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
     Some(this)
   }
   // Should never be called.
-  protected def cachedRecipe: SortedRDDRecipe[K, V] = ???
+  protected def cacheSortedAncestorsRecipe: SortedRDDRecipe[K, V] = ???
 
   override def setName(newName: String): this.type = {
     name = newName
@@ -618,5 +634,5 @@ private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
     Some(this)
   }
   // Should never be called.
-  protected def cachedRecipe: SortedRDDRecipe[K, V] = ???
+  protected def cacheSortedAncestorsRecipe: SortedRDDRecipe[K, V] = ???
 }
