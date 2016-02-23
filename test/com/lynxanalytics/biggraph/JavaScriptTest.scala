@@ -24,13 +24,6 @@ class JavaScriptTest extends FunSuite {
     assert(JavaScript("undefined").evaluator.evaluateString(noArgs) == None)
   }
 
-  def checkDoubleError(expr: String, msg: String): Unit = {
-    val e = intercept[java.lang.AssertionError] {
-      JavaScript(expr).evaluator.evaluateDouble(noArgs)
-    }
-    assert(e.getMessage == msg)
-  }
-
   test("test Double expressions") {
     assert(JavaScript("1.0").evaluator.evaluateDouble(noArgs) == Some(1.0))
     assert(JavaScript("'1.0'").evaluator.evaluateDouble(noArgs) == Some(1.0))
