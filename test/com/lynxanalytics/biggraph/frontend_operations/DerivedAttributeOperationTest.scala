@@ -93,10 +93,13 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Wrong type") {
-    intercept[AssertionError] {
+    val e = intercept[org.apache.spark.SparkException] {
       run("Derived vertex attribute",
         Map("type" -> "double", "output" -> "output", "expr" -> "'hello'"))
+      project.vertexAttributes("output").runtimeSafeCast[Double].rdd.collect
     }
+    assert(e.getCause.getMessage ==
+      "assertion failed: JavaScript('hello') with values: {} did not return a valid number: NaN")
   }
 
   test("Derived vertex attribute with substring conflict (#1676)") {

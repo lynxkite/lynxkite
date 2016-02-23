@@ -172,8 +172,6 @@ case class DeriveJSDouble(
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
   def check(v: Double, context: => String): Double = {
-    // A JavaScript expression with default values may return infinity.
-    // Infinity is only a problem with actual values.
     assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number: $v")
     v
   }
