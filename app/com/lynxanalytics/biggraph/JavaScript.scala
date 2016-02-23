@@ -12,39 +12,14 @@ case class JavaScript(expression: String) {
     if (isEmpty) {
       return true
     }
-    return javascript.Context.toBoolean(evaluator.evaluate(mapping))
-  }
-
-  def evaluateString(mapping: Map[String, Any]): Option[String] = {
-    val jsResult = evaluator.evaluate(mapping)
-    jsResult match {
-      case _: javascript.Undefined => None
-      case v => Some(javascript.Context.toString(v)) // Everything can be converted to a String.
-    }
-  }
-
-  def evaluateDouble(mapping: Map[String, Any]): Option[Double] = {
-    val jsResult = evaluator.evaluate(mapping)
-    jsResult match {
-      case _: javascript.Undefined => None
-      case v: java.lang.Number => Some(v.doubleValue) // All numbers can be converted to Doubles.
-      case v: String => {
-        try {
-          Some(v.toDouble) // Some Strings can be converted to Doubles.
-        } catch {
-          case e: java.lang.NumberFormatException => throw new java.lang.AssertionError(
-            s"${contextString(mapping)} did not return a valid number: $v")
-        }
-      }
-      case _ => throw new java.lang.AssertionError(
-        s"${contextString(mapping)} did not return a valid number: $jsResult")
-    }
+    return evaluator.evaluateBoolean(mapping).getOrElse(false)
   }
 
   def contextString(mapping: Map[String, Any]): String = {
     s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
   }
 
+  // Creating the evaluator is expensive, so let's make it explicit.
   def evaluator = new JavaScriptEvaluator(expression)
 }
 
@@ -63,7 +38,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
   sharedScope.sealObject()
 
-  def evaluate(mapping: Map[String, Any]): AnyRef = {
+  private def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
     val scope = cx.newObject(sharedScope)
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
@@ -71,7 +46,25 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
       val jsValue = javascript.Context.javaToJS(value, scope)
       javascript.ScriptableObject.putProperty(scope, name, jsValue)
     }
-    script.exec(cx, scope)
+    val jsResult = script.exec(cx, scope)
+    jsResult match {
+      case _: javascript.Undefined => None
+      case definedValue => Some(definedValue)
+    }
+  }
+
+  // Always returns a Double. Expressions which cannot be interpreted as Doubles
+  // like 'abc' will result in Double.NaN.
+  def evaluateDouble(mapping: Map[String, Any]): Option[Double] = {
+    evaluate(mapping).map { v => javascript.Context.toNumber(v) }
+  }
+
+  def evaluateString(mapping: Map[String, Any]): Option[String] = {
+    evaluate(mapping).map { v => javascript.Context.toString(v) }
+  }
+
+  def evaluateBoolean(mapping: Map[String, Any]): Option[Boolean] = {
+    evaluate(mapping).map { v => javascript.Context.toBoolean(v) }
   }
 }
 

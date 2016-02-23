@@ -90,7 +90,7 @@ case class DeriveJSScalarString(
     "scalarNames" -> scalarNames)
   def check(v: String, context: => String): String = v
   def evaluate(mapping: Map[String, Any]): Option[String] = {
-    expr.evaluateString(mapping)
+    expr.evaluator.evaluateString(mapping)
   }
 }
 
@@ -112,10 +112,10 @@ case class DeriveJSScalarDouble(
   def check(v: Double, context: => String): Double = {
     // A JavaScript expression with default values may return infinity.
     // Infinity is only a problem with actual values.
-    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number")
+    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number: $v")
     v
   }
   def evaluate(mapping: Map[String, Any]): Option[Double] = {
-    expr.evaluateDouble(mapping)
+    expr.evaluator.evaluateDouble(mapping)
   }
 }
