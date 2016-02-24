@@ -21,9 +21,7 @@ class OperationLogger(instance: MetaGraphOperationInstance,
 
   private def elapsedMs(): Long = {
     assert(startTime != -1 && stopTime != -1)
-    val diff = stopTime - startTime
-    assert(diff >= 0)
-    diff
+    stopTime - startTime
   }
 
   def addOutput(output: SafeFuture[EntityData]): Unit = {
@@ -38,12 +36,12 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     }
   }
 
-  def start(): Unit = {
+  def startTimer(): Unit = {
     assert(startTime == -1)
     startTime = System.currentTimeMillis()
   }
 
-  def stop(): Unit = {
+  def stopTimer(): Unit = {
     assert(stopTime == -1)
     stopTime = System.currentTimeMillis()
   }
@@ -76,9 +74,9 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     val out = json.Json.obj(
       "name" -> instance.operation.toString,
       "guid" -> instance.operation.gUID.toString,
-      "elapsedMs" -> json.JsNumber(elapsedMs()),
-      "inputs" -> inputInfoList.sortBy(_.gUID),
-      "outputs" -> outputs.sortBy(_.gUID)
+      "elapsedMs" -> elapsedMs(),
+      "inputs" -> inputInfoList.sortBy(_.name),
+      "outputs" -> outputs.sortBy(_.name)
     )
     log.info(s"$marker $out")
   }
