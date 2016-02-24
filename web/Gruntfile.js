@@ -56,7 +56,7 @@ module.exports = function (grunt) {
         tasks: ['asciidoctor']
       },
       adminManual: {
-        files: ['<%= yeoman.app %>/admin_manual/**/*.asciidoc'],
+        files: ['<%= yeoman.app %>/admin-manual/**/*.asciidoc'],
         tasks: ['asciidoctor', 'genTemplates']
       },
       gruntfile: {
@@ -109,6 +109,9 @@ module.exports = function (grunt) {
                 return;
               }
             }
+            if (req.url.indexOf('/pdf-') === 0) {
+              req.url = '/index.html';
+            }
             next();
           });
           return mws;
@@ -117,16 +120,6 @@ module.exports = function (grunt) {
       livereload: {
         options: {
           open: true,
-          base: [
-            '.tmp',
-            'testdata',
-            '<%= yeoman.app %>'
-          ]
-        }
-      },
-      test: {
-        options: {
-          port: 9002,
           base: [
             '.tmp',
             'testdata',
@@ -214,7 +207,7 @@ module.exports = function (grunt) {
       dist: {
         files: {
           '.tmp/help.html': ['<%= yeoman.app %>/help/index.asciidoc'],
-          '.tmp/adminManual.html': ['<%= yeoman.app %>/admin_manual/index.asciidoc'],
+          '.tmp/admin-manual.html': ['<%= yeoman.app %>/admin-manual/index.asciidoc'],
         },
       },
     },

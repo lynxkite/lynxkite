@@ -14,6 +14,9 @@ Example: `select count(*) from vertices where age < 30`
  - All the edge attributes can be accessed in the `edges` table.
 +
 Example: `select max(weight) from edges`
++
+You can not query the `edges` table if there are no edge attributes, even if the edges themselves
+are defined.
 
  - All the edge and vertex attributes can be accessed in the `triplets` table. Each row of this
 table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes

@@ -11,6 +11,16 @@ angular
   ])
 
   .config(function ($routeProvider) {
+    // One-page routing for PDF generation.
+    if (location.pathname.indexOf('/pdf-') === 0) {
+      var page = location.pathname.replace('/pdf-', '');
+      $routeProvider.otherwise({
+        templateUrl: 'views/' + page + '.html',
+        reloadOnSearch: false,
+      });
+      return;
+    }
+
     $routeProvider
       .when('/', {
         templateUrl: 'views/splash.html',
@@ -48,8 +58,8 @@ angular
       .when('/help', {
         templateUrl: 'views/help.html',
       })
-      .when('/adminManual', {
-        templateUrl: 'views/adminManual.html',
+      .when('/admin-manual', {
+        templateUrl: 'views/admin-manual.html',
       })
       .otherwise({
         redirectTo: '/',
