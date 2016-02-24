@@ -123,6 +123,11 @@ object PrefixRepository {
   private def checkPathSanity(path: String) = {
     assert(path.isEmpty || path.endsWith("@") || path.endsWith("/"),
       s"path: $path should either be empty or end with a @ or with a slash.")
+    // Only local clusters can reference local files
+    assert(
+      scala.util.Properties.envOrElse("SPARK_MASTER", "").startsWith("local") ||
+        !path.startsWith("file:"),
+      s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
   }
 
   def addUserDefinedResolutions() = {
