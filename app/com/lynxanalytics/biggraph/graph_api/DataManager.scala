@@ -268,7 +268,7 @@ class DataManager(sc: spark.SparkContext,
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
 
-        val logger = OperationLogger(instance, executionContext)
+        val logger = new OperationLogger(instance, executionContext)
         val instanceFuture = getInstanceFuture(instance, logger)
         for (input <- instance.inputs.all.values) {
           if (instance.operation.isHeavy && !input.isInstanceOf[Scalar[_]]) {
@@ -288,7 +288,7 @@ class DataManager(sc: spark.SparkContext,
               instanceFuture.map(_(output.gUID))
             })
         }
-        logger.close()
+        logger.logWhenReady()
       }
     }
   }
