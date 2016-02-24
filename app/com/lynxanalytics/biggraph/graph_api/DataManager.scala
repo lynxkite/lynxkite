@@ -129,17 +129,15 @@ class DataManager(sc: spark.SparkContext,
     val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
         case (name, entity) =>
-          getFuture(entity).map(data =>
-            {
-              logger.addInput(data)
-              (name, data)
-            }
-          )
+          getFuture(entity).map { data =>
+            logger.addInput(data)
+            (name, data)
+          }
       })
     futureInputs.map { inputs =>
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
-        logger.start()
+        logger.startTimer()
       }
       val inputDatas = DataSet(inputs.toMap)
       for (scalar <- instance.outputs.scalars.values) {
@@ -166,7 +164,7 @@ class DataManager(sc: spark.SparkContext,
       }
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
-        logger.stop()
+        logger.stopTimer()
       }
       outputDatas
     }
