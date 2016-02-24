@@ -31,7 +31,7 @@ object DeriveJS {
     vertexSet: VertexSet,
     namedScalars: Seq[(String, Scalar[_])] = Seq())(implicit manager: MetaGraphManager): Output[T] = {
 
-    // checkJSResult name collision between scalars and attributes
+    // Check name collision between scalars and attributes
     val common =
       namedAttributes.map(_._1).toSet & namedScalars.map(_._1).toSet
     assert(common.isEmpty, {
