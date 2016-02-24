@@ -12,11 +12,11 @@ case class JavaScript(expression: String) {
     if (isEmpty) {
       return true
     }
-    return evaluate(mapping, classOf[Boolean]).asInstanceOf[Boolean]
+    return evaluator.evaluateBoolean(mapping).getOrElse(false)
   }
 
-  def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
-    evaluator.evaluate(mapping, desiredClass)
+  def contextString(mapping: Map[String, Any]): String = {
+    s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
   }
 
   def evaluator = new JavaScriptEvaluator(expression)
@@ -37,7 +37,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
   sharedScope.sealObject()
 
-  def evaluate(mapping: Map[String, Any], desiredClass: java.lang.Class[_]): AnyRef = {
+  private def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
     val scope = cx.newObject(sharedScope)
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
@@ -47,9 +47,24 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
     }
     val jsResult = script.exec(cx, scope)
     jsResult match {
-      case _: javascript.Undefined => null
-      case definedValue => javascript.Context.jsToJava(definedValue, desiredClass)
+      case _: javascript.Undefined => None
+      case definedValue => Some(definedValue)
     }
+  }
+
+  // Always returns an Option[Double]. For results which cannot be interpreted as Doubles
+  // like 'abc' this will return Some(Double.NaN). For undefined JavaScript results this
+  // returns None.
+  def evaluateDouble(mapping: Map[String, Any]): Option[Double] = {
+    evaluate(mapping).map { v => javascript.Context.toNumber(v) }
+  }
+
+  def evaluateString(mapping: Map[String, Any]): Option[String] = {
+    evaluate(mapping).map { v => javascript.Context.toString(v) }
+  }
+
+  def evaluateBoolean(mapping: Map[String, Any]): Option[Boolean] = {
+    evaluate(mapping).map { v => javascript.Context.toBoolean(v) }
   }
 }
 

@@ -50,10 +50,7 @@ abstract class DeriveJSScalar[T](
   def validateJS[T: TypeTag](
     defaultScalarValues: Seq[Any]): Unit = {
     val testNamedValues = scalarNames.zip(defaultScalarValues).toMap
-    val result = expr.evaluate(testNamedValues, desiredClass)
-    if (result != null) {
-      convert(result)
-    }
+    evaluate(testNamedValues)
   }
 
   def execute(inputDatas: DataSet,
@@ -63,12 +60,18 @@ abstract class DeriveJSScalar[T](
     implicit val id = inputDatas
     val scalars = inputs.scalars.map(_.value.value)
     val bindings = scalarNames.zip(scalars).toMap
-    val derived = convert(expr.evaluate(bindings, desiredClass))
+    val result = evaluate(bindings)
+    assert(!result.isEmpty, s"${expr.contextString(bindings)} returned undefined for scalar")
+    val derived = checkJSResult(
+      result.get,
+      expr.contextString(bindings))
     output(o.sc, derived)
   }
 
-  protected val desiredClass: Class[_]
-  protected def convert(v: Any): T
+  protected def evaluate(mapping: Map[String, Any]): Option[T]
+  protected def checkJSResult(
+    v: T, // The value to convert.
+    context: => String): T // The context of the conversion for detailed error messages.
 }
 
 object DeriveJSScalarString extends OpFromJson {
@@ -85,10 +88,9 @@ case class DeriveJSScalarString(
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
-  val desiredClass = classOf[String]
-  def convert(v: Any): String = v match {
-    case v: String => v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
+  def checkJSResult(v: String, context: => String): String = v
+  def evaluate(mapping: Map[String, Any]): Option[String] = {
+    expr.evaluator.evaluateString(mapping)
   }
 }
 
@@ -107,11 +109,12 @@ case class DeriveJSScalarDouble(
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
-  val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any): Double = v match {
-    case v: Double =>
-      assert(!v.isNaN(), s"$expr did not return a valid number")
-      v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
+  def checkJSResult(v: Double, context: => String): Double = {
+    assert(!v.isNaN(), s"$context did not return a number: $v")
+    assert(!v.isInfinite(), s"$context returned an infinite number: $v")
+    v
+  }
+  def evaluate(mapping: Map[String, Any]): Option[Double] = {
+    expr.evaluator.evaluateDouble(mapping)
   }
 }
