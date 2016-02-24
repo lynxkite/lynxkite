@@ -24,14 +24,16 @@ angular.module('biggraph').factory('helpContent', function($http) {
       dd.attr('id', id);
       a.attr('id', '');
     });
-    // Make cross-references relative to #/help.
-    dom.find('a[href]').each(function(i, a) {
-      a = angular.element(a);
-      var href = a.attr('href');
-      if (href[0] === '#') {
-        a.attr('href', '#/help' + href);
-      }
-    });
+    // Make cross-references relative to #/help. (Except in PDF mode.)
+    if (location.pathname.indexOf('/pdf-') !== 0) {
+      dom.find('a[href]').each(function(i, a) {
+        a = angular.element(a);
+        var href = a.attr('href');
+        if (href[0] === '#') {
+          a.attr('href', '#/help' + href);
+        }
+      });
+    }
     return dom;
   });
   return dom;
