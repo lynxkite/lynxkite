@@ -62,14 +62,14 @@ abstract class DeriveJSScalar[T](
     val bindings = scalarNames.zip(scalars).toMap
     val result = evaluate(bindings)
     assert(!result.isEmpty, s"${expr.contextString(bindings)} returned undefined for scalar")
-    val derived = check(
+    val derived = checkJSResult(
       result.get,
       expr.contextString(bindings))
     output(o.sc, derived)
   }
 
   protected def evaluate(mapping: Map[String, Any]): Option[T]
-  protected def check(
+  protected def checkJSResult(
     v: T, // The value to convert.
     context: => String): T // The context of the conversion for detailed error messages.
 }
@@ -88,7 +88,7 @@ case class DeriveJSScalarString(
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
-  def check(v: String, context: => String): String = v
+  def checkJSResult(v: String, context: => String): String = v
   def evaluate(mapping: Map[String, Any]): Option[String] = {
     expr.evaluator.evaluateString(mapping)
   }
@@ -109,8 +109,9 @@ case class DeriveJSScalarDouble(
   override def toJson = Json.obj(
     "expr" -> expr.expression,
     "scalarNames" -> scalarNames)
-  def check(v: Double, context: => String): Double = {
-    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number: $v")
+  def checkJSResult(v: Double, context: => String): Double = {
+    assert(!v.isNaN(), s"$context did not return a number: $v")
+    assert(!v.isInfinite(), s"$context returned an infinite number: $v")
     v
   }
   def evaluate(mapping: Map[String, Any]): Option[Double] = {

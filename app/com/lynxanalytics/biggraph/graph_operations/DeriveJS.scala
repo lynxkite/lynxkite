@@ -31,7 +31,7 @@ object DeriveJS {
     vertexSet: VertexSet,
     namedScalars: Seq[(String, Scalar[_])] = Seq())(implicit manager: MetaGraphManager): Output[T] = {
 
-    // Check name collision between scalars and attributes
+    // checkJSResult name collision between scalars and attributes
     val common =
       namedAttributes.map(_._1).toSet & namedScalars.map(_._1).toSet
     assert(common.isEmpty, {
@@ -114,7 +114,7 @@ abstract class DeriveJS[T](
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
           evaluate(evaluator, namedValues).map {
-            result => key -> check(result, expr.contextString(namedValues))
+            result => key -> checkJSResult(result, expr.contextString(namedValues))
           }
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
@@ -122,7 +122,7 @@ abstract class DeriveJS[T](
   }
 
   protected def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[T]
-  protected def check(
+  protected def checkJSResult(
     v: T, // The value to convert.
     context: => String): T // The context of the conversion for detailed error messages.
 }
@@ -146,7 +146,7 @@ case class DeriveJSString(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
-  def check(v: String, context: => String): String = v
+  def checkJSResult(v: String, context: => String): String = v
   def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[String] = {
     evaluator.evaluateString(mapping)
   }
@@ -171,8 +171,9 @@ case class DeriveJSDouble(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
-  def check(v: Double, context: => String): Double = {
-    assert(!v.isNaN() && !v.isInfinite(), s"$context did not return a valid number: $v")
+  def checkJSResult(v: Double, context: => String): Double = {
+    assert(!v.isNaN(), s"$context did not return a number: $v")
+    assert(!v.isInfinite(), s"$context returned an infinite number: $v")
     v
   }
   def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[Double] = {

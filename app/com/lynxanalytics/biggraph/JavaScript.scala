@@ -19,7 +19,6 @@ case class JavaScript(expression: String) {
     s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
   }
 
-  // Creating the evaluator is expensive, so let's make it explicit.
   def evaluator = new JavaScriptEvaluator(expression)
 }
 
@@ -53,8 +52,9 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
     }
   }
 
-  // Always returns a Double. Expressions which cannot be interpreted as Doubles
-  // like 'abc' will result in Double.NaN.
+  // Always returns an Option[Double]. For results which cannot be interpreted as Doubles
+  // like 'abc' this will return Some(Double.NaN). For undefined JavaScript results this
+  // returns None.
   def evaluateDouble(mapping: Map[String, Any]): Option[Double] = {
     evaluate(mapping).map { v => javascript.Context.toNumber(v) }
   }
