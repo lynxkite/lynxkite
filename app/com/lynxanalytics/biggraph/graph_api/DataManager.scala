@@ -129,7 +129,12 @@ class DataManager(sc: spark.SparkContext,
     val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
         case (name, entity) =>
-          getFuture(entity).map(data => (name, data))
+          getFuture(entity).map(data =>
+            {
+              logger.addInput(data)
+              (name, data)
+            }
+          )
       })
     futureInputs.map { inputs =>
       if (instance.operation.isHeavy) {
@@ -270,11 +275,6 @@ class DataManager(sc: spark.SparkContext,
 
         val logger = new OperationLogger(instance, executionContext)
         val instanceFuture = getInstanceFuture(instance, logger)
-        for (input <- instance.inputs.all.values) {
-          if (instance.operation.isHeavy && !input.isInstanceOf[Scalar[_]]) {
-            logger.addInput(getFuture(input))
-          }
-        }
 
         for (output <- instance.outputs.all.values) {
           set(

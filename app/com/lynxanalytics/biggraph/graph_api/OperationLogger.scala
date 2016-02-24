@@ -10,12 +10,12 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class OperationLogger(instance: MetaGraphOperationInstance,
                       implicit val ec: ExecutionContextExecutorService) {
-  private val marker = "JSON_OPERATION_LOGGER_MARKER"
-  case class OutputInfo(name: String, partitions: Int, count: Option[Long])
-  case class InputInfo(name: String, partitions: Int, count: Option[Long])
+  private val marker = "OPERATION_LOGGER_MARKER"
+  case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
+  case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
 
   private val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
-  private val inputInfoList = scala.collection.mutable.Queue[SafeFuture[InputInfo]]()
+  private val inputInfoList = scala.collection.mutable.Queue[InputInfo]()
   private var startTime = -1L
   private var stopTime = -1L
 
@@ -30,7 +30,11 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     outputInfoList += output.map {
       o =>
         val rddData = o.asInstanceOf[EntityRDDData[_]]
-        OutputInfo(rddData.entity.name.name, rddData.rdd.partitions.size, rddData.count)
+        OutputInfo(
+          rddData.entity.name.name,
+          rddData.entity.gUID.toString,
+          rddData.rdd.partitions.size,
+          rddData.count)
     }
   }
 
@@ -43,27 +47,28 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     assert(stopTime == -1)
     stopTime = System.currentTimeMillis()
   }
-  def addInput(input: SafeFuture[EntityData]): Unit = {
-    inputInfoList += input.map {
-      i =>
-        val rddData = i.asInstanceOf[EntityRDDData[_]]
-        InputInfo(rddData.entity.toString, rddData.rdd.partitions.size, rddData.count)
+  def addInput(input: EntityData): Unit = {
+    if (instance.operation.isHeavy && !input.isInstanceOf[ScalarData[_]]) {
+      inputInfoList += {
+        val rddData = input.asInstanceOf[EntityRDDData[_]]
+        InputInfo(
+          rddData.entity.name.name,
+          rddData.entity.gUID.toString,
+          rddData.rdd.partitions.size,
+          rddData.count)
+      }
     }
   }
 
   def logWhenReady(): Unit = {
     val outputsFuture = SafeFuture.sequence(outputInfoList)
-    val inputsFuture = SafeFuture.sequence(inputInfoList)
 
     outputsFuture.map {
-      outputs =>
-        inputsFuture.map {
-          inputs => dump(inputs, outputs)
-        }
+      outputs => dump(outputs)
     }
   }
 
-  private def dump(inputs: Seq[InputInfo], outputs: Seq[OutputInfo]): Unit = {
+  private def dump(outputs: Seq[OutputInfo]): Unit = {
 
     implicit val formatInput = json.Json.format[InputInfo]
     implicit val formatOutput = json.Json.format[OutputInfo]
@@ -72,8 +77,8 @@ class OperationLogger(instance: MetaGraphOperationInstance,
       "name" -> instance.operation.toString,
       "guid" -> instance.operation.gUID.toString,
       "elapsedMs" -> json.JsNumber(elapsedMs()),
-      "inputs" -> inputs,
-      "outputs" -> outputs
+      "inputs" -> inputInfoList.sortBy(_.gUID),
+      "outputs" -> outputs.sortBy(_.gUID)
     )
     log.info(s"$marker $out")
   }
