@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -84,10 +85,7 @@ abstract class DeriveJS[T](
     defaultScalarValues: Seq[Any]): Unit = {
     val testNamedValues =
       (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
-    val result = expr.evaluate(testNamedValues, desiredClass)
-    if (result != null) {
-      convert(result)
-    }
+    evaluate(expr.evaluator, testNamedValues)
   }
 
   def execute(inputDatas: DataSet,
@@ -115,15 +113,18 @@ abstract class DeriveJS[T](
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
-          // JavaScript's "undefined" is returned as a Java "null".
-          Option(evaluator.evaluate(namedValues, desiredClass)).map(result => key -> convert(result))
+          evaluate(evaluator, namedValues).map {
+            result => key -> checkJSResult(result, expr.contextString(namedValues))
+          }
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
     output(o.attr, derived)
   }
 
-  protected val desiredClass: Class[_]
-  protected def convert(v: Any): T
+  protected def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[T]
+  protected def checkJSResult(
+    v: T, // The value to convert.
+    context: => String): T // The context of the conversion for detailed error messages.
 }
 
 object DeriveJSString extends OpFromJson {
@@ -145,10 +146,9 @@ case class DeriveJSString(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
     DeriveJSString.scalarNamesParameter.toJson(scalarNames)
-  val desiredClass = classOf[String]
-  def convert(v: Any): String = v match {
-    case v: String => v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to String")
+  def checkJSResult(v: String, context: => String): String = v
+  def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[String] = {
+    evaluator.evaluateString(mapping)
   }
 }
 
@@ -171,11 +171,12 @@ case class DeriveJSDouble(
     "expr" -> expr.expression,
     "attrNames" -> attrNames) ++
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames)
-  val desiredClass = classOf[java.lang.Double]
-  def convert(v: Any): Double = v match {
-    case v: Double =>
-      assert(!v.isNaN(), s"$expr did not return a valid number")
-      v
-    case _ => throw new AssertionError(s"$v of ${v.getClass} cannot be converted to Double")
+  def checkJSResult(v: Double, context: => String): Double = {
+    assert(!v.isNaN(), s"$context did not return a number: $v")
+    assert(!v.isInfinite(), s"$context returned an infinite number: $v")
+    v
+  }
+  def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[Double] = {
+    evaluator.evaluateDouble(mapping)
   }
 }
