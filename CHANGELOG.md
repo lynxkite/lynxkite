@@ -14,6 +14,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    be presented as strings.
  - Improved security: JSON queries are only accepted with the `X-Requested-With: XMLHttpRequest`
    header.
+ - Compressed files can be uploaded and handled as if they were not compressed. (Supported
+   extensions are `.gz`, `.bz2`, `.lzo`, and `.snappy`. Compressed files accessed from HDFS were
+   always supported.)
  - Improved error messages and documentation.
  - Case insensitive project search.
 
