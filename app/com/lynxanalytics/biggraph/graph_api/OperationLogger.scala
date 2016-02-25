@@ -45,16 +45,16 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     assert(stopTime == -1)
     stopTime = System.currentTimeMillis()
   }
-  def addInput(input: EntityData): Unit = {
-    if (instance.operation.isHeavy && !input.isInstanceOf[ScalarData[_]]) {
-      inputInfoList += {
-        val rddData = input.asInstanceOf[EntityRDDData[_]]
-        InputInfo(
-          rddData.entity.name.name,
-          rddData.entity.gUID.toString,
-          rddData.rdd.partitions.size,
-          rddData.count)
-      }
+  def addInput(name: String, input: EntityData): Unit = {
+    if (instance.operation.isHeavy) input match {
+      case rddData: EntityRDDData[_] =>
+        inputInfoList +=
+          InputInfo(
+            name,
+            rddData.entity.gUID.toString,
+            rddData.rdd.partitions.size,
+            rddData.count)
+      case _ => // Ignore scalars
     }
   }
 
