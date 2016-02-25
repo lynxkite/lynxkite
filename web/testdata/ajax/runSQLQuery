@@ -2,6 +2,7 @@
   "header" : ["fruit", "vegetable"],
   "data": [
     ["apple", "tomato"],
-    ["orange", "celery"]
+    ["orange", "cucumber"],
+    ["banana", "celery"]
   ]
 }
