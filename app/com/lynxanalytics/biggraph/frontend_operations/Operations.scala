@@ -853,7 +853,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Internal edge ID as attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "id"))
-    def enabled = hasVertexSet
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       project.newEdgeAttribute(params("name"), project.edgeBundle.idSet.idAttribute, help)
