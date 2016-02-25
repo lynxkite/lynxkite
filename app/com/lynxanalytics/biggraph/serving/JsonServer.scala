@@ -302,7 +302,7 @@ object ProductionJsonServer extends JsonServer {
         try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
         finally stream.close()
         val digest = md.digest().map("%02x".format(_)).mkString
-        val finalName = s"$baseName.$digest"
+        val finalName = s"$digest.$baseName"
         val uploadsDir = HadoopFile("UPLOAD$")
         uploadsDir.mkdirs() // Create the directory if it does not already exist.
         val finalFile = uploadsDir / finalName
