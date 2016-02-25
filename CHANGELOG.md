@@ -9,6 +9,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - History can be accessed even if some operations no longer exist. (1.7.0 removed all classical
    import operation, so this is an important fix.)
  - Improve scalability and performance of the Centrality algorithm family.
+ - Fixed saved visualizations, which were broken in 1.7.0.
  - LynxKite log directory can now be configured. (`KITE_LOG_DIR`)
  - All attribute types are now accessible through the SQL interface. Types not supported by SQL will
    be presented as strings.
