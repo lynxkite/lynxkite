@@ -86,7 +86,6 @@ angular.module('biggraph').directive('helpId',
           });
         }
         function expander(expanderLink, expanderContent) {
-          console.log('expander called');
           return function() {
             expanderLink.hide();
             expanderContent.show();
