@@ -35,3 +35,18 @@ sql-box > * {
 #sql-result {
   overflow-x: auto; /* Scroll if there are many columns. */
 }
+
+#sql-result table {
+  table-layout: fixed;
+}
+#sql-result th {
+  cursor: pointer;
+}
+#sql-result th.sort-desc:after {
+  content: '\25bc';
+  float: right;
+}
+#sql-result th.sort-asc:after {
+  content: '\25b2';
+  float: right;
+}

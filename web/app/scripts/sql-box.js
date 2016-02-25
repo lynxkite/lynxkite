@@ -9,6 +9,23 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     link: function(scope) {
       scope.inProgress = 0;
       scope.sql = 'select * from vertices';
+      scope.sort = {
+        column: undefined,
+        reverse: false,
+        select: function(index) {
+          index = index.toString();
+          if (scope.sort.column === index) {
+            scope.sort.reverse = !scope.sort.reverse;
+          }
+          scope.sort.column = index;
+        },
+        style: function(index) {
+          index = index.toString();
+          if (index === scope.sort.column) {
+            return scope.sort.reverse ? 'sort-desc' : 'sort-asc';
+          }
+        },
+      };
 
       scope.runSQLQuery = function() {
         if (!scope.sql) {

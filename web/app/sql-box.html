@@ -135,12 +135,14 @@
   <table class="table table-striped table-bordered">
     <thead>
       <tr>
-        <th ng-repeat="col in result.header">{{ col }}</th>
+        <th ng-repeat="col in result.header"
+          ng-click="sort.select($index)"
+          class="{{ sort.style($index) }}">{{ col }}</th>
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="rows in result.data track by $index">
-        <td ng-repeat="item in rows track by $index">{{ item }}</td>
+      <tr ng-repeat="row in result.data | orderBy:sort.column:sort.reverse track by $index">
+        <td ng-repeat="item in row track by $index">{{ item }}</td>
       </tr>
     </tbody>
   </table>
