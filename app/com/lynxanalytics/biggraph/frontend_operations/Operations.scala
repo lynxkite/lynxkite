@@ -839,6 +839,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       result.newVertexAttribute("id", result.vertexSet.idAttribute)
     }
   })
+
   register("Internal vertex ID as attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "id"))
@@ -846,6 +847,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       project.newVertexAttribute(params("name"), project.vertexSet.idAttribute, help)
+    }
+  })
+
+  register("Internal edge ID as attribute", new EdgeAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "id"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      project.newEdgeAttribute(params("name"), project.edgeBundle.idSet.idAttribute, help)
     }
   })
 
