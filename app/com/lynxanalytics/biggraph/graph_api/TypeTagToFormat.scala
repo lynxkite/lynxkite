@@ -146,11 +146,6 @@ object TypeTagToFormat {
       else if (TypeTagUtil.isType[Float](t)) implicitly[json.Format[Float]]
       else if (TypeTagUtil.isType[DynamicValue](t)) implicitly[json.Format[DynamicValue]]
       else if (TypeTagUtil.isType[UIStatus](t)) implicitly[json.Format[UIStatus]]
-      else if (TypeTagUtil.isType[UIAttributeAxisOptions](t)) implicitly[json.Format[UIAttributeAxisOptions]]
-      else if (TypeTagUtil.isType[UIAxisOptions](t)) implicitly[json.Format[UIAxisOptions]]
-      else if (TypeTagUtil.isType[UIAnimation](t)) implicitly[json.Format[UIAnimation]]
-      else if (TypeTagUtil.isType[UIAttributeFilter](t)) implicitly[json.Format[UIAttributeFilter]]
-      else if (TypeTagUtil.isType[UICenterRequest](t)) implicitly[json.Format[UICenterRequest]]
       else if (TypeTagUtil.isType[Edge](t)) implicitly[json.Format[Edge]]
       else if (TypeTagUtil.isSubtypeOf[ToJson](t)) ToJsonFormat
       else if (TypeTagUtil.isOfKind1[Option](t)) {
