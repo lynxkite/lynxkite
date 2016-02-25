@@ -11,11 +11,11 @@
   </div>
   <div ng-show="status.sparkWorking === false" class="text-right spark-status-error">
     <span class="glyphicon glyphicon-wrench" drop-tooltip-position="left middle"
-      drop-tooltip="Spark is not working properly. Please contact support if this persists."></span>
+      drop-tooltip="Spark health check failed. Please contact support."></span>
   </div>
   <div ng-show="status.kiteCoreWorking === false" class="text-right spark-status-error">
     <span class="glyphicon glyphicon-fire" drop-tooltip-position="left middle"
-      drop-tooltip="LynxKite is not working properly. Please contact support if this persists."></span>
+      drop-tooltip="LynxKite health check failed. Please contact support."></span>
   </div>
   <div class="spark-status-stages">
     <div class="spark-status-stage" ng-repeat="stage in stages(status) track by stage.id"
