@@ -31,7 +31,7 @@ if [ -f ${KITE_SITE_CONFIG} ]; then
   >&2 echo "Loading configuration from: ${KITE_SITE_CONFIG}"
   source ${KITE_SITE_CONFIG}
 else
-  >&2 echo "Warning, no Kite Site Config found at: ${KITE_SITE_CONFIG}"
+  >&2 echo "Warning, no LynxKite Site Config found at: ${KITE_SITE_CONFIG}"
   >&2 echo "Default location is $HOME/.kiterc, but you can override via the environment variable:"
   >&2 echo "KITE_SITE_CONFIG"
   >&2 echo "You can find an example config file at ${conf_dir}/kiterc_template"
@@ -167,7 +167,7 @@ command=(
 
 startKite () {
   if [ -f "${KITE_PID_FILE}" ]; then
-    >&2 echo "Kite is already running (or delete ${KITE_PID_FILE})"
+    >&2 echo "LynxKite is already running (or delete ${KITE_PID_FILE})"
     exit 1
   fi
   if [ ! -d "${SPARK_HOME}" ]; then
@@ -181,9 +181,9 @@ startKite () {
   read RESULT < ${KITE_READY_PIPE}
   STATUS=`echo $RESULT | cut -f 1 -d " "`
   if [[ "${STATUS}" == "ready" ]]; then
-    >&2 echo "Kite server started (PID ${PID})."
+    >&2 echo "LynxKite server started (PID ${PID})."
   else
-    >&2 echo "Kite server failed: $RESULT"
+    >&2 echo "LynxKite server failed: $RESULT"
     exit 1
   fi
 }
@@ -215,14 +215,14 @@ stopByPIDFile () {
 }
 
 stopKite () {
-  stopByPIDFile ${KITE_PID_FILE} "Kite server"
+  stopByPIDFile ${KITE_PID_FILE} "LynxKite server"
 }
 
 WATCHDOG_PID_FILE="${KITE_PID_FILE}.watchdog"
 startWatchdog () {
   if [ -n "${KITE_WATCHDOG_PORT}" ]; then
       if [ -f "${WATCHDOG_PID_FILE}" ]; then
-          >&2 echo "Kite Watchdog is already running (or delete ${WATCHDOG_PID_FILE})"
+          >&2 echo "LynxKite Watchdog is already running (or delete ${WATCHDOG_PID_FILE})"
           exit 1
       fi
       MAIN_URL="http://localhost:${KITE_HTTP_PORT}/"
@@ -235,12 +235,12 @@ startWatchdog () {
           --script="$0 watchdog_restart" \
           --pid_file ${WATCHDOG_PID_FILE} \
           > ${log_dir}/watchdog.stdout.$$ 2> ${log_dir}/watchdog.stderr.$$ &
-      >&2 echo "Kite Watchdog started (PID $!)."
+      >&2 echo "LynxKite Watchdog started (PID $!)."
   fi
 }
 
 stopWatchdog () {
-  stopByPIDFile "${WATCHDOG_PID_FILE}" "Kite Watchdog"
+  stopByPIDFile "${WATCHDOG_PID_FILE}" "LynxKite Watchdog"
 }
 
 case $mode in
