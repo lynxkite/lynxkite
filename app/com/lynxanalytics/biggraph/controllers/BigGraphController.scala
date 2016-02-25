@@ -295,13 +295,13 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val entry = DirectoryEntry.fromName(request.basePath)
     entry.assertReadAllowedFrom(user)
     val dir = entry.asDirectory
-    val terms = request.query.split(" ")
+    val terms = request.query.split(" ").map(_.toLowerCase)
     val dirs = dir
       .listDirectoriesRecursively
       .filter(_.readAllowedFrom(user))
       .filter { dir =>
         val baseName = dir.path.last.name
-        terms.forall(term => baseName.contains(term))
+        terms.forall(term => baseName.toLowerCase.contains(term))
       }
     val objects = dir
       .listObjectsRecursively
@@ -309,7 +309,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       .filter { project =>
         val baseName = project.path.last.name
         val notes = project.viewer.state.notes
-        terms.forall(term => baseName.contains(term) || notes.contains(term))
+        terms.forall(term => baseName.toLowerCase.contains(term) || notes.toLowerCase.contains(term))
       }
 
     ProjectList(
