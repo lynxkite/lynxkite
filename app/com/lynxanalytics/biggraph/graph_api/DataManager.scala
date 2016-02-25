@@ -129,9 +129,10 @@ class DataManager(sc: spark.SparkContext,
     val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
         case (name, entity) =>
-          getFuture(entity).map { data =>
-            logger.addInput(data)
-            (name, data)
+          getFuture(entity).map {
+            data =>
+              logger.addInput(name.toString, data)
+              (name, data)
           }
       })
     futureInputs.map { inputs =>
