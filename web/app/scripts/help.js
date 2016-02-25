@@ -77,16 +77,19 @@ angular.module('biggraph').directive('helpId',
             a.setAttribute('target', '_blank');
           });
           // Collapse sections marked with ====.
-          var details = content.find('.exampleblock');
-          var readMore = angular.element('<a class="read-more">read more</a>');
-          readMore.click(expander(readMore, details));
-          details.before(readMore);
-          details.hide();
+          content.find('.exampleblock').each(function (index, exampleBlock) {
+            var exampleBlockElement = angular.element(exampleBlock);
+            var readMoreElement = angular.element('<a class="read-more">read more</a>');
+            readMoreElement.click(expander(readMoreElement, exampleBlockElement));
+            exampleBlockElement.before(readMoreElement);
+            exampleBlockElement.hide();
+          });
         }
-        function expander(e, what) {
+        function expander(expanderLink, expanderContent) {
+          console.log('expander called');
           return function() {
-            e.hide();
-            what.show();
+            expanderLink.hide();
+            expanderContent.show();
           };
         }
 
