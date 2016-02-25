@@ -17,6 +17,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    always supported.)
  - Improved error messages and documentation.
  - Case insensitive project search.
+ - New operation, _Internal edge ID as attribute_.
 
 ### 1.7.0
 

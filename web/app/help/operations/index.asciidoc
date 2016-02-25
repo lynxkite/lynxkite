@@ -160,6 +160,8 @@ include::import-vertices-and-edges-from-a-single-table.asciidoc[]
 
 include::import-vertices.asciidoc[]
 
+include::internal-edge-id-as-attribute.asciidoc[]
+
 include::internal-vertex-id-as-attribute.asciidoc[]
 
 include::maximal-cliques.asciidoc[]
