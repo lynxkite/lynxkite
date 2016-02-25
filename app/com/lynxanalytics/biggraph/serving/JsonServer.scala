@@ -109,6 +109,8 @@ abstract class JsonServer extends mvc.Controller {
 
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
     action(parse.anyContent) { (user, request) =>
+      assert(request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
+        "Rejecting request because 'X-Requested-With: XMLHttpRequest' header is missing.")
       jsonQuery(user, request) { (user: User, i: I) =>
         Ok(json.Json.toJson(handler(user, i)))
       }
@@ -125,6 +127,8 @@ abstract class JsonServer extends mvc.Controller {
 
   def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => Future[O]) = {
     asyncAction(parse.anyContent) { (user, request) =>
+      assert(request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
+        "Rejecting request because 'X-Requested-With: XMLHttpRequest' header is missing.")
       jsonQuery(user, request) { (user: User, i: I) =>
         handler(user, i).map(o => Ok(json.Json.toJson(o)))
       }

@@ -66,6 +66,11 @@ angular
       });
   })
 
+  .config(function($httpProvider) {
+    // Identify requests from JavaScript by a header.
+    $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+  })
+
   .factory('$exceptionHandler', function($log, $injector) {
     return function(error) {
       // Log as usual.
