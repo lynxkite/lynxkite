@@ -13,6 +13,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - All attribute types are now accessible through the SQL interface. Types not supported by SQL will
    be presented as strings.
  - Improved error messages and documentation.
+ - Case insensitive project search.
 
 ### 1.7.0
 
