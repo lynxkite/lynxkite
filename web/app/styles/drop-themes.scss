@@ -10,6 +10,11 @@
   $color: white,
   $useDropShadow: false);
 
+.drop-element.drop-theme-tooltip {
+  z-index: 1000;
+  max-width: 30vw;
+}
+
 .drop-element.drop-theme-tooltip .drop-content {
   padding: 4px 8px;
   font-size: 12px;

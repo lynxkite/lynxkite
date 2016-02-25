@@ -173,6 +173,20 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
         }
       }
 
+    // Store the results of this iteration, discard the results of the previous one.
+    // - In theory, using MEMORY_AND_DISK would be more efficient here. In practice,
+    //   that significantly increases the time Spark spends in GC, and may even cause
+    //   the master to kill unresponsive executors.
+    // - If we don't do this, Spark will only compute each iteration of `measures` at
+    //   the last stage. In the current code, that would mean re-doing the shuffle of each
+    //   stage.
+    newHyperBallCounters.persist(StorageLevel.DISK_ONLY)
+    newMeasures.persist(StorageLevel.DISK_ONLY)
+    newMeasures.foreach(identity)
+    // Note, that unpersist does not delete shuffle files, see issues/#3147
+    measures.unpersist(blocking = false)
+    hyperBallCounters.unpersist(blocking = false)
+
     if (distance < maxDiameter) {
       getMeasures(
         distance + 1,
@@ -192,12 +206,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     partitioner: Partitioner,
     edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
     // For each vertex, add the HLL counter of every neighbor to the HLL counter
-    // of the vertex.
-    //
-    // We don't need outer join because each vertex has a loop edge. It is important
-    // in this logic that the hyperBallCounters in each iteration are a result of a single
-    // shuffle. This way the Spark DAG is simpler and there is no need for multiple
-    // computations of the same HLL or caching them.
+    // of the vertex. We don't need outer join because each vertex has a loop edge.
     hyperBallCounters
       .sortedJoin(edges)
       .flatMap {
