@@ -8,6 +8,11 @@ More details can be found in
 http://www.insead.edu/facultyresearch/research/details_papers.cfm?id=24896[
 Information Communities: The Network Structure of Communication].
 
+It often makes sense to filter out high degree vertices before detecting
+communities. In a social graph real people are unlikely to maintain thousands of
+connections. Filtering high degree vertices out is also known to speed up the
+algorithm significantly.
+
 ====
 [[cliques_name]] Name for maximal cliques segmentation::
 A new segmentation with the maximal cliques will be saved under this name.
