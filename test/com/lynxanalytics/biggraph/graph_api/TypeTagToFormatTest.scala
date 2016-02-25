@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.{ DynamicValue, DoubleGT, VertexAttributeFilter }
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import org.scalatest.FunSuite
@@ -36,6 +37,23 @@ class TypeTagToFormatTest extends FunSuite {
   test("TypeTag -> json conversions (DynamicValue)") {
     val dv = DynamicValue("name", true, Some(1.2), Some(1.3), None)
     testTag(dv)
+  }
+
+  test("TypeTag -> json conversions (UIStatus)") {
+    val uiStatus =
+      UIStatus(
+        "sampled",
+        "svg",
+        UIFilterStatus(Map(), Map()),
+        "4",
+        UIAxisOptions(Map(), Map()),
+        "1",
+        Map(),
+        UIAnimation(false, "neutral", "0"),
+        None,
+        Some(UICenterRequest(1, List(), None)),
+        Some(false))
+    testTag(uiStatus)
   }
 
   test("TypeTag -> json conversions (JsonTraits)") {

@@ -2,6 +2,7 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
+import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import play.api.libs.json
@@ -14,6 +15,13 @@ object TypeTagToFormat {
 
   implicit val formatDynamicFormat = json.Json.format[DynamicValue]
   implicit val formatEdge = json.Json.format[Edge]
+  implicit val formatUIFilterStatus = json.Json.format[UIFilterStatus]
+  implicit val formatUIAttributeAxisOptions = json.Json.format[UIAttributeAxisOptions]
+  implicit val formatUIAxisOptions = json.Json.format[UIAxisOptions]
+  implicit val formatUIAnimation = json.Json.format[UIAnimation]
+  implicit val formatUIAttributeFilter = json.Json.format[UIAttributeFilter]
+  implicit val formatUICenterRequest = json.Json.format[UICenterRequest]
+  implicit val formatUIStatus = json.Json.format[UIStatus]
 
   implicit object ToJsonFormat extends json.Format[ToJson] {
     def writes(t: ToJson): JsValue = {
@@ -137,6 +145,12 @@ object TypeTagToFormat {
       else if (TypeTagUtil.isType[Int](t)) implicitly[json.Format[Int]]
       else if (TypeTagUtil.isType[Float](t)) implicitly[json.Format[Float]]
       else if (TypeTagUtil.isType[DynamicValue](t)) implicitly[json.Format[DynamicValue]]
+      else if (TypeTagUtil.isType[UIStatus](t)) implicitly[json.Format[UIStatus]]
+      else if (TypeTagUtil.isType[UIAttributeAxisOptions](t)) implicitly[json.Format[UIAttributeAxisOptions]]
+      else if (TypeTagUtil.isType[UIAxisOptions](t)) implicitly[json.Format[UIAxisOptions]]
+      else if (TypeTagUtil.isType[UIAnimation](t)) implicitly[json.Format[UIAnimation]]
+      else if (TypeTagUtil.isType[UIAttributeFilter](t)) implicitly[json.Format[UIAttributeFilter]]
+      else if (TypeTagUtil.isType[UICenterRequest](t)) implicitly[json.Format[UICenterRequest]]
       else if (TypeTagUtil.isType[Edge](t)) implicitly[json.Format[Edge]]
       else if (TypeTagUtil.isSubtypeOf[ToJson](t)) ToJsonFormat
       else if (TypeTagUtil.isOfKind1[Option](t)) {
