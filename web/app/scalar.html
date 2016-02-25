@@ -2,7 +2,7 @@
 
 <value ng-if="asValue" class="scalar-value" id="scalar-{{scalar.title}}" ref="value"></value>
 
-<inline-loading ng-if="!asValue && !value.$resolved" ref="value"></inline-loading>
+<inline-loading ng-if="!asValue && !value.value.$resolved" ref="value.value"></inline-loading>
 
 <div class="pull-right" ng-show="scalar.typeName === 'Model'">
   <i class="glyphicon glyphicon-{{ showModel ? 'minus' : 'plus' }} section-button"
@@ -10,7 +10,7 @@
      tooltip="Show model details"></i>
 </div>
 
-<label ng-if="asSavedStatus && value.$resolved"
+<label ng-if="asSavedStatus && value.value.$resolved"
   class="btn btn-default"
   tooltip="Load UI Status" tooltip-append-to-body="true" tooltip-placement="bottom"
   ng-click="loadStatus()">

@@ -348,6 +348,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       // the computed value.
       function constructValueForComputedScalar() {
         scalarValue.value = scalar.computedValue;
+        scalarValue.value.$resolved = true;
       }
       // Fetches a new value for the scalar.
       function fetchScalarAndConstructValue() {
