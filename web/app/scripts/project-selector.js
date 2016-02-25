@@ -191,6 +191,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           }
         },
+        renameMenuItemLabel: 'Rename or move...'
       };
 
       scope.isProject = function(object) {
