@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.7.1
+
  - History can be accessed even if some operations no longer exist. (1.7.0 removed all classical
    import operation, so this is an important fix.)
  - Improve scalability and performance of the Centrality algorithm family.
