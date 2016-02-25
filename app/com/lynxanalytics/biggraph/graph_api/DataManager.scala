@@ -123,16 +123,22 @@ class DataManager(sc: spark.SparkContext,
     loggedFutures.put(f, ())
   }
 
-  private def execute(instance: MetaGraphOperationInstance): SafeFuture[Map[UUID, EntityData]] = {
+  private def execute(instance: MetaGraphOperationInstance,
+                      logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
     val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
         case (name, entity) =>
-          getFuture(entity).map(data => (name, data))
+          getFuture(entity).map {
+            data =>
+              logger.addInput(name.toString, data)
+              (name, data)
+          }
       })
     futureInputs.map { inputs =>
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
+        logger.startTimer()
       }
       val inputDatas = DataSet(inputs.toMap)
       for (scalar <- instance.outputs.scalars.values) {
@@ -159,6 +165,7 @@ class DataManager(sc: spark.SparkContext,
       }
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
+        logger.stopTimer()
       }
       outputDatas
     }
@@ -202,12 +209,13 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def getInstanceFuture(
-    instance: MetaGraphOperationInstance): SafeFuture[Map[UUID, EntityData]] = synchronized {
+    instance: MetaGraphOperationInstance,
+    logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = synchronized {
 
     val gUID = instance.gUID
     if (!instanceOutputCache.contains(gUID)) {
       instanceOutputCache(gUID) = {
-        val output = execute(instance)
+        val output = execute(instance, logger)
         if (instance.operation.isHeavy) {
           // For heavy operations we want to avoid caching the RDDs. The RDD data will be reloaded
           // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
@@ -263,17 +271,23 @@ class DataManager(sc: spark.SparkContext,
         assert(computationAllowed, "DEMO MODE, you cannot start new computations")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
-        val instanceFuture = getInstanceFuture(instance)
+
+        val logger = new OperationLogger(instance, executionContext)
+        val instanceFuture = getInstanceFuture(instance, logger)
+
         for (output <- instance.outputs.all.values) {
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => load(output))
+              val futureEntityData = instanceFuture.flatMap(_ => load(output))
+              logger.addOutput(futureEntityData)
+              futureEntityData
             } else {
               instanceFuture.map(_(output.gUID))
             })
         }
+        logger.logWhenReady()
       }
     }
   }
