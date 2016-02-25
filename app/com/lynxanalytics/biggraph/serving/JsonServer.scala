@@ -99,6 +99,8 @@ abstract class JsonServer extends mvc.Controller {
   def jsonQuery[I: json.Reads, R](
     user: User,
     request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
+    assert(request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
+      "Rejecting request because 'X-Requested-With: XMLHttpRequest' header is missing.")
     val t0 = System.currentTimeMillis
     val result = util.Try(handler(user, parseJson(user, request)))
     val dt = System.currentTimeMillis - t0

@@ -12,6 +12,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - LynxKite log directory can now be configured. (`KITE_LOG_DIR`)
  - All attribute types are now accessible through the SQL interface. Types not supported by SQL will
    be presented as strings.
+ - Improved security: JSON queries are only accepted with the `X-Requested-With: XMLHttpRequest`
+   header.
  - Improved error messages and documentation.
  - Case insensitive project search.
 
