@@ -12,6 +12,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - LynxKite log directory can now be configured. (`KITE_LOG_DIR`)
  - All attribute types are now accessible through the SQL interface. Types not supported by SQL will
    be presented as strings.
+ - Improved security: JSON queries are only accepted with the `X-Requested-With: XMLHttpRequest`
+   header.
  - Compressed files can be uploaded and handled as if they were not compressed. (Supported
    extensions are `.gz`, `.bz2`, `.lzo`, and `.snappy`. Compressed files accessed from HDFS were
    always supported.)

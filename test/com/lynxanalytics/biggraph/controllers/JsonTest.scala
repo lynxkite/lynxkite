@@ -46,9 +46,17 @@ class JsonTest extends FunSuite {
       === "\"test string: Hello BigGraph!\"")
   }
 
+  def fakeGet(uri: String, xRequestedWith: Seq[String] = Seq("XMLHttpRequest")) = {
+    FakeRequest(
+      GET,
+      uri,
+      FakeHeaders(Seq("X-Requested-With" -> xRequestedWith)),
+      play.api.mvc.AnyContentAsEmpty)
+  }
+
   test("call testGet with a valid fake GET message") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
-    val request = FakeRequest(GET, "/api/test?q=" + jsonString)
+    val request = fakeGet("/api/test?q=" + jsonString)
     val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === OK)
     assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
@@ -73,7 +81,7 @@ class JsonTest extends FunSuite {
 
   test("testGet should raise exception if JSON is incorrect") {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
-    val request = FakeRequest(GET, "/api/test?q=" + jsonString)
+    val request = fakeGet("/api/test?q=" + jsonString)
     intercept[Throwable] {
       await(TestJsonServer.testGet(request))
     }
@@ -81,7 +89,15 @@ class JsonTest extends FunSuite {
 
   test("testGet should raise exception if query parameter is incorrect") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
-    val request = FakeRequest(GET, "/api/test?gugu=" + jsonString)
+    val request = fakeGet("/api/test?gugu=" + jsonString)
+    intercept[Throwable] {
+      await(TestJsonServer.testGet(request))
+    }
+  }
+
+  test("testGet should raise exception if X-Requested-With is missing") {
+    val jsonString = """{"attr":"Hello BigGraph!"}"""
+    val request = fakeGet("/api/test?q=" + jsonString, xRequestedWith = Nil)
     intercept[Throwable] {
       await(TestJsonServer.testGet(request))
     }
