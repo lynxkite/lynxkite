@@ -71,7 +71,7 @@ Given a running backend, frontend tests can be run with `cd web; grunt test`. To
 the test code has to be modified. After the one or two `function` parameters add a `'solo'`
 parameter to mark the test for solo running. (Multiple tests can be marked with `'solo'` at the same
 time.) Run `VERBOSE=true grunt test` to enable verbose mode, which prints the tests names as it
-goes.
+goes. If the backend is not running on the default port, use `grunt --port=NNNN test` to test it.
 
 Another useful trick is to use `xvfb-run` (in Ubuntu, it is available in package `xvfb`) as this:
 `xvfb-run ./test_frontend.sh`. This will run the frontend tests in a virtual framebuffer.
