@@ -597,20 +597,14 @@ Selector.prototype = {
     element(by.id('pop-directory-icon')).click();
   },
 
-  menuClick: function(entry, action) {
-    var menu = entry.element(by.css('.dropdown'));
-    menu.element(by.css('a.dropdown-toggle')).click();
-    menu.element(by.id('menu-' + action)).click();
-  },
-
   renameProject: function(name, newName) {
     var project = this.project(name);
-    this.menuClick(project, 'rename');
+    testLib.menuClick(project, 'rename');
     project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName, K.ENTER);
   },
 
   deleteProject: function(name) {
-    this.menuClick(this.project(name), 'discard');
+    testLib.menuClick(this.project(name), 'discard');
     // We need to give the browser time to display the alert, see angular/protractor#1486.
     testLib.wait(protractor.ExpectedConditions.alertIsPresent());
     var confirmation = browser.switchTo().alert();
@@ -620,7 +614,7 @@ Selector.prototype = {
   },
 
   deleteDirectory: function(name) {
-    this.menuClick(this.directory(name), 'discard');
+    testLib.menuClick(this.directory(name), 'discard');
     // We need to give the browser time to display the alert, see angular/protractor#1486.
     testLib.wait(protractor.ExpectedConditions.alertIsPresent());
     var confirmation = browser.switchTo().alert();
@@ -898,6 +892,12 @@ testLib = {
     filename.then(function(fn) {
       expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
     });
+  },
+
+  menuClick: function(entry, action) {
+    var menu = entry.element(by.css('.dropdown'));
+    menu.element(by.css('a.dropdown-toggle')).click();
+    menu.element(by.id('menu-' + action)).click();
   },
 };
 
