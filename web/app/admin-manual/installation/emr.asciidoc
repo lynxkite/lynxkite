@@ -4,9 +4,7 @@ There is specialized support for running LynxKite on EMR. There is a script whic
 management, deployment and configuration of LynxKite on the cluster and remote restarts. To use LynxKite on
 EMR, follow these steps:
 
-. Install LynxKite as explained in (
-include::installing-binaries.asciidoc[]
-) to a local Linux machine.
+. Install LynxKite as explained in the <<installing-binaries>> section.
 In what follows, `$INSTALL_DIR` will refer to the installation directory of LynxKite. You can start
 for example with setting `$INSTALL_DIR=/path/to/kite/install/dir`.
 

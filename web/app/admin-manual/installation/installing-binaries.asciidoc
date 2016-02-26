@@ -1,3 +1,4 @@
+[[installing-binaries]]
 ## Installing the LynxKite binaries
 
 The LynxKite archive contains the following:
