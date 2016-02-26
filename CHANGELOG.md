@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - SQL query results can be sorted by clicking the column headers.
  - Fixed visualization save/restore, now for real, we promise.
+ - When visualizing two graphs, a separating line is displayed between them.
 
 ### 1.7.1
 
