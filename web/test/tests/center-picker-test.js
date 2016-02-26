@@ -129,7 +129,7 @@ module.exports = function(fw) {
       centerCount.sendKeys('1');
     });
 
-  fw.statePreservingTest(
+  fw.transitionTest(
     'test-example project with example graph',
     'visualization save/restore',
     function() {
@@ -149,20 +149,16 @@ module.exports = function(fw) {
         .element(by.xpath('..'));  // parent element
       var savedVisualizationIcon = savedVisualization
         .element(by.css('.glyphicon-eye-open'));
-      expect(savedVisualizationIcon.isDisplayed()).toBeTruthy();
+      lib.expectElement(savedVisualizationIcon);
       // Close and reopen the project and check if the eye icon is still there. issues/#3164
       lib.left.close();
       lib.splash.openProject('test-example');
       lib.left.toggleSampledVisualization();
-      expect(savedVisualizationIcon.isDisplayed()).toBeTruthy();
+      lib.expectElement(savedVisualizationIcon);
       // Try loading the visualization and check if centers count is correctly updated.
       expect(centerCount.getAttribute('value')).toBe('1');
       savedVisualizationIcon.click();
       expect(centerCount.getAttribute('value')).toBe('2');
-
-      // Clean up state.
-      lib.splash.menuClick(savedVisualization, 'discard');
-      lib.left.close();
-      lib.splash.openProject('test-example');
-    });
+    },
+    function() {});
 };
