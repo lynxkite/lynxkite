@@ -103,7 +103,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         tsv += ' to ' + graphName(eb.dstIdx) + ':\n';
         tsv += 'src\tdst\tsize';
         var attrs = [];
-        if (eb.srcIdx === eb.dstIdx) {
+        if (eb.srcIdx === eb.dstIdx && sides[eb.srcIdx]) {
           // Turn the object into an array;
           angular.forEach(
               sides[eb.srcIdx].edgeAttrs, function(attr) { if (attr) { attrs.push(attr); } });
@@ -178,7 +178,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       scope.mapViewEnabled = function() {
         var sides = [scope.graph.left, scope.graph.right];
         for (var i = 0; i < sides.length; ++i) {
-          if (sides[i] && sides[i].vertexAttrs.geo) {
+          if (sides[i] && sides[i].vertexAttrs && sides[i].vertexAttrs.geo) {
             return true;
           }
         }
