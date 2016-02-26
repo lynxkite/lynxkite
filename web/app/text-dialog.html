@@ -1,4 +1,4 @@
-<label ng-hide="dialogVisible" class="btn btn-default" ng-click="okClick()">
+<label ng-hide="dialogVisible" class="btn btn-default" ng-click="okClick()" id="text-dialog-open">
   {{buttonText}}
 </label>
 <form ng-show="dialogVisible" ng-submit="okClick()" style="display: inline;">
@@ -7,7 +7,7 @@
            class="btn btn-default"
            ng-model="dialogText"
            ng-disabled="!dialogEnabled">
-    <label class="btn btn-default" ng-click="okClick()">
+    <label class="btn btn-default" ng-click="okClick()" id="text-dialog-ok">
       {{buttonText}}
     </label>
     <label class="btn btn-default"
