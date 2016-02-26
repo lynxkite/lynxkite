@@ -236,6 +236,45 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return group;
   };
 
+  GraphView.prototype.addSideSeparators = function(numVisibleSides) {
+    if (numVisibleSides <= 1) {
+      return;
+    }
+    var separatorGroup = svg.create('g', {'class': 'side-separators'});
+    this.root.append(separatorGroup);
+    var sideWidth = this.svg.width() / numVisibleSides;
+    for (var i = 0; i < numVisibleSides - 1; ++i) {
+      var separatorLine = svg.create('line', {
+        x1: sideWidth * (i + 1),
+        y1: 0,
+        x2: sideWidth * (i + 1),
+        y2: this.svg.height(),
+        'class': 'side-separator-line',
+      });
+      separatorGroup.append(separatorLine);
+    }
+  };
+
+  GraphView.prototype.createClippers = function(halfColumnWidth, numVisibleSides) {
+    var clippers = [];
+    for (var i = 0; i < numVisibleSides; ++i) {
+      var isLeftMost = i === 0;
+      var isRightMost = i === (numVisibleSides - 1);
+      var separatorWidthHalf = 1;
+      var leftOffset = isLeftMost ? 0 : separatorWidthHalf;
+      var rightOffset = isRightMost ? 0 : separatorWidthHalf;
+      var clipper = new Clipper({
+        x: (i * 2) * halfColumnWidth + leftOffset,
+        y: 0,
+        width: halfColumnWidth * 2 - leftOffset - rightOffset,
+        height: 30000,
+      });
+      this.root.prepend(clipper.dom);
+      clippers.push(clipper);
+    }
+    return clippers;
+  };
+
   GraphView.prototype.update = function(data, menu) {
     this.clear();
     var i;
@@ -243,21 +282,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var sides = [this.scope.graph.left, this.scope.graph.right];
     var visibleSides = sides.filter(function(s) { return s && s.graphMode; } );
     var halfColumnWidth = this.svg.width() / visibleSides.length / 2;
-    var clippers = [];
     this.edgeGroups = [];
     this.vertexGroups = [];
-    for (i = 0; i < visibleSides.length; ++i) {
-      var clipper = new Clipper({
-        x: (i * 2) * halfColumnWidth,
-        y: 0,
-        width: halfColumnWidth * 2,
-        height: 30000,
-      });
-      this.root.prepend(clipper.dom);
-      clippers.push(clipper);
-      this.edgeGroups.push(this.addGroup('edges', clipper));
-    }
+    this.addSideSeparators(visibleSides.length);
+    var clippers = this.createClippers(halfColumnWidth, visibleSides.length);
+    // The order of adding the groups is important. Whatever comes later, will overlay
+    // things defined earlier. We want edges to be overlaid by vertices.
     this.crossEdgeGroup = this.addGroup('edges');
+    for (i = 0; i < visibleSides.length; ++i) {
+      this.edgeGroups.push(this.addGroup('edges', clippers[i]));
+    }
     for (i = 0; i < visibleSides.length; ++i) {
       this.vertexGroups.push(this.addGroup('nodes side' + i, clippers[i]));
     }

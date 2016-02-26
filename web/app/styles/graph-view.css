@@ -144,3 +144,8 @@ svg text.error {
   font-size: 20px;
   fill: white;
 }
+
+svg .side-separator-line {
+  stroke: #eeeeee;
+  stroke-width: 2;
+}
