@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - SQL query results can be sorted by clicking the column headers.
+ - Fixed visualization save/restore, now for real, we promise.
 
 ### 1.7.1
 

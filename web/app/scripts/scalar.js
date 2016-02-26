@@ -14,7 +14,7 @@ angular.module('biggraph').directive('scalar', function() {
       });
 
       scope.loadStatus = function() {
-        scope.side.updateFromBackendJson(scope.value.string);
+        scope.side.updateFromBackendJson(scope.value.value.string);
       };
     },
   };
