@@ -157,6 +157,10 @@ start)
     --region ${REGION} \
     ${EMR_LOG_URI} \
   )
+
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr ssh ${MASTER_ACCESS} --command "sudo yum install -y expect"
+
   ;&
 
 # ====== fall-through
@@ -164,7 +168,7 @@ reconfigure)
   MASTER_ACCESS=$(GetMasterAccessParams)
 
   # Prepare a config file.
-  CONFIG_FILE="/tmp/${CLUSTER_NAME}.kiterc"
+  KITERC_FILE="/tmp/${CLUSTER_NAME}.kiterc"
   HDFS_DATA='hdfs://$(hostname):8020/data'
   if [ -n "${S3_DATAREPO:-}" ]; then
     CheckDataRepo
@@ -174,7 +178,7 @@ reconfigure)
     KITE_DATA_DIR="$HDFS_DATA"
     KITE_EPHEMERAL_DATA_DIR=
   fi
-  cat > ${CONFIG_FILE} <<EOF
+  cat > ${KITERC_FILE} <<EOF
 # !!!Warning!!! Some values are overriden at the end of the file.
 
 `cat ${KITE_BASE}/conf/kiterc_template`
@@ -198,7 +202,19 @@ export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
 EOF
 
-  aws emr put ${MASTER_ACCESS} --src ${CONFIG_FILE} --dest .kiterc
+  SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"
+  cat > ${SPARK_ENV_FILE} <<EOF
+
+# Add S3 support.
+AWS_CLASSPATH1=\$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH2=\$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH3=\$(find /usr/share/aws/emr/emr-metrics/lib -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH_ALL=\$AWS_CLASSPATH1\$AWS_CLASSPATH2\$AWS_CLASSPATH3
+export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
+
+# Remove warnings from logs about lzo.
+export LD_LIBRARY_PATH="/usr/lib/hadoop-lzo/lib/native:\$LD_LIBRARY_PATH"
+EOF
 
   # Prepare a root definitions file.
   PREFIXDEF_FILE=/tmp/${CLUSTER_NAME}.prefdef
@@ -206,16 +222,18 @@ EOF
 S3="s3://"
 EOF
 
-  aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
 
   # Unpack Spark on the master and add the locally installed hadoop into its classpath.
   # (This way we get s3 consistent view.)
-  SPARK_NAME="spark-${SPARK_VERSION}-bin-without-hadoop"
+  SPARK_NAME="spark-${SPARK_VERSION}-bin-hadoop2.6"
   aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
     curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
-    tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION} && \
-    echo \"export SPARK_DIST_CLASSPATH=\\\$(hadoop classpath)\" >~/${SPARK_NAME}/conf/spark-env.sh && \
-    sudo yum install -y expect"
+    tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION}"
+
+  aws emr put ${MASTER_ACCESS} --src ${KITERC_FILE} --dest .kiterc
+  aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
+  aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest ${SPARK_NAME}/conf/spark-env.sh
+
   ;;
 
 # ======
