@@ -35,3 +35,10 @@ sql-box > * {
 #sql-result {
   overflow-x: auto; /* Scroll if there are many columns. */
 }
+
+#sql-result table {
+  table-layout: fixed;
+}
+#sql-result th {
+  cursor: pointer; /* Click to sort. */
+}

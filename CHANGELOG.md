@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - SQL query results can be sorted by clicking the column headers.
+
 ### 1.7.1
 
  - History can be accessed even if some operations no longer exist. (1.7.0 removed all classical
