@@ -136,8 +136,12 @@
     <thead>
       <tr>
         <th ng-repeat="col in result.header"
-          ng-click="sort.select($index)"
-          class="{{ sort.style($index) }}">{{ col }}</th>
+          ng-click="sort.select($index)">
+          {{ col }}
+          <div class="pull-right" ng-show="sort.column === $index.toString()">
+            <i class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+          </div>
+        </th>
       </tr>
     </thead>
     <tbody>
