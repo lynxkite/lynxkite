@@ -40,13 +40,5 @@ sql-box > * {
   table-layout: fixed;
 }
 #sql-result th {
-  cursor: pointer;
-}
-#sql-result th.sort-desc:after {
-  content: '\25bc';
-  float: right;
-}
-#sql-result th.sort-asc:after {
-  content: '\25b2';
-  float: right;
+  cursor: pointer; /* Click to sort. */
 }
