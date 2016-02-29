@@ -1,3 +1,10 @@
+// This is the build configuration for the frontend stuff.
+//
+// Commands:
+//   gulp           # Build everything in the "dist" directory.
+//   gulp serve     # Start an auto-updating server.
+//   gulp quick     # The quick part of the build, creating its output in ".tmp".
+
 var autoprefixer = require('gulp-autoprefixer');
 var asciidoctor = require('gulp-asciidoctor');
 var browserSync = require('browser-sync').create();
@@ -46,11 +53,18 @@ gulp.task('html', ['css', 'js'], function () {
 });
 
 gulp.task('dist', ['clean:dist', 'html'], function () {
-  return gulp.src('.tmp/**/*.html')
+  var dynamic = gulp.src('.tmp/**/*.html')
     .pipe(useref())
     .pipe(gulpif('*.js', uglify()))
     .pipe(gulpif(['**/*', '!**/*.html'], rev()))
-    .pipe(revReplace())
+    .pipe(revReplace());
+  var static = gulp.src([
+    'app/*.{png,svg}',
+    'app/images/*',
+    'app/bower_components/zeroclipboard/dist/ZeroClipboard.swf',
+    'app/bower_components/bootstrap/dist/fonts/*',
+  ]);
+  return merge(dynamic, static)
     .pipe(gulp.dest('dist'));
 });
 
@@ -103,8 +117,8 @@ gulp.task('serve', ['quick'], function() {
   });
 
   gulp.watch('app/styles/*.scss', ['sass']);
-  gulp.watch('app/**/*.js').on('change', browserSync.reload);
-  gulp.watch('app/*.html').on('change', browserSync.reload);
+  gulp.watch('.tmp/scripts/**/*.js').on('change', browserSync.reload);
+  gulp.watch('.tmp/*.html').on('change', browserSync.reload);
 });
 
 gulp.task('default', ['jshint', 'asciidoctor', 'dist']);
