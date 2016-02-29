@@ -5,6 +5,7 @@
 //   gulp serve     # Start an auto-updating server.
 //   gulp quick     # The quick part of the build, creating its output in ".tmp".
 
+var angularFilesort = require('gulp-angular-filesort');
 var autoprefixer = require('gulp-autoprefixer');
 var asciidoctor = require('gulp-asciidoctor');
 var browserSync = require('browser-sync').create();
@@ -44,10 +45,12 @@ gulp.task('asciidoctor', function () {
 });
 
 gulp.task('html', ['css', 'js'], function () {
-  var sources = gulp.src(['.tmp/**/*.js', '.tmp/**/*.css'], { read: false });
+  var css = gulp.src('.tmp/**/*.css', { read: false });
+  var js = gulp.src('.tmp/**/*.js').pipe(angularFilesort());
   return gulp.src('app/index.html')
     .pipe(wiredep())
-    .pipe(inject(sources))
+    .pipe(inject(css, { ignorePath: '.tmp' }))
+    .pipe(inject(js, { ignorePath: '.tmp' }))
     .pipe(gulp.dest('.tmp'))
     .pipe(browserSync.stream());
 });
@@ -79,12 +82,14 @@ gulp.task('css', ['sass'], function () {
   return gulp.src('app/styles/*.css')
     .pipe(autoprefixer())
     .pipe(gulp.dest('.tmp/styles'))
+    .pipe(browserSync.stream());
 });
 
 gulp.task('js', function () {
   return gulp.src('app/scripts/**/*.js')
     .pipe(ngAnnotate())
     .pipe(gulp.dest('.tmp/scripts'))
+    .pipe(browserSync.stream());
 });
 
 gulp.task('jshint', function() {
@@ -100,13 +105,12 @@ gulp.task('clean:dist', function() {
 gulp.task('serve', ['quick'], function() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
-  var proxy = httpProxy.createProxyServer({
-    changeOrigin: true,
-    autoRewrite: true,
-    secure: false
-  });
+  var proxy = httpProxy.createProxyServer();
   browserSync.init({
-    server: ['app', '.tmp'],
+    server: ['.tmp', 'app'],
+    ghostMode: false,
+    online: false,
+    notify: false,
   },
   function (err, bs) {
     bs.addMiddleware('*',
@@ -117,8 +121,8 @@ gulp.task('serve', ['quick'], function() {
   });
 
   gulp.watch('app/styles/*.scss', ['sass']);
-  gulp.watch('.tmp/scripts/**/*.js').on('change', browserSync.reload);
-  gulp.watch('.tmp/*.html').on('change', browserSync.reload);
+  gulp.watch('app/scripts/**/*.js', ['js']);
+  gulp.watch('app/*.html', ['html']);
 });
 
 gulp.task('default', ['jshint', 'asciidoctor', 'dist']);
