@@ -14,7 +14,7 @@ def warn(msg):
   else:
     print(msg, file=sys.stderr)
 
-protected_branches = ['master', 'brave-new-world']
+protected_branches = ['master']
 branch = subprocess.check_output('git rev-parse --abbrev-ref=strict HEAD'.split()).strip()
 if branch in protected_branches:
   warn('You cannot commit directly to {0!r}.'.format(branch))
@@ -37,7 +37,7 @@ if bad_lines:
 
 files = subprocess.check_output('git diff --name-only --staged'.split()).split('\n')
 if any(fn.endswith('.js') for fn in files):
-  if subprocess.call('cd web; grunt jshint', shell=True):
+  if subprocess.call('cd web; gulp jshint', shell=True):
     warn('JSHint fails.')
 
 if warned:
