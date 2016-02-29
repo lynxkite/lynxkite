@@ -58,4 +58,18 @@ module.exports = function(fw) {
     ])},
     function() {}
   );
+
+  fw.statePreservingTest(
+    'prediction from regression model',
+    'history editor is okay',
+    function() {
+      lib.left.history.open();
+      var predict = lib.left.history.getOperation(4);
+      function get(id) {
+        return predict.element(by.id(id)).$('option:checked').getText();
+      }
+      expect(get('model-name')).toBe('age_from_yob');
+      expect(get('model-feature-yob')).toBe('yob');
+      lib.left.history.close();
+    });
  };

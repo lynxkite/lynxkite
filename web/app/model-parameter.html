@@ -15,7 +15,7 @@
           id="model-feature-{{feature}}"
           ng-disabled="!editable"
           class="form-control"
-          ng-model="binding[$index]"
+          ng-model="binding[feature]"
           ng-options="attr.id as attr.title for attr in param.payload.attrs">
         </select>
       </td>

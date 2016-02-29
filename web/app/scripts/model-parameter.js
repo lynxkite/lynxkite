@@ -7,35 +7,57 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     scope: {
       param: '=', // Parameters of the available models.
       editable: '=', // Whether this input is editable.
-      model: '=', // Output: arguments to run the model with.
+      model: '=', // Input/output: arguments to run the model with.
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {
-      scope.$watch('activeModel', function(activeModel) {
-        scope.binding = [];
-        if (activeModel) {
-          for (var i = 0; i < activeModel.featureNames.length; ++i) {
-            for (var j = 0; j < scope.param.payload.attrs.length; ++j) {
-              var attr = scope.param.payload.attrs[j];
-              if (attr.id === activeModel.featureNames[i]) {
-                scope.binding[i] = attr.id;
-              }
+      scope.activeModel = undefined;
+      // Feature name to attribute name. Matching names are added by default.
+      scope.binding = {};
+      for (var j = 0; j < scope.param.payload.attrs.length; ++j) {
+        var id = scope.param.payload.attrs[j].id;
+        scope.binding[id] = id;
+      }
+
+      // React to external changes to model.
+      util.deepWatch(scope, 'model', function(model) {
+        console.log('model', model);
+        if (model) {
+          var modelParams = JSON.parse(model);
+          var models = scope.param.payload.models;
+          scope.activeModel = undefined;
+          for (var i = 0; i < models.length; ++i) {
+            if (models[i].name === modelParams.modelName) {
+              scope.activeModel = models[i];
             }
           }
+          if (!scope.activeModel) {
+            return;
+            //throw new Error('Could not find model "' + modelParams.modelName + '"');
+          }
+          for (i = 0; i < scope.activeModel.featureNames.length; ++i) {
+            var feature = scope.activeModel.featureNames[i];
+            scope.binding[feature] = modelParams.features[i];
+          }
         }
       });
-      util.deepWatch(scope, 'binding', function(binding) {
-        if (scope.activeModel && binding) {
+
+      util.deepWatch(scope, 'activeModel', updateModel);
+      util.deepWatch(scope, 'binding', updateModel);
+
+      function updateModel() {
+        var modelParams = {};
+        if (scope.activeModel) {
           var featureList = [];
           for (var i = 0; i < scope.activeModel.featureNames.length; ++i) {
-            featureList.push(binding[i]);
+            var feature = scope.activeModel.featureNames[i];
+            featureList.push(scope.binding[feature]);
           }
-          var modelParams = {};
           modelParams.modelName = scope.activeModel.name;
           modelParams.features = featureList;
-          scope.model = JSON.stringify(modelParams);
         }
-      });
+        scope.model = JSON.stringify(modelParams);
+      }
     },
   };
 });
