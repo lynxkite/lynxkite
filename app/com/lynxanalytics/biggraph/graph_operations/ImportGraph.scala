@@ -233,7 +233,7 @@ trait ImportCommon {
   protected def numberedLines(
     rc: RuntimeContext,
     input: RowInput): UniqueSortedRDD[ID, Seq[String]] = {
-    val numbered = input.lines(rc).cacheSortedAncestors
+    val numbered = input.lines(rc).copyWithAncestorsCached
     val maxLines = Limitations.maxImportedLines
     if (maxLines >= 0) {
       val numLines = numbered.count
@@ -498,7 +498,7 @@ class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: Str
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
         .sortUnique(partitioner)
-        .cacheSortedAncestors
+        .copyWithAncestorsCached
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))
