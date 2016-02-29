@@ -10,6 +10,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
+      function defaultSettings() {
+        return { privacy: 'private' };
+      }
+      scope.newProject = defaultSettings();
+      scope.newDirectory = defaultSettings();
       scope.path = scope.path || window.localStorage.getItem('last_selector_path') || '';
       hotkeys.bindTo(scope)
         .add({
@@ -116,7 +121,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           }).then(function() {
             scope.path = name;
             scope.searchQuery = '';
-            scope.newDirectory = {};
+            scope.newDirectory = defaultSettings();
           }).finally(function() {
             scope.newDirectory.sending = false;
           });
