@@ -7,7 +7,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'test-example project with example graph saved as apple',
     function() {
-      lib.left.saveProjectAs('apple')
+      lib.left.saveProjectAs('apple');
     },
     function() {
       // We are now in a project with the new name.
@@ -22,7 +22,7 @@ module.exports = function(fw) {
     'test-example project with example graph saved as apple',
     'test-example project with example graph saved as pear/apple',
     function() {
-      lib.left.saveProjectAs('pear/apple')
+      lib.left.saveProjectAs('pear/apple');
     },
     function() {
       // We are now in a project with the new name.
@@ -37,7 +37,7 @@ module.exports = function(fw) {
     'test-example project with example graph saved as apple',
     'cant save as to existing project',
     function() {
-      lib.left.saveProjectAs('test-example')
+      lib.left.saveProjectAs('test-example');
       expect(lib.error()).toEqual('test-example already exists.');
       lib.closeErrors();
     });

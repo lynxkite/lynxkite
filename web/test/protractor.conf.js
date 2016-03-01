@@ -1,3 +1,4 @@
+// jshint camelcase: false
 exports.config = {
   framework: 'jasmine2',
   directConnect: true,

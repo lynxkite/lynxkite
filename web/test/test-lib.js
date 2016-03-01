@@ -672,7 +672,7 @@ function randomPattern () {
   return r;
 }
 
-var lastDownloadList = undefined
+var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
@@ -738,7 +738,7 @@ testLib = {
           if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
           } else if (kind === 'file') {
-            testLib.uploadIntoFileParameter(e, value)
+            testLib.uploadIntoFileParameter(e, value);
           } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
@@ -844,8 +844,8 @@ testLib = {
 
   setEnablePopups: function(enable) {
     browser.executeScript(
-      "angular.element(document.body).injector()" +
-      ".get('dropTooltipConfig').enabled = " + enable);
+      'angular.element(document.body).injector()' +
+      '.get("dropTooltipConfig").enabled = ' + enable);
 
   },
 
