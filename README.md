@@ -5,8 +5,8 @@ LynxKite
 
 Install `nvm` (https://github.com/creationix/nvm). Then:
 
-    nvm install v0.10.25
-    nvm alias default v0.10.25
+    nvm install 5.7
+    nvm alias default 5.7
     npm install -g gulp bower
 
 Install `sbt` (Scala Build Tool):
