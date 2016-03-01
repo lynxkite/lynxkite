@@ -29,6 +29,6 @@ module.exports = function(fw) {
       lib.left.toggleSampledVisualization();
     },
     function() {
-      expect(element(by.css('svg.graph-view')).isDisplayed()).toBe(true);
+      expect($('svg.graph-view').isDisplayed()).toBe(true);
     });
 };
