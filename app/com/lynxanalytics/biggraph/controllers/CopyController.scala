@@ -27,8 +27,8 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     val dm = environment.dataManager
     dm.waitAllFutures()
     dm.synchronized {
-      dm.waitAllFutures()  // We don't want other operations to be running during s3copy.
-      sparkClusterController.disableWatchdog()  // Watchdog would fail since we are locking on dataManager.
+      dm.waitAllFutures() // We don't want other operations to be running during s3copy.
+      sparkClusterController.disableWatchdog() // Watchdog would fail since we are locking on dataManager.
       try {
         for (ephemeralPath <- dm.ephemeralPath) {
           log.info(s"Listing contents of $ephemeralPath...")
