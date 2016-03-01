@@ -375,8 +375,8 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // efficient to do the restriction using a binary search. For binary search, we need
   // the RDD data in an array and normally our RDDs are not stored in arrays, so we
   // need to convert this RDD to array. It's likely that there will be more of id restriction
-  // requests issued at different points in the RDD dependencey tree. In order to
-  // perpare for that, we don't convert this exact RDD to array, but go back to its
+  // requests issued at different points in the RDD dependency tree. In order to
+  // prepare for that, we don't convert this exact RDD to array, but go back to its
   // earliest possible ancestors (ancestors by idset preserving transformations) and convert
   // those to arrays, and do the filtering there.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] = restrictToIdSetRecipe(ids).asGeneral
