@@ -7,7 +7,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     scope: {
       param: '=', // Parameters of the available models.
       editable: '=', // Whether this input is editable.
-      model: '=', // Input/output: arguments to run the model with.
+      modelJson: '=model', // Input/output: Model configuration in JSON.
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {
@@ -20,10 +20,9 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       }
 
       // React to external changes to model.
-      util.deepWatch(scope, 'model', function(model) {
-        console.log('model', model);
-        if (model) {
-          var modelParams = JSON.parse(model);
+      util.deepWatch(scope, 'modelJson', function(modelJson) {
+        if (modelJson) {
+          var modelParams = JSON.parse(modelJson);
           var models = scope.param.payload.models;
           scope.activeModel = undefined;
           for (var i = 0; i < models.length; ++i) {
@@ -32,8 +31,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
             }
           }
           if (!scope.activeModel) {
-            return;
-            //throw new Error('Could not find model "' + modelParams.modelName + '"');
+            throw new Error('Could not find model "' + modelParams.modelName + '"');
           }
           for (i = 0; i < scope.activeModel.featureNames.length; ++i) {
             var feature = scope.activeModel.featureNames[i];
@@ -56,7 +54,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
           modelParams.modelName = scope.activeModel.name;
           modelParams.features = featureList;
         }
-        scope.model = JSON.stringify(modelParams);
+        scope.modelJson = JSON.stringify(modelParams);
       }
     },
   };
