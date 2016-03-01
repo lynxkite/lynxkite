@@ -6,7 +6,7 @@ set -e
 pushd web
 npm install
 bower install
-grunt
+gulp
 popd
 
 sbt stage
