@@ -311,6 +311,7 @@ class KiteMonitorThread(
 }
 
 class SparkClusterController(environment: BigGraphEnvironment) {
+  var watchdogEnabled = true
   val sc = environment.sparkContext
   val listener = new KiteListener
   sc.addSparkListener(listener)
@@ -339,8 +340,18 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     sc.cancelAllJobs()
   }
 
+  def disableWatchdog(): Unit = {
+    watchdogEnabled = true
+  }
+
+  def enableWatchdog(): Unit = {
+    watchdogEnabled = false
+  }
+
   def checkSparkOperational(): Unit = {
-    val res = listener.getCurrentResponse
-    assert(res.kiteCoreWorking && res.sparkWorking)
+    if (watchdogEnabled) {
+      val res = listener.getCurrentResponse
+      assert(res.kiteCoreWorking && res.sparkWorking)
+    }
   }
 }
