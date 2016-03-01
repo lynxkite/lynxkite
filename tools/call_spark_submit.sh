@@ -23,7 +23,7 @@ popd > /dev/null
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
 export KITE_RANDOM_SECRET=$(python -c \
-  'import random, string; print "".join(random.choice(string.letters) for i in range(32))')
+  'import random, string; print("".join(random.choice(string.ascii_letters) for i in range(32)))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
 export KITE_LOG_DIR=${log_dir}

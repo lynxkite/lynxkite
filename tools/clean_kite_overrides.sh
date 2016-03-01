@@ -1,7 +1,7 @@
 #!/bin/bash -ue
 
 RANDOM_SUFFIX=$(python -c \
-  'import random, string; print "".join(random.choice(string.letters) for i in range(6))')
+  'import random, string; print("".join(random.choice(string.ascii_letters) for i in range(6)))')
 TODAY=$(date "+%Y%m%d")
 RANDOM_NAME="$1${TODAY}_${RANDOM_SUFFIX}"
 
