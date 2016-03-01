@@ -341,11 +341,11 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def disableWatchdog(): Unit = {
-    watchdogEnabled = true
+    watchdogEnabled = false
   }
 
   def enableWatchdog(): Unit = {
-    watchdogEnabled = false
+    watchdogEnabled = true
   }
 
   def checkSparkOperational(): Unit = {
