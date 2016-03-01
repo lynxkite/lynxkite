@@ -423,7 +423,7 @@ object ProductionJsonServer extends JsonServer {
       version = version)
   }
 
-  val copyController = new CopyController(BigGraphProductionEnvironment)
+  val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
