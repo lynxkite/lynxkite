@@ -59,7 +59,8 @@ gulp.task('dist', ['clean:dist', 'html'], function () {
     'app/images/*',
     'app/bower_components/zeroclipboard/dist/ZeroClipboard.swf',
     'app/bower_components/bootstrap/dist/fonts/*',
-  ]);
+    'app/**/*.html', '!app/index.html',
+  ], { base: 'app' });
   return merge(dynamicFiles, staticFiles)
     .pipe(gulp.dest('dist'));
 });
@@ -99,6 +100,10 @@ gulp.task('serve', ['quick'], function() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
   var proxy = httpProxy.createProxyServer();
+  proxy.on('error', function(err, req, res) {
+    // Lot of ECONNRESET when live-reloading for some reason. Ignore them.
+    res.end();
+  });
   browserSync.init({
     server: ['.tmp', 'app'],
     ghostMode: false,
@@ -114,7 +119,7 @@ gulp.task('serve', ['quick'], function() {
   });
   gulp.watch('app/styles/*.scss', ['sass']);
   gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
-  gulp.watch('app/*.html', ['html']);
+  gulp.watch('app/**/*.html', ['html']);
 });
 
 var protractorDir = 'node_modules/protractor/';
