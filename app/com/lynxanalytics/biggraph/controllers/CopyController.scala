@@ -27,7 +27,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     val dm = environment.dataManager
     dm.waitAllFutures()
     dm.synchronized {
-      dm.waitAllFutures()  // We don't want other operations to be running during s3copy.
+      dm.waitAllFutures() // We don't want other operations to be running during s3copy.
       // Health checks would fail anyways because we are locking too long on dataManager here.
       // So we turn them off temporarily.
       sparkClusterController.disableHealthChecks()
