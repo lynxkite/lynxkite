@@ -58,10 +58,13 @@ gulp.task('dist', ['clean:dist', 'html'], function () {
     'app/*.{png,svg}',
     'app/images/*',
     'app/bower_components/zeroclipboard/dist/ZeroClipboard.swf',
-    'app/bower_components/bootstrap/dist/fonts/*',
     'app/**/*.html', '!app/index.html',
-  ], { base: 'app' });
-  return merge(dynamicFiles, staticFiles)
+    ], { base: 'app' });
+  // Move Bootstrap fonts to where the relative URLs will find it.
+  var fonts = gulp.src([
+    'app/bower_components/bootstrap/dist/fonts/*',
+    ], { base: 'app/bower_components/bootstrap/dist' });
+  return merge(dynamicFiles, staticFiles, fonts)
     .pipe(gulp.dest('dist'));
 });
 
