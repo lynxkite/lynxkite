@@ -336,7 +336,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   def sparkStatus(user: serving.User, req: SparkStatusRequest)(
     implicit ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
     val res = listener.future(req.syncedUntil)
-    if (watchdogEnabled) {
+    if (healthChecksEnabled) {
       res
     } else {
       res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
