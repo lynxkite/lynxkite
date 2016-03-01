@@ -37,7 +37,6 @@ trait BigGraphEnvironment extends SparkFreeEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
   def entityProgressManager = dataManager
-  var watchdogEnabled = true
 
   private lazy val uniqueId = table.DefaultSource.register(this)
   def dataFrame: spark.sql.DataFrameReader = {
