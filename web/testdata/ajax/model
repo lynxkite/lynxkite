@@ -1,6 +1,0 @@
-{
-  "method": "Linear Regression",
-  "labelName": "pear",
-  "details": "model details",
-  "featureNames": ["apple", "orange"]
-}

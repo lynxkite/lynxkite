@@ -6,6 +6,8 @@
 //   gulp test       # Protractor tests.
 //   gulp test:serve # Protractor tests against the server started with "gulp serve".
 'use strict';
+var LynxKitePort = process.env.PORT || 2200;
+var ProxyPort = 9090;
 var browserSync = require('browser-sync').create();
 var spawn = require('child_process').spawn;
 var del = require('del');
@@ -108,6 +110,7 @@ gulp.task('serve', ['quick'], function() {
     res.end();
   });
   browserSync.init({
+    port: ProxyPort,
     server: ['.tmp', 'app'],
     ghostMode: false,
     online: false,
@@ -116,7 +119,7 @@ gulp.task('serve', ['quick'], function() {
   function (err, bs) {
     bs.addMiddleware('*',
       function proxyMiddleware (req, res) {
-        proxy.web(req, res, { target: 'http://localhost:2200' });
+        proxy.web(req, res, { target: 'http://localhost:' + LynxKitePort });
       }
     );
   });
@@ -132,23 +135,24 @@ gulp.task('webdriver-update', function(done) {
     { stdio: 'inherit' }).once('close', done);
 });
 
-function runProtractor(args, done) {
+function runProtractor(port, done) {
   glob(protractorDir + 'selenium/selenium-server-standalone-*.jar', function(err, jars) {
     var jar = jars[jars.length - 1]; // Take the latest version.
     spawn(
       protractorDir + 'bin/protractor', [
       'test/protractor.conf.js',
-      '--seleniumServerJar', jar].concat(args),
+      '--seleniumServerJar', jar,
+      '--baseUrl', 'http://localhost:' + port + '/'],
       { stdio: 'inherit' }).once('close', done);
   });
 }
 
 gulp.task('test', ['webdriver-update'], function(done) {
-  runProtractor([], done);
+  runProtractor(LynxKitePort, done);
 });
 
 gulp.task('test:serve', ['webdriver-update'], function(done) {
-  runProtractor(['--baseUrl', 'http://localhost:3000/'], done);
+  runProtractor(ProxyPort, done);
 });
 
 gulp.task('default', ['jshint', 'asciidoctor', 'dist']);

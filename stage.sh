@@ -4,8 +4,8 @@ set -x
 set -e
 
 pushd web
-npm install
-bower install
+bower install --silent --config.interactive=false
+npm install --silent
 gulp
 popd
 
