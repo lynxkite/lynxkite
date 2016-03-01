@@ -2,7 +2,6 @@
 exports.config = {
   framework: 'jasmine2',
   directConnect: true,
-  baseUrl: 'http://localhost:2200/',
   specs: ['declarative.js'],
   // The real backend can be real slow.
   getPageTimeout: 120000,
