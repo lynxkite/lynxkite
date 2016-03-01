@@ -1,12 +1,15 @@
 // This is the build configuration for the frontend stuff.
 //
 // Commands:
-//   gulp           # Build everything in the "dist" directory.
-//   gulp serve     # Start an auto-updating server.
-//   gulp quick     # The quick part of the build, creating its output in ".tmp".
-
+//   gulp            # Build everything in the "dist" directory.
+//   gulp serve      # Start an auto-updating server backed by the real LynxKite.
+//   gulp test       # Protractor tests.
+//   gulp test:serve # Protractor tests against the server started with "gulp serve".
+'use strict';
 var browserSync = require('browser-sync').create();
+var spawn = require('child_process').spawn;
 var del = require('del');
+var glob = require('glob');
 var gulp = require('gulp');
 var httpProxy = require('http-proxy');
 var merge = require('merge-stream');
@@ -14,6 +17,7 @@ var wiredep = require('wiredep').stream;
 var $ = require('gulp-load-plugins')();
 
 gulp.task('asciidoctor', function () {
+  // jshint camelcase: false
   var help = gulp.src('app/help/index.asciidoc')
     .pipe($.asciidoctor({
       base_dir: 'app/help',
@@ -44,18 +48,19 @@ gulp.task('html', ['css', 'js'], function () {
 });
 
 gulp.task('dist', ['clean:dist', 'html'], function () {
-  var dynamic = gulp.src('.tmp/**/*.html')
+  var dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref())
     .pipe($.if('*.js', $.uglify()))
     .pipe($.if(['**/*', '!**/*.html'], $.rev()))
-    .pipe($.revReplace());
-  var static = gulp.src([
+    .pipe($.revReplace())
+    .pipe($.size({ showFiles: true, gzip: true }));
+  var staticFiles = gulp.src([
     'app/*.{png,svg}',
     'app/images/*',
     'app/bower_components/zeroclipboard/dist/ZeroClipboard.swf',
     'app/bower_components/bootstrap/dist/fonts/*',
   ]);
-  return merge(dynamic, static)
+  return merge(dynamicFiles, staticFiles)
     .pipe(gulp.dest('dist'));
 });
 
@@ -81,7 +86,7 @@ gulp.task('js', function () {
 });
 
 gulp.task('jshint', function() {
-  return gulp.src('app/scripts/**/*.js')
+  return gulp.src(['app/scripts/**/*.js', 'gulpfile.js', 'test/**/*.js'])
     .pipe($.jshint())
     .pipe($.jshint.reporter('default'));
 });
@@ -107,11 +112,36 @@ gulp.task('serve', ['quick'], function() {
       }
     );
   });
-
   gulp.watch('app/styles/*.scss', ['sass']);
-  gulp.watch('app/scripts/**/*.js', ['js']);
+  gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
   gulp.watch('app/*.html', ['html']);
 });
 
+var protractorDir = 'node_modules/protractor/';
+gulp.task('webdriver-update', function(done) {
+  spawn(
+    protractorDir + 'bin/webdriver-manager', ['update'],
+    { stdio: 'inherit' }).once('close', done);
+});
+
+function runProtractor(args, done) {
+  glob(protractorDir + 'selenium/selenium-server-standalone-*.jar', function(err, jars) {
+    var jar = jars[jars.length - 1]; // Take the latest version.
+    spawn(
+      protractorDir + 'bin/protractor', [
+      'test/protractor.conf.js',
+      '--seleniumServerJar', jar].concat(args),
+      { stdio: 'inherit' }).once('close', done);
+  });
+}
+
+gulp.task('test', ['webdriver-update'], function(done) {
+  runProtractor([], done);
+});
+
+gulp.task('test:serve', ['webdriver-update'], function(done) {
+  runProtractor(['--baseUrl', 'http://localhost:3000/'], done);
+});
+
 gulp.task('default', ['jshint', 'asciidoctor', 'dist']);
-gulp.task('quick', ['html']);
+gulp.task('quick', ['jshint', 'html']);
