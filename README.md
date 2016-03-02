@@ -73,6 +73,10 @@ the same time.) Run `VERBOSE=true gulp test` to enable verbose mode, which print
 it goes. Run `gulp test:serve` to run the tests against the development proxy. This allows for quick
 iteration against tests.
 
+By default LynxKite runs on port 2200 and `gulp test` and `gulp serve` look for it on this port. If
+you run LynxKite on a different port (say 1234), run `PORT=1234 gulp test` and `PORT=1234 gulp
+test`.
+
 The Protractor tests pop up an actual browser. If you want to avoid this, use `xvfb-run gulp test`.
 This will run the frontend tests in a virtual framebuffer. (In Ubuntu `xfvb-run` is available in
 package `xvfb`.)
