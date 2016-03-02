@@ -6,8 +6,12 @@
 //   gulp test       # Protractor tests.
 //   gulp test:serve # Protractor tests against the server started with "gulp serve".
 'use strict';
+
+// Port for LynxKite.
 var LynxKitePort = process.env.PORT || 2200;
+// Port for the development proxy.
 var ProxyPort = 9090;
+
 var browserSync = require('browser-sync').create();
 var spawn = require('child_process').spawn;
 var del = require('del');
@@ -19,6 +23,7 @@ var merge = require('merge-stream');
 var wiredep = require('wiredep').stream;
 var $ = require('gulp-load-plugins')();
 
+// Builds HTML files from AsciiDoctor documentation.
 gulp.task('asciidoctor', function () {
   // jshint camelcase: false
   var help = gulp.src('app/help/index.asciidoc')
@@ -39,6 +44,7 @@ gulp.task('asciidoctor', function () {
     .pipe(gulp.dest('.tmp'));
 });
 
+// Preprocesses HTML files.
 gulp.task('html', ['css', 'js'], function () {
   var css = gulp.src('.tmp/**/*.css', { read: false });
   var js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
@@ -50,7 +56,10 @@ gulp.task('html', ['css', 'js'], function () {
     .pipe(browserSync.stream());
 });
 
-gulp.task('dist', ['clean:dist', 'html'], function () {
+// Performs the final slow steps for creating the ultimate files that are included in LynxKite.
+// All the other tasks create intermediate outputs in .tmp. This task takes files from app and .tmp,
+// optimizes them, and saves them in dist.
+gulp.task('dist', ['clean:dist', 'asciidoctor', 'html'], function () {
   var beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
   var dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref({}, beforeConcat))
@@ -65,7 +74,7 @@ gulp.task('dist', ['clean:dist', 'html'], function () {
     'app/bower_components/zeroclipboard/dist/ZeroClipboard.swf',
     'app/**/*.html', '!app/index.html',
     ], { base: 'app' });
-  // Move Bootstrap fonts to where the relative URLs will find it.
+  // Move Bootstrap fonts to where the relative URLs will find them.
   var fonts = gulp.src([
     'app/bower_components/bootstrap/dist/fonts/*',
     ], { base: 'app/bower_components/bootstrap/dist' });
@@ -73,6 +82,7 @@ gulp.task('dist', ['clean:dist', 'html'], function () {
     .pipe(gulp.dest('dist'));
 });
 
+// Compiles SCSS files into CSS.
 gulp.task('sass', function () {
   return gulp.src('app/styles/*.scss')
     .pipe($.sass().on('error', $.sass.logError))
@@ -80,6 +90,7 @@ gulp.task('sass', function () {
     .pipe(browserSync.stream());
 });
 
+// Preprocesses CSS files.
 gulp.task('css', ['sass'], function () {
   return gulp.src('app/styles/*.css')
     .pipe($.autoprefixer())
@@ -87,6 +98,7 @@ gulp.task('css', ['sass'], function () {
     .pipe(browserSync.stream());
 });
 
+// Preprocesses JavaScript files.
 gulp.task('js', function () {
   return gulp.src('app/scripts/**/*.js')
     .pipe($.ngAnnotate())
@@ -94,16 +106,23 @@ gulp.task('js', function () {
     .pipe(browserSync.stream());
 });
 
+// Lints JavaScript files.
 gulp.task('jshint', function() {
   return gulp.src(['app/scripts/**/*.js', 'gulpfile.js', 'test/**/*.js'])
     .pipe($.jshint())
     .pipe($.jshint.reporter('default'));
 });
 
+// Deletes dist.
 gulp.task('clean:dist', function() {
   return del('dist');
 });
 
+// Starts a development proxy.
+// It connects to a real LynxKite server and forwards the AJAX requests to LynxKite. But it
+// overlays the frontend files in .tmp, and watches the source files. Whenever you edit a source
+// file, the right build task is run, and the browser automatically reloads the page. The proxy then
+// serves the modified files. Very good for development.
 gulp.task('serve', ['quick'], function() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
@@ -132,12 +151,14 @@ gulp.task('serve', ['quick'], function() {
 });
 
 var protractorDir = 'node_modules/protractor/';
+// Checks for webdriver updates.
 gulp.task('webdriver-update', function(done) {
   spawn(
     protractorDir + 'bin/webdriver-manager', ['update'],
     { stdio: 'inherit' }).once('close', done);
 });
 
+// Runs Protractor against a given port.
 function runProtractor(port, done) {
   glob(protractorDir + 'selenium/selenium-server-standalone-*.jar', function(err, jars) {
     var jar = jars[jars.length - 1]; // Take the latest version.
@@ -150,13 +171,18 @@ function runProtractor(port, done) {
   });
 }
 
+// Runs the Protractor tests against LynxKite.
 gulp.task('test', ['webdriver-update'], function(done) {
   runProtractor(LynxKitePort, done);
 });
 
+// Runs the Protractor tests against a development proxy. (You have to start the proxy first.)
 gulp.task('test:serve', ['webdriver-update'], function(done) {
   runProtractor(ProxyPort, done);
 });
 
-gulp.task('default', ['jshint', 'asciidoctor', 'dist']);
+// The default task builds dist.
+gulp.task('default', ['jshint', 'dist']);
+
+// A quicker build that populates .tmp.
 gulp.task('quick', ['jshint', 'html']);
