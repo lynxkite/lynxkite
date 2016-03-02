@@ -30,6 +30,7 @@ class StaticSparkContextProvider() extends SparkContextProvider {
 trait SparkFreeEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def entityProgressManager: graph_api.EntityProgressManager
+  def sqlHelper: spark_util.SQLHelper
 }
 
 trait BigGraphEnvironment extends SparkFreeEnvironment {
@@ -62,7 +63,14 @@ object BigGraphEnvironmentImpl {
       sparkContext <- sparkContextFuture
       metaGraphManager <- metaGraphManagerFuture
       dataManager <- dataManagerFuture
-    } yield new BigGraphEnvironmentImpl(sparkContext, metaGraphManager, dataManager)
+    } yield new BigGraphEnvironmentImpl(
+      sparkContext,
+      metaGraphManager,
+      dataManager,
+      new spark_util.SQLHelper(
+        sparkContext,
+        metaGraphManager,
+        dataManager))
     Await.result(envFuture, Duration.Inf)
   }
 
@@ -86,7 +94,8 @@ object BigGraphEnvironmentImpl {
 case class BigGraphEnvironmentImpl(
   sparkContext: spark.SparkContext,
   metaGraphManager: graph_api.MetaGraphManager,
-  dataManager: graph_api.DataManager) extends BigGraphEnvironment
+  dataManager: graph_api.DataManager,
+  sqlHelper: spark_util.SQLHelper) extends BigGraphEnvironment
 
 class RepositoryDirs(
     val metaDir: String,

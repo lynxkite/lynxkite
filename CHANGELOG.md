@@ -5,10 +5,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
-
  - A collection of goal oriented LynxKite lessons (the "LynxKite Academy") is now available for
    testing. You can find it at `/#/academy`. Any feedback is much appreciated!
  - Fixed data export in Amazon EMR.
+ - SQL query results can be saved as segmentations.
 
 ### 1.7.2
 

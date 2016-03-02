@@ -217,26 +217,15 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
-  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
-    val tables = metaManager.synchronized {
+  // Creates a DataFrame from an SQL query
+  // See also: SQLHelper.getDataFrame
+  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame =
+    metaManager.synchronized {
       val p = SubProject.parsePath(spec.project)
       assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
-
-      val v = p.viewer
-      v.allRelativeTablePaths.map {
-        path => (path.toString -> Table(path, v))
-      }
+      env.sqlHelper.getDataFrame(p.viewer, spec.sql)
     }
-    // Every query runs in its own SQLContext for isolation.
-    val sqlContext = dataManager.newSQLContext()
-    for ((tableName, table) <- tables) {
-      table.toDF(sqlContext).registerTempTable(tableName)
-    }
-
-    log.info(s"Trying to execute query: ${spec.sql}")
-    sqlContext.sql(spec.sql)
-  }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = dfFromSpec(user, request.df)

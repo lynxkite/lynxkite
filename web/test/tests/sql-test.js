@@ -24,6 +24,25 @@ module.exports = function(fw) {
       left.toggleSqlBox();
     });
 
+  fw.transitionTest(
+    'test-example project with example graph',
+    'SQL creating segmentation works',
+    function() {
+      left.toggleSqlBox();
+      left.runSql('select age, gender, name from vertices');
+      left.startSqlSaving();
+
+      // Choose in-project table format, and save.
+      left.side.element(by.css('#exportFormat option[value="segmentation"]')).click();
+      left.side.element(by.css('#exportKiteTable')).sendKeys('exported_table');
+      left.executeSqlSaving();
+      lib.left.openSegmentation('exported_table');
+      expect(lib.right.segmentCount()).toEqual(4);
+      expect(lib.right.vertexAttribute('age').isPresent()).toBe(true);
+      expect(lib.right.vertexAttribute('gender').isPresent()).toBe(true);
+      expect(lib.right.vertexAttribute('name').isPresent()).toBe(true);
+    }, function() {});
+
   fw.statePreservingTest(
     'test-example project with example graph',
     'SQL works for edge attributes',
