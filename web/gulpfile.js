@@ -14,6 +14,7 @@ var del = require('del');
 var glob = require('glob');
 var gulp = require('gulp');
 var httpProxy = require('http-proxy');
+var lazypipe = require('lazypipe');
 var merge = require('merge-stream');
 var wiredep = require('wiredep').stream;
 var $ = require('gulp-load-plugins')();
@@ -50,12 +51,14 @@ gulp.task('html', ['css', 'js'], function () {
 });
 
 gulp.task('dist', ['clean:dist', 'html'], function () {
+  var beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
   var dynamicFiles = gulp.src('.tmp/**/*.html')
-    .pipe($.useref())
+    .pipe($.useref({}, beforeConcat))
     .pipe($.if('*.js', $.uglify()))
     .pipe($.if(['**/*', '!**/*.html'], $.rev()))
     .pipe($.revReplace())
-    .pipe($.size({ showFiles: true, gzip: true }));
+    .pipe($.size({ showFiles: true, gzip: true }))
+    .pipe($.sourcemaps.write('maps'));
   var staticFiles = gulp.src([
     'app/*.{png,svg}',
     'app/images/*',
