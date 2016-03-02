@@ -10,6 +10,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) with GlobalSettings {
   override def onBadRequest(request: RequestHeader, error: String) = {
@@ -37,7 +38,7 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
     try {
       Await.result(notifier, 5.seconds)
     } catch {
-      case _: Throwable => println("Timeout - starter script could have been killed")
+      case _: Throwable => log.info("Timeout - starter script could have been killed")
     }
   }
 
