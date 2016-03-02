@@ -2992,6 +2992,44 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Create segmentation from SQL", new StructureOperation(_, _) with SegOp {
+    override def parameters = List(
+      Param("name", "Name"),
+      Code("sql", "SQL", defaultValue = "select * from vertices"))
+    def segmentationParameters = List()
+    def enabled = FEStatus.assert(true, "")
+
+    def apply(params: Map[String, String]) = {
+      val sql = params("sql")
+      val inputTables = env.sqlHelper.getInputColumns(project.viewer, sql)
+      val dataFrame = env.sqlHelper.getDataFrame(project.viewer, sql)
+      val op = new graph_operations.ExecuteSQL(
+        sql,
+        inputTables.map {
+          case (tableName, columnList) =>
+            (tableName, columnList.map(_._2))
+        },
+        dataFrame.schema)
+      var opBuilder = op()
+      for ((tableName, columns) <- inputTables) {
+        for ((guid, columnName) <- columns) {
+          val attrKey = op.tableColumns(tableName)(columnName)
+          val attrEntity = env
+            .metaGraphManager
+            .attribute(guid)
+            .asInstanceOf[Attribute[Any]]
+          opBuilder = opBuilder(attrKey, attrEntity)
+        }
+      }
+      val tableResult = opBuilder.result
+      val table = project.segmentation(params("name"))
+      table.vertexSet = tableResult.ids
+      for ((name, column) <- tableResult.columns) {
+        table.newVertexAttribute(name, column)
+      }
+    }
+  })
+
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, segmentation.belongsTo.reverse).result.outDegree

@@ -10,7 +10,6 @@ import org.apache.spark.sql.types
 import scala.reflect.runtime.universe.TypeTag
 
 object ImportDataFrame extends OpFromJson {
-  type SomeAttribute = Attribute[_]
 
   def toSymbol(field: types.StructField) = Symbol("imported_column_" + field.name)
 
@@ -55,6 +54,21 @@ object ImportDataFrame extends OpFromJson {
       field => field.name -> attributeFromField(ids, field)
     }.toMap
   }
+
+  def toNumberedLines(df: DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
+    val numRows = df.count()
+    val maxRows = Limitations.maxImportedLines
+    if (maxRows >= 0) {
+      if (numRows > maxRows) {
+        throw new AssertionError(
+          s"Can't import $numRows lines as your licence only allows $maxRows.")
+      }
+    }
+    val partitioner = rc.partitionerForNRows(numRows)
+    import com.lynxanalytics.biggraph.spark_util.Implicits._
+    df.rdd.randomNumbered(partitioner).mapValues(_.toSeq)
+  }
+
   def fromJson(j: JsValue) = new ImportDataFrame(
     types.DataType.fromJson((j \ "schema").as[String]).asInstanceOf[types.StructType],
     None,
@@ -86,21 +100,6 @@ class ImportDataFrame private (
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(schema)(instance)
   override def toJson = Json.obj("schema" -> schema.prettyJson, "timestamp" -> timestamp)
 
-  private def toNumberedLines(rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
-    val df = inputFrame.get
-    val numRows = df.count()
-    val maxRows = Limitations.maxImportedLines
-    if (maxRows >= 0) {
-      if (numRows > maxRows) {
-        throw new AssertionError(
-          s"Can't import $numRows lines as your licence only allows $maxRows.")
-      }
-    }
-    val partitioner = rc.partitionerForNRows(numRows)
-    import com.lynxanalytics.biggraph.spark_util.Implicits._
-    df.rdd.randomNumbered(partitioner).mapValues(_.toSeq)
-  }
-
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
@@ -116,6 +115,6 @@ class ImportDataFrame private (
     val entitiesByName = entities.map(e => (e.name, e): (Symbol, Attribute[_])).toMap
     val inOrder = schema.map(f => entitiesByName(toSymbol(f)))
 
-    rc.ioContext.writeAttributes(inOrder, toNumberedLines(rc))
+    rc.ioContext.writeAttributes(inOrder, toNumberedLines(inputFrame.get, rc))
   }
 }

@@ -22,7 +22,7 @@ trait Table {
       case (name, attr) =>
         spark.sql.types.StructField(
           name = name,
-          dataType = dfType(attr.typeTag))
+          dataType = Table.dfType(attr.typeTag))
     }
     spark.sql.types.StructType(fields)
   }
@@ -41,25 +41,12 @@ trait Table {
     checkpointedState.checkpoint.get
   }
 
-  private def supportedDFType[T: TypeTag]: Option[spark.sql.types.DataType] = {
-    try {
-      Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
-    } catch {
-      case _: UnsupportedOperationException => None
-    }
-  }
-
-  private def dfType[T: TypeTag]: spark.sql.types.DataType = {
-    // Convert unsupported types to string.
-    supportedDFType[T].getOrElse(spark.sql.types.StringType)
-  }
-
   // Returns the RDD for the attribute, if it is a supported DataFrame type.
   // Unsupported types are converted to string.
   def columnForDF(name: String)(implicit dm: DataManager): AttributeRDD[_] = {
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     val col = columns(name)
-    if (supportedDFType(col.typeTag).isDefined) col.rdd
+    if (Table.supportedDFType(col.typeTag).isDefined) col.rdd
     else col.rdd.mapValues(_.toString)
   }
 }
@@ -113,6 +100,19 @@ object Table {
       case customTableName: String =>
         throw new AssertionError(s"Table $customTableName not found.")
     }
+  }
+
+  private def supportedDFType[T: TypeTag]: Option[spark.sql.types.DataType] = {
+    try {
+      Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
+    } catch {
+      case _: UnsupportedOperationException => None
+    }
+  }
+
+  def dfType[T: TypeTag]: spark.sql.types.DataType = {
+    // Convert unsupported types to string.
+    supportedDFType[T].getOrElse(spark.sql.types.StringType)
   }
 }
 
