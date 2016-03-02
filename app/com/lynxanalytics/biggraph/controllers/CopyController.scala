@@ -30,7 +30,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       dm.waitAllFutures() // We don't want other operations to be running during s3copy.
       // Health checks would fail anyways because we are locking too long on dataManager here.
       // So we turn them off temporarily.
-      sparkClusterController.disableHealthChecks()
+      sparkClusterController.forceReportHealthy = true
       try {
         for (ephemeralPath <- dm.ephemeralPath) {
           log.info(s"Listing contents of $ephemeralPath...")
@@ -58,7 +58,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
           log.info(s"Copied ${copies.size} files.")
         }
       } finally {
-        sparkClusterController.enableHealthChecks()
+        sparkClusterController.forceReportHealthy = false
       }
     }
   }
