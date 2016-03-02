@@ -123,7 +123,7 @@ gulp.task('serve', ['quick'], function() {
       }
     );
   });
-  gulp.watch('app/styles/*.scss', ['sass']);
+  gulp.watch('app/styles/*.{,s}css', ['css']);
   gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
   gulp.watch('app/**/*.html', ['html']);
 });
