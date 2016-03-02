@@ -14,7 +14,7 @@
     "drop": "1.4.0",
     "es5-shim": "4.5.2",
     "es6-shim": "0.34.2",
-    "jquery": "2.2.1",
+    "jquery": "2.1.4",
     "json3": "3.3.2",
     "threejs": "jiyinyiyong/three.js#0.71.0",
     "threestrap": "0.0.10",
@@ -31,7 +31,7 @@
   "overrides": {
     "angular": {
       "dependencies": {
-        "jquery": "2.2.1"
+        "jquery": "2.1.4"
       }
     },
     "ace-builds": {
