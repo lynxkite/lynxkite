@@ -311,9 +311,9 @@ class KiteMonitorThread(
 }
 
 class SparkClusterController(environment: BigGraphEnvironment) {
-  // The health checks are always running, but if the below flag is false, then their results
+  // The health checks are always running, but if the below flag is true, then their results
   // are going to be ignored.
-  var forceReportHealthy = false
+  private var forceReportHealthy = false
   val sc = environment.sparkContext
   val listener = new KiteListener
   sc.addSparkListener(listener)
@@ -333,10 +333,18 @@ class SparkClusterController(environment: BigGraphEnvironment) {
       .getOrElse(10 * 1000))
   monitor.start()
 
+  def setForceReportHealthy(value: Boolean): Unit = synchronized {
+    forceReportHealthy = value
+  }
+
+  def getForceReportHealthy(): Boolean = synchronized {
+    forceReportHealthy
+  }
+
   def sparkStatus(user: serving.User, req: SparkStatusRequest)(
     implicit ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
     val res = listener.future(req.syncedUntil)
-    if (!forceReportHealthy) {
+    if (!getForceReportHealthy) {
       res
     } else {
       res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
@@ -349,7 +357,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def checkSparkOperational(): Unit = {
-    if (!forceReportHealthy) {
+    if (!getForceReportHealthy) {
       val res = listener.getCurrentResponse
       assert(res.kiteCoreWorking && res.sparkWorking)
     }
