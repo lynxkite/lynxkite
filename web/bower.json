@@ -29,6 +29,11 @@
     "angular": "1.4.4"
   },
   "overrides": {
+    "angular": {
+      "dependencies": {
+        "jquery": "2.1.4"
+      }
+    },
     "ace-builds": {
       "main": [
         "src-min-noconflict/ace.js",

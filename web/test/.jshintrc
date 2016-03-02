@@ -25,6 +25,7 @@
     "before": false,
     "beforeEach": false,
     "browser": false,
+    "by": false,
     "describe": false,
     "expect": false,
     "inject": false,

@@ -34,7 +34,5 @@ trap kill_backend EXIT
 echo "Kite running on port: $PORT"
 
 cd web
-# Make sure the webdriver is installed.
-node node_modules/protractor/bin/webdriver-manager update
 # Run test against backend.
-grunt test --port=$PORT "$@"
+PORT=$PORT gulp test

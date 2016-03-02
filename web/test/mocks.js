@@ -1,3 +1,4 @@
+'use strict';
 module.exports = {
   addTo: function(browser) {
     browser.addMockModule('biggraph', function() {
@@ -9,7 +10,7 @@ module.exports = {
         })
         .service('dropTooltipConfig', function() {
           this.enabled = false;
-        })
+        });
     });
   },
 };

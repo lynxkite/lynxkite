@@ -38,11 +38,11 @@ var fw = (function UIDescription() {
       states[stateName] = {
         parent: previousStateName,
         mustBeReached: function() {
-          if (!soloMode) return true;
-          if (solo) return true;
+          if (!soloMode) { return true; }
+          if (solo) { return true; }
           var tests = statePreservingTests[stateName] || [];
           for (var j = 0; j < tests.length; ++j) {
-            if (tests[j].solo) return true;
+            if (tests[j].solo) { return true; }
           }
           return false;
         },
@@ -92,8 +92,8 @@ var fw = (function UIDescription() {
       // statesToReach.
       var statesAutomaticallyReached = {};
       function markParentsAutomaticallyReached(stateName) {
-        var state = states[stateName]
-        var parent = state.parent
+        var state = states[stateName];
+        var parent = state.parent;
         if (parent !== undefined) {
           if (!statesAutomaticallyReached[parent]) {
             statesAutomaticallyReached[parent] = true;
@@ -102,16 +102,17 @@ var fw = (function UIDescription() {
         }
       }
 
-      for (var i = 0; i < stateNames.length; i++) {
-        var stateName = stateNames[i];
+      var i, stateName;
+      for (i = 0; i < stateNames.length; i++) {
+        stateName = stateNames[i];
         var state = states[stateName];
         if (state.mustBeReached()) {
           statesToReach.push(stateName);
           markParentsAutomaticallyReached(stateName);
         }
       }
-      for (var i = 0; i < statesToReach.length; i++) {
-        var stateName = statesToReach[i];
+      for (i = 0; i < statesToReach.length; i++) {
+        stateName = statesToReach[i];
         if (!statesAutomaticallyReached[stateName]) {
           states[stateName].reachAndTest();
         }
@@ -167,7 +168,7 @@ try {
   var stats = fs.lstatSync(userContentDir);
   if (stats.isDirectory()) {
     screenshotDir = userContentDir + '/';
-    userVisiblePrefix = 'http://' + require("os").hostname() + ':8888/userContent/';
+    userVisiblePrefix = 'http://' + require('os').hostname() + ':8888/userContent/';
   }
 } catch (e) {
 }
