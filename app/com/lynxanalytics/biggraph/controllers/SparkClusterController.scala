@@ -313,7 +313,7 @@ class KiteMonitorThread(
 class SparkClusterController(environment: BigGraphEnvironment) {
   // The health checks are always running, but if the below flag is false, then their results
   // are going to be ignored.
-  var healthChecksEnabled = true
+  var forceReportHealthy = false
   val sc = environment.sparkContext
   val listener = new KiteListener
   sc.addSparkListener(listener)
@@ -336,7 +336,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   def sparkStatus(user: serving.User, req: SparkStatusRequest)(
     implicit ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
     val res = listener.future(req.syncedUntil)
-    if (healthChecksEnabled) {
+    if (!forceReportHealthy) {
       res
     } else {
       res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
@@ -348,16 +348,8 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     sc.cancelAllJobs()
   }
 
-  def disableHealthChecks(): Unit = {
-    healthChecksEnabled = false
-  }
-
-  def enableHealthChecks(): Unit = {
-    healthChecksEnabled = true
-  }
-
   def checkSparkOperational(): Unit = {
-    if (healthChecksEnabled) {
+    if (!forceReportHealthy) {
       val res = listener.getCurrentResponse
       assert(res.kiteCoreWorking && res.sparkWorking)
     }
