@@ -7,7 +7,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     scope: {
       param: '=', // Parameters of the available models.
       editable: '=', // Whether this input is editable.
-      modelJson: '=model', // Input/output: Model configuration in JSON.
+      modelJson: '=', // Input/output: Model configuration in JSON.
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {
