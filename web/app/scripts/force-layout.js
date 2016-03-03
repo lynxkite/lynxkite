@@ -20,7 +20,7 @@ var FORCE_LAYOUT = (function() {
     return changed;
   };
   lib.Engine.prototype.calculate = function(vertices) {
-    var a, b, dx, dy, i, j;
+    var a, b, dx, dy, i, j, v;
     var maxDist = 0;  // Max. distance from center along one coordinate.
     var edgeCount = (vertices.edges || []).length;
     if (vertices.vs.length <= 1) {
@@ -90,7 +90,7 @@ var FORCE_LAYOUT = (function() {
     }
     var totalChange = 0;
     for (i = 0; i < vertices.vs.length; ++i) {
-      var v = vertices.vs[i];
+      v = vertices.vs[i];
       if (v.held || v.frozen || v.positioned) {
         // Cancel movement.
         v.x = v.forceOX;

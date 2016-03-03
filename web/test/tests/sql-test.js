@@ -1,6 +1,5 @@
 'use strict';
 
-/* global element, by */
 var lib = require('../test-lib.js');
 var left = lib.left;
 var right = lib.right;
@@ -12,7 +11,7 @@ module.exports = function(fw) {
     function() {
       left.toggleSqlBox();
       left.runSql();
-    
+
       left.expectSqlResult(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         [
@@ -140,7 +139,7 @@ module.exports = function(fw) {
         'select name, age, gender, income from vertices');
       left.startSqlSaving();
       left.side.$('#exportFormat option[value="parquet"]').click();
-      var fileName = 'UPLOAD$/example.' + process.pid + '.parquet'
+      var fileName = 'UPLOAD$/example.' + process.pid + '.parquet';
       left.side.$('#export-parquet-path').sendKeys(fileName);
       left.executeSqlSaving();
 

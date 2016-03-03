@@ -116,12 +116,12 @@ module.exports = function(fw) {
       pickButton.click();
       pickButton.click();
       pickExpandButton.click();
-      expect(pickOffset.getAttribute("value")).toBe('4');
+      expect(pickOffset.getAttribute('value')).toBe('4');
       pickOffset.clear();
       pickOffset.sendKeys('40');
       pickButton.click();
       pickButton.click();
-      expect(pickOffset.getAttribute("value")).toBe('42');
+      expect(pickOffset.getAttribute('value')).toBe('42');
       pickExpandButton.click();
 
       // Restore original state.
