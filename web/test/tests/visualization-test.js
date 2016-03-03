@@ -292,7 +292,6 @@ module.exports = function(fw) {
           ]);
       });
       var slider = lib.left.attributeSlider('age');
-      /* global protractor */
       var K = protractor.Key;
 
       slider.sendKeys(K.HOME);

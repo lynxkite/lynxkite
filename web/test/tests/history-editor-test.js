@@ -1,7 +1,5 @@
 'use strict';
 
-/* global by */
-
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
