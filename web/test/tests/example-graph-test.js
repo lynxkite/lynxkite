@@ -1,6 +1,5 @@
 'use strict';
 
-/* global element, by */
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
@@ -29,6 +28,6 @@ module.exports = function(fw) {
       lib.left.toggleSampledVisualization();
     },
     function() {
-      expect(element(by.css('svg.graph-view')).isDisplayed()).toBe(true);
+      expect($('svg.graph-view').isDisplayed()).toBe(true);
     });
 };
