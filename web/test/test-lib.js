@@ -1,7 +1,5 @@
 'use strict';
 
-/* global element, by, protractor */
-
 var testLib; // Forward declarations.
 var History; // Forward declarations.
 var request = require('request');
