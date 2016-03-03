@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
-import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_operations
 
 import java.util.regex.Pattern
 import play.api.libs.json
@@ -144,7 +144,7 @@ case class FEScalar(
   isInternal: Boolean,
   computeProgress: Double,
   errorMessage: Option[String],
-  computedValue: Option[DynamicValue])
+  computedValue: Option[graph_operations.DynamicValue])
 
 case class FEProjectListElement(
     name: String,
@@ -923,9 +923,27 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     op
   }
 
+  // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
+  private def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
+    updateDelta(editor, original, "vertex_count")
+    updateDelta(editor, original, "edge_count")
+    for (seg <- original.state.segmentations.keys) {
+      updateDeltas(editor.segmentation(seg), original.segmentation(seg))
+    }
+  }
+  private def updateDelta(editor: ProjectEditor, original: ProjectViewer, name: String): Unit = {
+    val before = original.scalars.get(name).map(_.runtimeSafeCast[Long])
+    val after = editor.scalars.get(name).map(_.runtimeSafeCast[Long])
+    val delta =
+      if (before.isEmpty || after.isEmpty || before == after) null
+      else graph_operations.ScalarLongDifference.run(after.get, before.get)
+    editor.scalars.set(s"!${name}_delta", delta)
+  }
+
   def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
-    val opResult = appliedOp(context, opSpec).project.rootState
-    manager.checkpointRepo.checkpointState(opResult, context.project.rootCheckpoint)
+    val editor = appliedOp(context, opSpec).project
+    updateDeltas(editor.rootEditor, original = context.project.rootViewer)
+    manager.checkpointRepo.checkpointState(editor.rootState, context.project.rootCheckpoint)
   }
 
   def apply(

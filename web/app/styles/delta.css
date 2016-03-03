@@ -1,0 +1,22 @@
+.delta {
+  display: inline-block;
+  text-align: center;
+}
+
+.delta-number {
+  font-size: 50%;
+  display: table-row;
+}
+
+.delta-increase {
+  color: rgba(0, 127, 0, 0.5);
+}
+
+.delta-decrease {
+  color: rgba(255, 0, 0, 0.5);
+}
+
+.delta-triangle {
+  font-size: 50%;
+  display: table-row;
+}
