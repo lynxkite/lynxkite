@@ -4,9 +4,9 @@ set -x
 set -e
 
 pushd web
-npm install
-bower install
-grunt
+bower install --silent --config.interactive=false
+npm install --silent
+gulp
 popd
 
 sbt stage

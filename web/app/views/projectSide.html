@@ -320,7 +320,9 @@
           ng-change="side.unsavedNotes = true"
           ng-trim="false"></textarea>
         <p class="text-right" ng-if="side.unsavedNotes">
-          <button ng-click="side.saveNotes()" ng-disabled="side.savingNotes" class="btn btn-default">{{side.savingNotes ? '...' : 'Save'}}</button>
+          <button ng-click="side.saveNotes()" ng-disabled="side.savingNotes" class="btn btn-default">
+            {{ side.savingNotes ? '...' : 'Save' }}
+          </button>
         </p>
       </li>
 

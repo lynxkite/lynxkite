@@ -55,7 +55,8 @@ module.exports = function(fw) {
         { title: '40.0', size: 100, value: 1 },
         { title: '49.0', size: 100, value: 1 },
         { title: '59.0', size: 100, value: 1 }
-    ])},
+      ]);
+    },
     function() {}
   );
 
