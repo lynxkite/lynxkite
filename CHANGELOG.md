@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Changes in vertex and edge count after an operation are reported on the UI.
+
 ### 1.7.2
 
  - SQL query results can be sorted by clicking the column headers.
