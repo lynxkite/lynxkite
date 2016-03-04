@@ -88,6 +88,7 @@ case class CSVImportRequest(
       .format("com.databricks.spark.csv")
       .option("mode", mode)
       .option("delimiter", delimiter)
+      .option("inferSchema", "true")
       // We don't want to skip lines starting with #
       .option("comment", null)
     val readerWithSchema = if (columnNames.nonEmpty) {
