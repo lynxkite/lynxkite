@@ -26,7 +26,7 @@ var $ = require('gulp-load-plugins')();
 // Builds HTML files from AsciiDoctor documentation.
 gulp.task('asciidoctor', function () {
   // jshint camelcase: false
-  var docs = ['admin-manual', 'help'];
+  var docs = ['academy', 'admin-manual', 'help'];
   var streams = [];
   for (var i = 0; i < docs.length; ++i) {
     var doc = docs[i];
