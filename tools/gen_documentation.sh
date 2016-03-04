@@ -22,12 +22,16 @@ trap kill_grunt EXIT
 while ! nc -z localhost 9090; do sleep 1; done
 echo # Add new-line after Grunt output.
 
-echo 'Generating User Guide...'
+echo 'Generating User Manual...'
 "$WKHTMLTOPDF" $WKHTML_OPT \
   'http://localhost:9090/pdf-help' 'LynxKite-User-Manual.pdf'
 
 echo 'Generating Admin Manual...'
 "$WKHTMLTOPDF" $WKHTML_OPT \
   'http://localhost:9090/pdf-admin-manual' 'LynxKite-Administrator-Manual.pdf'
+
+echo 'Generating Academy...'
+"$WKHTMLTOPDF" $WKHTML_OPT \
+  'http://localhost:9090/pdf-academy' 'LynxKite-Academy.pdf'
 
 echo 'LynxKite documentation generated successfully.'

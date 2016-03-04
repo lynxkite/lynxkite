@@ -137,12 +137,18 @@ gulp.task('serve', ['quick'], function() {
     online: false,
     notify: false,
   },
-  function (err, bs) {
-    bs.addMiddleware('*',
-      function proxyMiddleware (req, res) {
+  function(err, bs) {
+    bs.addMiddleware('',
+      function pdfMiddleware(req, res, next) {
+        if (req.url.indexOf('/pdf-') === 0) {
+          req.url = '/index.html';
+        }
+        next();
+      }, { override: true });
+    bs.addMiddleware('',
+      function proxyMiddleware(req, res) {
         proxy.web(req, res, { target: 'http://localhost:' + LynxKitePort });
-      }
-    );
+      });
   });
   gulp.watch('app/styles/*.{,s}css', ['css']);
   gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
