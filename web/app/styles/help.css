@@ -69,18 +69,18 @@ help-popup {
   display: block;
 }
 
-/* The single-page help document. */
-.users-guide {
+/* Single-page help documents. */
+.documentation {
   background: #48a;
   padding-top: 20px;
   padding-bottom: 20px;
 }
-.users-guide .container {
+.documentation .container {
   background: white;
   padding: 50px;
 }
 
-.users-guide a.anchor:before {
+.documentation a.anchor:before {
   content: "\2605  link here";
 }
 
