@@ -60,7 +60,7 @@ angular
       });
 
     // Register routing for documentation pages.
-    var docs = ['admin-manual', 'help'];
+    var docs = ['academy', 'admin-manual', 'help'];
     for (var i = 0; i < docs.length; ++i) {
       var template = '<div class="documentation">' +
         '<div documentation="' + docs[i] + '" class="help container"></div>' +
