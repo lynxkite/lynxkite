@@ -68,8 +68,8 @@ They only differ in how we define "neighboring elements". For example, in operat
 <<aggregate-to-segmentation>>, these neighboring elements are all the vertices that
 belong to the same segment (the segment being the vertex whose attribute this operation
 computes). Another example is <<aggregate-edge-attribute-to-vertices>>; in this case
-the 'neighboring elements' are the edges that leave or enter the vertex. Yet another
-example is <<aggregate-on-neighbors>>; the 'neighboring elements' here are the other
+the "neighboring elements" are the edges that leave or enter the vertex. Yet another
+example is <<aggregate-on-neighbors>>; the "neighboring elements" here are the other
 vertices connected to the vertex.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-book"></i></div></div></div>+++ Speciality operations
