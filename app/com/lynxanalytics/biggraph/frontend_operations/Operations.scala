@@ -213,7 +213,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
   abstract class DeprecatedOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Depricated operations", "red", deprecated = true, icon = "remove-sign"))
+    extends Operation(t, c, Category("Deprecated operations", "red", deprecated = true, icon = "remove-sign"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(

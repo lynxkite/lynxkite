@@ -213,7 +213,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
-        s"Neigborhood is too large to display (larger than ${request.maxSize})")
+        s"Neighborhood is too large to display (larger than ${request.maxSize})")
       neighborhood
     } else {
       centers.toSet
