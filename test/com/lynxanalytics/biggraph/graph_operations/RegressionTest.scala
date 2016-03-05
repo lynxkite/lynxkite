@@ -94,6 +94,17 @@ class RegressionTest extends FunSuite with TestGraphOp {
       Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
   }
 
+  test("Logistic regression") {
+    val prediction = {
+      val g = ExampleGraph()().result
+      val gender = DeriveJS.deriveFromAttributes[Double](
+        "(name == 'Isolated Joe' || name == 'Eve') ? 1 : 0", Seq("name" -> g.name), g.vertices).attr
+      predict("Logistic regression", gender, Seq(g.age))
+    }
+    assertRoughly(prediction,
+      Map(0L -> 0.0, 1L -> 1.0, 2L -> 0.0, 3L -> 1.0), maxError = 0.1)
+  }
+
   test("regression - age from year of birth") {
     testRegressions(
       label = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
