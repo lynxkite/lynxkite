@@ -49,7 +49,7 @@ The local temp directory is a local path that exists on all workers and the mast
 be used for storing temporary Spark/Hadoop files. This directory can potentially use a lot of
 space, so if you have a small root filesystem and an extra large drive mounted somewhere then you
 need to point this to somewhere on the large drive. On the other hand performance of this drive has
-a significant effect on overal speed, so using an SSD is a nice option here.
+a significant effect on overall speed, so using an SSD is a nice option here.
 ```
 LOCAL_TMP_DIR=/mnt/tmp
 ```

@@ -52,7 +52,7 @@ properly):
     ... `$INSTALL_DIR/tools/emr.sh start my_cluster_spec`
     ... `$INSTALL_DIR/tools/emr.sh metarestore my_cluster_spec`
     ... `$INSTALL_DIR/tools/emr.sh kite my_cluster_spec`
-    ... As you can see, stored data in S3 will be automatically used, but the stored matedata needs
+    ... As you can see, stored data in S3 will be automatically used, but the stored metadata needs
         to be taken from your local machine manually.
 
 . Once you are all done, you can permanently destroy your cluster by:
