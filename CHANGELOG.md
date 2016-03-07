@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - A collection of goal oriented LynxKite lessons (the "LynxKite Academy") is now available for
+   testing. You can find it at `/#/academy`. Any feedback is much appreciated!
+
 ### 1.7.2
 
  - SQL query results can be sorted by clicking the column headers.

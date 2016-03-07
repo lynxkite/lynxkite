@@ -1,47 +1,9 @@
 // Displays help content by ID.
 'use strict';
 
-// Loads and preprocesses the help pages.
-angular.module('biggraph').factory('helpContent', function($http) {
-  var html = $http.get('/help.html', { cache: true });
-  var dom = html.then(function success(response) {
-    /* global $ */
-    var dom = $($.parseHTML('<div><div id="whole-help">' + response.data + '</div></div>'));
-
-    // Move heading IDs to sectionbody divs.
-    dom.find('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6').each(function(i, div) {
-      div = angular.element(div);
-      var heading = div.children('[id]').first();
-      div.attr('id', heading.attr('id'));
-      heading.attr('id', '');
-    });
-    // Move anchor IDs inside <dt> to the next <dd>.
-    dom.find('dt > a[id]').each(function(i, a) {
-      a = angular.element(a);
-      var dd = a.parent().next('dd');
-      var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6');
-      var id = section.attr('id') + '-' + a.attr('id');
-      dd.attr('id', id);
-      a.attr('id', '');
-    });
-    // Make cross-references relative to #/help. (Except in PDF mode.)
-    if (location.pathname.indexOf('/pdf-') !== 0) {
-      dom.find('a[href]').each(function(i, a) {
-        a = angular.element(a);
-        var href = a.attr('href');
-        if (href[0] === '#') {
-          a.attr('href', '#/help' + href);
-        }
-      });
-    }
-    return dom;
-  });
-  return dom;
-});
-
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
 angular.module('biggraph').directive('helpId',
-    function(helpContent, $compile, $anchorScroll, util) {
+    function(documentation, $compile, $anchorScroll, util) {
   return {
     restrict: 'A',
     scope: {
@@ -54,7 +16,7 @@ angular.module('biggraph').directive('helpId',
         return id.match('^workflows/');
       }
       element.addClass('help');
-      helpContent.then(function(helpContent) {
+      documentation('help').then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
         if (isUserWorkflowId(id)) {
           element.empty();

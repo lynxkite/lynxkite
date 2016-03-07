@@ -26,21 +26,20 @@ var $ = require('gulp-load-plugins')();
 // Builds HTML files from AsciiDoctor documentation.
 gulp.task('asciidoctor', function () {
   // jshint camelcase: false
-  var help = gulp.src('app/help/index.asciidoc')
-    .pipe($.asciidoctor({
-      base_dir: 'app/help',
-      safe: 'safe',
-      header_footer: false,
-    }))
-    .pipe($.rename('help.html'));
-  var admin = gulp.src('app/admin-manual/index.asciidoc')
-    .pipe($.asciidoctor({
-      base_dir: 'app/admin-manual',
-      safe: 'safe',
-      header_footer: false,
-    }))
-    .pipe($.rename('admin-manual.html'));
-  return merge(help, admin)
+  var docs = ['academy', 'admin-manual', 'help'];
+  var streams = [];
+  for (var i = 0; i < docs.length; ++i) {
+    var doc = docs[i];
+    var stream = gulp.src('app/' + doc + '/index.asciidoc')
+      .pipe($.asciidoctor({
+        base_dir: 'app/' + doc,
+        safe: 'safe',
+        header_footer: false,
+      }))
+      .pipe($.rename(doc + '.html'));
+    streams.push(stream);
+  }
+  return merge(streams)
     .pipe(gulp.dest('.tmp'));
 });
 
@@ -138,12 +137,18 @@ gulp.task('serve', ['quick'], function() {
     online: false,
     notify: false,
   },
-  function (err, bs) {
-    bs.addMiddleware('*',
-      function proxyMiddleware (req, res) {
+  function(err, bs) {
+    bs.addMiddleware('',
+      function pdfMiddleware(req, res, next) {
+        if (req.url.indexOf('/pdf-') === 0) {
+          req.url = '/index.html';
+        }
+        next();
+      }, { override: true });
+    bs.addMiddleware('',
+      function proxyMiddleware(req, res) {
         proxy.web(req, res, { target: 'http://localhost:' + LynxKitePort });
-      }
-    );
+      });
   });
   gulp.watch('app/styles/*.{,s}css', ['css']);
   gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
