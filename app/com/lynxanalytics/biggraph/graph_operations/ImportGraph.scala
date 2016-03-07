@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
@@ -133,6 +134,7 @@ case class CSV private (file: HadoopFile,
                         allowCorruptLines: Boolean) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   val fields = allFields.filter(field => !omitFields.contains(field))
+  val filterEvaluator = filter.evaluator
   override def toJson = {
     Json.obj(
       "file" -> file.symbolicName,
@@ -167,7 +169,10 @@ case class CSV private (file: HadoopFile,
   val mayHaveNulls = false
 
   private def jsFilter(line: Seq[String]): Boolean = {
-    return filter.isTrue(allFields.zip(line).toMap)
+    if (filter.isEmpty) {
+      return true
+    }
+    return filterEvaluator.evaluateBoolean(allFields.zip(line).toMap).getOrElse(false)
   }
 
   private def checkNumberOfFields(line: Seq[String]): Boolean = {
