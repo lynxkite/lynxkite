@@ -173,8 +173,9 @@ case class CSV private (file: HadoopFile,
   private def jsFilter(line: Seq[String], evaluator: JavaScriptEvaluator): Boolean = {
     if (filter.isEmpty) {
       true
+    } else {
+      evaluator.evaluateBoolean(allFields.zip(line).toMap).getOrElse(false)
     }
-    return evaluator.evaluateBoolean(allFields.zip(line).toMap).getOrElse(false)
   }
 
   private def checkNumberOfFields(line: Seq[String]): Boolean = {
