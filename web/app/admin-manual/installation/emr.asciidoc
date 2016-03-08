@@ -33,9 +33,9 @@ https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-
 documentation. You can stop this script by hitting Ctrl+C and restart it any number of times without
 affecting your cluster.
 
-. Access files on s3 from LynxKite. You can access any s3 file accessible by the aws user that
+. Access files on S3 from LynxKite. You can access any S3 file accessible by the AWS user that
 was used to launch the cluster (determined by `AWS_ACCESS_KEY_ID`) using the `S3$` prefix. If you
-want to enable access to s3 files not accessible by this user, then you will have to add your own
+want to enable access to S3 files not accessible by this user, then you will have to add your own
 prefix definition to `/home/hadoop/prefix_definitions.txt`. You will need to add something like:
 `OTHER_S3="s3n://OTHER_AWS_ACCESS_KEY_ID:OTHER_AWS_SECRET_ACCESS_KEY@bucket/"`
 
