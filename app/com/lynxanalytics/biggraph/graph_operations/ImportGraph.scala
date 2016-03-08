@@ -134,7 +134,6 @@ case class CSV private (file: HadoopFile,
                         allowCorruptLines: Boolean) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   val fields = allFields.filter(field => !omitFields.contains(field))
-  val filterEvaluator = filter.evaluator
   override def toJson = {
     Json.obj(
       "file" -> file.symbolicName,
@@ -156,7 +155,10 @@ case class CSV private (file: HadoopFile,
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
       .filter(checkNumberOfFields(_))
-      .filter(jsFilter(_))
+      .mapPartitions({ it =>
+        val evaluator = filter.evaluator
+        it.filter(jsFilter(_, evaluator))
+      }, preservesPartitioning = true)
     val keptFields = if (omitFields.nonEmpty) {
       val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
       fullRows.map(fullRow => keptIndices.map(idx => fullRow(idx)))
@@ -168,11 +170,11 @@ case class CSV private (file: HadoopFile,
 
   val mayHaveNulls = false
 
-  private def jsFilter(line: Seq[String]): Boolean = {
+  private def jsFilter(line: Seq[String], evaluator: JavaScriptEvaluator): Boolean = {
     if (filter.isEmpty) {
-      return true
+      true
     }
-    return filterEvaluator.evaluateBoolean(allFields.zip(line).toMap).getOrElse(false)
+    return evaluator.evaluateBoolean(allFields.zip(line).toMap).getOrElse(false)
   }
 
   private def checkNumberOfFields(line: Seq[String]): Boolean = {
