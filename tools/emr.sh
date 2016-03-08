@@ -160,7 +160,7 @@ start)
   )
   # About the configuration changes above:
   # mapred.output.committer.class = org.apache.hadoop.mapred.FileOutputCommitter
-  # Because Amazon's default value is only supported with Amazon's JAR files.
+  # because Amazon's default value is only supported with Amazon's JAR files: #3234
 
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh ${MASTER_ACCESS} --command "sudo yum install -y expect"
