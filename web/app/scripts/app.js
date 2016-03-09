@@ -11,13 +11,15 @@ angular
   ])
 
   .config(function ($routeProvider) {
+    function docTemplate(doc) {
+      return { template: '<div class="documentation">' +
+        '<div documentation="' + doc + '" class="help container"></div>' +
+        '</div>', reloadOnSearch: false };
+    }
     // One-page routing for PDF generation.
     if (location.pathname.indexOf('/pdf-') === 0) {
       var page = location.pathname.replace('/pdf-', '');
-      $routeProvider.otherwise({
-        templateUrl: 'views/' + page + '.html',
-        reloadOnSearch: false,
-      });
+      $routeProvider.otherwise(docTemplate(page));
       return;
     }
 
@@ -51,19 +53,19 @@ angular
         templateUrl: 'views/cleaner.html',
         controller: 'CleanerCtrl',
       })
-     .when('/logs', {
+      .when('/logs', {
         templateUrl: 'views/logs.html',
         controller: 'LogsCtrl',
-      })
-      .when('/help', {
-        templateUrl: 'views/help.html',
-      })
-      .when('/admin-manual', {
-        templateUrl: 'views/admin-manual.html',
       })
       .otherwise({
         redirectTo: '/',
       });
+
+    // Register routing for documentation pages.
+    var docs = ['academy', 'admin-manual', 'help'];
+    for (var i = 0; i < docs.length; ++i) {
+      $routeProvider.when('/' + docs[i], docTemplate(docs[i]));
+    }
   })
 
   .config(function($httpProvider) {

@@ -19,6 +19,8 @@
   "trailing": true,
   "smarttabs": true,
   "globals": {
+    "$": false,
+    "$$": false,
     "after": false,
     "afterEach": false,
     "angular": false,
@@ -27,10 +29,12 @@
     "browser": false,
     "by": false,
     "describe": false,
+    "element": false,
     "expect": false,
     "inject": false,
     "it": false,
     "jasmine": false,
+    "protractor": false,
     "spyOn": false
   }
 }

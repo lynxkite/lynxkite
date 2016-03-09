@@ -75,7 +75,7 @@ Add to centers::
 This action will add the selected vertex to the centers.
 
 Set as only center::
-This action will set this vertex as the only center so that only this vertex and its neigborhood
+This action will set this vertex as the only center so that only this vertex and its neighborhood
 will be shown.
 
 Filter segmentation to this vertex::

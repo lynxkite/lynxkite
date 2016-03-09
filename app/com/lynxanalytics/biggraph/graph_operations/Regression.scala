@@ -53,7 +53,8 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Logistic regression" =>
         val p = getParams(forSGD = false)
-        val model = new mllib.classification.LogisticRegressionWithLBFGS().setNumClasses(10).run(p.points)
+        val model = new mllib.classification.LogisticRegressionWithLBFGS()
+          .setIntercept(true).setNumClasses(10).run(p.points)
         Model.checkLinearModel(model)
         (model.predict(p.vectors.values), p.vectors)
       case "Naive Bayes" =>

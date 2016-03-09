@@ -4,7 +4,7 @@ Calculates http://en.wikipedia.org/wiki/PageRank[PageRank] for every vertex.
 PageRank is calculated by simulating random walks on the graph. Its PageRank
 reflects the likelihood that the walk leads to a specific vertex.
 
-Let's imagine a social graph with information flowing along the egdes. In this case high
+Let's imagine a social graph with information flowing along the edges. In this case high
 PageRank means that the vertex is more likely to be the target of the information.
 
 Similarly, it may be useful to identify information sources in the reversed graph.

@@ -47,7 +47,7 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
       serving.ProductionJsonServer
     } catch {
       case t: Throwable =>
-        val exceptionMessage = t.getMessage.replace('\n', ' ')
+        val exceptionMessage = Option(t.getMessage).map(_.replace('\n', ' ')).getOrElse(t.toString)
         notifyStarterScript("failed: " + exceptionMessage)
         throw t
     }
