@@ -79,6 +79,7 @@ case class CSVImportRequest(
     delimiter: String,
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
     mode: String,
+    infer: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
 
@@ -88,7 +89,7 @@ case class CSVImportRequest(
       .format("com.databricks.spark.csv")
       .option("mode", mode)
       .option("delimiter", delimiter)
-      .option("inferSchema", "true")
+      .option("inferSchema", if (infer) "true" else "false")
       // We don't want to skip lines starting with #
       .option("comment", null)
     val readerWithSchema = if (columnNames.nonEmpty) {
