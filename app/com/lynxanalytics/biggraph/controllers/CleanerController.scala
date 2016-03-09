@@ -198,7 +198,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   def markFilesDeleted(user: serving.User, req: MarkDeletedRequest): Unit = synchronized {
     assert(user.isAdmin, "Only administrators can mark files deleted.")
     assert(methods.map { m => m.id } contains req.method,
-      s"Unkown orphan file marking method: ${req.method}")
+      s"Unknown orphan file marking method: ${req.method}")
     log.info(s"${user.email} attempting to mark orphan files deleted using '${req.method}'.")
     val files = getAllFiles()
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()

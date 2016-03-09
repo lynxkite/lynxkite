@@ -213,7 +213,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
   abstract class DeprecatedOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Depricated operations", "red", deprecated = true, icon = "remove-sign"))
+    extends Operation(t, c, Category("Deprecated operations", "red", deprecated = true, icon = "remove-sign"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
@@ -1414,7 +1414,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
       Choice("method", "Method", options = FEOption.list(
-        "Linear regression", "Ridge regression", "Lasso", "Naive Bayes",
+        "Linear regression", "Ridge regression", "Lasso", "Logistic regression", "Naive Bayes",
         "Decision tree", "Random forest", "Gradient-boosted trees")))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")

@@ -3,7 +3,7 @@
 Creates edges randomly so that the resulting graph is scale-free.
 
 This is an iterative algorithm. We start with one edge per vertex and in each
-iteration the number of edges gets approximately multipled by
+iteration the number of edges gets approximately multiplied by
 _Per iteration edge number multiplier_.
 
 ====
