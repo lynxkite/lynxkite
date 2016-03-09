@@ -9,6 +9,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       scope.csv = {
         delimiter: ',',
         mode: 'FAILFAST',
+        infer: true,
         fileUploadCount: 0,
       };
       scope.files = {
@@ -47,6 +48,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
             columnNames: splitCSVLine(scope.csv.columnNames),
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
+            infer: scope.csv.infer,
           });
       };
 
