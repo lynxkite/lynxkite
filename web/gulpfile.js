@@ -110,7 +110,8 @@ gulp.task('js', function () {
 gulp.task('jshint', function() {
   return gulp.src(['app/scripts/**/*.js', 'gulpfile.js', 'test/**/*.js'])
     .pipe($.jshint())
-    .pipe($.jshint.reporter('default'));
+    .pipe($.jshint.reporter('default'))
+    .pipe($.jshint.reporter('fail'));
 });
 
 // Deletes dist.
