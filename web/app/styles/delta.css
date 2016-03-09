@@ -1,6 +1,7 @@
 .delta {
   display: inline-block;
   text-align: center;
+  line-height: 0; /* Do not make line higher. */
 }
 
 .delta-number {
