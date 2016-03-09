@@ -79,7 +79,7 @@ def process_file(filename):
 
 def main():            
     process_file(flags.logfile)
-    print json.dumps(all_jsons, indent=8)
-
+    if flags.just_check == False:    
+        print json.dumps(all_jsons, indent=8)
 
 main()
