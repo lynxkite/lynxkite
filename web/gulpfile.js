@@ -40,7 +40,8 @@ gulp.task('asciidoctor', function () {
     streams.push(stream);
   }
   return merge(streams)
-    .pipe(gulp.dest('.tmp'));
+    .pipe(gulp.dest('.tmp'))
+    .pipe(browserSync.stream());
 });
 
 // Preprocesses HTML files.
@@ -153,6 +154,7 @@ gulp.task('serve', ['quick'], function() {
   gulp.watch('app/styles/*.{,s}css', ['css']);
   gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
   gulp.watch('app/**/*.html', ['html']);
+  gulp.watch('app/**/*.asciidoc', ['asciidoctor']);
 });
 
 var protractorDir = 'node_modules/protractor/';
@@ -190,4 +192,4 @@ gulp.task('test:serve', ['webdriver-update'], function(done) {
 gulp.task('default', ['jshint', 'dist']);
 
 // A quicker build that populates .tmp.
-gulp.task('quick', ['jshint', 'html']);
+gulp.task('quick', ['jshint', 'html', 'asciidoctor']);
