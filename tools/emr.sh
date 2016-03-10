@@ -64,6 +64,7 @@ SPEC=$2
 shift 2
 COMMAND_ARGS=( "$@" )
 source ${SPEC}
+export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always use the default
 
 # Spark installation to use for this cluster.
 SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
