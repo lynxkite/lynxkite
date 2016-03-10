@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Brings up a small EMR cluster and runs tests on it.
+# Usage:
+# emr_based_test.sh perf     # Run performance tests.
+# emr_based_test.sh frontend # Run e2e frontend tests.
+
 set -ueo pipefail
 trap "echo $0 has failed" ERR
 
