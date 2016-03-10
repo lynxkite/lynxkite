@@ -342,7 +342,7 @@ object SQLController {
     privacy: String)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
-    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
+    assert(!DirectoryEntry.fromName(tableName).exists, s"Entry '$tableName' already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     val table = TableImport.importDataFrameAsync(df)
