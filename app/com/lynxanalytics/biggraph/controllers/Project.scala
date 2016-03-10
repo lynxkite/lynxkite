@@ -1076,7 +1076,7 @@ class DirectoryEntry(val path: SymbolPath)(
     asInstanceOf[ProjectFrame]
   }
   def asNewProjectFrame(): ProjectFrame = {
-    assert(!exists, s"Directory entry '$path' already exists.")
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new ProjectFrame(path)
     res.initialize()
     res
