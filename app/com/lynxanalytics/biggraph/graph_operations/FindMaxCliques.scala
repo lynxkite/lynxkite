@@ -34,7 +34,7 @@ case class FindMaxCliques(
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val inputPartitioner = inputs.vs.rdd.partitioner.get
-    val cug = CompactUndirectedGraph(rc, inputs.es.rdd, needsBothDirections)
+    val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
     val numTasks = (rc.sparkContext.defaultParallelism * 5) max inputPartitioner.numPartitions
     val outputPartitioner = new HashPartitioner(numTasks)
     val cliqueLists = computeCliques(

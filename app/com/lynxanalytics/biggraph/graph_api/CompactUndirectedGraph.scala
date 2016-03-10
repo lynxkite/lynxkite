@@ -7,7 +7,7 @@
 //
 // Example usage:
 //
-//   val cug = CompactUndirectedGraph(rc, inputs.es.rdd, needsBothDirections)
+//   val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
 //   rdd.map(vertex => cug.getNeighbors(vertex)
 
 package com.lynxanalytics.biggraph.graph_api
@@ -33,9 +33,15 @@ object CompactUndirectedGraph {
   }
 
   def apply(rc: RuntimeContext,
-            edgesRDD: EdgeBundleRDD,
-            needsBothDirections: Boolean = true): CompactUndirectedGraph = {
+            edges: EdgeBundleData,
+            needsBothDirections: Boolean): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
+    apply(rc, edges.rdd, needsBothDirections)
+  }
+
+  def apply(rc: RuntimeContext,
+            edgesRDD: EdgeBundleRDD,
+            needsBothDirections: Boolean): CompactUndirectedGraph = {
     val path = rc.broadcastDirectory / scala.util.Random.alphanumeric.take(10).mkString.toLowerCase
     val outEdges = edgesRDD.map {
       case (id, edge) => (edge.src, edge.dst)
