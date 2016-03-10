@@ -16,13 +16,13 @@ object NeuralNetwork extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = NeuralNetwork()
+  def fromJson(j: JsValue) = NeuralNetwork((j \ "numFeatures").as[Int])
 }
 import NeuralNetwork._
-case class NeuralNetwork() extends TypedMetaGraphOp[Input, Output] {
+case class NeuralNetwork(numFeatures: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj()
+  override def toJson = Json.obj("numFeatures" -> numFeatures)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -36,10 +36,9 @@ case class NeuralNetwork() extends TypedMetaGraphOp[Input, Output] {
       CompactUndirectedGraph(rc, rdd, needsBothDirections = false)
     }
     val label = inputs.label.rdd.coalesce(1)
-    val label = inputs.label.rdd.coalesce(1)
     val prediction = label.mapPartitions(labels => predict(labels, edges, reversed))
 
-    output(o.prediction, prediction.sortUnique(inputs.vertices.partitioner.get))
+    output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
   val hiddenSize = 100
@@ -50,8 +49,10 @@ case class NeuralNetwork() extends TypedMetaGraphOp[Input, Output] {
     edges: CompactUndirectedGraph,
     reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
     val labels = labelIterator.toMap
-    val states = // TODO: Initial hidden state.
+    // TODO: Initial hidden state.
+    // val states =
     for (i <- 1 to iterations) {
     }
+    Iterator()
   }
 }
