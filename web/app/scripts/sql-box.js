@@ -82,6 +82,11 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         scope.inProgress += 1;
         var result;
         if (scope.exportFormat === 'table') {
+          if (!scope.exportKiteTable) {
+            util.error('Table name must be specified.');
+            scope.inProgress -= 1;
+            return;
+          }
           req.table = scope.exportKiteTable;
           req.privacy = 'public-read';
           result = util.post('/ajax/exportSQLQueryToTable', req);

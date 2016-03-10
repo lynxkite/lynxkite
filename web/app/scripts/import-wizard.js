@@ -21,6 +21,10 @@ angular.module('biggraph').directive('importWizard', function(util) {
 
       scope.requestInProgress = 0;
       function importStuff(endpoint, parameters) {
+        if (!scope.tableName) {
+          util.error('Table name must be specified.');
+          return;
+        }
         parameters.table =
           (scope.currentDirectory ? scope.currentDirectory + '/' : '') + scope.tableName;
         parameters.privacy = 'public-read';

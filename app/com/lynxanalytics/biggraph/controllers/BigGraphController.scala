@@ -333,7 +333,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   private def assertNameNotExists(name: String) = {
-    assert(!DirectoryEntry.fromName(name).exists, s"$name already exists.")
+    assert(!DirectoryEntry.fromName(name).exists, s"Entry '$name' already exists.")
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
