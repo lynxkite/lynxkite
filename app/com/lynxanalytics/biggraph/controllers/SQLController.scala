@@ -342,6 +342,7 @@ object SQLController {
     privacy: String)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
+    assert(!tableName.isEmpty, "Table name must be specified.")
     assert(!DirectoryEntry.fromName(tableName).exists, s"Entry '$tableName' already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
