@@ -1,0 +1,11 @@
+<div ng-if="ref && ref.value.double !== 0" class="delta"
+  drop-tooltip="Change due to {{ lastOperation }}.">
+  <span class="delta-triangle delta-increase glyphicon glyphicon-triangle-top"
+    ng-show="ref.value.$resolved && ref.value.double > 0"></span>
+  <value class="delta-number {{
+    ref.value.$resolved ?
+      (ref.value.double < 0 ? 'delta-decrease' : 'delta-increase') : ''
+    }}" ref="ref"></value>
+  <span class="delta-triangle delta-decrease glyphicon glyphicon-triangle-bottom"
+    ng-show="ref.value.$resolved && ref.value.double < 0"></span>
+</div>
