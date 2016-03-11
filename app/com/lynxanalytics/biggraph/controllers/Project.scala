@@ -1013,10 +1013,10 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def assertReadAllowedFrom(user: User): Unit = {
-    assert(readAllowedFrom(user), s"User $user does not have read access to $this.")
+    assert(readAllowedFrom(user), s"User $user does not have read access to entry '$this'.")
   }
   def assertWriteAllowedFrom(user: User): Unit = {
-    assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
+    assert(writeAllowedFrom(user), s"User $user does not have write access to entry '$this'.")
   }
   def assertParentWriteAllowedFrom(user: User): Unit = {
     if (!parent.isEmpty) {
@@ -1050,7 +1050,7 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def remove(): Unit = manager.synchronized {
     existing(rootDir).foreach(manager.rmTag(_))
-    log.info(s"A project has been discarded: $rootDir")
+    log.info(s"An entry has been discarded: $rootDir")
   }
 
   private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
@@ -1072,18 +1072,18 @@ class DirectoryEntry(val path: SymbolPath)(
   def isDirectory = exists && !hasCheckpoint
 
   def asProjectFrame: ProjectFrame = {
-    assert(isInstanceOf[ProjectFrame], s"$path is not a project")
+    assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
     asInstanceOf[ProjectFrame]
   }
   def asNewProjectFrame(): ProjectFrame = {
-    assert(!exists, s"Directory entry $path already exists")
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new ProjectFrame(path)
     res.initialize()
     res
   }
 
   def asTableFrame: TableFrame = {
-    assert(isInstanceOf[TableFrame], s"$path is not a table")
+    assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table, notes: String): TableFrame = {
@@ -1098,16 +1098,16 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def asObjectFrame: ObjectFrame = {
-    assert(isInstanceOf[ObjectFrame], s"$path is not an object")
+    assert(isInstanceOf[ObjectFrame], s"Entry '$path' is not an object")
     asInstanceOf[ObjectFrame]
   }
 
   def asDirectory: Directory = {
-    assert(isInstanceOf[Directory], s"$path is not a directory")
+    assert(isInstanceOf[Directory], s"Entry '$path' is not a directory")
     asInstanceOf[Directory]
   }
   def asNewDirectory(): Directory = {
-    assert(!exists, s"Directory entry $path already exists")
+    assert(!exists, s"Entry '$path' already exists")
     val res = new Directory(path)
     res.readACL = "*"
     res.writeACL = ""
