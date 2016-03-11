@@ -7,7 +7,7 @@ angular.module('biggraph').directive('tableKind', function() {
       tables: '=',
       selected: '=model',
       editable: '=',
-      fileUploads: '='
+      fileUploads: '=',
     },
     templateUrl: 'table-kind.html',
     link: function(scope) {
