@@ -130,3 +130,6 @@ export KITE_EXTRA_JARS=
 # The LynxKite Google client secret is only needed for Google Authenticator. Ask the Lynx R&D
 # team for further instructions if you think you need this feature.
 # export KITE_GOOGLE_CLIENT_SECRET='???'
+
+# Specify this to be the instance (client) where the program is run. E.g., Westeros
+KITE_INSTANCE=
