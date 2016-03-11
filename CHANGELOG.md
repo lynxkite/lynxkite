@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.7.3
+
  - Changes in vertex and edge count after an operation are reported on the UI.
  - Fixed data export in Amazon EMR.
  - Fixed _Import JDBC table_ button.
