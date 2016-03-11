@@ -186,7 +186,7 @@ startKite () {
   ) &
   PID=$!
   read RESULT < ${KITE_READY_PIPE}
-  rm -f "$KITE_READY_PIPE"
+  rm -f "$KITE_READY_PIPE" # Delete the pipe so that the code above doesn't get stuck writing to it.
   disown -h "$PID" || true # Detach LynxKite from terminal.
   STATUS=`echo $RESULT | cut -f 1 -d " "`
   if [[ "${STATUS}" == "ready" ]]; then
