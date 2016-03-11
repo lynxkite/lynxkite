@@ -1,4 +1,5 @@
 <configuration>
+  <statusListener class="com.lynxanalytics.biggraph.graph_util.FileRollingListener" />
 
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
