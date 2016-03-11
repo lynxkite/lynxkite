@@ -132,4 +132,4 @@ export KITE_EXTRA_JARS=
 # export KITE_GOOGLE_CLIENT_SECRET='???'
 
 # Specify this to be the instance (client) where the program is run. E.g., Westeros
-KITE_INSTANCE=
+export KITE_INSTANCE=
