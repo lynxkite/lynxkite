@@ -1,7 +1,13 @@
 #!/bin/bash
 
 set -ueo pipefail
-trap 'echo Failed.' ERR
+function trap_handler() {
+  THIS_SCRIPT="$0"
+  LAST_LINENO="$1"
+  LAST_COMMAND="$2"
+  echo "${THIS_SCRIPT}:${LAST_LINENO}: error while executing: ${LAST_COMMAND}" 1>&2;
+}
+trap 'trap_handler ${LINENO} "${BASH_COMMAND}"' ERR
 
 DIR=$(dirname $0)
 
@@ -64,6 +70,7 @@ SPEC=$2
 shift 2
 COMMAND_ARGS=( "$@" )
 source ${SPEC}
+export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always use the default
 
 # Spark installation to use for this cluster.
 SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
@@ -155,7 +162,6 @@ start)
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
-    --region ${REGION} \
     ${EMR_LOG_URI} \
   )
   # About the configuration changes above:
