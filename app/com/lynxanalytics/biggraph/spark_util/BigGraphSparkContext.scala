@@ -174,6 +174,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.clearspring.analytics.stream.cardinality.HyperLogLogPlus])
     kryo.register(classOf[com.clearspring.analytics.stream.cardinality.RegisterSet])
     kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
+    kryo.register(classOf[Array[org.apache.spark.sql.types.DataType]])
+    kryo.register(classOf[java.sql.Timestamp])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

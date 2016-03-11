@@ -82,6 +82,7 @@ case class CSVImportRequest(
     infer: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
+  assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val reader = dataManager.masterSQLContext
@@ -92,6 +93,7 @@ case class CSVImportRequest(
       .option("inferSchema", if (infer) "true" else "false")
       // We don't want to skip lines starting with #
       .option("comment", null)
+
     val readerWithSchema = if (columnNames.nonEmpty) {
       reader.schema(SQLController.stringOnlySchema(columnNames))
     } else {
