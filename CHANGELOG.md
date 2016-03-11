@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Changes in vertex and edge count after an operation are reported on the UI.
  - A collection of goal oriented LynxKite lessons (the "LynxKite Academy") is now available for
    testing. You can find it at `/#/academy`. Any feedback is much appreciated!
  - Fixed data export in Amazon EMR.
