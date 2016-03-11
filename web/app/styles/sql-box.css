@@ -41,6 +41,9 @@ sql-box > * {
 }
 
 #sql-result .ordering {
-  width: 15px;
-  overflow: hidden;
+  /* Reserves a little space for the ordering triangles, even when the triangle is not displayed. */
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  overflow: visible;
 }
