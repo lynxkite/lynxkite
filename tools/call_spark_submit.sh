@@ -176,9 +176,18 @@ startKite () {
   fi
   export KITE_READY_PIPE=/tmp/kite_pipe_${KITE_RANDOM_SECRET}
   mkfifo ${KITE_READY_PIPE}
-  nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
+  (
+    set +e # Keep going on error so we can report back through the pipe.
+    "${command[@]}" > "${log_dir}/kite.stdout.$$" 2> "${log_dir}/kite.stderr.$$"
+    >&2 cat "${log_dir}/kite.stderr.$$"
+    if [ -f "$KITE_READY_PIPE" ]; then
+      echo 'LynxKite stopped.' > "$KITE_READY_PIPE"
+    fi
+  ) &
   PID=$!
   read RESULT < ${KITE_READY_PIPE}
+  rm -f "$KITE_READY_PIPE" # Delete the pipe so that the code above doesn't get stuck writing to it.
+  disown -h "$PID" || true # Detach LynxKite from terminal.
   STATUS=`echo $RESULT | cut -f 1 -d " "`
   if [[ "${STATUS}" == "ready" ]]; then
     >&2 echo "LynxKite server started (PID ${PID})."
