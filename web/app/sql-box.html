@@ -138,10 +138,10 @@
         <th ng-repeat="col in result.header"
           ng-click="sort.select($index)">
           {{ col }}
-          <div class="pull-right ordering">
+          <span class="ordering">
             <i ng-show="sort.column === $index.toString()"
               class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
-          </div>
+          </span>
         </th>
       </tr>
     </thead>
