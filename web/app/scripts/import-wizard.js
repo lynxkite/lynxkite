@@ -9,7 +9,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       scope.csv = {
         delimiter: ',',
         mode: 'FAILFAST',
-        infer: true,
+        infer: false,
         fileUploadCount: 0,
       };
       scope.files = {
