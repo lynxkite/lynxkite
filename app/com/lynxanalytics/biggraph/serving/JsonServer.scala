@@ -13,10 +13,10 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 
-import java.io.File
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -410,11 +410,8 @@ object ProductionJsonServer extends JsonServer {
     (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
   }
 
-  lazy val version = try {
-    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
-  } catch {
-    case e: java.io.IOException => ""
-  }
+  val version = KiteInstanceInfo.kiteVersion
+
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
