@@ -278,7 +278,8 @@
               ng-if="side.project.vertexSet !== ''"
               ref="side.scalars['vertex_count']">
           </value>
-          <delta ref="side.scalars['!vertex_count_delta']"></delta>
+          <delta ref="side.scalars['!vertex_count_delta']"
+            last-operation="side.project.undoOp"></delta>
           <span class="emph" ng-if="side.project.vertexSet === ''">no</span>
           vertices with
           <value
@@ -287,7 +288,8 @@
               ref="side.scalars['edge_count']"
               id="edge-count">
           </value>
-          <delta ref="side.scalars['!edge_count_delta']"></delta>
+          <delta ref="side.scalars['!edge_count_delta']"
+            last-operation="side.project.undoOp"></delta>
           <span class="emph" ng-if="side.project.edgeBundle === ''">no</span>
           edges
         </span>
@@ -299,7 +301,8 @@
               ref="side.scalars['vertex_count']"
               id="segment-count">
           </value>
-          <delta ref="side.scalars['!vertex_count_delta']"></delta>
+          <delta ref="side.scalars['!vertex_count_delta']"
+            last-operation="side.project.undoOp"></delta>
           <span ng-if="side.scalars['!nonEmpty'].double === side.scalars['vertex_count'].double">
             non-empty segments
           </span>
@@ -310,7 +313,8 @@
           covering <value id="total-segment-coverage" class="emph" ref="side.scalars['!coverage']"></value> base vertices
           <span ng-if="side.project.edgeBundle !== ''">
             with <value id="segmentation-edge-count" class="emph" ref="side.scalars['edge_count']"></value>
-            <delta ref="side.scalars['!edge_count_delta']"></delta>
+            <delta ref="side.scalars['!edge_count_delta']"
+            last-operation="side.project.undoOp"></delta>
             edges
           </span>
         </span>

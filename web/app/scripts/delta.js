@@ -4,7 +4,7 @@
 angular.module('biggraph').directive('delta', function() {
   return {
     restrict: 'E',
-    scope: { ref: '=' },
+    scope: { ref: '=', lastOperation: '=' },
     templateUrl: 'delta.html',
   };
 });
