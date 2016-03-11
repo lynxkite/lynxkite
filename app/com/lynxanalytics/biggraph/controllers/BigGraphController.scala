@@ -94,7 +94,7 @@ object FEOperationParameterMeta {
     "model", // A special kind to set model parameters.
     "table") // A table.
 
-  val choiceKinds = Set("choice", "tag-list")
+  val choiceKinds = Set("choice", "tag-list", "table")
 }
 
 case class FEOperationParameterMeta(
