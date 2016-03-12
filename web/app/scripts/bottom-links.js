@@ -4,7 +4,9 @@
 angular.module('biggraph').directive('bottomLinks', function($window, util) {
   return {
     restrict: 'E',
-    scope: { info: '=' },  // Debug data to post with "send feedback".
+    scope: {
+      info: '=',  // Debug data to post with "send feedback".
+    },
     templateUrl: 'bottom-links.html',
     link: function(scope) {
       scope.util = util;
@@ -20,6 +22,8 @@ angular.module('biggraph').directive('bottomLinks', function($window, util) {
           $window.location.href = '/';
         });
       };
+
+      scope.user = util.nocache('/ajax/getUserData');
     },
   };
 });
