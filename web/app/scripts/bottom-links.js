@@ -22,8 +22,6 @@ angular.module('biggraph').directive('bottomLinks', function($window, util) {
           $window.location.href = '/';
         });
       };
-
-      scope.user = util.nocache('/ajax/getUserData');
     },
   };
 });
