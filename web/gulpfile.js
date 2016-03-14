@@ -12,6 +12,9 @@ var LynxKitePort = process.env.PORT || 2200;
 // Port for the development proxy.
 var ProxyPort = 9090;
 
+// The tools directory.
+var tools = '../tools/';
+
 var browserSync = require('browser-sync').create();
 var spawn = require('child_process').spawn;
 var del = require('del');
@@ -123,7 +126,7 @@ gulp.task('clean:dist', function() {
 // Generates template files form asciidoc.
 gulp.task('genTemplates', function() {
   return gulp.src('app/**/*.asciidoc')
-    .pipe(exec('../tools/gen_templates.py'));
+    .pipe(exec(tools + '/gen_templates.py'));
 });
 
 // Starts a development proxy.
