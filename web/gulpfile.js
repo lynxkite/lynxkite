@@ -13,7 +13,7 @@ var LynxKitePort = process.env.PORT || 2200;
 var ProxyPort = 9090;
 
 // The tools directory.
-var tools = '../tools/';
+var tools = '../tools';
 
 var browserSync = require('browser-sync').create();
 var spawn = require('child_process').spawn;
