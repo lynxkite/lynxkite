@@ -74,6 +74,7 @@ export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always
 
 # Spark installation to use for this cluster.
 SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
+SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 
 if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
@@ -85,7 +86,7 @@ GetMasterHostName() {
   CLUSTER_ID=$(GetClusterId)
   aws emr describe-cluster \
     --cluster-id ${CLUSTER_ID} \
-    | grep MasterPublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
+    | grep MasterPublicDnsName | cut -d'"' -f 4 | head -1
 }
 
 GetClusterId() {
@@ -148,21 +149,18 @@ case $COMMAND in
 start)
   if [ -n "${S3_DATAREPO:-}" ]; then
     CheckDataRepo
-    EMR_LOG_URI="--log-uri s3n://${S3_DATAREPO}/emr-logs/ --enable-debugging"
-  else
-    EMR_LOG_URI=""
   fi
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
-    --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole"}' \
+    --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
     --service-role EMR_DefaultRole \
     --release-label emr-4.2.0 \
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
-    ${EMR_LOG_URI} \
+    ${CREATE_CLUSTER_EXTRA_PARAMS} \
   )
   # About the configuration changes above:
   # mapred.output.committer.class = org.apache.hadoop.mapred.FileOutputCommitter
@@ -176,6 +174,7 @@ start)
 # ====== fall-through
 reconfigure)
   MASTER_ACCESS=$(GetMasterAccessParams)
+  MASTER_HOSTNAME=$(GetMasterHostName)
 
   # Prepare a config file.
   KITERC_FILE="/tmp/${CLUSTER_NAME}.kiterc"
@@ -233,16 +232,14 @@ S3="s3://"
 EOF
 
 
-  # Unpack Spark on the master and add the locally installed hadoop into its classpath.
-  # (This way we get s3 consistent view.)
-  SPARK_NAME="spark-${SPARK_VERSION}-bin-hadoop2.6"
-  aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
-    curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
-    tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION}"
-
+  # Copy Spark to the master.
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    ${SPARK_HOME}/ \
+    hadoop@${MASTER_HOSTNAME}:spark-${SPARK_VERSION}
+  # Copy config files to the master.
   aws emr put ${MASTER_ACCESS} --src ${KITERC_FILE} --dest .kiterc
   aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
-  aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest ${SPARK_NAME}/conf/spark-env.sh
+  aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest spark-${SPARK_VERSION}/conf/spark-env.sh
 
   ;;
 

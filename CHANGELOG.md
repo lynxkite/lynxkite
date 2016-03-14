@@ -5,6 +5,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+ - emr.sh: support setting up LynxKite in an Amazon VPC.
 
 ### 1.7.3
 
