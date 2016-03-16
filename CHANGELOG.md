@@ -10,7 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - New configuration option: `KITE_INSTANCE` added; this should be a string identifying the
    instance (e.g., Westeros). It is strongly recommended that you set it at installation: it
-   is used for collecting performace data.
+   will be used to identity the cluster in logs.
  - Changes in vertex and edge count after an operation are reported on the UI.
  - Fixed data export in Amazon EMR.
  - Fixed _Import JDBC table_ button.
