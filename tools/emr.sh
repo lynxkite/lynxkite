@@ -1,7 +1,13 @@
 #!/bin/bash
 
 set -ueo pipefail
-trap 'echo Failed.' ERR
+function trap_handler() {
+  THIS_SCRIPT="$0"
+  LAST_LINENO="$1"
+  LAST_COMMAND="$2"
+  echo "${THIS_SCRIPT}:${LAST_LINENO}: error while executing: ${LAST_COMMAND}" 1>&2;
+}
+trap 'trap_handler ${LINENO} "${BASH_COMMAND}"' ERR
 
 DIR=$(dirname $0)
 
@@ -64,6 +70,7 @@ SPEC=$2
 shift 2
 COMMAND_ARGS=( "$@" )
 source ${SPEC}
+export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always use the default
 
 # Spark installation to use for this cluster.
 SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
@@ -148,15 +155,18 @@ start)
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
+    --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole"}' \
     --service-role EMR_DefaultRole \
     --release-label emr-4.2.0 \
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
-    --region ${REGION} \
     ${EMR_LOG_URI} \
   )
+  # About the configuration changes above:
+  # mapred.output.committer.class = org.apache.hadoop.mapred.FileOutputCommitter
+  # because Amazon's default value is only supported with Amazon's JAR files: #3234
 
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh ${MASTER_ACCESS} --command "sudo yum install -y expect"

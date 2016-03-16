@@ -7,14 +7,6 @@ case class JavaScript(expression: String) {
   def isEmpty = expression.isEmpty
   def nonEmpty = expression.nonEmpty
 
-  def isTrue(mapping: (String, String)*): Boolean = isTrue(mapping.toMap)
-  def isTrue(mapping: Map[String, String]): Boolean = {
-    if (isEmpty) {
-      return true
-    }
-    return evaluator.evaluateBoolean(mapping).getOrElse(false)
-  }
-
   def contextString(mapping: Map[String, Any]): String = {
     s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
   }

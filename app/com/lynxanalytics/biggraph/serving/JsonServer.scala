@@ -398,6 +398,7 @@ object ProductionJsonServer extends JsonServer {
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
+  def getUserData = jsonGet(userController.getUserData)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
