@@ -17,7 +17,6 @@ import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 
-
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
