@@ -150,8 +150,8 @@ trait TagDir extends TagPath {
 
   def cp(from: SymbolPath, to: SymbolPath): TagPath = synchronized {
     assert(to.nonEmpty, s"Cannot copy from '$from' to '$to'.")
-    assert(!exists(to), s"'$to' already exists.")
-    assert(exists(from), s"'$from' does not exist.")
+    assert(!exists(to), s"Path '$to' already exists.")
+    assert(exists(from), s"Path '$from' does not exist.")
     val toDir = mkDirs(to.dropRight(1))
     (this / from).clone(toDir, to.last)
   }
