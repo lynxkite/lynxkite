@@ -3,6 +3,7 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
+import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import play.api.libs.json
 import scala.concurrent.ExecutionContextExecutorService
 
@@ -71,7 +72,14 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     implicit val formatInput = json.Json.format[InputInfo]
     implicit val formatOutput = json.Json.format[OutputInfo]
 
+    val instanceProperties = json.Json.obj(
+      "kiteVersion" -> KiteInstanceInfo.kiteVersion,
+      "sparkVersion" -> KiteInstanceInfo.sparkVersion,
+      "instanceName" -> KiteInstanceInfo.instanceName
+    )
+
     val out = json.Json.obj(
+      "instanceProperties" -> instanceProperties,
       "name" -> instance.operation.toString,
       "guid" -> instance.operation.gUID.toString,
       "elapsedMs" -> elapsedMs(),

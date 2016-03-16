@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
+import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
@@ -199,7 +200,7 @@ object BigGraphSparkContext {
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = ""): spark.SparkContext = {
-    val versionFound = org.apache.spark.SPARK_VERSION
+    val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
