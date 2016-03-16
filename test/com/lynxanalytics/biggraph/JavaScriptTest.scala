@@ -6,15 +6,16 @@ class JavaScriptTest extends FunSuite {
   val noArgs = Map[String, String]() // For nicer readability.
 
   test("test Boolean expressions") {
-    assert(JavaScript("true").isTrue(noArgs))
-    assert(JavaScript("1.0").isTrue(noArgs))
-    assert(JavaScript("'a'").isTrue(noArgs))
-    assert(JavaScript("").isTrue(noArgs))
+    assert(JavaScript("true").evaluator.evaluateBoolean(noArgs) == Some(true))
+    assert(JavaScript("1.0").evaluator.evaluateBoolean(noArgs) == Some(true))
+    assert(JavaScript("'a'").evaluator.evaluateBoolean(noArgs) == Some(true))
 
-    assert(!JavaScript("false").isTrue(noArgs))
-    assert(!JavaScript("0.0").isTrue(noArgs))
-    assert(!JavaScript("''").isTrue(noArgs))
-    assert(!JavaScript("undefined").isTrue(noArgs)) // undefined -> false
+    assert(JavaScript("false").evaluator.evaluateBoolean(noArgs) == Some(false))
+    assert(JavaScript("0.0").evaluator.evaluateBoolean(noArgs) == Some(false))
+    assert(JavaScript("''").evaluator.evaluateBoolean(noArgs) == Some(false))
+
+    assert(JavaScript("").evaluator.evaluateBoolean(noArgs) == None)
+    assert(JavaScript("undefined").evaluator.evaluateBoolean(noArgs) == None)
   }
 
   test("test String expressions") {
@@ -41,7 +42,7 @@ class JavaScriptTest extends FunSuite {
   test("test variable substitution") {
     assert(JavaScript("a").evaluator.evaluateDouble(Map("a" -> 1.0)) == Some(1.0))
     assert(JavaScript("a").evaluator.evaluateString(Map("a" -> 1.0)) == Some("1"))
-    assert(JavaScript("a").isTrue(Map("a" -> "1.0")))
+    assert(JavaScript("a").evaluator.evaluateBoolean(Map("a" -> "1.0")) == Some(true))
   }
 }
 

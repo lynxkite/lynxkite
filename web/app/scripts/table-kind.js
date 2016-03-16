@@ -3,7 +3,12 @@
 
 angular.module('biggraph').directive('tableKind', function() {
   return {
-    scope: { tables: '=', selected: '=model', editable: '=', fileUploads: '=' },
+    scope: {
+      tables: '=',
+      selected: '=model',
+      editable: '=',
+      fileUploads: '=',
+    },
     templateUrl: 'table-kind.html',
     link: function(scope) {
       scope.currentDirectory = '';
