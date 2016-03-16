@@ -45,21 +45,65 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
+  case class Network(
+      edgeMatrix: DenseMatrix[Double],
+      edgeBias: DenseVector[Double],
+      resetInput: DenseMatrix[Double],
+      resetHidden: DenseMatrix[Double],
+      updateInput: DenseMatrix[Double],
+      updateHidden: DenseMatrix[Double],
+      activationInput: DenseMatrix[Double],
+      activationHidden: DenseMatrix[Double]) {
+  }
+  object Network {
+    def zeros(networkSize: Int): Network = new Network(
+      edgeMatrix = DenseMatrix.zeros[Double](networkSize, networkSize),
+      edgeBias = DenseVector.zeros[Double](networkSize),
+      resetInput = DenseMatrix.zeros[Double](networkSize, networkSize),
+      resetHidden = DenseMatrix.zeros[Double](networkSize, networkSize),
+      updateInput = DenseMatrix.zeros[Double](networkSize, networkSize),
+      updateHidden = DenseMatrix.zeros[Double](networkSize, networkSize),
+      activationInput = DenseMatrix.zeros[Double](networkSize, networkSize),
+      activationHidden = DenseMatrix.zeros[Double](networkSize, networkSize))
+  }
+
+  class NetworkOutputs(
+      network: Network,
+      vertices: Iterable[ID],
+      edges: CompactUndirectedGraph,
+      state: Map[ID, DenseVector[Double]]) {
+    import breeze.numerics._
+    val input = vertices.map { id =>
+      val inputs = edges.getNeighbors(id).map(network.edgeMatrix * state(_))
+      id -> (inputs.reduce(_ + _) + network.edgeBias)
+    }.toMap
+    val reset = vertices.map { id =>
+      id -> sigmoid(network.resetInput * input(id) + network.resetHidden * state(id))
+    }.toMap
+    val update = vertices.map { id =>
+      id -> sigmoid(network.updateInput * input(id) + network.updateHidden * state(id))
+    }.toMap
+    val tildeState = vertices.map { id =>
+      id -> tanh(network.activationInput * input(id) + network.activationHidden * (reset(id) :* state(id)))
+    }.toMap
+    val newState = vertices.map { id =>
+      id -> ((update(id) * (-1.0) + 1.0) :* state(id) + update(id) :* tildeState(id))
+    }.toMap
+  }
+
   val networkSize = 100
   val iterations = 10
+  val depth = 10
   def predict(
     labelOptIterator: Iterator[(ID, Option[Double])],
     edges: CompactUndirectedGraph,
     reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
-    import breeze.linalg._
-    import breeze.numerics._
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     val labelOpt = labelOptIterator.toSeq
     val labels = labelOpt.flatMap { case (id, labelOpt) => labelOpt.map(id -> _) }.toMap
     val vertices = labelOpt.map(_._1)
-    val one = DenseVector.ones[Double](networkSize)
     // Initial state contains label. TODO: Also add features.
-    var state: Map[ID, DenseVector[Double]] = vertices.map { id =>
+    val firstState: Map[ID, DenseVector[Double]] = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = 1.0
@@ -67,32 +111,14 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       }
       id -> state
     }.toMap
-    // The learned parameters.
-    var edgeMatrix = DenseMatrix.zeros[Double](networkSize, networkSize)
-    var edgeBias = DenseVector.zeros[Double](networkSize)
-    var resetInput = DenseMatrix.zeros[Double](networkSize, networkSize)
-    var resetHidden = DenseMatrix.zeros[Double](networkSize, networkSize)
-    var updateInput = DenseMatrix.zeros[Double](networkSize, networkSize)
-    var updateHidden = DenseMatrix.zeros[Double](networkSize, networkSize)
-    var activationInput = DenseMatrix.zeros[Double](networkSize, networkSize)
-    var activationHidden = DenseMatrix.zeros[Double](networkSize, networkSize)
+
+    var network = Network.zeros(networkSize)
     for (i <- 1 to iterations) {
-      val input = vertices.map { id =>
-        val inputs = edges.getNeighbors(id).map(edgeMatrix * state(_))
-        id -> (inputs.reduce(_ + _) + edgeBias)
-      }.toMap
-      val reset = vertices.map { id =>
-        id -> sigmoid(resetInput * input(id) + resetHidden * state(id))
-      }.toMap
-      val update = vertices.map { id =>
-        id -> sigmoid(updateInput * input(id) + updateHidden * state(id))
-      }.toMap
-      val newState = vertices.map { id =>
-        id -> tanh(activationInput * input(id) + activationHidden * (reset(id) :* state(id)))
-      }.toMap
-      state = vertices.map { id =>
-        id -> ((one - update(id)) :* state(id) + update(id) :* newState(id))
-      }.toMap
+      val outputs = (0 until depth).foldLeft {
+        new NetworkOutputs(network, vertices, edges, firstState)
+      } { (outputs, iteration) =>
+        new NetworkOutputs(network, vertices, edges, outputs.newState)
+      }
     }
     Iterator()
   }
