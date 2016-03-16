@@ -32,22 +32,6 @@ def parse_operation_logs(line):
   if flags.just_check:
     return
   all_jsons.append(js)
-  # name = js['name']
-  # guid = js['guid']
-  # elapsedMs = js['elapsedMs']
-  # inputs = js['inputs']
-  # outputs = js['outputs']
-  # print "*****************"
-  # print type(name), name
-  # print type(guid), guid
-  # print type(elapsedMs), elapsedMs
-  # print 'outputs'
-  # for o in outputs:
-  #     print '      ' + str(o)
-  # print 'inputs'
-  # for i in inputs:
-  #     print '      ' + str(i)
-
 
 
 processors = {
