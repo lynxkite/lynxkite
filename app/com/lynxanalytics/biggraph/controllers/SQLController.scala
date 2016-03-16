@@ -97,7 +97,9 @@ case class CSVImportRequest(
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(files)
-    assert(columnNames.nonEmpty || hadoopFile.length > 0 || hadoopFile.globLength > 0,
+    assert(!hadoopFile.isDir, "Cannot load CSV data from a directory.")
+    assert(!hadoopFile.list.isEmpty, "No files found to load CSV data.")
+    assert(columnNames.nonEmpty || hadoopFile.globLength > 0,
       "Cannot infer CSV schema from empty file(s).")
     // TODO: #2889 (special characters in S3 passwords).
     readerWithSchema.load(hadoopFile.resolvedName)
