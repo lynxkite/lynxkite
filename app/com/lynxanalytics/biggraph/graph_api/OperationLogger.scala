@@ -72,10 +72,14 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     implicit val formatInput = json.Json.format[InputInfo]
     implicit val formatOutput = json.Json.format[OutputInfo]
 
-    val out = json.Json.obj(
+    val instanceProperties = json.Json.obj(
       "kiteVersion" -> KiteInstanceInfo.kiteVersion,
       "sparkVersion" -> KiteInstanceInfo.sparkVersion,
-      "instanceName" -> KiteInstanceInfo.instanceName,
+      "instanceName" -> KiteInstanceInfo.instanceName
+    )
+
+    val out = json.Json.obj(
+      "instanceProperties" -> instanceProperties,
       "name" -> instance.operation.toString,
       "guid" -> instance.operation.gUID.toString,
       "elapsedMs" -> elapsedMs(),
