@@ -9,7 +9,6 @@ from sets import Set
 flags = argparse.ArgumentParser(description='Parses a LynxKite log')
 
 flags.add_argument('--logfile', help='The name of the logfile', required=True)
-flags.add_argument('--just_check', help='Just check json in the logfile', action='store_true')
 
 flags = flags.parse_args()
 
@@ -18,19 +17,8 @@ all_jsons=[]
 # Operation logger
 operation_logger_marker = 'OPERATION_LOGGER_MARKER'
 
-def check_json(js):
-  assert(Set(js.keys()) ==  Set(['name', 'guid', 'elapsedMs', 'inputs', 'outputs']))
-  for o in js['outputs']:
-    assert(Set(o.keys()) == Set(['name', 'gUID', 'partitions', 'count']))
-  for i in js['inputs']:
-    assert(Set(i.keys()) == Set(['name', 'gUID', 'partitions', 'count']) or
-           Set(i.keys()) == Set(['name', 'gUID', 'partitions']))
-
 def parse_operation_logs(line):
   js = json.loads(line)
-  check_json(js)
-  if flags.just_check:
-    return
   all_jsons.append(js)
 
 
@@ -61,7 +49,6 @@ def process_file(filename):
 
 def main():
   process_file(flags.logfile)
-  if not flags.just_check:
-    print json.dumps(all_jsons, indent=8)
+  print json.dumps(all_jsons, indent=8)
 
 main()
