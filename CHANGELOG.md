@@ -8,6 +8,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.7.3
 
+ - New configuration option: `KITE_INSTANCE` added; this should be a string identifying the
+   instance (e.g., Westeros).
  - Changes in vertex and edge count after an operation are reported on the UI.
  - Fixed data export in Amazon EMR.
  - Fixed _Import JDBC table_ button.
