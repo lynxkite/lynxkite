@@ -3,10 +3,22 @@
     <i class="glyphicon glyphicon-home"></i> home
   </a>
   <a href="#/changepassword" ng-if="util.globals.hasAuth">
-    <i class="glyphicon glyphicon-user"></i> change password
+    <i class="glyphicon glyphicon-tag"></i> change password
+  </a>
+  <a href="#/users" ng-if="util.user.isAdmin">
+    <i class="glyphicon glyphicon-user"></i> manage users
   </a>
   <a href="#/help" target="_blank">
     <i class="glyphicon glyphicon-question-sign"></i> help
+  </a>
+  <a href="#/admin-manual" target="_blank" ng-if="util.user.isAdmin">
+    <i class="glyphicon glyphicon-book"></i> admin manual
+  </a>
+  <a href="#/logs">
+    <i class="glyphicon glyphicon-open-file" ng-if="util.user.isAdmin"></i> logs
+  </a>
+  <a href="#/cleaner" ng-if="util.user.isAdmin">
+    <i class="glyphicon glyphicon-hdd"></i> cleaner
   </a>
   <a href
     ng-click="sendFeedback()">

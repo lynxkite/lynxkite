@@ -1,0 +1,8 @@
+[
+  {
+    "Classification": "mapred-site",
+    "Properties": {
+      "mapred.output.committer.class": "org.apache.hadoop.mapred.FileOutputCommitter"
+    }
+  }
+]

@@ -6,8 +6,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - A collection of goal oriented LynxKite lessons (the "LynxKite Academy") is now available for
-   testing. You can find it at `/#/academy`. Any feedback is much appreciated!
+### 1.7.3
+
+ - Changes in vertex and edge count after an operation are reported on the UI.
+ - Fixed data export in Amazon EMR.
+ - Fixed _Import JDBC table_ button.
+ - `emr.sh` can now handle non-default region.
 
 ### 1.7.2
 
