@@ -395,5 +395,11 @@ angular.module('biggraph').factory('util', function utilFactory(
     slowQueue: new RequestQueue(2),
   };
   util.globals = util.get('/ajax/getGlobalSettings');
+
+  util.reloadUser = function() {
+    util.user = util.nocache('/ajax/getUserData');
+  };
+  util.reloadUser();
+
   return util;
 });
