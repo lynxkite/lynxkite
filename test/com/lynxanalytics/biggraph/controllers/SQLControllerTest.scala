@@ -5,6 +5,8 @@ import com.lynxanalytics.biggraph.graph_util
 
 class SQLControllerTest extends BigGraphControllerTestBase {
   val sqlController = new SQLController(this)
+  val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
+  graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
 
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
@@ -63,30 +65,46 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
 
-  test("import from CSV") {
-    val res = getClass.getResource("/graph_operations/ImportGraphTest").toString
-    graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", res)
-    val csvFiles = "IMPORTGRAPHTEST$/testgraph/vertex-data/part*"
+  def importCSV(file: String, columns: List[String], infer: Boolean): Unit = {
+    val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
     val response = await(sqlController.importCSV(
       user,
       CSVImportRequest(
         table = "csv-import-test",
         privacy = "public-read",
         files = csvFiles,
-        columnNames = List("vertexId", "name", "age"),
+        columnNames = columns,
         delimiter = ",",
         mode = "FAILFAST",
+        infer = infer,
         columnsToImport = List())))
     val tablePath = response.id
-
     run(
       "Import vertices",
       Map(
         "table" -> tablePath,
         "id-attr" -> "new_id"))
+  }
+
+  test("import from CSV without header") {
+    importCSV("testgraph/vertex-data", List("vertexId", "name", "age"), infer = false)
     assert(vattr[String]("vertexId") == Seq("0", "1", "2"))
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
     assert(vattr[String]("age") == Seq("18.2", "20.3", "50.3"))
+  }
+
+  test("import from CSV with header") {
+    importCSV("with-header", List(), infer = false)
+    assert(vattr[String]("vertexId") == Seq("0", "1", "2"))
+    assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
+    assert(vattr[String]("age") == Seq("18.2", "20.3", "50.3"))
+  }
+
+  test("import from CSV with type inference") {
+    importCSV("with-header", List(), infer = true)
+    assert(vattr[Int]("vertexId") == Seq(0, 1, 2))
+    assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
+    assert(vattr[Double]("age") == Seq(18.2, 20.3, 50.3))
   }
 
   test("import from SQLite") {

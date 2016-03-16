@@ -4,6 +4,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
+ - Numeric fields in CSV files can be imported to LynxKite with the right types.
+
 ### master
 
 ### 1.7.3

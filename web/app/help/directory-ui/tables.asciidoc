@@ -71,6 +71,10 @@ defined column list can result in an empty table.
 +
 **Salvage malformed lines: truncate or fill with nulls** will still import the problematic lines,
 dropping some data or inserting undefined values.
+
+[[infer]] Infer types::
+Automatically detects data types in the CSV. For example a column full of numbers will become a
+`Double`. If disabled, all columns are imported as ``String``s.
 ====
 
 [[import-json]]
