@@ -3001,31 +3001,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       val sql = params("sql")
-      val inputTables = env.sqlHelper.getInputColumns(project.viewer, sql)
-      val dataFrame = env.sqlHelper.getDataFrame(project.viewer, sql)
-      val op = new graph_operations.ExecuteSQL(
-        sql,
-        inputTables.map {
-          case (tableName, columnList) =>
-            (tableName, columnList.map(_._2))
-        },
-        dataFrame.schema)
-      var opBuilder = op()
-      for ((tableName, columns) <- inputTables) {
-        for ((guid, columnName) <- columns) {
-          val attrKey = op.tableColumns(tableName)(columnName)
-          val attrEntity = env
-            .metaGraphManager
-            .attribute(guid)
-            .asInstanceOf[Attribute[Any]]
-          opBuilder = opBuilder(attrKey, attrEntity)
-        }
-      }
-      val tableResult = opBuilder.result
-      val table = project.segmentation(params("name"))
-      table.vertexSet = tableResult.ids
-      for ((name, column) <- tableResult.columns) {
-        table.newVertexAttribute(name, column)
+      val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
+      val tableSegmentation = project.segmentation(params("name"))
+      tableSegmentation.vertexSet = table.idSet
+      for ((name, column) <- table.columns) {
+        tableSegmentation.newVertexAttribute(name, column)
       }
     }
   })

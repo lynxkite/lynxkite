@@ -5,9 +5,12 @@ import com.lynxanalytics.biggraph.controllers.Table
 import com.lynxanalytics.biggraph.controllers.RawTable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql
+import org.apache.spark.sql.types
+import org.apache.spark.sql.sources
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.rdd
 
 import scala.reflect.runtime.universe.TypeTag
@@ -16,9 +19,9 @@ import play.api.libs.json
 
 class AttributeTableRelation(
   vs: UniqueSortedRDD[ID, Unit],
-  attrs: Map[String, (UniqueSortedRDD[ID, _], TypeTag[_])],
+  attrs: Map[String, AttributeData[_]],
   val sqlContext: sql.SQLContext)
-    extends sql.sources.BaseRelation with sql.sources.TableScan with sql.sources.PrunedScan {
+    extends sources.BaseRelation with sources.TableScan with sources.PrunedScan {
 
   // TableScan
   override def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
@@ -29,18 +32,20 @@ class AttributeTableRelation(
     val rdds = requiredColumns.toSeq.map(name => attrs(name))
     val emptyRows = vs.mapValues(_ => Seq[Any]())
     val seqRows = rdds.foldLeft(emptyRows) {
-      case (seqs, (rdd, _)) =>
-        seqs.sortedLeftOuterJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }
+      case (seqs, data) =>
+        seqs
+          .sortedLeftOuterJoin(data.rdd)
+          .mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }
     }
     seqRows.values.map(sql.Row.fromSeq(_))
   }
 
   def schema = {
     val fields = attrs.toSeq.sortBy(_._1).map {
-      case (name, (rdd, ttag)) =>
-        sql.types.StructField(
+      case (name, data) =>
+        types.StructField(
           name = name,
-          dataType = Table.dfType(ttag))
+          dataType = Table.dfType(data.typeTag))
     }
     sql.types.StructType(fields)
   }
@@ -72,10 +77,6 @@ object ExecuteSQL extends OpFromJson {
     }.toMap
   }
 
-  // The output works the same way as in ImportDataFrame
-  class Output(schema: sql.types.StructType)(implicit instance: MetaGraphOperationInstance)
-    extends ImportDataFrame.Output(schema)
-
   def fromJson(j: JsValue) = {
     new ExecuteSQL(
       (j \ "sqlQuery").as[String],
@@ -90,10 +91,11 @@ class ExecuteSQL(
   val sqlQuery: String,
   val inputTables: Map[String, Seq[String]],
   val outputSchema: sql.types.StructType)
-    extends TypedMetaGraphOp[ExecuteSQL.Input, ExecuteSQL.Output] {
+    extends TypedMetaGraphOp[ExecuteSQL.Input, SQLHelper.DataFrameOutput] {
 
   override lazy val hashCode = gUID.hashCode
 
+  // Needed because of outputSchema.
   override def equals(other: Any): Boolean =
     other match {
       case otherOp: ExecuteSQL =>
@@ -106,32 +108,26 @@ class ExecuteSQL(
   override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new Input(inputTables)
 
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new SQLHelper.DataFrameOutput(outputSchema)(instance)
   override def toJson = Json.obj(
     "sqlQuery" -> sqlQuery,
     "inputTables" -> inputTables,
     "outputSchema" -> outputSchema.prettyJson)
 
   def execute(inputDatas: DataSet,
-              o: Output,
+              o: SQLHelper.DataFrameOutput,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
-    val sc = rc.sparkContext
-
-    val entities = o.columns.values.map(_.entity)
-    val entitiesByName = entities.map(e => (e.name, e): (Symbol, Attribute[_])).toMap
-    val inOrder = outputSchema.map(f => entitiesByName(toSymbol(f)))
-
     val sqlContext = rc.sqlContext.newSession()
-
     for ((tableName, tableVs) <- inputs.tables) {
       val tc = inputs
         .tableColumns(tableName)
         .map {
           case (columnName, columnAttr) =>
-            (columnName, (columnAttr.rdd, columnAttr.data.typeTag))
+            (columnName, columnAttr.data)
         }
         .toMap
 
@@ -139,8 +135,7 @@ class ExecuteSQL(
       val df = rt.toDF
       df.registerTempTable(tableName)
     }
-
-    var df = sqlContext.sql(sqlQuery)
-    rc.ioContext.writeAttributes(inOrder, ImportDataFrame.toNumberedLines(df, rc))
+    var dataFrame = sqlContext.sql(sqlQuery)
+    o.populateOutput(rc, outputSchema, dataFrame)
   }
 }
