@@ -158,6 +158,8 @@ command=(
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
     --jars "${SPARK_JARS}" \
+    --principal ${KERBEROS_PRINCIPAL} \
+    --keytab ${KERBEROS_KEYTAB} \
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     "${fake_application_jar}" \
