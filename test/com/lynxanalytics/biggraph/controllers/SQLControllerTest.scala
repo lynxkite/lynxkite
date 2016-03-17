@@ -39,7 +39,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       header = true)))
     val output = graph_util.HadoopFile(result.download.get.path).loadTextFile(sparkContext)
     assert(output.collect.sorted.mkString(", ") ==
-      "Adam;20.3, Eve;18.2, Isolated Joe;2.0, name;age")
+      "18.2;Eve, 2.0;Isolated Joe, 20.3;Adam, age;name")
   }
 
   test("sql export to database") {
@@ -56,11 +56,11 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       val rs = statement.executeQuery("select * from export_test;")
       new Iterator[String] {
         def hasNext = rs.next
-        def next = s"${rs.getString(1)};${rs.getDouble(2)}"
+        def next = s"${rs.getDouble(1)};${rs.getString(2)}"
       }.toIndexedSeq
     }
     connection.close()
-    assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
+    assert(results.sorted == Seq("18.2;Eve", "2.0;Isolated Joe", "20.3;Adam"))
   }
 
   test("import from CSV") {

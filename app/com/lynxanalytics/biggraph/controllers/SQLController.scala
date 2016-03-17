@@ -217,19 +217,26 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
-  // Creates a DataFrame from an SQL query
-  // See also: SQLHelper.getDataFrame
-  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame =
+  // Creates a table from an SQL query.
+  // TODO: The order of columns is lost in this process. Try to
+  // fix that.
+  private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
     metaManager.synchronized {
       val p = SubProject.parsePath(spec.project)
       assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
-      env.sqlHelper.getDataFrame(p.viewer, spec.sql)
+      env.sqlHelper.sqlToTable(p.viewer, spec.sql)
     }
+
+  // Creates a DataFrame from an SQL query. The computation steps will
+  // also be entered into the Metagraph.
+  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
+    tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
+  }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = dfFromSpec(user, request.df)
-
+    // TODO: use tableFromSpec directly here.
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
