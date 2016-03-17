@@ -10,6 +10,8 @@ include::configuration.asciidoc[]
 
 include::emr.asciidoc[]
 
+include::kerberos.asciidoc[]
+
 include::troubleshooting.asciidoc[]
 
 include::configuration/index.asciidoc[]
