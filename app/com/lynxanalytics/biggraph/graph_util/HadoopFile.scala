@@ -137,8 +137,6 @@ class HadoopFile private (
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum
 
-  def isDir = fs.isDirectory(path)
-
   def listStatus = fs.listStatus(path)
   def getContentSummary = fs.getContentSummary(path)
 
