@@ -155,7 +155,7 @@ start)
   fi
 
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
-  CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
+  CREATE_CLUSTER_COMMAND=(aws emr create-cluster \
     --applications Name=Hadoop \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
@@ -169,6 +169,9 @@ start)
   # About the configuration changes above:
   # mapred.output.committer.class = org.apache.hadoop.mapred.FileOutputCommitter
   # because Amazon's default value is only supported with Amazon's JAR files: #3234
+
+  echo "${CREATE_CLUSTER_COMMAND[@]}"
+  CREATE_CLUSTER_RESULT=$(exec "${CREATE_CLUSTER_COMMAND[@]}")
 
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh ${MASTER_ACCESS} --command "sudo yum install -y expect"
