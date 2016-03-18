@@ -3,7 +3,7 @@
 # allowed to access using what prefixes.
 
 # Special prefixes can be defined here that expand to directories or paths.
-# Suppose, for example, that the administrator speficies 
+# Suppose, for example, that the administrator specifies
 # DIR="file:/home/user/kite/" in this file. Then whenever the user references
 # DIR$subdir/data.txt (s)he will access the file:/home/users/kite/subdir/data.txt.
 # Moreover, there is no other way a user can refer to that file (unless there are
