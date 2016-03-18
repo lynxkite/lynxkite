@@ -45,16 +45,62 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
+  type Vector = DenseVector[Double]
+  type Matrix = DenseMatrix[Double]
+
   case class Network(
-    size: Int,
-    edgeMatrix: DenseMatrix[Double],
-    edgeBias: DenseVector[Double],
-    resetInput: DenseMatrix[Double],
-    resetHidden: DenseMatrix[Double],
-    updateInput: DenseMatrix[Double],
-    updateHidden: DenseMatrix[Double],
-    activationInput: DenseMatrix[Double],
-    activationHidden: DenseMatrix[Double])
+      size: Int,
+      edgeMatrix: Matrix,
+      edgeBias: Vector,
+      resetInput: Matrix,
+      resetHidden: Matrix,
+      updateInput: Matrix,
+      updateHidden: Matrix,
+      activationInput: Matrix,
+      activationHidden: Matrix) {
+    import breeze.numerics._
+
+    def squared = new Network(
+      size,
+      edgeMatrix :* edgeMatrix,
+      edgeBias :* edgeBias,
+      resetInput :* resetInput,
+      resetHidden :* resetHidden,
+      updateInput :* updateInput,
+      updateHidden :* updateHidden,
+      activationInput :* activationInput,
+      activationHidden :* activationHidden)
+
+    def plus(other: Network) = new Network(
+      size,
+      edgeMatrix + other.edgeMatrix,
+      edgeBias + other.edgeBias,
+      resetInput + other.resetInput,
+      resetHidden + other.resetHidden,
+      updateInput + other.updateInput,
+      updateHidden + other.updateHidden,
+      activationInput + other.activationInput,
+      activationHidden + other.activationHidden)
+
+    def adagradMatrix(memory: Network, gradient: Network, getter: Network => Matrix): Matrix = {
+      getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-8)
+    }
+
+    def adagradVector(memory: Network, gradient: Network, getter: Network => Vector): Vector = {
+      getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-8)
+    }
+
+    def adagrad(memory: Network, gradient: Network) = new Network(
+      size,
+      adagradMatrix(memory, gradient, _.edgeMatrix),
+      adagradVector(memory, gradient, _.edgeBias),
+      adagradMatrix(memory, gradient, _.resetInput),
+      adagradMatrix(memory, gradient, _.resetHidden),
+      adagradMatrix(memory, gradient, _.updateInput),
+      adagradMatrix(memory, gradient, _.updateHidden),
+      adagradMatrix(memory, gradient, _.activationInput),
+      adagradMatrix(memory, gradient, _.activationHidden))
+  }
   object Network {
     def zeros(size: Int) = new Network(
       size,
@@ -68,28 +114,28 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       activationHidden = DenseMatrix.zeros[Double](size, size))
   }
 
-  class NetworkOutputs(
+  case class NetworkOutputs(
       network: Network,
       vertices: Iterable[ID],
       edges: CompactUndirectedGraph,
-      state: Map[ID, DenseVector[Double]],
-      visibleState: Map[ID, DenseVector[Double]]) {
+      state: Map[ID, Vector],
+      visibleState: Map[ID, Vector]) {
     import breeze.numerics._
-    val input = vertices.map { id =>
+    val input: Map[ID, Vector] = vertices.map { id =>
       val inputs = edges.getNeighbors(id).map(network.edgeMatrix * visibleState(_))
       id -> (inputs.reduce(_ + _) + network.edgeBias)
     }.toMap
-    val reset = vertices.map { id =>
+    val reset: Map[ID, Vector] = vertices.map { id =>
       id -> sigmoid(network.resetInput * input(id) + network.resetHidden * state(id))
     }.toMap
-    val update = vertices.map { id =>
+    val update: Map[ID, Vector] = vertices.map { id =>
       id -> sigmoid(network.updateInput * input(id) + network.updateHidden * state(id))
     }.toMap
-    val tildeState = vertices.map { id =>
+    val tildeState: Map[ID, Vector] = vertices.map { id =>
       id -> tanh(network.activationInput * input(id) + network.activationHidden * (reset(id) :* state(id)))
     }.toMap
-    val newState = vertices.map { id =>
-      id -> ((update(id) * (-1.0) + 1.0) :* state(id) + update(id) :* tildeState(id))
+    val newState: Map[ID, Vector] = vertices.map { id =>
+      id -> ((1.0 - update(id)) :* state(id) + update(id) :* tildeState(id))
     }.toMap
   }
 
@@ -97,30 +143,91 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       network: Network,
       vertices: Iterable[ID],
       edges: CompactUndirectedGraph,
-      stateGradient: Map[ID, DenseVector[Double]],
-      outputs: Seq[NetworkOutputs]) {
+      stateGradient: Map[ID, Vector],
+      outputs: NetworkOutputs) {
     import breeze.numerics._
-    val state = vertices.map { id =>
-      id -> ((update(id) * (-1.0) + 1.0) :* state(id) + update(id) :* tildeState(id))
+    val tildeGradient: Map[ID, Vector] = vertices.map { id =>
+      id -> (outputs.update(id) :* stateGradient(id))
     }.toMap
-    val tildeState = vertices.map { id =>
-      id -> tanh(network.activationInput * input(id) + network.activationHidden * (reset(id) :* state(id)))
+    val tildeRawGradient: Map[ID, Vector] = vertices.map { id =>
+      // Propagate through tanh.
+      id -> ((1.0 - outputs.tildeState(id) :* outputs.tildeState(id)) :* tildeGradient(id))
     }.toMap
-    val update = vertices.map { id =>
-      id -> sigmoid(network.updateInput * input(id) + network.updateHidden * state(id))
+    val updateGradient: Map[ID, Vector] = vertices.map { id =>
+      id -> (outputs.tildeState(id) :* stateGradient(id) - stateGradient(id))
     }.toMap
-    val reset = vertices.map { id =>
-      id -> sigmoid(network.resetInput * input(id) + network.resetHidden * state(id))
+    val updateRawGradient: Map[ID, Vector] = vertices.map { id =>
+      // Propagate through sigmoid.
+      id -> (outputs.update(id) :* (1.0 - outputs.update(id)) :* updateGradient(id))
     }.toMap
-    val input = vertices.map { id =>
-      val inputs = edges.getNeighbors(id).map(network.edgeMatrix * state(_))
-      id -> (inputs.reduce(_ + _) + network.edgeBias)
+    val resetGradient: Map[ID, Vector] = vertices.map { id =>
+      id -> ((network.activationHidden.t * tildeRawGradient(id)) :* outputs.state(id))
     }.toMap
+    val resetRawGradient: Map[ID, Vector] = vertices.map { id =>
+      // Propagate through sigmoid.
+      id -> (outputs.reset(id) :* (1.0 - outputs.reset(id)) :* resetGradient(id))
+    }.toMap
+    val inputGradient: Map[ID, Vector] = vertices.map { id =>
+      id -> (
+        network.updateInput.t * updateRawGradient(id) +
+        network.resetInput.t * resetRawGradient(id))
+    }.toMap
+    val prevStateGradient: Map[ID, Vector] = vertices.map { id =>
+      val edgeGradients = edges.getNeighbors(id).map(network.edgeMatrix.t * stateGradient(_))
+      id -> (
+        network.updateHidden.t * updateRawGradient(id) +
+        network.resetHidden.t * resetRawGradient(id) +
+        stateGradient(id) +
+        (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id) +
+        edgeGradients.reduce(_ + _))
+    }.toMap
+    // Network gradients.
+    val activationInputGradient: Matrix = vertices.map { id =>
+      outputs.input(id) * tildeRawGradient(id).t
+    }.reduce(_ + _)
+    val activationHiddenGradient: Matrix = vertices.map { id =>
+      (outputs.reset(id) :* outputs.state(id)) * tildeRawGradient(id).t
+    }.reduce(_ + _)
+    val updateInputGradient: Matrix = vertices.map { id =>
+      outputs.input(id) * updateRawGradient(id).t
+    }.reduce(_ + _)
+    val updateHiddenGradient: Matrix = vertices.map { id =>
+      outputs.state(id) * updateRawGradient(id).t
+    }.reduce(_ + _)
+    val resetInputGradient: Matrix = vertices.map { id =>
+      outputs.input(id) * resetRawGradient(id).t
+    }.reduce(_ + _)
+    val resetHiddenGradient: Matrix = vertices.map { id =>
+      outputs.state(id) * resetRawGradient(id).t
+    }.reduce(_ + _)
+    val edgeBiasGradient: Vector = vertices.map { id =>
+      inputGradient(id)
+    }.reduce(_ + _)
+    val edgeMatrixGradient: Matrix = vertices.map { id =>
+      outputs.visibleState(id) * inputGradient(id).t
+    }.reduce(_ + _)
+  }
+
+  def gradientMatrix(
+    gradients: Seq[NetworkGradients], getter: NetworkGradients => Matrix): Matrix = {
+    import breeze.numerics._
+    val m = gradients.map(getter).reduce(_ + _)
+    clip.inPlace(m, -5.0, 5.0) // Mitigate exploding gradients.
+    m
+  }
+
+  def gradientVector(
+    gradients: Seq[NetworkGradients], getter: NetworkGradients => Vector): Vector = {
+    import breeze.numerics._
+    val m = gradients.map(getter).reduce(_ + _)
+    clip.inPlace(m, -5.0, 5.0) // Mitigate exploding gradients.
+    m
   }
 
   val networkSize = 100
   val iterations = 10
   val depth = 10
+  val learningRate = 0.1
   def predict(
     labelOptIterator: Iterator[(ID, Option[Double])],
     edges: CompactUndirectedGraph,
@@ -130,8 +237,9 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
     val labels = labelOpt.flatMap { case (id, labelOpt) => labelOpt.map(id -> _) }.toMap
     val vertices = labelOpt.map(_._1)
     // Initial state contains label. TODO: Also add features.
-    val blankState = vertices.map(_ -> DenseVector.zeros[Double](networkSize))
-    val trueState: Map[ID, DenseVector[Double]] = vertices.map { id =>
+    val blankState: Map[ID, Vector] =
+      vertices.map(_ -> DenseVector.zeros[Double](networkSize)).toMap
+    val trueState: Map[ID, Vector] = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = 1.0
@@ -141,9 +249,11 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
     }.toMap
 
     var network = Network.zeros(networkSize)
+    var adagradMemory = Network.zeros(networkSize)
+    var finalOutputs: NetworkOutputs = null
     for (i <- 1 to iterations) {
       // Forward pass.
-      val outputs = (0 until depth).foldLeft {
+      val outputs = (1 until depth).scanLeft {
         // Neighbors can see the labels (trueState) but it is hidden from the node itself (blankState).
         new NetworkOutputs(network, vertices, edges, blankState, trueState)
       } { (outputs, iteration) =>
@@ -151,15 +261,42 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       }
 
       // Backward pass.
-      val finalGradient = labels.map {
+      val errors: Map[ID, Double] = labels.map {
         case (id, label) =>
-          val error = DenseVector.zeros[Double](networkSize)
-          error(1) = label - outputs.last.state(1)
-          id -> error
+          // The label is predicted in position 1.
+          id -> (label - outputs.last.newState(id)(1))
       }
-      val gradients = new NetworkGradients(network, vertices, edges, finalGradient, outputs)
+      val errorTotal = errors.values.map(e => e * e).sum
+      println(s"Error in iteration $i: $errorTotal")
+      val finalGradient: Map[ID, Vector] = errors.map {
+        case (id, error) =>
+          val vec = DenseVector.zeros[Double](networkSize)
+          vec(1) = error
+          id -> vec
+      }
+      val gradients = outputs.init.scanRight {
+        new NetworkGradients(network, vertices, edges, finalGradient, outputs.last)
+      } { (outputs, gradients) =>
+        new NetworkGradients(network, vertices, edges, gradients.prevStateGradient, outputs)
+      }
+      val networkGradients = new Network(
+        size = network.size,
+        edgeMatrix = gradientMatrix(gradients, _.edgeMatrixGradient),
+        edgeBias = gradientVector(gradients, _.edgeBiasGradient),
+        resetInput = gradientMatrix(gradients, _.resetInputGradient),
+        resetHidden = gradientMatrix(gradients, _.resetHiddenGradient),
+        updateInput = gradientMatrix(gradients, _.updateInputGradient),
+        updateHidden = gradientMatrix(gradients, _.updateHiddenGradient),
+        activationInput = gradientMatrix(gradients, _.activationInputGradient),
+        activationHidden = gradientMatrix(gradients, _.activationHiddenGradient))
 
+      adagradMemory = adagradMemory.plus(networkGradients.squared)
+      network = network.adagrad(adagradMemory, networkGradients)
+      finalOutputs = outputs.last
     }
-    Iterator()
+    // Return last predictions.
+    finalOutputs.newState.map {
+      case (id, state) => id -> state(1)
+    }.iterator
   }
 }
