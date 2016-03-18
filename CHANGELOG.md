@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Numeric fields in CSV files can be imported to LynxKite with the right types.
 
 ### master
+ - emr.sh: support setting up LynxKite in an Amazon VPC.
 
 ### 1.7.3
 
