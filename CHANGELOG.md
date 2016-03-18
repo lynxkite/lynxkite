@@ -4,9 +4,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
- - Numeric fields in CSV files can be imported to LynxKite with the right types.
-
 ### master
+
+ - Numeric fields in CSV files can be imported to LynxKite with the right types.
+ - Fixed batch scripting issue with `lynx.loadProject()`.
 
 ### 1.7.3
 
