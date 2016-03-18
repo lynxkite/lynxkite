@@ -9,6 +9,11 @@ BigQuery json schema file specifying the format of the operation performance dat
         "mode": "REQUIRED"
     },
     {
+        "name": "timestamp",
+        "type": "INTEGER",
+        "mode": "REQUIRED"
+    },
+    {
         "name": "guid",
         "type": "STRING",
         "mode": "REQUIRED"
