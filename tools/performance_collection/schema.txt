@@ -1,3 +1,7 @@
+BigQuery json schema file specifying the format of the operation performance data.
+
+=== CUT HERE - FORMAT JSON SPEC FOLLOWS BELOW ===
+
 [
     {
         "name": "name",
