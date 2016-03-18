@@ -81,6 +81,7 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     val out = json.Json.obj(
       "instanceProperties" -> instanceProperties,
       "name" -> instance.operation.toString,
+      "timestamp" -> com.lynxanalytics.biggraph.graph_util.Timestamp.toString,
       "guid" -> instance.operation.gUID.toString,
       "elapsedMs" -> elapsedMs(),
       "inputs" -> inputInfoList.sortBy(_.name),
