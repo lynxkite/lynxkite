@@ -85,12 +85,12 @@ fi
 GetMasterHostName() {
   CLUSTER_ID=$(GetClusterId)
   aws emr describe-cluster \
-    --cluster-id ${CLUSTER_ID} \
+    --cluster-id ${CLUSTER_ID} --output=json \
     | grep MasterPublicDnsName | cut -d'"' -f 4 | head -1
 }
 
 GetClusterId() {
-  aws emr list-clusters --cluster-states STARTING BOOTSTRAPPING RUNNING WAITING | \
+  aws emr list-clusters --cluster-states STARTING BOOTSTRAPPING RUNNING WAITING --output=json | \
     grep -B 1 "\"Name\": \"${CLUSTER_NAME}\"" | \
     head -1 | \
     grep '"Id":' | \
@@ -150,6 +150,10 @@ start)
   if [ -n "${S3_DATAREPO:-}" ]; then
     CheckDataRepo
   fi
+  if [ -n "${CREATE_CLUSTER_EXTRA_EC2_ATTRS}" ]; then
+    CREATE_CLUSTER_EXTRA_EC2_ATTRS=",${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"
+  fi
+
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \

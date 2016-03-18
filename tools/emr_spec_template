@@ -52,7 +52,6 @@ S3_DATAREPO=lynx-bnw-data/${USER}-cluster
 CREATE_CLUSTER_EXTRA_PARAMS="--log-uri s3n://${S3_DATAREPO}/emr-logs/ --enable-debugging"
 
 # Specify additional EC2 attributes here. For example for deployment in a VPC private subnet, you'll
-# need to set SubnetId and AdditionalMasterSecurityGroups. This must be an empty string or must start
-# with a comma. E.g.:
-# CREATE_CLUSTER_EXTRA_EC2_ATTRS=', "SubnetId": "subnet-XXXX","AdditionalMasterSecurityGroups":["sg-YYYY"]'
+# need to set SubnetId and AdditionalMasterSecurityGroups. E.g.:
+# CREATE_CLUSTER_EXTRA_EC2_ATTRS='"SubnetId": "subnet-XXXX","AdditionalMasterSecurityGroups":["sg-YYYY"]'
 CREATE_CLUSTER_EXTRA_EC2_ATTRS=""
