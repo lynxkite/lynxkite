@@ -1,8 +1,8 @@
-// A benchmark/test script with a wide mix of operations.
+// A test script with a wide mix of operations.
 start_time = System.currentTimeMillis()
 
 project = lynx.newProject()
-project.newVertexSet(size: 1000000)
+project.newVertexSet(size: 10000)
 project.createScaleFreeRandomEdgeBundle(iterations: 5, perIterationMultiplier: 1.6, seed: 1571682864)
 project.addConstantEdgeAttribute(name: 'weight', value: 1, type: 'Double')
 df = project.sql('select src_id,dst_id,edge_weight from triplets')
