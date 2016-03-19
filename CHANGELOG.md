@@ -5,6 +5,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
  - Numeric fields in CSV files can be imported to LynxKite with the right types.
+ - Bottom links are moved to a dropup.
 
 ### master
 
