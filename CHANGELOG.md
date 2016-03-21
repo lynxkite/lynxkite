@@ -4,10 +4,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
- - Numeric fields in CSV files can be imported to LynxKite with the right types.
- - Bottom links are moved to a dropup.
-
 ### master
+
+ - emr.sh: support setting up LynxKite in an Amazon VPC.
+ - Numeric fields in CSV files can be imported to LynxKite with the right types.
+ - Fixed batch scripting issue with `lynx.loadProject()`.
+ - Bottom links are moved to a dropup.
 
 ### 1.7.3
 
