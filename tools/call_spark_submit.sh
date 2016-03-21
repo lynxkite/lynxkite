@@ -128,6 +128,10 @@ if [ -n "${NUM_EXECUTORS}" ]; then
   fi
 fi
 
+if [ -n "${KERBEROS_PRINCIPAL}" ]; then
+  EXTRA_OPTIONS="${EXTRA_OPTIONS} --principal ${KERBEROS_PRINCIPAL} --keytab ${KERBEROS_KEYTAB}"
+fi
+
 if [ "${SPARK_MASTER}" == "local" ]; then
  export SPARK_MASTER="${SPARK_MASTER}[${NUM_CORES_PER_EXECUTOR}]"
 fi
@@ -158,8 +162,6 @@ command=(
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
     --jars "${SPARK_JARS}" \
-    --principal ${KERBEROS_PRINCIPAL} \
-    --keytab ${KERBEROS_KEYTAB} \
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     "${fake_application_jar}" \
