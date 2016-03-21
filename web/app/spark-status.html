@@ -1,21 +1,28 @@
 <div class="spark-status">
-  <div ng-show="normalOperation(status)" class="text-right">
-    <span class="glyphicon glyphicon-cog spinner" drop-tooltip-position="left middle"
-      drop-tooltip="{{ message(status) }}"></span>
-    <span class="glyphicon glyphicon-remove kill" drop-tooltip-position="left middle"
-      drop-tooltip="Stop&nbsp;calculation" ng-click="kill()"></span>
-  </div>
-  <div ng-show="status.error" class="text-right spark-status-error">
-    <span class="glyphicon glyphicon-warning-sign" drop-tooltip-position="left middle"
-      drop-tooltip="{{ status.error }}"></span>
-  </div>
-  <div ng-show="status.sparkWorking === false" class="text-right spark-status-error">
-    <span class="glyphicon glyphicon-wrench" drop-tooltip-position="left middle"
-      drop-tooltip="Spark health check failed. Please contact support."></span>
-  </div>
-  <div ng-show="status.kiteCoreWorking === false" class="text-right spark-status-error">
-    <span class="glyphicon glyphicon-fire" drop-tooltip-position="left middle"
-      drop-tooltip="LynxKite health check failed. Please contact support."></span>
+  <div class="text-right">
+    <span ng-show="normalOperation(status)">
+      <span class="glyphicon glyphicon-cog spinner" drop-tooltip-position="left middle"
+        drop-tooltip="{{ message(status) }}"></span>
+      <span class="glyphicon glyphicon-remove kill" drop-tooltip-position="left middle"
+        drop-tooltip="Stop&nbsp;calculation" ng-click="kill()"></span>
+    </span>
+    <span ng-show="status.error" class="spark-status-error">
+      <span class="glyphicon glyphicon-warning-sign" drop-tooltip-position="left middle"
+        drop-tooltip="{{ status.error }}"></span>
+    </span>
+    <span ng-show="status.sparkWorking === false" class="spark-status-error">
+      <span class="glyphicon glyphicon-wrench" drop-tooltip-position="left middle"
+        drop-tooltip="Spark health check failed. Please contact support."></span>
+    </span>
+    <span ng-show="status.kiteCoreWorking === false" class="spark-status-error">
+      <span class="glyphicon glyphicon-fire" drop-tooltip-position="left middle"
+        drop-tooltip="LynxKite health check failed. Please contact support."></span>
+    </span>
+    <span class="spark-status-executors">
+      <span class="glyphicon glyphicon-tasks" drop-tooltip-position="left middle"
+        drop-tooltip="Number of executors"></span>
+      <span class="spark-status-executor-num">{{ status.executorNum }}</span>
+    </span>
   </div>
   <div class="spark-status-stages">
     <div class="spark-status-stage" ng-repeat="stage in stages(status) track by stage.id"

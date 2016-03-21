@@ -51,3 +51,11 @@
   font-size: 30px;
   margin-right: 30px; /* Same place as the cogwheel. */
 }
+
+.spark-status-executors {
+  font-size: 24px;
+}
+
+.spark-status-executor-num {
+  vertical-align: text-bottom;
+}

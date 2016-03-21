@@ -14,6 +14,7 @@ case class SparkStatusResponse(
   timestamp: Long, // This is the status at the given time.
   activeStages: List[StageInfo],
   pastStages: List[StageInfo],
+  executorNum: Int,
   sparkWorking: Boolean,
   kiteCoreWorking: Boolean)
 
@@ -30,9 +31,10 @@ case class StageInfo(
 class KiteListener extends spark.scheduler.SparkListener {
   private val activeStages = collection.mutable.Map[String, StageInfo]()
   private val pastStages = collection.mutable.Queue[StageInfo]()
+  private val executors = collection.mutable.Set[String]()
   private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   private var currentResp =
-    SparkStatusResponse(0, List(), List(), sparkWorking = true, kiteCoreWorking = true)
+    SparkStatusResponse(0, List(), List(), 0, sparkWorking = true, kiteCoreWorking = true)
   // The time of the last registered spark task finish event.
   private var lastSparkTaskFinish = 0L
   // Whether, to the knowledge of this listener, spark is stalled.
@@ -102,6 +104,16 @@ class KiteListener extends spark.scheduler.SparkListener {
     }
   }
 
+  override def onExecutorAdded(
+    executorAdded: spark.scheduler.SparkListenerExecutorAdded): Unit = synchronized {
+    executors += executorAdded.executorId
+  }
+
+  override def onExecutorRemoved(
+    executorRemoved: spark.scheduler.SparkListenerExecutorRemoved): Unit = synchronized {
+    executors -= executorRemoved.executorId
+  }
+
   def isSparkStalled = synchronized { sparkStalled }
   def setSparkStalled(stalled: Boolean): Unit = synchronized {
     val old = sparkStalled
@@ -119,6 +131,7 @@ class KiteListener extends spark.scheduler.SparkListener {
         time,
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
+        executors.size,
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking)
     for (p <- promises) {
