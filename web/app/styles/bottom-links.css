@@ -3,6 +3,7 @@
   bottom: 5px;
   right: 5px;
   background-color: white;
+  z-index: 999; /* The bottom links should not be covered by anything. */
 }
 
 .bottom-links > * {
