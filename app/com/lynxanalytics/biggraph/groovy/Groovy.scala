@@ -123,7 +123,9 @@ class LynxGroovyInterface(ctx: GroovyContext) {
   def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
-    new GroovyBatchProject(ctx, project.viewer.editor)
+    val editor = project.viewer.editor
+    editor.rootEditor.checkpoint = Some(project.viewer.rootCheckpoint)
+    new GroovyBatchProject(ctx, editor)
   }
 
   def newProject(): GroovyProject = {
