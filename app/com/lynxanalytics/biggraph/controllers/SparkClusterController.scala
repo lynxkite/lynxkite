@@ -14,7 +14,8 @@ case class SparkStatusResponse(
   timestamp: Long, // This is the status at the given time.
   activeStages: List[StageInfo],
   pastStages: List[StageInfo],
-  executorNum: Int,
+  activeExecutorNum: Int,
+  configedExecutorNum: Int,
   sparkWorking: Boolean,
   kiteCoreWorking: Boolean)
 
@@ -34,7 +35,7 @@ class KiteListener extends spark.scheduler.SparkListener {
   private val executors = collection.mutable.Set[String]()
   private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   private var currentResp =
-    SparkStatusResponse(0, List(), List(), 0, sparkWorking = true, kiteCoreWorking = true)
+    SparkStatusResponse(0, List(), List(), 0, 0, sparkWorking = true, kiteCoreWorking = true)
   // The time of the last registered spark task finish event.
   private var lastSparkTaskFinish = 0L
   // Whether, to the knowledge of this listener, spark is stalled.
@@ -132,6 +133,7 @@ class KiteListener extends spark.scheduler.SparkListener {
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
         executors.size,
+        sys.props.getOrElse("spark.executor.instances", "0").toInt,
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking)
     for (p <- promises) {
