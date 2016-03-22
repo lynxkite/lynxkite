@@ -188,3 +188,11 @@ team for further instructions if you think you need this feature.
 ```
 # export KITE_GOOGLE_CLIENT_SECRET='???'
 ```
+
+===========================================================
+On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
+variables. The principal acts like a user name and the keytab acts like a password.
+```
+# export KERBEROS_PRINCIPAL=
+# export KERBEROS_KEYTAB=
+```
