@@ -59,6 +59,13 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
                 beforeParams[param] = value;
               }
             });
+            // Also ignore changes where an empty value was removed. This is to clean up workflow
+            // scripts. (#3302)
+            angular.forEach(beforeParams, function(value, param) {
+              if (value === '' && afterParams[param] === undefined) {
+                delete beforeParams[param];
+              }
+            });
             if (angular.equals(after, beforeAllDefined)) { return; }
 
             step.localChanges = true;

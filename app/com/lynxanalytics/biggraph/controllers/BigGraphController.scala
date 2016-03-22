@@ -104,6 +104,7 @@ case class FEOperationParameterMeta(
     defaultValue: String,
     options: List[FEOption],
     multipleChoice: Boolean,
+    mandatory: Boolean, // If false, this parameter can be omitted from the request.
     payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
 
   require(
@@ -675,7 +676,7 @@ abstract class OperationParameterMeta {
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, payload)
+    id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {

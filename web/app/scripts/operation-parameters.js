@@ -12,6 +12,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       scope.$watch('fileUploads.count', function(count) {
         scope.busy = count !== 0;
       });
+
       // Translate between arrays and comma-separated strings for multiselects.
       scope.multiOutput = {};
       util.deepWatch(scope, 'output', function(output) {
@@ -25,8 +26,13 @@ angular.module('biggraph').directive('operationParameters', function(util) {
               scope.multiOutput[param.id] = [];
             }
           }
+          if (!param.mandatory && output[param.id] !== undefined && output[param.id].length === 0) {
+            // Hide empty optional parameters to keep history simpler.
+            delete output[param.id];
+          }
         }
       });
+
       util.deepWatch(scope, 'multiOutput', function(multiOutput) {
         for (var i = 0; i < scope.op.parameters.length; ++i) {
           var param = scope.op.parameters[i];
@@ -35,6 +41,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
           }
         }
       });
+
       scope.onLoad = function(editor) {
         editor.getSession().setTabSize(2);
         editor.renderer.setScrollMargin(3, 3, 3, 3);
