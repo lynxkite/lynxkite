@@ -282,7 +282,7 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       val errors: Map[ID, Double] = labelOpt.map {
         case (id, Some(label)) =>
           // The label is predicted in position 1.
-          id -> (label - outputs.last.newState(id)(1))
+          id -> (outputs.last.newState(id)(1) - label)
         case (id, None) =>
           id -> 0.0
       }.toMap
