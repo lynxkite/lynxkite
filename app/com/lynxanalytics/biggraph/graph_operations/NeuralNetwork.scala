@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import breeze.linalg._
+import breeze.stats.distributions.RandBasis
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -18,13 +19,25 @@ object NeuralNetwork extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = NeuralNetwork((j \ "featureCount").as[Int])
+  def fromJson(j: JsValue) = NeuralNetwork(
+    (j \ "featureCount").as[Int],
+    (j \ "networkSize").as[Int],
+    (j \ "iterations").as[Int],
+    (j \ "radius").as[Int])
 }
 import NeuralNetwork._
-case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Output] {
+case class NeuralNetwork(
+    featureCount: Int,
+    networkSize: Int,
+    iterations: Int,
+    radius: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("featureCount" -> featureCount)
+  override def toJson = Json.obj(
+    "featureCount" -> featureCount,
+    "networkSize" -> networkSize,
+    "iterations" -> iterations,
+    "radius" -> radius)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -82,12 +95,12 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       activationInput + other.activationInput,
       activationHidden + other.activationHidden)
 
+    val learningRate = 0.1
     def adagradMatrix(memory: Network, gradient: Network, getter: Network => Matrix): Matrix = {
-      getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-8)
+      getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-6)
     }
-
     def adagradVector(memory: Network, gradient: Network, getter: Network => Vector): Vector = {
-      getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-8)
+      getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-6)
     }
 
     def adagrad(memory: Network, gradient: Network) = new Network(
@@ -114,18 +127,18 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       activationInput = DenseMatrix.zeros[Double](size, size),
       activationHidden = DenseMatrix.zeros[Double](size, size))
 
-    def random(size: Int) = {
+    def random(size: Int)(implicit r: RandBasis) = {
       val amplitude = 0.01
       new Network(
         size,
-        edgeMatrix = DenseMatrix.rand(size, size) * amplitude,
-        edgeBias = DenseVector.rand(size) * amplitude,
-        resetInput = DenseMatrix.rand(size, size) * amplitude,
-        resetHidden = DenseMatrix.rand(size, size) * amplitude,
-        updateInput = DenseMatrix.rand(size, size) * amplitude,
-        updateHidden = DenseMatrix.rand(size, size) * amplitude,
-        activationInput = DenseMatrix.rand(size, size) * amplitude,
-        activationHidden = DenseMatrix.rand(size, size) * amplitude)
+        edgeMatrix = randn((size, size)) * amplitude,
+        edgeBias = randn(size) * amplitude,
+        resetInput = randn((size, size)) * amplitude,
+        resetHidden = randn((size, size)) * amplitude,
+        updateInput = randn((size, size)) * amplitude,
+        updateHidden = randn((size, size)) * amplitude,
+        activationInput = randn((size, size)) * amplitude,
+        activationHidden = randn((size, size)) * amplitude)
     }
   }
 
@@ -239,15 +252,10 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
     m
   }
 
-  val networkSize = 100
-  val iterations = 10
-  val depth = 10
-  val learningRate = 0.1
   def predict(
     labelOptIterator: Iterator[(ID, Option[Double])],
     edges: CompactUndirectedGraph,
     reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
-    println("predict")
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     val labelOpt = labelOptIterator.toSeq
     val labels = labelOpt.flatMap { case (id, labelOpt) => labelOpt.map(id -> _) }.toMap
@@ -258,23 +266,21 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
     val trueState: Map[ID, Vector] = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
-        state(0) = 1.0
-        state(1) = labels(id)
+        state(0) = 1.0 // Mark of a source of truth is in position 0.
+        state(1) = labels(id) // Label is in position 1.
       }
       id -> state
     }.toMap
 
-    var network = Network.random(networkSize)
+    var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
     for (i <- 1 to iterations) {
-      println(s"iteration $i")
       // Forward pass.
-      val outputs = (1 until depth).scanLeft {
+      val outputs = (1 until radius).scanLeft {
         // Neighbors can see the labels (trueState) but it is hidden from the node itself (blankState).
         new NetworkOutputs(network, vertices, edges, blankState, trueState)
-      } { (previous, depth) =>
-        println(s"depth $depth")
+      } { (previous, r) =>
         new NetworkOutputs(network, vertices, edges, previous.newState, previous.newState)
       }
 
@@ -287,7 +293,7 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
           id -> 0.0
       }.toMap
       val errorTotal = errors.values.map(e => e * e).sum
-      println(s"Error in iteration $i: $errorTotal")
+      println(s"Total error in iteration $i: $errorTotal")
       val finalGradient: Map[ID, Vector] = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
@@ -297,7 +303,6 @@ case class NeuralNetwork(featureCount: Int) extends TypedMetaGraphOp[Input, Outp
       val gradients = outputs.init.scanRight {
         new NetworkGradients(network, vertices, edges, finalGradient, outputs.last)
       } { (outputs, next) =>
-        println(s"backward")
         new NetworkGradients(network, vertices, edges, next.prevStateGradient, outputs)
       }
       val networkGradients = new Network(

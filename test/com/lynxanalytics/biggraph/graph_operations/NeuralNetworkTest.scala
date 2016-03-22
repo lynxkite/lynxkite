@@ -10,17 +10,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("lattice") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
-    val op = NeuralNetwork(0)
-    val nonEmpty = DeriveJS.deriveFromAttributes[String](
-      "side === '' ? undefined : side", Seq("side" -> g.attrs("side")),
+    val sideNum = DeriveJS.deriveFromAttributes[Double](
+      "side === '' ? undefined : side === 'left' ? -1.0 : 1.0", Seq("side" -> g.attrs("side")),
       g.vertices).attr
-    val isRight = DeriveJS.deriveFromAttributes[Double](
-      "side === 'right' ? 1.0 : 0.0", Seq("side" -> nonEmpty),
+    val prediction = {
+      val op = NeuralNetwork(featureCount = 0, networkSize = 20, iterations = 100, radius = 4)
+      op(op.edges, g.edges)(op.label, sideNum).result.prediction
+    }
+    val isWrong = DeriveJS.deriveFromAttributes[Double](
+      "var p = prediction < 0 ? 'left' : 'right'; p === truth ? 0.0 : 1.0;",
+      Seq("prediction" -> prediction, "truth" -> g.attrs("side_truth")),
       g.vertices).attr
-    val isRightTruth = DeriveJS.deriveFromAttributes[Double](
-      "side === 'right' ? 1.0 : 0.0", Seq("side" -> g.attrs("side_truth")),
-      g.vertices).attr
-    val prediction = op(op.edges, g.edges)(op.label, isRight).result.prediction
-    assert(prediction.rdd.collect.toSet == isRightTruth.rdd.collect.toSet)
+    assert(isWrong.rdd.values.collect.sum == 0)
   }
 }
