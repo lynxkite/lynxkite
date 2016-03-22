@@ -136,6 +136,6 @@ export KITE_EXTRA_JARS=
 
 # ===========================================================
 # On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
-# variables.
+# variables. The principal acts like a user name and the keytab acts like a password.
 # export KERBEROS_PRINCIPAL=
 # export KERBEROS_KEYTAB=

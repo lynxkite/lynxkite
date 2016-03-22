@@ -128,7 +128,11 @@ if [ -n "${NUM_EXECUTORS}" ]; then
   fi
 fi
 
-if [ -n "${KERBEROS_PRINCIPAL}" ]; then
+if [ -n "${KERBEROS_PRINCIPAL}" ] || [ -n "${KERBEROS_KEYTAB}" ]; then
+  if [ -z "${KERBEROS_PRINCIPAL}" ] || [ -z "${KERBEROS_KEYTAB}" ]; then
+    >&2 echo "Please define KERBEROS_PRINICPAL and KERBEROS_KEYTAB together: either both of them or none."
+    exit 1
+  fi
   EXTRA_OPTIONS="${EXTRA_OPTIONS} --principal ${KERBEROS_PRINCIPAL} --keytab ${KERBEROS_KEYTAB}"
 fi
 
