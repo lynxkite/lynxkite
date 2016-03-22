@@ -132,7 +132,7 @@ class KiteListener extends spark.scheduler.SparkListener {
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
         activeExecutorNum,
-        sys.props.getOrElse("spark.executor.instances", "0").toInt,
+        sys.props.getOrElse("spark.executor.instances", "1").toInt max 1,
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking)
     for (p <- promises) {
@@ -231,7 +231,7 @@ class KiteMonitorThread(
     val sc = environment.sparkContext
 
     // No way to find cores per executor programmatically. SPARK-2095
-    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch spark
+    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch Spark
     // in a way that this is probably mostly reliable.
     val numCoresPerExecutor =
       scala.util.Properties.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
@@ -278,6 +278,8 @@ class KiteMonitorThread(
       } else {
         lastSparkEvent + maxSparkIdleMillis
       }
+      // Update the number of active executors.
+      listener.updateExecutorNum(numExecutors)
       if (now > nextCoreCheck) {
         // do core checks
         import scala.concurrent.ExecutionContext.Implicits.global
@@ -295,7 +297,6 @@ class KiteMonitorThread(
               log.error("Error while testing kite core", e)
               false
           })
-        listener.updateExecutorNum(numExecutors)
         kiteCoreLastChecked = System.currentTimeMillis
       } else if (now > nextSparkCheck) {
         logSparkClusterInfo()
