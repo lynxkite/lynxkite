@@ -32,7 +32,7 @@ case class StageInfo(
 class KiteListener extends spark.scheduler.SparkListener {
   private val activeStages = collection.mutable.Map[String, StageInfo]()
   private val pastStages = collection.mutable.Queue[StageInfo]()
-  private val executors = collection.mutable.Set[String]()
+  private var activeExecutorNum = 0
   private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   private var currentResp =
     SparkStatusResponse(0, List(), List(), 0, 0, sparkWorking = true, kiteCoreWorking = true)
@@ -52,6 +52,15 @@ class KiteListener extends spark.scheduler.SparkListener {
     kiteCoreWorking = newKiteCoreWorking
     if (old != kiteCoreWorking) {
       log.info(s"Monitor: kite core working state changed to: $kiteCoreWorking")
+      send()
+    }
+  }
+
+  def updateExecutorNum(newActiveExecutorNum: Int): Unit = synchronized {
+    val old = activeExecutorNum
+    activeExecutorNum = newActiveExecutorNum
+    if (old != activeExecutorNum) {
+      log.info(s"Monitor: number of active executors changed to: $activeExecutorNum")
       send()
     }
   }
@@ -105,16 +114,6 @@ class KiteListener extends spark.scheduler.SparkListener {
     }
   }
 
-  override def onExecutorAdded(
-    executorAdded: spark.scheduler.SparkListenerExecutorAdded): Unit = synchronized {
-    executors += executorAdded.executorId
-  }
-
-  override def onExecutorRemoved(
-    executorRemoved: spark.scheduler.SparkListenerExecutorRemoved): Unit = synchronized {
-    executors -= executorRemoved.executorId
-  }
-
   def isSparkStalled = synchronized { sparkStalled }
   def setSparkStalled(stalled: Boolean): Unit = synchronized {
     val old = sparkStalled
@@ -132,7 +131,7 @@ class KiteListener extends spark.scheduler.SparkListener {
         time,
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
-        executors.size,
+        activeExecutorNum,
         sys.props.getOrElse("spark.executor.instances", "0").toInt,
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking)
@@ -226,6 +225,8 @@ class KiteMonitorThread(
     out.count.value == 4
   }
 
+  private def numExecutors = (environment.sparkContext.getExecutorStorageStatus.size - 1) max 1
+
   private def logSparkClusterInfo(): Unit = {
     val sc = environment.sparkContext
 
@@ -234,7 +235,6 @@ class KiteMonitorThread(
     // in a way that this is probably mostly reliable.
     val numCoresPerExecutor =
       scala.util.Properties.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
-    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
     val totalCores = numExecutors * numCoresPerExecutor
     val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
     val conf = sc.getConf
@@ -295,6 +295,7 @@ class KiteMonitorThread(
               log.error("Error while testing kite core", e)
               false
           })
+        listener.updateExecutorNum(numExecutors)
         kiteCoreLastChecked = System.currentTimeMillis
       } else if (now > nextSparkCheck) {
         logSparkClusterInfo()
