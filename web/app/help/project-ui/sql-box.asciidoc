@@ -24,9 +24,10 @@ of the source and destination vertices are prefixed with `src_` and `dst_` respe
 +
 Example: `select max(edge_weight) from triplets where src_age < dst_age`
 
- - The `belongsTo` table is only defined for segmentations. It contains the vertex attributes for
-the connected pairs of base and segmentation vertices prefixed with `base_` and `segment_`
-respectively.
+ - The `belongsTo` table is defined for each segmentation of a project or a segmentation. It contains
+the vertex attributes for the connected pairs of base and segmentation vertices prefixed with `base_`
+and `segment_` respectively. The table is defined on the base side - i.e. the project or the parent
+segmentation.
 +
 Example:
 `select base_name from {backtick}communities|belongsTo{backtick} where segment_name = "COOKING"`
