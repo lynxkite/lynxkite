@@ -8,21 +8,21 @@ import sys
 policy_files = ['kitelogs-logs.policy', 'kitelogs-ops.policy']
 
 def b64_file(filename):
-    with open(filename, 'r') as file:
-        data = file.read()
-        return b64encode(data)
+  with open(filename, 'r') as file:
+    data = file.read()
+    return b64encode(data)
 
 encoded_policies = map (b64_file, policy_files)
 
 def generate_signature(encoded_policy):
-    pemfile = expanduser('~') + '/.ssh/kite-logs.pem'
-    pem_key = open(pemfile, 'r').read()
-    assert pem_key    
-    key = EVP.load_key_string(pem_key)
-    key.reset_context(md='sha256')
-    key.sign_init()
-    key.sign_update(str(encoded_policy))
-    return b64encode(key.sign_final())
+  pemfile = expanduser('~') + '/.ssh/kite-logs.pem'
+  pem_key = open(pemfile, 'r').read()
+  assert pem_key    
+  key = EVP.load_key_string(pem_key)
+  key.reset_context(md='sha256')
+  key.sign_init()
+  key.sign_update(str(encoded_policy))
+  return b64encode(key.sign_final())
 
 signatures = map (generate_signature, encoded_policies)
 
