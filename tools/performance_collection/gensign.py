@@ -26,8 +26,7 @@ def generate_signature(encoded_policy):
 
 signatures = map(generate_signature, encoded_policies)
 
-print '''
-#!/bin/bash
+print '''#!/bin/bash
 #
 # GENERATED FILE, DO NOT EDIT!!!
 # Use gensign.py to generate this whenever you make a change to the *.policy files.
