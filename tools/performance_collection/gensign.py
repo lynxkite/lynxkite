@@ -12,7 +12,7 @@ def b64_file(filename):
     data = file.read()
     return b64encode(data)
 
-encoded_policies = map (b64_file, policy_files)
+encoded_policies = map(b64_file, policy_files)
 
 def generate_signature(encoded_policy):
   pemfile = expanduser('~') + '/.ssh/kite-logs.pem'
@@ -24,7 +24,7 @@ def generate_signature(encoded_policy):
   key.sign_update(str(encoded_policy))
   return b64encode(key.sign_final())
 
-signatures = map (generate_signature, encoded_policies)
+signatures = map(generate_signature, encoded_policies)
 
 print '''
 #!/bin/bash
