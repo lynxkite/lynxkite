@@ -102,6 +102,6 @@ ln -s /etc/hive/conf/hive-site.xml ~/spark-1.6.0/conf/
 LynxKite is compatible with HDFS running in Hive Availability mode. In this case the HDFS prefixes
 i.e. the `KITE_DATA_DIR` variable in <<kiterc-file>> and the <<prefix-definitions>> need to use the
 appropriate name service defined in the `core-site.xml` configuration file of Hadoop. Make sure that
-it is available in the `YARN_CONF_DIR`. Please refer to the related
+the file is available in the `YARN_CONF_DIR`. Please refer to the related
 https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HDFSHighAvailabilityWithNFS.html[Hadoop documentation]
 for more details.
