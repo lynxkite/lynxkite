@@ -96,3 +96,12 @@ depending on your Hadoop distribution, something like this would do:
 ```
 ln -s /etc/hive/conf/hive-site.xml ~/spark-1.6.0/conf/
 ```
+
+### Integrating with High Availability mode HDFS
+
+LynxKite is compatible with HDFS running in Hive Availability mode. In this case the
+`KITE_DATA_DIR` variable in <<kiterc-file>> and the <<prefix-definitions>> need to refer to the
+appropriate file system defined in the `core-site.xml` configuration file of Hadoop. Please
+refer to the related
+https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HDFSHighAvailabilityWithNFS.html[Hadoop documentation]
+for more details.
