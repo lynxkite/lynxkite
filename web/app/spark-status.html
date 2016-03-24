@@ -18,7 +18,7 @@
       drop-tooltip="LynxKite health check failed. Please contact support."></span>
   </div>
   <div class="spark-status-stages" drop-tooltip-position="left middle"
-    drop-tooltip="{{ status.activeExecutorNum }} out of {{ status.configedExecutorNum }} executors running.">
+    drop-tooltip="{{ stagesTooltip() }}">
     <div class="spark-status-stage" ng-repeat="stage in stages(status) track by stage.id"
       ng-class="{ failed: stage.failed }"
       ng-style="{

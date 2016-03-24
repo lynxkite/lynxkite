@@ -51,6 +51,16 @@ angular.module('biggraph')
           status.sparkWorking &&
           status.kiteCoreWorking;
       };
+
+      scope.stagesTooltip = function() {
+        var status = scope.status;
+        var tooltip = 'Spark stages';
+        if (status.activeExecutorNum !== undefined && status.configedExecutorNum !== undefined) {
+          tooltip = tooltip + ' (' + status.activeExecutorNum + ' out of ' +
+            status.configedExecutorNum + ' executors running)';
+        }
+        return tooltip + '.';
+      };
     },
   };
 })
