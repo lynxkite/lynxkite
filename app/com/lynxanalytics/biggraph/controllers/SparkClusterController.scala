@@ -29,7 +29,7 @@ case class StageInfo(
 
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
-class KiteListener(val sc: spark.SparkContext) extends spark.scheduler.SparkListener {
+class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
   private val activeStages = collection.mutable.Map[String, StageInfo]()
   private val pastStages = collection.mutable.Queue[StageInfo]()
   private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
@@ -116,8 +116,8 @@ class KiteListener(val sc: spark.SparkContext) extends spark.scheduler.SparkList
 
   def numExecutors: Option[Int] = synchronized {
     scala.util.Properties.envOrNone("SPARK_MASTER").get match {
-      case "yarn-client" => Some(sc.getExecutorStorageStatus.size - 1)
       case s if s.startsWith("local") => None
+      case _ => Some(sc.getExecutorStorageStatus.size - 1)
     }
   }
 
