@@ -34,6 +34,11 @@ object Scripting {
       val op = graph_operations.LoopEdgeBundle()
       op(op.vs, self).result.eb
     }
+
+    def emptyEdgeBundle: EdgeBundle = {
+      val op = graph_operations.EmptyEdgeBundle()
+      op(op.src, self)(op.dst, self).result.eb
+    }
   }
 
   implicit class RichContainedEdgeBundle(
