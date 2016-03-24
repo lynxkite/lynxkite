@@ -5,6 +5,7 @@ import breeze.linalg._
 import breeze.stats.distributions.RandBasis
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object NeuralNetwork extends OpFromJson {
@@ -56,10 +57,21 @@ case class NeuralNetwork(
       val rdd = inputs.edges.rdd.mapValues { case Edge(src, dst) => Edge(dst, src) }
       CompactUndirectedGraph(rc, rdd, needsBothDirections = false)
     }
-    // TODO: Add features.
+    val features = {
+      val arrays = inputs.vertices.rdd.mapValues(_ => new Array[Double](featureCount))
+      inputs.features.zipWithIndex.foldLeft(arrays) {
+        case (arrays, (feature, idx)) =>
+          arrays.sortedJoin(feature.rdd).mapValues {
+            case (array, feature) =>
+              array(idx) = feature
+              array
+          }
+      }
+    }
     val labelOpt = inputs.vertices.rdd.sortedLeftOuterJoin(inputs.label.rdd).mapValues(_._2)
-    val labelOpt1 = labelOpt.coalesce(1)
-    val prediction = labelOpt1.mapPartitions(labelOpt => predict(labelOpt, edges, reversed))
+    val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
+    val data1 = data.coalesce(1)
+    val prediction = data1.mapPartitions(data => predict(data, edges, reversed))
 
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
@@ -148,6 +160,12 @@ case class NeuralNetwork(
     }
   }
 
+  def vectorSum(size: Int, vectors: Iterable[Vector]) = {
+    val sum = DenseVector.zeros[Double](size)
+    for (v <- vectors) { sum += v }
+    sum
+  }
+
   case class NetworkOutputs(
       network: Network,
       vertices: Iterable[ID],
@@ -157,7 +175,7 @@ case class NeuralNetwork(
     import breeze.numerics._
     val input: Map[ID, Vector] = vertices.map { id =>
       val inputs = edges.getNeighbors(id).map(network.edgeMatrix * visibleState(_))
-      id -> (inputs.reduce(_ + _) + network.edgeBias)
+      id -> (vectorSum(network.size, inputs) + network.edgeBias)
     }.toMap
     val reset: Map[ID, Vector] = vertices.map { id =>
       id -> sigmoid(network.resetInput * input(id) + network.resetHidden * state(id))
@@ -213,7 +231,7 @@ case class NeuralNetwork(
         network.resetHidden.t * resetRawGradient(id) +
         stateGradient(id) +
         (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id) +
-        edgeGradients.reduce(_ + _))
+        vectorSum(network.size, edgeGradients))
     }.toMap
     // Network gradients.
     val activationInputGradient: Matrix = vertices.map { id =>
@@ -259,19 +277,24 @@ case class NeuralNetwork(
   }
 
   def predict(
-    labelOptIterator: Iterator[(ID, Option[Double])],
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
     edges: CompactUndirectedGraph,
     reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
-    val labelOpt = labelOptIterator.toSeq
-    val labels = labelOpt.flatMap { case (id, labelOpt) => labelOpt.map(id -> _) }.toMap
-    val vertices = labelOpt.map(_._1)
-    // Initial state contains label. TODO: Also add features.
+    val data = dataIterator.toSeq
+    val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
+    val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
+    val vertices = data.map(_._1)
+    // Initial state contains label and features.
     val trueState: Map[ID, Vector] = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = 1.0 // Mark of a source of truth is in position 0.
         state(1) = labels(id) // Label is in position 1.
+      }
+      val fs = features(id)
+      for (i <- 0 until fs.size) {
+        state(i + 2) = fs(i) // Features start from position 2.
       }
       id -> state
     }.toMap
@@ -306,11 +329,11 @@ case class NeuralNetwork(
       }
 
       // Backward pass.
-      val errors: Map[ID, Double] = labelOpt.map {
-        case (id, Some(label)) =>
+      val errors: Map[ID, Double] = data.map {
+        case (id, (Some(label), features)) =>
           // The label is predicted in position 1.
           id -> (outputs.last.newState(id)(1) - label)
-        case (id, None) =>
+        case (id, (None, features)) =>
           id -> 0.0
       }.toMap
       val errorTotal = errors.values.map(e => e * e).sum
