@@ -23,21 +23,27 @@ object NeuralNetwork extends OpFromJson {
     (j \ "featureCount").as[Int],
     (j \ "networkSize").as[Int],
     (j \ "iterations").as[Int],
-    (j \ "radius").as[Int])
+    (j \ "radius").as[Int],
+    (j \ "hideState").as[Boolean],
+    (j \ "forgetFraction").as[Double])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
     featureCount: Int,
     networkSize: Int,
     iterations: Int,
-    radius: Int) extends TypedMetaGraphOp[Input, Output] {
+    radius: Int,
+    hideState: Boolean,
+    forgetFraction: Double) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "featureCount" -> featureCount,
     "networkSize" -> networkSize,
     "iterations" -> iterations,
-    "radius" -> radius)
+    "radius" -> radius,
+    "hideState" -> hideState,
+    "forgetFraction" -> forgetFraction)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -261,8 +267,6 @@ case class NeuralNetwork(
     val labels = labelOpt.flatMap { case (id, labelOpt) => labelOpt.map(id -> _) }.toMap
     val vertices = labelOpt.map(_._1)
     // Initial state contains label. TODO: Also add features.
-    val blankState: Map[ID, Vector] =
-      vertices.map(_ -> DenseVector.zeros[Double](networkSize)).toMap
     val trueState: Map[ID, Vector] = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
@@ -275,11 +279,28 @@ case class NeuralNetwork(
     var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
+    val random = new util.Random(0)
     for (i <- 1 to iterations) {
+      // Forgets the label.
+      def blanked(state: Vector) = {
+        val s = state.copy
+        s(0) = 0.0
+        s(1) = 0.0
+        s
+      }
+      // Initial states.
+      val keptState = trueState.map {
+        case (id, state) =>
+          if (random.nextDouble < forgetFraction) id -> blanked(state) else id -> state
+      }
+      val initialState = if (!hideState) keptState else keptState.map {
+        // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
+        case (id, state) => id -> blanked(state)
+      }
+
       // Forward pass.
       val outputs = (1 until radius).scanLeft {
-        // Neighbors can see the labels (trueState) but it is hidden from the node itself (blankState).
-        new NetworkOutputs(network, vertices, edges, blankState, trueState)
+        new NetworkOutputs(network, vertices, edges, initialState, keptState)
       } { (previous, r) =>
         new NetworkOutputs(network, vertices, edges, previous.newState, previous.newState)
       }
