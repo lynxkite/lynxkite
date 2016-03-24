@@ -14,7 +14,9 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       "side === '' ? undefined : side === 'left' ? -1.0 : 1.0", Seq("side" -> g.attrs("side")),
       g.vertices).attr
     val prediction = {
-      val op = NeuralNetwork(featureCount = 0, networkSize = 20, iterations = 100, radius = 4)
+      val op = NeuralNetwork(
+        featureCount = 0, networkSize = 20, iterations = 1000, radius = 4,
+        hideState = false, forgetFraction = 0.0)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
