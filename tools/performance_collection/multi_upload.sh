@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  This script uploads kite logfiles and the operation performace data to the google cloud storage.
+#  This script uploads kite logfiles and the operation performance data to the google cloud storage.
 #
 #  Usage: multi_upload.sh PORT LOGDIR INSTANCE
 # 
