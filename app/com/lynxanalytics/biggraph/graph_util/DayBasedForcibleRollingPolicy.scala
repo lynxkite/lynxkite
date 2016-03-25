@@ -18,7 +18,7 @@ object DayBasedForcibleRollingPolicy {
 
   // The main API for the logger: Calling DayBasedForcibleRollingPolicy.triggerRotation() will
   // enforce a log rotation.
-  def triggerRotation() = {
+  def triggerRotation() = synchronized {
     forceRotation = true
     log.info("Triggering rollover")
   }
@@ -28,15 +28,17 @@ class DayBasedForcibleTriggeringPolicy[E] extends DefaultTimeBasedFileNamingAndT
   val oneDayInSeconds = 24L * 60 * 60
   val oneDayInMilliseconds = 1000 * oneDayInSeconds
 
-  // Unfortunately, super.isTriggeringEvent manipulates state :(
-  // Maybe it would be better to re-write it from scratch, but
-  // that would be very painful.
   // We're utilizing the following two members of our base class:
   //
-  // nextCheck: timestamp (a' la: System.currentTimeMillis) super.isTriggeringEvent returns true iff the current
-  //                     timestamp exceeds this.
+  // nextCheck: timestamp (a' la: System.currentTimeMillis)
+  //   super.isTriggeringEvent returns true iff the current timestamp exceeds this.
+  //
   // computeNextCheck(): the method used by super.isTriggeringEvent to compute the next value of nextCheck
-  //                     when the current timestamp exceeds nextCheck.
+  //    when the current timestamp exceeds nextCheck.
+  //
+
+  // isTriggeringEvent returns true if the log should be rotated and false otherwise.
+  // As a side effect, it can also manipulate nextCheck.
   override def isTriggeringEvent(activeFile: java.io.File, event: E): Boolean = {
     if (DayBasedForcibleRollingPolicy.isForced) {
       nextCheck = -1L
