@@ -45,8 +45,7 @@ class LogController extends play.api.http.HeaderNames {
   }
 
   def forceLogRotate(user: serving.User, req: serving.Empty): Unit = {
-    DayBasedForcibleRollingPolicy.forceRotation = true
-    log.info("Triggering rollover")
+    DayBasedForcibleRollingPolicy.triggerRotation()
   }
 
   def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {

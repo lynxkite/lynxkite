@@ -8,8 +8,20 @@ package com.lynxanalytics.biggraph.graph_util
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
 object DayBasedForcibleRollingPolicy {
-  var forceRotation = false
+  private var forceRotation = false
+
+  def isForced = forceRotation
+  def reset() = forceRotation = false
+
+  // The main API for the logger: Calling DayBasedForcibleRollingPolicy.triggerRotation() will
+  // enforce a log rotation.
+  def triggerRotation() = {
+    forceRotation = true
+    log.info("Triggering rollover")
+  }
 }
 
 class DayBasedForcibleTriggeringPolicy[E] extends DefaultTimeBasedFileNamingAndTriggeringPolicy[E] {
@@ -19,10 +31,16 @@ class DayBasedForcibleTriggeringPolicy[E] extends DefaultTimeBasedFileNamingAndT
   // Unfortunately, super.isTriggeringEvent manipulates state :(
   // Maybe it would be better to re-write it from scratch, but
   // that would be very painful.
+  // We're utilizing the following two members of our base class:
+  //
+  // nextCheck: timestamp (a' la: System.currentTimeMillis) super.isTriggeringEvent returns true iff the current
+  //                     timestamp exceeds this.
+  // computeNextCheck(): the method used by super.isTriggeringEvent to compute the next value of nextCheck
+  //                     when the current timestamp exceeds nextCheck.
   override def isTriggeringEvent(activeFile: java.io.File, event: E): Boolean = {
-    if (DayBasedForcibleRollingPolicy.forceRotation) {
+    if (DayBasedForcibleRollingPolicy.isForced) {
       nextCheck = -1L
-      DayBasedForcibleRollingPolicy.forceRotation = false
+      DayBasedForcibleRollingPolicy.reset()
     }
     val triggered = super.isTriggeringEvent(activeFile, event)
     assert(nextCheck != -1L, "DefaultTimeBasedFileNamingAndTriggeringPolicy didn't call computeNextCheck!!!")
