@@ -46,7 +46,7 @@ if [ "$PORT" -ne "0" ]; then
 fi
 
 cat $FILELIST | while read logfile; do
-    grep "^UPLOADED$" -q $logfile
+    tail -n 1 $logfile | grep -q "^UPLOADED$"
     if [ "$?" -ne "0" ]; then
         echo "Uploading $logfile"
         NAME=`basename $logfile | sed 's/[.]log$//'`        
