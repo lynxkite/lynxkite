@@ -61,6 +61,7 @@ GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.d
 
 GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
 GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile
+POST /forceLogRotate   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forceLogRotate
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin
