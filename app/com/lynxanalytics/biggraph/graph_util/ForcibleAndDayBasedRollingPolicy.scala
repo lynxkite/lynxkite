@@ -16,6 +16,9 @@ class ForcibleAndDayBasedTriggeringPolicy[E] extends DefaultTimeBasedFileNamingA
   val secondsInOneDay = 24L * 60 * 60
   val oneDayInMilliseconds = 1000 * secondsInOneDay
 
+  // Unfortunately, super.isTriggeringEvent manipulates state :(
+  // Maybe it would be better to re-write it from scratch, but
+  // that would be very painful.
   override def isTriggeringEvent(activeFile: java.io.File, event: E): Boolean = {
     if (ForcibleAndDayBasedRollingPolicy.forceRotation) {
       nextCheck = -1L
@@ -25,6 +28,7 @@ class ForcibleAndDayBasedTriggeringPolicy[E] extends DefaultTimeBasedFileNamingA
     assert(nextCheck != -1L, "DefaultTimeBasedFileNamingAndTriggeringPolicy didn't call computeNextCheck!!!")
     triggered
   }
+
   override def computeNextCheck(): Unit = {
     nextCheck = getCurrentTime() + oneDayInMilliseconds
   }
