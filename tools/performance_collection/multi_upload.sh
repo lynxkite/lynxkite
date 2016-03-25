@@ -24,7 +24,6 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
-KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 
 PORT=$1
 LOGDIR=$2
