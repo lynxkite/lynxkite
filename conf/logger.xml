@@ -3,7 +3,7 @@
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-     <rollingPolicy class="com.lynxanalytics.biggraph.graph_util.ForcibleAndDayBasedRollingPolicy">
+     <rollingPolicy class="com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy">
        <fileNamePattern>${KITE_LOG_DIR}/application-%d{yyyyMMdd_HHmmss}.log</fileNamePattern>
        <maxHistory>5184000</maxHistory> <!-- 5184000 = 60 days, given in seconds -->
        <cleanHistoryOnStart>true</cleanHistoryOnStart>
