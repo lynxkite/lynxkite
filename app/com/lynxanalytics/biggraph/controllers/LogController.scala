@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import java.io.File
 
-import com.lynxanalytics.biggraph.graph_util.ForcibleAndDayBasedRollingPolicy
+import com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy
 import play.api.mvc
 import play.api.libs.concurrent.Execution.Implicits._
 
@@ -45,7 +45,7 @@ class LogController extends play.api.http.HeaderNames {
   }
 
   def forceLogRotate(user: serving.User, req: serving.Empty): Unit = {
-    ForcibleAndDayBasedRollingPolicy.forceRotation = true
+    DayBasedForcibleRollingPolicy.forceRotation = true
     log.info("Triggering rollover")
   }
 

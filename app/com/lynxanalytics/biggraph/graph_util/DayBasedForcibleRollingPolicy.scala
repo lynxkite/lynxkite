@@ -8,21 +8,21 @@ package com.lynxanalytics.biggraph.graph_util
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy
 
-object ForcibleAndDayBasedRollingPolicy {
+object DayBasedForcibleRollingPolicy {
   var forceRotation = false
 }
 
-class ForcibleAndDayBasedTriggeringPolicy[E] extends DefaultTimeBasedFileNamingAndTriggeringPolicy[E] {
-  val secondsInOneDay = 24L * 60 * 60
-  val oneDayInMilliseconds = 1000 * secondsInOneDay
+class DayBasedForcibleTriggeringPolicy[E] extends DefaultTimeBasedFileNamingAndTriggeringPolicy[E] {
+  val oneDayInSeconds = 24L * 60 * 60
+  val oneDayInMilliseconds = 1000 * oneDayInSeconds
 
   // Unfortunately, super.isTriggeringEvent manipulates state :(
   // Maybe it would be better to re-write it from scratch, but
   // that would be very painful.
   override def isTriggeringEvent(activeFile: java.io.File, event: E): Boolean = {
-    if (ForcibleAndDayBasedRollingPolicy.forceRotation) {
+    if (DayBasedForcibleRollingPolicy.forceRotation) {
       nextCheck = -1L
-      ForcibleAndDayBasedRollingPolicy.forceRotation = false
+      DayBasedForcibleRollingPolicy.forceRotation = false
     }
     val triggered = super.isTriggeringEvent(activeFile, event)
     assert(nextCheck != -1L, "DefaultTimeBasedFileNamingAndTriggeringPolicy didn't call computeNextCheck!!!")
@@ -34,6 +34,6 @@ class ForcibleAndDayBasedTriggeringPolicy[E] extends DefaultTimeBasedFileNamingA
   }
 }
 
-class ForcibleAndDayBasedRollingPolicy[E] extends TimeBasedRollingPolicy[E] {
-  setTimeBasedFileNamingAndTriggeringPolicy(new ForcibleAndDayBasedTriggeringPolicy[E])
+class DayBasedForcibleRollingPolicy[E] extends TimeBasedRollingPolicy[E] {
+  setTimeBasedFileNamingAndTriggeringPolicy(new DayBasedForcibleTriggeringPolicy[E])
 }
