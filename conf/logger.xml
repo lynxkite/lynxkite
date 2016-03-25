@@ -5,9 +5,9 @@
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
      <rollingPolicy class="com.lynxanalytics.biggraph.graph_util.ForcibleAndDayBasedRollingPolicy">
-     <fileNamePattern>${KITE_LOG_DIR}/application-%d{yyyyMMdd_HHmmss}.log</fileNamePattern>
-    <maxHistory>5184000</maxHistory> <!-- 5184000 = 60 days, given in seconds -->
-    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+       <fileNamePattern>${KITE_LOG_DIR}/application-%d{yyyyMMdd_HHmmss}.log</fileNamePattern>
+       <maxHistory>5184000</maxHistory> <!-- 5184000 = 60 days, given in seconds -->
+       <cleanHistoryOnStart>true</cleanHistoryOnStart>
      </rollingPolicy>
      <encoder>
        <pattern>%.-1level%date %logger{0}:[%thread] %message%n%xException</pattern>
