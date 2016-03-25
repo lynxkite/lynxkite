@@ -406,6 +406,7 @@ object ProductionJsonServer extends JsonServer {
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)
+  def forceLogRotate = jsonPost(logController.forceLogRotate)
   def downloadLogFile = action(parse.anyContent) {
     (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
   }
