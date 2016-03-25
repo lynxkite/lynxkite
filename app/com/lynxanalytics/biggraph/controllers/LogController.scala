@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import java.io.File
 
+import com.lynxanalytics.biggraph.graph_util.ForcibleAndDayBasedRollingPolicy
 import play.api.mvc
 import play.api.libs.concurrent.Execution.Implicits._
 
@@ -41,6 +42,11 @@ class LogController extends play.api.http.HeaderNames {
     assert(logFiles.size > 0, "No application log file found")
     log.info(s"$user has downloaded the list of log files in $logDir")
     LogFiles(logFiles.toList)
+  }
+
+  def forceLogRotate(user: serving.User, req: serving.Empty): Unit = {
+    ForcibleAndDayBasedRollingPolicy.forceRotation = true
+    log.info("Triggering rollover")
   }
 
   def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {
