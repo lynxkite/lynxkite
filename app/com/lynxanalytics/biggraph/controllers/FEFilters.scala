@@ -104,7 +104,7 @@ object FEFilters {
     val negated = spec.startsWith("!")
     val innerSpec = if (negated) spec.drop(1) else spec
     val innerFilter: Filter[T] =
-      if (spec == "*") {
+      if (innerSpec == "*") {
         MatchAllFilter()
       } else if (typeOf[T] =:= typeOf[String]) {
         val stringFilter = innerSpec match {
