@@ -63,8 +63,8 @@ case class VertexAttributeFilter[T](filter: Filter[T])
   }
 }
 
-object MatchAllFilter extends FromJson[DefinedFilter[_]] {
-  def fromJson(j: JsValue) = DefinedFilter()
+object MatchAllFilter extends FromJson[MatchAllFilter[_]] {
+  def fromJson(j: JsValue) = MatchAllFilter()
 }
 case class MatchAllFilter[T]() extends Filter[T] {
   def matches(value: T) = true
