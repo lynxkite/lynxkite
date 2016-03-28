@@ -11,6 +11,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Fixed batch scripting issue with `lynx.loadProject()`.
  - Bottom links are moved to a popup.
  - Support for Kerberos-secured clusters.
+ - Attribute filter `*` added to match all defined values. This can be used e.g. to remove
+   vertices with no location from a map visualization.
 
 ### 1.7.3
 
