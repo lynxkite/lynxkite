@@ -11,7 +11,10 @@ restrict to those edges/vertices where the attribute is defined. E.g. if say you
 requiring age > 10, then you will only see vertices where age attribute is defined and the value of
 age is more than ten.
 
-The filtering syntax depends on the type of the attribute.
+The filtering syntax depends on the type of the attribute in most cases.
+
+* For every attribute type `*` matches all defined values. This is useful for discarding
+vertices/edges where a specific attribute is undefined.
 
 * For `String` and `Long` types the filter is a comma-separated list of values you want to match.
 For example `medium,high` would be a String filter to match these two values only, e.g. it would
