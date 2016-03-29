@@ -39,10 +39,10 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.sort(partitioner)
+    }
     val byDst = RDDUtils.hybridLookup(bySrc, nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.sort(partitioner)
+    }
     val edges = RDDUtils.hybridLookup(byDst, nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }.sortUnique(partitioner)

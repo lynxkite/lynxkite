@@ -101,16 +101,18 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     }
 
     def joinMapping[V: ClassTag](
-      rdd: SortedRDD[ID, V],
+      rdd: RDD[(ID, V)],
+      partitioner: Partitioner,
       mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
-      val mapping = getMapping(mappingInput, rdd.partitioner.get)
       // If the mapping has no duplicates we can use the faster sortedJoin.
       if (props.isFunction) {
+        val mapping = getMapping(mappingInput, mappingInput.rdd.partitioner.get)
         RDDUtils.hybridLookup(rdd, mapping.asUniqueSortedRDD)
       } else {
-        // If the mapping can have duplicates we need to use the slower hybrodLookupWithDuplicates.
-        RDDUtils.hybridLookupWithDuplicates(rdd, mapping)
+        // If the mapping can have duplicates we need to use the slower sortedJoinWithDuplicates.
+        val mapping = getMapping(mappingInput, partitioner)
+        rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
       }
     }
 
@@ -118,8 +120,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val srcPartitioner = src.partitioner.get
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-        .sort(srcPartitioner)
-      val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
+      val bySrc = joinMapping(byOldSrc, srcPartitioner, inputs.srcMapping)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
@@ -127,8 +128,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val dstPartitioner = dst.partitioner.get
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-        .sort(dstPartitioner)
-      val byDst = joinMapping(byOldDst, inputs.dstMapping)
+      val byDst = joinMapping(byOldDst, dstPartitioner, inputs.dstMapping)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }
