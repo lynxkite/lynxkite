@@ -64,10 +64,6 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200))
     checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0))
 
-    checkGood(RDDUtils.joinLookupWithDuplicates(sourceRDD, lookupRDD))
-    checkGood(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 200))
-    checkGood(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 0))
-
     val counts = sourceRDD
       .keys
       .map(_ -> 1l)
@@ -85,80 +81,6 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     assert(RDDUtils.smallTableLookup(sourceRDD, Map()).collect.isEmpty)
     assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200).collect.isEmpty)
     assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0).collect.isEmpty)
-
-    assert(RDDUtils.joinLookupWithDuplicates(sourceRDD, lookupRDD).collect.isEmpty)
-    assert(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 200).collect.isEmpty)
-    assert(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 0).collect.isEmpty)
-
-  }
-
-  test("xLookupWithDuplicates works as expected in presence of duplicates") {
-    val rnd = new util.Random(0)
-    val localSource = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
-    val localLookup =
-      (0 until 50).map(x => (x, rnd.nextDouble())) ++
-        (0 until 50).map(x => (50, 1.0 + x / 100.0)) ++
-        (0 until 100).map(x => (51, 2.0 + x / 100.0))
-    val localLookupMap = localLookup
-      .groupBy(_._1)
-      .mapValues(x => x.map(_._2))
-    val localResult = localSource
-      .flatMap {
-        case (key, value) =>
-          localLookupMap
-            .getOrElse(key, Seq())
-            .map(lv => key -> (value, lv))
-      }
-      .sorted
-
-    def checkGood(rdd: RDD[(Int, (Long, Double))]) {
-      assert(rdd.collect.toSeq.sorted == localResult)
-    }
-
-    def checkBad(rdd: RDD[(Int, (Long, Double))]) {
-      assert(rdd.collect.toSeq.sorted != localResult)
-    }
-
-    import Implicits._
-    val sourceRDD = sparkContext.parallelize(localSource, 10)
-    val lookupRDD = sparkContext.parallelize(localLookup).sortUnique(new HashPartitioner(10))
-
-    checkGood(RDDUtils.joinLookupWithDuplicates(sourceRDD, lookupRDD))
-    checkGood(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 10))
-    checkGood(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 0))
-
-    checkBad(RDDUtils.joinLookup(sourceRDD, lookupRDD))
-    checkBad(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 10))
-    checkBad(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0))
-  }
-
-  test("xLookupWithDuplicates works as expected in presence of duplicates (simple)") {
-    val rnd = new util.Random(0)
-    val localSource = Seq((1, 101l), (1, 102l), (2, 100l),
-      (3, 100l), (3, 101l))
-    val localLookup =
-      Seq((1, 1.0), (1, 1.0), (1, 2.0), (2, 1.0), (3, 1.0))
-    val localResult = Seq((1, (101.0, 1.0)),
-      (1, (101l, 1.0)),
-      (1, (101l, 2.0)),
-      (1, (102l, 1.0)),
-      (1, (102l, 1.0)),
-      (1, (102l, 2.0)),
-      (2, (100l, 1.0)),
-      (3, (100l, 1.0)),
-      (3, (101l, 1.0)))
-
-    def checkGood(rdd: RDD[(Int, (Long, Double))]) {
-      assert(rdd.collect.toSeq.sorted == localResult)
-    }
-
-    import Implicits._
-    val sourceRDD = sparkContext.parallelize(localSource, 10)
-    val lookupRDD = sparkContext.parallelize(localLookup).sortUnique(new HashPartitioner(10))
-
-    checkGood(RDDUtils.joinLookupWithDuplicates(sourceRDD, lookupRDD))
-    checkGood(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 2))
-    checkGood(RDDUtils.hybridLookupWithDuplicates(sourceRDD, lookupRDD, 0))
   }
 
   test("groupBySortedKey works as expected") {

@@ -265,12 +265,6 @@ object RDDUtils {
     sourceRDD.sort(lookupTable.partitioner.get).sortedJoin(lookupTable)
   }
 
-  def joinLookupWithDuplicates[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)], lookupTable: SortedRDD[K, S]): RDD[(K, (T, S))] = {
-    import Implicits._
-    sourceRDD.sort(lookupTable.partitioner.get).sortedJoinWithDuplicates(lookupTable)
-  }
-
   // A lookup method based on sending the lookup table to all tasks. The lookup table should be
   // reasonably small.
   def smallTableLookup[K, T, S](
@@ -284,11 +278,8 @@ object RDDUtils {
     util.Properties.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
   private val hybridLookupMaxLarge =
     util.Properties.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
-
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
-  // This is logically equivalent to sourceRDD.join(lookupTable), but handles keys with
-  // a lot of occurrences better.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] =
@@ -305,33 +296,6 @@ object RDDUtils {
       sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _),
       maxValuesPerKey) {
         tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap
-      }
-  }
-
-  // Like hybridLookup, but can handle duplicate keys in lookupTable.
-  // This is also logically equivalent to sourceRDD.join(lookupTable)
-  def hybridLookupWithDuplicates[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: SortedRDD[K, S]): RDD[(K, (T, S))] =
-    hybridLookupWithDuplicates(sourceRDD, lookupTable, hybridLookupThreshold)
-
-  def hybridLookupWithDuplicates[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: SortedRDD[K, S],
-    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
-
-    hybridLookupWithDuplicatesImpl(
-      sourceRDD,
-      lookupTable,
-      sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _),
-      maxValuesPerKey) {
-        tops =>
-          lookupTable
-            .restrictToIdSet(tops.toIndexedSeq.sorted)
-            .collect
-            .groupBy(_._1)
-            .map { case (key, value) => (key, value.map(_._2)) }
-            .toMap
       }
   }
 
@@ -384,38 +348,6 @@ object RDDUtils {
       }
     }
   }
-
-  private def hybridLookupWithDuplicatesImpl[K: Ordering: ClassTag, T: ClassTag, S, C](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: SortedRDD[K, S],
-    countsTable: RDD[(C, Long)],
-    maxValuesPerKey: Int)(
-      largeKeysMapFn: Seq[C] => Map[K, Seq[S]]): RDD[(K, (T, S))] = {
-
-    val numTops = lookupTable.partitions.size min hybridLookupMaxLarge
-    val ordering = new CountOrdering[C]
-    val tops = countsTable
-      .top(numTops)(ordering)
-      .sorted(ordering)
-    if (tops.isEmpty) sourceRDD.context.emptyRDD
-    else {
-      val biggest = tops.last
-      if (biggest._2 > maxValuesPerKey) {
-        val largeKeysMap = largeKeysMapFn(tops.map(_._1))
-        val larges = smallTableLookup(sourceRDD, largeKeysMap)
-          .flatMapValues {
-            case (left, rightSeq) =>
-              rightSeq.map(rightItem => (left, rightItem))
-          }
-        val smalls = joinLookupWithDuplicates(
-          sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
-        (smalls ++ larges).coalesce(sourceRDD.partitions.size)
-      } else {
-        joinLookupWithDuplicates(sourceRDD, lookupTable)
-      }
-    }
-  }
-
 }
 
 object Implicits {
