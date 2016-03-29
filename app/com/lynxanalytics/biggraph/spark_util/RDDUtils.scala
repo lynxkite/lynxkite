@@ -274,9 +274,9 @@ object RDDUtils {
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
-  val hybridLookupThreshold =
+  private val hybridLookupThreshold =
     util.Properties.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
-  val hybridLookupMaxLarge =
+  private val hybridLookupMaxLarge =
     util.Properties.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
