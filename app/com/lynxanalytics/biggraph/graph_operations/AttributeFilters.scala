@@ -68,7 +68,6 @@ object MatchAllFilter extends FromJson[MatchAllFilter[_]] {
 }
 case class MatchAllFilter[T]() extends Filter[T] {
   def matches(value: T) = true
-  override def toJson = Json.obj()
 }
 
 object NotFilter extends FromJson[NotFilter[_]] {
