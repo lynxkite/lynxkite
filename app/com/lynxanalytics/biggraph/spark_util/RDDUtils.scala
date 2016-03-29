@@ -392,7 +392,7 @@ object RDDUtils {
     maxValuesPerKey: Int)(
       largeKeysMapFn: Seq[C] => Map[K, Seq[S]]): RDD[(K, (T, S))] = {
 
-    val numTops = lookupTable.partitions.size min 100
+    val numTops = lookupTable.partitions.size min hybridLookupMaxLarge
     val ordering = new CountOrdering[C]
     val tops = countsTable
       .top(numTops)(ordering)
