@@ -8,10 +8,14 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.Partitioner
+import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
@@ -96,15 +100,18 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       }
     }
 
-    def joinMapping[V](
+    def joinMapping[V: ClassTag](
       rdd: SortedRDD[ID, V],
-      mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, (V, ID)] = {
+      mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput, rdd.partitioner.get)
       // If the mapping has no duplicates we can use the faster sortedJoin.
-      if (props.isFunction) rdd.sortedJoin(mapping.asUniqueSortedRDD)
-      // If the mapping can have duplicates we need to use the slower sortedJoinWithDuplicates.
-      else rdd.sortedJoinWithDuplicates(mapping)
+      if (props.isFunction) {
+        RDDUtils.hybridLookup(rdd, mapping.asUniqueSortedRDD)
+      } else {
+        // If the mapping can have duplicates we need to use the slower hybrodLookupWithDuplicates.
+        RDDUtils.hybridLookupWithDuplicates(rdd, mapping)
+      }
     }
 
     val srcInduced = if (!induceSrc) edges else {
