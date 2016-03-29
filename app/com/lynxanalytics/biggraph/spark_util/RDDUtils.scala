@@ -274,12 +274,21 @@ object RDDUtils {
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
+  val hybridLookupThreshold =
+    util.Properties.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
+  val hybridLookupMaxLarge =
+    util.Properties.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] =
+    hybridLookup(sourceRDD, lookupTable, hybridLookupThreshold)
+
+  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)],
     lookupTable: UniqueSortedRDD[K, S],
-    maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
+    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
 
     hybridLookupImpl(
       sourceRDD,
@@ -294,8 +303,13 @@ object RDDUtils {
   // keys is already available for the caller.
   def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
+    lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)]): RDD[(K, (T, S))] =
+    hybridLookupUsingCounts(sourceRDD, lookupTableWithCounts, hybridLookupThreshold)
+
+  def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)],
     lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)],
-    maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
+    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
 
     hybridLookupImpl(
       sourceRDD,
@@ -315,7 +329,7 @@ object RDDUtils {
     maxValuesPerKey: Int)(
       largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
 
-    val numTops = lookupTable.partitions.size min 100
+    val numTops = lookupTable.partitions.size min hybridLookupMaxLarge
     val ordering = new CountOrdering[C]
     val tops = countsTable
       .top(numTops)(ordering)
