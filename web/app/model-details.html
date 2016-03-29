@@ -7,6 +7,8 @@
     <label class="form-control" disabled>{{ model.method }}</label>
     Label:
     <label class="form-control" disabled>{{ model.labelName }}</label>
+    Scaling:
+    <textarea class="form-control" rows="2" disabled>{{ model.scalerDetails }}</textarea>
     Features:
     <div class="form-control" disabled>
       <span ng-repeat="featureName in model.featureNames">

@@ -95,6 +95,24 @@ case class Model(
     }
   }
 
+  def scalerDetails: String = {
+    val meanInfo =
+      if (featureScaler.withMean) {
+        val vec = featureScaler.mean.toArray.mkString(", ")
+        s"Centered with mean $vec\n"
+      } else {
+        "Not centered\n"
+      }
+    val stdInfo =
+      if (featureScaler.withStd) {
+        val vec = featureScaler.std.toArray.mkString(", ")
+        s"Scaled to unit standard deviation by $vec\n"
+      } else {
+        "Not scaled\n"
+      }
+    meanInfo + stdInfo
+  }
+
   // Scales back the labels if needed.
   def scaleBack(result: RDD[Double]): RDD[Double] = {
     if (labelScaler.isEmpty) {
@@ -135,6 +153,7 @@ object Model extends FromJson[Model] {
     method = m.method,
     labelName = m.labelName,
     featureNames = m.featureNames,
+    scalerDetails = m.scalerDetails,
     details = m.load(sc).details)
 
   def newModelFile: HadoopFile = {
@@ -183,6 +202,7 @@ case class FEModel(
   method: String,
   labelName: String,
   featureNames: List[String],
+  scalerDetails: String,
   details: String)
 
 trait ModelMeta {
