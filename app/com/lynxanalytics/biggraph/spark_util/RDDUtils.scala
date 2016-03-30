@@ -293,10 +293,12 @@ object RDDUtils {
     hybridLookupImpl(
       sourceRDD,
       lookupTable,
-      sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _),
-      maxValuesPerKey) {
-        tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap
-      }
+      sourceRDD
+        .mapValues(x => 1L)
+        .reduceByKey(lookupTable.partitioner.get, _ + _),
+      maxValuesPerKey)(
+        { k => k },
+        { tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap })
   }
 
   // This is a variant of hybridLookup that can be used if (an estimate of) the counts for each
@@ -315,7 +317,9 @@ object RDDUtils {
       sourceRDD,
       lookupTableWithCounts.mapValues(_._1),
       lookupTableWithCounts.map { case (k, (s, c)) => (k, s) -> c },
-      maxValuesPerKey) { tops => tops.toMap }
+      maxValuesPerKey)(
+        { case (k, s) => k },
+        { tops => tops.toMap })
   }
 
   // Common implementation for the above hybrid lookup methods.
@@ -327,6 +331,7 @@ object RDDUtils {
     lookupTable: UniqueSortedRDD[K, S],
     countsTable: RDD[(C, Long)],
     maxValuesPerKey: Int)(
+      keyMapping: C => K,
       largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
 
     val numTops = lookupTable.partitions.size min hybridLookupMaxLarge
@@ -339,9 +344,10 @@ object RDDUtils {
       val biggest = tops.last
       if (biggest._2 > maxValuesPerKey) {
         val largeKeysMap = largeKeysMapFn(tops.map(_._1))
+        val largeKeys = tops.map { case (c, _) => keyMapping(c) }.toSet
         val larges = smallTableLookup(sourceRDD, largeKeysMap)
         val smalls = joinLookup(
-          sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
+          sourceRDD.filter { case (key, _) => !largeKeys.contains(key) }, lookupTable)
         (smalls ++ larges).coalesce(sourceRDD.partitions.size)
       } else {
         joinLookup(sourceRDD, lookupTable)
