@@ -352,7 +352,7 @@ object RDDUtils {
         val larges = smallTableLookup(sourceRDD, largeKeysMap)
         val smalls = joinLookup(
           sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }, lookupTable)
-        (smalls ++ larges).coalesce(sourceRDD.partitions.size)
+        (smalls ++ larges).repartition(sourceRDD.partitions.size)
       } else {
         joinLookup(sourceRDD, lookupTable)
       }
