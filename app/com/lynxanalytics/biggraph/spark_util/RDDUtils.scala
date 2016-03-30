@@ -318,7 +318,7 @@ object RDDUtils {
       lookupTableWithCounts.mapValues(_._1),
       lookupTableWithCounts.map { case (k, (s, c)) => (k, s) -> c },
       maxValuesPerKey)(
-        { case (k, s) => k },
+        { case (k, _) => k },
         { tops => tops.toMap })
   }
 
@@ -344,6 +344,9 @@ object RDDUtils {
       val biggest = tops.last
       if (biggest._2 > maxValuesPerKey) {
         val largeKeysMap = largeKeysMapFn(tops.map(_._1))
+        // LargeKeyMap may not contain all keys from the sourceRDD, if they have
+        // no matching record in the lookupTable. We still need to use a complete
+        // set of the large keys.
         val largeKeys = tops.map { case (c, _) => keyMapping(c) }.toSet
         val larges = smallTableLookup(sourceRDD, largeKeysMap)
         val smalls = joinLookup(
