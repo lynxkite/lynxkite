@@ -297,7 +297,7 @@ object RDDUtils {
         .mapValues(x => 1L)
         .reduceByKey(lookupTable.partitioner.get, _ + _),
       maxValuesPerKey)(
-        { k => k },
+        { tops => tops.toSet },
         { tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap })
   }
 
@@ -318,7 +318,7 @@ object RDDUtils {
       lookupTableWithCounts.mapValues(_._1),
       lookupTableWithCounts.map { case (k, (s, c)) => (k, s) -> c },
       maxValuesPerKey)(
-        { case (k, _) => k },
+        { tops => tops.map { case (k, _) => k }.toSet },
         { tops => tops.toMap })
   }
 
@@ -327,11 +327,13 @@ object RDDUtils {
   // any count is higher than maxValuesPerKey, then it does a hybrid lookup. To get the lookup
   // table for large elements, it feds the top keys from countTable into largeKeysMapFn.
   private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S, C](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    countsTable: RDD[(C, Long)],
+    sourceRDD: RDD[(K, T)], // The larger source RDD.
+    lookupTable: UniqueSortedRDD[K, S], // The smaller lookup RDD.
+    countsTable: RDD[(C, Long)], // An RDD of the join IDs and their cardinality from the source RDD.
     maxValuesPerKey: Int)(
-      keyMapping: C => K,
+      // Returns the set of IDs (Set[K]) created from Seq[C].
+      largeKeysSetFn: Seq[C] => Set[K],
+      // Returns the subset of the lookupTable having the IDs of Seq[C] as keys.
       largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
 
     val numTops = lookupTable.partitions.size min hybridLookupMaxLarge
@@ -347,10 +349,10 @@ object RDDUtils {
         // LargeKeyMap may not contain all keys from the sourceRDD, if they have
         // no matching record in the lookupTable. We still need to use a complete
         // set of the large keys.
-        val largeKeys = tops.map { case (c, _) => keyMapping(c) }.toSet
+        val largeKeysSet = largeKeysSetFn(tops.map(_._1))
         val larges = smallTableLookup(sourceRDD, largeKeysMap)
         val smalls = joinLookup(
-          sourceRDD.filter { case (key, _) => !largeKeys.contains(key) }, lookupTable)
+          sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }, lookupTable)
         (smalls ++ larges).coalesce(sourceRDD.partitions.size)
       } else {
         joinLookup(sourceRDD, lookupTable)
