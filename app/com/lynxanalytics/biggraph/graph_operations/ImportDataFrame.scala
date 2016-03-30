@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.protection.Limitations
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types
 import scala.reflect.runtime.universe.TypeTag
 
@@ -13,6 +14,9 @@ object ImportDataFrame extends OpFromJson {
   type SomeAttribute = Attribute[_]
 
   def toSymbol(field: types.StructField) = Symbol("imported_column_" + field.name)
+
+  private def isTupleType(st: types.StructType) =
+    st.size == 2 && st(0).name == "_1" && st(1).name == "_2"
 
   // I really don't understand why this isn't part of the spark API, but I can't find it.
   // So here it goes.
@@ -34,6 +38,10 @@ object ImportDataFrame extends OpFromJson {
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
       case _: types.TimestampType => typeTag[java.sql.Timestamp]
+      case st: types.StructType if isTupleType(st) =>
+        TypeTagUtil.tuple2TypeTag(
+          typeTagFromDataType(st(0).dataType),
+          typeTagFromDataType(st(1).dataType))
       case x => throw new AssertionError(s"Unsupported type in DataFrame: $x")
     }
   }
@@ -61,7 +69,10 @@ object ImportDataFrame extends OpFromJson {
     (j \ "timestamp").as[String])
 
   def apply(inputFrame: DataFrame) =
-    new ImportDataFrame(inputFrame.schema, Some(inputFrame), Timestamp.toString)
+    new ImportDataFrame(
+      inputFrame.schema,
+      Some(inputFrame),
+      Timestamp.toString)
 }
 
 class ImportDataFrame private (
@@ -84,7 +95,23 @@ class ImportDataFrame private (
   override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(schema)(instance)
-  override def toJson = Json.obj("schema" -> schema.prettyJson, "timestamp" -> timestamp)
+  override def toJson = Json.obj(
+    "schema" -> schema.prettyJson,
+    "timestamp" -> timestamp)
+
+  private def processDataFrameRow(row: Row): Seq[Any] =
+    // A simple row.toSeq would be enough for this method, except
+    // that tuple-typed columns need special handling.
+    row
+      .toSeq
+      .zip(schema.toSeq.map(_.dataType))
+      .map {
+        // This map goes over each item in the row:
+        case (item: Row, st: types.StructType) if isTupleType(st) =>
+          (item(0), item(1))
+        case (item, _) =>
+          item
+      }
 
   private def toNumberedLines(rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
     val df = inputFrame.get
@@ -98,7 +125,9 @@ class ImportDataFrame private (
     }
     val partitioner = rc.partitionerForNRows(numRows)
     import com.lynxanalytics.biggraph.spark_util.Implicits._
-    df.rdd.randomNumbered(partitioner).mapValues(_.toSeq)
+    df.rdd
+      .randomNumbered(partitioner)
+      .mapValues(processDataFrameRow)
   }
 
   def execute(inputDatas: DataSet,
@@ -113,7 +142,9 @@ class ImportDataFrame private (
     val sc = rc.sparkContext
 
     val entities = o.columns.values.map(_.entity)
-    val entitiesByName = entities.map(e => (e.name, e): (Symbol, Attribute[_])).toMap
+    val entitiesByName = entities
+      .map(e => (e.name, e): (Symbol, Attribute[_]))
+      .toMap
     val inOrder = schema.map(f => entitiesByName(toSymbol(f)))
 
     rc.ioContext.writeAttributes(inOrder, toNumberedLines(rc))
