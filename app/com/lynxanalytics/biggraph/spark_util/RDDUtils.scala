@@ -336,7 +336,7 @@ object RDDUtils {
       // Returns the subset of the lookupTable having the IDs of Seq[C] as keys.
       largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
 
-    val numTops = lookupTable.partitions.size min hybridLookupMaxLarge
+    val numTops = lookupTable.partitions.size max hybridLookupMaxLarge
     val ordering = new CountOrdering[C]
     val tops = countsTable
       .top(numTops)(ordering)
