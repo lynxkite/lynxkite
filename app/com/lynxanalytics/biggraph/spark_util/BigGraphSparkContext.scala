@@ -197,6 +197,13 @@ object BigGraphSparkContext {
     new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
+  def logEnvironmentVariables() = {
+    log.info("Environment variables:")
+    import scala.collection.JavaConverters._
+    System.getenv().asScala.foreach {
+      case (k, v) => log.info(s"$k = $v")
+    }
+  }
   def apply(
     appName: String,
     useKryo: Boolean = true,
@@ -253,6 +260,7 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
+    logEnvironmentVariables()
     val sc = new spark.SparkContext(sparkConf)
     sc.addSparkListener(new BigGraphSparkListener(sc))
     sc
