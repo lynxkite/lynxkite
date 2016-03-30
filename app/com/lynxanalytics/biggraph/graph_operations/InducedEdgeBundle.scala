@@ -105,14 +105,13 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       partitioner: Partitioner,
       mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
+      val mapping = getMapping(mappingInput, partitioner)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        val mapping = getMapping(mappingInput, partitioner)
         RDDUtils.hybridLookup(rdd, mapping.asUniqueSortedRDD)
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
-        val mapping = getMapping(mappingInput, partitioner)
         rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
       }
     }
