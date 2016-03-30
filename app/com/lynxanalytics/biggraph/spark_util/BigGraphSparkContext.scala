@@ -198,6 +198,7 @@ object BigGraphSparkContext {
     myKryo
   }
   def logEnvironmentVariables() = {
+    log.info("Environment variables:")
     import scala.collection.JavaConverters._
     System.getenv().asScala.foreach {
       case (k, v) => log.info(s"$k = $v")
