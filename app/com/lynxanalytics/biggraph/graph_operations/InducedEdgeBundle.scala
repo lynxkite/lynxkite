@@ -107,7 +107,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val props = mappingInput.entity.properties
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        val mapping = getMapping(mappingInput, mappingInput.rdd.partitioner.get)
+        val mapping = getMapping(mappingInput, partitioner)
         RDDUtils.hybridLookup(rdd, mapping.asUniqueSortedRDD)
       } else {
         // If the mapping can have duplicates we need to use the less reliable
