@@ -8,10 +8,14 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.Partitioner
+import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
@@ -96,23 +100,28 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       }
     }
 
-    def joinMapping[V](
-      rdd: SortedRDD[ID, V],
-      mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, (V, ID)] = {
+    def joinMapping[V: ClassTag](
+      rdd: RDD[(ID, V)],
+      partitioner: Partitioner,
+      mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
-      val mapping = getMapping(mappingInput, rdd.partitioner.get)
-      // If the mapping has no duplicates we can use the faster sortedJoin.
-      if (props.isFunction) rdd.sortedJoin(mapping.asUniqueSortedRDD)
-      // If the mapping can have duplicates we need to use the slower sortedJoinWithDuplicates.
-      else rdd.sortedJoinWithDuplicates(mapping)
+      if (props.isFunction) {
+        // If the mapping has no duplicates we can use the safer hybridLookup.
+        val mapping = getMapping(mappingInput, mappingInput.rdd.partitioner.get)
+        RDDUtils.hybridLookup(rdd, mapping.asUniqueSortedRDD)
+      } else {
+        // If the mapping can have duplicates we need to use the less reliable
+        // sortedJoinWithDuplicates.
+        val mapping = getMapping(mappingInput, partitioner)
+        rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
+      }
     }
 
     val srcInduced = if (!induceSrc) edges else {
       val srcPartitioner = src.partitioner.get
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-        .sort(srcPartitioner)
-      val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
+      val bySrc = joinMapping(byOldSrc, srcPartitioner, inputs.srcMapping)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
@@ -120,8 +129,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val dstPartitioner = dst.partitioner.get
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-        .sort(dstPartitioner)
-      val byDst = joinMapping(byOldDst, inputs.dstMapping)
+      val byDst = joinMapping(byOldDst, dstPartitioner, inputs.dstMapping)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }
