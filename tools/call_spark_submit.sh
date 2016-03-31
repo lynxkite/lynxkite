@@ -290,11 +290,11 @@ case $mode in
     stopKite
     startKite
   ;;
-  upload)
+  uploadLogs)
     uploadLogs
   ;;
   *)
-    >&2 echo "Usage: $0 interactive|start|stop|restart|batch|upload"
+    >&2 echo "Usage: $0 interactive|start|stop|restart|batch|uploadLogs"
     exit 1
   ;;
 esac
