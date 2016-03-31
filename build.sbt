@@ -96,12 +96,8 @@ lazy val root = project.in(file("."))
 
 bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
 
-def buildSubDirs(baseDir: File, dirs: Seq[String]) : File = {
-  if (dirs.isEmpty) baseDir
-  else buildSubDirs(baseDir / dirs.head, dirs.drop(1))
-}
 def dirContents(baseDir: File, dirs: String*) = {
-  val subDir = buildSubDirs(baseDir, dirs)
+  val subDir = dirs.foldLeft(baseDir) { (file, dir) => file / dir}
   val pathFinder = subDir * "*"
   pathFinder.get map {
     tool: File =>
