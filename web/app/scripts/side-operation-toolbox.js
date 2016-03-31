@@ -42,7 +42,7 @@ angular.module('biggraph').directive('sideOperationToolbox', function($rootScope
       scope.$on('apply operation', function() {
         util.clearAlerts();
         scope.box.applying = true;
-        scope.side.applyOp(scope.box.op, scope.box.params)
+        scope.side.applyOp(scope.box.op, scope.box.params.withoutOptionalDefaults())
           .finally(function() { scope.box.applying = false; });
       });
     },

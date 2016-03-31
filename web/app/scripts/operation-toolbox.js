@@ -19,6 +19,21 @@ angular.module('biggraph').directive('operationToolbox', function() {
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
+      scope.$watch('params', function(params) {
+        if (params === undefined) { return; }
+        params.withoutOptionalDefaults = function() {
+          var params = angular.extend({}, scope.params); // Shallow copy.
+          delete params.withoutOptionalDefaults; // This is not really a parameter, sorry.
+          for (var i = 0; i < scope.opMeta.parameters.length; ++i) {
+            var param = scope.opMeta.parameters[i];
+            if (!param.mandatory && params[param.id] === param.defaultValue) {
+              delete params[param.id];
+            }
+          }
+          return params;
+        };
+      });
+
       scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];
