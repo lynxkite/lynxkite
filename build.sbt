@@ -96,22 +96,21 @@ lazy val root = project.in(file("."))
 
 bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
 
-def buildSubDirs(file: File, dirs: List[String]) : File = {
-  if (dirs.isEmpty) file
-  else buildSubDirs(file / dirs.head, dirs.drop(1))
+def buildSubDirs(baseDir: File, dirs: Seq[String]) : File = {
+  if (dirs.isEmpty) baseDir
+  else buildSubDirs(baseDir / dirs.head, dirs.drop(1))
 }
-def addDir(baseDir: File, dirs: String*) = {
-  val subDirList = List(dirs: _*)
-  val subDir = buildSubDirs(baseDir, subDirList)
+def addDirContents(baseDir: File, dirs: String*) = {
+  val subDir = buildSubDirs(baseDir, dirs)
   val pathFinder = subDir * "*"
   pathFinder.get map {
     tool: File =>
-      tool -> (subDirList.mkString("/") + "/" + tool.getName)
+      tool -> (dirs.mkString("/") + "/" + tool.getName)
   }
 }
 
-mappings in Universal ++= addDir(baseDirectory.value, "tools")
+mappings in Universal ++= addDirContents(baseDirectory.value, "tools")
 
-mappings in Universal ++= addDir(baseDirectory.value, "kitescripts")
+mappings in Universal ++= addDirContents(baseDirectory.value, "kitescripts")
 
-mappings in Universal ++= addDir(baseDirectory.value, "tools", "performance_collection")
+mappings in Universal ++= addDirContents(baseDirectory.value, "tools", "performance_collection")
