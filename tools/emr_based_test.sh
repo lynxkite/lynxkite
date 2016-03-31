@@ -41,6 +41,7 @@ stage/tools/emr.sh kite ${EMR_TEST_SPEC}
 case $MODE in
   perf )
     stage/tools/emr.sh batch ${EMR_TEST_SPEC} kitescripts/perf/*.groovy
+    stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
     ;;
   frontend )
     stage/tools/emr.sh connect ${EMR_TEST_SPEC} &
