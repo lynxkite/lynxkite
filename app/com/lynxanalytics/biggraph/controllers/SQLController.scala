@@ -112,7 +112,7 @@ object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
 }
 object FileImportValidator {
-  def checkFileHasContents(f: HadoopFile): Unit = {
+  def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
     assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
       s"No data was found at '${files}' (no or empty files).")
   }
