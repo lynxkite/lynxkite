@@ -59,13 +59,6 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
                 beforeParams[param] = value;
               }
             });
-            // Also ignore changes where an empty value was removed. This is to clean up workflow
-            // scripts. (#3302)
-            angular.forEach(beforeParams, function(value, param) {
-              if (value === '' && afterParams[param] === undefined) {
-                delete beforeParams[param];
-              }
-            });
             if (angular.equals(after, beforeAllDefined)) { return; }
 
             step.localChanges = true;
@@ -317,8 +310,9 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
             var seg = request.path[j];
             line.push('.segmentations[\'' + seg + '\']');
           }
-          var params = Object.keys(request.op.parameters);
-          params.sort();
+          var params = request.op.parameters.withoutOptionalDefaults();
+          var paramKeys = Object.keys(params);
+          paramKeys.sort();
           if (request.op.id.indexOf('workflows/') === 0) {
             var workflowName = request.op.id.split('/').slice(1).join('/');
             line.push('.runWorkflow(\'' + workflowName + '\'');
@@ -326,15 +320,15 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
           } else {
             line.push('.' + toGroovyId(request.op.id) + '(');
           }
-          for (j = 0; j < params.length; ++j) {
-            var k = params[j];
-            var v = request.op.parameters[k];
+          for (j = 0; j < paramKeys.length; ++j) {
+            var k = paramKeys[j];
+            var v = params[k];
             if (!k.match(/^[a-zA-Z]+$/)) {
               k = groovyQuote(k);
             }
             v = groovyQuote(v);
             line.push(k + ': ' + v);
-            if (j !== params.length - 1) {
+            if (j !== paramKeys.length - 1) {
               line.push(', ');
             }
           }

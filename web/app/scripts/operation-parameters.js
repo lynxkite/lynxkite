@@ -26,10 +26,6 @@ angular.module('biggraph').directive('operationParameters', function(util) {
               scope.multiOutput[param.id] = [];
             }
           }
-          if (!param.mandatory && output[param.id] !== undefined && output[param.id].length === 0) {
-            // Hide empty optional parameters to keep history simpler.
-            delete output[param.id];
-          }
         }
       });
 
