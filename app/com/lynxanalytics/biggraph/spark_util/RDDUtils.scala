@@ -350,7 +350,7 @@ object RDDUtils {
         // set of the large keys.
         val largeKeysSet = largeKeysSetFn(tops.map(_._1))
         val largeKeysCoverage = tops.map(_._2).reduce(_ + _)
-        log.info(s"Hybrid lookup took ${largeKeysSet.size} hubs covering ${largeKeysCoverage} source records.")
+        log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering ${largeKeysCoverage} source records.")
         val larges = smallTableLookup(sourceRDD, largeKeysMap)
         val smalls = joinLookup(
           sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }, lookupTable)
