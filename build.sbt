@@ -100,7 +100,7 @@ def buildSubDirs(baseDir: File, dirs: Seq[String]) : File = {
   if (dirs.isEmpty) baseDir
   else buildSubDirs(baseDir / dirs.head, dirs.drop(1))
 }
-def addDirContents(baseDir: File, dirs: String*) = {
+def dirContents(baseDir: File, dirs: String*) = {
   val subDir = buildSubDirs(baseDir, dirs)
   val pathFinder = subDir * "*"
   pathFinder.get map {
@@ -109,8 +109,8 @@ def addDirContents(baseDir: File, dirs: String*) = {
   }
 }
 
-mappings in Universal ++= addDirContents(baseDirectory.value, "tools")
+mappings in Universal ++= dirContents(baseDirectory.value, "tools")
 
-mappings in Universal ++= addDirContents(baseDirectory.value, "kitescripts")
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts")
 
-mappings in Universal ++= addDirContents(baseDirectory.value, "tools", "performance_collection")
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")
