@@ -101,8 +101,7 @@ case class CSVImportRequest(
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(files)
-    assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
-      s"No CSV data was found at '${files}' (no or empty files).")
+    FileImportValidator.checkFileHasContents(hadoopFile)
     // TODO: #2889 (special characters in S3 passwords).
     readerWithSchema.load(hadoopFile.resolvedName)
   }
@@ -111,6 +110,12 @@ case class CSVImportRequest(
 }
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
+}
+object FileImportValidator {
+  def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
+    assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
+      s"No data was found at '${hadoopFile.symbolicName}' (no or empty files).")
+  }
 }
 
 case class JdbcImportRequest(
@@ -154,6 +159,7 @@ trait FilesWithSchemaImportRequest extends GenericImportRequest {
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
+    FileImportValidator.checkFileHasContents(hadoopFile)
     dataManager.masterHiveContext.read.format(format).load(hadoopFile.resolvedName)
   }
 
