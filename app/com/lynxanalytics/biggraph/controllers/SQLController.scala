@@ -101,6 +101,8 @@ case class CSVImportRequest(
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(files)
+    assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
+      s"No CSV data was found at '${files}' (no or empty files).")
     // TODO: #2889 (special characters in S3 passwords).
     readerWithSchema.load(hadoopFile.resolvedName)
   }
