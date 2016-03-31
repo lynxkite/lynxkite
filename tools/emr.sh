@@ -27,6 +27,8 @@ if [ "$#" -lt 2 ]; then
   echo "   s3copy      - copies the data directory to s3 persistent storage"
   echo "                 You need to have \"connect\" running for this. See below."
   echo "   metacopy    - copies the meta directory to your local machine"
+  echo "   uploadLogs  - Uploads the application logs and the operation performance"
+  echo "                 data to google storage"
   echo "   metarestore - copies the meta directory from your local machines to the cluster"
   echo "   reset       - deletes the data and the meta directories and restarts kite"
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
@@ -103,7 +105,7 @@ GetMasterAccessParams() {
 }
 
 function ConfirmDataLoss {
-  read -p "Data not saved with the 's3copy' command will be lost. Are you sure? [Y/n] " answer
+  read -p "Data not saved with the 's3copy' command and logs not saved with uploadLogs will be lost. Are you sure? [Y/n] " answer
   case ${answer:0:1} in
     y|Y|'' )
       ;;
@@ -215,6 +217,7 @@ export KITE_PREFIX_DEFINITIONS=/home/hadoop/prefix_definitions.txt
 export KITE_AMMONITE_PORT=2203
 export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
+export KITE_INSTANCE=emr
 EOF
 
   SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"
@@ -250,6 +253,10 @@ EOF
   ;;
 
 # ======
+uploadLogs)
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph uploadLogs"
+  ;;
 kite)
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
