@@ -34,15 +34,16 @@ object OperationParams {
     val multipleChoice = false
     def validate(value: String): Unit = {}
   }
+
   case class Choice(
       id: String,
       title: String,
       options: List[FEOption],
       multipleChoice: Boolean = false,
-      allowUnknownOption: Boolean = false) extends OperationParameterMeta {
+      allowUnknownOption: Boolean = false,
+      mandatory: Boolean = true) extends OperationParameterMeta {
     val kind = "choice"
-    val defaultValue = ""
-    val mandatory = true
+    val defaultValue = options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
@@ -57,6 +58,7 @@ object OperationParams {
       }
     }
   }
+
   case class TableParam(
       id: String,
       title: String,
@@ -67,6 +69,7 @@ object OperationParams {
     val mandatory = true
     def validate(value: String): Unit = {}
   }
+
   case class TagList(
       id: String,
       title: String,
@@ -77,6 +80,7 @@ object OperationParams {
     val defaultValue = ""
     def validate(value: String): Unit = {}
   }
+
   case class File(id: String, title: String) extends OperationParameterMeta {
     val kind = "file"
     val multipleChoice = false
@@ -85,6 +89,7 @@ object OperationParams {
     val mandatory = true
     def validate(value: String): Unit = {}
   }
+
   case class Ratio(id: String, title: String, defaultValue: String = "")
       extends OperationParameterMeta {
     val kind = "default"
@@ -96,6 +101,7 @@ object OperationParams {
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
     }
   }
+
   case class NonNegInt(id: String, title: String, default: Int)
       extends OperationParameterMeta {
     val kind = "default"
@@ -107,6 +113,7 @@ object OperationParams {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
   }
+
   case class NonNegDouble(id: String, title: String, defaultValue: String = "")
       extends OperationParameterMeta {
     val kind = "default"
@@ -117,6 +124,7 @@ object OperationParams {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
   }
+
   case class Code(
       id: String,
       title: String,
@@ -587,7 +595,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
-        FEOption.noWeight +: edgeAttributes[Double]),
+        FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       Param(
         "max-iterations",
         "Maximum number of iterations to do",
@@ -599,7 +607,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgeBundle = project.edgeBundle
-      val weightsName = params("weights")
+      val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
       val weights =
         if (weightsName == FEOption.noWeight.id) edgeBundle.const(1.0)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
@@ -1111,15 +1119,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Choice("weights", "Weight attribute",
-        options = FEOption.noWeight +: edgeAttributes[Double]),
+        options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
+      val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
       val weights =
-        if (params("weights") == FEOption.noWeight.id) project.edgeBundle.const(1.0)
+        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank, help)
@@ -2507,7 +2516,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Choice("weights", "Edge weights",
-        options = FEOption.noWeight +: edgeAttributes[Double]),
+        options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
       Param(
@@ -2524,8 +2533,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
+      val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
       val weights =
-        if (params("weights") == FEOption.noWeight.id) project.edgeBundle.const(1.0)
+        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
 
       val candidates = {
