@@ -177,10 +177,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
 
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(vattr[(Double, Double)]("location") == Seq(
-      (-33.8674869d, 151.2069902d),
-      (1.352083d, 103.819836d),
-      (40.71448d, -74.00598d),
-      (47.5269674d, 19.0323968d)))
+      (-33.8674869, 151.2069902),
+      (1.352083, 103.819836),
+      (40.71448, -74.00598),
+      (47.5269674, 19.0323968)))
     graph_util.HadoopFile(exportPath).delete
   }
 

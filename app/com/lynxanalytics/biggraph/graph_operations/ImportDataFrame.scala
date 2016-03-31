@@ -115,12 +115,10 @@ class ImportDataFrame private (
     schema
       .map(field => field.dataType)
       .zipWithIndex
-      .flatMap {
-        // This map goes over each item in the row:
+      // Only keep the index of tuple items:
+      .collect {
         case (st: types.StructType, id) if isTuple2Type(st) =>
-          Some(id)
-        case (_, _) =>
-          None
+          id
       }
   }
 
