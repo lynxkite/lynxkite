@@ -101,14 +101,14 @@ case class Model(
         val vec = featureScaler.mean.toArray.mkString(", ")
         s"Centered with mean $vec\n"
       } else {
-        "Not centered\n"
+        ""
       }
     val stdInfo =
       if (featureScaler.withStd) {
         val vec = featureScaler.std.toArray.mkString(", ")
-        s"Scaled to unit standard deviation by $vec\n"
+        s"Scaled to unit standard deviation by $vec"
       } else {
-        "Not scaled\n"
+        ""
       }
     meanInfo + stdInfo
   }
