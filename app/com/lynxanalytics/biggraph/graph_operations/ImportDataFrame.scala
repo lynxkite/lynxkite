@@ -15,7 +15,7 @@ object ImportDataFrame extends OpFromJson {
 
   def toSymbol(field: types.StructField) = Symbol("imported_column_" + field.name)
 
-  private def isTupleType(st: types.StructType) =
+  private def isTuple2Type(st: types.StructType) =
     st.size == 2 && st(0).name == "_1" && st(1).name == "_2"
 
   // I really don't understand why this isn't part of the spark API, but I can't find it.
@@ -38,7 +38,7 @@ object ImportDataFrame extends OpFromJson {
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
       case _: types.TimestampType => typeTag[java.sql.Timestamp]
-      case st: types.StructType if isTupleType(st) =>
+      case st: types.StructType if isTuple2Type(st) =>
         TypeTagUtil.tuple2TypeTag(
           typeTagFromDataType(st(0).dataType),
           typeTagFromDataType(st(1).dataType))
@@ -99,19 +99,30 @@ class ImportDataFrame private (
     "schema" -> schema.prettyJson,
     "timestamp" -> timestamp)
 
-  private def processDataFrameRow(row: Row): Seq[Any] =
+  private def processDataFrameRow(tupleColumnIdList: Seq[Int])(row: Row): Seq[Any] = {
+    var result = row.toSeq
     // A simple row.toSeq would be enough for this method, except
     // that tuple-typed columns need special handling.
-    row
-      .toSeq
-      .zip(schema.toSeq.map(_.dataType))
-      .map {
+    for (columnId <- tupleColumnIdList) {
+      val column = result(columnId).asInstanceOf[Row]
+      result = result.updated(columnId, (column(0), column(1)))
+    }
+    result
+  }
+
+  // Collects positions of columns which contain tuples.
+  private def getTupleColumnIdList(): Seq[Int] = {
+    schema
+      .map(field => field.dataType)
+      .zipWithIndex
+      .flatMap {
         // This map goes over each item in the row:
-        case (item: Row, st: types.StructType) if isTupleType(st) =>
-          (item(0), item(1))
-        case (item, _) =>
-          item
+        case (st: types.StructType, id) if isTuple2Type(st) =>
+          Some(id)
+        case (_, _) =>
+          None
       }
+  }
 
   private def toNumberedLines(rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
     val df = inputFrame.get
@@ -125,9 +136,9 @@ class ImportDataFrame private (
     }
     val partitioner = rc.partitionerForNRows(numRows)
     import com.lynxanalytics.biggraph.spark_util.Implicits._
-    df.rdd
-      .randomNumbered(partitioner)
-      .mapValues(processDataFrameRow)
+    val rawLines = df.rdd.randomNumbered(partitioner)
+    val tupleColumnIdList = getTupleColumnIdList()
+    rawLines.mapValues(processDataFrameRow(tupleColumnIdList))
   }
 
   def execute(inputDatas: DataSet,
