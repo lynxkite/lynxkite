@@ -85,9 +85,11 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
+    // Use the edge partitioner for both the new edges and src and dst to avoid too
+    // large partitions.
+    val partitioner = inputs.edges.rdd.partitioner.get
 
-    def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate,
-                   partitioner: Partitioner): SortedRDD[ID, ID] = {
+    def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
@@ -102,10 +104,9 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
 
     def joinMapping[V: ClassTag](
       rdd: RDD[(ID, V)],
-      partitioner: Partitioner,
       mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
-      val mapping = getMapping(mappingInput, partitioner)
+      val mapping = getMapping(mappingInput)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
         RDDUtils.hybridLookup(rdd, mapping.asUniqueSortedRDD)
@@ -117,18 +118,16 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     }
 
     val srcInduced = if (!induceSrc) edges else {
-      val srcPartitioner = src.partitioner.get
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-      val bySrc = joinMapping(byOldSrc, srcPartitioner, inputs.srcMapping)
+      val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
     val dstInduced = if (!induceDst) srcInduced else {
-      val dstPartitioner = dst.partitioner.get
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-      val byDst = joinMapping(byOldDst, dstPartitioner, inputs.dstMapping)
+      val byDst = joinMapping(byOldDst, inputs.dstMapping)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }
