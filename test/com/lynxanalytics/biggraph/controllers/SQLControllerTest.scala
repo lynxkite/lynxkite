@@ -147,4 +147,41 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(subProject.viewer.vertexAttributes.keySet ==
       Set("new_id", "n", "id", "name", "race condition", "level"))
   }
+
+  test("sql export to parquet + import back (including tuple columns)") {
+    val exportPath = "IMPORTGRAPHTEST$/example.parquet"
+    graph_util.HadoopFile(exportPath).deleteIfExists
+
+    run("Example Graph")
+    val result = await(
+      sqlController.exportSQLQueryToParquet(
+        user,
+        SQLExportToParquetRequest(
+          DataFrameSpec(
+            project = projectName,
+            sql = "select name, age, location from vertices"),
+          path = exportPath)))
+    val response = await(sqlController.importParquet(
+      user,
+      ParquetImportRequest(
+        table = "csv-import-test",
+        privacy = "public-read",
+        files = exportPath + "/part*",
+        columnsToImport = List("name", "location"))))
+    val tablePath = response.id
+    run(
+      "Import vertices",
+      Map(
+        "table" -> tablePath,
+        "id-attr" -> "new_id"))
+
+    assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(vattr[(Double, Double)]("location") == Seq(
+      (-33.8674869d, 151.2069902d),
+      (1.352083d, 103.819836d),
+      (40.71448d, -74.00598d),
+      (47.5269674d, 19.0323968d)))
+    graph_util.HadoopFile(exportPath).delete
+  }
+
 }
