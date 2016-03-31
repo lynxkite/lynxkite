@@ -13,6 +13,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Support for Kerberos-secured clusters.
  - Attribute filter `*` added to match all defined values. This can be used e.g. to remove
    vertices with no location from a map visualization.
+ - Stability improvements regarding edge loading and handling graphs with large degree vertices.
 
 ### 1.7.3
 
