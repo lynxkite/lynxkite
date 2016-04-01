@@ -406,7 +406,7 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
   val id = attr.gUID.toString
 
-  def histogram: String = histogram(10, false, false)
+  def histogram: String = histogram(10, logarithmic = false, precise = false)
 
   def histogram(numBuckets: Int): String = histogram(numBuckets, logarithmic = false, precise = false)
 
