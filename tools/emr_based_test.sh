@@ -24,7 +24,7 @@ cat >>${EMR_TEST_SPEC} <<EOF
 CLUSTER_NAME=${CLUSTER_NAME}
 NUM_INSTANCES=3
 S3_DATAREPO=""
-
+KITE_INSTANCE_BASE_NAME=testemr
 EOF
 
 CLUSTERID=$(stage/tools/emr.sh clusterid ${EMR_TEST_SPEC})
@@ -41,6 +41,7 @@ stage/tools/emr.sh kite ${EMR_TEST_SPEC}
 case $MODE in
   perf )
     stage/tools/emr.sh batch ${EMR_TEST_SPEC} kitescripts/perf/*.groovy
+    stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
     ;;
   frontend )
     stage/tools/emr.sh connect ${EMR_TEST_SPEC} &
