@@ -217,7 +217,7 @@ export KITE_PREFIX_DEFINITIONS=/home/hadoop/prefix_definitions.txt
 export KITE_AMMONITE_PORT=2203
 export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
-export KITE_INSTANCE=emr
+export KITE_INSTANCE=${INSTANCE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
 EOF
 
   SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"

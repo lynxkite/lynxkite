@@ -81,3 +81,14 @@ need to set SubnetId and AdditionalMasterSecurityGroups. E.g.:
 ```
 CREATE_CLUSTER_EXTRA_EC2_ATTRS=""
 ```
+
+
+Provides a part of the name for the `KITE_INSTANCE` variable that identifies the instance. E.g.,
+leaving it at the default `emr` could result in such name: `emr-3-m3.2xlarge-8cores-18g`.
+(The `KITE_INSTANCE` variable is assembled like this:
+`${INSTANCE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g`)
+
+
+```
+INSTANCE_NAME=emr
+```
