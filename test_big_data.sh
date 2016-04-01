@@ -1,7 +1,7 @@
 #!/bin/bash -xue
 
 cd $(dirname $0)
-cat kitescripts/perf/last_output.md | sed '/size/how big/' > kitescripts/perf/last_output.md.new
+cat kitescripts/perf/last_output.md | sed 's/size/how big/' > kitescripts/perf/last_output.md.new
 mv kitescripts/perf/last_output.md{.new,}
 git status
 PERF_CHANGE="12% faster"
