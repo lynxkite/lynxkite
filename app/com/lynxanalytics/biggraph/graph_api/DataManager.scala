@@ -377,7 +377,8 @@ class DataManager(sc: spark.SparkContext,
       sparkContext = sc,
       sqlContext = masterSQLContext,
       ioContext = io.IOContext(dataRoot, sc),
-      broadcastDirectory = broadcastDirectory)
+      broadcastDirectory = broadcastDirectory,
+      dataManager = this)
   }
 
   def newSQLContext(): SQLContext = {

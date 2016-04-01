@@ -8,7 +8,8 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           sqlContext: spark.sql.SQLContext,
                           ioContext: io.IOContext,
-                          broadcastDirectory: HadoopFile) {
+                          broadcastDirectory: HadoopFile,
+                          dataManager: DataManager) {
   // A suitable partitioner for an RDD of N rows.
   def partitionerForNRows(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / io.EntityIO.verticesPerPartition).ceil.toInt max 1)

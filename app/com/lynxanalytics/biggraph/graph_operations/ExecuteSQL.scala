@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.controllers.RawTable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import com.lynxanalytics.biggraph.table.TableRelation
 
 import org.apache.spark.sql
 import org.apache.spark.sql.types
@@ -16,42 +17,6 @@ import org.apache.spark.rdd
 import scala.reflect.runtime.universe.TypeTag
 
 import play.api.libs.json
-
-class AttributeTableRelation(
-  vs: UniqueSortedRDD[ID, Unit],
-  attrs: Map[String, AttributeData[_]],
-  val sqlContext: sql.SQLContext)
-    extends sources.BaseRelation with sources.TableScan with sources.PrunedScan {
-
-  // TableScan
-  override def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
-
-  // PrunedScan
-  override def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row] = {
-
-    val rdds = requiredColumns.toSeq.map(name => attrs(name))
-    val emptyRows = vs.mapValues(_ => Seq[Any]())
-    val seqRows = rdds.foldLeft(emptyRows) {
-      case (seqs, data) =>
-        seqs
-          .sortedLeftOuterJoin(data.rdd)
-          .mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }
-    }
-    seqRows.values.map(sql.Row.fromSeq(_))
-  }
-
-  def schema = {
-    val fields = attrs.toSeq.sortBy(_._1).map {
-      case (name, data) =>
-        types.StructField(
-          name = name,
-          dataType = Table.dfType(data.typeTag))
-    }
-    sql.types.StructType(fields)
-  }
-
-  def toDF = sqlContext.baseRelationToDataFrame(this)
-}
 
 object ExecuteSQL extends OpFromJson {
   def toSymbol(field: sql.types.StructField) = Symbol("imported_column_" + field.name)
@@ -87,7 +52,7 @@ object ExecuteSQL extends OpFromJson {
   }
 }
 
-class ExecuteSQL(
+case class ExecuteSQL(
   val sqlQuery: String,
   val inputTables: Map[String, Seq[String]],
   val outputSchema: sql.types.StructType)
@@ -127,13 +92,13 @@ class ExecuteSQL(
         .tableColumns(tableName)
         .map {
           case (columnName, columnAttr) =>
-            (columnName, columnAttr.data)
+            (columnName, columnAttr.entity(output.instance))
         }
         .toMap
-
-      val rt = new AttributeTableRelation(tableVs.rdd, tc, sqlContext)
-      val df = rt.toDF
-      df.registerTempTable(tableName)
+      val rawTable = RawTable(tableVs.entity(output.instance), tc)
+      val tableRelation = new TableRelation(rawTable, sqlContext)(rc.dataManager)
+      val tableDataFrame = tableRelation.toDF
+      tableDataFrame.registerTempTable(tableName)
     }
     var dataFrame = sqlContext.sql(sqlQuery)
     o.populateOutput(rc, outputSchema, dataFrame)
