@@ -5,7 +5,7 @@
 #
 # emr_based_test.sh frontend  #  Run e2e frontend tests.
 #
-# emr_based_test.sh perf file1.groovy file2.groovy ... [-- key1:value1, key2:value2... ]
+# emr_based_test.sh perf file1.groovy file2.groovy ... [-- key1:value1 key2:value2 ... ]
 #   Run performance tests on the groovy files, and pass the key:value parameters to them.
 #
 #   Example:
