@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
+import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
@@ -174,6 +175,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.clearspring.analytics.stream.cardinality.HyperLogLogPlus])
     kryo.register(classOf[com.clearspring.analytics.stream.cardinality.RegisterSet])
     kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
+    kryo.register(classOf[Array[org.apache.spark.sql.types.DataType]])
+    kryo.register(classOf[java.sql.Timestamp])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -194,12 +197,19 @@ object BigGraphSparkContext {
     new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
+  def logEnvironmentVariables() = {
+    log.info("Environment variables:")
+    import scala.collection.JavaConverters._
+    System.getenv().asScala.foreach {
+      case (k, v) => log.info(s"$k = $v")
+    }
+  }
   def apply(
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = ""): spark.SparkContext = {
-    val versionFound = org.apache.spark.SPARK_VERSION
+    val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
@@ -250,6 +260,7 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
+    logEnvironmentVariables()
     val sc = new spark.SparkContext(sparkConf)
     sc.addSparkListener(new BigGraphSparkListener(sc))
     sc

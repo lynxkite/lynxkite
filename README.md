@@ -95,7 +95,7 @@ LynxKite.
 Before doing a release, please run the following tests:
 ```
 tools/emr_based_test.sh frontend
-tools/emr_based_test.sh perf
+tools/emr_based_test.sh perf kitescripts/perf/*.groovy
 ```
 You can choose to reuse the cluster when prompted. Once that's done, create a PR which
 updates the contents of [kitescripts/perf/last_output.md](kitescripts/perf/last_output.md)

@@ -38,7 +38,7 @@ module.exports = function(fw) {
     'cant save as to existing project',
     function() {
       lib.left.saveProjectAs('test-example');
-      expect(lib.error()).toEqual('test-example already exists.');
+      expect(lib.error()).toEqual('Entry \'test-example\' already exists.');
       lib.closeErrors();
     });
 };

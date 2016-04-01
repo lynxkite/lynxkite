@@ -128,6 +128,14 @@ if [ -n "${NUM_EXECUTORS}" ]; then
   fi
 fi
 
+if [ -n "${KERBEROS_PRINCIPAL}" ] || [ -n "${KERBEROS_KEYTAB}" ]; then
+  if [ -z "${KERBEROS_PRINCIPAL}" ] || [ -z "${KERBEROS_KEYTAB}" ]; then
+    >&2 echo "Please define KERBEROS_PRINICPAL and KERBEROS_KEYTAB together: either both of them or none."
+    exit 1
+  fi
+  EXTRA_OPTIONS="${EXTRA_OPTIONS} --principal ${KERBEROS_PRINCIPAL} --keytab ${KERBEROS_KEYTAB}"
+fi
+
 if [ "${SPARK_MASTER}" == "local" ]; then
  export SPARK_MASTER="${SPARK_MASTER}[${NUM_CORES_PER_EXECUTOR}]"
 fi
@@ -243,6 +251,20 @@ stopWatchdog () {
   stopByPIDFile "${WATCHDOG_PID_FILE}" "LynxKite Watchdog"
 }
 
+uploadLogs () {
+  if [ -z ${KITE_INSTANCE} ]; then
+    >&2 echo "KITE_INSTANCE is not set. Cannot upload logs."
+    exit 1
+  fi
+  THIS_DIR="$(dirname "$(readlink -f "$0")")"
+  UPLOADER=${THIS_DIR}/../tools/performance_collection/multi_upload.sh
+  if [ -f "${KITE_PID_FILE}" ]; then
+      ${UPLOADER} ${KITE_HTTP_PORT} ${KITE_LOG_DIR} ${KITE_INSTANCE}
+  else
+      ${UPLOADER} 0                 ${KITE_LOG_DIR} ${KITE_INSTANCE}
+  fi
+}
+
 case $mode in
   interactive)
     exec "${command[@]}"
@@ -268,8 +290,11 @@ case $mode in
     stopKite
     startKite
   ;;
+  uploadLogs)
+    uploadLogs
+  ;;
   *)
-    >&2 echo "Usage: $0 interactive|start|stop|restart|batch"
+    >&2 echo "Usage: $0 interactive|start|stop|restart|batch|uploadLogs"
     exit 1
   ;;
 esac

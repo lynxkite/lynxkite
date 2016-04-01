@@ -12,6 +12,9 @@ var LynxKitePort = process.env.PORT || 2200;
 // Port for the development proxy.
 var ProxyPort = 9090;
 
+// The tools directory.
+var tools = '../tools';
+
 var browserSync = require('browser-sync').create();
 var spawn = require('child_process').spawn;
 var del = require('del');
@@ -21,6 +24,7 @@ var httpProxy = require('http-proxy');
 var lazypipe = require('lazypipe');
 var merge = require('merge-stream');
 var wiredep = require('wiredep').stream;
+var exec = require('gulp-exec');
 var $ = require('gulp-load-plugins')();
 
 // Builds HTML files from AsciiDoctor documentation.
@@ -59,7 +63,7 @@ gulp.task('html', ['css', 'js'], function () {
 // Performs the final slow steps for creating the ultimate files that are included in LynxKite.
 // All the other tasks create intermediate outputs in .tmp. This task takes files from app and .tmp,
 // optimizes them, and saves them in dist.
-gulp.task('dist', ['clean:dist', 'asciidoctor', 'html'], function () {
+gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], function () {
   var beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
   var dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref({}, beforeConcat))
@@ -119,6 +123,12 @@ gulp.task('clean:dist', function() {
   return del('dist');
 });
 
+// Generates template files form asciidoc.
+gulp.task('genTemplates', function() {
+  return gulp.src('app/**/*.asciidoc')
+    .pipe(exec(tools + '/gen_templates.py'));
+});
+
 // Starts a development proxy.
 // It connects to a real LynxKite server and forwards the AJAX requests to LynxKite. But it
 // overlays the frontend files in .tmp, and watches the source files. Whenever you edit a source
@@ -155,7 +165,7 @@ gulp.task('serve', ['quick'], function() {
   gulp.watch('app/styles/*.{,s}css', ['css']);
   gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
   gulp.watch('app/**/*.html', ['html']);
-  gulp.watch('app/**/*.asciidoc', ['asciidoctor']);
+  gulp.watch('app/**/*.asciidoc', ['asciidoctor', 'genTemplates']);
 });
 
 var protractorDir = 'node_modules/protractor/';

@@ -46,9 +46,10 @@ GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonSe
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
 GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
 
-GET  /ajax/getUsers    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
+GET  /ajax/getUsers            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
 POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
-POST /ajax/createUser  com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
+POST /ajax/createUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
+GET  /ajax/getUserData         com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUserData
 
 GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
 POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJsonServer.markFilesDeleted
@@ -60,6 +61,7 @@ GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.d
 
 GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
 GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile
+POST /forceLogRotate   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forceLogRotate
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin

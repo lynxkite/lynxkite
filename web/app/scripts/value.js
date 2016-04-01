@@ -4,7 +4,10 @@
 angular.module('biggraph').directive('value', function(util) {
   return {
     restrict: 'E',
-    scope: { ref: '=', details: '=' },
+    scope: {
+      ref: '=', // Input. Scalar request to display.
+      details: '=', // Input. Extra details for error reporting.
+    },
     templateUrl: 'value.html',
     link: function(scope) {
       scope.util = util;
