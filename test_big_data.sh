@@ -5,7 +5,7 @@ cd $(dirname $0)
 # Run test. (TODO)
 cat kitescripts/perf/last_output.md | sed 's/size/how big/' > kitescripts/perf/last_output.md.new
 
-if [[ $USERNAME == 'jenkins' ]]; then
+if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
   git config user.name 'lynx-jenkins'
   git config user.email 'pizza-support@lynxanalytics.com'
