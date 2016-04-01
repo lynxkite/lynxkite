@@ -2,15 +2,25 @@
 
 # Brings up a small EMR cluster and runs tests on it.
 # Usage:
-# emr_based_test.sh perf     # Run performance tests.
-# emr_based_test.sh frontend # Run e2e frontend tests.
+#
+# emr_based_test.sh frontend  #  Run e2e frontend tests.
+#
+# emr_based_test.sh perf file1.groovy file2.groovy ... [-- key1:value1, key2:value2... ]
+#   Run performance tests on the groovy files, and pass the key:value parameters to them.
+#
+#   Example:
+#   emr_based_test.sh perf kitescripts/perf/*.groovy -- seed:1234
+#   This will run all groovy files in kitescripts/perf/ and all these
+#   groovy files will receive the seed parameter as 1234.
+
 
 set -ueo pipefail
 trap "echo $0 has failed" ERR
 
 cd "$(dirname $0)/.."
 
-MODE=${1:-perf}
+MODE=${1}
+shift
 
 CLUSTER_NAME="${USER}-test-cluster"
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
@@ -40,7 +50,7 @@ stage/tools/emr.sh kite ${EMR_TEST_SPEC}
 
 case $MODE in
   perf )
-    stage/tools/emr.sh batch ${EMR_TEST_SPEC} kitescripts/perf/*.groovy
+    stage/tools/emr.sh batch ${EMR_TEST_SPEC} $@
     stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
     ;;
   frontend )
