@@ -48,6 +48,7 @@ namespace.
  - `String **lynx.saveAsTable**(DataFrame df, String tableName, String notes = "")` saves an
    Apache Spark DataFrame as a LynxKite table. It returns the table identifier that can be used
    as a parameter for import operations.
+ - `String **lynx.resolvePath**(String path)` resolves a <<prefixed-paths, prefixed path>>.
 
 The properties of `GroovyProject` are:
 
