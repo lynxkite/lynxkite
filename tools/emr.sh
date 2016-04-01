@@ -373,21 +373,43 @@ expect "Password:"
 send "kite\r"
 EOF
 
-  # 1.2. Invoke each groovy script:
+  # 1.2. Compute the common groovy parameters; these follow the scripts separated
+  #      by a double dash. They should be specified in a 'batchy' way: i.e., key:value
+  #      but here we convert them to Ammonitese: "key" -> "value"
+
+  AMMONITE_PARAM_LIST=""
+  DOUBLE_HASH_SEEN=0
+
+  for GROOVY_PARAM in "${COMMAND_ARGS[@]}"; do
+    if [[ "$DOUBLE_HASH_SEEN" == "1" ]]; then
+      # Convert key:value  to  \"key\" -> \"value\"
+      AMMONITE_PARAM=`echo $GROOVY_PARAM | sed 's/\(.*\):\(.*\)/\\\"\1\\\" -> \\\"\2\\\"/'`
+      AMMONITE_PARAM_LIST="$AMMONITE_PARAM_LIST, $AMMONITE_PARAM"
+    fi
+    if [[ "$GROOVY_PARAM" == "--" ]]; then
+      DOUBLE_HASH_SEEN=1
+    fi
+  done
+
+
+  # 1.3. Invoke each groovy script:
   CNT=1
   for GROOVY_SCRIPT in "${COMMAND_ARGS[@]}"; do
+    if [[ "$GROOVY_SCRIPT" == "--"  ]]; then
+        break
+    fi
     GROOVY_SCRIPT_BASENAME=$(basename "$GROOVY_SCRIPT")
     REMOTE_GROOVY_SCRIPT_PATH="${REMOTE_BATCH_DIR}/script${CNT}_${GROOVY_SCRIPT_BASENAME}"
     CNT=$((CNT + 1))
-    # 1.2.1. Copy Groovy script to master
+    # 1.3.1. Copy Groovy script to master
     aws emr put ${MASTER_ACCESS} --src "${GROOVY_SCRIPT}" --dest "\"${REMOTE_GROOVY_SCRIPT_PATH}\""
-    # 1.2.2. Add Groovy script invocation into our master script.
+    # 1.3.2. Add Groovy script invocation into our master script.
     cat >>${MASTER_SCRIPT} <<EOF
 expect "@ "
-send "batch.runScript(\"${REMOTE_GROOVY_SCRIPT_PATH}\")\r"
+send "batch.runScript(\"${REMOTE_GROOVY_SCRIPT_PATH}\" ${AMMONITE_PARAM_LIST})\r"
 EOF
   done
-  # 1.3. SSH logout:
+  # 1.4. SSH logout:
   cat >>${MASTER_SCRIPT} <<EOF
 expect "@ "
 send "exit\r"
