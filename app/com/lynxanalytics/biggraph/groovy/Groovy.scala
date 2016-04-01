@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
 
@@ -156,6 +157,8 @@ class LynxGroovyInterface(ctx: GroovyContext) {
     new GlobalTablePath(f.checkpoint, f.name, Seq(Table.VertexTableName)).toString
   }
 
+  // Resolves the prefixed path.
+  def resolvePath(path: String): String = HadoopFile(path).resolvedName
 }
 
 // This is the interface that is visible from trustedShell as "lynx.drawing". This is
