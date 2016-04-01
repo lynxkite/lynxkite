@@ -24,6 +24,24 @@ shift
 
 CLUSTER_NAME="${USER}-test-cluster"
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
+NUM_INSTANCES=${NUM_INSTANCES:-3}
+
+if [[ ! $NUM_INSTANCES =~ ^[1-9][0-9]*$ ]]; then
+  echo "Variable NUM_INSTANCES=$NUM_INSTANCES. This is not a valid instance quantity."
+  exit 1
+fi
+
+if [[ $NUM_INSTANCES -gt 20 ]]; then
+    read -p "NUM_INSTANCES is rather great: $NUM_INSTANCES. Are you sure you want to run this many instances? [Y/n] " answer
+    case ${answer:0:1} in
+        y|Y|'' )
+            ;;
+        * )
+            exit 1
+            ;;
+    esac
+fi
+
 
 ./stage.sh
 
@@ -32,7 +50,7 @@ cat >>${EMR_TEST_SPEC} <<EOF
 
 # Override values for the test setup:
 CLUSTER_NAME=${CLUSTER_NAME}
-NUM_INSTANCES=3
+NUM_INSTANCES=${NUM_INSTANCES}
 S3_DATAREPO=""
 KITE_INSTANCE_BASE_NAME=testemr
 EOF
