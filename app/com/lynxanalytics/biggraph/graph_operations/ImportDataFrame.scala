@@ -10,13 +10,17 @@ import org.apache.spark.sql.types
 import scala.reflect.runtime.universe.TypeTag
 
 object ImportDataFrame extends OpFromJson {
+
   def fromJson(j: JsValue) = new ImportDataFrame(
     types.DataType.fromJson((j \ "schema").as[String]).asInstanceOf[types.StructType],
     None,
     (j \ "timestamp").as[String])
 
   def apply(inputFrame: DataFrame) =
-    new ImportDataFrame(inputFrame.schema, Some(inputFrame), Timestamp.toString)
+    new ImportDataFrame(
+      inputFrame.schema,
+      Some(inputFrame),
+      Timestamp.toString)
 }
 
 class ImportDataFrame private (
@@ -38,9 +42,12 @@ class ImportDataFrame private (
   override val isHeavy = true
   override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new NoInput()
+
   def outputMeta(instance: MetaGraphOperationInstance) =
     new SQLHelper.DataFrameOutput(schema)(instance)
-  override def toJson = Json.obj("schema" -> schema.prettyJson, "timestamp" -> timestamp)
+  override def toJson = Json.obj(
+    "schema" -> schema.prettyJson,
+    "timestamp" -> timestamp)
 
   def execute(inputDatas: DataSet,
               o: SQLHelper.DataFrameOutput,

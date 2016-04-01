@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object VerticesToEdges extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -38,11 +39,11 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.sort(partitioner)
-    val byDst = bySrc.sortedJoin(nameToId).map {
+    }
+    val byDst = RDDUtils.hybridLookup(bySrc, nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.sort(partitioner)
-    val edges = byDst.sortedJoin(nameToId).map {
+    }
+    val edges = RDDUtils.hybridLookup(byDst, nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }.sortUnique(partitioner)
     val embedding = inputs.vs.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) }

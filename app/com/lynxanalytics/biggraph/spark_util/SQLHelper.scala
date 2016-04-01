@@ -14,6 +14,7 @@ import org.apache.spark
 import org.apache.spark.rdd
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types
 
 import scala.collection.mutable;
@@ -111,6 +112,9 @@ class SQLHelper(
 object SQLHelper {
   private def toSymbol(field: types.StructField) = Symbol("imported_column_" + field.name)
 
+  private def isTuple2Type(st: types.StructType) =
+    st.size == 2 && st(0).name == "_1" && st(1).name == "_2"
+
   // I really don't understand why this isn't part of the spark API, but I can't find it.
   // So here it goes.
   private def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
@@ -131,12 +135,39 @@ object SQLHelper {
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
       case _: types.TimestampType => typeTag[java.sql.Timestamp]
+      case st: types.StructType if isTuple2Type(st) =>
+        TypeTagUtil.tuple2TypeTag(
+          typeTagFromDataType(st(0).dataType),
+          typeTagFromDataType(st(1).dataType))
       case x => throw new AssertionError(s"Unsupported type in DataFrame: $x")
     }
   }
 
-  private def toNumberedLines(df: DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
-    val numRows = df.count()
+  private def processDataFrameRow(tupleColumnIdList: Seq[Int])(row: Row): Seq[Any] = {
+    var result = row.toSeq
+    // A simple row.toSeq would be enough for this method, except
+    // that tuple-typed columns need special handling.
+    for (columnId <- tupleColumnIdList) {
+      val column = result(columnId).asInstanceOf[Row]
+      result = result.updated(columnId, (column(0), column(1)))
+    }
+    result
+  }
+
+  // Collects positions of columns which contain tuples.
+  private def getTupleColumnIdList(schema: types.StructType): Seq[Int] = {
+    schema
+      .map(field => field.dataType)
+      .zipWithIndex
+      // Only keep the index of tuple items:
+      .collect {
+        case (st: types.StructType, id) if isTuple2Type(st) =>
+          id
+      }
+  }
+
+  private def toNumberedLines(dataFrame: DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
+    val numRows = dataFrame.count()
     val maxRows = Limitations.maxImportedLines
     if (maxRows >= 0) {
       if (numRows > maxRows) {
@@ -146,7 +177,9 @@ object SQLHelper {
     }
     val partitioner = rc.partitionerForNRows(numRows)
     import com.lynxanalytics.biggraph.spark_util.Implicits._
-    df.rdd.randomNumbered(partitioner).mapValues(_.toSeq)
+    val rawLines = dataFrame.rdd.randomNumbered(partitioner)
+    val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
+    rawLines.mapValues(processDataFrameRow(tupleColumnIdList))
   }
 
   // Magic output for metagraph operations whose output is created
