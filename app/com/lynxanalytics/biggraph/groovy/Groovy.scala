@@ -406,18 +406,18 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
   val id = attr.gUID.toString
 
-  def histogram: String = histogram(10, false)
+  def histogram: String = histogram(10, false, false)
 
-  def histogram(numBuckets: Int): String = histogram(numBuckets, false)
+  def histogram(numBuckets: Int): String = histogram(numBuckets, logarithmic = false, precise = false)
 
-  def histogram(numBuckets: Int, logarithmic: Boolean): String = {
+  def histogram(numBuckets: Int, logarithmic: Boolean, precise: Boolean): String = {
     val drawing = new GraphDrawingController(ctx.env.get)
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = numBuckets,
       axisOptions = AxisOptions(logarithmic = logarithmic),
-      sampleSize = 50000)
+      sampleSize = if (precise) -1 else 50000)
     val res = drawing.getHistogram(ctx.user, req)
     import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(res).toString
