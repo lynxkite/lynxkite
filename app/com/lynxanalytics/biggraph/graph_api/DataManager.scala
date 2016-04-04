@@ -17,7 +17,7 @@ import scala.util.Failure
 import scala.util.Success
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, HadoopFile }
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -41,7 +41,7 @@ class DataManager(sc: spark.SparkContext,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext("DataManager",
-      maxParallelism = util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+      maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()

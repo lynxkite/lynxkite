@@ -1,6 +1,7 @@
 // Request handlers for cluster-level features.
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
@@ -115,7 +116,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
   }
 
   def numExecutors: Option[Int] = synchronized {
-    scala.util.Properties.envOrNone("SPARK_MASTER").get match {
+    LoggedEnvironment.envOrNone("SPARK_MASTER").get match {
       case s if s.startsWith("local") => None
       case _ => Some(sc.getExecutorStorageStatus.size - 1)
     }
@@ -229,7 +230,7 @@ class KiteMonitorThread(
     // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch Spark
     // in a way that this is probably mostly reliable.
     val numCoresPerExecutor =
-      scala.util.Properties.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
+      LoggedEnvironment.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
     val totalCores = listener.numExecutors.getOrElse(1) * numCoresPerExecutor
     val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
     val conf = sc.getConf
@@ -328,7 +329,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
 
-  def getLongEnv(name: String): Option[Long] = scala.util.Properties.envOrNone(name).map(_.toLong)
+  def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
 
   val monitor = new KiteMonitorThread(
     listener,

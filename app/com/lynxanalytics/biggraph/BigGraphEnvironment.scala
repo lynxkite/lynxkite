@@ -96,7 +96,9 @@ class RepositoryDirs(
 
   lazy val dataDir: HadoopFile = {
     PrefixRepository.registerPrefix(dataDirSymbolicName, dataDirResolvedName)
-    HadoopFile(dataDirSymbolicName)
+    val dir = HadoopFile(dataDirSymbolicName)
+    bigGraphLogger.info(s"dataDir: ${dir.resolvedNameWithNoCredentials}")
+    dir
   }
 
   lazy val ephemeralDataDir: Option[HadoopFile] = {
@@ -104,7 +106,9 @@ class RepositoryDirs(
       ephemeralDirResolvedName =>
         val ephemeralDirSymbolicName = "EPHEMERAL_" + dataDirSymbolicName
         PrefixRepository.registerPrefix(ephemeralDirSymbolicName, ephemeralDirResolvedName)
-        HadoopFile(ephemeralDirSymbolicName)
+        val dir = HadoopFile(ephemeralDirSymbolicName)
+        bigGraphLogger.info(s"ephemeralDataDir: ${dir.resolvedNameWithNoCredentials}")
+        dir
     }
   }
 

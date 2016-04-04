@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.ShuffledRDD
@@ -275,9 +276,9 @@ object RDDUtils {
   }
 
   private val hybridLookupThreshold =
-    util.Properties.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
+    LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
   private val hybridLookupMaxLarge =
-    util.Properties.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
+    LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](

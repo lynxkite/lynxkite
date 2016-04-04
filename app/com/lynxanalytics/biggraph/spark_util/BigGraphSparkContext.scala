@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
@@ -197,13 +198,6 @@ object BigGraphSparkContext {
     new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
-  def logEnvironmentVariables() = {
-    log.info("Environment variables:")
-    import scala.collection.JavaConverters._
-    System.getenv().asScala.foreach {
-      case (k, v) => log.info(s"$k = $v")
-    }
-  }
   def apply(
     appName: String,
     useKryo: Boolean = true,
@@ -217,10 +211,10 @@ object BigGraphSparkContext {
       .setAppName(appName)
       .set("spark.io.compression.codec", "lz4")
       .set("spark.executor.memory",
-        scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
+        LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
       .set("spark.akka.threads",
-        scala.util.Properties.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
-      .set("spark.local.dir", scala.util.Properties.envOrElse("KITE_LOCAL_TMP", "/tmp"))
+        LoggedEnvironment.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
+      .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
       // Speculative execution will start extra copies of tasks to eliminate long tail latency.
       .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
       .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
@@ -239,7 +233,7 @@ object BigGraphSparkContext {
       .set("spark.shuffle.consolidateFiles", "true")
       .set(
         "spark.executor.cores",
-        scala.util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
+        LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
       // We need a higher akka.frameSize (the Spark default is 10) as when the number of
       // partitions gets into the hundreds of thousands the map output statuses exceed this limit.
       .setIfMissing(
@@ -260,7 +254,6 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
-    logEnvironmentVariables()
     val sc = new spark.SparkContext(sparkConf)
     sc.addSparkListener(new BigGraphSparkListener(sc))
     sc
@@ -268,7 +261,7 @@ object BigGraphSparkContext {
 }
 
 class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
-  val maxStageFailures = util.Properties.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
+  val maxStageFailures = LoggedEnvironment.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
   val stageFailures = collection.mutable.Map[Int, Int]()
 
   override def onStageCompleted(
