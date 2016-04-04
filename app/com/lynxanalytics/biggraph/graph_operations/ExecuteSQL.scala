@@ -58,16 +58,6 @@ case class ExecuteSQL(
   val outputSchema: sql.types.StructType)
     extends TypedMetaGraphOp[ExecuteSQL.Input, SQLHelper.DataFrameOutput] {
 
-  override lazy val hashCode = gUID.hashCode
-
-  // Needed because of outputSchema.
-  override def equals(other: Any): Boolean =
-    other match {
-      case otherOp: ExecuteSQL =>
-        (otherOp.outputSchema == outputSchema) && (otherOp.inputTables == inputTables) && (otherOp.sqlQuery == sqlQuery)
-      case _ => false
-    }
-
   import ExecuteSQL._
   override val isHeavy = true
   override val hasCustomSaving = true // Single-pass import.
