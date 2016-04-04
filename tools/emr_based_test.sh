@@ -88,7 +88,10 @@ case $MODE in
     exit 1
 esac
 
-read -p "Test completed. Terminate cluster? [y/N] " answer
+answer='yes'
+if [ -t 1 ]; then
+  read -p "Test completed. Terminate cluster? [y/N] " answer
+fi
 case ${answer:0:1} in
   y|Y )
     stage/tools/emr.sh terminate-yes ${EMR_TEST_SPEC}
