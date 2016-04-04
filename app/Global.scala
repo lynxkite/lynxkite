@@ -1,4 +1,6 @@
 // Custom global failure handlers for Play Framework.
+
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import play.api._
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -29,7 +31,7 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
   def notifyStarterScript(msg: String): Unit = {
     val notifier =
       scala.concurrent.Future[Unit] {
-        scala.util.Properties.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
+        LoggedEnvironment.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
           org.apache.commons.io.FileUtils.writeStringToFile(
             new java.io.File(pipeName),
             msg + "\n",
