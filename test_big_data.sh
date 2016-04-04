@@ -2,8 +2,9 @@
 
 cd $(dirname $0)
 
-# Run test. (TODO)
-cat kitescripts/perf/last_output.md | sed 's/size/how big/' > kitescripts/perf/last_output.md.new
+# Run test.
+NUM_INSTANCES=3 \
+  tools/emr_based_test.sh perf kitescripts/perf/*.groovy > kitescripts/perf/last_output.md.new
 
 if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
