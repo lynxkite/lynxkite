@@ -297,7 +297,10 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
       }
 
       function groovyQuote(str) {
-        return '\'' + str.replace('\\', '\\\\').replace('\n', '\\n').replace('\'', '\\\'') + '\'';
+        str = str.replace(/\\/g, '\\\\');
+        str = str.replace(/\n/g, '\\n');
+        str = str.replace(/'/g, '\\\'');
+        return '\'' + str + '\'';
       }
 
       function toGroovy(requests) {

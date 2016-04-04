@@ -126,7 +126,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
     // for more efficient matrix multiplication.
     val degreeArray = indexedIds.map(id => degrees(id))
 
-    // See the above article for details, but sparseMatrix is basically the weighted adjecency
+    // See the above article for details, but sparseMatrix is basically the weighted adjacency
     // matrix of the graph restricted to the cluster. There is an additional correction
     // applied to the diagonal elements that makes sure all rows (and columns) sum up to 0.
     val sparseMatrix: Array[Array[(Int, Double)]] = indexedIds.map { id =>

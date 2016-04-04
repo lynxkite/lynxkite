@@ -1,7 +1,5 @@
 'use strict';
 
-/* global by */
-
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
@@ -38,7 +36,7 @@ module.exports = function(fw) {
     },
     function() {
       lib.left.history.open();
-      expect(lib.left.side.element(by.css('div.project.history')).isDisplayed()).
+      expect(lib.left.side.$('div.project.history').isDisplayed()).
           toBe(true);
       expect(lib.left.history.numOperations()).toBe(numOperations);
       lib.left.history.close();
@@ -127,7 +125,7 @@ module.exports = function(fw) {
       lib.left.history.open();
       lib.left.history.deleteOperation(0);
       expect(lib.left.history.numOperations()).toBe(numOperations - 1);
-      expect(lib.left.side.element(by.css('.inconsistent-history-sign')).isDisplayed()).toBe(true);
+      expect(lib.left.side.$('.inconsistent-history-sign').isDisplayed()).toBe(true);
       lib.left.history.expectSaveable(false);
       lib.left.history.close(true);
     });
@@ -141,7 +139,7 @@ module.exports = function(fw) {
       lib.left.history.insertOperation(
           2, 'down', 'PageRank',
           {name: 'wow_such_page_rank'});
-      var addedOpNameField = lib.left.history.getOperation(3).element(by.css('div#name input'));
+      var addedOpNameField = lib.left.history.getOperation(3).$('div#name input');
       expect(addedOpNameField.getAttribute('value')).toBe('wow_such_page_rank');
       lib.left.history.close(true);
     });
@@ -154,7 +152,7 @@ module.exports = function(fw) {
       lib.left.history.insertOperation(
           2, 'up', 'PageRank',
           {name: 'wow_such_page_rank'});
-      var addedOpNameField = lib.left.history.getOperation(2).element(by.css('div#name input'));
+      var addedOpNameField = lib.left.history.getOperation(2).$('div#name input');
       expect(addedOpNameField.getAttribute('value')).toBe('wow_such_page_rank');
       lib.left.history.close(true);
     });

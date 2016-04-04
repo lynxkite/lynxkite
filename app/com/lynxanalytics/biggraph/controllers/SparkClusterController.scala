@@ -14,6 +14,8 @@ case class SparkStatusResponse(
   timestamp: Long, // This is the status at the given time.
   activeStages: List[StageInfo],
   pastStages: List[StageInfo],
+  activeExecutorNum: Option[Int],
+  configedExecutorNum: Option[Int],
   sparkWorking: Boolean,
   kiteCoreWorking: Boolean)
 
@@ -27,12 +29,12 @@ case class StageInfo(
 
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
-class KiteListener extends spark.scheduler.SparkListener {
+class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
   private val activeStages = collection.mutable.Map[String, StageInfo]()
   private val pastStages = collection.mutable.Queue[StageInfo]()
   private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   private var currentResp =
-    SparkStatusResponse(0, List(), List(), sparkWorking = true, kiteCoreWorking = true)
+    SparkStatusResponse(0, List(), List(), None, None, sparkWorking = true, kiteCoreWorking = true)
   // The time of the last registered spark task finish event.
   private var lastSparkTaskFinish = 0L
   // Whether, to the knowledge of this listener, spark is stalled.
@@ -112,6 +114,13 @@ class KiteListener extends spark.scheduler.SparkListener {
     }
   }
 
+  def numExecutors: Option[Int] = synchronized {
+    scala.util.Properties.envOrNone("SPARK_MASTER").get match {
+      case s if s.startsWith("local") => None
+      case _ => Some(sc.getExecutorStorageStatus.size - 1)
+    }
+  }
+
   private def send(): Unit = synchronized {
     val time = System.currentTimeMillis
     currentResp =
@@ -119,6 +128,8 @@ class KiteListener extends spark.scheduler.SparkListener {
         time,
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
+        numExecutors,
+        sys.props.get("spark.executor.instances").map(_.toInt),
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking)
     for (p <- promises) {
@@ -215,12 +226,11 @@ class KiteMonitorThread(
     val sc = environment.sparkContext
 
     // No way to find cores per executor programmatically. SPARK-2095
-    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch spark
+    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch Spark
     // in a way that this is probably mostly reliable.
     val numCoresPerExecutor =
       scala.util.Properties.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
-    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
-    val totalCores = numExecutors * numCoresPerExecutor
+    val totalCores = listener.numExecutors.getOrElse(1) * numCoresPerExecutor
     val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
     val conf = sc.getConf
     // Unfortunately the defaults are hard-coded in Spark and not available.
@@ -311,8 +321,11 @@ class KiteMonitorThread(
 }
 
 class SparkClusterController(environment: BigGraphEnvironment) {
+  // The health checks are always running, but if the below flag is true, then their results
+  // are going to be ignored.
+  private var forceReportHealthy = false
   val sc = environment.sparkContext
-  val listener = new KiteListener
+  val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
 
   def getLongEnv(name: String): Option[Long] = scala.util.Properties.envOrNone(name).map(_.toLong)
@@ -330,8 +343,22 @@ class SparkClusterController(environment: BigGraphEnvironment) {
       .getOrElse(10 * 1000))
   monitor.start()
 
-  def sparkStatus(user: serving.User, req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
-    listener.future(req.syncedUntil)
+  def setForceReportHealthy(value: Boolean): Unit = synchronized {
+    forceReportHealthy = value
+  }
+
+  def getForceReportHealthy(): Boolean = synchronized {
+    forceReportHealthy
+  }
+
+  def sparkStatus(user: serving.User, req: SparkStatusRequest)(
+    implicit ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
+    val res = listener.future(req.syncedUntil)
+    if (!getForceReportHealthy) {
+      res
+    } else {
+      res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
+    }
   }
 
   def sparkCancelJobs(user: serving.User, req: serving.Empty): Unit = {
@@ -340,7 +367,9 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def checkSparkOperational(): Unit = {
-    val res = listener.getCurrentResponse
-    assert(res.kiteCoreWorking && res.sparkWorking)
+    if (!getForceReportHealthy) {
+      val res = listener.getCurrentResponse
+      assert(res.kiteCoreWorking && res.sparkWorking)
+    }
   }
 }

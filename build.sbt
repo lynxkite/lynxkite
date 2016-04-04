@@ -96,20 +96,17 @@ lazy val root = project.in(file("."))
 
 bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
 
-// Includes all files in the tools directory for stage. Does not include files subdirectories!
-mappings in Universal ++= {
-  val pathFinder = baseDirectory.value / "tools" * "*"
+def dirContents(baseDir: File, dirs: String*) = {
+  val subDir = dirs.foldLeft(baseDir) { (file, dir) => file / dir}
+  val pathFinder = subDir * "*"
   pathFinder.get map {
     tool: File =>
-    tool -> ("tools/" + tool.getName)
+      tool -> (dirs.mkString("/") + "/" + tool.getName)
   }
 }
 
-// Includes all files in the kitescripts directory for stage. Does not include files subdirectories!
-mappings in Universal ++= {
-  val pathFinder = baseDirectory.value / "kitescripts" * "*"
-  pathFinder.get map {
-    tool: File =>
-    tool -> ("kitescripts/" + tool.getName)
-  }
-}
+mappings in Universal ++= dirContents(baseDirectory.value, "tools")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")

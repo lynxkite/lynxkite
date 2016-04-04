@@ -14,6 +14,7 @@ angular.module('biggraph')
         $scope.submitted = false;
         if (success) {
           $location.url('/');
+          util.reloadUser();
         }
       });
       $scope.submitted = true;

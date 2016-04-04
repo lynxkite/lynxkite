@@ -11,7 +11,7 @@
 # GLOB is a glob specifying the csv files we should import as part of the test.
 
 RANDOM_ID=$(python -c \
-  'import random, string; print "".join(random.choice(string.letters) for i in range(8))')
+  'import random, string; print("".join(random.choice(string.ascii_letters) for i in range(8)))')
 
 set -ueo pipefail
 

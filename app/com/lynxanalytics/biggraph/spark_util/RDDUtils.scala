@@ -274,34 +274,52 @@ object RDDUtils {
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
+  private val hybridLookupThreshold =
+    util.Properties.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
+  private val hybridLookupMaxLarge =
+    util.Properties.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] =
+    hybridLookup(sourceRDD, lookupTable, hybridLookupThreshold)
+
+  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)],
     lookupTable: UniqueSortedRDD[K, S],
-    maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
+    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
 
     hybridLookupImpl(
       sourceRDD,
       lookupTable,
-      sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _),
-      maxValuesPerKey) {
-        tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap
-      }
+      sourceRDD
+        .mapValues(x => 1L)
+        .reduceByKey(lookupTable.partitioner.get, _ + _),
+      maxValuesPerKey)(
+        { tops => tops.toSet },
+        { tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap })
   }
 
   // This is a variant of hybridLookup that can be used if (an estimate of) the counts for each
   // keys is already available for the caller.
   def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
+    lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)]): RDD[(K, (T, S))] =
+    hybridLookupUsingCounts(sourceRDD, lookupTableWithCounts, hybridLookupThreshold)
+
+  def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)],
     lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)],
-    maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
+    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
 
     hybridLookupImpl(
       sourceRDD,
       lookupTableWithCounts.mapValues(_._1),
       lookupTableWithCounts.map { case (k, (s, c)) => (k, s) -> c },
-      maxValuesPerKey) { tops => tops.toMap }
+      maxValuesPerKey)(
+        { tops => tops.map { case (k, _) => k }.toSet },
+        { tops => tops.toMap })
   }
 
   // Common implementation for the above hybrid lookup methods.
@@ -309,26 +327,34 @@ object RDDUtils {
   // any count is higher than maxValuesPerKey, then it does a hybrid lookup. To get the lookup
   // table for large elements, it feds the top keys from countTable into largeKeysMapFn.
   private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S, C](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    countsTable: RDD[(C, Long)],
+    sourceRDD: RDD[(K, T)], // The larger source RDD.
+    lookupTable: UniqueSortedRDD[K, S], // The smaller lookup RDD.
+    countsTable: RDD[(C, Long)], // An RDD of the join IDs and their cardinality from the source RDD.
     maxValuesPerKey: Int)(
+      // Returns the set of IDs (Set[K]) created from Seq[C].
+      largeKeysSetFn: Seq[C] => Set[K],
+      // Returns the subset of the lookupTable having the IDs of Seq[C] as keys.
       largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
 
-    val numTops = lookupTable.partitions.size min 100
     val ordering = new CountOrdering[C]
     val tops = countsTable
-      .top(numTops)(ordering)
+      .top(hybridLookupMaxLarge)(ordering)
       .sorted(ordering)
     if (tops.isEmpty) sourceRDD.context.emptyRDD
     else {
       val biggest = tops.last
       if (biggest._2 > maxValuesPerKey) {
         val largeKeysMap = largeKeysMapFn(tops.map(_._1))
+        // LargeKeyMap may not contain all keys from the sourceRDD, if they have
+        // no matching record in the lookupTable. We still need to use a complete
+        // set of the large keys.
+        val largeKeysSet = largeKeysSetFn(tops.map(_._1))
+        val largeKeysCoverage = tops.map(_._2).reduce(_ + _)
+        log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering ${largeKeysCoverage} source records.")
         val larges = smallTableLookup(sourceRDD, largeKeysMap)
         val smalls = joinLookup(
-          sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
-        (smalls ++ larges).coalesce(sourceRDD.partitions.size)
+          sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }, lookupTable)
+        (smalls ++ larges).repartition(sourceRDD.partitions.size)
       } else {
         joinLookup(sourceRDD, lookupTable)
       }

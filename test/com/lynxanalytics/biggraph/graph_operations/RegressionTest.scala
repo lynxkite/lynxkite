@@ -13,7 +13,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
   }
 
   def assertRoughly(
-    result: Map[Long, Double], expectation: Map[Long, Double], maxError: Double) = {
+    result: Map[Long, Double], expectation: Map[Long, Double], maxError: Double = 0.0) = {
     assert(result.size == expectation.size)
     val error = result.map { case (k, v) => Math.abs(v - expectation(k)) }
     assert(error.max <= maxError, s"$result is unlike $expectation")
@@ -83,7 +83,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     assertRoughly(gender("Lasso"),
       Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
     assertRoughly(gender("Logistic regression"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
+      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0))
     assertRoughly(gender("Naive Bayes"),
       Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
     assertRoughly(gender("Decision tree"),
@@ -92,6 +92,17 @@ class RegressionTest extends FunSuite with TestGraphOp {
       Map(0L -> 1.0, 1L -> 0.5, 2L -> 1.0, 3L -> 0.8), maxError = 0.1)
     assertRoughly(gender("Gradient-boosted trees"),
       Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
+  }
+
+  test("Logistic regression") {
+    val prediction = {
+      val g = ExampleGraph()().result
+      val young = DeriveJS.deriveFromAttributes[Double](
+        "age < 19.0 ? 1 : 0", Seq("age" -> g.age), g.vertices).attr
+      predict("Logistic regression", young, Seq(g.age))
+    }
+    assertRoughly(prediction,
+      Map(0L -> 0.0, 1L -> 1.0, 2L -> 0.0, 3L -> 1.0))
   }
 
   test("regression - age from year of birth") {

@@ -22,7 +22,6 @@
         },
         onLoad: onLoad,
       }"
-      style="height: 60px;"
       class="form-control operation-attribute-entry"
       ng-if="param.kind === 'code'"
       ng-model="output[param.id]"
@@ -36,7 +35,7 @@
     <model-parameter ng-if="param.kind === 'model'"
         param="param"
         editable="editable"
-        model="output[param.id]"
+        model-json="output[param.id]"
         class="operation-attribute-entry">
     </model-parameter>
     <table-kind

@@ -4,137 +4,28 @@
     <meta charset="utf-8">
     <title>LynxKite</title>
     <meta name="viewport" content="width=device-width">
-    <!-- build:css styles/vendor.css -->
+    <!-- build:css(app) styles/vendor.css -->
     <!-- bower:css -->
-    <link rel="stylesheet" href="bower_components/angular-hotkeys/build/hotkeys.min.css" />
-    <link rel="stylesheet" href="bower_components/angular-ui-layout/src/ui-layout.css" />
-    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
     <!-- endbower -->
     <!-- endbuild -->
     <link rel="icon" type="image/png" href="/favicon.png">
-    <!-- build:css({.tmp,app}) styles/biggraph.css -->
-    <link rel="stylesheet" href="styles/graph.css">
-    <link rel="stylesheet" href="styles/graph-view.css">
-    <link rel="stylesheet" href="styles/project.css">
-    <link rel="stylesheet" href="styles/alert.css">
-    <link rel="stylesheet" href="styles/project-selector.css">
-    <link rel="stylesheet" href="styles/context-menu.css">
-    <link rel="stylesheet" href="styles/file-parameter.css">
-    <link rel="stylesheet" href="styles/model-parameter.css">
-    <link rel="stylesheet" href="styles/operation-toolbox.css">
-    <link rel="stylesheet" href="styles/operation-parameters.css">
-    <link rel="stylesheet" href="styles/value.css">
-    <link rel="stylesheet" href="styles/histogram.css">
-    <link rel="stylesheet" href="styles/item-name-and-menu.css">
-    <link rel="stylesheet" href="styles/spark-status.css">
-    <link rel="stylesheet" href="styles/sql-box.css">
-    <link rel="stylesheet" href="styles/model-details.css">
-    <link rel="stylesheet" href="styles/brand-box.css">
-    <link rel="stylesheet" href="styles/splash.css">
-    <link rel="stylesheet" href="styles/project-graph.css">
-    <link rel="stylesheet" href="styles/bottom-links.css">
-    <link rel="stylesheet" href="styles/project-history.css">
-    <link rel="stylesheet" href="styles/help.css">
-    <link rel="stylesheet" href="styles/drop-themes.css">
-    <link rel="stylesheet" href="styles/import-wizard.css">
-    <link rel="stylesheet" href="styles/logs.css">
+    <!-- build:css(.tmp) styles/biggraph.css -->
+    <!-- inject:css -->
+    <!-- endinject -->
     <!-- endbuild -->
   </head>
   <body>
     <div ng-view></div>
     <top-alerts></top-alerts>
 
-    <!-- build:js scripts/vendor.js -->
+    <!-- build:js(app) scripts/vendor.js -->
     <!-- bower:js -->
-    <script src="bower_components/es5-shim/es5-shim.js"></script>
-    <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/angular/angular.js"></script>
-    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
-    <script src="bower_components/angular-cookies/angular-cookies.js"></script>
-    <script src="bower_components/angular-hotkeys/build/hotkeys.min.js"></script>
-    <script src="bower_components/angular-route/angular-route.js"></script>
-    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
-    <script src="bower_components/ace-builds/src-min-noconflict/ace.js"></script>
-    <script src="bower_components/ace-builds/src-min-noconflict/mode-groovy.js"></script>
-    <script src="bower_components/ace-builds/src-min-noconflict/mode-javascript.js"></script>
-    <script src="bower_components/ace-builds/src-min-noconflict/mode-sql.js"></script>
-    <script src="bower_components/angular-ui-ace/ui-ace.js"></script>
-    <script src="bower_components/angular-ui-layout/src/ui-layout.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="bower_components/tether/dist/js/tether.js"></script>
-    <script src="bower_components/drop/dist/js/drop.js"></script>
-    <script src="bower_components/es6-shim/es6-shim.js"></script>
-    <script src="bower_components/json3/lib/json3.js"></script>
-    <script src="bower_components/threejs/three.min.js"></script>
-    <script src="bower_components/threestrap/build/threestrap.js"></script>
-    <script src="bower_components/tinycolor/tinycolor.js"></script>
-    <script src="bower_components/zeroclipboard/dist/ZeroClipboard.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
 
-    <!-- build:js({.tmp,app}) scripts/scripts.js -->
-    <script src="scripts/svg-util.js"></script>
-    <script src="scripts/common-util.js"></script>
-    <script src="scripts/force-layout.js"></script>
-    <script src="scripts/app.js"></script>
-    <script src="scripts/util.js"></script>
-    <script src="scripts/histogram-button.js"></script>
-    <script src="scripts/histogram.js"></script>
-    <script src="scripts/graph-view.js"></script>
-    <script src="scripts/graph-view-sidebar.js"></script>
-    <script src="scripts/project-selector.js"></script>
-    <script src="scripts/edge-attribute.js"></script>
-    <script src="scripts/vertex-attribute.js"></script>
-    <script src="scripts/scalar.js"></script>
-    <script src="scripts/model-details.js"></script>
-    <script src="scripts/segmentation.js"></script>
-    <script src="scripts/operation-parameters.js"></script>
-    <script src="scripts/operation.js"></script>
-    <script src="scripts/operation-toolbox.js"></script>
-    <script src="scripts/side-operation-toolbox.js"></script>
-    <script src="scripts/project-graph.js"></script>
-    <script src="scripts/file-parameter.js"></script>
-    <script src="scripts/top-alerts.js"></script>
-    <script src="scripts/copy-box.js"></script>
-    <script src="scripts/context-menu.js"></script>
-    <script src="scripts/item-name-and-menu.js"></script>
-    <script src="scripts/value.js"></script>
-    <script src="scripts/spark-status.js"></script>
-    <script src="scripts/brand-box.js"></script>
-    <script src="scripts/bottom-links.js"></script>
-    <script src="scripts/axis-options.js"></script>
-    <script src="scripts/acl-settings.js"></script>
-    <script src="scripts/controllers/login.js"></script>
-    <script src="scripts/renderer.js"></script>
-    <script src="scripts/project-history.js"></script>
-    <script src="scripts/controllers/changePassword.js"></script>
-    <script src="scripts/controllers/users.js"></script>
-    <script src="scripts/controllers/cleaner.js"></script>
-    <script src="scripts/controllers/logs.js"></script>
-    <script src="scripts/controllers/splash.js"></script>
-    <script src="scripts/controllers/project.js"></script>
-    <script src="scripts/controllers/demoMode.js"></script>
-    <script src="scripts/controllers/report-error.js"></script>
-    <script src="scripts/lazy-slider.js"></script>
-    <script src="scripts/selected-visualization.js"></script>
-    <script src="scripts/pick-options.js"></script>
-    <script src="scripts/text-dialog.js"></script>
-    <script src="scripts/tag-list.js"></script>
-    <script src="scripts/help.js"></script>
-    <script src="scripts/admin-manual.js"></script>
-    <script src="scripts/workflow-editor.js"></script>
-    <script src="scripts/side.js"></script>
-    <script src="scripts/sql-box.js"></script>
-    <script src="scripts/load-graph.js"></script>
-    <script src="scripts/embedded-visualization.js"></script>
-    <script src="scripts/trusted-html.js"></script>
-    <script src="scripts/get-center.js"></script>
-    <script src="scripts/drop-tooltip.js"></script>
-    <script src="scripts/inline-loading.js"></script>
-    <script src="scripts/compute-progress.js"></script>
-    <script src="scripts/import-wizard.js"></script>
-    <script src="scripts/model-parameter.js"></script>
-    <script src="scripts/table-kind.js"></script>
+    <!-- build:js(.tmp) scripts/biggraph.js -->
+    <!-- inject:js -->
+    <!-- endinject -->
     <!-- endbuild -->
   </body>
 </html>

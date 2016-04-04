@@ -1,7 +1,7 @@
+// jshint camelcase: false
 exports.config = {
   framework: 'jasmine2',
   directConnect: true,
-  baseUrl: 'http://localhost:2200/',
   specs: ['declarative.js'],
   // The real backend can be real slow.
   getPageTimeout: 120000,
@@ -14,14 +14,15 @@ exports.config = {
     platform: 'ANY',
     version: 'ANY',
     chromeOptions: {
+      args: ['--disable-gpu'], // For #3039.
       // Set download path and avoid prompting for download even though
       // this is already the default on Chrome but for completeness
-        prefs: {
-          download: {
-            prompt_for_download: false,
-            default_directory: '/tmp/protractorDownloads.' + process.pid,
-          },
+      prefs: {
+        download: {
+          prompt_for_download: false,
+          default_directory: '/tmp/protractorDownloads.' + process.pid,
         },
-     },
+      },
+    },
   },
 };
