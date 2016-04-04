@@ -1,8 +1,8 @@
 ### Create segmentation from SQL
 
 Executes an SQL query on the tables of this project, and creates
-a new segmentation in which the vertices are the results of the
-query.
+a new segmentation in which the vertices are the rows of the query
+result and the attributes are the columns.
 
 ====
 [[name]] Segmentation name::

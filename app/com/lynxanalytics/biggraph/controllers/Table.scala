@@ -84,7 +84,7 @@ object Table {
     fromTableName(path.tableName, path.containingViewer(context))
   }
   def apply(path: RelativeTablePath, context: ProjectViewer): Table = {
-    fromTableName(path.tableName, path.containingViewerImpl(context))
+    fromTableName(path.tableName, path.containingViewerOfRelativeTablePath(context))
   }
   def apply(path: GlobalTablePath)(implicit m: MetaGraphManager): Table = {
     fromTableName(path.tableName, path.containingViewer)
@@ -142,12 +142,12 @@ case class RelativeTablePath(path: Seq[String]) extends TablePath {
   def toFE = FEOption.regular(toString)
   def tableName = path.last
 
-  def containingViewerImpl(viewer: ProjectViewer) = {
+  def containingViewerOfRelativeTablePath(viewer: ProjectViewer) = {
     viewer.offspringViewer(path.init)
   }
 
   def containingViewer(viewer: ProjectViewer)(implicit manager: MetaGraphManager) = {
-    containingViewerImpl(viewer)
+    containingViewerOfRelativeTablePath(viewer)
   }
 
   def toAbsolute(prefix: Seq[String]) = AbsoluteTablePath(prefix ++ path)

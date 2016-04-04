@@ -191,7 +191,7 @@ object SQLHelper {
       ids: => EntityContainer[VertexSet], name: scala.Symbol): EntityContainer[Attribute[T]] =
       vertexAttribute[T](ids, name)
 
-    def attributeFromField(
+    private def attributeFromField(
       ids: => EntityContainer[VertexSet],
       field: types.StructField): EntityContainer[Attribute[_]] = {
       attributeFromTypeTag(ids, toSymbol(field))(typeTagFromDataType(field.dataType))
