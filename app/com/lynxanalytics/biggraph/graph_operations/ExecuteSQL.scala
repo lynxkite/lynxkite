@@ -19,8 +19,6 @@ import scala.reflect.runtime.universe.TypeTag
 import play.api.libs.json
 
 object ExecuteSQL extends OpFromJson {
-  def toSymbol(field: sql.types.StructField) = Symbol("imported_column_" + field.name)
-
   class Input(inputTables: Map[String, Seq[String]]) extends MagicInputSignature {
     val tables = inputTables.map {
       case (tableName, _) =>
