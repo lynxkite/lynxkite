@@ -57,8 +57,9 @@ The properties of `GroovyProject` are:
    and a `toDouble()` method, they return its value as a string/double respectively.
  - `Map<String, GroovyAttribute> **vertexAttributes**` and
    `Map<String, GroovyAttribute> **edgeAttributes**` are the vertex and edge attributes.
-   `GroovyAttribute` has a `histogram(Int n)` method that
-   returns a histogram of the attribute with `n` buckets.
+   `GroovyAttribute` has a `histogram()` method that
+   returns a histogram of the attribute with 10 buckets. You can also call it with additional
+   optional arguments, for example: `histogram(numBuckets: 12, logarithmic: true, precise: false)`.
  - `DataFrame **vertexDF**` gives you access to the vertex attributes of the project
    as an Apache Spark DataFrame. `DataFrame **edgeDF**` does the same for the edges.
    `DataFrame **tripletDF**` joins the two tables, giving access to the vertex attributes with
