@@ -530,14 +530,14 @@ class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD,
                     val count: Option[Long] = None) extends EntityRDDData[Unit] {
   val vertexSet = entity
-  def cached = new VertexSetData(entity, rdd.cacheSortedAncestors, count)
+  def cached = new VertexSetData(entity, rdd.copyWithAncestorsCached, count)
 }
 
 class EdgeBundleData(val entity: EdgeBundle,
                      val rdd: EdgeBundleRDD,
                      val count: Option[Long] = None) extends EntityRDDData[Edge] {
   val edgeBundle = entity
-  def cached = new EdgeBundleData(entity, rdd.cacheSortedAncestors, count)
+  def cached = new EdgeBundleData(entity, rdd.copyWithAncestorsCached, count)
 }
 
 class AttributeData[T](val entity: Attribute[T],
@@ -546,7 +546,7 @@ class AttributeData[T](val entity: Attribute[T],
     extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
   val attribute = entity
   val typeTag = attribute.typeTag
-  def cached = new AttributeData[T](entity, rdd.cacheSortedAncestors, count)
+  def cached = new AttributeData[T](entity, rdd.copyWithAncestorsCached, count)
 }
 
 class ScalarData[T](val entity: Scalar[T],
