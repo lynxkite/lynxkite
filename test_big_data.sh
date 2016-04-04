@@ -4,7 +4,17 @@ cd $(dirname $0)
 
 # Run test.
 NUM_INSTANCES=3 \
-  tools/emr_based_test.sh perf kitescripts/perf/*.groovy > kitescripts/perf/last_output.md.new
+  tools/emr_based_test.sh perf kitescripts/perf/*.groovy \
+  | tee > kitescripts/perf/full_output
+# Take the header.
+cat kitescripts/perf/last_output.md \
+  | sed -n -e '1,/```/p' \
+  > kitescripts/perf/last_output.md.new
+# Add the script output from the new run.
+cat kitescripts/perf/full_output \
+  | sed -n -e '/-- Running scripts./,/-- Scripts finished./p' \
+  >> kitescripts/perf/last_output.md.new
+rm kitescripts/perf/full_output
 
 if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
