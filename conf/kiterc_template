@@ -1,6 +1,9 @@
 
 # This file contains various configurations used when launching a LynxKite instance.
 
+# Specify this to be the instance (client) where the program is run. E.g., Westeros
+export KITE_INSTANCE=
+
 # Specify the directory containing your Spark installation.
 export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 
@@ -77,7 +80,7 @@ export KITE_HTTP_PORT=2200
 # be used for storing temporary Spark/Hadoop files. This directory can potentially use a lot of
 # space, so if you have a small root filesystem and an extra large drive mounted somewhere then you
 # need to point this to somewhere on the large drive. On the other hand performance of this drive has
-# a significant effect on overal speed, so using an SSD is a nice option here.
+# a significant effect on overall speed, so using an SSD is a nice option here.
 export KITE_LOCAL_TMP=/tmp
 
 # Configure the directory LynxKite uses for logging. Defaults to logs under the LynxKite
@@ -130,3 +133,8 @@ export KITE_EXTRA_JARS=
 # The LynxKite Google client secret is only needed for Google Authenticator. Ask the Lynx R&D
 # team for further instructions if you think you need this feature.
 # export KITE_GOOGLE_CLIENT_SECRET='???'
+
+# On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
+# variables. The principal acts like a user name and the keytab file acts like a password.
+# export KERBEROS_PRINCIPAL=
+# export KERBEROS_KEYTAB=

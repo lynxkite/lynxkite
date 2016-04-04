@@ -23,7 +23,7 @@ popd > /dev/null
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
 export KITE_RANDOM_SECRET=$(python -c \
-  'import random, string; print "".join(random.choice(string.letters) for i in range(32))')
+  'import random, string; print("".join(random.choice(string.ascii_letters) for i in range(32)))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
 export KITE_LOG_DIR=${log_dir}
@@ -126,6 +126,14 @@ if [ -n "${NUM_EXECUTORS}" ]; then
     >&2 echo "Num executors is not supported for master: ${SPARK_MASTER}"
     exit 1
   fi
+fi
+
+if [ -n "${KERBEROS_PRINCIPAL}" ] || [ -n "${KERBEROS_KEYTAB}" ]; then
+  if [ -z "${KERBEROS_PRINCIPAL}" ] || [ -z "${KERBEROS_KEYTAB}" ]; then
+    >&2 echo "Please define KERBEROS_PRINICPAL and KERBEROS_KEYTAB together: either both of them or none."
+    exit 1
+  fi
+  EXTRA_OPTIONS="${EXTRA_OPTIONS} --principal ${KERBEROS_PRINCIPAL} --keytab ${KERBEROS_KEYTAB}"
 fi
 
 if [ "${SPARK_MASTER}" == "local" ]; then
@@ -243,6 +251,20 @@ stopWatchdog () {
   stopByPIDFile "${WATCHDOG_PID_FILE}" "LynxKite Watchdog"
 }
 
+uploadLogs () {
+  if [ -z ${KITE_INSTANCE} ]; then
+    >&2 echo "KITE_INSTANCE is not set. Cannot upload logs."
+    exit 1
+  fi
+  THIS_DIR="$(dirname "$(readlink -f "$0")")"
+  UPLOADER=${THIS_DIR}/../tools/performance_collection/multi_upload.sh
+  if [ -f "${KITE_PID_FILE}" ]; then
+      ${UPLOADER} ${KITE_HTTP_PORT} ${KITE_LOG_DIR} ${KITE_INSTANCE}
+  else
+      ${UPLOADER} 0                 ${KITE_LOG_DIR} ${KITE_INSTANCE}
+  fi
+}
+
 case $mode in
   interactive)
     exec "${command[@]}"
@@ -268,8 +290,11 @@ case $mode in
     stopKite
     startKite
   ;;
+  uploadLogs)
+    uploadLogs
+  ;;
   *)
-    >&2 echo "Usage: $0 interactive|start|stop|restart|batch"
+    >&2 echo "Usage: $0 interactive|start|stop|restart|batch|uploadLogs"
     exit 1
   ;;
 esac

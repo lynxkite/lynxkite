@@ -29,16 +29,16 @@ case class ComputeVertexNeighborhood(
     val vs = inputs.vertices.rdd
     val es = inputs.edges.rdd
     val vsPart = vs.partitioner.get
-    var neigborhood = centers.toSet
+    var neighborhood = centers.toSet
     for (i <- 0 until radius) {
-      neigborhood ++= es
+      neighborhood ++= es
         .values
-        .filter(e => (neigborhood.contains(e.src) != neigborhood.contains(e.dst)))
+        .filter(e => (neighborhood.contains(e.src) != neighborhood.contains(e.dst)))
         .flatMap(e => Iterator(e.src, e.dst))
         .distinct
         .collect
         .toSet
     }
-    output(o.neighborhood, neigborhood)
+    output(o.neighborhood, neighborhood)
   }
 }

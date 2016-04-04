@@ -79,8 +79,10 @@ case class CSVImportRequest(
     delimiter: String,
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
     mode: String,
+    infer: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
+  assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val reader = dataManager.masterSQLContext
@@ -88,8 +90,10 @@ case class CSVImportRequest(
       .format("com.databricks.spark.csv")
       .option("mode", mode)
       .option("delimiter", delimiter)
+      .option("inferSchema", if (infer) "true" else "false")
       // We don't want to skip lines starting with #
       .option("comment", null)
+
     val readerWithSchema = if (columnNames.nonEmpty) {
       reader.schema(SQLController.stringOnlySchema(columnNames))
     } else {
@@ -97,6 +101,7 @@ case class CSVImportRequest(
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(files)
+    FileImportValidator.checkFileHasContents(hadoopFile)
     // TODO: #2889 (special characters in S3 passwords).
     readerWithSchema.load(hadoopFile.resolvedName)
   }
@@ -105,6 +110,12 @@ case class CSVImportRequest(
 }
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
+}
+object FileImportValidator {
+  def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
+    assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
+      s"No data was found at '${hadoopFile.symbolicName}' (no or empty files).")
+  }
 }
 
 case class JdbcImportRequest(
@@ -148,6 +159,7 @@ trait FilesWithSchemaImportRequest extends GenericImportRequest {
 
   def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
+    FileImportValidator.checkFileHasContents(hadoopFile)
     dataManager.masterHiveContext.read.format(format).load(hadoopFile.resolvedName)
   }
 
@@ -342,7 +354,8 @@ object SQLController {
     privacy: String)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
-    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
+    assert(!tableName.isEmpty, "Table name must be specified.")
+    assert(!DirectoryEntry.fromName(tableName).exists, s"Entry '$tableName' already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     val table = TableImport.importDataFrameAsync(df)

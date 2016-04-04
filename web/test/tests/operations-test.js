@@ -33,7 +33,7 @@ module.exports = function(fw) {
       lib.left.openSegmentation('seg');
       lib.right.openOperation('Create edges from co-occurrence');
       lib.right.expectOperationScalar('num_created_edges', '? \u21bb');
-      lib.right.toolbox.element(by.css('.value-retry')).click();
+      lib.right.toolbox.$('.value-retry').click();
       lib.right.expectOperationScalar('num_created_edges', '26');
     },
     function() {

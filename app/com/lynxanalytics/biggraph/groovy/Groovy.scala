@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
 
@@ -123,7 +124,9 @@ class LynxGroovyInterface(ctx: GroovyContext) {
   def loadProject(name: String): GroovyProject = {
     import ctx.metaManager
     val project = ProjectFrame.fromName(name)
-    new GroovyBatchProject(ctx, project.viewer.editor)
+    val editor = project.viewer.editor
+    editor.rootEditor.checkpoint = Some(project.viewer.rootCheckpoint)
+    new GroovyBatchProject(ctx, editor)
   }
 
   def newProject(): GroovyProject = {
@@ -154,6 +157,8 @@ class LynxGroovyInterface(ctx: GroovyContext) {
     new GlobalTablePath(f.checkpoint, f.name, Seq(Table.VertexTableName)).toString
   }
 
+  // Resolves the prefixed path.
+  def resolvePath(path: String): String = HadoopFile(path).resolvedName
 }
 
 // This is the interface that is visible from trustedShell as "lynx.drawing". This is
@@ -404,16 +409,18 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
   val id = attr.gUID.toString
 
-  def histogram: String = histogram(10)
+  def histogram: String = histogram(10, logarithmic = false, precise = false)
 
-  def histogram(numBuckets: Int): String = {
+  def histogram(numBuckets: Int): String = histogram(numBuckets, logarithmic = false, precise = false)
+
+  def histogram(numBuckets: Int, logarithmic: Boolean, precise: Boolean): String = {
     val drawing = new GraphDrawingController(ctx.env.get)
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = numBuckets,
-      axisOptions = AxisOptions(logarithmic = false),
-      sampleSize = 50000)
+      axisOptions = AxisOptions(logarithmic = logarithmic),
+      sampleSize = if (precise) -1 else 50000)
     val res = drawing.getHistogram(ctx.user, req)
     import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(res).toString

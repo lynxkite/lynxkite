@@ -25,5 +25,5 @@ The new attribute will be created under this name.
 The type (`Double` or `String`) of the created attribute.
 
 [[expr]] Value::
-The JavaScript expression.
+The JavaScript expression. You can enter multiple lines in the editor.
 ====

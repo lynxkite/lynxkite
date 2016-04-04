@@ -1,6 +1,5 @@
 'use strict';
 
-/* global element, by */
 var lib = require('../test-lib.js');
 var left = lib.left;
 var right = lib.right;
@@ -12,7 +11,7 @@ module.exports = function(fw) {
     function() {
       left.toggleSqlBox();
       left.runSql();
-    
+
       left.expectSqlResult(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         [
@@ -76,7 +75,7 @@ module.exports = function(fw) {
       left.startSqlSaving();
 
       // Choose csv format.
-      left.side.element(by.css('#exportFormat option[value="csv"]')).click();
+      left.side.$('#exportFormat option[value="csv"]').click();
 
       // And go.
       lib.startDownloadWatch();
@@ -104,8 +103,8 @@ module.exports = function(fw) {
       left.setSql(
         'select cast(rank1 as string), cast(rank2 as string) from vertices');
       left.startSqlSaving();
-      left.side.element(by.css('#exportFormat option[value="table"]')).click();
-      left.side.element(by.css('#exportKiteTable')).sendKeys('Random Edges');
+      left.side.$('#exportFormat option[value="table"]').click();
+      left.side.$('#exportKiteTable').sendKeys('Random Edges');
       left.executeSqlSaving();
 
       left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
@@ -139,18 +138,18 @@ module.exports = function(fw) {
       left.setSql(
         'select name, age, gender, income from vertices');
       left.startSqlSaving();
-      left.side.element(by.css('#exportFormat option[value="parquet"]')).click();
-      var fileName = 'UPLOAD$/example.' + process.pid + '.parquet'
-      left.side.element(by.css('#export-parquet-path')).sendKeys(fileName);
+      left.side.$('#exportFormat option[value="parquet"]').click();
+      var fileName = 'UPLOAD$/example.' + process.pid + '.parquet';
+      left.side.$('#export-parquet-path').sendKeys(fileName);
       left.executeSqlSaving();
 
       left.runOperation('Discard vertices');
       left.openOperation('Import vertices');
       var tableKind = left.operationParameter(left.toolbox, 'table');
       tableKind.element(by.id('import-new-table-button')).click();
-      tableKind.element(by.css('#table-name input')).sendKeys('example reloaded as parquet');
+      tableKind.$('#table-name input').sendKeys('example reloaded as parquet');
       tableKind.element(by.cssContainingText('#datatype option', 'Parquet files')).click();
-      tableKind.element(by.css('#parquet-filename input[ng-model="filename"]')).sendKeys(fileName);
+      tableKind.$('#parquet-filename input[ng-model="filename"]').sendKeys(fileName);
       tableKind.element(by.id('import-parquet-button')).click();
       left.submitOperation(left.toolbox);
     },

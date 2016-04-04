@@ -36,9 +36,14 @@ sql-box > * {
   overflow-x: auto; /* Scroll if there are many columns. */
 }
 
-#sql-result table {
-  table-layout: fixed;
-}
 #sql-result th {
   cursor: pointer; /* Click to sort. */
+}
+
+#sql-result .ordering {
+  /* Reserves a little space for the ordering triangles, even when the triangle is not displayed. */
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  overflow: visible;
 }

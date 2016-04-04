@@ -75,7 +75,7 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
   // It's the callers responsibility to make sure that the Seqs in data have elements of the right
   // type, corresponding to the given attributes. For wrong types, the behavior is unspecified,
   // it may or may not fail at write time.
-  // Don't let the AnyType type parameter fool you, it has really no signifance, you can basically
+  // Don't let the AnyType type parameter fool you, it has really no significance, you can basically
   // pass in an RDD of any kind of Seq you like. It's only needed because stupid RDDs are not
   // covariant, so taking AttributeRDD[Seq[_]] wouldn't be generic enough.
   def writeAttributes[AnyType](

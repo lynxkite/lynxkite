@@ -24,7 +24,7 @@ import ComputeVertexNeighborhoodFromTriplets._
 case class ComputeVertexNeighborhoodFromTriplets(
     centers: Seq[ID],
     radius: Int,
-    // Maximal number of vertices to return. If the specified neighborhood is larget then this, then
+    // Maximal number of vertices to return. If the specified neighborhood is larger then this, then
     // the output will be empty set to signal this outcome.
     maxCount: Int) extends TypedMetaGraphOp[Input, Output] {
 

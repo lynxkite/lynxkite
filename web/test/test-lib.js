@@ -1,7 +1,5 @@
 'use strict';
 
-/* global element, by, protractor */
-
 var testLib; // Forward declarations.
 var History; // Forward declarations.
 var request = require('request');
@@ -45,23 +43,23 @@ Side.prototype = {
   },
 
   getCategorySelector: function(categoryTitle) {
-    return this.toolbox.element(by.css('div.category[tooltip="' + categoryTitle + '"]'));
+    return this.toolbox.$('div.category[tooltip="' + categoryTitle + '"]');
   },
 
   getHistogram: function(attributeName) {
-    return this.side.element(by.css('histogram[attr-name="' + attributeName + '"]'));
+    return this.side.$('histogram[attr-name="' + attributeName + '"]');
   },
 
   getHistogramButton: function(attributeName) {
-    return this.side.element(by.css('#histogram-button[attr-name="' + attributeName + '"]'));
+    return this.side.$('#histogram-button[attr-name="' + attributeName + '"]');
   },
 
   getHistogramPreciseCheckbox: function(attributeName) {
-    return this.side.element(by.css('#precise-histogram-calculation[attr-name="' + attributeName + '"]'));
+    return this.side.$('#precise-histogram-calculation[attr-name="' + attributeName + '"]');
   },
 
   getHistogramTotalElement: function(attributeName) {
-    return this.getHistogram(attributeName).element(by.css('.histogram-total'));
+    return this.getHistogram(attributeName).$('.histogram-total');
   },
 
   getHistogramValues: function(attributeName, precise) {
@@ -80,7 +78,7 @@ Side.prototype = {
     expect(total.isDisplayed()).toBe(false);
     function allFrom(td) {
       var toolTip = td.getAttribute('drop-tooltip');
-      var style = td.element(by.css('div.bar')).getAttribute('style');
+      var style = td.$('div.bar').getAttribute('style');
       return protractor.promise.all([toolTip, style]).then(function(results) {
         var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
         var styleMatch = results[1].match(/^height: (\d+)%;$/);
@@ -91,7 +89,7 @@ Side.prototype = {
         };
       });
     }
-    var tds = histo.all(by.css('td'));
+    var tds = histo.$$('td');
     var res = tds.then(function(tds) {
       var res = [];
       for (var i = 0; i < tds.length; i++) {
@@ -123,11 +121,11 @@ Side.prototype = {
   },
 
   getProjectHistory: function() {
-    return this.side.element(by.css('div.project.history'));
+    return this.side.$('div.project.history');
   },
 
   getValue: function(id) {
-    var asStr = this.side.element(by.css('value#' + id + ' span.value')).getText();
+    var asStr = this.side.$('value#' + id + ' span.value').getText();
     return asStr.then(function(asS) { return parseInt(asS); });
   },
 
@@ -169,7 +167,7 @@ Side.prototype = {
   },
 
   closeOperation: function() {
-    this.toolbox.element(by.css('div.category.active')).click();
+    this.toolbox.$('div.category.active').click();
   },
 
   openWorkflowSavingDialog: function() {
@@ -189,8 +187,7 @@ Side.prototype = {
   },
 
   operationParameter: function(opElement, param) {
-    return opElement.element(by.css(
-      'operation-parameters #' + param + ' .operation-attribute-entry'));
+    return opElement.$('operation-parameters #' + param + ' .operation-attribute-entry');
   },
 
   populateOperation: function(parentElement, params) {
@@ -205,7 +202,7 @@ Side.prototype = {
   },
 
   submitOperation: function(parentElement) {
-    var button = parentElement.element(by.css('.ok-button'));
+    var button = parentElement.$('.ok-button');
     // Wait for uploads or whatever.
     testLib.wait(protractor.until.elementTextMatches(button, /OK/));
     button.click();
@@ -219,13 +216,12 @@ Side.prototype = {
 
   expectOperationScalar: function(name, text) {
     var cssSelector = 'value[ref="scalars[\'' + name + '\']"';
-    var valueElement = this.toolbox.element(by.css(cssSelector));
+    var valueElement = this.toolbox.$(cssSelector);
     expect(valueElement.getText()).toBe(text);
   },
 
   setAttributeFilter: function(attributeName, filterValue) {
-    var filterBox = this.side.element(
-      by.css('.attribute input[name="' + attributeName + '"]'));
+    var filterBox = this.side.$('.attribute input[name="' + attributeName + '"]');
     filterBox.clear();
     filterBox.sendKeys(filterValue, K.ENTER);
   },
@@ -243,7 +239,7 @@ Side.prototype = {
   },
 
   attributeCount: function() {
-    return this.side.all(by.css('li.attribute')).count();
+    return this.side.$$('li.attribute').count();
   },
 
   visualizeAttribute: function(attr, visualization) {
@@ -286,7 +282,7 @@ Side.prototype = {
   },
 
   vertexAttribute: function(name) {
-    return this.side.element(by.css('.vertex-attribute#attribute-' + toID(name)));
+    return this.side.$('.vertex-attribute#attribute-' + toID(name));
   },
 
   scalar: function(name) {
@@ -339,7 +335,7 @@ function History(side) {
 
 History.prototype = {
   open: function() {
-    this.side.side.element(by.css('.history-button')).click();
+    this.side.side.$('.history-button').click();
   },
 
   close: function(discardChanges) {
@@ -353,42 +349,41 @@ History.prototype = {
   },
 
   save: function(name) {
-    this.side.side.element(by.css('.save-history-button')).click();
+    this.side.side.$('.save-history-button').click();
     if (name !== undefined) {
-      var inputBox = this.side.side.element(by.css('.save-as-history-box input'));
+      var inputBox = this.side.side.$('.save-as-history-box input');
       inputBox.sendKeys(testLib.selectAllKey + name);
     }
-    this.side.side.element(by.css('.save-as-history-box .glyphicon-floppy-disk')).click();
+    this.side.side.$('.save-as-history-box .glyphicon-floppy-disk').click();
   },
 
   expectSaveable: function(saveable) {
-    expect(this.side.side.element(by.css('.save-history-button')).isPresent()).toBe(saveable);
+    expect(this.side.side.$('.save-history-button').isPresent()).toBe(saveable);
   },
 
   // Get an operation from the history. position is a zero-based index.
   getOperation: function(position) {
-    var list = this.side.side.all(by.css('project-history div.list-group > li'));
+    var list = this.side.side.$$('project-history div.list-group > li');
     return list.get(position);
   },
 
   getOperationName: function(position) {
-    return this.getOperation(position).element(by.css('h1')).getText();
+    return this.getOperation(position).$('h1').getText();
   },
 
   getOperationSegmentation: function(position) {
-    return this.getOperation(position).
-        element(by.css('div.affected-segmentation')).getText();
+    return this.getOperation(position).$('div.affected-segmentation').getText();
   },
 
   openDropdownMenu: function(operation) {
-    var menu = operation.element(by.css('.history-options.dropdown'));
-    menu.element(by.css('a.dropdown-toggle')).click();
+    var menu = operation.$('.history-options.dropdown');
+    menu.$('a.dropdown-toggle').click();
     return menu;
   },
 
   clickDropDownMenuItem: function(position, itemId) {
     var operation = this.getOperation(position);
-    this.openDropdownMenu(operation).element(by.css('a#dropdown-menu-' + itemId)).click();
+    this.openDropdownMenu(operation).$('a#dropdown-menu-' + itemId).click();
   },
 
   deleteOperation: function(position) {
@@ -410,29 +405,29 @@ History.prototype = {
   },
 
   numOperations: function() {
-    return this.side.side.all(by.css('project-history div.list-group > li')).count();
+    return this.side.side.$$('project-history div.list-group > li').count();
   },
 
   expectOperationParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).element(by.css('div#' + paramName + ' input'));
+    var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
   }
 
 };
 
 var visualization = {
-  svg: element(by.css('svg.graph-view')),
+  svg: $('svg.graph-view'),
 
   elementByLabel: function(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
   },
 
   clickMenu: function(item) {
-    element(by.css('.context-menu #menu-' + item)).click();
+    $('.context-menu #menu-' + item).click();
   },
 
   asTSV: function() {
-    var copyButton = element(by.css('.graph-sidebar [data-clipboard-text'));
+    var copyButton = $('.graph-sidebar [data-clipboard-text');
     // It would be too complicated to test actual copy & paste. We just trust ZeroClipboard instead.
     return copyButton.getAttribute('data-clipboard-text');
   },
@@ -541,15 +536,15 @@ Selector.prototype = {
   },
 
   expectNumProjects: function(n) {
-    return expect(element.all(by.css('.project-entry')).count()).toEqual(n);
+    return expect($$('.project-entry').count()).toEqual(n);
   },
 
   expectNumDirectories: function(n) {
-    return expect(element.all(by.css('.directory-entry')).count()).toEqual(n);
+    return expect($$('.directory-entry').count()).toEqual(n);
   },
 
   expectNumTables: function(n) {
-    return expect(element.all(by.css('.table-entry')).count()).toEqual(n);
+    return expect($$('.table-entry').count()).toEqual(n);
   },
 
   openNewProject: function(name) {
@@ -563,9 +558,9 @@ Selector.prototype = {
   },
 
   importLocalCSVFile: function(tableName, localCsvFile) {
-    this.root.element(by.css('import-wizard #table-name input')).sendKeys(tableName);
-    this.root.element(by.css('#datatype select option[value="csv"]')).click();
-    var csvFileParameter = element(by.css('#csv-filename file-parameter'));
+    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    this.root.$('#datatype select option[value="csv"]').click();
+    var csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
@@ -672,7 +667,7 @@ function randomPattern () {
   return r;
 }
 
-var lastDownloadList = undefined
+var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
@@ -715,7 +710,7 @@ testLib = {
   },
 
   helpPopup: function(helpId) {
-    return element(by.css('div[help-id="' + helpId + '"]'));
+    return $('div[help-id="' + helpId + '"]');
   },
 
   openNewProject: function(name) {
@@ -724,8 +719,8 @@ testLib = {
   },
 
   sendKeysToACE: function(e, keys) {
-    var aceContent = e.element(by.css('div.ace_content'));
-    var aceInput = e.element(by.css('textarea.ace_text-input'));
+    var aceContent = e.$('div.ace_content');
+    var aceInput = e.$('textarea.ace_text-input');
     // The double click on the text area focuses it properly.
     browser.actions().doubleClick(aceContent).perform();
     aceInput.sendKeys(testLib.selectAllKey + keys);
@@ -738,12 +733,12 @@ testLib = {
           if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
           } else if (kind === 'file') {
-            testLib.uploadIntoFileParameter(e, value)
+            testLib.uploadIntoFileParameter(e, value);
           } else if (kind === 'tag-list') {
             var values = value.split(',');
             for (var i = 0; i < values.length; ++i) {
-              e.element(by.css('.dropdown-toggle')).click();
-              e.element(by.css('.dropdown-menu #' + values[i])).click();
+              e.$('.dropdown-toggle').click();
+              e.$('.dropdown-menu #' + values[i]).click();
             }
           } else if (kind === 'table') {
             // You can specify a CSV file to be uploaded, or the name of an existing table.
@@ -808,7 +803,7 @@ testLib = {
 
   // A promise of the list of error messages.
   errors: function() {
-    return element.all(by.css('.top-alert-message')).map(function(e) { return e.getText(); });
+    return $$('.top-alert-message').map(function(e) { return e.getText(); });
   },
 
   // Expects that there will be a single error message and returns it as a promise.
@@ -820,7 +815,7 @@ testLib = {
   },
 
   closeErrors: function() {
-    element.all(by.css('.top-alert')).each(function(e) {
+    $$('.top-alert').each(function(e) {
       e.element(by.id('close-alert-button')).click();
     });
   },
@@ -833,7 +828,7 @@ testLib = {
   },
 
   expectModal: function(title) {
-    var t = element(by.css('.modal-title'));
+    var t = $('.modal-title');
     testLib.expectElement(t);
     expect(t.getText()).toEqual(title);
   },
@@ -844,8 +839,8 @@ testLib = {
 
   setEnablePopups: function(enable) {
     browser.executeScript(
-      "angular.element(document.body).injector()" +
-      ".get('dropTooltipConfig').enabled = " + enable);
+      'angular.element(document.body).injector()' +
+      '.get("dropTooltipConfig").enabled = ' + enable);
 
   },
 
@@ -895,8 +890,8 @@ testLib = {
   },
 
   menuClick: function(entry, action) {
-    var menu = entry.element(by.css('.dropdown'));
-    menu.element(by.css('a.dropdown-toggle')).click();
+    var menu = entry.$('.dropdown');
+    menu.$('a.dropdown-toggle').click();
     menu.element(by.id('menu-' + action)).click();
   },
 };
