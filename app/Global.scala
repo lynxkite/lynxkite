@@ -1,6 +1,5 @@
 // Custom global failure handlers for Play Framework.
 
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import play.api._
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -13,6 +12,7 @@ import scala.concurrent.duration._
 
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) with GlobalSettings {
   override def onBadRequest(request: RequestHeader, error: String) = {
