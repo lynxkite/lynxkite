@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import com.google.common.collect.MapMaker
 import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
@@ -109,9 +110,11 @@ class DataManager(sc: spark.SparkContext,
     entityCache(entity.gUID) = data
   }
 
-  // This is for asynchronous tasks. We store them in a WeakHashMap so that waitAllFutures can wait
+  // This is for asynchronous tasks. We store them as weak references so that waitAllFutures can wait
   // for them, but the data structure does not grow indefinitely.
-  private val loggedFutures = new java.util.WeakHashMap[SafeFuture[Unit], Unit]
+  // MapMaker returns thread-safe maps.
+  private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
+
   private def loggedFuture(func: => Unit): Unit = {
     val f = SafeFuture {
       try {
@@ -325,8 +328,8 @@ class DataManager(sc: spark.SparkContext,
 
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
-    import collection.JavaConversions.mapAsScalaMap
-    SafeFuture.sequence(loggedFutures.keys.toSeq).awaitReady(Duration.Inf)
+    import collection.JavaConversions.asScalaSet
+    SafeFuture.sequence(loggedFutures.keySet.toSeq).awaitReady(Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
