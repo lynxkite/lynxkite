@@ -1,7 +1,8 @@
 // The project history viewer/editor.
 'use strict';
 
-angular.module('biggraph').directive('projectHistory', function(util, $timeout) {
+angular.module('biggraph').directive('projectHistory',
+function(util, $timeout, removeOptionalDefaults) {
   return {
     restrict: 'E',
     scope: { show: '=', side: '=' },
@@ -252,10 +253,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         var history = scope.history;
         var code = '';
         if (history && history.$resolved && !history.$error) {
-          var requests = history.steps.map(function(step) {
-            return step.request;
-          });
-          code = toGroovy(requests);
+          code = toGroovy(history.steps);
         }
         scope.side.workflowEditor = {
           enabled: true,
@@ -300,17 +298,19 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         return '\'' + str.replace('\\', '\\\\').replace('\n', '\\n').replace('\'', '\\\'') + '\'';
       }
 
-      function toGroovy(requests) {
+      function toGroovy(steps) {
         var lines = [];
-        for (var i = 0; i < requests.length; ++i) {
-          var request = requests[i];
+        for (var i = 0; i < steps.length; ++i) {
+          var step = steps[i];
+          var request = step.request;
+          var op = findOp(step.opCategoriesBefore, request.op.id);
           var line = [];
           line.push('project');
           for (var j = 0; j < request.path.length; ++j) {
             var seg = request.path[j];
             line.push('.segmentations[\'' + seg + '\']');
           }
-          var params = request.op.parameters.withoutOptionalDefaults();
+          var params = removeOptionalDefaults(request.op.parameters, op);
           var paramKeys = Object.keys(params);
           paramKeys.sort();
           if (request.op.id.indexOf('workflows/') === 0) {
