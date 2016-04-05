@@ -230,8 +230,6 @@ class SQLController(val env: BigGraphEnvironment) {
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
   // Creates a table from an SQL query.
-  // TODO: The order of columns is lost in this process. Try to
-  // fix that.
   private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
     metaManager.synchronized {
       val p = SubProject.parsePath(spec.project)
