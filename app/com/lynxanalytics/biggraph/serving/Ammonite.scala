@@ -58,7 +58,7 @@ Drive responsibly.""")
         address = "localhost",
         port = ammonitePort.toInt,
         username = LoggedEnvironment.envOrElse("KITE_AMMONITE_USER", "lynx"),
-        password = LoggedEnvironment.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
+        password = LoggedEnvironment.envOrElse("KITE_AMMONITE_PASSWD", "kite", confidential = true)),
       predef = s"""
 repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineUnix
 import com.lynxanalytics.biggraph._
