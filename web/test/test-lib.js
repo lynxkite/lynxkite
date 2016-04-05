@@ -21,7 +21,12 @@ function Side(direction) {
 
 Side.prototype = {
   expectCurrentProjectIs: function(name) {
-    expect(this.side.evaluate('side.state.projectName'), name);
+    expect(this.side.evaluate('side.project.$error')).toBeFalsy();
+    expect(this.side.evaluate('side.state.projectName')).toBe(name);
+  },
+
+  expectCurrentProjectIsError: function() {
+    expect(this.side.evaluate('side.project.$error')).toBeTruthy();
   },
 
   // Only for opening the second project next to an already open project.
