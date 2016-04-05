@@ -266,7 +266,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(vs).asInstanceOf[VertexSetTemplate].set(target, va.vertexSet)
       super.set(withVs, va)
     }
-    def data(implicit dataSet: DataSet) = dataSet.attributes(name).asInstanceOf[AttributeData[_]]
+    def data(implicit dataSet: DataSet) = dataSet.attributes(name)
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
