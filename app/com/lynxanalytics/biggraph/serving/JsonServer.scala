@@ -154,7 +154,7 @@ object AssertLicenseNotExpired {
       val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
       println(message)
       log.error(message)
-      System.exit(1)
+      throw new RuntimeException(message)
     }
   }
 }
