@@ -409,11 +409,18 @@ class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
 class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
   val id = attr.gUID.toString
 
-  def histogram: String = histogram(10, logarithmic = false, precise = false)
+  def histogram: String = {
+    val options = new java.util.HashMap[String, Any]
+    options.put("numBuckets", 10)
+    histogram(options)
+  }
 
-  def histogram(numBuckets: Int): String = histogram(numBuckets, logarithmic = false, precise = false)
-
-  def histogram(numBuckets: Int, logarithmic: Boolean, precise: Boolean): String = {
+  def histogram(options: java.util.Map[String, Any]): String = {
+    val logarithmic = options.containsKey("logarithmic") && options.get("logarithmic").asInstanceOf[Boolean]
+    val precise = options.containsKey("precise") && options.get("precise").asInstanceOf[Boolean]
+    val numBuckets =
+      if (options.containsKey("numBuckets")) options.get("numBuckets").asInstanceOf[Int]
+      else 10
     val drawing = new GraphDrawingController(ctx.env.get)
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
