@@ -393,6 +393,10 @@ EOF
 
 
   # 1.3. Invoke each groovy script:
+  cat >>${MASTER_SCRIPT} <<EOF
+expect "@ "
+send "// -- Running scripts.\r"
+EOF
   CNT=1
   for GROOVY_SCRIPT in "${COMMAND_ARGS[@]}"; do
     if [[ "$GROOVY_SCRIPT" == "--"  ]]; then
@@ -411,6 +415,8 @@ EOF
   done
   # 1.4. SSH logout:
   cat >>${MASTER_SCRIPT} <<EOF
+expect "@ "
+send "// -- Scripts finished.\r"
 expect "@ "
 send "exit\r"
 EOF
