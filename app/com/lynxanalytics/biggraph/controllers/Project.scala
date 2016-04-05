@@ -609,10 +609,6 @@ sealed trait ProjectEditor {
     state = state.copy(segmentations = state.segmentations - name)
     setElementNote(SegmentationKind, name, null)
   }
-  def newSegmentation(name: String, seg: SegmentationState) = {
-    state = state.copy(
-      segmentations = state.segmentations + (name -> seg))
-  }
 
   def offspringEditor(path: Seq[String]): ProjectEditor =
     if (path.isEmpty) this
@@ -681,8 +677,8 @@ sealed trait ProjectEditor {
     }
 
     for ((segName, segState) <- origSegmentations) {
-      newSegmentation(segName, segState)
       val seg = segmentation(segName)
+      seg.segmentationState = segState
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
         op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
