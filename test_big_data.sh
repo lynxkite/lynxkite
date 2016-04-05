@@ -26,7 +26,6 @@ if [[ "$USER" == 'jenkins' ]]; then
   git fetch
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
   mv kitescripts/perf/last_output.md{.new,}
-  PERF_CHANGE="12% faster"
-  git commit -am "Big Data Test: $PERF_CHANGE"
+  git commit -am "Update Big Data Test results."
   git push
 fi
