@@ -2038,7 +2038,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Discard segmentation", new UtilityOperation(_, _) {
+  register("Discard segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
