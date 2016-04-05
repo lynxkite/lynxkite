@@ -110,8 +110,9 @@ class DataManager(sc: spark.SparkContext,
     entityCache(entity.gUID) = data
   }
 
-  // This is for asynchronous tasks. We store them in a WeakHashMap so that waitAllFutures can wait
+  // This is for asynchronous tasks. We store them as weak references so that waitAllFutures can wait
   // for them, but the data structure does not grow indefinitely.
+  // MapMaker returns thread-safe maps.
   private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
 
   private def loggedFuture(func: => Unit): Unit = {
