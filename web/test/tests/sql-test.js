@@ -15,14 +15,33 @@ module.exports = function(fw) {
       left.expectSqlResult(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         [
+          ['2.0', 'Male', '3', 'null', '[-33.8674869,151.2069902]', 'Isolated Joe'],
           ['20.3', 'Male', '0', '1000.0', '[40.71448,-74.00598]', 'Adam'],
           ['18.2', 'Female', '1', 'null', '[47.5269674,19.0323968]', 'Eve'],
           ['50.3', 'Male', '2', '2000.0', '[1.352083,103.819836]', 'Bob'],
-          ['2.0', 'Male', '3', 'null', '[-33.8674869,151.2069902]', 'Isolated Joe'],
         ]);
       // Reset state.
       left.toggleSqlBox();
     });
+
+  fw.transitionTest(
+    'test-example project with example graph',
+    'SQL creating segmentation works',
+    function() {
+      left.toggleSqlBox();
+      left.runSql('select age, gender, name from vertices');
+      left.startSqlSaving();
+
+      // Choose in-project table format, and save.
+      left.side.element(by.css('#exportFormat option[value="segmentation"]')).click();
+      left.side.element(by.css('#exportKiteTable')).sendKeys('exported_table');
+      left.executeSqlSaving();
+      lib.left.openSegmentation('exported_table');
+      expect(lib.right.segmentCount()).toEqual(4);
+      expect(lib.right.vertexAttribute('age').isPresent()).toBe(true);
+      expect(lib.right.vertexAttribute('gender').isPresent()).toBe(true);
+      expect(lib.right.vertexAttribute('name').isPresent()).toBe(true);
+    }, function() {});
 
   fw.statePreservingTest(
     'test-example project with example graph',
@@ -35,10 +54,10 @@ module.exports = function(fw) {
       left.expectSqlResult(
         ['edge_comment', 'src_name'],
         [
-          [ 'Adam loves Eve', 'Adam' ],
           [ 'Bob envies Adam', 'Bob' ],
-          [ 'Bob loves Eve', 'Bob' ],
+          [ 'Adam loves Eve', 'Adam' ],
           [ 'Eve loves Adam', 'Eve' ],
+          [ 'Bob loves Eve', 'Bob' ],
         ]);
 
       // Reset state.
@@ -83,7 +102,11 @@ module.exports = function(fw) {
       var downloadedFileName = lib.waitForNewDownload(/\.csv$/);
       lib.expectFileContents(
         downloadedFileName,
-        'name,age,income\nAdam,20.3,1000.0\nBob,50.3,2000.0\nEve,18.2,\nIsolated Joe,2.0,\n');
+        'age,income,name\n' +
+        '50.3,2000.0,Bob\n' +
+        '20.3,1000.0,Adam\n' +
+        '2.0,,Isolated Joe\n' +
+        '18.2,,Eve\n');
 
       // Reset state.
       left.toggleSqlBox();
@@ -125,7 +148,7 @@ module.exports = function(fw) {
 
       left.runSql(
         'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from triplets');
-      left.expectSqlResult(['srcgood', 'dstgood'], [['true', 'true']]);
+      left.expectSqlResult(['dstgood', 'srcgood'], [['true', 'true']]);
     },
     function() {
     });

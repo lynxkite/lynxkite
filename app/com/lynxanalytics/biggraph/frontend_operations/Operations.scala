@@ -2992,6 +2992,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Create segmentation from SQL", new StructureOperation(_, _) with SegOp {
+    override def parameters = List(
+      Param("name", "Name"),
+      Code("sql", "SQL", defaultValue = "select * from vertices"))
+    def segmentationParameters = List()
+    def enabled = FEStatus.assert(true, "")
+
+    def apply(params: Map[String, String]) = {
+      val sql = params("sql")
+      val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
+      val tableSegmentation = project.segmentation(params("name"))
+      tableSegmentation.vertexSet = table.idSet
+      for ((name, column) <- table.columns) {
+        tableSegmentation.newVertexAttribute(name, column)
+      }
+    }
+  })
+
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, segmentation.belongsTo.reverse).result.outDegree
