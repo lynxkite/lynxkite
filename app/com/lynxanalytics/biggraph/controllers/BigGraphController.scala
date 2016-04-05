@@ -929,7 +929,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     updateDelta(editor, original, "edge_count")
     for (seg <- editor.segmentationNames) {
       if (original.state.segmentations.contains(seg)) {
-        updateDeltas(editor.segmentation(seg), original.segmentation(seg))
+        updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
       }
     }
   }

@@ -600,6 +600,10 @@ sealed trait ProjectEditor {
 
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
+  def existingSegmentation(name: String) = {
+    assert(segmentationNames.contains(name), s"Segmentation $name does not exist.")
+    segmentation(name)
+  }
   def segmentationNames = state.segmentations.keys.toSeq.sorted
   def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
