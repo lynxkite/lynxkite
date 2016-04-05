@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 import com.lynxanalytics.biggraph.registerStandardPrefixes
 import com.lynxanalytics.biggraph.standardDataPrefix
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -78,6 +79,7 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGrap
   }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
+  override def sqlHelper = new SQLHelper(sparkContext, metaGraphManager, dataManager)
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
