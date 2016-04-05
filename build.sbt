@@ -54,6 +54,7 @@ libraryDependencies ++= Seq(
   "com.databricks" % "spark-csv_2.10" % "1.3.0",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
+  "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.10.3")
 
