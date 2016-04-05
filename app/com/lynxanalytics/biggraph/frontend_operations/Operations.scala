@@ -1759,8 +1759,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val oldSegmentations = project.viewer.segmentationMap
       project.setVertexSet(m.segments, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
-        project.newSegmentation(name, segViewer.segmentationState)
-        val seg = project.existingSegmentation(name)
+        val seg = project.segmentation(name)
+        seg.segmentationState = segViewer.segmentationState
         val op = graph_operations.InducedEdgeBundle(induceDst = false)
         seg.belongsTo = op(
           op.srcMapping, m.belongsTo)(
