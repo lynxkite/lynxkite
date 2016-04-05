@@ -9,6 +9,7 @@ angular.module('biggraph').directive('operationToolbox', function() {
     scope: {
       categories: '=',  // (Input.) List of operation categories.
       op: '=?',  // (Input/output.) Currently selected operation's id (if any).
+      opMeta: '=?',  // (Output.) Currently selected operation's metadata.
       params: '=?',  // (Input/output.) Currently set operation parameters.
       category: '=?',  // (Input/output.) Currently selected category (if any).
       searching: '=?',  // (Input/output.) Whether operation search is active.
@@ -19,21 +20,6 @@ angular.module('biggraph').directive('operationToolbox', function() {
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
-      scope.$watch('params', function(params) {
-        if (params === undefined) { return; }
-        params.withoutOptionalDefaults = function() {
-          var params = angular.extend({}, scope.params); // Shallow copy.
-          delete params.withoutOptionalDefaults; // This is not really a parameter, sorry.
-          for (var i = 0; i < scope.opMeta.parameters.length; ++i) {
-            var param = scope.opMeta.parameters[i];
-            if (!param.mandatory && params[param.id] === param.defaultValue) {
-              delete params[param.id];
-            }
-          }
-          return params;
-        };
-      });
-
       scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];
@@ -75,29 +61,35 @@ angular.module('biggraph').directive('operationToolbox', function() {
         }
       };
 
-      scope.findColor = function(opId) {
-        var op = scope.findOp(opId);
+      scope.$watch('opMeta', function(op) {
+        scope.opColor = 'yellow';
+        if (op === undefined) {
+          return;
+        }
         for (var i = 0; i < scope.categories.length; ++i) {
           var cat = scope.categories[i];
           if (op.category === cat.title) {
-            return cat.color;
+            scope.opColor = cat.color;
+            return;
           }
         }
-        console.error('Could not find category for', opId);
-        return 'yellow';
-      };
+        console.error('Could not find category for', op.id);
+      });
 
-      scope.findOp = function(opId) {
+      scope.$watch('op', function(opId) {
+        console.log('op', opId);
         for (var i = 0; i < scope.categories.length; ++i) {
           for (var j = 0; j < scope.categories[i].ops.length; ++j) {
             var op = scope.categories[i].ops[j];
             if (opId === op.id) {
-              return op;
+              scope.opMeta = op;
+              console.log('op', op);
+              return;
             }
           }
         }
-        return undefined;
-      };
+        scope.opMeta = undefined;
+      });
 
       scope.clickedCat = function(cat) {
         if (scope.category === cat && !scope.op) {
@@ -129,5 +121,20 @@ angular.module('biggraph').directive('operationToolbox', function() {
         scope.searching = true;
       }
     },
+  };
+});
+
+angular.module('biggraph').factory('removeOptionalDefaults', function() {
+  return function(params, op) {
+    console.log('orig', params);
+    params = angular.extend({}, params); // Shallow copy.
+    for (var i = 0; i < op.parameters.length; ++i) {
+      var param = op.parameters[i];
+      if (!param.mandatory && params[param.id] === param.defaultValue) {
+        delete params[param.id];
+      }
+    }
+    console.log('removed', params);
+    return params;
   };
 });
