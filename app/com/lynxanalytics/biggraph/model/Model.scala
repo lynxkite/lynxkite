@@ -20,7 +20,7 @@ trait ModelImplementation {
 private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
   def details: String = {
-    val weights = m.weights.toArray.mkString(", ")
+    val weights = "(" + m.weights.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\nweights: $weights"
   }
 }
@@ -98,15 +98,15 @@ case class Model(
   def scalerDetails: String = {
     val meanInfo =
       if (featureScaler.withMean) {
-        val vec = featureScaler.mean.toArray.mkString(", ")
-        s"Centered with mean $vec\n"
+        val vec = "(" + featureScaler.mean.toArray.mkString(", ") + ")"
+        s"Centered to 0; original mean was $vec\n"
       } else {
         ""
       }
     val stdInfo =
       if (featureScaler.withStd) {
-        val vec = featureScaler.std.toArray.mkString(", ")
-        s"Scaled to unit standard deviation by $vec"
+        val vec = "(" + featureScaler.std.toArray.mkString(", ") + ")"
+        s"Scaled to unit standard deviation; original deviation was $vec"
       } else {
         ""
       }
