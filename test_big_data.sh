@@ -22,8 +22,8 @@ if [[ "$USER" == 'jenkins' ]]; then
   git config user.email 'pizza-support@lynxanalytics.com'
   git config push.default simple
   export GIT_SSH_COMMAND='ssh -i ~/.ssh/lynx-jenkins'
-  git checkout "$GIT_BRANCH"
   git fetch
+  git checkout "$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
   mv kitescripts/perf/last_output.md{.new,}
   git commit -am "Update Big Data Test results."
