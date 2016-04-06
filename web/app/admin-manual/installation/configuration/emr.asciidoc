@@ -100,4 +100,3 @@ leaving it at the default `emr` could result in such name: `emr-3-m3.2xlarge-8co
 ```
 KITE_INSTANCE_BASE_NAME=emr
 ```
-
