@@ -1,3 +1,6 @@
+// Tests the "Import vertices and edges from a single table" FE operation.
+// The edges are loaded from edges.csv of the testSet into a table "test_edges"
+
 testSet = params.testSet ?: 'fake_westeros_100k'
 importPath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/edges.csv')
 
@@ -7,7 +10,7 @@ df = lynx.sqlContext.read()
   .option('header', 'true')
   .load(importPath)
 project.importVerticesAndEdgesFromASingleTable(
-  table: lynx.saveAsTable(df, 'importtest'),
+  table: lynx.saveAsTable(df, 'test_edges'),
   src: 'src',
   dst: 'dst')
 

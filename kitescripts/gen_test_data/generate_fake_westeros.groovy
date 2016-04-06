@@ -1,11 +1,16 @@
-numVertices = params.numVertices ?: '100000'
-numBatches = params.numBatches ?: '100'
-ratio = params.ratio ?: '1.08'
-// The highest degree will be min(ratio^(numBatches - 1), numVertices / numBatches)
+// This script generates a graph that has a similar degree distribution like the
+// one that caused import trouble at Westeros. (Number of vertices goes down
+// exponentially as degree goes up exponentially.)
+
+numVertices = (params.numVertices ?: '100000').toInteger()
+numBatches = (params.numBatches ?: '100').toInteger()
+maxDegree = (params.maxDegree ?: '1000').toInteger()
 // Parameters used to generate test data:
-// 100,000       / 100 / 1.08 --> fake_westeros_100k
-// 100,000,000   / 100 / 1.15 --> fake_westeros_100m
-// 2,000,000,000 /  20 / 2.65 --> fake_westeros_2g
+// 100,000       / 100 /       1,000 --> fake_westeros_100k
+// 100,000,000   / 100 /   1,000,000 --> fake_westeros_100m
+// 2,000,000,000 /  20 / 100,000,000 --> fake_westeros_2g
+assert (maxDegree <= numVertices / numBatches)
+ratio = Math.exp(Math.log(maxDegree) / (numBatches - 1))
 
 testSet = params.testSet ?: 'fake_westeros_100k'
 
@@ -21,17 +26,17 @@ project.renameVertexAttribute(from: 'ordinal', to: 'src')
 // to the "westeros" case. The goal is that we want to see exponentially
 // decreasing vertex counts as degree goes up in the logarithmic degree histogram.
 // To achieve that, we will created the edges in batches of fixed size, but the
-// amount of dst-side vertices per batches will be halved after each iteration.
+// amount of dst-side vertices per batches will be halved* after each iteration.
+// *in case of ratio = 2.0 (in the general case, they are divided by ratio)
 // So we start
 // with creating N vertices of degree 1, and then
 // N/2 vertices of degree 2,
 // N/4 vertices of degree 4,
 // and so on. Notes:
-// - A lot of vertices will get a +1 degree compared to that if they show up at
-// the src side of an edge.
+// - This algorithm only controls the in-degrees. Some vertices will get an out-degree of 1
+// and the rest will get an out-degree of 0.
 // - Each vertex of the current graph will generate one edge in the resulting
 // CSV file.
-// - The exact ratio between batches is not 2.0 but 1.3
 project.derivedVertexAttribute(
   expr:
     'var numVertices = ' + numVertices + ';\n' +
