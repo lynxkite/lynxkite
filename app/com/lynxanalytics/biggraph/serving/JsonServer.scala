@@ -11,9 +11,7 @@ import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, HadoopFile, Timestamp, KiteInstanceInfo }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 
@@ -156,7 +154,7 @@ object AssertLicenseNotExpired {
       val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
       println(message)
       log.error(message)
-      System.exit(1)
+      throw new RuntimeException(message)
     }
   }
 }
@@ -416,8 +414,8 @@ object ProductionJsonServer extends JsonServer {
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
-      title = util.Properties.envOrElse("KITE_TITLE", "LynxKite"),
-      tagline = util.Properties.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
+      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       version = version)
   }
 

@@ -14,6 +14,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Attribute filter `*` added to match all defined values. This can be used e.g. to remove
    vertices with no location from a map visualization.
  - Stability improvements regarding edge loading and handling graphs with large degree vertices.
+ - SQL query results can be saved as segmentations.
 
 ### 1.7.3
 
