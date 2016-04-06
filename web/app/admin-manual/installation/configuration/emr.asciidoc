@@ -82,6 +82,14 @@ need to set SubnetId and AdditionalMasterSecurityGroups. E.g.:
 CREATE_CLUSTER_EXTRA_EC2_ATTRS=""
 ```
 
+By default, emr.sh installs Spark by downloading an official version from cloudfront.net
+directly to the master machine. This may be undesired in a Virtual Private Cluster setup,
+where the master has no Internet access. In such cases, setting the below flag to "local"
+tells emr.sh to upload the local Spark installation instead.
+
+```
+# DEPLOY_SPARK_FROM=local
+```
 
 Provides a part of the name for the `KITE_INSTANCE` variable that identifies the instance. E.g.,
 leaving it at the default `emr` could result in such name: `emr-3-m3.2xlarge-8cores-18g`.
@@ -92,3 +100,4 @@ leaving it at the default `emr` could result in such name: `emr-3-m3.2xlarge-8co
 ```
 KITE_INSTANCE_BASE_NAME=emr
 ```
+
