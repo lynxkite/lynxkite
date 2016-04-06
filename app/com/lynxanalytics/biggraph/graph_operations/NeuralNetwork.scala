@@ -235,28 +235,28 @@ case class NeuralNetwork(
     }.toMap
     // Network gradients.
     val activationInputGradient: Matrix = vertices.map { id =>
-      outputs.input(id) * tildeRawGradient(id).t
+      tildeRawGradient(id) * outputs.input(id).t
     }.reduce(_ + _)
     val activationHiddenGradient: Matrix = vertices.map { id =>
-      (outputs.reset(id) :* outputs.state(id)) * tildeRawGradient(id).t
+      tildeRawGradient(id) * (outputs.reset(id) :* outputs.state(id)).t
     }.reduce(_ + _)
     val updateInputGradient: Matrix = vertices.map { id =>
-      outputs.input(id) * updateRawGradient(id).t
+      updateRawGradient(id) * outputs.input(id).t
     }.reduce(_ + _)
     val updateHiddenGradient: Matrix = vertices.map { id =>
-      outputs.state(id) * updateRawGradient(id).t
+      updateRawGradient(id) * outputs.state(id).t
     }.reduce(_ + _)
     val resetInputGradient: Matrix = vertices.map { id =>
-      outputs.input(id) * resetRawGradient(id).t
+      resetRawGradient(id) * outputs.input(id).t
     }.reduce(_ + _)
     val resetHiddenGradient: Matrix = vertices.map { id =>
-      outputs.state(id) * resetRawGradient(id).t
+      resetRawGradient(id) * outputs.state(id).t
     }.reduce(_ + _)
     val edgeBiasGradient: Vector = vertices.map { id =>
       inputGradient(id)
     }.reduce(_ + _)
     val edgeMatrixGradient: Matrix = vertices.map { id =>
-      outputs.visibleState(id) * inputGradient(id).t
+      inputGradient(id) * outputs.visibleState(id).t
     }.reduce(_ + _)
   }
 
