@@ -5,16 +5,17 @@ cd $(dirname $0)
 # Run test.
 NUM_INSTANCES=3 \
   tools/emr_based_test.sh perf kitescripts/big_data_tests/edge_import.groovy -- testSet:fake_westeros_100m \
-  | tee > kitescripts/perf/full_output
+  | tee > kitescripts/big_data_tests/full_output
 # Take the header.
-cat kitescripts/perf/last_output.md \
+cat kitescripts/big_data_tests/last_output.md \
   | sed -n -e '1,/```/p' \
-  > kitescripts/perf/last_output.md.new
+  > kitescripts/big_data_tests/last_output.md.new
 # Add the script output from the new run.
-cat kitescripts/perf/full_output \
-  | sed -n -e '/-- Running scripts./,/-- Scripts finished./p' \
-  >> kitescripts/perf/last_output.md.new
-rm kitescripts/perf/full_output
+cat kitescripts/big_data_tests/full_output \
+  | awk '/STARTING SCRIPT/{flag=1}/FINISHED SCRIPT/{print;flag=0}flag' \
+  >> kitescripts/big_data_tests/last_output.md.new
+echo '```' >>kitescripts/big_data_tests/last_output.md.new
+rm kitescripts/big_data_tests/full_output
 
 if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
@@ -25,7 +26,7 @@ if [[ "$USER" == 'jenkins' ]]; then
   git fetch
   git checkout "$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
-  mv kitescripts/perf/last_output.md{.new,}
+  mv kitescripts/big_data_tests/last_output.md{.new,}
   git commit -am "Update Big Data Test results."
   git push
 fi
