@@ -29,8 +29,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.model
-import com.lynxanalytics.biggraph.serving.User
-import com.lynxanalytics.biggraph.serving.Utils
+import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
 
 import java.io.File
 import java.util.UUID
@@ -971,7 +970,7 @@ object Directory {
 
 // May be a directory a project frame or a table.
 class DirectoryEntry(val path: SymbolPath)(
-    implicit manager: MetaGraphManager) {
+    implicit manager: MetaGraphManager) extends AccessControl {
 
   override def toString = path.toString
   override def equals(p: Any) =
@@ -1012,12 +1011,6 @@ class DirectoryEntry(val path: SymbolPath)(
     }
   }
 
-  def assertReadAllowedFrom(user: User): Unit = {
-    assert(readAllowedFrom(user), s"User $user does not have read access to entry '$this'.")
-  }
-  def assertWriteAllowedFrom(user: User): Unit = {
-    assert(writeAllowedFrom(user), s"User $user does not have write access to entry '$this'.")
-  }
   def assertParentWriteAllowedFrom(user: User): Unit = {
     if (!parent.isEmpty) {
       parent.get.assertWriteAllowedFrom(user)
@@ -1039,13 +1032,6 @@ class DirectoryEntry(val path: SymbolPath)(
   }
   private def localWriteAllowedFrom(user: User): Boolean = {
     aclContains(writeACL, user)
-  }
-
-  def aclContains(acl: String, user: User): Boolean = {
-    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
-    // We translate this to a regex for checking.
-    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
-    user.email.matches(regex)
   }
 
   def remove(): Unit = manager.synchronized {
