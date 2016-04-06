@@ -100,7 +100,6 @@ class SQLHelper(
         val attrKey = op.tableColumns(tableName)(columnName)
         val attrEntity = metaManager
           .attribute(guid)
-          .asInstanceOf[Attribute[Any]]
         opBuilder = opBuilder(attrKey, attrEntity)
       }
     }

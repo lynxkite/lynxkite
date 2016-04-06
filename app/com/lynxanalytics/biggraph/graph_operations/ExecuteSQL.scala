@@ -30,7 +30,7 @@ object ExecuteSQL extends OpFromJson {
         val columns = columnNames.map(
           columnName => (
             columnName,
-            vertexAttribute[Any](
+            anyVertexAttribute(
               tables(tableName),
               Symbol(s"${tableName}_${columnName}_attr")
             )
@@ -76,14 +76,13 @@ case class ExecuteSQL(
 
     val sqlContext = rc.sqlContext.newSession()
     for ((tableName, tableVs) <- inputs.tables) {
-      val tc = inputs
+      val tableColumnList: Iterable[(String, Attribute[_])] = inputs
         .tableColumns(tableName)
         .map {
           case (columnName, columnAttr) =>
             (columnName, columnAttr.entity(output.instance))
         }
-        .toMap
-      val rawTable = RawTable(tableVs.entity(output.instance), tc)
+      val rawTable = RawTable(tableVs.entity(output.instance), tableColumnList.toMap)
       val tableRelation = new TableRelation(rawTable, sqlContext)(rc.dataManager)
       val tableDataFrame = tableRelation.toDF
       tableDataFrame.registerTempTable(tableName)
