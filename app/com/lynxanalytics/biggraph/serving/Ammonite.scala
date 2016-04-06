@@ -1,6 +1,7 @@
 // The Ammonite shell you can access via SSH.
 package com.lynxanalytics.biggraph.serving
 
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -49,15 +50,15 @@ For convenience, we've set up some Kite specific bindings for you:
 Remember, any of the above can be used to easily destroy the running server or even any data.
 Drive responsibly.""")
 
-  private val replServer = scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map { ammonitePort =>
+  private val replServer = LoggedEnvironment.envOrNone("KITE_AMMONITE_PORT").map { ammonitePort =>
     import ammonite.repl.Bind
     new ammonite.sshd.SshdRepl(
       ammonite.sshd.SshServerConfig(
         // We only listen on the local interface.
         address = "localhost",
         port = ammonitePort.toInt,
-        username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
-        password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
+        username = LoggedEnvironment.envOrElse("KITE_AMMONITE_USER", "lynx"),
+        password = LoggedEnvironment.envOrElse("KITE_AMMONITE_PASSWD", "kite", confidential = true)),
       predef = s"""
 repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineUnix
 import com.lynxanalytics.biggraph._

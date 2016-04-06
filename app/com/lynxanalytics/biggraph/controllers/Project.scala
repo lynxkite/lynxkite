@@ -599,14 +599,14 @@ sealed trait ProjectEditor {
 
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
+  def existingSegmentation(name: String) = {
+    assert(segmentationNames.contains(name), s"Segmentation $name does not exist.")
+    segmentation(name)
+  }
   def segmentationNames = state.segmentations.keys.toSeq.sorted
   def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
     setElementNote(SegmentationKind, name, null)
-  }
-  def newSegmentation(name: String, seg: SegmentationState) = {
-    state = state.copy(
-      segmentations = state.segmentations + (name -> seg))
   }
 
   def offspringEditor(path: Seq[String]): ProjectEditor =
@@ -676,8 +676,8 @@ sealed trait ProjectEditor {
     }
 
     for ((segName, segState) <- origSegmentations) {
-      newSegmentation(segName, segState)
       val seg = segmentation(segName)
+      seg.segmentationState = segState
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
         op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(

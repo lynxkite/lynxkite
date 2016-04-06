@@ -125,14 +125,14 @@ object PrefixRepository {
       s"path: $path should either be empty or end with a @ or with a slash.")
     // Only local clusters can reference local files
     assert(
-      scala.util.Properties.envOrElse("SPARK_MASTER", "").startsWith("local") ||
+      LoggedEnvironment.envOrElse("SPARK_MASTER", "").startsWith("local") ||
         !path.startsWith("file:"),
       s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
   }
 
   def addUserDefinedResolutions() = {
     val userDefinedPrefixResolutionFile =
-      scala.util.Properties.envOrElse("KITE_PREFIX_DEFINITIONS", "")
+      LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
     if (userDefinedPrefixResolutionFile.nonEmpty) {
       val userDefinedResolutions = parseUserDefinedInputFromFile(userDefinedPrefixResolutionFile)
       for ((prefixSymbolNoDollar, path) <- userDefinedResolutions) {

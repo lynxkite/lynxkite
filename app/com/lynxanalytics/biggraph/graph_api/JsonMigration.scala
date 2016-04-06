@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import java.util.UUID
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
@@ -129,7 +130,7 @@ object MetaRepositoryManager {
     } else {
       val newest = versions.head
       val forcedMigration =
-        scala.util.Properties.envOrNone("KITE_FORCED_MIGRATION").map(_.toBoolean).getOrElse(false)
+        LoggedEnvironment.envOrNone("KITE_FORCED_MIGRATION").map(_.toBoolean).getOrElse(false)
       if (forcedMigration) {
         log.info("Forced migration requested.")
       }

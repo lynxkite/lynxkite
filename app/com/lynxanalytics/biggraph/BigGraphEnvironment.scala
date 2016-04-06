@@ -30,6 +30,7 @@ class StaticSparkContextProvider() extends SparkContextProvider {
 trait SparkFreeEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def entityProgressManager: graph_api.EntityProgressManager
+  def sqlHelper: spark_util.SQLHelper
 }
 
 trait BigGraphEnvironment extends SparkFreeEnvironment {
@@ -62,7 +63,14 @@ object BigGraphEnvironmentImpl {
       sparkContext <- sparkContextFuture
       metaGraphManager <- metaGraphManagerFuture
       dataManager <- dataManagerFuture
-    } yield new BigGraphEnvironmentImpl(sparkContext, metaGraphManager, dataManager)
+    } yield new BigGraphEnvironmentImpl(
+      sparkContext,
+      metaGraphManager,
+      dataManager,
+      new spark_util.SQLHelper(
+        sparkContext,
+        metaGraphManager,
+        dataManager))
     Await.result(envFuture, Duration.Inf)
   }
 
@@ -86,7 +94,8 @@ object BigGraphEnvironmentImpl {
 case class BigGraphEnvironmentImpl(
   sparkContext: spark.SparkContext,
   metaGraphManager: graph_api.MetaGraphManager,
-  dataManager: graph_api.DataManager) extends BigGraphEnvironment
+  dataManager: graph_api.DataManager,
+  sqlHelper: spark_util.SQLHelper) extends BigGraphEnvironment
 
 class RepositoryDirs(
     val metaDir: String,
@@ -96,7 +105,9 @@ class RepositoryDirs(
 
   lazy val dataDir: HadoopFile = {
     PrefixRepository.registerPrefix(dataDirSymbolicName, dataDirResolvedName)
-    HadoopFile(dataDirSymbolicName)
+    val dir = HadoopFile(dataDirSymbolicName)
+    bigGraphLogger.info(s"dataDir: ${dir.resolvedNameWithNoCredentials}")
+    dir
   }
 
   lazy val ephemeralDataDir: Option[HadoopFile] = {
@@ -104,7 +115,9 @@ class RepositoryDirs(
       ephemeralDirResolvedName =>
         val ephemeralDirSymbolicName = "EPHEMERAL_" + dataDirSymbolicName
         PrefixRepository.registerPrefix(ephemeralDirSymbolicName, ephemeralDirResolvedName)
-        HadoopFile(ephemeralDirSymbolicName)
+        val dir = HadoopFile(ephemeralDirSymbolicName)
+        bigGraphLogger.info(s"ephemeralDataDir: ${dir.resolvedNameWithNoCredentials}")
+        dir
     }
   }
 

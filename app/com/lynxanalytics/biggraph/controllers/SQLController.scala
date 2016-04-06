@@ -217,7 +217,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def async[T](func: => T): Future[T] = Future(func)
 
   def doImport(user: serving.User, request: GenericImportRequest) = async[FEOption] {
-    SQLController.saveTable(
+    SQLController.saveTableFromDataFrame(
       request.restrictedDataFrame(user),
       request.notes,
       user,
@@ -232,30 +232,24 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
-  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
-    val tables = metaManager.synchronized {
+  // Creates a table from an SQL query.
+  private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
+    metaManager.synchronized {
       val p = SubProject.parsePath(spec.project)
       assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
-
-      val v = p.viewer
-      v.allRelativeTablePaths.map {
-        path => (path.toString -> Table(path, v))
-      }
-    }
-    // Every query runs in its own SQLContext for isolation.
-    val sqlContext = dataManager.newSQLContext()
-    for ((tableName, table) <- tables) {
-      table.toDF(sqlContext).registerTempTable(tableName)
+      env.sqlHelper.sqlToTable(p.viewer, spec.sql)
     }
 
-    log.info(s"Trying to execute query: ${spec.sql}")
-    sqlContext.sql(spec.sql)
+  // Creates a DataFrame from an SQL query. The computation steps will
+  // also be entered into the Metagraph.
+  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
+    tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = dfFromSpec(user, request.df)
-
+    // TODO: use tableFromSpec directly here.
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
@@ -270,9 +264,10 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = dfFromSpec(user, request.df)
+    val table = tableFromSpec(user, request.df)
+
     SQLController.saveTable(
-      df, s"From ${request.df.project} by running ${request.df.sql}",
+      table, s"From ${request.df.project} by running ${request.df.sql}",
       user, request.table, request.privacy)
   }
 
@@ -350,7 +345,19 @@ object SQLController {
     StructType(columns.map(StructField(_, StringType, true)))
   }
 
-  def saveTable(
+  private def assertAccessAndGetTableEntry(
+    user: serving.User,
+    tableName: String,
+    privacy: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
+
+    assert(!tableName.isEmpty, "Table name must be specified.")
+    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
+    val entry = DirectoryEntry.fromName(tableName)
+    entry.assertParentWriteAllowedFrom(user)
+    entry
+  }
+
+  def saveTableFromDataFrame(
     df: spark.sql.DataFrame,
     notes: String,
     user: serving.User,
@@ -358,11 +365,19 @@ object SQLController {
     privacy: String)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
-    assert(!tableName.isEmpty, "Table name must be specified.")
-    assert(!DirectoryEntry.fromName(tableName).exists, s"Entry '$tableName' already exists.")
-    val entry = DirectoryEntry.fromName(tableName)
-    entry.assertParentWriteAllowedFrom(user)
+    assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
+    saveTable(table, notes, user, tableName, privacy)
+  }
+
+  def saveTable(
+    table: Table,
+    notes: String,
+    user: serving.User,
+    tableName: String,
+    privacy: String)(
+      implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
+    val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
     val frame = entry.asNewTableFrame(checkpoint)
     frame.setupACL(privacy, user)
