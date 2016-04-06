@@ -74,10 +74,6 @@ COMMAND_ARGS=( "$@" )
 source ${SPEC}
 export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always use the default
 
-# Spark installation to use for this cluster.
-SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
-SPARK_HOME=$HOME/spark-${SPARK_VERSION}
-
 if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
   echoerr "to work."
@@ -240,11 +236,24 @@ EOF
 S3="s3://"
 EOF
 
+  # Spark version to use for this cluster.
+  SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
 
-  # Copy Spark to the master.
-  rsync -ave "$SSH" -r --copy-dirlinks \
-    ${SPARK_HOME}/ \
-    hadoop@${MASTER_HOSTNAME}:spark-${SPARK_VERSION}
+  if [ "${DEPLOY_SPARK_FROM:-}" = "local" ]; then
+    # Copy Spark from local machine to the master.
+    SPARK_HOME=$HOME/spark-${SPARK_VERSION}
+    aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-*"
+    rsync -ave "$SSH" -r --copy-dirlinks \
+      ${SPARK_HOME}/ \
+      hadoop@${MASTER_HOSTNAME}:spark-${SPARK_VERSION}
+  else
+    # Download and unpack Spark on the master.
+    SPARK_NAME="spark-${SPARK_VERSION}-bin-hadoop2.6"
+    aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
+      curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
+      tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION}"
+  fi
+
   # Copy config files to the master.
   aws emr put ${MASTER_ACCESS} --src ${KITERC_FILE} --dest .kiterc
   aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
@@ -257,6 +266,8 @@ uploadLogs)
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph uploadLogs"
   ;;
+
+# ======
 kite)
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
@@ -267,7 +278,10 @@ kite)
   MASTER_HOSTNAME=$(GetMasterHostName)
   MASTER_ACCESS=$(GetMasterAccessParams)
 
-  rsync -ave "$SSH" -r --copy-dirlinks --exclude /logs --exclude RUNNING_PID \
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    --exclude /logs \
+    --exclude RUNNING_PID \
+    --exclude metastore_db \
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
 
