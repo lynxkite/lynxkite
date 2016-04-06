@@ -4,7 +4,7 @@ cd $(dirname $0)
 
 # Run test.
 NUM_INSTANCES=3 \
-  tools/emr_based_test.sh perf kitescripts/perf/kitescripts/big_data_tests/edge_import.groovy -- testSet:fake_westeros_100m \
+  tools/emr_based_test.sh perf kitescripts/big_data_tests/edge_import.groovy -- testSet:fake_westeros_100m \
   | tee > kitescripts/perf/full_output
 # Take the header.
 cat kitescripts/perf/last_output.md \
