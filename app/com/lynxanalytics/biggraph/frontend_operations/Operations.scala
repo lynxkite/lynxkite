@@ -764,7 +764,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val locationAttr = params("location")
       val belongsToLocation =
         if (locationAttr.startsWith(SegmentationPrefix)) {
-          project.segmentation(locationAttr.substring(SegmentationPrefix.length)).belongsTo
+          project.existingSegmentation(locationAttr.substring(SegmentationPrefix.length)).belongsTo
         } else {
           val locationAttribute =
             project.vertexAttributes(locationAttr.substring(AttributePrefix.length)).runtimeSafeCast[String]
@@ -802,7 +802,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
 
     def apply(params: Map[String, String]) = {
-      val segmentations = params("segmentations").split(",", -1).map(project.segmentation(_))
+      val segmentations =
+        params("segmentations").split(",", -1).map(project.existingSegmentation(_))
       assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
@@ -1758,8 +1759,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val oldSegmentations = project.viewer.segmentationMap
       project.setVertexSet(m.segments, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
-        project.newSegmentation(name, segViewer.segmentationState)
         val seg = project.segmentation(name)
+        seg.segmentationState = segViewer.segmentationState
         val op = graph_operations.InducedEdgeBundle(induceDst = false)
         seg.belongsTo = op(
           op.srcMapping, m.belongsTo)(
@@ -2038,7 +2039,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Discard segmentation", new UtilityOperation(_, _) {
+  register("Discard segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
@@ -2124,7 +2125,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         s"""A segmentation named '${params("to")}' already exists,
             please discard it or choose another name""")
       project.segmentation(params("to")).segmentationState =
-        project.segmentation(params("from")).segmentationState
+        project.existingSegmentation(params("from")).segmentationState
       project.deleteSegmentation(params("from"))
     }
   })
@@ -2192,7 +2193,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy segmentation $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      val from = project.segmentation(params("from"))
+      val from = project.existingSegmentation(params("from"))
       val to = project.segmentation(params("to"))
       to.segmentationState = from.segmentationState
     }
@@ -2623,8 +2624,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "(For example, use the copy graph into segmentation operation.)")
 
     def apply(params: Map[String, String]): Unit = {
-      val golden = project.segmentation(params("golden"))
-      val test = project.segmentation(params("test"))
+      val golden = project.existingSegmentation(params("golden"))
+      val test = project.existingSegmentation(params("test"))
       val op = graph_operations.CompareSegmentationEdges()
       val result = op(
         op.goldenBelongsTo, golden.belongsTo)(
