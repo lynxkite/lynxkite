@@ -406,11 +406,7 @@ EOF
     # 1.3.2. Add Groovy script invocation into our master script.
     cat >>${MASTER_SCRIPT} <<EOF
 expect "@ "
-send "val startTime = System.currentTimeMillis()\r"
-expect "@ "
 send "batch.runScript(\"${REMOTE_GROOVY_SCRIPT_PATH}\" ${AMMONITE_PARAM_LIST})\r"
-expect "@ "
-send "println(s\"\[DONE\]: ${GROOVY_SCRIPT_BASENAME} RUN TIME: \\\${(System.currentTimeMillis() - startTime) / 1000} seconds\")\r"
 EOF
   done
   # 1.4. SSH logout:

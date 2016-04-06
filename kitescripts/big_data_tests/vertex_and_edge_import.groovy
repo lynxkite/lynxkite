@@ -1,3 +1,7 @@
+// Tests the "Import vertices" and "Import edges for existing vertices" FE operations.
+// The vertices are loaded from edges.csv of the testSet into a table "test_vertices"
+// The edges are loaded from edges.csv of the testSet into a table "test_edges"
+
 testSet = params.testSet ?: 'fake_westeros_100k'
 edgePath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/edges.csv')
 vertexPath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/vertices.csv')
