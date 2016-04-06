@@ -15,6 +15,7 @@ module.exports = function(fw) {
     },
     function() {
     });
+
   fw.transitionTest(
     'segmentation by double created',
     'segmentation opens',
@@ -24,24 +25,37 @@ module.exports = function(fw) {
     function() {
       expect(lib.right.segmentCount()).toEqual(2);
     });
+
   fw.transitionTest(
     'segmentation opens',
     'sub-segmentation can be created and opened',
     function() {
       lib.right.runOperation('Copy graph into a segmentation', {'name': 'copy'});
       lib.right.openSegmentation('copy');
-      lib.right.expectCurrentProjectIs('example|bucketing|copy');
     },
     function() {
+      lib.right.expectCurrentProjectIs('test-example|bucketing|copy');
     });
+
   fw.transitionTest(
     'sub-segmentation can be created and opened',
     'closing sub-segmentation on the RHS reopens its grandparent',
     function() {
       lib.right.close();
-      lib.left.expectCurrentProjectIs('example');
-      lib.right.expectCurrentProjectIs('example|bucketing');
     },
     function() {
+      lib.left.expectCurrentProjectIs('test-example');
+      lib.right.expectCurrentProjectIs('test-example|bucketing');
+    });
+
+  fw.transitionTest(
+    'closing sub-segmentation on the RHS reopens its grandparent',
+    'discard segmentation works',
+    function() {
+      lib.left.runOperation('Discard segmentation', { name: 'bucketing' });
+    },
+    function() {
+      lib.left.expectCurrentProjectIs('test-example');
+      lib.right.expectCurrentProjectIsError();
     });
 };

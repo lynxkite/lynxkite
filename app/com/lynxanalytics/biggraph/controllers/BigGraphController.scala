@@ -927,8 +927,10 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   private def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
     updateDelta(editor, original, "vertex_count")
     updateDelta(editor, original, "edge_count")
-    for (seg <- original.state.segmentations.keys) {
-      updateDeltas(editor.segmentation(seg), original.segmentation(seg))
+    for (seg <- editor.segmentationNames) {
+      if (original.state.segmentations.contains(seg)) {
+        updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
+      }
     }
   }
   private def updateDelta(editor: ProjectEditor, original: ProjectViewer, name: String): Unit = {
