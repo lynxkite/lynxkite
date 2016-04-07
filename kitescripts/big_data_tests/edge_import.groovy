@@ -1,7 +1,6 @@
 // Tests the "Import vertices and edges from a single table" FE operation.
-// The edges are loaded from a table named "test_edges"
 
-// Requires: load_test_set.groovy
+/// REQUIRE_SCRIPT load_edges_from_test_set.groovy
 
 project = lynx.newProject()
 

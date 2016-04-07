@@ -21,6 +21,7 @@ cd "$(dirname $0)/.."
 
 MODE=${1}
 shift
+COMMAND_ARGS=( "$@" )
 
 CLUSTER_NAME="${USER}-test-cluster"
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
@@ -43,7 +44,8 @@ if [[ $NUM_INSTANCES -gt 20 ]]; then
 fi
 
 
-./stage.sh
+#./stage.sh
+sbt stage
 
 cp stage/tools/emr_spec_template ${EMR_TEST_SPEC}
 cat >>${EMR_TEST_SPEC} <<EOF
@@ -64,11 +66,16 @@ else
   stage/tools/emr.sh start ${EMR_TEST_SPEC}
 fi
 
-stage/tools/emr.sh kite ${EMR_TEST_SPEC}
+stage/tools/emr.sh deploy-kite ${EMR_TEST_SPEC}
 
 case $MODE in
   perf )
-    stage/tools/emr.sh batch ${EMR_TEST_SPEC} $@
+    TMP_SCRIPT=/tmp/${CLUSTER_NAME}_test_script.sh
+    echo "biggraphstage/kitescripts/big_data_tests/big_data_test_runner.py '$1' '$2'" >${TMP_SCRIPT}
+    stage/tools/emr.sh put ${EMR_TEST_SPEC} ${TMP_SCRIPT} test_cmd.sh
+    stage/tools/emr.sh cmd ${EMR_TEST_SPEC} \
+      "chmod a+x test_cmd.sh && ./test_cmd.sh"
+
     stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
     ;;
   frontend )

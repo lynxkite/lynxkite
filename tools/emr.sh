@@ -28,13 +28,12 @@ if [ "$#" -lt 2 ]; then
   echo "                 You need to have \"connect\" running for this. See below."
   echo "   metacopy    - copies the meta directory to your local machine"
   echo "   uploadLogs  - Uploads the application logs and the operation performance"
-  echo "                 data to google storage"
+  echo "                 data to Google storage"
   echo "   metarestore - copies the meta directory from your local machines to the cluster"
-  echo "   reset       - deletes the data and the meta directories and restarts kite"
+  echo "   reset       - deletes the data and the meta directories and stops LynxKite"
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
   echo "                 from behind the Amazon firewall"
-  echo "   kite        - (re)starts the kite server"
-  echo "   batch       - Takes a space-separated list of groovy scripts and executes them "
+  echo "   kite        - (re)starts the LynxKite server"
   echo "                 on a running cluster. The scripts have to be already uploaded to "
   echo "                 the master. The path of each script should be relative to the kitescripts "
   echo "                 directory on the master."
@@ -47,19 +46,6 @@ if [ "$#" -lt 2 ]; then
   echo "   emr.sh connect my_cluster_spec  # makes Kite available on your local machine"
   echo
   echo "   .... use Kite ...."
-  echo
-  echo "   emr.sh terminate my_cluster_spec"
-  echo
-  echo " Example batch workflow:"
-  echo "   emr.sh start my_cluster_spec"
-  echo "   emr.sh kite my_cluster_spec"
-  echo "   emr.sh batch my_cluster_spec ../kitescripts/visualization_perf.groovy ../kitescripts/jsperf.groovy"
-  echo
-  echo "   .... analyze results, debug ...."
-  echo
-  echo "   # If you want to rerun the scripts, don't forget to reset before that:"
-  echo "   emr.sh reset my_cluster_spec"
-  echo "   emr.sh batch my_cluster_spec ../kitescripts/visualization_perf.groovy ../kitescripts/jsperf.groovy"
   echo
   echo "   emr.sh terminate my_cluster_spec"
 
@@ -130,6 +116,23 @@ CheckDataRepo() {
     echoerr "REGION is ${REGION}"
     exit 1
   fi
+}
+
+DeployKite() {
+  # Restage and restart kite.
+  if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
+    echoerr "You must run this script from inside a stage, not from the source tree!"
+    exit 1
+  fi
+
+  MASTER_HOSTNAME=$(GetMasterHostName)
+
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    --exclude /logs \
+    --exclude RUNNING_PID \
+    --exclude metastore_db \
+    ${KITE_BASE}/ \
+    hadoop@${MASTER_HOSTNAME}:biggraphstage
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -264,25 +267,16 @@ uploadLogs)
   aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph uploadLogs"
   ;;
 
+# =====
+deploy-kite)
+  DeployKite
+  ;;
+
 # ======
 kite)
-  # Restage and restart kite.
-  if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
-    echoerr "You must run this script from inside a stage, not from the source tree!"
-    exit 1
-  fi
+  DeployKite
 
-  MASTER_HOSTNAME=$(GetMasterHostName)
   MASTER_ACCESS=$(GetMasterAccessParams)
-
-  rsync -ave "$SSH" -r --copy-dirlinks \
-    --exclude /logs \
-    --exclude RUNNING_PID \
-    --exclude metastore_db \
-    ${KITE_BASE}/ \
-    hadoop@${MASTER_HOSTNAME}:biggraphstage
-
-
   echo "Starting..."
   aws emr ssh $MASTER_ACCESS --command 'biggraphstage/bin/biggraph restart'
 
@@ -314,6 +308,13 @@ cmd)
   $SSH -A hadoop@${MASTER_HOSTNAME} "${COMMAND_ARGS[@]}"
   ;;
 
+
+# ======
+put)
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr put ${MASTER_ACCESS} --src $1 --dest $2
+  ;;
+
 # ======
 metacopy)
   MASTER_ACCESS=$(GetMasterAccessParams)
@@ -337,13 +338,13 @@ reset)
   ConfirmDataLoss
   ;&
 
-# ====== fal-through
+# ====== fall-through
 reset-yes)
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
-    ./biggraphstage/bin/biggraph start"
+    true;"
   ;;
 
 # ======
@@ -365,61 +366,6 @@ clusterid)
 s3copy)
   curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral"
   echo "Copy successful."
-  ;;
-
-# ======
-batch)
-  # 1. First we build a master script.
-  MASTER_BATCH_DIR="/tmp/${CLUSTER_NAME}_batch_job"
-  rm -Rf ${MASTER_BATCH_DIR}
-  mkdir -p ${MASTER_BATCH_DIR}
-  MASTER_SCRIPT="${MASTER_BATCH_DIR}/kite_batch_job.sh"
-
-  REMOTE_BATCH_DIR="/home/hadoop/batch"
-
-  # 1.1. Shut down LynxKite if running:
-  cat >${MASTER_SCRIPT} <<EOF
-~/biggraphstage/bin/biggraph stop
-EOF
-  chmod a+x ${MASTER_SCRIPT}
-
-  # 1.2. Collect the common Groovy parameters:
-  GROOVY_PARAM_LIST=""
-  DOUBLE_HASH_SEEN=0
-  for GROOVY_PARAM in "${COMMAND_ARGS[@]}"; do
-    if [[ "$DOUBLE_HASH_SEEN" == "1" ]]; then
-      GROOVY_PARAM_LIST="$GROOVY_PARAM_LIST $GROOVY_PARAM"
-    elif [[ "$GROOVY_PARAM" == "--" ]]; then
-      DOUBLE_HASH_SEEN=1
-    fi
-  done
-
-  # 1.3. Invoke each groovy script:
-  CNT=1
-  for GROOVY_SCRIPT in "${COMMAND_ARGS[@]}"; do
-    if [[ "$GROOVY_SCRIPT" == "--"  ]]; then
-        break
-    fi
-    GROOVY_SCRIPT_BASENAME=$(basename "$GROOVY_SCRIPT")
-    # We add a unique prefix to the file name to avoid name clashes.
-    REMOTE_GROOVY_SCRIPT_NAME="script${CNT}_${GROOVY_SCRIPT_BASENAME}"
-    CNT=$((CNT + 1))
-    # 1.3.1. Copy Groovy script to master
-    cp "${GROOVY_SCRIPT}" "${MASTER_BATCH_DIR}/${REMOTE_GROOVY_SCRIPT_NAME}"
-
-    # 1.3.2. Add Groovy script invocation into our master script.
-    cat >>${MASTER_SCRIPT} <<EOF
-~/biggraphstage/bin/biggraph batch "${REMOTE_BATCH_DIR}/${REMOTE_GROOVY_SCRIPT_NAME}" ${GROOVY_PARAM_LIST}
-EOF
-  done
-
-  # 2. Upload and execute the script:
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  MASTER_HOSTNAME=$(GetMasterHostName)
-  rsync -ave "$SSH" -r -z --copy-dirlinks \
-    ${MASTER_BATCH_DIR}/ \
-    hadoop@${MASTER_HOSTNAME}:${REMOTE_BATCH_DIR}
-  aws emr ssh ${MASTER_ACCESS} --command "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
   ;;
 
 # ======
