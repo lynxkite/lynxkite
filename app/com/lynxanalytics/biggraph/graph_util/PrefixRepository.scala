@@ -19,7 +19,7 @@ object PathNormalizer {
   }
 }
 
-object PrefixRepository {
+class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String) {
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
   private val symbolicPrefixPattern = "([_A-Z][_A-Z0-9]*[$])(.*)".r
   private val schemePattern = "[A-Za-z][-\\+\\.A-Za-z0-9]*:".r
@@ -41,7 +41,7 @@ object PrefixRepository {
   private def fullyQualify(path: String): String =
     HadoopFile.defaultFs.makeQualified(new hadoop.fs.Path(path)).toString
 
-  def tryToSplitBasedOnTheAvailablePrefixes(path: String): (String, String) =
+  private def tryToSplitBasedOnTheAvailablePrefixes(path: String): (String, String) =
     getBestCandidate(path)
       .map {
         case (prefixSym, resolution) =>
@@ -112,9 +112,10 @@ object PrefixRepository {
       .map(line => extractUserDefinedPrefix(line))
   }
 
-  def parseUserDefinedInputFromFile(filename: String): Iterator[(String, String)] = {
+  private def parseUserDefinedInputFromFile(filename: String): Iterator[(String, String)] = {
     parseInput(Source.fromFile(filename).getLines)
   }
+
   def parseUserDefinedInputFromURI(filename: String): Iterator[(String, String)] = {
     val URI = new java.net.URI(filename)
     parseInput(Source.fromURI(URI).getLines)
@@ -130,9 +131,7 @@ object PrefixRepository {
       s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
   }
 
-  def addUserDefinedResolutions() = {
-    val userDefinedPrefixResolutionFile =
-      LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
+  private def addUserDefinedResolutions() = {
     if (userDefinedPrefixResolutionFile.nonEmpty) {
       val userDefinedResolutions = parseUserDefinedInputFromFile(userDefinedPrefixResolutionFile)
       for ((prefixSymbolNoDollar, path) <- userDefinedResolutions) {
@@ -143,4 +142,19 @@ object PrefixRepository {
   }
 
   addUserDefinedResolutions()
+}
+
+object PrefixRepository {
+  val prefixRepository = new PrefixRepositoryImpl(LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", ""))
+
+  def getPrefixInfo(prefixSymbol: String) =
+    prefixRepository.getPrefixInfo(prefixSymbol)
+  def splitSymbolicPattern(str: String, legacyMode: Boolean) =
+    prefixRepository.splitSymbolicPattern(str, legacyMode)
+  def dropResolutions() =
+    prefixRepository.dropResolutions()
+  def registerPrefix(prefixSymbol: String, prefixResolution: String) =
+    prefixRepository.registerPrefix(prefixSymbol, prefixResolution)
+  def parseUserDefinedInputFromURI(filename: String) =
+    prefixRepository.parseUserDefinedInputFromURI(filename)
 }
