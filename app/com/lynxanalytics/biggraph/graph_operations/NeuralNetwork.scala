@@ -206,7 +206,7 @@ case class NeuralNetwork(
       id -> ((1.0 - outputs.tildeState(id) :* outputs.tildeState(id)) :* tildeGradient(id))
     }.toMap
     val updateGradient: Map[ID, Vector] = vertices.map { id =>
-      id -> (outputs.tildeState(id) :* stateGradient(id) - stateGradient(id))
+      id -> ((outputs.tildeState(id) - outputs.state(id)) :* stateGradient(id))
     }.toMap
     val updateRawGradient: Map[ID, Vector] = vertices.map { id =>
       // Propagate through sigmoid.
@@ -225,11 +225,11 @@ case class NeuralNetwork(
         network.resetInput.t * resetRawGradient(id))
     }.toMap
     val prevStateGradient: Map[ID, Vector] = vertices.map { id =>
-      val edgeGradients = edges.getNeighbors(id).map(network.edgeMatrix.t * stateGradient(_))
+      val edgeGradients = edges.getNeighbors(id).map(network.edgeMatrix.t * inputGradient(_))
       id -> (
         network.updateHidden.t * updateRawGradient(id) +
         network.resetHidden.t * resetRawGradient(id) +
-        stateGradient(id) +
+        (1.0 - outputs.update(id)) :* stateGradient(id) +
         (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id) +
         vectorSum(network.size, edgeGradients))
     }.toMap
