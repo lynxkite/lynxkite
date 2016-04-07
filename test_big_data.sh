@@ -1,10 +1,18 @@
 #!/bin/bash -xue
 
+# This is the script that Jenkins calls when the user wants to run a "big data"
+# test on a Pull Request. It fires up an EMR cluster, runs groovy scripts in it
+# and dumps the test results as a commit into the PR.
+
 cd $(dirname $0)
 
 # Run test.
 NUM_INSTANCES=3 \
-  tools/emr_based_test.sh perf kitescripts/big_data_tests/edge_import.groovy kitescripts/big_data_tests/vertex_and_edge_import.groovy -- testSet:fake_westeros_100m \
+  tools/emr_based_test.sh perf \
+    kitescripts/big_data_tests/edge_import.groovy \
+    kitescripts/big_data_tests/vertex_and_edge_import.groovy \
+    -- \
+    testSet:fake_westeros_100m \
   | tee > kitescripts/big_data_tests/full_output
 # Take the header.
 cat kitescripts/big_data_tests/last_output.md \

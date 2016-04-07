@@ -401,6 +401,7 @@ EOF
         break
     fi
     GROOVY_SCRIPT_BASENAME=$(basename "$GROOVY_SCRIPT")
+    # We add a unique prefix to the file name to avoid name clashes.
     REMOTE_GROOVY_SCRIPT_NAME="script${CNT}_${GROOVY_SCRIPT_BASENAME}"
     CNT=$((CNT + 1))
     # 1.3.1. Copy Groovy script to master
