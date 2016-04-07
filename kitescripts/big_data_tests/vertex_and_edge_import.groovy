@@ -1,9 +1,7 @@
 // Tests the "Import vertices" and "Import edges for existing vertices" FE operations.
-// The vertices are loaded from a table named "test_vertices"
-// The edges are loaded from a table named "test_edges"
 
-// Requires: load_test_set.groovy
-
+/// REQUIRE_SCRIPT load_edges_from_test_set.groovy
+/// REQUIRE_SCRIPT load_vertices_from_test_set.groovy
 
 project = lynx.newProject()
 
