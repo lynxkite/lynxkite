@@ -35,3 +35,6 @@ project/plugins/project/
 
 # intellij specific
 .idea
+
+# sbt test creates it
+metastore_db/
