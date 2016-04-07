@@ -212,16 +212,55 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Check user defined path parsing") {
-    val filename = prefixPath + "/subdir/prefix_definitions.txt"
-    val pairs = PrefixRepository.parseUserDefinedInputFromURI(filename).toList
+    val inputLines = """# Comment
+              |#
+              |
+              |# Blank
+              |
+              |#COMMENTEDOUT="file:/home/user/"
+              |
+              |# # #
+              |#
+              |TEST_EMPTY="" #empty
+              |
+              |TEST_S3N="s3n://testkey:testpwd@" #
+              |
+              |TEST_S3NDIR="s3n://testkey:testpwd@directory/" #####
+              |
+              |TESTFILEDIR="file:/home/user/"
+              |
+              |          # This doesn't end in a slash!!!
+              |          TESTBLANKS_="hdfs://root/path"
+              |
+              |# Only whitespace
+              |
+              |
+              |
+              |
+              |
+              |
+              |""".stripMargin('|').split("\n").toList
 
+    val pairs = PrefixRepositoryImpl.parseInput(inputLines)
     val expected = List(
       "TEST_EMPTY" -> "",
       "TEST_S3N" -> "s3n://testkey:testpwd@",
       "TEST_S3NDIR" -> "s3n://testkey:testpwd@directory/",
       "TESTFILEDIR" -> "file:/home/user/",
       "TESTBLANKS_" -> "hdfs://root/path")
-    assert(pairs == expected)
+    assert(pairs === expected)
+  }
+
+  test("Check user defined path: parsing blanks at the end of line") {
+    val pairs = PrefixRepositoryImpl.parseInput(
+      List(
+        """PATH="hdfs://pathnode/"  """,
+        """  PATH2="hdfs://pathnode2/"     """)
+    )
+    val expected = List(
+      "PATH" -> "hdfs://pathnode/",
+      "PATH2" -> "hdfs://pathnode2/")
+    assert(pairs === expected)
   }
 
   test("Legacy mode works") {

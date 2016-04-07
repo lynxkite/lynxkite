@@ -40,18 +40,58 @@ class PrefixACLs {
   }
 }
 
-class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String = "") {
-  private val pathResolutions = scala.collection.mutable.Map[String, String]()
-  private val prefixACLs = new PrefixACLs
+object PrefixRepositoryImpl {
   private val symbolicPrefixPattern = "([_A-Z][_A-Z0-9]*[$])(.*)".r
   private val schemePattern = "[A-Za-z][-\\+\\.A-Za-z0-9]*:".r
-
   private def hasScheme(filename: String): Boolean = {
     schemePattern.findPrefixMatchOf(filename).nonEmpty
   }
+  private def fullyQualify(path: String): String =
+    HadoopFile.defaultFs.makeQualified(new hadoop.fs.Path(path)).toString
+  private def prefixSymbolSyntaxIsOK(prefixSymbol: String): Boolean = {
+    prefixSymbol match {
+      case symbolicPrefixPattern(_, rest) => rest.isEmpty
+      case _ => false
+    }
+  }
+  private def extractKeyAndValue(line: String): (String, String) = {
+    val pattern = "([_A-Z][_A-Z0-9]+)=\"([^\"]*)\"".r
+    line match {
+      case pattern(key, value) =>
+        key -> value
+      case _ =>
+        throw new AssertionError(s"Could not parse $line")
+    }
+  }
+
+  def parseInput(inputLines: List[String]): List[(String, String)] = {
+    inputLines.map { line => "[#].*$".r.replaceAllIn(line, "") } // Strip comments
+      .map { line => line.trim } // Strip leading and trailing blanks
+      .filter(line => line.nonEmpty) // Strip blank lines
+      .map(line => extractKeyAndValue(line))
+  }
+
+  private def checkPathSanity(path: String) = {
+    assert(path.isEmpty || path.endsWith("@") || path.endsWith("/"),
+      s"path: $path should either be empty or end with a @ or with a slash.")
+    // Only local clusters can reference local files
+    assert(
+      LoggedEnvironment.envOrElse("SPARK_MASTER", "").startsWith("local") ||
+        !path.startsWith("file:"),
+      s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
+  }
+
+}
+
+class PrefixRepositoryImpl(inputLines: List[String]) {
+  import PrefixRepositoryImpl._
+
+  private val pathResolutions = scala.collection.mutable.Map[String, String]()
+  private val prefixACLs = new PrefixACLs
+
+  parseKeysAndValues(parseInput(inputLines))
 
   private def getBestCandidate(path: String): Option[(String, String)] = {
-
     val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
     if (candidates.isEmpty) {
       None
@@ -59,9 +99,6 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String = "") {
       Some(candidates.maxBy(_._2.length))
     }
   }
-
-  private def fullyQualify(path: String): String =
-    HadoopFile.defaultFs.makeQualified(new hadoop.fs.Path(path)).toString
 
   private def tryToSplitBasedOnTheAvailablePrefixes(path: String): (String, String) =
     getBestCandidate(path)
@@ -83,13 +120,6 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String = "") {
       case _ =>
         throw new AssertionError(
           s"File name specification ${str} should start with a registered prefix (XYZ$$)")
-    }
-  }
-
-  private def prefixSymbolSyntaxIsOK(prefixSymbol: String): Boolean = {
-    prefixSymbol match {
-      case symbolicPrefixPattern(_, rest) => rest.isEmpty
-      case _ => false
     }
   }
 
@@ -118,43 +148,7 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String = "") {
     pathResolutions(prefixSymbol) = PathNormalizer.normalize(resolvedResolution)
   }
 
-  private def extractKeyAndValue(line: String): (String, String) = {
-    val pattern = "([_A-Z][_A-Z0-9]+)=\"([^\"]*)\"".r
-    line match {
-      case pattern(key, value) =>
-        key -> value
-      case _ =>
-        throw new AssertionError(s"Could not parse $line")
-    }
-  }
-
-  private def parseInput(stringIterator: Iterator[String]): Iterator[(String, String)] = {
-    stringIterator.map { line => "[#].*$".r.replaceAllIn(line, "") } // Strip comments
-      .map { line => line.trim } // Strip leading and trailing blanks
-      .filter(line => line.nonEmpty) // Strip blank lines
-      .map(line => extractKeyAndValue(line))
-  }
-
-  private def parseUserDefinedInputFromFile(filename: String): Iterator[(String, String)] = {
-    parseInput(Source.fromFile(filename).getLines)
-  }
-
-  def parseUserDefinedInputFromURI(filename: String): Iterator[(String, String)] = {
-    val URI = new java.net.URI(filename)
-    parseInput(Source.fromURI(URI).getLines)
-  }
-
-  private def checkPathSanity(path: String) = {
-    assert(path.isEmpty || path.endsWith("@") || path.endsWith("/"),
-      s"path: $path should either be empty or end with a @ or with a slash.")
-    // Only local clusters can reference local files
-    assert(
-      LoggedEnvironment.envOrElse("SPARK_MASTER", "").startsWith("local") ||
-        !path.startsWith("file:"),
-      s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
-  }
-
-  def parseKeysAndValues(input: Iterator[(String, String)]): Unit = {
+  def parseKeysAndValues(input: List[(String, String)]): Unit = {
     for ((key, value) <- input) {
       if (key.endsWith("_READ_ACL")) {
         prefixACLs.registerReadACL(key.dropRight("_READ_ACL".length), value)
@@ -168,19 +162,16 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String = "") {
       }
     }
   }
-
-  private def addUserDefinedResolutions(inputFile: String) = {
-    if (inputFile.nonEmpty) {
-      val userDefinedResolutions = parseUserDefinedInputFromFile(inputFile)
-      parseKeysAndValues(userDefinedResolutions)
-    }
-  }
-
-  addUserDefinedResolutions(userDefinedPrefixResolutionFile)
 }
 
 object PrefixRepository {
-  val prefixRepository = new PrefixRepositoryImpl(LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", ""))
+  val prefixRepository = {
+    val prefixDefinitionFile = LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
+    if (prefixDefinitionFile.nonEmpty)
+      new PrefixRepositoryImpl(Source.fromFile(prefixDefinitionFile).getLines.toList)
+    else
+      new PrefixRepositoryImpl(List())
+  }
 
   def getPrefixInfo(prefixSymbol: String) =
     prefixRepository.getPrefixInfo(prefixSymbol)
@@ -190,6 +181,5 @@ object PrefixRepository {
     prefixRepository.dropResolutions()
   def registerPrefix(prefixSymbol: String, prefixResolution: String) =
     prefixRepository.registerPrefix(prefixSymbol, prefixResolution)
-  def parseUserDefinedInputFromURI(filename: String) =
-    prefixRepository.parseUserDefinedInputFromURI(filename)
+
 }
