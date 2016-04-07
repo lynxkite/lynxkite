@@ -124,7 +124,7 @@ println "$count vertices processed in $time seconds."
 // Example of Spark SQL integration.
 project.vertexDF.printSchema()
 project.vertexDF.groupBy('gender').count().show()
-project.sql('select * from vertices where gender = "Male"')
+df = project.sql('select * from vertices where gender = "Male"')
 df.show()
 df.write().format('com.databricks.spark.csv').option('header', 'true').save('males.csv')
 df.write().format('parquet').save('males.parquet')
