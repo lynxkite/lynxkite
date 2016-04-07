@@ -102,6 +102,11 @@ object Scripting {
   implicit class RichStringAttribute(self: Attribute[String])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.VertexAttributeToDouble.run(self)
+
+    def derive(expression: String) = {
+      graph_operations.DeriveJS.deriveFromAttributes[String](
+        expression, Seq("x" -> self), self.vertexSet).attr
+    }
   }
 
   implicit class RichContainedDoubleAttribute(
@@ -110,6 +115,11 @@ object Scripting {
   implicit class RichDoubleAttribute(self: Attribute[Double])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.DoubleAttributeToLong.run(self)
+
+    def derive(expression: String) = {
+      graph_operations.DeriveJS.deriveFromAttributes[Double](
+        expression, Seq("x" -> self), self.vertexSet).attr
+    }
   }
 
   implicit class RichContainedLongAttribute(
