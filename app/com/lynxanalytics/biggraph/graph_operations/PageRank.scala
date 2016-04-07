@@ -2,7 +2,10 @@
 // a random walk will take us to a specific vertex.
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark
+
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object PageRank extends OpFromJson {
@@ -38,29 +41,27 @@ case class PageRank(dampingFactor: Double,
     val weights = inputs.weights.rdd.filter(_._2 > 0.0)
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val targetsWithWeights = edges.sortedJoin(weights)
-      .map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }
-      .groupBySortedKey(vertexPartitioner)
-      .mapValues { it =>
-        val dstW = it.toSeq
-        def sumWeights(s: Seq[(ID, Double)]) = s.map({ case (dst, w) => w }).sum
-        val total = sumWeights(dstW)
-        // Collapse parallel edges.
-        val collapsed = dstW.groupBy({ case (dst, w) => dst }).mapValues(sumWeights(_))
-        collapsed.mapValues(w => w / total).toArray
-      }
+    val edgePartitioner = edges.partitioner.get
 
-    var pageRank = vertices.mapValues(_ => 1.0)
+    val edgesWithWeights = edges.sortedJoin(weights).map {
+      case (_, (edge, weight)) => edge.src -> (edge.dst, weight)
+    }
+    val sumWeights = edgesWithWeights
+      .map { case (src, (_, weight)) => src -> weight }
+      .reduceBySortedKey(edgePartitioner, _ + _)
+    val targetsWithWeights = RDDUtils.hybridLookup(edgesWithWeights, sumWeights)
+      .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) }
+      .persist(spark.storage.StorageLevel.DISK_ONLY)
+
+    var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(edgePartitioner)
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
-      val incomingRank = pageRank.sortedJoin(targetsWithWeights)
-        .flatMap {
-          case (id, (pr, targets)) =>
-            targets.map { case (tid, weight) => (tid, pr * weight * dampingFactor) }
+      val incomingRank = RDDUtils.hybridLookup(targetsWithWeights, pageRank)
+        .map {
+          case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
-        .groupBySortedKey(vertexPartitioner)
-        .mapValues(_.sum)
+        .reduceBySortedKey(edgePartitioner, _ + _)
 
       val totalIncoming = incomingRank.map(_._2).aggregate(0.0)(_ + _, _ + _)
       val distributedExtraWeight = (vertexCount - totalIncoming) / vertexCount
@@ -70,6 +71,6 @@ case class PageRank(dampingFactor: Double,
           case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
     }
-    output(o.pagerank, pageRank)
+    output(o.pagerank, pageRank.sortedRepartition(vertexPartitioner))
   }
 }
