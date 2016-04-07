@@ -97,15 +97,14 @@ PageRank to another CSV, and prints the number of vertices and the time the whol
 start_time = System.currentTimeMillis()
 // Import input, calculate PageRank, export output.
 project = lynx.newProject()
-project.importVerticesAndEdgesFromSingleCSVFileset(
-  files: params['input'],
-  header: '<read first line>',
-  delimiter: ',',
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv')
+  .option('header', 'true')
+  .load(params['input'])
+project.importVerticesAndEdgesFromASingleTable(
+  table: lynx.saveAsTable(df, 'Batch Example Table'),
   src: 'src',
-  dst: 'dst',
-  filter: '',
-  allow_corrupt_lines: 'no',
-  omitted: '')
+  dst: 'dst')
 project.pageRank(
   name: 'page_rank',
   weights: '!no weight',
@@ -125,8 +124,7 @@ println "$count vertices processed in $time seconds."
 // Example of Spark SQL integration.
 project.vertexDF.printSchema()
 project.vertexDF.groupBy('gender').count().show()
-project.vertexDF.registerTempTable('example')
-df = lynx.sql('select * from example where gender = "Male"')
+project.sql('select * from vertices where gender = "Male"')
 df.show()
 df.write().format('com.databricks.spark.csv').option('header', 'true').save('males.csv')
 df.write().format('parquet').save('males.parquet')
