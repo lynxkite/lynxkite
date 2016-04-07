@@ -19,8 +19,30 @@ object PathNormalizer {
   }
 }
 
-class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String) {
+class PrefixACLs {
+  private val readACLs = scala.collection.mutable.Map[String, String]()
+  private val writeACLs = scala.collection.mutable.Map[String, String]()
+
+  def registerReadACL(prefix: String, readACL: String) = readACLs(prefix) = readACL
+  def registerWriteACL(prefix: String, writeACL: String) = writeACLs(prefix) = writeACL
+
+  def getWriteACL(prefix: String) =
+    if (writeACLs.contains(prefix)) writeACLs(prefix)
+    else "*"
+
+  def getReadACL(prefix: String) =
+    if (readACLs.contains(prefix)) readACLs(prefix)
+    else getWriteACL(prefix)
+
+  def clear() = {
+    readACLs.clear()
+    writeACLs.clear()
+  }
+}
+
+class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String = "") {
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
+  private val prefixACLs = new PrefixACLs
   private val symbolicPrefixPattern = "([_A-Z][_A-Z0-9]*[$])(.*)".r
   private val schemePattern = "[A-Za-z][-\\+\\.A-Za-z0-9]*:".r
 
@@ -79,6 +101,7 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String) {
   // This is only used by the testing module
   def dropResolutions() = {
     pathResolutions.clear()
+    prefixACLs.clear()
   }
 
   def registerPrefix(prefixSymbol: String, prefixResolution: String) = {
@@ -95,13 +118,13 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String) {
     pathResolutions(prefixSymbol) = PathNormalizer.normalize(resolvedResolution)
   }
 
-  private def extractUserDefinedPrefix(prefixDef: String): (String, String) = {
+  private def extractKeyAndValue(line: String): (String, String) = {
     val pattern = "([_A-Z][_A-Z0-9]+)=\"([^\"]*)\"".r
-    prefixDef match {
-      case pattern(prefixSymbolNoDollar, path) =>
-        prefixSymbolNoDollar -> path
+    line match {
+      case pattern(key, value) =>
+        key -> value
       case _ =>
-        throw new AssertionError(s"Could not parse $prefixDef")
+        throw new AssertionError(s"Could not parse $line")
     }
   }
 
@@ -109,7 +132,7 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String) {
     stringIterator.map { line => "[#].*$".r.replaceAllIn(line, "") } // Strip comments
       .map { line => line.trim } // Strip leading and trailing blanks
       .filter(line => line.nonEmpty) // Strip blank lines
-      .map(line => extractUserDefinedPrefix(line))
+      .map(line => extractKeyAndValue(line))
   }
 
   private def parseUserDefinedInputFromFile(filename: String): Iterator[(String, String)] = {
@@ -131,17 +154,29 @@ class PrefixRepositoryImpl(userDefinedPrefixResolutionFile: String) {
       s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
   }
 
-  private def addUserDefinedResolutions() = {
-    if (userDefinedPrefixResolutionFile.nonEmpty) {
-      val userDefinedResolutions = parseUserDefinedInputFromFile(userDefinedPrefixResolutionFile)
-      for ((prefixSymbolNoDollar, path) <- userDefinedResolutions) {
+  def parseKeysAndValues(input: Iterator[(String, String)]): Unit = {
+    for ((key, value) <- input) {
+      if (key.endsWith("_READ_ACL")) {
+        prefixACLs.registerReadACL(key.dropRight("_READ_ACL".length), value)
+      } else if (key.endsWith("_WRITE_ACL")) {
+        prefixACLs.registerWriteACL(key.dropRight("_WRITE_ACL".length), value)
+      } else {
+        val prefixSymbolNoDollar = key
+        val path = value
         checkPathSanity(path)
         registerPrefix(prefixSymbolNoDollar + "$", path)
       }
     }
   }
 
-  addUserDefinedResolutions()
+  private def addUserDefinedResolutions(inputFile: String) = {
+    if (inputFile.nonEmpty) {
+      val userDefinedResolutions = parseUserDefinedInputFromFile(inputFile)
+      parseKeysAndValues(userDefinedResolutions)
+    }
+  }
+
+  addUserDefinedResolutions(userDefinedPrefixResolutionFile)
 }
 
 object PrefixRepository {
