@@ -8,4 +8,12 @@ file will be pushed to the pull request by Jenkins.
 
 The results of the latest run are below:
 ```
+STARTING SCRIPT /home/hadoop/batch/script1_edge_import.groovy with params List((testSet,fake_westeros_100m))
+in_degree: {"labelType":"between","labels":["0.0","1.0","4.0","15.8","63.1","251.2","1000.0","3981.1","15848.9","63095.7","251188.4","999999.0"],"sizes":[92322477,5612496,1593916,354400,87790,21749,5388,1342,337,86,19]}
+out_degree: {"labelType":"between","labels":["1.00","1.00"],"sizes":[100000000]}
+FINISHED SCRIPT /home/hadoop/batch/script1_edge_import.groovy, took 1093 seconds
+STARTING SCRIPT /home/hadoop/batch/script2_vertex_and_edge_import.groovy with params List((testSet,fake_westeros_100m))
+in_degree: {"labelType":"between","labels":["0.0","1.0","4.0","15.8","63.1","251.2","1000.0","3981.1","15848.9","63095.7","251188.4","999999.0"],"sizes":[92322477,5612496,1593916,354400,87790,21749,5388,1342,337,86,19]}
+out_degree: {"labelType":"between","labels":["1.00","1.00"],"sizes":[100000000]}
+FINISHED SCRIPT /home/hadoop/batch/script2_vertex_and_edge_import.groovy, took 1273 seconds
 ```
