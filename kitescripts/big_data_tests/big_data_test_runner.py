@@ -10,7 +10,7 @@ scripts can be annotated with
 
 /// REQUIRE_SCRIPT other_script.groovy
 
-lines, and if this script will choose an execution order in which
+lines, and this script will choose an execution order in which
 a groovy script is only executed after all its required scripts were run.
 (This only works if the requirement graph has no loops.)
 
@@ -27,37 +27,35 @@ import os
 import sys
 import subprocess
 
-"""
-Set of tests that were seen by the runTest functions.
-This is used to ensure that one test is executed at most
-once.
-"""
-seenTests = {}
+# Set of tests that were seen by the run_test functions.
+# This is used to ensure that one test is executed at most
+# once.
+seen_tests = {}
 
-def runTest(kitePath, testDir, testName, testDataSet):
+def run_test(kite_path, test_dir, test_name, test_data_set):
   """
   Runs a single test script, but before that, runs its
   requirement scripts.
   """
-  if testName in seenTests:
+  if test_name in seen_tests:
     return
-  seenTests[testName] = True
+  seen_tests[test_name] = True
 
-  fileName = testDir + '/' + testName
-  for line in open(fileName, 'r'):
+  file_name = test_dir + '/' + test_name
+  for line in open(file_name, 'r'):
     if line.startswith('///'):
       REQUIRE_SCRIPT_STR = '/// REQUIRE_SCRIPT '
       if line.startswith(REQUIRE_SCRIPT_STR):
-        requiredScript = line[len(REQUIRE_SCRIPT_STR):].strip()
-        runTest(kitePath, testDir, requiredScript, testDataSet) 
+        required_script = line[len(REQUIRE_SCRIPT_STR):].strip()
+        run_test(kite_path, test_dir, required_script, test_data_set) 
       else:
-        print 'Unknown directive in ', fileName, ': ', line
+        print 'Unknown directive in ', file_name, ': ', line
         sys.exit(1)
 
-  subprocess.call([kitePath, 'batch', fileName, testDataSet])
+  subprocess.call([kite_path, 'batch', file_name, test_data_set])
 
 def main(argv):
-  myPath = os.path.abspath('/'.join(argv[0].split('/')[:-1]))
+  my_path = os.path.abspath(os.path.dirname(argv[0]))
   if len(argv) < 3:
     print 'Invalid parameters. Usage:'
     print argv[0], ' pattern parameter'
@@ -65,14 +63,18 @@ def main(argv):
     print argv[0], ' \'*\' testSet:fake_westeros_100k'
     return
   else:
-    scriptPattern = argv[1]
-    testDataSet = argv[2]
-  kitePath = myPath + '/../../bin/biggraph'
-  scripts = glob.glob(myPath + '/' + scriptPattern + '.groovy')
+    script_pattern = argv[1]
+    test_data_set = argv[2]
+  kite_path = my_path + '/../../bin/biggraph'
+  scripts = glob.glob(my_path + '/' + script_pattern + '.groovy')
   # Ensure the order is deterministic to have nice diffs:
   scripts.sort()
   for script in scripts:
-    runTest(kitePath, myPath, script.split('/')[-1], testDataSet)
+    run_test(
+      kite_path,
+      my_path,
+      os.path.relpath(script, my_path),
+      test_data_set)
 
 if __name__ == "__main__":
   main(sys.argv)
