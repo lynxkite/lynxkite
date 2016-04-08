@@ -273,10 +273,8 @@ class HadoopFileTest extends FunSuite {
         |PATH1="hdfs://node1/"
         |
         |PATH2="hdfs://node2/"
-        |PATH2_READ_ACL="*@lynx"
-        |
-        |PATH3="hdfs://node3/"
-        |PATH3_WRITE_ACL="*@lynx"
+        |PATH2_READ_ACL="*@lynx1"
+        |PATH2_WRITE_ACL="*@lynx2"
       """.stripMargin.split("\n").toList
     val prefixRepo = new PrefixRepositoryImpl(input)
 
@@ -284,13 +282,32 @@ class HadoopFileTest extends FunSuite {
     assert(prefixRepo.getReadACL("PATH1$") == "*")
     assert(prefixRepo.getWriteACL("PATH1$") == "*")
 
-    // Only read settings, write: default
-    assert(prefixRepo.getReadACL("PATH2$") == "*@lynx")
-    assert(prefixRepo.getWriteACL("PATH2$") == "*")
+    // Given settings: retrieved correctly
+    assert(prefixRepo.getReadACL("PATH2$") == "*@lynx1")
+    assert(prefixRepo.getWriteACL("PATH2$") == "*@lynx2")
+  }
 
-    // Only write settings, read inherits write
-    assert(prefixRepo.getReadACL("PATH3$") == "*@lynx")
-    assert(prefixRepo.getWriteACL("PATH3$") == "*@lynx")
+  test("Lopsided settings cause an assert") {
+    val input =
+      """
+        |PATH="hdfs://node2/"
+        |PATH_READ_ACL="*@lynx"
+      """.stripMargin.split("\n").toList
+    intercept[Throwable] {
+      new PrefixRepositoryImpl(input)
+    }
+  }
+
+  test("Misspelled settings cause an assert") {
+    val input =
+      """
+        |PAHT="hdfs://node2/"
+        |PATH_READ_ACL="*@lynx"
+        |PATH_READ_ACL="*@lynx"
+      """.stripMargin.split("\n").toList
+    intercept[Throwable] {
+      new PrefixRepositoryImpl(input)
+    }
   }
 
   test("Legacy mode works") {

@@ -32,17 +32,26 @@ class PrefixACLs {
 
   def getReadACL(prefix: String) =
     if (readACLs.contains(prefix)) readACLs(prefix)
-    else getWriteACL(prefix)
+    else "*"
 
   def clear() = {
     readACLs.clear()
     writeACLs.clear()
   }
+
   def checkSanity(possibleKeys: Seq[String]) = {
     val diffRead = readACLs.keys.toSet &~ possibleKeys.toSet
-    assert(diffRead.isEmpty, s"READ_ACLS defined for non existing prefixes: $diffRead")
+    assert(diffRead.isEmpty, s"READ_ACL defined for non existing prefixes: $diffRead")
     val diffWrite = writeACLs.keys.toSet &~ possibleKeys.toSet
-    assert(diffWrite.isEmpty, s"WRITE_ACLS defined for non existing prefixes: $diffWrite")
+    assert(diffWrite.isEmpty, s"WRITE_ACL defined for non existing prefixes: $diffWrite")
+
+    val diffWriteRead = writeACLs.keys.toSet &~ readACLs.keys.toSet
+    assert(diffWriteRead.isEmpty,
+      s"No READ_ACL is defined for these prefixes: $diffWriteRead")
+
+    val diffReadWrite = readACLs.keys.toSet &~ writeACLs.keys.toSet
+    assert(diffReadWrite.isEmpty,
+      s"No WRITE_ACL is defined for these prefixes: $diffWriteRead")
   }
 }
 
