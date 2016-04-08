@@ -1,22 +1,24 @@
 #!/usr/bin/python
 
-# Given a glob pattern, this executes all the Groovy scripts
-# from its own directory, starting up a separate instance
-# of LynxKite for each script. (To avoid interactions between
-# tests, e.g. cache-related.)
-# The order of script execution is not arbitrary. The groovy
-# scripts can be annotated with
-#
-# /// REQUIRE_SCRIPT other_script.groovy
-#
-# lines, and if this script will choose an execution order in which
-# a groovy script is only executed after all its required scripts were run.
-# (This only works if the requirement graph has no loops.)
+"""
+Given a glob pattern, this executes all the Groovy scripts
+from its own directory, starting up a separate instance
+of LynxKite for each script. (To avoid interactions between
+tests, e.g. cache-related.)
+The order of script execution is not arbitrary. The groovy
+scripts can be annotated with
 
-# Usage big_data_test_runner.py pattern value:setting
-# For example xyz/big_data_test_runner.py '*' testSet:fake_westeros_100m
-# Will execute all the tests xyz/*.groovy using the test data from
-# fake_westeros_100m.
+/// REQUIRE_SCRIPT other_script.groovy
+
+lines, and if this script will choose an execution order in which
+a groovy script is only executed after all its required scripts were run.
+(This only works if the requirement graph has no loops.)
+
+Usage big_data_test_runner.py pattern value:setting
+For example xyz/big_data_test_runner.py '*' testSet:fake_westeros_100m
+Will execute all the tests xyz/*.groovy using the test data from
+fake_westeros_100m.
+"""
 
 # TODO: support multiple patterns and multiple arguments
 
@@ -25,12 +27,18 @@ import os
 import sys
 import subprocess
 
-# Set of tests that were seen by the runTest functions.
-# This is used to ensure that one test is executed at most
-# once.
+"""
+Set of tests that were seen by the runTest functions.
+This is used to ensure that one test is executed at most
+once.
+"""
 seenTests = {}
 
 def runTest(kitePath, testDir, testName, testDataSet):
+  """
+  Runs a single test script, but before that, runs its
+  requirement scripts.
+  """
   if testName in seenTests:
     return
   seenTests[testName] = True
