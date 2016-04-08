@@ -49,7 +49,7 @@ namespace.
    Apache Spark DataFrame as a LynxKite table. It returns the table identifier that can be used
    as a parameter for import operations.
  - `String **lynx.resolvePath**(String path)` resolves a <<prefixed-paths, prefixed path>>.
- - `StructType **lynx.schema**(List[String] columns)` creates a schema with `StringType` columns
+ - `StructType **lynx.stringSchema**(List[String] columns)` creates a schema with `StringType` columns
    It can be used when loading tables via the `sqlContext`.
 
 The properties of `GroovyProject` are:
@@ -102,6 +102,12 @@ project = lynx.newProject()
 df = lynx.sqlContext.read()
   .format('com.databricks.spark.csv')
   .option('header', 'true')
+  .load(params['input'])
+// Alternatively if there are no headers in the CSV file.
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv')
+  .option('header', 'false')
+  .schema(lynx.stringSchema(['src', 'dst']))
   .load(params['input'])
 project.importVerticesAndEdgesFromASingleTable(
   table: lynx.saveAsTable(df, 'Batch Example Table'),
