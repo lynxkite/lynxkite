@@ -2337,35 +2337,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val segmentation = project.segmentation(params("name"))
 
       val segAttr = runtimeSafeImport(
-        segmentation, baseColumn, segColumn, baseAttr)(baseAttr.typeTag)
+        segmentation, baseColumn, segColumn, baseAttr)(baseColumn.typeTag, segColumn.typeTag)
       segmentation.newVertexAttribute(segColumnName, segAttr)
     }
 
-    def runtimeSafeImport[T: TypeTag](
+    def runtimeSafeImport[A: TypeTag, B: TypeTag](
       segmentation: SegmentationEditor,
       baseColumn: Attribute[_], segColumn: Attribute[_], baseAttr: Attribute[_]): Attribute[_] = {
       typedImport(
         segmentation,
-        baseColumn.runtimeSafeCast[T],
-        segColumn.runtimeSafeCast[T],
-        baseAttr.runtimeSafeCast[T])
+        baseColumn.runtimeSafeCast[A],
+        segColumn.runtimeSafeCast[B],
+        baseAttr.runtimeSafeCast[A])
     }
 
-    def typedImport[T: TypeTag](
+    def typedImport[A: TypeTag, B: TypeTag](
       segmentation: SegmentationEditor,
-      baseColumn: Attribute[T], segColumn: Attribute[T], baseAttr: Attribute[T]): Attribute[T] = {
+      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[A]): Attribute[B] = {
       // Merge by segment ID to create the segments.
       val merge = {
-        val op = graph_operations.MergeVertices[T]()
+        val op = graph_operations.MergeVertices[B]()
         op(op.attr, segColumn).result
       }
       segmentation.setVertexSet(merge.segments, idAttr = "id")
       // Move segment ID to the segments.
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
-        AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[T]()))
+        AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
       // Import belongs-to relationship as edges between the base and the segmentation.
-      val imp = graph_operations.ImportEdgeListForExistingVertexSetFromTableBase.run[T](
+      val imp = graph_operations.ImportEdgeListForExistingVertexSetFromTableBase.run(
         baseAttr, segAttr, baseColumn, segColumn)
       segmentation.belongsTo = imp.edges
       segAttr

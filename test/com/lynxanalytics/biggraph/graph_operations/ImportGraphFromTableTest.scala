@@ -17,11 +17,8 @@ class ImportGraphFromTableTest extends FunSuite with TestGraphOp {
       table.vs, Map(1 -> "Eve", 2 -> "Adam", 3 -> "Hank", 4 -> "Eve"))
     val graph = ExampleGraph().result
 
-    val op = ImportEdgeListForExistingVertexSetFromTable()
-    val result = op(op.srcVidAttr, graph.name)(
-      op.dstVidAttr, graph.name)(
-        op.srcVidColumn, srcColumn)(
-          op.dstVidColumn, dstColumn).result
+    val result = ImportEdgeListForExistingVertexSetFromTableBase.run(
+      graph.name, graph.name, srcColumn, dstColumn)
     assert(Seq((1, (0, 1)), (2, (1, 0)), (4, (2, 1))) ==
       result.edges.toIdPairSeq)
   }
@@ -33,11 +30,8 @@ class ImportGraphFromTableTest extends FunSuite with TestGraphOp {
     val dstColumn = AddVertexAttribute.run(table.vs, Map(0 -> 1L, 1 -> 0L, 2 -> 0L, 3 -> 1L))
     val graph = ExampleGraph().result
 
-    val op = ImportEdgeListForExistingVertexSetFromTableLong()
-    val result = op(op.srcVidAttr, graph.vertices.idAttribute)(
-      op.dstVidAttr, graph.vertices.idAttribute)(
-        op.srcVidColumn, srcColumn)(
-          op.dstVidColumn, dstColumn).result
+    val result = ImportEdgeListForExistingVertexSetFromTableBase.run(
+      graph.vertices.idAttribute, graph.vertices.idAttribute, srcColumn, dstColumn)
     assert(graph.edges.toIdPairSeq == result.edges.toIdPairSeq)
   }
 }

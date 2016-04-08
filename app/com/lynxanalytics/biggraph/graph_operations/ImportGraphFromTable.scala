@@ -4,41 +4,44 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object ImportEdgeListForExistingVertexSetFromTableBase {
-  class Input[T] extends MagicInputSignature {
+  class Input[A, B] extends MagicInputSignature {
     val rows = vertexSet
-    val srcVidColumn = vertexAttribute[T](rows)
-    val dstVidColumn = vertexAttribute[T](rows)
+    val srcVidColumn = vertexAttribute[A](rows)
+    val dstVidColumn = vertexAttribute[B](rows)
     val sources = vertexSet
     val destinations = vertexSet
-    val srcVidAttr = vertexAttribute[T](sources)
-    val dstVidAttr = vertexAttribute[T](destinations)
+    val srcVidAttr = vertexAttribute[A](sources)
+    val dstVidAttr = vertexAttribute[B](destinations)
   }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T])
+  class Output[A, B](implicit instance: MetaGraphOperationInstance,
+                     inputs: Input[A, B])
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
   }
 
-  def run[T: TypeTag](
-    srcVidAttr: Attribute[T],
-    dstVidAttr: Attribute[T],
-    srcVidColumn: Attribute[T],
-    dstVidColumn: Attribute[T])(implicit m: MetaGraphManager): Output[T] = {
+  def run[A: TypeTag, B: TypeTag](
+    srcVidAttr: Attribute[A],
+    dstVidAttr: Attribute[B],
+    srcVidColumn: Attribute[A],
+    dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output[A, B] = {
     import Scripting._
     val op = {
-      if (typeOf[T] =:= typeOf[String])
+      if (typeOf[A] =:= typeOf[String] && typeOf[B] =:= typeOf[String])
         new ImportEdgeListForExistingVertexSetFromTable()
-      else if (typeOf[T] =:= typeOf[Long])
-        new ImportEdgeListForExistingVertexSetFromTableLong()
-      else assert(false,
-        s"ImportEdgeListForExistingVertexSetFromTableBase is not supported for ${typeOf[T]}.")
-    }.asInstanceOf[ImportEdgeListForExistingVertexSetFromTableBase[T]]
+      else if (typeOf[A] =:= typeOf[Long] && typeOf[B] =:= typeOf[String])
+        new ImportEdgeListForExistingVertexSetFromTableLongString()
+      else if (typeOf[A] =:= typeOf[Long] && typeOf[B] =:= typeOf[Long])
+        new ImportEdgeListForExistingVertexSetFromTableLongLong()
+      else assert(
+        false,
+        "ImportEdgeListForExistingVertexSetFromTableBase is not supported for" +
+          s" ${typeOf[A]} + ${typeOf[B]}.")
+    }.asInstanceOf[ImportEdgeListForExistingVertexSetFromTableBase[A, B]]
     op(
       op.srcVidColumn, srcVidColumn)(
         op.dstVidColumn, dstVidColumn)(
@@ -50,27 +53,28 @@ object ImportEdgeListForExistingVertexSetFromTableBase {
     srcVidAttr: Attribute[_],
     dstVidAttr: Attribute[_],
     srcVidColumn: Attribute[_],
-    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_] = {
-    val tt = srcVidAttr.typeTag
-    runtimeSafeHelper(srcVidAttr, dstVidAttr, srcVidColumn, dstVidColumn)(tt, m)
+    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_, _] = {
+    val ta = srcVidAttr.typeTag
+    val tb = dstVidAttr.typeTag
+    runtimeSafeHelper(srcVidAttr, dstVidAttr, srcVidColumn, dstVidColumn)(ta, tb, m)
   }
 
-  private def runtimeSafeHelper[T: TypeTag](
+  private def runtimeSafeHelper[A: TypeTag, B: TypeTag](
     srcVidAttr: Attribute[_],
     dstVidAttr: Attribute[_],
     srcVidColumn: Attribute[_],
-    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_] = {
+    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_, _] = {
     run(
-      srcVidAttr.runtimeSafeCast[T],
-      dstVidAttr.runtimeSafeCast[T],
-      srcVidColumn.runtimeSafeCast[T],
-      dstVidColumn.runtimeSafeCast[T])
+      srcVidAttr.runtimeSafeCast[A],
+      dstVidAttr.runtimeSafeCast[B],
+      srcVidColumn.runtimeSafeCast[A],
+      dstVidColumn.runtimeSafeCast[B])
   }
 
-  def resolveEdges[T: reflect.ClassTag: Ordering](
-    unresolvedEdges: UniqueSortedRDD[ID, (T, T)],
-    srcVidAttr: AttributeData[T],
-    dstVidAttr: AttributeData[T]): UniqueSortedRDD[ID, Edge] = {
+  def resolveEdges[A: reflect.ClassTag: Ordering, B: reflect.ClassTag: Ordering](
+    unresolvedEdges: UniqueSortedRDD[ID, (A, B)],
+    srcVidAttr: AttributeData[A],
+    dstVidAttr: AttributeData[B]): UniqueSortedRDD[ID, Edge] = {
 
     val partitioner = unresolvedEdges.partitioner.get
 
@@ -79,7 +83,7 @@ object ImportEdgeListForExistingVertexSetFromTableBase {
       .assertUniqueKeys(partitioner)
     val dstNameToVid = {
       if (srcVidAttr.gUID == dstVidAttr.gUID)
-        srcNameToVid
+        srcNameToVid.asInstanceOf[UniqueSortedRDD[B, ID]]
       else
         dstVidAttr.rdd
           .map { case (k, v) => v -> k }
@@ -98,14 +102,14 @@ object ImportEdgeListForExistingVertexSetFromTableBase {
   }
 }
 import ImportEdgeListForExistingVertexSetFromTableBase._
-abstract class ImportEdgeListForExistingVertexSetFromTableBase[T: reflect.ClassTag: Ordering]
-    extends TypedMetaGraphOp[Input[T], Output[T]] {
+abstract class ImportEdgeListForExistingVertexSetFromTableBase[A: reflect.ClassTag: Ordering, B: reflect.ClassTag: Ordering]
+    extends TypedMetaGraphOp[Input[A, B], Output[A, B]] {
   override val isHeavy = true
-  @transient override lazy val inputs = new Input[T]()
+  @transient override lazy val inputs = new Input[A, B]()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
-              o: Output[T],
+              o: Output[A, B],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
@@ -132,10 +136,16 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
   def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTable()
 }
 case class ImportEdgeListForExistingVertexSetFromTable()
-  extends ImportEdgeListForExistingVertexSetFromTableBase[String]
+  extends ImportEdgeListForExistingVertexSetFromTableBase[String, String]
 
-object ImportEdgeListForExistingVertexSetFromTableLong extends OpFromJson {
-  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTableLong()
+object ImportEdgeListForExistingVertexSetFromTableLongString extends OpFromJson {
+  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTableLongString()
 }
-case class ImportEdgeListForExistingVertexSetFromTableLong()
-  extends ImportEdgeListForExistingVertexSetFromTableBase[Long]
+case class ImportEdgeListForExistingVertexSetFromTableLongString()
+  extends ImportEdgeListForExistingVertexSetFromTableBase[Long, String]
+
+object ImportEdgeListForExistingVertexSetFromTableLongLong extends OpFromJson {
+  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTableLongLong()
+}
+case class ImportEdgeListForExistingVertexSetFromTableLongLong()
+  extends ImportEdgeListForExistingVertexSetFromTableBase[Long, Long]

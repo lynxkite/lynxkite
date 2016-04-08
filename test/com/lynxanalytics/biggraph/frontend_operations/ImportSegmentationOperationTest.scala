@@ -9,13 +9,13 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
 
   def getTable = {
     val rows = Seq(
-      ("Adam", "Good"),
-      ("Eve", "Naughty"),
-      ("Bob", "Good"),
-      ("Isolated Joe", "Naughty"),
-      ("Isolated Joe", "Retired"))
+      ("Adam", "Good", 0L),
+      ("Eve", "Naughty", 1L),
+      ("Bob", "Good", 2L),
+      ("Isolated Joe", "Naughty", 3L),
+      ("Isolated Joe", "Retired", 3L))
     val sql = cleanDataManager.newSQLContext
-    val dataFrame = sql.createDataFrame(rows).toDF("base_name", "seg_name")
+    val dataFrame = sql.createDataFrame(rows).toDF("base_name", "seg_name", "base_id")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_segmentation_import").asNewTableFrame(table, "")
     s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
@@ -62,5 +62,16 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
       belongsTo.map { case (vid, sid) => vid -> nameMap(sid) }
     }
     assert(segMap == Seq(0 -> "Good", 1 -> "Naughty", 2 -> "Good", 3 -> "Retired", 3 -> "Naughty"))
+  }
+
+  test("Import segmentation for example graph by Long ID") {
+    run("Example Graph")
+    run("Import segmentation", Map(
+      "table" -> getTable,
+      "name" -> "imported",
+      "base-id-attr" -> "id",
+      "base-id-column" -> "base_id",
+      "seg-id-column" -> "seg_name"))
+    checkAssertions()
   }
 }
