@@ -115,7 +115,6 @@ project.importVerticesAndEdgesFromASingleTable(
   dst: 'dst')
 project.pageRank(
   name: 'page_rank',
-  weights: '!no weight',
   iterations: '5',
   damping: '0.85')
 project.exportVertexAttributesToFile(
