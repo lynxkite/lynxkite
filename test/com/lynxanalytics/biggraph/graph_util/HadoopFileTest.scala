@@ -303,7 +303,7 @@ class HadoopFileTest extends FunSuite {
       """
         |PAHT="hdfs://node2/"
         |PATH_READ_ACL="*@lynx"
-        |PATH_READ_ACL="*@lynx"
+        |PATH_WRITE_ACL="*@lynx"
       """.stripMargin.split("\n").toList
     intercept[Throwable] {
       new PrefixRepositoryImpl(input)
