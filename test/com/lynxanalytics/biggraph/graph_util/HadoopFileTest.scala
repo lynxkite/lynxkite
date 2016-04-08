@@ -254,8 +254,8 @@ class HadoopFileTest extends FunSuite {
   test("Check user defined path: parsing blanks at the end of line") {
     val pairs = PrefixRepositoryImpl.parseInput(
       List(
-        """PATH="hdfs://pathnode/"  """,
-        """  PATH2="hdfs://pathnode2/"     """)
+        "PATH=\"hdfs://pathnode/\"  ",
+        "PATH2=\"hdfs://pathnode2/\"\t\t \t")
     )
     val expected = List(
       "PATH" -> "hdfs://pathnode/",
