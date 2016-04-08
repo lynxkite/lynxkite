@@ -38,6 +38,12 @@ class PrefixACLs {
     readACLs.clear()
     writeACLs.clear()
   }
+  def checkSanity(possibleKeys: Seq[String]) = {
+    val diffRead = readACLs.keys.toSet &~ possibleKeys.toSet
+    assert(diffRead.isEmpty, s"READ_ACLS defined for non existing prefixes: $diffRead")
+    val diffWrite = writeACLs.keys.toSet &~ possibleKeys.toSet
+    assert(diffWrite.isEmpty, s"WRITE_ACLS defined for non existing prefixes: $diffWrite")
+  }
 }
 
 object PrefixRepositoryImpl {
@@ -90,6 +96,7 @@ class PrefixRepositoryImpl(inputLines: List[String]) {
   private val prefixACLs = new PrefixACLs
 
   parseKeysAndValues(parseInput(inputLines))
+  prefixACLs.checkSanity(pathResolutions.keys.toSeq)
 
   private def getBestCandidate(path: String): Option[(String, String)] = {
     val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
@@ -98,6 +105,14 @@ class PrefixRepositoryImpl(inputLines: List[String]) {
     } else {
       Some(candidates.maxBy(_._2.length))
     }
+  }
+
+  def getWriteACL(prefix: String): String = {
+    prefixACLs.getWriteACL(prefix)
+  }
+
+  def getReadACL(prefix: String): String = {
+    prefixACLs.getReadACL(prefix)
   }
 
   private def tryToSplitBasedOnTheAvailablePrefixes(path: String): (String, String) =
@@ -151,9 +166,9 @@ class PrefixRepositoryImpl(inputLines: List[String]) {
   def parseKeysAndValues(input: List[(String, String)]): Unit = {
     for ((key, value) <- input) {
       if (key.endsWith("_READ_ACL")) {
-        prefixACLs.registerReadACL(key.dropRight("_READ_ACL".length), value)
+        prefixACLs.registerReadACL(key.dropRight("_READ_ACL".length) + "$", value)
       } else if (key.endsWith("_WRITE_ACL")) {
-        prefixACLs.registerWriteACL(key.dropRight("_WRITE_ACL".length), value)
+        prefixACLs.registerWriteACL(key.dropRight("_WRITE_ACL".length) + "$", value)
       } else {
         val prefixSymbolNoDollar = key
         val path = value
@@ -181,5 +196,9 @@ object PrefixRepository {
     prefixRepository.dropResolutions()
   def registerPrefix(prefixSymbol: String, prefixResolution: String) =
     prefixRepository.registerPrefix(prefixSymbol, prefixResolution)
+  def getWriteACL(prefix: String) =
+    prefixRepository.getWriteACL(prefix)
+  def getReadACL(prefix: String) =
+    prefixRepository.getReadACL(prefix)
 
 }
