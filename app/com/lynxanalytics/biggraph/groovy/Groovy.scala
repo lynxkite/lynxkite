@@ -159,6 +159,12 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   // Resolves the prefixed path.
   def resolvePath(path: String): String = HadoopFile(path).resolvedName
+
+  // Creates a StructType with StringType columns from the input column names.
+  def stringSchema(columns: java.util.List[String]): spark.sql.types.StructType = {
+    import scala.collection.JavaConversions._
+    SQLController.stringOnlySchema(columns)
+  }
 }
 
 // This is the interface that is visible from trustedShell as "lynx.drawing". This is
