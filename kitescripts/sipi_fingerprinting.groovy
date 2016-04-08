@@ -111,7 +111,6 @@ union.fingerprintingBasedOnAttributes(
   rightName: 'linkedin_name',
   mo: '1',
   ms: '0.0',
-  weights: '!no weight',
   extra: '"weightingMode": "InverseInDegreeBasedHybrid", "multiNeighborsPreference": 5.0')
 
 // Evaluate.
