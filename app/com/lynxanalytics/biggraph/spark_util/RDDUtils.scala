@@ -302,27 +302,6 @@ object RDDUtils {
         { tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap })
   }
 
-  // This is a variant of hybridLookup that can be used if (an estimate of) the counts for each
-  // keys is already available for the caller.
-  def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)]): RDD[(K, (T, S))] =
-    hybridLookupUsingCounts(sourceRDD, lookupTableWithCounts, hybridLookupThreshold)
-
-  def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)],
-    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
-
-    hybridLookupImpl(
-      sourceRDD,
-      lookupTableWithCounts.mapValues(_._1),
-      lookupTableWithCounts.map { case (k, (s, c)) => (k, s) -> c },
-      maxValuesPerKey)(
-        { tops => tops.map { case (k, _) => k }.toSet },
-        { tops => tops.toMap })
-  }
-
   // Common implementation for the above hybrid lookup methods.
   // This will find the top key (the ones with the largest count) from the countsTable. Then if
   // any count is higher than maxValuesPerKey, then it does a hybrid lookup. To get the lookup

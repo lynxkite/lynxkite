@@ -362,30 +362,29 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     val columns = readColumns(rc, input, Set(src, dst))
     val edgePartitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
-    val namesWithCounts = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
-      .map(x => x -> 1L)
-      .reduceByKey(edgePartitioner, _ + _)
+    val names = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
+      .distinct
       .cache()
-    val vertexPartitioner = rc.partitionerForNRows(namesWithCounts.count())
-    val idToNameWithCount = namesWithCounts.randomNumbered(vertexPartitioner)
-    val nameToIdWithCount = idToNameWithCount
-      .map { case (id, (name, count)) => (name, (id, count)) }
+    val vertexPartitioner = rc.partitionerForNRows(names.count())
+    val idToName = names.randomNumbered(vertexPartitioner)
+    val nameToId = idToName
+      .map { case (id, (name)) => name -> id }
       // This is going to be joined with edges, so we use the edge partitioner.
       .sortUnique(edgePartitioner)
-    val srcResolvedByDst = RDDUtils.hybridLookupUsingCounts(
+    val srcResolvedByDst = RDDUtils.hybridLookup(
       edgeSrcDst(columns).map {
         case (edgeId, (src, dst)) => src -> (edgeId, dst)
       },
-      nameToIdWithCount)
+      nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = RDDUtils.hybridLookupUsingCounts(srcResolvedByDst, nameToIdWithCount)
+    val edges = RDDUtils.hybridLookup(srcResolvedByDst, nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)
 
     output(o.edges, edges)
-    output(o.vertices, idToNameWithCount.mapValues(_ => ()))
-    output(o.stringID, idToNameWithCount.mapValues(_._1))
+    output(o.vertices, idToName.mapValues(_ => ()))
+    output(o.stringID, idToName)
   }
 }
 
