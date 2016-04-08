@@ -46,7 +46,7 @@ def runTest(kitePath, testDir, testName, testDataSet):
         print 'Unknown directive in ', fileName, ': ', line
         sys.exit(1)
 
-  subprocess.call([kitePath, 'batch', fileName])
+  subprocess.call([kitePath, 'batch', fileName, testDataSet])
 
 def main(argv):
   myPath = os.path.abspath('/'.join(argv[0].split('/')[:-1]))
@@ -57,14 +57,14 @@ def main(argv):
     print argv[0], ' \'*\' testSet:fake_westeros_100k'
     return
   else:
-    scriptFilter = argv[1]
-    testSetFilter = argv[2]
+    scriptPattern = argv[1]
+    testDataSet = argv[2]
   kitePath = myPath + '/../../bin/biggraph'
-  scripts = glob.glob(myPath + '/' + scriptFilter + '.groovy')
+  scripts = glob.glob(myPath + '/' + scriptPattern + '.groovy')
   # Ensure the order is deterministic to have nice diffs:
   scripts.sort()
   for script in scripts:
-    runTest(kitePath, myPath, script.split('/')[-1], testSetFilter)
+    runTest(kitePath, myPath, script.split('/')[-1], testDataSet)
 
 if __name__ == "__main__":
   main(sys.argv)
