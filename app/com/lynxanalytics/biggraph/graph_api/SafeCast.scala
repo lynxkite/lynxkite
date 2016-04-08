@@ -20,10 +20,6 @@ object RuntimeSafeCastable {
     val tt = typeTag[T]
     ClassTag[T](tt.mirror.runtimeClass(tt.tpe))
   }
-
-  def sameCast[T: TypeTag, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteKind]](
-    list: ConcreteKind[_]*): Iterable[ConcreteKind[T]] =
-    list.map(_.runtimeSafeCast[T])
 }
 trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteKind]] {
   implicit def typeTag: TypeTag[T]
