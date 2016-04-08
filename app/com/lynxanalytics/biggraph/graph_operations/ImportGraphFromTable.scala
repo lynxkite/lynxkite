@@ -1,6 +1,8 @@
 // Operations and other classes for importing data from tables.
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.runtime.universe._
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
@@ -21,6 +23,48 @@ object ImportEdgeListForExistingVertexSetFromTableBase {
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
+  }
+
+  def run[T: TypeTag](
+    srcVidAttr: Attribute[T],
+    dstVidAttr: Attribute[T],
+    srcVidColumn: Attribute[T],
+    dstVidColumn: Attribute[T])(implicit m: MetaGraphManager): Output[T] = {
+    import Scripting._
+    val op = {
+      if (typeOf[T] =:= typeOf[String])
+        new ImportEdgeListForExistingVertexSetFromTable()
+      else if (typeOf[T] =:= typeOf[Long])
+        new ImportEdgeListForExistingVertexSetFromTableLong()
+      else assert(false,
+        s"ImportEdgeListForExistingVertexSetFromTableBase is not supported for ${typeOf[T]}.")
+    }.asInstanceOf[ImportEdgeListForExistingVertexSetFromTableBase[T]]
+    op(
+      op.srcVidColumn, srcVidColumn)(
+        op.dstVidColumn, dstVidColumn)(
+          op.srcVidAttr, srcVidAttr)(
+            op.dstVidAttr, dstVidAttr).result
+  }
+
+  def runtimeSafe(
+    srcVidAttr: Attribute[_],
+    dstVidAttr: Attribute[_],
+    srcVidColumn: Attribute[_],
+    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_] = {
+    val tt = srcVidAttr.typeTag
+    runtimeSafeHelper(srcVidAttr, dstVidAttr, srcVidColumn, dstVidColumn)(tt, m)
+  }
+
+  private def runtimeSafeHelper[T: TypeTag](
+    srcVidAttr: Attribute[_],
+    dstVidAttr: Attribute[_],
+    srcVidColumn: Attribute[_],
+    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_] = {
+    run(
+      srcVidAttr.runtimeSafeCast[T],
+      dstVidAttr.runtimeSafeCast[T],
+      srcVidColumn.runtimeSafeCast[T],
+      dstVidColumn.runtimeSafeCast[T])
   }
 
   def resolveEdges[T: reflect.ClassTag: Ordering](
