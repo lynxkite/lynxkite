@@ -77,13 +77,11 @@ angular.module('biggraph').directive('operationToolbox', function() {
       });
 
       scope.$watch('op', function(opId) {
-        console.log('op', opId);
         for (var i = 0; i < scope.categories.length; ++i) {
           for (var j = 0; j < scope.categories[i].ops.length; ++j) {
             var op = scope.categories[i].ops[j];
             if (opId === op.id) {
               scope.opMeta = op;
-              console.log('op', op);
               return;
             }
           }
@@ -126,7 +124,6 @@ angular.module('biggraph').directive('operationToolbox', function() {
 
 angular.module('biggraph').factory('removeOptionalDefaults', function() {
   return function(params, op) {
-    console.log('orig', params);
     params = angular.extend({}, params); // Shallow copy.
     for (var i = 0; i < op.parameters.length; ++i) {
       var param = op.parameters[i];
@@ -134,7 +131,6 @@ angular.module('biggraph').factory('removeOptionalDefaults', function() {
         delete params[param.id];
       }
     }
-    console.log('removed', params);
     return params;
   };
 });
