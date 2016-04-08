@@ -140,8 +140,7 @@ if [ ! -f "${SSH_KEY}" ]; then
   exit 1
 fi
 
-SSH="ssh -i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
-
+SSH="ssh -i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no -o ServerAliveInterval=30"
 
 # ==== Handling the cases ===
 case $COMMAND in
