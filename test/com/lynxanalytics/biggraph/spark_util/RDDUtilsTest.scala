@@ -63,14 +63,6 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     checkGood(RDDUtils.smallTableLookup(sourceRDD, localLookupMap))
     checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200))
     checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0))
-
-    val counts = sourceRDD
-      .keys
-      .map(_ -> 1l)
-      .reduceBySortedKey(lookupRDD.partitioner.get, _ + _)
-    val lookupRDDWihtCounts = lookupRDD.sortedJoin(counts)
-    checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 200))
-    checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 0))
   }
 
   test("lookup on empty RDD") {
