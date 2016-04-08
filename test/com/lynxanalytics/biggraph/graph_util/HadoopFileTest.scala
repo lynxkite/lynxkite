@@ -232,6 +232,8 @@ class HadoopFileTest extends FunSuite {
               |          # This doesn't end in a slash!!!
               |          TESTBLANKS_="hdfs://root/path"
               |
+              | TESTFILEDIR_READ_ACL="*"
+              | TESTFILEDIR_WRITE_ACL="gabor.olah@lynxanalytics.com"
               |# Only whitespace
               |
               |
@@ -247,8 +249,10 @@ class HadoopFileTest extends FunSuite {
       "TEST_S3N" -> "s3n://testkey:testpwd@",
       "TEST_S3NDIR" -> "s3n://testkey:testpwd@directory/",
       "TESTFILEDIR" -> "file:/home/user/",
+      "TESTFILEDIR_READ_ACL" -> "*",
+      "TESTFILEDIR_WRITE_ACL" -> "gabor.olah@lynxanalytics.com",
       "TESTBLANKS_" -> "hdfs://root/path")
-    assert(pairs === expected)
+    assert(pairs.sorted === expected.sorted)
   }
 
   test("Check user defined path: parsing blanks at the end of line") {
@@ -260,7 +264,33 @@ class HadoopFileTest extends FunSuite {
     val expected = List(
       "PATH" -> "hdfs://pathnode/",
       "PATH2" -> "hdfs://pathnode2/")
-    assert(pairs === expected)
+    assert(pairs.sorted === expected.sorted)
+  }
+
+  test("ACLs can be retrieved") {
+    val input =
+      """
+        |PATH1="hdfs://node1/"
+        |
+        |PATH2="hdfs://node2/"
+        |PATH2_READ_ACL="*@lynx"
+        |
+        |PATH3="hdfs://node3/"
+        |PATH3_WRITE_ACL="*@lynx"
+      """.stripMargin.split("\n").toList
+    val prefixRepo = new PrefixRepositoryImpl(input)
+
+    // No settings: default
+    assert(prefixRepo.getReadACL("PATH1$") == "*")
+    assert(prefixRepo.getWriteACL("PATH1$") == "*")
+
+    // Only read settings, write: default
+    assert(prefixRepo.getReadACL("PATH2$") == "*@lynx")
+    assert(prefixRepo.getWriteACL("PATH2$") == "*")
+
+    // Only write settings, read inherits write
+    assert(prefixRepo.getReadACL("PATH3$") == "*@lynx")
+    assert(prefixRepo.getWriteACL("PATH3$") == "*@lynx")
   }
 
   test("Legacy mode works") {

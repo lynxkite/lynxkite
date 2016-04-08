@@ -288,17 +288,13 @@ class HadoopFile private (
   }
 
   def readAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
-    // TODO: implement this
-    println(s"readAllowedFrom: user: $user  path: $toString")
-    log.info(s"readAllowedFrom: user: $user  path: $toString")
-    true
+    val acl = PrefixRepository.getReadACL(prefixSymbol)
+    aclContains(acl, user)
   }
 
   def writeAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
-    // TODO: implement this
-    println(s"writeAllowedFrom: user: $user  path: $toString")
-    log.info(s"writeAllowedFrom: user: $user  path: $toString")
-    true
+    val acl = PrefixRepository.getWriteACL(prefixSymbol)
+    aclContains(acl, user)
   }
 
 }
