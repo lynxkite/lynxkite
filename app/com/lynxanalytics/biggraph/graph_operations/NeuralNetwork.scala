@@ -187,7 +187,7 @@ case class NeuralNetwork(
       id -> tanh(network.activationInput * input(id) + network.activationHidden * (reset(id) :* state(id)))
     }.toMap
     val newState: Map[ID, Vector] = vertices.map { id =>
-      id -> ((1.0 - update(id)) :* state(id) + update(id) :* tildeState(id))
+      id -> ((1.0 - update(id)) :* state(id) + (update(id) :* tildeState(id)))
     }.toMap
   }
 
@@ -203,7 +203,7 @@ case class NeuralNetwork(
     }.toMap
     val tildeRawGradient: Map[ID, Vector] = vertices.map { id =>
       // Propagate through tanh.
-      id -> ((1.0 - outputs.tildeState(id) :* outputs.tildeState(id)) :* tildeGradient(id))
+      id -> ((1.0 - (outputs.tildeState(id) :* outputs.tildeState(id))) :* tildeGradient(id))
     }.toMap
     val updateGradient: Map[ID, Vector] = vertices.map { id =>
       id -> ((outputs.tildeState(id) - outputs.state(id)) :* stateGradient(id))
@@ -260,11 +260,12 @@ case class NeuralNetwork(
     }.reduce(_ + _)
   }
 
+  val clipTo = 5.0
   def gradientMatrix(
     gradients: Seq[NetworkGradients], getter: NetworkGradients => Matrix): Matrix = {
     import breeze.numerics._
     val m = gradients.map(getter).reduce(_ + _)
-    clip.inPlace(m, -5.0, 5.0) // Mitigate exploding gradients.
+    clip.inPlace(m, -clipTo, clipTo) // Mitigate exploding gradients.
     m
   }
 
@@ -272,7 +273,7 @@ case class NeuralNetwork(
     gradients: Seq[NetworkGradients], getter: NetworkGradients => Vector): Vector = {
     import breeze.numerics._
     val m = gradients.map(getter).reduce(_ + _)
-    clip.inPlace(m, -5.0, 5.0) // Mitigate exploding gradients.
+    clip.inPlace(m, -clipTo, clipTo) // Mitigate exploding gradients.
     m
   }
 
