@@ -15,12 +15,10 @@ a groovy script is only executed after all its required scripts were run.
 (This only works if the requirement graph has no loops.)
 
 Usage big_data_test_runner.py pattern value:setting
-For example xyz/big_data_test_runner.py '*' testSet:fake_westeros_100m
+For example xyz/big_data_test_runner.py '*' testDataSet:fake_westeros_100m
 Will execute all the tests xyz/*.groovy using the test data from
 fake_westeros_100m.
 """
-
-# TODO: support multiple patterns and multiple arguments
 
 import glob
 import os
@@ -32,7 +30,7 @@ import subprocess
 # once.
 seen_tests = {}
 
-def run_test(kite_path, test_dir, test_name, test_data_set):
+def run_test(kite_path, test_dir, test_name, groovy_args):
   """
   Runs a single test script, but before that, runs its
   requirement scripts.
@@ -47,24 +45,24 @@ def run_test(kite_path, test_dir, test_name, test_data_set):
       REQUIRE_SCRIPT_STR = '/// REQUIRE_SCRIPT '
       if line.startswith(REQUIRE_SCRIPT_STR):
         required_script = line[len(REQUIRE_SCRIPT_STR):].strip()
-        run_test(kite_path, test_dir, required_script, test_data_set) 
+        run_test(kite_path, test_dir, required_script, groovy_args)
       else:
         print 'Unknown directive in ', file_name, ': ', line
         sys.exit(1)
 
-  subprocess.call([kite_path, 'batch', file_name, test_data_set])
+  subprocess.call([kite_path, 'batch', file_name] + groovy_args)
 
 def main(argv):
   my_path = os.path.abspath(os.path.dirname(argv[0]))
-  if len(argv) < 3:
+  if len(argv) < 2:
     print 'Invalid parameters. Usage:'
-    print argv[0], ' pattern parameter'
+    print argv[0], ' test_pattern [param1:value1 ...]'
     print 'For example:'
-    print argv[0], ' \'*\' testSet:fake_westeros_100k'
+    print argv[0], ' \'*\' testDataSet:fake_westeros_100k'
     return
   else:
     script_pattern = argv[1]
-    test_data_set = argv[2]
+    test_data_set = argv[2:]
   kite_path = my_path + '/../../bin/biggraph'
   scripts = glob.glob(my_path + '/' + script_pattern + '.groovy')
   # Ensure the order is deterministic to have nice diffs:
