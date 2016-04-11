@@ -24,6 +24,7 @@ object NeuralNetwork extends OpFromJson {
     (j \ "featureCount").as[Int],
     (j \ "networkSize").as[Int],
     (j \ "iterations").as[Int],
+    (j \ "learningRate").as[Double],
     (j \ "radius").as[Int],
     (j \ "hideState").as[Boolean],
     (j \ "forgetFraction").as[Double])
@@ -33,6 +34,7 @@ case class NeuralNetwork(
     featureCount: Int,
     networkSize: Int,
     iterations: Int,
+    learningRate: Double,
     radius: Int,
     hideState: Boolean,
     forgetFraction: Double) extends TypedMetaGraphOp[Input, Output] {
@@ -42,6 +44,7 @@ case class NeuralNetwork(
     "featureCount" -> featureCount,
     "networkSize" -> networkSize,
     "iterations" -> iterations,
+    "learningRate" -> learningRate,
     "radius" -> radius,
     "hideState" -> hideState,
     "forgetFraction" -> forgetFraction)
@@ -113,7 +116,6 @@ case class NeuralNetwork(
       activationInput + other.activationInput,
       activationHidden + other.activationHidden)
 
-    val learningRate = 0.1
     def adagradMatrix(memory: Network, gradient: Network, getter: Network => Matrix): Matrix = {
       getter(this) - learningRate * getter(gradient) / sqrt(getter(memory) + 1e-6)
     }
