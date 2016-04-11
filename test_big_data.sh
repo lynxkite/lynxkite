@@ -54,6 +54,7 @@ if [[ "$USER" == 'jenkins' ]]; then
   git checkout "$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
   mv kitescripts/big_data_tests/${OUTPUT_FILE}.md{.new,}
+  git add kitescripts/big_data_tests/${OUTPUT_FILE}.md
   git commit -am "Update Big Data Test results."
   git push
 fi
