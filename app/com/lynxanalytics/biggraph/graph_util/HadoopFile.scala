@@ -8,6 +8,7 @@ import org.apache.spark.deploy.SparkHadoopUtil
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.serving.AccessControl
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -50,7 +51,7 @@ object HadoopFile {
 class HadoopFile private (
     val prefixSymbol: String,
     val normalizedRelativePath: String,
-    parentLazyFS: Option[HadoopFile.LazySharedFileSystem]) extends Serializable {
+    parentLazyFS: Option[HadoopFile.LazySharedFileSystem]) extends Serializable with AccessControl {
 
   override def equals(o: Any) = o match {
     case o: HadoopFile =>
@@ -285,6 +286,17 @@ class HadoopFile private (
   def /(path_element: String): HadoopFile = {
     this + ("/" + path_element)
   }
+
+  def readAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
+    val acl = PrefixRepository.getReadACL(prefixSymbol)
+    aclContains(acl, user)
+  }
+
+  def writeAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
+    val acl = PrefixRepository.getWriteACL(prefixSymbol)
+    aclContains(acl, user)
+  }
+
 }
 
 // A SequenceFile loader that creates one partition per file.
