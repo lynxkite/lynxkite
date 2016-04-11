@@ -172,9 +172,12 @@ object AssertNotRunningAndRegisterRunning {
 
   // This is platform-dependent :(
   private def getPid(): String = {
-    val statFile = scala.io.Source.fromFile("/proc/self/stat")
-    val theLine = statFile.getLines().toList.head
-    theLine.split(' ').head
+
+    val pidAtHostname =
+      // Returns <pid>@<hostname>
+      java.lang.management.ManagementFactory.getRuntimeMXBean.getName
+    val atSignIndex = pidAtHostname.indexOf('@')
+    pidAtHostname.dropRight(pidAtHostname.length - atSignIndex)
   }
 
   private def writePid(pidFile: File) = {
