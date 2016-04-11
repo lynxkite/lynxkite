@@ -1,6 +1,8 @@
 // The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
+import java.io.{ FileOutputStream, File }
+
 import play.api.libs.json
 import play.api.mvc
 import play.Play
@@ -159,6 +161,38 @@ object AssertLicenseNotExpired {
   }
 }
 
+object AssertNotRunningAndRegisterRunning {
+  private def getPidFile(pidFilePath: String): File = {
+    val pidFile = new File(pidFilePath).getAbsoluteFile
+    if (pidFile.exists) {
+      throw new RuntimeException(s"LynxKite is already running (or delete $pidFilePath)")
+    }
+    pidFile
+  }
+
+  // This is platform-dependent :(
+  private def getPid(): String = {
+    val statFile = scala.io.Source.fromFile("/proc/self/stat")
+    val theLine = statFile.getLines().toList.head
+    theLine.split(' ').head
+  }
+
+  private def writePid(pidFile: File) = {
+    val pid = getPid()
+    val output = new FileOutputStream(pidFile)
+    try output.write(pid.getBytes) finally output.close()
+  }
+
+  def apply() = {
+    val pidFilePath = LoggedEnvironment.envOrNone("KITE_PID_FILE")
+    if (pidFilePath.isDefined) {
+      val pidFile = getPidFile(pidFilePath.get)
+      writePid(pidFile)
+      pidFile.deleteOnExit()
+    }
+  }
+}
+
 object FrontendJson {
   /**
    * Implicit JSON inception
@@ -285,6 +319,7 @@ object ProductionJsonServer extends JsonServer {
   import FrontendJson._
 
   AssertLicenseNotExpired()
+  AssertNotRunningAndRegisterRunning()
 
   // File upload.
   def upload = {
