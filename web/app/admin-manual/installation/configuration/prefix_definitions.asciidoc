@@ -52,26 +52,26 @@ a path, they specify user access privileges for a given prefix. Suppose you have
 following prefix:
 
 ```
-SENSITIVE_DATA="hdfs://sensitive_data/"
+# SENSITIVE_DATA="hdfs://sensitive_data/"
 ```
 
 By default, all users are allowed to access files such as `SENSITIVE_DATA$secret.csv`. This can
 be changed by adding two extra lines to the prefix definition file, for example:
 
 ```
-SENSITIVE_DATA_READ_ACL="*@mycompany.com"
-SENSITIVE_DATA_WRITE_ACL="jack@mycompany.com,jill@mycompany.com"
+# SENSITIVE_DATA_READ_ACL="*@mycompany.com"
+# SENSITIVE_DATA_WRITE_ACL="jack@mycompany.com,jill@mycompany.com"
 ```
 
 This gives read access to all users at `mycompany.com` and write access to users `jack`, and `jill`
-(In general, an access control list is comma-delimited; `+*+` (asterisk)
-can be used as a wildcard; `+*+` means all logged in users.
-`+*@lynxanalytics.com+`, for example, means all users with user names matching that pattern.)
+(In general, an access control list is comma-delimited; `*` (asterisk)
+can be used as a wildcard; `*` means all logged in users.
+`*@lynxanalytics.com`, for example, means all users with user names matching that pattern.)
 
 Note that this implies that you cannot have a prefix symbol that ends in `_READ_ACL` or `_WRITE_ACL`
 because that would be interpreted as an access control specification.
 
-Specifying neither read nor write access for a prefix implies `+*+` access; that is, any user can
+Specifying neither read nor write access for a prefix implies `*` access; that is, any user can
 read or write files accessed via that prefix. But if you specify either access type, you must
 specify the other access type as well.
 
@@ -79,10 +79,10 @@ It is important to note that access control checks only the prefixes, but not th
 in such a setting
 
 ```
-ROOT="hdfs://root/"
-SENSITIVE_DATA="hdfs://root/sensitive_data/"
-SENSITIVE_DATA_READ_ACL="*@mycompany.com"
-SENSITIVE_DATA_WRITE_ACL="boss@mycompany.com"
+# ROOT="hdfs://root/"
+# SENSITIVE_DATA="hdfs://root/sensitive_data/"
+# SENSITIVE_DATA_READ_ACL="*@mycompany.com"
+# SENSITIVE_DATA_WRITE_ACL="boss@mycompany.com"
 ```
 
 there is no use in providing read and write access to your sensitive data, because
