@@ -10,7 +10,7 @@
 #   with a given parameter.
 #
 #   Example:
-#   emr_based_test.sh perf '*' testDataSet:fake_westeros_100k
+#   emr_based_test.sh backend 'big_data_tests/*' testDataSet:fake_westeros_100k
 #   This will run all groovy files in kitescripts/perf/*.groovy and all these
 #   groovy files will receive the testDataSet:fake_westeros_100k parameter.
 
@@ -21,7 +21,6 @@ cd "$(dirname $0)/.."
 
 MODE=${1}
 shift
-COMMAND_ARGS=( "$@" )
 
 CLUSTER_NAME="${USER}-test-cluster"
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
@@ -68,14 +67,18 @@ fi
 stage/tools/emr.sh deploy-kite ${EMR_TEST_SPEC}
 
 case $MODE in
-  bigdata )
+  backend )
     # The next lines are just for invoking:
     # big_data_test_runner.py $1 $2
     # remotely on the master.
     # We need this horror to avoid shell-expansion of the
     # '*' character.
     TMP_SCRIPT=/tmp/${CLUSTER_NAME}_test_script.sh
-    echo "biggraphstage/kitescripts/big_data_tests/big_data_test_runner.py '$1' '$2'" >${TMP_SCRIPT}
+    SCRIPT_SELECTOR_PATTERN="'$1'"
+    shift
+    COMMAND_ARGS=( "$@" )
+    echo "biggraphstage/kitescripts/big_data_test_runner.py \
+      ${SCRIPT_SELECTOR_PATTERN} ${COMMAND_ARGS[@]}" >${TMP_SCRIPT}
     stage/tools/emr.sh put ${EMR_TEST_SPEC} ${TMP_SCRIPT} test_cmd.sh
     stage/tools/emr.sh cmd ${EMR_TEST_SPEC} \
       "chmod a+x test_cmd.sh && ./test_cmd.sh"
@@ -96,7 +99,7 @@ case $MODE in
     ;;
   * )
     echo "Invalid mode was specified: ${MODE}"
-    echo "Usage: $0 bigdata|frontend"
+    echo "Usage: $0 backend|frontend"
     exit 1
 esac
 
