@@ -55,11 +55,11 @@ trait GenericImportRequest {
   // Empty list means all columns.
   val columnsToImport: List[String]
 
-  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame
+  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
-  def restrictedDataFrame(implicit dataManager: DataManager): spark.sql.DataFrame =
-    restrictToColumns(dataFrame, columnsToImport)
+  def restrictedDataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    restrictToColumns(dataFrame(user), columnsToImport)
 
   private def restrictToColumns(
     full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
@@ -84,7 +84,7 @@ case class CSVImportRequest(
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
-  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val reader = dataManager.masterSQLContext
       .read
       .format("com.databricks.spark.csv")
@@ -101,6 +101,7 @@ case class CSVImportRequest(
       reader.option("header", "true")
     }
     val hadoopFile = HadoopFile(files)
+    hadoopFile.assertReadAllowedFrom(user)
     FileImportValidator.checkFileHasContents(hadoopFile)
     // TODO: #2889 (special characters in S3 passwords).
     readerWithSchema.load(hadoopFile.resolvedName)
@@ -111,6 +112,7 @@ case class CSVImportRequest(
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
 }
+
 object FileImportValidator {
   def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
     assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
@@ -126,7 +128,7 @@ case class JdbcImportRequest(
     keyColumn: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
       val connection = java.sql.DriverManager.getConnection(jdbcUrl)
@@ -157,8 +159,9 @@ trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
 
-  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
+    hadoopFile.assertReadAllowedFrom(user)
     FileImportValidator.checkFileHasContents(hadoopFile)
     dataManager.masterHiveContext.read.format(format).load(hadoopFile.resolvedName)
   }
@@ -196,7 +199,7 @@ case class HiveImportRequest(
     hiveTable: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
       dataManager.hiveConfigured,
       "Hive is not configured for this Kite instance. Contact your system administrator.")
@@ -215,7 +218,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def doImport(user: serving.User, request: GenericImportRequest) = async[FEOption] {
     SQLController.saveTableFromDataFrame(
-      request.restrictedDataFrame,
+      request.restrictedDataFrame(user),
       request.notes,
       user,
       request.table,
@@ -331,6 +334,7 @@ class SQLController(val env: BigGraphEnvironment) {
     options: Map[String, String] = Map()): Unit = {
     val df = dfFromSpec(user, dfSpec)
     // TODO: #2889 (special characters in S3 passwords).
+    file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
   }
 
