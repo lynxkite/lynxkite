@@ -30,27 +30,27 @@ import subprocess
 # once.
 seen_tests = {}
 
-def run_test(kite_path, test_dir, test_name, groovy_args):
+def run_test(kite_path, test_path, groovy_args):
   """
   Runs a single test script, but before that, runs its
   requirement scripts.
   """
-  if test_name in seen_tests:
+  if test_path in seen_tests:
     return
-  seen_tests[test_name] = True
+  seen_tests[test_path] = True
 
-  file_name = test_dir + '/' + test_name
-  for line in open(file_name, 'r'):
+  test_script_dir = os.path.dirname(test_path)
+  for line in open(test_path, 'r'):
     if line.startswith('///'):
       REQUIRE_SCRIPT_STR = '/// REQUIRE_SCRIPT '
       if line.startswith(REQUIRE_SCRIPT_STR):
         required_script = line[len(REQUIRE_SCRIPT_STR):].strip()
-        run_test(kite_path, test_dir, required_script, groovy_args)
+        required_script_path = test_script_dir + '/' + required_script
+        run_test(kite_path, required_script_path, groovy_args)
       else:
-        print 'Unknown directive in ', file_name, ': ', line
+        print 'Unknown directive in ', test_path, ': ', line
         sys.exit(1)
-
-  subprocess.call([kite_path, 'batch', file_name] + groovy_args)
+  subprocess.call([kite_path, 'batch', test_path] + groovy_args)
 
 def main(argv):
   my_path = os.path.abspath(os.path.dirname(argv[0]))
@@ -63,15 +63,14 @@ def main(argv):
   else:
     script_pattern = argv[1]
     test_data_set = argv[2:]
-  kite_path = my_path + '/../../bin/biggraph'
+  kite_path = my_path + '/../bin/biggraph'
   scripts = glob.glob(my_path + '/' + script_pattern + '.groovy')
   # Ensure the order is deterministic to have nice diffs:
   scripts.sort()
   for script in scripts:
     run_test(
       kite_path,
-      my_path,
-      os.path.relpath(script, my_path),
+      script,
       test_data_set)
 
 if __name__ == "__main__":

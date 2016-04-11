@@ -5,21 +5,38 @@
 numVertices = (params.numVertices ?: '100000').toInteger()
 numBatches = (params.numBatches ?: '100').toInteger()
 maxDegree = (params.maxDegree ?: '1000').toInteger()
+
+// Adds a vertex which is connected to every other vertex.
+addGlobalHubVertex = (params.addGlobalHubVertex ?: 'false').toBoolean()
+addReversedEdges = (params.addReversedEdges ?: 'false').toBoolean()
+
 // Parameters used to generate test data:
-// 100,000       / 100 /       1,000 --> fake_westeros_100k
-// 100,000,000   / 100 /   1,000,000 --> fake_westeros_100m
-// 2,000,000,000 /  20 / 100,000,000 --> fake_westeros_2g
+//
+// numVertices:100000     numBatches:100 maxDegree:1000      testDataSet:fake_westeros_100k
+// numVertices:100000000  numBatches:100 maxDegree:1000000   testDataSet:fake_westeros_100m
+// numVertices:2000000000 numBatches:20  maxDegree:100000000 testDataSet:fake_westeros_2g
+//
+// testDataSet:fake_westeros_xt_100k \
+//   numVertices:100000 numBatches:100 maxDegree:1000 \
+//   addGlobalHubVertex:true addReversedEdges:true
+//
+// Usage example: tools/emr_based_test.sh backend gen_test_data/generate_fake_westeros args
+
 assert (maxDegree <= numVertices / numBatches)
 ratio = Math.exp(Math.log(maxDegree) / (numBatches - 1))
 
-testSet = params.testSet ?: 'fake_westeros_100k'
+testSet = params.testDataSet ?: 'fake_westeros_100k'
 
 edgeExportPath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/edges.csv')
 vertexExportPath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/vertices.csv')
 
 project = lynx.newProject()
 
-project.newVertexSet(size: numVertices)
+numEffectiveVertices = numVertices
+if (addGlobalHubVertex) {
+  numEffectiveVertices *= 2
+}
+project.newVertexSet(size: numEffectiveVertices)
 project.vertexAttributeToDouble(attr: 'ordinal')
 project.renameVertexAttribute(from: 'ordinal', to: 'src')
 // We try to generate a simple graph which has similar degree distribution
@@ -41,39 +58,62 @@ project.derivedVertexAttribute(
   expr:
     'var numVertices = ' + numVertices + ';\n' +
     'var ratio = ' + ratio + ';\n' +
-    'var numBatches = ' + numBatches + '\n' +
+    'var numBatches = ' + numBatches + ';\n' +
     'var batchSize = Math.floor(numVertices / numBatches);\n' +
-    'var continuousPos = src / batchSize;\n' +
-    'var batchId = Math.floor(continuousPos);\n' +
-    'var frac = continuousPos - batchId;\n' +
+    'var result = numVertices;\n' +  // extra vertex to become the global hub
+    'if (src < numVertices) {\n' +
+    '  var continuousPos = src / batchSize;\n' +
+    '  var batchId = Math.floor(continuousPos);\n' +
+    '  var frac = continuousPos - batchId;\n' +
     // (batchId + 1) % numBatches
-    'var shiftedBatchId = batchId + 1 >= numBatches - 0.001 ? 0 : batchId + 1;\n' +
+    '  var shiftedBatchId = batchId + 1 >= numBatches - 0.001 ? 0 : batchId + 1;\n' +
     // Each batch uses vertices from the range
     // shiftedBatchId * batchSize -- (shiftedBatchId+1) * batchSize
-    'var startingDstSideVertex = shiftedBatchId * batchSize;\n' +
-    'var fpFloorFix = 1.0 / batchSize;\n' + // Offset to fix rounding.
+    '  var startingDstSideVertex = shiftedBatchId * batchSize;\n' +
+    '  var fpFloorFix = 1.0 / batchSize;\n' + // Offset to fix rounding.
                                             // Makes sense when testing with ratio = 2.0
-    'var thisVertexOffset = Math.floor(frac * batchSize / Math.pow(ratio, batchId) + fpFloorFix);\n' +
-    'startingDstSideVertex + thisVertexOffset;\n',
+    '  var thisVertexOffset = Math.floor(frac * batchSize / Math.pow(ratio, batchId) + fpFloorFix);\n' +
+    '  result = startingDstSideVertex + thisVertexOffset;\n' +
+    '}\n' +
+    'result;',
   output: 'dst',
   type: 'double')
+if (addGlobalHubVertex) {
+  project.derivedVertexAttribute(
+    expr: 'src % ' + numVertices,
+    output: 'src',
+    type: 'double')
+}
+
 project.derivedVertexAttribute(expr: 'src', output: 'src', type: 'double')
 project.vertexAttributeToString(attr: 'dst,src')
 
-df = project.sql(
-  'select src,dst from vertices')
-df.write()
-  .format('com.databricks.spark.csv')
-  .option('header', 'true')
-  .mode('overwrite')
-  .save(edgeExportPath)
-
-df = project.sql(
+vertexDF = project.sql(
   'select src as vertex_id from vertices')
-df.write()
+vertexDF.write()
   .format('com.databricks.spark.csv')
   .option('header', 'true')
   .mode('overwrite')
   .save(vertexExportPath)
 
-println "exported $numVertices edges"
+edgeDF = project.sql(
+  'select src,dst from vertices')
+if (addReversedEdges) {
+  project = lynx.newProject()
+
+  project.importVerticesAndEdgesFromASingleTable(
+    table: lynx.saveAsTable(edgeDF, 'tmp_test_edges'),
+    src: 'src',
+    dst: 'dst')
+  project.addReversedEdges()
+  edgeDF = project.sql(
+    'select src_stringID as src, dst_stringID as dst from triplets')
+}
+
+edgeDF.write()
+  .format('com.databricks.spark.csv')
+  .option('header', 'true')
+  .mode('overwrite')
+  .save(edgeExportPath)
+
+println "exported ${numEffectiveVertices} edges"
