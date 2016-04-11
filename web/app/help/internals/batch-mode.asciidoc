@@ -48,6 +48,8 @@ namespace.
  - `String **lynx.saveAsTable**(DataFrame df, String tableName, String notes = "")` saves an
    Apache Spark DataFrame as a LynxKite table. It returns the table identifier that can be used
    as a parameter for import operations.
+ - `String **lynx.openTable(String tableName)` gets the table identifier of a table known
+   by its name. This identifier can be used as a parameter for import operations.
  - `String **lynx.resolvePath**(String path)` resolves a <<prefixed-paths, prefixed path>>.
  - `StructType **lynx.stringSchema**(List[String] columns)` creates a schema with `StringType` columns
    It can be used when loading tables via the `sqlContext`.
