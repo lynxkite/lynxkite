@@ -1,6 +1,7 @@
 
 # The prefix definitions configuration file is used to specify what file paths users are
-# allowed to access using what prefixes.
+# allowed to access using what prefixes. It also serves as a means to provide user access
+# control to certain prefixes if desired.
 
 # Special prefixes can be defined here that expand to directories or paths.
 # Suppose, for example, that the administrator specifies
@@ -38,3 +39,40 @@
 # A specification of EMPTY such as the one above gives the user
 # full access to anything; e.g., they can say
 # EMPTY$s3n://key:password@somedir/somefile or EMPTY$file://etc/passwd.
+
+
+# Prefix symbol endings _READ_ACL and WRITE_ACL have a special meaning: instead of specifying
+# a path, they specify user access privileges for a given prefix. Suppose you have defined the
+# following prefix:
+
+SENSITIVE_DATA="hdfs://sensitive_data/"
+
+# By default, all users are allowed to access files such as SENSITIVE_DATA$secret.csv. This can
+# be changed by adding two extra lines to the prefix definition file, for example:
+
+SENSITIVE_DATA_READ_ACL="*@mycompany.com"
+SENSITIVE_DATA_WRITE_ACL="boss@mycompany.com"
+
+# This gives read access to users at mycompany.com and write access to the boss. The syntax is
+# the same as for project and folder access control, see <<access-control-list-syntax>>.
+
+# This implies that you cannot have a prefix symbol that ends in _READ_ACL or _WRITE_ACL
+# because that would be interpreted as an access control specification.
+
+# Specifying neither read nor write access for a prefix implies +*+ access; that is, any user can
+# read or write files accessed via that prefix. But if you specify either access type, you must
+# specify the other access type as well.
+
+# It is important to note that access control checks only the prefixes, but not the files itself. So,
+# in such a setting
+
+ROOT="hdfs://root/"
+SENSITIVE_DATA="hdfs://root/sensitive_data/"
+SENSITIVE_DATA_READ_ACL="*@mycompany.com"
+SENSITIVE_DATA_WRITE_ACL="boss@mycompany.com"
+
+# there is no use in providing read and write access to your sensitive data, because
+# although only boss@mycompany.com can write SENSITIVE_DATA$secret.csv, anyone
+# can read and write ROOT$sensitive_data/secret.csv, which is the same file.
+# So if you use prefix-based access control, make sure that the data protected is not
+# accessible via another prefix.
