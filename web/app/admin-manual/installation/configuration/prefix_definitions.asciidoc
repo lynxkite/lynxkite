@@ -60,13 +60,15 @@ be changed by adding two extra lines to the prefix definition file, for example:
 
 ```
 SENSITIVE_DATA_READ_ACL="*@mycompany.com"
-SENSITIVE_DATA_WRITE_ACL="boss@mycompany.com"
+SENSITIVE_DATA_WRITE_ACL="jack@mycompany.com,jill@mycompany.com"
 ```
 
-This gives read access to users at `mycompany.com` and write access to the `boss`. The syntax is
-the same as for project and folder access control, see <<access-control-list-syntax>>.
+This gives read access to all users at `mycompany.com` and write access to users `jack`, and `jill`
+(In general, an access control list is comma-delimited; `+*+` (asterisk)
+can be used as a wildcard; `+*+` means all logged in users.
+`+*@lynxanalytics.com+`, for example, means all users with user names matching that pattern.)
 
-This implies that you cannot have a prefix symbol that ends in `_READ_ACL` or `_WRITE_ACL`
+Note that this implies that you cannot have a prefix symbol that ends in `_READ_ACL` or `_WRITE_ACL`
 because that would be interpreted as an access control specification.
 
 Specifying neither read nor write access for a prefix implies `+*+` access; that is, any user can
