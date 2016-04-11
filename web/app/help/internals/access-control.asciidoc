@@ -8,8 +8,12 @@ is enabled.
 
 ### Access control lists
 
-Access rights are controlled at the project and the folder level. A project or a folder
-has two access control lists: one for reading and one for writing. A user has read
+Access rights are controlled at three levels: the project level, the folder level,
+and the file prefix level. The latter is described in <<prefix-based-access-control>>; the
+first two are described below.
+
+A project or a folder has two access control lists: one for reading
+and one for writing. A user has read
 access to a project or a folder if he is on it's access control list and has read
 access to the parent folders recursively. Similarly, write access requires being on the
 write access control list plus _read_ access for all parents. Being on the write access
@@ -25,12 +29,6 @@ cannot make changes.
 - The users with write access to a project can see everything and make any change
 (including modifying the writing list).
 
-The access control lists can be modified in the project or folder settings
-+++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++.
-The lists are comma-delimited and `+*+` (asterisk) can be used as a wildcard. `+*+`
-means all logged in users. `+*@lynxanalytics.com+`, for example, means all users with
-user names matching that pattern.
-
 When creating a project or a folder, you have the choice of setting it to _private_,
 _publicly readable_ or _publicly writable_. These options provide different default
 access control lists, but the lists can be freely modified later.
@@ -44,6 +42,15 @@ project and make changes to the copy.
 To protect your projects from other users you have to put it in a folder writable only
 by you. Remember, deleting a project requires write access to it's parent folder, not
 the project itself.
+
+[[access-control-list-syntax]]
+#### Access control list syntax
+
+The access control lists can be modified in the project or folder settings
++++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++.
+The lists are comma-delimited and `+*+` (asterisk) can be used as a wildcard. `+*+`
+means all logged in users. `+*@lynxanalytics.com+`, for example, means all users with
+user names matching that pattern.
 
 ### Administrator users
 
