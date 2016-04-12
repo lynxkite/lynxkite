@@ -8,17 +8,14 @@ maxDegree = (params.maxDegree ?: '1000').toInteger()
 
 // Adds a vertex which is connected to every other vertex.
 addGlobalHubVertex = (params.addGlobalHubVertex ?: 'true').toBoolean()
-addReversedEdges = (params.addReversedEdges ?: 'true').toBoolean()
 
-// Parameters used to generate test data:
+// Args used to generate test data:
 //
-// numVertices:100000     numBatches:100 maxDegree:1000      testDataSet:fake_westeros_100k
-// numVertices:100000000  numBatches:100 maxDegree:1000000   testDataSet:fake_westeros_100m
-// numVertices:2000000000 numBatches:20  maxDegree:100000000 testDataSet:fake_westeros_2g
+// testDataSet:fake_westeros_xt_100k
+//   numVertices:100000 numBatches:100 maxDegree:1000
 //
-// testDataSet:fake_westeros_xt_100k \
-//   numVertices:100000 numBatches:100 maxDegree:1000 \
-//   addGlobalHubVertex:true addReversedEdges:true
+// testDataSet:fake_westeros_xt_25m
+//   numVertices:25000000  numBatches:20 maxDegree:1250000
 //
 // Usage example: tools/emr_based_test.sh backend gen_test_data/generate_fake_westeros args
 
@@ -72,12 +69,13 @@ project.derivedVertexAttribute(
     '  var startingDstSideVertex = shiftedBatchId * batchSize;\n' +
     '  var fpFloorFix = 1.0 / batchSize;\n' + // Offset to fix rounding.
                                             // Makes sense when testing with ratio = 2.0
+                                            // Not really verified.
     '  var thisVertexOffset = Math.floor(frac * batchSize / Math.pow(ratio, batchId) + fpFloorFix);\n' +
     '  result = startingDstSideVertex + thisVertexOffset;\n' +
     '}\n' +
-    'result;',
+    'result.toFixed();',
   output: 'dst',
-  type: 'double')
+  type: 'string')
 if (addGlobalHubVertex) {
   project.derivedVertexAttribute(
     expr: 'src % ' + numVertices,
@@ -85,23 +83,18 @@ if (addGlobalHubVertex) {
     type: 'double')
 }
 
+// Convert src to string:
 project.derivedVertexAttribute(expr: 'src', output: 'src', type: 'double')
-project.vertexAttributeToString(attr: 'dst,src')
+project.derivedVertexAttribute(
+  expr: 'src.toFixed()',
+  output: 'src',
+  type: 'string')
 
-vertexDF = project.sql(
-  'select src as vertex_id from vertices')
-vertexDF.write()
-  .format('com.databricks.spark.csv')
-  .option('header', 'true')
-  .mode('overwrite')
-  .save(vertexExportPath)
-
+// Add reversed edges:
 edgeDF = project.sql(
   'select src,dst from vertices')
-if (addReversedEdges) {
-  revEdgeDF = edgeDF.select(edgeDF.col("dst"), edgeDF.col("src")).toDF("src", "dst")
-  edgeDF = edgeDF.unionAll(revEdgeDF)
-}
+revEdgeDF = edgeDF.select(edgeDF.col("dst"), edgeDF.col("src")).toDF("src", "dst")
+edgeDF = edgeDF.unionAll(revEdgeDF)
 
 edgeDF.write()
   .format('com.databricks.spark.csv')
@@ -109,4 +102,12 @@ edgeDF.write()
   .mode('overwrite')
   .save(edgeExportPath)
 
-println "exported ${numEffectiveVertices} edges"
+// Obtain vertex ids (assumes that edges are symmetric):
+vertexDF = edgeDF.select(edgeDF.col("src")).distinct()
+vertexDF.write()
+  .format('com.databricks.spark.csv')
+  .option('header', 'true')
+  .mode('overwrite')
+  .save(vertexExportPath)
+
+println "exported ${numEffectiveVertices * 2} edges"
