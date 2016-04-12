@@ -10,7 +10,7 @@
 cd $(dirname $0)
 
 TEST_PATTERN="${1:-*}"
-DATA_SET="${2:-fake_westeros_100m}"
+DATA_SET="${2:-fake_westeros_xt_100m}"
 NUM_EMR_INSTANCES=${3:-3}
 
 OUTPUT_FILE="last_results_${NUM_EMR_INSTANCES}i_${DATA_SET}"
