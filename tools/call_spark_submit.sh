@@ -55,7 +55,7 @@ addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
 addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
-addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
+addJPropIfNonEmpty pidfile.path "/dev/null"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
 
@@ -174,10 +174,6 @@ command=(
 )
 
 startKite () {
-  if [ -f "${KITE_PID_FILE}" ]; then
-    >&2 echo "LynxKite is already running (or delete ${KITE_PID_FILE})"
-    exit 1
-  fi
   if [ ! -d "${SPARK_HOME}" ]; then
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
