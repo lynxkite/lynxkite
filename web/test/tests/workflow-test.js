@@ -19,14 +19,10 @@ module.exports = function(fw) {
       lib.left.openWorkflowSavingDialog();
       expect(lib.left.getWorkflowCodeEditor().evaluate('state.workflow.code')).toBe(
         'project.exampleGraph()' +
-          '\nproject.filterByAttributes(\'filterea-comment\': \'\',' +
-          ' \'filterea-weight\': \'!1\',' +
-          ' \'filterva-age\': \'<40\',' +
-          ' \'filterva-gender\': \'\',' +
-          ' \'filterva-id\': \'\',' +
-          ' \'filterva-income\': \'\',' +
-          ' \'filterva-location\': \'\',' +
-          ' \'filterva-name\': \'Adam,Eve,Bob\')');
+          '\nproject.filterByAttributes(' +
+          '\'filterea-weight\': \'!1\', ' +
+          '\'filterva-age\': \'<40\', ' +
+          '\'filterva-name\': \'Adam,Eve,Bob\')');
       lib.left.closeWorkflowSavingDialog();
       lib.left.history.close();
     });

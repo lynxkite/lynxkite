@@ -28,13 +28,12 @@ if [ "$#" -lt 2 ]; then
   echo "                 You need to have \"connect\" running for this. See below."
   echo "   metacopy    - copies the meta directory to your local machine"
   echo "   uploadLogs  - Uploads the application logs and the operation performance"
-  echo "                 data to google storage"
+  echo "                 data to Google storage"
   echo "   metarestore - copies the meta directory from your local machines to the cluster"
-  echo "   reset       - deletes the data and the meta directories and restarts kite"
+  echo "   reset       - deletes the data and the meta directories and stops LynxKite"
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
   echo "                 from behind the Amazon firewall"
-  echo "   kite        - (re)starts the kite server"
-  echo "   batch       - Takes a space-separated list of groovy scripts and executes them "
+  echo "   kite        - (re)starts the LynxKite server"
   echo "                 on a running cluster. The scripts have to be already uploaded to "
   echo "                 the master. The path of each script should be relative to the kitescripts "
   echo "                 directory on the master."
@@ -47,19 +46,6 @@ if [ "$#" -lt 2 ]; then
   echo "   emr.sh connect my_cluster_spec  # makes Kite available on your local machine"
   echo
   echo "   .... use Kite ...."
-  echo
-  echo "   emr.sh terminate my_cluster_spec"
-  echo
-  echo " Example batch workflow:"
-  echo "   emr.sh start my_cluster_spec"
-  echo "   emr.sh kite my_cluster_spec"
-  echo "   emr.sh batch my_cluster_spec ../kitescripts/visualization_perf.groovy ../kitescripts/jsperf.groovy"
-  echo
-  echo "   .... analyze results, debug ...."
-  echo
-  echo "   # If you want to rerun the scripts, don't forget to reset before that:"
-  echo "   emr.sh reset my_cluster_spec"
-  echo "   emr.sh batch my_cluster_spec ../kitescripts/visualization_perf.groovy ../kitescripts/jsperf.groovy"
   echo
   echo "   emr.sh terminate my_cluster_spec"
 
@@ -132,13 +118,29 @@ CheckDataRepo() {
   fi
 }
 
+DeployKite() {
+  # Restage and restart kite.
+  if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
+    echoerr "You must run this script from inside a stage, not from the source tree!"
+    exit 1
+  fi
+
+  MASTER_HOSTNAME=$(GetMasterHostName)
+
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    --exclude /logs \
+    --exclude RUNNING_PID \
+    --exclude metastore_db \
+    ${KITE_BASE}/ \
+    hadoop@${MASTER_HOSTNAME}:biggraphstage
+}
+
 if [ ! -f "${SSH_KEY}" ]; then
   echoerr "${SSH_KEY} does not exist."
   exit 1
 fi
 
-SSH="ssh -i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
-
+SSH="ssh -i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no -o ServerAliveInterval=30"
 
 # ==== Handling the cases ===
 case $COMMAND in
@@ -169,9 +171,6 @@ start)
   # About the configuration changes above:
   # mapred.output.committer.class = org.apache.hadoop.mapred.FileOutputCommitter
   # because Amazon's default value is only supported with Amazon's JAR files: #3234
-
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh ${MASTER_ACCESS} --command "sudo yum install -y expect"
 
   ;&
 
@@ -267,25 +266,16 @@ uploadLogs)
   aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph uploadLogs"
   ;;
 
+# =====
+deploy-kite)
+  DeployKite
+  ;;
+
 # ======
 kite)
-  # Restage and restart kite.
-  if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
-    echoerr "You must run this script from inside a stage, not from the source tree!"
-    exit 1
-  fi
+  DeployKite
 
-  MASTER_HOSTNAME=$(GetMasterHostName)
   MASTER_ACCESS=$(GetMasterAccessParams)
-
-  rsync -ave "$SSH" -r --copy-dirlinks \
-    --exclude /logs \
-    --exclude RUNNING_PID \
-    --exclude metastore_db \
-    ${KITE_BASE}/ \
-    hadoop@${MASTER_HOSTNAME}:biggraphstage
-
-
   echo "Starting..."
   aws emr ssh $MASTER_ACCESS --command 'biggraphstage/bin/biggraph restart'
 
@@ -317,6 +307,13 @@ cmd)
   $SSH -A hadoop@${MASTER_HOSTNAME} "${COMMAND_ARGS[@]}"
   ;;
 
+
+# ======
+put)
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr put ${MASTER_ACCESS} --src $1 --dest $2
+  ;;
+
 # ======
 metacopy)
   MASTER_ACCESS=$(GetMasterAccessParams)
@@ -340,13 +337,13 @@ reset)
   ConfirmDataLoss
   ;&
 
-# ====== fal-through
+# ====== fall-through
 reset-yes)
   MASTER_ACCESS=$(GetMasterAccessParams)
   aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
-    ./biggraphstage/bin/biggraph start"
+    true;"
   ;;
 
 # ======
@@ -368,77 +365,6 @@ clusterid)
 s3copy)
   curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral"
   echo "Copy successful."
-  ;;
-
-batch)
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  REMOTE_BATCH_DIR="/home/hadoop/batch"
-  aws emr ssh ${MASTER_ACCESS} --command "mkdir -p ${REMOTE_BATCH_DIR}"
-
-  # 1. First we build a master script that logs in to Ammonite via SSH and
-  # invokes the user-specified Groovy scripts.
-  MASTER_SCRIPT="/tmp/${CLUSTER_NAME}_batch-job.sh"
-  # 1.1. SSH login:
-  cat >${MASTER_SCRIPT} <<EOF
-#!/usr/bin/expect -f
-set timeout 86400
-spawn ssh -oStrictHostKeyChecking=no -oServerAliveInterval=30 -p 2203 lynx@localhost
-expect "Password:"
-send "kite\r"
-EOF
-
-  # 1.2. Compute the common groovy parameters; these follow the scripts separated
-  #      by a double dash. They should be specified in a 'batchy' way: i.e., key:value
-  #      but here we convert them to Ammonitese: "key" -> "value"
-
-  AMMONITE_PARAM_LIST=""
-  DOUBLE_HASH_SEEN=0
-
-  for GROOVY_PARAM in "${COMMAND_ARGS[@]}"; do
-    if [[ "$DOUBLE_HASH_SEEN" == "1" ]]; then
-      # Convert key:value  to  \"key\" -> \"value\"
-      AMMONITE_PARAM=`echo $GROOVY_PARAM | sed 's/\(.*\):\(.*\)/\\\"\1\\\" -> \\\"\2\\\"/'`
-      AMMONITE_PARAM_LIST="$AMMONITE_PARAM_LIST, $AMMONITE_PARAM"
-    fi
-    if [[ "$GROOVY_PARAM" == "--" ]]; then
-      DOUBLE_HASH_SEEN=1
-    fi
-  done
-
-
-  # 1.3. Invoke each groovy script:
-  cat >>${MASTER_SCRIPT} <<EOF
-expect "@ "
-send "// -- Running scripts.\r"
-EOF
-  CNT=1
-  for GROOVY_SCRIPT in "${COMMAND_ARGS[@]}"; do
-    if [[ "$GROOVY_SCRIPT" == "--"  ]]; then
-        break
-    fi
-    GROOVY_SCRIPT_BASENAME=$(basename "$GROOVY_SCRIPT")
-    REMOTE_GROOVY_SCRIPT_PATH="${REMOTE_BATCH_DIR}/script${CNT}_${GROOVY_SCRIPT_BASENAME}"
-    CNT=$((CNT + 1))
-    # 1.3.1. Copy Groovy script to master
-    aws emr put ${MASTER_ACCESS} --src "${GROOVY_SCRIPT}" --dest "\"${REMOTE_GROOVY_SCRIPT_PATH}\""
-    # 1.3.2. Add Groovy script invocation into our master script.
-    cat >>${MASTER_SCRIPT} <<EOF
-expect "@ "
-send "batch.runScript(\"${REMOTE_GROOVY_SCRIPT_PATH}\" ${AMMONITE_PARAM_LIST})\r"
-EOF
-  done
-  # 1.4. SSH logout:
-  cat >>${MASTER_SCRIPT} <<EOF
-expect "@ "
-send "// -- Scripts finished.\r"
-expect "@ "
-send "exit\r"
-EOF
-
-  # 2. Upload and execute the script:
-  chmod a+x ${MASTER_SCRIPT}
-  aws emr put ${MASTER_ACCESS} --src ${MASTER_SCRIPT} --dest "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
-  aws emr ssh ${MASTER_ACCESS} --command "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
   ;;
 
 # ======
