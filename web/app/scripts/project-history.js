@@ -8,6 +8,7 @@ function(util, $timeout, removeOptionalDefaults) {
     scope: { show: '=', side: '=' },
     templateUrl: 'project-history.html',
     link: function(scope) {
+      scope.historyScope = scope;
       scope.$watch('show', getHistory);
       scope.$watch('side.state.projectName', getHistory);
       function getHistory() {
@@ -23,18 +24,28 @@ function(util, $timeout, removeOptionalDefaults) {
         scope.localChanges = false;
         scope.valid = true;
         var history = scope.history;
+        scope.historyBackup = angular.copy(scope.history);
         if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
-            var step = history.steps[i];
-            step.localChanges = false;
-            step.editable = scope.valid;
-            if ((step.checkpoint === undefined) && !step.status.enabled) {
-              scope.valid = false;
-            }
-            watchStep(i, step);
+            setupHistoryStep(i);
           }
         }
       }
+      function setupHistoryStep(i) {
+        var history = scope.history;
+        var step = history.steps[i];
+        step.localChanges = false;
+        step.editable = scope.valid;
+        if ((step.checkpoint === undefined) && !step.status.enabled) {
+          scope.valid = false;
+        }
+        watchStep(i, step);
+      }
+      scope.discardChanges = function() {
+        scope.history = scope.historyBackup;
+        update();
+      };
+
       scope.$watch('history', update);
       scope.$watch('history.$resolved', update);
       scope.$on('apply operation', validate);
@@ -229,13 +240,13 @@ function(util, $timeout, removeOptionalDefaults) {
       scope.insertBefore = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
         clearCheckpointsFrom(pos);
-        scope.history.steps.splice(pos, 0, blankStep(seg));
+        scope.history.steps.splice(pos, 0, createNewStep(seg));
         validate();
       };
       scope.insertAfter = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
         clearCheckpointsFrom(pos + 1);
-        scope.history.steps.splice(pos + 1, 0, blankStep(seg));
+        scope.history.steps.splice(pos + 1, 0, createNewStep(seg));
         validate();
       };
 
@@ -265,7 +276,7 @@ function(util, $timeout, removeOptionalDefaults) {
         };
       };
 
-      function blankStep(seg) {
+      function createNewStep(seg) {
         var path = [];
         if (seg !== undefined) {
           path = seg.name.split('|');
