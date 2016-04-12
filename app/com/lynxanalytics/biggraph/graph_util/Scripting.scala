@@ -103,7 +103,7 @@ object Scripting {
     def asDouble: Attribute[Double] =
       graph_operations.VertexAttributeToDouble.run(self)
 
-    def derive(expression: String) = {
+    def derive(expression: String): Attribute[String] = {
       graph_operations.DeriveJS.deriveFromAttributes[String](
         expression, Seq("x" -> self), self.vertexSet).attr
     }
@@ -116,7 +116,7 @@ object Scripting {
     def asLong: Attribute[Long] =
       graph_operations.DoubleAttributeToLong.run(self)
 
-    def derive(expression: String) = {
+    def derive(expression: String): Attribute[Double] = {
       graph_operations.DeriveJS.deriveFromAttributes[Double](
         expression, Seq("x" -> self), self.vertexSet).attr
     }
