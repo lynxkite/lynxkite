@@ -12,7 +12,7 @@ anchor = re.compile(r'\#\#\#')
 url = re.compile(r'(http.*)\[(.*)\]')
 bold = re.compile(r'\*(.*)\*')
 
-def asciidocToTemplate(src, dst):
+def asciidocToTemplate(src, dst, onlyCode = False):
   codeBlock = False
   with open(src, 'r') as s:
     with open(dst, 'w') as d:
@@ -23,14 +23,16 @@ def asciidocToTemplate(src, dst):
           if codeBlock:
             d.write(line)
           else:
-            if line == '\n':
-              d.write(line)
-            else:
-              if not header.match(line) and not anchor.match(line):
-                line = line.replace('`', '')
-                line = url.sub(r'\2 (\1)', line)
-                line = bold.sub(r'\1', line)
-                d.write('# ' + line)
+            if not onlyCode:
+              if line == '\n':
+                d.write(line)
+              else:
+                if not header.match(line) and not anchor.match(line):
+                  line = line.replace('`', '')
+                  line = url.sub(r'\2 (\1)', line)
+                  line = bold.sub(r'\1', line)
+                  d.write('# ' + line)
+
 
 app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -39,7 +41,8 @@ asciidocToTemplate(
   app_home + '/conf/kiterc_template')
 asciidocToTemplate(
   app_home + '/web/app/admin-manual/installation/automatic-log-collection.asciidoc',
-  app_home + '/tools/cron_upload.sh')
+  app_home + '/tools/cron_upload.sh',
+  onlyCode = True)
 asciidocToTemplate(
   app_home + '/web/app/admin-manual/installation/configuration/emr.asciidoc',
   app_home + '/tools/emr_spec_template')
