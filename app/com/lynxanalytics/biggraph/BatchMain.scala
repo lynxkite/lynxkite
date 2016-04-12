@@ -30,6 +30,10 @@ For example:
 
   serving.Ammonite.maybeStart()
   try {
+    println(s"STARTING SCRIPT ${scriptFileName} with params ${params}")
+    val startTime = System.currentTimeMillis()
     groovy.GroovyContext.runScript(scriptFileName, params: _*)
+    val elapsedTimeSecs = (System.currentTimeMillis() - startTime) / 1000
+    println(s"FINISHED SCRIPT ${scriptFileName}, took ${elapsedTimeSecs} seconds")
   } finally serving.Ammonite.maybeStop()
 }
