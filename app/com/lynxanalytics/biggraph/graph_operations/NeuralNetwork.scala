@@ -292,8 +292,8 @@ case class NeuralNetwork(
     val trueState: Map[ID, Vector] = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
-        state(0) = 1.0 // Mark of a source of truth is in position 0.
-        state(1) = labels(id) // Label is in position 1.
+        state(0) = labels(id) // Label is in position 0.
+        state(1) = 1.0 // Mark of a source of truth is in position 1.
       }
       val fs = features(id)
       for (i <- 0 until fs.size) {
@@ -334,8 +334,8 @@ case class NeuralNetwork(
       // Backward pass.
       val errors: Map[ID, Double] = data.map {
         case (id, (Some(label), features)) =>
-          // The label is predicted in position 1.
-          id -> (outputs.last.newState(id)(1) - label)
+          // The label is predicted in position 0.
+          id -> (outputs.last.newState(id)(0) - label)
         case (id, (None, features)) =>
           id -> 0.0
       }.toMap
@@ -344,7 +344,7 @@ case class NeuralNetwork(
       val finalGradient: Map[ID, Vector] = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
-          vec(1) = error
+          vec(0) = error
           id -> vec
       }
       val gradients = outputs.init.scanRight {
@@ -362,14 +362,13 @@ case class NeuralNetwork(
         updateHidden = gradientMatrix(gradients, _.updateHiddenGradient),
         activationInput = gradientMatrix(gradients, _.activationInputGradient),
         activationHidden = gradientMatrix(gradients, _.activationHiddenGradient))
-
       adagradMemory = adagradMemory.plus(networkGradients.squared)
       network = network.adagrad(adagradMemory, networkGradients)
       finalOutputs = outputs.last
     }
     // Return last predictions.
     finalOutputs.newState.map {
-      case (id, state) => id -> state(1)
+      case (id, state) => id -> state(0)
     }.iterator
   }
 }
