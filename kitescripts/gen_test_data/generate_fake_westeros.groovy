@@ -7,8 +7,8 @@ numBatches = (params.numBatches ?: '100').toInteger()
 maxDegree = (params.maxDegree ?: '1000').toInteger()
 
 // Adds a vertex which is connected to every other vertex.
-addGlobalHubVertex = (params.addGlobalHubVertex ?: 'false').toBoolean()
-addReversedEdges = (params.addReversedEdges ?: 'false').toBoolean()
+addGlobalHubVertex = (params.addGlobalHubVertex ?: 'true').toBoolean()
+addReversedEdges = (params.addReversedEdges ?: 'true').toBoolean()
 
 // Parameters used to generate test data:
 //
@@ -99,15 +99,8 @@ vertexDF.write()
 edgeDF = project.sql(
   'select src,dst from vertices')
 if (addReversedEdges) {
-  project = lynx.newProject()
-
-  project.importVerticesAndEdgesFromASingleTable(
-    table: lynx.saveAsTable(edgeDF, 'tmp_test_edges'),
-    src: 'src',
-    dst: 'dst')
-  project.addReversedEdges()
-  edgeDF = project.sql(
-    'select src_stringID as src, dst_stringID as dst from triplets')
+  revEdgeDF = edgeDF.select(edgeDF.col("dst"), edgeDF.col("src")).toDF("src", "dst")
+  edgeDF = edgeDF.unionAll(revEdgeDF)
 }
 
 edgeDF.write()
