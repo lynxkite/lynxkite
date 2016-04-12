@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object ImportEdgeListForExistingVertexSetFromTableBase {
+object ImportEdgesForExistingVertices extends OpFromJson {
   class Input[A, B] extends MagicInputSignature {
     val rows = vertexSet
     val srcVidColumn = vertexAttribute[A](rows)
@@ -30,18 +30,8 @@ object ImportEdgeListForExistingVertexSetFromTableBase {
     srcVidColumn: Attribute[A],
     dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output[A, B] = {
     import Scripting._
-    val op = {
-      if (typeOf[A] =:= typeOf[String] && typeOf[B] =:= typeOf[String])
-        new ImportEdgeListForExistingVertexSetFromTable()
-      else if (typeOf[A] =:= typeOf[Long] && typeOf[B] =:= typeOf[String])
-        new ImportEdgeListForExistingVertexSetFromTableLongString()
-      else if (typeOf[A] =:= typeOf[Long] && typeOf[B] =:= typeOf[Long])
-        new ImportEdgeListForExistingVertexSetFromTableLongLong()
-      else assert(
-        false,
-        "ImportEdgeListForExistingVertexSetFromTableBase is not supported for" +
-          s" ${typeOf[A]} + ${typeOf[B]}.")
-    }.asInstanceOf[ImportEdgeListForExistingVertexSetFromTableBase[A, B]]
+    import SerializableType._
+    val op = ImportEdgesForExistingVertices[A, B]()
     op(
       op.srcVidColumn, srcVidColumn)(
         op.dstVidColumn, dstVidColumn)(
@@ -100,19 +90,29 @@ object ImportEdgeListForExistingVertexSetFromTableBase {
       .map { case (dstName, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
       .sortUnique(partitioner)
   }
+
+  def fromJson(j: JsValue) = {
+    val srcType = SerializableType.fromJson(j \ "srcType")
+    val dstType = SerializableType.fromJson(j \ "dstType")
+    ImportEdgesForExistingVertices()(srcType, dstType)
+  }
 }
-import ImportEdgeListForExistingVertexSetFromTableBase._
-abstract class ImportEdgeListForExistingVertexSetFromTableBase[A: reflect.ClassTag: Ordering, B: reflect.ClassTag: Ordering]
+import ImportEdgesForExistingVertices._
+case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableType]()
     extends TypedMetaGraphOp[Input[A, B], Output[A, B]] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[A, B]()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = Json.obj(
+    "srcType" -> implicitly[SerializableType[A]].toJson,
+    "dstType" -> implicitly[SerializableType[B]].toJson)
 
   def execute(inputDatas: DataSet,
               o: Output[A, B],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    import SerializableType._
 
     // Join the source and destination columns of the table to import.
     // If there were null values in the original DataFrame, then those
@@ -131,21 +131,7 @@ abstract class ImportEdgeListForExistingVertexSetFromTableBase[A: reflect.ClassT
   }
 }
 
-// Typed versions.
+// Legacy class.
 object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
-  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTable()
+  def fromJson(j: JsValue) = ImportEdgesForExistingVertices[String, String]()
 }
-case class ImportEdgeListForExistingVertexSetFromTable()
-  extends ImportEdgeListForExistingVertexSetFromTableBase[String, String]
-
-object ImportEdgeListForExistingVertexSetFromTableLongString extends OpFromJson {
-  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTableLongString()
-}
-case class ImportEdgeListForExistingVertexSetFromTableLongString()
-  extends ImportEdgeListForExistingVertexSetFromTableBase[Long, String]
-
-object ImportEdgeListForExistingVertexSetFromTableLongLong extends OpFromJson {
-  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTableLongLong()
-}
-case class ImportEdgeListForExistingVertexSetFromTableLongLong()
-  extends ImportEdgeListForExistingVertexSetFromTableBase[Long, Long]
