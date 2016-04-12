@@ -1,21 +1,3 @@
-# ## Automatic log collection
-
-# For Internet-connected LynxKite instances, it is possible to set up a cronjob that uploads the logs created
-# by the running instance to Google storage. This is useful partly for debugging purposes, partly for
-# maintaining a database that can answer questions such as how much time does
-# it usually take to perform this and that operation.
-
-# Note that (1) the logs will be uploaded to a South Asia region,
-# and (2) logs already uploaded will not be uploaded again.
-
-# To configure this, copy the following script (which can be found at /tools/cron_upload.sh)
-# to /etc/cron.monthly; this way uploading will be triggered in every month.
-# It is, of course, possible to create a custom setup; monthly upload is just a
-# recommended setting. You might need to edit the script to ensure that
-# the SCRIPTLOGS variable equals KITE_SCRIPT_LOGS (see <<kiterc-script-logs>>).
-# Please, also make sure that KITE_INSTANCE (<<kite-instance>>) is set in .kiterc,
-# otherwise log upload will not work.
-
 #!/bin/bash
 #
 # Runs the bigraph uploadLogs, which uploads the logs and operation performance data
