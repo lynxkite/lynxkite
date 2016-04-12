@@ -289,8 +289,6 @@ case $mode in
   uploadLogs)
     uploadLogs
   ;;
-  gabor)
-  ;;
   *)
     >&2 echo "Usage: $0 interactive|start|stop|restart|batch|uploadLogs"
     exit 1
