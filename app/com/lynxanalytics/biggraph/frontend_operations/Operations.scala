@@ -2336,24 +2336,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val baseAttr = project.vertexAttributes(baseAttrName)
       val segmentation = project.segmentation(params("name"))
 
-      val segAttr = runtimeSafeImport(
-        segmentation, baseColumn, segColumn, baseAttr)(baseColumn.typeTag, segColumn.typeTag)
+      val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
       segmentation.newVertexAttribute(segColumnName, segAttr)
     }
 
-    def runtimeSafeImport[A: TypeTag, B: TypeTag](
+    def typedImport[A, B](
       segmentation: SegmentationEditor,
-      baseColumn: Attribute[_], segColumn: Attribute[_], baseAttr: Attribute[_]): Attribute[_] = {
-      typedImport(
-        segmentation,
-        baseColumn.runtimeSafeCast[A],
-        segColumn.runtimeSafeCast[B],
-        baseAttr.runtimeSafeCast[A])
-    }
-
-    def typedImport[A: TypeTag, B: TypeTag](
-      segmentation: SegmentationEditor,
-      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[A]): Attribute[B] = {
+      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
       // Merge by segment ID to create the segments.
       val merge = {
         val op = graph_operations.MergeVertices[B]()
@@ -2364,9 +2353,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
         AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
+      implicit val ta = baseColumn.typeTag
+      implicit val tb = segColumn.typeTag
       // Import belongs-to relationship as edges between the base and the segmentation.
       val imp = graph_operations.ImportEdgesForExistingVertices.run(
-        baseAttr, segAttr, baseColumn, segColumn)
+        baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
       segmentation.belongsTo = imp.edges
       segAttr
     }
