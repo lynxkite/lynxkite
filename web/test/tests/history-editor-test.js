@@ -133,27 +133,25 @@ module.exports = function(fw) {
   // TODO(gaborfeher): Also test adding segmentations.
   fw.statePreservingTest(
     'test-example project with history',
-    'new operation can be inserted into history (below op)',
+    'new operation can be inserted into history (general case)',
     function() {
       lib.left.history.open();
-      lib.left.history.insertOperation(
-          2, 'down', 'PageRank',
+      lib.left.history.insertOperationSimple(
+          3, 'PageRank',
           {name: 'wow_such_page_rank'});
-      var addedOpNameField = lib.left.history.getOperation(3).$('div#name input');
-      expect(addedOpNameField.getAttribute('value')).toBe('wow_such_page_rank');
+      lib.left.history.expextOperationParameter(3, 'name', 'wow_such_page_rank');
       lib.left.history.close(true);
     });
 
   fw.statePreservingTest(
     'test-example project with history',
-    'new operation can be inserted into history (above op)',
+    'new operation can be inserted into history (top position)',
     function() {
       lib.left.history.open();
-      lib.left.history.insertOperation(
-          2, 'up', 'PageRank',
-          {name: 'wow_such_page_rank'});
-      var addedOpNameField = lib.left.history.getOperation(2).$('div#name input');
-      expect(addedOpNameField.getAttribute('value')).toBe('wow_such_page_rank');
+      lib.left.history.insertOperationSimple(
+          0, 'New vertex set',
+          {size: '111'});
+      lib.left.history.expectOperationParameter(0, 'size', '111');
       lib.left.history.close(true);
     });
 
@@ -162,11 +160,9 @@ module.exports = function(fw) {
     'new operation can be inserted into history, under a segmentation',
     function() {
       lib.left.history.open();
-
       // Add segmentation operation below and check:
-      lib.left.history.insertOperation(
-          4,
-          'down',
+      lib.left.history.insertOperationForSegmentation(
+          5,
           'Add gaussian vertex attribute',
           {},
           'connected_components_segmentation');
@@ -174,20 +170,63 @@ module.exports = function(fw) {
       expect(lib.left.history.getOperationName(5)).toBe('Add gaussian vertex attribute');
       expect(lib.left.history.getOperationSegmentation(5)).toBe('connected_components_segmentation');
 
-      // Add segmentation operation above and check:
-      lib.left.history.insertOperation(
-          5,
-          'up',
-          'Add constant vertex attribute',
-          {name: 'const_attr'},
-          'connected_components_segmentation');
-      expect(lib.left.history.numOperations()).toBe(numOperations + 2);
-      expect(lib.left.history.getOperationName(5)).toBe('Add constant vertex attribute');
-      expect(lib.left.history.getOperationSegmentation(5)).toBe('connected_components_segmentation');
-      expect(lib.left.history.getOperationName(6)).toBe('Add gaussian vertex attribute');
-      expect(lib.left.history.getOperationSegmentation(6)).toBe('connected_components_segmentation');
-
       lib.left.history.close(true);
     });
+
+  fw.statePreservingTest(
+    'test-example project with history',
+    'operation type can be changed',
+    function() {
+      lib.left.history.open();
+      var operation = lib.left.history.getOperation(2);
+      lib.left.history.enterEditMode(operation);
+      lib.left.history.selectOperation(operation, 'Random vertex attribute');
+      lib.left.populateOperation(operation, {'seed': '420'});
+      lib.left.submitOperation(operation);
+      expect(lib.left.history.getOperationName(2)).toBe('Add random vertex attribute');
+      lib.left.history.expectOperationParameter(2, 'seed', '420');
+      lib.left.history.close(true);
+    });
+
+  fw.statePreservingTest(
+    'test-example project with history',
+    'operation type can be changed and then the change discarded',
+    function() {
+      lib.left.history.open();
+      var operation = lib.left.history.getOperation(2);
+      lib.left.history.enterEditMode(operation);
+      lib.left.history.selectOperation(operation, 'Random vertex attribute');
+      lib.left.populateOperation(operation, {'seed': '420'});
+      lib.left.history.discardEdits(operation);
+      expect(lib.left.history.getOperationName(2)).toBe('Add constant vertex attribute');
+      lib.left.history.close(false);
+    });
+
+  fw.statePreservingTest(
+    'test-example project with history',
+    'operation parameter can be changed',
+    function() {
+      lib.left.history.open();
+      var operation = lib.left.history.getOperation(2);
+      lib.left.populateOperation(operation, {'value': '4242'});
+      lib.left.submitOperation(operation);
+      expect(lib.left.history.getOperationName(2)).toBe('Add constant vertex attribute');
+      lib.left.history.expectOperationParameter(2, 'value', '4242');
+      lib.left.history.close(true);
+    });
+
+  fw.statePreservingTest(
+    'test-example project with history',
+    'operation parameter can be changed and then the change discarded',
+    function() {
+      lib.left.history.open();
+      var operation = lib.left.history.getOperation(2);
+      lib.left.populateOperation(operation, {'value': '4242'});
+      lib.left.history.discardEdits(operation);
+      expect(lib.left.history.getOperationName(2)).toBe('Add constant vertex attribute');
+      lib.left.history.expectOperationParameter(2, 'value', '300000');
+      lib.left.history.close(false);
+    });
+
 
 };
