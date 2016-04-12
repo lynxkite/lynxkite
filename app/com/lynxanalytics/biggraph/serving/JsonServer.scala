@@ -170,14 +170,13 @@ object AssertNotRunningAndRegisterRunning {
     pidFile
   }
 
-  // This is platform-dependent :(
   private def getPid(): String = {
 
     val pidAtHostname =
       // Returns <pid>@<hostname>
       java.lang.management.ManagementFactory.getRuntimeMXBean.getName
     val atSignIndex = pidAtHostname.indexOf('@')
-    pidAtHostname.dropRight(pidAtHostname.length - atSignIndex)
+    pidAtHostname.take(atSignIndex)
   }
 
   private def writePid(pidFile: File) = {
