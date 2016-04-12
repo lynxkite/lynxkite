@@ -103,7 +103,7 @@ edgeDF.write()
   .save(edgeExportPath)
 
 // Obtain vertex ids (assumes that edges are symmetric):
-vertexDF = edgeDF.select(edgeDF.col("src")).distinct()
+vertexDF = edgeDF.select(edgeDF.col("src")).distinct().toDF("vertex_id")
 vertexDF.write()
   .format('com.databricks.spark.csv')
   .option('header', 'true')
