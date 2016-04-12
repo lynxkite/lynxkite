@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
 import play.api.libs.json.{ Writes, Reads }
+import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 // TypedJson is a JSON object with a string "class" and an object "data" field:
 //   { "class": "my.little.ClassName", "data": { ... } }
@@ -85,4 +87,47 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
   def fromJson(j: json.JsValue): T = {
     (j \ paramName).asOpt[T].getOrElse(defaultValue)
   }
+}
+
+object SerializableType extends FromJson[SerializableType[_]] {
+  def fromJson(j: json.JsValue): SerializableType[_] = {
+    (j \ "typename").as[String] match {
+      case "String" => string
+      case "Double" => double
+      case "Long" => long
+      case "Int" => int
+    }
+  }
+
+  implicit val string = new SerializableType[String]("String")
+  implicit val double = new SerializableType[Double]("Double")
+  implicit val long = new SerializableType[Long]("Long")
+  implicit val int = new SerializableType[Int]("Int")
+
+  import scala.language.implicitConversions
+  implicit def typeTagToSerializableType[T: TypeTag]: SerializableType[T] = {
+    val t = typeOf[T]
+    val st =
+      if (t =:= typeOf[String]) string
+      else if (t =:= typeOf[Double]) double
+      else if (t =:= typeOf[Long]) long
+      else if (t =:= typeOf[Int]) int
+      else assert(false, s"Unsupported type: $t")
+    st.asInstanceOf[SerializableType[T]]
+  }
+
+  implicit def serializableTypeToClassTag[T: SerializableType]: ClassTag[T] =
+    implicitly[SerializableType[T]].classTag
+
+  implicit def serializableTypeToOrdering[T: SerializableType]: Ordering[T] =
+    implicitly[SerializableType[T]].ordering
+
+  implicit def serializableTypeToTypeTag[T: SerializableType]: TypeTag[T] =
+    implicitly[SerializableType[T]].typeTag
+}
+class SerializableType[T: ClassTag: Ordering: TypeTag] private (typename: String) extends ToJson {
+  override def toJson = Json.obj("typename" -> typename)
+  def classTag = implicitly[ClassTag[T]]
+  def ordering = implicitly[Ordering[T]]
+  def typeTag = implicitly[TypeTag[T]]
 }

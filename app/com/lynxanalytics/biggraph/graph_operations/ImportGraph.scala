@@ -437,7 +437,7 @@ class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, v
     val columns = readColumns(rc, input, Set(src, dst))
     putEdgeAttributes(columns, o.attrs, output)
 
-    val edges = ImportEdgeListForExistingVertexSetFromTableBase.resolveEdges(
+    val edges = ImportEdgesForExistingVertices.resolveEdges(
       edgeSrcDst(columns),
       inputs.srcVidAttr.data,
       inputs.dstVidAttr.data)

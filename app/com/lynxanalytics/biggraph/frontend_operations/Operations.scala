@@ -363,7 +363,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attrName = params("attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val attr = project.vertexAttributes(attrName)
-      val imp = graph_operations.ImportEdgeListForExistingVertexSetFromTableBase.runtimeSafe(
+      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
         attr, attr, table.columns(src), table.columns(dst))
       project.edgeBundle = imp.edges
       for (edgeAttrName <- table.columns.keys) {
@@ -2297,7 +2297,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The base ID attribute parameter must be set.")
       assert(segAttrName != FEOption.unset.id,
         "The segmentation ID attribute parameter must be set.")
-      val imp = graph_operations.ImportEdgeListForExistingVertexSetFromTableBase.runtimeSafe(
+      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
         parent.vertexAttributes(baseAttrName),
         project.vertexAttributes(segAttrName),
         table.columns(baseColumnName),
@@ -2365,7 +2365,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         merge.belongsTo,
         AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
       // Import belongs-to relationship as edges between the base and the segmentation.
-      val imp = graph_operations.ImportEdgeListForExistingVertexSetFromTableBase.run(
+      val imp = graph_operations.ImportEdgesForExistingVertices.run(
         baseAttr, segAttr, baseColumn, segColumn)
       segmentation.belongsTo = imp.edges
       segAttr
