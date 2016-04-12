@@ -38,6 +38,9 @@ asciidocToTemplate(
   app_home + '/web/app/admin-manual/installation/configuration/kiterc.asciidoc',
   app_home + '/conf/kiterc_template')
 asciidocToTemplate(
+  app_home + '/web/app/admin-manual/installation/automatic-log-collection.asciidoc',
+  app_home + '/tools/cron_upload.sh')
+asciidocToTemplate(
   app_home + '/web/app/admin-manual/installation/configuration/emr.asciidoc',
   app_home + '/tools/emr_spec_template')
 asciidocToTemplate(
