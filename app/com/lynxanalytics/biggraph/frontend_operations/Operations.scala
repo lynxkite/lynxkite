@@ -345,15 +345,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("attr", "Vertex ID attribute",
-        options = FEOption.unset +: (vertexAttributes[String] ++ vertexAttributes[Long])),
+      Choice("attr", "Vertex ID attribute", options = FEOption.unset +: vertexAttributes),
       Param("src", "Source ID column"),
       Param("dst", "Destination ID column"))
     def enabled =
       hasNoEdgeBundle &&
         hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty || vertexAttributes[Long].nonEmpty,
-          "No vertex attributes to use as id.")
+        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val src = params("src")
@@ -2266,23 +2264,21 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice(
         "base-id-attr",
         s"Identifying vertex attribute in base project",
-        options = FEOption.list(parent.vertexAttributeNames[String].toList ++
-          parent.vertexAttributeNames[Long].toList)),
+        options = FEOption.list(parent.vertexAttributeNames.toList)),
       Param("base-id-column", s"Identifying column for base project"),
       Choice(
         "seg-id-attr",
         s"Identifying vertex attribute in segmentation",
-        options = vertexAttributes[String] ++ vertexAttributes[Long]),
+        options = vertexAttributes),
       Param("seg-id-column", s"Identifying column for segmentation"))
     def enabled =
       isSegmentation &&
         FEStatus.assert(
-          vertexAttributes[String].nonEmpty || vertexAttributes[Long].nonEmpty,
-          "No suitable vertex attributes in this segmentation") &&
+          vertexAttributes.nonEmpty,
+          "No vertex attributes in this segmentation") &&
           FEStatus.assert(
-            parent.vertexAttributeNames[String].nonEmpty ||
-              parent.vertexAttributeNames[Long].nonEmpty,
-            "No suitable vertex attributes in base project")
+            parent.vertexAttributeNames.nonEmpty,
+            "No vertex attributes in base project")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base-id-column")
@@ -2314,12 +2310,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         accessibleTableOptions),
       Param("name", s"Name of new segmentation"),
       Choice("base-id-attr", "Vertex ID attribute",
-        options = FEOption.unset +: (vertexAttributes[String] ++ vertexAttributes[Long])),
+        options = FEOption.unset +: vertexAttributes),
       Param("base-id-column", "Vertex ID column"),
       Param("seg-id-column", "Segment ID column"))
     def enabled = FEStatus.assert(
-      vertexAttributes[String].nonEmpty || vertexAttributes[Long].nonEmpty,
-      "No suitable vertex attributes")
+      vertexAttributes.nonEmpty, "No suitable vertex attributes")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base-id-column")
