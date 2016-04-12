@@ -39,24 +39,16 @@ object ImportEdgesForExistingVertices extends OpFromJson {
             op.dstVidAttr, dstVidAttr).result
   }
 
-  def runtimeSafe(
-    srcVidAttr: Attribute[_],
-    dstVidAttr: Attribute[_],
+  def runtimeSafe[A, B](
+    srcVidAttr: Attribute[A],
+    dstVidAttr: Attribute[B],
     srcVidColumn: Attribute[_],
     dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_, _] = {
-    val ta = srcVidAttr.typeTag
-    val tb = dstVidAttr.typeTag
-    runtimeSafeHelper(srcVidAttr, dstVidAttr, srcVidColumn, dstVidColumn)(ta, tb, m)
-  }
-
-  private def runtimeSafeHelper[A: TypeTag, B: TypeTag](
-    srcVidAttr: Attribute[_],
-    dstVidAttr: Attribute[_],
-    srcVidColumn: Attribute[_],
-    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_, _] = {
+    implicit val ta = srcVidAttr.typeTag
+    implicit val tb = dstVidAttr.typeTag
     run(
-      srcVidAttr.runtimeSafeCast[A],
-      dstVidAttr.runtimeSafeCast[B],
+      srcVidAttr,
+      dstVidAttr,
       srcVidColumn.runtimeSafeCast[A],
       dstVidColumn.runtimeSafeCast[B])
   }
