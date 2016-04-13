@@ -32,7 +32,6 @@ def asciidocToTemplate(src, dst):
                 line = bold.sub(r'\1', line)
                 d.write('# ' + line)
 
-
 app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 asciidocToTemplate(
