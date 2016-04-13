@@ -9,3 +9,4 @@ project.centrality(algorithm: 'Harmonic', bits: '4', maxDiameter: '5', name: 'ce
 centrality_histogram = project.vertexAttributes['centrality'].histogram(
   logarithmic: true,
   precise: true)
+println "centrality: $centrality_histogram"

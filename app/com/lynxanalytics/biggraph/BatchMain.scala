@@ -27,6 +27,7 @@ For example:
       (paramSpec.take(colonIdx), paramSpec.drop(colonIdx + 1))
     }
   serving.AssertLicenseNotExpired()
+  serving.AssertNotRunningAndRegisterRunning()
 
   serving.Ammonite.maybeStart()
   try {
