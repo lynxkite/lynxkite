@@ -10,14 +10,14 @@
 cd $(dirname $0)
 
 TEST_PATTERN="${1:-*}"
-DATA_SET="${2:-fake_westeros_100m}"
+DATA_SET="${2:-fake_westeros_xt_25m}"
 NUM_EMR_INSTANCES=${3:-3}
 
 OUTPUT_FILE="last_results_${NUM_EMR_INSTANCES}i_${DATA_SET}"
 
 # Run test.
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
-  tools/emr_based_test.sh bigdata "${TEST_PATTERN}" testDataSet:${DATA_SET} 2>&1 \
+  tools/emr_based_test.sh backend "big_data_tests/${TEST_PATTERN}" testDataSet:${DATA_SET} 2>&1 \
   | tee kitescripts/big_data_tests/full_output
 
 # Write the header.
