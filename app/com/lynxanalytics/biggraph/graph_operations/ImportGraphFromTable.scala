@@ -33,14 +33,14 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
     val partitioner = unresolvedEdges.partitioner.get
 
     val srcStringToVid = srcVidAttr.rdd
-      .map { case (k, v) => v -> k }
+      .map(_.swap)
       .assertUniqueKeys(partitioner)
     val dstStringToVid = {
       if (srcVidAttr.gUID == dstVidAttr.gUID)
         srcStringToVid
       else
         dstVidAttr.rdd
-          .map { case (k, v) => v -> k }
+          .map(_.swap)
           .assertUniqueKeys(partitioner)
     }
     val srcResolvedByDst = RDDUtils.hybridLookup(
