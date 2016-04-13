@@ -1,28 +1,27 @@
 // This script generates a graph that has a similar degree distribution like the
 // one that caused import trouble at Westeros. (Number of vertices goes down
 // exponentially as degree goes up exponentially.)
+//
+// Usage examples:
+//   tools/emr_based_test.sh backend gen_test_data/generate_fake_westeros \
+//     testDataSet:fake_westeros_xt_100k numVertices:100000 numBatches:100 maxDegree:1000
+//
+//   tools/emr_based_test.sh backend gen_test_data/generate_fake_westeros \
+//     testDataSet:fake_westeros_xt_25m numVertices:25000000 numBatches:20 maxDegree:1250000
+
+testSet = params.testDataSet ?: 'tmp_test_data'
 
 numVertices = (params.numVertices ?: '100000').toInteger()
 numBatches = (params.numBatches ?: '100').toInteger()
 maxDegree = (params.maxDegree ?: '1000').toInteger()
+// Note: reverse edges are added automatically.
 
 // Adds a vertex which is connected to every other vertex.
 addGlobalHubVertex = (params.addGlobalHubVertex ?: 'true').toBoolean()
 
-// Args used to generate test data:
-//
-// testDataSet:fake_westeros_xt_100k
-//   numVertices:100000 numBatches:100 maxDegree:1000
-//
-// testDataSet:fake_westeros_xt_25m
-//   numVertices:25000000  numBatches:20 maxDegree:1250000
-//
-// Usage example: tools/emr_based_test.sh backend gen_test_data/generate_fake_westeros args
-
 assert (maxDegree <= numVertices / numBatches)
 ratio = Math.exp(Math.log(maxDegree) / (numBatches - 1))
 
-testSet = params.testDataSet ?: 'fake_westeros_100k'
 
 edgeExportPath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/edges.csv')
 vertexExportPath = lynx.resolvePath('S3$/lynxkite-test-data/' + testSet + '/vertices.csv')
