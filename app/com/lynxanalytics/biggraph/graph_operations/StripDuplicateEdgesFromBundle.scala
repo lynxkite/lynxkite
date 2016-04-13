@@ -28,9 +28,9 @@ case class StripDuplicateEdgesFromBundle() extends TypedMetaGraphOp[GraphInput, 
 
     val es = inputs.es.rdd
 
-    val swapped = es.map { case (id, e) => (e, id) }
+    val swapped = es.map(_.swap)
     val representativeEdges = swapped.reduceByKey((oneID, anotherID) => oneID)
-    val swappedBack = representativeEdges.map { case (e, id) => (id, e) }
+    val swappedBack = representativeEdges.map(_.swap)
 
     val esPart = es.partitioner.get
     output(o.unique, swappedBack.sortUnique(esPart))
