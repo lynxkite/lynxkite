@@ -1,7 +1,7 @@
 // Loads edges.csv from the test set into the 'test_edges' table.
 
 
-testDataSet = params.testDataSet ?: 'fake_westeros_100k'
+testDataSet = params.testDataSet ?: 'fake_westeros_xt_100k'
 edgePath = lynx.resolvePath(
   'S3$/lynxkite-test-data/' + testDataSet + '/edges.csv')
 
