@@ -1,68 +1,19 @@
 ## Automatic log collection
 
-For Internet-connected LynxKite instances, it is possible to set up a cronjob that uploads the logs created
-by the running instance to Google storage. This is useful partly for debugging purposes, partly for
+For Internet-connected LynxKite instances, it is possible to set up a cronjob that sends
+the logs created the running instance to LynxAnalytics.
+This is useful partly for debugging purposes, partly for
 maintaining a database that can answer questions such as how much time does
 it usually take to perform this and that operation.
 
-Note that (1) the logs will be uploaded to a South Asia region,
-and (2) logs already uploaded will not be uploaded again.
+Note that the uploaded logs will be treated confidentiality.
 
 To configure this, locate the file `tools/cron_upload.sh` in the installation.
-(The contents of that file are displayed below.)
 Suppose that the full path is `/home/kite/kite_1.7.3/tools/cron_upload.sh`.
 Then issue the command `crontab -e` and type the following in the editor invoked:
-`@monthly /home/kite/kite_1.7.3/tools/cron_upload.sh`.
-This way uploading will be triggered in every month.
-It is, of course, possible to create a custom setup; monthly upload is just a
-recommended setting. You might need to edit the script to ensure that
-the `SCRIPTLOGS` variable equals `KITE_SCRIPT_LOGS` (see <<kiterc-script-logs>>).
-Please, also make sure that `KITE_INSTANCE` (<<kite-instance>>) is set in `.kiterc`,
-otherwise log upload will not work.
-
-```
-#!/bin/bash
-#
-# Runs the bigraph uploadLogs, which uploads the logs and operation performance data
-# to google storage.
-# This script should be run as a cron job!
-# Copy this file to /etc/cron.monthly/ for automatic monthly uploads.
-
-# Set this variable to the biggraph script log file. (The same as KITE_SCRIPT_LOGS)
-SCRIPTLOGS=${HOME}/biggraph.log
-
-checkFile() {
-    FILE=$1
-    if [ ! -e $FILE ]; then
-        >&2 echo "File '$FILE' does not exist!"
-        exit 1
-    fi
-
-    if [ ! -f $FILE ]; then
-        >&2 echo "File '$FILE' is not a regular file!"
-        exit 1
-    fi
-
-    if [ ! -r $FILE ]; then
-        >&2 echo "File '$FILE' cannot be read!"
-        exit 1
-    fi
-}
-
-checkFile $SCRIPTLOGS
-
-COMMAND=`tail -n1 $SCRIPTLOGS | cut -d ' ' -f3`
-
-if [[ ! $COMMAND =~ biggraph$ ]]; then
-    >&2 echo "The command: '$COMMAND' doesn't look like a bigraph script"
-fi
-
-checkFile $COMMAND
-
-if [ ! -x $COMMAND ]; then
-    >&2 echo "File $COMMAND is not executable"
-fi
-
-$COMMAND uploadLogs
-
-```
+`@daily /home/kite/kite_1.7.3/tools/cron_upload.sh`.
+This way uploading will be triggered every day.
+It is, of course, possible to create a custom setup; daily upload is just a
+recommended setting.  Please, make sure that `KITE_INSTANCE` (<<kite-instance>>)
+is set in `.kiterc`, otherwise log upload will not work.
+It is not necessary to repeat this whenever you install a new LynxKite version.
