@@ -52,7 +52,7 @@ case class PageRank(dampingFactor: Double,
       .map { case (src, (_, weight)) => src -> weight }
       .reduceBySortedKey(edgePartitioner, _ + _)
     val targetsWithWeightsRDD = RDDUtils
-      .hybridLookup(edgesWithWeights, sumWeights)
+      .hybridLookup(edgesWithWeights, sumWeights, repartition = false)
       .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) }
     val targetsWithWeights = LargeTable(targetsWithWeightsRDD, edgePartitioner)
     targetsWithWeights.cache()

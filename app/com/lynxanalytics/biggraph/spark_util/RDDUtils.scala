@@ -283,17 +283,25 @@ object RDDUtils {
   // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] =
-    hybridLookup(sourceRDD, lookupTable, hybridLookupThreshold)
+    lookupTable: UniqueSortedRDD[K, S],
+    repartition: Boolean = true): RDD[(K, (T, S))] =
+    hybridLookup(sourceRDD, lookupTable, repartition, hybridLookupThreshold)
+
+  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)],
+    lookupTable: UniqueSortedRDD[K, S],
+    maxValuesPerKey: Int): RDD[(K, (T, S))] =
+    hybridLookup(sourceRDD, lookupTable, repartition = true, maxValuesPerKey)
 
   // This will find the top key (the ones with the largest count) from the sourceRDD. Then if
   // any count is higher than maxValuesPerKey, then it does a hybrid lookup.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     sourceRDD: RDD[(K, T)],
     lookupTable: UniqueSortedRDD[K, S],
+    repartition: Boolean,
     maxValuesPerKey: Int): RDD[(K, (T, S))] = {
 
-    hybridLookup(LargeTable(sourceRDD, lookupTable.partitioner.get), lookupTable, repartition = true, maxValuesPerKey)
+    hybridLookup(LargeTable(sourceRDD, lookupTable.partitioner.get), lookupTable, repartition, maxValuesPerKey)
   }
 
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
