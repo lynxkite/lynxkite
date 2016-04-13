@@ -275,9 +275,9 @@ object RDDUtils {
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
-  private val hybridLookupThreshold =
+  val hybridLookupThreshold =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
-  private val hybridLookupMaxLarge =
+  val hybridLookupMaxLarge =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
@@ -293,31 +293,66 @@ object RDDUtils {
     lookupTable: UniqueSortedRDD[K, S],
     maxValuesPerKey: Int): RDD[(K, (T, S))] = {
 
-    val countsTable = sourceRDD
-      .mapValues(x => 1L)
-      .reduceByKey(lookupTable.partitioner.get, _ + _)
-    val ordering = new CountOrdering[K]
-    val tops = countsTable
-      .top(hybridLookupMaxLarge)(ordering)
-      .sorted(ordering)
-    if (tops.isEmpty) sourceRDD.context.emptyRDD
+    hybridLookup(LargeTable(sourceRDD, lookupTable.partitioner.get), lookupTable, repartition = true, maxValuesPerKey)
+  }
+
+  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    table: LargeTable[K, T],
+    lookupTable: UniqueSortedRDD[K, S],
+    repartition: Boolean,
+    maxValuesPerKey: Int = hybridLookupThreshold): RDD[(K, (T, S))] = {
+
+    if (table.tops.isEmpty) table.sourceRDD.context.emptyRDD
     else {
-      val biggest = tops.last
+      val biggest = table.tops.last
       if (biggest._2 > maxValuesPerKey) {
-        val largeKeysMap = lookupTable.restrictToIdSet(tops.map(_._1).toIndexedSeq.sorted).collect.toMap
-        // LargeKeyMap may not contain all keys from the sourceRDD, if they have
-        // no matching record in the lookupTable. We still need to use a complete
-        // set of the large keys.
-        val largeKeysSet = tops.map(_._1).toSet
-        val largeKeysCoverage = tops.map(_._2).reduce(_ + _)
-        log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering ${largeKeysCoverage} source records.")
-        val larges = smallTableLookup(sourceRDD, largeKeysMap)
-        val smalls = joinLookup(
-          sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }, lookupTable)
-        (smalls ++ larges).repartition(sourceRDD.partitions.size)
+        val largeKeysMap = lookupTable.restrictToIdSet(table.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
+        log.info(s"Hybrid lookup found ${table.largeKeysSet.size} large keys covering ${table.largeKeysCoverage} source records.")
+        val larges = smallTableLookup(table.largeKeysTable, largeKeysMap)
+        val smalls = joinLookup(table.smallKeysTable, lookupTable)
+        val jointTable = (smalls ++ larges)
+        if (repartition) {
+          jointTable.repartition(table.sourceRDD.partitions.size)
+        } else {
+          jointTable.coalesce(table.sourceRDD.partitions.size)
+        }
       } else {
-        joinLookup(sourceRDD, lookupTable)
+        joinLookup(table.sourceRDD, lookupTable)
       }
+    }
+  }
+}
+
+case class LargeTable[K: Ordering: ClassTag, T: ClassTag](
+    sourceRDD: RDD[(K, T)],
+    partitioner: spark.Partitioner) {
+
+  val ordering = new CountOrdering[K]
+  val tops = sourceRDD
+    .mapValues(x => 1L)
+    .reduceByKey(partitioner, _ + _)
+    .top(RDDUtils.hybridLookupMaxLarge)(ordering)
+    .sorted(ordering)
+  // LargeKeyMap may not contain all keys from the sourceRDD, if they have
+  // no matching record in the lookupTable. We still need to use a complete
+  // set of the large keys.
+  val largeKeysSet = tops.map(_._1).toSet
+  val largeKeysCoverage = tops.map(_._2).reduce(_ + _)
+
+  val largeKeysTable = tops.isEmpty match {
+    case true => sourceRDD.context.emptyRDD[(K, T)]
+    case false => sourceRDD.filter { case (key, _) => largeKeysSet.contains(key) }
+  }
+  val smallKeysTable = tops.isEmpty match {
+    case true => sourceRDD.context.emptyRDD[(K, T)]
+    case false => sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+  }
+  def cache(): Unit = {
+    if (!tops.isEmpty) {
+      largeKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+      smallKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+    } else {
+      sourceRDD.persist(spark.storage.StorageLevel.DISK_ONLY)
     }
   }
 }
