@@ -333,26 +333,25 @@ case class LargeTable[K: Ordering: ClassTag, T: ClassTag](
     .reduceByKey(partitioner, _ + _)
     .top(RDDUtils.hybridLookupMaxLarge)(ordering)
     .sorted(ordering)
-  // LargeKeyMap may not contain all keys from the sourceRDD, if they have
-  // no matching record in the lookupTable. We still need to use a complete
-  // set of the large keys.
-  val largeKeysSet = tops.map(_._1).toSet
-  val largeKeysCoverage = tops.map(_._2).reduce(_ + _)
 
-  val largeKeysTable = tops.isEmpty match {
-    case true => sourceRDD.context.emptyRDD[(K, T)]
-    case false => sourceRDD.filter { case (key, _) => largeKeysSet.contains(key) }
+  val (largeKeysSet, largeKeysCoverage) = tops.isEmpty match {
+    case true => (Set.empty[K], 0L)
+    case false => (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  val smallKeysTable = tops.isEmpty match {
-    case true => sourceRDD.context.emptyRDD[(K, T)]
-    case false => sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+  val (smallKeysTable, largeKeysTable) = tops.isEmpty match {
+    case true => (sourceRDD.context.emptyRDD[(K, T)], sourceRDD.context.emptyRDD[(K, T)])
+    case false => (
+      sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) },
+      sourceRDD.filter { case (key, _) => largeKeysSet.contains(key) }
+    )
   }
+
   def cache(): Unit = {
-    if (!tops.isEmpty) {
-      largeKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
-      smallKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
-    } else {
+    if (tops.isEmpty) {
       sourceRDD.persist(spark.storage.StorageLevel.DISK_ONLY)
+    } else {
+      smallKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+      largeKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
     }
   }
 }

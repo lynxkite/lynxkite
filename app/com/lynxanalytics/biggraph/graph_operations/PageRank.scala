@@ -47,6 +47,7 @@ case class PageRank(dampingFactor: Double,
     val edgesWithWeights = edges.sortedJoin(weights).map {
       case (_, (edge, weight)) => edge.src -> (edge.dst, weight)
     }
+    edgesWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
     val sumWeights = edgesWithWeights
       .map { case (src, (_, weight)) => src -> weight }
       .reduceBySortedKey(edgePartitioner, _ + _)
