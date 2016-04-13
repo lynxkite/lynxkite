@@ -17,8 +17,8 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     val srcVidAttr = vertexAttribute[A](sources)
     val dstVidAttr = vertexAttribute[B](destinations)
   }
-  class Output[A, B](implicit instance: MetaGraphOperationInstance,
-                     inputs: Input[A, B])
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input[_, _])
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
@@ -28,7 +28,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     srcVidAttr: Attribute[A],
     dstVidAttr: Attribute[B],
     srcVidColumn: Attribute[A],
-    dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output[A, B] = {
+    dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output = {
     import Scripting._
     import SerializableType._
     val op = ImportEdgesForExistingVertices[A, B]()
@@ -43,7 +43,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     srcVidAttr: Attribute[A],
     dstVidAttr: Attribute[B],
     srcVidColumn: Attribute[_],
-    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output[_, _] = {
+    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output = {
     implicit val ta = srcVidAttr.typeTag
     implicit val tb = dstVidAttr.typeTag
     run(
@@ -91,7 +91,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
 }
 import ImportEdgesForExistingVertices._
 case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableType]()
-    extends TypedMetaGraphOp[Input[A, B], Output[A, B]] {
+    extends TypedMetaGraphOp[Input[A, B], Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[A, B]()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -100,7 +100,7 @@ case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableTy
     "dstType" -> implicitly[SerializableType[B]].toJson)
 
   def execute(inputDatas: DataSet,
-              o: Output[A, B],
+              o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
