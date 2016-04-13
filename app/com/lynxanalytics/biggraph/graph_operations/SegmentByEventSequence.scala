@@ -187,7 +187,7 @@ case class SegmentByEventSequence(
         }
     }
     val segmentIdToCodeAndPersons = personToSegmentCode
-      .map { case (personId, segmentCode) => (segmentCode, personId) }
+      .map(_.swap)
       .groupBySortedKey(partitioner)
       .randomNumbered(partitioner)
     output(

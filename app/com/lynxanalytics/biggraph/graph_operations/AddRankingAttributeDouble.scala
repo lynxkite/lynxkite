@@ -33,7 +33,7 @@ case class AddRankingAttributeDouble(ascending: Boolean) extends TypedMetaGraphO
     implicit val ds = inputDatas
     val sortKey = inputs.sortKey.rdd
 
-    val swapped = sortKey.map { case (id, value) => value -> id }
+    val swapped = sortKey.map(_.swap)
 
     val sorted = swapped.sortByKey(ascending)
     val zipped = sorted.zipWithIndex()

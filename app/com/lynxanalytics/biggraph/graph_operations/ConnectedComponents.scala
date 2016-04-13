@@ -128,7 +128,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     // Recursion.
     val newComponents: UniqueSortedRDD[ID, ComponentID] = getComponents(newGraph, iteration + 1)
     // We just have to map back the component IDs to the vertices.
-    val reverseMoves = moves.map({ case (n, party) => (party, n) })
+    val reverseMoves = moves.map(_.swap)
     val parties = reverseMoves.groupBySortedKey(partitioner)
     val components = parties.sortedLeftOuterJoin(newComponents).flatMap({
       case (party, (guests, component)) =>

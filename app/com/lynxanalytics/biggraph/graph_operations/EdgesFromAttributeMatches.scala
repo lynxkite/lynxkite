@@ -25,7 +25,7 @@ case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttribu
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
-    val byAttr = attr.map { case (id, attr) => (attr, id) }
+    val byAttr = attr.map(_.swap)
     val matching = byAttr.groupByKey()
     val edges = matching.flatMap {
       case (attr, vertices) => for { a <- vertices; b <- vertices; if a != b } yield Edge(a, b)
@@ -66,10 +66,10 @@ case class EdgesFromBipartiteAttributeMatches[T]()
     implicit val id = inputDatas
     implicit val ct = inputs.fromAttr.data.classTag
     val fromByAttr = inputs.fromAttr.rdd
-      .map { case (id, attr) => (attr, id) }
+      .map(_.swap)
       .groupByKey()
     val toByAttr = inputs.toAttr.rdd
-      .map { case (id, attr) => (attr, id) }
+      .map(_.swap)
       .groupByKey()
     val edges = fromByAttr.join(toByAttr).flatMap {
       case (attr, (fromIds, toIds)) => for { a <- fromIds; b <- toIds } yield Edge(a, b)
@@ -121,10 +121,10 @@ case class EdgesFromUniqueBipartiteAttributeMatches()
       inputs.from.rdd.partitioner.get,
       inputs.to.rdd.partitioner.get)
     val fromStringToId = inputs.fromAttr.rdd
-      .map { case (fromId, fromString) => (fromString, fromId) }
+      .map(_.swap)
       .assertUniqueKeys(partitioner)
     val toStringToId = inputs.toAttr.rdd
-      .map { case (toId, toString) => (toString, toId) }
+      .map(_.swap)
       .assertUniqueKeys(partitioner)
     val mapping = fromStringToId
       .sortedJoin(toStringToId)

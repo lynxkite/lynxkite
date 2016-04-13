@@ -11,7 +11,7 @@ class AddReversedEdgesTest extends FunSuite with TestGraphOp {
     val g = EnhancedExampleGraph()().result
     val op = AddReversedEdges(addIsNewAttr = true)
     val out = op(op.es, g.edges).result
-    val reversedEdges = g.edges.toPairSeq.map { case (a, b) => (b, a) }
+    val reversedEdges = g.edges.toPairSeq.map(_.swap)
     val expected = g.edges.toPairSeq ++ reversedEdges
     assert(out.esPlus.toPairSeq == expected.sorted)
 

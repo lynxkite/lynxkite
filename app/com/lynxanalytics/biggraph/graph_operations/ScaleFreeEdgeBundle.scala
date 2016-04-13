@@ -85,11 +85,11 @@ case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultipli
         (partitioner.numPartitions * perIterationMultiplier).ceil.toInt)
       val numberedFirsts = firsts
         .zipWithIndex
-        .map { case (edge, idx) => idx -> edge }
+        .map(_.swap)
         .sortUnique(partitioner)
       val numberedSeconds = shuffledSeconds
         .zipWithIndex
-        .map { case (edge, idx) => idx -> edge }
+        .map(_.swap)
         .sortUnique(partitioner)
 
       edges = numberedFirsts.sortedJoin(numberedSeconds)
