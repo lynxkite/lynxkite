@@ -2,10 +2,19 @@
 
 # This is the script that Jenkins calls when the user wants to run a "big data"
 # test on a Pull Request. It fires up an EMR cluster, runs groovy scripts in it
-# and dumps the test results as a commit into the PR.
+# and creates a file with the results. In case of Jenkins, it also dumps the test
+# results as a commit into the PR.
 #
-# Usage: test_big_data.sh test_pattern test_data_set
-# Example: test_big_data.sh '*' fake_westeros_100k
+# Usage: test_big_data.sh test_pattern test_data_set [number of emr instances]
+# Usage examples:
+#   test_big_data.sh '*' fake_westeros_xt_25m
+#   test_big_data.sh pagerank fake_westeros_xt_25m
+#   test_big_data.sh centrality twitter 10
+#
+# The test codes are located in the git repo under: kitescripts/big_data_tests
+# The test data files are located under: s3://lynxkite-test-data/
+# To generate your own test data files, see:
+# kitescripts/gen_test_data/generate_fake_westeros.groovy
 
 cd $(dirname $0)
 
