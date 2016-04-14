@@ -3,6 +3,7 @@
 
 This file contains various configurations used when launching a LynxKite instance.
 
+[[kite-instance]]
 Specify this to be the instance (client) where the program is run. E.g., Westeros
 ```
 export KITE_INSTANCE=
@@ -58,6 +59,12 @@ export KITE_PREFIX_DEFINITIONS=
 Specify the PID file for LynxKite servers.
 ```
 export KITE_PID_FILE=$HOME/kite.pid
+```
+
+When set, each action performed by the biggraph script (start,stop,restart, etc.) is logged to
+this file.
+```
+export KITE_SCRIPT_LOGS=$HOME/biggraph.log
 ```
 
 Specify the user registry file for LynxKite servers.

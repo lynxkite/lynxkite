@@ -212,16 +212,102 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Check user defined path parsing") {
-    val filename = prefixPath + "/subdir/prefix_definitions.txt"
-    val pairs = PrefixRepository.parseUserDefinedInputFromURI(filename).toList
+    val inputLines = """# Comment
+              |#
+              |
+              |# Blank
+              |
+              |#COMMENTEDOUT="file:/home/user/"
+              |
+              |# # #
+              |#
+              |TEST_EMPTY="" #empty
+              |
+              |TEST_S3N="s3n://testkey:testpwd@" #
+              |
+              |TEST_S3NDIR="s3n://testkey:testpwd@directory/" #####
+              |
+              |TESTFILEDIR="file:/home/user/"
+              |
+              |          # This doesn't end in a slash!!!
+              |          TESTBLANKS_="hdfs://root/path"
+              |
+              | TESTFILEDIR_READ_ACL="*"
+              | TESTFILEDIR_WRITE_ACL="gabor.olah@lynxanalytics.com"
+              |# Only whitespace
+              |
+              |
+              |
+              |
+              |
+              |
+              |""".stripMargin('|').split("\n").toList
 
+    val pairs = PrefixRepositoryImpl.parseInput(inputLines)
     val expected = List(
       "TEST_EMPTY" -> "",
       "TEST_S3N" -> "s3n://testkey:testpwd@",
       "TEST_S3NDIR" -> "s3n://testkey:testpwd@directory/",
       "TESTFILEDIR" -> "file:/home/user/",
+      "TESTFILEDIR_READ_ACL" -> "*",
+      "TESTFILEDIR_WRITE_ACL" -> "gabor.olah@lynxanalytics.com",
       "TESTBLANKS_" -> "hdfs://root/path")
-    assert(pairs == expected)
+    assert(pairs.sorted === expected.sorted)
+  }
+
+  test("Check user defined path: parsing blanks at the end of line") {
+    val pairs = PrefixRepositoryImpl.parseInput(
+      List(
+        "PATH=\"hdfs://pathnode/\"  ",
+        "PATH2=\"hdfs://pathnode2/\"\t\t \t")
+    )
+    val expected = List(
+      "PATH" -> "hdfs://pathnode/",
+      "PATH2" -> "hdfs://pathnode2/")
+    assert(pairs.sorted === expected.sorted)
+  }
+
+  test("ACLs can be retrieved") {
+    val input =
+      """
+        |PATH1="hdfs://node1/"
+        |
+        |PATH2="hdfs://node2/"
+        |PATH2_READ_ACL="*@lynx1"
+        |PATH2_WRITE_ACL="*@lynx2"
+      """.stripMargin.split("\n").toList
+    val prefixRepo = new PrefixRepositoryImpl(input)
+
+    // No settings: default
+    assert(prefixRepo.getReadACL("PATH1$") == "*")
+    assert(prefixRepo.getWriteACL("PATH1$") == "*")
+
+    // Given settings: retrieved correctly
+    assert(prefixRepo.getReadACL("PATH2$") == "*@lynx1")
+    assert(prefixRepo.getWriteACL("PATH2$") == "*@lynx2")
+  }
+
+  test("Lopsided settings cause an assert") {
+    val input =
+      """
+        |PATH="hdfs://node2/"
+        |PATH_READ_ACL="*@lynx"
+      """.stripMargin.split("\n").toList
+    intercept[Throwable] {
+      new PrefixRepositoryImpl(input)
+    }
+  }
+
+  test("Misspelled settings cause an assert") {
+    val input =
+      """
+        |PAHT="hdfs://node2/"
+        |PATH_READ_ACL="*@lynx"
+        |PATH_WRITE_ACL="*@lynx"
+      """.stripMargin.split("\n").toList
+    intercept[Throwable] {
+      new PrefixRepositoryImpl(input)
+    }
   }
 
   test("Legacy mode works") {

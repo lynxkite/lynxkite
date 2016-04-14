@@ -165,7 +165,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       .sortedJoinWithDuplicates(vsToSegRestricted)
       .map { case (src, (dst, srcSeg)) => (src, dst) -> srcSeg }
     val edgeToDstSeg = selectedEdges
-      .map { case (src, dst) => (dst, src) }
+      .map(_.swap)
       .sort(partitioner)
       .sortedJoinWithDuplicates(vsToSegRestricted)
       .map { case (dst, (src, dstSeg)) => (src, dst) -> dstSeg }
@@ -230,7 +230,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     val belongsTo = inputs.belongsTo.rdd
     val segmentationPartitioner = belongsTo.partitioner.get
     val vsToSeg = getVsToSegDistinct(belongsTo)
-    val segToVs = vsToSeg.map { case (src, dst) => (dst, src) }.sort(segmentationPartitioner)
+    val segToVs = vsToSeg.map(_.swap).sort(segmentationPartitioner)
     val segToMemberArray = segToVs.groupByKey
     val expectedNumberOfPreSelectedEdges =
       (segToMemberArray.values.map(edges => edges.size.toLong * edges.size.toLong).sum * prob).toLong

@@ -5,14 +5,14 @@
 #
 # emr_based_test.sh frontend  #  Run e2e frontend tests.
 #
-# emr_based_test.sh perf file1.groovy file2.groovy ... [-- key1:value1 key2:value2 ... ]
-#   Run performance tests on the groovy files, and pass the key:value parameters to them.
+# emr_based_test.sh bigdata test_pattern param:value
+#   Run big data tests specified by the pattern kitescripts/big_data_tests/test_pattern.groovy
+#   with a given parameter.
 #
 #   Example:
-#   emr_based_test.sh perf kitescripts/perf/*.groovy -- seed:1234
-#   This will run all groovy files in kitescripts/perf/ and all these
-#   groovy files will receive the seed parameter as 1234.
-
+#   emr_based_test.sh backend 'big_data_tests/*' testDataSet:fake_westeros_100k
+#   This will run all groovy files in kitescripts/perf/*.groovy and all these
+#   groovy files will receive the testDataSet:fake_westeros_100k parameter.
 
 set -ueo pipefail
 trap "echo $0 has failed" ERR
@@ -64,11 +64,26 @@ else
   stage/tools/emr.sh start ${EMR_TEST_SPEC}
 fi
 
-stage/tools/emr.sh kite ${EMR_TEST_SPEC}
+stage/tools/emr.sh deploy-kite ${EMR_TEST_SPEC}
 
 case $MODE in
-  perf )
-    stage/tools/emr.sh batch ${EMR_TEST_SPEC} $@
+  backend )
+    # The next lines are just for invoking:
+    # big_data_test_runner.py $1 $2
+    # remotely on the master.
+    # We need this horror to avoid shell-expansion of the
+    # '*' character.
+    TMP_SCRIPT=/tmp/${CLUSTER_NAME}_test_script.sh
+    SCRIPT_SELECTOR_PATTERN="'$1'"
+    shift
+    COMMAND_ARGS=( "$@" )
+    echo "biggraphstage/kitescripts/big_data_test_runner.py \
+      ${SCRIPT_SELECTOR_PATTERN} ${COMMAND_ARGS[@]}" >${TMP_SCRIPT}
+    stage/tools/emr.sh put ${EMR_TEST_SPEC} ${TMP_SCRIPT} test_cmd.sh
+    stage/tools/emr.sh cmd ${EMR_TEST_SPEC} \
+      "chmod a+x test_cmd.sh && ./test_cmd.sh"
+
+    # Upload logs.
     stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
     ;;
   frontend )
@@ -84,7 +99,7 @@ case $MODE in
     ;;
   * )
     echo "Invalid mode was specified: ${MODE}"
-    echo "Usage: $0 perf|frontend"
+    echo "Usage: $0 backend|frontend"
     exit 1
 esac
 

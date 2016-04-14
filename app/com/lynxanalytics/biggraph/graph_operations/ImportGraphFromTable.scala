@@ -60,14 +60,14 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     val partitioner = unresolvedEdges.partitioner.get
 
     val srcNameToVid = srcVidAttr.rdd
-      .map { case (k, v) => v -> k }
+      .map(_.swap)
       .assertUniqueKeys(partitioner)
     val dstNameToVid = {
       if (srcVidAttr.gUID == dstVidAttr.gUID)
         srcNameToVid.asInstanceOf[UniqueSortedRDD[B, ID]]
       else
         dstVidAttr.rdd
-          .map { case (k, v) => v -> k }
+          .map(_.swap)
           .assertUniqueKeys(partitioner)
     }
     val srcResolvedByDst = RDDUtils.hybridLookup(

@@ -24,7 +24,6 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
     run("Fingerprinting based on attributes", Map(
       "leftName" -> "email",
       "rightName" -> "name",
-      "weights" -> "!no weight",
       "mo" -> "1",
       "ms" -> "0.5"))
     assert(project.scalars("fingerprinting matches found").value == 9)

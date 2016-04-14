@@ -17,6 +17,21 @@ The machine learning algorithm used to create this model.
 
 The name of the attribute that this model is trained to predict. (The dependent variable.)
 
+### Scaling
+
+Details about the pre-processing scaling step applied to the features before training. The two
+phases are centering and scaling. The first phase (centering) centers the data with mean before scaling,
+i.e., the mean is subtracted from all elements. The data set acquired this way has a mean of 0.
+The second phase (scaling) is acquired by dividing all the elements by the standard deviation.
+The means and deviations in these steps are computed columnwise.
+
+Suppose we have an original data item (a, b). After these two steps, the data item that
+is used for the training will be ((a-m1)/d1, (b-m2)/d2), where m1 and d1 are the mean
+and the standard deviation for the first column (the a's) and m2 and d2 are the mean
+and the standard deviation for the second column (the b's).
+
+Note that both steps are optional: it depends on the model, whether they are applied or not.
+
 ### Features
 
 The list of the feature attributes that this model uses for predictions.

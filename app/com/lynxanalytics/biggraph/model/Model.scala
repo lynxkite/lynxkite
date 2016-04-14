@@ -20,7 +20,7 @@ trait ModelImplementation {
 private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
   def details: String = {
-    val weights = m.weights.toArray.mkString(", ")
+    val weights = "(" + m.weights.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\nweights: $weights"
   }
 }
@@ -95,6 +95,24 @@ case class Model(
     }
   }
 
+  def scalerDetails: String = {
+    val meanInfo =
+      if (featureScaler.withMean) {
+        val vec = "(" + featureScaler.mean.toArray.mkString(", ") + ")"
+        s"Centered to 0; original mean was $vec\n"
+      } else {
+        ""
+      }
+    val stdInfo =
+      if (featureScaler.withStd) {
+        val vec = "(" + featureScaler.std.toArray.mkString(", ") + ")"
+        s"Scaled to unit standard deviation; original deviation was $vec"
+      } else {
+        ""
+      }
+    meanInfo + stdInfo
+  }
+
   // Scales back the labels if needed.
   def scaleBack(result: RDD[Double]): RDD[Double] = {
     if (labelScaler.isEmpty) {
@@ -135,6 +153,7 @@ object Model extends FromJson[Model] {
     method = m.method,
     labelName = m.labelName,
     featureNames = m.featureNames,
+    scalerDetails = m.scalerDetails,
     details = m.load(sc).details)
 
   def newModelFile: HadoopFile = {
@@ -183,6 +202,7 @@ case class FEModel(
   method: String,
   labelName: String,
   featureNames: List[String],
+  scalerDetails: String,
   details: String)
 
 trait ModelMeta {

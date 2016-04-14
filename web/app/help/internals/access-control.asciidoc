@@ -8,8 +8,12 @@ is enabled.
 
 ### Access control lists
 
-Access rights are controlled at the project and the folder level. A project or a folder
-has two access control lists: one for reading and one for writing. A user has read
+Access rights are controlled at three levels: the project level, the folder level,
+and the file prefix level. The latter is only relevant to administrators
+and described in the Admin Manual; the first two are described below.
+
+A project or a folder has two access control lists: one for reading
+and one for writing. A user has read
 access to a project or a folder if he is on it's access control list and has read
 access to the parent folders recursively. Similarly, write access requires being on the
 write access control list plus _read_ access for all parents. Being on the write access

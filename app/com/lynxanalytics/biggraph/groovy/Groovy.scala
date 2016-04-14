@@ -145,6 +145,13 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   val drawing = new DrawingGroovyInterface()
 
+  def openTable(tableName: String): String = {
+    import ctx.metaManager
+    import ctx.dataManager
+    val f = DirectoryEntry.fromName(tableName).asTableFrame
+    new GlobalTablePath(f.checkpoint, f.name, Seq(Table.VertexTableName)).toString
+  }
+
   // Returns the table checkpoint name.
   def saveAsTable(df: spark.sql.DataFrame, tableName: String): String =
     saveAsTable(df, tableName, notes = "")
@@ -159,6 +166,12 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   // Resolves the prefixed path.
   def resolvePath(path: String): String = HadoopFile(path).resolvedName
+
+  // Creates a StructType with StringType columns from the input column names.
+  def stringSchema(columns: java.util.List[String]): spark.sql.types.StructType = {
+    import scala.collection.JavaConversions._
+    SQLController.stringOnlySchema(columns)
+  }
 }
 
 // This is the interface that is visible from trustedShell as "lynx.drawing". This is
