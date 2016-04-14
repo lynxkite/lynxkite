@@ -279,86 +279,81 @@ object RDDUtils {
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
   val hybridLookupMaxLarge =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
-  // A lookup method that does smallTableLookup for a few keys that have too many instances to
-  // be handled by joinLookup and does joinLookup for the rest.
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    repartition: Boolean = true): RDD[(K, (T, S))] =
-    hybridLookup(sourceRDD, lookupTable, repartition, hybridLookupThreshold)
 
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    maxValuesPerKey: Int): RDD[(K, (T, S))] =
-    hybridLookup(sourceRDD, lookupTable, repartition = true, maxValuesPerKey)
-
-  // This will find the top key (the ones with the largest count) from the sourceRDD. Then if
-  // any count is higher than maxValuesPerKey, then it does a hybrid lookup.
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    repartition: Boolean,
-    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
-
-    hybridLookup(LargeTable(sourceRDD, lookupTable.partitioner.get), lookupTable, repartition, maxValuesPerKey)
+  def quickHybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = hybridLookupImpl(hybridRDD, lookupTable)
+    if (hybridRDD.isSkewed) {
+      result.coalesce(hybridRDD.sourceRDD.partitions.size)
+    } else {
+      result
+    }
   }
 
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    table: LargeTable[K, T],
-    lookupTable: UniqueSortedRDD[K, S],
-    repartition: Boolean,
-    maxValuesPerKey: Int = hybridLookupThreshold): RDD[(K, (T, S))] = {
+    sourceRDD: RDD[(K, T)],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    hybridLookup(HybridRDD(sourceRDD), lookupTable)
+  }
 
-    if (table.tops.isEmpty) table.sourceRDD.context.emptyRDD
+  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = hybridLookupImpl(hybridRDD, lookupTable)
+    if (hybridRDD.isSkewed) {
+      result.repartition(hybridRDD.sourceRDD.partitions.size)
+    } else {
+      result
+    }
+  }
+
+  private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S](
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+
+    if (hybridRDD.tops.isEmpty) hybridRDD.sourceRDD.context.emptyRDD
     else {
-      val biggest = table.tops.last
-      if (biggest._2 > maxValuesPerKey) {
-        val largeKeysMap = lookupTable.restrictToIdSet(table.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
-        log.info(s"Hybrid lookup found ${table.largeKeysSet.size} large keys covering ${table.largeKeysCoverage} source records.")
-        val larges = smallTableLookup(table.largeKeysTable, largeKeysMap)
-        val smalls = joinLookup(table.smallKeysTable, lookupTable)
-        val jointTable = (smalls ++ larges)
-        if (repartition) {
-          jointTable.repartition(table.sourceRDD.partitions.size)
-        } else {
-          jointTable.coalesce(table.sourceRDD.partitions.size)
-        }
+      if (hybridRDD.isSkewed) {
+        val largeKeysMap = lookupTable.restrictToIdSet(hybridRDD.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
+        log.info(s"Hybrid lookup found ${hybridRDD.largeKeysSet.size} large keys covering ${hybridRDD.largeKeysCoverage} source records.")
+        val larges = smallTableLookup(hybridRDD.largeKeysTable, largeKeysMap)
+        val smalls = joinLookup(hybridRDD.sourceRDD, lookupTable)
+        smalls ++ larges
       } else {
-        joinLookup(table.sourceRDD, lookupTable)
+        joinLookup(hybridRDD.sourceRDD, lookupTable)
       }
     }
   }
 }
 
-case class LargeTable[K: Ordering: ClassTag, T: ClassTag](
+case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     sourceRDD: RDD[(K, T)],
-    partitioner: spark.Partitioner) {
+    maxValuesPerKey: Int = RDDUtils.hybridLookupThreshold) {
 
-  val ordering = new CountOrdering[K]
-  val tops = sourceRDD
-    .mapValues(x => 1L)
-    .reduceByKey(partitioner, _ + _)
-    .top(RDDUtils.hybridLookupMaxLarge)(ordering)
-    .sorted(ordering)
-
-  val (largeKeysSet, largeKeysCoverage) = tops.isEmpty match {
-    case true => (Set.empty[K], 0L)
-    case false => (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
+  val tops = {
+    val ordering = new CountOrdering[K]
+    sourceRDD
+      .mapValues(x => 1L)
+      .reduceByKey(_ + _)
+      .top(RDDUtils.hybridLookupMaxLarge)(ordering)
+      .sorted(ordering)
   }
-  val (smallKeysTable, largeKeysTable) = tops.isEmpty match {
-    case true => (sourceRDD.context.emptyRDD[(K, T)], sourceRDD.context.emptyRDD[(K, T)])
-    case false => (
-      sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) },
-      sourceRDD.filter { case (key, _) => largeKeysSet.contains(key) }
-    )
+  val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
+
+  val (largeKeysSet, largeKeysCoverage) = if (tops.isEmpty) {
+    (Set.empty[K], 0L)
+  } else {
+    (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
+  }
+  val largeKeysTable = if (tops.isEmpty) {
+    sourceRDD.context.emptyRDD[(K, T)]
+  } else {
+    sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
   }
 
   def cache(): Unit = {
-    if (tops.isEmpty) {
-      sourceRDD.persist(spark.storage.StorageLevel.DISK_ONLY)
-    } else {
-      smallKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+    if (!tops.isEmpty && isSkewed) {
       largeKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
     }
   }
@@ -443,6 +438,16 @@ object Implicits {
           it.take(elementsFromThisPartition)
         },
         preservesPartitioning = true)
+    }
+
+    // Returns the partitioner of this RDD, or that of one of its one-to-one dependencies.
+    def ancestorPartitioner: Option[spark.Partitioner] = {
+      self.partitioner.orElse {
+        val deps = self.dependencies
+        if (deps.size == 1 && deps(0).isInstanceOf[spark.OneToOneDependency[T]])
+          deps(0).rdd.ancestorPartitioner
+        else None // Not a single narrow dependency.
+      }
     }
   }
 
