@@ -242,7 +242,7 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
   }
 }
 
-object AddVertexAttribute {
+object AddVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
   }
@@ -250,33 +250,38 @@ object AddVertexAttribute {
     implicit val inst = instance
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
-  def fromJson[T: play.api.libs.json.Reads](j: play.api.libs.json.JsValue) = {
-    (j \ "values").as[Map[String, T]].map { case (k, v) => k.toInt -> v }
+
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    val st = SerializableType.fromJson(j \ "type")
+    fromJsonTyped(j)(st)
   }
-  def run[T: reflect.ClassTag: TypeTag](
+  def fromJsonTyped[T](j: JsValue)(implicit st: SerializableType[T]) = {
+    import st.format
+    AddVertexAttribute((j \ "values").as[Map[String, T]].map { case (k, v) => k.toInt -> v })
+  }
+
+  def run[T: TypeTag](
     vs: VertexSet, values: Map[Int, T])(implicit m: MetaGraphManager): Attribute[T] = {
     import Scripting._
-    val op = {
-      if (typeOf[T] =:= typeOf[String])
-        AddVertexAttributeString(values.asInstanceOf[Map[Int, String]])
-      else if (typeOf[T] =:= typeOf[Double])
-        AddVertexAttributeDouble(values.asInstanceOf[Map[Int, Double]])
-      else if (typeOf[T] =:= typeOf[Long])
-        AddVertexAttributeLong(values.asInstanceOf[Map[Int, Long]])
-      else assert(false, s"AddVertexAttribute is not supported for ${typeOf[T]}.")
-    }.asInstanceOf[AddVertexAttribute[T]]
+    val op = AddVertexAttribute(values)(SerializableType[T])
     op(op.vs, vs).result.attr
   }
 }
-abstract class AddVertexAttribute[T: play.api.libs.json.Writes: reflect.ClassTag: TypeTag](
-  values: Map[Int, T])
+case class AddVertexAttribute[T](values: Map[Int, T])(implicit st: SerializableType[T])
     extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output[T]] {
   import AddVertexAttribute._
 
   @transient override lazy val inputs = new Input
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T](instance, inputs)
-  override def toJson = Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T](instance, inputs)(st.typeTag)
+  override def toJson = {
+    import st.format
+    Json.obj(
+      "values" -> values.map { case (k, v) => k.toString -> v },
+      "type" -> st.toJson)
+  }
+
   def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
+    import st.classTag
     implicit val id = inputDatas
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
@@ -284,23 +289,3 @@ abstract class AddVertexAttribute[T: play.api.libs.json.Writes: reflect.ClassTag
     output(o.attr, sc.parallelize(idMap).sortUnique(partitioner))
   }
 }
-
-object AddVertexAttributeString extends OpFromJson {
-  def fromJson(j: JsValue) = new AddVertexAttributeString(AddVertexAttribute.fromJson[String](j))
-}
-case class AddVertexAttributeString(values: Map[Int, String])
-  extends AddVertexAttribute[String](values)
-
-object AddVertexAttributeDouble extends OpFromJson {
-  def fromJson(j: JsValue) =
-    new AddVertexAttributeDouble(AddVertexAttribute.fromJson[Double](j))
-}
-case class AddVertexAttributeDouble(values: Map[Int, Double])
-  extends AddVertexAttribute[Double](values)
-
-object AddVertexAttributeLong extends OpFromJson {
-  def fromJson(j: JsValue) =
-    new AddVertexAttributeLong(AddVertexAttribute.fromJson[Long](j))
-}
-case class AddVertexAttributeLong(values: Map[Int, Long])
-  extends AddVertexAttribute[Long](values)
