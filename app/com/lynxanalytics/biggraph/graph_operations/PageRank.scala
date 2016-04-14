@@ -60,6 +60,7 @@ case class PageRank(dampingFactor: Double,
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
+      // No need for repartitioning since we reduce anyway.
       val incomingRank = RDDUtils.hybridLookupAndCoalesce(targetsWithWeights, pageRank)
         .map {
           case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor

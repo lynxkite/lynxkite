@@ -281,6 +281,8 @@ object RDDUtils {
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
 
   // TODO Move these lookup functions to HybridRDD.
+
+  // Same as hybridLookup but repartitions the result after a hybrid lookup.
   def hybridLookupAndRepartition[K: Ordering: ClassTag, T: ClassTag, S](
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
@@ -292,6 +294,7 @@ object RDDUtils {
     }
   }
 
+  // Same as hybridLookup but coalesces the result after a hybrid lookup.
   def hybridLookupAndCoalesce[K: Ordering: ClassTag, T: ClassTag, S](
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
@@ -303,6 +306,8 @@ object RDDUtils {
     }
   }
 
+  // A lookup method that does smallTableLookup for a few keys that have too many instances to
+  // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
@@ -436,16 +441,6 @@ object Implicits {
           it.take(elementsFromThisPartition)
         },
         preservesPartitioning = true)
-    }
-
-    // Returns the partitioner of this RDD, or that of one of its one-to-one dependencies.
-    def ancestorPartitioner: Option[spark.Partitioner] = {
-      self.partitioner.orElse {
-        val deps = self.dependencies
-        if (deps.size == 1 && deps(0).isInstanceOf[spark.OneToOneDependency[T]])
-          deps(0).rdd.ancestorPartitioner
-        else None // Not a single narrow dependency.
-      }
     }
   }
 
