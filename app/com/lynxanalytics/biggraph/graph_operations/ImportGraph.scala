@@ -368,7 +368,7 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     val vertexPartitioner = rc.partitionerForNRows(names.count())
     val idToName = names.randomNumbered(vertexPartitioner)
     val nameToId = idToName
-      .map { case (id, name) => name -> id }
+      .map(_.swap)
       // This is going to be joined with edges, so we use the edge partitioner.
       .sortUnique(edgePartitioner)
     val srcResolvedByDst = RDDUtils.hybridLookup(
@@ -496,7 +496,7 @@ class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: Str
     val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId =
       inputs.idAttr.rdd
-        .map { case (internal, external) => (external, internal) }
+        .map(_.swap)
         .assertUniqueKeys(partitioner)
     val linesByExternalId = lines
       .map(line => (line(idFieldIdx), line))
