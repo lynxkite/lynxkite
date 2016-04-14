@@ -280,10 +280,21 @@ object RDDUtils {
   val hybridLookupMaxLarge =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
 
-  def quickHybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
+  def hybridLookupAndRepartition[K: Ordering: ClassTag, T: ClassTag, S](
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = hybridLookupImpl(hybridRDD, lookupTable)
+    val result = hybridLookup(hybridRDD, lookupTable)
+    if (hybridRDD.isSkewed) {
+      result.repartition(hybridRDD.sourceRDD.partitions.size)
+    } else {
+      result
+    }
+  }
+
+  def hybridLookupAndCoalesce[K: Ordering: ClassTag, T: ClassTag, S](
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = hybridLookup(hybridRDD, lookupTable)
     if (hybridRDD.isSkewed) {
       result.coalesce(hybridRDD.sourceRDD.partitions.size)
     } else {
@@ -292,23 +303,6 @@ object RDDUtils {
   }
 
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    hybridLookup(HybridRDD(sourceRDD), lookupTable)
-  }
-
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    hybridRDD: HybridRDD[K, T],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = hybridLookupImpl(hybridRDD, lookupTable)
-    if (hybridRDD.isSkewed) {
-      result.repartition(hybridRDD.sourceRDD.partitions.size)
-    } else {
-      result
-    }
-  }
-
-  private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S](
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
@@ -317,8 +311,8 @@ object RDDUtils {
       if (hybridRDD.isSkewed) {
         val largeKeysMap = lookupTable.restrictToIdSet(hybridRDD.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
         log.info(s"Hybrid lookup found ${hybridRDD.largeKeysSet.size} large keys covering ${hybridRDD.largeKeysCoverage} source records.")
-        val larges = smallTableLookup(hybridRDD.largeKeysTable, largeKeysMap)
-        val smalls = joinLookup(hybridRDD.sourceRDD, lookupTable)
+        val larges = smallTableLookup(hybridRDD.sourceRDD, largeKeysMap)
+        val smalls = joinLookup(hybridRDD.smallKeysTable, lookupTable)
         smalls ++ larges
       } else {
         joinLookup(hybridRDD.sourceRDD, lookupTable)
@@ -346,15 +340,18 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   } else {
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  val largeKeysTable = if (tops.isEmpty) {
+  val smallKeysTable = if (tops.isEmpty) {
     sourceRDD.context.emptyRDD[(K, T)]
   } else {
     sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
   }
 
   def cache(): Unit = {
-    if (!tops.isEmpty && isSkewed) {
-      largeKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+    if (!tops.isEmpty) {
+      if (isSkewed) {
+        smallKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+      }
+      sourceRDD.persist(spark.storage.StorageLevel.DISK_ONLY)
     }
   }
 }

@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -43,14 +44,14 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
           .map(_.swap)
           .assertUniqueKeys(partitioner)
     }
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      unresolvedEdges.map {
+    val srcResolvedByDst = RDDUtils.hybridLookupAndRepartition(
+      HybridRDD(unresolvedEdges.map {
         case (edgeId, (srcString, dstString)) => srcString -> (edgeId, dstString)
-      },
+      }),
       srcStringToVid)
       .map { case (srcString, ((edgeId, dstString), srcVid)) => dstString -> (edgeId, srcVid) }
 
-    RDDUtils.hybridLookup(srcResolvedByDst, dstStringToVid)
+    RDDUtils.hybridLookupAndRepartition(HybridRDD(srcResolvedByDst), dstStringToVid)
       .map { case (dstString, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
       .sortUnique(partitioner)
   }
