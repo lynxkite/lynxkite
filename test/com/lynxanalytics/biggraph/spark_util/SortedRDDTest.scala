@@ -102,7 +102,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       (i, it) => new util.Random(i + seed).alphanumeric.take(rows).iterator
     }
     val partitioner = new HashPartitioner(raw.partitions.size)
-    raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
+    raw.zipWithUniqueId.map(_.swap).partitionBy(partitioner)
   }
 
   test("benchmark sorting", com.lynxanalytics.biggraph.Benchmark) {
@@ -276,8 +276,8 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
         .sort(new HashPartitioner(parts)).cache
       sorted.calculate
-      def oldMV = sorted.map({ case (id, x) => id -> (id, x) }).sort(sorted.partitioner.get).collect.toMap
-      def newMV = sorted.mapValuesWithKeys({ case (id, x) => (id, x) }).collect.toMap
+      def oldMV = sorted.map { case (id, x) => id -> (id, x) }.sort(sorted.partitioner.get).collect.toMap
+      def newMV = sorted.mapValuesWithKeys { case (id, x) => (id, x) }.collect.toMap
     }
     val parts = 4
     val table = "%10s | %10s | %10s"

@@ -14,7 +14,7 @@ class PartialRunTest extends FunSuite with TestSparkContext {
       (i, it) => new util.Random(i + seed).alphanumeric.take(rows).iterator
     }
     val partitioner = new HashPartitioner(raw.partitions.size)
-    raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
+    raw.zipWithUniqueId.map(_.swap).partitionBy(partitioner)
   }
 
   def countAs(in: RDD[(Long, Char)], prefLength: Int): Int = {

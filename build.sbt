@@ -110,4 +110,8 @@ mappings in Universal ++= dirContents(baseDirectory.value, "tools")
 
 mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts")
 
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "big_data_tests")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "gen_test_data")
+
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")

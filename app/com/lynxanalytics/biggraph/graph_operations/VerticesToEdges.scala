@@ -34,7 +34,7 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val dstAttr = inputs.dstAttr.rdd
     val names = (srcAttr.values ++ dstAttr.values).distinct
     val idToName = names.randomNumbered(partitioner.numPartitions)
-    val nameToId = idToName.map { case (id, name) => (name, id) }
+    val nameToId = idToName.map(_.swap)
       .sortUnique(partitioner)
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
