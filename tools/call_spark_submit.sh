@@ -295,7 +295,7 @@ case $mode in
   ;;
 esac
 
-if [ -n ${KITE_SCRIPT_LOGS} ]; then
+if [ -n "${KITE_SCRIPT_LOGS}" ]; then
     THIS_PROG="$(readlink -f "$0")"
     NOW=`date "+%Y:%m:%d %H:%M:%S"`
     echo $NOW $THIS_PROG $mode >> $KITE_SCRIPT_LOGS
