@@ -280,6 +280,7 @@ object RDDUtils {
   val hybridLookupMaxLarge =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
 
+  // TODO Move these lookup functions to HybridRDD.
   def hybridLookupAndRepartition[K: Ordering: ClassTag, T: ClassTag, S](
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
@@ -335,12 +336,12 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   }
   val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
 
-  val (largeKeysSet, largeKeysCoverage) = if (tops.isEmpty) {
+  val (largeKeysSet, largeKeysCoverage) = if (tops.isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
   } else {
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  val smallKeysTable = if (tops.isEmpty) {
+  val smallKeysTable = if (tops.isEmpty || !isSkewed) {
     sourceRDD.context.emptyRDD[(K, T)]
   } else {
     sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
