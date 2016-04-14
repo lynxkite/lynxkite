@@ -6,7 +6,7 @@ import org.apache.spark
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
-import com.lynxanalytics.biggraph.spark_util.LargeTable
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object PageRank extends OpFromJson {
@@ -51,17 +51,16 @@ case class PageRank(dampingFactor: Double,
     val sumWeights = edgesWithWeights
       .map { case (src, (_, weight)) => src -> weight }
       .reduceBySortedKey(edgePartitioner, _ + _)
-    val targetsWithWeightsRDD = RDDUtils
-      .hybridLookup(edgesWithWeights, sumWeights, repartition = false)
-      .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) }
-    val targetsWithWeights = LargeTable(targetsWithWeightsRDD, edgePartitioner)
+    val targetsWithWeights = HybridRDD(RDDUtils
+      .quickHybridLookup(HybridRDD(edgesWithWeights), sumWeights)
+      .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) })
     targetsWithWeights.cache()
 
     var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(edgePartitioner)
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
-      val incomingRank = RDDUtils.hybridLookup(targetsWithWeights, pageRank, repartition = false)
+      val incomingRank = RDDUtils.quickHybridLookup(targetsWithWeights, pageRank)
         .map {
           case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
