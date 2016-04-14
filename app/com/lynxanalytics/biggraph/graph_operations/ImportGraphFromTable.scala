@@ -30,8 +30,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     srcVidColumn: Attribute[A],
     dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output = {
     import Scripting._
-    import SerializableType._
-    val op = ImportEdgesForExistingVertices[A, B]()
+    val op = ImportEdgesForExistingVertices[A, B]()(SerializableType[A], SerializableType[B])
     op(
       op.srcVidColumn, srcVidColumn)(
         op.dstVidColumn, dstVidColumn)(
@@ -104,7 +103,7 @@ case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableTy
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    import SerializableType._
+    import SerializableType.Implicits._
 
     // Join the source and destination columns of the table to import.
     // If there were null values in the original DataFrame, then those
@@ -125,5 +124,8 @@ case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableTy
 
 // Legacy class.
 object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
-  def fromJson(j: JsValue) = ImportEdgesForExistingVertices[String, String]()
+  def fromJson(j: JsValue) = {
+    ImportEdgesForExistingVertices[String, String]()(
+      SerializableType[String], SerializableType[String])
+  }
 }

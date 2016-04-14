@@ -99,13 +99,12 @@ object SerializableType extends FromJson[SerializableType[_]] {
     }
   }
 
-  implicit val string = new SerializableType[String]("String")
-  implicit val double = new SerializableType[Double]("Double")
-  implicit val long = new SerializableType[Long]("Long")
-  implicit val int = new SerializableType[Int]("Int")
+  val string = new SerializableType[String]("String")
+  val double = new SerializableType[Double]("Double")
+  val long = new SerializableType[Long]("Long")
+  val int = new SerializableType[Int]("Int")
 
-  import scala.language.implicitConversions
-  implicit def typeTagToSerializableType[T: TypeTag]: SerializableType[T] = {
+  def apply[T: TypeTag]: SerializableType[T] = {
     val t = typeOf[T]
     val st =
       if (t =:= typeOf[String]) string
@@ -116,18 +115,17 @@ object SerializableType extends FromJson[SerializableType[_]] {
     st.asInstanceOf[SerializableType[T]]
   }
 
-  implicit def serializableTypeToClassTag[T: SerializableType]: ClassTag[T] =
-    implicitly[SerializableType[T]].classTag
-
-  implicit def serializableTypeToOrdering[T: SerializableType]: Ordering[T] =
-    implicitly[SerializableType[T]].ordering
-
-  implicit def serializableTypeToTypeTag[T: SerializableType]: TypeTag[T] =
-    implicitly[SerializableType[T]].typeTag
+  object Implicits {
+    import scala.language.implicitConversions
+    implicit def classTag[T](implicit st: SerializableType[T]) = st.classTag
+    implicit def format[T](implicit st: SerializableType[T]) = st.format
+    implicit def ordering[T](implicit st: SerializableType[T]) = st.ordering
+    implicit def typeTag[T](implicit st: SerializableType[T]) = st.typeTag
+  }
 }
-class SerializableType[T: ClassTag: Ordering: TypeTag] private (typename: String) extends ToJson {
+class SerializableType[T] private (typename: String)(implicit val classTag: ClassTag[T],
+                                                     val format: play.api.libs.json.Format[T],
+                                                     val ordering: Ordering[T],
+                                                     val typeTag: TypeTag[T]) extends ToJson {
   override def toJson = Json.obj("typename" -> typename)
-  def classTag = implicitly[ClassTag[T]]
-  def ordering = implicitly[Ordering[T]]
-  def typeTag = implicitly[TypeTag[T]]
 }
