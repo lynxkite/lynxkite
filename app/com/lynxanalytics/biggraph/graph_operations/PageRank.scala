@@ -52,7 +52,7 @@ case class PageRank(dampingFactor: Double,
       .map { case (src, (_, weight)) => src -> weight }
       .reduceBySortedKey(edgePartitioner, _ + _)
     val targetsWithWeights = HybridRDD(RDDUtils
-      .quickHybridLookup(HybridRDD(edgesWithWeights), sumWeights)
+      .hybridLookupAndCoalesce(HybridRDD(edgesWithWeights), sumWeights)
       .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) })
     targetsWithWeights.cache()
 
@@ -60,7 +60,7 @@ case class PageRank(dampingFactor: Double,
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
-      val incomingRank = RDDUtils.quickHybridLookup(targetsWithWeights, pageRank)
+      val incomingRank = RDDUtils.hybridLookupAndCoalesce(targetsWithWeights, pageRank)
         .map {
           case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
