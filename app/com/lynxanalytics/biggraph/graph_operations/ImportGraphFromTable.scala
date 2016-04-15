@@ -125,7 +125,14 @@ case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableTy
 // Legacy class.
 object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
   def fromJson(j: JsValue) = {
-    ImportEdgesForExistingVertices[String, String]()(
-      SerializableType[String], SerializableType[String])
+    // Use the new implementation, but without changing the serialized form.
+    // This keeps the GUID unchanged and avoids recomputation.
+    new ImportEdgesForExistingVertices[String, String]()(
+      SerializableType[String], SerializableType[String]) {
+      override def toTypedJson =
+        Json.obj("class" ->
+          "com.lynxanalytics.biggraph.graph_operations.ImportEdgeListForExistingVertexSetFromTable",
+          "data" -> Json.obj())
+    }
   }
 }
