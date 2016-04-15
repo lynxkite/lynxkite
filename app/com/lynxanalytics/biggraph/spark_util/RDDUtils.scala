@@ -312,11 +312,12 @@ object RDDUtils {
     hybridRDD: HybridRDD[K, T],
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
-    if (hybridRDD.tops.isEmpty) hybridRDD.sourceRDD.context.emptyRDD
+    if (hybridRDD.isEmpty) hybridRDD.sourceRDD.context.emptyRDD
     else {
       if (hybridRDD.isSkewed) {
         val largeKeysMap = lookupTable.restrictToIdSet(hybridRDD.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
-        log.info(s"Hybrid lookup found ${hybridRDD.largeKeysSet.size} large keys covering ${hybridRDD.largeKeysCoverage} source records.")
+        log.info(s"Hybrid lookup found ${hybridRDD.largeKeysSet.size} large keys covering "
+          + "${hybridRDD.largeKeysCoverage} source records.")
         val larges = smallTableLookup(hybridRDD.sourceRDD, largeKeysMap)
         val smalls = joinLookup(hybridRDD.smallKeysTable, lookupTable)
         smalls ++ larges
@@ -339,25 +340,25 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       .top(RDDUtils.hybridLookupMaxLarge)(ordering)
       .sorted(ordering)
   }
+  val isEmpty = tops.isEmpty
   val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
 
-  val (largeKeysSet, largeKeysCoverage) = if (tops.isEmpty || !isSkewed) {
+  val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
   } else {
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  val smallKeysTable = if (tops.isEmpty || !isSkewed) {
-    sourceRDD.context.emptyRDD[(K, T)]
-  } else {
+  lazy val smallKeysTable = {
+    assert(isSkewed, "Accessing smallKeysTable is only valid for skewed HybridRDDs.")
     sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
   }
 
-  def cache(): Unit = {
-    if (!tops.isEmpty) {
+  def persist(storageLevel: spark.storage.StorageLevel): Unit = {
+    if (!isEmpty) {
       if (isSkewed) {
-        smallKeysTable.persist(spark.storage.StorageLevel.DISK_ONLY)
+        smallKeysTable.persist(storageLevel)
       }
-      sourceRDD.persist(spark.storage.StorageLevel.DISK_ONLY)
+      sourceRDD.persist(storageLevel)
     }
   }
 }
