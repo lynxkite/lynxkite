@@ -89,7 +89,7 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
   }
 }
 
-object SerializableType extends FromJson[SerializableType[_]] {
+object SerializableType {
   def fromJson(j: json.JsValue): SerializableType[_] = {
     (j \ "typename").as[String] match {
       case "String" => string
