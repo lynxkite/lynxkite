@@ -348,9 +348,10 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   } else {
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  lazy val smallKeysTable = {
-    assert(isSkewed, "Accessing smallKeysTable is only valid for skewed HybridRDDs.")
+  val smallKeysTable = if (isSkewed) {
     sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+  } else {
+    sourceRDD.context.emptyRDD[(K, T)]
   }
 
   def persist(storageLevel: spark.storage.StorageLevel): Unit = {
