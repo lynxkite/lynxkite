@@ -48,13 +48,18 @@ case class PageRank(dampingFactor: Double,
       case (_, (edge, weight)) => edge.src -> (edge.dst, weight)
     }
     edgesWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
+    // The sum of weights for every src vertex.
     val sumWeights = edgesWithWeights
-      .map { case (src, (_, weight)) => src -> weight }
+      .mapValues(_._2) // Discard dst and keep weights.
       .reduceBySortedKey(edgePartitioner, _ + _)
-    val targetsWithWeights = HybridRDD(RDDUtils
-      .hybridLookupAndCoalesce(HybridRDD(edgesWithWeights), sumWeights)
-      .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) })
-    targetsWithWeights.cache()
+
+    // Join the sum of weights per src to the src vertices in the edge RDD.
+    val edgesWithSumWeights = RDDUtils.hybridLookupAndCoalesce(HybridRDD(edgesWithWeights), sumWeights)
+    // Normalize the weights for every src vertex.
+    val targetsWithWeights = HybridRDD(
+      edgesWithSumWeights
+        .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) })
+    targetsWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
 
     var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(edgePartitioner)
     val vertexCount = vertices.count
@@ -67,7 +72,7 @@ case class PageRank(dampingFactor: Double,
         }
         .reduceBySortedKey(edgePartitioner, _ + _)
 
-      val totalIncoming = incomingRank.map(_._2).aggregate(0.0)(_ + _, _ + _)
+      val totalIncoming = incomingRank.values.sum
       val distributedExtraWeight = (vertexCount - totalIncoming) / vertexCount
 
       pageRank = pageRank.sortedLeftOuterJoin(incomingRank)
