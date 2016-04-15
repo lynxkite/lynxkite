@@ -323,7 +323,9 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     val result = lookup(lookupTable)
     if (isSkewed) {
-      result.repartition(sourceRDD.partitions.size)
+      // "ord = null" is a workaround for a Scala 2.10 compiler bug.
+      // TODO: Remove when upgrading to 2.11.
+      result.repartition(sourceRDD.partitions.size)(ord = null)
     } else {
       result
     }
@@ -334,7 +336,9 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     val result = lookup(lookupTable)
     if (isSkewed) {
-      result.coalesce(sourceRDD.partitions.size)
+      // "ord = null" is a workaround for a Scala 2.10 compiler bug.
+      // TODO: Remove when upgrading to 2.11.
+      result.coalesce(sourceRDD.partitions.size)(ord = null)
     } else {
       result
     }
