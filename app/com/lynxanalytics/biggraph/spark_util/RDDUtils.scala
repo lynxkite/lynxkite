@@ -452,7 +452,7 @@ object Implicits {
     def asSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       assert(self.partitioner.isDefined,
         s"Cannot cast to unique RDD if there is no partitioner specified")
-      new AlreadySortedRDD[K, V](self)
+      new AlreadySortedRDD(self)
     }
     // Trust that this RDD is partitioned and sorted and has unique keys.
     // Make sure it uses the given partitioner.
@@ -461,12 +461,12 @@ object Implicits {
       assert(self.partitions.size == partitioner.numPartitions,
         s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
           s" to RDD of size ${self.partitions.size}: $self")
-      new AlreadyPartitionedRDD[(K, V)](self, partitioner).asUniqueSortedRDD
+      new AlreadyPartitionedRDD(self, partitioner).asUniqueSortedRDD
     }
     def asUniqueSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       assert(self.partitioner.isDefined,
         s"Cannot cast to unique RDD if there is no partitioner specified")
-      new AlreadySortedRDD[K, V](self) with UniqueSortedRDD[K, V]
+      new AlreadySortedRDD(self) with UniqueSortedRDD[K, V]
     }
     // Sorts each partition of the RDD in isolation.
     def sort(partitioner: spark.Partitioner)(
