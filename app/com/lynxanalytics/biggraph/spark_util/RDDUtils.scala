@@ -275,49 +275,91 @@ object RDDUtils {
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
-  private val hybridLookupThreshold =
+  val hybridLookupThreshold =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
-  private val hybridLookupMaxLarge =
+  val hybridLookupMaxLarge =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
+
+  // TODO Move these lookup functions to HybridRDD.
+
+  // Same as hybridLookup but repartitions the result after a hybrid lookup.
+  def hybridLookupAndRepartition[K: Ordering: ClassTag, T: ClassTag, S](
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = hybridLookup(hybridRDD, lookupTable)
+    if (hybridRDD.isSkewed) {
+      result.repartition(hybridRDD.sourceRDD.partitions.size)
+    } else {
+      result
+    }
+  }
+
+  // Same as hybridLookup but coalesces the result after a hybrid lookup.
+  def hybridLookupAndCoalesce[K: Ordering: ClassTag, T: ClassTag, S](
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = hybridLookup(hybridRDD, lookupTable)
+    if (hybridRDD.isSkewed) {
+      result.coalesce(hybridRDD.sourceRDD.partitions.size)
+    } else {
+      result
+    }
+  }
+
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest.
   def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] =
-    hybridLookup(sourceRDD, lookupTable, hybridLookupThreshold)
+    hybridRDD: HybridRDD[K, T],
+    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
-  // This will find the top key (the ones with the largest count) from the sourceRDD. Then if
-  // any count is higher than maxValuesPerKey, then it does a hybrid lookup.
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    maxValuesPerKey: Int): RDD[(K, (T, S))] = {
-
-    val countsTable = sourceRDD
-      .mapValues(x => 1L)
-      .reduceByKey(lookupTable.partitioner.get, _ + _)
-    val ordering = new CountOrdering[K]
-    val tops = countsTable
-      .top(hybridLookupMaxLarge)(ordering)
-      .sorted(ordering)
-    if (tops.isEmpty) sourceRDD.context.emptyRDD
+    if (hybridRDD.isEmpty) hybridRDD.sourceRDD.context.emptyRDD
     else {
-      val biggest = tops.last
-      if (biggest._2 > maxValuesPerKey) {
-        val largeKeysMap = lookupTable.restrictToIdSet(tops.map(_._1).toIndexedSeq.sorted).collect.toMap
-        // LargeKeyMap may not contain all keys from the sourceRDD, if they have
-        // no matching record in the lookupTable. We still need to use a complete
-        // set of the large keys.
-        val largeKeysSet = tops.map(_._1).toSet
-        val largeKeysCoverage = tops.map(_._2).reduce(_ + _)
-        log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering ${largeKeysCoverage} source records.")
-        val larges = smallTableLookup(sourceRDD, largeKeysMap)
-        val smalls = joinLookup(
-          sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }, lookupTable)
-        (smalls ++ larges).repartition(sourceRDD.partitions.size)
+      if (hybridRDD.isSkewed) {
+        val largeKeysMap = lookupTable.restrictToIdSet(hybridRDD.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
+        log.info(s"Hybrid lookup found ${hybridRDD.largeKeysSet.size} large keys covering "
+          + "${hybridRDD.largeKeysCoverage} source records.")
+        val larges = smallTableLookup(hybridRDD.sourceRDD, largeKeysMap)
+        val smalls = joinLookup(hybridRDD.smallKeysTable, lookupTable)
+        smalls ++ larges
       } else {
-        joinLookup(sourceRDD, lookupTable)
+        joinLookup(hybridRDD.sourceRDD, lookupTable)
       }
+    }
+  }
+}
+
+case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
+    sourceRDD: RDD[(K, T)],
+    maxValuesPerKey: Int = RDDUtils.hybridLookupThreshold) {
+
+  val tops = {
+    val ordering = new CountOrdering[K]
+    sourceRDD
+      .mapValues(x => 1L)
+      .reduceByKey(_ + _)
+      .top(RDDUtils.hybridLookupMaxLarge)(ordering)
+      .sorted(ordering)
+  }
+  val isEmpty = tops.isEmpty
+  val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
+
+  val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
+    (Set.empty[K], 0L)
+  } else {
+    (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
+  }
+  val smallKeysTable = if (isSkewed) {
+    sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+  } else {
+    sourceRDD.context.emptyRDD[(K, T)]
+  }
+
+  def persist(storageLevel: spark.storage.StorageLevel): Unit = {
+    if (!isEmpty) {
+      if (isSkewed) {
+        smallKeysTable.persist(storageLevel)
+      }
+      sourceRDD.persist(storageLevel)
     }
   }
 }
