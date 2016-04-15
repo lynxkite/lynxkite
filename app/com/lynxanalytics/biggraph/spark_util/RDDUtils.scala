@@ -257,111 +257,6 @@ object RDDUtils {
   def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
-
-  // A lookup method based on joining the source RDD with the lookup table. Assumes
-  // that each key has only so many instances that we can handle all of them in a single partition.
-  def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)], lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    import Implicits._
-    sourceRDD.sort(lookupTable.partitioner.get).sortedJoin(lookupTable)
-  }
-
-  // A lookup method based on sending the lookup table to all tasks. The lookup table should be
-  // reasonably small.
-  def smallTableLookup[K, T, S](
-    sourceRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
-
-    sourceRDD
-      .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
-  }
-
-  val hybridLookupThreshold =
-    LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
-  val hybridLookupMaxLarge =
-    LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
-
-  // TODO Move these lookup functions to HybridRDD.
-
-  // Same as hybridLookup but repartitions the result after a hybrid lookup.
-  def hybridLookupAndRepartition[K: Ordering: ClassTag, T: ClassTag, S](
-    hybridRDD: HybridRDD[K, T],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = hybridLookup(hybridRDD, lookupTable)
-    if (hybridRDD.isSkewed) {
-      result.repartition(hybridRDD.sourceRDD.partitions.size)
-    } else {
-      result
-    }
-  }
-
-  // Same as hybridLookup but coalesces the result after a hybrid lookup.
-  def hybridLookupAndCoalesce[K: Ordering: ClassTag, T: ClassTag, S](
-    hybridRDD: HybridRDD[K, T],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = hybridLookup(hybridRDD, lookupTable)
-    if (hybridRDD.isSkewed) {
-      result.coalesce(hybridRDD.sourceRDD.partitions.size)
-    } else {
-      result
-    }
-  }
-
-  // A lookup method that does smallTableLookup for a few keys that have too many instances to
-  // be handled by joinLookup and does joinLookup for the rest.
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    hybridRDD: HybridRDD[K, T],
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-
-    if (hybridRDD.isEmpty) hybridRDD.sourceRDD.context.emptyRDD
-    else {
-      if (hybridRDD.isSkewed) {
-        val largeKeysMap = lookupTable.restrictToIdSet(hybridRDD.tops.map(_._1).toIndexedSeq.sorted).collect.toMap
-        log.info(s"Hybrid lookup found ${hybridRDD.largeKeysSet.size} large keys covering "
-          + "${hybridRDD.largeKeysCoverage} source records.")
-        val larges = smallTableLookup(hybridRDD.sourceRDD, largeKeysMap)
-        val smalls = joinLookup(hybridRDD.smallKeysTable, lookupTable)
-        smalls ++ larges
-      } else {
-        joinLookup(hybridRDD.sourceRDD, lookupTable)
-      }
-    }
-  }
-}
-
-case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
-    sourceRDD: RDD[(K, T)],
-    maxValuesPerKey: Int = RDDUtils.hybridLookupThreshold) {
-
-  val tops = {
-    val ordering = new CountOrdering[K]
-    sourceRDD
-      .mapValues(x => 1L)
-      .reduceByKey(_ + _)
-      .top(RDDUtils.hybridLookupMaxLarge)(ordering)
-      .sorted(ordering)
-  }
-  val isEmpty = tops.isEmpty
-  val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
-
-  val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
-    (Set.empty[K], 0L)
-  } else {
-    (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
-  }
-  val smallKeysTable = if (isSkewed) {
-    sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
-  } else {
-    sourceRDD.context.emptyRDD[(K, T)]
-  }
-
-  def persist(storageLevel: spark.storage.StorageLevel): Unit = {
-    if (!isEmpty) {
-      if (isSkewed) {
-        smallKeysTable.persist(storageLevel)
-      }
-      sourceRDD.persist(storageLevel)
-    }
-  }
 }
 
 object Implicits {
@@ -465,7 +360,7 @@ object Implicits {
     def asUniqueSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       assert(self.partitioner.isDefined,
         s"Cannot cast to unique RDD if there is no partitioner specified")
-      new AlreadySortedRDD(self) with UniqueSortedRDD[K, V]
+      new AlreadySortedRDD[K, V](self) with UniqueSortedRDD[K, V]
     }
     // Sorts each partition of the RDD in isolation.
     def sort(partitioner: spark.Partitioner)(
