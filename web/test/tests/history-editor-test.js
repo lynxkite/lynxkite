@@ -139,7 +139,7 @@ module.exports = function(fw) {
       lib.left.history.insertOperationSimple(
           3, 'PageRank',
           {name: 'wow_such_page_rank'});
-      lib.left.history.expextOperationParameter(3, 'name', 'wow_such_page_rank');
+      lib.left.history.expectOperationParameter(3, 'name', 'wow_such_page_rank');
       lib.left.history.close(true);
     });
 
