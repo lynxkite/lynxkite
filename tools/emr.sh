@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Last successful tested with: aws-cli/1.10.20 Python/2.7.6 Linux/3.13.0-85-generic botocore/1.4.11
+# TODO: rewrite this in Python using boto directly
+
 set -ueo pipefail
 function trap_handler() {
   THIS_SCRIPT="$0"
@@ -171,6 +174,8 @@ start)
   # About the configuration changes above:
   # mapred.output.committer.class = org.apache.hadoop.mapred.FileOutputCommitter
   # because Amazon's default value is only supported with Amazon's JAR files: #3234
+
+  aws emr wait cluster-running --cli-input-json "${CREATE_CLUSTER_RESULT}"
 
   ;&
 
