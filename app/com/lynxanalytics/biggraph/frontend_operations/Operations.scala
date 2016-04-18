@@ -22,6 +22,7 @@ import com.lynxanalytics.biggraph.serving.FrontendJson
 import com.lynxanalytics.biggraph.table.TableImport
 
 import play.api.libs.json
+import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
   case class Param(
@@ -352,14 +353,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("attr", "Vertex ID attribute",
-        options = FEOption.unset +: vertexAttributes[String]),
+      Choice("attr", "Vertex ID attribute", options = FEOption.unset +: vertexAttributes),
       Param("src", "Source ID column"),
       Param("dst", "Destination ID column"))
     def enabled =
       hasNoEdgeBundle &&
         hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val src = params("src")
@@ -368,15 +368,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
       val attrName = params("attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val srcVidColumn = table.columns(src).runtimeSafeCast[String]
-      val dstVidColumn = table.columns(dst).runtimeSafeCast[String]
-      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-      val imp = op(
-        op.srcVidColumn, srcVidColumn)(
-          op.dstVidColumn, dstVidColumn)(
-            op.srcVidAttr, attr)(
-              op.dstVidAttr, attr).result
+      val attr = project.vertexAttributes(attrName)
+      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+        attr, attr, table.columns(src), table.columns(dst))
       project.edgeBundle = imp.edges
       for (edgeAttrName <- table.columns.keys) {
         project.edgeAttributes(edgeAttrName) = table.columns(edgeAttrName).pullVia(imp.embedding)
@@ -2279,19 +2273,21 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice(
         "base-id-attr",
         s"Identifying vertex attribute in base project",
-        options = FEOption.list(parent.vertexAttributeNames[String].toList)),
+        options = FEOption.list(parent.vertexAttributeNames.toList)),
       Param("base-id-column", s"Identifying column for base project"),
       Choice(
         "seg-id-attr",
         s"Identifying vertex attribute in segmentation",
-        options = vertexAttributes[String]),
+        options = vertexAttributes),
       Param("seg-id-column", s"Identifying column for segmentation"))
     def enabled =
       isSegmentation &&
         FEStatus.assert(
-          vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
+          vertexAttributes.nonEmpty,
+          "No vertex attributes in this segmentation") &&
           FEStatus.assert(
-            parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
+            parent.vertexAttributeNames.nonEmpty,
+            "No vertex attributes in base project")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base-id-column")
@@ -2306,16 +2302,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The base ID attribute parameter must be set.")
       assert(segAttrName != FEOption.unset.id,
         "The segmentation ID attribute parameter must be set.")
-      val baseColumn = table.columns(baseColumnName).runtimeSafeCast[String]
-      val segColumn = table.columns(segColumnName).runtimeSafeCast[String]
-      val baseAttr = parent.vertexAttributes(baseAttrName).runtimeSafeCast[String]
-      val segAttr = project.vertexAttributes(segAttrName).runtimeSafeCast[String]
-      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-      val imp = op(
-        op.srcVidColumn, baseColumn)(
-          op.dstVidColumn, segColumn)(
-            op.srcVidAttr, baseAttr)(
-              op.dstVidAttr, segAttr).result
+      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+        parent.vertexAttributes(baseAttrName),
+        project.vertexAttributes(segAttrName),
+        table.columns(baseColumnName),
+        table.columns(segColumnName))
       seg.belongsTo = imp.edges
     }
   })
@@ -2328,10 +2319,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         accessibleTableOptions),
       Param("name", s"Name of new segmentation"),
       Choice("base-id-attr", "Vertex ID attribute",
-        options = FEOption.unset +: vertexAttributes[String]),
+        options = FEOption.unset +: vertexAttributes),
       Param("base-id-column", "Vertex ID column"),
       Param("seg-id-column", "Segment ID column"))
-    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes")
+    def enabled = FEStatus.assert(
+      vertexAttributes.nonEmpty, "No suitable vertex attributes")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base-id-column")
@@ -2343,31 +2335,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The identifying column parameter must be set for the segmentation.")
       assert(baseAttrName != FEOption.unset.id,
         "The base ID attribute parameter must be set.")
-      val baseColumn = table.columns(baseColumnName).runtimeSafeCast[String]
-      val segColumn = table.columns(segColumnName).runtimeSafeCast[String]
-      val baseAttr = project.vertexAttributes(baseAttrName).runtimeSafeCast[String]
+      val baseColumn = table.columns(baseColumnName)
+      val segColumn = table.columns(segColumnName)
+      val baseAttr = project.vertexAttributes(baseAttrName)
+      val segmentation = project.segmentation(params("name"))
 
+      val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
+      segmentation.newVertexAttribute(segColumnName, segAttr)
+    }
+
+    def typedImport[A, B](
+      segmentation: SegmentationEditor,
+      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
       // Merge by segment ID to create the segments.
       val merge = {
-        val op = graph_operations.MergeVertices[String]()
+        val op = graph_operations.MergeVertices[B]()
         op(op.attr, segColumn).result
       }
-      val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(merge.segments, idAttr = "id")
       // Move segment ID to the segments.
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
-        AttributeWithLocalAggregator(segColumn, "most_common"))
-        .runtimeSafeCast[String]
-      segmentation.newVertexAttribute(segColumnName, segAttr)
+        AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
+      implicit val ta = baseColumn.typeTag
+      implicit val tb = segColumn.typeTag
       // Import belongs-to relationship as edges between the base and the segmentation.
-      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-      val edgeImport = op(
-        op.srcVidColumn, baseColumn)(
-          op.dstVidColumn, segColumn)(
-            op.srcVidAttr, baseAttr)(
-              op.dstVidAttr, segAttr).result
-      segmentation.belongsTo = edgeImport.edges
+      val imp = graph_operations.ImportEdgesForExistingVertices.run(
+        baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
+      segmentation.belongsTo = imp.edges
+      segAttr
     }
   })
 
