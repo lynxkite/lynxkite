@@ -8,7 +8,6 @@ function(util, $timeout, removeOptionalDefaults) {
     scope: { show: '=', side: '=' },
     templateUrl: 'project-history.html',
     link: function(scope) {
-      scope.historyScope = scope;
       scope.$watch('show', getHistory);
       scope.$watch('side.state.projectName', getHistory);
       function getHistory() {

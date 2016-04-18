@@ -8,26 +8,9 @@ angular.module('biggraph')
     // A lot of internals are exposed, because this directive is used both in
     // side-operation-toolbox and in project-history.
     scope: {
-      step: '=',
-      before: '=',
-      historyScope: '='
+      segmentations: '=',  // (Input) List of possible segmentations.
+      insertOperation: '&',  // (Method) The directive will call this to insert a new operation.
     },
     templateUrl: 'project-history-adder.html',
-    link: function(scope) {
-      scope.insertOp = function(segmentation) {
-        if (scope.before) {
-          scope.historyScope.insertBefore(scope.step, segmentation);
-        } else {
-          scope.historyScope.insertAfter(scope.step, segmentation);
-        }
-      };
-      scope.segmentations = function() {
-        if (scope.before) {
-          return scope.step.segmentationsBefore;
-        } else {
-          return scope.step.segmentationsAfter;
-        }
-      };
-    }
   };
 });

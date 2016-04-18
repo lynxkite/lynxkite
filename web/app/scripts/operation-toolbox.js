@@ -18,8 +18,8 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
       historyMode: '=',  // (Input.) Whether this toolbox is inside the history browser.
       step: '=',  // (Input.) If historyMode is true, this is the history step of the operation.
-      // (Input/Output) If historyMode is true, this is the scope of the history editor:
-      historyScope: '=',
+      discardStep: '&', // (Method.) For manipulating history.
+      discardChanges: '&', // (Method.) For manipulating history.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
@@ -29,8 +29,8 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
           scope.editMode = true;
           $rootScope.$broadcast('close all other history toolboxes', scope);
         };
-        scope.discardChanges = function() {
-          scope.historyScope.discardChanges();
+        scope.discardChangesAndFinishEdit = function() {
+          scope.discardChanges();
           scope.editMode = false;
         };
         scope.$watch('step.localChanges', function() {
@@ -38,9 +38,6 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
             scope.enterEditMode();
           }
         });
-        scope.discardSelf = function() {
-          scope.historyScope.discard(scope.step);
-        };
 
         scope.$on(
           'close all other history toolboxes',
