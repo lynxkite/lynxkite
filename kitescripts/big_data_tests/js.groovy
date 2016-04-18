@@ -2,7 +2,8 @@
 
 // REQUIRE_SCRIPT edge_import.groovy
 
-project = lynx.loadProject('edge_import_results')
+project = lynx.loadProject('edge_import_result')
+
 project.vertexAttributeToDouble(attr: 'ordinal')
 project.derivedVertexAttribute(
   output: 'x',
