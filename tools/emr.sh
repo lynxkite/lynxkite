@@ -400,12 +400,12 @@ EOF
 
   # 1.2. Collect the common Groovy parameters:
   GROOVY_PARAM_LIST=""
-  DOUBLE_HASH_SEEN=0
+  DOUBLE_DASH_SEEN=0
   for GROOVY_PARAM in "${COMMAND_ARGS[@]}"; do
-    if [[ "$DOUBLE_HASH_SEEN" == "1" ]]; then
+    if [[ "$DOUBLE_DASH_SEEN" == "1" ]]; then
       GROOVY_PARAM_LIST="$GROOVY_PARAM_LIST $GROOVY_PARAM"
     elif [[ "$GROOVY_PARAM" == "--" ]]; then
-      DOUBLE_HASH_SEEN=1
+      DOUBLE_DASH_SEEN=1
     fi
   done
 
