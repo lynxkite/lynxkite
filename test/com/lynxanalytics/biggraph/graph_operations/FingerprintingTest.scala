@@ -106,14 +106,10 @@ class FingerprintingCandidatesTest extends FunSuite with TestGraphOp {
 
   def candidates(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Seq[(Int, Int)] = {
     val graph = SmallTestGraph(left ++ right).result
-    val leftName = {
-      val op = AddVertexAttribute((left.keys ++ left.values.flatten).map(i => i -> s"L$i").toMap)
-      op(op.vs, graph.vs).result.attr
-    }
-    val rightName = {
-      val op = AddVertexAttribute((right.keys ++ right.values.flatten).map(i => i -> s"R$i").toMap)
-      op(op.vs, graph.vs).result.attr
-    }
+    val leftName = AddVertexAttribute.run(
+      graph.vs, (left.keys ++ left.values.flatten).map(i => i -> s"L$i").toMap)
+    val rightName = AddVertexAttribute.run(
+      graph.vs, (right.keys ++ right.values.flatten).map(i => i -> s"R$i").toMap)
     val candidates = {
       val op = FingerprintingCandidates()
       op(op.es, graph.es)(op.leftName, leftName)(op.rightName, rightName).result.candidates

@@ -1,7 +1,7 @@
 // The toolbox shows the list of operation categories and the operations.
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function() {
+angular.module('biggraph').directive('operationToolbox', function($rootScope) {
   return {
     restrict: 'E',
     // A lot of internals are exposed, because this directive is used both in
@@ -17,9 +17,42 @@ angular.module('biggraph').directive('operationToolbox', function() {
       editable: '=',  // (Input.) Whether the toolbox should be interactive.
       sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
       historyMode: '=',  // (Input.) Whether this toolbox is inside the history browser.
+      step: '=',  // (Input.) If historyMode is true, this is the history step of the operation.
+      discardStep: '&', // (Method.) For manipulating history.
+      discardChanges: '&', // (Method.) For manipulating history.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
+      scope.editMode = !scope.historyMode;
+      if (scope.historyMode) {
+        scope.enterEditMode = function() {
+          scope.editMode = true;
+          $rootScope.$broadcast('close all other history toolboxes', scope);
+        };
+        scope.discardChangesAndFinishEdit = function() {
+          scope.discardChanges();
+          scope.editMode = false;
+        };
+        scope.$watch('step.localChanges', function() {
+          if (scope.step.localChanges) {
+            scope.enterEditMode();
+          }
+        });
+
+        scope.$on(
+          'close all other history toolboxes',
+          function(event, src) {
+            if (src !== scope) {
+              scope.editMode = false;
+            }
+          });
+        if (scope.step.request.op.id === 'No-operation') {
+          // This is a hack so that newly added operations
+          // start off with their category menu open.
+          scope.enterEditMode();
+        }
+      }
+
       scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];

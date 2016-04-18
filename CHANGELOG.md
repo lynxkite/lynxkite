@@ -9,6 +9,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Prefix-based user access control can be specified in the prefix definitions file.
  - emr.sh: support setting up LynxKite in an Amazon VPC.
  - Numeric fields in CSV files can be imported to LynxKite with the right types.
+ - When importing edges for existing vertices, you can now join by non-string attributes too.
  - Fixed batch scripting issue with `lynx.loadProject()`.
  - Bottom links are moved to a popup.
  - Support for Kerberos-secured clusters.
