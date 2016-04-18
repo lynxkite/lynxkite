@@ -1,9 +1,8 @@
-// Simple JavaScript benchmark.
-start_time = System.currentTimeMillis()
+// Tests JavaScript execution performance.
 
-vertices = 10000000
-project = lynx.newProject()
-project.newVertexSet(size: vertices)
+// REQUIRE_SCRIPT edge_import.groovy
+
+project = lynx.loadProject('edge_import_results')
 project.vertexAttributeToDouble(attr: 'ordinal')
 project.derivedVertexAttribute(
   output: 'x',
@@ -12,4 +11,3 @@ project.derivedVertexAttribute(
 
 println "vertices: $vertices"
 println "x: ${ project.vertexAttributes['x'].histogram() }"
-println "time: ${ (System.currentTimeMillis() - start_time) / 1000 } seconds"
