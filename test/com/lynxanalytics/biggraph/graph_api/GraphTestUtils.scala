@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark
 import org.scalatest
 import scala.util.Random
+import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
@@ -245,53 +246,42 @@ object AddVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val attr = vertexAttribute[String](inputs.vs.entity)
+  class Output[T: TypeTag](instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    implicit val inst = instance
+    val attr = vertexAttribute[T](inputs.vs.entity)
   }
-  def fromJson(j: JsValue) =
-    AddVertexAttribute((j \ "values").as[Map[String, String]].map { case (k, v) => k.toInt -> v })
-}
-case class AddVertexAttribute(values: Map[Int, String])
-    extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output] {
-  import AddVertexAttribute._
-  @transient override lazy val inputs = new Input
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson =
-    Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
-  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
-    implicit val id = inputDatas
-    val sc = rc.sparkContext
-    val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
-    val partitioner = inputs.vs.rdd.partitioner.get
-    output(o.attr, sc.parallelize(idMap).sortUnique(partitioner))
-  }
-}
 
-object AddDoubleVertexAttribute extends OpFromJson {
-  class Input extends MagicInputSignature {
-    val vs = vertexSet
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    val st = SerializableType.fromJson(j \ "type")
+    fromJsonTyped(j)(st)
   }
-  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val attr = vertexAttribute[Double](inputs.vs.entity)
+  def fromJsonTyped[T](j: JsValue)(implicit st: SerializableType[T]) = {
+    import st.format
+    AddVertexAttribute((j \ "values").as[Map[String, T]].map { case (k, v) => k.toInt -> v })
   }
-  def fromJson(j: JsValue) =
-    AddDoubleVertexAttribute((j \ "values").as[Map[String, Double]].map { case (k, v) => k.toInt -> v })
 
-  def run(
-    vs: VertexSet, values: Map[Int, Double])(implicit m: MetaGraphManager): Attribute[Double] = {
+  def run[T: TypeTag](
+    vs: VertexSet, values: Map[Int, T])(implicit m: MetaGraphManager): Attribute[T] = {
     import Scripting._
-    val op = AddDoubleVertexAttribute(values)
+    val op = AddVertexAttribute(values)(SerializableType[T])
     op(op.vs, vs).result.attr
   }
 }
-case class AddDoubleVertexAttribute(values: Map[Int, Double])
-    extends TypedMetaGraphOp[AddDoubleVertexAttribute.Input, AddDoubleVertexAttribute.Output] {
-  import AddDoubleVertexAttribute._
+case class AddVertexAttribute[T](values: Map[Int, T])(implicit st: SerializableType[T])
+    extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output[T]] {
+  import AddVertexAttribute._
+
   @transient override lazy val inputs = new Input
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson =
-    Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
-  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T](instance, inputs)(st.typeTag)
+  override def toJson = {
+    import st.format
+    Json.obj(
+      "values" -> values.map { case (k, v) => k.toString -> v },
+      "type" -> st.toJson)
+  }
+
+  def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
+    import st.classTag
     implicit val id = inputDatas
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }

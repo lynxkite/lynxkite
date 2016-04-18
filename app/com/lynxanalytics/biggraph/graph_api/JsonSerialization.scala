@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
 import play.api.libs.json.{ Writes, Reads }
+import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 // TypedJson is a JSON object with a string "class" and an object "data" field:
 //   { "class": "my.little.ClassName", "data": { ... } }
@@ -85,4 +87,45 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
   def fromJson(j: json.JsValue): T = {
     (j \ paramName).asOpt[T].getOrElse(defaultValue)
   }
+}
+
+object SerializableType {
+  def fromJson(j: json.JsValue): SerializableType[_] = {
+    (j \ "typename").as[String] match {
+      case "String" => string
+      case "Double" => double
+      case "Long" => long
+      case "Int" => int
+    }
+  }
+
+  val string = new SerializableType[String]("String")
+  val double = new SerializableType[Double]("Double")
+  val long = new SerializableType[Long]("Long")
+  val int = new SerializableType[Int]("Int")
+
+  def apply[T: TypeTag]: SerializableType[T] = {
+    val t = typeOf[T]
+    val st =
+      if (t =:= typeOf[String]) string
+      else if (t =:= typeOf[Double]) double
+      else if (t =:= typeOf[Long]) long
+      else if (t =:= typeOf[Int]) int
+      else assert(false, s"Unsupported type: $t")
+    st.asInstanceOf[SerializableType[T]]
+  }
+
+  object Implicits {
+    import scala.language.implicitConversions
+    implicit def classTag[T](implicit st: SerializableType[T]) = st.classTag
+    implicit def format[T](implicit st: SerializableType[T]) = st.format
+    implicit def ordering[T](implicit st: SerializableType[T]) = st.ordering
+    implicit def typeTag[T](implicit st: SerializableType[T]) = st.typeTag
+  }
+}
+class SerializableType[T] private (typename: String)(implicit val classTag: ClassTag[T],
+                                                     val format: play.api.libs.json.Format[T],
+                                                     val ordering: Ordering[T],
+                                                     val typeTag: TypeTag[T]) extends ToJson {
+  override def toJson = Json.obj("typename" -> typename)
 }

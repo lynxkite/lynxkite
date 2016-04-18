@@ -368,7 +368,14 @@ History.prototype = {
 
   // Get an operation from the history. position is a zero-based index.
   getOperation: function(position) {
-    var list = this.side.side.$$('project-history div.list-group > li');
+    var list = this.side.side.
+      $$('project-history div.list-group > li.history-operation-item');
+    return list.get(position);
+  },
+
+  getInsertMenu: function(position) {
+    var list = this.side.side.
+      $$('project-history div.list-group > li > project-history-adder');
     return list.get(position);
   },
 
@@ -381,36 +388,58 @@ History.prototype = {
   },
 
   openDropdownMenu: function(operation) {
-    var menu = operation.$('.history-options.dropdown');
+    var menu = operation.$('.history-options');
     menu.$('a.dropdown-toggle').click();
     return menu;
   },
 
   clickDropDownMenuItem: function(position, itemId) {
-    var operation = this.getOperation(position);
+    var operation = this.getInsertMenu(position);
     this.openDropdownMenu(operation).$('a#dropdown-menu-' + itemId).click();
   },
 
-  deleteOperation: function(position) {
-    this.clickDropDownMenuItem(position, 'discard');
+  selectOperation: function(op, name) {
+    op.element(by.id('operation-search')).click();
+    op.element(by.id('filter')).sendKeys(name, K.ENTER);
   },
 
-  insertOperation: function(parentPos, direction, name, params, segmentation) {
-    var menuItemId = 'add-' + direction;
-    if (segmentation) {
-      menuItemId += '-for-' + segmentation;
-    }
-    this.clickDropDownMenuItem(parentPos, menuItemId);
-    var newPos = direction === 'up' ? parentPos : parentPos + 1;
+  deleteOperation: function(position) {
+    this.getOperation(position).$('#operation-discard').click();
+  },
+
+  enterEditMode: function(op) {
+    op.$('#operation-edit').click();
+  },
+
+  discardEdits: function(op) {
+    op.$('#operation-discard-changes').click();
+  },
+
+  initInsertedOperation: function(newPos, name, params) {
     var newOp = this.getOperation(newPos);
-    newOp.element(by.id('operation-search')).click();
-    newOp.element(by.id('filter')).sendKeys(name, K.ENTER);
+    this.selectOperation(newOp, name);
     this.side.populateOperation(newOp, params);
     this.side.submitOperation(newOp);
   },
 
+  insertOperationSimple: function(pos, name, params) {
+    this.getInsertMenu(pos).click();
+    this.initInsertedOperation(pos, name, params);
+  },
+
+  insertOperationForSegmentation: function(pos, name, params, segmentation) {
+    var menuItemId = 'add';
+    if (segmentation) {
+      menuItemId += '-for-' + segmentation;
+    }
+    this.clickDropDownMenuItem(pos, menuItemId);
+    this.initInsertedOperation(pos, name, params);
+  },
+
   numOperations: function() {
-    return this.side.side.$$('project-history div.list-group > li').count();
+    return this.side.side.
+      $$('project-history div.list-group > li.history-operation-item').
+      count();
   },
 
   expectOperationParameter: function(opPosition, paramName, expectedValue) {
