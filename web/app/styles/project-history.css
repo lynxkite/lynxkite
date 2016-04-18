@@ -13,7 +13,6 @@ project-history .list-group-item:first-child {
 project-history h2 {
   font-size: 20px;
   margin: 0;
-  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -41,12 +40,6 @@ project-history .operation-apply-button {
 }
 project-history .local-changes .operation-apply-button {
   display: block;
-}
-
-project-history .history-options {
-  /* Lift up by 20px. */
-  position: relative;
-  bottom: 20px;
 }
 
 project-history .affected-segmentation {
