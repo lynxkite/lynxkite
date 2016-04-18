@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Last successful tested with: aws-cli/1.10.20 Python/2.7.6 Linux/3.13.0-85-generic botocore/1.4.11
+# Last successful tested with: aws-cli/1.10.20 Python/2.7.6 botocore/1.4.11
 # TODO: rewrite this in Python using boto directly
 
 set -ueo pipefail
@@ -37,9 +37,6 @@ if [ "$#" -lt 2 ]; then
   echo "   connect     - redirects the kite web interface to http://localhost:4044"
   echo "                 from behind the Amazon firewall"
   echo "   kite        - (re)starts the LynxKite server"
-  echo "                 on a running cluster. The scripts have to be already uploaded to "
-  echo "                 the master. The path of each script should be relative to the kitescripts "
-  echo "                 directory on the master."
   echo "   ssh         - Logs in to the master."
   echo "   cmd         - Executes a command on the master."
   echo
@@ -50,6 +47,19 @@ if [ "$#" -lt 2 ]; then
   echo
   echo "   .... use Kite ...."
   echo
+  echo "   emr.sh terminate my_cluster_spec"
+  echo
+  echo
+  echo " Example batch workflow:"
+  echo "   emr.sh start my_cluster_spec"
+  echo "   emr.sh deploy-kite my_cluster_spec  # Deploys Kite without starting it"
+  echo "   emr.sh batch my_cluster_spec my_scipt.groovy -- param1:value1 # parameters are optional"
+  echo
+  echo "   .... analyze results, debug ...."
+  echo
+  echo "   # If you want to reproduce a performance test, don't forget to flush cache before that:"
+  echo "   emr.sh reset my_cluster_spec"
+  echo "   emr.sh batch my_cluster_spec my_script.groovy -- param1:value1"
   echo "   emr.sh terminate my_cluster_spec"
 
   exit 1
@@ -370,6 +380,61 @@ clusterid)
 s3copy)
   curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral"
   echo "Copy successful."
+  ;;
+
+# ======
+batch)
+  # 1. First we build a master script.
+  MASTER_BATCH_DIR="/tmp/${CLUSTER_NAME}_batch_job"
+  rm -Rf ${MASTER_BATCH_DIR}
+  mkdir -p ${MASTER_BATCH_DIR}
+  MASTER_SCRIPT="${MASTER_BATCH_DIR}/kite_batch_job.sh"
+
+  REMOTE_BATCH_DIR="/home/hadoop/batch"
+
+  # 1.1. Shut down LynxKite if running:
+  cat >${MASTER_SCRIPT} <<EOF
+  ~/biggraphstage/bin/biggraph stop
+EOF
+  chmod a+x ${MASTER_SCRIPT}
+
+  # 1.2. Collect the common Groovy parameters:
+  GROOVY_PARAM_LIST=""
+  DOUBLE_HASH_SEEN=0
+  for GROOVY_PARAM in "${COMMAND_ARGS[@]}"; do
+    if [[ "$DOUBLE_HASH_SEEN" == "1" ]]; then
+      GROOVY_PARAM_LIST="$GROOVY_PARAM_LIST $GROOVY_PARAM"
+    elif [[ "$GROOVY_PARAM" == "--" ]]; then
+      DOUBLE_HASH_SEEN=1
+    fi
+  done
+
+  # 1.3. Invoke each groovy script:
+  CNT=1
+  for GROOVY_SCRIPT in "${COMMAND_ARGS[@]}"; do
+    if [[ "$GROOVY_SCRIPT" == "--"  ]]; then
+      break
+    fi
+    GROOVY_SCRIPT_BASENAME=$(basename "$GROOVY_SCRIPT")
+    # We add a unique prefix to the file name to avoid name clashes.
+    REMOTE_GROOVY_SCRIPT_NAME="script${CNT}_${GROOVY_SCRIPT_BASENAME}"
+    CNT=$((CNT + 1))
+    # 1.3.1. Copy Groovy script to common directory
+    cp "${GROOVY_SCRIPT}" "${MASTER_BATCH_DIR}/${REMOTE_GROOVY_SCRIPT_NAME}"
+
+    # 1.3.2. Add Groovy script invocation into our master script.
+    cat >>${MASTER_SCRIPT} <<EOF
+~/biggraphstage/bin/biggraph batch "${REMOTE_BATCH_DIR}/${REMOTE_GROOVY_SCRIPT_NAME}" ${GROOVY_PARAM_LIST}
+EOF
+  done
+
+  # 2. Upload and execute the scripts:
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  rsync -ave "$SSH" -r -z --copy-dirlinks \
+    ${MASTER_BATCH_DIR}/ \
+    hadoop@${MASTER_HOSTNAME}:${REMOTE_BATCH_DIR}
+  aws emr ssh ${MASTER_ACCESS} --command "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
   ;;
 
 # ======
