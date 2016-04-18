@@ -4,7 +4,8 @@
 
 seed = 12321
 
-project = lynx.loadProject('edge_import_results')
+project = lynx.loadProject('edge_import_result')
+
 project.addRandomVertexAttribute(
   name: 'randomV',
   dist: 'Standard Uniform',
