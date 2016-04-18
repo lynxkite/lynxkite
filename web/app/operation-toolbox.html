@@ -8,7 +8,7 @@
         drop-tooltip="Discard operation"
         drop-tooltip-position="left middle"
         drop-tooltip-enable="editable"
-        ng-click="editable && discardSelf()">
+        ng-click="editable && discardStep()">
         <i class="glyphicon glyphicon-remove"></i>
       </div>
 
@@ -29,7 +29,7 @@
         drop-tooltip="Discard changes"
         drop-tooltip-position="left middle"
         drop-tooltip-enable="editable"
-        ng-click="editable && discardChanges()">
+        ng-click="editable && discardChangesAndFinishEdit()">
         <i class="glyphicon glyphicon-erase"></i>
       </div>
     </div>

@@ -1,15 +1,14 @@
 <div style="margin-left: auto; margin-right: auto; text-align: center;">
 
-  <a href ng-if="segmentations().length === 0"
-    ng-click="insertOp()"
+  <a href ng-if="segmentations.length === 0"
+    ng-click="insertOperation()"
     id="dropdown-menu-add-single">
     <i class="glyphicon glyphicon-plus-sign" style="color: green; font-size: 2.0em;">
     </i>
   </a>
 
   <div class="btn-group history-options" dropdown
-    ng-if="segmentations().length > 0"
-    ng-hide="historyScope.localChanges || !step.editable">
+    ng-if="segmentations.length > 0">
     <a href class="btn-dropdown dropdown-toggle" dropdown-toggle>
       <i class="glyphicon glyphicon-plus-sign" style="color: green; font-size: 2.0em;">
       </i>
@@ -20,8 +19,9 @@
           Insert operation
         </a>
       </li>
-      <li ng-repeat="seg in segmentations()">
-        <a href ng-click="insertOp(seg)" id="dropdown-menu-add-for-{{seg.name}}">
+      <li ng-repeat="seg in segmentations">
+        <a href ng-click="insertOperation({segmentation: seg})"
+          id="dropdown-menu-add-for-{{seg.name}}">
           Insert operation for {{seg.name}}
         </a>
       </li>
