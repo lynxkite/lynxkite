@@ -1,11 +1,10 @@
+// Tests graph visualization.
+
+// REQUIRE_SCRIPT edge_import.groovy
+
 seed = 12321
-vertices = 500000  // keep this higher than EntityIO.verticesPerPartition
 
-start_time = System.currentTimeMillis()
-
-project = lynx.newProject()
-project.newVertexSet(size: vertices)
-project.createRandomEdgeBundle(degree: 10.0, seed: seed + 1)
+project = lynx.loadProject('edge_import_results')
 project.addRandomVertexAttribute(
   name: 'randomV',
   dist: 'Standard Uniform',
@@ -165,4 +164,3 @@ testComplexView(
   )
 )
 
-println "time: ${ (System.currentTimeMillis() - start_time) / 1000 } seconds"
