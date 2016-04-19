@@ -3,6 +3,12 @@
 
 This file contains various configurations used when launching a LynxKite instance.
 
+[[kite-instance]]
+Specify this to be the instance (client) where the program is run. E.g., Westeros
+```
+export KITE_INSTANCE=
+```
+
 Specify the directory containing your Spark installation.
 ```
 export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
@@ -53,6 +59,12 @@ export KITE_PREFIX_DEFINITIONS=
 Specify the PID file for LynxKite servers.
 ```
 export KITE_PID_FILE=$HOME/kite.pid
+```
+
+When set, each action performed by the biggraph script (start,stop,restart, etc.) is logged to
+this file.
+```
+export KITE_SCRIPT_LOGS=$HOME/biggraph.log
 ```
 
 Specify the user registry file for LynxKite servers.
@@ -182,4 +194,11 @@ The LynxKite Google client secret is only needed for Google Authenticator. Ask t
 team for further instructions if you think you need this feature.
 ```
 # export KITE_GOOGLE_CLIENT_SECRET='???'
+```
+
+On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
+variables. The principal acts like a user name and the keytab file acts like a password.
+```
+# export KERBEROS_PRINCIPAL=
+# export KERBEROS_KEYTAB=
 ```

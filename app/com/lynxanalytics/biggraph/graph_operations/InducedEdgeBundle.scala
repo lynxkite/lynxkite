@@ -8,10 +8,14 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.Partitioner
+import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
@@ -81,9 +85,11 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
+    // Use the edge partitioner for both the new edges and src and dst to avoid too
+    // large partitions.
+    val partitioner = inputs.edges.rdd.partitioner.get
 
-    def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate,
-                   partitioner: Partitioner): SortedRDD[ID, ID] = {
+    def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
@@ -96,31 +102,31 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       }
     }
 
-    def joinMapping[V](
-      rdd: SortedRDD[ID, V],
-      mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, (V, ID)] = {
+    def joinMapping[V: ClassTag](
+      rdd: RDD[(ID, V)],
+      mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
-      val mapping = getMapping(mappingInput, rdd.partitioner.get)
-      // If the mapping has no duplicates we can use the faster sortedJoin.
-      if (props.isFunction) rdd.sortedJoin(mapping.asUniqueSortedRDD)
-      // If the mapping can have duplicates we need to use the slower sortedJoinWithDuplicates.
-      else rdd.sortedJoinWithDuplicates(mapping)
+      val mapping = getMapping(mappingInput)
+      if (props.isFunction) {
+        // If the mapping has no duplicates we can use the safer hybridLookup.
+        HybridRDD(rdd).lookupAndRepartition(mapping.asUniqueSortedRDD)
+      } else {
+        // If the mapping can have duplicates we need to use the less reliable
+        // sortedJoinWithDuplicates.
+        rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
+      }
     }
 
     val srcInduced = if (!induceSrc) edges else {
-      val srcPartitioner = src.partitioner.get
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-        .sort(srcPartitioner)
       val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
     val dstInduced = if (!induceDst) srcInduced else {
-      val dstPartitioner = dst.partitioner.get
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-        .sort(dstPartitioner)
       val byDst = joinMapping(byOldDst, inputs.dstMapping)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values

@@ -22,6 +22,7 @@ import com.lynxanalytics.biggraph.serving.FrontendJson
 import com.lynxanalytics.biggraph.table.TableImport
 
 import play.api.libs.json
+import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
   case class Param(
@@ -34,15 +35,16 @@ object OperationParams {
     val multipleChoice = false
     def validate(value: String): Unit = {}
   }
+
   case class Choice(
       id: String,
       title: String,
       options: List[FEOption],
       multipleChoice: Boolean = false,
-      allowUnknownOption: Boolean = false) extends OperationParameterMeta {
+      allowUnknownOption: Boolean = false,
+      mandatory: Boolean = true) extends OperationParameterMeta {
     val kind = "choice"
-    val defaultValue = ""
-    val mandatory = true
+    val defaultValue = options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
@@ -57,6 +59,7 @@ object OperationParams {
       }
     }
   }
+
   case class TableParam(
       id: String,
       title: String,
@@ -67,6 +70,7 @@ object OperationParams {
     val mandatory = true
     def validate(value: String): Unit = {}
   }
+
   case class TagList(
       id: String,
       title: String,
@@ -77,6 +81,7 @@ object OperationParams {
     val defaultValue = ""
     def validate(value: String): Unit = {}
   }
+
   case class File(id: String, title: String) extends OperationParameterMeta {
     val kind = "file"
     val multipleChoice = false
@@ -85,6 +90,7 @@ object OperationParams {
     val mandatory = true
     def validate(value: String): Unit = {}
   }
+
   case class Ratio(id: String, title: String, defaultValue: String = "")
       extends OperationParameterMeta {
     val kind = "default"
@@ -96,6 +102,7 @@ object OperationParams {
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
     }
   }
+
   case class NonNegInt(id: String, title: String, default: Int)
       extends OperationParameterMeta {
     val kind = "default"
@@ -107,6 +114,7 @@ object OperationParams {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
   }
+
   case class NonNegDouble(id: String, title: String, defaultValue: String = "")
       extends OperationParameterMeta {
     val kind = "default"
@@ -117,6 +125,7 @@ object OperationParams {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
   }
+
   case class Code(
       id: String,
       title: String,
@@ -344,14 +353,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("attr", "Vertex ID attribute",
-        options = FEOption.unset +: vertexAttributes[String]),
+      Choice("attr", "Vertex ID attribute", options = FEOption.unset +: vertexAttributes),
       Param("src", "Source ID column"),
       Param("dst", "Destination ID column"))
     def enabled =
       hasNoEdgeBundle &&
         hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val src = params("src")
@@ -360,15 +368,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
       val attrName = params("attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val srcVidColumn = table.columns(src).runtimeSafeCast[String]
-      val dstVidColumn = table.columns(dst).runtimeSafeCast[String]
-      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-      val imp = op(
-        op.srcVidColumn, srcVidColumn)(
-          op.dstVidColumn, dstVidColumn)(
-            op.srcVidAttr, attr)(
-              op.dstVidAttr, attr).result
+      val attr = project.vertexAttributes(attrName)
+      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+        attr, attr, table.columns(src), table.columns(dst))
       project.edgeBundle = imp.edges
       for (edgeAttrName <- table.columns.keys) {
         project.edgeAttributes(edgeAttrName) = table.columns(edgeAttrName).pullVia(imp.embedding)
@@ -587,7 +589,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
-        FEOption.noWeight +: edgeAttributes[Double]),
+        FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       Param(
         "max-iterations",
         "Maximum number of iterations to do",
@@ -599,7 +601,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgeBundle = project.edgeBundle
-      val weightsName = params("weights")
+      val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
       val weights =
         if (weightsName == FEOption.noWeight.id) edgeBundle.const(1.0)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
@@ -764,7 +766,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val locationAttr = params("location")
       val belongsToLocation =
         if (locationAttr.startsWith(SegmentationPrefix)) {
-          project.segmentation(locationAttr.substring(SegmentationPrefix.length)).belongsTo
+          project.existingSegmentation(locationAttr.substring(SegmentationPrefix.length)).belongsTo
         } else {
           val locationAttribute =
             project.vertexAttributes(locationAttr.substring(AttributePrefix.length)).runtimeSafeCast[String]
@@ -802,7 +804,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
 
     def apply(params: Map[String, String]) = {
-      val segmentations = params("segmentations").split(",", -1).map(project.segmentation(_))
+      val segmentations =
+        params("segmentations").split(",", -1).map(project.existingSegmentation(_))
       assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
@@ -1111,15 +1114,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Choice("weights", "Weight attribute",
-        options = FEOption.noWeight +: edgeAttributes[Double]),
+        options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
+      val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
       val weights =
-        if (params("weights") == FEOption.noWeight.id) project.edgeBundle.const(1.0)
+        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank, help)
@@ -1758,8 +1762,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val oldSegmentations = project.viewer.segmentationMap
       project.setVertexSet(m.segments, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
-        project.newSegmentation(name, segViewer.segmentationState)
         val seg = project.segmentation(name)
+        seg.segmentationState = segViewer.segmentationState
         val op = graph_operations.InducedEdgeBundle(induceDst = false)
         seg.belongsTo = op(
           op.srcMapping, m.belongsTo)(
@@ -2038,7 +2042,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Discard segmentation", new UtilityOperation(_, _) {
+  register("Discard segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
@@ -2124,7 +2128,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         s"""A segmentation named '${params("to")}' already exists,
             please discard it or choose another name""")
       project.segmentation(params("to")).segmentationState =
-        project.segmentation(params("from")).segmentationState
+        project.existingSegmentation(params("from")).segmentationState
       project.deleteSegmentation(params("from"))
     }
   })
@@ -2192,7 +2196,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy segmentation $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      val from = project.segmentation(params("from"))
+      val from = project.existingSegmentation(params("from"))
       val to = project.segmentation(params("to"))
       to.segmentationState = from.segmentationState
     }
@@ -2269,19 +2273,21 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice(
         "base-id-attr",
         s"Identifying vertex attribute in base project",
-        options = FEOption.list(parent.vertexAttributeNames[String].toList)),
+        options = FEOption.list(parent.vertexAttributeNames.toList)),
       Param("base-id-column", s"Identifying column for base project"),
       Choice(
         "seg-id-attr",
         s"Identifying vertex attribute in segmentation",
-        options = vertexAttributes[String]),
+        options = vertexAttributes),
       Param("seg-id-column", s"Identifying column for segmentation"))
     def enabled =
       isSegmentation &&
         FEStatus.assert(
-          vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
+          vertexAttributes.nonEmpty,
+          "No vertex attributes in this segmentation") &&
           FEStatus.assert(
-            parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
+            parent.vertexAttributeNames.nonEmpty,
+            "No vertex attributes in base project")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base-id-column")
@@ -2296,16 +2302,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The base ID attribute parameter must be set.")
       assert(segAttrName != FEOption.unset.id,
         "The segmentation ID attribute parameter must be set.")
-      val baseColumn = table.columns(baseColumnName).runtimeSafeCast[String]
-      val segColumn = table.columns(segColumnName).runtimeSafeCast[String]
-      val baseAttr = parent.vertexAttributes(baseAttrName).runtimeSafeCast[String]
-      val segAttr = project.vertexAttributes(segAttrName).runtimeSafeCast[String]
-      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-      val imp = op(
-        op.srcVidColumn, baseColumn)(
-          op.dstVidColumn, segColumn)(
-            op.srcVidAttr, baseAttr)(
-              op.dstVidAttr, segAttr).result
+      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+        parent.vertexAttributes(baseAttrName),
+        project.vertexAttributes(segAttrName),
+        table.columns(baseColumnName),
+        table.columns(segColumnName))
       seg.belongsTo = imp.edges
     }
   })
@@ -2318,10 +2319,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         accessibleTableOptions),
       Param("name", s"Name of new segmentation"),
       Choice("base-id-attr", "Vertex ID attribute",
-        options = FEOption.unset +: vertexAttributes[String]),
+        options = FEOption.unset +: vertexAttributes),
       Param("base-id-column", "Vertex ID column"),
       Param("seg-id-column", "Segment ID column"))
-    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes")
+    def enabled = FEStatus.assert(
+      vertexAttributes.nonEmpty, "No suitable vertex attributes")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base-id-column")
@@ -2333,31 +2335,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The identifying column parameter must be set for the segmentation.")
       assert(baseAttrName != FEOption.unset.id,
         "The base ID attribute parameter must be set.")
-      val baseColumn = table.columns(baseColumnName).runtimeSafeCast[String]
-      val segColumn = table.columns(segColumnName).runtimeSafeCast[String]
-      val baseAttr = project.vertexAttributes(baseAttrName).runtimeSafeCast[String]
+      val baseColumn = table.columns(baseColumnName)
+      val segColumn = table.columns(segColumnName)
+      val baseAttr = project.vertexAttributes(baseAttrName)
+      val segmentation = project.segmentation(params("name"))
 
+      val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
+      segmentation.newVertexAttribute(segColumnName, segAttr)
+    }
+
+    def typedImport[A, B](
+      segmentation: SegmentationEditor,
+      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
       // Merge by segment ID to create the segments.
       val merge = {
-        val op = graph_operations.MergeVertices[String]()
+        val op = graph_operations.MergeVertices[B]()
         op(op.attr, segColumn).result
       }
-      val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(merge.segments, idAttr = "id")
       // Move segment ID to the segments.
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
-        AttributeWithLocalAggregator(segColumn, "most_common"))
-        .runtimeSafeCast[String]
-      segmentation.newVertexAttribute(segColumnName, segAttr)
+        AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
+      implicit val ta = baseColumn.typeTag
+      implicit val tb = segColumn.typeTag
       // Import belongs-to relationship as edges between the base and the segmentation.
-      val op = new graph_operations.ImportEdgeListForExistingVertexSetFromTable()
-      val edgeImport = op(
-        op.srcVidColumn, baseColumn)(
-          op.dstVidColumn, segColumn)(
-            op.srcVidAttr, baseAttr)(
-              op.dstVidAttr, segAttr).result
-      segmentation.belongsTo = edgeImport.edges
+      val imp = graph_operations.ImportEdgesForExistingVertices.run(
+        baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
+      segmentation.belongsTo = imp.edges
+      segAttr
     }
   })
 
@@ -2507,7 +2513,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Choice("weights", "Edge weights",
-        options = FEOption.noWeight +: edgeAttributes[Double]),
+        options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
       Param(
@@ -2524,8 +2530,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
+      val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
       val weights =
-        if (params("weights") == FEOption.noWeight.id) project.edgeBundle.const(1.0)
+        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
 
       val candidates = {
@@ -2623,8 +2630,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "(For example, use the copy graph into segmentation operation.)")
 
     def apply(params: Map[String, String]): Unit = {
-      val golden = project.segmentation(params("golden"))
-      val test = project.segmentation(params("test"))
+      val golden = project.existingSegmentation(params("golden"))
+      val test = project.existingSegmentation(params("test"))
       val op = graph_operations.CompareSegmentationEdges()
       val result = op(
         op.goldenBelongsTo, golden.belongsTo)(
@@ -2988,6 +2995,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       parent.edgeBundle = induction.induced
       for ((name, attr) <- seg.edgeAttributes) {
         parent.edgeAttributes(name) = attr.pullVia(induction.embedding)
+      }
+    }
+  })
+
+  register("Create segmentation from SQL", new StructureOperation(_, _) with SegOp {
+    override def parameters = List(
+      Param("name", "Name"),
+      Code("sql", "SQL", defaultValue = "select * from vertices"))
+    def segmentationParameters = List()
+    def enabled = FEStatus.assert(true, "")
+
+    def apply(params: Map[String, String]) = {
+      val sql = params("sql")
+      val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
+      val tableSegmentation = project.segmentation(params("name"))
+      tableSegmentation.vertexSet = table.idSet
+      for ((name, column) <- table.columns) {
+        tableSegmentation.newVertexAttribute(name, column)
       }
     }
   })

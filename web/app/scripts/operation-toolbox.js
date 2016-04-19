@@ -1,7 +1,7 @@
 // The toolbox shows the list of operation categories and the operations.
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function() {
+angular.module('biggraph').directive('operationToolbox', function($rootScope) {
   return {
     restrict: 'E',
     // A lot of internals are exposed, because this directive is used both in
@@ -9,6 +9,7 @@ angular.module('biggraph').directive('operationToolbox', function() {
     scope: {
       categories: '=',  // (Input.) List of operation categories.
       op: '=?',  // (Input/output.) Currently selected operation's id (if any).
+      opMeta: '=?',  // (Output.) Currently selected operation's metadata.
       params: '=?',  // (Input/output.) Currently set operation parameters.
       category: '=?',  // (Input/output.) Currently selected category (if any).
       searching: '=?',  // (Input/output.) Whether operation search is active.
@@ -16,9 +17,42 @@ angular.module('biggraph').directive('operationToolbox', function() {
       editable: '=',  // (Input.) Whether the toolbox should be interactive.
       sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
       historyMode: '=',  // (Input.) Whether this toolbox is inside the history browser.
+      step: '=',  // (Input.) If historyMode is true, this is the history step of the operation.
+      discardStep: '&', // (Method.) For manipulating history.
+      discardChanges: '&', // (Method.) For manipulating history.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
+      scope.editMode = !scope.historyMode;
+      if (scope.historyMode) {
+        scope.enterEditMode = function() {
+          scope.editMode = true;
+          $rootScope.$broadcast('close all other history toolboxes', scope);
+        };
+        scope.discardChangesAndFinishEdit = function() {
+          scope.discardChanges();
+          scope.editMode = false;
+        };
+        scope.$watch('step.localChanges', function() {
+          if (scope.step.localChanges) {
+            scope.enterEditMode();
+          }
+        });
+
+        scope.$on(
+          'close all other history toolboxes',
+          function(event, src) {
+            if (src !== scope) {
+              scope.editMode = false;
+            }
+          });
+        if (scope.step.request.op.id === 'No-operation') {
+          // This is a hack so that newly added operations
+          // start off with their category menu open.
+          scope.enterEditMode();
+        }
+      }
+
       scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];
@@ -60,29 +94,33 @@ angular.module('biggraph').directive('operationToolbox', function() {
         }
       };
 
-      scope.findColor = function(opId) {
-        var op = scope.findOp(opId);
+      scope.$watch('opMeta', function(op) {
+        scope.opColor = 'yellow';
+        if (op === undefined) {
+          return;
+        }
         for (var i = 0; i < scope.categories.length; ++i) {
           var cat = scope.categories[i];
           if (op.category === cat.title) {
-            return cat.color;
+            scope.opColor = cat.color;
+            return;
           }
         }
-        console.error('Could not find category for', opId);
-        return 'yellow';
-      };
+        console.error('Could not find category for', op.id);
+      });
 
-      scope.findOp = function(opId) {
+      scope.$watch('op', function(opId) {
         for (var i = 0; i < scope.categories.length; ++i) {
           for (var j = 0; j < scope.categories[i].ops.length; ++j) {
             var op = scope.categories[i].ops[j];
             if (opId === op.id) {
-              return op;
+              scope.opMeta = op;
+              return;
             }
           }
         }
-        return undefined;
-      };
+        scope.opMeta = undefined;
+      });
 
       scope.clickedCat = function(cat) {
         if (scope.category === cat && !scope.op) {
@@ -114,5 +152,18 @@ angular.module('biggraph').directive('operationToolbox', function() {
         scope.searching = true;
       }
     },
+  };
+});
+
+angular.module('biggraph').factory('removeOptionalDefaults', function() {
+  return function(params, op) {
+    params = angular.extend({}, params); // Shallow copy.
+    for (var i = 0; i < op.parameters.length; ++i) {
+      var param = op.parameters[i];
+      if (!param.mandatory && params[param.id] === param.defaultValue) {
+        delete params[param.id];
+      }
+    }
+    return params;
   };
 });

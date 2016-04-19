@@ -161,6 +161,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-random-edge-bundle.asciidoc[]
 
+include::create-segmentation-from-sql.asciidoc[]
+
 include::create-scale-free-random-edge-bundle.asciidoc[]
 
 include::define-segmentation-links-from-matching-attributes.asciidoc[]

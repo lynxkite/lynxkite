@@ -56,11 +56,11 @@ case class CompareSegmentationEdges()
     val partitioner = golden.partitioner.get
 
     val goldenKeys = golden
-      .map { case (id, edge) => edge -> id }
+      .map(_.swap)
       .sort(partitioner)
       .distinctByKey()
     val testKeys = test
-      .map { case (id, edge) => edge -> id }
+      .map(_.swap)
       .sort(partitioner)
       .distinctByKey()
     val goldenCount = goldenKeys.count

@@ -47,7 +47,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         3 -> Seq(4),
         4 -> Seq(5),
         5 -> Seq())).result
-    val startingDistance = AddDoubleVertexAttribute.run(graph.vs, Map(0 -> 100.0))
+    val startingDistance = AddVertexAttribute.run(graph.vs, Map(0 -> 100.0))
     val edgeDistance = AddConstantAttribute.run(graph.es.idSet, 2.0)
     val distance = {
       val op = ShortestPath(10)
@@ -72,9 +72,9 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         3 -> Seq(4),
         5 -> Seq(6),
         6 -> Seq(4))).result
-    val startingDistance = AddDoubleVertexAttribute.run(graph.vs, Map(0 -> 0.0))
+    val startingDistance = AddVertexAttribute.run(graph.vs, Map(0 -> 0.0))
     val edgeDistance = {
-      val vertexWeights = AddDoubleVertexAttribute.run(graph.vs, Map(
+      val vertexWeights = AddVertexAttribute.run(graph.vs, Map(
         0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0, 5 -> 10.0, 6 -> 10.0))
       VertexToEdgeAttribute.srcAttribute(vertexWeights, graph.es)
     }

@@ -2,7 +2,10 @@
 // a random walk will take us to a specific vertex.
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark
+
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object PageRank extends OpFromJson {
@@ -38,31 +41,37 @@ case class PageRank(dampingFactor: Double,
     val weights = inputs.weights.rdd.filter(_._2 > 0.0)
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val targetsWithWeights = edges.sortedJoin(weights)
-      .map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }
-      .groupBySortedKey(vertexPartitioner)
-      .mapValues { it =>
-        val dstW = it.toSeq
-        def sumWeights(s: Seq[(ID, Double)]) = s.map({ case (dst, w) => w }).sum
-        val total = sumWeights(dstW)
-        // Collapse parallel edges.
-        val collapsed = dstW.groupBy({ case (dst, w) => dst }).mapValues(sumWeights(_))
-        collapsed.mapValues(w => w / total).toArray
-      }
+    val edgePartitioner = edges.partitioner.get
 
-    var pageRank = vertices.mapValues(_ => 1.0)
+    val edgesWithWeights = edges.sortedJoin(weights).map {
+      case (_, (edge, weight)) => edge.src -> (edge.dst, weight)
+    }
+    edgesWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
+    // The sum of weights for every src vertex.
+    val sumWeights = edgesWithWeights
+      .mapValues(_._2) // Discard dst and keep weights.
+      .reduceBySortedKey(edgePartitioner, _ + _)
+
+    // Join the sum of weights per src to the src vertices in the edge RDD.
+    val edgesWithSumWeights = HybridRDD(edgesWithWeights).lookupAndCoalesce(sumWeights)
+    // Normalize the weights for every src vertex.
+    val targetsWithWeights = HybridRDD(
+      edgesWithSumWeights
+        .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) })
+    targetsWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
+
+    var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(edgePartitioner)
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
-      val incomingRank = pageRank.sortedJoin(targetsWithWeights)
-        .flatMap {
-          case (id, (pr, targets)) =>
-            targets.map { case (tid, weight) => (tid, pr * weight * dampingFactor) }
+      // No need for repartitioning since we reduce anyway.
+      val incomingRank = targetsWithWeights.lookupAndCoalesce(pageRank)
+        .map {
+          case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
-        .groupBySortedKey(vertexPartitioner)
-        .mapValues(_.sum)
+        .reduceBySortedKey(edgePartitioner, _ + _)
 
-      val totalIncoming = incomingRank.map(_._2).aggregate(0.0)(_ + _, _ + _)
+      val totalIncoming = incomingRank.values.sum
       val distributedExtraWeight = (vertexCount - totalIncoming) / vertexCount
 
       pageRank = pageRank.sortedLeftOuterJoin(incomingRank)
@@ -70,6 +79,6 @@ case class PageRank(dampingFactor: Double,
           case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
     }
-    output(o.pagerank, pageRank)
+    output(o.pagerank, pageRank.sortedRepartition(vertexPartitioner))
   }
 }

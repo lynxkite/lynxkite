@@ -48,7 +48,8 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
-        if (exportFormat === 'table') {
+        if (exportFormat === 'table' ||
+            exportFormat === 'segmentation') {
           scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
@@ -85,6 +86,13 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           req.table = scope.exportKiteTable;
           req.privacy = 'public-read';
           result = util.post('/ajax/exportSQLQueryToTable', req);
+        } else if (scope.exportFormat === 'segmentation') {
+          result = scope.side.applyOp(
+              'Create-segmentation-from-SQL',
+              {
+                name: scope.exportKiteTable,
+                sql: scope.sql
+              });
         } else if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;
@@ -114,7 +122,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         result.then(function(result) {
           scope.showExportOptions = false;
           scope.success = 'Results exported.';
-          if (result.download) {
+          if (result && result.download) {
             // Fire off the download.
             $window.location =
               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));

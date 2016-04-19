@@ -4,9 +4,11 @@ package com.lynxanalytics.biggraph.graph_util
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
+import org.apache.spark.deploy.SparkHadoopUtil
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.serving.AccessControl
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -35,7 +37,7 @@ object HadoopFile {
     new HadoopFile(prefixSymbol, normalizedRelativePath, parentLazyFS)
   }
 
-  lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
+  lazy val defaultFs = hadoop.fs.FileSystem.get(SparkHadoopUtil.get.conf)
   private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 
@@ -49,7 +51,7 @@ object HadoopFile {
 class HadoopFile private (
     val prefixSymbol: String,
     val normalizedRelativePath: String,
-    parentLazyFS: Option[HadoopFile.LazySharedFileSystem]) extends Serializable {
+    parentLazyFS: Option[HadoopFile.LazySharedFileSystem]) extends Serializable with AccessControl {
 
   override def equals(o: Any) = o match {
     case o: HadoopFile =>
@@ -73,7 +75,7 @@ class HadoopFile private (
   override def toString = symbolicName
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
-    val conf = new hadoop.conf.Configuration()
+    val conf = SparkHadoopUtil.get.conf
     if (hasCredentials) {
       conf.set("fs.s3n.awsAccessKeyId", awsID)
       conf.set("fs.s3n.awsSecretAccessKey", awsSecret)
@@ -284,6 +286,17 @@ class HadoopFile private (
   def /(path_element: String): HadoopFile = {
     this + ("/" + path_element)
   }
+
+  def readAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
+    val acl = PrefixRepository.getReadACL(prefixSymbol)
+    aclContains(acl, user)
+  }
+
+  def writeAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
+    val acl = PrefixRepository.getWriteACL(prefixSymbol)
+    aclContains(acl, user)
+  }
+
 }
 
 // A SequenceFile loader that creates one partition per file.

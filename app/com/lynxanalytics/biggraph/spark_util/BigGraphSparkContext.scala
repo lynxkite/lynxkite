@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
@@ -174,6 +176,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.clearspring.analytics.stream.cardinality.HyperLogLogPlus])
     kryo.register(classOf[com.clearspring.analytics.stream.cardinality.RegisterSet])
     kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
+    kryo.register(classOf[Array[org.apache.spark.sql.types.DataType]])
+    kryo.register(classOf[java.sql.Timestamp])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -199,7 +203,7 @@ object BigGraphSparkContext {
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = ""): spark.SparkContext = {
-    val versionFound = org.apache.spark.SPARK_VERSION
+    val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
@@ -207,10 +211,10 @@ object BigGraphSparkContext {
       .setAppName(appName)
       .set("spark.io.compression.codec", "lz4")
       .set("spark.executor.memory",
-        scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
+        LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
       .set("spark.akka.threads",
-        scala.util.Properties.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
-      .set("spark.local.dir", scala.util.Properties.envOrElse("KITE_LOCAL_TMP", "/tmp"))
+        LoggedEnvironment.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
+      .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
       // Speculative execution will start extra copies of tasks to eliminate long tail latency.
       .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
       .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
@@ -229,7 +233,7 @@ object BigGraphSparkContext {
       .set("spark.shuffle.consolidateFiles", "true")
       .set(
         "spark.executor.cores",
-        scala.util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
+        LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
       // We need a higher akka.frameSize (the Spark default is 10) as when the number of
       // partitions gets into the hundreds of thousands the map output statuses exceed this limit.
       .setIfMissing(
@@ -257,7 +261,7 @@ object BigGraphSparkContext {
 }
 
 class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
-  val maxStageFailures = util.Properties.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
+  val maxStageFailures = LoggedEnvironment.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
   val stageFailures = collection.mutable.Map[Int, Int]()
 
   override def onStageCompleted(

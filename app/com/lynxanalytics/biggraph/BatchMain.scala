@@ -27,9 +27,16 @@ For example:
       (paramSpec.take(colonIdx), paramSpec.drop(colonIdx + 1))
     }
   serving.AssertLicenseNotExpired()
+  serving.AssertNotRunningAndRegisterRunning()
 
   serving.Ammonite.maybeStart()
+  println(s"STARTING SCRIPT ${scriptFileName} with params ${params}")
+  val startTime = System.currentTimeMillis()
   try {
     groovy.GroovyContext.runScript(scriptFileName, params: _*)
-  } finally serving.Ammonite.maybeStop()
+  } finally {
+    val elapsedTimeSecs = (System.currentTimeMillis() - startTime) / 1000
+    println(s"FINISHED SCRIPT ${scriptFileName}, took ${elapsedTimeSecs} seconds")
+    serving.Ammonite.maybeStop()
+  }
 }

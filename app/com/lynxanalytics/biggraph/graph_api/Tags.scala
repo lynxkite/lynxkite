@@ -5,7 +5,7 @@ import java.io.File
 import java.util.UUID
 import scala.collection.mutable
 
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   override def equals(p: Any) = {
@@ -150,8 +150,8 @@ trait TagDir extends TagPath {
 
   def cp(from: SymbolPath, to: SymbolPath): TagPath = synchronized {
     assert(to.nonEmpty, s"Cannot copy from '$from' to '$to'.")
-    assert(!exists(to), s"'$to' already exists.")
-    assert(exists(from), s"'$from' does not exist.")
+    assert(!exists(to), s"Path '$to' already exists.")
+    assert(exists(from), s"Path '$from' does not exist.")
     val toDir = mkDirs(to.dropRight(1))
     (this / from).clone(toDir, to.last)
   }
@@ -236,7 +236,7 @@ object TagRoot {
 
   // Creates an empty root backed in a tmp directory.
   def temporaryRoot: TagRoot = {
-    val tmpRootDir = scala.util.Properties.envOrElse("KITE_LOCAL_TMP", "/tmp")
+    val tmpRootDir = LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp")
     val currentRepo = s"${tmpRootDir}/${Timestamp.toString}"
     apply(currentRepo)
   }

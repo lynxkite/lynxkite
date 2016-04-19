@@ -142,9 +142,9 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
   var verticesPerPartition =
-    util.Properties.envOrElse("KITE_VERTICES_PER_PARTITION", "200000").toInt
+    LoggedEnvironment.envOrElse("KITE_VERTICES_PER_PARTITION", "200000").toInt
   var tolerance =
-    util.Properties.envOrElse("KITE_VERTICES_PARTITION_TOLERANCE", "2.0").toDouble
+    LoggedEnvironment.envOrElse("KITE_VERTICES_PARTITION_TOLERANCE", "2.0").toDouble
 
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
@@ -406,7 +406,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)],
                                                parent: VertexSetData): RDD[(Long, T)] = {
-    val vsRDD = parent.rdd.cacheSortedAncestors
+    val vsRDD = parent.rdd.copyWithAncestorsCached
     // Enforcing colocation:
     assert(vsRDD.partitions.size == rawRDD.partitions.size,
       s"$vsRDD and $rawRDD should have the same number of partitions, " +

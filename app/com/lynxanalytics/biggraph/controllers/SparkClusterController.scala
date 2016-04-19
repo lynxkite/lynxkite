@@ -1,6 +1,7 @@
 // Request handlers for cluster-level features.
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
@@ -14,6 +15,8 @@ case class SparkStatusResponse(
   timestamp: Long, // This is the status at the given time.
   activeStages: List[StageInfo],
   pastStages: List[StageInfo],
+  activeExecutorNum: Option[Int],
+  configedExecutorNum: Option[Int],
   sparkWorking: Boolean,
   kiteCoreWorking: Boolean)
 
@@ -27,12 +30,12 @@ case class StageInfo(
 
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
-class KiteListener extends spark.scheduler.SparkListener {
+class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
   private val activeStages = collection.mutable.Map[String, StageInfo]()
   private val pastStages = collection.mutable.Queue[StageInfo]()
   private val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   private var currentResp =
-    SparkStatusResponse(0, List(), List(), sparkWorking = true, kiteCoreWorking = true)
+    SparkStatusResponse(0, List(), List(), None, None, sparkWorking = true, kiteCoreWorking = true)
   // The time of the last registered spark task finish event.
   private var lastSparkTaskFinish = 0L
   // Whether, to the knowledge of this listener, spark is stalled.
@@ -112,6 +115,13 @@ class KiteListener extends spark.scheduler.SparkListener {
     }
   }
 
+  def numExecutors: Option[Int] = synchronized {
+    LoggedEnvironment.envOrNone("SPARK_MASTER").get match {
+      case s if s.startsWith("local") => None
+      case _ => Some(sc.getExecutorStorageStatus.size - 1)
+    }
+  }
+
   private def send(): Unit = synchronized {
     val time = System.currentTimeMillis
     currentResp =
@@ -119,6 +129,8 @@ class KiteListener extends spark.scheduler.SparkListener {
         time,
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
+        numExecutors,
+        sys.props.get("spark.executor.instances").map(_.toInt),
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking)
     for (p <- promises) {
@@ -215,12 +227,11 @@ class KiteMonitorThread(
     val sc = environment.sparkContext
 
     // No way to find cores per executor programmatically. SPARK-2095
-    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch spark
+    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch Spark
     // in a way that this is probably mostly reliable.
     val numCoresPerExecutor =
-      scala.util.Properties.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
-    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
-    val totalCores = numExecutors * numCoresPerExecutor
+      LoggedEnvironment.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
+    val totalCores = listener.numExecutors.getOrElse(1) * numCoresPerExecutor
     val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
     val conf = sc.getConf
     // Unfortunately the defaults are hard-coded in Spark and not available.
@@ -315,10 +326,10 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   // are going to be ignored.
   private var forceReportHealthy = false
   val sc = environment.sparkContext
-  val listener = new KiteListener
+  val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
 
-  def getLongEnv(name: String): Option[Long] = scala.util.Properties.envOrNone(name).map(_.toLong)
+  def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
 
   val monitor = new KiteMonitorThread(
     listener,

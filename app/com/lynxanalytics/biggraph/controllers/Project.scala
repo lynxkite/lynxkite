@@ -29,8 +29,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.model
-import com.lynxanalytics.biggraph.serving.User
-import com.lynxanalytics.biggraph.serving.Utils
+import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
 
 import java.io.File
 import java.util.UUID
@@ -600,14 +599,14 @@ sealed trait ProjectEditor {
 
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
+  def existingSegmentation(name: String) = {
+    assert(segmentationNames.contains(name), s"Segmentation $name does not exist.")
+    segmentation(name)
+  }
   def segmentationNames = state.segmentations.keys.toSeq.sorted
   def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
     setElementNote(SegmentationKind, name, null)
-  }
-  def newSegmentation(name: String, seg: SegmentationState) = {
-    state = state.copy(
-      segmentations = state.segmentations + (name -> seg))
   }
 
   def offspringEditor(path: Seq[String]): ProjectEditor =
@@ -677,8 +676,8 @@ sealed trait ProjectEditor {
     }
 
     for ((segName, segState) <- origSegmentations) {
-      newSegmentation(segName, segState)
       val seg = segmentation(segName)
+      seg.segmentationState = segState
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
         op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
@@ -971,7 +970,7 @@ object Directory {
 
 // May be a directory a project frame or a table.
 class DirectoryEntry(val path: SymbolPath)(
-    implicit manager: MetaGraphManager) {
+    implicit manager: MetaGraphManager) extends AccessControl {
 
   override def toString = path.toString
   override def equals(p: Any) =
@@ -1012,12 +1011,6 @@ class DirectoryEntry(val path: SymbolPath)(
     }
   }
 
-  def assertReadAllowedFrom(user: User): Unit = {
-    assert(readAllowedFrom(user), s"User $user does not have read access to $this.")
-  }
-  def assertWriteAllowedFrom(user: User): Unit = {
-    assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
-  }
   def assertParentWriteAllowedFrom(user: User): Unit = {
     if (!parent.isEmpty) {
       parent.get.assertWriteAllowedFrom(user)
@@ -1041,16 +1034,9 @@ class DirectoryEntry(val path: SymbolPath)(
     aclContains(writeACL, user)
   }
 
-  def aclContains(acl: String, user: User): Boolean = {
-    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
-    // We translate this to a regex for checking.
-    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
-    user.email.matches(regex)
-  }
-
   def remove(): Unit = manager.synchronized {
     existing(rootDir).foreach(manager.rmTag(_))
-    log.info(s"A project has been discarded: $rootDir")
+    log.info(s"An entry has been discarded: $rootDir")
   }
 
   private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
@@ -1072,18 +1058,18 @@ class DirectoryEntry(val path: SymbolPath)(
   def isDirectory = exists && !hasCheckpoint
 
   def asProjectFrame: ProjectFrame = {
-    assert(isInstanceOf[ProjectFrame], s"$path is not a project")
+    assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
     asInstanceOf[ProjectFrame]
   }
   def asNewProjectFrame(): ProjectFrame = {
-    assert(!exists, s"Directory entry $path already exists")
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new ProjectFrame(path)
     res.initialize()
     res
   }
 
   def asTableFrame: TableFrame = {
-    assert(isInstanceOf[TableFrame], s"$path is not a table")
+    assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table, notes: String): TableFrame = {
@@ -1098,16 +1084,16 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def asObjectFrame: ObjectFrame = {
-    assert(isInstanceOf[ObjectFrame], s"$path is not an object")
+    assert(isInstanceOf[ObjectFrame], s"Entry '$path' is not an object")
     asInstanceOf[ObjectFrame]
   }
 
   def asDirectory: Directory = {
-    assert(isInstanceOf[Directory], s"$path is not a directory")
+    assert(isInstanceOf[Directory], s"Entry '$path' is not a directory")
     asInstanceOf[Directory]
   }
   def asNewDirectory(): Directory = {
-    assert(!exists, s"Directory entry $path already exists")
+    assert(!exists, s"Entry '$path' already exists")
     val res = new Directory(path)
     res.readACL = "*"
     res.writeACL = ""
