@@ -71,7 +71,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
-  // Same as hybridLookup but repartitions the result after a hybrid lookup. The elements of the
+  // Same as lookup but repartitions the result after a hybrid lookup. The elements of the
   // result RDD are evenly distributed among its partitions.
   def lookupAndRepartition[S](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
@@ -85,7 +85,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     }
   }
 
-  // Same as hybridLookup but coalesces the result after a hybrid lookup. The result RDD has
+  // Same as lookup but coalesces the result after a hybrid lookup. The result RDD has
   // as many partitions as the original one.
   def lookupAndCoalesce[S](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
