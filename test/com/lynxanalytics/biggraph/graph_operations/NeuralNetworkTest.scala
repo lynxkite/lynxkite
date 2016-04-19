@@ -95,24 +95,16 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(isWrong.rdd.values.sum == 0)
   }
 
-  // Lattice problem, by forgetting. Does not learn well.
-  //
-  // I believe with low fraction of forgetting the direction of learning will
-  // be to predict from the known state. Vertices pushing for the generalized solution are
-  // outnumbered by the vertices pushing for the trivial solution. With a high fraction of
-  // forgetting the network falls apart and most vertices are in the dark.
-  //
-  // In theory both problems should be overcome by a high number of iterations, but I could not find
-  // a setup that works.
-  ignore("lattice, forgetting") {
+  // Lattice problem, by forgetting.
+  test("lattice, forgetting") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val sideNum = g.attr[String]("side").derive[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 200, learningRate = 0.1, radius = 3,
-        hideState = false, forgetFraction = 0.6)
+        featureCount = 0, networkSize = 4, iterations = 30, learningRate = 0.2, radius = 3,
+        hideState = false, forgetFraction = 0.5)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
