@@ -13,30 +13,62 @@ Jenkins.
 The results of the latest run are below:
 ```
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy with params List((testDataSet,fake_westeros_xt_25m))
-2016-04-15 15:20:26,111 - [ERROR] - from com.hadoop.compression.lzo.LzoCodec in main 
+2016-04-19 22:28:49,583 - [ERROR] - from com.hadoop.compression.lzo.LzoCodec in main 
 Failed to load/initialize native-lzo library
 
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 348 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 341 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy with params List((testDataSet,fake_westeros_xt_25m))
 in_degree: {"labelType":"between","labels":["2.0","10.2","52.5","269.2","1379.7","7071.1","36239.0","185723.6","951827.0","4878081.0","25000000.0"],"sizes":[24739211,232363,21936,5007,1144,302,30,6,1,1]}
 out_degree: {"labelType":"between","labels":["2.0","10.2","52.5","269.2","1379.7","7071.1","36239.0","185723.6","951827.0","4878081.0","25000000.0"],"sizes":[24739211,232363,21936,5007,1144,302,30,6,1,1]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 563 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 564 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy with params List((testDataSet,fake_westeros_xt_25m))
-2016-04-15 15:42:10,669 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-3 
-Task 205 in stage 9.0 failed 4 times; aborting job
+2016-04-19 22:50:36,262 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-2 
+Task 0 in stage 9.0 failed 4 times; aborting job
 
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 335 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 344 seconds
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_xt_25m))
+vertex_count: 24971574
+edge_count: 15000000
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 732 seconds
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy with params List((testDataSet,fake_westeros_xt_25m))
+x: {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[7903748,3275101,2511571,2120664,1867374,1687510,1551697,1442940,1356298,1283098]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 30 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy with params List((testDataSet,fake_westeros_xt_25m))
-2016-04-15 15:42:42,443 - [ERROR] - from com.hadoop.compression.lzo.LzoCodec in main 
+2016-04-19 23:04:48,227 - [ERROR] - from com.hadoop.compression.lzo.LzoCodec in main 
 Failed to load/initialize native-lzo library
 
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy, took 107 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy, took 112 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy with params List((testDataSet,fake_westeros_xt_25m))
 page_rank_no_weights: {"labelType":"between","labels":["0.4","2.0","10.7","57.5","310.0","1672.4","9021.8","48669.2","262551.6","1416363.9","7640734.1"],"sizes":[24695565,246900,51064,4988,1143,263,70,6,1,1]}
 page_rank_weights: {"labelType":"between","labels":["0.2","0.9","5.2","30.7","181.2","1068.3","6296.9","37116.8","218784.3","1289621.3","7601655.1"],"sizes":[23682964,1205146,97155,11640,2476,541,62,15,1,1]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1541 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1535 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy with params List((testDataSet,fake_westeros_xt_25m))
 in_degree: {"labelType":"between","labels":["2.0","10.2","52.5","269.2","1379.7","7071.1","36239.0","185723.6","951827.0","4878081.0","25000000.0"],"sizes":[24739211,232363,21936,5007,1144,302,30,6,1,1]}
 out_degree: {"labelType":"between","labels":["2.0","10.2","52.5","269.2","1379.7","7071.1","36239.0","185723.6","951827.0","4878081.0","25000000.0"],"sizes":[24739211,232363,21936,5007,1144,302,30,6,1,1]}
 FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy, took 444 seconds
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy with params List((testDataSet,fake_westeros_xt_25m))
+1: visualize one graph
+  vertex sets:
+    0: size= 3
+  edge bundles:
+    0: size= 0
+2. Visualize one graph with filters
+  vertex sets:
+    0: size= 2
+  edge bundles:
+    0: size= 0
+3. Get visualization of a graph plus a segmentation
+  vertex sets:
+    0: size= 3
+    1: size= 45
+  edge bundles:
+    0: size= 0
+    1: size= 245
+    2: size= 2
+4. Bucketed view
+  vertex sets:
+    0: size= 100
+  edge bundles:
+    0: size= 10000
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy, took 172 seconds
 ```
