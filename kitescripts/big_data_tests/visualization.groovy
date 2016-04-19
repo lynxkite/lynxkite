@@ -1,10 +1,10 @@
 // Tests graph visualization.
 
-// REQUIRE_SCRIPT edge_import.groovy
+/// REQUIRE_SCRIPT filter_high_degree_vertices.groovy
 
 seed = 12321
 
-project = lynx.loadProject('edge_import_result')
+project = lynx.loadProject('filter_high_degree_vertices_result')
 
 project.addRandomVertexAttribute(
   name: 'randomV',

@@ -50,6 +50,9 @@ def run_test(kite_path, test_path, groovy_args):
       else:
         print 'Unknown directive in ', test_path, ': ', line
         sys.exit(1)
+    elif line.startswith('// REQ'):
+      print 'Did you mean /// REQUIRE_SCRIPT in ', test_path, ': ', line
+      sys.exit(1)
   subprocess.call([kite_path, 'batch', test_path] + groovy_args)
 
 def main(argv):
