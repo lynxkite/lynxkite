@@ -55,7 +55,7 @@ addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
 addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
-addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
+addJPropIfNonEmpty pidfile.path "/dev/null"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
 
@@ -99,7 +99,7 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
   if [ -n "${YARN_EXECUTOR_MEMORY_OVERHEAD_MB}" ]; then
     COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB="${YARN_EXECUTOR_MEMORY_OVERHEAD_MB}"
   else
-    RATIO_PERCENT=15
+    RATIO_PERCENT=20
     LAST_CHAR=${EXECUTOR_MEMORY: -1}
     if [ "${LAST_CHAR}" == "m" ]; then
       COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * $RATIO_PERCENT / 100))
@@ -126,6 +126,14 @@ if [ -n "${NUM_EXECUTORS}" ]; then
     >&2 echo "Num executors is not supported for master: ${SPARK_MASTER}"
     exit 1
   fi
+fi
+
+if [ -n "${KERBEROS_PRINCIPAL}" ] || [ -n "${KERBEROS_KEYTAB}" ]; then
+  if [ -z "${KERBEROS_PRINCIPAL}" ] || [ -z "${KERBEROS_KEYTAB}" ]; then
+    >&2 echo "Please define KERBEROS_PRINICPAL and KERBEROS_KEYTAB together: either both of them or none."
+    exit 1
+  fi
+  EXTRA_OPTIONS="${EXTRA_OPTIONS} --principal ${KERBEROS_PRINCIPAL} --keytab ${KERBEROS_KEYTAB}"
 fi
 
 if [ "${SPARK_MASTER}" == "local" ]; then
@@ -166,10 +174,6 @@ command=(
 )
 
 startKite () {
-  if [ -f "${KITE_PID_FILE}" ]; then
-    >&2 echo "LynxKite is already running (or delete ${KITE_PID_FILE})"
-    exit 1
-  fi
   if [ ! -d "${SPARK_HOME}" ]; then
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
@@ -243,6 +247,20 @@ stopWatchdog () {
   stopByPIDFile "${WATCHDOG_PID_FILE}" "LynxKite Watchdog"
 }
 
+uploadLogs () {
+  if [ -z ${KITE_INSTANCE} ]; then
+    >&2 echo "KITE_INSTANCE is not set. Cannot upload logs."
+    exit 1
+  fi
+  THIS_DIR="$(dirname "$(readlink -f "$0")")"
+  UPLOADER=${THIS_DIR}/../tools/performance_collection/multi_upload.sh
+  if [ -f "${KITE_PID_FILE}" ]; then
+      ${UPLOADER} ${KITE_HTTP_PORT} ${KITE_LOG_DIR} ${KITE_INSTANCE}
+  else
+      ${UPLOADER} 0                 ${KITE_LOG_DIR} ${KITE_INSTANCE}
+  fi
+}
+
 case $mode in
   interactive)
     exec "${command[@]}"
@@ -268,10 +286,19 @@ case $mode in
     stopKite
     startKite
   ;;
+  uploadLogs)
+    uploadLogs
+  ;;
   *)
-    >&2 echo "Usage: $0 interactive|start|stop|restart|batch"
+    >&2 echo "Usage: $0 interactive|start|stop|restart|batch|uploadLogs"
     exit 1
   ;;
 esac
+
+if [ -n "${KITE_SCRIPT_LOGS}" ]; then
+    THIS_PROG="$(readlink -f "$0")"
+    NOW=`date "+%Y:%m:%d %H:%M:%S"`
+    echo $NOW $THIS_PROG $mode >> $KITE_SCRIPT_LOGS
+fi
 
 exit

@@ -12,6 +12,15 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(subProject.toFE.undoOp == "Filter age <40")
   }
 
+  test("filtering by defined vertex attribute") {
+    run("Example Graph")
+    val filter = ProjectAttributeFilter("income", "*")
+    controller.filterProject(user, ProjectFilterRequest(projectName, List(filter), List()))
+    assert(vattr[String]("name") == Seq("Adam", "Bob"))
+    assert(eattr[String]("comment") == Seq("Bob envies Adam"))
+    assert(subProject.toFE.undoOp == "Filter income *")
+  }
+
   test("filtering by vertex attribute (no edge bundle)") {
     run("Example Graph")
     run("Discard edges")

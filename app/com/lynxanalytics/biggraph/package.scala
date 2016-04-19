@@ -1,7 +1,7 @@
 // Package-level variables. Creates our logger and the BigGraphEnvironment.
 package com.lynxanalytics
 
-import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, PrefixRepository }
 import ch.qos.logback.classic.LoggerContext
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
@@ -36,7 +36,7 @@ package object biggraph {
 
     bigGraphLogger.info("Starting to initialize production Kite environment")
     val repoDirs =
-      scala.util.Properties.envOrNone("REPOSITORY_MODE") match {
+      LoggedEnvironment.envOrNone("REPOSITORY_MODE", confidential = true) match {
         case Some(staticRepoPattern(metaDir, dataDir, "")) =>
           new RepositoryDirs(metaDir, standardDataPrefix, dataDir)
         case Some(staticRepoPattern(metaDir, dataDir, ephemeralDataDir)) =>

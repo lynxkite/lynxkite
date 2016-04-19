@@ -25,6 +25,7 @@
     <div class="col-sm-8">
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
         <option value="table">LynxKite table</option>
+        <option value="segmentation">Segmentation</option>
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
         <option value="parquet">Parquet</option>
@@ -34,7 +35,7 @@
     </div>
   </div>
 
-  <div class="form-group" ng-show="exportFormat === 'table'">
+  <div class="form-group" ng-show="exportFormat === 'table' || exportFormat === 'segmentation'">
     <label for="exportKiteTable" class="col-sm-4 control-label">
       Table name <help-popup href="export-lynxkite-table-table"></help-popup>
     </label>
@@ -138,9 +139,10 @@
         <th ng-repeat="col in result.header"
           ng-click="sort.select($index)">
           {{ col }}
-          <div class="pull-right" ng-show="sort.column === $index.toString()">
-            <i class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
-          </div>
+          <span class="ordering">
+            <i ng-show="sort.column === $index.toString()"
+              class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+          </span>
         </th>
       </tr>
     </thead>

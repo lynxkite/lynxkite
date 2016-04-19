@@ -89,3 +89,25 @@ package `xvfb`.)
 
 The `test_frontend.sh` script builds and starts LynxKite, runs the Protractor tests, then shuts down
 LynxKite.
+
+## Big Data tests
+
+If you want to measure the effect of a code change on big data, create a PR and add
+a comment to it containing the phrase `Big Data Test please`. This will trigger Jenkins
+to spin up an EMR cluster, run the tests and push the results as a commit into your PR.
+
+You can manually run these tests using `test_big_data.sh`, and you can also specify more parameters
+that way, e.g. `test_big_data.sh pagerank 'fake_westeros_xt_25m'`. For further use cases, see the
+comments in `test_big_data.sh`.
+
+
+## Release guide
+
+Before doing a release, please run the following tests:
+```
+tools/emr_based_test.sh frontend
+test_big_data.sh
+```
+After this, please create a PR that updates the generated big data test result file.
+(`test_big_data.sh` is the same as saying `Big Data Test please` in a PR, but this one can reuse
+the cluster started in the previous line.)

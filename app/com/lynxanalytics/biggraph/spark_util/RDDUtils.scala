@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.ShuffledRDD
@@ -16,11 +17,11 @@ class IDBuckets[T](
   val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
     extends Serializable with Equals {
   var sample = mutable.Map[ID, T]() // May be null!
-  def add(id: ID, t: T) = {
+  def add(id: ID, t: T): Unit = {
     counts(t) += 1
     addSample(id, t)
   }
-  def absorb(b: IDBuckets[T]) = {
+  def absorb(b: IDBuckets[T]): Unit = {
     for ((k, v) <- b.counts) {
       counts(k) += v
     }
@@ -171,7 +172,7 @@ object RDDUtils {
     valueBuckets.counts.transform {
       (value, count) => math.round(count / rounder).toInt * rounder
     }
-    return valueBuckets
+    valueBuckets
   }
 
   private def preciseValueCounts[T](
@@ -255,84 +256,6 @@ object RDDUtils {
 
   def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
-  }
-
-  // A lookup method based on joining the source RDD with the lookup table. Assumes
-  // that each key has only so many instances that we can handle all of them in a single partition.
-  def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)], lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    import Implicits._
-    sourceRDD.sort(lookupTable.partitioner.get).sortedJoin(lookupTable)
-  }
-
-  // A lookup method based on sending the lookup table to all tasks. The lookup table should be
-  // reasonably small.
-  def smallTableLookup[K, T, S](
-    sourceRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
-
-    sourceRDD
-      .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
-  }
-
-  // A lookup method that does smallTableLookup for a few keys that have too many instances to
-  // be handled by joinLookup and does joinLookup for the rest.
-  def hybridLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
-
-    hybridLookupImpl(
-      sourceRDD,
-      lookupTable,
-      sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _),
-      maxValuesPerKey) {
-        tops => lookupTable.restrictToIdSet(tops.toIndexedSeq.sorted).collect.toMap
-      }
-  }
-
-  // This is a variant of hybridLookup that can be used if (an estimate of) the counts for each
-  // keys is already available for the caller.
-  def hybridLookupUsingCounts[K: Ordering: ClassTag, T: ClassTag, S](
-    sourceRDD: RDD[(K, T)],
-    lookupTableWithCounts: UniqueSortedRDD[K, (S, Long)],
-    maxValuesPerKey: Int = 100000): RDD[(K, (T, S))] = {
-
-    hybridLookupImpl(
-      sourceRDD,
-      lookupTableWithCounts.mapValues(_._1),
-      lookupTableWithCounts.map { case (k, (s, c)) => (k, s) -> c },
-      maxValuesPerKey) { tops => tops.toMap }
-  }
-
-  // Common implementation for the above hybrid lookup methods.
-  // This will find the top key (the ones with the largest count) from the countsTable. Then if
-  // any count is higher than maxValuesPerKey, then it does a hybrid lookup. To get the lookup
-  // table for large elements, it feds the top keys from countTable into largeKeysMapFn.
-  private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S, C](
-    sourceRDD: RDD[(K, T)],
-    lookupTable: UniqueSortedRDD[K, S],
-    countsTable: RDD[(C, Long)],
-    maxValuesPerKey: Int)(
-      largeKeysMapFn: Seq[C] => Map[K, S]): RDD[(K, (T, S))] = {
-
-    val numTops = lookupTable.partitions.size min 100
-    val ordering = new CountOrdering[C]
-    val tops = countsTable
-      .top(numTops)(ordering)
-      .sorted(ordering)
-    if (tops.isEmpty) sourceRDD.context.emptyRDD
-    else {
-      val biggest = tops.last
-      if (biggest._2 > maxValuesPerKey) {
-        val largeKeysMap = largeKeysMapFn(tops.map(_._1))
-        val larges = smallTableLookup(sourceRDD, largeKeysMap)
-        val smalls = joinLookup(
-          sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
-        (smalls ++ larges).coalesce(sourceRDD.partitions.size)
-      } else {
-        joinLookup(sourceRDD, lookupTable)
-      }
-    }
   }
 }
 

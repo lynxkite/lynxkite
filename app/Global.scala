@@ -1,4 +1,5 @@
 // Custom global failure handlers for Play Framework.
+
 import play.api._
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -11,6 +12,7 @@ import scala.concurrent.duration._
 
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) with GlobalSettings {
   override def onBadRequest(request: RequestHeader, error: String) = {
@@ -29,7 +31,7 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
   def notifyStarterScript(msg: String): Unit = {
     val notifier =
       scala.concurrent.Future[Unit] {
-        scala.util.Properties.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
+        LoggedEnvironment.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
           org.apache.commons.io.FileUtils.writeStringToFile(
             new java.io.File(pipeName),
             msg + "\n",
@@ -46,6 +48,10 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
     try {
       serving.ProductionJsonServer
     } catch {
+      case t: ExceptionInInitializerError =>
+        val exceptionMessage = Option(t.getCause).map(_.toString.replace('\n', ' ')).getOrElse(t.toString)
+        notifyStarterScript("failed: " + exceptionMessage)
+        throw t
       case t: Throwable =>
         val exceptionMessage = Option(t.getMessage).map(_.replace('\n', ' ')).getOrElse(t.toString)
         notifyStarterScript("failed: " + exceptionMessage)

@@ -32,7 +32,7 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
     val partitioner = attr.partitioner.get
-    val byAttr = attr.map { case (id, attr) => (attr, id) }
+    val byAttr = attr.map(_.swap)
     val matching = byAttr
       .groupByKey(partitioner)
       .mapPartitionsWithIndex {

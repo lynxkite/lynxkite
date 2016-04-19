@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -241,7 +241,7 @@ trait ImportCommon {
   protected def numberedLines(
     rc: RuntimeContext,
     input: RowInput): UniqueSortedRDD[ID, Seq[String]] = {
-    val numbered = input.lines(rc).cacheSortedAncestors
+    val numbered = input.lines(rc).copyWithAncestorsCached
     val maxLines = Limitations.maxImportedLines
     if (maxLines >= 0) {
       val numLines = numbered.count
@@ -362,30 +362,30 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     val columns = readColumns(rc, input, Set(src, dst))
     val edgePartitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
-    val namesWithCounts = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
-      .map(x => x -> 1L)
-      .reduceByKey(edgePartitioner, _ + _)
+    val names = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
+      .distinct
       .cache()
-    val vertexPartitioner = rc.partitionerForNRows(namesWithCounts.count())
-    val idToNameWithCount = namesWithCounts.randomNumbered(vertexPartitioner)
-    val nameToIdWithCount = idToNameWithCount
-      .map { case (id, (name, count)) => (name, (id, count)) }
+    val vertexPartitioner = rc.partitionerForNRows(names.count())
+    val idToName = names.randomNumbered(vertexPartitioner)
+    val nameToId = idToName
+      .map(_.swap)
       // This is going to be joined with edges, so we use the edge partitioner.
       .sortUnique(edgePartitioner)
-    val srcResolvedByDst = RDDUtils.hybridLookupUsingCounts(
-      edgeSrcDst(columns).map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      },
-      nameToIdWithCount)
+    val edgesBySrc = edgeSrcDst(columns).map {
+      case (edgeId, (src, dst)) => src -> (edgeId, dst)
+    }
+    val srcResolvedByDst = HybridRDD(edgesBySrc)
+      .lookupAndRepartition(nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = RDDUtils.hybridLookupUsingCounts(srcResolvedByDst, nameToIdWithCount)
+    val edges = HybridRDD(srcResolvedByDst)
+      .lookupAndRepartition(nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)
 
     output(o.edges, edges)
-    output(o.vertices, idToNameWithCount.mapValues(_ => ()))
-    output(o.stringID, idToNameWithCount.mapValues(_._1))
+    output(o.vertices, idToName.mapValues(_ => ()))
+    output(o.stringID, idToName)
   }
 }
 
@@ -437,7 +437,7 @@ class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, v
     val columns = readColumns(rc, input, Set(src, dst))
     putEdgeAttributes(columns, o.attrs, output)
 
-    val edges = ImportEdgeListForExistingVertexSetFromTable.resolveEdges(
+    val edges = ImportEdgesForExistingVertices.resolveEdges(
       edgeSrcDst(columns),
       inputs.srcVidAttr.data,
       inputs.dstVidAttr.data)
@@ -497,7 +497,7 @@ class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: Str
     val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId =
       inputs.idAttr.rdd
-        .map { case (internal, external) => (external, internal) }
+        .map(_.swap)
         .assertUniqueKeys(partitioner)
     val linesByExternalId = lines
       .map(line => (line(idFieldIdx), line))
@@ -506,7 +506,7 @@ class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: Str
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
         .sortUnique(partitioner)
-        .cacheSortedAncestors
+        .copyWithAncestorsCached
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))

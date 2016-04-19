@@ -40,49 +40,6 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     }
   }
 
-  test("lookup operations work as expected") {
-    val rnd = new util.Random(0)
-    val localSource = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
-    val localLookup = (0 until 50).map(x => (x, rnd.nextDouble()))
-    val localLookupMap = localLookup.toMap
-    val localResult = localSource
-      .flatMap {
-        case (key, value) => localLookupMap.get(key).map(lv => key -> (value, lv))
-      }
-      .sorted
-
-    def checkGood(rdd: RDD[(Int, (Long, Double))]) {
-      assert(rdd.collect.toSeq.sorted == localResult)
-    }
-
-    import Implicits._
-    val sourceRDD = sparkContext.parallelize(localSource, 10)
-    val lookupRDD = sparkContext.parallelize(localLookup).sortUnique(new HashPartitioner(10))
-
-    checkGood(RDDUtils.joinLookup(sourceRDD, lookupRDD))
-    checkGood(RDDUtils.smallTableLookup(sourceRDD, localLookupMap))
-    checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200))
-    checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0))
-
-    val counts = sourceRDD
-      .keys
-      .map(_ -> 1l)
-      .reduceBySortedKey(lookupRDD.partitioner.get, _ + _)
-    val lookupRDDWihtCounts = lookupRDD.sortedJoin(counts)
-    checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 200))
-    checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 0))
-  }
-
-  test("lookup on empty RDD") {
-    import Implicits._
-    val sourceRDD = sparkContext.emptyRDD[(Int, Long)]
-    val lookupRDD = sparkContext.emptyRDD[(Int, Double)].sortUnique(new HashPartitioner(1))
-    assert(RDDUtils.joinLookup(sourceRDD, lookupRDD).collect.isEmpty)
-    assert(RDDUtils.smallTableLookup(sourceRDD, Map()).collect.isEmpty)
-    assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200).collect.isEmpty)
-    assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0).collect.isEmpty)
-  }
-
   test("groupBySortedKey works as expected") {
     import Implicits._
     val rnd = new util.Random(0)

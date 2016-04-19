@@ -1,6 +1,8 @@
 // The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
+import java.io.{ FileOutputStream, File }
+
 import play.api.libs.json
 import play.api.mvc
 import play.Play
@@ -11,12 +13,9 @@ import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, HadoopFile, Timestamp, KiteInstanceInfo }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
-
-import java.io.File
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -157,7 +156,41 @@ object AssertLicenseNotExpired {
       val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
       println(message)
       log.error(message)
-      System.exit(1)
+      throw new RuntimeException(message)
+    }
+  }
+}
+
+object AssertNotRunningAndRegisterRunning {
+  private def getPidFile(pidFilePath: String): File = {
+    val pidFile = new File(pidFilePath).getAbsoluteFile
+    if (pidFile.exists) {
+      throw new RuntimeException(s"LynxKite is already running (or delete $pidFilePath)")
+    }
+    pidFile
+  }
+
+  private def getPid(): String = {
+
+    val pidAtHostname =
+      // Returns <pid>@<hostname>
+      java.lang.management.ManagementFactory.getRuntimeMXBean.getName
+    val atSignIndex = pidAtHostname.indexOf('@')
+    pidAtHostname.take(atSignIndex)
+  }
+
+  private def writePid(pidFile: File) = {
+    val pid = getPid()
+    val output = new FileOutputStream(pidFile)
+    try output.write(pid.getBytes) finally output.close()
+  }
+
+  def apply() = {
+    val pidFilePath = LoggedEnvironment.envOrNone("KITE_PID_FILE")
+    if (pidFilePath.isDefined) {
+      val pidFile = getPidFile(pidFilePath.get)
+      writePid(pidFile)
+      pidFile.deleteOnExit()
     }
   }
 }
@@ -288,6 +321,7 @@ object ProductionJsonServer extends JsonServer {
   import FrontendJson._
 
   AssertLicenseNotExpired()
+  AssertNotRunningAndRegisterRunning()
 
   // File upload.
   def upload = {
@@ -398,6 +432,7 @@ object ProductionJsonServer extends JsonServer {
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
+  def getUserData = jsonGet(userController.getUserData)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
@@ -406,20 +441,18 @@ object ProductionJsonServer extends JsonServer {
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)
+  def forceLogRotate = jsonPost(logController.forceLogRotate)
   def downloadLogFile = action(parse.anyContent) {
     (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
   }
 
-  lazy val version = try {
-    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
-  } catch {
-    case e: java.io.IOException => ""
-  }
+  val version = KiteInstanceInfo.kiteVersion
+
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
-      title = util.Properties.envOrElse("KITE_TITLE", "LynxKite"),
-      tagline = util.Properties.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
+      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       version = version)
   }
 

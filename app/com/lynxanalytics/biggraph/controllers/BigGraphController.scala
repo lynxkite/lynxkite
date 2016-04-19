@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
-import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_operations
 
 import java.util.regex.Pattern
 import play.api.libs.json
@@ -94,7 +94,7 @@ object FEOperationParameterMeta {
     "model", // A special kind to set model parameters.
     "table") // A table.
 
-  val choiceKinds = Set("choice", "tag-list")
+  val choiceKinds = Set("choice", "tag-list", "table")
 }
 
 case class FEOperationParameterMeta(
@@ -104,6 +104,7 @@ case class FEOperationParameterMeta(
     defaultValue: String,
     options: List[FEOption],
     multipleChoice: Boolean,
+    mandatory: Boolean, // If false, this parameter can be omitted from the request.
     payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
 
   require(
@@ -144,7 +145,7 @@ case class FEScalar(
   isInternal: Boolean,
   computeProgress: Double,
   errorMessage: Option[String],
-  computedValue: Option[DynamicValue])
+  computedValue: Option[graph_operations.DynamicValue])
 
 case class FEProjectListElement(
     name: String,
@@ -333,7 +334,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   private def assertNameNotExists(name: String) = {
-    assert(!DirectoryEntry.fromName(name).exists, s"$name already exists.")
+    assert(!DirectoryEntry.fromName(name).exists, s"Entry '$name' already exists.")
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
@@ -675,7 +676,7 @@ abstract class OperationParameterMeta {
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, payload)
+    id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
@@ -923,9 +924,29 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     op
   }
 
+  // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
+  private def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
+    updateDelta(editor, original, "vertex_count")
+    updateDelta(editor, original, "edge_count")
+    for (seg <- editor.segmentationNames) {
+      if (original.state.segmentations.contains(seg)) {
+        updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
+      }
+    }
+  }
+  private def updateDelta(editor: ProjectEditor, original: ProjectViewer, name: String): Unit = {
+    val before = original.scalars.get(name).map(_.runtimeSafeCast[Long])
+    val after = editor.scalars.get(name).map(_.runtimeSafeCast[Long])
+    val delta =
+      if (before.isEmpty || after.isEmpty || before == after) null
+      else graph_operations.ScalarLongDifference.run(after.get, before.get)
+    editor.scalars.set(s"!${name}_delta", delta)
+  }
+
   def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
-    val opResult = appliedOp(context, opSpec).project.rootState
-    manager.checkpointRepo.checkpointState(opResult, context.project.rootCheckpoint)
+    val editor = appliedOp(context, opSpec).project
+    updateDeltas(editor.rootEditor, original = context.project.rootViewer)
+    manager.checkpointRepo.checkpointState(editor.rootState, context.project.rootCheckpoint)
   }
 
   def apply(

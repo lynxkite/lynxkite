@@ -4,6 +4,8 @@ package com.lynxanalytics.biggraph.controllers
 
 import java.io.File
 
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy
 import play.api.mvc
 import play.api.libs.concurrent.Execution.Implicits._
 
@@ -25,7 +27,7 @@ class LogController extends play.api.http.HeaderNames {
 
   def getLogFiles(user: serving.User, req: serving.Empty): LogFiles = {
     assert(user.isAdmin, "Only admins can access the server logs")
-    val logDir = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"))
+    val logDir = new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"))
     assert(logDir.exists, s"Application log directory not found at $logDir")
     assert(logDir.isDirectory, s"$logDir is not a directory")
     val logFiles = logDir.listFiles
@@ -43,9 +45,13 @@ class LogController extends play.api.http.HeaderNames {
     LogFiles(logFiles.toList)
   }
 
+  def forceLogRotate(user: serving.User, req: serving.Empty): Unit = {
+    DayBasedForcibleRollingPolicy.triggerRotation()
+  }
+
   def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {
     assert(user.isAdmin, "Only admins can access the server logs")
-    val logFile = new File(util.Properties.envOrElse("KITE_LOG_DIR", "logs"), request.name)
+    val logFile = new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"), request.name)
     assert(logFile.exists, s"Application log file not found at $logFile")
     log.info(s"$user has downloaded log file $logFile")
     mvc.Results.Ok.sendFile(logFile)

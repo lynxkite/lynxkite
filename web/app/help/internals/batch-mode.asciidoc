@@ -48,6 +48,11 @@ namespace.
  - `String **lynx.saveAsTable**(DataFrame df, String tableName, String notes = "")` saves an
    Apache Spark DataFrame as a LynxKite table. It returns the table identifier that can be used
    as a parameter for import operations.
+ - `String **lynx.openTable(String tableName)` gets the table identifier of a table known
+   by its name. This identifier can be used as a parameter for import operations.
+ - `String **lynx.resolvePath**(String path)` resolves a <<prefixed-paths, prefixed path>>.
+ - `StructType **lynx.stringSchema**(List[String] columns)` creates a schema with `StringType` columns
+   It can be used when loading tables via the `sqlContext`.
 
 The properties of `GroovyProject` are:
 
@@ -56,8 +61,9 @@ The properties of `GroovyProject` are:
    and a `toDouble()` method, they return its value as a string/double respectively.
  - `Map<String, GroovyAttribute> **vertexAttributes**` and
    `Map<String, GroovyAttribute> **edgeAttributes**` are the vertex and edge attributes.
-   `GroovyAttribute` has a `histogram(Int n)` method that
-   returns a histogram of the attribute with `n` buckets.
+   `GroovyAttribute` has a `histogram()` method that
+   returns a histogram of the attribute with 10 buckets. You can also call it with additional
+   optional arguments, for example: `histogram(numBuckets: 12, logarithmic: true, precise: false)`.
  - `DataFrame **vertexDF**` gives you access to the vertex attributes of the project
    as an Apache Spark DataFrame. `DataFrame **edgeDF**` does the same for the edges.
    `DataFrame **tripletDF**` joins the two tables, giving access to the vertex attributes with
@@ -95,18 +101,22 @@ PageRank to another CSV, and prints the number of vertices and the time the whol
 start_time = System.currentTimeMillis()
 // Import input, calculate PageRank, export output.
 project = lynx.newProject()
-project.importVerticesAndEdgesFromSingleCSVFileset(
-  files: params['input'],
-  header: '<read first line>',
-  delimiter: ',',
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv')
+  .option('header', 'true')
+  .load(params['input'])
+// Alternatively if there are no headers in the CSV file.
+df = lynx.sqlContext.read()
+  .format('com.databricks.spark.csv')
+  .option('header', 'false')
+  .schema(lynx.stringSchema(['src', 'dst']))
+  .load(params['input'])
+project.importVerticesAndEdgesFromASingleTable(
+  table: lynx.saveAsTable(df, 'Batch Example Table'),
   src: 'src',
-  dst: 'dst',
-  filter: '',
-  allow_corrupt_lines: 'no',
-  omitted: '')
+  dst: 'dst')
 project.pageRank(
   name: 'page_rank',
-  weights: '!no weight',
   iterations: '5',
   damping: '0.85')
 project.exportVertexAttributesToFile(
@@ -123,8 +133,7 @@ println "$count vertices processed in $time seconds."
 // Example of Spark SQL integration.
 project.vertexDF.printSchema()
 project.vertexDF.groupBy('gender').count().show()
-project.vertexDF.registerTempTable('example')
-df = lynx.sql('select * from example where gender = "Male"')
+df = project.sql('select * from vertices where gender = "Male"')
 df.show()
 df.write().format('com.databricks.spark.csv').option('header', 'true').save('males.csv')
 df.write().format('parquet').save('males.parquet')

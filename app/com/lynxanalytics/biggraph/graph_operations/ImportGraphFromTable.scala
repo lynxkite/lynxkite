@@ -1,72 +1,111 @@
 // Operations and other classes for importing data from tables.
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.runtime.universe._
+
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
-  class Input extends MagicInputSignature {
+object ImportEdgesForExistingVertices extends OpFromJson {
+  class Input[A, B] extends MagicInputSignature {
     val rows = vertexSet
-    val srcVidColumn = vertexAttribute[String](rows)
-    val dstVidColumn = vertexAttribute[String](rows)
+    val srcVidColumn = vertexAttribute[A](rows)
+    val dstVidColumn = vertexAttribute[B](rows)
     val sources = vertexSet
     val destinations = vertexSet
-    val srcVidAttr = vertexAttribute[String](sources)
-    val dstVidAttr = vertexAttribute[String](destinations)
+    val srcVidAttr = vertexAttribute[A](sources)
+    val dstVidAttr = vertexAttribute[B](destinations)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input)
+               inputs: Input[_, _])
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: JsValue) =
-    ImportEdgeListForExistingVertexSetFromTable()
 
-  def resolveEdges(
-    unresolvedEdges: UniqueSortedRDD[ID, (String, String)],
-    srcVidAttr: AttributeData[String],
-    dstVidAttr: AttributeData[String]): UniqueSortedRDD[ID, Edge] = {
+  def run[A: TypeTag, B: TypeTag](
+    srcVidAttr: Attribute[A],
+    dstVidAttr: Attribute[B],
+    srcVidColumn: Attribute[A],
+    dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output = {
+    import Scripting._
+    val op = ImportEdgesForExistingVertices[A, B]()(SerializableType[A], SerializableType[B])
+    op(
+      op.srcVidColumn, srcVidColumn)(
+        op.dstVidColumn, dstVidColumn)(
+          op.srcVidAttr, srcVidAttr)(
+            op.dstVidAttr, dstVidAttr).result
+  }
+
+  def runtimeSafe[A, B](
+    srcVidAttr: Attribute[A],
+    dstVidAttr: Attribute[B],
+    srcVidColumn: Attribute[_],
+    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output = {
+    implicit val ta = srcVidAttr.typeTag
+    implicit val tb = dstVidAttr.typeTag
+    run(
+      srcVidAttr,
+      dstVidAttr,
+      srcVidColumn.runtimeSafeCast[A],
+      dstVidColumn.runtimeSafeCast[B])
+  }
+
+  def resolveEdges[A: reflect.ClassTag: Ordering, B: reflect.ClassTag: Ordering](
+    unresolvedEdges: UniqueSortedRDD[ID, (A, B)],
+    srcVidAttr: AttributeData[A],
+    dstVidAttr: AttributeData[B]): UniqueSortedRDD[ID, Edge] = {
 
     val partitioner = unresolvedEdges.partitioner.get
 
-    val srcStringToVid = srcVidAttr.rdd
-      .map { case (k, v) => v -> k }
+    val srcNameToVid = srcVidAttr.rdd
+      .map(_.swap)
       .assertUniqueKeys(partitioner)
-    val dstStringToVid = {
+    val dstNameToVid = {
       if (srcVidAttr.gUID == dstVidAttr.gUID)
-        srcStringToVid
+        srcNameToVid.asInstanceOf[UniqueSortedRDD[B, ID]]
       else
         dstVidAttr.rdd
-          .map { case (k, v) => v -> k }
+          .map(_.swap)
           .assertUniqueKeys(partitioner)
     }
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      unresolvedEdges.map {
-        case (edgeId, (srcString, dstString)) => srcString -> (edgeId, dstString)
-      },
-      srcStringToVid)
-      .map { case (srcString, ((edgeId, dstString), srcVid)) => dstString -> (edgeId, srcVid) }
+    val edgesBySrc = unresolvedEdges.map {
+      case (edgeId, (srcName, dstName)) => srcName -> (edgeId, dstName)
+    }
+    val srcResolvedByDst = HybridRDD(edgesBySrc)
+      .lookupAndRepartition(srcNameToVid)
+      .map { case (srcName, ((edgeId, dstName), srcVid)) => dstName -> (edgeId, srcVid) }
 
-    RDDUtils.hybridLookup(srcResolvedByDst, dstStringToVid)
-      .map { case (dstString, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
+    HybridRDD(srcResolvedByDst)
+      .lookupAndRepartition(dstNameToVid)
+      .map { case (dstName, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
       .sortUnique(partitioner)
   }
+
+  def fromJson(j: JsValue) = {
+    val srcType = SerializableType.fromJson(j \ "srcType")
+    val dstType = SerializableType.fromJson(j \ "dstType")
+    ImportEdgesForExistingVertices()(srcType, dstType)
+  }
 }
-import ImportEdgeListForExistingVertexSetFromTable._
-case class ImportEdgeListForExistingVertexSetFromTable()
-    extends TypedMetaGraphOp[Input, Output] {
+import ImportEdgesForExistingVertices._
+case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableType]()
+    extends TypedMetaGraphOp[Input[A, B], Output] {
   override val isHeavy = true
-  @transient override lazy val inputs = new Input()
+  @transient override lazy val inputs = new Input[A, B]()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = Json.obj(
+    "srcType" -> implicitly[SerializableType[A]].toJson,
+    "dstType" -> implicitly[SerializableType[B]].toJson)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    import SerializableType.Implicits._
 
     // Join the source and destination columns of the table to import.
     // If there were null values in the original DataFrame, then those
@@ -83,4 +122,16 @@ case class ImportEdgeListForExistingVertexSetFromTable()
     output(o.edges, edges)
     output(o.embedding, embedding)
   }
+}
+
+// Legacy class.
+object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
+  def fromJson(j: JsValue) = new ImportEdgeListForExistingVertexSetFromTable
+}
+// Use the new implementation, but without changing the serialized form.
+// This keeps the GUID unchanged and avoids recomputation.
+class ImportEdgeListForExistingVertexSetFromTable
+    extends ImportEdgesForExistingVertices[String, String]()(
+      SerializableType[String], SerializableType[String]) {
+  override def toJson = Json.obj()
 }

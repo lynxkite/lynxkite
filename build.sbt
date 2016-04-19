@@ -54,6 +54,7 @@ libraryDependencies ++= Seq(
   "com.databricks" % "spark-csv_2.10" % "1.3.0",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
+  "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.10.3",
   // Fast linear algebra.
@@ -99,20 +100,21 @@ lazy val root = project.in(file("."))
 
 bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
 
-// Includes all files in the tools directory for stage. Does not include files subdirectories!
-mappings in Universal ++= {
-  val pathFinder = baseDirectory.value / "tools" * "*"
+def dirContents(baseDir: File, dirs: String*) = {
+  val subDir = dirs.foldLeft(baseDir) { (file, dir) => file / dir}
+  val pathFinder = subDir * "*"
   pathFinder.get map {
     tool: File =>
-    tool -> ("tools/" + tool.getName)
+      tool -> (dirs.mkString("/") + "/" + tool.getName)
   }
 }
 
-// Includes all files in the kitescripts directory for stage. Does not include files subdirectories!
-mappings in Universal ++= {
-  val pathFinder = baseDirectory.value / "kitescripts" * "*"
-  pathFinder.get map {
-    tool: File =>
-    tool -> ("kitescripts/" + tool.getName)
-  }
-}
+mappings in Universal ++= dirContents(baseDirectory.value, "tools")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "big_data_tests")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "gen_test_data")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")

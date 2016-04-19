@@ -32,6 +32,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       columnNames = Nil,
       delimiter = ",",
       mode = "FAILFAST",
+      infer = false,
       columnsToImport = List()))
     concurrent.Await.result(f, concurrent.duration.Duration.Inf).id
   }

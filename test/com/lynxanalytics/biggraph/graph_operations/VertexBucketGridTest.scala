@@ -67,6 +67,8 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
           op.yAttribute, g.age)(
             op.originalCount, count)).result
 
-    out.buckets.value.counts.map { case (key, value) => assert(value == 0) } // All counters are zero because of rounding.
+    for ((key, value) <- out.buckets.value.counts) {
+      assert(value == 0) // All counters are zero because of rounding.
+    }
   }
 }

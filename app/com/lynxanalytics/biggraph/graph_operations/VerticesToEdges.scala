@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 
 object VerticesToEdges extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -33,16 +34,16 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val dstAttr = inputs.dstAttr.rdd
     val names = (srcAttr.values ++ dstAttr.values).distinct
     val idToName = names.randomNumbered(partitioner.numPartitions)
-    val nameToId = idToName.map { case (id, name) => (name, id) }
+    val nameToId = idToName.map(_.swap)
       .sortUnique(partitioner)
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.sort(partitioner)
-    val byDst = bySrc.sortedJoin(nameToId).map {
+    }
+    val byDst = HybridRDD(bySrc).lookupAndRepartition(nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.sort(partitioner)
-    val edges = byDst.sortedJoin(nameToId).map {
+    }
+    val edges = HybridRDD(byDst).lookupAndRepartition(nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }.sortUnique(partitioner)
     val embedding = inputs.vs.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) }

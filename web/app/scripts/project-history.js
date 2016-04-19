@@ -1,7 +1,8 @@
 // The project history viewer/editor.
 'use strict';
 
-angular.module('biggraph').directive('projectHistory', function(util, $timeout) {
+angular.module('biggraph').directive('projectHistory',
+function(util, $timeout, removeOptionalDefaults) {
   return {
     restrict: 'E',
     scope: { show: '=', side: '=' },
@@ -22,18 +23,28 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         scope.localChanges = false;
         scope.valid = true;
         var history = scope.history;
+        scope.historyBackup = angular.copy(scope.history);
         if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
-            var step = history.steps[i];
-            step.localChanges = false;
-            step.editable = scope.valid;
-            if ((step.checkpoint === undefined) && !step.status.enabled) {
-              scope.valid = false;
-            }
-            watchStep(i, step);
+            setupHistoryStep(i);
           }
         }
       }
+      function setupHistoryStep(i) {
+        var history = scope.history;
+        var step = history.steps[i];
+        step.localChanges = false;
+        step.editable = scope.valid;
+        if ((step.checkpoint === undefined) && !step.status.enabled) {
+          scope.valid = false;
+        }
+        watchStep(i, step);
+      }
+      scope.discardChanges = function() {
+        scope.history = scope.historyBackup;
+        update();
+      };
+
       scope.$watch('history', update);
       scope.$watch('history.$resolved', update);
       scope.$on('apply operation', validate);
@@ -228,13 +239,13 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
       scope.insertBefore = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
         clearCheckpointsFrom(pos);
-        scope.history.steps.splice(pos, 0, blankStep(seg));
+        scope.history.steps.splice(pos, 0, createNewStep(seg));
         validate();
       };
       scope.insertAfter = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
         clearCheckpointsFrom(pos + 1);
-        scope.history.steps.splice(pos + 1, 0, blankStep(seg));
+        scope.history.steps.splice(pos + 1, 0, createNewStep(seg));
         validate();
       };
 
@@ -252,10 +263,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         var history = scope.history;
         var code = '';
         if (history && history.$resolved && !history.$error) {
-          var requests = history.steps.map(function(step) {
-            return step.request;
-          });
-          code = toGroovy(requests);
+          code = toGroovy(history.steps);
         }
         scope.side.workflowEditor = {
           enabled: true,
@@ -267,7 +275,7 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
         };
       };
 
-      function blankStep(seg) {
+      function createNewStep(seg) {
         var path = [];
         if (seg !== undefined) {
           path = seg.name.split('|');
@@ -297,21 +305,27 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
       }
 
       function groovyQuote(str) {
-        return '\'' + str.replace('\\', '\\\\').replace('\n', '\\n').replace('\'', '\\\'') + '\'';
+        str = str.replace(/\\/g, '\\\\');
+        str = str.replace(/\n/g, '\\n');
+        str = str.replace(/'/g, '\\\'');
+        return '\'' + str + '\'';
       }
 
-      function toGroovy(requests) {
+      function toGroovy(steps) {
         var lines = [];
-        for (var i = 0; i < requests.length; ++i) {
-          var request = requests[i];
+        for (var i = 0; i < steps.length; ++i) {
+          var step = steps[i];
+          var request = step.request;
+          var op = findOp(step.opCategoriesBefore, request.op.id);
           var line = [];
           line.push('project');
           for (var j = 0; j < request.path.length; ++j) {
             var seg = request.path[j];
             line.push('.segmentations[\'' + seg + '\']');
           }
-          var params = Object.keys(request.op.parameters);
-          params.sort();
+          var params = removeOptionalDefaults(request.op.parameters, op);
+          var paramKeys = Object.keys(params);
+          paramKeys.sort();
           if (request.op.id.indexOf('workflows/') === 0) {
             var workflowName = request.op.id.split('/').slice(1).join('/');
             line.push('.runWorkflow(\'' + workflowName + '\'');
@@ -319,15 +333,15 @@ angular.module('biggraph').directive('projectHistory', function(util, $timeout) 
           } else {
             line.push('.' + toGroovyId(request.op.id) + '(');
           }
-          for (j = 0; j < params.length; ++j) {
-            var k = params[j];
-            var v = request.op.parameters[k];
+          for (j = 0; j < paramKeys.length; ++j) {
+            var k = paramKeys[j];
+            var v = params[k];
             if (!k.match(/^[a-zA-Z]+$/)) {
               k = groovyQuote(k);
             }
             v = groovyQuote(v);
             line.push(k + ': ' + v);
-            if (j !== params.length - 1) {
+            if (j !== paramKeys.length - 1) {
               line.push(', ');
             }
           }
