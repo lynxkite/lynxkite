@@ -189,7 +189,7 @@ case class NeuralNetwork(
       id -> tanh(network.activationInput * input(id) + network.activationHidden * (reset(id) :* state(id)))
     }.toMap
     val newState: Map[ID, Vector] = vertices.map { id =>
-      id -> ((1.0 - update(id)) :* state(id) + (update(id) :* tildeState(id)))
+      id -> (((1.0 - update(id)) :* state(id)) + (update(id) :* tildeState(id)))
     }.toMap
   }
 
