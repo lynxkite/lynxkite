@@ -15,6 +15,8 @@ object HybridRDD {
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
 }
 
+// A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
+// is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     sourceRDD: RDD[(K, T)],
     maxValuesPerKey: Int = HybridRDD.hybridLookupThreshold) {
@@ -27,7 +29,9 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       .top(HybridRDD.hybridLookupMaxLarge)(ordering)
       .sorted(ordering)
   }
+  // True iff this HybridRDD has no elements.
   val isEmpty = tops.isEmpty
+  // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
 
   val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
@@ -41,6 +45,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     sourceRDD.context.emptyRDD[(K, T)]
   }
 
+  // Caches the sourceRDD and the helper RDDs computed from it.
   def persist(storageLevel: spark.storage.StorageLevel): Unit = {
     if (!isEmpty) {
       if (isSkewed) {
@@ -62,12 +67,12 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // reasonably small.
   private def smallTableLookup[S](
     sourceRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
-
     sourceRDD
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
-  // Same as hybridLookup but repartitions the result after a hybrid lookup.
+  // Same as hybridLookup but repartitions the result after a hybrid lookup. The elements of the
+  // result RDD are evenly distributed among its partitions.
   def lookupAndRepartition[S](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     val result = lookup(lookupTable)
@@ -80,7 +85,8 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     }
   }
 
-  // Same as hybridLookup but coalesces the result after a hybrid lookup.
+  // Same as hybridLookup but coalesces the result after a hybrid lookup. The result RDD has
+  // as many partitions as the original one.
   def lookupAndCoalesce[S](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     val result = lookup(lookupTable)
@@ -94,7 +100,8 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   }
 
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
-  // be handled by joinLookup and does joinLookup for the rest.
+  // be handled by joinLookup and does joinLookup for the rest. There are no guarantees about the
+  // partitions of the result RDD.
   def lookup[S](
     lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
