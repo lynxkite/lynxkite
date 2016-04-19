@@ -318,7 +318,9 @@ case class NeuralNetwork(
       // Initial states.
       val keptState = trueState.map {
         case (id, state) =>
-          if (random.nextDouble < forgetFraction) id -> blanked(state) else id -> state
+          // Make final predictions in the last iteration. No forgetting now!
+          if (i != iterations && random.nextDouble < forgetFraction) id -> blanked(state)
+          else id -> state
       }
       val initialState = if (!hideState) keptState else keptState.map {
         // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
