@@ -2,6 +2,8 @@
 // reversed edge bundle. All the operations have compile-time safety and operate on the metagraph.
 package com.lynxanalytics.biggraph.graph_util
 
+import scala.reflect.runtime.universe.TypeTag
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -94,6 +96,11 @@ object Scripting {
     def join[S](other: Attribute[S]): Attribute[(T, S)] = {
       graph_operations.JoinAttributes.run(self, other)
     }
+
+    def derive[S: TypeTag](expression: String): Attribute[S] = {
+      graph_operations.DeriveJS.deriveFromAttributes[S](
+        expression, Seq("x" -> self), self.vertexSet).attr
+    }
   }
 
   implicit class RichContainedStringAttribute(
@@ -102,11 +109,6 @@ object Scripting {
   implicit class RichStringAttribute(self: Attribute[String])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.VertexAttributeToDouble.run(self)
-
-    def derive(expression: String): Attribute[String] = {
-      graph_operations.DeriveJS.deriveFromAttributes[String](
-        expression, Seq("x" -> self), self.vertexSet).attr
-    }
   }
 
   implicit class RichContainedDoubleAttribute(
@@ -115,11 +117,6 @@ object Scripting {
   implicit class RichDoubleAttribute(self: Attribute[Double])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.DoubleAttributeToLong.run(self)
-
-    def derive(expression: String): Attribute[Double] = {
-      graph_operations.DeriveJS.deriveFromAttributes[Double](
-        expression, Seq("x" -> self), self.vertexSet).attr
-    }
   }
 
   implicit class RichContainedLongAttribute(

@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark
 import org.scalatest
 import scala.util.Random
+import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
@@ -90,7 +91,9 @@ trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphe
   registerStandardPrefixes()
 }
 
-case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, Attribute[_]])
+case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, Attribute[_]]) {
+  def attr[T: TypeTag](name: String) = attrs(name).runtimeSafeCast[T]
+}
 object TestGraph {
   private def loadCSV(file: String)(implicit dm: DataManager) = {
     dm.newSQLContext().read.format("com.databricks.spark.csv")
