@@ -7,6 +7,7 @@ import breeze.stats.distributions.RandBasis
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object NeuralNetwork extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
@@ -340,7 +341,7 @@ case class NeuralNetwork(
           id -> 0.0
       }.toMap
       val errorTotal = errors.values.map(e => e * e).sum
-      println(s"Total error in iteration $i: $errorTotal")
+      log.info(s"Total error in iteration $i: $errorTotal")
       val finalGradient: Map[ID, Vector] = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
