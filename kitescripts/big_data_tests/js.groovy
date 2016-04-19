@@ -1,14 +1,17 @@
 // Tests JavaScript execution performance.
 
-// REQUIRE_SCRIPT edge_import.groovy
+/// REQUIRE_SCRIPT edge_import.groovy
 
 project = lynx.loadProject('edge_import_result')
 
-project.vertexAttributeToDouble(attr: 'ordinal')
+project.addRandomVertexAttribute(
+  name: 'random',
+  dist: 'Standard Uniform',
+  seed: 20160419
+)
 project.derivedVertexAttribute(
   output: 'x',
   type: 'double',
-  expr: 'ordinal * ordinal')
+  expr: 'random * random')
 
-println "vertices: $vertices"
-println "x: ${ project.vertexAttributes['x'].histogram() }"
+println "x: ${ project.vertexAttributes['x'].histogram(precise: true) }"

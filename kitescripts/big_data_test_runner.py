@@ -25,12 +25,7 @@ import os
 import sys
 import subprocess
 
-# Set of tests that were seen by the run_test functions.
-# This is used to ensure that one test is executed at most
-# once.
-seen_tests = {}
-
-def run_test(kite_path, test_path, groovy_args):
+def run_test(kite_path, test_path, groovy_args, seen_tests, dry_run):
   """
   Runs a single test script, but before that, runs its
   requirement scripts.
@@ -46,14 +41,28 @@ def run_test(kite_path, test_path, groovy_args):
       if line.startswith(REQUIRE_SCRIPT_STR):
         required_script = line[len(REQUIRE_SCRIPT_STR):].strip()
         required_script_path = test_script_dir + '/' + required_script
-        run_test(kite_path, required_script_path, groovy_args)
+        run_test(kite_path, required_script_path, groovy_args, seen_tests, dry_run)
       else:
-        print 'Unknown directive in ', test_path, ': ', line
+        print 'Unknown directive in ', test_path, ':', line
         sys.exit(1)
     elif line.startswith('// REQ'):
-      print 'Did you mean /// REQUIRE_SCRIPT in ', test_path, ': ', line
+      print 'Did you mean /// REQUIRE_SCRIPT in ', test_path, ':', line
       sys.exit(1)
-  subprocess.call([kite_path, 'batch', test_path] + groovy_args)
+  if not dry_run:
+    subprocess.call([kite_path, 'batch', test_path] + groovy_args)
+
+def run_tests(kite_path, scripts, test_data_set, dry_run):
+  # Set of tests that were seen by the run_test functions.
+  # This is used to ensure that one test is executed at most
+  # once.
+  seen_tests = {}
+  for script in scripts:
+    run_test(
+      kite_path,
+      script,
+      test_data_set,
+      seen_tests,
+      dry_run)
 
 def main(argv):
   my_path = os.path.abspath(os.path.dirname(argv[0]))
@@ -70,11 +79,9 @@ def main(argv):
   scripts = glob.glob(my_path + '/' + script_pattern + '.groovy')
   # Ensure the order is deterministic to have nice diffs:
   scripts.sort()
-  for script in scripts:
-    run_test(
-      kite_path,
-      script,
-      test_data_set)
+  # Make a dry run first to detect macro errors early:
+  run_tests(kite_path, scripts, test_data_set, dry_run=True)
+  run_tests(kite_path, scripts, test_data_set, dry_run=False)
 
 if __name__ == "__main__":
   main(sys.argv)
