@@ -179,11 +179,6 @@ case class NeuralNetwork(
       val inputs = edges.getNeighbors(id).map(network.edgeMatrix * visibleState(_))
       id -> (vectorSum(network.size, inputs) + network.edgeBias)
     }.toMap
-    for (id <- vertices.take(0)) {
-      println(s"id: $id")
-      println(s"state: ${state(id)}")
-      println(s"visibleState: ${visibleState(id)}")
-    }
     val reset: Map[ID, Vector] = vertices.map { id =>
       id -> sigmoid(network.resetInput * input(id) + network.resetHidden * state(id))
     }.toMap
@@ -196,9 +191,6 @@ case class NeuralNetwork(
     val newState: Map[ID, Vector] = vertices.map { id =>
       id -> ((1.0 - update(id)) :* state(id) + (update(id) :* tildeState(id)))
     }.toMap
-    val xewState: Map[ID, Vector] = vertices.map { id =>
-      id -> tanh(network.activationHidden * state(id))
-    }.toMap
   }
 
   class NetworkGradients(
@@ -210,10 +202,6 @@ case class NeuralNetwork(
     import breeze.numerics._
     val tildeGradient: Map[ID, Vector] = vertices.map { id =>
       id -> (outputs.update(id) :* stateGradient(id))
-    }.toMap
-    val stateRawGradient: Map[ID, Vector] = vertices.map { id =>
-      // Propagate through tanh.
-      id -> ((1.0 - (outputs.newState(id) :* outputs.newState(id))) :* stateGradient(id))
     }.toMap
     val tildeRawGradient: Map[ID, Vector] = vertices.map { id =>
       // Propagate through tanh.
@@ -247,18 +235,12 @@ case class NeuralNetwork(
         (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id) +
         vectorSum(network.size, edgeGradients))
     }.toMap
-    val xrevStateGradient: Map[ID, Vector] = vertices.map { id =>
-      id -> (network.activationHidden.t * stateRawGradient(id))
-    }.toMap
     // Network gradients.
     val activationInputGradient: Matrix = vertices.map { id =>
       tildeRawGradient(id) * outputs.input(id).t
     }.reduce(_ + _)
     val activationHiddenGradient: Matrix = vertices.map { id =>
       tildeRawGradient(id) * (outputs.reset(id) :* outputs.state(id)).t
-    }.reduce(_ + _)
-    val xctivationHiddenGradient: Matrix = vertices.map { id =>
-      stateRawGradient(id) * outputs.state(id).t
     }.reduce(_ + _)
     val updateInputGradient: Matrix = vertices.map { id =>
       updateRawGradient(id) * outputs.input(id).t
@@ -278,42 +260,6 @@ case class NeuralNetwork(
     val edgeMatrixGradient: Matrix = vertices.map { id =>
       inputGradient(id) * outputs.visibleState(id).t
     }.reduce(_ + _)
-    if (false) {
-      for (id <- vertices.take(2)) {
-        println(id)
-        println("state:\n" + outputs.state(id))
-        println("input:\n" + outputs.input(id))
-        println("newState:\n" + outputs.newState(id))
-        println("tildeState:\n" + outputs.tildeState(id))
-        println("update:\n" + outputs.update(id))
-        println("reset:\n" + outputs.reset(id))
-        println("stateGradient:\n" + stateGradient(id))
-        println("tildeGradient:\n" + tildeGradient(id))
-        println("tildeRawGradient:\n" + tildeRawGradient(id))
-        println("updateGradient:\n" + updateGradient(id))
-        println("updateRawGradient:\n" + updateRawGradient(id))
-        println("resetGradient:\n" + resetGradient(id))
-        println("resetRawGradient:\n" + resetRawGradient(id))
-        println("inputGradient:\n" + inputGradient(id))
-        for (n <- edges.getNeighbors(id)) {
-          println(s"visibleState($n): " + outputs.visibleState(n))
-        }
-      }
-      /*
-      println("activationHidden:\n" + network.activationHidden)
-      println("activationHiddenGradient:\n" + activationHiddenGradient)
-      println("updateHidden:\n" + network.updateHidden)
-      println("updateHiddenGradient:\n" + updateHiddenGradient)
-      println("resetHidden:\n" + network.resetHidden)
-      println("resetHiddenGradient:\n" + resetHiddenGradient)
-      */
-      println("activationInput:\n" + network.activationInput)
-      println("activationInputGradient:\n" + activationInputGradient)
-      println("updateInput:\n" + network.updateInput)
-      println("updateInputGradient:\n" + updateInputGradient)
-      println("resetInput:\n" + network.resetInput)
-      println("resetInputGradient:\n" + resetInputGradient)
-    }
   }
 
   val clipTo = 5.0
@@ -337,7 +283,7 @@ case class NeuralNetwork(
     dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
     edges: CompactUndirectedGraph,
     reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
-    //assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
+    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     val data = dataIterator.toSeq
     val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
