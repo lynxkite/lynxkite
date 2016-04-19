@@ -5,7 +5,6 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -54,7 +53,7 @@ case class PageRank(dampingFactor: Double,
       .reduceBySortedKey(edgePartitioner, _ + _)
 
     // Join the sum of weights per src to the src vertices in the edge RDD.
-    val edgesWithSumWeights = RDDUtils.hybridLookupAndCoalesce(HybridRDD(edgesWithWeights), sumWeights)
+    val edgesWithSumWeights = HybridRDD(edgesWithWeights).lookupAndCoalesce(sumWeights)
     // Normalize the weights for every src vertex.
     val targetsWithWeights = HybridRDD(
       edgesWithSumWeights
@@ -66,7 +65,7 @@ case class PageRank(dampingFactor: Double,
 
     for (i <- 0 until iterations) {
       // No need for repartitioning since we reduce anyway.
-      val incomingRank = RDDUtils.hybridLookupAndCoalesce(targetsWithWeights, pageRank)
+      val incomingRank = targetsWithWeights.lookupAndCoalesce(pageRank)
         .map {
           case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
