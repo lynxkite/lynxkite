@@ -6,7 +6,6 @@ import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -372,14 +371,15 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
       .map(_.swap)
       // This is going to be joined with edges, so we use the edge partitioner.
       .sortUnique(edgePartitioner)
-    val srcResolvedByDst = RDDUtils.hybridLookupAndRepartition(
-      HybridRDD(edgeSrcDst(columns).map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      }),
-      nameToId)
+    val edgesBySrc = edgeSrcDst(columns).map {
+      case (edgeId, (src, dst)) => src -> (edgeId, dst)
+    }
+    val srcResolvedByDst = HybridRDD(edgesBySrc)
+      .lookupAndRepartition(nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = RDDUtils.hybridLookupAndRepartition(HybridRDD(srcResolvedByDst), nameToId)
+    val edges = HybridRDD(srcResolvedByDst)
+      .lookupAndRepartition(nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)
 
