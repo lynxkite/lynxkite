@@ -2,7 +2,15 @@
 'use strict';
 
 angular.module('biggraph').factory('documentation', function($http) {
+  var cache = {};
   function documentation(name) {
+    if (cache[name] === undefined) {
+      cache[name] = load(name);
+    }
+    return cache[name];
+  }
+
+  function load(name) {
     var html = $http.get('/' + name + '.html', { cache: true });
     var dom = html.then(function success(response) {
       /* global $ */
