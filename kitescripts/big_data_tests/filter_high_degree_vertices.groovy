@@ -5,7 +5,7 @@
 project = lynx.loadProject('edge_import_result')
 
 project.degree(direction: 'all edges', name: 'degree')
-project.filterByAttributes('filterva-degree': '< 100')
+project.filterByAttributes('filterva-degree': '< 5000')
 
 println "vertex_count: ${ project.scalars['vertex_count'] }"
 println "edge_count: ${ project.scalars['edge_count'] }"
