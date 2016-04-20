@@ -1,3 +1,8 @@
+<div class="clearfix">
+  <span class="lead de-emph">SQL</span>
+  <help-popup href="sql-box" class="pull-right"></help-popup>
+</div>
+
 <div
   ui-ace="{
     mode: 'sql',
@@ -13,7 +18,7 @@
   <button class="btn btn-primary"
     ng-disabled="showExportOptions"
     id="save-results-opener"
-    ng-click="showExportOptions = true">Save results...</button>
+    ng-click="showExportOptions = true">Export...</button>
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 </div>
 

@@ -1,9 +1,8 @@
 [[sql-box]]
 ## SQL interface
 
-There is a SQL interface at the bottom of project pages that can be expanded with the plus button
-(+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++). The SQL
-box makes it possible to run SQL queries over the data in the project.
+There is a SQL interface at the bottom of project pages that
+makes it possible to run SQL queries over the data in the project and export the results.
 
 The following tables are available for SQL access:
 
