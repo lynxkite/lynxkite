@@ -1,11 +1,11 @@
+// Tests graph visualization.
+
+/// REQUIRE_SCRIPT filter_high_degree_vertices.groovy
+
 seed = 12321
-vertices = 500000  // keep this higher than EntityIO.verticesPerPartition
 
-start_time = System.currentTimeMillis()
+project = lynx.loadProject('filter_high_degree_vertices_result')
 
-project = lynx.newProject()
-project.newVertexSet(size: vertices)
-project.createRandomEdgeBundle(degree: 10.0, seed: seed + 1)
 project.addRandomVertexAttribute(
   name: 'randomV',
   dist: 'Standard Uniform',
@@ -165,4 +165,3 @@ testComplexView(
   )
 )
 
-println "time: ${ (System.currentTimeMillis() - start_time) / 1000 } seconds"
