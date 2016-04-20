@@ -9,8 +9,8 @@ fi
 WKHTML_OPT='--lowquality --footer-center [page] --margin-top 20mm --margin-bottom 20mm'
 
 echo 'Starting LynxKite...'
-cd "$(dirname $0)/.."
-'./run.sh' &
+cd "$(dirname $0)/../web"
+gulp serve &
 LYNXKITE_PID=$!
 cd -
 function kill_grunt {
