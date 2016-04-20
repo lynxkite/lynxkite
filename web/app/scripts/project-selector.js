@@ -10,6 +10,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
+      scope.util = util;
       function defaultSettings() {
         return { privacy: 'private' };
       }
