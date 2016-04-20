@@ -46,11 +46,11 @@
       </form>
     </div>
 
-    <div class="entry" id="import-table" ng-click="startTableImport()">
+    <div class="entry{{ importTable.expanded ? '-nohover' : '' }}"
+      id="import-table" ng-click="startTableImport()">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead">Import table</span>
       <import-wizard
-       class="entry"
        current-directory="path"
        ng-if="importTable.expanded"
        on-cancel="importTable.expanded = false"
