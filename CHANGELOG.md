@@ -17,6 +17,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    vertices with no location from a map visualization.
  - Stability improvements regarding edge loading and handling graphs with large degree vertices.
  - SQL query results can be saved as segmentations.
+ - Prettier project history editor.
 
 ### 1.7.3
 
