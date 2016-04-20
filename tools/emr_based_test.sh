@@ -105,7 +105,8 @@ case $MODE in
 esac
 
 answer='yes'
-if [ -t 1 ]; then
+# Ask only if STDIN is a terminal.
+if [ -t 0 ]; then
   read -p "Test completed. Terminate cluster? [y/N] " answer
 fi
 case ${answer:0:1} in
