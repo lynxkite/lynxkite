@@ -304,10 +304,6 @@ Side.prototype = {
     return this.side.element(by.id('sql-editor'));
   },
 
-  toggleSqlBox: function() {
-    this.side.element(by.id('sql-toggle')).click();
-  },
-
   setSql: function(sql) {
     testLib.sendKeysToACE(this.sqlEditor(), sql);
   },
