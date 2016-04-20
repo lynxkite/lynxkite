@@ -64,10 +64,10 @@ else
   stage/tools/emr.sh start ${EMR_TEST_SPEC}
 fi
 
-stage/tools/emr.sh deploy-kite ${EMR_TEST_SPEC}
 
 case $MODE in
   backend )
+    stage/tools/emr.sh deploy-kite ${EMR_TEST_SPEC}
     # The next lines are just for invoking:
     # big_data_test_runner.py $1 $2
     # remotely on the master.
@@ -87,6 +87,7 @@ case $MODE in
     stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
     ;;
   frontend )
+    stage/tools/emr.sh kite ${EMR_TEST_SPEC}
     stage/tools/emr.sh connect ${EMR_TEST_SPEC} &
     CONNECTION_PID=$!
     sleep 15
