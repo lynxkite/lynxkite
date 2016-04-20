@@ -46,7 +46,7 @@
       </form>
     </div>
 
-    <div class="entry{{ importTable.expanded ? '-nohover' : '' }}"
+    <div ng-class="importTable.expanded ? 'entry-nohover' : 'entry'"
       id="import-table" ng-click="startTableImport()">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead">Import table</span>
