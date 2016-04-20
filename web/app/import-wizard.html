@@ -184,49 +184,55 @@
 
   <div class="form-group">
     <div class="col-sm-offset-4 col-sm-8">
-      <div
+      <button
         id="import-csv-button"
-        ng-show="(datatype === 'csv') && csv.filename && !requestInProgress && tableName"
+        ng-show="datatype === 'csv'"
+        ng-disabled="!csv.filename || requestInProgress || !tableName"
         ng-click="importCSV()"
         class="btn btn-default">
         Import CSV files
-      </div>
-      <div
+      </button>
+      <button
         id="import-parquet-button"
-        ng-show="(datatype === 'parquet') && files.filename && !requestInProgress && tableName"
+        ng-show="datatype === 'parquet'"
+        ng-disabled="!files.filename || requestInProgress || !tableName"
         ng-click="importParquet()"
         class="btn btn-default">
         Import Parquet files
-      </div>
-      <div
+      </button>
+      <button
         id="import-orc-button"
-        ng-show="(datatype === 'orc') && files.filename && !requestInProgress && tableName"
+        ng-show="datatype === 'orc'"
+        ng-disabled="!files.filename || requestInProgress || !tableName"
         ng-click="importORC()"
         class="btn btn-default">
         Import ORC files
-      </div>
-      <div
+      </button>
+      <button
         id="import-json-button"
-        ng-show="(datatype === 'json') && files.filename && !requestInProgress && tableName"
+        ng-show="datatype === 'json'"
+        ng-disabled="!files.filename || requestInProgress || !tableName"
         ng-click="importJson()"
         class="btn btn-default">
         Import JSON files
-      </div>
-      <div
+      </button>
+      <button
         id="import-jdbc-button"
-        ng-show="(datatype === 'jdbc') && jdbc.url && jdbc.table && jdbc.keyColumn && !requestInProgress && tableName"
+        ng-show="datatype === 'jdbc'"
+        ng-disabled="!jdbc.url || !jdbc.table || !jdbc.keyColumn || requestInProgress || !tableName"
         ng-click="importJdbc()"
         class="btn btn-default">
         Import JDBC table
-      </div>
-      <div
+      </button>
+      <button
         id="import-hive-button"
-        ng-show="(datatype === 'hive') && hive.tableName && !requestInProgress && tableName"
+        ng-show="datatype === 'hive'"
+        ng-disabled="!hive.tableName || requestInProgress || !tableName"
         ng-click="importHive()"
         class="btn btn-default">
         Import Hive table
-      </div>
-      <div ng-click="cancel($event)" class="btn btn-default">Cancel</div>
+      </button>
+      <button ng-click="cancel($event)" class="btn btn-default">Cancel</button>
     </div>
   </div>
 </form>
