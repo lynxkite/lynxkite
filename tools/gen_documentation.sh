@@ -1,8 +1,8 @@
 #!/bin/bash -eu
 # Script for generating PDF versions of the documentation pages.
 
-# Assign to $WKHTMLTOPDF if it is not defined. This also works in -u mode:
-: "${WKHTMLTOPDF:=$(which wkhtmltopdf)}"
+# Using which with a safe default so that this works in -u mode.
+WKHTMLTOPDF="${WKHTMLTOPDF:-$(which wkhtmltopdf || echo '')}"
 
 if [ ! -x "$WKHTMLTOPDF" ]; then
   >&2 echo 'Please install wkhtmltopdf (0.12.3 or newer) or set WKHTMLTOPDF to point to the binary.'
