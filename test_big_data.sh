@@ -19,18 +19,19 @@
 cd $(dirname $0)
 
 TEST_PATTERN="${1:-*}"
-DATA_SET="${2:-fake_westeros_xt_25m}"
+DATA_SET="${2:-fake_westeros_v3_5m_145m}"
 NUM_EMR_INSTANCES=${3:-3}
 
-OUTPUT_FILE="last_results_${NUM_EMR_INSTANCES}i_${DATA_SET}"
+OUTPUT_FILE="emr${NUM_EMR_INSTANCES}_${DATA_SET}"
+RESULTS_DIR="kitescripts/big_data_tests/results"
 
 # Run test.
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
   tools/emr_based_test.sh backend "big_data_tests/${TEST_PATTERN}" testDataSet:${DATA_SET} 2>&1 \
-  | tee kitescripts/big_data_tests/full_output
+  | tee "${RESULTS_DIR}/full_output"
 
 # Write the header.
-cat >kitescripts/big_data_tests/${OUTPUT_FILE}.md.new <<EOF
+cat >"${RESULTS_DIR}/${OUTPUT_FILE}.md.new" <<EOF
 LynxKite big data test results
 ==============================
 
@@ -47,11 +48,11 @@ The results of the latest run are below:
 \`\`\`
 EOF
 # Add the script output from the new run.
-cat kitescripts/big_data_tests/full_output \
+cat "${RESULTS_DIR}/full_output" \
   | awk '/STARTING SCRIPT/{flag=1}/FINISHED SCRIPT/{print;flag=0}flag' \
-  >> kitescripts/big_data_tests/${OUTPUT_FILE}.md.new
-echo '```' >>kitescripts/big_data_tests/${OUTPUT_FILE}.md.new
-rm kitescripts/big_data_tests/full_output
+  >> "${RESULTS_DIR}/${OUTPUT_FILE}.md.new"
+echo '```' >>"${RESULTS_DIR}/${OUTPUT_FILE}.md.new"
+rm "${RESULTS_DIR}/full_output"
 
 if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
@@ -62,8 +63,8 @@ if [[ "$USER" == 'jenkins' ]]; then
   git fetch
   git checkout "$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
-  mv kitescripts/big_data_tests/${OUTPUT_FILE}.md{.new,}
-  git add kitescripts/big_data_tests/${OUTPUT_FILE}.md
+  mv ${RESULTS_DIR}/${OUTPUT_FILE}.md{.new,}
+  git add "${RESULTS_DIR}/${OUTPUT_FILE}.md"
   git commit -am "Update Big Data Test results."
   git push
 fi
