@@ -20,10 +20,8 @@ for (i = 1; i < numVertices; ++i) {
 println "numVertices= $numVertices, numEdges= $numEdges"
 
 def humanizeNumber(num) {
-  s = "kmgt"
-  if (num < 1000) return num.toString()
+  s = ['', 'k', 'm', 'g', 't']
   id = 0
-  num = num / 1000.0
   while (Math.round(num) >= 1000.0) {
     id++
     num = num / 1000.0
@@ -78,9 +76,7 @@ forwardEdgeDF = project.
   sql('select src,dst from vertices')
 
 // Create reversed edges:
-revEdgeDF = forwardEdgeDF.select(
-  forwardEdgeDF.col("dst"), forwardEdgeDF.col("src")).toDF("src", "dst")
-edgeDF = forwardEdgeDF.unionAll(revEdgeDF)
+edgeDF = forwardEdgeDF.unionAll(forwardEdgeDF.select("dst", "src"))
 
 edgeDF.write()
   .format('com.databricks.spark.csv')

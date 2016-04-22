@@ -24,14 +24,19 @@ NUM_EMR_INSTANCES=${3:-3}
 
 OUTPUT_FILE="emr${NUM_EMR_INSTANCES}_${DATA_SET}"
 RESULTS_DIR="kitescripts/big_data_tests/results"
+OUTPUT_FILE_BASE="${RESULTS_DIR}/${OUTPUT_FILE}"
+
+FULL_OUTPUT_LOG="${OUTPUT_FILE_BASE}.log"
+TMP_OUTPUT="${OUTPUT_FILE_BASE}.md.new"
+FINAL_OUTPUT="${OUTPUT_FILE_BASE}.md"
 
 # Run test.
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
   tools/emr_based_test.sh backend "big_data_tests/${TEST_PATTERN}" testDataSet:${DATA_SET} 2>&1 \
-  | tee "${RESULTS_DIR}/full_output"
+  | tee ${FULL_OUTPUT_LOG}
 
 # Write the header.
-cat >"${RESULTS_DIR}/${OUTPUT_FILE}.md.new" <<EOF
+cat >${TMP_OUTPUT} <<EOF
 LynxKite big data test results
 ==============================
 
@@ -48,11 +53,11 @@ The results of the latest run are below:
 \`\`\`
 EOF
 # Add the script output from the new run.
-cat "${RESULTS_DIR}/full_output" \
+cat ${FULL_OUTPUT_LOG} \
   | awk '/STARTING SCRIPT/{flag=1}/FINISHED SCRIPT/{print;flag=0}flag' \
-  >> "${RESULTS_DIR}/${OUTPUT_FILE}.md.new"
-echo '```' >>"${RESULTS_DIR}/${OUTPUT_FILE}.md.new"
-rm "${RESULTS_DIR}/full_output"
+  >> ${TMP_OUTPUT}
+echo '```' >>${TMP_OUTPUT}
+rm ${FULL_OUTPUT_LOG}
 
 if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
@@ -63,8 +68,8 @@ if [[ "$USER" == 'jenkins' ]]; then
   git fetch
   git checkout "$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
-  mv ${RESULTS_DIR}/${OUTPUT_FILE}.md{.new,}
-  git add "${RESULTS_DIR}/${OUTPUT_FILE}.md"
+  mv ${TMP_OUTPUT} ${FINAL_OUTPUT}
+  git add ${FINAL_OUTPUT}
   git commit -am "Update Big Data Test results."
   git push
 fi
