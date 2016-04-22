@@ -13,30 +13,22 @@ Jenkins.
 The results of the latest run are below:
 ```
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-2016-04-21 14:38:23,082 - [ERROR] - from com.hadoop.compression.lzo.LzoCodec in main 
-Failed to load/initialize native-lzo library
-
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 34 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 33 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
 in_degree: {"labelType":"between","labels":["2.0","5.8","17.1","49.9","145.9","426.4","1246.2","3642.2","10644.6","31109.4","90919.0"],"sizes":[709,77913,18993,1714,455,145,48,17,6,2]}
 out_degree: {"labelType":"between","labels":["2.0","5.8","17.1","49.9","145.9","426.4","1246.2","3642.2","10644.6","31109.4","90919.0"],"sizes":[709,77913,18993,1714,455,145,48,17,6,2]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 32 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 31 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-2016-04-21 14:41:46,715 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-3 
-Task 9 in stage 9.0 failed 4 times; aborting job
-
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 80 seconds
+centrality: {"labelType":"between","labels":["28775.0","31656.4","34826.2","38313.5","42150.0","46370.7","51014.0","56122.2","61742.0","67924.4","74726.0"],"sizes":[45,10443,15891,33984,21974,17656,5,2,1,1]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 27 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
 vertex_count: 99966
 edge_count: 1432884
 FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 43 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
 x: {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[31694,13019,10138,8380,7407,6778,6158,5722,5469,5237]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 11 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 12 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-2016-04-21 14:44:10,271 - [ERROR] - from com.hadoop.compression.lzo.LzoCodec in main 
-Failed to load/initialize native-lzo library
-
 FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy, took 26 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
 page_rank_no_weights: {"labelType":"between","labels":["0.2","0.6","1.6","4.2","11.2","29.6","78.5","207.8","550.3","1457.3","3859.5"],"sizes":[39895,56419,2639,688,229,83,31,11,5,2]}
@@ -54,9 +46,9 @@ STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualizat
     0: size= 114
 2. Visualize one graph with filters
   vertex sets:
-    0: size= 40
+    0: size= 43
   edge bundles:
-    0: size= 88
+    0: size= 92
 3. Get visualization of a graph plus a segmentation
   vertex sets:
     0: size= 50
@@ -64,7 +56,7 @@ STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualizat
   edge bundles:
     0: size= 114
     1: size= 245
-    2: size= 21
+    2: size= 28
 4. Bucketed view
   vertex sets:
     0: size= 100
