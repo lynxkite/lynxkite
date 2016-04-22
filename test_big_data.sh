@@ -1,4 +1,4 @@
-#!/bin/bash -xue
+#!/bin/bash
 
 # This is the script that Jenkins calls when the user wants to run a "big data"
 # test on a Pull Request. It fires up an EMR cluster, runs groovy scripts in it
@@ -15,6 +15,9 @@
 # The test data files are located under: s3://lynxkite-test-data/
 # To generate your own test data files, see:
 # kitescripts/gen_test_data/generate_fake_westeros.groovy
+
+set -ueo pipefail
+trap "echo $0 has failed" ERR
 
 cd $(dirname $0)
 
