@@ -16,7 +16,7 @@
 # To generate your own test data files, see:
 # kitescripts/gen_test_data/generate_fake_westeros.groovy
 
-set -ueo pipefail
+set -xueo pipefail
 trap "echo $0 has failed" ERR
 
 cd $(dirname $0)
