@@ -3,7 +3,6 @@
 
 package com.lynxanalytics.biggraph
 
-import com.lynxanalytics.biggraph.spark_util.ExecutorStatusMonitor
 
 object BatchMain extends App {
   if (args.size < 1) {
@@ -35,7 +34,6 @@ For example:
   println(s"STARTING SCRIPT ${scriptFileName} with params ${params}")
   val startTime = System.currentTimeMillis()
   try {
-    new ExecutorStatusMonitor(BigGraphProductionEnvironment.sparkContext)
     groovy.GroovyContext.runScript(scriptFileName, params: _*)
   } finally {
     val elapsedTimeSecs = (System.currentTimeMillis() - startTime) / 1000
