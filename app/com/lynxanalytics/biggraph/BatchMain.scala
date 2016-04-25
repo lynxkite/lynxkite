@@ -3,7 +3,6 @@
 
 package com.lynxanalytics.biggraph
 
-
 object BatchMain extends App {
   if (args.size < 1) {
     System.err.println("""
