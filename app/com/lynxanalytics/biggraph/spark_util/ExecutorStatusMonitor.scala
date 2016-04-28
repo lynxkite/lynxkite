@@ -12,7 +12,7 @@ class ExecutorStatusMonitor(
   private val checkPeriod =
     LoggedEnvironment.envOrElse("KITE_EXECUTOR_STATUS_MONITOR_PERIOD_MILLIS", "60000").toLong
 
-  private def rddGetTotal(storageStatus: StorageStatus, memFun: (StorageStatus, Int) => Long): Long = {
+  def rddGetTotal(storageStatus: StorageStatus, memFun: (StorageStatus, Int) => Long): Long = {
     val rddBlocks =
       storageStatus.rddBlocks.keys.toSeq.filter(_.isInstanceOf[RDDBlockId]).map(_.asInstanceOf[RDDBlockId])
     rddBlocks.map(_.rddId).distinct.map {
@@ -21,14 +21,15 @@ class ExecutorStatusMonitor(
   }
 
   private def logStorageStatus(): Unit = {
-    val storageStatus = sc.getExecutorStorageStatus.toSeq
+    val allStorageStatuses = sc.getExecutorStorageStatus.toSeq
     def rddDisk(storageStatus: StorageStatus, id: Int) = storageStatus.diskUsedByRdd(id)
     def rddMem(storageStatus: StorageStatus, id: Int) = storageStatus.memUsedByRdd(id)
     def rddOffHeap(storageStatus: StorageStatus, id: Int) = storageStatus.offHeapUsedByRdd(id)
 
-    storageStatus.foreach {
+    allStorageStatuses.foreach {
       x =>
-        val diskUsed = x.diskUsed // In the source: _nonRddStorageInfo._2 + _rddBlocks.keys.toSeq.map(diskUsedByRdd).sum
+        // In the source: diskUsed = _nonRddStorageInfo._2 + _rddBlocks.keys.toSeq.map(diskUsedByRdd).sum
+        val diskUsed = x.diskUsed
         val rddDiskUsed = rddGetTotal(x, rddDisk)
 
         val memUsed = x.memUsed
