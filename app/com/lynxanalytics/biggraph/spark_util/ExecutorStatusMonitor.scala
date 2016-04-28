@@ -28,25 +28,16 @@ class ExecutorStatusMonitor(
 
     allStorageStatuses.foreach {
       x =>
-        // In the source: diskUsed = _nonRddStorageInfo._2 + _rddBlocks.keys.toSeq.map(diskUsedByRdd).sum
         val diskUsed = x.diskUsed
-        val rddDiskUsed = rddGetTotal(x, rddDisk)
-
         val memUsed = x.memUsed
-        val rddMemUsed = rddGetTotal(x, rddMem)
-
         val offHeapUsed = x.offHeapUsed
-        val rddOffHeapUsed = rddGetTotal(x, rddOffHeap)
-
-        val rddBlocksSize = x.rddBlocks.size
 
         val executor = x.blockManagerId.host + ":" + x.blockManagerId.port
         val msg =
           s"StorageStatus: executor: $executor" +
-            s"  (rdd+other)" +
-            s"  diskUsed: $rddDiskUsed+$diskUsed" +
-            s"  memUsed: $rddMemUsed+$memUsed" +
-            s"  offHeapUsed: $rddOffHeapUsed+$offHeapUsed"
+            s"  diskUsed: $diskUsed" +
+            s"  memUsed: $memUsed" +
+            s"  offHeapUsed: $offHeapUsed"
         log.info(msg)
     }
   }
@@ -57,7 +48,6 @@ class ExecutorStatusMonitor(
       case (e, m) =>
         val msg = s"Memory status: executor: $e  max memory: ${m._1}  remaining memory: ${m._2}"
         log.info(msg)
-
     }
   }
 
