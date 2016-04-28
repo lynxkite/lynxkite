@@ -56,9 +56,7 @@ angular.module('biggraph')
           }
         }
       }
-      scope.$watch('dropTooltip', updateTooltip);
-      scope.$watch('dropTooltipEnable', updateTooltip);
-      scope.$watch('dropTooltipPosition', updateTooltip);
+      scope.$watchGroup(['dropTooltip', 'dropTooltipEnable', 'dropTooltipPosition'], updateTooltip);
       scope.$on('$destroy', function() {
         if (drop) {
           drop.destroy();
