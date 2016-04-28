@@ -2,7 +2,7 @@
 start_time = System.currentTimeMillis()
 
 project = lynx.newProject()
-project.newVertexSet(size: 10000)
+project.newVertexSet(size: 100*10000)
 project.saveAs('dailytest') // Test saving and loading.
 project = lynx.loadProject('dailytest')
 project.createScaleFreeRandomEdgeBundle(iterations: 5, perIterationMultiplier: 1.6, seed: 1571682864)
