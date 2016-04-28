@@ -4,7 +4,6 @@ package com.lynxanalytics.biggraph.spark_util
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import org.apache.spark.storage.{ StorageStatus, RDDBlockId }
 
 class ExecutorStatusMonitor(
     sc: spark.SparkContext) extends Thread("executor-status-monitor") {
