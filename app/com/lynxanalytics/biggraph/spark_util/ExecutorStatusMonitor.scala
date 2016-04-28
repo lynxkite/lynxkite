@@ -15,20 +15,20 @@ class ExecutorStatusMonitor(
     val allStorageStatuses = sc.getExecutorStorageStatus.toSeq
 
     for (storageStatus <- allStorageStatuses) {
-        val executor = storageStatus.blockManagerId.host + ":" + storageStatus.blockManagerId.port
-        val msg =
-          s"StorageStatus: executor: $executor" +
-            s"  diskUsed: ${storageStatus.diskUsed}" +
-            s"  memUsed: ${storageStatus.memUsed}" +
-            s"  offHeapUsed: ${storageStatus.offHeapUsed}"
-        log.info(msg)
+      val executor = storageStatus.blockManagerId.host + ":" + storageStatus.blockManagerId.port
+      val msg =
+        s"StorageStatus: executor: $executor" +
+          s"  diskUsed: ${storageStatus.diskUsed}" +
+          s"  memUsed: ${storageStatus.memUsed}" +
+          s"  offHeapUsed: ${storageStatus.offHeapUsed}"
+      log.info(msg)
     }
   }
 
   private def logMemoryStatus(): Unit = {
     val memoryStatus = sc.getExecutorMemoryStatus.toSeq
     memoryStatus.foreach {
-      case (executor, (maxMemory,remainingMemory)) =>
+      case (executor, (maxMemory, remainingMemory)) =>
         val msg = s"Memory status: executor: $executor  max memory: $maxMemory  remaining memory: $remainingMemory"
         log.info(msg)
     }
