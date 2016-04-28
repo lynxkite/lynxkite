@@ -12,32 +12,16 @@ class ExecutorStatusMonitor(
   private val checkPeriod =
     LoggedEnvironment.envOrElse("KITE_EXECUTOR_STATUS_MONITOR_PERIOD_MILLIS", "60000").toLong
 
-  def rddGetTotal(storageStatus: StorageStatus, memFun: (StorageStatus, Int) => Long): Long = {
-    val rddBlocks =
-      storageStatus.rddBlocks.keys.toSeq.filter(_.isInstanceOf[RDDBlockId]).map(_.asInstanceOf[RDDBlockId])
-    rddBlocks.map(_.rddId).distinct.map {
-      id => memFun(storageStatus, id)
-    }.sum
-  }
-
   private def logStorageStatus(): Unit = {
     val allStorageStatuses = sc.getExecutorStorageStatus.toSeq
-    def rddDisk(storageStatus: StorageStatus, id: Int) = storageStatus.diskUsedByRdd(id)
-    def rddMem(storageStatus: StorageStatus, id: Int) = storageStatus.memUsedByRdd(id)
-    def rddOffHeap(storageStatus: StorageStatus, id: Int) = storageStatus.offHeapUsedByRdd(id)
 
-    allStorageStatuses.foreach {
-      x =>
-        val diskUsed = x.diskUsed
-        val memUsed = x.memUsed
-        val offHeapUsed = x.offHeapUsed
-
-        val executor = x.blockManagerId.host + ":" + x.blockManagerId.port
+    for (storageStatus <- allStorageStatuses) {
+        val executor = storageStatus.blockManagerId.host + ":" + storageStatus.blockManagerId.port
         val msg =
           s"StorageStatus: executor: $executor" +
-            s"  diskUsed: $diskUsed" +
-            s"  memUsed: $memUsed" +
-            s"  offHeapUsed: $offHeapUsed"
+            s"  diskUsed: ${storageStatus.diskUsed}" +
+            s"  memUsed: ${storageStatus.memUsed}" +
+            s"  offHeapUsed: ${storageStatus.offHeapUsed}"
         log.info(msg)
     }
   }
@@ -45,8 +29,8 @@ class ExecutorStatusMonitor(
   private def logMemoryStatus(): Unit = {
     val memoryStatus = sc.getExecutorMemoryStatus.toSeq
     memoryStatus.foreach {
-      case (e, m) =>
-        val msg = s"Memory status: executor: $e  max memory: ${m._1}  remaining memory: ${m._2}"
+      case (executor, (maxMemory,remainingMemory)) =>
+        val msg = s"Memory status: executor: $executor  max memory: $maxMemory  remaining memory: $remainingMemory"
         log.info(msg)
     }
   }
@@ -60,5 +44,4 @@ class ExecutorStatusMonitor(
   }
 
   setDaemon(true)
-  start()
 }

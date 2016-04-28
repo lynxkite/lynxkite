@@ -53,7 +53,8 @@ package object biggraph {
     val res = BigGraphEnvironmentImpl.createStaticDirEnvironment(
       repoDirs,
       new StaticSparkContextProvider())
-    new ExecutorStatusMonitor(res.sparkContext)
+    val executorStatusMonitor = new ExecutorStatusMonitor(res.sparkContext)
+    executorStatusMonitor.start()
     bigGraphLogger.info("Production Kite environment initialized")
     res
   }
