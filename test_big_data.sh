@@ -34,6 +34,7 @@ TMP_OUTPUT="${OUTPUT_FILE_BASE}.md.new"
 FINAL_OUTPUT="${OUTPUT_FILE_BASE}.md"
 
 # Run test.
+tools/install_spark.sh
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
   tools/emr_based_test.sh backend "big_data_tests/${TEST_PATTERN}" testDataSet:${DATA_SET} 2>&1 \
   | tee ${FULL_OUTPUT_LOG}
