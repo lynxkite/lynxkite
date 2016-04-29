@@ -5,6 +5,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+ - Improve speed and stability of the project history editor
 
 ### 1.7.4
 
