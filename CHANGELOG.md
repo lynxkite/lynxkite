@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
  - Improve speed and stability of the project history editor
+ - Easier to find data export button
+ - Table import wizard: added tab stops and removed highlight flickering
+ - Hide ACL settings in single-user instances
 
 ### 1.7.4
 
