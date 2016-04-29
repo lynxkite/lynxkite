@@ -594,7 +594,7 @@ Selector.prototype = {
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
-    testLib.wait(protractor.until.elementIsVisible(importCsvButton));
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
     importCsvButton.click();
   },
 
