@@ -26,11 +26,9 @@ class ExecutorStatusMonitor(
   }
 
   private def logMemoryStatus(): Unit = {
-    val memoryStatus = sc.getExecutorMemoryStatus.toSeq
-    memoryStatus.foreach {
-      case (executor, (maxMemory, remainingMemory)) =>
-        val msg = s"Memory status: executor: $executor  max memory: $maxMemory  remaining memory: $remainingMemory"
-        log.info(msg)
+    for ((executor, (maxMemory, remainingMemory)) <- sc.getExecutorMemoryStatus.toSeq) {
+      val msg = s"Memory status: executor: $executor  max memory: $maxMemory  remaining memory: $remainingMemory"
+      log.info(msg)
     }
   }
 
