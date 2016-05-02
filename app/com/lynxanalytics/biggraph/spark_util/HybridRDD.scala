@@ -18,8 +18,11 @@ object HybridRDD {
 // A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
 // is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
+    // The large potentially skewed RDD to do joins on.
     sourceRDD: RDD[(K, T)],
-    partitioner: Option[spark.Partitioner],
+    // A optional partitioner good enough for both RDDs. Only specify it if the subsequent
+    // lookupRDDs are partitioned with the same partitioner.
+    partitioner: Option[spark.Partitioner] = None,
     maxValuesPerKey: Int = HybridRDD.hybridLookupThreshold) {
 
   val tops = {
@@ -34,6 +37,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   val isEmpty = tops.isEmpty
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
+  // True iff a partitioner is specified.
   val hasPartitioner = !partitioner.isEmpty
 
   val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
@@ -41,9 +45,11 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   } else {
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  val smallKeysTable = if (isSkewed) {
+  val smallKeysRDD = if (isSkewed) {
     val rdd = sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
     if (hasPartitioner) {
+      // Sort the smallKeysRDD once instead of every time there is a lookup.
+      import Implicits._
       rdd.sort(partitioner.get)
     } else {
       rdd
@@ -51,23 +57,31 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   } else {
     sourceRDD.context.emptyRDD[(K, T)]
   }
+  val optimizedSourceRDD = if (!isSkewed && hasPartitioner) {
+    // If this HybridRDD is not skewed joinLookups will happen on the sourceRDD, so better sort it once.
+    import Implicits._
+    sourceRDD.sort(partitioner.get)
+  } else {
+    sourceRDD
+  }
 
-  // Caches the sourceRDD and the helper RDDs computed from it.
+  // Caches the optimizedSourceRDD and the smallKeysRDD.
   def persist(storageLevel: spark.storage.StorageLevel): Unit = {
     if (!isEmpty) {
       if (isSkewed) {
-        smallKeysTable.persist(storageLevel)
+        smallKeysRDD.persist(storageLevel)
       }
-      sourceRDD.persist(storageLevel)
+      optimizedSourceRDD.persist(storageLevel)
     }
   }
 
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[S](
-    sourceRDD: RDD[(K, T)], lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    sourceRDD: RDD[(K, T)], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     import Implicits._
-    sourceRDD.sort(lookupTable.partitioner.get).sortedJoin(lookupTable)
+    // Sort will have no effect if the sourceRDD is already sorted with the same partitioner.
+    sourceRDD.sort(lookupRDD.partitioner.get).sortedJoin(lookupRDD)
   }
 
   // A lookup method based on sending the lookup table to all tasks. The lookup table should be
@@ -81,8 +95,8 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // Same as lookup but repartitions the result after a hybrid lookup. The elements of the
   // result RDD are evenly distributed among its partitions.
   def lookupAndRepartition[S](
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = lookup(lookupTable)
+    lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = lookup(lookupRDD)
     if (isSkewed) {
       // "ord = null" is a workaround for a Scala 2.10 compiler bug.
       // TODO: Remove when upgrading to 2.11.
@@ -95,8 +109,8 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // Same as lookup but coalesces the result after a hybrid lookup. The result RDD has
   // as many partitions as the original one.
   def lookupAndCoalesce[S](
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = lookup(lookupTable)
+    lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    val result = lookup(lookupRDD)
     if (isSkewed) {
       // "ord = null" is a workaround for a Scala 2.10 compiler bug.
       // TODO: Remove when upgrading to 2.11.
@@ -110,19 +124,19 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // be handled by joinLookup and does joinLookup for the rest. There are no guarantees about the
   // partitions of the result RDD.
   def lookup[S](
-    lookupTable: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
     if (isEmpty) sourceRDD.context.emptyRDD
     else {
       if (isSkewed) {
-        val largeKeysMap = lookupTable.restrictToIdSet(tops.map(_._1).toIndexedSeq.sorted).collect.toMap
+        val largeKeysMap = lookupRDD.restrictToIdSet(tops.map(_._1).toIndexedSeq.sorted).collect.toMap
         log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
           + "${largeKeysCoverage} source records.")
-        val larges = smallTableLookup(sourceRDD, largeKeysMap)
-        val smalls = joinLookup(smallKeysTable, lookupTable)
+        val larges = smallTableLookup(optimizedSourceRDD, largeKeysMap)
+        val smalls = joinLookup(smallKeysRDD, lookupRDD)
         smalls ++ larges
       } else {
-        joinLookup(sourceRDD, lookupTable)
+        joinLookup(optimizedSourceRDD, lookupRDD)
       }
     }
   }
