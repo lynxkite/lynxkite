@@ -19,6 +19,7 @@ object HybridRDD {
 // is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     sourceRDD: RDD[(K, T)],
+    partitioner: Option[spark.Partitioner],
     maxValuesPerKey: Int = HybridRDD.hybridLookupThreshold) {
 
   val tops = {
@@ -33,6 +34,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   val isEmpty = tops.isEmpty
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
+  val hasPartitioner = !partitioner.isEmpty
 
   val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
@@ -40,7 +42,12 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
   val smallKeysTable = if (isSkewed) {
-    sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+    val rdd = sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+    if (hasPartitioner) {
+      rdd.sort(partitioner.get)
+    } else {
+      rdd
+    }
   } else {
     sourceRDD.context.emptyRDD[(K, T)]
   }
