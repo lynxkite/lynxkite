@@ -78,6 +78,10 @@ case class PageRank(dampingFactor: Double,
         .mapValues {
           case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
+        // We need copyWithAncestorsCached because of the restrictToIdSet in HybridRDD.
+        // CopyWithAncestorsCached caches everything into memory which may be problematic.
+        .copyWithAncestorsCached
+        .persist(spark.storage.StorageLevel.DISK_ONLY)
     }
     output(o.pagerank, pageRank.sortedRepartition(vertexPartitioner))
   }
