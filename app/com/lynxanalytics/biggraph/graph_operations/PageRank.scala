@@ -56,8 +56,8 @@ case class PageRank(dampingFactor: Double,
     val edgesWithSumWeights = HybridRDD(edgesWithWeights).lookupAndCoalesce(sumWeights)
     // Normalize the weights for every src vertex.
     val targetsWithWeights = HybridRDD(
-      edgesWithSumWeights
-        .mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) })
+      edgesWithSumWeights.mapValues { case ((dst, weight), sumWeight) => (dst, weight / sumWeight) },
+      Some(edgePartitioner))
     targetsWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
 
     var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(edgePartitioner)
