@@ -3,10 +3,11 @@
 
 cd $(dirname $0)/..
 VERSION=$(cat conf/SPARK_VERSION)
+HADOOP='2.6'
 cd $HOME
 if [[ ! -x "spark-${VERSION}" ]]; then
-  wget "http://d3kbcqa49mib13.cloudfront.net/spark-${VERSION}-bin-hadoop2.4.tgz"
-  tar xf "spark-${VERSION}-bin-hadoop2.4.tgz"
-  rm "spark-${VERSION}-bin-hadoop2.4.tgz"
-  ln -s "spark-${VERSION}-bin-hadoop2.4" "spark-${VERSION}"
+  wget "http://d3kbcqa49mib13.cloudfront.net/spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
+  tar xf "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
+  rm "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
+  ln -s "spark-${VERSION}-bin-hadoop${HADOOP}" "spark-${VERSION}"
 fi
