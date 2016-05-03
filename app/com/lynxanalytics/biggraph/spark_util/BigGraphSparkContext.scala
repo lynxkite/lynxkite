@@ -209,6 +209,7 @@ object BigGraphSparkContext {
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
+      .set("spark.memory.useLegacyMode", "true")
       .set("spark.io.compression.codec", "lz4")
       .set("spark.executor.memory",
         LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
