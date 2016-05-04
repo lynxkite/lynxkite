@@ -6,6 +6,8 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 
+import org.apache.spark
+
 object AddReversedEdges extends OpFromJson {
   private val addIsNewAttrParameter = NewParameter("addIsNewAttr", false)
   class Input extends MagicInputSignature {
@@ -46,7 +48,7 @@ case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGrap
     val reverseAdded: SortedRDD[ID, (Edge, Double)] =
       es.flatMapValues(e => Iterator((e, 0.0), (Edge(e.dst, e.src), 1.0)))
     // The new edge bundle should have 2x as many edges and therefore partitions as the original.
-    val partitioner = rc.partitionerForNPartitions(es.partitions.size * 2)
+    val partitioner = new spark.HashPartitioner(es.partitions.size * 2)
     val renumbered: UniqueSortedRDD[ID, (ID, (Edge, Double))] =
       reverseAdded.randomNumbered(partitioner)
     output(o.esPlus, renumbered.mapValues { case (oldID, (e, _)) => e })
