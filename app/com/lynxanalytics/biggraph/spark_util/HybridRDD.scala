@@ -78,17 +78,17 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[S](
-    sourceRDD: RDD[(K, T)], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    leftRDD: RDD[(K, T)], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     import Implicits._
-    // Sort will have no effect if the sourceRDD is already sorted with the same partitioner.
-    sourceRDD.sort(lookupRDD.partitioner.get).sortedJoin(lookupRDD)
+    // Sort will have no effect if the leftRDD is already sorted with the same partitioner.
+    leftRDD.sort(lookupRDD.partitioner.get).sortedJoin(lookupRDD)
   }
 
   // A lookup method based on sending the lookup table to all tasks. The lookup table should be
   // reasonably small.
   private def smallTableLookup[S](
-    sourceRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
-    sourceRDD
+    leftRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
+    leftRDD
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
