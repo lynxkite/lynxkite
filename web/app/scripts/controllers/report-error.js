@@ -1,14 +1,8 @@
 // The modal dialog for error reporting.
 'use strict';
 
-function decodeMsg(msg) {
-  var area = document.createElement('textarea');
-  area.innerHTML = msg;
-  return area.value;
-}
-
 angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modalInstance, alert) {
-  $scope.message = decodeMsg(alert.message || '');
+  $scope.message = alert.message || '';
   $scope.details = alert.details ? JSON.stringify(alert.details, null, '  ') : undefined;
 
   var support = 'support@lynxanalytics.freshdesk.com';
