@@ -3,14 +3,7 @@
 # Last successful tested with: aws-cli/1.10.20 Python/2.7.6 botocore/1.4.11
 # TODO: rewrite this in Python using boto directly
 
-set -ueo pipefail
-function trap_handler() {
-  THIS_SCRIPT="$0"
-  LAST_LINENO="$1"
-  LAST_COMMAND="$2"
-  echo "${THIS_SCRIPT}:${LAST_LINENO}: error while executing: ${LAST_COMMAND}" 1>&2;
-}
-trap 'trap_handler ${LINENO} "${BASH_COMMAND}"' ERR
+source "$(dirname $0)/biggraph_common.sh"
 
 DIR=$(dirname $0)
 
@@ -148,6 +141,12 @@ DeployKite() {
     hadoop@${MASTER_HOSTNAME}:biggraphstage
 }
 
+ExecuteOnMaster() {
+  CMD=$1
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr ssh $MASTER_ACCESS --command "$CMD"
+}
+
 if [ ! -f "${SSH_KEY}" ]; then
   echoerr "${SSH_KEY} does not exist."
   exit 1
@@ -277,8 +276,7 @@ EOF
 
 # ======
 uploadLogs)
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph uploadLogs"
+  ExecuteOnMaster "./biggraphstage/bin/biggraph uploadLogs"
   ;;
 
 # =====
@@ -295,6 +293,10 @@ kite)
   aws emr ssh $MASTER_ACCESS --command 'biggraphstage/bin/biggraph restart'
 
   echo "Server started. Use ${0} connect ${SPEC} to connect to it."
+  ;;
+
+setup-monitoring)
+  ExecuteOnMaster "./biggraphstage/tools/monitoring/setup_monitoring_master.sh"
   ;;
 
 # ======
@@ -321,7 +323,6 @@ cmd)
   MASTER_HOSTNAME=$(GetMasterHostName)
   $SSH -A hadoop@${MASTER_HOSTNAME} "${COMMAND_ARGS[@]}"
   ;;
-
 
 # ======
 put)
@@ -354,8 +355,7 @@ reset)
 
 # ====== fall-through
 reset-yes)
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop; \
+  ExecuteOnMaster "./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
     true;"
