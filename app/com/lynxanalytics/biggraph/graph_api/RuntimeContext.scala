@@ -15,6 +15,4 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
     new spark.HashPartitioner((n / io.EntityIO.verticesPerPartition).ceil.toInt max 1)
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
-  def partitionerForNPartitions(n: Int): spark.Partitioner =
-    new spark.HashPartitioner(n max 1)
 }
