@@ -30,8 +30,9 @@ function kill_backend {
   kill $KITE_PID
   rm -rf "$TMP"
 }
-trap kill_backend EXIT
+trap kill_backend EXIT ERR
 echo "Kite running on port: $PORT"
+PORT=$PORT ./test_interface.sh
 
 cd web
 # Run test against backend.
