@@ -18,7 +18,7 @@ class SparkTests(sc: spark.SparkContext) {
 
     var state = vertices.map(id => (id, 1L))
     var counters = vertices.map(id => 0)
-    for (i <- 1 to 5) {
+    for (i <- 1 to 7) {
       if (storageLevel != null) {
         state.persist(storageLevel)
         state.foreach(identity) // force cache fill
@@ -29,7 +29,7 @@ class SparkTests(sc: spark.SparkContext) {
         .flatMap {
           case (id, cnt) =>
             val r = new scala.util.Random(id)
-            (1 to 4).map {
+            (1 to 20).map {
               _ =>
                 (r.nextInt(numVertices), cnt)
             }
