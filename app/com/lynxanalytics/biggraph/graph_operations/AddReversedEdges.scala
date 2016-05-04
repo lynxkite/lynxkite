@@ -45,8 +45,8 @@ case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGrap
     val es = inputs.es.rdd
     val reverseAdded: SortedRDD[ID, (Edge, Double)] =
       es.flatMapValues(e => Iterator((e, 0.0), (Edge(e.dst, e.src), 1.0)))
-    // The new edge bundle will have exactly 2x as many edges as the original.
-    val partitioner = rc.partitionerForNRows(es.count * 2)
+    // The new edge bundle should have 2x as many edges and therefore partitions as the original.
+    val partitioner = rc.partitionerForNPartitions(es.partitions.size * 2)
     val renumbered: UniqueSortedRDD[ID, (ID, (Edge, Double))] =
       reverseAdded.randomNumbered(partitioner)
     output(o.esPlus, renumbered.mapValues { case (oldID, (e, _)) => e })
