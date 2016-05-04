@@ -16,16 +16,15 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) with GlobalSettings {
   override def onBadRequest(request: RequestHeader, error: String) = {
-    concurrent.Future.successful(BadRequest(escape(error)))
+    concurrent.Future.successful(BadRequest(error))
   }
 
   override def onError(request: RequestHeader, throwable: Throwable) = {
-    concurrent.Future.successful(InternalServerError(escape(
-      serving.Utils.formatThrowable(throwable))))
+    concurrent.Future.successful(InternalServerError(serving.Utils.formatThrowable(throwable)))
   }
 
   override def onHandlerNotFound(request: RequestHeader) = {
-    concurrent.Future.successful(NotFound(escape(request.toString)))
+    concurrent.Future.successful(NotFound(request.toString))
   }
 
   def notifyStarterScript(msg: String): Unit = {
