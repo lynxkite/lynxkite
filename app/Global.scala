@@ -16,7 +16,11 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) with GlobalSettings {
-  private def escapeIfNeeded(error: String, headers: Headers) = {
+  // PR #2433 also transformed
+  // error messages that the user could actually see, but were perfectly
+  // safe to be unescaped. See issue #3348. So, we only perform
+  // escaping where necessary.
+  private def escapeIfNeeded(error: String, headers: Headers): Html = {
     if (headers.get("X-Requested-With") == Some("XMLHttpRequest")) Html(error)
     else escape(error)
   }
