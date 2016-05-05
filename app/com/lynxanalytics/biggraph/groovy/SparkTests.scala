@@ -7,37 +7,41 @@ import org.apache.spark
 class SparkTests(sc: spark.SparkContext) {
 
   def iterativeTest(params: java.util.Map[String, AnyRef]) {
-    val storageLevel = params
+    val storageLevelString = params
       .get("storageLevel")
-      .asInstanceOf[spark.storage.StorageLevel]
+      .asInstanceOf[String]
+    val storageLevel = if (storageLevelString == null) null else spark.storage.StorageLevel.fromString(storageLevelString)
     val numVertices = params
       .get("dataSize")
       .asInstanceOf[String]
       .toInt
-    val vertices = sc.parallelize(0 to (numVertices - 1))
-
-    var state = vertices.map(id => (id, 1L))
-    var counters = vertices.map(id => 0)
-    for (i <- 1 to 7) {
-      if (storageLevel != null) {
-        state.persist(storageLevel)
-        state.foreach(identity) // force cache fill
-      } else {
-        state.foreach(identity) // do a forking (emulate real algo)
+    val numPartitions = 100
+    val vertices = sc.parallelize(0 to (numVertices - 1), numPartitions)
+    val data = vertices
+      .map {
+        id =>
+          val r = new scala.util.Random(id)
+          (r.nextInt(numVertices), Unit)
       }
-      state = state
-        .flatMap {
-          case (id, cnt) =>
-            val r = new scala.util.Random(id)
-            (1 to 20).map {
-              _ =>
-                (r.nextInt(numVertices), cnt)
-            }
-        }
-        .reduceByKey(_ + _)
+      .partitionBy(new spark.HashPartitioner(numPartitions))
+
+    /*      .flatMap {
+        case (id, cnt) =>
+          val r = new scala.util.Random(id)
+          (1 to 20).map {
+            _ =>
+              (r.nextInt(numVertices), cnt)
+          }
+      }
+      .reduceByKey(_ + _)*/
+
+    if (storageLevel != null) {
+      data.persist(storageLevel)
     }
 
-    state.foreach(identity)
+    data.foreach(identity)
+    data.foreach(identity)
+
   }
 
 }
