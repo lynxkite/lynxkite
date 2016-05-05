@@ -313,9 +313,10 @@ object Aggregator {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
     def aggregate(values: Iterable[Double]) = {
       val cnt: Int = values.size
-      val (halfCount1: Int, halfCount2: Int) = if (cnt % 2 == 0) { if (cnt == 0) (0, 0) else (cnt / 2 - 1, cnt / 2) }
-      else ((cnt - 1) / 2, (cnt - 1) / 2)
-      val sortedValues = values.toSeq.sortWith(_ > _)
+      val (halfCount1, halfCount2) =
+        if (cnt % 2 == 0) (cnt / 2 - 1, cnt / 2)
+        else ((cnt - 1) / 2, (cnt - 1) / 2)
+      val sortedValues = values.toSeq.sorted
       (sortedValues(halfCount1) + sortedValues(halfCount2)) / 2
     }
   }
