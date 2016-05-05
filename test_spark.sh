@@ -38,8 +38,8 @@ runTests() {
 }
 
 RESULTS_DIR="kitescripts/spark_tests/results"
-NEW_RESULTS_FILE="${RESULTS_DIR}/${MODE}_${DATA_SIZE}_results.md.new"
-OUTPUT_LOG="${RESULTS_DIR}/${MODE}_${DATA_SIZE}_results.log"
+NEW_RESULTS_FILE="${RESULTS_DIR}/${MODE}_${DATA_SIZE}.md"
+OUTPUT_LOG="${RESULTS_DIR}/${MODE}_${DATA_SIZE}.log"
 
 rm -f ${NEW_RESULTS_FILE}
 
