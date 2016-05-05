@@ -18,7 +18,7 @@ object HybridRDD {
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
     leftRDD: SortedRDD[K, T], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    assert(leftRDD.partitioner.get eq leftRDD.partitioner.get)
+    assert(leftRDD.partitioner.get eq lookupRDD.partitioner.get)
     leftRDD.sortedJoin(lookupRDD)
   }
 
