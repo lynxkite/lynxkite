@@ -70,7 +70,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   } else {
     sourceRDD.sort(partitioner)
   }
-  // The RDD to use with map lookup.
+  // The RDD to use with map lookup. It may contain keys with large cardinalities.
   val largeKeysRDD: RDD[(K, T)] = if (isSkewed) {
     sourceRDD
   } else {
