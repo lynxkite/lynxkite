@@ -13,6 +13,22 @@ object HybridRDD {
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
   private val hybridLookupMaxLarge =
     LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
+
+  // A lookup method based on joining the source RDD with the lookup table. Assumes
+  // that each key has only so many instances that we can handle all of them in a single partition.
+  private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    leftRDD: SortedRDD[K, T], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+    assert(leftRDD.partitioner.get eq leftRDD.partitioner.get)
+    leftRDD.sortedJoin(lookupRDD)
+  }
+
+  // A lookup method based on sending the lookup table to all tasks. The lookup table should be
+  // reasonably small.
+  private def smallTableLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    leftRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
+    leftRDD
+      .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
+  }
 }
 
 // A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
@@ -22,7 +38,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     sourceRDD: RDD[(K, T)],
     // A optional partitioner good enough for both RDDs. Only specify it if the subsequent
     // lookupRDDs are partitioned with the same partitioner.
-    partitioner: Option[spark.Partitioner] = None,
+    partitioner: spark.Partitioner,
     maxValuesPerKey: Int = HybridRDD.hybridLookupThreshold) {
 
   val tops = {
@@ -33,63 +49,40 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       .top(HybridRDD.hybridLookupMaxLarge)(ordering)
       .sorted(ordering)
   }
+  val topIDs = tops.map(_._1).toIndexedSeq.sorted
+
   // True iff this HybridRDD has no elements.
   val isEmpty = tops.isEmpty
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !tops.isEmpty && tops.last._2 > maxValuesPerKey
-  // True iff a partitioner is specified.
-  val hasPartitioner = !partitioner.isEmpty
 
   val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
   } else {
     (tops.map(_._1).toSet, tops.map(_._2).reduce(_ + _))
   }
-  val smallKeysRDD = if (isSkewed) {
-    val rdd = sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
-    if (hasPartitioner) {
-      // Sort the smallKeysRDD once instead of every time there is a lookup.
-      import Implicits._
-      rdd.sort(partitioner.get)
-    } else {
-      rdd
-    }
+  // The RDD containing only keys that are safe to use in sorted join.
+  import Implicits._
+  val smallKeysRDD: SortedRDD[K, T] = if (isSkewed) {
+    sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }.sort(partitioner)
   } else {
-    sourceRDD.context.emptyRDD[(K, T)]
+    sourceRDD.sort(partitioner)
   }
-  val optimizedSourceRDD = if (!isSkewed && hasPartitioner) {
-    // If this HybridRDD is not skewed joinLookups will happen on the sourceRDD, so better sort it once.
-    import Implicits._
-    sourceRDD.sort(partitioner.get)
-  } else {
+  // The RDD to use with map lookup.
+  val largeKeysRDD: RDD[(K, T)] = if (isSkewed) {
     sourceRDD
+  } else {
+    null
   }
 
   // Caches the optimizedSourceRDD and the smallKeysRDD.
   def persist(storageLevel: spark.storage.StorageLevel): Unit = {
     if (!isEmpty) {
       if (isSkewed) {
-        smallKeysRDD.persist(storageLevel)
+        largeKeysRDD.persist(storageLevel)
       }
-      optimizedSourceRDD.persist(storageLevel)
+      smallKeysRDD.persist(storageLevel)
     }
-  }
-
-  // A lookup method based on joining the source RDD with the lookup table. Assumes
-  // that each key has only so many instances that we can handle all of them in a single partition.
-  private def joinLookup[S](
-    leftRDD: RDD[(K, T)], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    import Implicits._
-    // Sort will have no effect if the leftRDD is already sorted with the same partitioner.
-    leftRDD.sort(lookupRDD.partitioner.get).sortedJoin(lookupRDD)
-  }
-
-  // A lookup method based on sending the lookup table to all tasks. The lookup table should be
-  // reasonably small.
-  private def smallTableLookup[S](
-    leftRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
-    leftRDD
-      .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
   // Same as lookup but repartitions the result after a hybrid lookup. The elements of the
@@ -129,14 +122,14 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     if (isEmpty) sourceRDD.context.emptyRDD
     else {
       if (isSkewed) {
-        val largeKeysMap = lookupRDD.restrictToIdSet(tops.map(_._1).toIndexedSeq.sorted).collect.toMap
+        val largeKeysMap = lookupRDD.restrictToIdSet(topIDs).collect.toMap
         log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
           + "${largeKeysCoverage} source records.")
-        val larges = smallTableLookup(optimizedSourceRDD, largeKeysMap)
-        val smalls = joinLookup(smallKeysRDD, lookupRDD)
+        val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
+        val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
         smalls ++ larges
       } else {
-        joinLookup(optimizedSourceRDD, lookupRDD)
+        HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
       }
     }
   }
