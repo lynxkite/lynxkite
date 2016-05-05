@@ -12,6 +12,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Table import wizard: added tab stops and removed highlight flickering
  - Hide ACL settings in single-user instances
 
+ - New aggregator: `median`.
+
 ### 1.7.4
 
  - Prefix-based user access control can be specified in the prefix definitions file.
