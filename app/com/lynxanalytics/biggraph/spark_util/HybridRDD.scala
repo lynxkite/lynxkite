@@ -36,12 +36,12 @@ object HybridRDD {
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // The large potentially skewed RDD to do joins on.
     sourceRDD: RDD[(K, T)],
-    // A optional partitioner good enough for both RDDs. Only specify it if the subsequent
-    // lookupRDDs are partitioned with the same partitioner.
+    // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
+    // must have the same partitioner.    
     partitioner: spark.Partitioner,
     maxValuesPerKey: Int = HybridRDD.hybridLookupThreshold) {
 
-  val tops = {
+  private val tops = {
     val ordering = new CountOrdering[K]
     sourceRDD
       .mapValues(x => 1L)
@@ -49,29 +49,29 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       .top(HybridRDD.hybridLookupMaxLarge)(ordering)
       .sorted(ordering)
   }
-  val filteredTops = tops.filter(_._2 > maxValuesPerKey)
+  private val filteredTops = tops.filter(_._2 > maxValuesPerKey)
 
   // True iff this HybridRDD has no elements.
   val isEmpty = tops.isEmpty
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !filteredTops.isEmpty
 
-  val filteredTopIDs = filteredTops.map(_._1).toIndexedSeq.sorted
+  private val filteredTopIDs = filteredTops.map(_._1).toIndexedSeq.sorted
 
-  val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
+  private val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
   } else {
     (filteredTops.map(_._1).toSet, filteredTops.map(_._2).reduce(_ + _))
   }
   // The RDD containing only keys that are safe to use in sorted join.
   import Implicits._
-  val smallKeysRDD: SortedRDD[K, T] = if (isSkewed) {
+  private val smallKeysRDD: SortedRDD[K, T] = if (isSkewed) {
     sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }.sort(partitioner)
   } else {
     sourceRDD.sort(partitioner)
   }
   // The RDD to use with map lookup. It may contain keys with large cardinalities.
-  val largeKeysRDD: RDD[(K, T)] = if (isSkewed) {
+  private val largeKeysRDD: RDD[(K, T)] = if (isSkewed) {
     sourceRDD
   } else {
     null
