@@ -207,6 +207,6 @@ Uncomment the below lines to export LynxKite's Spark metrics into
 a Graphite-compatible monitoring system. You can use this together
 with `setup_monitoring_master.sh`.
 ```
-export GRAPHITE_MONITORING_HOST=$(hostname)
-export GRAPHITE_MONITORING_PORT=9109
+# export GRAPHITE_MONITORING_HOST=$(hostname)
+# export GRAPHITE_MONITORING_PORT=9109
 ```
