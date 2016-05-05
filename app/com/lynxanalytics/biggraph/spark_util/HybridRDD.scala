@@ -77,7 +77,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     null
   }
 
-  // Caches the optimizedSourceRDD and the smallKeysRDD.
+  // Caches the smallKeysRDD and the largeKeysRDD for skewed HybridRDDs.
   def persist(storageLevel: spark.storage.StorageLevel): Unit = {
     if (!isEmpty) {
       if (isSkewed) {
