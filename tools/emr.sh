@@ -124,7 +124,13 @@ CheckDataRepo() {
   fi
 }
 
-DeployKite() {
+ExecuteOnMaster() {
+  CMD=$1
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr ssh $MASTER_ACCESS --command "$CMD"
+}
+
+DeployKiteAndMonitoring() {
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
     echoerr "You must run this script from inside a stage, not from the source tree!"
@@ -139,12 +145,8 @@ DeployKite() {
     --exclude metastore_db \
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
-}
 
-ExecuteOnMaster() {
-  CMD=$1
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "$CMD"
+  ExecuteOnMaster "./biggraphstage/tools/monitoring/restart_monitoring_master.sh"
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -227,6 +229,8 @@ export KITE_AMMONITE_PORT=2203
 export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
 export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
+export GRAPHITE_MONITORING_HOST=\$(hostname)
+export GRAPHITE_MONITORING_PORT=9109
 EOF
 
   SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"
@@ -281,22 +285,18 @@ uploadLogs)
 
 # =====
 deploy-kite)
-  DeployKite
+  DeployKiteAndMonitoring
   ;;
 
 # ======
 kite)
-  DeployKite
+  DeployKiteAndMonitoring
 
   MASTER_ACCESS=$(GetMasterAccessParams)
   echo "Starting..."
   aws emr ssh $MASTER_ACCESS --command 'biggraphstage/bin/biggraph restart'
 
   echo "Server started. Use ${0} connect ${SPEC} to connect to it."
-  ;;
-
-setup-monitoring)
-  ExecuteOnMaster "./biggraphstage/tools/monitoring/setup_monitoring_master.sh"
   ;;
 
 # ======
