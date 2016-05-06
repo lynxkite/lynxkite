@@ -18,7 +18,8 @@ object HybridRDD {
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
     leftRDD: SortedRDD[K, T], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    assert(leftRDD.partitioner.get eq lookupRDD.partitioner.get)
+    assert(leftRDD.partitioner.get eq lookupRDD.partitioner.get,
+      "LeftRDD and lookupRDD must have the same partitioner.")
     leftRDD.sortedJoin(lookupRDD)
   }
 
@@ -61,15 +62,17 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   private val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
   } else {
-    (filteredTops.map(_._1).toSet, filteredTops.map(_._2).reduce(_ + _))
+    (filteredTopIDs.toSet, filteredTops.map(_._2).reduce(_ + _))
   }
   // The RDD containing only keys that are safe to use in sorted join.
   import Implicits._
-  private val smallKeysRDD: SortedRDD[K, T] = if (isSkewed) {
-    sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }.sort(partitioner)
-  } else {
-    sourceRDD.sort(partitioner)
-  }
+  private val smallKeysRDD: SortedRDD[K, T] = {
+    if (isSkewed) {
+      sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
+    } else {
+      sourceRDD
+    }
+  }.sort(partitioner)
   // The RDD to use with map lookup. It may contain keys with large cardinalities.
   private val largeKeysRDD: RDD[(K, T)] = if (isSkewed) {
     sourceRDD
@@ -123,15 +126,15 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
 
     if (isEmpty) sourceRDD.context.emptyRDD
     else {
+      val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
       if (isSkewed) {
         val largeKeysMap = lookupRDD.restrictToIdSet(filteredTopIDs).collect.toMap
         log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
           + "${largeKeysCoverage} source records.")
         val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
-        val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
         smalls ++ larges
       } else {
-        HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
+        smalls // For non-skewed RDDs every row is in smallKeysRDD.
       }
     }
   }
