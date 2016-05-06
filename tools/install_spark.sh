@@ -5,11 +5,7 @@ cd $(dirname $0)/..
 VERSION=$(cat conf/SPARK_VERSION)
 
 # Link to the given name or spark-$VERSION by default.
-if [[ -n "$1" ]]; then
-  LINK="$1"
-else
-  LINK="spark-${VERSION}"
-fi
+LINK="${1:-spark-${VERSION}}"
 
 HADOOP='2.6'
 cd $HOME
