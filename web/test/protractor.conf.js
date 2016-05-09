@@ -14,7 +14,10 @@ exports.config = {
     platform: 'ANY',
     version: 'ANY',
     chromeOptions: {
-      args: ['--disable-gpu'], // For #3039.
+      args: [
+        '--disable-gpu', // For #3039.
+        '--no-sandbox', // Sandboxing fails on GCE in Docker. Too safe already?
+      ],
       // Set download path and avoid prompting for download even though
       // this is already the default on Chrome but for completeness
       prefs: {

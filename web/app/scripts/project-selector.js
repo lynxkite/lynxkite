@@ -185,7 +185,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkEntry',
-              { 
+              {
                 from: p,
                 to: scope.dirName(p) + 'Copy of ' + scope.baseName(p)
               }).then(scope.reload);

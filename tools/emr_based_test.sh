@@ -22,7 +22,7 @@ cd "$(dirname $0)/.."
 MODE=${1}
 shift
 
-CLUSTER_NAME="${USER}-test-cluster"
+CLUSTER_NAME=${CLUSTER_NAME:-${USER}-test-cluster}
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
 NUM_INSTANCES=${NUM_INSTANCES:-3}
 

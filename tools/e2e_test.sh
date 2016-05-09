@@ -26,12 +26,13 @@ KITE_SITE_CONFIG="conf/kiterc_template" \
 KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" stage/bin/biggraph start
 KITE_PID=`cat ${PID_FILE}`
 function kill_backend {
-  echo "Shutting down server on port $KITE_PID."
+  echo "Shutting down server on port $PORT"
   kill $KITE_PID
   rm -rf "$TMP"
 }
-trap kill_backend EXIT
+trap kill_backend EXIT ERR
 echo "Kite running on port: $PORT"
+PORT=$PORT tools/test_interface.sh
 
 cd web
 # Run test against backend.
