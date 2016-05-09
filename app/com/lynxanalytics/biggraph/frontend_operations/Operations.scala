@@ -1344,7 +1344,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
       }
-      project.newVertexAttribute(params("output"), result.attr, expr + help)
+      project.newVertexAttribute(params("output"), result, expr + help)
     }
   })
 
@@ -1386,7 +1386,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
       }
-      project.edgeAttributes(params("output")) = result.attr
+      project.edgeAttributes(params("output")) = result
     }
   })
 
