@@ -3,6 +3,7 @@ package com.lynxanalytics
 
 import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, PrefixRepository }
 import ch.qos.logback.classic.LoggerContext
+import com.lynxanalytics.biggraph.spark_util.ExecutorStatusMonitor
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
@@ -52,6 +53,8 @@ package object biggraph {
     val res = BigGraphEnvironmentImpl.createStaticDirEnvironment(
       repoDirs,
       new StaticSparkContextProvider())
+    val executorStatusMonitor = new ExecutorStatusMonitor(res.sparkContext)
+    executorStatusMonitor.start()
     bigGraphLogger.info("Production Kite environment initialized")
     res
   }

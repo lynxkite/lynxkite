@@ -144,17 +144,18 @@ tag::local-aggregators[]
 The available aggregators are:
 
  * For `Double` attributes:
- ** `sum`
  ** `average`
- ** `min`
- ** `max`
- ** `most_common`
- ** `count_distinct` (the number of distinct values)
  ** `count` (number of cases where the attribute is defined)
- ** `vector` (all the values, as a `Vector` attribute)
- ** `set` (all the unique values, as a `Set` attribute)
+ ** `count_distinct` (the number of distinct values)
  ** `first` (arbitrarily picks a value)
+ ** `max`
+ ** 'median'
+ ** `min`
+ ** `most_common`
+ ** `set` (all the unique values, as a `Set` attribute)
  ** `std_deviation` (standard deviation)
+ ** `sum`
+ ** `vector` (all the values, as a `Vector` attribute)
 
  * For `String` attributes:
  ** `most_common`

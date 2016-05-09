@@ -74,11 +74,11 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     val edgesBySrc = unresolvedEdges.map {
       case (edgeId, (srcName, dstName)) => srcName -> (edgeId, dstName)
     }
-    val srcResolvedByDst = HybridRDD(edgesBySrc)
+    val srcResolvedByDst = HybridRDD(edgesBySrc, partitioner)
       .lookupAndRepartition(srcNameToVid)
       .map { case (srcName, ((edgeId, dstName), srcVid)) => dstName -> (edgeId, srcVid) }
 
-    HybridRDD(srcResolvedByDst)
+    HybridRDD(srcResolvedByDst, partitioner)
       .lookupAndRepartition(dstNameToVid)
       .map { case (dstName, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
       .sortUnique(partitioner)
