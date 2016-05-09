@@ -73,7 +73,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
       println("       . " + method)
       val g = ExampleGraph()().result
       val gender = DeriveJS.deriveFromAttributes[Double](
-        "gender == 'Male' ? 1 : 0", Seq("gender" -> g.gender), g.vertices).attr
+        "gender == 'Male' ? 1 : 0", Seq("gender" -> g.gender), g.vertices)
       predict(method, gender, Seq(g.age))
     }
     assertRoughly(gender("Linear regression"),
@@ -98,7 +98,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     val prediction = {
       val g = ExampleGraph()().result
       val young = DeriveJS.deriveFromAttributes[Double](
-        "age < 19.0 ? 1 : 0", Seq("age" -> g.age), g.vertices).attr
+        "age < 19.0 ? 1 : 0", Seq("age" -> g.age), g.vertices)
       predict("Logistic regression", young, Seq(g.age))
     }
     assertRoughly(prediction,
