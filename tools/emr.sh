@@ -125,9 +125,16 @@ CheckDataRepo() {
 }
 
 ExecuteOnMaster() {
-  CMD=$1
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "$CMD"
+  CMD=( "$@" )
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  $SSH -A hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
+}
+
+GetInstanceList() {
+  aws emr list-instances --cluster-id=$(GetClusterId) \
+    | grep PublicDnsName \
+    | cut -d'"' -f 4 \
+    | tr '\n' ' '
 }
 
 DeployKiteAndMonitoring() {
@@ -146,7 +153,9 @@ DeployKiteAndMonitoring() {
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
 
-  ExecuteOnMaster "./biggraphstage/tools/monitoring/restart_monitoring_master.sh"
+  ExecuteOnMaster \
+    ./biggraphstage/tools/monitoring/restart_monitoring_master.sh \
+    $(GetInstanceList)
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -168,11 +177,16 @@ start)
     CREATE_CLUSTER_EXTRA_EC2_ATTRS=",${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"
   fi
 
+  # Scripts for monitoring.
+  aws s3 mb "s3://lynxkite-tmp/${CLUSTER_NAME}"
+  aws s3 cp monitoring/restart_monitoring_node.sh "s3://lynxkite-tmp/${CLUSTER_NAME}/"
+
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   set -x
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
+    --bootstrap-actions Path="s3://lynxkite-tmp/${CLUSTER_NAME}/restart_monitoring_node.sh" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
     --service-role EMR_DefaultRole \
     --release-label emr-4.2.0 \
