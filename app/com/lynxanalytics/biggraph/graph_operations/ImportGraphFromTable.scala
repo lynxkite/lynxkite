@@ -79,7 +79,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
       .map { case (srcName, ((edgeId, dstName), srcVid)) => dstName -> (edgeId, srcVid) }
 
     HybridRDD(srcResolvedByDst, partitioner)
-      .lookupAndRepartition(dstNameToVid)
+      .lookup(dstNameToVid)
       .map { case (dstName, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
       .sortUnique(partitioner)
   }
