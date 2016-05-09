@@ -198,6 +198,28 @@ object BigGraphSparkContext {
     new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
+  def setupMonitoring(conf: spark.SparkConf): spark.SparkConf = {
+    val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
+    val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
+    if (graphiteHostName == "" || graphitePort == "") {
+      conf
+    } else {
+      // Set the keys normally defined in metrics.properties here.
+      // This way it's easier to make sure that executors receive the
+      // settings.
+      conf
+        .set("spark.metrics.conf.*.sink.graphite.class", "org.apache.spark.metrics.sink.GraphiteSink")
+        .set("spark.metrics.conf.*.sink.graphite.host", graphiteHostName)
+        .set("spark.metrics.conf.*.sink.graphite.port", graphitePort)
+        .set("spark.metrics.conf.*.sink.graphite.period", "1")
+        .set("spark.metrics.conf.*.sink.graphite.unit", "seconds")
+        .set("spark.metrics.conf.master.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+        .set("spark.metrics.conf.worker.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+        .set("spark.metrics.conf.driver.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+        .set("spark.metrics.conf.executor.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+    }
+  }
+
   def apply(
     appName: String,
     useKryo: Boolean = true,
@@ -249,6 +271,7 @@ object BigGraphSparkContext {
       .setIfMissing(
         "spark.akka.frameSize", "1000")
       .set("spark.sql.runSQLOnFiles", "false")
+    sparkConf = setupMonitoring(sparkConf)
     if (useKryo) {
       sparkConf = sparkConf
         .set(
