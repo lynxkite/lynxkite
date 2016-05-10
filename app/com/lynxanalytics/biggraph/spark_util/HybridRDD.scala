@@ -57,12 +57,10 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !filteredTops.isEmpty
 
-  private val filteredTopIDs = filteredTops.map(_._1).toIndexedSeq.sorted
-
   private val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
     (Set.empty[K], 0L)
   } else {
-    (filteredTopIDs.toSet, filteredTops.map(_._2).reduce(_ + _))
+    (filteredTops.map(_._1).toSet, filteredTops.map(_._2).reduce(_ + _))
   }
   // The RDD containing only keys that are safe to use in sorted join.
   import Implicits._
@@ -128,7 +126,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     else {
       val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
       if (isSkewed) {
-        val largeKeysMap = lookupRDD.restrictToIdSet(filteredTopIDs).collect.toMap
+        val largeKeysMap = lookupRDD.filter(largeKeysSet contains _._1).collect.toMap
         log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
           + "${largeKeysCoverage} source records.")
         val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
