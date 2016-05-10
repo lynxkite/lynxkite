@@ -127,8 +127,9 @@ CheckDataRepo() {
 ExecuteOnMaster() {
   CMD=( "$@" )
   MASTER_HOSTNAME=$(GetMasterHostName)
-  ssh-add ${SSH_KEY}  # Allow ssh from master so slaves.
-  $SSH -A hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
+  MASTER_ACCESS=$(GetMasterAccessParams)
+  aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest .ssh/cluster-key.pem
+  $SSH hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
 }
 
 GetInstanceList() {
