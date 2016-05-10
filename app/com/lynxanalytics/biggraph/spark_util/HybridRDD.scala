@@ -7,12 +7,15 @@ import org.apache.spark.rdd.RDD
 import scala.reflect._
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 
 object HybridRDD {
-  private val hybridLookupThreshold =
-    LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_THRESHOLD", "100000").toInt
-  private val hybridLookupMaxLarge =
-    LoggedEnvironment.envOrElse("KITE_HYBRID_LOOKUP_MAX_LARGE", "100").toInt
+  // If the threshold is not defined use a number sufficiently smaller than vertices per partition.
+  // If we pick vertices per partition the partition load is going to be uneven for the sortedJoin
+  // in joinLookup. If we pick a too small threshold the largeKeysSet is going to be too large.
+  // In the worst case largeKeysSet can have sourceRDD size / threshold elements.
+  private val hybridLookupThreshold = util.Properties.envOrElse(
+    "KITE_HYBRID_LOOKUP_THRESHOLD", s"${EntityIO.verticesPerPartition / 5}").toInt
 
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
@@ -40,27 +43,24 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
     // must have the same partitioner.    
     partitioner: spark.Partitioner,
-    maxValuesPerKey: Int = HybridRDD.hybridLookupThreshold) {
+    // The threshold to decide whether this HybridRDD is skewed.
+    threshold: Int = HybridRDD.hybridLookupThreshold) {
 
-  private val tops = {
-    val ordering = new CountOrdering[K]
+  private val larges = {
     sourceRDD
       .mapValues(x => 1L)
       .reduceByKey(_ + _)
-      .top(HybridRDD.hybridLookupMaxLarge)(ordering)
-      .sorted(ordering)
+      .filter(_._2 >= threshold)
+      .collect
   }
-  private val filteredTops = tops.filter(_._2 > maxValuesPerKey)
 
-  // True iff this HybridRDD has no elements.
-  val isEmpty = tops.isEmpty
   // True iff this HybridRDD has keys with large cardinalities.
-  val isSkewed = !filteredTops.isEmpty
+  val isSkewed = !larges.isEmpty
 
-  private val (largeKeysSet, largeKeysCoverage) = if (isEmpty || !isSkewed) {
+  private val (largeKeysSet, largeKeysCoverage) = if (!isSkewed) {
     (Set.empty[K], 0L)
   } else {
-    (filteredTops.map(_._1).toSet, filteredTops.map(_._2).reduce(_ + _))
+    (largeIDs.toSet, larges.map(_._2).reduce(_ + _))
   }
   // The RDD containing only keys that are safe to use in sorted join.
   import Implicits._
@@ -80,12 +80,10 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
 
   // Caches the smallKeysRDD and the largeKeysRDD for skewed HybridRDDs.
   def persist(storageLevel: spark.storage.StorageLevel): Unit = {
-    if (!isEmpty) {
-      if (isSkewed) {
-        largeKeysRDD.persist(storageLevel)
-      }
-      smallKeysRDD.persist(storageLevel)
+    if (isSkewed) {
+      largeKeysRDD.persist(storageLevel)
     }
+    smallKeysRDD.persist(storageLevel)
   }
 
   // Same as lookup but repartitions the result after a hybrid lookup. The elements of the
@@ -122,18 +120,15 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   def lookup[S](
     lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
-    if (isEmpty) sourceRDD.context.emptyRDD
-    else {
-      val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
-      if (isSkewed) {
-        val largeKeysMap = lookupRDD.filter(largeKeysSet contains _._1).collect.toMap
-        log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
-          + "${largeKeysCoverage} source records.")
-        val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
-        smalls ++ larges
-      } else {
-        smalls // For non-skewed RDDs every row is in smallKeysRDD.
-      }
+    val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
+    if (isSkewed) {
+      val largeKeysMap = lookupRDD.restrictToIdSet(largeKeysSet contains _._1).collect.toMap
+      log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
+        + "${largeKeysCoverage} source records.")
+      val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
+      smalls ++ larges
+    } else {
+      smalls // For non-skewed RDDs every row is in smallKeysRDD.
     }
   }
 }
