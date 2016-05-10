@@ -127,6 +127,7 @@ CheckDataRepo() {
 ExecuteOnMaster() {
   CMD=( "$@" )
   MASTER_HOSTNAME=$(GetMasterHostName)
+  ssh-add ${SSH_KEY}  # Allow ssh from master so slaves.
   $SSH -A hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
 }
 
@@ -177,16 +178,11 @@ start)
     CREATE_CLUSTER_EXTRA_EC2_ATTRS=",${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"
   fi
 
-  # Scripts for monitoring.
-  aws s3 mb "s3://lynxkite-tmp/${CLUSTER_NAME}"
-  aws s3 cp monitoring/restart_monitoring_node.sh "s3://lynxkite-tmp/${CLUSTER_NAME}/"
-
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   set -x
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
-    --bootstrap-actions Path="s3://lynxkite-tmp/${CLUSTER_NAME}/restart_monitoring_node.sh" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
     --service-role EMR_DefaultRole \
     --release-label emr-4.2.0 \
@@ -369,7 +365,8 @@ reset)
 
 # ====== fall-through
 reset-yes)
-  ExecuteOnMaster "./biggraphstage/bin/biggraph stop; \
+  ExecuteOnMaster "killall -9 big_data_test_runner.py; \
+    ./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
     true;"
