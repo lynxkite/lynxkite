@@ -4,7 +4,7 @@
       id="close-alert-button"
       class="pull-right clicky glyphicon glyphicon-remove"
       ng-click="close($index)"></div>
-    <div class="top-alert-message" ng-bind-html="alert.message | trustAsHtml">
+    <div class="top-alert-message"> {{alert.message}}
     </div>
     <div class="top-alert-footer">
       <a href ng-click="reportError(alert)">report a problem</a>

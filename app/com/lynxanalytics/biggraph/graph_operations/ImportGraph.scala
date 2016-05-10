@@ -374,11 +374,11 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     val edgesBySrc = edgeSrcDst(columns).map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
-    val srcResolvedByDst = HybridRDD(edgesBySrc)
+    val srcResolvedByDst = HybridRDD(edgesBySrc, edgePartitioner)
       .lookupAndRepartition(nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = HybridRDD(srcResolvedByDst)
+    val edges = HybridRDD(srcResolvedByDst, edgePartitioner)
       .lookupAndRepartition(nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)
