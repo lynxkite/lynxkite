@@ -60,7 +60,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   private val (largeKeysSet, largeKeysCoverage) = if (!isSkewed) {
     (Set.empty[K], 0L)
   } else {
-    (largeIDs.toSet, larges.map(_._2).reduce(_ + _))
+    (larges.map(_._1).toSet, larges.map(_._2).reduce(_ + _))
   }
   // The RDD containing only keys that are safe to use in sorted join.
   import Implicits._
