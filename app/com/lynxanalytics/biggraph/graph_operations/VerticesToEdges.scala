@@ -5,6 +5,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 
+import org.apache.spark
+
 object VerticesToEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
@@ -33,9 +35,13 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val srcAttr = inputs.srcAttr.rdd
     val dstAttr = inputs.dstAttr.rdd
     val names = (srcAttr.values ++ dstAttr.values).distinct
-    val idToName = names.randomNumbered(partitioner.numPartitions)
-    val nameToId = idToName.map(_.swap)
+    val idToName = names
+      .randomNumbered(partitioner.numPartitions)
+      .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
+    val nameToId = idToName
+      .map(_.swap)
       .sortUnique(partitioner)
+      .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
