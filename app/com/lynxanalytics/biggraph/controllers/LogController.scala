@@ -21,13 +21,17 @@ case class LogFiles(files: List[FileDescriptor])
 
 case class DownloadLogFileRequest(name: String)
 
+object LogController {
+  def getLogDir: File =
+    new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"))
+}
 class LogController extends play.api.http.HeaderNames {
 
   val dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
   def getLogFiles(user: serving.User, req: serving.Empty): LogFiles = {
     assert(user.isAdmin, "Only admins can access the server logs")
-    val logDir = new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"))
+    val logDir = LogController.getLogDir
     assert(logDir.exists, s"Application log directory not found at $logDir")
     assert(logDir.isDirectory, s"$logDir is not a directory")
     val logFiles = logDir.listFiles

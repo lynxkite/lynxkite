@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
+import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
@@ -271,10 +272,12 @@ object BigGraphSparkContext {
       .setIfMissing(
         "spark.akka.frameSize", "1000")
       .set("spark.sql.runSQLOnFiles", "false")
-      .set("spark.eventLog.dir", LoggedEnvironment.envOrElse("SPARK_EVENTLOG_DIR", ""))
+      // Configure Spark event logging:
       .set(
-        "spark.eventLog.enabled",
-        if (LoggedEnvironment.envOrElse("SPARK_EVENTLOG_DIR", "").isEmpty) "false" else "true")
+        "spark.eventLog.dir",
+        "file://" + LogController.getLogDir.getAbsolutePath)
+      .set("spark.eventLog.enabled", "true")
+      .set("spark.eventLog.compress", "true")
     sparkConf = setupMonitoring(sparkConf)
     if (useKryo) {
       sparkConf = sparkConf
