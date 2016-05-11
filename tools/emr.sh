@@ -127,16 +127,7 @@ CheckDataRepo() {
 ExecuteOnMaster() {
   CMD=( "$@" )
   MASTER_HOSTNAME=$(GetMasterHostName)
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest .ssh/cluster-key.pem
   $SSH hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
-}
-
-GetInstanceList() {
-  aws emr list-instances --cluster-id=$(GetClusterId) \
-    | grep PublicDnsName \
-    | cut -d'"' -f 4 \
-    | tr '\n' ' '
 }
 
 DeployKiteAndMonitoring() {
@@ -155,9 +146,7 @@ DeployKiteAndMonitoring() {
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
 
-  ExecuteOnMaster \
-    ./biggraphstage/tools/monitoring/restart_monitoring_master.sh \
-    $(GetInstanceList)
+  ExecuteOnMaster ./biggraphstage/tools/monitoring/restart_monitoring_master.sh
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -286,6 +275,8 @@ EOF
   aws emr put ${MASTER_ACCESS} --src ${KITERC_FILE} --dest .kiterc
   aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
   aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest spark-${SPARK_VERSION}/conf/spark-env.sh
+  aws emr ssh ${MASTER_ACCESS} --command "rm -f .ssh/cluster-key.pem"
+  aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest ".ssh/cluster-key.pem"
 
   ;;
 
