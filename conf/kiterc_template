@@ -148,10 +148,3 @@ export KITE_EXTRA_JARS=
 # with tools/monitoring/restart_monitoring_master.sh.
 # export GRAPHITE_MONITORING_HOST=$(hostname)
 # export GRAPHITE_MONITORING_PORT=9109
-
-# While LynxKite is running, you can monitor Spark's execution process by watching the
-# web UI at the :4040 or :8088 ports of the master, depending on the setup. If you
-# want to save this information for later use, then specify the below direcotry and
-# use ~/spark-1.6.0/sbin/start-history-server.sh to view the results. You'll need
-# to create the directory yourself before starting LynxKite.
-# SPARK_EVENTLOG_DIR=/tmp/spark-events

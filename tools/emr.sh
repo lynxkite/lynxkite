@@ -231,7 +231,6 @@ export KITE_AMMONITE_PASSWD=kite
 export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
 export GRAPHITE_MONITORING_HOST=\$(hostname)
 export GRAPHITE_MONITORING_PORT=9109
-export SPARK_EVENTLOG_DIR=/tmp/spark-events
 EOF
 
   SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"
@@ -279,8 +278,10 @@ EOF
   aws emr ssh ${MASTER_ACCESS} --command "rm -f .ssh/cluster-key.pem"
   aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest ".ssh/cluster-key.pem"
   # Starts Spark history server at port 108080. (We won't fail the whole script if this fails.)
-  aws emr ssh ${MASTER_ACCESS} --command "mkdir -p /tmp/spark-events; \
-    /home/hadoop/spark-${SPARK_VERSION}/sbin/start-history-server.sh;
+  EVENTLOG_DIR=/home/hadoop/biggraphstage/logs
+  aws emr ssh ${MASTER_ACCESS} --command "mkdir -p ${EVENTLOG_DIR}; \
+    /home/hadoop/spark-${SPARK_VERSION}/sbin/stop-history-server.sh; \
+    /home/hadoop/spark-${SPARK_VERSION}/sbin/start-history-server.sh  ${EVENTLOG_DIR}; \
     true"
 
   ;;
