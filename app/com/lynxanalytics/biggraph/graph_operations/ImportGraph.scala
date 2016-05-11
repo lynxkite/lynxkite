@@ -371,7 +371,7 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     val idToName = names.randomNumbered(vertexPartitioner)
     val nameToId = idToName
       .map(_.swap)
-      // This is going to be joined with edges, so we use the edge partitioner.
+      // This is going to be used in HybridRDD, so use the larger partitioner.
       .sortUnique(maxPartitioner)
     val edgesBySrc = edgeSrcDst(columns).map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)

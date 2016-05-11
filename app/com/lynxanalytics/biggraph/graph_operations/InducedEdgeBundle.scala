@@ -86,8 +86,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
-    // Use the edge partitioner for both the new edges and src and dst to avoid too
-    // large partitions.
+    // Use the larger partitioner for sorted join and HybridRDD.
     val maxPartitioner = RDDUtils.maxPartitioner(
       inputs.edges.rdd.partitioner.get, inputs.src.rdd.partitioner.get)
 
