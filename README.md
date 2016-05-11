@@ -104,7 +104,7 @@ comments in `test_big_data.sh`.
 ## Run executors on different JVM-s.
 
 Sometimes you want to use a non-local setup on your local machine: e.g., three executors on
-three different JVS, all of them separated from the driver JVM. This is a better approximation
+three different JVMs, each separate from the driver JVM. This is a better approximation
 of a production environment, while still comparatively easy to work with.
 Here's how I managed to set it up.
 
