@@ -271,6 +271,10 @@ object BigGraphSparkContext {
       .setIfMissing(
         "spark.akka.frameSize", "1000")
       .set("spark.sql.runSQLOnFiles", "false")
+      .set("spark.eventLog.dir", LoggedEnvironment.envOrElse("SPARK_EVENTLOG_DIR", ""))
+      .set(
+        "spark.eventLog.enabled",
+        if (LoggedEnvironment.envOrElse("SPARK_EVENTLOG_DIR", "").isEmpty) "false" else "true")
     sparkConf = setupMonitoring(sparkConf)
     if (useKryo) {
       sparkConf = sparkConf
