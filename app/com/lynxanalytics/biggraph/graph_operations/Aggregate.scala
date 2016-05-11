@@ -308,6 +308,19 @@ object Aggregator {
     }
   }
 
+  object Median extends LocalAggregatorFromJson { def fromJson(j: JsValue) = Median() }
+  case class Median() extends LocalAggregator[Double, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
+    def aggregate(values: Iterable[Double]) = {
+      val cnt: Int = values.size
+      val (halfCount1, halfCount2) =
+        if (cnt % 2 == 0) (cnt / 2 - 1, cnt / 2)
+        else ((cnt - 1) / 2, (cnt - 1) / 2)
+      val sortedValues = values.toSeq.sorted
+      (sortedValues(halfCount1) + sortedValues(halfCount2)) / 2
+    }
+  }
+
   object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
   case class MostCommon[T]() extends LocalAggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
