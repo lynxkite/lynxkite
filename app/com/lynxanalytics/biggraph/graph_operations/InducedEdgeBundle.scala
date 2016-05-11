@@ -14,8 +14,9 @@ import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
@@ -85,20 +86,22 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
-    // Use the edge partitioner for both the new edges and src and dst to avoid too
-    // large partitions.
-    val partitioner = inputs.edges.rdd.partitioner.get
+    // Use the larger partitioner for sorted join and HybridRDD.
+    val maxPartitioner = RDDUtils.maxPartitioner(
+      inputs.edges.rdd.partitioner.get,
+      inputs.src.rdd.partitioner.get,
+      inputs.dst.rdd.partitioner.get)
 
     def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
         // We might save a shuffle in this case.
-        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(partitioner)
+        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(maxPartitioner)
       } else {
         mappingEdges
           .map { case (id, edge) => (edge.src, edge.dst) }
-          .sort(partitioner)
+          .sort(maxPartitioner)
       }
     }
 
@@ -109,11 +112,11 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val mapping = getMapping(mappingInput)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        HybridRDD(rdd, partitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
+        HybridRDD(rdd, maxPartitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
-        rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
+        rdd.sort(maxPartitioner).sortedJoinWithDuplicates(mapping)
       }
     }
 
