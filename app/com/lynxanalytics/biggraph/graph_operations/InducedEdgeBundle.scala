@@ -87,7 +87,8 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val edges = inputs.edges.rdd
     // Use the edge partitioner for both the new edges and src and dst to avoid too
     // large partitions.
-    val maxPartitioner = HybridRDD.maxPartitioner(inputs.edges.rdd.partitioner.get, inputs.src.rdd.partitioner.get)
+    val maxPartitioner = HybridRDD.maxPartitioner(
+      inputs.edges.rdd.partitioner.get, inputs.src.rdd.partitioner.get)
 
     def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
