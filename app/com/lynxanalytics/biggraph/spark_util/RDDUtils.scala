@@ -257,6 +257,9 @@ object RDDUtils {
   def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
+
+  // Returns the Partitioner which has more partitions.
+  def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
 }
 
 object Implicits {

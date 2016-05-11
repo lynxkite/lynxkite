@@ -7,6 +7,7 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object PageRank extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -41,7 +42,7 @@ case class PageRank(dampingFactor: Double,
     val weights = inputs.weights.rdd.filter(_._2 > 0.0)
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val edgePartitioner = edges.partitioner.get
+    val maxPartitioner = RDDUtils.maxPartitioner(edges.partitioner.get, vertexPartitioner)
 
     val edgesWithWeights = edges.sortedJoin(weights).map {
       case (_, (edge, weight)) => edge.src -> (edge.dst, weight)
@@ -50,20 +51,20 @@ case class PageRank(dampingFactor: Double,
     // The sum of weights for every src vertex.
     val sumWeights = edgesWithWeights
       .mapValues(_._2) // Discard dst and keep weights.
-      .reduceBySortedKey(edgePartitioner, _ + _)
+      .reduceBySortedKey(maxPartitioner, _ + _)
 
     // Join the sum of weights per src to the src vertices in the edge RDD.
     val edgesWithSumWeights =
-      HybridRDD(edgesWithWeights, edgePartitioner).lookupAndCoalesce(sumWeights)
+      HybridRDD(edgesWithWeights, maxPartitioner).lookupAndCoalesce(sumWeights)
     // Normalize the weights for every src vertex.
     val targetsWithWeights = HybridRDD(
       edgesWithSumWeights.mapValues {
         case ((dst, weight), sumWeight) => (dst, weight / sumWeight)
       },
-      edgePartitioner)
+      maxPartitioner)
     targetsWithWeights.persist(spark.storage.StorageLevel.DISK_ONLY)
 
-    var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(edgePartitioner)
+    var pageRank = vertices.mapValues(_ => 1.0).sortedRepartition(maxPartitioner)
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
@@ -72,7 +73,7 @@ case class PageRank(dampingFactor: Double,
         .map {
           case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
-        .reduceBySortedKey(edgePartitioner, _ + _)
+        .reduceBySortedKey(maxPartitioner, _ + _)
 
       val totalIncoming = incomingRank.values.sum
       val distributedExtraWeight = (vertexCount - totalIncoming) / vertexCount
