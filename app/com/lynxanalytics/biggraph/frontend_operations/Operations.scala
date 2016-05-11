@@ -1047,6 +1047,42 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Coloring", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "color"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.Coloring()
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.coloring, help)
+    }
+  })
+
+  register("BetterColoring", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "better_color"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.BetterColoring()
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.coloring, help)
+    }
+  })
+
+  register("EvenBetterColoring", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "evenBetter_color"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.EvenBetterColoring()
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.coloring, help)
+    }
+  })
+
   register("Clustering coefficient", new MetricsOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
@@ -1105,6 +1141,20 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.OutDegree()
+      project.newVertexAttribute(
+        params("name"), op(op.es, es).result.outDegree, params("direction") + help)
+    }
+  })
+
+  register("Proba", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "degree"),
+      Choice("direction", "Count", options = Direction.options))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
+      val op = graph_operations.Proba()
       project.newVertexAttribute(
         params("name"), op(op.es, es).result.outDegree, params("direction") + help)
     }
