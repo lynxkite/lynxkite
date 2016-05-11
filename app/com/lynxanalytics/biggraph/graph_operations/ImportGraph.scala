@@ -5,10 +5,11 @@ import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.lang.StringEscapeUtils
@@ -366,7 +367,7 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
       .distinct
       .cache()
     val vertexPartitioner = rc.partitionerForNRows(names.count())
-    val maxPartitioner = HybridRDD.maxPartitioner(edgePartitioner, vertexPartitioner)
+    val maxPartitioner = RDDUtils.maxPartitioner(edgePartitioner, vertexPartitioner)
     val idToName = names.randomNumbered(vertexPartitioner)
     val nameToId = idToName
       .map(_.swap)

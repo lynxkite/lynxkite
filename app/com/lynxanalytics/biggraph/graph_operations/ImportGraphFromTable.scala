@@ -5,8 +5,9 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 object ImportEdgesForExistingVertices extends OpFromJson {
   class Input[A, B] extends MagicInputSignature {
@@ -59,7 +60,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     dstVidAttr: AttributeData[B]): UniqueSortedRDD[ID, Edge] = {
 
     val edgePartitioner = unresolvedEdges.partitioner.get
-    val maxPartitioner = HybridRDD.maxPartitioner(edgePartitioner, srcVidAttr.rdd.partitioner.get)
+    val maxPartitioner = RDDUtils.maxPartitioner(edgePartitioner, srcVidAttr.rdd.partitioner.get)
 
     val srcNameToVid = srcVidAttr.rdd
       .map(_.swap)
