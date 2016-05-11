@@ -31,7 +31,7 @@ in the YARN configurations.
 #### Spark JVM overhead
 
 By default Spark does not allocate enough memory overhead on top of the heap size for the JVM
-itself. LynxKite by default asks for 15% overhead which should be enough. If not, then add
+itself. LynxKite by default asks for 20% overhead which should be enough. If not, then add
 `export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000` into your `.kiterc` file.
 
 #### Smart YARN memory monitor
