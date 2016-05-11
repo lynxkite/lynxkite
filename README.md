@@ -108,12 +108,12 @@ three different JVMs, each separate from the driver JVM. This is a better approx
 of a production environment, while still comparatively easy to work with.
 Here's how I managed to set it up.
 
-    1. Start spark master:
+1. Start spark master:
     ~/spark-<version>/sbin/start-master.sh
-    2. Start 3 executors:
+2. Start 3 executors:
     SPARK_WORKER_INSTANCES=3 ~/spark-<version>/sbin/start-slave.sh spark://DeepThought:7077
-    (Using "localhost" instead of "DeepThought" did not work for me)
-    3. In my .kiterc:
+(Using "localhost" instead of "DeepThought" did not work for me)
+3. In my .kiterc:
     export SPARK_MASTER=spark://DeepThought:7077
     export EXECUTOR_MEMORY=6g
     export NUM_EXECUTORS=3
