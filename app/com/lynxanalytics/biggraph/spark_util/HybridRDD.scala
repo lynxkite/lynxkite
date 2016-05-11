@@ -33,6 +33,9 @@ object HybridRDD {
     leftRDD
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
+
+  def maxPartitioner(p1: spark.Partitioner, p2: spark.Partitioner): spark.Partitioner =
+    if (p1.numPartitions >= p2.numPartitions) { p1 } else { p2 }
 }
 
 // A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
