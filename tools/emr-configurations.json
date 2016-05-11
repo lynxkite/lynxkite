@@ -4,5 +4,11 @@
     "Properties": {
       "mapred.output.committer.class": "org.apache.hadoop.mapred.FileOutputCommitter"
     }
+  },
+  {
+    "Classification": "yarn-site",
+    "Properties": {
+      "yarn.nodemanager.container-monitor.procfs-tree.smaps-based-rss.enabled": "true"
+    }
   }
 ]
