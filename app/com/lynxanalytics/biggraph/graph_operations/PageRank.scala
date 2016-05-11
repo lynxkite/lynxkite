@@ -81,6 +81,7 @@ case class PageRank(dampingFactor: Double,
         .mapValues {
           case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
+        .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
     }
     output(o.pagerank, pageRank.sortedRepartition(vertexPartitioner))
   }
