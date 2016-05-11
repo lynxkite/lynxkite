@@ -125,9 +125,18 @@ CheckDataRepo() {
 }
 
 ExecuteOnMaster() {
-  CMD=$1
+  CMD=( "$@" )
+  MASTER_HOSTNAME=$(GetMasterHostName)
   MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "$CMD"
+  aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest .ssh/cluster-key.pem
+  $SSH hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
+}
+
+GetInstanceList() {
+  aws emr list-instances --cluster-id=$(GetClusterId) \
+    | grep PublicDnsName \
+    | cut -d'"' -f 4 \
+    | tr '\n' ' '
 }
 
 DeployKiteAndMonitoring() {
@@ -146,7 +155,9 @@ DeployKiteAndMonitoring() {
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
 
-  ExecuteOnMaster "./biggraphstage/tools/monitoring/restart_monitoring_master.sh"
+  ExecuteOnMaster \
+    ./biggraphstage/tools/monitoring/restart_monitoring_master.sh \
+    $(GetInstanceList)
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -355,7 +366,8 @@ reset)
 
 # ====== fall-through
 reset-yes)
-  ExecuteOnMaster "./biggraphstage/bin/biggraph stop; \
+  ExecuteOnMaster "killall -9 big_data_test_runner.py; \
+    ./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
     true;"
