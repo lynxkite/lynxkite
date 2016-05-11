@@ -366,19 +366,20 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
       .distinct
       .cache()
     val vertexPartitioner = rc.partitionerForNRows(names.count())
+    val maxPartitioner = HybridRDD.maxPartitioner(edgePartitioner, vertexPartitioner)
     val idToName = names.randomNumbered(vertexPartitioner)
     val nameToId = idToName
       .map(_.swap)
       // This is going to be joined with edges, so we use the edge partitioner.
-      .sortUnique(edgePartitioner)
+      .sortUnique(maxPartitioner)
     val edgesBySrc = edgeSrcDst(columns).map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
-    val srcResolvedByDst = HybridRDD(edgesBySrc, edgePartitioner)
+    val srcResolvedByDst = HybridRDD(edgesBySrc, maxPartitioner)
       .lookupAndRepartition(nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = HybridRDD(srcResolvedByDst, edgePartitioner)
+    val edges = HybridRDD(srcResolvedByDst, maxPartitioner)
       .lookupAndRepartition(nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)
