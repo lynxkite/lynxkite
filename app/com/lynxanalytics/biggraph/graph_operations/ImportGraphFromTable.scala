@@ -60,7 +60,8 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     dstVidAttr: AttributeData[B]): UniqueSortedRDD[ID, Edge] = {
 
     val edgePartitioner = unresolvedEdges.partitioner.get
-    val maxPartitioner = RDDUtils.maxPartitioner(edgePartitioner, srcVidAttr.rdd.partitioner.get)
+    val maxPartitioner = RDDUtils.maxPartitioner(
+      edgePartitioner, srcVidAttr.rdd.partitioner.get, dstVidAttr.rdd.partitioner.get)
 
     val srcNameToVid = srcVidAttr.rdd
       .map(_.swap)

@@ -261,6 +261,9 @@ object RDDUtils {
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(p1: spark.Partitioner, p2: spark.Partitioner): spark.Partitioner =
     if (p1.numPartitions >= p2.numPartitions) p1 else p2
+  def maxPartitioner(
+    p1: spark.Partitioner, p2: spark.Partitioner, p3: spark.Partitioner): spark.Partitioner =
+    maxPartitioner(p1, maxPartitioner(p2, p3))
 }
 
 object Implicits {
