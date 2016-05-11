@@ -130,7 +130,7 @@ ExecuteOnMaster() {
   $SSH hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
 }
 
-DeployKiteAndMonitoring() {
+DeployKite() {
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
     echoerr "You must run this script from inside a stage, not from the source tree!"
@@ -145,7 +145,9 @@ DeployKiteAndMonitoring() {
     --exclude metastore_db \
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
+}
 
+RestartMonitoring() {
   ExecuteOnMaster ./biggraphstage/tools/monitoring/restart_monitoring_master.sh
 }
 
@@ -278,6 +280,8 @@ EOF
   aws emr ssh ${MASTER_ACCESS} --command "rm -f .ssh/cluster-key.pem"
   aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest ".ssh/cluster-key.pem"
 
+  DeployKite
+  RestartMonitoring
   ;;
 
 # ======
@@ -287,12 +291,12 @@ uploadLogs)
 
 # =====
 deploy-kite)
-  DeployKiteAndMonitoring
+  DeployKite
   ;;
 
 # ======
 kite)
-  DeployKiteAndMonitoring
+  DeployKite
 
   MASTER_ACCESS=$(GetMasterAccessParams)
   echo "Starting..."
