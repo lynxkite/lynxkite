@@ -7,6 +7,7 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object PageRank extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -41,7 +42,7 @@ case class PageRank(dampingFactor: Double,
     val weights = inputs.weights.rdd.filter(_._2 > 0.0)
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val maxPartitioner = HybridRDD.maxPartitioner(edges.partitioner.get, vertexPartitioner)
+    val maxPartitioner = RDDUtils.maxPartitioner(edges.partitioner.get, vertexPartitioner)
 
     val edgesWithWeights = edges.sortedJoin(weights).map {
       case (_, (edge, weight)) => edge.src -> (edge.dst, weight)

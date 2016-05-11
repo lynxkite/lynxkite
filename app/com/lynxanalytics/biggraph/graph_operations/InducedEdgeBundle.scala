@@ -16,6 +16,7 @@ import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
@@ -87,7 +88,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val edges = inputs.edges.rdd
     // Use the edge partitioner for both the new edges and src and dst to avoid too
     // large partitions.
-    val maxPartitioner = HybridRDD.maxPartitioner(
+    val maxPartitioner = RDDUtils.maxPartitioner(
       inputs.edges.rdd.partitioner.get, inputs.src.rdd.partitioner.get)
 
     def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
