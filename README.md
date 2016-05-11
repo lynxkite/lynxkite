@@ -101,6 +101,30 @@ that way, e.g. `test_big_data.sh pagerank 'fake_westeros_xt_25m'`. For further u
 comments in `test_big_data.sh`.
 
 
+## Run executors on different JVM-s.
+
+Sometimes you want to use a non-local setup on your local machine: e.g., three executors on
+three different JVMs, each separate from the driver JVM. This is a better approximation
+of a production environment, while still comparatively easy to work with.
+Here's how I managed to set it up.
+
+ 1. Start spark master:
+
+        ~/spark-<version>/sbin/start-master.sh
+    
+ 2. Start 3 executors:
+
+        SPARK_WORKER_INSTANCES=3 ~/spark-<version>/sbin/start-slave.sh spark://DeepThought:7077
+    
+    (Using "localhost" instead of "DeepThought" did not work for me)
+
+ 3. In my .kiterc:
+
+        export SPARK_MASTER=spark://DeepThought:7077
+        export EXECUTOR_MEMORY=6g
+        export NUM_EXECUTORS=3
+        export NUM_CORES_PER_EXECUTOR=2
+
 ## Release guide
 
 Before doing a release, please run the following tests:
