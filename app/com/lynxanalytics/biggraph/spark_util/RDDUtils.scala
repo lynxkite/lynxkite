@@ -272,7 +272,7 @@ object RDDUtils {
     rdd: UniqueSortedRDD[K, V], rc: RuntimeContext, countSampleRatio: Int = 10): UniqueSortedRDD[K, V] = {
     val count = countApprox(rdd, countSampleRatio)
     val ratio = EntityIO.verticesPerPartition.toDouble / (count.toDouble / rdd.partitions.size)
-    if (ratio < EntityIO.tolerance || ratio > 1.0 / EntityIO.tolerance) {
+    if (EntityIO.tolerance > ratio && ratio > 1.0 / EntityIO.tolerance) {
       rdd
     } else {
       import Implicits._
