@@ -5,8 +5,9 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 object ImportEdgesForExistingVertices extends OpFromJson {
   class Input[A, B] extends MagicInputSignature {
@@ -58,30 +59,32 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     srcVidAttr: AttributeData[A],
     dstVidAttr: AttributeData[B]): UniqueSortedRDD[ID, Edge] = {
 
-    val partitioner = unresolvedEdges.partitioner.get
+    val edgePartitioner = unresolvedEdges.partitioner.get
+    val maxPartitioner = RDDUtils.maxPartitioner(
+      edgePartitioner, srcVidAttr.rdd.partitioner.get, dstVidAttr.rdd.partitioner.get)
 
     val srcNameToVid = srcVidAttr.rdd
       .map(_.swap)
-      .assertUniqueKeys(partitioner)
+      .assertUniqueKeys(maxPartitioner)
     val dstNameToVid = {
       if (srcVidAttr.gUID == dstVidAttr.gUID)
         srcNameToVid.asInstanceOf[UniqueSortedRDD[B, ID]]
       else
         dstVidAttr.rdd
           .map(_.swap)
-          .assertUniqueKeys(partitioner)
+          .assertUniqueKeys(maxPartitioner)
     }
     val edgesBySrc = unresolvedEdges.map {
       case (edgeId, (srcName, dstName)) => srcName -> (edgeId, dstName)
     }
-    val srcResolvedByDst = HybridRDD(edgesBySrc, partitioner)
+    val srcResolvedByDst = HybridRDD(edgesBySrc, maxPartitioner)
       .lookupAndRepartition(srcNameToVid)
       .map { case (srcName, ((edgeId, dstName), srcVid)) => dstName -> (edgeId, srcVid) }
 
-    HybridRDD(srcResolvedByDst, partitioner)
+    HybridRDD(srcResolvedByDst, maxPartitioner)
       .lookupAndRepartition(dstNameToVid)
       .map { case (dstName, ((edgeId, srcVid), dstVid)) => edgeId -> Edge(srcVid, dstVid) }
-      .sortUnique(partitioner)
+      .sortUnique(edgePartitioner)
   }
 
   def fromJson(j: JsValue) = {
