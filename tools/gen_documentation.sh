@@ -21,7 +21,7 @@ function kill_grunt {
 }
 trap kill_grunt EXIT
 # Wait until Grunt is up.
-while ! nc -z localhost 9090; do sleep 1; done
+tools/wait_for_port.sh 9090
 echo # Add new-line after Grunt output.
 
 echo 'Generating User Manual...'

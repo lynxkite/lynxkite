@@ -3,14 +3,7 @@
 # Last successful tested with: aws-cli/1.10.20 Python/2.7.6 botocore/1.4.11
 # TODO: rewrite this in Python using boto directly
 
-set -ueo pipefail
-function trap_handler() {
-  THIS_SCRIPT="$0"
-  LAST_LINENO="$1"
-  LAST_COMMAND="$2"
-  echo "${THIS_SCRIPT}:${LAST_LINENO}: error while executing: ${LAST_COMMAND}" 1>&2;
-}
-trap 'trap_handler ${LINENO} "${BASH_COMMAND}"' ERR
+source "$(dirname $0)/biggraph_common.sh"
 
 DIR=$(dirname $0)
 
@@ -131,6 +124,12 @@ CheckDataRepo() {
   fi
 }
 
+ExecuteOnMaster() {
+  CMD=( "$@" )
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  $SSH hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
+}
+
 DeployKite() {
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
@@ -146,6 +145,10 @@ DeployKite() {
     --exclude metastore_db \
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
+}
+
+RestartMonitoring() {
+  ExecuteOnMaster ./biggraphstage/tools/monitoring/restart_monitoring_master.sh
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -228,6 +231,8 @@ export KITE_AMMONITE_PORT=2203
 export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
 export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
+export GRAPHITE_MONITORING_HOST=\$(hostname)
+export GRAPHITE_MONITORING_PORT=9109
 EOF
 
   SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"
@@ -272,13 +277,16 @@ EOF
   aws emr put ${MASTER_ACCESS} --src ${KITERC_FILE} --dest .kiterc
   aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
   aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest spark-${SPARK_VERSION}/conf/spark-env.sh
+  aws emr ssh ${MASTER_ACCESS} --command "rm -f .ssh/cluster-key.pem"
+  aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest ".ssh/cluster-key.pem"
 
+  DeployKite
+  RestartMonitoring
   ;;
 
 # ======
 uploadLogs)
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph uploadLogs"
+  ExecuteOnMaster "./biggraphstage/bin/biggraph uploadLogs"
   ;;
 
 # =====
@@ -322,7 +330,6 @@ cmd)
   $SSH -A hadoop@${MASTER_HOSTNAME} "${COMMAND_ARGS[@]}"
   ;;
 
-
 # ======
 put)
   MASTER_ACCESS=$(GetMasterAccessParams)
@@ -354,8 +361,8 @@ reset)
 
 # ====== fall-through
 reset-yes)
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "./biggraphstage/bin/biggraph stop; \
+  ExecuteOnMaster "killall -9 big_data_test_runner.py; \
+    ./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
     true;"
