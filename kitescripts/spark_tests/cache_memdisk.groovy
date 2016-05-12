@@ -1,5 +1,5 @@
 import org.apache.spark.storage.StorageLevel
 
-//lynx.sparkTests.cacheTest(
-//  storageLevel: "MEMORY_AND_DISK",
-//  dataSize: params.dataSize)
+lynx.sparkTests.cacheTest(
+  storageLevel: "MEMORY_AND_DISK",
+  dataSize: params.dataSize)
