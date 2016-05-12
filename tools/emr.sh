@@ -279,7 +279,7 @@ EOF
   aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest spark-${SPARK_VERSION}/conf/spark-env.sh
   aws emr ssh ${MASTER_ACCESS} --command "rm -f .ssh/cluster-key.pem"
   aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest ".ssh/cluster-key.pem"
-  # Starts Spark history server at port 108080. (We won't fail the whole script if this fails.)
+  # Starts Spark history server at port 18080. (We won't fail the whole script if this fails.)
   EVENTLOG_DIR=/home/hadoop/biggraphstage/logs
   aws emr ssh ${MASTER_ACCESS} --command "mkdir -p ${EVENTLOG_DIR}; \
     /home/hadoop/spark-${SPARK_VERSION}/sbin/stop-history-server.sh; \
