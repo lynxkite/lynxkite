@@ -262,12 +262,16 @@ object RDDUtils {
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
 
+  // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
+  // distributed partitions.
   def countApprox(rdd: RDD[_], sampleRatio: Int = 10): Long =
     (rdd.mapPartitions(it => Iterator(it.size))
       .coalesce(sampleRatio)
       .mapPartitions(it => it.take(1))
       .sum * sampleRatio).toLong
 
+  // Repartitions and sorts the rdd if the current partitioning is not adequate. Only use it on
+  // RDDs with evenly distributed partitions.
   def repartitionAndSort[K: Ordering: ClassTag, V: ClassTag](
     rdd: UniqueSortedRDD[K, V], rc: RuntimeContext, countSampleRatio: Int = 10): UniqueSortedRDD[K, V] = {
     val count = countApprox(rdd, countSampleRatio)
