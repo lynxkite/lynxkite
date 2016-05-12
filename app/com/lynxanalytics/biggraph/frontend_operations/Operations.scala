@@ -1047,7 +1047,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Coloring", new MetricsOperation(_, _) {
+  register("Find vertex coloring", new MetricsOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "color"))
     def enabled = hasEdgeBundle
