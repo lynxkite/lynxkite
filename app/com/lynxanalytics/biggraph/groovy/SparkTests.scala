@@ -4,9 +4,18 @@ package com.lynxanalytics.biggraph.groovy
 
 import org.apache.spark
 
+class SparkTestListener(sc: spark.SparkContext, s: String) extends spark.scheduler.SparkListener {
+  override def onStageCompleted(
+    stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+    val info = stageCompleted.stageInfo
+    println(
+      s"$s: STAGE DONE: [${info.stageId}.${info.attemptId}] ${info.name} ${(info.completionTime.get - info.submissionTime.get) / 1000} seconds")
+  }
+}
+
 class SparkTests(sc: spark.SparkContext) {
 
-  def iterativeTest(params: java.util.Map[String, AnyRef]) {
+  def cacheTest(params: java.util.Map[String, AnyRef]) {
     val storageLevelString = params
       .get("storageLevel")
       .asInstanceOf[String]
@@ -15,25 +24,19 @@ class SparkTests(sc: spark.SparkContext) {
       .get("dataSize")
       .asInstanceOf[String]
       .toInt
+
+    val listener = new SparkTestListener(sc, storageLevelString)
+    sc.addSparkListener(listener)
+
     val numPartitions = 100
     val vertices = sc.parallelize(0 to (numVertices - 1), numPartitions)
     val data = vertices
-      .map {
-        id =>
-          val r = new scala.util.Random(id)
-          (r.nextInt(numVertices), Unit)
+      .mapPartitionsWithIndex {
+        (pidx, it) =>
+          val r = new scala.util.Random(pidx)
+          it.map { _ => (r.nextInt(numVertices), Unit) }
       }
       .partitionBy(new spark.HashPartitioner(numPartitions))
-
-    /*      .flatMap {
-        case (id, cnt) =>
-          val r = new scala.util.Random(id)
-          (1 to 20).map {
-            _ =>
-              (r.nextInt(numVertices), cnt)
-          }
-      }
-      .reduceByKey(_ + _)*/
 
     if (storageLevel != null) {
       data.persist(storageLevel)
@@ -42,6 +45,7 @@ class SparkTests(sc: spark.SparkContext) {
     data.foreach(identity)
     data.foreach(identity)
 
+    //    System.in.read()
   }
 
 }

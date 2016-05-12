@@ -243,6 +243,9 @@ object BigGraphSparkContext {
       .setAppName(appName)
       .set("spark.memory.useLegacyMode", "true")
       .set("spark.io.compression.codec", "lz4")
+      .set("spark.rdd.compress", "true")
+      .set("spark.locality.wait", "2m")
+      .set("spark.eventLog.enabled", "true")
       .set("spark.executor.memory",
         LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
       .set("spark.akka.threads",
