@@ -137,11 +137,11 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
     if (srcIsFunction && dstIsFunction) {
-      val induced = RDDUtils.repartitionAndSort(dstInduced.sortUnique(maxPartitioner), rc)
+      val induced = RDDUtils.repartitionAndSort(dstInduced.sortUnique(edges.partitioner.get), rc)
       output(o.induced, induced)
       output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
     } else {
-      // We may end up with way more or less edges than we had originally. We need a new partitioner.
+      // We may end up with way more edges than we had originally. We need a new partitioner.
       val partitioner = rc.partitionerForNRows(dstInduced.count)
       // A non-function mapping can introduce duplicates. We need to generate new IDs.
       val renumbered = dstInduced.randomNumbered(partitioner)
