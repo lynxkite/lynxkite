@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository, Timestamp }
 import org.apache.spark
 import org.scalatest.Tag
 
@@ -52,20 +52,21 @@ object TestUtils {
 
 trait TestTempDir {
   val sysTempDir = System.getProperty("java.io.tmpdir")
-  val myTempDir = new File(
-    "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
+  val myTempDir = new File(s"$sysTempDir/${getClass.getName}-$Timestamp")
   myTempDir.mkdir
 
   val myTempDirPrefix = TestUtils.getDummyPrefixName(myTempDir.toString)
   def tempDir(dirName: String): File = new File(myTempDir, dirName)
 
   // Used to create suitable repository paths for test DataManagers.
-  def getDirForDataManager(): HadoopFile = {
-    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
-    val managerDir = tempDir("dataManager." + dirName)
+  def cleanDataManagerDir(): HadoopFile = {
+    val managerDir = tempDir(s"dataManager.$Timestamp")
     managerDir.mkdir
     HadoopFile(TestUtils.getDummyPrefixName(managerDir.toString))
   }
+
+  // Delete the temporary directory on exit.
+  org.apache.commons.io.FileUtils.forceDeleteOnExit(myTempDir)
 }
 
 private object SparkContextContainer {
