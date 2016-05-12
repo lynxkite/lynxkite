@@ -126,19 +126,18 @@ var fw = (function UIDescription() {
           var fs = require('fs');
           var pattern = lib.theRandomPattern;
 
-          fs.readdir(lib.protractorDownloads, function (error, files) {
-            if (error) {
-              throw error;
+          var downloads = lib.protractorDownloads;
+          var files = fs.readdirSync(downloads);
+          for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            if (f.indexOf(pattern) > -1) {
+              var full = downloads + '/' + f;
+              console.log('Deleting: ' + full);
+              fs.unlinkSync(full);
             }
-            for (var i = 0; i < files.length; i++) {
-              var f = files[i];
-              if (f.indexOf(pattern) > -1) {
-                var full = lib.protractorDownloads + '/' + f;
-                console.log('Deleting: ' + full);
-                fs.unlink(full);
-              }
-            }
-          });
+          }
+          console.log('Deleting: ' + downloads);
+          fs.rmdirSync(downloads);
         });
 
         it('fails in solo mode so it is not accidentally committed', function() {

@@ -257,6 +257,15 @@ object RDDUtils {
   def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
+
+  // Returns the Partitioner which has more partitions.
+  def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
+
+  def countApprox(rdd: RDD[_], sampleRatio: Int = 10): Long =
+    (rdd.mapPartitions(it => Iterator(it.size))
+      .coalesce(sampleRatio)
+      .mapPartitions(it => it.take(1))
+      .sum * sampleRatio).toLong
 }
 
 object Implicits {

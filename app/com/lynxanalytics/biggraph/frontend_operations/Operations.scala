@@ -3047,13 +3047,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("weighted_sum", "weighted_average", "by_max_weight", "by_min_weight")
+            FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
           } else if (needsGlobal) {
-            FEOption.list("sum", "average", "min", "max", "count", "first", "std_deviation")
+            FEOption.list("average", "count", "first", "max", "min", "std_deviation", "sum")
+
           } else {
             FEOption.list(
-              "sum", "average", "min", "max", "most_common", "count_distinct",
-              "count", "vector", "set", "std_deviation")
+              "average", "count", "count_distinct", "max", "median", "min", "most_common",
+              "set", "std_deviation", "sum", "vector")
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -3071,7 +3072,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             FEOption.list("count", "first")
           } else {
-            FEOption.list("most_common", "count_distinct", "count", "vector", "set")
+            FEOption.list("count", "count_distinct", "median", "most_common", "set", "vector")
           }
         }
         TagList(s"aggregate-$name", name, options = options)
