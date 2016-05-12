@@ -110,14 +110,15 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput)
-      if (props.isFunction) {
+      val result = if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        HybridRDD(rdd, maxPartitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
+        HybridRDD(rdd, maxPartitioner).lookup(mapping.asUniqueSortedRDD)
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
         rdd.sort(maxPartitioner).sortedJoinWithDuplicates(mapping)
       }
+      result.repartition(result.partitions.size)
     }
 
     val srcInduced = if (!induceSrc) edges else {
