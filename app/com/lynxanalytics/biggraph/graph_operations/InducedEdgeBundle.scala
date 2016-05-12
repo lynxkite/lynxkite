@@ -110,15 +110,14 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput)
-      val result = if (props.isFunction) {
+      if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        HybridRDD(rdd, maxPartitioner).lookup(mapping.asUniqueSortedRDD)
+        HybridRDD(rdd, maxPartitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
         rdd.sort(maxPartitioner).sortedJoinWithDuplicates(mapping)
       }
-      result.repartition(result.partitions.size)
     }
 
     val srcInduced = if (!induceSrc) edges else {
@@ -137,15 +136,15 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     }
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
-    // We may end up with way more or less edges than we had originally. We need a new partitioner.
-    val newPartitioner = rc.partitionerForNRows(RDDUtils.countApprox(dstInduced))
     if (srcIsFunction && dstIsFunction) {
-      val induced = dstInduced.sortUnique(newPartitioner)
+      val induced = RDDUtils.repartitionAndSort(dstInduced.sortUnique(maxPartitioner), rc)
       output(o.induced, induced)
       output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
     } else {
+      // We may end up with way more or less edges than we had originally. We need a new partitioner.
+      val partitioner = rc.partitionerForNRows(dstInduced.count)
       // A non-function mapping can introduce duplicates. We need to generate new IDs.
-      val renumbered = dstInduced.randomNumbered(newPartitioner)
+      val renumbered = dstInduced.randomNumbered(partitioner)
       output(o.induced, renumbered.mapValues { case (oldId, edge) => edge })
       output(o.embedding,
         renumbered.mapValuesWithKeys { case (newId, (oldId, edge)) => Edge(newId, oldId) })

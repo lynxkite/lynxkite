@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
@@ -266,6 +267,19 @@ object RDDUtils {
       .coalesce(sampleRatio)
       .mapPartitions(it => it.take(1))
       .sum * sampleRatio).toLong
+
+  def repartitionAndSort[K: Ordering: ClassTag, V: ClassTag](
+    rdd: UniqueSortedRDD[K, V], rc: RuntimeContext, countSampleRatio: Int = 10): UniqueSortedRDD[K, V] = {
+    val count = countApprox(rdd, countSampleRatio)
+    val ratio = EntityIO.verticesPerPartition.toDouble / (count.toDouble / rdd.partitions.size)
+    if (ratio < EntityIO.tolerance || ratio > 1.0 / EntityIO.tolerance) {
+      rdd
+    } else {
+      import Implicits._
+      val partitioner = rc.partitionerForNRows(count)
+      rdd.sortUnique(partitioner)
+    }
+  }
 }
 
 object Implicits {
