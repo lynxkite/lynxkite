@@ -1,5 +1,5 @@
 import org.apache.spark.storage.StorageLevel
 
-lynx.sparkTests.iterativeTest(
-  storageLevel: "MEMORY_AND_DISK_SER",
+lynx.sparkTests.cacheTest(
+  storageLevel: "DISK_ONLY",
   dataSize: params.dataSize)
