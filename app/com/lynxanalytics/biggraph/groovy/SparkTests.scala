@@ -13,6 +13,18 @@ class SparkTestListener(sc: spark.SparkContext, s: String) extends spark.schedul
   }
 }
 
+object SparkTests {
+  def CreateData(r: scala.util.Random): Any = {
+    // This is not tha same as (), the instance of Unit, this is the type Unit.
+    // This is a mistake but for now I want this to be comparable with earlier versions.
+    Unit
+
+    // Alternative data generation:
+    // This kills the YARN container with DISK.
+    // (1 to 2).map(_ => r.nextInt())
+  }
+
+}
 class SparkTests(sc: spark.SparkContext) {
 
   def cacheTest(params: java.util.Map[String, AnyRef]) {
@@ -34,7 +46,7 @@ class SparkTests(sc: spark.SparkContext) {
       .mapPartitionsWithIndex {
         (pidx, it) =>
           val r = new scala.util.Random(pidx)
-          it.map { _ => (r.nextInt(numVertices), Unit) }
+          it.map { _ => (r.nextInt(numVertices), SparkTests.CreateData(r)) }
       }
       .partitionBy(new spark.HashPartitioner(numPartitions))
 
