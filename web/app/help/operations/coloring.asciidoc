@@ -1,0 +1,20 @@
+### Coloring
+
+Finds a coloring of the graph with no two neighbors with the same color. The colors are represented by integer numbers
+cast as doubles.
+
+The main idea is: direct the edges to get a directed acyclic graph and then calculate for each vertex v the length of
+ the longest directed path starting from v. We accomplish this by coloring the source vertices to the same color,
+ delete them from the graph, and then repeat this till there are no more vertices left in the graph.
+ It's basically the same algorithm as the critical path method / PERT algorithm in the case when all tasks takes
+ unit long to be finished. (https://en.wikipedia.org/wiki/Program_evaluation_and_review_technique)
+
+This gives us a correct coloring. To reduce the number of colors used we use an iteration where each steps try to
+lower the number of colors by trying out a new direction of the edges derived from our current coloring:
+  if we currently have an N-coloring f:vertexset -> {1, 2,..., N} then for each vertex v
+  order(v) = color(v) % floor(N/2). The direction of the edges are from lower order to higher order (in case of
+  equality: from lower ID to hogher ID).
+
+Since color(v) = the length of the longest directed path starting with v, all directed paths with more than N/2
+vertices in the old DAG are not directed paths anymore in the new DAG. So intiuitively, the new DAG is likely to need
+less colors.
