@@ -80,7 +80,7 @@ case $MODE in
     stage/tools/emr.sh ssh ${EMR_TEST_SPEC} <<ENDSSH
       # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
       sed -i '/^export DEV_EXTRA_SPARK_OPTIONS/d' .kiterc
-      echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS}\"" >>.kiterc
+      echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS:-}\"" >>.kiterc
       biggraphstage/kitescripts/big_data_test_runner.py \
           ${SCRIPT_SELECTOR_PATTERN} ${COMMAND_ARGS[@]}
 ENDSSH
