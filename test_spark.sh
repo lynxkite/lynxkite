@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Runs syntetic Spark tests inside LynxKite.
+# Runs synthetic Spark tests inside LynxKite.
 
 if [ $# -ne 2 ] || [ "$1" != "local" ] && [ "$1" != "remote" ]; then
 
   echo "Usage:"
   echo "  test_spark.sh local|remote data_size partition_size [test_name_pattern]"
   echo
-  echo "Runs syntetic Spark tests on EMR or locally. The Spark tests "
+  echo "Runs synthetic Spark tests on EMR or locally. The Spark tests "
   echo "are running inside LynxKite so they are using the same Spark settings."
   echo
   echo "Examples:"
@@ -58,9 +58,7 @@ rm -f ${NEW_RESULTS_FILE}
 
 runTests 2>&1 | tee ${OUTPUT_LOG}
 
-#grep FINISHED ${OUTPUT_LOG} | \
-#  awk '{ n=split($3,s,"/"); printf "%s: %s\n",substr(s[n],0,length(s[n])),$5 }' >>${NEW_RESULTS_FILE}
-
-echo "$*" >${NEW_RESULTS_FILE}
+echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS}\"" >${NEW_RESULTS_FILE}
+echo "$*" >>${NEW_RESULTS_FILE}
 grep 'FINISHED SCRIPT\|STAGE DONE' ${OUTPUT_LOG} >>${NEW_RESULTS_FILE}
 
