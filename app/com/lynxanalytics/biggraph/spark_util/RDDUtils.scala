@@ -261,6 +261,7 @@ object RDDUtils {
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
 
+  // Returns the keys and their cardinalities from it.
   def countByKey[K](it: Iterator[(K, _)]): Iterator[(K, Long)] = {
     val map = new scala.collection.mutable.HashMap[K, Long]
     for ((k, _) <- it) {
