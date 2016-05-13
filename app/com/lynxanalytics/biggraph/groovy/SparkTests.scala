@@ -8,8 +8,8 @@ class SparkTestListener(sc: spark.SparkContext, s: String) extends spark.schedul
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     val info = stageCompleted.stageInfo
-    println(
-      s"$s: STAGE DONE: [${info.stageId}.${info.attemptId}] ${info.name} ${(info.completionTime.get - info.submissionTime.get) / 1000} seconds")
+    println(s"$s: STAGE DONE: [${info.stageId}.${info.attemptId}] " +
+      s"${info.name} ${(info.completionTime.get - info.submissionTime.get) / 1000} seconds")
   }
 }
 
@@ -19,7 +19,9 @@ class SparkTests(sc: spark.SparkContext) {
     val storageLevelString = params
       .get("storageLevel")
       .asInstanceOf[String]
-    val storageLevel = if (storageLevelString == null) null else spark.storage.StorageLevel.fromString(storageLevelString)
+    val storageLevel =
+      if (storageLevelString == null) null
+      else spark.storage.StorageLevel.fromString(storageLevelString)
     val numVertices = params
       .get("dataSize")
       .asInstanceOf[String]
