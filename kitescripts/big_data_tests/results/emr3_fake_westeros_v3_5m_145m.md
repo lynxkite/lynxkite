@@ -13,16 +13,16 @@ Jenkins.
 The results of the latest run are below:
 ```
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 535 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 526 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 in_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61327,4734779,172990,24250,5145,1162,269,62,14,4]}
 out_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61327,4734779,172990,24250,5145,1162,269,62,14,4]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 842 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 808 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-2016-05-11 13:08:13,073 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-0 
-Task 33 in stage 9.0 failed 4 times; aborting job
+2016-05-12 11:05:23,872 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-2 
+Task 3 in stage 9.0 failed 4 times; aborting job
 
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 296 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 272 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 vertex_count: 4998173
 edge_count: 71622548
@@ -35,30 +35,30 @@ FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_verti
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 page_rank_no_weights: {"labelType":"between","labels":["0.2","0.8","3.1","11.8","45.4","175.3","676.0","2606.9","10053.9","38773.9","149536.4"],"sizes":[4290280,650645,45794,9960,2468,634,164,43,11,3]}
 page_rank_weights: {"labelType":"between","labels":["0.2","0.6","2.5","9.8","38.7","153.3","607.4","2406.3","9531.9","37758.5","149571.8"],"sizes":[2713878,2208704,61281,12221,2938,736,183,46,12,3]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1725 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1674 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 in_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61326,4734778,172990,24250,5145,1162,269,62,14,4]}
 out_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61326,4734778,172990,24250,5145,1162,269,62,14,4]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy, took 646 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy, took 639 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 1: visualize one graph
   vertex sets:
-    0: size= 63
+    0: size= 64
   edge bundles:
-    0: size= 120
+    0: size= 122
 2. Visualize one graph with filters
   vertex sets:
-    0: size= 54
+    0: size= 47
   edge bundles:
-    0: size= 54
+    0: size= 48
 3. Get visualization of a graph plus a segmentation
   vertex sets:
-    0: size= 63
+    0: size= 64
     1: size= 45
   edge bundles:
-    0: size= 120
+    0: size= 122
     1: size= 245
-    2: size= 30
+    2: size= 24
 4. Bucketed view
   vertex sets:
     0: size= 100
