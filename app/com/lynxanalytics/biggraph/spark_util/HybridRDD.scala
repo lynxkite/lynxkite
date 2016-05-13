@@ -41,7 +41,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // The large potentially skewed RDD to do joins on.
     sourceRDD: RDD[(K, T)],
     // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
-    // must have the same partitioner.    
+    // must have the same partitioner.
     partitioner: spark.Partitioner,
     // The threshold to decide whether this HybridRDD is skewed.
     threshold: Int = HybridRDD.hybridLookupThreshold) {
@@ -51,15 +51,16 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     val p = 10 min sourceRDD.partitions.size
     val sampleRatio = sourceRDD.partitions.size.toDouble / p
     sourceRDD
-      .mapPartitions(it => {
+      .mapPartitions(it => Iterator({
         RDDUtils
           .countByKey(it)
           .filter(_._2 > thresholdPerPartition)
-      })
+      }))
       .coalesce(p)
-      .mapPartitions(it => it.take(1))
+      .mapPartitions(it => it.next())
       .reduceByKey(_ + _)
-      .mapValues(_ * sampleRatio)
+      .mapValues(x => (x * sampleRatio).toLong)
+      .filter(_._2 > threshold)
       .collect
   }
 
