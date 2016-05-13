@@ -14,8 +14,8 @@
 #   This will run all groovy files in kitescripts/perf/*.groovy and all these
 #   groovy files will receive the testDataSet:fake_westeros_100k parameter.
 
-set -ueo pipefail
-trap "echo $0 has failed" ERR
+source "$(dirname $0)/biggraph_common.sh"
+set -x
 
 cd "$(dirname $0)/.."
 
@@ -77,11 +77,13 @@ case $MODE in
     SCRIPT_SELECTOR_PATTERN="'$1'"
     shift
     COMMAND_ARGS=( "$@" )
-    echo "biggraphstage/kitescripts/big_data_test_runner.py \
-      ${SCRIPT_SELECTOR_PATTERN} ${COMMAND_ARGS[@]}" >${TMP_SCRIPT}
-    stage/tools/emr.sh put ${EMR_TEST_SPEC} ${TMP_SCRIPT} test_cmd.sh
-    stage/tools/emr.sh cmd ${EMR_TEST_SPEC} \
-      "chmod a+x test_cmd.sh && ./test_cmd.sh"
+    stage/tools/emr.sh ssh ${EMR_TEST_SPEC} <<ENDSSH
+      # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
+      sed -i '/^export DEV_EXTRA_SPARK_OPTIONS/d' .kiterc
+      echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS}\"" >>.kiterc
+      biggraphstage/kitescripts/big_data_test_runner.py \
+          ${SCRIPT_SELECTOR_PATTERN} ${COMMAND_ARGS[@]}
+ENDSSH
 
     # Upload logs.
     stage/tools/emr.sh uploadLogs ${EMR_TEST_SPEC}
