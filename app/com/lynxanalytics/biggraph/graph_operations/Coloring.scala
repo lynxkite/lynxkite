@@ -1,7 +1,6 @@
 // Generates an approximation of the optimal graph coloring
 package com.lynxanalytics.biggraph.graph_operations
 
-
 import com.lynxanalytics.biggraph.graph_api.{ DataSet, OutputBuilder, RuntimeContext, _ }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
@@ -40,7 +39,6 @@ case class Coloring()
 
     val maxIterations = 10
 
-
     case class PertColoring(result: Option[(Double, AttributeRDD[Double])])
 
     /* pertColoring works on a directed acylic graph (DAG) and colors each vertex according to the length of the longest
@@ -59,7 +57,7 @@ case class Coloring()
       if (nextColor >= tooManyColors) PertColoring(None)
       else {
         val notYetColored = directedEdges.mapValues(dst => nextColor).distinct
-        if (notYetColored.isEmpty()) PertColoring(Some(nextColor-1, coloringSoFar))
+        if (notYetColored.isEmpty()) PertColoring(Some(nextColor - 1, coloringSoFar))
         else {
           val newDirectedEdges = directedEdges.map(e => e.swap).join(notYetColored)
             .map { case (dst, (src, color)) => (src, dst) }
@@ -70,7 +68,6 @@ case class Coloring()
         }
       }
     }
-
 
     val edgesWithoutID = edges.map { case (id, e) => (e.src, e.dst) }
       .filter { case (src, dst) => src != dst }.distinct()
@@ -86,7 +83,7 @@ case class Coloring()
       val directedEdges = directedEdges1.map {
         case ((src, srcOrd), (dst, dstOrd)) =>
           if (srcOrd < dstOrd) (src, dst)
-          else if (dstOrd <  srcOrd) (dst, src)
+          else if (dstOrd < srcOrd) (dst, src)
           else if (src < dst) (src, dst)
           else (dst, src)
       }
@@ -112,10 +109,8 @@ case class Coloring()
           .result.getOrElse((currentNumberOfColors, oldColoring))
         if (newNumberOfColors > currentNumberOfColors) oldColoring
         else findBetterColoring(newColoring, newNumberOfColors, iterationsLeft - 1)
-      }
-      else oldColoring
+      } else oldColoring
     }
-
 
     val degreeWithoutIsolatedVertices = edgesWithoutID.flatMap { case (src, dst) => Seq(src -> 1.0, dst -> 1.0) }.
       reduceBySortedKey(edgePartitioner, _ + _)
@@ -142,7 +137,6 @@ case class Coloring()
       },
         preservesPartitioning = true).asUniqueSortedRDD
     }
-
 
     /* Tries out to particular orderings for a start: the ordering based on the degrees of the vertices and another
      * one derived from it called convexOrdering - it basically puts the vertices with big degree to both ends of the
