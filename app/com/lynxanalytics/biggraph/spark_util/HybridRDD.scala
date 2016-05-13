@@ -17,6 +17,8 @@ object HybridRDD {
   private val hybridLookupThreshold = util.Properties.envOrElse(
     "KITE_HYBRID_LOOKUP_THRESHOLD", s"${EntityIO.verticesPerPartition / 5}").toInt
 
+  private val sampleRatio = 10
+
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
@@ -47,16 +49,18 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     threshold: Int = HybridRDD.hybridLookupThreshold) {
 
   private val larges = {
-    val thresholdPerPartition = threshold / sourceRDD.partitions.size
-    val p = 10 min sourceRDD.partitions.size
-    val sampleRatio = sourceRDD.partitions.size.toDouble / p
+    // Assumes that the keys are distributed evenly among the partitions.
+    val partitionSize = sourceRDD.partitions.size
+    val thresholdPerPartition = threshold / partitionSize
+    val p = HybridRDD.sampleRatio min partitionSize
+    val sampleRatio = partitionSize.toDouble / p
     sourceRDD
       .mapPartitions(it => Iterator({
         RDDUtils
           .countByKey(it)
           .filter(_._2 > thresholdPerPartition)
       }))
-      .coalesce(p)
+      .coalesce(p) // Coerse partitions into p buckets.
       .mapPartitions(it => it.next())
       .reduceByKey(_ + _)
       .mapValues(x => (x * sampleRatio).toLong)
