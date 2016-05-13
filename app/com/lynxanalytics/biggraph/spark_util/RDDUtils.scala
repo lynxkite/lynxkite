@@ -260,6 +260,15 @@ object RDDUtils {
 
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
+
+  def countByKey[K](it: Iterator[(K, _)]): Iterator[(K, Long)] = {
+    val map = new scala.collection.mutable.HashMap[K, Long]
+    for ((k, _) <- it) {
+      val n = map.get(k)
+      map.put(k, if (n.isEmpty) 0L else n.get + 1L)
+    }
+    map.toIterator
+  }
 }
 
 object Implicits {

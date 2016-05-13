@@ -47,10 +47,19 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     threshold: Int = HybridRDD.hybridLookupThreshold) {
 
   private val larges = {
+    val thresholdPerPartition = threshold / sourceRDD.partitions.size
+    val p = 10 min sourceRDD.partitions.size
+    val sampleRatio = sourceRDD.partitions.size.toDouble / p
     sourceRDD
-      .mapValues(x => 1L)
+      .mapPartitions(it => {
+        RDDUtils
+          .countByKey(it)
+          .filter(_._2 > thresholdPerPartition)
+      })
+      .coalesce(p)
+      .mapPartitions(it => it.take(1))
       .reduceByKey(_ + _)
-      .filter(_._2 >= threshold)
+      .mapValues(_ * sampleRatio)
       .collect
   }
 
@@ -124,7 +133,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     if (isSkewed) {
       val largeKeysMap = lookupRDD.filter(largeKeysSet contains _._1).collect.toMap
       log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
-        + "${largeKeysCoverage} source records.")
+        + s"${largeKeysCoverage} source records.")
       val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
       smalls ++ larges
     } else {
