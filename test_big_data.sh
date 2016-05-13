@@ -7,8 +7,19 @@
 #
 # Usage: test_big_data.sh test_pattern test_data_set [number of emr instances]
 # Usage examples:
-#   test_big_data.sh '*' fake_westeros_xt_25m
-#   test_big_data.sh pagerank fake_westeros_xt_25m
+#   test_big_data.sh
+#   # Default run. Runs all the tests on fake_westeros_v3_5m_145m, a graph
+#   # with 5m vertices, 145m edges, with a somewhat exponential degree distribution
+#   # and many "leaf-like" vertices.
+#
+#   # Other possible invocations:
+#   test_big_data.sh '*' fake_westeros_v3_100k_2m    # 100k vertices, 2m edges (small)
+#   test_big_data.sh '*' fake_westeros_v3_5m_145m    # 5m vertices, 145m edges (default)
+#   test_big_data.sh '*' fake_westeros_v3_10m_303m   # 10m vertices, 303m edges (large)
+#   test_big_data.sh '*' fake_westeros_v3_25m_799m   # 25m vertices 799m edges (xlarge)
+#
+#   test_big_data.sh '*' fake_westeros_v3_100k_2m
+#   test_big_data.sh pagerank fake_westeros_v3_100k_2m
 #   test_big_data.sh centrality twitter 10
 #
 # The test codes are located in the git repo under: kitescripts/big_data_tests
