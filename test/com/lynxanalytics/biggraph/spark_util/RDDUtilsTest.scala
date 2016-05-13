@@ -6,7 +6,6 @@ import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
 
 class RDDUtilsTest extends FunSuite with TestSparkContext {
-  /*
   test("genID works for small and large numbers") {
     val parts = 10
     val border = Int.MaxValue / parts
@@ -66,7 +65,7 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     val reduced2 = sourceRDD.sort(p).reduceBySortedKey(p, _ + _)
     assert(reduced.collect.toSeq == reduced2.collect.toSeq)
   }
-*/
+
   test("countApprox works as expected") {
     import Implicits._
     val rnd = new util.Random(0)
