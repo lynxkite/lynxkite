@@ -58,10 +58,11 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       .mapPartitions(it => Iterator({
         RDDUtils
           .countByKey(it)
+          // Filter in every partition to reduce the size of the shuffle write.
           .filter(_._2 > thresholdPerPartition)
       }))
       .coalesce(p) // Coerse partitions into p buckets.
-      .mapPartitions(it => it.next())
+      .mapPartitions(it => it.next()) // Pick the first partition from every bucket.
       .reduceByKey(_ + _)
       .mapValues(x => (x * sampleRatio).toLong)
       .filter(_._2 > threshold)
