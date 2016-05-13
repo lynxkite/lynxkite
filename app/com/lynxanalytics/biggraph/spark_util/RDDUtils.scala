@@ -264,17 +264,24 @@ object RDDUtils {
 
   // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
   // distributed partitions.
-  def countApprox(rdd: RDD[_], sampleRatio: Int = 10): Long =
+  def countApprox(rdd: RDD[_], sampleSize: Int = 10): Long = {
     (rdd.mapPartitions(it => Iterator(it.size))
-      .coalesce(sampleRatio)
-      .mapPartitions(it => it.take(1))
-      .sum * sampleRatio).toLong
+      .coalesce(sampleSize)
+      .mapPartitions(it => {
+        if (it.hasNext) {
+          it.take(1).map(_ * (it.size + 1))
+        } else {
+          Iterator(0)
+        }
+      })
+      .sum).toLong
+  }
 
   // Repartitions and sorts the rdd if the current partitioning is not adequate. Only use it on
   // RDDs with evenly distributed partitions.
   def repartitionAndSort[K: Ordering: ClassTag, V: ClassTag](
-    rdd: UniqueSortedRDD[K, V], rc: RuntimeContext, countSampleRatio: Int = 10): UniqueSortedRDD[K, V] = {
-    val count = countApprox(rdd, countSampleRatio)
+    rdd: UniqueSortedRDD[K, V], rc: RuntimeContext): UniqueSortedRDD[K, V] = {
+    val count = countApprox(rdd)
     val ratio = EntityIO.verticesPerPartition.toDouble / (count.toDouble / rdd.partitions.size)
     if (EntityIO.tolerance > ratio && ratio > 1.0 / EntityIO.tolerance) {
       rdd
