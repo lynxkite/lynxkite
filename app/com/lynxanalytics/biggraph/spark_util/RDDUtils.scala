@@ -264,17 +264,17 @@ object RDDUtils {
 
   // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
   // distributed partitions.
-  def countApprox(rdd: RDD[_], sampleSize: Int = 10): Long = {
+  def countApprox(
+    rdd: RDD[_], // The RDD to perform the count on.
+    sampleSize: Int = 10 // The number of sample partitions to actually check.
+    ): Long = {
+    // The sample should not be larger than the number of partitions.
+    val p = sampleSize min rdd.partitions.size
+    val sampleRatio = rdd.partitions.size.toDouble / p
     (rdd.mapPartitions(it => Iterator(it.size))
-      .coalesce(sampleSize)
-      .mapPartitions(it => {
-        if (it.hasNext) {
-          it.take(1).map(_ * (it.size + 1))
-        } else {
-          Iterator(0)
-        }
-      })
-      .sum).toLong
+      .coalesce(p) // Coerce the partitions into p buckets.
+      .mapPartitions(it => it.take(1)) // There should be no empty buckets.
+      .sum * sampleRatio).toLong
   }
 
   // Repartitions and sorts the rdd if the current partitioning is not adequate. Only use it on
