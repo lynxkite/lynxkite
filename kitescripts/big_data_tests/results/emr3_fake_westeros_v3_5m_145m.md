@@ -26,7 +26,7 @@ FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 vertex_count: 4998173
 edge_count: 71622548
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 942 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 829 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 x: {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[1581353,655063,502689,423821,372686,337422,310645,288104,271624,256595]}
 FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 18 seconds
