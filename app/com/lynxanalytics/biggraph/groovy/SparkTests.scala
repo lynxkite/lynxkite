@@ -1,4 +1,4 @@
-// Varius spark benchmarks to be run from groovy scripts.
+// Various spark benchmarks to be run from groovy scripts.
 
 package com.lynxanalytics.biggraph.groovy
 
@@ -13,18 +13,6 @@ class SparkTestListener(sc: spark.SparkContext, s: String) extends spark.schedul
   }
 }
 
-object SparkTests {
-  def CreateData(r: scala.util.Random): Any = {
-    // This is not tha same as (), the instance of Unit, this is the type Unit.
-    // This is a mistake but for now I want this to be comparable with earlier versions.
-    Unit
-
-    // Alternative data generation:
-    // This kills the YARN container with DISK.
-    // (1 to 2).map(_ => r.nextInt())
-  }
-
-}
 class SparkTests(sc: spark.SparkContext) {
 
   def cacheTest(params: java.util.Map[String, AnyRef]) {
@@ -36,17 +24,22 @@ class SparkTests(sc: spark.SparkContext) {
       .get("dataSize")
       .asInstanceOf[String]
       .toInt
+    val numPartitions = params
+      .get("numPartitions")
+      .asInstanceOf[String]
+      .toInt
 
     val listener = new SparkTestListener(sc, storageLevelString)
     sc.addSparkListener(listener)
 
-    val numPartitions = 100
     val vertices = sc.parallelize(0 to (numVertices - 1), numPartitions)
     val data = vertices
       .mapPartitionsWithIndex {
         (pidx, it) =>
           val r = new scala.util.Random(pidx)
-          it.map { _ => (r.nextInt(numVertices), SparkTests.CreateData(r)) }
+          it.map { _ =>
+            (r.nextInt(numVertices).toLong, (r.nextLong, r.nextLong))
+          }
       }
       .partitionBy(new spark.HashPartitioner(numPartitions))
 
