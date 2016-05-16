@@ -55,9 +55,9 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     threshold: Int = HybridRDD.hybridLookupThreshold) {
 
   private val larges = {
-    val (rdd, sampleRatio) = if (even) {
+    val numPartitions = sourceRDD.partitions.size
+    val (rdd, sampleRatio) = if (even && numPartitions > 0) {
       // Assumes that the keys are distributed evenly among the partitions.
-      val numPartitions = sourceRDD.partitions.size
       val thresholdPerPartition = threshold / numPartitions
       val numSamplePartitions = HybridRDD.numSamplePartitions min numPartitions
       (sourceRDD
