@@ -92,6 +92,34 @@ trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphe
   registerStandardPrefixes()
 }
 
+case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, Attribute[_]]) {
+  def attr[T: TypeTag](name: String) = attrs(name).runtimeSafeCast[T]
+}
+object TestGraph {
+  private def loadCSV(file: String)(implicit dm: DataManager) = {
+    dm.newSQLContext().read.format("com.databricks.spark.csv")
+      .option("header", "true")
+      .load(file)
+  }
+  // Loads a graph from vertices.csv and edges.csv.
+  def fromCSV(directory: String)(implicit mm: MetaGraphManager, dm: DataManager): TestGraph = {
+    import Scripting._
+    val vertexCSV = ImportDataFrame(loadCSV(directory + "/vertices.csv")).result
+    val edgeCSV = ImportDataFrame(loadCSV(directory + "/edges.csv")).result
+    val edges = {
+      val op = new ImportEdgeListForExistingVertexSetFromTable()
+      op(
+        op.srcVidColumn, edgeCSV.columns("src").runtimeSafeCast[String])(
+          op.dstVidColumn, edgeCSV.columns("dst").runtimeSafeCast[String])(
+            op.srcVidAttr, vertexCSV.columns("id").runtimeSafeCast[String])(
+              op.dstVidAttr, vertexCSV.columns("id").runtimeSafeCast[String]).result.edges
+    }
+    TestGraph(vertexCSV.ids, edges, vertexCSV.columns.map {
+      case (name, attr) => name -> attr.entity
+    }.toMap)
+  }
+}
+
 object SmallTestGraph extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val (vs, es) = graph
