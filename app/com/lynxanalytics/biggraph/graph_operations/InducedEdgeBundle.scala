@@ -116,7 +116,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
         if (repartition) {
           HybridRDD(rdd, maxPartitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
         } else {
-          HybridRDD(rdd, maxPartitioner).lookupAndCoalesce(mapping.asUniqueSortedRDD)
+          HybridRDD(rdd, maxPartitioner).lookup(mapping.asUniqueSortedRDD)
         }
       } else {
         // If the mapping can have duplicates we need to use the less reliable
