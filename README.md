@@ -111,16 +111,16 @@ Here's how I managed to set it up.
  1. Start spark master:
 
         ~/spark-<version>/sbin/start-master.sh
-    
+
  2. Start 3 executors:
 
-        SPARK_WORKER_INSTANCES=3 ~/spark-<version>/sbin/start-slave.sh spark://DeepThought:7077
-    
-    (Using "localhost" instead of "DeepThought" did not work for me)
+        SPARK_WORKER_INSTANCES=3 ~/spark-<version>/sbin/start-slave.sh spark://$(hostname):7077
+
+    (Using "localhost" instead of "$(hostname)" did not work for me)
 
  3. In my .kiterc:
 
-        export SPARK_MASTER=spark://DeepThought:7077
+        export SPARK_MASTER=spark://$(hostname):7077
         export EXECUTOR_MEMORY=6g
         export NUM_EXECUTORS=3
         export NUM_CORES_PER_EXECUTOR=2

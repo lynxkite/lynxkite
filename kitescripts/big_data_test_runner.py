@@ -51,7 +51,7 @@ def run_test(kite_path, test_path, groovy_args, seen_tests, dry_run):
   if not dry_run:
     subprocess.call([kite_path, 'batch', test_path] + groovy_args)
 
-def run_tests(kite_path, scripts, test_data_set, dry_run):
+def run_tests(kite_path, scripts, groovy_args, dry_run):
   # Set of tests that were seen by the run_test functions.
   # This is used to ensure that one test is executed at most
   # once.
@@ -60,7 +60,7 @@ def run_tests(kite_path, scripts, test_data_set, dry_run):
     run_test(
       kite_path,
       script,
-      test_data_set,
+      groovy_args,
       seen_tests,
       dry_run)
 
@@ -74,14 +74,14 @@ def main(argv):
     return
   else:
     script_pattern = argv[1]
-    test_data_set = argv[2:]
+    groovy_args = argv[2:]
   kite_path = my_path + '/../bin/biggraph'
   scripts = glob.glob(my_path + '/' + script_pattern + '.groovy')
   # Ensure the order is deterministic to have nice diffs:
   scripts.sort()
   # Make a dry run first to detect macro errors early:
-  run_tests(kite_path, scripts, test_data_set, dry_run=True)
-  run_tests(kite_path, scripts, test_data_set, dry_run=False)
+  run_tests(kite_path, scripts, groovy_args, dry_run=True)
+  run_tests(kite_path, scripts, groovy_args, dry_run=False)
 
 if __name__ == "__main__":
   main(sys.argv)
