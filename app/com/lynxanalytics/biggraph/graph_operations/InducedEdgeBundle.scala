@@ -112,7 +112,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       val mapping = getMapping(mappingInput)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        HybridRDD(rdd, maxPartitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
+        HybridRDD(rdd, maxPartitioner, even = true).lookupAndRepartition(mapping.asUniqueSortedRDD)
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
