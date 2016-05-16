@@ -17,7 +17,10 @@ object HybridRDD {
   private val hybridLookupThreshold = util.Properties.envOrElse(
     "KITE_HYBRID_LOOKUP_THRESHOLD", s"${EntityIO.verticesPerPartition / 5}").toInt
 
-  private val sampleRatio = 10
+  // The optimal number of sample partitions is the number of tasks can be done in parallel.
+  private val numSamplePartitions =
+    util.Properties.envOrElse("NUM_EXECUTORS", "1").toInt *
+      util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
 
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
@@ -45,24 +48,28 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
     // must have the same partitioner.
     partitioner: spark.Partitioner,
+    // The RDD is distributed evenly, both in terms of the sizes of the partitions and the
+    // distribution of the keys per partition.
+    even: Boolean = false,
     // The threshold to decide whether this HybridRDD is skewed.
     threshold: Int = HybridRDD.hybridLookupThreshold) {
 
   private val larges = {
-    // Assumes that the keys are distributed evenly among the partitions.
-    val partitionSize = sourceRDD.partitions.size
-    val thresholdPerPartition = threshold / partitionSize
-    val p = HybridRDD.sampleRatio min partitionSize
-    val sampleRatio = partitionSize.toDouble / p
-    sourceRDD
-      .mapPartitions(it => Iterator({
-        RDDUtils
-          .countByKey(it)
-          // Filter in every partition to reduce the size of the shuffle write.
-          .filter(_._2 > thresholdPerPartition)
-      }))
-      .coalesce(p) // Coerse partitions into p buckets.
-      .mapPartitions(it => it.next()) // Pick the first partition from every bucket.
+    val (rdd, sampleRatio) = if (even) {
+      // Assumes that the keys are distributed evenly among the partitions.
+      val numPartitions = sourceRDD.partitions.size
+      val thresholdPerPartition = threshold / numPartitions
+      val numSamplePartitions = HybridRDD.numSamplePartitions min numPartitions
+      (sourceRDD
+        .mapPartitions(it => Iterator(it))
+        .coalesce(numSamplePartitions) // Coerse partitions into p buckets.
+        .mapPartitions(it => it.next()), // Pick the first partition from every bucket.
+        numPartitions.toDouble / numSamplePartitions)
+    } else {
+      (sourceRDD, 1.0)
+    }
+    rdd
+      .mapValues(_ => 1l)
       .reduceByKey(_ + _)
       .mapValues(x => (x * sampleRatio).toLong)
       .filter(_._2 > threshold)
