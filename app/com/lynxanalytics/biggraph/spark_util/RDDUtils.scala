@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
+import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
@@ -262,28 +263,34 @@ object RDDUtils {
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
 
+  private val numSamplePartitions =
+    util.Properties.envOrElse("NUM_EXECUTORS", "1").toInt *
+      util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
+
   // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
   // distributed partitions.
-  def countApprox(
-    rdd: RDD[_], // The RDD to perform the count on.
-    sampleSize: Int = 10 // The number of sample partitions to actually check.
-    ): Long = {
+  def countApproxEvenRDD(rdd: RDD[_]): Long = {
+    if (rdd.partitions.isEmpty) {
+      return 0L
+    }
+    val numPartitions = rdd.partitions.size
     // The sample should not be larger than the number of partitions.
-    val p = sampleSize min rdd.partitions.size
-    val sampleRatio = rdd.partitions.size.toDouble / p
+    val numSamplePartitions = RDDUtils.numSamplePartitions min numPartitions
+    val sampleRatio = numPartitions.toDouble / numSamplePartitions
     (rdd.mapPartitions(it => Iterator(it.size))
-      .coalesce(p) // Coerce the partitions into p buckets.
-      .mapPartitions(it => it.take(1)) // There should be no empty buckets.
+      .coalesce(numSamplePartitions) // Coerce the partitions into numSamplePartitions buckets.
+      .mapPartitions(_.take(1)) // There should be no empty buckets.
       .sum * sampleRatio).toLong
   }
 
-  // Repartitions and sorts the rdd if the current partitioning is not adequate. Only use it on
-  // RDDs with evenly distributed partitions.
-  def repartitionAndSort[K: Ordering: ClassTag, V: ClassTag](
+  // Optionally repartitions the sorted RDD with a "good" partitioner, meaning the number of
+  // rows per partition is close to the ideal setting specified in EnityIO. This is expensive,
+  // so if the partition sizes are sufficiently close to the ideal no repartitioning happens.
+  def maybeRepartitionForOutput[K: Ordering: ClassTag, V: ClassTag](
     rdd: UniqueSortedRDD[K, V], rc: RuntimeContext): UniqueSortedRDD[K, V] = {
-    val count = countApprox(rdd)
-    val ratio = EntityIO.verticesPerPartition.toDouble / (count.toDouble / rdd.partitions.size)
-    if (EntityIO.tolerance > ratio && ratio > 1.0 / EntityIO.tolerance) {
+    val count = countApproxEvenRDD(rdd)
+    val ratio = RatioSorter.ratio(rdd.partitions.size, EntityIO.desiredNumPartitions(count))
+    if (ratio < EntityIO.tolerance) {
       rdd
     } else {
       import Implicits._

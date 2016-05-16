@@ -137,7 +137,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
     if (srcIsFunction && dstIsFunction) {
-      val induced = RDDUtils.repartitionAndSort(dstInduced.sortUnique(edges.partitioner.get), rc)
+      val induced = RDDUtils.maybeRepartitionForOutput(dstInduced.sortUnique(edges.partitioner.get), rc)
       output(o.induced, induced)
       output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
     } else {
