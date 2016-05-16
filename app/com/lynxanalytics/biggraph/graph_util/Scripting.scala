@@ -2,6 +2,8 @@
 // reversed edge bundle. All the operations have compile-time safety and operate on the metagraph.
 package com.lynxanalytics.biggraph.graph_util
 
+import scala.reflect.runtime.universe.TypeTag
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -33,6 +35,11 @@ object Scripting {
     def loops: EdgeBundle = {
       val op = graph_operations.LoopEdgeBundle()
       op(op.vs, self).result.eb
+    }
+
+    def emptyEdgeBundle: EdgeBundle = {
+      val op = graph_operations.EmptyEdgeBundle()
+      op(op.src, self)(op.dst, self).result.eb
     }
   }
 
@@ -88,6 +95,11 @@ object Scripting {
 
     def join[S](other: Attribute[S]): Attribute[(T, S)] = {
       graph_operations.JoinAttributes.run(self, other)
+    }
+
+    def deriveX[S: TypeTag](expression: String): Attribute[S] = {
+      graph_operations.DeriveJS.deriveFromAttributes[S](
+        expression, Seq("x" -> self), self.vertexSet)
     }
   }
 

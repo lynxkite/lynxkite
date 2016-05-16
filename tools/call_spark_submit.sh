@@ -168,6 +168,7 @@ command=(
     --jars "${SPARK_JARS}" \
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
+    ${DEV_EXTRA_SPARK_OPTIONS} \
     "${fake_application_jar}" \
     "${app_commands[@]}" \
     "${residual_args[@]:1}"
