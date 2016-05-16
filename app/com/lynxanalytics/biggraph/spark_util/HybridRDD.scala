@@ -124,7 +124,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     if (isSkewed) {
       val largeKeysMap = lookupRDD.filter(largeKeysSet contains _._1).collect.toMap
       log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
-        + "${largeKeysCoverage} source records.")
+        + s"${largeKeysCoverage} source records.")
       val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
       smalls ++ larges
     } else {
