@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_operations._
-import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
+import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile, Timestamp }
 import com.lynxanalytics.biggraph.registerStandardPrefixes
 import com.lynxanalytics.biggraph.standardDataPrefix
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
@@ -43,8 +43,7 @@ object GraphTestUtils {
 
 trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManagerDir = {
-    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
-    val managerDir = tempDir("metaGraphManager." + dirName)
+    val managerDir = tempDir(s"metaGraphManager.$Timestamp")
     managerDir.mkdir
     managerDir.toString
   }
@@ -53,7 +52,7 @@ trait TestMetaGraphManager extends TestTempDir {
 
 trait TestDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager: DataManager = {
-    val dataDir = getDirForDataManager()
+    val dataDir = cleanDataManagerDir()
     new DataManager(sparkContext, dataDir)
   }
 }
@@ -65,8 +64,8 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
   def prepareDataRepos(permanent: HadoopFile, ephemeral: HadoopFile): Unit = {
   }
   def cleanDataManagerEphemeral: DataManager = {
-    val permanentDir = getDirForDataManager()
-    val ephemeralDir = getDirForDataManager()
+    val permanentDir = cleanDataManagerDir()
+    val ephemeralDir = cleanDataManagerDir()
     prepareDataRepos(permanentDir, ephemeralDir)
     new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
   }
@@ -91,6 +90,34 @@ trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphe
   implicit val dataManager = cleanDataManagerEphemeral
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.writablePath.symbolicName)
   registerStandardPrefixes()
+}
+
+case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, Attribute[_]]) {
+  def attr[T: TypeTag](name: String) = attrs(name).runtimeSafeCast[T]
+}
+object TestGraph {
+  private def loadCSV(file: String)(implicit dm: DataManager) = {
+    dm.newSQLContext().read.format("com.databricks.spark.csv")
+      .option("header", "true")
+      .load(file)
+  }
+  // Loads a graph from vertices.csv and edges.csv.
+  def fromCSV(directory: String)(implicit mm: MetaGraphManager, dm: DataManager): TestGraph = {
+    import Scripting._
+    val vertexCSV = ImportDataFrame(loadCSV(directory + "/vertices.csv")).result
+    val edgeCSV = ImportDataFrame(loadCSV(directory + "/edges.csv")).result
+    val edges = {
+      val op = new ImportEdgeListForExistingVertexSetFromTable()
+      op(
+        op.srcVidColumn, edgeCSV.columns("src").runtimeSafeCast[String])(
+          op.dstVidColumn, edgeCSV.columns("dst").runtimeSafeCast[String])(
+            op.srcVidAttr, vertexCSV.columns("id").runtimeSafeCast[String])(
+              op.dstVidAttr, vertexCSV.columns("id").runtimeSafeCast[String]).result.edges
+    }
+    TestGraph(vertexCSV.ids, edges, vertexCSV.columns.map {
+      case (name, attr) => name -> attr.entity
+    }.toMap)
+  }
 }
 
 object SmallTestGraph extends OpFromJson {

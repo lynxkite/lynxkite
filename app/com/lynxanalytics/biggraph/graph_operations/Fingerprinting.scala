@@ -169,7 +169,7 @@ case class Fingerprinting(
 
     // Run findStableMarriage with the smaller side as "ladies".
     def flipped(rdd: UniqueSortedRDD[ID, ID]): UniqueSortedRDD[ID, ID] = {
-      rdd.map(pair => pair._2 -> pair._1).sortUnique(candidatesPartitioner)
+      rdd.map(_.swap).sortUnique(candidatesPartitioner)
     }
     val (leftToRight, rightToLeft) =
       if (rightCount < leftCount) {

@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 
 class RegressionTest extends FunSuite with TestGraphOp {
   def predict(method: String, label: Attribute[Double], features: Seq[Attribute[Double]]) = {
@@ -72,8 +73,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
     def gender(method: String) = {
       println("       . " + method)
       val g = ExampleGraph()().result
-      val gender = DeriveJS.deriveFromAttributes[Double](
-        "gender == 'Male' ? 1 : 0", Seq("gender" -> g.gender), g.vertices).attr
+      val gender = g.gender.deriveX[Double]("x == 'Male' ? 1 : 0")
       predict(method, gender, Seq(g.age))
     }
     assertRoughly(gender("Linear regression"),
@@ -97,8 +97,7 @@ class RegressionTest extends FunSuite with TestGraphOp {
   test("Logistic regression") {
     val prediction = {
       val g = ExampleGraph()().result
-      val young = DeriveJS.deriveFromAttributes[Double](
-        "age < 19.0 ? 1 : 0", Seq("age" -> g.age), g.vertices).attr
+      val young = g.age.deriveX[Double]("x < 19.0 ? 1 : 0")
       predict("Logistic regression", young, Seq(g.age))
     }
     assertRoughly(prediction,
