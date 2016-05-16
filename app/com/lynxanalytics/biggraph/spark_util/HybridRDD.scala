@@ -62,7 +62,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       val numSamplePartitions = HybridRDD.numSamplePartitions min numPartitions
       (sourceRDD
         .mapPartitions(it => Iterator(it))
-        .coalesce(numSamplePartitions) // Coerse partitions into p buckets.
+        .coalesce(numSamplePartitions) // Coerse partitions into numSamplePartitions buckets.
         .mapPartitions(it => it.next()), // Pick the first partition from every bucket.
         numPartitions.toDouble / numSamplePartitions)
     } else {
