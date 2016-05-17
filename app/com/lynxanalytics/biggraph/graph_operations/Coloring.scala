@@ -101,13 +101,13 @@ case class Coloring()
     def findBetterColoring(oldColoring: AttributeRDD[Double], currentNumberOfColors: Double,
                            iterationsLeft: Int): AttributeRDD[Double] = {
       if (iterationsLeft > 0) {
-        val newOrdering = oldColoring.mapValues(c => if (c % 2 < 1) c + currentNumberOfColors else c)
+        val newOrdering = oldColoring.mapValues(c => math.floor(c % (currentNumberOfColors / 2)))
         val directedEdges = directEdgesFromOrdering(newOrdering)
         val startingColoring = vertices.mapValues(_ => 1.0)
 
         val (newNumberOfColors, newColoring) = pertColoring(directedEdges, startingColoring, 2.0, currentNumberOfColors)
           .result.getOrElse((currentNumberOfColors, oldColoring))
-        if (newNumberOfColors >= currentNumberOfColors) oldColoring
+        if (newNumberOfColors > currentNumberOfColors) oldColoring
         else findBetterColoring(newColoring, newNumberOfColors, iterationsLeft - 1)
       } else oldColoring
     }
@@ -115,15 +115,28 @@ case class Coloring()
     val degreeWithoutIsolatedVertices = edgesWithoutID.flatMap { case (src, dst) => Seq(src -> 1.0, dst -> 1.0) }.
       reduceBySortedKey(edgePartitioner, _ + _)
 
-    /* We use the degree AttributeRDD to direct the edges to create directed acyclic graph (DAG).
-     * We want to create DAG where the length of the longest directed path is as small as possible.
-     * The DAG created from degree have the vertices with big degreegit  at the front of the topological order.
-     * The idea behind singling out this ordering is that a long path in the underlying undirected graph
-     * is very likely to go through vertices with high degree. If the vertices with high degree have vertices with
-     * smaller degree between them along the path then the ordering based on the degree will cut up such a path.
+    /* we use these two AttributeRDDs to direct the edges to create directed acyclic graphs (DAGs).
+     * We want to create DAGs where the length of the longest directed path is as small as possible.
+     * The DAG created from degree have the vertices with big degree at the front of the topological order.
+     * In the DAG created from convexOrdering they have 1/2 chance to get to the front or to the back.
+     * The idea behind singling out these two orderings is that a long path in the underlying undirected graph
+     * is very likely to go through vertices with high degree. If vertices with high degree are next to each
+     * other on this path then convexOrdering has a 1/2 chance to result in a DAG where this path is not directed path.
+     * On the other hand, if the vertices with high degree have vertices with smaller degree between them along the
+     * path then the ordering based on the degree will cut up such a path.
      */
     val degree = vertices.sortUnique(betterPartitioner).sortedLeftOuterJoin(degreeWithoutIsolatedVertices).
       mapValues(_._2.getOrElse(0.0))
+    val convexOrdering: AttributeRDD[Double] = {
+      degree.mapPartitionsWithIndex({
+        (pid, it) =>
+          val rnd = new util.Random(pid)
+          it.map {
+            case (vid, degr) => vid -> degr * (1 - rnd.nextDouble())
+          }
+      },
+        preservesPartitioning = true).asUniqueSortedRDD
+    }
 
     /* Tries out to particular orderings for a start: the ordering based on the degrees of the vertices and another
      * one derived from it called convexOrdering - it basically puts the vertices with big degree to both ends of the
@@ -138,7 +151,11 @@ case class Coloring()
       val (numberOfColorsSoFar, coloringByDegreeOrdering) = pertColoring(directedEdgesToDegreeOrdering,
         startingColoring, 2, vertexCount).result.get
 
-      findBetterColoring(coloringByDegreeOrdering, numberOfColorsSoFar, iteration)
+      val directedEdgesToConvordering = directEdgesFromOrdering(convexOrdering)
+      val (numberOfColorsSoFar2, coloringAfterTryingConvexOrdering) = pertColoring(directedEdgesToConvordering,
+        startingColoring, 2, numberOfColorsSoFar).result.getOrElse(numberOfColorsSoFar, coloringByDegreeOrdering)
+
+      findBetterColoring(coloringAfterTryingConvexOrdering, numberOfColorsSoFar2, iteration)
     }
 
     val coloring = findColoring(maxIterations)
