@@ -14,8 +14,8 @@ trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
   def column(name: String): Attribute[_] = {
-    val colNames = columns.keys.mkString(", ")
-    assert(columns contains name, s"Invalid table column ${name}. Possible values: ${colNames}.")
+    lazy val colNames = columns.keys.mkString(", ")
+    assert(columns.contains(name), s"Invalid table column ${name}. Possible values: ${colNames}.")
     columns(name)
   }
 
