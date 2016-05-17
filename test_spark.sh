@@ -2,7 +2,7 @@
 
 # Runs synthetic Spark tests inside LynxKite.
 
-if [ $# -ne 2 ] || [ "$1" != "local" ] && [ "$1" != "remote" ]; then
+if [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
 
   echo "Usage:"
   echo "  test_spark.sh local|remote data_size partition_size [test_name_pattern]"
