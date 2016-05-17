@@ -50,7 +50,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     partitioner: spark.Partitioner,
     // The RDD is distributed evenly, both in terms of the sizes of the partitions and the
     // distribution of the keys per partition.
-    even: Boolean = false,
+    even: Boolean,
     // The threshold to decide whether this HybridRDD is skewed.
     threshold: Int = HybridRDD.hybridLookupThreshold) {
 
@@ -58,11 +58,10 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     val numPartitions = sourceRDD.partitions.size
     val (rdd, sampleRatio) = if (even && numPartitions > 0) {
       // Assumes that the keys are distributed evenly among the partitions.
-      val thresholdPerPartition = threshold / numPartitions
       val numSamplePartitions = HybridRDD.numSamplePartitions min numPartitions
       (sourceRDD
         .mapPartitions(it => Iterator(it))
-        .coalesce(numSamplePartitions) // Coerse partitions into numSamplePartitions buckets.
+        .coalesce(numSamplePartitions) // Coerce partitions into numSamplePartitions buckets.
         .mapPartitions(it => it.next()), // Pick the first partition from every bucket.
         numPartitions.toDouble / numSamplePartitions)
     } else {
