@@ -2,7 +2,7 @@
 
 # Runs synthetic Spark tests inside LynxKite.
 
-if [ $# -ne 2 ] || [ "$1" != "local" ] && [ "$1" != "remote" ]; then
+if [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
 
   echo "Usage:"
   echo "  test_spark.sh local|remote data_size partition_size [test_name_pattern]"
@@ -50,6 +50,8 @@ runTests() {
 }
 
 RESULTS_DIR="kitescripts/spark_tests/results"
+mkdir -p $RESULTS_DIR
+
 FNAME_BASE="results_$(date +%Y%m%d_%H%M%S)"
 NEW_RESULTS_FILE="${RESULTS_DIR}/${FNAME_BASE}.md"
 OUTPUT_LOG="${RESULTS_DIR}/${FNAME_BASE}.log"
