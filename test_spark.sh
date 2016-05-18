@@ -3,7 +3,6 @@
 # Runs synthetic Spark tests inside LynxKite.
 
 if [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
-
   echo "Usage:"
   echo "  test_spark.sh local|remote data_size partition_size [test_name_pattern]"
   echo
@@ -25,42 +24,43 @@ trap "echo $0 has failed" ERR
 MODE=$1
 DATA_SIZE=$2
 NUM_PARTITIONS=$3
-TEST_NAME_PATTERN=${4:-*}
+TEST_SELECTOR=${4:-all.list}
 
-cd $(dirname $0)
 
-if [ "$MODE" = "local" ]; then
-  ./stage.sh
-fi
+DIR_SUFFIX=${DEV_EXTRA_SPARK_OPTIONS:-}
+DIR_SUFFIX=${DIR_SUFFIX//[[:blank:]]/}
 
-runTests() {
-  case $MODE in
-    "local" )
-      ./stage/kitescripts/big_data_test_runner.py \
-          "spark_tests/$TEST_NAME_PATTERN" \
-          dataSize:$DATA_SIZE numPartitions:$NUM_PARTITIONS
-      ;;
-    "remote" )
-      tools/emr_based_test.sh backend \
-          "spark_tests/$TEST_NAME_PATTERN" \
-          dataSize:$DATA_SIZE numPartitions:$NUM_PARTITIONS 2>&1
-      ;;
-  esac
+RESULTS_DIR="$(dirname $0)/kitescripts/spark_tests/results/${MODE}_${DATA_SIZE}_${NUM_PARTITIONS}$DIR_SUFFIX"
 
-}
+case $MODE in
+  "local" )
+    mkdir -p ${RESULTS_DIR}
+    $(dirname $0)/stage.sh
+    TESTS_TO_RUN=$(
+      $(dirname $0)/stage/kitescripts/big_data_test_scheduler.py \
+          --remote_lynxkite_path=$(dirname $0)/stage/bin/biggraph \
+          --remote_test_dir=$(dirname $0)/kitescripts/spark_tests \
+          --local_test_dir=$(dirname $0)/kitescripts/spark_tests \
+          --test_selector="${TEST_SELECTOR}" \
+          --lynxkite_arg="dataSize:${DATA_SIZE}" \
+          --lynxkite_arg="numPartitions:${NUM_PARTITIONS}" \
+          --remote_output_dir=${RESULTS_DIR}
+        )
+    while read -r LINE; do
+      eval $LINE
+    done <<< "$TESTS_TO_RUN"
+    ;;
+  "remote" )
+    EMR_RESULTS_DIR=$RESULTS_DIR \
+      $(dirname $0)/tools/emr_based_test.sh backend \
+        --remote_test_dir=/home/hadoop/biggraphstage/kitescripts/spark_tests \
+        --local_test_dir=$(dirname $0)/kitescripts/spark_tests \
+        --test_selector="${TEST_SELECTOR}" \
+        --lynxkite_arg="dataSize:${DATA_SIZE}" \
+        --lynxkite_arg="numPartitions:${NUM_PARTITIONS}"
+    ;;
+esac
 
-RESULTS_DIR="kitescripts/spark_tests/results"
-mkdir -p $RESULTS_DIR
-
-FNAME_BASE="results_$(date +%Y%m%d_%H%M%S)"
-NEW_RESULTS_FILE="${RESULTS_DIR}/${FNAME_BASE}.md"
-OUTPUT_LOG="${RESULTS_DIR}/${FNAME_BASE}.log"
-
-rm -f ${NEW_RESULTS_FILE}
-
-runTests 2>&1 | tee ${OUTPUT_LOG}
-
-echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS}\"" >${NEW_RESULTS_FILE}
-echo "$*" >>${NEW_RESULTS_FILE}
-grep 'FINISHED SCRIPT\|STAGE DONE' ${OUTPUT_LOG} >>${NEW_RESULTS_FILE}
+grep --no-filename 'FINISHED SCRIPT\|STAGE DONE' \
+    ${RESULTS_DIR}/*.out.txt >${RESULTS_DIR}/filtered_log.txt
 
