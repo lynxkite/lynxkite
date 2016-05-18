@@ -16,3 +16,9 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
 }
+object RuntimeContext {
+  // The optimal number of sample partitions is the number of tasks can be done in parallel.
+  val numSamplePartitions =
+    util.Properties.envOrElse("NUM_EXECUTORS", "1").toInt *
+      util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
+}
