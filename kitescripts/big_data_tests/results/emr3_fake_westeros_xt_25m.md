@@ -65,7 +65,4 @@ STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualizat
   edge bundles:
     0: size= 10000
 FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy, took 190 seconds
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/coloring.groovy with params List((testDataSet,fake_westeros_xt_25m))
-colors: {"labelType":"between","labels":["1.00","1.80","2.60","3.40","4.20","5.00","5.80","6.60","7.40","8.20","9.00"],"sizes":[17938603,1441522,509541,119647,0,63,27,1,4872493,118104]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/coloring.groovy, took 26426 seconds
 ```
