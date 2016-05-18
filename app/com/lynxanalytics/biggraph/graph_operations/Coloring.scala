@@ -101,7 +101,7 @@ case class Coloring()
     def findBetterColoring(oldColoring: AttributeRDD[Double], currentNumberOfColors: Double,
                            iterationsLeft: Int): AttributeRDD[Double] = {
       if (iterationsLeft > 0) {
-        val newOrdering = oldColoring.mapValues(c => if (c % 2 < 1) c + currentNumberOfColors else c)
+        val newOrdering = oldColoring.mapValues(c => if (c % 2 == 0) c + currentNumberOfColors else c)
         val directedEdges = directEdgesFromOrdering(newOrdering)
         val startingColoring = vertices.mapValues(_ => 1.0)
 
