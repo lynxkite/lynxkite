@@ -440,3 +440,10 @@ object Implicits {
 
   }
 }
+
+// An RDD that only has a subset of the partitions from the original RDD.
+private[spark_util] class PartialRDD[T: ClassTag](rdd: RDD[T], n: Int) extends RDD[T](rdd) {
+  def getPartitions: Array[spark.Partition] = rdd.partitions.take(n)
+  override val partitioner = None
+  def compute(split: spark.Partition, context: spark.TaskContext) = rdd.compute(split, context)
+}
