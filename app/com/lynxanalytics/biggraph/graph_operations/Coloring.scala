@@ -56,15 +56,16 @@ case class Coloring()
       nextColor: Double, tooManyColors: Double): PertColoring = {
       if (nextColor >= tooManyColors) PertColoring(None)
       else {
-        val notYetColored = directedEdges.mapValues(dst => nextColor).distinct
-        if (notYetColored.isEmpty()) PertColoring(Some(nextColor - 1, coloringSoFar))
+        if (directedEdges.isEmpty()) PertColoring(Some(nextColor - 1, coloringSoFar))
         else {
-          val newDirectedEdges = directedEdges.map(e => e.swap).join(notYetColored)
-            .map { case (dst, (src, color)) => (src, dst) }
+          val notYetColored = directedEdges.mapValues(dst => nextColor).distinct
           val newColoringSoFar = coloringSoFar.leftOuterJoin(notYetColored).mapValues {
             case (oldColor, newColorOpt) => newColorOpt.getOrElse(oldColor)
           }.sortUnique(vertexPartitioner)
-          pertColoring(newDirectedEdges, newColoringSoFar, nextColor + 1.0, tooManyColors)
+          val newDirectedEdges = directedEdges.map(e => e.swap).join(notYetColored)
+            .map { case (dst, (src, color)) => (src, dst) }
+          if (newDirectedEdges.isEmpty()) PertColoring(Some(nextColor, newColoringSoFar))
+          else pertColoring(newDirectedEdges, newColoringSoFar, nextColor + 1.0, tooManyColors)
         }
       }
     }
@@ -112,7 +113,7 @@ case class Coloring()
     }
 
     val degreeWithoutIsolatedVertices = edgesWithoutID.flatMap { case (src, dst) => Seq(src -> 1.0, dst -> 1.0) }.
-      reduceBySortedKey(edgePartitioner, _ + _)
+      reduceBySortedKey(betterPartitioner, _ + _)
 
     /* we use the degree AttributeRDD to direct the edges to create a directed acyclic graph (DAG).
      * We want to create a DAG where the length of the longest directed path is as small as possible.
