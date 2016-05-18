@@ -59,10 +59,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     val (rdd, sampleRatio) = if (even && numPartitions > 0) {
       // Assumes that the keys are distributed evenly among the partitions.
       val numSamplePartitions = HybridRDD.numSamplePartitions min numPartitions
-      (sourceRDD
-        .mapPartitions(it => Iterator(it))
-        .coalesce(numSamplePartitions) // Coerce partitions into numSamplePartitions buckets.
-        .mapPartitions(it => it.next()), // Pick the first partition from every bucket.
+      (new PartialRDD(sourceRDD, numSamplePartitions),
         numPartitions.toDouble / numSamplePartitions)
     } else {
       (sourceRDD, 1.0)
