@@ -66,13 +66,11 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     assert(reduced.collect.toSeq == reduced2.collect.toSeq)
   }
 
-  test("countApprox works as expected") {
+  test("countApproxEvenRDD works as expected") {
     import Implicits._
     val rnd = new util.Random(0)
     val data = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
     val rdd = sparkContext.parallelize(data, 10)
-    assert(RDDUtils.countApprox(rdd, 5) == 1000)
-    assert(RDDUtils.countApprox(rdd, 10) == 1000)
-    assert(RDDUtils.countApprox(rdd, 25) == 1000)
+    assert(RDDUtils.countApproxEvenRDD(rdd) == 1000)
   }
 }

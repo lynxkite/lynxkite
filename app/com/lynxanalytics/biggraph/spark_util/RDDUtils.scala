@@ -263,7 +263,8 @@ object RDDUtils {
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
 
-  private val numSamplePartitions =
+  // The optimal number of sample partitions is the number of tasks can be done in parallel.
+  private[spark_util] val numSamplePartitions =
     util.Properties.envOrElse("NUM_EXECUTORS", "1").toInt *
       util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
 
@@ -277,24 +278,22 @@ object RDDUtils {
     // The sample should not be larger than the number of partitions.
     val numSamplePartitions = RDDUtils.numSamplePartitions min numPartitions
     val sampleRatio = numPartitions.toDouble / numSamplePartitions
-    (rdd.mapPartitions(it => Iterator(it.size))
-      .coalesce(numSamplePartitions) // Coerce the partitions into numSamplePartitions buckets.
-      .mapPartitions(_.take(1)) // There should be no empty buckets.
-      .sum * sampleRatio).toLong
+    (new PartialRDD(rdd, numSamplePartitions).count * sampleRatio).toLong
   }
 
   // Optionally repartitions the sorted RDD with a "good" partitioner, meaning the number of
   // rows per partition is close to the ideal setting specified in EnityIO. This is expensive,
   // so if the partition sizes are sufficiently close to the ideal no repartitioning happens.
+  // This method assumes that the RDD is partitioned evenly.
   def maybeRepartitionForOutput[K: Ordering: ClassTag, V: ClassTag](
-    rdd: UniqueSortedRDD[K, V], rc: RuntimeContext): UniqueSortedRDD[K, V] = {
+    rdd: UniqueSortedRDD[K, V]): UniqueSortedRDD[K, V] = {
     val count = countApproxEvenRDD(rdd)
-    val ratio = RatioSorter.ratio(rdd.partitions.size, EntityIO.desiredNumPartitions(count))
-    if (ratio < EntityIO.tolerance) {
+    val desiredNumPartitions = EntityIO.desiredNumPartitions(count)
+    if (RatioSorter.ratio(rdd.partitions.size, desiredNumPartitions) < EntityIO.tolerance) {
       rdd
     } else {
       import Implicits._
-      val partitioner = rc.partitionerForNRows(count)
+      val partitioner = new spark.HashPartitioner(desiredNumPartitions)
       rdd.sortUnique(partitioner)
     }
   }
