@@ -17,6 +17,11 @@ object HybridRDD {
   private val hybridLookupThreshold = util.Properties.envOrElse(
     "KITE_HYBRID_LOOKUP_THRESHOLD", s"${EntityIO.verticesPerPartition / 5}").toInt
 
+  // The optimal number of sample partitions is the number of tasks can be done in parallel.
+  private val numSamplePartitions =
+    util.Properties.envOrElse("NUM_EXECUTORS", "1").toInt *
+      util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
+
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
@@ -41,16 +46,29 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // The large potentially skewed RDD to do joins on.
     sourceRDD: RDD[(K, T)],
     // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
-    // must have the same partitioner.    
+    // must have the same partitioner.
     partitioner: spark.Partitioner,
+    // The RDD is distributed evenly, both in terms of the sizes of the partitions and the
+    // distribution of the keys per partition.
+    even: Boolean,
     // The threshold to decide whether this HybridRDD is skewed.
     threshold: Int = HybridRDD.hybridLookupThreshold) {
 
   private val larges = {
-    sourceRDD
-      .mapValues(x => 1L)
+    val numPartitions = sourceRDD.partitions.size
+    val (rdd, sampleRatio) = if (even && numPartitions > 0) {
+      // Assumes that the keys are distributed evenly among the partitions.
+      val numSamplePartitions = HybridRDD.numSamplePartitions min numPartitions
+      (new PartialRDD(sourceRDD, numSamplePartitions),
+        numPartitions.toDouble / numSamplePartitions)
+    } else {
+      (sourceRDD, 1.0)
+    }
+    rdd
+      .mapValues(_ => 1l)
       .reduceByKey(_ + _)
-      .filter(_._2 >= threshold)
+      .mapValues(x => (x * sampleRatio).toLong)
+      .filter(_._2 > threshold)
       .collect
   }
 

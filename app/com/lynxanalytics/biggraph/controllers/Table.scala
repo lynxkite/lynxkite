@@ -13,6 +13,11 @@ import org.apache.spark.sql.SQLContext
 trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
+  def column(name: String): Attribute[_] = {
+    lazy val colNames = columns.keys.mkString(", ")
+    assert(columns.contains(name), s"Invalid table column ${name}. Possible values: ${colNames}.")
+    columns(name)
+  }
 
   def toDF(sqlContext: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
     new TableRelation(this, sqlContext).toDF
