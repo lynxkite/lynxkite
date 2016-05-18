@@ -107,12 +107,18 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
 
     def joinMapping[V: ClassTag](
       rdd: RDD[(ID, V)],
-      mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
+      mappingInput: MagicInputSignature#EdgeBundleTemplate,
+      repartition: Boolean): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        HybridRDD(rdd, maxPartitioner, even = true).lookupAndRepartition(mapping.asUniqueSortedRDD)
+        if (repartition) {
+          HybridRDD(rdd, maxPartitioner, even = true)
+            .lookupAndRepartition(mapping.asUniqueSortedRDD)
+        } else {
+          HybridRDD(rdd, maxPartitioner, even = true).lookup(mapping.asUniqueSortedRDD)
+        }
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
@@ -123,14 +129,14 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val srcInduced = if (!induceSrc) edges else {
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-      val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
+      val bySrc = joinMapping(byOldSrc, inputs.srcMapping, repartition = true)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
     val dstInduced = if (!induceDst) srcInduced else {
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-      val byDst = joinMapping(byOldDst, inputs.dstMapping)
+      val byDst = joinMapping(byOldDst, inputs.dstMapping, repartition = false)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }

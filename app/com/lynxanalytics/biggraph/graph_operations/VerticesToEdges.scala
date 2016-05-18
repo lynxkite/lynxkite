@@ -43,7 +43,7 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val byDst = HybridRDD(bySrc, partitioner, even = true).lookupAndRepartition(nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
     }
-    val edges = HybridRDD(byDst, partitioner, even = true).lookupAndRepartition(nameToId).map {
+    val edges = HybridRDD(byDst, partitioner, even = true).lookup(nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }.sortUnique(partitioner)
     val embedding = inputs.vs.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) }
