@@ -100,7 +100,7 @@ case class Coloring()
     def findBetterColoring(oldColoring: AttributeRDD[Double], currentNumberOfColors: Double,
                            iterationsLeft: Int): AttributeRDD[Double] = {
       if (iterationsLeft > 0) {
-        val newOrdering = oldColoring.mapValues(c => if(c % 2 < 1) c + currentNumberOfColors else c)
+        val newOrdering = oldColoring.mapValues(c => if (c % 2 < 1) c + currentNumberOfColors else c)
         val directedEdges = directEdgesFromOrdering(newOrdering)
         val startingColoring = vertices.mapValues(_ => 1.0)
 
@@ -124,8 +124,7 @@ case class Coloring()
     val degree = vertices.sortUnique(betterPartitioner).sortedLeftOuterJoin(degreeWithoutIsolatedVertices).
       mapValues(_._2.getOrElse(0.0))
 
-
-    /* findColoring tarts with the ordering based on the degrees of the vertices in hopes that it gives us a good
+    /* findColoring starts with the ordering based on the degrees of the vertices in hopes that it gives us a good
      * starting coloring. Then try to improve the coloring by iterating the findBetterColoring function.
      */
     def findColoring(iteration: Int) = {
