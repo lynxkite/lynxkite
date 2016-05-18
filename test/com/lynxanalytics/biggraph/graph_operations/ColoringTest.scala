@@ -10,10 +10,7 @@ class ColoringTest extends FunSuite with TestGraphOp {
     val eg = ExampleGraph()().result
     val op = Coloring()
     val res = op(op.es, eg.edges)().result
-    val color = res.coloring.rdd.collect.toMap
-    assert(color(0) == 2.0, s"Bad color: ${color(0)}")
-    assert(color(1) == 1.0, s"Bad color: ${color(1)}")
-    assert(color(2) == 3.0, s"Bad color: ${color(2)}")
-    assert(color(3) == 1.0, s"Bad color: ${color(3)}")
+    val color = res.coloring.rdd.collect.toSeq.sorted
+    assert(color == Seq(0 -> 2.0, 1 -> 1.0, 2 -> 3.0, 3 -> 1.0))
   }
 }
