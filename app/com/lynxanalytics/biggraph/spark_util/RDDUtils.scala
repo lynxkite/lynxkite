@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.spark_util
 import com.esotericsoftware.kryo
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
+import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
@@ -263,11 +264,6 @@ object RDDUtils {
   // Returns the Partitioner which has more partitions.
   def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
 
-  // The optimal number of sample partitions is the number of tasks can be done in parallel.
-  private[spark_util] val numSamplePartitions =
-    util.Properties.envOrElse("NUM_EXECUTORS", "1").toInt *
-      util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
-
   // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
   // distributed partitions.
   def countApproxEvenRDD(rdd: RDD[_]): Long = {
@@ -276,7 +272,7 @@ object RDDUtils {
     }
     val numPartitions = rdd.partitions.size
     // The sample should not be larger than the number of partitions.
-    val numSamplePartitions = RDDUtils.numSamplePartitions min numPartitions
+    val numSamplePartitions = RuntimeContext.numSamplePartitions min numPartitions
     val sampleRatio = numPartitions.toDouble / numSamplePartitions
     (new PartialRDD(rdd, numSamplePartitions).count * sampleRatio).toLong
   }

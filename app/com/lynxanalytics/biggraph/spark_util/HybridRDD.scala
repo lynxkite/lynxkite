@@ -1,6 +1,7 @@
 // Assorted utilities for working with RDDs.
 package com.lynxanalytics.biggraph.spark_util
 
+import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
@@ -53,7 +54,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     val numPartitions = sourceRDD.partitions.size
     val (rdd, sampleRatio) = if (even && numPartitions > 0) {
       // Assumes that the keys are distributed evenly among the partitions.
-      val numSamplePartitions = RDDUtils.numSamplePartitions min numPartitions
+      val numSamplePartitions = RuntimeContext.numSamplePartitions min numPartitions
       (new PartialRDD(sourceRDD, numSamplePartitions),
         numPartitions.toDouble / numSamplePartitions)
     } else {
