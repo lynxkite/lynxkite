@@ -400,6 +400,13 @@ s3copy)
   echo "Copy successful."
   ;;
 
+download-dir)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    hadoop@${MASTER_HOSTNAME}:$1 \
+    $2
+  ;;
+
 # ======
 batch)
   # 1. First we build a master script.
