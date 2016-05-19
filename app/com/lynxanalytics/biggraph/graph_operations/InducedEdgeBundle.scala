@@ -14,8 +14,9 @@ import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {
@@ -82,59 +83,68 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
+    implicit val runtimeContext = rc
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
-    // Use the edge partitioner for both the new edges and src and dst to avoid too
-    // large partitions.
-    val partitioner = inputs.edges.rdd.partitioner.get
+    // Use the larger partitioner for sorted join and HybridRDD.
+    val maxPartitioner = RDDUtils.maxPartitioner(
+      inputs.edges.rdd.partitioner.get,
+      inputs.src.rdd.partitioner.get,
+      inputs.dst.rdd.partitioner.get)
 
     def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
         // We might save a shuffle in this case.
-        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(partitioner)
+        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(maxPartitioner)
       } else {
         mappingEdges
           .map { case (id, edge) => (edge.src, edge.dst) }
-          .sort(partitioner)
+          .sort(maxPartitioner)
       }
     }
 
     def joinMapping[V: ClassTag](
       rdd: RDD[(ID, V)],
-      mappingInput: MagicInputSignature#EdgeBundleTemplate): RDD[(ID, (V, ID))] = {
+      mappingInput: MagicInputSignature#EdgeBundleTemplate,
+      repartition: Boolean): RDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
-        HybridRDD(rdd, partitioner).lookupAndRepartition(mapping.asUniqueSortedRDD)
+        if (repartition) {
+          HybridRDD(rdd, maxPartitioner, even = true)
+            .lookupAndRepartition(mapping.asUniqueSortedRDD)
+        } else {
+          HybridRDD(rdd, maxPartitioner, even = true).lookup(mapping.asUniqueSortedRDD)
+        }
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
-        rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
+        rdd.sort(maxPartitioner).sortedJoinWithDuplicates(mapping)
       }
     }
 
     val srcInduced = if (!induceSrc) edges else {
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-      val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
+      val bySrc = joinMapping(byOldSrc, inputs.srcMapping, repartition = true)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
     val dstInduced = if (!induceDst) srcInduced else {
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-      val byDst = joinMapping(byOldDst, inputs.dstMapping)
+      val byDst = joinMapping(byOldDst, inputs.dstMapping, repartition = false)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
     if (srcIsFunction && dstIsFunction) {
-      val induced = dstInduced.sortUnique(edges.partitioner.get)
+      val induced = RDDUtils.maybeRepartitionForOutput(dstInduced.sortUnique(edges.partitioner.get))
       output(o.induced, induced)
       output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
     } else {

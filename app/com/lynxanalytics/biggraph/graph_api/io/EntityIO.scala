@@ -149,6 +149,13 @@ object EntityIO {
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
     dataRoot / io.OperationsDir / instance.gUID.toString
+
+  // The ideal number of partitions for n rows.
+  def desiredNumPartitions(n: Long): Int = {
+    val p = Math.ceil(n.toDouble / verticesPerPartition).toInt
+    // Always have at least 1 partition.
+    p max 1
+  }
 }
 
 case class EntityMetadata(lines: Long, serialization: Option[String]) {
@@ -211,16 +218,19 @@ class ScalarIO[T](entity: Scalar[T], context: IOContext)
   private def successPath: HadoopFileLike = path / Success
 }
 
+object RatioSorter {
+  def ratio(a: Int, desired: Int): Double = {
+    val aa = a.toDouble
+    if (aa > desired) aa / desired
+    else desired.toDouble / aa
+  }
+}
+
 case class RatioSorter(elements: Seq[Int], desired: Int) {
   assert(desired > 0, "RatioSorter only supports positive integers")
   assert(elements.filter(_ <= 0).isEmpty, "RatioSorter only supports positive integers")
   private val sorted: Seq[(Int, Double)] = {
-    elements.map { a =>
-      val aa = a.toDouble
-      if (aa > desired) (a, aa / desired)
-      else (a, desired.toDouble / aa)
-    }
-      .sortBy(_._2)
+    elements.map(a => (a, RatioSorter.ratio(a, desired))).sortBy(_._2)
   }
 
   val best: Option[Int] = sorted.map(_._1).headOption
@@ -228,7 +238,6 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
   def getBestWithinTolerance(tolerance: Double): Option[Int] = {
     sorted.filter(_._2 < tolerance).map(_._1).headOption
   }
-
 }
 
 abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEntity,
@@ -389,9 +398,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
     val vertices = entityLocation.numVertices
-    val p = Math.ceil(vertices.toDouble / EntityIO.verticesPerPartition).toInt
-    // Always have at least 1 partition.
-    p max 1
+    EntityIO.desiredNumPartitions(vertices)
   }
 
   private def selectPartitionNumber(entityLocation: EntityLocationSnapshot): Int = {

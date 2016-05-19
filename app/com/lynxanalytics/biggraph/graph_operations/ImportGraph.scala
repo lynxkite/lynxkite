@@ -7,8 +7,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.lang.StringEscapeUtils
@@ -359,6 +360,7 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
+    implicit val runtimeContext = rc
     val columns = readColumns(rc, input, Set(src, dst))
     val edgePartitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
@@ -366,20 +368,21 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
       .distinct
       .cache()
     val vertexPartitioner = rc.partitionerForNRows(names.count())
+    val maxPartitioner = RDDUtils.maxPartitioner(edgePartitioner, vertexPartitioner)
     val idToName = names.randomNumbered(vertexPartitioner)
     val nameToId = idToName
       .map(_.swap)
-      // This is going to be joined with edges, so we use the edge partitioner.
-      .sortUnique(edgePartitioner)
+      // This is going to be used in HybridRDD, so use the larger partitioner.
+      .sortUnique(maxPartitioner)
     val edgesBySrc = edgeSrcDst(columns).map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
-    val srcResolvedByDst = HybridRDD(edgesBySrc, edgePartitioner)
+    val srcResolvedByDst = HybridRDD(edgesBySrc, maxPartitioner, even = true)
       .lookupAndRepartition(nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = HybridRDD(srcResolvedByDst, edgePartitioner)
-      .lookupAndRepartition(nameToId)
+    val edges = HybridRDD(srcResolvedByDst, maxPartitioner, even = true)
+      .lookup(nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)
 
@@ -434,6 +437,7 @@ class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, v
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     val columns = readColumns(rc, input, Set(src, dst))
     putEdgeAttributes(columns, o.attrs, output)
 

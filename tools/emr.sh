@@ -125,12 +125,12 @@ CheckDataRepo() {
 }
 
 ExecuteOnMaster() {
-  CMD=$1
-  MASTER_ACCESS=$(GetMasterAccessParams)
-  aws emr ssh $MASTER_ACCESS --command "$CMD"
+  CMD=( "$@" )
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  $SSH hadoop@${MASTER_HOSTNAME} "${CMD[@]}"
 }
 
-DeployKiteAndMonitoring() {
+DeployKite() {
   # Restage and restart kite.
   if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
     echoerr "You must run this script from inside a stage, not from the source tree!"
@@ -145,8 +145,10 @@ DeployKiteAndMonitoring() {
     --exclude metastore_db \
     ${KITE_BASE}/ \
     hadoop@${MASTER_HOSTNAME}:biggraphstage
+}
 
-  ExecuteOnMaster "./biggraphstage/tools/monitoring/restart_monitoring_master.sh"
+RestartMonitoring() {
+  ExecuteOnMaster ./biggraphstage/tools/monitoring/restart_monitoring_master.sh
 }
 
 if [ ! -f "${SSH_KEY}" ]; then
@@ -275,7 +277,17 @@ EOF
   aws emr put ${MASTER_ACCESS} --src ${KITERC_FILE} --dest .kiterc
   aws emr put ${MASTER_ACCESS} --src ${PREFIXDEF_FILE} --dest prefix_definitions.txt
   aws emr put ${MASTER_ACCESS} --src ${SPARK_ENV_FILE} --dest spark-${SPARK_VERSION}/conf/spark-env.sh
+  aws emr ssh ${MASTER_ACCESS} --command "rm -f .ssh/cluster-key.pem"
+  aws emr put ${MASTER_ACCESS} --src ${SSH_KEY} --dest ".ssh/cluster-key.pem"
+  # Starts Spark history server at port 18080. (We won't fail the whole script if this fails.)
+  EVENTLOG_DIR=/home/hadoop/biggraphstage/logs
+  aws emr ssh ${MASTER_ACCESS} --command "mkdir -p ${EVENTLOG_DIR}; \
+    /home/hadoop/spark-${SPARK_VERSION}/sbin/stop-history-server.sh; \
+    /home/hadoop/spark-${SPARK_VERSION}/sbin/start-history-server.sh  ${EVENTLOG_DIR}; \
+    true"
 
+  DeployKite
+  RestartMonitoring
   ;;
 
 # ======
@@ -285,12 +297,12 @@ uploadLogs)
 
 # =====
 deploy-kite)
-  DeployKiteAndMonitoring
+  DeployKite
   ;;
 
 # ======
 kite)
-  DeployKiteAndMonitoring
+  DeployKite
 
   MASTER_ACCESS=$(GetMasterAccessParams)
   echo "Starting..."
@@ -306,7 +318,11 @@ connect)
   echo "be available at http://localhost:8157 to access your cluster."
   echo "Press Ctrl-C to exit."
   echo
-  echo "Remote LynxKite access: http://${MASTER_HOSTNAME}:4044"
+  echo "Available services: "
+  echo " http://${MASTER_HOSTNAME}:4044 - LynxKite"
+  echo " http://${MASTER_HOSTNAME}:8088 - Cluster Controller (this way to Spark UI)"
+  echo " http://${MASTER_HOSTNAME}:3000 - Grafana monitoring"
+  echo " http://${MASTER_HOSTNAME}:18080 - Spark History Server"
   echo "See below for SOCKS proxy configuration instructions:"
   echo "https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-connect-master-node-proxy.html"
   $SSH hadoop@${MASTER_HOSTNAME} -N -L 4044:localhost:4044 -D 8157
@@ -355,7 +371,8 @@ reset)
 
 # ====== fall-through
 reset-yes)
-  ExecuteOnMaster "./biggraphstage/bin/biggraph stop; \
+  ExecuteOnMaster "killall -9 big_data_test_runner.py; \
+    ./biggraphstage/bin/biggraph stop; \
     rm -Rf kite_meta; \
     hadoop fs -rm -r /data; \
     true;"
