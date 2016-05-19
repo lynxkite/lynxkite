@@ -360,6 +360,7 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
+    implicit val runtimeContext = rc
     val columns = readColumns(rc, input, Set(src, dst))
     val edgePartitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
@@ -436,6 +437,7 @@ class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, v
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     val columns = readColumns(rc, input, Set(src, dst))
     putEdgeAttributes(columns, o.attrs, output)
 

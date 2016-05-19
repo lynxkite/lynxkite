@@ -57,7 +57,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
   def resolveEdges[A: reflect.ClassTag: Ordering, B: reflect.ClassTag: Ordering](
     unresolvedEdges: UniqueSortedRDD[ID, (A, B)],
     srcVidAttr: AttributeData[A],
-    dstVidAttr: AttributeData[B]): UniqueSortedRDD[ID, Edge] = {
+    dstVidAttr: AttributeData[B])(implicit rc: RuntimeContext): UniqueSortedRDD[ID, Edge] = {
 
     val edgePartitioner = unresolvedEdges.partitioner.get
     val maxPartitioner = RDDUtils.maxPartitioner(
@@ -108,6 +108,7 @@ case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableTy
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     import SerializableType.Implicits._
 
     // Join the source and destination columns of the table to import.

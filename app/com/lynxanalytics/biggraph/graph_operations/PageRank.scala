@@ -37,6 +37,7 @@ case class PageRank(dampingFactor: Double,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     val edges = inputs.es.rdd
     // We only keep positive weights. Otherwise per-node normalization may not make sense.
     val weights = inputs.weights.rdd.filter(_._2 > 0.0)

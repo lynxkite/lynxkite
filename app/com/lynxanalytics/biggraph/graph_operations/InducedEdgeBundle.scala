@@ -83,6 +83,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
+    implicit val runtimeContext = rc
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd

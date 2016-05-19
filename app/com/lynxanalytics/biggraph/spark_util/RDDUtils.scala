@@ -266,13 +266,13 @@ object RDDUtils {
 
   // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
   // distributed partitions.
-  def countApproxEvenRDD(rdd: RDD[_]): Long = {
+  def countApproxEvenRDD(rdd: RDD[_])(implicit rc: RuntimeContext): Long = {
     if (rdd.partitions.isEmpty) {
       return 0L
     }
     val numPartitions = rdd.partitions.size
     // The sample should not be larger than the number of partitions.
-    val numSamplePartitions = RuntimeContext.numSamplePartitions min numPartitions
+    val numSamplePartitions = rc.numSamplePartitions min numPartitions
     val sampleRatio = numPartitions.toDouble / numSamplePartitions
     (new PartialRDD(rdd, numSamplePartitions).count * sampleRatio).toLong
   }
@@ -282,7 +282,7 @@ object RDDUtils {
   // so if the partition sizes are sufficiently close to the ideal no repartitioning happens.
   // This method assumes that the RDD is partitioned evenly.
   def maybeRepartitionForOutput[K: Ordering: ClassTag, V: ClassTag](
-    rdd: UniqueSortedRDD[K, V]): UniqueSortedRDD[K, V] = {
+    rdd: UniqueSortedRDD[K, V])(implicit rc: RuntimeContext): UniqueSortedRDD[K, V] = {
     val count = countApproxEvenRDD(rdd)
     val desiredNumPartitions = EntityIO.desiredNumPartitions(count)
     if (RatioSorter.ratio(rdd.partitions.size, desiredNumPartitions) < EntityIO.tolerance) {
