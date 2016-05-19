@@ -143,6 +143,8 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   val sqlContext = ctx.sqlContext
 
+  val sparkTests = new SparkTests(ctx.env.get.sparkContext)
+
   val drawing = new DrawingGroovyInterface()
 
   def openTable(tableName: String): String = {

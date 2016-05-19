@@ -2,6 +2,9 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
+import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
+import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
@@ -257,6 +260,39 @@ object RDDUtils {
   def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
+
+  // Returns the Partitioner which has more partitions.
+  def maxPartitioner(ps: spark.Partitioner*): spark.Partitioner = ps.maxBy(_.numPartitions)
+
+  // Returns an approximation of the number of the rows in rdd. Only use it on RDDs with evenly
+  // distributed partitions.
+  def countApproxEvenRDD(rdd: RDD[_])(implicit rc: RuntimeContext): Long = {
+    if (rdd.partitions.isEmpty) {
+      return 0L
+    }
+    val numPartitions = rdd.partitions.size
+    // The sample should not be larger than the number of partitions.
+    val numSamplePartitions = rc.numSamplePartitions min numPartitions
+    val sampleRatio = numPartitions.toDouble / numSamplePartitions
+    (new PartialRDD(rdd, numSamplePartitions).count * sampleRatio).toLong
+  }
+
+  // Optionally repartitions the sorted RDD with a "good" partitioner, meaning the number of
+  // rows per partition is close to the ideal setting specified in EnityIO. This is expensive,
+  // so if the partition sizes are sufficiently close to the ideal no repartitioning happens.
+  // This method assumes that the RDD is partitioned evenly.
+  def maybeRepartitionForOutput[K: Ordering: ClassTag, V: ClassTag](
+    rdd: UniqueSortedRDD[K, V])(implicit rc: RuntimeContext): UniqueSortedRDD[K, V] = {
+    val count = countApproxEvenRDD(rdd)
+    val desiredNumPartitions = EntityIO.desiredNumPartitions(count)
+    if (RatioSorter.ratio(rdd.partitions.size, desiredNumPartitions) < EntityIO.tolerance) {
+      rdd
+    } else {
+      import Implicits._
+      val partitioner = new spark.HashPartitioner(desiredNumPartitions)
+      rdd.sortUnique(partitioner)
+    }
+  }
 }
 
 object Implicits {
@@ -436,4 +472,11 @@ object Implicits {
         }
 
   }
+}
+
+// An RDD that only has a subset of the partitions from the original RDD.
+private[spark_util] class PartialRDD[T: ClassTag](rdd: RDD[T], n: Int) extends RDD[T](rdd) {
+  def getPartitions: Array[spark.Partition] = rdd.partitions.take(n)
+  override val partitioner = None
+  def compute(split: spark.Partition, context: spark.TaskContext) = rdd.compute(split, context)
 }

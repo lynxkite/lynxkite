@@ -370,10 +370,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val attr = project.vertexAttributes(attrName)
       val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-        attr, attr, table.columns(src), table.columns(dst))
+        attr, attr, table.column(src), table.column(dst))
       project.edgeBundle = imp.edges
-      for (edgeAttrName <- table.columns.keys) {
-        project.edgeAttributes(edgeAttrName) = table.columns(edgeAttrName).pullVia(imp.embedding)
+      for ((name, attr) <- table.columns) {
+        project.edgeAttributes(name) = attr.pullVia(imp.embedding)
       }
     }
   })
@@ -395,8 +395,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val eg = {
         val op = graph_operations.VerticesToEdges()
-        op(op.srcAttr, table.columns(src).runtimeSafeCast[String])(
-          op.dstAttr, table.columns(dst).runtimeSafeCast[String]).result
+        op(op.srcAttr, table.column(src).runtimeSafeCast[String])(
+          op.dstAttr, table.column(dst).runtimeSafeCast[String]).result
       }
       project.setVertexSet(eg.vs, idAttr = "id")
       project.newVertexAttribute("stringID", eg.stringID)
@@ -425,7 +425,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -455,7 +455,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -1344,7 +1344,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
       }
-      project.newVertexAttribute(params("output"), result.attr, expr + help)
+      project.newVertexAttribute(params("output"), result, expr + help)
     }
   })
 
@@ -1386,7 +1386,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
       }
-      project.edgeAttributes(params("output")) = result.attr
+      project.edgeAttributes(params("output")) = result
     }
   })
 
@@ -2305,8 +2305,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
         parent.vertexAttributes(baseAttrName),
         project.vertexAttributes(segAttrName),
-        table.columns(baseColumnName),
-        table.columns(segColumnName))
+        table.column(baseColumnName),
+        table.column(segColumnName))
       seg.belongsTo = imp.edges
     }
   })
@@ -2335,8 +2335,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The identifying column parameter must be set for the segmentation.")
       assert(baseAttrName != FEOption.unset.id,
         "The base ID attribute parameter must be set.")
-      val baseColumn = table.columns(baseColumnName)
-      val segColumn = table.columns(segColumnName)
+      val baseColumn = table.column(baseColumnName)
+      val segColumn = table.column(segColumnName)
       val baseAttr = project.vertexAttributes(baseAttrName)
       val segmentation = project.segmentation(params("name"))
 
