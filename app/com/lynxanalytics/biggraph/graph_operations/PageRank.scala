@@ -71,7 +71,7 @@ case class PageRank(dampingFactor: Double,
 
     for (i <- 0 until iterations) {
       // No need for repartitioning since we reduce anyway.
-      val incomingRank = targetsWithWeights.lookupAndCoalesce(pageRank)
+      val incomingRank = targetsWithWeights.lookup(pageRank)
         .map {
           case (src, ((dst, weight), pr)) => dst -> pr * weight * dampingFactor
         }
