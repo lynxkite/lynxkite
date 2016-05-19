@@ -48,13 +48,14 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // distribution of the keys per partition.
     even: Boolean,
     // The threshold to decide whether this HybridRDD is skewed.
-    threshold: Int = HybridRDD.hybridLookupThreshold) {
+    threshold: Int = HybridRDD.hybridLookupThreshold)(
+        implicit rc: RuntimeContext) {
 
   private val larges = {
     val numPartitions = sourceRDD.partitions.size
     val (rdd, sampleRatio) = if (even && numPartitions > 0) {
       // Assumes that the keys are distributed evenly among the partitions.
-      val numSamplePartitions = RuntimeContext.numSamplePartitions min numPartitions
+      val numSamplePartitions = rc.numSamplePartitions min numPartitions
       (new PartialRDD(sourceRDD, numSamplePartitions),
         numPartitions.toDouble / numSamplePartitions)
     } else {

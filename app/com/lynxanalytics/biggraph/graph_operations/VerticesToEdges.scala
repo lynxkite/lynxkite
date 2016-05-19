@@ -29,6 +29,7 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     val partitioner = inputs.vs.rdd.partitioner.get
     val srcAttr = inputs.srcAttr.rdd
     val dstAttr = inputs.dstAttr.rdd
