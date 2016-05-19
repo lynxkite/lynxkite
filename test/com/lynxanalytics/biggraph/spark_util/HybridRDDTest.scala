@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
+import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.TestSparkContext
 
 class HybridRDDTest extends FunSuite with TestSparkContext {
@@ -26,6 +27,7 @@ class HybridRDDTest extends FunSuite with TestSparkContext {
     val sourceRDD = sparkContext.parallelize(localSource, 10)
     val lookupRDD = sparkContext.parallelize(localLookup).sortUnique(partitioner)
 
+    implicit val rc = RuntimeContext(sparkContext, null, null, null, null)
     checkGood(HybridRDD(sourceRDD, partitioner, even = true, 2000).lookup(lookupRDD))
     checkGood(HybridRDD(sourceRDD, partitioner, even = true, 200).lookup(lookupRDD))
     checkGood(HybridRDD(sourceRDD, partitioner, even = true, 20).lookup(lookupRDD))
@@ -44,6 +46,8 @@ class HybridRDDTest extends FunSuite with TestSparkContext {
     val partitioner = new HashPartitioner(1)
     val sourceRDD = sparkContext.emptyRDD[(Int, Long)]
     val lookupRDD = sparkContext.emptyRDD[(Int, Double)].sortUnique(partitioner)
+    implicit val rc = RuntimeContext(sparkContext, null, null, null, null)
+
     assert(HybridRDD(sourceRDD, partitioner, even = true, 2000).lookup(lookupRDD).collect.isEmpty)
     assert(HybridRDD(sourceRDD, partitioner, even = true, 200).lookup(lookupRDD).collect.isEmpty)
     assert(HybridRDD(sourceRDD, partitioner, even = true, 20).lookup(lookupRDD).collect.isEmpty)

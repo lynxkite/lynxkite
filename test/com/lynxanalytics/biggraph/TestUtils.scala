@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository, Timestamp }
 import org.apache.spark
 import org.scalatest.Tag
@@ -79,7 +78,6 @@ private object SparkContextContainer {
 
 trait TestSparkContext {
   val sparkContext = SparkContextContainer.sparkContext
-  implicit val runtimeContext = RuntimeContext(sparkContext, null, null, null, null)
 }
 
 case class Timed[X](nanos: Long, value: X)

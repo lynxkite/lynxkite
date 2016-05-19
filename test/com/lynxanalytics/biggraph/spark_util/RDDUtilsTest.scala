@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
+import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.TestSparkContext
 
 class RDDUtilsTest extends FunSuite with TestSparkContext {
@@ -71,6 +72,7 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     val rnd = new util.Random(0)
     val data = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
     val rdd = sparkContext.parallelize(data, 10)
+    implicit val rc = RuntimeContext(sparkContext, null, null, null, null)
     assert(RDDUtils.countApproxEvenRDD(rdd) == 1000)
   }
 }
