@@ -3,6 +3,18 @@
 """
 Generates a list of shell commands to be used for running
 big data tests on LynxKite. Prints it to the standard output.
+The printed list will look like this:
+path/to/biggraph batch script1.groovy | tee ...
+path/to/biggraph batch script2.groovy | tee ...
+path/to/biggraph batch script3.groovy | tee ...
+The order of scripts will not be arbitrary. The groovy scripts
+can be annotated with
+
+/// REQUIRE_SCRIPT other_script.groovy
+
+lines, and this script will choose an execution order in which
+a groovy script is only executed after all its required scripts were
+completed. (This only works if the requirement graph has no loops.)
 """
 
 import optparse
