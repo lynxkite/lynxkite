@@ -5,12 +5,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
-
+- New operation "Find vertex coloring" has been added. 
 ### 1.7.5
  - Improve speed and stability of the project history editor
  - Easier to find data export button
  - Table import wizard: added tab stops and removed highlight flickering
  - Hide ACL settings in single-user instances
+
+ - New aggregator: `median`.
 
 ### 1.7.4
 

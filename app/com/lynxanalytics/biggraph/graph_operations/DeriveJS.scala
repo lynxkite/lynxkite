@@ -29,7 +29,8 @@ object DeriveJS {
     exprString: String,
     namedAttributes: Seq[(String, Attribute[_])],
     vertexSet: VertexSet,
-    namedScalars: Seq[(String, Scalar[_])] = Seq())(implicit manager: MetaGraphManager): Output[T] = {
+    namedScalars: Seq[(String, Scalar[_])] = Seq())(
+      implicit manager: MetaGraphManager): Attribute[T] = {
 
     // Check name collision between scalars and attributes
     val common =
@@ -63,7 +64,7 @@ object DeriveJS {
     op.validateJS[T](defaultAttributeValues, defaultScalarValues)
 
     import Scripting._
-    op(op.vs, vertexSet)(op.attrs, jsValueAttributes)(op.scalars, jsValueScalars).result
+    op(op.vs, vertexSet)(op.attrs, jsValueAttributes)(op.scalars, jsValueScalars).result.attr
   }
 }
 import DeriveJS._
