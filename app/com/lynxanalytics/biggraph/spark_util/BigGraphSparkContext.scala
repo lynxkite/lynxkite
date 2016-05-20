@@ -199,14 +199,17 @@ object BigGraphSparkContext {
     new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
+  def isMonitoringEnabled =
+    LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_HOST") != None &&
+      LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_PORT") != None
+
   def setupMonitoring(conf: spark.SparkConf): spark.SparkConf = {
-    val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
-    val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
-    if (graphiteHostName == "" || graphitePort == "") {
+    if (!isMonitoringEnabled) {
       conf
     } else {
+      val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
+      val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
       val jvmSource = "org.apache.spark.metrics.source.JvmSource"
-      val biggraphSource = "org.apache.spark.metrics.source.BigGraphMonitoringSource"
       // Set the keys normally defined in metrics.properties here.
       // This way it's easier to make sure that executors receive the
       // settings.
@@ -220,10 +223,33 @@ object BigGraphSparkContext {
         .set("spark.metrics.conf.worker.source.jvm.class", jvmSource)
         .set("spark.metrics.conf.driver.source.jvm.class", jvmSource)
         .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
-        .set("spark.metrics.conf.master.source.biggraph.class", biggraphSource)
-        .set("spark.metrics.conf.worker.source.biggraph.class", biggraphSource)
-        .set("spark.metrics.conf.driver.source.biggraph.class", biggraphSource)
-        .set("spark.metrics.conf.executor.source.biggraph.class", biggraphSource)
+    }
+  }
+
+  def setupCustomMonitoring(sc: spark.SparkContext) = {
+    if (isMonitoringEnabled) {
+      // Hacky solution to register BiggraphMonitoringSource as a
+      // metric Source in Spark's metric system on each JVM. Why
+      // are we not just registering it with Spark the same way as
+      // JvmSource above? Because Spark sets up metrics before
+      // adding the biggraph JAR file into its classpath.
+
+      // We need to run the code in SetupMetricsSingleton for each
+      // executor JVM exactly once. This code is inspired by H2O
+      // sparkling-water's implementation of setting up workers on
+      // each Spark executor. They go to great lengths of making sure
+      // they exactly know the number of hosts and fail if they can't
+      // realiably count them. Here we are just going to do a
+      // best-effort hack.
+      val numExecutors = LoggedEnvironment
+        .envOrElse("NUM_EXECUTORS", "1")
+        .toInt
+      val numCoresPerExecutor = LoggedEnvironment
+        .envOrElse("NUM_CORES_PER_EXECUTOR", "4")
+        .toInt
+      val dummyRddSize = numExecutors * numCoresPerExecutor * 10
+      sc.parallelize(1 to dummyRddSize, dummyRddSize)
+        .foreach(_ => SetupMetricsSingleton.dummy)
     }
   }
 
@@ -302,6 +328,7 @@ object BigGraphSparkContext {
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
     val sc = new spark.SparkContext(sparkConf)
     sc.addSparkListener(new BigGraphSparkListener(sc))
+    setupCustomMonitoring(sc)
     sc
   }
 }

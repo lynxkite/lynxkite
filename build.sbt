@@ -56,7 +56,10 @@ libraryDependencies ++= Seq(
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.19",
   "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
-  "org.scala-lang" % "scala-library" % "2.10.3")
+  "org.scala-lang" % "scala-library" % "2.10.3",
+  // This is a dependency of Spark. Needed here explicitly
+  // so that SetupMetricsSingleton compiles.
+  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209")
 
 resolvers += "Twitter Repository" at "http://maven.twttr.com"
 

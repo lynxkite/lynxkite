@@ -3,9 +3,25 @@ package com.lynxanalytics.biggraph.spark_util
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricSet
 import com.codahale.metrics.Metric
+import com.codahale.metrics.MetricRegistry
+
+import org.apache.spark.metrics.sink.GraphiteSink
+import org.apache.spark.metrics.sink.ConsoleSink
+import org.apache.spark.metrics.source.BigGraphJvmMonitoringSource
 
 import java.lang.management.BufferPoolMXBean
 import java.lang.management.ManagementFactory
+
+object SetupMetricsSingleton {
+  // Calling this method will instantiate this singleton.
+  // The below code will only be run once per singleton.
+  def dummy = ()
+
+  val metricRegistry = new MetricRegistry()
+  metricRegistry.registerAll(new BigGraphMetricSet)
+  val ms = org.apache.spark.SparkEnv.get.metricsSystem
+  ms.registerSource(new BigGraphJvmMonitoringSource)
+}
 
 class BigGraphMetricSet extends MetricSet {
 
@@ -17,19 +33,19 @@ class BigGraphMetricSet extends MetricSet {
   override def getMetrics(): java.util.Map[String, Metric] = {
     val gauges = new java.util.HashMap[String, Metric]()
     for (bean <- bufferPools) {
-      val name = "bufferpool." + bean.getName
+      val name = "buffer_pool." + bean.getName + "."
       gauges.put(
-        name + ".count",
+        name + "count",
         new Gauge[Long] {
           override def getValue: Long = bean.getCount
         })
       gauges.put(
-        name + ".used",
+        name + "used_bytes",
         new Gauge[Long] {
           override def getValue: Long = bean.getMemoryUsed
         })
       gauges.put(
-        name + ".capacity",
+        name + "capacity_bytes",
         new Gauge[Long] {
           override def getValue: Long = bean.getTotalCapacity
         })
