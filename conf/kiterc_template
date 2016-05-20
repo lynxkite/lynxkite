@@ -142,3 +142,9 @@ export KITE_EXTRA_JARS=
 # variables. The principal acts like a user name and the keytab file acts like a password.
 # export KERBEROS_PRINCIPAL=
 # export KERBEROS_KEYTAB=
+
+# Uncomment the below lines to export LynxKite's Spark metrics into
+# a Graphite-compatible monitoring system. You can use this together
+# with tools/monitoring/restart_monitoring_master.sh.
+# export GRAPHITE_MONITORING_HOST=$(hostname)
+# export GRAPHITE_MONITORING_PORT=9109

@@ -237,7 +237,7 @@ object TagRoot {
   // Creates an empty root backed in a tmp directory.
   def temporaryRoot: TagRoot = {
     val tmpRootDir = LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp")
-    val currentRepo = s"${tmpRootDir}/${Timestamp.toString}"
+    val currentRepo = s"$tmpRootDir/$Timestamp"
     apply(currentRepo)
   }
 

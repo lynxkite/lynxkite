@@ -19,12 +19,23 @@ is also required for the user that starts LynxKite. Example commands to create t
 By default LynxKite runs on port 2200. If this is used by another process, move LynxKite to a
 different port (by changing the `KITE_HTTP_PORT` setting in `.kiterc`).
 
+### YARN settings
+
 [[yarn-memory-limit]]
-### YARN memory limit
+#### YARN memory limit
 
 Set the executor memory (`EXECUTOR_MEMORY`) lower than the YARN NodeManager memory limit defined
 with the `yarn.nodemanager.resource.memory-mb` and `yarn.scheduler.maximum-allocation-mb` settings
 in the YARN configurations.
+
+#### Smart YARN memory monitor
+
+If allowed by the YARN administrator, set
+`yarn.nodemanager.container-monitor.procfs-tree.smaps-based-rss.enabled` to `true` in the
+YARN configuration. This will prevent the YARN nodemanager from incorrectly including
+shared memory regions in the total physical memory used by Spark executors. Not setting this
+flag may result in the node manager unjustly but mercilessly shutting down the executor.
+
 
 [[the-32-gb-rule]]
 ### The 32 GB rule
@@ -37,9 +48,4 @@ than a JVM with 32 GB RAM. For that reason it is not recommended to set the `EXE
 This https://blogs.oracle.com/jrockit/entry/understanding_compressed_refer[article] explains the
 issue in detail.
 
-### Spark JVM overhead
-
-By default Spark does not allocate enough memory overhead on top of the heap size for the JVM
-itself. LynxKite by default asks for 15% overhead which should be enough. If not, then add
-`export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000` into your `.kiterc` file.
 
