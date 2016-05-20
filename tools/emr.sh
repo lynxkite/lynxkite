@@ -238,15 +238,13 @@ EOF
   SPARK_ENV_FILE="/tmp/${CLUSTER_NAME}.spark-env"
   cat > ${SPARK_ENV_FILE} <<EOF
 
-# Monitoring :(
-MON_CLASSPATH=/home/hadoop/monitoring/biggraph.biggraph-0.1-SNAPSHOT.jar
-
 # Add S3 support.
 AWS_CLASSPATH1=\$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH2=\$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH3=\$(find /usr/share/aws/emr/emr-metrics/lib -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH_ALL=\$AWS_CLASSPATH1\$AWS_CLASSPATH2\$AWS_CLASSPATH3
-export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\$AWS_CLASSPATH_ALL\$MON_CLASSPATH
+export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
+
 
 # Remove warnings from logs about lzo.
 export LD_LIBRARY_PATH="/usr/lib/hadoop-lzo/lib/native:\$LD_LIBRARY_PATH"
