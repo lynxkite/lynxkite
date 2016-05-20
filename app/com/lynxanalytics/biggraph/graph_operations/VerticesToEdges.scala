@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 import org.apache.spark
 
@@ -54,9 +55,10 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }.sortUnique(partitioner)
     val embedding = inputs.vs.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) }
-    output(o.vs, idToName.mapValues(_ => ()))
+    val idToNameForOutput = RDDUtils.maybeRepartitionForOutput(idToName)
+    output(o.vs, idToNameForOutput.mapValues(_ => ()))
     output(o.es, edges)
-    output(o.stringID, idToName)
+    output(o.stringID, idToNameForOutput)
     output(o.embedding, embedding)
   }
 }
