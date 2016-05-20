@@ -115,20 +115,6 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     }
   }
 
-  // Same as lookup but coalesces the result after a hybrid lookup. The result RDD has
-  // as many partitions as the original one.
-  def lookupAndCoalesce[S](
-    lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    val result = lookup(lookupRDD)
-    if (isSkewed) {
-      // "ord = null" is a workaround for a Scala 2.10 compiler bug.
-      // TODO: Remove when upgrading to 2.11.
-      result.coalesce(sourceRDD.partitions.size)(ord = null)
-    } else {
-      result
-    }
-  }
-
   // A lookup method that does smallTableLookup for a few keys that have too many instances to
   // be handled by joinLookup and does joinLookup for the rest. There are no guarantees about the
   // partitions of the result RDD.
