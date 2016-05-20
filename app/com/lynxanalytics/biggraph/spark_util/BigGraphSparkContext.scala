@@ -205,6 +205,8 @@ object BigGraphSparkContext {
     if (graphiteHostName == "" || graphitePort == "") {
       conf
     } else {
+      val jvmSource = "org.apache.spark.metrics.source.JvmSource"
+      val biggraphSource = "org.apache.spark.metrics.source.BigGraphMonitoringSource"
       // Set the keys normally defined in metrics.properties here.
       // This way it's easier to make sure that executors receive the
       // settings.
@@ -214,10 +216,14 @@ object BigGraphSparkContext {
         .set("spark.metrics.conf.*.sink.graphite.port", graphitePort)
         .set("spark.metrics.conf.*.sink.graphite.period", "1")
         .set("spark.metrics.conf.*.sink.graphite.unit", "seconds")
-        .set("spark.metrics.conf.master.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
-        .set("spark.metrics.conf.worker.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
-        .set("spark.metrics.conf.driver.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
-        .set("spark.metrics.conf.executor.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+        .set("spark.metrics.conf.master.source.jvm.class", jvmSource)
+        .set("spark.metrics.conf.worker.source.jvm.class", jvmSource)
+        .set("spark.metrics.conf.driver.source.jvm.class", jvmSource)
+        .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
+        .set("spark.metrics.conf.master.source.biggraph.class", biggraphSource)
+        .set("spark.metrics.conf.worker.source.biggraph.class", biggraphSource)
+        .set("spark.metrics.conf.driver.source.biggraph.class", biggraphSource)
+        .set("spark.metrics.conf.executor.source.biggraph.class", biggraphSource)
     }
   }
 
