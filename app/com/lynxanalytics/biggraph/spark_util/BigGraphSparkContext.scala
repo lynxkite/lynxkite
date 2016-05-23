@@ -200,30 +200,26 @@ object BigGraphSparkContext {
     myKryo
   }
   def isMonitoringEnabled =
-    LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_HOST") != None &&
-      LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_PORT") != None
+    LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_HOST").isDefined &&
+      LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_PORT").isDefined
 
   def setupMonitoring(conf: spark.SparkConf): spark.SparkConf = {
-    if (!isMonitoringEnabled) {
-      conf
-    } else {
-      val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
-      val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
-      val jvmSource = "org.apache.spark.metrics.source.JvmSource"
-      // Set the keys normally defined in metrics.properties here.
-      // This way it's easier to make sure that executors receive the
-      // settings.
-      conf
-        .set("spark.metrics.conf.*.sink.graphite.class", "org.apache.spark.metrics.sink.GraphiteSink")
-        .set("spark.metrics.conf.*.sink.graphite.host", graphiteHostName)
-        .set("spark.metrics.conf.*.sink.graphite.port", graphitePort)
-        .set("spark.metrics.conf.*.sink.graphite.period", "1")
-        .set("spark.metrics.conf.*.sink.graphite.unit", "seconds")
-        .set("spark.metrics.conf.master.source.jvm.class", jvmSource)
-        .set("spark.metrics.conf.worker.source.jvm.class", jvmSource)
-        .set("spark.metrics.conf.driver.source.jvm.class", jvmSource)
-        .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
-    }
+    val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
+    val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
+    val jvmSource = "org.apache.spark.metrics.source.JvmSource"
+    // Set the keys normally defined in metrics.properties here.
+    // This way it's easier to make sure that executors receive the
+    // settings.
+    conf
+      .set("spark.metrics.conf.*.sink.graphite.class", "org.apache.spark.metrics.sink.GraphiteSink")
+      .set("spark.metrics.conf.*.sink.graphite.host", graphiteHostName)
+      .set("spark.metrics.conf.*.sink.graphite.port", graphitePort)
+      .set("spark.metrics.conf.*.sink.graphite.period", "1")
+      .set("spark.metrics.conf.*.sink.graphite.unit", "seconds")
+      .set("spark.metrics.conf.master.source.jvm.class", jvmSource)
+      .set("spark.metrics.conf.worker.source.jvm.class", jvmSource)
+      .set("spark.metrics.conf.driver.source.jvm.class", jvmSource)
+      .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
   }
 
   def setupCustomMonitoring(sc: spark.SparkContext) = {
@@ -310,7 +306,7 @@ object BigGraphSparkContext {
         "file://" + LogController.getLogDir.getAbsolutePath)
       .set("spark.eventLog.enabled", "true")
       .set("spark.eventLog.compress", "true")
-    sparkConf = setupMonitoring(sparkConf)
+    sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
     if (useKryo) {
       sparkConf = sparkConf
         .set(
@@ -328,7 +324,9 @@ object BigGraphSparkContext {
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
     val sc = new spark.SparkContext(sparkConf)
     sc.addSparkListener(new BigGraphSparkListener(sc))
-    setupCustomMonitoring(sc)
+    if (isMonitoringEnabled) {
+      setupCustomMonitoring(sc)
+    }
     sc
   }
 }
