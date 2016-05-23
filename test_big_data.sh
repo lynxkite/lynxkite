@@ -37,8 +37,8 @@
 set -xueo pipefail
 trap "echo $0 has failed" ERR
 
-TEST_SELECTOR="${1:-default.list}"
-DATA_SET="${2:-fake_westeros_v3_5m_145m}"
+TEST_SELECTOR="${1:-load_edges_from_test_set.groovy}"
+DATA_SET="${2:-fake_westeros_v3_100k_2m}"
 NUM_EMR_INSTANCES=${3:-3}
 
 RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_INSTANCES}_${DATA_SET}"
