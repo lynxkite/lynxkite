@@ -22,6 +22,33 @@ import glob
 import os
 import sys
 
+def parse_args(argv):
+  parser = optparse.OptionParser()
+  parser.add_option(
+      '--remote_lynxkite_path',
+      help='Path to the LynxKite executable on the machine where '
+           'the test will be executed. Will be invoked by the '
+           'generated script.')
+  parser.add_option(
+      '--test_selector',
+      help='A .list file containing the list of .groovy test files,'
+           'or a .groovy file to be executed as a test')
+  parser.add_option(
+      '--local_test_dir',
+      help='Directory from where to parse the test codes for '
+           'dependencies by this program.')
+  parser.add_option(
+      '--remote_test_dir',
+      help='Directory from where to run the tests in the '
+           'generated script.')
+  parser.add_option(
+      '--remote_output_dir',
+      help='Location where results will be written by the '
+           'generated script.')
+  parser.add_option('--lynxkite_arg', action='append')
+  (options, args) = parser.parse_args()
+  return options
+
 def run_lynx_kite(test_name, options):
   print '{0} batch {1}/{2} {3} 2>&1 | tee {4}/{5}.out.txt'.format(
     options.remote_lynxkite_path,
@@ -67,31 +94,7 @@ def run_tests(scripts, options):
 
 def main(argv):
   my_path = os.path.abspath(os.path.dirname(argv[0]))
-
-  parser = optparse.OptionParser()
-  parser.add_option(
-      '--remote_lynxkite_path',
-      help='Path to the LynxKite executable on the machine where '
-           'the test will be executed. Will be invoked by the '
-           'generated script.')
-  parser.add_option(
-      '--test_selector',
-      help='A .list file containing the list of .groovy test files,'
-           'or a .groovy file to be executed as a test')
-  parser.add_option(
-      '--local_test_dir',
-      help='Directory from where to parse the test codes for '
-           'dependencies by this program.')
-  parser.add_option(
-      '--remote_test_dir',
-      help='Directory from where to run the tests in the '
-           'generated script.')
-  parser.add_option(
-      '--remote_output_dir',
-      help='Location where results will be written by the '
-           'generated script.')
-  parser.add_option('--lynxkite_arg', action='append')
-  (options, args) = parser.parse_args()
+  options = parse_args(argv)
 
   scripts = []
   test_selector = options.test_selector

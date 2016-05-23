@@ -42,15 +42,24 @@ DATA_SET="${2:-fake_westeros_v3_5m_145m}"
 NUM_EMR_INSTANCES=${3:-3}
 
 RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_INSTANCES}_${DATA_SET}"
+TMP_RESULTS_DIR="${RESULTS_DIR}.new"
+rm -Rf ${TMP_RESULTS_DIR}
+cp -a ${RESULTS_DIR} ${TMP_RESULTS_DIR}
 
 # Run test.
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
-EMR_RESULTS_DIR=${RESULTS_DIR} \
+EMR_RESULTS_DIR=${TMP_RESULTS_DIR} \
   $(dirname $0)/tools/emr_based_test.sh backend \
     --remote_test_dir=/home/hadoop/biggraphstage/kitescripts/big_data_tests \
     --local_test_dir=$(dirname $0)/kitescripts/big_data_tests \
     --test_selector="${TEST_SELECTOR}" \
     --lynxkite_arg="testDataSet:${DATA_SET}"
+
+finalize_results() {
+  mkdir -p ${RESULTS_DIR}
+  cp ${TMP_RESULTS_DIR}/* ${RESULTS_DIR}
+  rm -Rf ${TMP_RESULTS_DIR}
+}
 
 if [[ "$USER" == 'jenkins' ]]; then
   # Commit and push changed output on PR branch.
@@ -61,7 +70,10 @@ if [[ "$USER" == 'jenkins' ]]; then
   git fetch
   git checkout "$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
+  finalize_results
   git add ${RESULTS_DIR}
   git commit -am "Update Big Data Test results."
   git push
+else
+  finalize_results
 fi

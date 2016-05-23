@@ -108,7 +108,7 @@ ENDSSH
       # Create nice summary file:
       cat ${EMR_RESULTS_DIR}/*.out.txt | \
           grep FINISHED | \
-          sed 's/^FINISHED SCRIPT\(.*\), took \(.*\) seconds$/\1:\2/' \
+          sed 's/^FINISHED SCRIPT \(.*\), took \(.*\) seconds$/\1:\2/' \
             >${EMR_RESULTS_DIR}/summary.txt
     fi
 
