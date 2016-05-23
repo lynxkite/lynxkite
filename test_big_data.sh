@@ -44,7 +44,9 @@ NUM_EMR_INSTANCES=${3:-3}
 RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_INSTANCES}_${DATA_SET}"
 TMP_RESULTS_DIR="${RESULTS_DIR}.new"
 rm -Rf ${TMP_RESULTS_DIR}
-cp -a ${RESULTS_DIR} ${TMP_RESULTS_DIR}
+if [ -d ${RESULTS_DIR} ]; then
+  cp -a ${RESULTS_DIR} ${TMP_RESULTS_DIR}
+fi
 
 # Run test.
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
