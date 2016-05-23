@@ -35,7 +35,7 @@ FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_verti
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 page_rank_no_weights: {"labelType":"between","labels":["0.2","0.8","3.1","11.8","45.4","175.3","676.0","2606.9","10053.9","38773.9","149536.4"],"sizes":[4290280,650645,45794,9960,2468,634,164,43,11,3]}
 page_rank_weights: {"labelType":"between","labels":["0.2","0.6","2.5","9.8","38.7","153.3","607.4","2406.3","9531.9","37758.5","149571.8"],"sizes":[2713878,2208704,61281,12221,2938,736,183,46,12,3]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1422 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1153 seconds
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
 in_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61326,4734778,172990,24250,5145,1162,269,62,14,4]}
 out_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61326,4734778,172990,24250,5145,1162,269,62,14,4]}
