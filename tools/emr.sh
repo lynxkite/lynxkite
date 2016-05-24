@@ -173,11 +173,11 @@ start)
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   set -x
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
-    --applications Name=Hadoop \
+    --applications Name=MapR,Args=--edition,m3,--version,4.0.2 \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
     --service-role EMR_DefaultRole \
-    --release-label emr-4.2.0 \
+    --ami-version 3.3.2 \
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
