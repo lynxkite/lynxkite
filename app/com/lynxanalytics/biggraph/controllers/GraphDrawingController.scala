@@ -89,6 +89,8 @@ case class EdgeDiagramSpec(
   edgeWeightId: String = "",
   // Whether to generate 3D coordinates for the vertices.
   layout3D: Boolean,
+  //wether to normalize the thickness of the edges shown on the bucketed graph according to the relative density
+  relativeEdgeDensity: Boolean,
   // Attributes to be returned together with the edges. As one visualized edge can correspond to
   // many actual edges, clients always have to specify an aggregator as well. For now, this only
   // works for small edge set visualizations (i.e. sampled mode).
@@ -543,7 +545,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .map(eb => eb.copy(
         srcDiagramId = resolveDiagramId(eb.srcDiagramId),
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
-    val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(user, _))
+    val edgeDiagrams = modifiedEdgeSpecs.map { spec =>
+      if (spec.relativeEdgeDensity) {
+        val originalEdgeDiagram = getEdgeDiagram(user, spec)
+        val originalEdges = originalEdgeDiagram.edges
+        val aggregWeights = for (i <- originalEdges) yield originalEdges.size
+        val avgOfAggregWeights = aggregWeights.sum / aggregWeights.size
+        val newEdges = originalEdges.map { feEdge =>
+          val srcSize = vertexDiagrams.find(diag => diag.diagramId == spec.srcDiagramId).get.vertices(feEdge.a).size
+          val dstSize = vertexDiagrams.find(diag => diag.diagramId == spec.dstDiagramId).get.vertices(feEdge.b).size
+          feEdge.copy(size = feEdge.size / ((srcSize * dstSize) * avgOfAggregWeights))
+        }
+        originalEdgeDiagram.copy(edges = newEdges)
+      } else getEdgeDiagram(user, spec)
+    }
     for ((spec, diag) <- request.edgeBundles zip edgeDiagrams) {
       assert(
         diag.size <= spec.maxSize,
