@@ -17,6 +17,7 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: '4',
         preciseBucketSizes: false,
+        relativeEdgeDensity: false,
         sampleRadius: '1',
         display: 'svg',
         animate: {
@@ -104,6 +105,7 @@ angular.module('biggraph')
 
       vd.bucketCount = this.state.bucketCount;
       vd.preciseBucketSizes = this.state.preciseBucketSizes;
+      vd.relativeEdgeDensity = this.state.relativeEdgeDensity;
 
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
       vd.xAttribute = this.resolveVertexAttribute(this.state.attributeTitles.x);
