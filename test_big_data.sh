@@ -71,7 +71,7 @@ if [[ "$USER" == 'jenkins' ]]; then
   export GIT_SSH_COMMAND='ssh -i ~/.ssh/lynx-jenkins'
   git fetch
   git checkout "$GIT_BRANCH"
-  git reset --hard "$GIT_BRANCH"  # Discard potential local changes from failed runs.
+  git reset --hard "origin/$GIT_BRANCH"  # Discard potential local changes from failed runs.
   finalize_results
   git add ${RESULTS_DIR}
   git commit -am "Update Big Data Test results."
