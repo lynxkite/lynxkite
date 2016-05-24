@@ -32,6 +32,7 @@ case class OutDegree() extends TypedMetaGraphOp[Input, Output] {
     val outdegrees = inputs.es.rdd
       .map { case (_, edge) => edge.src -> 1.0 }
       .reduceBySortedKey(vsA.partitioner.get, _ + _)
+    println(outdegrees.collect.toSeq)
     // Still need to map 0-s to vertices without outgoing edges.
     val result = vsA.sortedLeftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0))
     output(o.outDegree, result)
