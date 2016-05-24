@@ -527,6 +527,18 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       if (request.layout3D) ForceLayout3D(feEdges) else Map())
   }
 
+  // Recalculates the edge weights to be relative to the vertex sizes.
+  def relativeEdgeDensity(
+    ed: EdgeDiagramResponse, src: VertexDiagramResponse, dst: VertexDiagramResponse): EdgeDiagramResponse = {
+    val originalEdges = ed.edges
+    val newEdges = originalEdges.map { feEdge =>
+      val srcSize = src.vertices(feEdge.a).size
+      val dstSize = dst.vertices(feEdge.b).size
+      feEdge.copy(size = feEdge.size / (srcSize * dstSize))
+    }
+    ed.copy(edges = newEdges)
+  }
+
   def getComplexView(user: User, request: FEGraphRequest): FEGraphResponse = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(user, _))
     for ((spec, diag) <- request.vertexSets zip vertexDiagrams) {
@@ -546,18 +558,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         srcDiagramId = resolveDiagramId(eb.srcDiagramId),
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
     val edgeDiagrams = modifiedEdgeSpecs.map { spec =>
+      val ed = getEdgeDiagram(user, spec)
       if (spec.relativeEdgeDensity) {
-        val originalEdgeDiagram = getEdgeDiagram(user, spec)
-        val originalEdges = originalEdgeDiagram.edges
-        val aggregWeights = for (i <- originalEdges) yield originalEdges.size
-        val avgOfAggregWeights = aggregWeights.sum / aggregWeights.size
-        val newEdges = originalEdges.map { feEdge =>
-          val srcSize = vertexDiagrams.find(diag => diag.diagramId == spec.srcDiagramId).get.vertices(feEdge.a).size
-          val dstSize = vertexDiagrams.find(diag => diag.diagramId == spec.dstDiagramId).get.vertices(feEdge.b).size
-          feEdge.copy(size = feEdge.size / ((srcSize * dstSize) * avgOfAggregWeights))
-        }
-        originalEdgeDiagram.copy(edges = newEdges)
-      } else getEdgeDiagram(user, spec)
+        val src = vertexDiagrams.find(diag => diag.diagramId == spec.srcDiagramId).get
+        val dst = vertexDiagrams.find(diag => diag.diagramId == spec.dstDiagramId).get
+        relativeEdgeDensity(ed, src, dst)
+      } else ed
     }
     for ((spec, diag) <- request.edgeBundles zip edgeDiagrams) {
       assert(
