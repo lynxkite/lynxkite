@@ -236,7 +236,8 @@ class DrawingGroovyInterface {
       dstIdx = dstIdx,
       edgeBundleId = params("edgeBundleId").asInstanceOf[String],
       filters = toList[FEVertexAttributeFilter](paramsMap.get("filters")),
-      layout3D = params.getOrElse("layout3D", false).asInstanceOf[Boolean])
+      layout3D = params.getOrElse("layout3D", false).asInstanceOf[Boolean],
+      relativeEdgeDensity = params.getOrElse("relativeEdgeDensity", false).asInstanceOf[Boolean])
   }
 
   def newFEGraphRequest(paramsMap: java.util.Map[String, AnyRef]): FEGraphRequest = {
