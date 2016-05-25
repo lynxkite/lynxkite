@@ -89,7 +89,7 @@ case class EdgeDiagramSpec(
   edgeWeightId: String = "",
   // Whether to generate 3D coordinates for the vertices.
   layout3D: Boolean,
-  //wether to normalize the thickness of the edges shown on the bucketed graph according to the relative density
+  //whether to normalize the thickness of the edges shown on the bucketed graph according to the relative density
   relativeEdgeDensity: Boolean,
   // Attributes to be returned together with the edges. As one visualized edge can correspond to
   // many actual edges, clients always have to specify an aggregator as well. For now, this only

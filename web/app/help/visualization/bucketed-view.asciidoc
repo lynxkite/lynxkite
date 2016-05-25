@@ -27,6 +27,6 @@ going from a vertex in bucket A to a vertex in bucket B (or in the weighted case
 on such edges). This makes the edges going between large buckets typically much thicker than those going between
  smaller buckets.
 
-The relative edge density, on the other hand, is calculated by dividing the number of edges between bucket A and
+Relative edge density, on the other hand, is calculated by dividing the number of edges between bucket A and
 bucket B by [size of bucket A] &times; [size of bucket B]. This way, the
 individual bucket sizes aren't reflected on the thickness of the edges.
