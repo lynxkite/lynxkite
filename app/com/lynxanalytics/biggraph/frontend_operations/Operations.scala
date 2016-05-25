@@ -1047,6 +1047,18 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Find vertex coloring", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "color"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.Coloring()
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.coloring, help)
+    }
+  })
+
   register("Clustering coefficient", new MetricsOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
