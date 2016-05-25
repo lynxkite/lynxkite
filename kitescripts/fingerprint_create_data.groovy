@@ -43,5 +43,5 @@ project.derivedVertexAttribute(
 df = project.sql('select id, peripheral from vertices')
 df.write().format('com.databricks.spark.csv').option('header', 'true').save(output + '_vertices')
 
-df = project.sql('select src_id, dst_id, edge_originalCalls as originalCalls from triplets')
+df = project.sql('select src_id, dst_id, edge_originalCalls as originalCalls from edges')
 df.write().format('com.databricks.spark.csv').option('header', 'true').save(output + '_edges')

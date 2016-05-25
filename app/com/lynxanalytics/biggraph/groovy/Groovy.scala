@@ -311,10 +311,10 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
       case "vertexDF" =>
         Table.fromTableName(Table.VertexTableName, editor.viewer).toDF(ctx.sqlContext)
+      case "edgeAttributeDF" =>
+        Table.fromTableName(Table.EdgeAttributeTableName, editor.viewer).toDF(ctx.sqlContext)
       case "edgeDF" =>
         Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF(ctx.sqlContext)
-      case "tripletDF" =>
-        Table.fromTableName(Table.TripletTableName, editor.viewer).toDF(ctx.sqlContext)
       case "belongsToDF" =>
         assert(editor.isSegmentation, "belongsToDF is only defined for segmentations.")
         Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF(ctx.sqlContext)

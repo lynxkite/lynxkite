@@ -7,7 +7,7 @@ project.saveAs('dailytest') // Test saving and loading.
 project = lynx.loadProject('dailytest')
 project.createScaleFreeRandomEdgeBundle(iterations: 5, perIterationMultiplier: 1.6, seed: 1571682864)
 project.addConstantEdgeAttribute(name: 'weight', value: 1, type: 'Double')
-df = project.sql('select src_id,dst_id,edge_weight from triplets')
+df = project.sql('select src_id,dst_id,edge_weight from edges')
 df.write().format('com.databricks.spark.csv')
   .option('header', 'true').mode('overwrite').save('randomgraph')
 
