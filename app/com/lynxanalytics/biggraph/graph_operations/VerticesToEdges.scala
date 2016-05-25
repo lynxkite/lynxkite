@@ -39,11 +39,11 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val names = (srcAttr.values ++ dstAttr.values).distinct
     val idToName = names
       .randomNumbered(partitioner.numPartitions)
-      .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
+      .persist(spark.storage.StorageLevel.DISK_ONLY)
     val nameToId = idToName
       .map(_.swap)
       .sortUnique(partitioner)
-      .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
+      .persist(spark.storage.StorageLevel.DISK_ONLY)
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
