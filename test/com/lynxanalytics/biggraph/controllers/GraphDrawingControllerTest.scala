@@ -176,9 +176,10 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       mode = "bucketed"
     )
     val res = controller.relativeEdgeDensity(ed, vd, vd)
-    assert(res.edges(0).size == res.edges(1).size * 2)
-    assert(res.edges(0).size == res.edges(2).size * 10)
-    assert(res.edges(1).size == res.edges(3).size)
+    assert(res.edges(0).size == 0.2)
+    assert(res.edges(1).size == 0.1)
+    assert(res.edges(2).size == 0.02)
+    assert(res.edges(3).size == 0.1)
   }
 
   test("big bucketed view") {
