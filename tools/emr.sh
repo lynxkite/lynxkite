@@ -245,6 +245,7 @@ AWS_CLASSPATH3=\$(find /usr/share/aws/emr/emr-metrics/lib -name "*.jar" | tr '\n
 AWS_CLASSPATH_ALL=\$AWS_CLASSPATH1\$AWS_CLASSPATH2\$AWS_CLASSPATH3
 export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
 
+
 # Remove warnings from logs about lzo.
 export LD_LIBRARY_PATH="/usr/lib/hadoop-lzo/lib/native:\$LD_LIBRARY_PATH"
 EOF
@@ -397,6 +398,13 @@ clusterid)
 s3copy)
   curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://localhost:4044/ajax/copyEphemeral"
   echo "Copy successful."
+  ;;
+
+download-dir)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    hadoop@${MASTER_HOSTNAME}:$1 \
+    $2
   ;;
 
 # ======
