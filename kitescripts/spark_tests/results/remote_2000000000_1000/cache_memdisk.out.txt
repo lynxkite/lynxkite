@@ -1,0 +1,5 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memdisk.groovy with params List((dataSize,2000000000), (numPartitions,1000))
+MEMORY_AND_DISK: STAGE DONE: [1.0] mapPartitionsWithIndex at SparkTests.scala:39 130 seconds
+MEMORY_AND_DISK: STAGE DONE: [2.0] foreach at SparkTests.scala:52 192 seconds
+MEMORY_AND_DISK: STAGE DONE: [4.0] foreach at SparkTests.scala:53 46 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memdisk.groovy, took 370 seconds

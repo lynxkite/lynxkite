@@ -1,0 +1,5 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+2016-05-24 17:20:47,765 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-0 
+Task 11 in stage 10.0 failed 4 times; aborting job
+
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 275 seconds
