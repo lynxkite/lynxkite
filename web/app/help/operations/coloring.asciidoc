@@ -1,7 +1,8 @@
 ### Find vertex coloring
 
-Finds a coloring of the graph with no two neighbors with the same color. The colors are represented by integer numbers
-cast as doubles. Tries to find a coloring with few colors.
+Finds a coloring of the vertices of the graph with no two neighbors with the same color. The colors are represented by
+numbers. Tries to find a coloring with few colors.
+
 Vertex coloring is used in scheduling problems to distribute resources among parties which simultaneously
 and asynchronously request them.
 https://en.wikipedia.org/wiki/Graph_coloring
