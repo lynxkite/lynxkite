@@ -5,6 +5,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+- New option has been added in bucketed view: relative edge density.
 - New operation "Find vertex coloring" has been added. 
 ### 1.7.5
  - Improve speed and stability of the project history editor
