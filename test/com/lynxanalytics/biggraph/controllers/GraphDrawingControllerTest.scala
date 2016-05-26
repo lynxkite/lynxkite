@@ -63,7 +63,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(),
-        layout3D = false)))
+        layout3D = false,
+        relativeEdgeDensity = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -109,6 +110,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(ef),
         layout3D = false,
+        relativeEdgeDensity = false,
         attrs = Seq(AggregatedAttribute(weight, "sum")))))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
@@ -145,7 +147,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(),
-        layout3D = false)))
+        layout3D = false,
+        relativeEdgeDensity = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -156,6 +159,27 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0), FEEdge(3, 0, 1.0), FEEdge(1, 0, 1.0), FEEdge(3, 1, 1.0)))
+  }
+
+  test("relative edge density") {
+    val ed = EdgeDiagramResponse(
+      srcDiagramId = "vertexDiagramId",
+      dstDiagramId = "vertexDiagramId",
+      srcIdx = 0,
+      dstIdx = 0,
+      edges = Seq(FEEdge(0, 1, 1.0), FEEdge(0, 2, 1.0), FEEdge(1, 2, 1.0), FEEdge(1, 3, 1.0)),
+      layout3D = Map()
+    )
+    val vd = VertexDiagramResponse(
+      diagramId = "vertexDiagramId",
+      vertices = Seq(FEVertex(1.0, 0, 0), FEVertex(5.0, 0, 1), FEVertex(10.0, 1, 0), FEVertex(2.0, 1, 1)),
+      mode = "bucketed"
+    )
+    val res = controller.relativeEdgeDensity(ed, vd, vd)
+    assert(res.edges(0).size == 0.2)
+    assert(res.edges(1).size == 0.1)
+    assert(res.edges(2).size == 0.02)
+    assert(res.edges(3).size == 0.1)
   }
 
   test("big bucketed view") {
@@ -174,7 +198,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
         filters = Seq(),
-        layout3D = false)))
+        layout3D = false,
+        relativeEdgeDensity = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -205,7 +230,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
         filters = Seq(),
-        layout3D = false)))
+        layout3D = false,
+        relativeEdgeDensity = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -245,7 +271,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
         filters = Seq(ef),
-        layout3D = false)))
+        layout3D = false,
+        relativeEdgeDensity = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -284,7 +311,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
         filters = Seq(ef),
-        layout3D = false)))
+        layout3D = false,
+        relativeEdgeDensity = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)

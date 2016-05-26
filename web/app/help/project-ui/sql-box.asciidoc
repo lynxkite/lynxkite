@@ -10,32 +10,32 @@ The following tables are available for SQL access:
 +
 Example: `select count(*) from vertices where age < 30`
 
- - All the edge attributes can be accessed in the `edges` table.
+ - All the edge attributes can be accessed in the `edge_attributes` table.
 +
-Example: `select max(weight) from edges`
+Example: `select max(weight) from edge_attributes`
 +
-You can not query the `edges` table if there are no edge attributes, even if the edges themselves
-are defined.
+You can not query the `edge_attributes` table if there are no edge attributes, even if the edges
+themselves are defined.
 
- - All the edge and vertex attributes can be accessed in the `triplets` table. Each row of this
+ - All the edge and vertex attributes can be accessed in the `edges` table. Each row of this
 table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes
 of the source and destination vertices are prefixed with `src_` and `dst_` respectively.
 +
-Example: `select max(edge_weight) from triplets where src_age < dst_age`
+Example: `select max(edge_weight) from edges where src_age < dst_age`
 
- - The `belongsTo` table is defined for each segmentation of a project or a segmentation. It contains
+ - The `belongs_to` table is defined for each segmentation of a project or a segmentation. It contains
 the vertex attributes for the connected pairs of base and segmentation vertices prefixed with `base_`
 and `segment_` respectively.
 +
-Example (work on the segment side): `select * from belongsTo`
+Example (work on the segment side): `select * from belongs_to`
 +
 The tables of segmentations can also be accessed using the
 `{backtick}segmentation name|table name{backtick}` syntax from the base side.
 +
 Examples (work on the base side):
 
- * `select count(*) from {backtick}communities|belongsTo{backtick} group by segment_id`
- * `select base_name from {backtick}communities|belongsTo{backtick} where segment_name = "COOKING"`
+ * `select count(*) from {backtick}communities|belongs_to{backtick} group by segment_id`
+ * `select base_name from {backtick}communities|belongs_to{backtick} where segment_name = "COOKING"`
 
 +
 The backticks are used for escaping the table name with special characters.
