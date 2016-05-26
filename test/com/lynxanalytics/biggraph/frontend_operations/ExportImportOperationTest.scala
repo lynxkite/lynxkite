@@ -44,7 +44,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     run(
       "Import vertices",
       Map(
-        "table" -> (project2Checkpoint + "|triplets"),
+        "table" -> (project2Checkpoint + "|edges"),
         "id-attr" -> "id"))
     assert(project.vertexSet.rdd.count == 4)
     assert(project.edgeBundle == null)
@@ -66,7 +66,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import belongs to as edges
     run("Import vertices and edges from a single table",
       Map(
-        "table" -> (project2Checkpoint + "|cc|belongsTo"),
+        "table" -> (project2Checkpoint + "|cc|belongs_to"),
         "src" -> "base_name",
         "dst" -> "segment_id"))
     // 4 nodes in 2 segments

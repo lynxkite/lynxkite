@@ -287,7 +287,7 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.TripletTableName)
+      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
 }
@@ -349,7 +349,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.TripletTableName) ++
+      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
       Option(belongsTo).map(_ => Table.BelongsToTableName)
 }
 
