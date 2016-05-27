@@ -162,6 +162,13 @@ user running LynxKite and change the password below.
 # export KITE_AMMONITE_PASSWD=kite
 ```
 
+API access to LynxKite is available by sending JSON commands through a Unix pipe.
+LynxKite will create this pipe on startup. This pipe gives full administrative access, so use
+the file system permissions on the containing directory to limit access to it.
+```
+# export KITE_API_PIPE=$HOME/secure/api-pipe
+```
+
 [[kiterc-https]]
 Options needed if you want to use authentication and HTTPS.
 
