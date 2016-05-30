@@ -21,15 +21,18 @@ import types
 
 
 def _init():
-  global server_pipe, response_pipe
+  global server_pipe, response_pipe_int, response_pipe_ext
   server_pipe = _getkiterc('KITE_API_PIPE')
-  response_pipe = '{}/pipe-{}'.format(tempfile.gettempdir(), os.getpid())
-  os.mkfifo(response_pipe)
+  response_dir_int = os.environ.get('KITE_API_PIPE_RESPONSE_INTERNAL') or tempfile.gettempdir()
+  response_dir_ext = os.environ.get('KITE_API_PIPE_RESPONSE_EXTERNAL') or response_dir_int
+  response_pipe_int = '{}/pipe-{}'.format(response_dir_int, os.getpid())
+  response_pipe_ext = '{}/pipe-{}'.format(response_dir_ext, os.getpid())
+  os.mkfifo(response_pipe_int)
   atexit.register(_cleanup)
 
 
 def _cleanup():
-  os.remove(response_pipe)
+  os.remove(response_pipe_int)
 
 
 class Project(object):
@@ -66,10 +69,10 @@ class LynxException(Exception):
 
 
 def _send(command, payload={}):
-  msg = json.dumps(dict(command=command, payload=payload, responsePipe=response_pipe))
+  msg = json.dumps(dict(command=command, payload=payload, responsePipe=response_pipe_ext))
   with open(server_pipe, 'w') as p:
     p.write(msg)
-  with open(response_pipe) as p:
+  with open(response_pipe_int) as p:
     data = p.read()
     r = json.loads(data, object_hook=_asobject)
     if hasattr(r, 'error'):
@@ -85,7 +88,9 @@ def _getkiterc(variable):
   return subprocess.check_output(
       '''
       KITE_SITE_CONFIG=${{KITE_SITE_CONFIG:-$HOME/.kiterc}}
-      source "$KITE_SITE_CONFIG"
+      if [ -f "$KITE_SITE_CONFIG" ]; then
+        source "$KITE_SITE_CONFIG"
+      fi
       if [ -f "$KITE_SITE_CONFIG_OVERRIDES" ]; then
         source "$KITE_SITE_CONFIG_OVERRIDES"
       fi
