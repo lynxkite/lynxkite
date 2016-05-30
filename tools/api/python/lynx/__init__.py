@@ -46,6 +46,10 @@ class Project(object):
       return r.double
     return r.string
 
+  def sql(self, query):
+    r = _send('sql', dict(checkpoint=self.checkpoint, query=query), raw=True)
+    return r['rows']
+
   def run_operation(self, operation, parameters):
     r = _send('runOperation',
         dict(checkpoint=self.checkpoint, operation=operation, parameters=parameters))
@@ -68,15 +72,20 @@ class LynxException(Exception):
     self.command = command
 
 
-def _send(command, payload={}):
+def _send(command, payload={}, raw=False):
   msg = json.dumps(dict(command=command, payload=payload, responsePipe=response_pipe_ext))
   with open(server_pipe, 'w') as p:
     p.write(msg)
   with open(response_pipe_int) as p:
     data = p.read()
-    r = json.loads(data, object_hook=_asobject)
-    if hasattr(r, 'error'):
-      raise LynxException(r.error, r.request)
+    if raw:
+      r = json.loads(data)
+      if 'error' in r:
+        raise LynxException(r['error'], r['request'])
+    else:
+      r = json.loads(data, object_hook=_asobject)
+      if hasattr(r, 'error'):
+        raise LynxException(r.error, r.request)
     return r
 
 
