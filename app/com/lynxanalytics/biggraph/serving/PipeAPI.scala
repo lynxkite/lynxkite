@@ -1,13 +1,16 @@
 // An API that allows controlling a running LynxKite instance via JSON commands through a Unix pipe.
 package com.lynxanalytics.biggraph.serving
 
+import org.apache.spark.sql.types
 import play.api.libs.json
+
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 object PipeAPI {
   val env = BigGraphProductionEnvironment
@@ -22,9 +25,10 @@ object PipeAPI {
     def execute(): Unit = {
       val response = try {
         command match {
+          case "getScalar" => json.Json.toJson(getScalar(payload.as[ScalarRequest]))
           case "newProject" => json.Json.toJson(newProject())
           case "runOperation" => json.Json.toJson(runOperation(payload.as[OperationRequest]))
-          case "getScalar" => json.Json.toJson(getScalar(payload.as[ScalarRequest]))
+          case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
         }
       } catch {
         case t: Throwable =>
@@ -43,11 +47,16 @@ object PipeAPI {
     operation: String,
     parameters: Map[String, String])
   case class ScalarRequest(checkpoint: String, scalar: String)
+  case class SqlRequest(checkpoint: String, query: String)
+  // Each row is a map, repeating the schema. Values may be missing for some rows.
+  case class TableResult(rows: List[Map[String, json.JsValue]])
   implicit val fCommand = json.Json.format[Command]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
+  implicit val rSqlRequest = json.Json.reads[SqlRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wTableResult = json.Json.writes[TableResult]
 
   val user = User("Pipe API User", isAdmin = true)
 
@@ -75,6 +84,33 @@ object PipeAPI {
     implicit val tt = scalar.typeTag
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     DynamicValue.convert(scalar.value)
+  }
+
+  def sql(request: SqlRequest): TableResult = {
+    val sqlContext = dataManager.newSQLContext()
+    val viewer = getViewer(request.checkpoint)
+    for (path <- viewer.allRelativeTablePaths) {
+      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(path.toString)
+    }
+    val df = sqlContext.sql(request.query)
+    val schema = df.schema
+    val limit = LoggedEnvironment.envOrElse("KITE_SQL_LIMIT", "200").toInt
+    val data = df.take(limit)
+    val rows = data.map { row =>
+      schema.fields.zipWithIndex.flatMap {
+        case (f, i) =>
+          if (row.isNullAt(i)) None
+          else {
+            val jsValue = f.dataType match {
+              case _: types.DoubleType => json.Json.toJson(row.getDouble(i))
+              case _: types.StringType => json.Json.toJson(row.getString(i))
+              case _ => json.Json.toJson(row.get(i).toString)
+            }
+            Some(f.name -> jsValue)
+          }
+      }.toMap
+    }
+    TableResult(rows = rows.toList)
   }
 
   val pipeFile = LoggedEnvironment.envOrNone("KITE_API_PIPE").map(new java.io.File(_))
