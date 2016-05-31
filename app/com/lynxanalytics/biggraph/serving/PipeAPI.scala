@@ -113,12 +113,8 @@ object PipeAPI {
   }
 
   def sql(request: SqlRequest): TableResult = {
-    val sqlContext = dataManager.newSQLContext()
     val viewer = getViewer(request.checkpoint)
-    for (path <- viewer.allRelativeTablePaths) {
-      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(path.toString)
-    }
-    val df = sqlContext.sql(request.query)
+    val df = env.sqlHelper.sqlToTable(viewer, request.query).toDF(dataManager.masterSQLContext)
     val schema = df.schema
     val data = df.take(request.limit)
     val rows = data.map { row =>
