@@ -96,15 +96,16 @@ def _asobject(dic):
 
 def _fromkiterc(variable):
   '''Returns the value of a variable defined in .kiterc.'''
-  return subprocess.check_output(
-      '''
-      KITE_SITE_CONFIG=${{KITE_SITE_CONFIG:-$HOME/.kiterc}}
+  load_kiterc = '''
+      KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
       source "$KITE_SITE_CONFIG"
       if [ -f "$KITE_SITE_CONFIG_OVERRIDES" ]; then
         source "$KITE_SITE_CONFIG_OVERRIDES"
       fi
-      echo ${}
-      '''.format(variable), shell=True, executable='/bin/bash').strip()
+      '''
+  # We will source kiterc, then print the variable we want.
+  command = '{}; echo ${}'.format(load_kiterc, variable)
+  return subprocess.check_output(command, shell=True, executable='/bin/bash').strip()
 
 
 _init()
