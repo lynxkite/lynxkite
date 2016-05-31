@@ -150,7 +150,16 @@
     </div>
     <div>
       <i class="list-group-item">
-        <sql-box directory="path"></sql-box>
+        <span class="lead de-emph">SQL</span>
+        <div class="pull-right">
+          <i class="glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }} section-button"
+             id="sql-toggle"
+             ng-click="showSQL = !showSQL"
+             tooltip="Open SQL interface"></i>
+        </div>
+        <help-popup href="sql-box" class="pull-right"></help-popup>
+        <div class="clearfix"></div>
+        <sql-box directory="path" hideable=true ng-if="showSQL"></sql-box>
       </i>
     </div>
   </div>

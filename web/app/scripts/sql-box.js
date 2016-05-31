@@ -6,16 +6,17 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     restrict: 'E',
     scope: {
       side: '=?',
-      directory: '=?'
+      directory: '=?',
+      hideable: '=?'
      },
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      scope.isGlobal = (typeof scope.directory === 'undefined' ? false : true);
+      scope.isGlobal = typeof scope.directory === 'undefined' ? false : true;
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
-      scope.dir = scope.isGlobal ?  scope.directory : '';
-      scope.project = scope.isGlobal ? '' : scope.side.state.projectName;
+      scope.project = typeof scope.side === 'undefined' ? undefined :
+      scope.side.state.projectName;
       scope.sort = {
         column: undefined,
         reverse: false,
@@ -44,7 +45,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             {
               df: {
                 isGlobal: scope.isGlobal,
-                directory: scope.dir,
+                directory: scope.directory,
                 project: scope.project,
                 sql: scope.sql,
               },
@@ -85,6 +86,8 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         }
         var req = {
           df: {
+            isGlobal: scope.isGlobal,
+            directory: scope.directory,
             project: scope.project,
             sql: scope.sql,
           },

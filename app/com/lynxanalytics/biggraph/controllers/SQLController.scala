@@ -13,7 +13,14 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class DataFrameSpec(isGlobal: Boolean, directory: String, project: String, sql: String)
+object DataFrameSpec {
+  // Utilities for testing.
+  def local(project: String, sql: String) =
+    new DataFrameSpec(isGlobal = false, directory = None, project = Some(project), sql = sql)
+  def global(directory: String, sql: String) =
+    new DataFrameSpec(isGlobal = true, directory = Some(directory), project = None, sql = sql)
+}
+case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String)
 case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
@@ -236,15 +243,17 @@ class SQLController(val env: BigGraphEnvironment) {
   private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
     metaManager.synchronized {
       if (spec.isGlobal) {
-        val directory = Directory.fromName(spec.directory)
+        assert(spec.directory.nonEmpty && spec.project.isEmpty, "...")
+        val directory = Directory.fromName(spec.directory.get)
         val allProjectNames = directory.listObjectsRecursively.map(objFrame => objFrame.name)
         val allProjectsWithName = allProjectNames.map(name => (name, SubProject.parsePath(name))).toMap
         val allowedProjectsWithName = allProjectsWithName.filter(_._2.frame.readAllowedFrom(user))
         val availableProjectsWithName = allowedProjectsWithName.filter(_._2.frame.exists)
-        val projectViewsWithNames = availableProjectsWithName.mapValues(_.viewer)
-        env.sqlHelper.sqlToTableGlobal(projectViewsWithNames, spec.sql, spec.isGlobal)
+        val projectViewersWithNames = availableProjectsWithName.mapValues(_.viewer)
+        env.sqlHelper.sqlToTableGlobal(projectViewersWithNames, spec.sql, spec.isGlobal)
       } else {
-        val p = SubProject.parsePath(spec.project)
+        assert(spec.directory.isEmpty && spec.project.nonEmpty, "...")
+        val p = SubProject.parsePath(spec.project.get)
         assert(p.frame.exists, s"Project ${spec.project} does not exist.")
         p.frame.assertReadAllowedFrom(user)
         env.sqlHelper.sqlToTable(p.viewer, spec.sql)
