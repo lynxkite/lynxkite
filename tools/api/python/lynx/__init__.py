@@ -25,6 +25,8 @@ def _init():
   '''Runs when the module is loaded. Reads configuration and creates response pipe.'''
   global server_pipe, response_pipe_int, response_pipe_ext
   server_pipe = _fromkiterc('KITE_API_PIPE')
+  # This INTERNAL/EXTERNAL configuration is used when running in a Docker container.
+  # INTERNAL is the path where we see the file. EXTERNAL is the same from LynxKite's perspective.
   response_dir_int = os.environ.get('KITE_API_PIPE_RESPONSE_INTERNAL') or tempfile.gettempdir()
   response_dir_ext = os.environ.get('KITE_API_PIPE_RESPONSE_EXTERNAL') or response_dir_int
   response_pipe_int = '{}/pipe-{}'.format(response_dir_int, os.getpid())
@@ -64,6 +66,7 @@ class Project(object):
     r = _send('runOperation',
         dict(checkpoint=self.checkpoint, operation=operation, parameters=parameters))
     self.checkpoint = r.checkpoint
+    return self
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -71,7 +74,7 @@ class Project(object):
       params = {}
       for k, v in kwargs.items():
         params[k] = str(v)
-      self.run_operation(attr, params)
+      return self.run_operation(attr, params)
     return f
 
 
