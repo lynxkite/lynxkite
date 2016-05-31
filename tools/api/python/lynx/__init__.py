@@ -118,7 +118,7 @@ def _fromkiterc(variable):
       fi
       '''
   # We will source kiterc, then print the variable we want.
-  command = '{}; echo ${}'.format(load_kiterc, variable)
+  command = '{}\n echo ${}'.format(load_kiterc, variable)
   return subprocess.check_output(command, shell=True, executable='/bin/bash').strip()
 
 
