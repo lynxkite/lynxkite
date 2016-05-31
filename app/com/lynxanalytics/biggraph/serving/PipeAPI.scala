@@ -27,7 +27,9 @@ object PipeAPI {
         command match {
           case "getScalar" => json.Json.toJson(getScalar(payload.as[ScalarRequest]))
           case "newProject" => json.Json.toJson(newProject())
+          case "loadProject" => json.Json.toJson(loadProject(payload.as[ProjectRequest]))
           case "runOperation" => json.Json.toJson(runOperation(payload.as[OperationRequest]))
+          case "saveProject" => json.Json.toJson(saveProject(payload.as[SaveProjectRequest]))
           case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
         }
       } catch {
@@ -46,6 +48,8 @@ object PipeAPI {
     checkpoint: String,
     operation: String,
     parameters: Map[String, String])
+  case class ProjectRequest(project: String)
+  case class SaveProjectRequest(checkpoint: String, project: String)
   case class ScalarRequest(checkpoint: String, scalar: String)
   case class SqlRequest(checkpoint: String, query: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
@@ -53,6 +57,8 @@ object PipeAPI {
   implicit val fCommand = json.Json.format[Command]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
+  implicit val rProjectRequest = json.Json.reads[ProjectRequest]
+  implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rSqlRequest = json.Json.reads[SqlRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
@@ -62,6 +68,26 @@ object PipeAPI {
 
   def newProject(): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
+  }
+
+  def loadProject(request: ProjectRequest): CheckpointResponse = {
+    val project = controllers.ProjectFrame.fromName(request.project)
+    val cp = project.viewer.rootCheckpoint
+    CheckpointResponse(cp)
+  }
+
+  def saveProject(request: SaveProjectRequest): CheckpointResponse = {
+    val entry = controllers.DirectoryEntry.fromName(request.project)
+    val project = if (!entry.exists) {
+      val p = entry.asNewProjectFrame()
+      p.writeACL = user.email
+      p.readACL = user.email
+      p
+    } else {
+      entry.asProjectFrame
+    }
+    project.setCheckpoint(request.checkpoint)
+    CheckpointResponse(request.checkpoint)
   }
 
   def getViewer(cp: String) =

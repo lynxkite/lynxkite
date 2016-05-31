@@ -45,10 +45,20 @@ class Project(object):
 
   This project is not automatically saved to the LynxKite project directories.
   '''
+  @staticmethod
+  def load(name):
+    p = Project()
+    r = _send('loadProject', dict(project=name))
+    p.checkpoint = r.checkpoint
+    return p
+
   def __init__(self):
     '''Creates a new blank project.'''
     r = _send('newProject')
     self.checkpoint = r.checkpoint
+
+  def save(self, name):
+    _send('saveProject', dict(checkpoint=self.checkpoint, project=name))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
