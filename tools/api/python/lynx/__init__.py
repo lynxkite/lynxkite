@@ -55,8 +55,8 @@ class Project(object):
       return r.double
     return r.string
 
-  def sql(self, query):
-    r = _send('sql', dict(checkpoint=self.checkpoint, query=query), raw=True)
+  def sql(self, query, limit=1000):
+    r = _send('sql', dict(checkpoint=self.checkpoint, query=query, limit=limit), raw=True)
     return r['rows']
 
   def run_operation(self, operation, parameters):

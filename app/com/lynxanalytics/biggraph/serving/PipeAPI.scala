@@ -47,7 +47,7 @@ object PipeAPI {
     operation: String,
     parameters: Map[String, String])
   case class ScalarRequest(checkpoint: String, scalar: String)
-  case class SqlRequest(checkpoint: String, query: String)
+  case class SqlRequest(checkpoint: String, query: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
   implicit val fCommand = json.Json.format[Command]
@@ -94,8 +94,7 @@ object PipeAPI {
     }
     val df = sqlContext.sql(request.query)
     val schema = df.schema
-    val limit = LoggedEnvironment.envOrElse("KITE_SQL_LIMIT", "200").toInt
-    val data = df.take(limit)
+    val data = df.take(request.limit)
     val rows = data.map { row =>
       schema.fields.zipWithIndex.flatMap {
         case (f, i) =>
