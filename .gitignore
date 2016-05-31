@@ -1,6 +1,7 @@
 *.class
 *.log
 *.pyc
+__pycache__
 
 # sbt specific
 .cache
