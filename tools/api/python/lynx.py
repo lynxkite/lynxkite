@@ -6,10 +6,8 @@ Example usage:
 
     import lynx
     p = lynx.Project()
-    p.new_vertex_set(size=100)
+    p.newVertexSet(size=100)
     print(p.scalar('vertex_count'))
-
-The operation method names are case and underscore-insensitive. Pick your favorite style.
 '''
 import atexit
 import json
@@ -49,12 +47,11 @@ class Project(object):
     self.checkpoint = r.checkpoint
 
   def __getattr__(self, attr):
-    operation = attr.replace('_', '')  # Drop underscores.
     def f(**kwargs):
       params = {}
       for k, v in kwargs.items():
         params[k] = str(v)
-      self.run_operation(operation, params)
+      self.run_operation(attr, params)
     return f
 
 
