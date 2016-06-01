@@ -110,7 +110,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       val files = paths.map(collection.createTaskFile(_))
       try {
         val verticesWriter = files.last.writer
-        for (file <- files) file.committer.setupTask(file.context)
+        for (file <- files) {
+          file.committer.setupTask(file.context)
+          file.writer // Make sure a writer is created even if the partition is empty.
+        }
         for ((id, cols) <- iterator) {
           vsCount += 1
           val key = new hadoop.io.LongWritable(id)
