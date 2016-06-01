@@ -417,7 +417,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     // Enforcing colocation:
     assert(vsRDD.partitions.size == rawRDD.partitions.size,
       s"$vsRDD and $rawRDD should have the same number of partitions, " +
-        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}")
+        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}\n" +
+        s"${vsRDD.toDebugString}\n${rawRDD.toDebugString}")
     vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
       (it1, it2) => it2
     }
