@@ -3,6 +3,17 @@
 
 There is a SQL interface at the bottom of project pages that
 makes it possible to run SQL queries over the data in the project and export the results.
+ Also, there is a SQL interface at the bottom of the project browser page that can be expanded with the plus
+button and which can be used to make queries to all available projects in the current folder
+(those in subfolders included). In this case, you need to provide the path from your current folder to the project,
+then use `|` to specify the table you want to access. It is important to keep in mind that you need to enclose all of
+this between two `&#96;` symbols. (see example below)
+
+For example, let's say you are in your private folder where you have a subfolder called Premier_League, in which you
+have a project named Arsenal. If you want to acces the vertices table of the Arsenal project from your private folder,
+you need to refer to it by `&#96;Premier_League/Arsenal|vertices&#96;`. In case you are already in the
+`Premier_League` folder, the reference shortens to `&#96;Arsenal|vertices&#96;`
+
 
 The following tables are available for SQL access:
 

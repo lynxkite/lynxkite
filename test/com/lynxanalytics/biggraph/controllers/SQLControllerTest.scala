@@ -11,10 +11,27 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
+  test("global sql on vertices") {
+    val directoryName = "Test_Directory"
+    val directory = DirectoryEntry.fromName(directoryName).asNewDirectory()
+    val globalProjectName = "Global_Test_Name"
+    val globalProjectPath = directoryName + "/" + globalProjectName
+    val globalProjectframe = DirectoryEntry.fromName(globalProjectPath).asNewProjectFrame()
+    globalProjectframe.initialize
+    val globalProject = globalProjectframe.subproject
+    run("Example Graph", on = globalProjectPath)
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = directoryName, sql = "select name from `" + globalProjectName +
+        "|" + "vertices` where age < 40"),
+      maxRows = 10)))
+    assert(result.header == List("name"))
+    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
   test("sql on vertices") {
     run("Example Graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec(project = projectName, sql = "select name from vertices where age < 40"),
+      DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
     assert(result.header == List("name"))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
@@ -24,7 +41,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val file = getClass.getResource("/controllers/noread.csv").toString
     intercept[Throwable] {
       await(sqlController.runSQLQuery(user, SQLQueryRequest(
-        DataFrameSpec(
+        DataFrameSpec.local(
           project = projectName,
           sql = s"select * from csv.`$file`"),
         maxRows = 10)))
@@ -34,7 +51,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql export to csv") {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
-      DataFrameSpec(project = projectName, sql = "select name, age from vertices where age < 40"),
+      DataFrameSpec.local(project = projectName, sql = "select name, age from vertices where age < 40"),
       path = "<download>",
       delimiter = ";",
       quote = "\"",
@@ -48,7 +65,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
-      DataFrameSpec(project = projectName, sql = "select name, age from vertices where age < 40"),
+      DataFrameSpec.local(project = projectName, sql = "select name, age from vertices where age < 40"),
       jdbcUrl = url,
       table = "export_test",
       mode = "error")))
@@ -157,7 +174,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       sqlController.exportSQLQueryToParquet(
         user,
         SQLExportToParquetRequest(
-          DataFrameSpec(
+          DataFrameSpec.local(
             project = projectName,
             sql = "select name, age, location from vertices"),
           path = exportPath)))

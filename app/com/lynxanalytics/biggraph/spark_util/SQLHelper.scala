@@ -61,39 +61,34 @@ class SQLHelper(
   // Given a project and a query, collects the the guids of the
   // input attributes required to execute the query.
   // The result is a map of tableName -> Seq(guid, columnName)
-  def getInputColumns(projects: Map[String, controllers.ProjectViewer], sqlQuery: String,
-                      isGlobal: Boolean): (Map[String, Seq[(UUID, String)]], DataFrame) = {
+  def getInputColumns(tables: Map[String, controllers.Table],
+                      sqlQuery: String): (Map[String, Seq[(UUID, String)]], DataFrame) = {
     // This implementation exploits that DataFrame.explain()
     // scans all the input columns. We create fake input table
     // relations below, and collect the scanned columns in
     // `columnAccumulator`.
     val columnAccumulator = mutable.Map[String, Seq[(UUID, String)]]()
     val sqlContext = dataManager.newSQLContext()
-    for ((projectName, project) <- projects) {
-      for (path <- project.allRelativeTablePaths) {
-        val tableName = if (isGlobal) projectName + "|" + path.toString else path.toString
-        val dataFrame = (
-          new InputGUIDCollectingFakeTableRelation(
-            controllers.Table(path, project),
-            sqlContext,
-            sparkContext,
-            columnList => {
-              columnAccumulator(tableName) = columnList
-            }
-          )).toDF
-        dataFrame.registerTempTable(tableName)
-      }
+    for ((tableName, table) <- tables) {
+      val dataFrame = (
+        new InputGUIDCollectingFakeTableRelation(
+          table,
+          sqlContext,
+          sparkContext,
+          columnList => {
+            columnAccumulator(tableName) = columnList
+          }
+        )).toDF
+      dataFrame.registerTempTable(tableName)
     }
     val df = sqlContext.sql(sqlQuery)
     sql.SQLHelperHelper.explainQuery(df)
     (columnAccumulator.toMap, df)
   }
 
-  //makes it possible to run SQL query on folder level with acces to multiple projects
-  def sqlToTableGlobal(projects: Map[String, controllers.ProjectViewer], sqlQuery: String,
-                       isGlobal: Boolean): controllers.Table = {
+  def executeSQL(tables: Map[String, controllers.Table], sqlQuery: String) = {
     implicit val m = metaManager
-    val (inputTables, dataFrame) = getInputColumns(projects, sqlQuery, isGlobal)
+    val (inputTables, dataFrame) = getInputColumns(tables, sqlQuery)
     val op = new graph_operations.ExecuteSQL(
       sqlQuery,
       inputTables.map {
@@ -114,9 +109,20 @@ class SQLHelper(
     controllers.RawTable(res.ids, res.columns.mapValues(_.entity))
   }
 
+  //makes it possible to run SQL query on folder level with acces to multiple projects
+  def sqlToTableGlobal(projects: Map[String, controllers.ProjectViewer], sqlQuery: String): controllers.Table = {
+    val tableMap = projects.map { case (globPath, proj) => ((globPath, proj), proj.allRelativeTablePaths) }
+      .flatMap {
+        case ((globPath, proj), relPaths) => relPaths.map {
+          path => (globPath + "|" + path.toString, controllers.Table(path, proj))
+        }
+      }
+    executeSQL(tableMap, sqlQuery)
+  }
+
   def sqlToTable(project: controllers.ProjectViewer, sqlQuery: String): controllers.Table = {
-    val projects = Map("" -> project)
-    sqlToTableGlobal(projects, sqlQuery, false)
+    val tableMap = project.allRelativeTablePaths.map(path => (path.toString, controllers.Table(path, project))).toMap
+    executeSQL(tableMap, sqlQuery)
   }
 
 }
