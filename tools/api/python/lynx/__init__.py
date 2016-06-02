@@ -21,6 +21,9 @@ import tempfile
 import types
 
 
+default_sql_limit = 1000
+
+
 def _init():
   '''Runs when the module is loaded. Reads configuration and creates response pipe.'''
   global server_pipe, response_pipe_int, response_pipe_ext
@@ -67,8 +70,12 @@ class Project(object):
       return r.double
     return r.string
 
-  def sql(self, query, limit=1000):
-    r = _send('sql', dict(checkpoint=self.checkpoint, query=query, limit=limit), raw=True)
+  def sql(self, query, limit=None):
+    r = _send('sql', dict(
+      checkpoint=self.checkpoint,
+      query=query,
+      limit=limit or default_sql_limit,
+      ), raw=True)
     return r['rows']
 
   def run_operation(self, operation, parameters):
