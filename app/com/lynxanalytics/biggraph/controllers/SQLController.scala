@@ -244,13 +244,16 @@ class SQLController(val env: BigGraphEnvironment) {
     metaManager.synchronized {
       if (spec.isGlobal) {
         assert(spec.directory.nonEmpty && spec.project.isEmpty, "...")
-        val directory = Directory.fromName(spec.directory.get)
+        val directoryName = spec.directory.get
+        val directoryPreFix = if (directoryName == "") "" else directoryName + "/"
+        val directory = Directory.fromName(directoryName)
         val allProjectNames = directory.listObjectsRecursively.map(objFrame => objFrame.name)
         val allProjectsWithName = allProjectNames.map(name => (name, SubProject.parsePath(name))).toMap
         val allowedProjectsWithName = allProjectsWithName.filter(_._2.frame.readAllowedFrom(user))
         val availableProjectsWithName = allowedProjectsWithName.filter(_._2.frame.exists)
         val projectViewersWithNames = availableProjectsWithName.mapValues(_.viewer)
-        env.sqlHelper.sqlToTableGlobal(projectViewersWithNames, spec.sql, spec.isGlobal)
+        val projectViewersWithRelativeNames = projectViewersWithNames.map { case (name, viewer) => (name.stripPrefix(directoryPreFix), viewer) }
+        env.sqlHelper.sqlToTableGlobal(projectViewersWithRelativeNames, spec.sql)
       } else {
         assert(spec.directory.isEmpty && spec.project.nonEmpty, "...")
         val p = SubProject.parsePath(spec.project.get)
