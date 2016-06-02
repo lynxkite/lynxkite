@@ -129,6 +129,7 @@ object PipeAPI {
             val jsValue = f.dataType match {
               case _: types.DoubleType => json.Json.toJson(row.getDouble(i))
               case _: types.StringType => json.Json.toJson(row.getString(i))
+              case _: types.LongType => json.Json.toJson(row.getLong(i))
               case _ => json.Json.toJson(row.get(i).toString)
             }
             Some(f.name -> jsValue)
