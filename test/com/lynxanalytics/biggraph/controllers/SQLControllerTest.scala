@@ -17,8 +17,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val globalProjectName = "Global_Test_Name"
     val globalProjectPath = directoryName + "/" + globalProjectName
     val globalProjectframe = DirectoryEntry.fromName(globalProjectPath).asNewProjectFrame()
-    globalProjectframe.initialize
-    val globalProject = globalProjectframe.subproject
     run("Example Graph", on = globalProjectPath)
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.global(directory = directoryName, sql = "select name from `" + globalProjectName +

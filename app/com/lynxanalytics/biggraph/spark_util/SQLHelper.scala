@@ -109,14 +109,14 @@ class SQLHelper(
     controllers.RawTable(res.ids, res.columns.mapValues(_.entity))
   }
 
-  //makes it possible to run SQL query on folder level with acces to multiple projects
+  // Makes it possible to run SQL query on folder level with access to multiple projects.
   def sqlToTableGlobal(projects: Map[String, controllers.ProjectViewer], sqlQuery: String): controllers.Table = {
-    val tableMap = projects.map { case (globPath, proj) => ((globPath, proj), proj.allRelativeTablePaths) }
-      .flatMap {
-        case ((globPath, proj), relPaths) => relPaths.map {
+    val tableMap = projects.flatMap {
+      case (globPath, proj) =>
+        proj.allRelativeTablePaths.map {
           path => (globPath + "|" + path.toString, controllers.Table(path, proj))
         }
-      }
+    }
     executeSQL(tableMap, sqlQuery)
   }
 
