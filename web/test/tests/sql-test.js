@@ -43,7 +43,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'SQL works for edge attributes',
     function() {
-      left.runSql('select edge_comment, src_name from triplets order by edge_comment');
+      left.runSql('select edge_comment, src_name from edges order by edge_comment');
 
       left.expectSqlResult(
         ['edge_comment', 'src_name'],
@@ -64,8 +64,8 @@ module.exports = function(fw) {
       left.runOperation('Copy graph into a segmentation');
       left.openSegmentation('self_as_segmentation');
       left.runSql(
-        'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongsTo`');
-      right.runSql('select sum(base_random - segment_random) as error from belongsTo');
+        'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongs_to`');
+      right.runSql('select sum(base_random - segment_random) as error from belongs_to');
     },
     function() {
       left.expectSqlResult(['sum'], [['100.0']]);
@@ -124,11 +124,11 @@ module.exports = function(fw) {
           dst: 'rank2',
         });
 
-      left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edges');
+      left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
       left.expectSqlResult(['r1sum', 'r2sum'], [['4950.0', '4950.0']]);
 
       left.runSql(
-        'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from triplets');
+        'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
       left.expectSqlResult(['dstgood', 'srcgood'], [['true', 'true']]);
     },
     function() {

@@ -2,7 +2,13 @@
 
 # Runs synthetic Spark tests inside LynxKite.
 
-if [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
+if [[ $# -eq 0 ]]; then
+  # Take default args.
+  MODE="remote"
+  DATA_SIZE="2000000000"
+  NUM_PARTITIONS="1000"
+  TEST_SELECTOR="all.list"
+elif [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
   echo "Usage:"
   echo "  test_spark.sh local|remote data_size partition_size [test_name_pattern]"
   echo
@@ -16,16 +22,16 @@ if [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
   echo
   echo "This will run the tests in TestSpark.scala."
   exit 1
+else
+  # Take command line args.
+  MODE=$1
+  DATA_SIZE=$2
+  NUM_PARTITIONS=$3
+  TEST_SELECTOR=${4:-all.list}
 fi
 
 set -xueo pipefail
 trap "echo $0 has failed" ERR
-
-MODE=$1
-DATA_SIZE=$2
-NUM_PARTITIONS=$3
-TEST_SELECTOR=${4:-all.list}
-
 
 DIR_SUFFIX=${DEV_EXTRA_SPARK_OPTIONS:-}
 DIR_SUFFIX=${DIR_SUFFIX//[[:blank:]]/}
