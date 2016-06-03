@@ -44,6 +44,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           filters: viewData.filters.edge,
           edgeWeightId: (viewData.edgeWidth || { id: '' }).id,
           layout3D: viewData.display === '3d',
+          relativeEdgeDensity: viewData.relativeEdgeDensity,
           attrs: edgeAttrs,
           maxSize: (viewData.display === '3d') ? 1000000 : 10000,
         });
@@ -91,6 +92,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           filters: [],
           edgeWeightId: '',
           layout3D: false,
+          relativeEdgeDensity: false,
           attrs: [],
           maxSize: 10000,
         });
@@ -105,6 +107,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           filters: [],
           edgeWeightId: '',
           layout3D: false,
+          relativeEdgeDensity: false,
           attrs: [],
           maxSize: 10000,
         });
