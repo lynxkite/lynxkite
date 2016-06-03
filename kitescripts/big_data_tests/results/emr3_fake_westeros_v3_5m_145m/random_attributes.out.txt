@@ -1,0 +1,6 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/random_attributes.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+rnd_std_uniform (edges): {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[14520954,14517493,14516924,14522539,14517574,14517107,14524233,14512397,14514594,14521423]}
+rnd_std_uniform (vertices): {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[499174,499463,499180,500862,500683,498882,501037,500085,500699,499937]}
+rnd_std_normal (edges): {"labelType":"between","labels":["-5.5","-4.4","-3.3","-2.1","-1.0","0.1","1.3","2.4","3.5","4.6","5.8"],"sizes":[884,80534,2327983,20568045,56938311,50060553,13963691,1212642,32325,270]}
+rnd_std_normal (vertices): {"labelType":"between","labels":["-5.1","-4.0","-2.9","-1.9","-0.8","0.3","1.4","2.5","3.6","4.7","5.8"],"sizes":[134,7934,150279,947378,2022821,1475303,365109,30213,825,6]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/random_attributes.groovy, took 111 seconds
