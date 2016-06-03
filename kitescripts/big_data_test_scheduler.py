@@ -54,7 +54,7 @@ def run_lynx_kite(test_name, options):
     options.remote_lynxkite_path,
     options.remote_test_dir,
     test_name,
-    ' '.join(options.lynxkite_arg),
+    ' '.join(options.lynxkite_arg or []),
     options.remote_output_dir,
     test_name.split('.')[0])
 
@@ -92,21 +92,30 @@ def run_tests(scripts, options):
     if len(line) > 0 and line[0] != '#':
       run_test(line, options, tests_seen)
 
-def main(argv):
-  my_path = os.path.abspath(os.path.dirname(argv[0]))
-  options = parse_args(argv)
-
+def get_script_list(options):
   scripts = []
   test_selector = options.test_selector
   if (test_selector.endswith('.list')):
     for line in open(options.local_test_dir + '/' + test_selector, 'r'):
-      scripts.append(line.strip())
+      sline = line.strip()
+      if sline == '':
+        pass
+      if sline == '*':
+        matches = glob.glob(options.local_test_dir + '/*.groovy')
+        scripts += map(lambda path: path.split('/')[-1], matches)
+      else:
+        scripts.append(sline)
   elif (test_selector.endswith('.groovy')):
     scripts.append(test_selector)
+  return scripts
+
+def main(argv):
+  options = parse_args(argv)
+
+  scripts = get_script_list(options)
   if scripts == []:
     sys.stderr.write('No tests specified.\n')
     sys.exit(1)
-
   run_tests(scripts, options)
 
 if __name__ == "__main__":
