@@ -5,15 +5,17 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+
 - Global SQL-box has been added.
 - New option has been added in bucketed view: relative edge density.
 - New operation "Find vertex coloring" has been added. 
+
 ### 1.7.5
+
  - Improve speed and stability of the project history editor
  - Easier to find data export button
  - Table import wizard: added tab stops and removed highlight flickering
  - Hide ACL settings in single-user instances
-
  - New aggregator: `median`.
 
 ### 1.7.4
