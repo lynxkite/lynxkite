@@ -244,9 +244,9 @@ class SQLController(val env: BigGraphEnvironment) {
     metaManager.synchronized {
       if (spec.isGlobal) {
         assert(spec.directory.nonEmpty && spec.project.isEmpty,
-          "DataSFrameSpec must not have both of these fields defined: directory, project.")
+          "DataFrameSpec must not have both of these fields defined: directory, project.")
         val directoryName = spec.directory.get
-        val directoryPreFix = if (directoryName == "") "" else directoryName + "/"
+        val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
         val directory = Directory.fromName(directoryName)
         val allProjectNames = directory.listObjectsRecursively.map(objFrame => objFrame.name)
         val allProjectsWithName = allProjectNames.map(name => (name, SubProject.parsePath(name))).toMap
@@ -254,11 +254,11 @@ class SQLController(val env: BigGraphEnvironment) {
         val availableProjectsWithName = allowedProjectsWithName.filter(_._2.frame.exists)
         val projectViewersWithNames = availableProjectsWithName.mapValues(_.viewer)
         val projectViewersWithRelativeNames = projectViewersWithNames
-          .map { case (name, viewer) => (name.stripPrefix(directoryPreFix), viewer) }
+          .map { case (name, viewer) => (name.stripPrefix(directoryPrefix), viewer) }
         env.sqlHelper.sqlToTableGlobal(projectViewersWithRelativeNames, spec.sql)
       } else {
         assert(spec.directory.isEmpty && spec.project.nonEmpty,
-          "DataSFrameSpec must have one of these fields defined: directory, project.")
+          "DataFrameSpec must have one of these fields defined: directory, project.")
         val p = SubProject.parsePath(spec.project.get)
         assert(p.frame.exists, s"Project ${spec.project} does not exist.")
         p.frame.assertReadAllowedFrom(user)
