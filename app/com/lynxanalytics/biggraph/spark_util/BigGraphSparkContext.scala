@@ -287,6 +287,11 @@ object BigGraphSparkContext {
         // http://spark.apache.org/docs/latest/job-scheduling.html
         "spark.scheduler.mode",
         "FAIR")
+      .set(
+        // Make sure spark will wait for the data to be available locally
+        "spark.locality.wait",
+        "99m"
+      )
       .set("spark.core.connection.ack.wait.timeout", "240")
       // Combines shuffle output into a single file which improves shuffle performance and reduces
       // number of open files for jobs with many reduce tasks. It only has some bad side effects
