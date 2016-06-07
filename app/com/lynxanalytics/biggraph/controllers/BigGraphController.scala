@@ -760,9 +760,10 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     Operation.allObjects(user)
       .filter(_.checkpoint.nonEmpty)
       .flatMap {
-        project =>
-          project.viewer.allAbsoluteTablePaths
-            .map(_.toGlobal(project.checkpoint, project.name).toFE)
+        projectOrTable =>
+          projectOrTable.viewer.allAbsoluteTablePaths
+            .map(_.toGlobal(projectOrTable.checkpoint, projectOrTable.name).toFE)
+            .map { FEOpt => if (projectOrTable.isTable) FEOpt.copy(title = projectOrTable.name) else FEOpt }
       }.toList.sortBy(_.title)
   }
 
