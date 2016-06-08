@@ -288,6 +288,7 @@ object BigGraphSparkContext {
         "spark.scheduler.mode",
         "FAIR")
       .set(
+        // TODO: remove this when we get to Spark 2.*.*
         // Make sure spark will wait for the data to be available locally
         "spark.locality.wait",
         "99m"
