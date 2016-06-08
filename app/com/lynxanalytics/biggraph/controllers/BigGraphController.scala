@@ -763,7 +763,9 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
         projectOrTable =>
           projectOrTable.viewer.allAbsoluteTablePaths
             .map(_.toGlobal(projectOrTable.checkpoint, projectOrTable.name).toFE)
-            .map { FEOpt => if (projectOrTable.isTable) FEOpt.copy(title = projectOrTable.name) else FEOpt }
+            .map { FEOpt =>
+              if (projectOrTable.isTable) FEOpt.copy(title = FEOpt.title.replace("|vertices", "")) else FEOpt
+            }
       }.toList.sortBy(_.title)
   }
 
