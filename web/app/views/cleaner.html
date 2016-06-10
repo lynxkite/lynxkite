@@ -2,7 +2,10 @@
 
   <h1>Cleaner</h1>
   <form>
-    <table class="table table-striped">
+    <p class="alert alert-danger" ng-show="fileStatus.$error">
+      {{ fileStatus.$error }}
+    </p>
+    <table class="table table-striped" ng-show="!fileStatus.$error">
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>
         <td>All entities</td>
@@ -20,7 +23,7 @@
         </td>
       </tr>
     </table>
-    <div class="form-horizontal">
+    <div class="form-horizontal" ng-show="!fileStatus.$error">
       <div class="form-group">
         <button type="submit" class="btn btn-success" ng-click="markFilesDeleted()">
           Mark files deleted
