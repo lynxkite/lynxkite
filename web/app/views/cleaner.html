@@ -2,9 +2,9 @@
 
   <h1>Cleaner</h1>
   <form>
-    <p class="alert alert-danger" ng-show="fileStatus.$error">
+    <div class="alert alert-danger" ng-show="fileStatus.$error">
       {{ fileStatus.$error }}
-    </p>
+    </div>
     <table class="table table-striped" ng-show="!fileStatus.$error">
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>
