@@ -12,7 +12,9 @@ angular
 
   .config(function ($routeProvider) {
     function docTemplate(doc) {
-      return { template: '<div class="documentation">' +
+      return { template:
+        '<find-in-page-box></find-in-page-box>' +
+        '<div class="documentation">' +
         '<div documentation="' + doc + '" class="help container"></div>' +
         '</div>', reloadOnSearch: false };
     }
