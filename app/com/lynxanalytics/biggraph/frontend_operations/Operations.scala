@@ -1009,6 +1009,26 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("first_dimension_name", "Save as"),
+      Param("second_dimension_name", "Save as"),
+      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true))
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
+
+    def apply(params: Map[String, String]) = {
+      assert(params("features").nonEmpty, "Please select at least one predictor.")
+      val featureNames = params("features").split(",", -1).sorted
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val op = graph_operations.ReduceDimensions(features.size)
+      val result = op(op.features, features).result
+      project.newVertexAttribute(params("first_dimension_name"), result.attr1, help)
+      project.newVertexAttribute(params("second_dimension_name"), result.attr2, help)
+    }
+  })
+
   register("Reverse edge direction", new StructureOperation(_, _) {
     def parameters = List()
     def enabled = hasEdgeBundle
