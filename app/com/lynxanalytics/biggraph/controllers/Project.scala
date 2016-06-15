@@ -1049,7 +1049,11 @@ class DirectoryEntry(val path: SymbolPath)(
     DirectoryEntry.fromPath(to.path)
   }
 
-  def parent = if (path.size > 1) Some(new Directory(path.init)) else None
+  def parent = {
+    if (path.size > 1) Some(new Directory(path.init))
+    else if (path.size == 1) Some(DirectoryEntry.rootDirectory)
+    else None
+  }
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
