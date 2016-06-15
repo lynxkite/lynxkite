@@ -4,11 +4,6 @@
 
 project = lynx.loadProject("random_attributes")
 
-project.addRandomVertexAttribute(
-  name: 'rnd_std_normal2',
-  dist: 'Standard Normal',
-  seed: '12345')
-
 project.renameVertexAttribute(
   from: 'rnd_std_normal',
   to: 'i_begin')
