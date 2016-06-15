@@ -16,6 +16,8 @@ import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
 
+import org.joda.time.DateTimeConstants
+
 // Placeholders for deleted classes.
 class DeadClass1
 class DeadClass2
@@ -249,11 +251,27 @@ object BigGraphSparkContext {
     }
   }
 
+  def rotateSparkEventLogs() = {
+    val pattern = ".*-([0-9]+)\\.lz4".r
+    val currentTime = System.currentTimeMillis
+    val deletionThreshold = currentTime - 60 * 24 * 3600
+    for (file <- LogController.getLogDir.listFiles) {
+      if (file.isFile() && file.getName().endsWith("lz4")) {
+        println(file.getName() + ": " + file.lastModified())
+        if (file.lastModified() < deletionThreshold) {
+          file.delete()
+        }
+      }
+    }
+  }
+
   def apply(
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = ""): spark.SparkContext = {
+    rotateSparkEventLogs()
+
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
