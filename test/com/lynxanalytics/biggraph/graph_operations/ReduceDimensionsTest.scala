@@ -27,7 +27,7 @@ class ReduceDimensionsTest extends FunSuite with TestGraphOp {
     val result = op(op.features, Seq(g.age, g.income): Seq[Attribute[Double]]).result
     val attr1 = result.attr1.rdd
     val attr2 = result.attr2.rdd
-    assert(attr1.count == 2)
+    assert(attr1.count == 4)
     assert(attr2.count == 2)
   }
 
@@ -35,8 +35,8 @@ class ReduceDimensionsTest extends FunSuite with TestGraphOp {
     val sqlContext = dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val numAttr = 10
-    val attrs = (0 until numAttr).map(i => (1 to 1000).map { case x => x -> i.toDouble }.toMap)
+    val numAttr = 1000
+    val attrs = (0 until numAttr).map(i => (1 to 50000).map { case x => x -> i.toDouble }.toMap)
     val g = SmallTestGraph(attrs(0).mapValues(_ => Seq())).result
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
     val op = ReduceDimensions(numAttr)
