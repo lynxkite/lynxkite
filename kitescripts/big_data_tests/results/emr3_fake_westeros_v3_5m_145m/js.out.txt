@@ -1,3 +1,3 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-x: {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[45910167,19020161,14594148,12301956,10840258,9798939,9004700,8383481,7880620,7450808]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 92 seconds
+x: {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[45906923,19014509,14592644,12301338,10841773,9802901,9011564,8385121,7875750,7452715]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 91 seconds
