@@ -440,11 +440,10 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val gotWriteAccess = request.writeACL.replace(" ", "").split(",").toSet
     val union = gotReadAccess union gotWriteAccess
 
-    val notAllowed = union.map { email => User(email, false) }
-      .filter(p.parent.isDefined && !p.parent.get.readAllowedFrom(_))
-    val notAllowedString = notAllowed.toString.stripPrefix("Set(").stripSuffix(")")
+    val notAllowed = if (p.parent.isEmpty) Set() else union.map { email => User(email, false) }
+      .filter(!p.parent.get.readAllowedFrom(_))
     assert(notAllowed.isEmpty,
-      s"The following users don't have read access to all of the parent folders: ${notAllowedString}")
+      s"The following users don't have read access to all of the parent folders: ${notAllowed.mkString(", ")}")
 
     p.readACL = request.readACL
     p.writeACL = request.writeACL
