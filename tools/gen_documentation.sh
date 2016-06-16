@@ -8,7 +8,7 @@ if [ ! -x "$WKHTMLTOPDF" ]; then
   >&2 echo 'Please install wkhtmltopdf (0.12.3 or newer) or set WKHTMLTOPDF to point to the binary.'
   exit 1
 fi
-WKHTML_OPT='--lowquality --footer-center [page] --margin-top 20mm --margin-bottom 20mm --print-media-type'
+WKHTML_OPT='--lowquality --footer-center [page] --margin-top 20mm --margin-bottom 20mm'
 
 echo 'Starting LynxKite...'
 cd "$(dirname $0)/../web"
