@@ -59,21 +59,33 @@ angular.module('biggraph').directive('findInPageBox', function() {
         return list;
       }
 
+      function wrapTextNodeInHighlightElem(node, selectionId) {
+        var highlightElem = document.createElement('span');
+        highlightElem.className =
+          'find-highlight find-highlight-' + selectionId; 
+        var nodeClone = node.cloneNode(true);
+        highlightElem.appendChild(nodeClone);
+        node.parentNode.replaceChild(highlightElem, node);
+      }
+
       // Highlights a portion of the text in node by replacing
       // it with a <span...></span> node. Returns a new node
       // containing the remaining text from node starting after
       // </span>.
-      function highlightSection(node, start, length, id) {
-        var highlightElem = document.createElement('span');
-        highlightElem.className = 'find-highlight find-highlight-' + id;
-
-        var wordNode = node.splitText(start);
-        node = wordNode.splitText(length);
-        var wordClone = wordNode.cloneNode(true);
-        highlightElem.appendChild(wordClone);
-        wordNode.parentNode.replaceChild(highlightElem, wordNode);
-
-        return node;
+      function highlightSection(node, start, length, selectionId) {
+        // We break the text of node into 3 parts:
+        // before selection, selection, after selection
+        var part23 = node.splitText(start);
+        // At this point it's true that:
+        //   node === beforeSelection
+        //   part23 === selection + afterSelection
+        var part3 = part23.splitText(length);
+        var part2 = part23;
+        // At this point it's true that:
+        //   part2 === selection
+        //   part3 === afterSelection
+        wrapTextNodeInHighlightElem(part2, selectionId);
+        return part3;
       }
 
       // Given the list of text nodes and match positions,
