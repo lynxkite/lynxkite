@@ -100,7 +100,7 @@ def get_script_list(options):
       sline = line.strip()
       if sline == '':
         pass
-      if sline == '*':
+      elif sline == '*':
         matches = glob.glob(options.local_test_dir + '/*.groovy')
         scripts += map(lambda path: path.split('/')[-1], matches)
       else:
