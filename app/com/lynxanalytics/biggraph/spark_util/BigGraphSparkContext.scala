@@ -179,9 +179,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
     kryo.register(classOf[Array[org.apache.spark.sql.types.DataType]])
     kryo.register(classOf[java.sql.Timestamp])
-    kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
-    kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
-    kryo.register(Class.forName("[[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
