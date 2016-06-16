@@ -114,7 +114,11 @@ object PipeAPI {
 
   def sql(request: SqlRequest): TableResult = {
     val viewer = getViewer(request.checkpoint)
-    val df = env.sqlHelper.sqlToTable(viewer, request.query).toDF(dataManager.masterSQLContext)
+    val sqlContext = dataManager.masterHiveContext.newSession
+    for (path <- viewer.allRelativeTablePaths) {
+      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(path.toString)
+    }
+    val df = sqlContext.sql(request.query)
     val schema = df.schema
     val data = df.take(request.limit)
     val rows = data.map { row =>
@@ -125,6 +129,7 @@ object PipeAPI {
             val jsValue = f.dataType match {
               case _: types.DoubleType => json.Json.toJson(row.getDouble(i))
               case _: types.StringType => json.Json.toJson(row.getString(i))
+              case _: types.LongType => json.Json.toJson(row.getLong(i))
               case _ => json.Json.toJson(row.get(i).toString)
             }
             Some(f.name -> jsValue)
