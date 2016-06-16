@@ -4,7 +4,11 @@
 
 project = lynx.loadProject('filter_high_degree_vertices_result')
 
-project.maximalCliques('bothdir': 'yes')
+project.maximalCliques(
+  'bothdir': 'yes',
+  'name': 'maximal_cliques',
+  'min': '3'
+)
 
 s = project.segmentations['maximal_cliques']
 
