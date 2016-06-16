@@ -5,7 +5,7 @@
 project = lynx.loadProject('filter_high_degree_vertices_result')
 
 project.maximalCliques(
-  'bothdir': 'yes',
+  'bothdir': 'true',
   'name': 'maximal_cliques',
   'min': '3'
 )
