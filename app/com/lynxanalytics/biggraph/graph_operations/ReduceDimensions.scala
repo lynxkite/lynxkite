@@ -6,12 +6,14 @@ import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
+import org.apache.spark.sql
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.feature.PCA
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
+import scala.collection.mutable.ArraySeq
 
 object ReduceDimensions extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -47,24 +49,23 @@ case class ReduceDimensions(numFeatures: Int)
 
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
-    val featuresRDD: Array[AttributeRDD[Double]] = inputs.features.toArray.map { i => i.rdd }
-    val featuresDF = featuresRDD.map { i => i.toDF("ID", i.hashCode.toString) } //the approach may not be necessary
-    val joinDF = featuresDF.reduce(_ join (_, "ID"))
-    // Create a new column which represents the vector of selected attributes 
-    val attributesNames = joinDF.columns.slice(1, joinDF.columns.length)
-    val assembler = new VectorAssembler().setInputCols(attributesNames).setOutputCol("features")
-    val featuresWithVector = assembler.transform(joinDF)
+    val RDDArray: Array[AttributeRDD[Double]] = inputs.features.toArray.map { i => i.rdd }
+    val emptyRows = RDDArray(0).mapValues(_ => Array[Double]())
+    val featuresRDD: AttributeRDD[Array[Double]] = RDDArray.foldLeft(emptyRows) { (seqs, rdd) =>
+      seqs.sortedJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.asInstanceOf[Double] }
+    }
 
     // Using the PCA method to transform "features" to a lower dimension "pcaFeatures"
-    val pca = new PCA().setInputCol("features").setOutputCol("pcaFeatures").setK(2).fit(featuresWithVector)
-    val pcaDF = pca.transform(featuresWithVector).select("ID", "pcaFeatures")
-    val partitioner = featuresRDD(0).partitioner.get
-    val pcaRdd = pcaDF.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1)))
-    val dim1Rdd = pcaRdd.mapValues(v => v.values(0)).sortUnique(partitioner)
-    val dim2Rdd = pcaRdd.mapValues(v => v.values(1)).sortUnique(partitioner)
+    val featuresDF = featuresRDD.mapValues(a => Vectors.dense(a)).toDF("ID", "vector")
+    val pca = new PCA().setInputCol("vector").setOutputCol("pcaVector").setK(2).fit(featuresDF)
+    val pcaDF = pca.transform(featuresDF).select("ID", "pcaVector")
+    val partitioner = RDDArray(0).partitioner.get
+    val pcaRdd = pcaDF.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1))).sortUnique(partitioner)
+    val dim1Rdd = pcaRdd.mapValues(v => v.values(0))
+    val dim2Rdd = pcaRdd.mapValues(v => v.values(1))
 
     output(o.attr1, dim1Rdd)
-    output(o.attr2, dim2Rdd)
+    output(o.attr2, dim1Rdd)
   }
 }
 
