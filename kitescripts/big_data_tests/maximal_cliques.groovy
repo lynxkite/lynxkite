@@ -1,8 +1,9 @@
 // Tests the "Maximal cliques" operation
 
-/// REQUIRE_SCRIPT filter_high_degree_vertices.groovy
+/// REQUIRE_SCRIPT edge_import.groovy
 
-project = lynx.loadProject('filter_high_degree_vertices_result')
+project = lynx.loadProject('edge_import_result')
+
 
 project.maximalCliques(
   'bothdir': 'true',
@@ -12,5 +13,5 @@ project.maximalCliques(
 
 s = project.segmentations['maximal_cliques']
 
-println "segmentation vertices: ${s.scalars['vertex_count']} segmentation edges: ${s.scalars['edge_count']}"
+println "max cliques: ${s.scalars['vertex_count']}"
 
