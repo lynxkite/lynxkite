@@ -688,47 +688,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Segment by kmeans clustering", new CreateSegmentationOperation(_, _) {
-    def parameters = List(
-      Param("output", "Save as"),
-      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
-      NonNegInt("k", "Number of clusters", default = 2),
-      NonNegInt("maxIter", "Maximum number of iterations", default = 20),
-      NonNegDouble("tolerance", "Tolerance", defaultValue = "0.0001"),
-      RandomSeed("seed", "Seed"))
-    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
-    override def summary(params: Map[String, String]) = {
-      val k = params("k")
-      val maxIter = params("maxIter")
-      s"Segmentation by $k clusters"
-    }
-
-    def apply(params: Map[String, String]) = {
-      assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1).sorted
-      val features = featureNames.map {
-        name => project.vertexAttributes(name).runtimeSafeCast[Double]
-      }
-      val k = params("k").toInt
-      val maxIter = params("maxIter").toInt
-      val tolerance = params("tolerance").toDouble
-      val seed = params("seed").toLong
-      /*val bucketing = {
-        val op = graph_operations.KMeansBucketing(k, maxIter, tolerance, seed, features.size)
-        op(op.features, features).result
-      }
-      val segmentation = project.segmentation(params("name"))
-      segmentation.setVertexSet(bucketing.segments, idAttr = "id")
-      segmentation.notes = summary(params)
-      segmentation.belongsTo = bucketing.belongsTo
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
-      segmentation.newVertexAttribute("label", bucketing.label)*/
-      val op = graph_operations.KMeansBucketing(k, maxIter, tolerance, seed, features.size)
-      val result = op(op.features, features).result.attr
-      project.newVertexAttribute(params("output"), result, help)
-    }
-  })
-
   register("Segment by interval", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),

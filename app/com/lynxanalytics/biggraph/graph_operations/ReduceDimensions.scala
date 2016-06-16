@@ -48,7 +48,7 @@ case class ReduceDimensions(numFeatures: Int)
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
     val featuresRDD: Array[AttributeRDD[Double]] = inputs.features.toArray.map { i => i.rdd }
-    /*val featuresDF = featuresRDD.map { i => i.toDF("ID", i.hashCode.toString) } //the approach may not be necessary
+    val featuresDF = featuresRDD.map { i => i.toDF("ID", i.hashCode.toString) } //the approach may not be necessary
     val joinDF = featuresDF.reduce(_ join (_, "ID"))
     // Create a new column which represents the vector of selected attributes 
     val attributesNames = joinDF.columns.slice(1, joinDF.columns.length)
@@ -59,12 +59,12 @@ case class ReduceDimensions(numFeatures: Int)
     val pca = new PCA().setInputCol("features").setOutputCol("pcaFeatures").setK(2).fit(featuresWithVector)
     val pcaDF = pca.transform(featuresWithVector).select("ID", "pcaFeatures")
     val partitioner = featuresRDD(0).partitioner.get
-    val pcaRdd = pcaDF.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1))).sortUnique(partitioner)
-    val dim1Rdd = pcaRdd.mapValues(v => v.values(0))
-    val dim2Rdd = pcaRdd.mapValues(v => v.values(1))*/
+    val pcaRdd = pcaDF.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1)))
+    val dim1Rdd = pcaRdd.mapValues(v => v.values(0)).sortUnique(partitioner)
+    val dim2Rdd = pcaRdd.mapValues(v => v.values(1)).sortUnique(partitioner)
 
-    output(o.attr1, featuresRDD(0))
-    output(o.attr2, featuresRDD(1))
+    output(o.attr1, dim1Rdd)
+    output(o.attr2, dim2Rdd)
   }
 }
 
