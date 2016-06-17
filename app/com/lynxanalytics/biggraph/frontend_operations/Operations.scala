@@ -6,7 +6,9 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.graph_operations.{ EdgeBundleAsAttribute, PartitionAttribute, RandomDistribution }
+import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
+import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
+import com.lynxanalytics.biggraph.graph_operations.PartitionAttribute
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -19,8 +21,8 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import com.lynxanalytics.biggraph.table.TableImport
-import play.api.libs.json
 
+import play.api.libs.json
 import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
