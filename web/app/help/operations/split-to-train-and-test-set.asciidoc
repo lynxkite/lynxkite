@@ -1,0 +1,20 @@
+### Split to train and test set
+
+Based on the target attribute, the data is split into 2 partitions with sizes according to 'Test set ratio'.
+
+====
+
+*Parameters*
+
+[[target]] Target attribute::
+The attribute you want to split.
+
+[[test_set_ratio]] Test set ratio::
+A test set is a random sample of the vertices. This parameter gives the size of the test set
+as a fraction of the total vertex count.
+
+[[seed]] Random seed for test selection::
+Random seed.
++
+include::{g}[tag=random-seed]
+====
