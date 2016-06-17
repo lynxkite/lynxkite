@@ -55,6 +55,9 @@ help-popup {
 /* Anchors for linking to sections. */
 .help a.anchor {
   float: right;
+  display: block;
+}
+.documentation .help a.anchor {
   display: none;
 }
 .help a.anchor:before {
