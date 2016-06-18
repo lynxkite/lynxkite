@@ -1,6 +1,7 @@
 // Reduce multiple double attributes to two double attributes by principle components analysis.
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.collection.mutable.ArrayBuffer
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -49,14 +50,29 @@ case class ReduceDimensions(numFeatures: Int)
 
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
-    val RDDArray: Array[AttributeRDD[Double]] = inputs.features.toArray.map { i => i.rdd }
-    val emptyRows = RDDArray(0).mapValues(_ => Array[Double]())
-    val featuresRDD: AttributeRDD[Array[Double]] = RDDArray.foldLeft(emptyRows) { (seqs, rdd) =>
-      seqs.sortedJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.asInstanceOf[Double] }
+
+    val partSize = 60
+    val numParts = (numFeatures - 1) / partSize
+    val featuresRDDParts = new ArrayBuffer[AttributeRDD[org.apache.spark.mllib.linalg.Vector]]()
+    for (i <- 0 to numParts) {
+      val start = i * partSize
+      val end = math.min((i + 1) * partSize, numFeatures)
+      val RDDArray: Array[AttributeRDD[Double]] = inputs.features.toArray.slice(start, end).map { i => i.rdd }
+      val emptyRows = RDDArray(0).mapValues(_ => Array[Double]())
+      val featuresRDD: AttributeRDD[Array[Double]] = RDDArray.foldLeft(emptyRows) { (seqs, rdd) =>
+        seqs.sortedJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.asInstanceOf[Double] }
+      }
+      featuresRDDParts += featuresRDD.mapValues(a => Vectors.dense(a))
     }
+    
+    // Join different parts of Rdds and use vector assembler to combine them to a single feature vector 
+    val featuresDFParts = featuresRDDParts.map(x => x.toDF("ID", scala.util.Random.alphanumeric.take(5).mkString)
+    val joinDF = featuresDFParts.reduce(_ join (_, "ID"))
+    val attributesNames = joinDF.columns.slice(1, joinDF.columns.length)
+    val assembler = new VectorAssembler().setInputCols(attributesNames).setOutputCol("vector")
+    val featuresDF = assembler.transform(joinDF)
 
     // Using the PCA method to transform "features" to a lower dimension "pcaFeatures"
-    val featuresDF = featuresRDD.mapValues(a => Vectors.dense(a)).toDF("ID", "vector")
     val pca = new PCA().setInputCol("vector").setOutputCol("pcaVector").setK(2).fit(featuresDF)
     val pcaDF = pca.transform(featuresDF).select("ID", "pcaVector")
     val partitioner = RDDArray(0).partitioner.get
