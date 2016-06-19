@@ -6,9 +6,9 @@ STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualizat
     0: size= 116
 2. Visualize one graph with filters
   vertex sets:
-    0: size= 56
+    0: size= 50
   edge bundles:
-    0: size= 78
+    0: size= 70
 3. Get visualization of a graph plus a segmentation
   vertex sets:
     0: size= 61
@@ -16,10 +16,10 @@ STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualizat
   edge bundles:
     0: size= 116
     1: size= 245
-    2: size= 25
+    2: size= 29
 4. Bucketed view
   vertex sets:
     0: size= 100
   edge bundles:
     0: size= 10000
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy, took 123 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy, took 139 seconds
