@@ -11,10 +11,11 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      if(!!scope.side && !!scope.directory) {
+      scope.directoryDefined = (typeof scope.directory !== 'undefined');
+      if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
       }
-      if(!scope.side && !scope.directory) {
+      if(!scope.side && !scope.directoryDefined) {
         throw 'one of them needs to be defined: scope.side, scope.directory';
       }
       scope.isGlobal = !scope.side;
