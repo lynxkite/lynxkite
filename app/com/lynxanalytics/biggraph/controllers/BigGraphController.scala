@@ -6,11 +6,13 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
+import com.lynxanalytics.biggraph.frontend_operations.{ OperationParams, Operations }
 import com.lynxanalytics.biggraph.graph_operations
-
 import java.util.regex.Pattern
+
+import com.lynxanalytics.biggraph.serving.User
 import play.api.libs.json
+
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -433,6 +435,17 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     // To avoid accidents, a user cannot remove themselves from the write ACL.
     assert(user.isAdmin || p.aclContains(request.writeACL, user),
       s"You cannot forfeit your write access to project $p.")
+    // Checking that we only give access to users with read access to all parent directories
+    val gotReadAccess = request.readACL.replace(" ", "").split(",").toSet
+    val gotWriteAccess = request.writeACL.replace(" ", "").split(",").toSet
+    val union = gotReadAccess union gotWriteAccess
+    val notAllowed =
+      if (p.parent.isEmpty) Set()
+      else union.map { email => User(email, false) }.filter(!p.parent.get.readAllowedFrom(_))
+
+    assert(notAllowed.isEmpty,
+      s"The following users don't have read access to all of the parent folders: ${notAllowed.mkString(", ")}")
+
     p.readACL = request.readACL
     p.writeACL = request.writeACL
   }
@@ -760,9 +773,14 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     Operation.allObjects(user)
       .filter(_.checkpoint.nonEmpty)
       .flatMap {
-        project =>
-          project.viewer.allAbsoluteTablePaths
-            .map(_.toGlobal(project.checkpoint, project.name).toFE)
+        projectOrTable =>
+          projectOrTable.viewer.allAbsoluteTablePaths
+            .map(_.toGlobal(projectOrTable.checkpoint, projectOrTable.name).toFE)
+            // If it is an imported table which is not in a project then it looks nicer from the user's point
+            // of view if there is no |vertices suffix in the title of the FEOpt (what is shown to the user)
+            .map { FEOpt =>
+              if (projectOrTable.isTable) FEOpt.copy(title = FEOpt.title.replace("|vertices", "")) else FEOpt
+            }
       }.toList.sortBy(_.title)
   }
 
