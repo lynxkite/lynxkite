@@ -119,11 +119,9 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
         for ((id, cols) <- iterator) {
           vsCount += 1
           val key = new hadoop.io.LongWritable(id)
-          for {
-            (((file, serializer), col), count) <- files.zip(serializers).zip(cols).zip(attrCounts)
-            if col != null
-          } {
-            count += 1
+          val zipped = files.zip(serializers).zip(cols).zip(attrCounts)
+          for ((((file, serializer), col), attrCount) <- zipped if col != null) {
+            attrCount += 1
             val value = serializer.unsafeSerialize(col)
             file.writer.write(key, value)
           }
