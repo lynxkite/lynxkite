@@ -1,7 +1,7 @@
 [[global-sql-box]]
 ## SQL interface at the project browser page.
 
-There is a SQL interface at the bottom of the project browser page that can be expanded with the plus
+There is a SQL interface on the project browser page that can be expanded by clicking on the plus
 button and which can be used to make queries to all available projects in the current folder
 (those in subfolders included). To refer to the table you want to access, you first need to provide the path from
 your current folder to the project, then use `|` to specify the table you want to access. It is important to keep
@@ -12,4 +12,4 @@ have a project named Arsenal. If you want to acces the vertices table of the Ars
 you need to refer to it by `&#96;Premier_League/Arsenal|vertices&#96;`. In case you are already in the
 `Premier_League` folder, the reference shortens to `&#96;Arsenal|vertices&#96;`
 
-See the section on <<sql-box>> for more details on the use of the SQL interface.
+See the section on <<sql-box>> for more details on the usage of the SQL interface.

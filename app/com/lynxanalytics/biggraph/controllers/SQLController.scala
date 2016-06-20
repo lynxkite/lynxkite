@@ -248,13 +248,18 @@ class SQLController(val env: BigGraphEnvironment) {
         val directoryName = spec.directory.get
         val directoryPreFix = if (directoryName == "") "" else directoryName + "/"
         val directory = Directory.fromName(directoryName)
-        val allProjectNames = directory.listObjectsRecursively.map(objFrame => objFrame.name)
+        val (allProjects, tables) = directory.listObjectsRecursively.partition(_.isInstanceOf[ProjectFrame])
+        //val tableNames = tables.map(tableFrame => tableFrame.name)
+        //val tablePaths = tableNames.map { name => GlobalTablePath.parse(name) }
+        //val tablesWithName = tablePaths.map(path => path.tableName)
+        val allProjectNames = allProjects.map(projFrame => projFrame.name)
         val allProjectsWithName = allProjectNames.map(name => (name, SubProject.parsePath(name))).toMap
         val allowedProjectsWithName = allProjectsWithName.filter(_._2.frame.readAllowedFrom(user))
         val availableProjectsWithName = allowedProjectsWithName.filter(_._2.frame.exists)
         val projectViewersWithNames = availableProjectsWithName.mapValues(_.viewer)
         val projectViewersWithRelativeNames = projectViewersWithNames
           .map { case (name, viewer) => (name.stripPrefix(directoryPreFix), viewer) }
+
         env.sqlHelper.sqlToTableGlobal(projectViewersWithRelativeNames, spec.sql)
       } else {
         assert(spec.directory.isEmpty && spec.project.nonEmpty,
