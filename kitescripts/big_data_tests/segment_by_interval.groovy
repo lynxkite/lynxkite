@@ -32,3 +32,4 @@ project.segmentByInterval(
 s = project.segmentations['seg_interval_overlap']
 println "[seg_interval_overlap] vertices: ${s.scalars['vertex_count']} edges: ${s.scalars['edge_count']}"
 
+project.saveAs('segment_by_interval_result')
