@@ -60,4 +60,7 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def value = future.value
 
   def isCompleted = future.isCompleted
+
+  def zip[U](other: SafeFuture[U]): SafeFuture[(T, U)] =
+    new SafeFuture(future.zip(other.future))
 }

@@ -410,19 +410,6 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   private def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
   private def existsAtLegacy = (legacyPath / Success).exists
   private def existsPartitioned = computeAvailablePartitions.nonEmpty && metaFile.exists
-
-  protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)],
-                                               parent: VertexSetData): RDD[(Long, T)] = {
-    val vsRDD = parent.rdd.copyWithAncestorsCached
-    // Enforcing colocation:
-    assert(vsRDD.partitions.size == rawRDD.partitions.size,
-      s"$vsRDD and $rawRDD should have the same number of partitions, " +
-        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}\n" +
-        s"${vsRDD.toDebugString}\n${rawRDD.toDebugString}")
-    vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
-      (it1, it2) => it2
-    }
-  }
 }
 
 class VertexSetIO(entity: VertexSet, context: IOContext)
@@ -464,10 +451,9 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
     assert(partitioner eq parent.get.rdd.partitioner.get,
       s"Partitioner mismatch for $entity.")
     val rdd = path.loadEntityRDD[Edge](sc, serialization)
-    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
       entity,
-      coLocated.asUniqueSortedRDD(partitioner),
+      rdd.asUniqueSortedRDD(partitioner),
       Some(count))
   }
 
@@ -495,10 +481,9 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
     implicit val ct = entity.classTag
     implicit val tt = entity.typeTag
     val rdd = path.loadEntityRDD[T](sc, serialization)
-    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
       entity,
-      coLocated.asUniqueSortedRDD(partitioner),
+      rdd.asUniqueSortedRDD(partitioner),
       Some(count))
   }
 
