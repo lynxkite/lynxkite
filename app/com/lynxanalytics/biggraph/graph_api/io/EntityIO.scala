@@ -98,7 +98,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
 
     val trackerID = Timestamp.toString
     val rddID = data.id
-    val count = sparkContext.accumulator[Long](0L, "Line count")
+    val vsCount = sparkContext.accumulator[Long](0L, s"Vertex count for ${vs.gUID}")
+    val attrCounts = attributes.map {
+      attr => sparkContext.accumulator[Long](0L, s"Attribute count for ${attr.gUID}")
+    }
     val unitSerializer = EntitySerializer.forType[Unit]
     val serializers = attributes.map(EntitySerializer.forAttribute(_))
     // writeShard is the function that runs on the executors. It writes out one partition of the
@@ -109,12 +112,16 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       val files = paths.map(collection.createTaskFile(_))
       try {
         val verticesWriter = files.last.writer
-        for (file <- files) file.committer.setupTask(file.context)
-        val filesAndSerializers = files zip serializers
+        for (file <- files) {
+          file.committer.setupTask(file.context)
+          file.writer // Make sure a writer is created even if the partition is empty.
+        }
         for ((id, cols) <- iterator) {
-          count += 1
+          vsCount += 1
           val key = new hadoop.io.LongWritable(id)
-          for (((file, serializer), col) <- (filesAndSerializers zip cols) if col != null) {
+          val zipped = files.zip(serializers).zip(cols).zip(attrCounts)
+          for ((((file, serializer), col), attrCount) <- zipped if col != null) {
+            attrCount += 1
             val value = serializer.unsafeSerialize(col)
             file.writer.write(key, value)
           }
@@ -132,10 +139,11 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     sparkContext.runJob(data, writeShard)
     for (file <- files) file.committer.commitJob(file.context)
     // Write metadata files.
-    val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
+    val vertexSetMeta = EntityMetadata(vsCount.value, Some(unitSerializer.name))
     vertexSetMeta.write(partitionedPath(vs).forWriting)
-    for ((attr, serializer) <- attributes zip serializers)
+    for (((attr, serializer), count) <- attributes.zip(serializers).zip(attrCounts)) {
       EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
+    }
   }
 }
 
