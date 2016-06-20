@@ -9,7 +9,7 @@ class ProjectTest extends FunSuite with TestGraphOp {
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
     val request = CreateProjectRequest(name = name, notes = "", privacy = "public-write")
-    controller.createProject(null, request)
+    controller.createProject(User.fake, request)
     ProjectFrame.fromName(name)
   }
   val projectFrame = createProject("Test_Project")

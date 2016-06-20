@@ -118,7 +118,7 @@ module.exports = function(fw) {
       left.runOperation(
         'Import edges for existing vertices',
         {
-          table: 'Random Edges|vertices',
+          table: 'Random Edges',
           attr: 'ordinal',
           src: 'rank1',
           dst: 'rank2',
