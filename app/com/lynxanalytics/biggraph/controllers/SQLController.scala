@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
 import scala.concurrent.Future
+import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -80,7 +81,7 @@ case class CSVImportRequest(
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
     mode: String,
     infer: Boolean,
-    columnsToImport: List[String]) extends GenericImportRequest {
+    columnsToImport: List[String]) extends GenericImportRequest with ToJson {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
@@ -107,10 +108,16 @@ case class CSVImportRequest(
     readerWithSchema.load(hadoopFile.resolvedName)
   }
 
+  override def toJson = {
+    import com.lynxanalytics.biggraph.serving.FrontendJson.wCSVImportRequest
+    Json.toJson(this)
+  }
+
   def notes = s"Imported from CSV files ${files}."
 }
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
+
 }
 
 object FileImportValidator {
@@ -225,7 +232,19 @@ class SQLController(val env: BigGraphEnvironment) {
       request.privacy)
   }
 
-  def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
+  def importCSV(user: serving.User, request: CSVImportRequest) = {
+    val tableImport = doImport(user, request)
+    tableImport.onComplete { _ =>
+      // the existence of the table tag is checked before the import
+      // so creating this tag before the import is done leads to an error
+      //TODO: is there a prettier way to do this?
+      val tagPath = DirectoryEntry.root / SymbolPath.parse(request.table) / "importRequest"
+      val jsonString = Json.stringify(TypedJson(request))
+      metaManager.setTag(tagPath, jsonString)
+    }
+    tableImport
+  }
+
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
   def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
