@@ -293,6 +293,7 @@ object FrontendJson {
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
+  implicit val wCSVImportRequest = json.Json.writes[CSVImportRequest]
   implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
   implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
   implicit val rORCImportRequest = json.Json.reads[ORCImportRequest]
