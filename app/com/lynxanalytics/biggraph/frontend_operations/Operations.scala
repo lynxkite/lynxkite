@@ -3032,16 +3032,17 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Split to train and test set", new VertexAttributesOperation(_, _) {
     override def parameters = List(
-      Choice("target", "Target attribute",
+      Choice("source", "Source attribute",
         options = vertexAttributes),
       Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
       RandomSeed("seed", "Random seed for test set selection"))
-    def enabled = hasVertexSet
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]) = {
-      val targetName = params("target")
+      val targetName = params("source")
       val target = project.vertexAttributes(targetName)
       val roles = {
-        val op = graph_operations.CreateRole(params("test_set_ratio").toDouble, params("seed").toInt)
+        val op = graph_operations.CreateRole(
+          params("test_set_ratio").toDouble, params("seed").toInt)
         op(op.vertices, target.vertexSet).result.role
       }
       val parted = partitionVariable(target, roles)
@@ -3049,7 +3050,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       project.newVertexAttribute(s"${targetName}_test", parted.test)
       project.newVertexAttribute(s"${targetName}_train", parted.train)
     }
-    def partitionVariable[T](target: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
+    def partitionVariable[T](
+      target: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
       val op = graph_operations.PartitionAttribute[T]()
       op(op.attr, target)(op.role, roles).result
     }
