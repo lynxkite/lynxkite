@@ -1533,7 +1533,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Weighted aggregate to segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = List(
-      Choice("weight", "Weight", options = vertexAttributes[Double])) ++
+      Choice("weight", "Weight", options = parentVertexAttributes[Double])) ++
       aggregateParams(parent.vertexAttributes, weighted = true)
     def enabled =
       isSegmentation &&
