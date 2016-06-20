@@ -98,8 +98,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
 
     val trackerID = Timestamp.toString
     val rddID = data.id
-    val vsCount = sparkContext.accumulator[Long](0L, "Vertex count")
-    val attrCounts = attributes.map(attr => sparkContext.accumulator[Long](0L, "Attribute count"))
+    val vsCount = sparkContext.accumulator[Long](0L, s"Vertex count for ${vs.gUID}")
+    val attrCounts = attributes.map {
+      attr => sparkContext.accumulator[Long](0L, s"Attribute count for ${attr.gUID}")
+    }
     val unitSerializer = EntitySerializer.forType[Unit]
     val serializers = attributes.map(EntitySerializer.forAttribute(_))
     // writeShard is the function that runs on the executors. It writes out one partition of the
