@@ -1011,10 +1011,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
     def parameters = List(
-      Param("output1", "Save as", defaultValue = "first_dimension"),
-      Param("output2", "Save as", defaultValue = "second_dimension"),
-      Choice("method", "Method", options = FEOption.list("Principal Components Analysis")),
-      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true))
+      Param("name_one", "First dimension name", defaultValue = "first_dimension"),
+      Param("name_two", "Second dimension name", defaultValue = "second_dimension"),
+      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("method", "Reduction method", options = FEOption.list("Principal Components Analysis")))
     def enabled = FEStatus.assert(
       vertexAttributes[Double].size >= 2, "Not enough vertex attributes.")
     def apply(params: Map[String, String]) = {
@@ -1025,8 +1025,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
       val op = graph_operations.ReduceDimensions(features.size)
       val result = op(op.features, features).result
-      project.newVertexAttribute(params("output1"), result.attr1, help)
-      project.newVertexAttribute(params("output2"), result.attr2, help)
+      project.newVertexAttribute(params("name_one"), result.attr1, help)
+      project.newVertexAttribute(params("name_two"), result.attr2, help)
     }
   })
 
