@@ -299,7 +299,11 @@ object RDDUtils {
   }
 
   // Transform an array of feature rdds to a DataFrame with vector attributes (supports mass amounts of input features) 
+<<<<<<< HEAD
   def foldToLinalgVectorDF(
+=======
+  def foldToLinigVectorDF(
+>>>>>>> b3cbccef1be5d1711e50e218d5d5018e1f0155b3
     features: Array[AttributeRDD[Double]],
     outputName: String, rc: RuntimeContext): DataFrame = {
     val sqlContext = rc.dataManager.newSQLContext()
