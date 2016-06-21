@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
 import scala.concurrent.Future
-import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -13,6 +12,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json
 
 case class DataFrameSpec(project: String, sql: String)
 case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
@@ -50,7 +50,7 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 
-trait GenericImportRequest {
+trait GenericImportRequest extends ToJson {
   val table: String
   val privacy: String
   // Empty list means all columns.
@@ -81,7 +81,7 @@ case class CSVImportRequest(
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
     mode: String,
     infer: Boolean,
-    columnsToImport: List[String]) extends GenericImportRequest with ToJson {
+    columnsToImport: List[String]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
@@ -108,16 +108,15 @@ case class CSVImportRequest(
     readerWithSchema.load(hadoopFile.resolvedName)
   }
 
+  def notes = s"Imported from CSV files ${files}."
+
   override def toJson = {
     import com.lynxanalytics.biggraph.serving.FrontendJson.wCSVImportRequest
     Json.toJson(this)
   }
-
-  def notes = s"Imported from CSV files ${files}."
 }
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
-
 }
 
 object FileImportValidator {
@@ -160,6 +159,11 @@ case class JdbcImportRequest(
     val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
     s"Imported from table ${jdbcTable} at ${urlSafePart}."
   }
+
+  override def toJson = {
+    import com.lynxanalytics.biggraph.serving.FrontendJson.wJdbcImportRequest
+    Json.toJson(this)
+  }
 }
 
 trait FilesWithSchemaImportRequest extends GenericImportRequest {
@@ -182,6 +186,11 @@ case class ParquetImportRequest(
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "parquet"
+
+  override def toJson = {
+    import com.lynxanalytics.biggraph.serving.FrontendJson.wParquetImportRequest
+    Json.toJson(this)
+  }
 }
 
 case class ORCImportRequest(
@@ -190,6 +199,11 @@ case class ORCImportRequest(
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "orc"
+
+  override def toJson = {
+    import com.lynxanalytics.biggraph.serving.FrontendJson.wORCImportRequest
+    Json.toJson(this)
+  }
 }
 
 case class JsonImportRequest(
@@ -198,6 +212,11 @@ case class JsonImportRequest(
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "json"
+
+  override def toJson = {
+    import com.lynxanalytics.biggraph.serving.FrontendJson.wJsonImportRequest
+    Json.toJson(this)
+  }
 }
 
 case class HiveImportRequest(
@@ -213,6 +232,11 @@ case class HiveImportRequest(
     dataManager.masterHiveContext.table(hiveTable)
   }
   def notes = s"Imported from Hive table ${hiveTable}."
+
+  override def toJson = {
+    import com.lynxanalytics.biggraph.serving.FrontendJson.wHiveImportRequest
+    Json.toJson(this)
+  }
 }
 
 class SQLController(val env: BigGraphEnvironment) {
@@ -229,22 +253,11 @@ class SQLController(val env: BigGraphEnvironment) {
       request.notes,
       user,
       request.table,
-      request.privacy)
+      request.privacy,
+      TypedJson(request))
   }
 
-  def importCSV(user: serving.User, request: CSVImportRequest) = {
-    val tableImport = doImport(user, request)
-    tableImport.onComplete { _ =>
-      // the existence of the table tag is checked before the import
-      // so creating this tag before the import is done leads to an error
-      //TODO: is there a prettier way to do this?
-      val tagPath = DirectoryEntry.root / SymbolPath.parse(request.table) / "importRequest"
-      val jsonString = Json.stringify(TypedJson(request))
-      metaManager.setTag(tagPath, jsonString)
-    }
-    tableImport
-  }
-
+  def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
   def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
@@ -287,7 +300,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
     SQLController.saveTable(
       table, s"From ${request.df.project} by running ${request.df.sql}",
-      user, request.table, request.privacy)
+      user, request.table, request.privacy, null)
   }
 
   def exportSQLQueryToCSV(
@@ -381,12 +394,13 @@ object SQLController {
     notes: String,
     user: serving.User,
     tableName: String,
-    privacy: String)(
+    privacy: String,
+    importConfig: json.JsValue)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
-    saveTable(table, notes, user, tableName, privacy)
+    saveTable(table, notes, user, tableName, privacy, importConfig)
   }
 
   def saveTable(
@@ -394,11 +408,13 @@ object SQLController {
     notes: String,
     user: serving.User,
     tableName: String,
-    privacy: String)(
+    privacy: String,
+    importConfig: json.JsValue)(
       implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
     val frame = entry.asNewTableFrame(checkpoint)
+    frame.setImportConfig(importConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
