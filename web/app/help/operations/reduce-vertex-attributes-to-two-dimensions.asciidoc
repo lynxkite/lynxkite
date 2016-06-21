@@ -1,0 +1,17 @@
+### Reduce vertex attributes to two dimensions 
+
+Reduce multiple double attributes to two double attributes.
+
+====
+[[name_one]] First dimension name::
+The first dimension will be stored as a double attribute using this name.
+
+[[name_two]] Second dimension name::
+The second dimension will be stored as a double attribute using this name.
+
+[[features]] Feature attributes::
+Attributes to be used as inputs for the dimension reduction. 
+
+[[method]] Reduction method::
+The algorithm used to reduce vertex attributes to two dimensions.
+====

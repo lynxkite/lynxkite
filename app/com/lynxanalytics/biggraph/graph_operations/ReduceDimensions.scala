@@ -28,7 +28,7 @@ object ReduceDimensions extends OpFromJson {
     val attr2 = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) =
-    ReduceDimensions((j \ "featureNames").as[Int])
+    ReduceDimensions((j \ "numFeatures").as[Int])
 }
 
 case class ReduceDimensions(numFeatures: Int)
@@ -38,7 +38,7 @@ case class ReduceDimensions(numFeatures: Int)
   def outputMeta(instance: MetaGraphOperationInstance) = {
     new Output(EdgeBundleProperties.default)(instance, inputs)
   }
-  override def toJson = Json.obj("featureNames" -> numFeatures)
+  override def toJson = Json.obj("numFeatures" -> numFeatures)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -49,19 +49,19 @@ case class ReduceDimensions(numFeatures: Int)
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val RDDArray = inputs.features.toArray.map { i => i.rdd }
-    val unscaledRDD = Model.toLinalgVector(RDDArray, inputs.vs.rdd)
-    val unscaledDF = unscaledRDD.toDF("ID", "unscaled")
+    val rddArray = inputs.features.toArray.map { i => i.rdd }
+    val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vs.rdd)
+    val unscaledDf = unscaledRdd.toDF("ID", "unscaled")
 
     // Scale the data and transform it to two dimensions by PCA algorithm
     val scaler = new StandardScaler().setInputCol("unscaled").setOutputCol("vector")
       .setWithStd(true).setWithMean(false)
     val pca = new PCA().setInputCol("vector").setOutputCol("pcaVector").setK(2)
     val pipeline = new Pipeline().setStages(Array(scaler, pca))
-    val model = pipeline.fit(unscaledDF)
-    val pcaDF = model.transform(unscaledDF).select("ID", "pcaVector")
-    val partitioner = RDDArray(0).partitioner.get
-    val pcaRdd = pcaDF.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1))).sortUnique(partitioner)
+    val model = pipeline.fit(unscaledDf)
+    val pcaDf = model.transform(unscaledDf).select("ID", "pcaVector")
+    val partitioner = rddArray(0).partitioner.get
+    val pcaRdd = pcaDf.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1))).sortUnique(partitioner)
     val dim1Rdd = pcaRdd.mapValues(v => v.values(0))
     val dim2Rdd = pcaRdd.mapValues(v => v.values(1))
     output(o.attr1, dim1Rdd)
