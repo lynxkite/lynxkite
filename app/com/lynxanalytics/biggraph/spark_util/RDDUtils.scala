@@ -7,8 +7,12 @@ import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
+import org.apache.spark.mllib
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.ShuffledRDD
+import org.apache.spark.sql.DataFrame
 import scala.collection.mutable
 import scala.reflect._
 
@@ -292,6 +296,36 @@ object RDDUtils {
       val partitioner = new spark.HashPartitioner(desiredNumPartitions)
       rdd.sortUnique(partitioner)
     }
+  }
+
+  // Transform an array of feature rdds to a DataFrame with vector attributes (supports mass amounts of input features) 
+  def foldToLinigVectorDF(
+    features: Array[AttributeRDD[Double]],
+    outputName: String, rc: RuntimeContext): DataFrame = {
+    val sqlContext = rc.dataManager.newSQLContext()
+    import sqlContext.implicits._
+
+    // Join attribute rdd by parts and transform each part to a dataframe 
+    val partSize = 60
+    val numFeatures = features.size
+    val numParts = Math.ceil(numFeatures / partSize.toDouble).toInt
+    val featuresDFParts = new Array[DataFrame](numParts)
+    for (i <- 0 until numParts) {
+      val start = i * partSize
+      val end = math.min((i + 1) * partSize, numFeatures)
+      val partfeatures: Array[AttributeRDD[Double]] = features.slice(start, end)
+      val emptyRows = partfeatures(0).mapValues(_ => Array[Double]())
+      val featuresRDD: AttributeRDD[Array[Double]] = partfeatures.foldLeft(emptyRows) { (seqs, rdd) =>
+        seqs.sortedJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.asInstanceOf[Double] }
+      }
+      featuresDFParts(i) = featuresRDD.mapValues(a => Vectors.dense(a)).toDF("ID", i.toString)
+    }
+
+    // Join each dataframe as a single dataframe and use vector assembler to create a single feature vector
+    val joinDF = featuresDFParts.reduce(_ join (_, "ID"))
+    val attributesNames = joinDF.columns.slice(1, joinDF.columns.length)
+    val assembler = new VectorAssembler().setInputCols(attributesNames).setOutputCol(outputName)
+    assembler.transform(joinDF)
   }
 }
 
