@@ -31,11 +31,11 @@ class ReduceDimensionsTest extends FunSuite with TestGraphOp {
     assert(attr2.count == 2)
   }
 
-  test("larger data set with 10 attributes") {
+  test("larger data set with 40 attributes") {
     val sqlContext = dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val numAttr = 360
+    val numAttr = 40
     val attrs = (0 until numAttr).map(i => (1 to 1000).map { case x => x -> i.toDouble }.toMap)
     val g = SmallTestGraph(attrs(0).mapValues(_ => Seq())).result
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
