@@ -897,6 +897,10 @@ class TableFrame(path: SymbolPath)(
   }
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
   def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
+
+  def setImportConfig(importConfig: json.JsValue): Unit = {
+    set(rootDir / "importConfig", Json.stringify(importConfig))
+  }
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
