@@ -5,7 +5,7 @@
 
 project = lynx.loadProject('random_attributes')
 
-name='ranking'
+name = 'ranking'
 
 project.addRankAttribute(
   'rankattr': name,

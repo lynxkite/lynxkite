@@ -4,7 +4,7 @@
 
 project = lynx.loadProject('filter_high_degree_vertices_result')
 
-name='clustering_coefficient'
+name = 'clustering_coefficient'
 
 project.clusteringCoefficient(
   'name': name,
