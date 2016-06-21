@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.8.0
+
  - Global SQL-box added
  - New option has been added in bucketed view: relative edge density.
  - New operation "Find vertex coloring" has been added.
