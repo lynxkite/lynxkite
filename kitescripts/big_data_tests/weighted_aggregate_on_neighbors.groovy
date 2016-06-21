@@ -11,8 +11,6 @@ project.weightedAggregateOnNeighbors(
   'aggregate-rnd_std_normal': 'weighted_average'
 )
 
-project.saveAs('weighted_aggregate_on_neighbors_result')
-
 histogram = project
   .vertexAttributes['rnd_std_normal_weighted_average_by_rnd_std_uniform']
   .histogram(
@@ -21,5 +19,3 @@ histogram = project
   )
 
 println "Weighted aggregate on neighbors histogram: $histogram"
-
-
