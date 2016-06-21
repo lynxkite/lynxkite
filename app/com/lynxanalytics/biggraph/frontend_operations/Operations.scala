@@ -1011,8 +1011,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
     def parameters = List(
+<<<<<<< HEAD
       Param("output1", "Save as", defaultValue = "first_dimension"),
       Param("output2", "Save as", defaultValue = "second_dimension"),
+=======
+      Param("output", "Save as", defaultValue = "first_dimension_name"),
+      Param("output", "Save as", defaultValue = "second_dimension_name"),
+>>>>>>> b3cbccef1be5d1711e50e218d5d5018e1f0155b3
       Choice("method", "Method", options = FEOption.list("Principal Components Analysis")),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true))
     def enabled = FEStatus.assert(
