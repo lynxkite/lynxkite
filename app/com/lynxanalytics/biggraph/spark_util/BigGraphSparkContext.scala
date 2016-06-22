@@ -252,13 +252,11 @@ object BigGraphSparkContext {
   }
 
   def rotateSparkEventLogs() = {
-    val pattern = ".*-([0-9]+)\\.lz4".r
-    val currentTime = System.currentTimeMillis
-    val deletionThreshold = currentTime - 60 * 24 * 3600
+    val currentTimeMillis = System.currentTimeMillis
+    val deletionThresholdMillis = currentTimeMillis - 60 * 24 * 3600 * 1000
     for (file <- LogController.getLogDir.listFiles) {
       if (file.isFile() && file.getName().endsWith("lz4")) {
-        println(file.getName() + ": " + file.lastModified())
-        if (file.lastModified() < deletionThreshold) {
+        if (file.lastModified() < deletionThresholdMillis) {
           file.delete()
         }
       }
