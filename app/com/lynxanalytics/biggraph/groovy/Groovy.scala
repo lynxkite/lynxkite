@@ -448,6 +448,16 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
     import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(res).toString
   }
+
+  def printAndCompute(options: java.util.Map[String, Any]) = {
+    if (!options.containsKey("logarithmic")) {
+      options.put("logarithmic", false)
+    }
+    if (!options.containsKey("precise")) {
+      options.put("precise", true)
+    }
+    val str = histogram(options)
+    println (s"histogram: $str")
 }
 
 // No checkpointing or entity access in workflow mode.
