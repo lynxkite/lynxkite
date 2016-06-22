@@ -449,16 +449,13 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
     json.Json.toJson(res).toString
   }
 
-  def printAndCompute(): Unit = {
+  def computeAndPrintHistogram: Unit = {
     val options = new java.util.HashMap[String, Any]
     options.put("name", "histogram")
-    printAndCompute(options)
+    computeAndPrintHistogram(options)
   }
 
-  def printAndCompute(options: java.util.Map[String, Any]): Unit = {
-    if (!options.containsKey("logarithmic")) {
-      options.put("logarithmic", false)
-    }
+  def computeAndPrintHistogram(options: java.util.Map[String, Any]): Unit = {
     if (!options.containsKey("precise")) {
       options.put("precise", true)
     }
