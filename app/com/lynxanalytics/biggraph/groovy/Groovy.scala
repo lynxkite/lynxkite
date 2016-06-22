@@ -449,15 +449,32 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
     json.Json.toJson(res).toString
   }
 
-  def printAndCompute(options: java.util.Map[String, Any]) = {
+  def printAndCompute(): Unit = {
+    val options = new java.util.HashMap[String, Any]
+    options.put("name", "histogram")
+    printAndCompute(options)
+  }
+
+  def printAndCompute(options: java.util.Map[String, Any]): Unit = {
     if (!options.containsKey("logarithmic")) {
       options.put("logarithmic", false)
     }
     if (!options.containsKey("precise")) {
       options.put("precise", true)
     }
+    val name =
+      if (options.containsKey("name")) {
+        val passedName = options.get("name")
+        assert(passedName.isInstanceOf[String])
+        options.remove("name")
+        passedName.asInstanceOf[String]
+      } else {
+        "histogram"
+      }
     val str = histogram(options)
-    println (s"histogram: $str")
+    println(s"$name: $str")
+  }
+
 }
 
 // No checkpointing or entity access in workflow mode.
