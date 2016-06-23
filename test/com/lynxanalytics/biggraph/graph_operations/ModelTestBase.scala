@@ -29,6 +29,11 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     op(op.model, m)(op.features, features).result.prediction
   }
 
+  def classify(m: Scalar[Model], features: Seq[Attribute[Double]]): Attribute[Double] = {
+    val op = ClassifyVerticesByModel(features.size)
+    op(op.model, m)(op.features, features).result.classification
+  }
+
   def graph(numVertices: Int): SmallTestGraph.Output = {
     SmallTestGraph((0 until numVertices).map(v => v -> Seq()).toMap).result
   }

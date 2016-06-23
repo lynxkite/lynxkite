@@ -4,8 +4,11 @@ package com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
+import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib
+import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SQLContext
 import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
@@ -22,6 +25,17 @@ private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearMod
   def details: String = {
     val weights = "(" + m.weights.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\nweights: $weights"
+  }
+}
+
+private class ClusterModelImpl(m: ml.PipelineModel, sqlContext: SQLContext) extends ModelImplementation {
+  import sqlContext.implicits._
+  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
+    //val partitioner = data.partitioner.get
+    m.transform(data.map(x => Tuple1(x)).toDF("unscaled")).map { row => row.getAs[Int](2).toDouble }
+  }
+  def details: String = {
+    "intercept"
   }
 }
 
@@ -92,6 +106,8 @@ case class Model(
         new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
       case "Lasso" =>
         new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
+      case "KMeans" =>
+        new ClusterModelImpl(ml.PipelineModel.load(path), new SQLContext(sc))
     }
   }
 
