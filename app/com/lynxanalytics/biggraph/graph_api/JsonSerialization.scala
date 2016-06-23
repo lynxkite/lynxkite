@@ -44,6 +44,10 @@ object TypedJson {
       case p: ToJson => p.toTypedJson
     }
   }
+
+  def createFromWriter[T: json.Writes](p: T): json.JsValue = {
+    json.Json.obj("class" -> p.getClass.getName, "data" -> json.Json.toJson(p))
+  }
 }
 
 // Extend ToJson if you want to be serializable in this system.

@@ -50,7 +50,7 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 
-trait GenericImportRequest extends ToJson {
+trait GenericImportRequest {
   val table: String
   val privacy: String
   // Empty list means all columns.
@@ -109,11 +109,6 @@ case class CSVImportRequest(
   }
 
   def notes = s"Imported from CSV files ${files}."
-
-  override def toJson = {
-    import com.lynxanalytics.biggraph.serving.FrontendJson.wCSVImportRequest
-    Json.toJson(this)
-  }
 }
 object CSVImportRequest {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
@@ -159,11 +154,6 @@ case class JdbcImportRequest(
     val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
     s"Imported from table ${jdbcTable} at ${urlSafePart}."
   }
-
-  override def toJson = {
-    import com.lynxanalytics.biggraph.serving.FrontendJson.wJdbcImportRequest
-    Json.toJson(this)
-  }
 }
 
 trait FilesWithSchemaImportRequest extends GenericImportRequest {
@@ -186,11 +176,6 @@ case class ParquetImportRequest(
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "parquet"
-
-  override def toJson = {
-    import com.lynxanalytics.biggraph.serving.FrontendJson.wParquetImportRequest
-    Json.toJson(this)
-  }
 }
 
 case class ORCImportRequest(
@@ -199,11 +184,6 @@ case class ORCImportRequest(
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "orc"
-
-  override def toJson = {
-    import com.lynxanalytics.biggraph.serving.FrontendJson.wORCImportRequest
-    Json.toJson(this)
-  }
 }
 
 case class JsonImportRequest(
@@ -212,11 +192,6 @@ case class JsonImportRequest(
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "json"
-
-  override def toJson = {
-    import com.lynxanalytics.biggraph.serving.FrontendJson.wJsonImportRequest
-    Json.toJson(this)
-  }
 }
 
 case class HiveImportRequest(
@@ -232,11 +207,6 @@ case class HiveImportRequest(
     dataManager.masterHiveContext.table(hiveTable)
   }
   def notes = s"Imported from Hive table ${hiveTable}."
-
-  override def toJson = {
-    import com.lynxanalytics.biggraph.serving.FrontendJson.wHiveImportRequest
-    Json.toJson(this)
-  }
 }
 
 class SQLController(val env: BigGraphEnvironment) {
@@ -247,16 +217,17 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport(user: serving.User, request: GenericImportRequest) = async[FEOption] {
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T) = async[FEOption] {
     SQLController.saveTableFromDataFrame(
       request.restrictedDataFrame(user),
       request.notes,
       user,
       request.table,
       request.privacy,
-      TypedJson(request))
+      TypedJson.createFromWriter(request))
   }
 
+  import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
