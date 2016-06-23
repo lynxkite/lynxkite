@@ -224,7 +224,7 @@ class SQLController(val env: BigGraphEnvironment) {
       user,
       request.table,
       request.privacy,
-      TypedJson.createFromWriter(request))
+      TypedJson.createFromWriter(request).as[json.JsObject])
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -366,7 +366,7 @@ object SQLController {
     user: serving.User,
     tableName: String,
     privacy: String,
-    importConfig: json.JsValue)(
+    importConfig: json.JsObject)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
@@ -380,7 +380,7 @@ object SQLController {
     user: serving.User,
     tableName: String,
     privacy: String,
-    importConfig: json.JsValue)(
+    importConfig: json.JsObject)(
       implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
