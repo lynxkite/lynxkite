@@ -1011,22 +1011,22 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
     def parameters = List(
-      Param("name_one", "First dimension name", defaultValue = "first_dimension"),
-      Param("name_two", "Second dimension name", defaultValue = "second_dimension"),
-      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
+      Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
+      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
       Choice("method", "Reduction method", options = FEOption.list("Principal Components Analysis")))
     def enabled = FEStatus.assert(
       vertexAttributes[Double].size >= 2, "Not enough vertex attributes.")
     def apply(params: Map[String, String]) = {
-      assert(params("features").nonEmpty, "Please select at least one predictor.")
       val featureNames = params("features").split(",", -1).sorted
+      assert(featureNames.size >= 2, "Please select at least two attributes.")
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
       val op = graph_operations.ReduceDimensions(features.size)
       val result = op(op.features, features).result
-      project.newVertexAttribute(params("name_one"), result.attr1, help)
-      project.newVertexAttribute(params("name_two"), result.attr2, help)
+      project.newVertexAttribute(params("output_name1"), result.attr1, help)
+      project.newVertexAttribute(params("output_name2"), result.attr2, help)
     }
   })
 
