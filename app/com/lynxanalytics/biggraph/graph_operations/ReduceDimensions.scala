@@ -10,9 +10,8 @@ import com.lynxanalytics.biggraph.model.Model
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.mllib.linalg.DenseVector
-import org.apache.spark.ml.feature.PCA
-import org.apache.spark.ml.feature.StandardScaler
-import org.apache.spark.ml.{ Pipeline, PipelineModel }
+import org.apache.spark.ml.feature.{ PCA, PCAModel }
+import org.apache.spark.ml.feature.{ StandardScaler, StandardScalerModel }
 
 object ReduceDimensions extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -49,17 +48,18 @@ case class ReduceDimensions(numFeatures: Int)
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val rddArray = inputs.features.toArray.map { i => i.rdd }
+    val rddArray = inputs.features.toArray.map { v => v.rdd }
     val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vs.rdd)
-    val unscaledDf = unscaledRdd.toDF("ID", "unscaled")
+    val unscaledDf = unscaledRdd.toDF("id", "unscaled")
 
     // Scale the data and transform it to two dimensions by PCA algorithm
-    val scaler = new StandardScaler().setInputCol("unscaled").setOutputCol("vector")
-      .setWithStd(true).setWithMean(false)
-    val pca = new PCA().setInputCol("vector").setOutputCol("pcaVector").setK(2)
-    val pipeline = new Pipeline().setStages(Array(scaler, pca))
-    val model = pipeline.fit(unscaledDf)
-    val pcaDf = model.transform(unscaledDf).select("ID", "pcaVector")
+    val scaler = new StandardScaler().setInputCol("unscaled").setOutputCol("scaled")
+      .setWithStd(true).setWithMean(true)
+    val scalerModel = scaler.fit(unscaledDf)
+    val scaledDF = scalerModel.transform(unscaledDf)
+    val pca = new PCA().setInputCol("scaled").setOutputCol("pcaVector").setK(2)
+    val pcaModel = pca.fit(scaledDF)
+    val pcaDf = pcaModel.transform(scaledDF).select("id", "pcaVector")
     val partitioner = rddArray(0).partitioner.get
     val pcaRdd = pcaDf.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1))).sortUnique(partitioner)
     val dim1Rdd = pcaRdd.mapValues(v => v.values(0))

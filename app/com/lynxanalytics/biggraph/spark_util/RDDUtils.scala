@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
-import org.apache.spark.mllib
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.rdd.RDD

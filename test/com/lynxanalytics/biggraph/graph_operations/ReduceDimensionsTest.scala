@@ -7,6 +7,7 @@ import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.rdd.RDD
+import org.apache.spark
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -36,14 +37,16 @@ class ReduceDimensionsTest extends FunSuite with TestGraphOp {
     import sqlContext.implicits._
 
     val numAttr = 40
-    val attrs = (0 until numAttr).map(i => (1 to 1000).map { case x => x -> i.toDouble }.toMap)
-    val g = SmallTestGraph(attrs(0).mapValues(_ => Seq())).result
+    val attrs = (1 to numAttr).map(i => (0 to 1000).map { case x => x -> (x * i).toDouble }.toMap)
+    val g = SmallTestGraph(attrs(0).mapValues(_ => Seq()), 10).result
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
     val op = ReduceDimensions(numAttr)
     val result = op(op.features, features).result
     val attr1 = result.attr1.rdd
     val attr2 = result.attr2.rdd
-    assert(attr1.count == 1000)
-    assert(attr2.count == 1000)
+    assert((attr1.lookup(500)(0) - 0.0).abs <= 1E-6, "the principal component shall center at the origin")
+    assert(attr1.partitioner.get.numPartitions == 10, "numbers of partitions shall remain the same")
+    assert(attr1.count == 1001)
+    assert(attr2.count == 1001)
   }
 }
