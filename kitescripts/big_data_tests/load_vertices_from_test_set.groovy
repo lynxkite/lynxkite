@@ -1,6 +1,7 @@
 // Loads vertices.csv from the test set into the 'test_vertices' table.
 
-testDataSet = params.testDataSet ?: 'fake_westeros_xt_100k'
+testDataSet = params.testDataSet
+
 vertexPath = lynx.resolvePath(
   'S3$/lynxkite-test-data/' + testDataSet + '/vertices.csv')
 
