@@ -5,10 +5,14 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.model._
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.StandardScaler
+import org.apache.spark.mllib.feature.StandardScalerModel
+import org.apache.spark.ml.{ Pipeline, PipelineModel }
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
@@ -23,26 +27,23 @@ object KMeansModelTrainer extends OpFromJson {
   class Output(properties: EdgeBundleProperties)(
       implicit instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    /*val segments = vertexSet
-    val belongsTo = edgeBundle(inputs.vs.entity, segments, properties)
-    val label = vertexAttribute[Int](segments)*/
-    val attr = vertexAttribute[Double](inputs.vs.entity)
+    val model = scalar[Model]
   }
   def fromJson(j: JsValue) =
     KMeansModelTrainer((j \ "k").as[Int], (j \ "maxIter").as[Int], (j \ "tolerance").as[Double],
-      (j \ "seed").as[Int], (j \ "featureNames").as[Int])
+      (j \ "seed").as[Int], (j \ "featureNames").as[List[String]])
 }
 
-case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Long, numFeatures: Int)
-    extends TypedMetaGraphOp[KMeansModelTrainer.Input, KMeansModelTrainer.Output] {
+case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Long, featureNames: List[String])
+    extends TypedMetaGraphOp[KMeansModelTrainer.Input, KMeansModelTrainer.Output] with ModelMeta {
   import KMeansModelTrainer._
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(numFeatures)
+  @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = {
     new Output(EdgeBundleProperties.default)(instance, inputs)
   }
   override def toJson = Json.obj("k" -> k, "maxIter" -> maxIter, "tolerance" -> tolerance,
-    "seed" -> seed, "featureNames" -> numFeatures)
+    "seed" -> seed, "featureNames" -> featureNames)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -51,26 +52,29 @@ case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Lon
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
-    val featuresDF = inputs.features.toArray.map(i => i.rdd.toDF("ID", i.hashCode.toString)) //the approach may not be necessary
-    val joinDF = featuresDF.reduce(_ join (_, "ID"))
+
+    val rddArray = inputs.features.toArray.map { v => v.rdd }
+    val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vs.rdd)
+    val unscaledDf = unscaledRdd.toDF("ID", "unscaled")
+
     // Create a new column which represents the vector of selected attributes 
-    val attributesNames = joinDF.columns.slice(1, joinDF.columns.length)
-    val assembler = new VectorAssembler().setInputCols(attributesNames).setOutputCol("vector")
-    val featuresWithVector = assembler.transform(joinDF)
+    val scaler = new StandardScaler().setInputCol("unscaled").setOutputCol("vector")
+      .setWithStd(true).setWithMean(false)
     val kmeans = new KMeans().setK(k).setMaxIter(maxIter).setTol(tolerance).setSeed(seed)
       .setFeaturesCol("vector").setPredictionCol("prediction")
-    val model = kmeans.fit(featuresWithVector)
-    // Predict the cluster centers of each data point  
-    val prediction = model.transform(featuresWithVector)
-    val partitioner = inputs.features(0).rdd.partitioner.get
-    val predDF = prediction.select("ID", "prediction")
-    val predRdd = predDF.map(row => (row.getAs[ID](0), row.getInt(1).toDouble)).sortUnique(partitioner)
+    val pipeline = new Pipeline().setStages(Array(scaler, kmeans))
+    val model = pipeline.fit(unscaledDf)
 
-    /*val bucketing = Bucketing(predRdd)
-    output(o.segments, bucketing.segments)
-    output(o.label, bucketing.label)
-    output(o.belongsTo, bucketing.belongsTo)*/
-    output(o.attr, predRdd)
+    val file = Model.newModelFile
+    model.save(file.resolvedName)
+    output(o.model, Model(
+      method = "KMeans",
+      labelName = "default",
+      symbolicPath = file.symbolicName,
+      featureNames = featureNames,
+      labelScaler = Some(new StandardScalerModel(Vectors.dense(0), Vectors.dense(0), true, true)),
+      featureScaler = new StandardScalerModel(Vectors.dense(0), Vectors.dense(0), true, true))
+    )
   }
 }
 
