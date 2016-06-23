@@ -8,14 +8,16 @@ import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.rdd.RDD
 
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.model._
 
-class KMeansModelTrainerTest extends FunSuite with TestGraphOp {
+class KMeansModelTrainerTest extends ModelTestBase {
 
   test("example graph by age") {
     val sqlContext = dataManager.newSQLContext()
@@ -31,10 +33,26 @@ class KMeansModelTrainerTest extends FunSuite with TestGraphOp {
     // val labels = g.vertices.rdd
     val featureNames = List("age")
 
-    // val features = featureNames.map { name => g.age.runtimeSafeCast[Double] }
-    val op = KMeansModelTrainer(2, 20, 0.0001, 1000, 1)
-    val derive = op(op.features, Seq(g.age): Seq[Attribute[Double]]).result.attr
-    println(derive.rdd.foreach(println))
+    val features = featureNames.map { name => g.age.runtimeSafeCast[Double] }
+    val op = KMeansModelTrainer(2, 20, 0.0001, 1000, List("age"))
+    val m = op(op.features, Seq(g.age): Seq[Attribute[Double]]).result.model
+    /*val fea = Model.toLinalgVector(Array(g.age.rdd), g.vertices.rdd)
+    val clas = m.value.load(dataManager.runtimeContext.sparkContext).predict(fea.values)
+    val ids = fea.keys*/
+
+    /*val feat = Seq(g.age)
+    val op2 = graph_operations.ClassifyVerticesByModel(feat.size)
+    op2(op2.model, m)(op2.features, feat).result.classification*/
+
+    //println(ids.zip(clas).filter(!_._2.isNaN).sortUnique(fea.partitioner.get).foreach(print))
+    //assert(m.method == "KMeans")
+    //assert(m.featureNames == List("age"))
+    //val yob = Seq(AddVertexAttribute.run(g.vertices, Map(0 -> 2000.0)))
+
+    //println(Model.toFE(m.value, dataManager.runtimeContext.sparkContext))
+    print(classify(m, Seq(g.age)))
+
+    //println(derive.rdd.foreach(println))
 
     /*sert(bucketing.segments.toSeq.size == 2)
 

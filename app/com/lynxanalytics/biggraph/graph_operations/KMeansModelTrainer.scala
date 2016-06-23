@@ -19,9 +19,9 @@ import org.apache.spark.sql.SQLContext
 // Creates a kmeans segmentation where each segment represents one cluster.
 object KMeansModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
-    val vs = vertexSet
+    val vertices = vertexSet
     val features = (0 until numFeatures).map {
-      i => vertexAttribute[Double](vs, Symbol(s"feature-$i"))
+      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
     }
   }
   class Output(properties: EdgeBundleProperties)(
@@ -54,7 +54,7 @@ case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Lon
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map { v => v.rdd }
-    val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vs.rdd)
+    val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val unscaledDf = unscaledRdd.toDF("ID", "unscaled")
 
     // Create a new column which represents the vector of selected attributes 
