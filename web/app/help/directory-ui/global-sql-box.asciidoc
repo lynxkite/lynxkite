@@ -1,5 +1,5 @@
 [[global-sql-box]]
-## SQL interface at the project browser page.
+## SQL interface
 
 There is a SQL interface on the project browser page that can be expanded by clicking on the plus
 button and which can be used to make queries to all available projects in the current folder
@@ -8,7 +8,7 @@ your current folder to the project, then use `|` to specify the table you want t
 in mind that you need to enclose all of this between two `&#96;` symbols (_see example below_).
 
 For example, let's say you are in your private folder where you have a subfolder called Premier_League, in which you
-have a project named Arsenal. If you want to acces the vertices table of the Arsenal project from your private folder,
+have a project named Arsenal. If you want to access the vertices table of the Arsenal project from your private folder,
 you need to refer to it by `&#96;Premier_League/Arsenal|vertices&#96;`. In case you are already in the
 `Premier_League` folder, the reference shortens to `&#96;Arsenal|vertices&#96;`
 
