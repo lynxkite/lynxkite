@@ -1,5 +1,5 @@
 [[global-sql-box]]
-## SQL interface
+## SQL interface on the project browser page
 
 There is a SQL interface on the project browser page that can be expanded by clicking on the plus
 button and which can be used to make queries to all available projects in the current folder
