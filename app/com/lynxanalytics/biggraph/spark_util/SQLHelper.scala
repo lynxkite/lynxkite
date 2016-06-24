@@ -61,7 +61,7 @@ class SQLHelper(
   // Given a project and a query, collects the the guids of the
   // input attributes required to execute the query.
   // The result is a map of tableName -> Seq(guid, columnName)
-  def getInputColumns(tables: Map[String, controllers.Table],
+  def getInputColumns(project: controllers.ProjectViewer,
                       sqlQuery: String): (Map[String, Seq[(UUID, String)]], DataFrame) = {
     // This implementation exploits that DataFrame.explain()
     // scans all the input columns. We create fake input table
@@ -69,15 +69,14 @@ class SQLHelper(
     // `columnAccumulator`.
     val columnAccumulator = mutable.Map[String, Seq[(UUID, String)]]()
     val sqlContext = dataManager.newSQLContext()
-    for ((tableName, table) <- tables) {
+    for (path <- project.allRelativeTablePaths) {
+      val tableName = path.toString
       val dataFrame = (
         new InputGUIDCollectingFakeTableRelation(
-          table,
+          controllers.Table(path, project),
           sqlContext,
           sparkContext,
-          columnList => {
-            columnAccumulator(tableName) = columnList
-          }
+          columnList => { columnAccumulator(tableName) = columnList }
         )).toDF
       dataFrame.registerTempTable(tableName)
     }
@@ -86,9 +85,9 @@ class SQLHelper(
     (columnAccumulator.toMap, df)
   }
 
-  def executeSQL(tables: Map[String, controllers.Table], sqlQuery: String) = {
+  def sqlToTable(project: controllers.ProjectViewer, sqlQuery: String): controllers.Table = {
     implicit val m = metaManager
-    val (inputTables, dataFrame) = getInputColumns(tables, sqlQuery)
+    val (inputTables, dataFrame) = getInputColumns(project, sqlQuery)
     val op = new graph_operations.ExecuteSQL(
       sqlQuery,
       inputTables.map {
@@ -107,22 +106,6 @@ class SQLHelper(
     }
     val res = opBuilder.result
     controllers.RawTable(res.ids, res.columns.mapValues(_.entity))
-  }
-
-  // Makes it possible to run SQL query on folder level with access to multiple projects.
-  def sqlToTableGlobal(projects: Map[String, controllers.ProjectViewer], sqlQuery: String): controllers.Table = {
-    val tableMap = projects.flatMap {
-      case (globPath, proj) =>
-        proj.allRelativeTablePaths.map {
-          path => (globPath + "|" + path.toString, controllers.Table(path, proj))
-        }
-    }
-    executeSQL(tableMap, sqlQuery)
-  }
-
-  def sqlToTable(project: controllers.ProjectViewer, sqlQuery: String): controllers.Table = {
-    val tableMap = project.allRelativeTablePaths.map(path => (path.toString, controllers.Table(path, project))).toMap
-    executeSQL(tableMap, sqlQuery)
   }
 
 }
