@@ -10,10 +10,9 @@ project.clusteringCoefficient(
   'name': name,
 )
 
-histogram = project.vertexAttributes[name].histogram(
-  logarithmic: true,
-  precise: true)
+project.vertexAttributes[name].computeAndPrintHistogram(
+        'name': name,
+        logarithmic: true)
 
-println "$name: $histogram"
 
 

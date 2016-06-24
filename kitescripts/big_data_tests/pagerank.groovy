@@ -17,5 +17,7 @@ project.pagerank(
   iterations: '5',
   damping: '0.85')
 
-println "page_rank_no_weights: ${ project.vertexAttributes['page_rank_no_weights'].histogram(logarithmic: true, precise: true) }"
-println "page_rank_weights: ${ project.vertexAttributes['page_rank_weights'].histogram(logarithmic: true, precise: true) }"
+project.vertexAttributes['page_rank_no_weights']
+  .computeAndPrintHistogram(name: 'page_rank_no_weights', logarithmic: true)
+project.vertexAttributes['page_rank_weights']
+  .computeAndPrintHistogram(name: 'page_rank_weights', logarithmic: true)

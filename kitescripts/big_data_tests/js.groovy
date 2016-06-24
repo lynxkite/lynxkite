@@ -9,4 +9,4 @@ project.derivedEdgeAttribute(
   type: 'double',
   expr: 'rnd_std_uniform * rnd_std_uniform')
 
-println "x: ${ project.edgeAttributes['x'].histogram(precise: true) }"
+project.edgeAttributes['x'].computeAndPrintHistogram(name: 'x', precise: true)

@@ -11,12 +11,11 @@ segmentation.weightedAggregateToSegmentation(
   'aggregate-rnd_std_normal': 'weighted_sum'
 )
 
-histogram = segmentation
+segmentation
   .vertexAttributes['rnd_std_normal_weighted_sum_by_rnd_std_uniform']
-  .histogram(
+  .computeAndPrintHistogram(
+    name: 'eighted aggregate to segmentation histogram',
     logarithmic: true,
-    precise: true
   )
 
-println "Weighted aggregate to segmentation histogram: $histogram"
 

@@ -13,4 +13,6 @@ project.weightedAggregateOnNeighbors(
 
 project
   .vertexAttributes['rnd_std_normal_weighted_average_by_rnd_std_uniform']
-  .computeAndPrintHistogram()
+  .computeAndPrintHistogram(
+    name: 'Weighted on neighbors histogram',
+    logarithmic: true)

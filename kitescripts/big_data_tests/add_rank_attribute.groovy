@@ -13,10 +13,7 @@ project.addRankAttribute(
   'order:': 'ascending'
 )
 
-histogram = project.vertexAttributes[name].histogram(
-  logarithmic: true,
-  precise: true)
-
-
-println "$name: $histogram"
+project.vertexAttributes[name].computeAndPrintHistogram(
+        'name': name,
+        logarithmic: true)
 
