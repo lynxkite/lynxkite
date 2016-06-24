@@ -239,42 +239,87 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
-  // Creates a table from an SQL query.
-  private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
-    metaManager.synchronized {
-      if (spec.isGlobal) {
-        assert(spec.directory.nonEmpty && spec.project.isEmpty,
-          "DataSFrameSpec must not have both of these fields defined: directory, project.")
-        val directoryName = spec.directory.get
-        val directoryPreFix = if (directoryName == "") "" else directoryName + "/"
-        val directory = Directory.fromName(directoryName)
-        val (allProjects, tables) = directory.listObjectsRecursively.partition(_.isInstanceOf[ProjectFrame])
-        //val tableNames = tables.map(tableFrame => tableFrame.name)
-        //val tablePaths = tableNames.map { name => GlobalTablePath.parse(name) }
-        //val tablesWithName = tablePaths.map(path => path.tableName)
-        val allProjectNames = allProjects.map(projFrame => projFrame.name)
-        val allProjectsWithName = allProjectNames.map(name => (name, SubProject.parsePath(name))).toMap
-        val allowedProjectsWithName = allProjectsWithName.filter(_._2.frame.readAllowedFrom(user))
-        val availableProjectsWithName = allowedProjectsWithName.filter(_._2.frame.exists)
-        val projectViewersWithNames = availableProjectsWithName.mapValues(_.viewer)
-        val projectViewersWithRelativeNames = projectViewersWithNames
-          .map { case (name, viewer) => (name.stripPrefix(directoryPreFix), viewer) }
+  // Finds the names of tables from string
+  private def findTablesFromQuery(query: String): List[String] = {
+    val split = query.split('`')
+    val firstTable = if (query.head == '`') 0 else 1
+    Iterator.from(firstTable, 2).takeWhile(_ < split.length).map(split(_)).toList
+  }
 
-        env.sqlHelper.sqlToTableGlobal(projectViewersWithRelativeNames, spec.sql)
-      } else {
-        assert(spec.directory.isEmpty && spec.project.nonEmpty,
-          "DataSFrameSpec must have one of these fields defined: directory, project.")
-        val p = SubProject.parsePath(spec.project.get)
-        assert(p.frame.exists, s"Project ${spec.project} does not exist.")
-        p.frame.assertReadAllowedFrom(user)
-        env.sqlHelper.sqlToTable(p.viewer, spec.sql)
+  // Creates a DataFrame from a global level SQL query.
+  private def globalSQL(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame =
+    metaManager.synchronized {
+      assert(spec.directory.nonEmpty && spec.project.isEmpty,
+        "DataSFrameSpec must not have both of these fields defined: directory, project.")
+
+      val directoryName = spec.directory.get
+      val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
+      val givenTableNames = findTablesFromQuery(spec.sql)
+      // Maps the relative table names used in the sql query with the global name
+      val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
+      // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
+      val (projectTableNames, importedTableNames) = tableNames.partition(_._2.contains('|'))
+      // For project tables we take the name of the projects to check whether they exist and accessible to the user
+      val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
+      val usedProjects = usedProjectNames.mapValues(DirectoryEntry.fromName(_))
+      val wrongProjects = usedProjects.values.filterNot { proj => proj.isProject && proj.readAllowedFrom(user) }
+      val wrongProjectNames = wrongProjects.mkString("' ")
+      assert(wrongProjects.isEmpty,
+        "The following projects do not exist or you do not have access to them: " + wrongProjectNames)
+
+      // We check wheether the project tables given in the sql query really exist in the projects
+      def listTableNames(proj: ProjectFrame) = {
+        proj.viewer.allAbsoluteTablePaths.map(_.toString).map(proj.path.toString + _)
       }
+      val possibleProjTables = usedProjects.flatMap {
+        case (name, projFrame) => listTableNames(projFrame.asProjectFrame)
+      }.toList
+      val notRealProjTables = projectTableNames.values.filterNot(possibleProjTables.contains(_))
+      val notRealProjTableNames = notRealProjTables.mkString(", ")
+      assert(notRealProjTables.isEmpty,
+        " There are no such tables as: " + notRealProjTableNames)
+
+      // If everything is okay then we take all the project tables we need
+      val projectTables = usedProjects.mapValues(_.asProjectFrame).flatMap {
+        case (name, proj) => proj.viewer.allRelativeTablePaths.filter(_.path == name.split('|').tail.toSeq)
+          .map(path => (name, controllers.Table(path, proj.viewer)))
+      }
+
+      val importedTableFrames = importedTableNames.mapValues(DirectoryEntry.fromName(_))
+      val notExistingImpTables = importedTableFrames.values.filterNot { t => t.exists && t.readAllowedFrom(user) }
+      val notExistingImpTableNames = notExistingImpTables.mkString(", ")
+      assert(notExistingImpTables.isEmpty,
+        "The following tables do not exist or you do not have access to them: " + notExistingImpTableNames)
+
+      val importedTables = importedTableFrames.mapValues(_.asTableFrame.table)
+      val allTables = projectTables ++ importedTables
+
+      val sqlContext = dataManager.newSQLContext()
+
+      val dataframes = allTables.mapValues(_.toDF(sqlContext))
+      for ((name, df) <- dataframes) {
+        df.registerTempTable(name)
+      }
+
+      sqlContext.sql(spec.sql)
     }
 
-  // Creates a DataFrame from an SQL query. The computation steps will
+  // Creates Table from an SQL query for project level query
+  private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
+    metaManager.synchronized {
+      assert(spec.directory.isEmpty && spec.project.nonEmpty,
+        "DataSFrameSpec must have one of these fields defined: directory, project.")
+      val p = SubProject.parsePath(spec.project.get)
+      assert(p.frame.exists, s"Project ${spec.project} does not exist.")
+      p.frame.assertReadAllowedFrom(user)
+      env.sqlHelper.sqlToTable(p.viewer, spec.sql)
+    }
+
+  // Creates a DataFrame from an SQL query. If it is a project level query then the computation steps will
   // also be entered into the Metagraph.
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
-    tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
+    if (spec.isGlobal) globalSQL(user, spec)
+    else tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
