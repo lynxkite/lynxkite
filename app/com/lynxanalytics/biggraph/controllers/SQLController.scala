@@ -282,7 +282,7 @@ class SQLController(val env: BigGraphEnvironment) {
       // If everything is okay then we take all the project tables we need
       val projectTables = usedProjects.mapValues(_.asProjectFrame).flatMap {
         case (name, proj) => proj.viewer.allRelativeTablePaths.filter(_.path == name.split('|').tail.toSeq)
-          .map(path => (name, controllers.Table(path, proj.viewer)))
+          .map(path => (name, Table(path, proj.viewer)))
       }
 
       val importedTableFrames = importedTableNames.mapValues(DirectoryEntry.fromName(_))
