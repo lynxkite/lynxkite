@@ -241,16 +241,15 @@ class SQLController(val env: BigGraphEnvironment) {
 
   // Finds the names of tables from string
   private def findTablesFromQuery(query: String): List[String] = {
-    val split = query.split('`')
-    val firstTable = if (query.head == '`') 0 else 1
-    Iterator.from(firstTable, 2).takeWhile(_ < split.length).map(split(_)).toList
+    val split = query.split("`", -1)
+    Iterator.range(start = 1, end = split.length, step = 2).map(split(_)).toList
   }
 
   // Creates a DataFrame from a global level SQL query.
   private def globalSQL(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame =
     metaManager.synchronized {
       assert(spec.directory.nonEmpty && spec.project.isEmpty,
-        "DataSFrameSpec must not have both of these fields defined: directory, project.")
+        "DataFrameSpec must not have both of these fields defined: directory, project.")
 
       val directoryName = spec.directory.get
       val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
