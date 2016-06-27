@@ -15,3 +15,4 @@ s = project.segmentations['segmentation']
 
 println "vertices: ${s.scalars['vertex_count']}"
 
+project.saveAs('create_segmentation_from_sql_result')
