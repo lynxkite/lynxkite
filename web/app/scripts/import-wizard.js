@@ -60,6 +60,26 @@ angular.module('biggraph').directive('importWizard', function(util) {
           });
       }
 
+      scope.$on('fill import from config', function(evt, newConfig, tableName) {
+        scope.tableName = tableName;
+        scope.columnsToImport = newConfig.data.columnsToImport;
+
+        //com.lynxanalytics.biggraph.controllers.CSVImportRequest
+        var requestName = newConfig.class.split('.').pop(); //CSVImportRequest
+        var prefixLength = 'ImportRequest'.length;
+        var datatype = requestName.slice(0, prefixLength * -1).toLowerCase();
+        scope.datatype = datatype;
+        var datatypeScope = scope.$eval(datatype);
+
+        datatypeScope.filename = newConfig.data.files;
+
+        for (var newConfigItem in newConfig.data) {
+            if (newConfigItem in datatypeScope) {
+                datatypeScope[newConfigItem] = newConfig.data[newConfigItem];
+            }
+        }
+      });
+
       scope.importParquet = function() {
         importFilesWith('/ajax/importParquet');
       };

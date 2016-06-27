@@ -1,7 +1,8 @@
 // The list of projects.
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function(util, hotkeys, $timeout) {
+angular.module('biggraph').directive('projectSelector',
+  function(util, hotkeys, $timeout, $anchorScroll) {
   return {
     restrict: 'E',
     scope: {
@@ -196,6 +197,13 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           if (window.confirm(message)) {
             util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           }
+        },
+        editImport: function(name, config) {
+          scope.startTableImport();
+          $timeout(function () {
+            $anchorScroll('import-table');
+            scope.$broadcast('fill import from config', config, name);
+          });
         },
         renameMenuItemLabel: 'Rename or move...'
       };
