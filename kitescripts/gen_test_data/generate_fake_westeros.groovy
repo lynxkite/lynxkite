@@ -3,10 +3,10 @@
 // exponentially as degree goes up exponentially.)
 //
 // Usage examples:
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/generate_fake_westeros.groovy --  numVertices:100000 maxDegree:100000 dropoff:1.1
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/generate_fake_westeros.groovy -- numVertices:5000000 maxDegree:5000000 dropoff:1.1
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/gen_test_data/generate_fake_westeros.groovy -- numVertices:10000000 maxDegree:10000000 dropoff:1.1
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/generate_fake_westeros.groovy -- numVertices:25000000 maxDegree:25000000 dropoff:1.1
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/generate_fake_westeros.groovy --  numVertices:100000 maxDegree:100000 dropoff:1.1
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/generate_fake_westeros.groovy -- numVertices:5000000 maxDegree:5000000 dropoff:1.1
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/gen_test_data/generate_fake_westeros.groovy -- numVertices:10000000 maxDegree:10000000 dropoff:1.1
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/generate_fake_westeros.groovy -- numVertices:25000000 maxDegree:25000000 dropoff:1.1
 
 // See issues/3690 before running this.
 
