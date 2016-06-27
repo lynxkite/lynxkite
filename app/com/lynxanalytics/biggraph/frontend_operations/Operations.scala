@@ -8,6 +8,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
+import com.lynxanalytics.biggraph.graph_operations.PartitionAttribute
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -1593,7 +1594,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Weighted aggregate to segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = List(
-      Choice("weight", "Weight", options = vertexAttributes[Double])) ++
+      Choice("weight", "Weight", options = parentVertexAttributes[Double])) ++
       aggregateParams(parent.vertexAttributes, weighted = true)
     def enabled =
       isSegmentation &&
@@ -3086,6 +3087,33 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       for ((name, column) <- table.columns) {
         tableSegmentation.newVertexAttribute(name, column)
       }
+    }
+  })
+
+  register("Split to train and test set", new VertexAttributesOperation(_, _) {
+    override def parameters = List(
+      Choice("source", "Source attribute",
+        options = vertexAttributes),
+      Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
+      RandomSeed("seed", "Random seed for test set selection"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val sourceName = params("source")
+      val source = project.vertexAttributes(sourceName)
+      val roles = {
+        val op = graph_operations.CreateRole(
+          params("test_set_ratio").toDouble, params("seed").toInt)
+        op(op.vertices, source.vertexSet).result.role
+      }
+      val parted = partitionVariable(source, roles)
+
+      project.newVertexAttribute(s"${sourceName}_test", parted.test)
+      project.newVertexAttribute(s"${sourceName}_train", parted.train)
+    }
+    def partitionVariable[T](
+      source: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
+      val op = graph_operations.PartitionAttribute[T]()
+      op(op.attr, source)(op.role, roles).result
     }
   })
 

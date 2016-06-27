@@ -5,15 +5,21 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
-- Global SQL-box added
-- New option has been added in bucketed view: relative edge density.
-- New operation "Find vertex coloring" has been added. 
+
+### 1.8.0
+
+ - Major performance and scalability improvements.
+ - New option has been added in bucketed view: relative edge density.
+ - New operation "Find vertex coloring" has been added.
+ - Add search box to built-in help.
+ - Experimental feature: LynxKite can be used from [Jupyter](http://jupyter.org) (IPython Notebook).
+
 ### 1.7.5
+
  - Improve speed and stability of the project history editor
  - Easier to find data export button
  - Table import wizard: added tab stops and removed highlight flickering
  - Hide ACL settings in single-user instances
-
  - New aggregator: `median`.
 
 ### 1.7.4
