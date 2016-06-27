@@ -1,10 +1,10 @@
 // Create random attributes for a graph in a CSV files.
 
 // Usage examples:
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/generate_random_attributes.groovy --  numVertices:100000 testSetName:fake_westeros_v3_100k_2m
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/generate_random_attributes.groovy -- numVertices:5000000 testSetName:fake_westeros_v3_5m_145m
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/gen_test_data/generate_random_attributes.groovy -- numVertices:10000000 testSetName:fake_westeros_v3_10m_303m
-//   emr.sh batch emr_test_spec .../kitescripts/gen_test_data/generate_random_attributes.groovy -- numVertices:25000000 testSetName:fake_westeros_v3_25m_799m
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/generate_random_attributes.groovy --  numVertices:100000 testSetName:fake_westeros_v3_100k_2m
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/generate_random_attributes.groovy -- numVertices:5000000 testSetName:fake_westeros_v3_5m_145m
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/gen_test_data/generate_random_attributes.groovy -- numVertices:10000000 testSetName:fake_westeros_v3_10m_303m
+//   ./stage/tools/emr.sh batch ./stage/tools/emr_spec_template ./kitescripts/gen_test_data/generate_random_attributes.groovy -- numVertices:25000000 testSetName:fake_westeros_v3_25m_799m
 
 numVertices = params.numVertices.toInteger()
 testSetName = params.testSetName

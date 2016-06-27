@@ -11,5 +11,6 @@ project.importVertexAttributes(
   'id-attr': 'stringID',
   'id-column': 'id',
   'prefix': '')
+// TODO: use computeAndPrintHistogram
 println "vertex attr: ${ project.vertexAttributes['attr1'].histogram(precise: true ) }"
 
