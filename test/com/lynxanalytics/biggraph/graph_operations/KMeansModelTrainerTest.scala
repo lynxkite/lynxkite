@@ -26,10 +26,6 @@ class KMeansModelTrainerTest extends ModelTestBase {
     val g = ExampleGraph()().result
     // val features = (0 until 2).map { i => g.age.rdd.toDF }
 
-    // println(g.age.rdd.sortedJoin(g.income.rdd))
-    // println(features)
-    // println(features.reduce((a, b) => a.join(b, "_1")).show)
-    // println(g.age.toString)
     // val labels = g.vertices.rdd
     val featureNames = List("age")
 
@@ -44,15 +40,9 @@ class KMeansModelTrainerTest extends ModelTestBase {
     val op2 = graph_operations.ClassifyVerticesByModel(feat.size)
     op2(op2.model, m)(op2.features, feat).result.classification*/
 
-    //println(ids.zip(clas).filter(!_._2.isNaN).sortUnique(fea.partitioner.get).foreach(print))
-    //assert(m.method == "KMeans")
-    //assert(m.featureNames == List("age"))
-    //val yob = Seq(AddVertexAttribute.run(g.vertices, Map(0 -> 2000.0)))
-
-    //println(Model.toFE(m.value, dataManager.runtimeContext.sparkContext))
-    print(classify(m, Seq(g.age)))
-
-    //println(derive.rdd.foreach(println))
+    assert(m.value.method == "KMeans")
+    assert(m.value.featureNames == List("age"))
+    cluster(m, Seq(g.age))
 
     /*sert(bucketing.segments.toSeq.size == 2)
 
