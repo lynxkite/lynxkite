@@ -1550,10 +1550,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Classify vertices by model", new VertexAttributesOperation(_, _) {
+  register("Cluster vertices by model", new VertexAttributesOperation(_, _) {
     val models = project.viewer.models
     def parameters = List(
-      Param("name", "The name of the attribute of the classifications"),
+      Param("name", "The name of the attribute of the clustering"),
       ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No models.") &&
@@ -1567,11 +1567,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
-      val classifiedAttribute = {
-        val op = graph_operations.ClassifyVerticesByModel(features.size)
-        op(op.model, modelValue)(op.features, features).result.classification
+      val clusteredAttribute = {
+        val op = graph_operations.ClusterVerticesByModel(features.size)
+        op(op.model, modelValue)(op.features, features).result.clustering
       }
-      project.newVertexAttribute(name, classifiedAttribute, s"classified from ${modelValue.name}")
+      project.newVertexAttribute(name, clusteredAttribute, s"clustered from ${modelValue.name}")
     }
   })
 

@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object ClassifyVerticesByModel extends OpFromJson {
+object ClusterVerticesByModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until numFeatures).map {
@@ -15,12 +15,12 @@ object ClassifyVerticesByModel extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val classification = vertexAttribute[Double](inputs.vertices.entity)
+    val clustering = vertexAttribute[Double](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = ClassifyVerticesByModel((j \ "numFeatures").as[Int])
+  def fromJson(j: JsValue) = ClusterVerticesByModel((j \ "numFeatures").as[Int])
 }
-import ClassifyVerticesByModel._
-case class ClassifyVerticesByModel(numFeatures: Int)
+import ClusterVerticesByModel._
+case class ClusterVerticesByModel(numFeatures: Int)
     extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
   override val isHeavy = true
@@ -36,11 +36,11 @@ case class ClassifyVerticesByModel(numFeatures: Int)
     val rddArray = inputs.features.toArray.map { v => v.rdd }
     val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
 
-    val classification = model.load(rc.sparkContext).predict(unscaledRdd.values)
+    val clustering = model.load(rc.sparkContext).predict(unscaledRdd.values)
     val ids = unscaledRdd.keys
 
     output(
-      o.classification, ids.zip(classification).filter(!_._2.isNaN).asUniqueSortedRDD(unscaledRdd.partitioner.get)
+      o.clustering, ids.zip(clustering).filter(!_._2.isNaN).asUniqueSortedRDD(unscaledRdd.partitioner.get)
     )
   }
 }
