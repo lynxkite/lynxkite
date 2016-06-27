@@ -16,8 +16,6 @@ import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
 
-import org.joda.time.DateTimeConstants
-
 // Placeholders for deleted classes.
 class DeadClass1
 class DeadClass2
