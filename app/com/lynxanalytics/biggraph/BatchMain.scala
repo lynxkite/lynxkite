@@ -30,6 +30,7 @@ For example:
   serving.AssertNotRunningAndRegisterRunning()
 
   serving.Ammonite.maybeStart()
+  serving.PipeAPI.maybeStart()
   println(s"STARTING SCRIPT ${scriptFileName} with params ${params}")
   val startTime = System.currentTimeMillis()
   try {
