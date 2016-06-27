@@ -257,11 +257,25 @@ object BigGraphSparkContext {
     }
   }
 
+  def rotateSparkEventLogs() = {
+    val currentTimeMillis = System.currentTimeMillis
+    val deletionThresholdMillis = currentTimeMillis - 60 * 24 * 3600 * 1000
+    for (file <- LogController.getLogDir.listFiles) {
+      if (file.isFile() && file.getName().endsWith("lz4")) {
+        if (file.lastModified() < deletionThresholdMillis) {
+          file.delete()
+        }
+      }
+    }
+  }
+
   def apply(
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = ""): spark.SparkContext = {
+    rotateSparkEventLogs()
+
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
