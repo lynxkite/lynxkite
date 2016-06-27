@@ -1013,10 +1013,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
       Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
-      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
-      Choice("method", "Reduction method", options = FEOption.list("Principal Components Analysis")))
+      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true))
     def enabled = FEStatus.assert(
-      vertexAttributes[Double].size >= 2, "Not enough vertex attributes.")
+      vertexAttributes[Double].size >= 2, "Less than two vertex attributes.")
     def apply(params: Map[String, String]) = {
       val featureNames = params("features").split(",", -1).sorted
       assert(featureNames.size >= 2, "Please select at least two attributes.")
