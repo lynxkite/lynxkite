@@ -12,9 +12,16 @@ angular
 
   .config(function ($routeProvider) {
     function docTemplate(doc) {
-      return { template: '<div class="documentation">' +
+      return { template:
+        '<div class="documentation">' +
         '<div documentation="' + doc + '" class="help container"></div>' +
         '</div>', reloadOnSearch: false };
+    }
+    function docWebTemplate(doc) {
+      return { template:
+        '<find-in-page-box></find-in-page-box>' +
+        docTemplate(doc).template
+      };
     }
     // One-page routing for PDF generation.
     if (location.pathname.indexOf('/pdf-') === 0) {
@@ -64,7 +71,7 @@ angular
     // Register routing for documentation pages.
     var docs = ['academy', 'admin-manual', 'help'];
     for (var i = 0; i < docs.length; ++i) {
-      $routeProvider.when('/' + docs[i], docTemplate(docs[i]));
+      $routeProvider.when('/' + docs[i], docWebTemplate(docs[i]));
     }
   })
 

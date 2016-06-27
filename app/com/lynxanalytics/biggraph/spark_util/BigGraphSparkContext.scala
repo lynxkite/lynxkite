@@ -222,6 +222,14 @@ object BigGraphSparkContext {
       .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
   }
 
+  def infiniteLocalityConf(conf: spark.SparkConf, sparkVersion: String): spark.SparkConf = {
+    // Make sure spark will wait for the data to be available locally
+    assert(sparkVersion.startsWith("1."),
+      s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
+    conf.set("spark.locality.wait", "99m")
+    conf
+  }
+
   def setupCustomMonitoring(sc: spark.SparkContext) = {
     if (isMonitoringEnabled) {
       // Hacky solution to register BiggraphMonitoringSource as a
@@ -307,6 +315,7 @@ object BigGraphSparkContext {
       .set("spark.eventLog.enabled", "true")
       .set("spark.eventLog.compress", "true")
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
+    sparkConf = infiniteLocalityConf(sparkConf, versionFound)
     if (useKryo) {
       sparkConf = sparkConf
         .set(
