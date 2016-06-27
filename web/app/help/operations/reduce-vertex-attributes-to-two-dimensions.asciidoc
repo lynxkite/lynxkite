@@ -1,7 +1,7 @@
 ### Reduce vertex attributes to two dimensions 
 
 Scale the mean and standard deviation of the data and reduce multiple double attributes to two double 
-attributes.
+attributes by Principal Component Analysis.
 
 Principal Component Analysis (PCA) is used to emphsize variation and bring out strong patterns in 
 a dataset. It is often makes data easy to explore and visualize.
@@ -17,6 +17,4 @@ The second dimension will be stored as a double attribute using this name.
 [[features]] Feature attributes::
 Attributes to be used as inputs for the dimension reduction. 
 
-[[method]] Reduction method::
-The algorithm used to reduce vertex attributes to two dimensions. (currently only PCA is supported)
 ====
