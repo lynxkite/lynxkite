@@ -651,7 +651,7 @@ Selector.prototype = {
   },
 
   editImport: function(name) {
-    testLib.menuClick(this.directory(name), 'edit-import');
+    testLib.menuClick(this.table(name), 'edit-import');
   },
 
   expectProjectListed: function(name) {
