@@ -30,6 +30,7 @@
     "jshint": "2.9.1",
     "merge-stream": "1.0.0",
     "protractor": "3.1.1",
+    "request": "2.72.0",
     "wiredep": "3.0.0"
   },
   "scripts": {

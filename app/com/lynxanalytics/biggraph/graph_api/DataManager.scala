@@ -7,18 +7,22 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 import com.google.common.collect.MapMaker
-import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, HadoopFile }
+import com.lynxanalytics.biggraph.graph_api.io.DataRoot
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -348,15 +352,46 @@ class DataManager(sc: spark.SparkContext,
     getFuture(entity).awaitResult(Duration.Inf)
   }
 
+  private def coLocatedFuture[T: ClassTag](
+    dataFuture: SafeFuture[EntityRDDData[T]],
+    idSet: VertexSet): SafeFuture[(UniqueSortedRDD[Long, T], Option[Long])] = {
+
+    dataFuture.zip(getFuture(idSet)).map {
+      case (data, idSetData) =>
+        (enforceCoLocationWithIdSet(data, idSetData), data.count)
+    }
+  }
+  private def enforceCoLocationWithIdSet[T: ClassTag](
+    rawEntityData: EntityRDDData[T],
+    parent: VertexSetData): UniqueSortedRDD[Long, T] = {
+
+    val vsRDD = parent.rdd.copyWithAncestorsCached
+    // Enforcing colocation:
+    val rawRDD = rawEntityData.rdd
+    assert(
+      vsRDD.partitions.size == rawRDD.partitions.size,
+      s"$vsRDD and $rawRDD should have the same number of partitions, " +
+        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}\n" +
+        s"${vsRDD.toDebugString}\n${rawRDD.toDebugString}")
+    import com.lynxanalytics.biggraph.spark_util.Implicits.PairRDDUtils
+    vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
+      (it1, it2) => it2
+    }.asUniqueSortedRDD
+  }
   def cache(entity: MetaGraphEntity): Unit = {
     // We do not cache anything in demo mode.
     if (computationAllowed) {
       synchronized {
         if (!sparkCachedEntities.contains(entity.gUID)) {
-          val dataFuture = getFuture(entity)
-          entityCache(entity.gUID) = dataFuture.map {
-            case rddData: EntityRDDData[_] => rddData.cached
-            case data: EntityData => data
+          entityCache(entity.gUID) = entity match {
+            case vs: VertexSet => getFuture(vs).map(_.cached)
+            case eb: EdgeBundle =>
+              coLocatedFuture(getFuture(eb), eb.idSet)
+                .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
+            case va: Attribute[_] =>
+              coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
+                .map { case (rdd, count) => new AttributeData(va, rdd, count) }
+            case sc: Scalar[_] => getFuture(sc)
           }
           sparkCachedEntities.add(entity.gUID)
         }

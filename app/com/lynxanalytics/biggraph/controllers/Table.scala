@@ -13,6 +13,11 @@ import org.apache.spark.sql.SQLContext
 trait Table {
   def idSet: VertexSet
   def columns: Map[String, Attribute[_]]
+  def column(name: String): Attribute[_] = {
+    lazy val colNames = columns.keys.mkString(", ")
+    assert(columns.contains(name), s"Invalid table column ${name}. Possible values: ${colNames}.")
+    columns(name)
+  }
 
   def toDF(sqlContext: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
     new TableRelation(this, sqlContext).toDF
@@ -53,10 +58,10 @@ trait Table {
 object Table {
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
-  val TripletTableName = "triplets"
-  val BelongsToTableName = "belongsTo"
+  val EdgeAttributeTableName = "edge_attributes"
+  val BelongsToTableName = "belongs_to"
   val ReservedTableNames =
-    Set(VertexTableName, EdgeTableName, TripletTableName, BelongsToTableName)
+    Set(VertexTableName, EdgeTableName, EdgeAttributeTableName, BelongsToTableName)
 
   // A canonical table path is what's used by operations to reference a table. It's always meant to
   // be a valid id for an FEOption.
@@ -75,8 +80,8 @@ object Table {
   // or can be one of the following implicitly defined tables:
   //  vertices
   //  edges
-  //  triplets
-  //  belongsTo - only defined for segmentations
+  //  edge_attributes
+  //  belongs_to - only defined for segmentations
   //
   // The first two formats are only meaningful in the context of a project viewer. Global paths
   // can be resolved out of context as well, so there is a specialized function just for those.
@@ -94,7 +99,7 @@ object Table {
     tableName match {
       case VertexTableName => new VertexTable(viewer)
       case EdgeTableName => new EdgeTable(viewer)
-      case TripletTableName => new TripletTable(viewer)
+      case EdgeAttributeTableName => new EdgeAttributeTable(viewer)
       case BelongsToTableName =>
         assert(
           viewer.isInstanceOf[SegmentationViewer],
@@ -203,14 +208,14 @@ class VertexTable(project: ProjectViewer) extends Table {
   def columns = project.vertexAttributes
 }
 
-class EdgeTable(project: ProjectViewer) extends Table {
-  assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o edges")
+class EdgeAttributeTable(project: ProjectViewer) extends Table {
+  assert(project.edgeBundle != null, "Cannot define an EdgeAttributeTable on a project w/o edges")
 
   def idSet = project.edgeBundle.idSet
   def columns = project.edgeAttributes
 }
 
-class TripletTable(project: ProjectViewer) extends Table {
+class EdgeTable(project: ProjectViewer) extends Table {
   assert(project.edgeBundle != null, "Cannot define an EdgeTable on a project w/o edges")
 
   def idSet = project.edgeBundle.idSet

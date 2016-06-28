@@ -98,7 +98,10 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
 
     val trackerID = Timestamp.toString
     val rddID = data.id
-    val count = sparkContext.accumulator[Long](0L, "Line count")
+    val vsCount = sparkContext.accumulator[Long](0L, s"Vertex count for ${vs.gUID}")
+    val attrCounts = attributes.map {
+      attr => sparkContext.accumulator[Long](0L, s"Attribute count for ${attr.gUID}")
+    }
     val unitSerializer = EntitySerializer.forType[Unit]
     val serializers = attributes.map(EntitySerializer.forAttribute(_))
     // writeShard is the function that runs on the executors. It writes out one partition of the
@@ -109,12 +112,16 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       val files = paths.map(collection.createTaskFile(_))
       try {
         val verticesWriter = files.last.writer
-        for (file <- files) file.committer.setupTask(file.context)
-        val filesAndSerializers = files zip serializers
+        for (file <- files) {
+          file.committer.setupTask(file.context)
+          file.writer // Make sure a writer is created even if the partition is empty.
+        }
         for ((id, cols) <- iterator) {
-          count += 1
+          vsCount += 1
           val key = new hadoop.io.LongWritable(id)
-          for (((file, serializer), col) <- (filesAndSerializers zip cols) if col != null) {
+          val zipped = files.zip(serializers).zip(cols).zip(attrCounts)
+          for ((((file, serializer), col), attrCount) <- zipped if col != null) {
+            attrCount += 1
             val value = serializer.unsafeSerialize(col)
             file.writer.write(key, value)
           }
@@ -132,10 +139,11 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     sparkContext.runJob(data, writeShard)
     for (file <- files) file.committer.commitJob(file.context)
     // Write metadata files.
-    val vertexSetMeta = EntityMetadata(count.value, Some(unitSerializer.name))
+    val vertexSetMeta = EntityMetadata(vsCount.value, Some(unitSerializer.name))
     vertexSetMeta.write(partitionedPath(vs).forWriting)
-    for ((attr, serializer) <- attributes zip serializers)
+    for (((attr, serializer), count) <- attributes.zip(serializers).zip(attrCounts)) {
       EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
+    }
   }
 }
 
@@ -149,6 +157,13 @@ object EntityIO {
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
     dataRoot / io.OperationsDir / instance.gUID.toString
+
+  // The ideal number of partitions for n rows.
+  def desiredNumPartitions(n: Long): Int = {
+    val p = Math.ceil(n.toDouble / verticesPerPartition).toInt
+    // Always have at least 1 partition.
+    p max 1
+  }
 }
 
 case class EntityMetadata(lines: Long, serialization: Option[String]) {
@@ -211,16 +226,19 @@ class ScalarIO[T](entity: Scalar[T], context: IOContext)
   private def successPath: HadoopFileLike = path / Success
 }
 
+object RatioSorter {
+  def ratio(a: Int, desired: Int): Double = {
+    val aa = a.toDouble
+    if (aa > desired) aa / desired
+    else desired.toDouble / aa
+  }
+}
+
 case class RatioSorter(elements: Seq[Int], desired: Int) {
   assert(desired > 0, "RatioSorter only supports positive integers")
   assert(elements.filter(_ <= 0).isEmpty, "RatioSorter only supports positive integers")
   private val sorted: Seq[(Int, Double)] = {
-    elements.map { a =>
-      val aa = a.toDouble
-      if (aa > desired) (a, aa / desired)
-      else (a, desired.toDouble / aa)
-    }
-      .sortBy(_._2)
+    elements.map(a => (a, RatioSorter.ratio(a, desired))).sortBy(_._2)
   }
 
   val best: Option[Int] = sorted.map(_._1).headOption
@@ -228,7 +246,6 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
   def getBestWithinTolerance(tolerance: Double): Option[Int] = {
     sorted.filter(_._2 < tolerance).map(_._1).headOption
   }
-
 }
 
 abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEntity,
@@ -389,9 +406,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
     val vertices = entityLocation.numVertices
-    val p = Math.ceil(vertices.toDouble / EntityIO.verticesPerPartition).toInt
-    // Always have at least 1 partition.
-    p max 1
+    EntityIO.desiredNumPartitions(vertices)
   }
 
   private def selectPartitionNumber(entityLocation: EntityLocationSnapshot): Int = {
@@ -403,18 +418,6 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   private def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
   private def existsAtLegacy = (legacyPath / Success).exists
   private def existsPartitioned = computeAvailablePartitions.nonEmpty && metaFile.exists
-
-  protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)],
-                                               parent: VertexSetData): RDD[(Long, T)] = {
-    val vsRDD = parent.rdd.copyWithAncestorsCached
-    // Enforcing colocation:
-    assert(vsRDD.partitions.size == rawRDD.partitions.size,
-      s"$vsRDD and $rawRDD should have the same number of partitions, " +
-        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}")
-    vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
-      (it1, it2) => it2
-    }
-  }
 }
 
 class VertexSetIO(entity: VertexSet, context: IOContext)
@@ -456,10 +459,9 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
     assert(partitioner eq parent.get.rdd.partitioner.get,
       s"Partitioner mismatch for $entity.")
     val rdd = path.loadEntityRDD[Edge](sc, serialization)
-    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
       entity,
-      coLocated.asUniqueSortedRDD(partitioner),
+      rdd.asUniqueSortedRDD(partitioner),
       Some(count))
   }
 
@@ -487,10 +489,9 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
     implicit val ct = entity.classTag
     implicit val tt = entity.typeTag
     val rdd = path.loadEntityRDD[T](sc, serialization)
-    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
       entity,
-      coLocated.asUniqueSortedRDD(partitioner),
+      rdd.asUniqueSortedRDD(partitioner),
       Some(count))
   }
 

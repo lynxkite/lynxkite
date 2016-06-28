@@ -4,6 +4,9 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+
+import org.apache.spark
 
 object VerticesToEdges extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -29,27 +32,33 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     val partitioner = inputs.vs.rdd.partitioner.get
     val srcAttr = inputs.srcAttr.rdd
     val dstAttr = inputs.dstAttr.rdd
     val names = (srcAttr.values ++ dstAttr.values).distinct
-    val idToName = names.randomNumbered(partitioner.numPartitions)
-    val nameToId = idToName.map(_.swap)
+    val idToName = names
+      .randomNumbered(partitioner.numPartitions)
+      .persist(spark.storage.StorageLevel.DISK_ONLY)
+    val nameToId = idToName
+      .map(_.swap)
       .sortUnique(partitioner)
+      .persist(spark.storage.StorageLevel.DISK_ONLY)
     val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
-    val byDst = HybridRDD(bySrc).lookupAndRepartition(nameToId).map {
+    val byDst = HybridRDD(bySrc, partitioner, even = true).lookupAndRepartition(nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
     }
-    val edges = HybridRDD(byDst).lookupAndRepartition(nameToId).map {
+    val edges = HybridRDD(byDst, partitioner, even = true).lookup(nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }.sortUnique(partitioner)
     val embedding = inputs.vs.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) }
-    output(o.vs, idToName.mapValues(_ => ()))
+    val idToNameForOutput = RDDUtils.maybeRepartitionForOutput(idToName)
+    output(o.vs, idToNameForOutput.mapValues(_ => ()))
     output(o.es, edges)
-    output(o.stringID, idToName)
+    output(o.stringID, idToNameForOutput)
     output(o.embedding, embedding)
   }
 }

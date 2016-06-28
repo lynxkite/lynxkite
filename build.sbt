@@ -54,13 +54,15 @@ libraryDependencies ++= Seq(
   "com.databricks" % "spark-csv_2.10" % "1.3.0",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
-  // TODO(darabos-neural): This conflicts with Guava 15 somehow.
-  // "com.google.guava" % "guava" % "16.0.1",
+  "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.10.3",
   // Fast linear algebra.
   "org.scalanlp" %% "breeze" % "0.12",
-  "org.scalanlp" %% "breeze-natives" % "0.12")
+  "org.scalanlp" %% "breeze-natives" % "0.12",
+  // This is a dependency of Spark. Needed here explicitly
+  // so that SetupMetricsSingleton compiles.
+  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209")
 
 resolvers += "Twitter Repository" at "http://maven.twttr.com"
 
@@ -118,4 +120,12 @@ mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "big_d
 
 mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "gen_test_data")
 
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring", "dashboards")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "spark_tests")
+
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "api", "python", "lynx")

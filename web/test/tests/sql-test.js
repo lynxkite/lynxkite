@@ -9,7 +9,6 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'SQL default query works',
     function() {
-      left.toggleSqlBox();
       left.runSql();
 
       left.expectSqlResult(
@@ -20,15 +19,12 @@ module.exports = function(fw) {
           ['18.2', 'Female', '1', 'null', '[47.5269674,19.0323968]', 'Eve'],
           ['50.3', 'Male', '2', '2000.0', '[1.352083,103.819836]', 'Bob'],
         ]);
-      // Reset state.
-      left.toggleSqlBox();
     });
 
   fw.transitionTest(
     'test-example project with example graph',
     'SQL creating segmentation works',
     function() {
-      left.toggleSqlBox();
       left.runSql('select age, gender, name from vertices');
       left.startSqlSaving();
 
@@ -47,9 +43,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'SQL works for edge attributes',
     function() {
-      left.toggleSqlBox();
-
-      left.runSql('select edge_comment, src_name from triplets order by edge_comment');
+      left.runSql('select edge_comment, src_name from edges order by edge_comment');
 
       left.expectSqlResult(
         ['edge_comment', 'src_name'],
@@ -59,9 +53,6 @@ module.exports = function(fw) {
           [ 'Eve loves Adam', 'Eve' ],
           [ 'Bob loves Eve', 'Bob' ],
         ]);
-
-      // Reset state.
-      left.toggleSqlBox();
     });
 
   fw.transitionTest(
@@ -72,11 +63,9 @@ module.exports = function(fw) {
       left.runOperation('Add random vertex attribute', { seed: '1' });
       left.runOperation('Copy graph into a segmentation');
       left.openSegmentation('self_as_segmentation');
-      left.toggleSqlBox();
       left.runSql(
-        'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongsTo`');
-      right.toggleSqlBox();
-      right.runSql('select sum(base_random - segment_random) as error from belongsTo');
+        'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongs_to`');
+      right.runSql('select sum(base_random - segment_random) as error from belongs_to');
     },
     function() {
       left.expectSqlResult(['sum'], [['100.0']]);
@@ -87,8 +76,6 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'Save SQL result as CSV works',
     function() {
-      left.toggleSqlBox();
-
       left.setSql('select name, age, income from vertices order by name');
 
       left.startSqlSaving();
@@ -107,9 +94,6 @@ module.exports = function(fw) {
         '20.3,1000.0,Adam\n' +
         '2.0,,Isolated Joe\n' +
         '18.2,,Eve\n');
-
-      // Reset state.
-      left.toggleSqlBox();
     });
 
   fw.transitionTest(
@@ -122,7 +106,6 @@ module.exports = function(fw) {
       left.runOperation('Add rank attribute', { keyattr: 'random1', rankattr: 'rank1' });
       left.runOperation('Add rank attribute', { keyattr: 'random2', rankattr: 'rank2' });
 
-      left.toggleSqlBox();
       left.setSql(
         'select cast(rank1 as string), cast(rank2 as string) from vertices');
       left.startSqlSaving();
@@ -135,19 +118,17 @@ module.exports = function(fw) {
       left.runOperation(
         'Import edges for existing vertices',
         {
-          table: 'Random Edges|vertices',
+          table: 'Random Edges',
           attr: 'ordinal',
           src: 'rank1',
           dst: 'rank2',
         });
 
-      left.toggleSqlBox();
-
-      left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edges');
+      left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
       left.expectSqlResult(['r1sum', 'r2sum'], [['4950.0', '4950.0']]);
 
       left.runSql(
-        'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from triplets');
+        'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
       left.expectSqlResult(['dstgood', 'srcgood'], [['true', 'true']]);
     },
     function() {
@@ -157,7 +138,6 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'parquet export and reimport right from the operation',
     function() {
-      left.toggleSqlBox();
       left.setSql(
         'select name, age, gender, income from vertices');
       left.startSqlSaving();

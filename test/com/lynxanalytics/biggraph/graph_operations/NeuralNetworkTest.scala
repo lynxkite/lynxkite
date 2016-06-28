@@ -20,7 +20,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("label, trivial") {
     // The label is a random attribute. It is visible to the vertex.
     val vs = CreateVertexSet(1000).result.vs
-    val a = vs.randomAttribute(0).derive[Double]("x < 0 ? -1 : 1")
+    val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 2, iterations = 5, learningRate = 0.5, radius = 0,
@@ -34,8 +34,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   ignore("feature, trivial") {
     // The label and one of the features are the same random attribute.
     val vs = CreateVertexSet(1000).result.vs
-    val a = vs.randomAttribute(0).derive[Double]("x < 0 ? -1 : 1")
-    val b = vs.randomAttribute(1000).derive[Double]("x < 0 ? -1 : 1") // Red herring.
+    val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
+    val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 2, networkSize = 4, iterations = 30, learningRate = 0.1, radius = 0,
@@ -50,8 +50,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     // The label and one of the features are the same random attribute.
     // Propagates through 3 full layers.
     val vs = CreateVertexSet(1000).result.vs
-    val a = vs.randomAttribute(0).derive[Double]("x < 0 ? -1 : 1")
-    val b = vs.randomAttribute(1000).derive[Double]("x < 0 ? -1 : 1") // Red herring.
+    val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
+    val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 2, networkSize = 4, iterations = 10, learningRate = 0.2, radius = 3,
@@ -80,7 +80,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("lattice, hiding") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
-    val sideNum = g.attr[String]("side").derive[Double](
+    val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
@@ -99,7 +99,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("lattice, forgetting") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
-    val sideNum = g.attr[String]("side").derive[Double](
+    val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(

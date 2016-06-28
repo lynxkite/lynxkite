@@ -33,6 +33,7 @@ object AttributeWithLocalAggregator {
           attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
       case "vector" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsVector[T]())
       case "set" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsSet[T]())
+      case "median" => AttributeWithLocalAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Median())
       case _ => AttributeWithAggregator(attr, choice)
     }
   }

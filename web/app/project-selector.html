@@ -46,11 +46,11 @@
       </form>
     </div>
 
-    <div class="entry" id="import-table" ng-click="startTableImport()">
+    <div ng-class="importTable.expanded ? 'entry-nohover' : 'entry'"
+      id="import-table" ng-click="startTableImport()">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead">Import table</span>
       <import-wizard
-       class="entry"
        current-directory="path"
        ng-if="importTable.expanded"
        on-cancel="importTable.expanded = false"
@@ -65,8 +65,10 @@
           >{{ dir }}<span ng-hide="$last" class="slash">/</span></span>
       </span>
       <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon" ng-show="path"></span>
-      <span class="clicky glyphicon glyphicon-cog" ng-click="scope.showSettings = !scope.showSettings"
-            id="directory-settings-icon"></span>
+      <span class="clicky glyphicon glyphicon-cog"
+        ng-show="util.globals.hasAuth"
+        ng-click="scope.showSettings = !scope.showSettings"
+        id="directory-settings-icon"></span>
     </div>
 
     <!-- Directory settings. -->

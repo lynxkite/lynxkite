@@ -1,0 +1,22 @@
+find-in-page-box {
+  position: fixed;
+  top: 0px;
+  right: 0px;
+}
+
+find-in-page-box input {
+}
+
+span.find-highlight {
+  background: yellow;
+}
+span.find-highlight-current {
+  background: orange;
+}
+
+@media print {
+  find-in-page-box, find-in-page-box *, .find-higlight {
+    display: none !important;
+  }
+}
+

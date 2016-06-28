@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import org.apache.spark._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
@@ -114,24 +115,28 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     vs: UniqueSortedRDD[ID, Unit],
     es: UniqueSortedRDD[ID, Edge],
     measureFunction: MeasureFunction): UniqueSortedRDD[ID, (Int, Double)] = {
+    implicit val rcImplicit = rc
 
     // Get a partitioner of suitable size:
-    val numEdges = es.count // edge data size is ~ 3 x Long = 24 bytes
-    val numVertices = vs.count // vertex data size is ~ 2^bits bytes
-    val numEffectiveRows = Math.max(numEdges, numVertices * (1 << bits) / 24)
-    val partitioner = rc.partitionerForNRows(numEffectiveRows)
+    val edgePartitions = es.partitioner.size // edge data size is ~ 3 x Long = 24 bytes
+    val vertexPartitions = vs.partitioner.size // vertex data size is ~ 2^bits bytes
+    val effectiveVertexPartitions = vertexPartitions * (1 << bits) / 24
+    val partitioner = if (edgePartitions > effectiveVertexPartitions) {
+      es.partitioner.get
+    } else {
+      new HashPartitioner(effectiveVertexPartitions)
+    }
 
     val vertices = vs.sortedRepartition(partitioner)
     val originalEdges = es.map { case (id, edge) => (edge.src, edge.dst) }
     val loopEdges = vs.map { case (id, _) => (id, id) }
-    val edges = (originalEdges ++ loopEdges)
-      .groupBySortedKey(partitioner)
-      .mapValuesWithKeys {
-        // Remove parallel edges because they would be ignored
-        // later anyways.
-        case (id, neighbors) => neighbors.toSeq.distinct: Iterable[ID]
-      }
-      .persist(StorageLevel.MEMORY_AND_DISK)
+    val distinctEdges = (originalEdges ++ loopEdges)
+      .distinct(partitioner.numPartitions)
+    val edges = HybridRDD(
+      distinctEdges,
+      partitioner,
+      false)
+    distinctEdges.persist(StorageLevel.DISK_ONLY)
     // Hll counters are used to estimate set sizes.
     val hyperBallCounters = vertices.mapValuesWithKeys {
       // Initialize a counter for every vertex
@@ -159,7 +164,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     measures: UniqueSortedRDD[ID, (Int, Double)], // (coreachable set size, centrality) at `diameter - 1`
     measureFunction: MeasureFunction,
     partitioner: Partitioner,
-    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, (Int, Double)] = {
+    edges: HybridRDD[ID, ID]): UniqueSortedRDD[ID, (Int, Double)] = {
 
     val newHyperBallCounters = getNextHyperBalls(hyperBallCounters, partitioner, edges)
     val newMeasures = newHyperBallCounters
@@ -204,15 +209,12 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
   private def getNextHyperBalls(
     hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus],
     partitioner: Partitioner,
-    edges: UniqueSortedRDD[ID, Iterable[ID]]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
+    edges: HybridRDD[ID, ID]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
     // For each vertex, add the HLL counter of every neighbor to the HLL counter
     // of the vertex. We don't need outer join because each vertex has a loop edge.
-    hyperBallCounters
-      .sortedJoin(edges)
-      .flatMap {
-        case (id, (hll, neighbors)) =>
-          neighbors.map(nid => (nid, hll))
-      }
+    edges
+      .lookup(hyperBallCounters)
+      .values // (src, (dst, hll)) => (dst, hll)
       .reduceBySortedKey(
         partitioner,
         {

@@ -22,7 +22,8 @@
   padding: 0 5px;
 }
 
-.project-list .entry > .icon {
+.project-list .entry > .icon,
+.project-list .entry-nohover > .icon {
   position: absolute;
   padding: 10px;
   margin-left: -40px;
@@ -39,7 +40,8 @@
   color: white;
 }
 
-.project-list .entry {
+.project-list .entry,
+.project-list .entry-nohover {
   position: relative;
   padding: 10px;
   padding-left: 40px;

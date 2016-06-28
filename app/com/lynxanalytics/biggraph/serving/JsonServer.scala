@@ -460,4 +460,5 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
+  PipeAPI.maybeStart()
 }

@@ -254,6 +254,15 @@
                 <input type="checkbox" ng-model="side.state.preciseBucketSizes">
               </td>
             </tr>
+            <tr>
+              <td>
+                <help-popup href="relative-edge-density"></help-popup>
+                Relative edge density:
+              </td>
+              <td>
+                <input type="checkbox" ng-model="side.state.relativeEdgeDensity">
+              </td>
+            </tr>
           </table>
         </div>
 
@@ -367,16 +376,7 @@
       <li class="sublist list-group-item segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
 
       <li class="list-group-item">
-        <span class="lead de-emph">SQL</span>
-        <div class="pull-right">
-          <i class="glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }} section-button"
-            id="sql-toggle"
-            ng-click="showSQL = !showSQL"
-            tooltip="Open SQL interface"></i>
-        </div>
-        <help-popup href="sql-box" class="pull-right"></help-popup>
-        <div class="clearfix"></div>
-        <sql-box side="side" ng-if="showSQL"></sql-box>
+        <sql-box side="side"></sql-box>
       </i>
     </div>
   </div>

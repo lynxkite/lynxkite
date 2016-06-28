@@ -143,6 +143,8 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   val sqlContext = ctx.sqlContext
 
+  val sparkTests = new SparkTests(ctx.env.get.sparkContext)
+
   val drawing = new DrawingGroovyInterface()
 
   def openTable(tableName: String): String = {
@@ -234,7 +236,8 @@ class DrawingGroovyInterface {
       dstIdx = dstIdx,
       edgeBundleId = params("edgeBundleId").asInstanceOf[String],
       filters = toList[FEVertexAttributeFilter](paramsMap.get("filters")),
-      layout3D = params.getOrElse("layout3D", false).asInstanceOf[Boolean])
+      layout3D = params.getOrElse("layout3D", false).asInstanceOf[Boolean],
+      relativeEdgeDensity = params.getOrElse("relativeEdgeDensity", false).asInstanceOf[Boolean])
   }
 
   def newFEGraphRequest(paramsMap: java.util.Map[String, AnyRef]): FEGraphRequest = {
@@ -309,10 +312,10 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
       case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
       case "vertexDF" =>
         Table.fromTableName(Table.VertexTableName, editor.viewer).toDF(ctx.sqlContext)
+      case "edgeAttributeDF" =>
+        Table.fromTableName(Table.EdgeAttributeTableName, editor.viewer).toDF(ctx.sqlContext)
       case "edgeDF" =>
         Table.fromTableName(Table.EdgeTableName, editor.viewer).toDF(ctx.sqlContext)
-      case "tripletDF" =>
-        Table.fromTableName(Table.TripletTableName, editor.viewer).toDF(ctx.sqlContext)
       case "belongsToDF" =>
         assert(editor.isSegmentation, "belongsToDF is only defined for segmentations.")
         Table.fromTableName(Table.BelongsToTableName, editor.viewer).toDF(ctx.sqlContext)
