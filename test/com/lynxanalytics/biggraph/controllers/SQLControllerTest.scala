@@ -12,15 +12,22 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
   test("global sql on vertices") {
-    val directoryName = "Test_Directory"
-    val directory = DirectoryEntry.fromName(directoryName).asNewDirectory()
-    val globalProjectName = "Global_Test_Name"
-    val globalProjectPath = directoryName + "/" + globalProjectName
-    val globalProjectframe = DirectoryEntry.fromName(globalProjectPath).asNewProjectFrame()
-    run("Example Graph", on = globalProjectPath)
+    val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
+    run("Example Graph", on = "Test_Dir/Test_Project")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = directoryName, sql = "select name from `" + globalProjectName +
-        "|" + "vertices` where age < 40"),
+      DataFrameSpec.global(directory = "Test_Dir",
+        sql = "select name from `Test_Project|vertices` where age < 40"),
+      maxRows = 10)))
+    assert(result.header == List("name"))
+    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  test("global sql on vertices with attribute name quoted with backticks") {
+    val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
+    run("Example Graph", on = "Test_Dir/Test_Project")
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "Test_Dir",
+        sql = "select `name` from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
     assert(result.header == List("name"))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
