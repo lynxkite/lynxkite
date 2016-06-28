@@ -295,7 +295,7 @@ class SQLController(val env: BigGraphEnvironment) {
   private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
     metaManager.synchronized {
       assert(spec.directory.isEmpty,
-        "The directory field in the DataSFrameSpec must be empty for local SQL queries.")
+        "The directory field in the DataFrameSpec must be empty for local SQL queries.")
       val p = SubProject.parsePath(spec.project.get)
       assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
