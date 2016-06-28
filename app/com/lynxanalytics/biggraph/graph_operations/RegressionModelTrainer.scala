@@ -19,13 +19,13 @@ object RegressionModelTrainer extends OpFromJson {
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
     (j \ "method").as[String],
-    (j \ "labelName").as[String],
+    (j \ "labelName").as[Option[String]],
     (j \ "featureNames").as[List[String]])
 }
 import RegressionModelTrainer._
 case class RegressionModelTrainer(
     method: String,
-    labelName: String,
+    labelName: Option[String],
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   @transient override lazy val inputs = new Input(featureNames.size)
   override val isHeavy = true

@@ -69,11 +69,11 @@ case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Lon
     model.save(file.resolvedName)
     output(o.model, Model(
       method = "KMeans",
-      labelName = "default",
+      labelName = None,
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
-      labelScaler = Some(new StandardScalerModel(Vectors.dense(0), Vectors.dense(0), true, true)),
-      featureScaler = new StandardScalerModel(Vectors.dense(0), Vectors.dense(0), true, true))
+      labelScaler = None,
+      featureScaler = None)
     )
   }
 }

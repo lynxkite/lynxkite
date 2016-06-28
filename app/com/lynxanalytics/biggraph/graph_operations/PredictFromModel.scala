@@ -35,7 +35,7 @@ case class PredictFromModel(numFeatures: Int)
     val model = inputs.model.value
     val scaled = Model.toLinalgVector(
       inputs.features.toArray.map { v => v.rdd },
-      inputs.vertices.rdd).mapValues(v => model.featureScaler.transform(v))
+      inputs.vertices.rdd).mapValues(v => model.featureScaler.get.transform(v))
 
     val predictions = model.scaleBack(model.load(rc.sparkContext).predict(scaled.values))
     val ids = scaled.keys // We just put back the keys with a zip.

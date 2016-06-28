@@ -1484,7 +1484,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val method = params("method")
       val model = {
         val op = graph_operations.RegressionModelTrainer(
-          method, labelName, featureNames.toList)
+          method, Some(labelName), featureNames.toList)
         op(op.label, label)(op.features, features).result.model
       }
       project.scalars(name) = model

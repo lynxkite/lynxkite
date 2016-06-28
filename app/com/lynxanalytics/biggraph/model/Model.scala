@@ -42,10 +42,10 @@ private class ClusterModelImpl(m: ml.PipelineModel, sqlContext: SQLContext) exte
 case class Model(
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
-  labelName: String, // Name of the label attribute used to train this model.
+  labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
   labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
-  featureScaler: mllib.feature.StandardScalerModel) // The scaler used to scale the features.
+  featureScaler: Option[mllib.feature.StandardScalerModel]) // The scaler used to scale the features.
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -77,7 +77,7 @@ case class Model(
         featureNames == o.featureNames &&
         ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
           standardScalerModelEquals(labelScaler.get, o.labelScaler.get)) &&
-          standardScalerModelEquals(featureScaler, o.featureScaler)
+          standardScalerModelEquals(featureScaler.get, o.featureScaler.get)
     } else {
       false
     }
@@ -92,7 +92,7 @@ case class Model(
       "labelName" -> labelName,
       "featureNames" -> featureNames,
       "labelScaler" -> standardScalerModelToJson(labelScaler),
-      "featureScaler" -> standardScalerModelToJson(Some(featureScaler))
+      "featureScaler" -> standardScalerModelToJson(featureScaler)
     )
   }
 
@@ -113,15 +113,15 @@ case class Model(
 
   def scalerDetails: String = {
     val meanInfo =
-      if (featureScaler.withMean) {
-        val vec = "(" + featureScaler.mean.toArray.mkString(", ") + ")"
+      if (featureScaler.get.withMean) {
+        val vec = "(" + featureScaler.get.mean.toArray.mkString(", ") + ")"
         s"Centered to 0; original mean was $vec\n"
       } else {
         ""
       }
     val stdInfo =
-      if (featureScaler.withStd) {
-        val vec = "(" + featureScaler.std.toArray.mkString(", ") + ")"
+      if (featureScaler.get.withStd) {
+        val vec = "(" + featureScaler.get.std.toArray.mkString(", ") + ")"
         s"Scaled to unit standard deviation; original deviation was $vec"
       } else {
         ""
@@ -157,10 +157,10 @@ object Model extends FromJson[Model] {
     Model(
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
-      (j \ "labelName").as[String],
+      (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
       standardScalerModelFromJson(j \ "labelScaler"),
-      standardScalerModelFromJson(j \ "featureScaler").get
+      standardScalerModelFromJson(j \ "featureScaler")
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(modelName, modelMeta.featureNames)
@@ -216,7 +216,7 @@ case class FEModelMeta(
 
 case class FEModel(
   method: String,
-  labelName: String,
+  labelName: Option[String],
   featureNames: List[String],
   scalerDetails: String,
   details: String)
@@ -233,7 +233,7 @@ case class ScaledParams(
   // An optional scaler if it was used to scale the labels. It can be used
   // to scale back the results.
   labelScaler: Option[mllib.feature.StandardScalerModel],
-  featureScaler: mllib.feature.StandardScalerModel)
+  featureScaler: Option[mllib.feature.StandardScalerModel])
 
 class Scaler(
     // Whether the data should be prepared for a Stochastic Gradient Descent method.
@@ -258,7 +258,7 @@ class Scaler(
           case (_, v) => v
         })
       // Scale all vectors using the scaler created from the training vectors.
-      (unscaled.mapValues(v => scaler.transform(v)), scaler)
+      (unscaled.mapValues(v => scaler.transform(v)), Some(scaler))
     }
 
     val (labels, labelScaler) = if (forSGD) {
