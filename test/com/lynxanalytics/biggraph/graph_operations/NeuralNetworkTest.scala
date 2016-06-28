@@ -113,4 +113,50 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       g.vertices).attr
     assert(isWrong.rdd.values.sum == 0)
   }
+
+  test("bipartite") {
+    def neighbours(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
+      if (vertex < partition1) List.range(partition1, total)
+      else List.range(0, partition1)
+    }
+    def edgeListsOfCompleteBipartiteGraph(total: Int, partition1: Int): Map[Int, Seq[Int]] = {
+      val edgeList = {
+        for {
+          v <- Range(0, total)
+        } yield {
+          (v, neighbours(total, partition1, v))
+        }
+      }
+      edgeList.toMap
+    }
+    def inWhichPartition(total: Int, partition1: Int): Map[Int, Double] = {
+      val partition = {
+        for {
+          v <- Range(0, total)
+        } yield {
+          if (v < partition1) (v, 1.0)
+          else (v, -1.0)
+        }
+      }
+      partition.toMap
+    }
+
+    val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(10, 5))
+    val vertices = g.result.vs
+    val partition = AddVertexAttribute.run(vertices, inWhichPartition(10, 5))
+
+    val prediction = {
+      val op = NeuralNetwork(
+        featureCount = 0, networkSize = 4, iterations = 25, learningRate = 0.2, radius = 3,
+        hideState = true, forgetFraction = 0.0)
+      op(op.edges, g.result.es)(op.label, partition).result.prediction
+    }
+    prediction.rdd.count // HACK: NullPointerException otherwise.
+    val isWrong = DeriveJS.deriveFromAttributes[Double](
+      "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
+      Seq("prediction" -> prediction, "truth" -> partition),
+      g.result.vs).attr
+    assert(isWrong.rdd.values.sum == 0)
+  }
+
 }
