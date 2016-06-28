@@ -12,4 +12,10 @@ have a project named Arsenal. If you want to access the vertices table of the Ar
 you need to refer to it by `&#96;Premier_League/Arsenal|vertices&#96;`. In case you are already in the
 `Premier_League` folder, the reference shortens to `&#96;Arsenal|vertices&#96;`
 
+The SQL interface on the project browser page can also be used to reference tables not imported into projects. For
+example, let's say you have a table called Players which has the data of all football players playing in the
+Premier League. Then you can reference it the same way as the tables in projects: e.g. you can list all Arsenal players
+with `select * from &#96;Players&#96; where team = "Arsenal"`. Notice that you still need to enclose the table name
+between two &#96; symbols.
+
 See the section on <<sql-box>> for more details on the usage of the SQL interface.

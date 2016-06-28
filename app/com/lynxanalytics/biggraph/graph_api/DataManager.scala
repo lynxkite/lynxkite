@@ -422,8 +422,4 @@ class DataManager(sc: spark.SparkContext,
   def newSQLContext(): SQLContext = {
     masterSQLContext.newSession()
   }
-
-  def newHiveContext(): HiveContext = {
-    masterHiveContext.newSession()
-  }
 }
