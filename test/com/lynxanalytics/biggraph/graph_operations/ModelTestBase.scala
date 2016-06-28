@@ -20,7 +20,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     graph: SmallTestGraph.Output): Scalar[Model] = {
     val l = AddVertexAttribute.run(graph.vs, label)
     val a = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
-    val op = RegressionModelTrainer(method, labelName, featureNames)
+    val op = RegressionModelTrainer(method, Some(labelName), featureNames)
     op(op.features, a)(op.label, l).result.model
   }
 
