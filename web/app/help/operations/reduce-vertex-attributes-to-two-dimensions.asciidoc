@@ -4,8 +4,8 @@ Scale the mean and standard deviation of the data and reduce multiple double att
 attributes by Principal Component Analysis.
 
 Principal Component Analysis (PCA) is used to emphsize variation and bring out strong patterns in 
-a dataset. It is often makes data easy to explore and visualize.
-https://en.wikipedia.org/wiki/Principal_component_analysis#Relation_between_PCA_and_K-means_clustering
+a dataset. It often makes data easy to explore and visualize.
+https://en.wikipedia.org/wiki/Principal_component_analysis[Principal Component Analysis]
 
 ====
 [[output_name1]] First dimension name::
