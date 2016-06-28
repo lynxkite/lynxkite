@@ -114,31 +114,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(isWrong.rdd.values.sum == 0)
   }
 
+  //Learning partition in a bipartite graph
   test("bipartite") {
-    def neighbours(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
-      if (vertex < partition1) List.range(partition1, total)
-      else List.range(0, partition1)
+    def neighbors(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
+      if (vertex < partition1) partition1 until total
+      else 0 until partition1
     }
     def edgeListsOfCompleteBipartiteGraph(total: Int, partition1: Int): Map[Int, Seq[Int]] = {
-      val edgeList = {
-        for {
-          v <- Range(0, total)
-        } yield {
-          (v, neighbours(total, partition1, v))
-        }
-      }
-      edgeList.toMap
+      (0 until total).map(v => v -> neighbors(total, partition1, v)).toMap
     }
     def inWhichPartition(total: Int, partition1: Int): Map[Int, Double] = {
-      val partition = {
-        for {
-          v <- Range(0, total)
-        } yield {
-          if (v < partition1) (v, 1.0)
-          else (v, -1.0)
-        }
-      }
-      partition.toMap
+      (0 until total).map(v => if (v < partition1) (v, 1.0) else (v, -1.0)).toMap
     }
 
     val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(10, 5))
@@ -147,7 +133,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 25, learningRate = 0.2, radius = 3,
+        featureCount = 0, networkSize = 4, iterations = 11, learningRate = 0.2, radius = 3,
         hideState = true, forgetFraction = 0.0)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
     }
