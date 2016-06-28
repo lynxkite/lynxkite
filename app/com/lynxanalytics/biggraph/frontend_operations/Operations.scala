@@ -8,6 +8,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
 import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
+import com.lynxanalytics.biggraph.graph_operations.PartitionAttribute
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -370,10 +371,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val attr = project.vertexAttributes(attrName)
       val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-        attr, attr, table.columns(src), table.columns(dst))
+        attr, attr, table.column(src), table.column(dst))
       project.edgeBundle = imp.edges
-      for (edgeAttrName <- table.columns.keys) {
-        project.edgeAttributes(edgeAttrName) = table.columns(edgeAttrName).pullVia(imp.embedding)
+      for ((name, attr) <- table.columns) {
+        project.edgeAttributes(name) = attr.pullVia(imp.embedding)
       }
     }
   })
@@ -395,8 +396,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val eg = {
         val op = graph_operations.VerticesToEdges()
-        op(op.srcAttr, table.columns(src).runtimeSafeCast[String])(
-          op.dstAttr, table.columns(dst).runtimeSafeCast[String]).result
+        op(op.srcAttr, table.column(src).runtimeSafeCast[String])(
+          op.dstAttr, table.column(dst).runtimeSafeCast[String]).result
       }
       project.setVertexSet(eg.vs, idAttr = "id")
       project.newVertexAttribute("stringID", eg.stringID)
@@ -425,7 +426,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -455,7 +456,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attrName = params("id-attr")
       assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.columns(params("id-column")).runtimeSafeCast[String]
+      val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -1009,6 +1010,26 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
+      Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
+      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true))
+    def enabled = FEStatus.assert(
+      vertexAttributes[Double].size >= 2, "Less than two vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      val featureNames = params("features").split(",", -1).sorted
+      assert(featureNames.size >= 2, "Please select at least two attributes.")
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val op = graph_operations.ReduceDimensions(features.size)
+      val result = op(op.features, features).result
+      project.newVertexAttribute(params("output_name1"), result.attr1, help)
+      project.newVertexAttribute(params("output_name2"), result.attr2, help)
+    }
+  })
+
   register("Reverse edge direction", new StructureOperation(_, _) {
     def parameters = List()
     def enabled = hasEdgeBundle
@@ -1044,6 +1065,18 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (addIsNewAttr) {
         project.edgeAttributes(params("distattr")) = rev.isNew
       }
+    }
+  })
+
+  register("Find vertex coloring", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "color"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.Coloring()
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.coloring, help)
     }
   })
 
@@ -1344,7 +1377,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
       }
-      project.newVertexAttribute(params("output"), result.attr, expr + help)
+      project.newVertexAttribute(params("output"), result, expr + help)
     }
   })
 
@@ -1386,7 +1419,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
       }
-      project.edgeAttributes(params("output")) = result.attr
+      project.edgeAttributes(params("output")) = result
     }
   })
 
@@ -1521,7 +1554,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Weighted aggregate to segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = List(
-      Choice("weight", "Weight", options = vertexAttributes[Double])) ++
+      Choice("weight", "Weight", options = parentVertexAttributes[Double])) ++
       aggregateParams(parent.vertexAttributes, weighted = true)
     def enabled =
       isSegmentation &&
@@ -2305,8 +2338,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
         parent.vertexAttributes(baseAttrName),
         project.vertexAttributes(segAttrName),
-        table.columns(baseColumnName),
-        table.columns(segColumnName))
+        table.column(baseColumnName),
+        table.column(segColumnName))
       seg.belongsTo = imp.edges
     }
   })
@@ -2335,8 +2368,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "The identifying column parameter must be set for the segmentation.")
       assert(baseAttrName != FEOption.unset.id,
         "The base ID attribute parameter must be set.")
-      val baseColumn = table.columns(baseColumnName)
-      val segColumn = table.columns(segColumnName)
+      val baseColumn = table.column(baseColumnName)
+      val segColumn = table.column(segColumnName)
       val baseAttr = project.vertexAttributes(baseAttrName)
       val segmentation = project.segmentation(params("name"))
 
@@ -3017,6 +3050,33 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Split to train and test set", new VertexAttributesOperation(_, _) {
+    override def parameters = List(
+      Choice("source", "Source attribute",
+        options = vertexAttributes),
+      Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
+      RandomSeed("seed", "Random seed for test set selection"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val sourceName = params("source")
+      val source = project.vertexAttributes(sourceName)
+      val roles = {
+        val op = graph_operations.CreateRole(
+          params("test_set_ratio").toDouble, params("seed").toInt)
+        op(op.vertices, source.vertexSet).result.role
+      }
+      val parted = partitionVariable(source, roles)
+
+      project.newVertexAttribute(s"${sourceName}_test", parted.test)
+      project.newVertexAttribute(s"${sourceName}_train", parted.train)
+    }
+    def partitionVariable[T](
+      source: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
+      val op = graph_operations.PartitionAttribute[T]()
+      op(op.attr, source)(op.role, roles).result
+    }
+  })
+
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, segmentation.belongsTo.reverse).result.outDegree
@@ -3047,13 +3107,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("weighted_sum", "weighted_average", "by_max_weight", "by_min_weight")
+            FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
           } else if (needsGlobal) {
-            FEOption.list("sum", "average", "min", "max", "count", "first", "std_deviation")
+            FEOption.list("average", "count", "first", "max", "min", "std_deviation", "sum")
+
           } else {
             FEOption.list(
-              "sum", "average", "min", "max", "most_common", "count_distinct",
-              "count", "vector", "set", "std_deviation")
+              "average", "count", "count_distinct", "max", "median", "min", "most_common",
+              "set", "std_deviation", "sum", "vector")
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -3071,7 +3132,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             FEOption.list("count", "first")
           } else {
-            FEOption.list("most_common", "count_distinct", "count", "vector", "set")
+            FEOption.list("count", "count_distinct", "median", "most_common", "set", "vector")
           }
         }
         TagList(s"aggregate-$name", name, options = options)

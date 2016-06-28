@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
+import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
@@ -178,6 +179,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
     kryo.register(classOf[Array[org.apache.spark.sql.types.DataType]])
     kryo.register(classOf[java.sql.Timestamp])
+    kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
+    kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
+    kryo.register(Class.forName("[[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -198,17 +202,99 @@ object BigGraphSparkContext {
     new BigGraphKryoForcedRegistrator().registerClasses(myKryo)
     myKryo
   }
+  def isMonitoringEnabled =
+    LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_HOST").isDefined &&
+      LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_PORT").isDefined
+
+  def setupMonitoring(conf: spark.SparkConf): spark.SparkConf = {
+    val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
+    val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
+    val jvmSource = "org.apache.spark.metrics.source.JvmSource"
+    // Set the keys normally defined in metrics.properties here.
+    // This way it's easier to make sure that executors receive the
+    // settings.
+    conf
+      .set("spark.metrics.conf.*.sink.graphite.class", "org.apache.spark.metrics.sink.GraphiteSink")
+      .set("spark.metrics.conf.*.sink.graphite.host", graphiteHostName)
+      .set("spark.metrics.conf.*.sink.graphite.port", graphitePort)
+      .set("spark.metrics.conf.*.sink.graphite.period", "1")
+      .set("spark.metrics.conf.*.sink.graphite.unit", "seconds")
+      .set("spark.metrics.conf.master.source.jvm.class", jvmSource)
+      .set("spark.metrics.conf.worker.source.jvm.class", jvmSource)
+      .set("spark.metrics.conf.driver.source.jvm.class", jvmSource)
+      .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
+  }
+
+  def infiniteLocalityConf(conf: spark.SparkConf, sparkVersion: String): spark.SparkConf = {
+    // Make sure spark will wait for the data to be available locally
+    assert(sparkVersion.startsWith("1."),
+      s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
+    conf.set("spark.locality.wait", "99m")
+    conf
+  }
+
+  def setupCustomMonitoring(sc: spark.SparkContext) = {
+    if (isMonitoringEnabled) {
+      // Hacky solution to register BiggraphMonitoringSource as a
+      // metric Source in Spark's metric system on each JVM. Why
+      // are we not just registering it with Spark the same way as
+      // JvmSource above? Because Spark sets up metrics before
+      // adding the biggraph JAR file into its classpath.
+
+      // We need to run the code in SetupMetricsSingleton for each
+      // executor JVM exactly once. This code is inspired by H2O
+      // sparkling-water's implementation of setting up workers on
+      // each Spark executor. They go to great lengths of making sure
+      // they exactly know the number of hosts and fail if they can't
+      // realiably count them. Here we are just going to do a
+      // best-effort hack.
+      val numExecutors = LoggedEnvironment
+        .envOrElse("NUM_EXECUTORS", "1")
+        .toInt
+      val numCoresPerExecutor = LoggedEnvironment
+        .envOrElse("NUM_CORES_PER_EXECUTOR", "4")
+        .toInt
+      val dummyRddSize = numExecutors * numCoresPerExecutor * 10
+      sc.parallelize(1 to dummyRddSize, dummyRddSize)
+        .foreach(_ => SetupMetricsSingleton.dummy)
+    }
+  }
+
+  def rotateSparkEventLogs() = {
+    val currentTimeMillis = System.currentTimeMillis
+    val deletionThresholdMillis = currentTimeMillis - 60 * 24 * 3600 * 1000
+    for (file <- LogController.getLogDir.listFiles) {
+      if (file.isFile() && file.getName().endsWith("lz4")) {
+        if (file.lastModified() < deletionThresholdMillis) {
+          file.delete()
+        }
+      }
+    }
+  }
+
   def apply(
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = ""): spark.SparkContext = {
+    rotateSparkEventLogs()
+
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
+
+    // Don't forget to review spark.memory.useLegacyMode before upgrading Spark to 2.x
+    // Without that setting, Spark 1.6.0 slows down when the cache is full. Other flags can
+    // also fix that issue:
+    //   spark.memory.fraction 0.66
+    // Or:
+    //   spark.executor.extraJavaOptions -XX:NewRatio=3
+    assert(versionFound.startsWith("1."), "Spark 2.0 is not yet supported.")
+
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
+      .set("spark.memory.useLegacyMode", "true")
       .set("spark.io.compression.codec", "lz4")
       .set("spark.executor.memory",
         LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
@@ -239,6 +325,14 @@ object BigGraphSparkContext {
       .setIfMissing(
         "spark.akka.frameSize", "1000")
       .set("spark.sql.runSQLOnFiles", "false")
+      // Configure Spark event logging:
+      .set(
+        "spark.eventLog.dir",
+        "file://" + LogController.getLogDir.getAbsolutePath)
+      .set("spark.eventLog.enabled", "true")
+      .set("spark.eventLog.compress", "true")
+    sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
+    sparkConf = infiniteLocalityConf(sparkConf, versionFound)
     if (useKryo) {
       sparkConf = sparkConf
         .set(
@@ -256,6 +350,9 @@ object BigGraphSparkContext {
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
     val sc = new spark.SparkContext(sparkConf)
     sc.addSparkListener(new BigGraphSparkListener(sc))
+    if (isMonitoringEnabled) {
+      setupCustomMonitoring(sc)
+    }
     sc
   }
 }

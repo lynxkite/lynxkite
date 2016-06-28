@@ -290,7 +290,9 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
     mapValuesRecipe(f).asGeneral
 
   def mapValuesRecipe[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDDRecipe[K, U] =
-    deriveRecipe(_.self.mapValues(x => f(x)))
+    deriveRecipe(_.mapPartitions(
+      { it => it.map { case (k, v) => (k, f(v)) } },
+      preservesPartitioning = true))
 
   def flatMapValues[U](
     f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] =
@@ -298,7 +300,9 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
 
   def flatMapValuesRecipe[U](
     f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDDRecipe[K, U] =
-    deriveRecipe(_.self.flatMapValues(x => f(x)))
+    deriveRecipe(_.mapPartitions(
+      { it => it.flatMap { case (k, v) => f(v).map { v => (k, v) } } },
+      preservesPartitioning = true))
 
   // This version takes a Key-Value tuple as argument.
   def mapValuesWithKeys[U](f: ((K, V)) => U): SortedRDD[K, U] =
@@ -313,7 +317,9 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
     filterRecipe(f).asGeneral
 
   def filterRecipe(f: ((K, V)) => Boolean): SortedRDDRecipe[K, V] =
-    deriveRecipe(_.self.filter(f))
+    deriveRecipe(_.mapPartitions(
+      { it => it.filter(f) },
+      preservesPartitioning = true))
 
   // When a key is present multiple times, keep the first key-value
   // pair and discard the rest.

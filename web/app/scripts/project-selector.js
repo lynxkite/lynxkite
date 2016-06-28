@@ -10,6 +10,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
+      scope.util = util;
       function defaultSettings() {
         return { privacy: 'private' };
       }
@@ -184,7 +185,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkEntry',
-              { 
+              {
                 from: p,
                 to: scope.dirName(p) + 'Copy of ' + scope.baseName(p)
               }).then(scope.reload);

@@ -1,7 +1,10 @@
 <div class="col-sm-offset-3 col-sm-6">
 
   <h1>Cleaner</h1>
-  <form>
+  <div class="alert alert-danger" ng-show="fileStatus.$error">
+    {{ fileStatus.$error }}
+  </div>
+  <form ng-show="!fileStatus.$error">
     <table class="table table-striped">
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>

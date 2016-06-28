@@ -83,7 +83,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("JS integers become Scala doubles") {
     val g = ExampleGraph()().result
 
-    val derived = DeriveJS.deriveFromAttributes[Double]("2", Seq(), g.vertices).attr
+    val derived = DeriveJS.deriveFromAttributes[Double]("2", Seq(), g.vertices)
     assert(derived.rdd.collect.toSet == Set(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 2.0))
   }
 
@@ -103,7 +103,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     intercept[AssertionError] {
       DeriveJS.deriveFromAttributes[Double](
-        "location ? 1.0 : 2.0", Seq("location" -> g.location), g.vertices).attr
+        "location ? 1.0 : 2.0", Seq("location" -> g.location), g.vertices)
     }
   }
 
@@ -117,7 +117,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("Utility methods") {
     val g = ExampleGraph()().result
     val nameHash = DeriveJS.deriveFromAttributes[Double](
-      "util.hash(name)", Seq("name" -> g.name), g.vertices).attr
+      "util.hash(name)", Seq("name" -> g.name), g.vertices)
     assert(nameHash.rdd.collect.toSeq.sorted ==
       Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
         2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
@@ -125,7 +125,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val rndSum = DeriveJS.deriveFromAttributes[Double](
       "var rnd = util.rnd(income); rnd.nextDouble() + rnd.nextDouble();",
       Seq("income" -> g.income),
-      g.vertices).attr
+      g.vertices)
     def rndSumScala(income: Double) = {
       val rnd = new scala.util.Random(income.toLong)
       rnd.nextDouble + rnd.nextDouble

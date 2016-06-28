@@ -65,8 +65,8 @@ The properties of `GroovyProject` are:
    returns a histogram of the attribute with 10 buckets. You can also call it with additional
    optional arguments, for example: `histogram(numBuckets: 12, logarithmic: true, precise: false)`.
  - `DataFrame **vertexDF**` gives you access to the vertex attributes of the project
-   as an Apache Spark DataFrame. `DataFrame **edgeDF**` does the same for the edges.
-   `DataFrame **tripletDF**` joins the two tables, giving access to the vertex attributes with
+   as an Apache Spark DataFrame. `DataFrame **edgeAttributeDF**` does the same for the edges.
+   `DataFrame **edgeDF**` joins the two tables, giving access to the vertex attributes with
    `src_` and `dst_` prefixes and to the edge attributes with the `edge_` prefix.
    `DataFrame **belongsToDF**` (defined on segmentations)
    does it for the links going between a project and its segmentation with vertex attributes

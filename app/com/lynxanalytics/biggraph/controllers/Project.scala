@@ -287,7 +287,7 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.TripletTableName)
+      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
 }
@@ -349,7 +349,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   def implicitTableNames =
     Option(vertexSet).map(_ => Table.VertexTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.TripletTableName) ++
+      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
       Option(belongsTo).map(_ => Table.BelongsToTableName)
 }
 
@@ -1049,7 +1049,11 @@ class DirectoryEntry(val path: SymbolPath)(
     DirectoryEntry.fromPath(to.path)
   }
 
-  def parent = if (path.size > 1) Some(new Directory(path.init)) else None
+  def parent = {
+    if (path.size > 1) Some(new Directory(path.init))
+    else if (path.size == 1) Some(DirectoryEntry.rootDirectory)
+    else None
+  }
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")

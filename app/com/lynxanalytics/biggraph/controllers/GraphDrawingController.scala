@@ -89,6 +89,8 @@ case class EdgeDiagramSpec(
   edgeWeightId: String = "",
   // Whether to generate 3D coordinates for the vertices.
   layout3D: Boolean,
+  //whether to normalize the thickness of the edges shown on the bucketed graph according to the relative density
+  relativeEdgeDensity: Boolean,
   // Attributes to be returned together with the edges. As one visualized edge can correspond to
   // many actual edges, clients always have to specify an aggregator as well. For now, this only
   // works for small edge set visualizations (i.e. sampled mode).
@@ -525,6 +527,18 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       if (request.layout3D) ForceLayout3D(feEdges) else Map())
   }
 
+  // Recalculates the edge weights to be relative to the vertex sizes.
+  def relativeEdgeDensity(
+    ed: EdgeDiagramResponse, src: VertexDiagramResponse, dst: VertexDiagramResponse): EdgeDiagramResponse = {
+    val originalEdges = ed.edges
+    val newEdges = originalEdges.map { feEdge =>
+      val srcSize = src.vertices(feEdge.a).size
+      val dstSize = dst.vertices(feEdge.b).size
+      feEdge.copy(size = feEdge.size / (srcSize * dstSize))
+    }
+    ed.copy(edges = newEdges)
+  }
+
   def getComplexView(user: User, request: FEGraphRequest): FEGraphResponse = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(user, _))
     for ((spec, diag) <- request.vertexSets zip vertexDiagrams) {
@@ -543,7 +557,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .map(eb => eb.copy(
         srcDiagramId = resolveDiagramId(eb.srcDiagramId),
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
-    val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(user, _))
+    val edgeDiagrams = modifiedEdgeSpecs.map { spec =>
+      val ed = getEdgeDiagram(user, spec)
+      if (spec.relativeEdgeDensity) {
+        val src = vertexDiagrams.find(diag => diag.diagramId == spec.srcDiagramId).get
+        val dst = vertexDiagrams.find(diag => diag.diagramId == spec.dstDiagramId).get
+        relativeEdgeDensity(ed, src, dst)
+      } else ed
+    }
     for ((spec, diag) <- request.edgeBundles zip edgeDiagrams) {
       assert(
         diag.size <= spec.maxSize,
