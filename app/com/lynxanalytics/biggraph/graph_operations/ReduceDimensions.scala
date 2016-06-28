@@ -1,17 +1,11 @@
-// Reduce multiple double attributes to two double attributes by principle components analysis.
+// Reduce multiple double attributes to two double attributes by principal components analysis.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.model.Model
-
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.mllib.linalg.DenseVector
-import org.apache.spark.ml.feature.{ PCA, PCAModel }
-import org.apache.spark.ml.feature.{ StandardScaler, StandardScalerModel }
+import org.apache.spark.ml.feature.{ StandardScaler, PCA }
 
 object ReduceDimensions extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {

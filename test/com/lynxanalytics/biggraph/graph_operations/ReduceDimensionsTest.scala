@@ -1,28 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.rdd.RDD
-import org.apache.spark
-
-import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_util.Scripting._
-import com.lynxanalytics.biggraph.JavaScript
 
 class ReduceDimensionsTest extends FunSuite with TestGraphOp {
 
   test("example graph") {
-    val sqlContext = dataManager.newSQLContext()
-    import sqlContext.implicits._
-
     val g = ExampleGraph()().result
     val op = ReduceDimensions(2)
     val result = op(op.features, Seq(g.age, g.income): Seq[Attribute[Double]]).result
@@ -33,9 +17,6 @@ class ReduceDimensionsTest extends FunSuite with TestGraphOp {
   }
 
   test("larger data set with 40 attributes") {
-    val sqlContext = dataManager.newSQLContext()
-    import sqlContext.implicits._
-
     val numAttr = 40
     val attrs = (1 to numAttr).map(i => (0 to 1000).map {
       case x => x -> (x * i).toDouble
