@@ -43,4 +43,16 @@ class ModelJsonSerializationTest extends ModelTestBase {
     assert(m2 == m1)
   }
 
+  test("Model json serialization works when labelScaler, labelName and featureScaler are None") {
+    val m1 = Model(
+      "one",
+      "two",
+      None,
+      List[String]("four", "five"),
+      None,
+      None)
+    val out = m1.toJson
+    val m2 = Model.fromJson(out)
+    assert(m2 == m1)
+  }
 }

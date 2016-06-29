@@ -18,7 +18,7 @@ class RegressionModelTrainerTest extends ModelTestBase {
     assert(m.featureNames == List("yob"))
     val impl = m.load(sparkContext)
     val yob = vectorRDD(Array(2000))
-    val age = m.scaleBack(impl.predict(
+    val age = m.scaleBack(impl.transform(
       yob.map(v => m.featureScaler.get.transform(v)))).collect()(0)
     assertRoughlyEquals(age, 15, 1)
   }

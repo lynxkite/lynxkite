@@ -15,27 +15,26 @@ import play.api.libs.json.JsNull
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
-  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double]
+  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double]
   def details: String
 }
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
-  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
   def details: String = {
     val weights = "(" + m.weights.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\nweights: $weights"
   }
 }
 
-private class ClusterModelImpl(m: ml.PipelineModel, sqlContext: SQLContext) extends ModelImplementation {
+private class ClusterModelImpl(m: ml.clustering.KMeansModel, sqlContext: SQLContext) extends ModelImplementation {
   import sqlContext.implicits._
-  def predict(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
-    //val partitioner = data.partitioner.get
+  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
     m.transform(data.map(x => Tuple1(x)).toDF("unscaled")).map { row => row.getAs[Int](2).toDouble }
   }
   def details: String = {
-    "intercept"
+    s"Cluster centers: ${m.clusterCenters.mkString}"
   }
 }
 
@@ -77,7 +76,8 @@ case class Model(
         featureNames == o.featureNames &&
         ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
           standardScalerModelEquals(labelScaler.get, o.labelScaler.get)) &&
-          standardScalerModelEquals(featureScaler.get, o.featureScaler.get)
+          ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
+            standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
     } else {
       false
     }
@@ -106,8 +106,8 @@ case class Model(
         new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
       case "Lasso" =>
         new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
-      case "KMeans" =>
-        new ClusterModelImpl(ml.PipelineModel.load(path), new SQLContext(sc))
+      case "KMeans clustering" =>
+        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), new SQLContext(sc))
     }
   }
 
@@ -227,7 +227,7 @@ trait ModelMeta {
 
 case class ScaledParams(
   // Labeled training data points.
-  points: RDD[mllib.regression.LabeledPoint],
+  points: Option[RDD[mllib.regression.LabeledPoint]],
   // All feature data.
   vectors: AttributeRDD[mllib.linalg.Vector],
   // An optional scaler if it was used to scale the labels. It can be used
@@ -274,10 +274,29 @@ class Scaler(
       (labelRDD, None)
     }
 
-    val points = labels.sortedJoin(vectors).values.map {
+    val points = Some(labels.sortedJoin(vectors).values.map {
       case (l, v) => new mllib.regression.LabeledPoint(l, v)
-    }
-    points.cache
+    })
+    points.get.cache
     ScaledParams(points, vectors, labelScaler, featureScaler)
+  }
+
+  // This scaler can be used for unsupervised learning
+  def scaleFeatures(
+    features: Array[AttributeRDD[Double]],
+    vertices: VertexSetRDD)(implicit id: DataSet): ScaledParams = {
+
+    val unscaled = Model.toLinalgVector(features, vertices)
+    // All scaled data points.
+    val (vectors, featureScaler) = {
+
+      // Must scale the features or we get NaN predictions. (SPARK-1859)
+      val scaler = new mllib.feature.StandardScaler(
+        withMean = forSGD, // Center the vectors for SGD training methods.
+        withStd = true).fit(unscaled.values)
+      // Scale all vectors using the scaler created from the training vectors.
+      (unscaled.mapValues(v => scaler.transform(v)), Some(scaler))
+    }
+    ScaledParams(None, vectors, None, featureScaler)
   }
 }

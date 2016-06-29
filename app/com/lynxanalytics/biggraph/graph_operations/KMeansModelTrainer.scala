@@ -54,26 +54,23 @@ case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Lon
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map { v => v.rdd }
-    val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val unscaledDf = unscaledRdd.toDF("ID", "unscaled")
+    val params = new Scaler(forSGD = false).scaleFeatures(rddArray, inputs.vertices.rdd)
+    val scaledDf = params.vectors.toDF("ID", "vector")
 
-    // Create a new column which represents the vector of selected attributes 
-    val scaler = new StandardScaler().setInputCol("unscaled").setOutputCol("vector")
-      .setWithStd(true).setWithMean(false)
+    // Train a KMeans model from the scaled vectors
     val kmeans = new KMeans().setK(k).setMaxIter(maxIter).setTol(tolerance).setSeed(seed)
       .setFeaturesCol("vector").setPredictionCol("prediction")
-    val pipeline = new Pipeline().setStages(Array(scaler, kmeans))
-    val model = pipeline.fit(unscaledDf)
+    val model = kmeans.fit(scaledDf)
 
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
-      method = "KMeans",
+      method = "KMeans clustering",
       labelName = None,
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
       labelScaler = None,
-      featureScaler = None)
+      featureScaler = params.featureScaler)
     )
   }
 }

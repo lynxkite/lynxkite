@@ -35,12 +35,13 @@ case class ClusterVerticesByModel(numFeatures: Int)
     val model = inputs.model.value
     val rddArray = inputs.features.toArray.map { v => v.rdd }
     val unscaledRdd = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
+    val scaledRdd = unscaledRdd.mapValues(v => model.featureScaler.get.transform(v))
 
-    val clustering = model.load(rc.sparkContext).predict(unscaledRdd.values)
+    val clustering = model.load(rc.sparkContext).transform(scaledRdd.values)
     val ids = unscaledRdd.keys
 
     output(
-      o.clustering, ids.zip(clustering).filter(!_._2.isNaN).asUniqueSortedRDD(unscaledRdd.partitioner.get)
+      o.clustering, ids.zip(clustering).filter(!_._2.isNaN).asUniqueSortedRDD(scaledRdd.partitioner.get)
     )
   }
 }
