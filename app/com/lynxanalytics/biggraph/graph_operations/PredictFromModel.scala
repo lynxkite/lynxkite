@@ -37,7 +37,7 @@ case class PredictFromModel(numFeatures: Int)
       inputs.features.toArray.map { v => v.rdd },
       inputs.vertices.rdd).mapValues(v => model.featureScaler.get.transform(v))
 
-    val predictions = model.scaleBack(model.load(rc.sparkContext).predict(scaled.values))
+    val predictions = model.scaleBack(model.load(rc.sparkContext).transform(scaled.values))
     val ids = scaled.keys // We just put back the keys with a zip.
     output(
       o.prediction,

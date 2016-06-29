@@ -47,11 +47,11 @@ case class RegressionModelTrainer(
 
     val model = method match {
       case "Linear regression" =>
-        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
+        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points.get)
       case "Ridge regression" =>
-        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
+        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points.get)
       case "Lasso" =>
-        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
+        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points.get)
     }
     Model.checkLinearModel(model)
 

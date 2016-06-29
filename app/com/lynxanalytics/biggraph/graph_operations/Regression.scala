@@ -38,33 +38,33 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     val (predictions, vectors) = method match {
       case "Linear regression" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
+        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points.get)
         Model.checkLinearModel(model)
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Ridge regression" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
+        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points.get)
         Model.checkLinearModel(model)
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Lasso" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
+        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points.get)
         Model.checkLinearModel(model)
         (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
       case "Logistic regression" =>
         val p = getParams(forSGD = false)
         val model = new mllib.classification.LogisticRegressionWithLBFGS()
-          .setIntercept(true).setNumClasses(10).run(p.points)
+          .setIntercept(true).setNumClasses(10).run(p.points.get)
         Model.checkLinearModel(model)
         (model.predict(p.vectors.values), p.vectors)
       case "Naive Bayes" =>
         val p = getParams(forSGD = false)
-        val model = mllib.classification.NaiveBayes.train(p.points)
+        val model = mllib.classification.NaiveBayes.train(p.points.get)
         (model.predict(p.vectors.values), p.vectors)
       case "Decision tree" =>
         val p = getParams(forSGD = false)
         val model = mllib.tree.DecisionTree.trainRegressor(
-          input = p.points,
+          input = p.points.get,
           categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
           impurity = "variance", // Options: gini, entropy, variance as of Spark 1.6.0.
           maxDepth = 5,
@@ -73,7 +73,7 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
       case "Random forest" =>
         val p = getParams(forSGD = false)
         val model = mllib.tree.RandomForest.trainRegressor(
-          input = p.points,
+          input = p.points.get,
           categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
           numTrees = 10,
           featureSubsetStrategy = "onethird",
@@ -88,7 +88,7 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
         boostingStrategy.numIterations = 10
         boostingStrategy.treeStrategy.maxDepth = 5
         boostingStrategy.treeStrategy.categoricalFeaturesInfo = Map[Int, Int]() // All continuous.
-        val model = mllib.tree.GradientBoostedTrees.train(p.points, boostingStrategy)
+        val model = mllib.tree.GradientBoostedTrees.train(p.points.get, boostingStrategy)
         (model.predict(p.vectors.values), p.vectors)
     }
     val ids = vectors.keys // We just put back the keys with a zip.
