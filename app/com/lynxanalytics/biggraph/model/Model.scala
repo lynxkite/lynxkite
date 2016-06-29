@@ -21,7 +21,7 @@ trait ModelImplementation {
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
-  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
   def details: String = {
     val weights = "(" + m.weights.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\nweights: $weights"
@@ -30,8 +30,9 @@ private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearMod
 
 private class ClusterModelImpl(m: ml.clustering.KMeansModel, sqlContext: SQLContext) extends ModelImplementation {
   import sqlContext.implicits._
-  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
-    m.transform(data.map(x => Tuple1(x)).toDF("unscaled")).map { row => row.getAs[Int](2).toDouble }
+  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
+    val dataDf = data.map(x => Tuple1(x)).toDF("vector")
+    m.transform(dataDf).map { row => row.getAs[Int](1).toDouble }
   }
   def details: String = {
     s"Cluster centers: ${m.clusterCenters.mkString}"

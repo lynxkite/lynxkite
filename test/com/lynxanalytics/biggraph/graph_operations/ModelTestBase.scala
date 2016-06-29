@@ -45,4 +45,8 @@ class ModelTestBase extends FunSuite with TestGraphOp {
   def vectorRDD(v: Array[Double]): rdd.RDD[mllib.linalg.Vector] = {
     sparkContext.parallelize(Array(new mllib.linalg.DenseVector(v)))
   }
+
+  def vectorsRDD(arr: Array[Array[Double]]): rdd.RDD[mllib.linalg.Vector] = {
+    sparkContext.parallelize(arr.map(v => new mllib.linalg.DenseVector(v)))
+  }
 }
