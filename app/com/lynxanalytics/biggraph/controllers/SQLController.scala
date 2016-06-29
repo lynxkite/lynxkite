@@ -258,12 +258,13 @@ class SQLController(val env: BigGraphEnvironment) {
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
       // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
       val (projectTableNames, importedTableNames) = tableNames.partition(_._2.contains('|'))
-      // For the assumed project tables we select those whose correspontding project really exists and
+      // For the assumed project tables we select those whose corresponding project really exists and
       // is accessible to the user
       val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
       val usedProjects = usedProjectNames.mapValues(DirectoryEntry.fromName(_))
-      val goodProjectViewers = usedProjects.filter { case (name, proj) => proj.isProject && proj.readAllowedFrom(user) }
-        .mapValues(_.asProjectFrame.viewer)
+      val goodProjectViewers = usedProjects.collect {
+        case (name, proj) if proj.isProject && proj.readAllowedFrom(user) => (name, proj.asProjectFrame.viewer)
+      }
 
       val allTablePathsInGoodProjects = goodProjectViewers.flatMap {
         case (name, proj) => proj.allRelativeTablePaths.map { path => ((name, path), proj) }
