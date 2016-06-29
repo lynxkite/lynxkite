@@ -53,14 +53,14 @@ case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Lon
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val rddArray = inputs.features.toArray.map { v => v.rdd }
-    val params = new Scaler(forSGD = false).scaleFeatures(rddArray, inputs.vertices.rdd)
-    val scaledDf = params.vectors.toDF("ID", "vector")
+    val RDDArray = inputs.features.toArray.map { v => v.rdd }
+    val params = new Scaler(forSGD = false).scaleFeatures(RDDArray, inputs.vertices.rdd)
+    val scaledDF = params.vectors.toDF("ID", "vector")
 
     // Train a KMeans model from the scaled vectors
     val kmeans = new KMeans().setK(k).setMaxIter(maxIter).setTol(tolerance).setSeed(seed)
       .setFeaturesCol("vector").setPredictionCol("prediction")
-    val model = kmeans.fit(scaledDf)
+    val model = kmeans.fit(scaledDF)
 
     val file = Model.newModelFile
     model.save(file.resolvedName)
