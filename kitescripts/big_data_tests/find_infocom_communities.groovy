@@ -5,7 +5,7 @@
 project = lynx.loadProject('maximal_cliques_result')
 
 project.findInfocomCommunities(
-  'cliques_name': 'maximal_cliques'
+  'cliques_name': 'maximal_cliques',
   'communities_name': 'communities',
   'bothdir': 'false',
   'min_cliques': '3',
