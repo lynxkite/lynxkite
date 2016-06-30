@@ -4,7 +4,7 @@
 
 project = lynx.loadProject('filter_high_degree_vertices_result')
 
-project.maximalCliques(
+project.modularClustering(
   'name': 'modular_clusters',
   'weight': '!no weight',
   'max-iterations': '30',

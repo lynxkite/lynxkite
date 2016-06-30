@@ -10,7 +10,7 @@ name = 'ranking'
 project.addRankAttribute(
   'rankattr': name,
   'keyattr': 'rnd_std_uniform',
-  'order:': 'ascending'
+  'order': 'ascending'
 )
 
 project.vertexAttributes[name].computeAndPrintHistogram(
