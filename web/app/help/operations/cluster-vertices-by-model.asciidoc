@@ -1,0 +1,14 @@
+### Cluster vertices by model
+
+Creates clustering labels from a model and vertex attributes of the graph.
+
+====
+[[name]] Clustering label name::
+The new attribute of the clustering label will be created under this name.
+
+[[model]] Name and parameters of the model::
+The model used for the clustering and a mapping from vertex attributes to the model's
+features.
++
+Every feature of the model needs to be mapped to a vertex attribute.
+====

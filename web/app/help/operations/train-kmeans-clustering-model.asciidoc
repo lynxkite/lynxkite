@@ -1,0 +1,18 @@
+### Train linear regression model
+
+Trains a linear regression model using the graph's vertex attributes.
+
+====
+[[name]] Model name::
+The model will be stored as a scalar attribute using this name.
+
+[[label]] Label attribute::
+The vertex attribute for which the model is trained.
+
+[[features]] Feature attributes::
+Attributes to be used as inputs for the training algorithm. The trained model
+will have a list of features with the same names and semantics.
+
+[[method]] Training method::
+The algorithm used to train the linear regression model.
+====
