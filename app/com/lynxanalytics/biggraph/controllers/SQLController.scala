@@ -271,7 +271,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
     SQLController.saveTable(
       table, s"From ${request.df.project} by running ${request.df.sql}",
-      user, request.table, request.privacy, null)
+      user, request.table, request.privacy)
   }
 
   def exportSQLQueryToCSV(
@@ -371,7 +371,7 @@ object SQLController {
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
-    saveTable(table, notes, user, tableName, privacy, importConfig)
+    saveTable(table, notes, user, tableName, privacy, Option(importConfig))
   }
 
   def saveTable(
@@ -380,12 +380,12 @@ object SQLController {
     user: serving.User,
     tableName: String,
     privacy: String,
-    importConfig: json.JsObject)(
+    importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
     val frame = entry.asNewTableFrame(checkpoint)
-    frame.setImportConfig(importConfig)
+    importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }

@@ -7,7 +7,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 - Global SQL-box added
 - New option has been added in bucketed view: relative edge density.
-- New operation "Find vertex coloring" has been added. 
+- New operation "Find vertex coloring" has been added.
+- Import options are now stored for each table an can be reused via "Edit import button"
 ### 1.7.5
  - Improve speed and stability of the project history editor
  - Easier to find data export button

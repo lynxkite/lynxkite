@@ -40,11 +40,15 @@ angular.module('biggraph').directive('importWizard', function(util) {
         return csv ? csv.split(',') : [];
       }
 
+      function joinCSVLine(csv) {
+        return csv ? csv.join(',') : [];
+      }
+
       scope.importCSV = function() {
         importStuff(
           '/ajax/importCSV',
           {
-            files: scope.csv.filename,
+            files: scope.csv.files,
             columnNames: splitCSVLine(scope.csv.columnNames),
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
@@ -62,23 +66,44 @@ angular.module('biggraph').directive('importWizard', function(util) {
 
       scope.$on('fill import from config', function(evt, newConfig, tableName) {
         scope.tableName = tableName;
-        scope.columnsToImport = newConfig.data.columnsToImport;
+
+        scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
 
         //com.lynxanalytics.biggraph.controllers.CSVImportRequest
         var requestName = newConfig.class.split('.').pop(); //CSVImportRequest
-        var prefixLength = 'ImportRequest'.length;
-        var datatype = requestName.slice(0, prefixLength * -1).toLowerCase();
+        var suffixLength = 'ImportRequest'.length;
+        var datatype = requestName.slice(0, -suffixLength).toLowerCase();
         scope.datatype = datatype;
         var datatypeScope = scope.$eval(datatype);
 
         datatypeScope.filename = newConfig.data.files;
 
-        for (var newConfigItem in newConfig.data) {
-            if (newConfigItem in datatypeScope) {
-                datatypeScope[newConfigItem] = newConfig.data[newConfigItem];
-            }
+        if (datatypeScope === 'jdbc') {
+          fillJdbcFromData(datatypeScope, newConfig.data);
+        } else if (datatypeScope === 'hive') {
+          fillHiveFromData(datatypeScope, newConfig.data);
+        } else {
+          fillScopeFromData(datatypeScope, newConfig.data);
         }
       });
+
+      function fillScopeFromData(datatypeScope, data) {
+        for (var newConfigItem in data) {
+          if (newConfigItem in datatypeScope) {
+            datatypeScope[newConfigItem] = data[newConfigItem];
+          }
+        }
+      }
+
+      function fillJdbcFromData(jdbc, data) {
+        jdbc.url = data.jdbcUrl;
+        jdbc.table = data.jdbcTable;
+        jdbc.keyColumn = data.keyColumn;
+      }
+
+      function fillHiveFromData(hive, data) {
+        hive.tableName = data.hiveTable;
+      }
 
       scope.importParquet = function() {
         importFilesWith('/ajax/importParquet');
