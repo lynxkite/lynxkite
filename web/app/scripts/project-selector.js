@@ -198,7 +198,7 @@ angular.module('biggraph').directive('projectSelector',
             util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           }
         },
-        editImport: function(name, config) {
+        editConfig: function(name, config) {
           scope.startTableImport();
           $timeout(function () {
             $anchorScroll('import-table');

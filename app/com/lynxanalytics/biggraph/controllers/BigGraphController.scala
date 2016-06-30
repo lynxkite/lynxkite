@@ -156,7 +156,9 @@ case class FEProjectListElement(
     vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
     edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
     error: Option[String] = None, // If set the project could not be opened.
-    details: Option[json.JsObject] = None) {
+    details: Option[json.JsObject] = None) { // The contents of this depend on
+  // the element, e.g. table uses it to
+  // store import configuration
 
   assert(objectType == "table" || objectType == "project", s"Unrecognized objectType: $objectType")
 }
