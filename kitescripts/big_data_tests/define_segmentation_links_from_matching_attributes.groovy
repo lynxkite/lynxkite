@@ -32,8 +32,8 @@ segmentation.defineSegmentationLinksFromMatchingAttributes(
 )
 
 
-project.saveAs('define_segmentation_links_from_matching_attributes_result')
-
+df = segmentation.sql("select * from belongs_to")
+lynx.saveAsTable(df, "segmentation_belongs_to_table")
 
 println "belongsTo Edges: ${segmentation.scalars['!belongsToEdges']}"
 
