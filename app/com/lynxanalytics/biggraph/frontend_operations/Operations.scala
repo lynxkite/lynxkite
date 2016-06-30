@@ -1494,9 +1494,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Train KMeans clustering model", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
-      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
       NonNegInt("k", "Number of clusters", default = 2),
-      NonNegInt("maxIter", "Maximum number of iterations", default = 20),
+      NonNegInt("max-iter", "Maximum number of iterations", default = 20),
       NonNegDouble("tolerance", "Tolerance", defaultValue = "0.0001"),
       RandomSeed("seed", "Seed"))
     def enabled =
@@ -1514,11 +1514,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
       val name = params("name")
       val k = params("k").toInt
-      val maxIter = params("maxIter").toInt
+      val maxIter = params("max-iter").toInt
       val tolerance = params("tolerance").toDouble
       val seed = params("seed").toLong
       val model = {
-        val op = graph_operations.KMeansModelTrainer(
+        val op = graph_operations.KMeansClusteringModelTrainer(
           k, maxIter, tolerance, seed, featureNames.toList)
         op(op.features, features).result.model
       }

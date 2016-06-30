@@ -35,7 +35,7 @@ private class ClusterModelImpl(m: ml.clustering.KMeansModel, sqlContext: SQLCont
     m.transform(dataDf).map { row => row.getAs[Int](1).toDouble }
   }
   def details: String = {
-    s"Cluster centers: ${m.clusterCenters.mkString}"
+    s"Cluster centers: ${m.clusterCenters.mkString}" //TODO: maybe also compute the cost (required input data)
   }
 }
 
@@ -282,7 +282,7 @@ class Scaler(
     ScaledParams(points, vectors, labelScaler, featureScaler)
   }
 
-  // This scaler can be used for unsupervised learning
+  // This feature scaler can be used for unsupervised learning
   def scaleFeatures(
     features: Array[AttributeRDD[Double]],
     vertices: VertexSetRDD)(implicit id: DataSet): ScaledParams = {
@@ -291,7 +291,6 @@ class Scaler(
     // All scaled data points.
     val (vectors, featureScaler) = {
 
-      // Must scale the features or we get NaN predictions. (SPARK-1859)
       val scaler = new mllib.feature.StandardScaler(
         withMean = forSGD, // Center the vectors for SGD training methods.
         withStd = true).fit(unscaled.values)

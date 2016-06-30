@@ -1,4 +1,4 @@
-// Creates a prediction attribute from a machine learning model.
+// Creates a clustering attribute from a machine learning model.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

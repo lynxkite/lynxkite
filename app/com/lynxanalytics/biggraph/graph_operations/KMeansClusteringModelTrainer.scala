@@ -2,22 +2,11 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.model._
-
 import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.ml.feature.StandardScaler
-import org.apache.spark.mllib.feature.StandardScalerModel
-import org.apache.spark.ml.{ Pipeline, PipelineModel }
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
 
 // Creates a kmeans segmentation where each segment represents one cluster.
-object KMeansModelTrainer extends OpFromJson {
+object KMeansClusteringModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until numFeatures).map {
@@ -30,13 +19,13 @@ object KMeansModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) =
-    KMeansModelTrainer((j \ "k").as[Int], (j \ "maxIter").as[Int], (j \ "tolerance").as[Double],
+    KMeansClusteringModelTrainer((j \ "k").as[Int], (j \ "maxIter").as[Int], (j \ "tolerance").as[Double],
       (j \ "seed").as[Int], (j \ "featureNames").as[List[String]])
 }
 
-case class KMeansModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Long, featureNames: List[String])
-    extends TypedMetaGraphOp[KMeansModelTrainer.Input, KMeansModelTrainer.Output] with ModelMeta {
-  import KMeansModelTrainer._
+case class KMeansClusteringModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Long, featureNames: List[String])
+    extends TypedMetaGraphOp[KMeansClusteringModelTrainer.Input, KMeansClusteringModelTrainer.Output] with ModelMeta {
+  import KMeansClusteringModelTrainer._
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = {
