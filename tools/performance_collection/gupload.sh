@@ -86,7 +86,7 @@ curl \
 $TRACE \
 --form policy=$POL \
 --form signature=$SIG \
---form acl=bucket-owner-read \
+--form acl=project-private \
 --form key=$OUTPUT \
 --form GoogleAccessId=kite-logs-upload@big-graph-gc1.iam.gserviceaccount.com \
 --form file=@$INPUT \
