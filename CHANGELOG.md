@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Global SQL-box has been added.
+
 ### 1.8.0
 
  - Major performance and scalability improvements.
