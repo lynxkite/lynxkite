@@ -4,7 +4,7 @@ Generates a script that can upload kite logs and the extracted operation perform
 to the google storage. Only needs to be run when changes are made to the *.policy
 files in this directory. Run it like this:
 
-python gensign.sy > gupload.sh
+python gensign.py > gupload.sh
 
 The new version of gupload.sh should then be committed
 
@@ -128,7 +128,7 @@ curl \\
 $TRACE \\
 --form policy=$POL \\
 --form signature=$SIG \\
---form acl=bucket-owner-read \\
+--form acl=project-private \\
 --form key=$OUTPUT \\
 --form GoogleAccessId=kite-logs-upload@big-graph-gc1.iam.gserviceaccount.com \\
 --form file=@$INPUT \\

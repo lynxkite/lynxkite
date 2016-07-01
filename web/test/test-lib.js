@@ -935,6 +935,13 @@ testLib = {
     menu.$('a.dropdown-toggle').click();
     menu.element(by.id('menu-' + action)).click();
   },
+
+  switchToWindow: function(pos) {
+    browser.getAllWindowHandles()
+      .then(handles => {
+        browser.driver.switchTo().window(handles[pos]);
+    });
+  },
 };
 
 module.exports = testLib;
