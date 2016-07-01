@@ -83,7 +83,7 @@ case class Model(
       val o = other.asInstanceOf[Model]
       def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
         standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
-      def featureScalerEquals = ((featureScaler.isEmpty && !o.featureScaler.isEmpty) ||
+      def featureScalerEquals = ((featureScaler.isEmpty && o.featureScaler.isEmpty) ||
         standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
       method == o.method &&
         symbolicPath == o.symbolicPath &&
