@@ -749,6 +749,9 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     FEOption.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
     FEOption.list(project.vertexAttributeNames[T].toList)
+  protected def parentVertexAttributes[T: TypeTag] = {
+    FEOption.list(project.asSegmentation.parent.vertexAttributeNames[T].toList)
+  }
   protected def edgeAttributes[T: TypeTag] =
     FEOption.list(project.edgeAttributeNames[T].toList)
   protected def segmentations =
