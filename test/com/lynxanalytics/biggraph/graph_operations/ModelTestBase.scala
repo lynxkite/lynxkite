@@ -29,11 +29,6 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     op(op.model, m)(op.features, features).result.prediction
   }
 
-  def cluster(m: Scalar[Model], features: Seq[Attribute[Double]]): Attribute[Double] = {
-    val op = ClusterVerticesByModel(features.size)
-    op(op.model, m)(op.features, features).result.clustering
-  }
-
   def graph(numVertices: Int): SmallTestGraph.Output = {
     SmallTestGraph((0 until numVertices).map(v => v -> Seq()).toMap).result
   }
