@@ -247,6 +247,8 @@ include::internal-edge-id-as-attribute.asciidoc[]
 
 include::internal-vertex-id-as-attribute.asciidoc[]
 
+include::mask-vertex-attribute.asciidoc[]
+
 include::maximal-cliques.asciidoc[]
 
 include::merge-parallel-edges-by-attribute.asciidoc[]
