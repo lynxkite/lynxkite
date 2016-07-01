@@ -1,11 +1,10 @@
-// Creates a segmentation where each segment represents a bucket of an attribute.
+// Train a kmeans clustering model.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.ml.clustering.KMeans
 
-// Creates a kmeans segmentation where each segment represents one cluster.
 object KMeansClusteringModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
@@ -18,21 +17,31 @@ object KMeansClusteringModelTrainer extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
-  def fromJson(j: JsValue) =
-    KMeansClusteringModelTrainer((j \ "k").as[Int], (j \ "maxIter").as[Int], (j \ "tolerance").as[Double],
-      (j \ "seed").as[Int], (j \ "featureNames").as[List[String]])
+  def fromJson(j: JsValue) = KMeansClusteringModelTrainer(
+    (j \ "k").as[Int],
+    (j \ "maxIter").as[Int],
+    (j \ "tolerance").as[Double],
+    (j \ "seed").as[Int],
+    (j \ "featureNames").as[List[String]])
 }
-
-case class KMeansClusteringModelTrainer(k: Int, maxIter: Int, tolerance: Double, seed: Long, featureNames: List[String])
-    extends TypedMetaGraphOp[KMeansClusteringModelTrainer.Input, KMeansClusteringModelTrainer.Output] with ModelMeta {
-  import KMeansClusteringModelTrainer._
+import KMeansClusteringModelTrainer._
+case class KMeansClusteringModelTrainer(
+    k: Int,
+    maxIter: Int,
+    tolerance: Double,
+    seed: Long,
+    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = {
     new Output(EdgeBundleProperties.default)(instance, inputs)
   }
-  override def toJson = Json.obj("k" -> k, "maxIter" -> maxIter, "tolerance" -> tolerance,
-    "seed" -> seed, "featureNames" -> featureNames)
+  override def toJson = Json.obj(
+    "k" -> k,
+    "maxIter" -> maxIter,
+    "tolerance" -> tolerance,
+    "seed" -> seed,
+    "featureNames" -> featureNames)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -47,10 +56,14 @@ case class KMeansClusteringModelTrainer(k: Int, maxIter: Int, tolerance: Double,
     val scaledDF = params.vectors.toDF("ID", "vector")
 
     // Train a KMeans model from the scaled vectors
-    val kmeans = new KMeans().setK(k).setMaxIter(maxIter).setTol(tolerance).setSeed(seed)
-      .setFeaturesCol("vector").setPredictionCol("prediction")
+    val kmeans = new KMeans()
+      .setK(k)
+      .setMaxIter(maxIter)
+      .setTol(tolerance)
+      .setSeed(seed)
+      .setFeaturesCol("vector")
+      .setPredictionCol("prediction")
     val model = kmeans.fit(scaledDF)
-
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(

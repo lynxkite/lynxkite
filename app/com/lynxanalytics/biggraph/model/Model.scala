@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.feature.ElementwiseProduct
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
@@ -20,7 +21,8 @@ trait ModelImplementation {
 }
 
 // Helper classes to provide a common abstraction for various types of models.
-private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
+private class LinearRegressionModelImpl(
+    m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
   def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
   def details: String = {
     val weights = "(" + m.weights.toArray.mkString(", ") + ")"
@@ -28,14 +30,22 @@ private class LinearRegressionModelImpl(m: mllib.regression.GeneralizedLinearMod
   }
 }
 
-private class ClusterModelImpl(m: ml.clustering.KMeansModel, sqlContext: SQLContext) extends ModelImplementation {
+private class ClusterModelImpl(
+    m: ml.clustering.KMeansModel,
+    featureScaler: Option[mllib.feature.StandardScalerModel],
+    sc: spark.SparkContext) extends ModelImplementation {
+  val sqlContext = new SQLContext(sc)
   import sqlContext.implicits._
   def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
     val dataDf = data.map(x => Tuple1(x)).toDF("vector")
     m.transform(dataDf).map { row => row.getAs[Int](1).toDouble }
   }
+  val unscaledCenters = sc.parallelize(m.clusterCenters)
+  val transformingVector = featureScaler.get.std
+  val transformer = new ElementwiseProduct(transformingVector)
+  val scaledCenters = transformer.transform(unscaledCenters)
   def details: String = {
-    s"Cluster centers: ${m.clusterCenters.mkString}" //TODO: maybe also compute the cost (required input data)
+    s"Cluster centers: ${scaledCenters.collect.mkString}" //TODO: maybe also compute the cost (required input data)
   }
 }
 
@@ -71,14 +81,15 @@ case class Model(
   override def equals(other: Any) = {
     if (canEqual(other)) {
       val o = other.asInstanceOf[Model]
+      def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
+        standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
+      def featureScalerEquals = ((featureScaler.isEmpty && !o.featureScaler.isEmpty) ||
+        standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
       method == o.method &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
-        ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
-          standardScalerModelEquals(labelScaler.get, o.labelScaler.get)) &&
-          ((!labelScaler.isDefined && !o.labelScaler.isDefined) ||
-            standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
+        labelScalerEquals && featureScalerEquals
     } else {
       false
     }
@@ -108,7 +119,7 @@ case class Model(
       case "Lasso" =>
         new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
       case "KMeans clustering" =>
-        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), new SQLContext(sc))
+        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), featureScaler, sc)
     }
   }
 
@@ -293,7 +304,8 @@ class Scaler(
 
       val scaler = new mllib.feature.StandardScaler(
         withMean = forSGD, // Center the vectors for SGD training methods.
-        withStd = true).fit(unscaled.values)
+        withStd = true)
+        .fit(unscaled.values)
       // Scale all vectors using the scaler created from the training vectors.
       (unscaled.mapValues(v => scaler.transform(v)), Some(scaler))
     }
