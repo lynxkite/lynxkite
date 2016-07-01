@@ -4,20 +4,16 @@ Uses the https://en.wikipedia.org/wiki/PBKDF2[PBDKF2] algorithm to mask an attri
  get replaced by a seemingly random value. The same original values get replaced by the same new value and
 different original values get (almost certainly) replaced by different new values.
 
-As all operation, this one also can be undone in the project so it would only provide real masking if the data is
-imported outside of the project.
+As all operations, this one also can be undone in the project so it would only provide real masking if the data is
+exported outside of the project.
 
 ====
 [[attr]] Vertex attribute::
-The attribute(s) whcih will be masked.
+The attribute(s) which will be masked.
 
 [[salt]] Salt::
 The salt is choosen by the user and is used to the defend against attacks using a list of pre-computed hashes for the
  probable values (https://en.wikipedia.org/wiki/Rainbow_table[rainbow table] attacks). As such, the length and
  the complexity of the salt do not directly impact the safety of the masked data. Thus, the salt only needs to be
  not trivial to guess for a potential attacker.
-
-[[iterations]] Iterations::
-The algorithm can made quicker or slower by setting the number iterations higher or lower. On the other hand, higher
-speed also means that it is "cheaper" to the attacker to make guesses.
 ====

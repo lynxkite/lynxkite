@@ -1,8 +1,8 @@
 // Applies the PBKDF2 algorithm to mask an attribute: https://en.wikipedia.org/wiki/PBKDF2
-// The salt is given by the user and used to the defend against attacks using a list of pre-computed hashes for the
+// The salt is given by the user and used to defend against attacks using a list of pre-computed hashes for the
 // probable values (rainbow table attacks).
 // The algorithm can made quicker or slower by setting the number iterations. Higher speed also means that attacker
-// can make quesses for cheaper.
+// can make guesses for cheaper.
 
 package com.lynxanalytics.biggraph.graph_operations
 
@@ -21,16 +21,15 @@ object HashVertexAttribute extends OpFromJson {
     val hashed = vertexAttribute[String](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HashVertexAttribute(
-    (j \ "salt").as[String],
-    (j \ "iterations").as[Int])
+    (j \ "salt").as[String])
 }
 import HashVertexAttribute._
-case class HashVertexAttribute(salt: String, iterations: Int)
+case class HashVertexAttribute(salt: String)
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("salt" -> salt, "iterations" -> iterations)
+  override def toJson = Json.obj("salt" -> salt)
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
@@ -38,17 +37,19 @@ case class HashVertexAttribute(salt: String, iterations: Int)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
 
-    // The salt can not be empty
-    val notEmptySalt = if (salt.nonEmpty) salt else "Dennis Bergkamp"
-    val keyLength = 25
+    // The preferred length of the hash.
+    val keyLength = 80
+    val iterations = 5
 
+    // Using the javax.crypto library to create the hash function
     def hash(string: String) = {
       val spec: PBEKeySpec = new PBEKeySpec(string.toCharArray, salt.getBytes, iterations, keyLength)
       val key: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-      val hashedPassword = key.generateSecret(spec).getEncoded
-      String.format("%x", new BigInteger(hashedPassword))
+      val hashedPassword: Array[Byte] = key.generateSecret(spec).getEncoded
+      hashedPassword.map("%02X" format _).mkString
+      //     String.format("%x", new BigInteger(hashedPassword))
     }
 
-    output(o.hashed, inputs.attr.rdd.mapValues(v => hash(v.toString)))
+    output(o.hashed, inputs.attr.rdd.mapValues(v => hash(v)))
   }
 }
