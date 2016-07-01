@@ -6,9 +6,18 @@
 name = 'create_segmentation_from_sql_result'
 
 project = lynx.loadProject(name)
-project.vertexAttributeToDouble(
-  'attr': 'ordinal'
+
+project.addRandomVertexAttribute(
+  name: 'some_random',
+  dist: 'Standard Uniform',
+  seed: '892389'
 )
+project.addRankAttribute(
+  'rankattr': 'ordinal',
+  'keyattr': 'some_random',
+  'order': 'ascending'
+)
+
 project.derivedVertexAttribute(
   'output': 'src',
   'type': 'string',
