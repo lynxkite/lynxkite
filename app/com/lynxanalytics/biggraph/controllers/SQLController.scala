@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json
 
 object DataFrameSpec {
   // Utilities for testing.
@@ -223,15 +224,17 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport(user: serving.User, request: GenericImportRequest) = async[FEOption] {
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T) = async[FEOption] {
     SQLController.saveTableFromDataFrame(
       request.restrictedDataFrame(user),
       request.notes,
       user,
       request.table,
-      request.privacy)
+      request.privacy,
+      TypedJson.createFromWriter(request).as[json.JsObject])
   }
 
+  import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
@@ -413,7 +416,6 @@ object SQLController {
     privacy: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
 
     assert(!tableName.isEmpty, "Table name must be specified.")
-    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     entry
@@ -424,12 +426,13 @@ object SQLController {
     notes: String,
     user: serving.User,
     tableName: String,
-    privacy: String)(
+    privacy: String,
+    importConfig: json.JsObject)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
-    saveTable(table, notes, user, tableName, privacy)
+    saveTable(table, notes, user, tableName, privacy, Some(importConfig))
   }
 
   def saveTable(
@@ -437,11 +440,13 @@ object SQLController {
     notes: String,
     user: serving.User,
     tableName: String,
-    privacy: String)(
+    privacy: String,
+    importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
     val frame = entry.asNewTableFrame(checkpoint)
+    importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
