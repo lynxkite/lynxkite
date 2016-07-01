@@ -4,11 +4,24 @@
 angular.module('biggraph').directive('sqlBox', function($window, side, util) {
   return {
     restrict: 'E',
-    scope: { side: '=' },
+    scope: {
+      side: '=?',
+      directory: '=?',
+     },
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      scope.sql = 'select * from vertices';
+      scope.directoryDefined = (typeof scope.directory !== 'undefined');
+      if(!!scope.side && scope.directoryDefined) {
+        throw 'can not be both defined: scope.side, scope.directory';
+      }
+      if(!scope.side && !scope.directoryDefined) {
+        throw 'one of them needs to be defined: scope.side, scope.directory';
+      }
+      scope.isGlobal = !scope.side;
+      scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
+       'select * from vertices';
+      scope.project = scope.project = scope.side && scope.side.state.projectName;
       scope.sort = {
         column: undefined,
         reverse: false,
@@ -36,7 +49,9 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             '/ajax/runSQLQuery',
             {
               df: {
-                project: scope.side.state.projectName,
+                isGlobal: scope.isGlobal,
+                directory: scope.directory,
+                project: scope.project,
                 sql: scope.sql,
               },
               maxRows: 10,
@@ -76,7 +91,9 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         }
         var req = {
           df: {
-            project: scope.side.state.projectName,
+            isGlobal: scope.isGlobal,
+            directory: scope.directory,
+            project: scope.project,
             sql: scope.sql,
           },
         };

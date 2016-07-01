@@ -61,7 +61,8 @@ class SQLHelper(
   // Given a project and a query, collects the the guids of the
   // input attributes required to execute the query.
   // The result is a map of tableName -> Seq(guid, columnName)
-  def getInputColumns(project: controllers.ProjectViewer, sqlQuery: String): (Map[String, Seq[(UUID, String)]], DataFrame) = {
+  def getInputColumns(project: controllers.ProjectViewer,
+                      sqlQuery: String): (Map[String, Seq[(UUID, String)]], DataFrame) = {
     // This implementation exploits that DataFrame.explain()
     // scans all the input columns. We create fake input table
     // relations below, and collect the scanned columns in
