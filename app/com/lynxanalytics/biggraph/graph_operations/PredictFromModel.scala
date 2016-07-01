@@ -33,14 +33,18 @@ case class PredictFromModel(numFeatures: Int)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val model = inputs.model.value
-    val scaled = Model.toLinalgVector(
-      inputs.features.toArray.map { v => v.rdd },
-      inputs.vertices.rdd).mapValues(v => model.featureScaler.get.transform(v))
-
-    val predictions = model.scaleBack(model.load(rc.sparkContext).transform(scaled.values))
-    val ids = scaled.keys // We just put back the keys with a zip.
+    val RDDArray = inputs.features.toArray.map { v => v.rdd }
+    val unscaledRDD = Model.toLinalgVector(RDDArray, inputs.vertices.rdd)
+    val scaledRDD = unscaledRDD.mapValues(v => model.featureScaler.get.transform(v))
+    val partitioner = scaledRDD.partitioner.get
+    val ids = scaledRDD.keys // We will put back the keys with a zip.
+    def predictions = if (model.method == "KMeans clustering") {
+      model.load(rc.sparkContext).transform(scaledRDD.values)
+    } else {
+      model.scaleBack(model.load(rc.sparkContext).transform(scaledRDD.values))
+    }
     output(
       o.prediction,
-      ids.zip(predictions).filter(!_._2.isNaN).asUniqueSortedRDD(scaled.partitioner.get))
+      ids.zip(predictions).filter(!_._2.isNaN).asUniqueSortedRDD(partitioner))
   }
 }
