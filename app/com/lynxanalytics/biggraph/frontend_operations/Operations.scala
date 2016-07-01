@@ -1243,6 +1243,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Mask vertex attribute", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true),
+      Param("salt", "Salt", defaultValue = "Arsenal FC"),
+      NonNegInt("iterations", "Number of iterations", default = 1000)
+    )
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("attr").nonEmpty, "Please choose a vertex attribute to mask")
+      val op = graph_operations.HashVertexAttribute(params("salt").toString, params("iterations").toInt)
+      for (attribute <- params("attr").split(",", -1)) {
+        val attr = project.vertexAttributes(attribute).asString
+        project.newVertexAttribute(attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
+          "This attribute has been masked")
+      }
+    }
+  })
+
   private val toStringHelpText = "Converts the selected %s attributes to string type."
   register("Vertex attribute to string", new VertexAttributesOperation(_, _) {
     def parameters = List(
