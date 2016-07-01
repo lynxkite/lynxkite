@@ -266,12 +266,11 @@ class SQLController(val env: BigGraphEnvironment) {
         case (name, proj) if proj.isProject && proj.readAllowedFrom(user) => (name, proj.asProjectFrame.viewer)
       }
 
-      val allTablePathsInGoodProjects = goodProjectViewers.flatMap {
-        case (name, proj) => proj.allRelativeTablePaths.map { path => ((name, path), proj) }
+      val goodTablePathsInGoodProjects = goodProjectViewers.flatMap {
+        case (name, proj) => proj.allRelativeTablePaths.find(_.path == name.split('|').tail.toSeq)
+          .map { path => ((name, path), proj) }
       }
-      val goodTablePathsInGoodProjects = allTablePathsInGoodProjects.filter {
-        case ((name, path), proj) => path.path == name.split('|').tail.toSeq
-      }
+
       val projectTables = goodTablePathsInGoodProjects.map { case ((name, path), proj) => (name, Table(path, proj)) }
 
       val importedTableFrames = importedTableNames.mapValues(DirectoryEntry.fromName(_))
