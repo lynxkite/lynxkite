@@ -6,7 +6,7 @@ project = lynx.loadProject('filter_high_degree_vertices_result')
 
 project.modularClustering(
   'name': 'modular_clusters',
-  'weight': '!no weight',
+  'weights': '!no weight',
   'max-iterations': '30',
   'min-increment-per-iteration': '0.001'
 )
