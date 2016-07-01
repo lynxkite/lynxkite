@@ -48,7 +48,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         importStuff(
           '/ajax/importCSV',
           {
-            files: scope.csv.files,
+            files: scope.csv.filename,
             columnNames: splitCSVLine(scope.csv.columnNames),
             delimiter: scope.csv.delimiter,
             mode: scope.csv.mode,
