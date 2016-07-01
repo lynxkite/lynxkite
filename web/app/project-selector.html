@@ -136,7 +136,8 @@
           menu="menu"
           name="{{object.name}}"
           short-name="{{pathInside(object.name)}}"
-          type="{{object.objectType}}">
+          type="{{object.objectType}}"
+          config="object.details">
         </item-name-and-menu>
         <a ng-if="isProject(object)" href="#/project/{{object.name}}" target="_blank"
           ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">

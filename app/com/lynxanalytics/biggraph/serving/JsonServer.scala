@@ -292,12 +292,12 @@ object FrontendJson {
   implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
-  implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
-  implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
-  implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
-  implicit val rORCImportRequest = json.Json.reads[ORCImportRequest]
-  implicit val rJsonImportRequest = json.Json.reads[JsonImportRequest]
-  implicit val rHiveImportRequest = json.Json.reads[HiveImportRequest]
+  implicit val fCSVImportRequest = json.Json.format[CSVImportRequest]
+  implicit val fJdbcImportRequest = json.Json.format[JdbcImportRequest]
+  implicit val fParquetImportRequest = json.Json.format[ParquetImportRequest]
+  implicit val fORCImportRequest = json.Json.format[ORCImportRequest]
+  implicit val fJsonImportRequest = json.Json.format[JsonImportRequest]
+  implicit val fHiveImportRequest = json.Json.format[HiveImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 

@@ -5,6 +5,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+- Global SQL-box added
+- Import options are now stored for each table and can be reused via "Edit import" button
 
  - Global SQL-box has been added.
 
