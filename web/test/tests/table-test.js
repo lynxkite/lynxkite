@@ -33,24 +33,15 @@ module.exports = function(fw) {
       expect(lib.left.attributeCount()).toEqual(3);
     }
   );
-  fw.transitionTest(
+  fw.statePreservingTest(
     'CSV file imported as table',
     'Editing imported CSV configuration is possible',
     function() {
       lib.splash.editImport('csv imported');
-    },
-    function() {
       expect(element(by.model('tableName')).getAttribute('value')).toEqual(tableName);
       expect(element(by.model('columnsToImport')).getAttribute('value')).toEqual(columns);
-    }
-  );
-  fw.transitionTest(
-    'Editing imported CSV configuration is possible',
-    'CSV file imported as table #2',
-    function() {
+
       lib.splash.clickAndWaitForImport();
-    },
-    function() {
       expect(lib.errors()).toEqual([]);
       lib.splash.expectNumProjects(0);
       lib.splash.expectNumDirectories(0);
