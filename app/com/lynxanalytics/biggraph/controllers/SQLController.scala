@@ -354,7 +354,6 @@ object SQLController {
     privacy: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
 
     assert(!tableName.isEmpty, "Table name must be specified.")
-    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     entry

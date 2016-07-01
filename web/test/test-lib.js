@@ -587,6 +587,13 @@ Selector.prototype = {
     element(by.id('import-table')).click();
   },
 
+  clickAndWaitForImport: function() {
+    var importCsvButton = element(by.id('import-csv-button'));
+    // Wait for the upload to finish.
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
+    importCsvButton.click();
+  },
+
   importLocalCSVFile: function(tableName, localCsvFile, columns) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
     if (columns) {
@@ -595,10 +602,7 @@ Selector.prototype = {
     this.root.$('#datatype select option[value="csv"]').click();
     var csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
-    var importCsvButton = element(by.id('import-csv-button'));
-    // Wait for the upload to finish.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
-    importCsvButton.click();
+    this.clickAndWaitForImport();
   },
 
   newDirectory: function(name) {
