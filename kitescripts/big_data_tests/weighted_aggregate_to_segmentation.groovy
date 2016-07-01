@@ -8,11 +8,11 @@ segmentation = project.segmentations['seg_interval']
 
 segmentation.weightedAggregateToSegmentation(
   'weight': 'rnd_std_uniform',
-  'aggregate-rnd_std_normal': 'weighted_sum'
+  'aggregate-rnd_std_normal2': 'weighted_sum'
 )
 
 segmentation
-  .vertexAttributes['rnd_std_normal_weighted_sum_by_rnd_std_uniform']
+  .vertexAttributes['rnd_std_normal2_weighted_sum_by_rnd_std_uniform']
   .computeAndPrintHistogram(
     name: 'eighted aggregate to segmentation histogram',
     logarithmic: true,
