@@ -45,7 +45,7 @@ private class ClusterModelImpl(
   val transformer = new ElementwiseProduct(transformingVector)
   val scaledCenters = transformer.transform(unscaledCenters)
   def details: String = {
-    s"Cluster centers: ${scaledCenters.collect.mkString}" //TODO: maybe also compute the cost (required input data)
+    s"cluster centers: ${scaledCenters.collect.mkString}" //TODO: maybe also compute the cost (required input data)
   }
 }
 
