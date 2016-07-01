@@ -44,4 +44,18 @@ module.exports = function(fw) {
       expect(element(by.model('columnsToImport')).getAttribute('value')).toEqual(columns);
     }
   );
+  fw.transitionTest(
+    'Editing imported CSV configuration is possible',
+    'CSV file imported as table #2',
+    function() {
+      lib.splash.clickAndWaitForImport();
+    },
+    function() {
+      expect(lib.errors()).toEqual([]);
+      lib.splash.expectNumProjects(0);
+      lib.splash.expectNumDirectories(0);
+      lib.splash.expectNumTables(1);
+      lib.splash.expectTableListed(tableName);
+    }
+  );
 };
