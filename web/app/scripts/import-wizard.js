@@ -41,7 +41,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       }
 
       function joinCSVLine(csv) {
-        return csv ? csv.join(',') : [];
+        return csv ? csv.join(',') : '';
       }
 
       scope.importCSV = function() {

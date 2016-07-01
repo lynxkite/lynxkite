@@ -371,7 +371,7 @@ object SQLController {
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
-    saveTable(table, notes, user, tableName, privacy, Option(importConfig))
+    saveTable(table, notes, user, tableName, privacy, Some(importConfig))
   }
 
   def saveTable(
