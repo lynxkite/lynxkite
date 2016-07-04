@@ -275,6 +275,8 @@ include::predict-vertex-attribute.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
+include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
+
 include::rename-edge-attribute.asciidoc[]
 
 include::rename-scalar.asciidoc[]

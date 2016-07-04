@@ -12,8 +12,16 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json
 
-case class DataFrameSpec(project: String, sql: String)
+object DataFrameSpec {
+  // Utilities for testing.
+  def local(project: String, sql: String) =
+    new DataFrameSpec(isGlobal = false, directory = None, project = Some(project), sql = sql)
+  def global(directory: String, sql: String) =
+    new DataFrameSpec(isGlobal = true, directory = Some(directory), project = None, sql = sql)
+}
+case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String)
 case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
@@ -216,15 +224,17 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport(user: serving.User, request: GenericImportRequest) = async[FEOption] {
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T) = async[FEOption] {
     SQLController.saveTableFromDataFrame(
       request.restrictedDataFrame(user),
       request.notes,
       user,
       request.table,
-      request.privacy)
+      request.privacy,
+      TypedJson.createFromWriter(request).as[json.JsObject])
   }
 
+  import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
   def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
@@ -232,19 +242,74 @@ class SQLController(val env: BigGraphEnvironment) {
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
-  // Creates a table from an SQL query.
+  // Finds the names of tables from string
+  private def findTablesFromQuery(query: String): List[String] = {
+    val split = query.split("`", -1)
+    Iterator.range(start = 1, end = split.length, step = 2).map(split(_)).toList
+  }
+
+  // Creates a DataFrame from a global level SQL query.
+  private def globalSQL(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame =
+    metaManager.synchronized {
+      assert(spec.project.isEmpty,
+        "The project field in the DataFrameSpec must be empty for global SQL queries.")
+
+      val directoryName = spec.directory.get
+      val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
+      val givenTableNames = findTablesFromQuery(spec.sql)
+      // Maps the relative table names used in the sql query with the global name
+      val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
+      // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
+      val (projectTableNames, importedTableNames) = tableNames.partition(_._2.contains('|'))
+      // For the assumed project tables we select those whose corresponding project really exists and
+      // is accessible to the user
+      val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
+      val usedProjects = usedProjectNames.mapValues(DirectoryEntry.fromName(_))
+      val goodProjectViewers = usedProjects.collect {
+        case (name, proj) if proj.isProject && proj.readAllowedFrom(user) => (name, proj.asProjectFrame.viewer)
+      }
+
+      val goodTablePathsInGoodProjects = goodProjectViewers.flatMap {
+        case (name, proj) => proj.allRelativeTablePaths.find(_.path == name.split('|').tail.toSeq)
+          .map { path => ((name, path), proj) }
+      }
+
+      val projectTables = goodTablePathsInGoodProjects.map { case ((name, path), proj) => (name, Table(path, proj)) }
+
+      val importedTableFrames = importedTableNames.mapValues(DirectoryEntry.fromName(_))
+      val goodImportedTables = importedTableFrames.filter {
+        case (name, entry) => entry.exists && entry.readAllowedFrom(user)
+      }
+      val importedTables = goodImportedTables.mapValues(_.asTableFrame.table)
+
+      val allTables = projectTables ++ importedTables
+
+      val sqlContext = dataManager.newSQLContext()
+
+      val dataframes = allTables.mapValues(_.toDF(sqlContext))
+      for ((name, df) <- dataframes) {
+        df.registerTempTable(name)
+      }
+
+      sqlContext.sql(spec.sql)
+    }
+
+  // Creates Table from an SQL query for project level query
   private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
     metaManager.synchronized {
-      val p = SubProject.parsePath(spec.project)
+      assert(spec.directory.isEmpty,
+        "The directory field in the DataFrameSpec must be empty for local SQL queries.")
+      val p = SubProject.parsePath(spec.project.get)
       assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
       env.sqlHelper.sqlToTable(p.viewer, spec.sql)
     }
 
-  // Creates a DataFrame from an SQL query. The computation steps will
+  // Creates a DataFrame from an SQL query. If it is a project level query then the computation steps will
   // also be entered into the Metagraph.
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
-    tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
+    if (spec.isGlobal) globalSQL(user, spec)
+    else tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
@@ -351,7 +416,6 @@ object SQLController {
     privacy: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
 
     assert(!tableName.isEmpty, "Table name must be specified.")
-    assert(!DirectoryEntry.fromName(tableName).exists, s"$tableName already exists.")
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     entry
@@ -362,12 +426,13 @@ object SQLController {
     notes: String,
     user: serving.User,
     tableName: String,
-    privacy: String)(
+    privacy: String,
+    importConfig: json.JsObject)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
-    saveTable(table, notes, user, tableName, privacy)
+    saveTable(table, notes, user, tableName, privacy, Some(importConfig))
   }
 
   def saveTable(
@@ -375,11 +440,13 @@ object SQLController {
     notes: String,
     user: serving.User,
     tableName: String,
-    privacy: String)(
+    privacy: String,
+    importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
     val frame = entry.asNewTableFrame(checkpoint)
+    importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
