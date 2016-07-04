@@ -39,7 +39,7 @@ case class HashVertexAttribute(salt: String)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
 
-    // The preferred length of the hash. The lenght was choosen according to the probabilities listed in 
+    // The preferred length of the hash. The length was choosen according to the probabilities listed in 
     // https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
     val keyLength = 96
     val iterations = 1
