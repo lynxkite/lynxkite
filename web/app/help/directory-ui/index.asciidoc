@@ -11,3 +11,5 @@ include::directories.asciidoc[]
 include::projects.asciidoc[]
 
 include::tables.asciidoc[]
+
+include::global-sql-box.asciidoc[]

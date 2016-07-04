@@ -587,15 +587,22 @@ Selector.prototype = {
     element(by.id('import-table')).click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile) {
-    this.root.$('import-wizard #table-name input').sendKeys(tableName);
-    this.root.$('#datatype select option[value="csv"]').click();
-    var csvFileParameter = $('#csv-filename file-parameter');
-    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
+  clickAndWaitForImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
     testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
     importCsvButton.click();
+  },
+
+  importLocalCSVFile: function(tableName, localCsvFile, columns) {
+    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    if (columns) {
+      this.root.$('import-wizard #columns-to-import input').sendKeys(columns);
+    }
+    this.root.$('#datatype select option[value="csv"]').click();
+    var csvFileParameter = $('#csv-filename file-parameter');
+    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
+    this.clickAndWaitForImport();
   },
 
   newDirectory: function(name) {
@@ -645,6 +652,10 @@ Selector.prototype = {
     var confirmation = browser.switchTo().alert();
     expect(confirmation.getText()).toContain('delete directory ' + name);
     confirmation.accept();
+  },
+
+  editImport: function(name) {
+    testLib.menuClick(this.table(name), 'edit-import');
   },
 
   expectProjectListed: function(name) {
