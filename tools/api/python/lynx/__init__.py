@@ -78,6 +78,38 @@ class Project(object):
       ), raw=True)
     return r['rows']
 
+  def importCSV(self, files, table,
+                privacy = "public-read",
+                columnNames = [],
+                delimiter = ",",
+                mode = "FAILFAST",
+                infer = True,
+                columnsToImport = []):
+    r = _send("importCSV",
+              dict(
+                files = files,
+                table = table,
+                privacy = privacy,
+                columnNames = columnNames,
+                delimiter = delimiter,
+                mode = mode,
+                infer = infer,
+                columnsToImport = columnsToImport))
+    return r
+
+  def importJdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
+                privacy = "public-read",
+                columnsToImport = []):
+    r = _send("importJdbc",
+              dict(
+                table = table,
+                privacy = privacy,
+                jdbcUrl = jdbcUrl,
+                jdbcTable = jdbcTable,
+                keyColumn = keyColumn,
+                columnsToImport = columnsToImport))
+    return "something"
+
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
     r = _send('runOperation',
