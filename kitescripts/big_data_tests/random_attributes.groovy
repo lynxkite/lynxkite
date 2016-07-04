@@ -44,4 +44,10 @@ project.addRandomVertexAttribute(
 project.vertexAttributes['rnd_std_normal2']
         .computeAndPrintHistogram(name: 'rnd_std_normal2 (vertices)')
 
+project.addRankAttribute(
+  'rankattr': 'ordinal',
+  'keyattr': 'rnd_std_uniform',
+  'order': 'ascending'
+)
+
 project.saveAs('random_attributes')

@@ -7,28 +7,14 @@ name = 'create_segmentation_from_sql_result'
 
 project = lynx.loadProject(name)
 
-project.addRandomVertexAttribute(
-  name: 'some_random',
-  dist: 'Standard Uniform',
-  seed: '892389'
-)
-project.addRankAttribute(
-  'rankattr': 'ordinal',
-  'keyattr': 'some_random',
-  'order': 'ascending'
-)
-
 project.derivedVertexAttribute(
   'output': 'src',
   'type': 'string',
   'expr': 'Math.floor(ordinal/3.0)'
 )
 
-
 segmentation = project.segmentations['segmentation']
-segmentation.vertexAttributeToDouble(
-  'attr': 'ordinal'
-)
+
 segmentation.derivedVertexAttribute(
   'output': 'dst',
   'type': 'string',
@@ -43,6 +29,7 @@ segmentation.defineSegmentationLinksFromMatchingAttributes(
 
 df = segmentation.sql("select * from belongs_to")
 lynx.saveAsTable(df, "segmentation_belongs_to_table")
+
 
 println "belongsTo Edges: ${segmentation.scalars['!belongsToEdges']}"
 
