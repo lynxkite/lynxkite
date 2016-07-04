@@ -149,14 +149,15 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String, objectType: String)(
+  def toListElementFE(projectName: String, objectType: String, details: Option[json.JsObject])(
     implicit epm: EntityProgressManager): FEProjectListElement = {
     FEProjectListElement(
       projectName,
       objectType,
       state.notes,
       feScalar("vertex_count"),
-      feScalar("edge_count"))
+      feScalar("edge_count"),
+      details = details)
   }
 
   // Returns the FE attribute representing the seq of members for
@@ -895,6 +896,9 @@ class TableFrame(path: SymbolPath)(
     set(rootDir / "objectType", "table")
     checkpoint = cp
   }
+
+  def setImportConfig(obj: json.JsObject) = details = obj
+
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
   def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
 }
@@ -916,13 +920,20 @@ abstract class ObjectFrame(path: SymbolPath)(
 
   def currentState: RootProjectState = getCheckpointState(checkpoint)
 
+  def details: Option[json.JsObject] = {
+    val path = rootDir / "details"
+    existing(path).map(get).map(s => json.Json.parse(s).as[json.JsObject])
+  }
+
+  protected def details_=(x: json.JsObject): Unit = set(rootDir / "details", json.Json.stringify(x))
+
   def viewer = new RootProjectViewer(currentState)
 
   def objectType: String = get(rootDir / "objectType", "project")
 
   def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
-      viewer.toListElementFE(name, objectType)
+      viewer.toListElementFE(name, objectType, details)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
