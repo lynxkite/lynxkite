@@ -1263,7 +1263,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
     // To have a more secure default salt value than just using Random.nextInt.toString
     def nextString(length: Int): String = {
-      val validCharacters: Array[Char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456879".toCharArray
+      val validCharacters: Array[Char] = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toArray
       val srand: java.security.SecureRandom = new java.security.SecureRandom()
       val rand: java.util.Random = new java.util.Random()
 
