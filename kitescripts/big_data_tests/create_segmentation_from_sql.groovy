@@ -1,8 +1,8 @@
 // Tests the "Create segmentation from SQL" operation
 
-/// REQUIRE_SCRIPT edge_import.groovy
+/// REQUIRE_SCRIPT random_attributes.groovy
 
-name = 'edge_import_result'
+name = 'random_attributes'
 
 project = lynx.loadProject(name)
 
