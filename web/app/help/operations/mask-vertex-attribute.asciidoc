@@ -7,13 +7,19 @@ different original values get (almost certainly) replaced by different new value
 As all operations, this one also can be undone in the project so it would only provide real masking if the data is
 exported outside of the project.
 
+Treat the salt like a password for the data. Choose a long string that the recipient of the data has no chance of
+guessing. (Do not use the name of a person or project.)
+
+To illustrate the mechanics of irreversible masking and the importance of a good salt string, consider the following
+example. We have a data set of phone calls and we have masked the phone numbers. Arthur gets access to the masked data
+and learns or guesses the salt. Arthur can now apply the same masking to the phone number of Guinevere as was used on
+the original data set and look her up in the graph. He can also apply masking to the phone numbers of all the knights
+of the round table and see which knight has Guinevere been making calls to.
+
 ====
 [[attr]] Vertex attribute::
 The attribute(s) which will be masked.
 
 [[salt]] Salt::
-The salt is choosen by the user and is used to the defend against attacks using a list of pre-computed hashes for the
- probable values (https://en.wikipedia.org/wiki/Rainbow_table[rainbow table] attacks). As such, the length and
- the complexity of the salt do not directly impact the safety of the masked data. Thus, the salt only needs to be
- not trivial to guess for a potential attacker.
+The value of the salt.
 ====

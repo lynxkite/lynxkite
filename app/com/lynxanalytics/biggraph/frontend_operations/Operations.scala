@@ -1246,9 +1246,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Mask vertex attribute", new ImportOperation(_, _) {
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true),
-      Param("salt", "Salt", defaultValue = util.Random.nextInt.toString)
+      Param("salt", "Salt", defaultValue = nextString(15))
     )
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+
     def apply(params: Map[String, String]) = {
       assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to mask.")
       assert(params("salt").nonEmpty, "Please set a salt value.")
@@ -1258,6 +1259,18 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.newVertexAttribute(attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
           "This attribute has been masked")
       }
+    }
+
+    // To have a more secure default salt value than just using Random.nextInt.toString
+    def nextString(length: Int): String = {
+      val validCharacters: Array[Char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456879".toCharArray
+      val srand: java.security.SecureRandom = new java.security.SecureRandom()
+      val rand: java.util.Random = new java.util.Random()
+
+      rand.setSeed(srand.nextLong())
+
+      val chars: Array[Char] = new Array[Char](length)
+      chars.map(_ => validCharacters(rand.nextInt(validCharacters.length))).mkString("")
     }
   })
 
