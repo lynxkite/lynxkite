@@ -7,9 +7,11 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
-import java.math.BigInteger
+
+object SecretKeyFactory {
+  val secretKeyFactory: javax.crypto.SecretKeyFactory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+}
 
 object HashVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -39,15 +41,14 @@ case class HashVertexAttribute(salt: String)
 
     // The preferred length of the hash.
     val keyLength = 80
-    val iterations = 5
+    val iterations = 1
 
     // Using the javax.crypto library to create the hash function
     def hash(string: String) = {
       val spec: PBEKeySpec = new PBEKeySpec(string.toCharArray, salt.getBytes, iterations, keyLength)
-      val key: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-      val hashedPassword: Array[Byte] = key.generateSecret(spec).getEncoded
+      val secretKeyFactory = SecretKeyFactory.secretKeyFactory
+      val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
       hashedPassword.map("%02X" format _).mkString
-      //     String.format("%x", new BigInteger(hashedPassword))
     }
 
     output(o.hashed, inputs.attr.rdd.mapValues(v => hash(v)))
