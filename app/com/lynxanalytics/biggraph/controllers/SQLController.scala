@@ -225,13 +225,13 @@ class SQLController(val env: BigGraphEnvironment) {
   def async[T](func: => T): Future[T] = Future(func)
 
   def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
-    SQLController.saveTableFromDataFrame(
+    SQLController.saveTable(
       request.restrictedDataFrame(user),
       request.notes,
       user,
       request.table,
       request.privacy,
-      TypedJson.createFromWriter(request).as[json.JsObject])
+      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
@@ -281,39 +281,45 @@ class SQLController(val env: BigGraphEnvironment) {
       }
       val importedTables = goodImportedTables.mapValues(_.asTableFrame.table)
 
-      val allTables = projectTables ++ importedTables
-
-      val sqlContext = dataManager.newSQLContext()
-
-      val dataframes = allTables.mapValues(_.toDF(sqlContext))
-      for ((name, df) <- dataframes) {
-        df.registerTempTable(name)
-      }
-
-      sqlContext.sql(spec.sql)
+      queryTables(spec.sql, projectTables ++ importedTables)
     }
 
-  // Creates Table from an SQL query for project level query
-  private def tableFromSpec(user: serving.User, spec: DataFrameSpec): Table =
-    metaManager.synchronized {
+  // Executes an SQL query at the project level.
+  private def projectSQL(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
+    val tables = metaManager.synchronized {
       assert(spec.directory.isEmpty,
         "The directory field in the DataFrameSpec must be empty for local SQL queries.")
       val p = SubProject.parsePath(spec.project.get)
       assert(p.frame.exists, s"Project ${spec.project} does not exist.")
       p.frame.assertReadAllowedFrom(user)
-      env.sqlHelper.sqlToTable(p.viewer, spec.sql)
+
+      val v = p.viewer
+      v.allRelativeTablePaths.map {
+        path => (path.toString -> Table(path, v))
+      }
     }
+    queryTables(spec.sql, tables)
+  }
+
+  private def queryTables(sql: String, tables: Iterable[(String, Table)]): spark.sql.DataFrame = {
+    // Every query runs in its own SQLContext for isolation.
+    val sqlContext = dataManager.newSQLContext()
+    for ((name, table) <- tables) {
+      table.toDF(sqlContext).registerTempTable(name)
+    }
+    log.info(s"Trying to execute query: ${sql}")
+    sqlContext.sql(sql)
+  }
 
   // Creates a DataFrame from an SQL query. If it is a project level query then the computation steps will
   // also be entered into the Metagraph.
   private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
     if (spec.isGlobal) globalSQL(user, spec)
-    else tableFromSpec(user, spec).toDF(dataManager.masterSQLContext)
+    else projectSQL(user, spec)
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = dfFromSpec(user, request.df)
-    // TODO: use tableFromSpec directly here.
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
@@ -328,10 +334,10 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val table = tableFromSpec(user, request.df)
+    val df = dfFromSpec(user, request.df)
 
     SQLController.saveTable(
-      table, s"From ${request.df.project} by running ${request.df.sql}",
+      df, s"From ${request.df.project} by running ${request.df.sql}",
       user, request.table, request.privacy)
   }
 
@@ -420,28 +426,17 @@ object SQLController {
     entry
   }
 
-  def saveTableFromDataFrame(
+  def saveTable(
     df: spark.sql.DataFrame,
     notes: String,
     user: serving.User,
     tableName: String,
     privacy: String,
-    importConfig: json.JsObject)(
+    importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
-    saveTable(table, notes, user, tableName, privacy, Some(importConfig))
-  }
-
-  def saveTable(
-    table: Table,
-    notes: String,
-    user: serving.User,
-    tableName: String,
-    privacy: String,
-    importConfig: Option[json.JsObject] = None)(
-      implicit metaManager: MetaGraphManager): FEOption = metaManager.synchronized {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
     val frame = entry.asNewTableFrame(checkpoint)
