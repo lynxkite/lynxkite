@@ -156,11 +156,10 @@ object PipeAPI {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes]
-    (request: T): CheckpointResponse = {
-    
-    sqlController.doImport(user, request)
-    CheckpointResponse("")
+  def importRequest[T <: GenericImportRequest: json.Writes](request: T): CheckpointResponse = {
+    val res = sqlController.doImport(user, request)
+    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
+    CheckpointResponse(cp)
   }
 
   val pipeFile = LoggedEnvironment.envOrNone("KITE_API_PIPE").map(new java.io.File(_))
