@@ -72,5 +72,7 @@ GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
 POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
 
+POST /remote com.lynxanalytics.biggraph.serving.ProductionJsonServer.remote
+
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

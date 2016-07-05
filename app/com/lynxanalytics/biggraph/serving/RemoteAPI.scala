@@ -1,4 +1,4 @@
-// An API that allows controlling a running LynxKite instance via JSON commands through a Unix pipe.
+// An API that allows controlling a running LynxKite instance via JSON commands.
 package com.lynxanalytics.biggraph.serving
 
 import org.apache.spark.sql.types
@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
-object PipeAPI {
+object RemoteAPI {
   val env = BigGraphProductionEnvironment
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
@@ -21,15 +21,16 @@ object PipeAPI {
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
-  case class Command(responsePipe: String, command: String, payload: json.JsObject) {
-    def execute(): Unit = {
-      val response = try {
+  case class Command(command: String, payload: json.JsObject) {
+    def execute(user: User): json.JsValue = {
+      import RemoteAPI.JsonFormatters._
+      try {
         command match {
           case "getScalar" => json.Json.toJson(getScalar(payload.as[ScalarRequest]))
           case "newProject" => json.Json.toJson(newProject())
-          case "loadProject" => json.Json.toJson(loadProject(payload.as[ProjectRequest]))
-          case "runOperation" => json.Json.toJson(runOperation(payload.as[OperationRequest]))
-          case "saveProject" => json.Json.toJson(saveProject(payload.as[SaveProjectRequest]))
+          case "loadProject" => json.Json.toJson(loadProject(user, payload.as[ProjectRequest]))
+          case "runOperation" => json.Json.toJson(runOperation(user, payload.as[OperationRequest]))
+          case "saveProject" => json.Json.toJson(saveProject(user, payload.as[SaveProjectRequest]))
           case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
         }
       } catch {
@@ -37,9 +38,6 @@ object PipeAPI {
           log.error(s"Error while processing $this:", t)
           json.Json.obj("error" -> t.toString, "request" -> json.Json.toJson(this))
       }
-      val data = json.Json.asciiStringify(response)
-      org.apache.commons.io.FileUtils.writeStringToFile(
-        new java.io.File(responsePipe), data, "utf-8")
     }
   }
 
@@ -54,29 +52,30 @@ object PipeAPI {
   case class SqlRequest(checkpoint: String, query: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
-  implicit val fCommand = json.Json.format[Command]
-  implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
-  implicit val rOperationRequest = json.Json.reads[OperationRequest]
-  implicit val rProjectRequest = json.Json.reads[ProjectRequest]
-  implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
-  implicit val rScalarRequest = json.Json.reads[ScalarRequest]
-  implicit val rSqlRequest = json.Json.reads[SqlRequest]
-  implicit val wDynamicValue = json.Json.writes[DynamicValue]
-  implicit val wTableResult = json.Json.writes[TableResult]
-
-  val user = User("Pipe API User", isAdmin = true)
+  object JsonFormatters {
+    implicit val fCommand = json.Json.format[Command]
+    implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
+    implicit val rOperationRequest = json.Json.reads[OperationRequest]
+    implicit val rProjectRequest = json.Json.reads[ProjectRequest]
+    implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
+    implicit val rScalarRequest = json.Json.reads[ScalarRequest]
+    implicit val rSqlRequest = json.Json.reads[SqlRequest]
+    implicit val wDynamicValue = json.Json.writes[DynamicValue]
+    implicit val wTableResult = json.Json.writes[TableResult]
+  }
 
   def newProject(): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
   }
 
-  def loadProject(request: ProjectRequest): CheckpointResponse = {
+  def loadProject(user: User, request: ProjectRequest): CheckpointResponse = {
     val project = controllers.ProjectFrame.fromName(request.project)
+    project.assertReadAllowedFrom(user)
     val cp = project.viewer.rootCheckpoint
     CheckpointResponse(cp)
   }
 
-  def saveProject(request: SaveProjectRequest): CheckpointResponse = {
+  def saveProject(user: User, request: SaveProjectRequest): CheckpointResponse = {
     val entry = controllers.DirectoryEntry.fromName(request.project)
     val project = if (!entry.exists) {
       val p = entry.asNewProjectFrame()
@@ -93,7 +92,7 @@ object PipeAPI {
   def getViewer(cp: String) =
     new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
 
-  def runOperation(request: OperationRequest): CheckpointResponse = {
+  def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
     val normalized = normalize(request.operation)
     assert(normalizedIds.contains(normalized), s"No such operation: ${request.operation}")
     val operation = normalizedIds(normalized)
@@ -139,37 +138,7 @@ object PipeAPI {
     TableResult(rows = rows.toList)
   }
 
-  val pipeFile = LoggedEnvironment.envOrNone("KITE_API_PIPE").map(new java.io.File(_))
-
-  // Starts a daemon thread if KITE_API_PIPE is configured.
-  def maybeStart() = {
-    for (f <- pipeFile) {
-      if (!f.exists) {
-        val mkfifo = sys.process.Process(Seq("mkfifo", f.getAbsolutePath)).run
-        assert(mkfifo.exitValue == 0, s"Could not create Unix pipe $f")
-      }
-      val p = new PipeAPI(f)
-      p.start
-    }
-  }
-}
-class PipeAPI(pipe: java.io.File) extends Thread("Pipe API") {
-  import PipeAPI._
-  setDaemon(true)
-
-  override def run() = {
-    while (true) {
-      val input = scala.io.Source.fromFile(pipe, "utf-8")
-      log.info(s"Pipe API reading from $pipe.")
-      for (line <- input.getLines) {
-        try {
-          log.info(s"Received $line")
-          val cmd = json.Json.parse(line).as[Command]
-          cmd.execute()
-        } catch {
-          case t: Throwable => log.error(s"Error while processing $line:", t)
-        }
-      }
-    }
+  def remote(user: User, command: Command) = {
+    command.execute(user)
   }
 }

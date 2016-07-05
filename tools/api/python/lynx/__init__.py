@@ -1,6 +1,10 @@
-'''Python interface for the named pipe-based LynxKite API.
+'''Python interface for the LynxKite Remote API.
 
-Reads the pipe location from .kiterc just like LynxKite does.
+The access to the LynxKite instance can be configured through the following environment variables:
+
+    LYNXKITE_ADDRESS=https://lynxkite.example.com/
+    LYNXKITE_USERNAME=user@company
+    LYNXKITE_PASSWORD=my_password
 
 Example usage:
 
@@ -12,35 +16,25 @@ Example usage:
 The list of operations is not documented, but you can copy the invocation from a LynxKite project
 history.
 '''
-import atexit
+import http.cookiejar
 import json
 import os
-import re
-import subprocess
-import tempfile
 import types
+import urllib
 
 
 default_sql_limit = 1000
 
 
-def _init():
-  '''Runs when the module is loaded. Reads configuration and creates response pipe.'''
-  global server_pipe, response_pipe_int, response_pipe_ext
-  server_pipe = _fromkiterc('KITE_API_PIPE')
-  # This INTERNAL/EXTERNAL configuration is used when running in a Docker container.
-  # INTERNAL is the path where we see the file. EXTERNAL is the same from LynxKite's perspective.
-  response_dir_int = os.environ.get('KITE_API_PIPE_RESPONSE_INTERNAL') or tempfile.gettempdir()
-  response_dir_ext = os.environ.get('KITE_API_PIPE_RESPONSE_EXTERNAL') or response_dir_int
-  response_pipe_int = '{}/pipe-{}'.format(response_dir_int, os.getpid())
-  response_pipe_ext = '{}/pipe-{}'.format(response_dir_ext, os.getpid())
-  os.mkfifo(response_pipe_int)
-  atexit.register(_cleanup)
-
-
-def _cleanup():
-  '''Runs at exit to remove the response pipe.'''
-  os.remove(response_pipe_int)
+def reconnect():
+  '''Runs when the module is loaded. Performs login.'''
+  global connection
+  cj = http.cookiejar.CookieJar()
+  connection = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+  if os.environ.get('LYNXKITE_USERNAME'):
+    _request('/passwordLogin', dict(
+        username=os.environ['LYNXKITE_USERNAME'],
+        password=os.environ['LYNXKITE_PASSWORD']))
 
 
 class Project(object):
@@ -103,22 +97,29 @@ class LynxException(Exception):
     self.command = command
 
 
+def _request(endpoint, payload={}):
+  '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
+  data = json.dumps(payload).encode('utf-8')
+  req = urllib.request.Request(
+      os.environ.get('LYNXKITE_ADDRESS').rstrip('/') + '/' + endpoint.lstrip('/'),
+      data=data,
+      headers={'Content-Type': 'application/json'})
+  with connection.open(req) as r:
+    return r.read().decode('utf-8')
+
+
 def _send(command, payload={}, raw=False):
   '''Sends a command to LynxKite and returns the response when it arrives.'''
-  msg = json.dumps(dict(command=command, payload=payload, responsePipe=response_pipe_ext))
-  with open(server_pipe, 'w') as p:
-    p.write(msg)
-  with open(response_pipe_int) as p:
-    data = p.read()
-    if raw:
-      r = json.loads(data)
-      if 'error' in r:
-        raise LynxException(r['error'], r['request'])
-    else:
-      r = json.loads(data, object_hook=_asobject)
-      if hasattr(r, 'error'):
-        raise LynxException(r.error, r.request)
-    return r
+  data = _request('/remote', dict(command=command, payload=payload))
+  if raw:
+    r = json.loads(data)
+    if 'error' in r:
+      raise LynxException(r['error'], r['request'])
+  else:
+    r = json.loads(data, object_hook=_asobject)
+    if hasattr(r, 'error'):
+      raise LynxException(r.error, r.request)
+  return r
 
 
 def _asobject(dic):
@@ -126,20 +127,4 @@ def _asobject(dic):
   return types.SimpleNamespace(**dic)
 
 
-def _fromkiterc(variable):
-  '''Returns the value of a variable defined in .kiterc.'''
-  load_kiterc = '''
-      KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
-      if [ -f "$KITE_SITE_CONFIG" ]; then
-        source "$KITE_SITE_CONFIG"
-      fi
-      if [ -f "$KITE_SITE_CONFIG_OVERRIDES" ]; then
-        source "$KITE_SITE_CONFIG_OVERRIDES"
-      fi
-      '''
-  # We will source kiterc, then print the variable we want.
-  command = '{}\n echo ${}'.format(load_kiterc, variable)
-  return subprocess.check_output(command, shell=True, executable='/bin/bash').strip()
-
-
-_init()
+reconnect()
