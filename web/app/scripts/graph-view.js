@@ -629,10 +629,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
 
       var size = 0.5;
-      if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
+      if (sizeAttr) {
+      var s = vertex.attrs[sizeAttr].double;
+      size = s > 0 ? s / sizeMax : 0; }
 
       var labelSize = 0.5;
-      if (labelSizeAttr) { labelSize = vertex.attrs[labelSizeAttr].double / labelSizeMax; }
+      if (labelSizeAttr) {
+      var l = vertex.attrs[labelSizeAttr].double;
+      labelSize = l > 0 ? l / labelSizeMax: 0; }
 
       var color = UNCOLORED;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
