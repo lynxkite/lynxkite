@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
+import com.lynxanalytics.biggraph.graph_operations._
 
 import util.Random
 
@@ -190,5 +191,33 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       Seq("prediction" -> prediction, "truth" -> trueParityAttr),
       g.result.vs).attr
     assert(isWrong.rdd.values.sum == 0)
+  }
+
+  // learn Page Rank
+  test("Page Rank") {
+    val vs = CreateVertexSet(1000).result.vs
+    val es = {
+      val eop = FastRandomEdgeBundle(7, 20)
+      eop(eop.vs, vs).result.es
+    }
+    val truePr = {
+      val weight = AddConstantAttribute.run(es.idSet, 1.0)
+      val op = PageRank(0.5, 100)
+      val realPr = op(op.es, es)(op.weights, weight).result.pagerank
+      DeriveJS.deriveFromAttributes[Double](
+        "realPr * 2 - 1", Seq("realPr" -> realPr), vs).attr
+    }
+    val a = vs.randomAttribute(6)
+    val pr = DeriveJS.deriveFromAttributes[Double](
+      "a < -1 ? undefined : truePr", Seq("a" -> a, "truePr" -> truePr), vs).attr
+
+    val prediction = {
+      val op = NeuralNetwork(
+        featureCount = 0, networkSize = 4, iterations = 1000, learningRate = 0.2, radius = 4,
+        hideState = true, forgetFraction = 0.1)
+      op(op.edges, es)(op.label, pr).result.prediction
+    }
+    prediction.rdd.count
+    assert(differenceSquareSum(prediction, truePr) < 10)
   }
 }
