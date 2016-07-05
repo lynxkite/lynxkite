@@ -5,11 +5,17 @@ package com.lynxanalytics.biggraph.groovy
 import org.apache.spark
 
 class SparkTestListener(sc: spark.SparkContext, s: String) extends spark.scheduler.SparkListener {
+  val localityInfo = scala.collection.mutable.Map[String, Int]().withDefaultValue(0)
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     val info = stageCompleted.stageInfo
-    println(s"$s: STAGE DONE: [${info.stageId}.${info.attemptId}] " +
+    println(s"$s: STAGE DONE: [${info.stageId}.${info.attemptId}] localities: $localityInfo  " +
       s"${info.name} ${(info.completionTime.get - info.submissionTime.get) / 1000} seconds")
+    localityInfo.clear()
+  }
+  override def onTaskEnd(taskEnd: org.apache.spark.scheduler.SparkListenerTaskEnd): Unit = {
+    val locInfo = taskEnd.taskInfo.taskLocality.toString
+    localityInfo(locInfo) += 1
   }
 }
 
@@ -51,8 +57,6 @@ class SparkTests(sc: spark.SparkContext) {
 
     data.foreach(identity)
     data.foreach(identity)
-
-    //    System.in.read()
   }
 
 }
