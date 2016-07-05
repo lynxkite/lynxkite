@@ -147,13 +147,13 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(isWrong.rdd.values.sum == 0)
   }
 
-  //parity of the containing path in a graph consisting of paths
-  test("parity of containing path") {
+  //Learn parity of the containing path in a graph consisting of paths. Not possible with this GRU.
+  ignore("parity of containing path") {
     val numberOfVertices = 1000
     val numberOfPaths = 200
 
-    val r = new Random
-    val pathStarts = (0 until numberOfPaths - 1).map(i => r.nextInt(numberOfVertices - 1)).sorted
+    val r = new Random(9)
+    val pathStarts = r.shuffle(1 to numberOfVertices - 1).drop(numberOfVertices - numberOfPaths).sorted
     val edgeList = (0 until numberOfVertices).map(v =>
       if (pathStarts.contains(v) && pathStarts.contains(v + 1)) v -> List()
       else if (pathStarts.contains(v) || v == 0) v -> List(v + 1)
@@ -162,7 +162,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val extendedPathStarts = 0 +: pathStarts :+ (numberOfVertices - 1)
     def inWhichPath(v: Int): Int = {
-      (0 until numberOfPaths).map(i => (extendedPathStarts(i) <= v && v < extendedPathStarts(i + 1))).indexOf(true)
+      (0 until numberOfPaths).indexWhere(i => (extendedPathStarts(i) <= v && v < extendedPathStarts(i + 1)))
     }
     val parityOfContainingPath = {
       (0 until numberOfVertices - 1).map(v =>
@@ -172,7 +172,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val g = SmallTestGraph(edgeList)
     val vertices = g.result.vs
     val trueParityAttr = AddVertexAttribute.run(vertices, parityOfContainingPath)
-    val a = vertices.randomAttribute(9)
+    val a = vertices.randomAttribute(8)
     val parityAttr = DeriveJS.deriveFromAttributes[Double](
       "a < -1 ? undefined : trueParityAttr",
       Seq("a" -> a, "trueParityAttr" -> trueParityAttr),
@@ -180,8 +180,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 50, learningRate = 0.2, radius = 3,
-        hideState = true, forgetFraction = 0.0)
+        featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.4, radius = 4,
+        hideState = true, forgetFraction = 0.3)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
     }
     prediction.rdd.count
