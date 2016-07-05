@@ -224,7 +224,7 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T) = async[FEOption] {
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
     SQLController.saveTableFromDataFrame(
       request.restrictedDataFrame(user),
       request.notes,
@@ -232,7 +232,6 @@ class SQLController(val env: BigGraphEnvironment) {
       request.table,
       request.privacy,
       TypedJson.createFromWriter(request).as[json.JsObject])
-  }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
