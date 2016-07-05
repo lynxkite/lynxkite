@@ -10,6 +10,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Global SQL-box has been added.
 
+- New operation "Mask vertex attribute" has been added.
+- Global SQL-box has been added.
+- Import options are now stored for each table and can be reused via "Edit import" button.
+
 ### 1.8.0
 
  - Major performance and scalability improvements.
