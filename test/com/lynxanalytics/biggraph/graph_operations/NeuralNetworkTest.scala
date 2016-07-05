@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 
+import util.Random
+
 class NeuralNetworkTest extends FunSuite with TestGraphOp {
   def differenceSquareSum(a: Attribute[Double], b: Attribute[Double]): Double = {
     val diff = DeriveJS.deriveFromAttributes[Double](
@@ -145,4 +147,48 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(isWrong.rdd.values.sum == 0)
   }
 
+  //Learn parity of the containing path in a graph consisting of paths. Not possible with this GRU.
+  ignore("parity of containing path") {
+    val numberOfVertices = 1000
+    val numberOfPaths = 200
+
+    val r = new Random(9)
+    val pathStarts = r.shuffle(1 to numberOfVertices - 1).drop(numberOfVertices - numberOfPaths).sorted
+    val edgeList = (0 until numberOfVertices).map(v =>
+      if (pathStarts.contains(v) && pathStarts.contains(v + 1)) v -> List()
+      else if (pathStarts.contains(v) || v == 0) v -> List(v + 1)
+      else if (pathStarts.contains(v + 1) || v == numberOfVertices - 1) v -> List(v - 1)
+      else v -> List(v - 1, v + 1)).toMap
+
+    val extendedPathStarts = 0 +: pathStarts :+ (numberOfVertices - 1)
+    def inWhichPath(v: Int): Int = {
+      (0 until numberOfPaths).indexWhere(i => (extendedPathStarts(i) <= v && v < extendedPathStarts(i + 1)))
+    }
+    val parityOfContainingPath = {
+      (0 until numberOfVertices - 1).map(v =>
+        (v, ((extendedPathStarts(inWhichPath(v) + 1) - extendedPathStarts(inWhichPath(v))) % 2) * 2 - 1.0)).toMap
+    }
+
+    val g = SmallTestGraph(edgeList)
+    val vertices = g.result.vs
+    val trueParityAttr = AddVertexAttribute.run(vertices, parityOfContainingPath)
+    val a = vertices.randomAttribute(8)
+    val parityAttr = DeriveJS.deriveFromAttributes[Double](
+      "a < -1 ? undefined : trueParityAttr",
+      Seq("a" -> a, "trueParityAttr" -> trueParityAttr),
+      vertices).attr
+
+    val prediction = {
+      val op = NeuralNetwork(
+        featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.4, radius = 4,
+        hideState = true, forgetFraction = 0.3)
+      op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
+    }
+    prediction.rdd.count
+    val isWrong = DeriveJS.deriveFromAttributes[Double](
+      "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
+      Seq("prediction" -> prediction, "truth" -> trueParityAttr),
+      g.result.vs).attr
+    assert(isWrong.rdd.values.sum == 0)
+  }
 }
