@@ -1263,6 +1263,37 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Mask vertex attribute", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true),
+      Param("salt", "Salt", defaultValue = nextString(15))
+    )
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+
+    def apply(params: Map[String, String]) = {
+      assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to mask.")
+      assert(params("salt").nonEmpty, "Please set a salt value.")
+      val op = graph_operations.HashVertexAttribute(params("salt").toString)
+      for (attribute <- params("attr").split(",", -1)) {
+        val attr = project.vertexAttributes(attribute).asString
+        project.newVertexAttribute(attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
+          "This attribute has been masked")
+      }
+    }
+
+    // To have a more secure default salt value than just using Random.nextInt.toString
+    def nextString(length: Int): String = {
+      val validCharacters: Array[Char] = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toArray
+      val srand: java.security.SecureRandom = new java.security.SecureRandom()
+      val rand: java.util.Random = new java.util.Random()
+
+      rand.setSeed(srand.nextLong())
+
+      val chars: Array[Char] = new Array[Char](length)
+      chars.map(_ => validCharacters(rand.nextInt(validCharacters.length))).mkString("")
+    }
+  })
+
   private val toStringHelpText = "Converts the selected %s attributes to string type."
   register("Vertex attribute to string", new VertexAttributesOperation(_, _) {
     def parameters = List(
