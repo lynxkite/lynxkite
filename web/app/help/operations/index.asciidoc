@@ -123,6 +123,8 @@ include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
 
+include::classify-attributes-by-a-model.asciidoc[]
+
 include::clustering-coefficient.asciidoc[]
 
 include::coloring.asciidoc[]
@@ -305,7 +307,7 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
-include::train-kmeans-clustering-model.asciidoc[]
+include::train-a-kmeans-clustering-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 

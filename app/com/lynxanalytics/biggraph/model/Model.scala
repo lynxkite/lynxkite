@@ -4,8 +4,6 @@ package com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.spark.mllib.linalg.DenseVector
-import org.apache.spark.mllib.feature.ElementwiseProduct
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
@@ -32,20 +30,26 @@ private class LinearRegressionModelImpl(
 
 private class ClusterModelImpl(
     m: ml.clustering.KMeansModel,
-    featureScaler: Option[mllib.feature.StandardScalerModel],
-    sc: spark.SparkContext) extends ModelImplementation {
-  val sqlContext = new SQLContext(sc)
-  import sqlContext.implicits._
+    featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
+
   def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
-    val dataDf = data.map(x => Tuple1(x)).toDF("vector")
-    m.transform(dataDf).map { row => row.getAs[Int](1).toDouble }
+    val dataDF = {
+      val sc = data.context
+      val sqlContext = new SQLContext(sc)
+      import sqlContext.implicits._
+      data.map(x => Tuple1(x)).toDF("vector")
+    }
+    // Output a rdd of resulting cluster labels
+    m.transform(dataDF).map { row => row.getAs[Int](1).toDouble }
   }
-  val unscaledCenters = sc.parallelize(m.clusterCenters)
-  val transformingVector = featureScaler.get.std
-  val transformer = new ElementwiseProduct(transformingVector)
-  val scaledCenters = transformer.transform(unscaledCenters)
+  val scaledCenters = {
+    val unscaledCenters = m.clusterCenters
+    val transformingVector = featureScaler.std
+    val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
+    unscaledCenters.map(transformer.transform(_))
+  }
   def details: String = {
-    s"cluster centers: ${scaledCenters.collect.mkString}" //TODO: maybe also compute the cost (required input data)
+    s"cluster centers: ${scaledCenters.mkString}"
   }
 }
 
@@ -55,7 +59,7 @@ case class Model(
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
   labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
-  featureScaler: Option[mllib.feature.StandardScalerModel]) // The scaler used to scale the features.
+  featureScaler: mllib.feature.StandardScalerModel) // The scaler used to scale the features.
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -83,13 +87,12 @@ case class Model(
       val o = other.asInstanceOf[Model]
       def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
         standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
-      def featureScalerEquals = ((featureScaler.isEmpty && o.featureScaler.isEmpty) ||
-        standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
       method == o.method &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
-        labelScalerEquals && featureScalerEquals
+        labelScalerEquals &&
+        standardScalerModelEquals(featureScaler, o.featureScaler)
     } else {
       false
     }
@@ -104,7 +107,7 @@ case class Model(
       "labelName" -> labelName,
       "featureNames" -> featureNames,
       "labelScaler" -> standardScalerModelToJson(labelScaler),
-      "featureScaler" -> standardScalerModelToJson(featureScaler)
+      "featureScaler" -> standardScalerModelToJson(Some(featureScaler))
     )
   }
 
@@ -119,21 +122,21 @@ case class Model(
       case "Lasso" =>
         new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
       case "KMeans clustering" =>
-        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), featureScaler, sc)
+        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), featureScaler)
     }
   }
 
   def scalerDetails: String = {
     val meanInfo =
-      if (featureScaler.get.withMean) {
-        val vec = "(" + featureScaler.get.mean.toArray.mkString(", ") + ")"
+      if (featureScaler.withMean) {
+        val vec = "(" + featureScaler.mean.toArray.mkString(", ") + ")"
         s"Centered to 0; original mean was $vec\n"
       } else {
         ""
       }
     val stdInfo =
-      if (featureScaler.get.withStd) {
-        val vec = "(" + featureScaler.get.std.toArray.mkString(", ") + ")"
+      if (featureScaler.withStd) {
+        val vec = "(" + featureScaler.std.toArray.mkString(", ") + ")"
         s"Scaled to unit standard deviation; original deviation was $vec"
       } else {
         ""
@@ -172,7 +175,7 @@ object Model extends FromJson[Model] {
       (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
       standardScalerModelFromJson(j \ "labelScaler"),
-      standardScalerModelFromJson(j \ "featureScaler")
+      standardScalerModelFromJson(j \ "featureScaler").get
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(modelName, modelMeta.featureNames)
@@ -245,10 +248,11 @@ case class ScaledParams(
   // An optional scaler if it was used to scale the labels. It can be used
   // to scale back the results.
   labelScaler: Option[mllib.feature.StandardScalerModel],
-  featureScaler: Option[mllib.feature.StandardScalerModel])
+  featureScaler: mllib.feature.StandardScalerModel)
 
 class Scaler(
     // Whether the data should be prepared for a Stochastic Gradient Descent method.
+    // TODO: Add more conditions in the future because not all scalers depend only on SGD.
     forSGD: Boolean) {
 
   // Creates the input for training and evaluation.
@@ -270,7 +274,7 @@ class Scaler(
           case (_, v) => v
         })
       // Scale all vectors using the scaler created from the training vectors.
-      (unscaled.mapValues(v => scaler.transform(v)), Some(scaler))
+      (unscaled.mapValues(v => scaler.transform(v)), scaler)
     }
 
     val (labels, labelScaler) = if (forSGD) {
@@ -293,7 +297,7 @@ class Scaler(
     ScaledParams(points, vectors, labelScaler, featureScaler)
   }
 
-  // This feature scaler can be used for unsupervised learning
+  // This feature scaler can be used for unsupervised learning.
   def scaleFeatures(
     features: Array[AttributeRDD[Double]],
     vertices: VertexSetRDD)(implicit id: DataSet): ScaledParams = {
@@ -307,8 +311,8 @@ class Scaler(
         withStd = true)
         .fit(unscaled.values)
       // Scale all vectors using the scaler created from the training vectors.
-      (unscaled.mapValues(v => scaler.transform(v)), Some(scaler))
+      (unscaled.mapValues(v => scaler.transform(v)), scaler)
     }
-    ScaledParams(None, vectors, None, featureScaler)
+    ScaledParams(points = None, vectors, labelScaler = None, featureScaler)
   }
 }

@@ -1,4 +1,4 @@
-// Train a kmeans clustering model.
+// Train a k-means clustering model.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -12,15 +12,13 @@ object KMeansClusteringModelTrainer extends OpFromJson {
       i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
     }
   }
-  class Output(properties: EdgeBundleProperties)(
-      implicit instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = KMeansClusteringModelTrainer(
     (j \ "k").as[Int],
     (j \ "maxIter").as[Int],
-    (j \ "tolerance").as[Double],
     (j \ "seed").as[Int],
     (j \ "featureNames").as[List[String]])
 }
@@ -28,18 +26,14 @@ import KMeansClusteringModelTrainer._
 case class KMeansClusteringModelTrainer(
     k: Int,
     maxIter: Int,
-    tolerance: Double,
     seed: Long,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
-  def outputMeta(instance: MetaGraphOperationInstance) = {
-    new Output(EdgeBundleProperties.default)(instance, inputs)
-  }
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "k" -> k,
     "maxIter" -> maxIter,
-    "tolerance" -> tolerance,
     "seed" -> seed,
     "featureNames" -> featureNames)
 
@@ -51,15 +45,15 @@ case class KMeansClusteringModelTrainer(
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val RDDArray = inputs.features.toArray.map { v => v.rdd }
-    val params = new Scaler(forSGD = false).scaleFeatures(RDDArray, inputs.vertices.rdd)
+    val rddArray = inputs.features.map(_.rdd).toArray
+    val params = new Scaler(forSGD = false).scaleFeatures(rddArray, inputs.vertices.rdd)
     val scaledDF = params.vectors.toDF("ID", "vector")
 
-    // Train a KMeans model from the scaled vectors
+    // Train a k-means model from the scaled vectors.
     val kmeans = new KMeans()
       .setK(k)
       .setMaxIter(maxIter)
-      .setTol(tolerance)
+      .setTol(0) // The convergence of the algorithm is controlled by maximum number of iterations.
       .setSeed(seed)
       .setFeaturesCol("vector")
       .setPredictionCol("prediction")
