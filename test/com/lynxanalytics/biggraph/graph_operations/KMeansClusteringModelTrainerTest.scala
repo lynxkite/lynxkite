@@ -11,49 +11,52 @@ class KMeansClusteringModelTrainerTest extends ModelTestBase {
     val g = ExampleGraph()().result
     val featureNames = List("age")
     val features: Seq[Attribute[Double]] = Seq(g.age)
-    val op = KMeansClusteringModelTrainer(2, 20, 0.0001, 1000, featureNames)
+    val op = KMeansClusteringModelTrainer(
+      k = 2,
+      maxIter = 20,
+      seed = 1000,
+      featureNames)
     val m = op(op.features, features).result.model.value
 
+    // Load the model class and check each of its fields. 
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
     assert(m.method == "KMeans clustering")
     assert(m.featureNames == List("age"))
     assert(KMeansModel.load(path).clusterCenters.size == 2)
 
-    //check data points with similar ages have the same label
+    // Check that data points with similar ages have the same label. 
+    // Check that data points with distant ages have different labels.
     val impl = m.load(sparkContext)
-    val ageSimilar = vectorsRDD(Array(Array(20.3), Array(18.2)))
+    val ages = vectorsRDD(Array(15), Array(20), Array(50))
     val clustering = impl.transform(
-      ageSimilar.map(v => m.featureScaler.get.transform(v))).collect
-    assert(clustering(0) == clustering(1))
+      ages.map(v => m.featureScaler.transform(v))).collect
+    assert(clustering(0) == clustering(1),
+      "Age 15 and Age 20 shall be in the same cluster.")
+    assert(clustering(0) != clustering(2),
+      "Age 15 and Age 50 shall be in the different cluster.")
   }
 
   test("larger data set with 20 attributes") {
+    // Load the model class and check each of its fields.
     val numAttr = 20
     val numData = 100
-    // 100 data where the first data point has twenty attributes of value 1.0, the 
-    // second data point has twenty attributes of value 2.0 ... etc 
-    val attrs = (1 to numAttr).map(i => (1 to numData).map {
-      case x => x -> x.toDouble
-    }.toMap)
-    val g = SmallTestGraph(attrs(0).mapValues(_ => Seq()), 10).result
-    val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val featureNames = (1 to 20).toList.map { i => i.toString }
-    val op = KMeansClusteringModelTrainer(10, 50, 0.0001, 1000, featureNames)
-    val m = op(op.features, features).result.model.value
-
+    val k = 10
+    val m = testKMeansModel(numAttr, numData, k).value // From the ModelTestBase class.
+    // Load the model class and check the number of clusters.
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
-    assert(m.featureNames == featureNames)
-    assert(KMeansModel.load(path).clusterCenters.size == 10)
+    assert(KMeansModel.load(path).clusterCenters.size == k)
 
+    // Check that data points with similar values have the same label. 
+    // Check that data points with distant values have different labels. 
     val impl = m.load(sparkContext)
-    // check input data with similar attribute values withh belong to the same group 
-    val dataSimilar = vectorsRDD(Array(Array.fill(20)(1), Array.fill(20)(5),
-      Array.fill(20)(96), Array.fill(20)(100)))
+    val data = vectorsRDD(Array.fill(numAttr)(1), Array.fill(numAttr)(5),
+      Array.fill(numAttr)(96), Array.fill(numAttr)(100))
     val clustering = impl.transform(
-      dataSimilar.map(v => m.featureScaler.get.transform(v))).collect
+      data.map(v => m.featureScaler.transform(v))).collect
     assert(clustering(0) == clustering(1))
     assert(clustering(2) == clustering(3))
+    assert(clustering(0) != clustering(3))
   }
 }
