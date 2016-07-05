@@ -850,6 +850,7 @@ object ProjectFrame {
     "checkpoint", "nextCheckpoint",
     "farthestCheckpoint",
     "objectType", "details")
+  // Do not add to the set above, begin internal names with '!'.
 
   def validateName(name: String, what: String = "Name",
                    allowSlash: Boolean = false,
@@ -860,9 +861,8 @@ object ProjectFrame {
     assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
     val path = SymbolPath.parse(name)
     if (path.nonEmpty) {
-      // Syombol puts '-s at the beginning, we drop these
-      val trimmed = path.last.toString().dropWhile(_ == '\'')
-      assert(!reservedWords.contains(trimmed), s"$trimmed is a reserved word")
+      val name = path.last.name
+      assert(!reservedWords.contains(name), s"$name is a reserved word")
     }
   }
 
