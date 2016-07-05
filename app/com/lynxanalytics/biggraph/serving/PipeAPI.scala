@@ -42,28 +42,12 @@ object PipeAPI {
           case "runOperation" => json.Json.toJson(runOperation(payload.as[OperationRequest]))
           case "saveProject" => json.Json.toJson(saveProject(payload.as[SaveProjectRequest]))
           case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
-          case "importJdbc" => json.Json.toJson(payload.as[JdbcImportRequest])
+          case "importJdbc" => json.Json.toJson(importRequest(payload.as[JdbcImportRequest]))
           case "importHive" => json.Json.toJson(importRequest(payload.as[HiveImportRequest]))
-          case "importCSV" => {
-            val request = payload.as[CSVImportRequest]
-            val copied = copyToLynxKite(request.files)
-            json.Json.toJson(importRequest(request.copy(files = copied.toString)))
-          }
-          case "importParquet" => {
-            val request = payload.as[ParquetImportRequest]
-            val copied = copyToLynxKite(request.files)
-            json.Json.toJson(importRequest(request.copy(files = copied.toString)))
-          }
-          case "importORC" => {
-            val request = payload.as[ORCImportRequest]
-            val copied = copyToLynxKite(request.files)
-            json.Json.toJson(importRequest(request.copy(files = copied.toString)))
-          }
-          case "importJson" => {
-            val request = payload.as[JsonImportRequest]
-            val copied = copyToLynxKite(request.files)
-            json.Json.toJson(importRequest(request.copy(files = copied.toString)))
-          }
+          case "importCSV" => json.Json.toJson(importRequest(payload.as[CSVImportRequest]))
+          case "importParquet" => json.Json.toJson(importRequest(payload.as[ParquetImportRequest]))
+          case "importORC" => json.Json.toJson(importRequest(payload.as[ORCImportRequest]))
+          case "importJson" => json.Json.toJson(importRequest(payload.as[JsonImportRequest]))
         }
       } catch {
         case t: Throwable =>
@@ -172,36 +156,11 @@ object PipeAPI {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](request: T): CheckpointResponse = {
+  def importRequest[T <: GenericImportRequest: json.Writes]
+    (request: T): CheckpointResponse = {
+    
     sqlController.doImport(user, request)
     CheckpointResponse("")
-  }
-
-  def copyToLynxKite(uri: String): HadoopFile = {
-    // uri is either an http(s) link or an absolute file path
-
-    val baseName = uri.split("/").last.replace(" ", "_")
-    val finalName = s"$baseName.$Timestamp"
-    val uploadsDir = HadoopFile("UPLOAD$")
-    uploadsDir.mkdirs() // Create the directory if it does not already exist.
-    val finalFile: HadoopFile = uploadsDir / finalName
-
-    val isWebRequest = "^https?://.*".r
-    val regexMatch = isWebRequest.findFirstIn(uri)
-    val inputStream: InputStream = if (regexMatch.isDefined) {
-      new URL(uri).openStream()
-    } else {
-      new FileInputStream(uri)
-    }
-
-    val outputStream: OutputStream = finalFile.create()
-
-    try IOUtils.copy(inputStream, outputStream)
-    finally {
-      inputStream.close()
-      outputStream.close()
-    }
-    finalFile
   }
 
   val pipeFile = LoggedEnvironment.envOrNone("KITE_API_PIPE").map(new java.io.File(_))
