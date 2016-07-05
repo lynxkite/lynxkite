@@ -11,6 +11,7 @@ class HashVertexAttributeTest extends FunSuite with TestGraphOp {
     val op = HashVertexAttribute("Dennis Bergkamp")
     val res = op(op.vs, eg.vertices)(op.attr, eg.name).result.hashed
     val hash = res.rdd.collect.toSeq.sorted
-    assert(hash == Seq(0 -> "99263F16589D60", 1 -> "AB72E85EFFE1DE", 2 -> "EF6AE3AE06DA2C", 3 -> "919EDDE6FCBBF2"))
+    assert(hash == Seq(0 -> "29863D72F28233796FD2C420", 1 -> "2F020DD4972D253730990906",
+      2 -> "363EA594AD8BFEEEB0EAC85C", 3 -> "A08B9B3BAC49A60C67F6F458"))
   }
 }
