@@ -1,4 +1,4 @@
-### Classify attributes by a model
+### Classify attributes with a model
 
 Creates classifications from a model and vertex attributes of the graph.
 

@@ -4,7 +4,7 @@
 Machine learning models are one of the graph attribute types.
 They are created by a machine learning operation (for example <<train-linear-regression-model>>)
 and used for prediction with the <<predict-from-model>> operation or classification with the
-<<classify-attributes-by-model>> operation.
+<<classify-attributes-with-model>> operation.
 
 Press the plus button
 (+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++)

@@ -18,22 +18,20 @@ object RegressionModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
-    (j \ "isClassification").as[Boolean],
     (j \ "method").as[String],
     (j \ "labelName").as[String],
     (j \ "featureNames").as[List[String]])
 }
 import RegressionModelTrainer._
 case class RegressionModelTrainer(
-    isClassification: Boolean = false,
     method: String,
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
-  @transient override lazy val inputs = new Input(featureNames.size)
+  val isClassification = false
   override val isHeavy = true
+  @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "isClassification" -> isClassification,
     "method" -> method,
     "labelName" -> labelName,
     "featureNames" -> featureNames)
@@ -50,18 +48,17 @@ case class RegressionModelTrainer(
 
     val model = method match {
       case "Linear regression" =>
-        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points.get)
+        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
       case "Ridge regression" =>
-        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points.get)
+        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
       case "Lasso" =>
-        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points.get)
+        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.labeledPoints.get)
     }
     Model.checkLinearModel(model)
 
     val file = Model.newModelFile
     model.save(rc.sparkContext, file.resolvedName)
     output(o.model, Model(
-      isClassification = isClassification,
       method = method,
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),

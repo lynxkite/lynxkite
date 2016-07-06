@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object ClassifyByModel extends OpFromJson {
+object ClassifyWithModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until numFeatures).map {
@@ -17,10 +17,10 @@ object ClassifyByModel extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val classification = vertexAttribute[Double](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = ClassifyByModel((j \ "numFeatures").as[Int])
+  def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
 }
-import ClassifyByModel._
-case class ClassifyByModel(numFeatures: Int)
+import ClassifyWithModel._
+case class ClassifyWithModel(numFeatures: Int)
     extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
   override val isHeavy = true

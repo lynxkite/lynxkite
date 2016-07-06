@@ -20,7 +20,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     graph: SmallTestGraph.Output): Scalar[Model] = {
     val l = AddVertexAttribute.run(graph.vs, label)
     val a = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
-    val op = RegressionModelTrainer(isClassification = false, method, labelName, featureNames)
+    val op = RegressionModelTrainer(method, labelName, featureNames)
     op(op.features, a)(op.label, l).result.model
   }
 
@@ -35,7 +35,6 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
     val featureNames = (1 to numAttr).toList.map { i => i.toString }
     val op = KMeansClusteringModelTrainer(
-      isClassification = true,
       k,
       maxIter = 50,
       seed = 1000,

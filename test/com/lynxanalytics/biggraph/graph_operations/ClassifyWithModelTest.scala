@@ -3,8 +3,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class ClassifyByModelTest extends ModelTestBase {
-  test("test the k-means clusterng model on larger data set with 20 attributes") {
+class ClassifyWithModelTest extends ModelTestBase {
+  test("test the k-means clustering model on larger data set with 20 attributes") {
     val numAttr = 20
     val numData = 100
     val k = 10
@@ -16,7 +16,7 @@ class ClassifyByModelTest extends ModelTestBase {
     val g = graph(numVertices = 4)
     val attrs = (0 until numAttr).map(_ => Map(0 -> 100.0, 1 -> 96.0, 2 -> 5.0, 3 -> 1.0))
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val op = ClassifyByModel(numAttr)
+    val op = ClassifyWithModel(numAttr)
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
