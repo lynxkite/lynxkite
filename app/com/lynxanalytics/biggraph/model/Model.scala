@@ -31,7 +31,6 @@ private class LinearRegressionModelImpl(
 private class ClusterModelImpl(
     m: ml.clustering.KMeansModel,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
-
   def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
     val dataDF = {
       val sc = data.context
@@ -39,7 +38,8 @@ private class ClusterModelImpl(
       import sqlContext.implicits._
       data.map(x => Tuple1(x)).toDF("vector")
     }
-    // Output a rdd of resulting cluster labels
+    // Transform the data to a new DataFrame with the schema [vector | prediction].  
+    // Output the second column which is a rdd of the resulting cluster labels.
     m.transform(dataDF).map { row => row.getAs[Int](1).toDouble }
   }
   val scaledCenters = {
@@ -54,7 +54,6 @@ private class ClusterModelImpl(
 }
 
 case class Model(
-  isClassification: Boolean, // The model is a classification model or a regression model.
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
@@ -89,7 +88,6 @@ case class Model(
       def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
         standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
       method == o.method &&
-        isClassification == o.isClassification &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
@@ -104,7 +102,6 @@ case class Model(
 
   override def toJson: json.JsValue = {
     json.Json.obj(
-      "isClassification" -> isClassification,
       "method" -> method,
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
@@ -173,7 +170,6 @@ object Model extends FromJson[Model] {
 
   override def fromJson(j: json.JsValue): Model = {
     Model(
-      (j \ "isClassification").as[Boolean],
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
@@ -216,10 +212,10 @@ object Model extends FromJson[Model] {
 
   // Transforms features to an MLLIB compatible format.
   def toLinalgVector(
-    features: Array[AttributeRDD[Double]],
+    featuresArray: Array[AttributeRDD[Double]],
     vertices: VertexSetRDD): AttributeRDD[mllib.linalg.Vector] = {
-    val emptyArrays = vertices.mapValues(l => new Array[Double](features.size))
-    val numberedFeatures = features.zipWithIndex
+    val emptyArrays = vertices.mapValues(l => new Array[Double](featuresArray.size))
+    val numberedFeatures = featuresArray.zipWithIndex
     val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
       case (a, (f, i)) =>
         a.sortedJoin(f).mapValues {
@@ -249,9 +245,9 @@ trait ModelMeta {
 
 case class ScaledParams(
   // Labeled training data points.
-  points: Option[RDD[mllib.regression.LabeledPoint]],
+  labeledPoints: Option[RDD[mllib.regression.LabeledPoint]],
   // All feature data.
-  vectors: AttributeRDD[mllib.linalg.Vector],
+  features: AttributeRDD[mllib.linalg.Vector],
   // An optional scaler if it was used to scale the labels. It can be used
   // to scale back the results.
   labelScaler: Option[mllib.feature.StandardScalerModel],
@@ -265,22 +261,22 @@ class Scaler(
   // Creates the input for training and evaluation.
   def scale(
     labelRDD: AttributeRDD[Double],
-    features: Array[AttributeRDD[Double]],
+    featuresArray: Array[AttributeRDD[Double]],
     vertices: VertexSetRDD)(implicit id: DataSet): ScaledParams = {
 
-    val unscaled = Model.toLinalgVector(features, vertices)
+    val unscaled = Model.toLinalgVector(featuresArray, vertices)
     // All scaled data points.
-    val (vectors, featureScaler) = {
+    val (features, featureScaler) = {
 
       // Must scale the features or we get NaN predictions. (SPARK-1859)
       val scaler = new mllib.feature.StandardScaler(
-        withMean = forSGD, // Center the vectors for SGD training methods.
+        withMean = forSGD, // Center the features for SGD training methods.
         withStd = true).fit(
-        // Set the scaler based on only the training vectors, i.e. where we have a label.
+        // Set the scaler based on only the training features, i.e. where we have a label.
         labelRDD.sortedJoin(unscaled).values.map {
           case (_, v) => v
         })
-      // Scale all vectors using the scaler created from the training vectors.
+      // Scale all features using the scaler created from the training features.
       (unscaled.mapValues(v => scaler.transform(v)), scaler)
     }
 
@@ -297,29 +293,29 @@ class Scaler(
       (labelRDD, None)
     }
 
-    val points = Some(labels.sortedJoin(vectors).values.map {
+    val labeledPoints = Some(labels.sortedJoin(features).values.map {
       case (l, v) => new mllib.regression.LabeledPoint(l, v)
     })
-    points.get.cache
-    ScaledParams(points, vectors, labelScaler, featureScaler)
+    labeledPoints.get.cache
+    ScaledParams(labeledPoints, features, labelScaler, featureScaler)
   }
 
   // This feature scaler can be used for unsupervised learning.
   def scaleFeatures(
-    features: Array[AttributeRDD[Double]],
+    featuresArray: Array[AttributeRDD[Double]],
     vertices: VertexSetRDD)(implicit id: DataSet): ScaledParams = {
 
-    val unscaled = Model.toLinalgVector(features, vertices)
+    val unscaled = Model.toLinalgVector(featuresArray, vertices)
     // All scaled data points.
-    val (vectors, featureScaler) = {
+    val (features, featureScaler) = {
 
       val scaler = new mllib.feature.StandardScaler(
-        withMean = forSGD, // Center the vectors for SGD training methods.
+        withMean = forSGD, // Center the features for SGD training methods.
         withStd = true)
         .fit(unscaled.values)
-      // Scale all vectors using the scaler created from the training vectors.
+      // Scale all features using the scaler created from the training features.
       (unscaled.mapValues(v => scaler.transform(v)), scaler)
     }
-    ScaledParams(points = None, vectors, labelScaler = None, featureScaler)
+    ScaledParams(labeledPoints = None, features, labelScaler = None, featureScaler)
   }
 }

@@ -19,7 +19,6 @@ class ModelJsonSerializationTest extends ModelTestBase {
 
   test("Model json serialization works") {
     val m1 = Model(
-      isClassification = false,
       "one",
       "two",
       Some("three"),
@@ -33,7 +32,6 @@ class ModelJsonSerializationTest extends ModelTestBase {
 
   test("Model json serialization works when labelScaler is None") {
     val m1 = Model(
-      isClassification = false,
       "one",
       "two",
       Some("three"),
@@ -47,7 +45,6 @@ class ModelJsonSerializationTest extends ModelTestBase {
 
   test("Model json serialization works when labelScaler and labelName are None") {
     val m1 = Model(
-      isClassification = true,
       "one",
       "two",
       None,

@@ -17,7 +17,6 @@ object KMeansClusteringModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = KMeansClusteringModelTrainer(
-    (j \ "isClassification").as[Boolean],
     (j \ "k").as[Int],
     (j \ "maxIter").as[Int],
     (j \ "seed").as[Int],
@@ -25,16 +24,15 @@ object KMeansClusteringModelTrainer extends OpFromJson {
 }
 import KMeansClusteringModelTrainer._
 case class KMeansClusteringModelTrainer(
-    isClassification: Boolean = true,
     k: Int,
     maxIter: Int,
     seed: Long,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+  val isClassification = true
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "isClassification" -> isClassification,
     "k" -> k,
     "maxIter" -> maxIter,
     "seed" -> seed,
@@ -48,9 +46,9 @@ case class KMeansClusteringModelTrainer(
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val rddArray = inputs.features.map(_.rdd).toArray
-    val params = new Scaler(forSGD = false).scaleFeatures(rddArray, inputs.vertices.rdd)
-    val scaledDF = params.vectors.toDF("ID", "vector")
+    val featuresArray = inputs.features.map(_.rdd).toArray
+    val params = new Scaler(forSGD = false).scaleFeatures(featuresArray, inputs.vertices.rdd)
+    val scaledDF = params.features.toDF("ID", "vector")
 
     // Train a k-means model from the scaled vectors.
     val kmeans = new KMeans()
@@ -64,7 +62,6 @@ case class KMeansClusteringModelTrainer(
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
-      isClassification = isClassification,
       method = "KMeans clustering",
       labelName = None,
       symbolicPath = file.symbolicName,
