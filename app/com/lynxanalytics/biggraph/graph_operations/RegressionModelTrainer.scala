@@ -18,12 +18,14 @@ object RegressionModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
+    (j \ "isClassification").as[Boolean],
     (j \ "method").as[String],
     (j \ "labelName").as[String],
     (j \ "featureNames").as[List[String]])
 }
 import RegressionModelTrainer._
 case class RegressionModelTrainer(
+    isClassification: Boolean = false,
     method: String,
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
@@ -31,6 +33,7 @@ case class RegressionModelTrainer(
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
+    "isClassification" -> isClassification,
     "method" -> method,
     "labelName" -> labelName,
     "featureNames" -> featureNames)
@@ -58,6 +61,7 @@ case class RegressionModelTrainer(
     val file = Model.newModelFile
     model.save(rc.sparkContext, file.resolvedName)
     output(o.model, Model(
+      isClassification = isClassification,
       method = method,
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),

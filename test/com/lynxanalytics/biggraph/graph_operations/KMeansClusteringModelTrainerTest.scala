@@ -12,6 +12,7 @@ class KMeansClusteringModelTrainerTest extends ModelTestBase {
     val featureNames = List("age")
     val features: Seq[Attribute[Double]] = Seq(g.age)
     val op = KMeansClusteringModelTrainer(
+      isClassification = true,
       k = 2,
       maxIter = 20,
       seed = 1000,

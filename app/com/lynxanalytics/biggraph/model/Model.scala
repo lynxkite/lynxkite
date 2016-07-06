@@ -54,6 +54,7 @@ private class ClusterModelImpl(
 }
 
 case class Model(
+  isClassification: Boolean, // The model is a classification model or a regression model.
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
@@ -88,6 +89,7 @@ case class Model(
       def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
         standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
       method == o.method &&
+        isClassification == o.isClassification &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
@@ -102,6 +104,7 @@ case class Model(
 
   override def toJson: json.JsValue = {
     json.Json.obj(
+      "isClassification" -> isClassification,
       "method" -> method,
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
@@ -170,6 +173,7 @@ object Model extends FromJson[Model] {
 
   override def fromJson(j: json.JsValue): Model = {
     Model(
+      (j \ "isClassification").as[Boolean],
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
@@ -178,7 +182,8 @@ object Model extends FromJson[Model] {
       standardScalerModelFromJson(j \ "featureScaler").get
     )
   }
-  def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(modelName, modelMeta.featureNames)
+  def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
+    modelName, modelMeta.isClassification, modelMeta.featureNames)
 
   def toFE(m: Model, sc: spark.SparkContext): FEModel = FEModel(
     method = m.method,
@@ -227,6 +232,7 @@ object Model extends FromJson[Model] {
 
 case class FEModelMeta(
   name: String,
+  isClassification: Boolean,
   featureNames: List[String])
 
 case class FEModel(
@@ -237,6 +243,7 @@ case class FEModel(
   details: String)
 
 trait ModelMeta {
+  def isClassification: Boolean
   def featureNames: List[String]
 }
 
