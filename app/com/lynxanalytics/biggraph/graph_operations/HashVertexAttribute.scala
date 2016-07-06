@@ -30,12 +30,13 @@ object HashVertexAttribute extends OpFromJson {
   val keyLength = 96
   val iterations = 1
 
+  val secretKeyFactory = SecretKeyFactory.secretKeyFactory
+
   // Using the javax.crypto library to create the hash function
   def hash(string: String, salt: String) = {
     val spec: PBEKeySpec = new PBEKeySpec(string.toCharArray, salt.getBytes, iterations, keyLength)
-    val secretKeyFactory = SecretKeyFactory.secretKeyFactory
     val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
-    hashedPassword.map("%02X" format _).mkString
+    hashedPassword.map("%02X".format(_)).mkString
   }
 
 }
@@ -53,8 +54,7 @@ case class HashVertexAttribute(salt: String)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
 
-    def hash(string: String) = HashVertexAttribute.hash(string, salt)
-
-    output(o.hashed, inputs.attr.rdd.mapValues(v => hash(v)))
+    val hashed = inputs.attr.rdd.mapValues(v => HashVertexAttribute.hash(v, salt))
+    output(o.hashed, hashed)
   }
 }
