@@ -104,8 +104,16 @@ def _request(endpoint, payload={}):
       os.environ.get('LYNXKITE_ADDRESS').rstrip('/') + '/' + endpoint.lstrip('/'),
       data=data,
       headers={'Content-Type': 'application/json'})
-  with connection.open(req) as r:
-    return r.read().decode('utf-8')
+  while True:
+    try:
+      with connection.open(req) as r:
+        return r.read().decode('utf-8')
+    except urllib.error.HTTPError as err:
+      if err.code == 401: # Unauthorized.
+        connect()
+        # And then retry via the "while" loop.
+      else:
+        raise err
 
 
 def _send(command, payload={}, raw=False):
