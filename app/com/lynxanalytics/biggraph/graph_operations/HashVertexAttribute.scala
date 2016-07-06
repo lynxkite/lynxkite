@@ -24,6 +24,20 @@ object HashVertexAttribute extends OpFromJson {
   }
   def fromJson(j: JsValue) = HashVertexAttribute(
     (j \ "salt").as[String])
+
+  // The preferred length of the hash. The length was choosen according to the probabilities listed in
+  // https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
+  val keyLength = 96
+  val iterations = 1
+
+  // Using the javax.crypto library to create the hash function
+  def hash(string: String, salt: String) = {
+    val spec: PBEKeySpec = new PBEKeySpec(string.toCharArray, salt.getBytes, iterations, keyLength)
+    val secretKeyFactory = SecretKeyFactory.secretKeyFactory
+    val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
+    hashedPassword.map("%02X" format _).mkString
+  }
+
 }
 import HashVertexAttribute._
 case class HashVertexAttribute(salt: String)
@@ -39,18 +53,7 @@ case class HashVertexAttribute(salt: String)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
 
-    // The preferred length of the hash. The length was choosen according to the probabilities listed in 
-    // https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
-    val keyLength = 96
-    val iterations = 1
-
-    // Using the javax.crypto library to create the hash function
-    def hash(string: String) = {
-      val spec: PBEKeySpec = new PBEKeySpec(string.toCharArray, salt.getBytes, iterations, keyLength)
-      val secretKeyFactory = SecretKeyFactory.secretKeyFactory
-      val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
-      hashedPassword.map("%02X" format _).mkString
-    }
+    def hash(string: String) = HashVertexAttribute.hash(string, salt)
 
     output(o.hashed, inputs.attr.rdd.mapValues(v => hash(v)))
   }

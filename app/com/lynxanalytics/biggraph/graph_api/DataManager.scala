@@ -6,20 +6,22 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+
 import com.google.common.collect.MapMaker
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
+
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
-
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
+import com.lynxanalytics.biggraph.graph_operations.HashVertexAttribute
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
@@ -420,6 +422,8 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def newSQLContext(): SQLContext = {
-    masterSQLContext.newSession()
+    val sqlContext = masterSQLContext.newSession()
+    sqlContext.udf.register("mask", (string: String, salt: String) => HashVertexAttribute.hash(string, salt))
+    sqlContext
   }
 }
