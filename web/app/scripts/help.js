@@ -77,11 +77,14 @@ angular.module('biggraph')
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
       var button = element.find('#help-button')[0];
-      var popup = element.find('#help-popup')[0];
+      var popup = element.find('#help-popup');
+      scope.isEmpty = function() {
+        return popup.children().length === 0;
+      };
       /* global Drop */
       var drop = new Drop({
         target: button,
-        content: popup,
+        content: popup[0],
         position: 'bottom center',
         classes: 'drop-theme-help-popup',
         openOn: dropTooltipConfig.enabled ? 'hover' : undefined,
