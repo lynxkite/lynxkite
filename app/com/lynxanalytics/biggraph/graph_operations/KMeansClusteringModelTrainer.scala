@@ -17,6 +17,7 @@ object KMeansClusteringModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = KMeansClusteringModelTrainer(
+    (j \ "isClassification").as[Boolean],
     (j \ "k").as[Int],
     (j \ "maxIter").as[Int],
     (j \ "seed").as[Int],
@@ -24,6 +25,7 @@ object KMeansClusteringModelTrainer extends OpFromJson {
 }
 import KMeansClusteringModelTrainer._
 case class KMeansClusteringModelTrainer(
+    isClassification: Boolean = true,
     k: Int,
     maxIter: Int,
     seed: Long,
@@ -32,6 +34,7 @@ case class KMeansClusteringModelTrainer(
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
+    "isClassification" -> isClassification,
     "k" -> k,
     "maxIter" -> maxIter,
     "seed" -> seed,
@@ -61,6 +64,7 @@ case class KMeansClusteringModelTrainer(
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
+      isClassification = isClassification,
       method = "KMeans clustering",
       labelName = None,
       symbolicPath = file.symbolicName,

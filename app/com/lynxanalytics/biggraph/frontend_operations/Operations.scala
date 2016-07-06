@@ -1504,7 +1504,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val method = params("method")
       val model = {
         val op = graph_operations.RegressionModelTrainer(
-          method, labelName, featureNames.toList)
+          isClassification = false, method, labelName, featureNames.toList)
         op(op.label, label)(op.features, features).result.model
       }
       project.scalars(name) = model
@@ -1537,7 +1537,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val seed = params("seed").toLong
       val model = {
         val op = graph_operations.KMeansClusteringModelTrainer(
-          k, maxIter, seed, featureNames.toList)
+          isClassification = true, k, maxIter, seed, featureNames.toList)
         op(op.features, features).result.model
       }
       project.scalars(name) = model
@@ -1545,7 +1545,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   })
 
   register("Predict from model", new VertexAttributesOperation(_, _) {
-    val models = project.viewer.models
+    val models = project.viewer.models.filter(!_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the predictions"),
       ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
@@ -1570,7 +1570,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   })
 
   register("Classify attributes by a model", new VertexAttributesOperation(_, _) {
-    val models = project.viewer.models
+    val models = project.viewer.models.filter(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the classification"),
       ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
