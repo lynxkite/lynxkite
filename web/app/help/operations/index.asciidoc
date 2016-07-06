@@ -123,6 +123,8 @@ include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
 
+include::classify-vertices-with-a-model.asciidoc[]
+
 include::clustering-coefficient.asciidoc[]
 
 include::coloring.asciidoc[]
@@ -306,6 +308,8 @@ include::shortest-path.asciidoc[]
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
+
+include::train-a-kmeans-clustering-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 

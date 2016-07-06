@@ -24,6 +24,25 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     op(op.features, a)(op.label, l).result.model
   }
 
+  def testKMeansModel(numAttr: Int, numData: Int, k: Int): Scalar[Model] = {
+    // 100 data where the first data point has 20 attributes of value 1.0, the
+    // second data point has 20 attributes of value 2.0 ..., and the last data
+    // point has 20 attributes of value 100.0.
+    val attrs = (1 to numAttr).map(i => (1 to numData).map {
+      case x => x -> x.toDouble
+    }.toMap)
+    val g = SmallTestGraph(attrs(0).mapValues(_ => Seq()), 10).result
+    val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
+    val featureNames = (1 to numAttr).toList.map { i => i.toString }
+    val op = KMeansClusteringModelTrainer(
+      k,
+      maxIter = 50,
+      seed = 1000,
+      featureNames)
+    // The k-means model built from the above features 
+    op(op.features, features).result.model
+  }
+
   def predict(m: Scalar[Model], features: Seq[Attribute[Double]]): Attribute[Double] = {
     val op = PredictFromModel(features.size)
     op(op.model, m)(op.features, features).result.prediction
@@ -37,7 +56,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     assert(Math.abs(x - y) < maxDifference, s"$x does not equal to $y with $maxDifference precision")
   }
 
-  def vectorRDD(v: Array[Double]): rdd.RDD[mllib.linalg.Vector] = {
-    sparkContext.parallelize(Array(new mllib.linalg.DenseVector(v)))
+  def vectorsRDD(arr: Array[Double]*): rdd.RDD[mllib.linalg.Vector] = {
+    sparkContext.parallelize(arr.map(v => new mllib.linalg.DenseVector(v)))
   }
 }

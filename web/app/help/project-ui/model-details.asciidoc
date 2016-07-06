@@ -3,7 +3,8 @@
 
 Machine learning models are one of the graph attribute types.
 They are created by a machine learning operation (for example <<train-linear-regression-model>>)
-and used for prediction with the <<predict-from-model>> operation.
+and used for prediction with the <<predict-from-model>> operation or classification with the
+<<classify-vertices-with-model>> operation.
 
 Press the plus button
 (+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++)
@@ -16,6 +17,8 @@ The machine learning algorithm used to create this model.
 ### Label
 
 The name of the attribute that this model is trained to predict. (The dependent variable.)
+
+This will not appear for unsupervised machine learning models.
 
 ### Scaling
 
@@ -43,3 +46,7 @@ For linear regression models:
 
 * `intercept` is the constant parameter in the linear equation the model uses to predict.
 * `weights` is the vector of the regression coefficients.
+
+For KMeans clustering model:
+
+* `cluster centers` are the vectors of the KMeans cluster centers.

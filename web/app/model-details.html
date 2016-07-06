@@ -5,8 +5,10 @@
   <div ng-show="model.$resolved && !model.$error" id="model-details-parameters">
     Method:
     <label class="form-control" disabled>{{ model.method }}</label>
-    Label:
-    <label class="form-control" disabled>{{ model.labelName }}</label>
+    <div ng-show="model.labelName">
+      Label:
+      <label class="form-control" disabled>{{ model.labelName }}</label>
+    </div>
     <div ng-show="model.scalerDetails">
       Scaling:
       <textarea class="form-control" rows="2" disabled>{{ model.scalerDetails }}</textarea>
