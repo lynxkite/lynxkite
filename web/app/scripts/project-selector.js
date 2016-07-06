@@ -192,13 +192,18 @@ angular.module('biggraph').directive('projectSelector',
               }).then(scope.reload);
         },
         discard: function(kind, p) {
-          if (p.indexOf('Trash/') === 0) {
+          var trashDir = 'Trash';
+          if (util.globals.hasAuth) {
+            // Per-user trash.
+            trashDir = 'Users/' + util.user.email + '/Trash';
+          }
+          if (p.indexOf(trashDir) === 0) {
             // Already in Trash. Discard permanently.
             util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
           } else {
             // Not in Trash. Move to Trash.
             util.post('/ajax/renameEntry',
-                { from: p, to: 'Trash/' + p, overwrite: true }).then(scope.reload);
+                { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
           }
         },
         editConfig: function(name, config) {
