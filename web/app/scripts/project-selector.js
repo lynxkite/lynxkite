@@ -195,7 +195,7 @@ angular.module('biggraph').directive('projectSelector',
           var trashDir = 'Trash';
           if (util.globals.hasAuth) {
             // Per-user trash.
-            trashDir = 'Users/' + util.user.email + '/Trash';
+            trashDir = util.user.home + '/Trash';
           }
           if (p.indexOf(trashDir) === 0) {
             // Already in Trash. Discard permanently.
