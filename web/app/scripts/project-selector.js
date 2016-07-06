@@ -182,7 +182,7 @@ angular.module('biggraph').directive('projectSelector',
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
           util.post('/ajax/renameEntry',
-              { from: oldName, to: newName }).then(scope.reload);
+              { from: oldName, to: newName, overwrite: false }).then(scope.reload);
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkEntry',
@@ -198,7 +198,7 @@ angular.module('biggraph').directive('projectSelector',
           } else {
             // Not in Trash. Move to Trash.
             util.post('/ajax/renameEntry',
-                { from: p, to: 'Trash/' + p }).then(scope.reload);
+                { from: p, to: 'Trash/' + p, overwrite: true }).then(scope.reload);
           }
         },
         editConfig: function(name, config) {
