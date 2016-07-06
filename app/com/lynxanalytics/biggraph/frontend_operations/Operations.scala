@@ -1550,7 +1550,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("name", "The name of the attribute of the predictions"),
       ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
     def enabled =
-      FEStatus.assert(models.nonEmpty, "No classification models.") &&
+      FEStatus.assert(models.nonEmpty, "No regression models.") &&
         FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
@@ -1569,13 +1569,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Classify attributes with a model", new VertexAttributesOperation(_, _) {
+  register("Classify vertices with a model", new VertexAttributesOperation(_, _) {
     val models = project.viewer.models.filter(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the classifications"),
       ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
     def enabled =
-      FEStatus.assert(models.nonEmpty, "No regression models.") &&
+      FEStatus.assert(models.nonEmpty, "No classification models.") &&
         FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
