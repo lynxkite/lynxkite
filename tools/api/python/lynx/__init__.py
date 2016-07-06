@@ -26,7 +26,7 @@ import urllib
 default_sql_limit = 1000
 
 
-def reconnect():
+def connect():
   '''Runs when the module is loaded. Performs login.'''
   global connection
   cj = http.cookiejar.CookieJar()
@@ -127,4 +127,4 @@ def _asobject(dic):
   return types.SimpleNamespace(**dic)
 
 
-reconnect()
+connect()
