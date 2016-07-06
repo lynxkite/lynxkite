@@ -123,7 +123,7 @@ include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
 
-include::classify-attributes-with-a-model.asciidoc[]
+include::classify-vertices-with-a-model.asciidoc[]
 
 include::clustering-coefficient.asciidoc[]
 
