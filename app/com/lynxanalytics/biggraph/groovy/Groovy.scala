@@ -356,6 +356,44 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     sqlContext.sql(query)
   }
 
+  def computeNew(): Unit = {
+    val dataManager = ctx.dataManager
+
+    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+
+    def acceptableType[T](attr: Attribute[T]): Boolean = {
+      attr.is[String] || attr.is[Double]
+    }
+
+    val uncomputedAttributes = attributes.map {
+      case (name, attr) =>
+        val entity = attr.manager.entity(attr.gUID)
+        val computed = dataManager.computeProgress(entity)
+        computed -> (name, attr)
+    }.filter(_._1 < 1.0)
+      .map {
+        case (computed, (name, attr)) => (name, attr)
+      }
+      .filter(x => (acceptableType(x._2)))
+
+    for ((name, attr) <- uncomputedAttributes) {
+      val groovyAttr = new GroovyAttribute(ctx, attr)
+      val histogramOptions = new java.util.HashMap[String, Any]
+      histogramOptions.put("numBuckets", 10)
+      histogramOptions.put("precise", true)
+      if (attr.isInstanceOf[Double]) histogramOptions.put("logarithmic", true)
+
+      val histogram = groovyAttr.histogram(histogramOptions)
+      println(s"${name}: ${histogram}")
+    }
+
+    val segmentations = editor.viewer.sortedSegmentations
+    for (segmentation <- segmentations) {
+      val groovySegm = new GroovyBatchProject(ctx, segmentation.editor)
+      groovySegm.computeNew()
+    }
+  }
+
   // Creates a string that can be used as the value for a Choice that expects a titled
   // checkpoint. It will point to the checkpoint of the root project of this project.
   def rootCheckpointWithTitle(title: String): String =
