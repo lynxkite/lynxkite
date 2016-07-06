@@ -221,7 +221,7 @@ case class ProjectFilterRequest(
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
 case class ForkEntryRequest(from: String, to: String)
-case class RenameEntryRequest(from: String, to: String)
+case class RenameEntryRequest(from: String, to: String, overwrite: Boolean)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
@@ -371,7 +371,9 @@ class BigGraphController(val env: SparkFreeEnvironment) {
 
   def renameEntry(
     user: serving.User, request: RenameEntryRequest): Unit = metaManager.synchronized {
-    assertNameNotExists(request.to)
+    if (!request.overwrite) {
+      assertNameNotExists(request.to)
+    }
     val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertParentWriteAllowedFrom(user)
     val pTo = DirectoryEntry.fromName(request.to)
