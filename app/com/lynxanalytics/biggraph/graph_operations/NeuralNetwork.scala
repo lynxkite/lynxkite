@@ -106,17 +106,16 @@ case class NeuralNetwork(
     val network = {
       import NeuralGates._
       val vs = Neighbors()
-      val eb = Vector("edge bias")
-      val input = vs * Matrix("edge matrix") + eb
+      val eb = V("edge bias")
+      val input = Sum(vs * M("edge matrix")) + eb
       val state = State("state")
-      val update = Sigmoid(input * Matrix("update i") + state * Matrix("update h"))
-      val reset = Sigmoid(input * Matrix("reset i") + state * Matrix("reset h"))
-      val tilde = Tanh(input * Matrix("activation i") + state * reset * Matrix("activation h"))
+      val update = Sigmoid(input * M("update i") + state * M("update h"))
+      val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
+      val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
       Outputs(
         "new state" -> (state - update * state + update * tilde)
       )
     }
-    var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
     val random = new util.Random(0)
     for (i <- 1 to iterations) {
@@ -145,12 +144,13 @@ case class NeuralNetwork(
       } { (previous, r) =>
         network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
       }
+      finalOutputs = outputs.last("new state")
 
       // Backward pass.
       val errors: Map[ID, Double] = data.map {
         case (id, (Some(label), features)) =>
           // The label is predicted in position 0.
-          id -> (outputs.last("new state")(id)(0) - label)
+          id -> (finalOutputs(id)(0) - label)
         case (id, (None, features)) =>
           id -> 0.0
       }.toMap
@@ -168,7 +168,6 @@ case class NeuralNetwork(
         network.backward(vertices, edges, outputs, "new state" -> next)
       }
       network = network.update(gradients)
-      finalOutputs = outputs.last
     }
     // Return last predictions.
     finalOutputs.newState.map {
