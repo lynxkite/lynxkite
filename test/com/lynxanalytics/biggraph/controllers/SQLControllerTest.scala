@@ -42,6 +42,15 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
+  test("sql with empty results") {
+    run("Example Graph")
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.local(project = projectName, sql = "select id from vertices where id = 11"),
+      maxRows = 10)))
+    assert(result.header == List("id"))
+    assert(result.data == List())
+  }
+
   test("sql file reading is disabled") {
     val file = getClass.getResource("/controllers/noread.csv").toString
     intercept[Throwable] {
@@ -56,21 +65,26 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql export to csv") {
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
-      DataFrameSpec.local(project = projectName, sql = "select name, age from vertices where age < 40"),
+      DataFrameSpec.local(
+        project = projectName,
+        sql = "select name, age from vertices where age < 40"),
       path = "<download>",
       delimiter = ";",
       quote = "\"",
       header = true)))
     val output = graph_util.HadoopFile(result.download.get.path).loadTextFile(sparkContext)
-    assert(output.collect.sorted.mkString(", ") ==
-      "18.2;Eve, 2.0;Isolated Joe, 20.3;Adam, age;name")
+    val header = "name;age"
+    assert(output.collect.filter(_ != header).sorted.mkString(", ") ==
+      "Adam;20.3, Eve;18.2, Isolated Joe;2.0")
   }
 
   test("sql export to database") {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Example Graph")
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
-      DataFrameSpec.local(project = projectName, sql = "select name, age from vertices where age < 40"),
+      DataFrameSpec.local(
+        project = projectName,
+        sql = "select name, age from vertices where age < 40 order by name"),
       jdbcUrl = url,
       table = "export_test",
       mode = "error")))
@@ -80,16 +94,16 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       val rs = statement.executeQuery("select * from export_test;")
       new Iterator[String] {
         def hasNext = rs.next
-        def next = s"${rs.getDouble(1)};${rs.getString(2)}"
+        def next = s"${rs.getString(1)};${rs.getDouble(2)}"
       }.toIndexedSeq
     }
     connection.close()
-    assert(results.sorted == Seq("18.2;Eve", "2.0;Isolated Joe", "20.3;Adam"))
+    assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
 
   def importCSV(file: String, columns: List[String], infer: Boolean): Unit = {
     val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
-    val response = await(sqlController.importCSV(
+    val response = sqlController.importCSV(
       user,
       CSVImportRequest(
         table = "csv-import-test",
@@ -99,7 +113,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         delimiter = ",",
         mode = "FAILFAST",
         infer = infer,
-        columnsToImport = List())))
+        columnsToImport = List()))
     val tablePath = response.id
     run(
       "Import vertices",
@@ -145,7 +159,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val response = await(sqlController.importJdbc(
+    val response = sqlController.importJdbc(
       user,
       JdbcImportRequest(
         table = "jdbc-import-test",
@@ -153,7 +167,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = url,
         jdbcTable = "subscribers",
         keyColumn = "id",
-        columnsToImport = List("n", "id", "name", "race condition", "level"))))
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
     val tablePath = response.id
 
     run(
@@ -183,13 +197,13 @@ class SQLControllerTest extends BigGraphControllerTestBase {
             project = projectName,
             sql = "select name, age, location from vertices"),
           path = exportPath)))
-    val response = await(sqlController.importParquet(
+    val response = sqlController.importParquet(
       user,
       ParquetImportRequest(
         table = "csv-import-test",
         privacy = "public-read",
         files = exportPath + "/part*",
-        columnsToImport = List("name", "location"))))
+        columnsToImport = List("name", "location")))
     val tablePath = response.id
     run(
       "Import vertices",

@@ -34,7 +34,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       mode = "FAILFAST",
       infer = false,
       columnsToImport = List()))
-    concurrent.Await.result(f, concurrent.duration.Duration.Inf).id
+    f.id
   }
 
   def run(opId: String, params: Map[String, String] = Map(), on: ProjectEditor = project) = {
