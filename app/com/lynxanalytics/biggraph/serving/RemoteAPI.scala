@@ -36,20 +36,27 @@ object RemoteAPI {
     def execute(user: User): json.JsValue = {
       log.info(s"Executing Remote API command from $user: $this")
       import RemoteAPI.JsonFormatters._
+      // Convenience wrappers.
+      def run[Out: json.Writes](f: ((User) => Out)): json.JsValue =
+        json.Json.toJson(f(user))
+      def call[In: json.Reads, Out: json.Writes](f: ((User, In) => Out)): json.JsValue =
+        json.Json.toJson(f(user, payload.as[In]))
+      def doImport[T <: GenericImportRequest: json.Writes: json.Reads] =
+        call[T, CheckpointResponse](importRequest)
       try {
         command match {
-          case "getScalar" => json.Json.toJson(getScalar(payload.as[ScalarRequest]))
-          case "newProject" => json.Json.toJson(newProject())
-          case "loadProject" => json.Json.toJson(loadProject(user, payload.as[ProjectRequest]))
-          case "runOperation" => json.Json.toJson(runOperation(user, payload.as[OperationRequest]))
-          case "saveProject" => json.Json.toJson(saveProject(user, payload.as[SaveProjectRequest]))
-          case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
-          case "importJdbc" => json.Json.toJson(importRequest(user, payload.as[JdbcImportRequest]))
-          case "importHive" => json.Json.toJson(importRequest(user, payload.as[HiveImportRequest]))
-          case "importCSV" => json.Json.toJson(importRequest(user, payload.as[CSVImportRequest]))
-          case "importParquet" => json.Json.toJson(importRequest(user, payload.as[ParquetImportRequest]))
-          case "importORC" => json.Json.toJson(importRequest(user, payload.as[ORCImportRequest]))
-          case "importJson" => json.Json.toJson(importRequest(user, payload.as[JsonImportRequest]))
+          case "getScalar" => call(getScalar)
+          case "newProject" => run(newProject)
+          case "loadProject" => call(loadProject)
+          case "runOperation" => call(runOperation)
+          case "saveProject" => call(saveProject)
+          case "sql" => call(sql)
+          case "importJdbc" => doImport[JdbcImportRequest]
+          case "importHive" => doImport[HiveImportRequest]
+          case "importCSV" => doImport[CSVImportRequest]
+          case "importParquet" => doImport[ParquetImportRequest]
+          case "importORC" => doImport[ORCImportRequest]
+          case "importJson" => doImport[JsonImportRequest]
         }
       } catch {
         case t: Throwable =>
@@ -82,7 +89,7 @@ object RemoteAPI {
     implicit val wTableResult = json.Json.writes[TableResult]
   }
 
-  def newProject(): CheckpointResponse = {
+  def newProject(user: User): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
   }
 
@@ -121,7 +128,7 @@ object RemoteAPI {
     CheckpointResponse(newState.checkpoint.get)
   }
 
-  def getScalar(request: ScalarRequest): DynamicValue = {
+  def getScalar(user: User, request: ScalarRequest): DynamicValue = {
     val viewer = getViewer(request.checkpoint)
     val scalar = viewer.scalars(request.scalar)
     implicit val tt = scalar.typeTag
@@ -129,7 +136,7 @@ object RemoteAPI {
     DynamicValue.convert(scalar.value)
   }
 
-  def sql(request: SqlRequest): TableResult = {
+  def sql(user: User, request: SqlRequest): TableResult = {
     val viewer = getViewer(request.checkpoint)
     val sqlContext = dataManager.masterHiveContext.newSession
     for (path <- viewer.allRelativeTablePaths) {
