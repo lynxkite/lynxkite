@@ -34,6 +34,7 @@ object RemoteAPI {
 
   case class Command(command: String, payload: json.JsObject) {
     def execute(user: User): json.JsValue = {
+      log.info(s"Executing Remote API command from $user: $this")
       import RemoteAPI.JsonFormatters._
       try {
         command match {
