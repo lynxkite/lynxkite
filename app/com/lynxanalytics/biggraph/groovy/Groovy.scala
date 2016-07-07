@@ -391,6 +391,8 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     }
   }
 
+  // Compute and print uncomputed attributes and scalars in a project
+  // and in its segmentations recursively.
   def computeUncomputed(): Unit = {
     computeUncomputedAttributes()
     computeUncomputedScalars()
