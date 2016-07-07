@@ -103,7 +103,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
 
   def importCSV(file: String, columns: List[String], infer: Boolean): Unit = {
     val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
-    val response = await(sqlController.importCSV(
+    val response = sqlController.importCSV(
       user,
       CSVImportRequest(
         table = "csv-import-test",
@@ -113,7 +113,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         delimiter = ",",
         mode = "FAILFAST",
         infer = infer,
-        columnsToImport = List())))
+        columnsToImport = List()))
     val tablePath = response.id
     run(
       "Import vertices",
@@ -159,7 +159,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     """)
     connection.close()
 
-    val response = await(sqlController.importJdbc(
+    val response = sqlController.importJdbc(
       user,
       JdbcImportRequest(
         table = "jdbc-import-test",
@@ -167,7 +167,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = url,
         jdbcTable = "subscribers",
         keyColumn = "id",
-        columnsToImport = List("n", "id", "name", "race condition", "level"))))
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
     val tablePath = response.id
 
     run(
@@ -197,13 +197,13 @@ class SQLControllerTest extends BigGraphControllerTestBase {
             project = projectName,
             sql = "select name, age, location from vertices"),
           path = exportPath)))
-    val response = await(sqlController.importParquet(
+    val response = sqlController.importParquet(
       user,
       ParquetImportRequest(
         table = "csv-import-test",
         privacy = "public-read",
         files = exportPath + "/part*",
-        columnsToImport = List("name", "location"))))
+        columnsToImport = List("name", "location")))
     val tablePath = response.id
     run(
       "Import vertices",
