@@ -845,6 +845,12 @@ class ProjectFrame(path: SymbolPath)(
 object ProjectFrame {
   val separator = "|"
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
+  val reservedWords = Set(
+    "readACL", "writeACL",
+    "checkpoint", "nextCheckpoint",
+    "farthestCheckpoint",
+    "objectType", "details")
+  // Do not add to the set above, begin internal names with '!'.
 
   def validateName(name: String, what: String = "Name",
                    allowSlash: Boolean = false,
@@ -853,6 +859,11 @@ object ProjectFrame {
     assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
     assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
     assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
+    val path = SymbolPath.parse(name)
+    if (path.nonEmpty) {
+      val name = path.last.name
+      assert(!reservedWords.contains(name), s"$name is a reserved word")
+    }
   }
 
   def fromName(name: String)(implicit manager: MetaGraphManager) =
