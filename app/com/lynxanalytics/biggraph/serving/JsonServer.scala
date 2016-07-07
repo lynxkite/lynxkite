@@ -303,7 +303,7 @@ object FrontendJson {
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
-  implicit val wUser = json.Json.writes[User]
+  implicit val wUser = User.Writes
   implicit val wUserList = json.Json.writes[UserList]
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
@@ -401,12 +401,12 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def importCSV = jsonFuturePost(sqlController.importCSV)
-  def importJdbc = jsonFuturePost(sqlController.importJdbc)
-  def importParquet = jsonFuturePost(sqlController.importParquet)
-  def importORC = jsonFuturePost(sqlController.importORC)
-  def importJson = jsonFuturePost(sqlController.importJson)
-  def importHive = jsonFuturePost(sqlController.importHive)
+  def importCSV = jsonPost(sqlController.importCSV)
+  def importJdbc = jsonPost(sqlController.importJdbc)
+  def importParquet = jsonPost(sqlController.importParquet)
+  def importORC = jsonPost(sqlController.importORC)
+  def importJson = jsonPost(sqlController.importJson)
+  def importHive = jsonPost(sqlController.importHive)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

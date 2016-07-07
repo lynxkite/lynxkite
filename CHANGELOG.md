@@ -5,16 +5,17 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
-- Global SQL-box added
-- Import options are now stored for each table and can be reused via "Edit import" button
 
+ - Import options are now stored for each table and can be reused via "Edit import" button
  - Global SQL-box has been added.
+ - New operation _"Mask vertex attribute"_ has been added.
+ - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
 
 ### 1.8.0
 
  - Major performance and scalability improvements.
  - New option has been added in bucketed view: relative edge density.
- - New operation "Find vertex coloring" has been added.
+ - New operation _"Find vertex coloring"_ has been added.
  - Add search box to built-in help.
  - Experimental feature: LynxKite can be used from [Jupyter](http://jupyter.org) (IPython Notebook).
 
