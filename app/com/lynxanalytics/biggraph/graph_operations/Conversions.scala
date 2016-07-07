@@ -51,7 +51,12 @@ object DynamicValue {
     }
     else if (typeOf[T] =:= typeOf[model.Model]) value => {
       val m = value.asInstanceOf[model.Model]
-      DynamicValue(string = s"${m.method} model predicting ${m.labelName}")
+      if (m.labelName.isDefined) {
+        DynamicValue(string = s"${m.method} model predicting ${m.labelName.get}")
+      } else {
+        DynamicValue(string = s"${m.method} unsupervised learning model")
+      }
+
     }
     else if (typeOf[T] =:= typeOf[UIStatus]) value => {
       import UIStatusSerialization._

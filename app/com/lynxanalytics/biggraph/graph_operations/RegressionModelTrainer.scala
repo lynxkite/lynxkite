@@ -27,8 +27,9 @@ case class RegressionModelTrainer(
     method: String,
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
-  @transient override lazy val inputs = new Input(featureNames.size)
+  val isClassification = false
   override val isHeavy = true
+  @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "method" -> method,
@@ -47,11 +48,11 @@ case class RegressionModelTrainer(
 
     val model = method match {
       case "Linear regression" =>
-        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
+        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
       case "Ridge regression" =>
-        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
+        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
       case "Lasso" =>
-        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
+        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.labeledPoints.get)
     }
     Model.checkLinearModel(model)
 
@@ -60,7 +61,7 @@ case class RegressionModelTrainer(
     output(o.model, Model(
       method = method,
       symbolicPath = file.symbolicName,
-      labelName = labelName,
+      labelName = Some(labelName),
       featureNames = featureNames,
       labelScaler = p.labelScaler,
       featureScaler = p.featureScaler))
