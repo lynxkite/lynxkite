@@ -637,21 +637,10 @@ Selector.prototype = {
 
   deleteProject: function(name) {
     testLib.menuClick(this.project(name), 'discard');
-    // We need to give the browser time to display the alert, see angular/protractor#1486.
-    testLib.wait(protractor.ExpectedConditions.alertIsPresent());
-    var confirmation = browser.switchTo().alert();
-    expect(confirmation.getText()).toContain('delete project ');
-    expect(confirmation.getText()).toContain(name);
-    confirmation.accept();
   },
 
   deleteDirectory: function(name) {
     testLib.menuClick(this.directory(name), 'discard');
-    // We need to give the browser time to display the alert, see angular/protractor#1486.
-    testLib.wait(protractor.ExpectedConditions.alertIsPresent());
-    var confirmation = browser.switchTo().alert();
-    expect(confirmation.getText()).toContain('delete directory ' + name);
-    confirmation.accept();
   },
 
   editImport: function(name) {

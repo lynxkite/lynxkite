@@ -38,42 +38,42 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     val (predictions, vectors) = method match {
       case "Linear regression" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.points)
+        val model = new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
         Model.checkLinearModel(model)
-        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
+        (Model.scaleBack(model.predict(p.features.values), p.labelScaler.get), p.features)
       case "Ridge regression" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.points)
+        val model = new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
         Model.checkLinearModel(model)
-        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
+        (Model.scaleBack(model.predict(p.features.values), p.labelScaler.get), p.features)
       case "Lasso" =>
         val p = getParams(forSGD = true)
-        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.points)
+        val model = new mllib.regression.LassoWithSGD().setIntercept(true).run(p.labeledPoints.get)
         Model.checkLinearModel(model)
-        (Model.scaleBack(model.predict(p.vectors.values), p.labelScaler.get), p.vectors)
+        (Model.scaleBack(model.predict(p.features.values), p.labelScaler.get), p.features)
       case "Logistic regression" =>
         val p = getParams(forSGD = false)
         val model = new mllib.classification.LogisticRegressionWithLBFGS()
-          .setIntercept(true).setNumClasses(10).run(p.points)
+          .setIntercept(true).setNumClasses(10).run(p.labeledPoints.get)
         Model.checkLinearModel(model)
-        (model.predict(p.vectors.values), p.vectors)
+        (model.predict(p.features.values), p.features)
       case "Naive Bayes" =>
         val p = getParams(forSGD = false)
-        val model = mllib.classification.NaiveBayes.train(p.points)
-        (model.predict(p.vectors.values), p.vectors)
+        val model = mllib.classification.NaiveBayes.train(p.labeledPoints.get)
+        (model.predict(p.features.values), p.features)
       case "Decision tree" =>
         val p = getParams(forSGD = false)
         val model = mllib.tree.DecisionTree.trainRegressor(
-          input = p.points,
+          input = p.labeledPoints.get,
           categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
           impurity = "variance", // Options: gini, entropy, variance as of Spark 1.6.0.
           maxDepth = 5,
           maxBins = 32)
-        (model.predict(p.vectors.values), p.vectors)
+        (model.predict(p.features.values), p.features)
       case "Random forest" =>
         val p = getParams(forSGD = false)
         val model = mllib.tree.RandomForest.trainRegressor(
-          input = p.points,
+          input = p.labeledPoints.get,
           categoricalFeaturesInfo = Map[Int, Int](), // All continuous.
           numTrees = 10,
           featureSubsetStrategy = "onethird",
@@ -81,15 +81,15 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
           maxDepth = 4,
           maxBins = 100,
           seed = 0)
-        (model.predict(p.vectors.values), p.vectors)
+        (model.predict(p.features.values), p.features)
       case "Gradient-boosted trees" =>
         val p = getParams(forSGD = false)
         val boostingStrategy = mllib.tree.configuration.BoostingStrategy.defaultParams("Regression")
         boostingStrategy.numIterations = 10
         boostingStrategy.treeStrategy.maxDepth = 5
         boostingStrategy.treeStrategy.categoricalFeaturesInfo = Map[Int, Int]() // All continuous.
-        val model = mllib.tree.GradientBoostedTrees.train(p.points, boostingStrategy)
-        (model.predict(p.vectors.values), p.vectors)
+        val model = mllib.tree.GradientBoostedTrees.train(p.labeledPoints.get, boostingStrategy)
+        (model.predict(p.features.values), p.features)
     }
     val ids = vectors.keys // We just put back the keys with a zip.
     output(
