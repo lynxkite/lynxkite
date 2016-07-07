@@ -1,6 +1,12 @@
 // An API that allows controlling a running LynxKite instance via JSON commands through a Unix pipe.
 package com.lynxanalytics.biggraph.serving
 
+import java.io.FileInputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.URL
+
+import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.types
 import play.api.libs.json
 
@@ -8,15 +14,20 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
+import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.serving.FrontendJson._
 
 object PipeAPI {
   val env = BigGraphProductionEnvironment
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
+  val sqlController = new SQLController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
@@ -31,6 +42,12 @@ object PipeAPI {
           case "runOperation" => json.Json.toJson(runOperation(payload.as[OperationRequest]))
           case "saveProject" => json.Json.toJson(saveProject(payload.as[SaveProjectRequest]))
           case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
+          case "importJdbc" => json.Json.toJson(importRequest(payload.as[JdbcImportRequest]))
+          case "importHive" => json.Json.toJson(importRequest(payload.as[HiveImportRequest]))
+          case "importCSV" => json.Json.toJson(importRequest(payload.as[CSVImportRequest]))
+          case "importParquet" => json.Json.toJson(importRequest(payload.as[ParquetImportRequest]))
+          case "importORC" => json.Json.toJson(importRequest(payload.as[ORCImportRequest]))
+          case "importJson" => json.Json.toJson(importRequest(payload.as[JsonImportRequest]))
         }
       } catch {
         case t: Throwable =>
@@ -137,6 +154,12 @@ object PipeAPI {
       }.toMap
     }
     TableResult(rows = rows.toList)
+  }
+
+  def importRequest[T <: GenericImportRequest: json.Writes](request: T): CheckpointResponse = {
+    val res = sqlController.doImport(user, request)
+    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
+    CheckpointResponse(cp)
   }
 
   val pipeFile = LoggedEnvironment.envOrNone("KITE_API_PIPE").map(new java.io.File(_))

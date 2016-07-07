@@ -22,7 +22,7 @@ import types
 
 
 default_sql_limit = 1000
-
+default_privacy = "public-read"
 
 def _init():
   '''Runs when the module is loaded. Reads configuration and creates response pipe.'''
@@ -77,6 +77,65 @@ class Project(object):
       limit=limit or default_sql_limit,
       ), raw=True)
     return r['rows']
+
+  def import_csv(self, files, table,
+                privacy = default_privacy,
+                columnNames = [],
+                delimiter = ",",
+                mode = "FAILFAST",
+                infer = True,
+                columnsToImport = []):
+    r = _send("importCSV",
+              dict(
+                files = files,
+                table = table,
+                privacy = privacy,
+                columnNames = columnNames,
+                delimiter = delimiter,
+                mode = mode,
+                infer = infer,
+                columnsToImport = columnsToImport))
+    return r
+
+  def import_hive(self, table, hiveTable, privacy = default_privacy, columnsToImport = []):
+    r = _send("importHive",
+              dict(
+                table = table,
+                privacy = privacy,
+                hiveTable = hiveTable,
+                columnsToImport = columnsToImport))
+    return r
+
+  def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
+                  privacy = default_privacy, columnsToImport = []):
+    r = _send("importJdbc",
+              dict(
+                table = table,
+                jdbcUrl = jdbcUrl,
+                privacy = privacy,
+                jdbcTable = jdbcTable,
+                keyColumn = keyColumn,
+                columnsToImport = columnsToImport))
+    return r
+
+  def import_parquet(self, table, privacy = default_privacy, columnsToImport = []):
+    self._importFileWithSchema("Parquet", table, privacy, columnsToImport)
+
+  def import_orc(self, table, privacy = default_privacy, columnsToImport = []):
+    self._importFileWithSchema("ORC", table, privacy, columnsToImport)
+
+  def import_json(self, table, privacy = default_privacy, columnsToImport = []):
+    self._importFileWithSchema("Json", table, privacy, columnsToImport)
+
+  def _importFileWithSchema(format, table, privacy, files, columnsToImport):
+    r = _send("import" + format,
+              dict(
+                table = table,
+                privacy = privacy,
+                files = files,
+                columnsToImport = columnsToImport))
+    return r
+
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
