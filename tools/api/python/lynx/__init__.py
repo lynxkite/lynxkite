@@ -150,10 +150,9 @@ class Project(object):
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
-  def __init__(self, error, command):
+  def __init__(self, error):
     super(LynxException, self).__init__(error)
     self.error = error
-    self.command = command
 
 
 def _request(endpoint, payload={}):
@@ -171,6 +170,8 @@ def _request(endpoint, payload={}):
       if err.code == 401: # Unauthorized.
         connect()
         # And then retry via the "while" loop.
+      if err.code == 500: # Unauthorized.
+        raise LynxException(err.read())
       else:
         raise err
 
@@ -180,12 +181,8 @@ def _send(command, payload={}, raw=False):
   data = _request('/remote/' + command, payload)
   if raw:
     r = json.loads(data)
-    if 'error' in r:
-      raise LynxException(r['error'], r['request'])
   else:
     r = json.loads(data, object_hook=_asobject)
-    if hasattr(r, 'error'):
-      raise LynxException(r.error, r.request)
   return r
 
 
