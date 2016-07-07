@@ -12,7 +12,5 @@ project.findInfocomCommunities(
   'adjacency_threshold': '0.6'
 )
 
-s = project.segmentations['communities']
-
-println "communities: ${s.scalars['communities']}"
+project.computeUncomputed()
 

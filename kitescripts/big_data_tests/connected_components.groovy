@@ -9,9 +9,8 @@ project.connectedComponents(
   'name': 'connected_components',
 )
 
-s = project.segmentations['connected_components']
+project.computeUncomputed()
 
-println "connected_components: ${s.scalars['vertex_count']}"
 
 
 

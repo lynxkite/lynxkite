@@ -12,8 +12,5 @@ project.importVerticesAndEdgesFromASingleTable(
 project.degree(direction: 'incoming edges', name: 'in_degree')
 project.degree(direction: 'outgoing edges', name: 'out_degree')
 
-
-project.vertexAttributes['in_degree'].computeAndPrintHistogram(name: 'in_degree', logarithmic: true)
-project.vertexAttributes['out_degree'].computeAndPrintHistogram(name: 'out_degree', logarithmic: true)
-
 project.saveAs('edge_import_result')
+project.computeUncomputed()

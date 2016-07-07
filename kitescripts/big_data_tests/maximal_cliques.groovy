@@ -10,8 +10,7 @@ project.maximalCliques(
   'min': '3'
 )
 
-s = project.segmentations['maximal_cliques']
-
 project.saveAs('maximal_cliques_result')
 
-println "maximal cliques: ${s.scalars['vertex_count']}"
+project.computeUncomputed()
+

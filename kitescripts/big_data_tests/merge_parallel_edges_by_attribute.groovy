@@ -15,10 +15,4 @@ project.mergeParallelEdgesByAttribute(
   'aggregate-label': 'average'
 )
 
-project.edgeAttributes['label_average']
-  .computeAndPrintHistogram(
-    name: 'label_average',
-  )
-
-
-println "vertices: ${project.scalars['vertex_count']} edges ${project.scalars['edge_count']}"
+project.computeUncomputed()

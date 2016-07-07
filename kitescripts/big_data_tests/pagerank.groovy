@@ -17,7 +17,4 @@ project.pagerank(
   iterations: '5',
   damping: '0.85')
 
-project.vertexAttributes['page_rank_no_weights']
-  .computeAndPrintHistogram(name: 'page_rank_no_weights', logarithmic: true)
-project.vertexAttributes['page_rank_weights']
-  .computeAndPrintHistogram(name: 'page_rank_weights', logarithmic: true)
+project.computeUncomputed()

@@ -16,8 +16,4 @@ project.mergeVerticesByAttribute(
   'aggregate-rnd_std_normal': 'average'
 )
 
-project.vertexAttributes['rnd_std_normal_average']
-  .computeAndPrintHistogram(
-    name: 'Merge vertices by attribute: rnd_std_normal_average histogram',
-    logarithmic: true,
-  )
+project.computeUncomputed()
