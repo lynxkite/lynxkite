@@ -448,30 +448,6 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
     import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(res).toString
   }
-
-  def computeAndPrintHistogram: Unit = {
-    val options = new java.util.HashMap[String, Any]
-    options.put("name", "histogram")
-    computeAndPrintHistogram(options)
-  }
-
-  def computeAndPrintHistogram(options: java.util.Map[String, Any]): Unit = {
-    if (!options.containsKey("precise")) {
-      options.put("precise", true)
-    }
-    val name =
-      if (options.containsKey("name")) {
-        val passedName = options.get("name")
-        assert(passedName.isInstanceOf[String])
-        options.remove("name")
-        passedName.asInstanceOf[String]
-      } else {
-        "histogram"
-      }
-    val str = histogram(options)
-    println(s"$name: $str")
-  }
-
 }
 
 // No checkpointing or entity access in workflow mode.
