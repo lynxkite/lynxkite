@@ -177,7 +177,7 @@ def _request(endpoint, payload={}):
 
 def _send(command, payload={}, raw=False):
   '''Sends a command to LynxKite and returns the response when it arrives.'''
-  data = _request('/remote', dict(command=command, payload=payload))
+  data = _request('/remote/' + command, payload)
   if raw:
     r = json.loads(data)
     if 'error' in r:

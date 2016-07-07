@@ -11,7 +11,7 @@ import org.apache.spark.sql.types
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
+import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
@@ -22,50 +22,7 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 
-object RemoteAPI {
-  val env = BigGraphProductionEnvironment
-  implicit val metaManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
-  val ops = new frontend_operations.Operations(env)
-  val sqlController = new SQLController(env)
-
-  def normalize(operation: String) = operation.replace("-", "").toLowerCase
-  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
-
-  case class Command(command: String, payload: json.JsObject) {
-    def execute(user: User): json.JsValue = {
-      log.info(s"Executing Remote API command from $user: $this")
-      import RemoteAPI.JsonFormatters._
-      // Convenience wrappers.
-      def run[Out: json.Writes](f: ((User) => Out)): json.JsValue =
-        json.Json.toJson(f(user))
-      def call[In: json.Reads, Out: json.Writes](f: ((User, In) => Out)): json.JsValue =
-        json.Json.toJson(f(user, payload.as[In]))
-      def doImport[T <: GenericImportRequest: json.Writes: json.Reads] =
-        call[T, CheckpointResponse](importRequest)
-      try {
-        command match {
-          case "getScalar" => call(getScalar)
-          case "newProject" => run(newProject)
-          case "loadProject" => call(loadProject)
-          case "runOperation" => call(runOperation)
-          case "saveProject" => call(saveProject)
-          case "sql" => call(sql)
-          case "importJdbc" => doImport[JdbcImportRequest]
-          case "importHive" => doImport[HiveImportRequest]
-          case "importCSV" => doImport[CSVImportRequest]
-          case "importParquet" => doImport[ParquetImportRequest]
-          case "importORC" => doImport[ORCImportRequest]
-          case "importJson" => doImport[JsonImportRequest]
-        }
-      } catch {
-        case t: Throwable =>
-          log.error(s"Error while processing $this:", t)
-          json.Json.obj("error" -> t.toString, "request" -> json.Json.toJson(this))
-      }
-    }
-  }
-
+object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
@@ -77,19 +34,47 @@ object RemoteAPI {
   case class SqlRequest(checkpoint: String, query: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
-  object JsonFormatters {
-    implicit val fCommand = json.Json.format[Command]
-    implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
-    implicit val rOperationRequest = json.Json.reads[OperationRequest]
-    implicit val rProjectRequest = json.Json.reads[ProjectRequest]
-    implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
-    implicit val rScalarRequest = json.Json.reads[ScalarRequest]
-    implicit val rSqlRequest = json.Json.reads[SqlRequest]
-    implicit val wDynamicValue = json.Json.writes[DynamicValue]
-    implicit val wTableResult = json.Json.writes[TableResult]
-  }
+  implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
+  implicit val rOperationRequest = json.Json.reads[OperationRequest]
+  implicit val rProjectRequest = json.Json.reads[ProjectRequest]
+  implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
+  implicit val rScalarRequest = json.Json.reads[ScalarRequest]
+  implicit val rSqlRequest = json.Json.reads[SqlRequest]
+  implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wTableResult = json.Json.writes[TableResult]
+}
 
-  def newProject(user: User): CheckpointResponse = {
+object RemoteAPIServer extends JsonServer {
+  import RemoteAPIProtocol._
+  val userController = ProductionJsonServer.userController
+  val c = new RemoteAPIController(BigGraphProductionEnvironment)
+  def getScalar = jsonPost(c.getScalar)
+  def newProject = jsonPost(c.newProject)
+  def loadProject = jsonPost(c.loadProject)
+  def runOperation = jsonPost(c.runOperation)
+  def saveProject = jsonPost(c.saveProject)
+  def sql = jsonPost(c.sql)
+  private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
+    jsonPost[T, CheckpointResponse](c.importRequest)
+  def importJdbc = importRequest[JdbcImportRequest]
+  def importHive = importRequest[HiveImportRequest]
+  def importCSV = importRequest[CSVImportRequest]
+  def importParquet = importRequest[ParquetImportRequest]
+  def importORC = importRequest[ORCImportRequest]
+  def importJson = importRequest[JsonImportRequest]
+}
+
+class RemoteAPIController(env: BigGraphEnvironment) {
+  import RemoteAPIProtocol._
+  implicit val metaManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
+  val ops = new frontend_operations.Operations(env)
+  val sqlController = new SQLController(env)
+
+  def normalize(operation: String) = operation.replace("-", "").toLowerCase
+  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
+
+  def newProject(user: User, request: Empty): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
   }
 
@@ -167,9 +152,5 @@ object RemoteAPI {
     val res = sqlController.doImport(user, request)
     val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
     CheckpointResponse(cp)
-  }
-
-  def remote(user: User, command: Command) = {
-    command.execute(user)
   }
 }
