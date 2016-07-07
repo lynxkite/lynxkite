@@ -11,6 +11,4 @@ project.modularClustering(
   'min-increment-per-iteration': '0.001'
 )
 
-s = project.segmentations['modular_clusters']
-
-println "modular clustering: ${s.scalars['modular_clusters']}"
+project.computeUncomputed()

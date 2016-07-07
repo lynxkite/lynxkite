@@ -11,11 +11,4 @@ segmentation.weightedAggregateToSegmentation(
   'aggregate-rnd_std_normal2': 'weighted_sum'
 )
 
-segmentation
-  .vertexAttributes['rnd_std_normal2_weighted_sum_by_rnd_std_uniform']
-  .computeAndPrintHistogram(
-    name: 'eighted aggregate to segmentation histogram',
-    logarithmic: true,
-  )
-
-
+project.computeUncomputed()

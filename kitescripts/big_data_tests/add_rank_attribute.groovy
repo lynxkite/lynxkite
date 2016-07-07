@@ -13,7 +13,6 @@ project.addRankAttribute(
   'order': 'ascending'
 )
 
-project.vertexAttributes[name].computeAndPrintHistogram(
-        'name': name,
-        logarithmic: true)
+project.computeUncomputed()
+
 

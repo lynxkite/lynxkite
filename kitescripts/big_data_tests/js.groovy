@@ -9,4 +9,5 @@ project.derivedEdgeAttribute(
   type: 'double',
   expr: 'rnd_std_uniform * rnd_std_uniform')
 
-project.edgeAttributes['x'].computeAndPrintHistogram(name: 'x', precise: true)
+project.computeUncomputed()
+

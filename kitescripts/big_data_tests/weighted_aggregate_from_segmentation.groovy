@@ -12,8 +12,4 @@ segmentation.weightedAggregateFromSegmentation(
   'aggregate-top': 'weighted_sum'
 )
 
-project.vertexAttributes['top_weighted_sum_by_size'].computeAndPrintHistogram(
-  name: 'Weighted aggregate to segmentation histogram',
-  logarithmic: true)
-
-
+project.computeUncomputed()

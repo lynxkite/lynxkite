@@ -14,5 +14,6 @@ project.unionWithAnotherProject(
 )
 
 
-println "vertices: ${project.scalars['vertex_count']} edges ${project.scalars['edge_count']}"
+project.computeUncomputed()
+
 

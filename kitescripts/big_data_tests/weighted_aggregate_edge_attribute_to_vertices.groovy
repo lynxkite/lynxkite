@@ -11,9 +11,4 @@ project.weightedAggregateEdgeAttributeToVertices(
   'aggregate-rnd_std_normal': 'weighted_average'
 )
 
-project
-  .vertexAttributes['rnd_std_normal_weighted_average_by_rnd_std_uniform']
-  .computeAndPrintHistogram(
-    name: 'weighted aggregate edge attribute to vertices',
-    logarithmic: true,
-  )
+project.computeUncomputed()

@@ -11,4 +11,4 @@ s = project.segmentations['maximal_cliques']
 
 s.createEdgesFromCoOccurrence()
 
-println "edges created: ${project.scalars['edge_count']}"
+project.computeUncomputed()

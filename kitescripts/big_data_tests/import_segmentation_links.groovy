@@ -8,11 +8,6 @@ name = 'create_segmentation_from_sql_result'
 project = lynx.loadProject(name)
 segmentation = project.segmentations['segmentation']
 
-
-//project.vertexAttributeToString(attr: 'ordinal')
-//segmentation.vertexAttributeToString(attr: 'ordinal')
-
-
 segmentation.importSegmentationLinks(
   'table': lynx.openTable('segmentation_belongs_to_table'),
   'base-id-attr': 'ordinal',
@@ -21,5 +16,6 @@ segmentation.importSegmentationLinks(
   'seg-id-column': 'segment_ordinal'
 )
 
-println "belongsTo Edges: ${segmentation.scalars['!belongsToEdges']}"
+project.computeUncomputed()
+
 

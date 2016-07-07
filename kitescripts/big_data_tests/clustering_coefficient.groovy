@@ -10,9 +10,7 @@ project.clusteringCoefficient(
   'name': name,
 )
 
-project.vertexAttributes[name].computeAndPrintHistogram(
-        'name': name,
-        logarithmic: true)
+project.computeUncomputed()
 
 
 
