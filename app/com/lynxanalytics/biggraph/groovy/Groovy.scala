@@ -356,41 +356,49 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     sqlContext.sql(query)
   }
 
-  def computeNew(): Unit = {
+  private def uncomputed(entity: TypedEntity[_]): Boolean = {
     val dataManager = ctx.dataManager
+    val progress = dataManager.computeProgress(entity)
+    progress < 1.0
+  }
 
-    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+  private def computeUncomputedScalars(): Unit = {
+    val uncomputedScalars = editor.scalars.filter(x => uncomputed(x._2))
 
-    def acceptableType[T](attr: Attribute[T]): Boolean = {
-      attr.is[String] || attr.is[Double]
+    for ((name, scalar) <- uncomputedScalars) {
+      val value = ctx.dataManager.get(scalar).value
+      println(s"$name: $value")
     }
+  }
 
-    val uncomputedAttributes = attributes.map {
-      case (name, attr) =>
-        val entity = attr.manager.entity(attr.gUID)
-        val computed = dataManager.computeProgress(entity)
-        computed -> (name, attr)
-    }.filter(_._1 < 1.0)
-      .map {
-        case (computed, (name, attr)) => (name, attr)
-      }
-      .filter(x => (acceptableType(x._2)))
+  private def computeUncomputedAttributes(): Unit = {
+    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+    val uncomputedAttributes = attributes.filter(x => uncomputed(x._2))
 
     for ((name, attr) <- uncomputedAttributes) {
-      val groovyAttr = new GroovyAttribute(ctx, attr)
-      val histogramOptions = new java.util.HashMap[String, Any]
-      histogramOptions.put("numBuckets", 10)
-      histogramOptions.put("precise", true)
-      if (attr.isInstanceOf[Double]) histogramOptions.put("logarithmic", true)
-
-      val histogram = groovyAttr.histogram(histogramOptions)
-      println(s"${name}: ${histogram}")
+      if (attr.is[String] || attr.is[Double]) {
+        val groovyAttr = new GroovyAttribute(ctx, attr)
+        val histogramOptions = new java.util.HashMap[String, Any]
+        histogramOptions.put("numBuckets", 10)
+        histogramOptions.put("precise", true)
+        if (attr.is[Double]) histogramOptions.put("logarithmic", true)
+        val histogram = groovyAttr.histogram(histogramOptions)
+        println(s"${name}: ${histogram}")
+      } else {
+        ctx.dataManager.get(attr)
+        println(s"${name}: <computed>")
+      }
     }
+  }
+
+  def computeUncomputed(): Unit = {
+    computeUncomputedAttributes()
+    computeUncomputedScalars()
 
     val segmentations = editor.viewer.sortedSegmentations
     for (segmentation <- segmentations) {
       val groovySegm = new GroovyBatchProject(ctx, segmentation.editor)
-      groovySegm.computeNew()
+      groovySegm.computeUncomputed()
     }
   }
 
@@ -450,7 +458,7 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
   }
 }
 
-class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
+class GroovyScalar(ctx: GroovyContext, val scalar: Scalar[_]) {
   override def toString = {
     import ctx.dataManager
     scalar.value.toString
