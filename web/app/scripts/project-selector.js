@@ -182,7 +182,7 @@ angular.module('biggraph').directive('projectSelector',
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
           util.post('/ajax/renameEntry',
-              { from: oldName, to: newName }).then(scope.reload);
+              { from: oldName, to: newName, overwrite: false }).then(scope.reload);
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkEntry',
@@ -192,10 +192,18 @@ angular.module('biggraph').directive('projectSelector',
               }).then(scope.reload);
         },
         discard: function(kind, p) {
-          var message = 'Permanently delete ' + kind + ' ' + p + '?';
-          message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
-          if (window.confirm(message)) {
+          var trashDir = 'Trash';
+          if (util.globals.hasAuth) {
+            // Per-user trash.
+            trashDir = util.user.home + '/Trash';
+          }
+          if (p.indexOf(trashDir) === 0) {
+            // Already in Trash. Discard permanently.
             util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
+          } else {
+            // Not in Trash. Move to Trash.
+            util.post('/ajax/renameEntry',
+                { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
           }
         },
         editConfig: function(name, config) {
