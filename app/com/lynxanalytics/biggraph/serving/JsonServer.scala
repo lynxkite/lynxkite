@@ -459,8 +459,5 @@ object ProductionJsonServer extends JsonServer {
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
-  import RemoteAPI.JsonFormatters._
-  def remote = jsonPost(RemoteAPI.remote)
-
   Ammonite.maybeStart()
 }
