@@ -74,7 +74,7 @@ case class ExecuteSQL(
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
-    val sqlContext = rc.sqlContext.newSession()
+    val sqlContext = rc.dataManager.newSQLContext()
     for ((tableName, tableVs) <- inputs.tables) {
       val tableColumnList: Iterable[(String, Attribute[_])] = inputs
         .tableColumns(tableName)
