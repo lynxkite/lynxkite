@@ -1273,7 +1273,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to mask.")
       assert(params("salt").nonEmpty, "Please set a salt value.")
-      val op = graph_operations.HashVertexAttribute(params("salt").toString)
+      val maskedSalt = "SECRET_BEG" + params("salt") + "SECRET_END"
+      val op = graph_operations.HashVertexAttribute(maskedSalt.toString)
       for (attribute <- params("attr").split(",", -1)) {
         val attr = project.vertexAttributes(attribute).asString
         project.newVertexAttribute(attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
