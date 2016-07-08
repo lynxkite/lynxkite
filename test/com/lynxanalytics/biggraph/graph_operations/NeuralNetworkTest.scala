@@ -197,12 +197,12 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("Page Rank") {
     val vs = CreateVertexSet(1000).result.vs
     val es = {
-      val eop = FastRandomEdgeBundle(7, 20)
-      eop(eop.vs, vs).result.es
+      val eop = FastRandomEdgeBundle(seed = 7, averageDegree = 20)
+      eop(eop.vs, vs).result.es.addReversed
     }
     val truePr = {
-      val weight = AddConstantAttribute.run(es.idSet, 1.0)
-      val op = PageRank(0.5, 100)
+      val weight = es.idSet.const(1.0)
+      val op = PageRank(dampingFactor = 0.5, iterations = 3)
       val realPr = op(op.es, es)(op.weights, weight).result.pagerank
       DeriveJS.deriveFromAttributes[Double](
         "realPr * 2 - 1", Seq("realPr" -> realPr), vs)
@@ -214,8 +214,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 1000, learningRate = 0.2, radius = 4,
-        hideState = true, forgetFraction = 0.1)
+        featureCount = 0, networkSize = 20, iterations = 1000, learningRate = 0.5, radius = 4,
+        hideState = true, forgetFraction = 0.0)
       op(op.edges, es)(op.label, pr).result.prediction
     }
     prediction.rdd.count
