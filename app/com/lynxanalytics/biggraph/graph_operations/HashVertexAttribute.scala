@@ -38,11 +38,21 @@ object HashVertexAttribute extends OpFromJson {
     val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
     hashedPassword.map("%02X".format(_)).mkString
   }
-
+  def projectFromLogging(stringToHide: String) = "SECRET(" + stringToHide + ")"
+  def getContents(maskedString: String): String = {
+    maskedString.drop("SECRET(".length).dropRight(1)
+  }
+  def checkProtection(str: String): Unit = {
+    assert(str.startsWith("SECRET(") && str.endsWith(")"),
+      "Secret string should be protected with SECRET(...)")
+    assert(!getContents(str).contains(")"),
+      "Secret string should not contain a closing bracket")
+  }
 }
 import HashVertexAttribute._
 case class HashVertexAttribute(salt: String)
     extends TypedMetaGraphOp[Input, Output] {
+  checkProtection(salt)
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
