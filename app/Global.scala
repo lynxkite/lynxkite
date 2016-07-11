@@ -36,18 +36,24 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
   }
 
   def notifyStarterScript(msg: String): Unit = {
-    val notifier =
-      scala.concurrent.Future[Unit] {
-        LoggedEnvironment.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
-          org.apache.commons.io.FileUtils.writeStringToFile(
-            new java.io.File(pipeName),
-            msg + "\n",
-            "utf8"))
+    val starterScriptPipe = LoggedEnvironment.envOrNone("KITE_READY_PIPE")
+    if (starterScriptPipe.isEmpty) { // There is no starter script
+      log.error(msg)
+      sys.exit(1)
+    } else {
+      val notifier =
+        scala.concurrent.Future[Unit] {
+          starterScriptPipe.foreach(pipeName =>
+            org.apache.commons.io.FileUtils.writeStringToFile(
+              new java.io.File(pipeName),
+              msg + "\n",
+              "utf8"))
+        }
+      try {
+        Await.result(notifier, 5.seconds)
+      } catch {
+        case _: Throwable => log.info("Timeout - starter script could have been killed")
       }
-    try {
-      Await.result(notifier, 5.seconds)
-    } catch {
-      case _: Throwable => log.info("Timeout - starter script could have been killed")
     }
   }
 
