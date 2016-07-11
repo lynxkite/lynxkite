@@ -162,14 +162,15 @@ def _request(endpoint, payload={}):
       os.environ.get('LYNXKITE_ADDRESS').rstrip('/') + '/' + endpoint.lstrip('/'),
       data=data,
       headers={'Content-Type': 'application/json'})
-  while True:
+  max_tries = 3
+  for i in range(max_tries):
     try:
       with connection.open(req) as r:
         return r.read().decode('utf-8')
     except urllib.error.HTTPError as err:
       if err.code == 401: # Unauthorized.
         connect()
-        # And then retry via the "while" loop.
+        # And then retry via the "for" loop.
       if err.code == 500: # Unauthorized.
         raise LynxException(err.read())
       else:
