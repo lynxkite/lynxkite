@@ -19,9 +19,19 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     attrs: Seq[Map[Int, Double]],
     graph: SmallTestGraph.Output): Scalar[Model] = {
     val l = AddVertexAttribute.run(graph.vs, label)
-    val a = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
-    val op = RegressionModelTrainer(method, labelName, featureNames)
-    op(op.features, a)(op.label, l).result.model
+    val features = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
+    method match {
+      case "Linear regression" | "Ridge regression" | "Lasso" =>
+        val op = RegressionModelTrainer(method, labelName, featureNames)
+        op(op.features, features)(op.label, l).result.model
+      case "Logistic regression" =>
+        val op = LogisticRegressionModelTrainer(
+          threshold = 0.5,
+          maxIter = 20,
+          labelName,
+          featureNames)
+        op(op.features, features)(op.label, l).result.model
+    }
   }
 
   def testKMeansModel(numAttr: Int, numData: Int, k: Int): Scalar[Model] = {

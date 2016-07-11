@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.apache.spark.mllib.linalg.DenseVector
 
 object ClassifyWithModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -15,6 +16,7 @@ object ClassifyWithModel extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
+    val probability = vertexAttribute[Double](inputs.vertices.entity)
     val classification = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
@@ -32,15 +34,22 @@ case class ClassifyWithModel(numFeatures: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    val sqlContext = rc.dataManager.newSQLContext()
+    import sqlContext.implicits._
+
     val model = inputs.model.value
     val rddArray = inputs.features.toArray.map { v => v.rdd }
     val unscaledRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledRDD = unscaledRDD.mapValues(v => model.featureScaler.transform(v))
+    val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
-    val ids = scaledRDD.keys // We will put back the keys with a zip.
-    def classification = model.scaleBack(model.load(rc.sparkContext).transform(scaledRDD.values))
-    output(
-      o.classification,
-      ids.zip(classification).filter(!_._2.isNaN).asUniqueSortedRDD(partitioner))
+    val transformation = model.load(rc.sparkContext).transformDF(scaledDF)
+      .select("ID", "probability", "prediction").map(row =>
+        (row.getAs[ID]("ID"),
+          (row.getAs[DenseVector]("probability"),
+            row.getAs[java.lang.Number]("prediction").doubleValue)))
+      .sortUnique(partitioner)
+    output(o.probability, transformation.mapValues(_._1.toArray.max))
+    output(o.classification, transformation.mapValues(_._2))
   }
 }
