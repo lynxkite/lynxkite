@@ -26,15 +26,66 @@ import urllib
 default_sql_limit = 1000
 default_privacy = "public-read"
 
-def connect():
-  '''Runs when the module is loaded. Performs login.'''
-  global connection
-  cj = http.cookiejar.CookieJar()
-  connection = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-  if os.environ.get('LYNXKITE_USERNAME'):
-    _request('/passwordLogin', dict(
-        username=os.environ['LYNXKITE_USERNAME'],
-        password=os.environ['LYNXKITE_PASSWORD']))
+_connection = None
+def default_connection():
+  global _connection
+  if _connection is None:
+    _connection = Connection(
+        os.environ['LYNXKITE_ADDRESS'],
+        os.environ.get('LYNXKITE_USERNAME'),
+        os.environ.get('LYNXKITE_PASSWORD'))
+  return _connection
+
+
+class Connection(object):
+  '''A connection to a LynxKite instance.
+
+  Some LynxKite API methods take a connection argument which can be used to communicate with
+  multiple LynxKite instances from the same session. If this argument is not provided, the default
+  connection is used instead. The default connection is configured via the LYNXKITE_ADDRESS,
+  LYNXKITE_USERNAME, and LYNXKITE_PASSWORD environment variables.
+  '''
+
+  def __init__(self, address, username=None, password=None):
+    '''Creates a connection object, performing authentication if necessary.'''
+    self.address = address
+    self.username = username
+    self.password = password
+    cj = http.cookiejar.CookieJar()
+    self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    if username:
+      self.request('/passwordLogin', dict(username=self.username, password=self.password))
+
+  def request(self, endpoint, payload={}):
+    '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(
+        self.address.rstrip('/') + '/' + endpoint.lstrip('/'),
+        data=data,
+        headers={'Content-Type': 'application/json'})
+    max_tries = 3
+    for i in range(max_tries):
+      try:
+        with self.opener.open(req) as r:
+          return r.read().decode('utf-8')
+      except urllib.error.HTTPError as err:
+        if err.code == 401: # Unauthorized.
+          connect()
+          # And then retry via the "for" loop.
+        if err.code == 500: # Unauthorized.
+          raise LynxException(err.read())
+        else:
+          raise err
+
+
+  def send(self, command, payload={}, raw=False):
+    '''Sends a command to LynxKite and returns the response when it arrives.'''
+    data = self.request('/remote/' + command, payload)
+    if raw:
+      r = json.loads(data)
+    else:
+      r = json.loads(data, object_hook=_asobject)
+    return r
 
 
 class Project(object):
@@ -43,29 +94,32 @@ class Project(object):
   This project is not automatically saved to the LynxKite project directories.
   '''
   @staticmethod
-  def load(name):
-    p = Project()
-    r = _send('loadProject', dict(project=name))
+  def load(name, connection=None):
+    '''Loads an existing LynxKite project.'''
+    connection = connection or default_connection()
+    p = Project(connection)
+    r = connection.send('loadProject', dict(project=name))
     p.checkpoint = r.checkpoint
     return p
 
-  def __init__(self):
+  def __init__(self, connection=None):
     '''Creates a new blank project.'''
-    r = _send('newProject')
+    self.connection = connection or default_connection()
+    r = self.connection.send('newProject')
     self.checkpoint = r.checkpoint
 
   def save(self, name):
-    _send('saveProject', dict(checkpoint=self.checkpoint, project=name))
+    self.connection.send('saveProject', dict(checkpoint=self.checkpoint, project=name))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = _send('getScalar', dict(checkpoint=self.checkpoint, scalar=scalar))
+    r = self.connection.send('getScalar', dict(checkpoint=self.checkpoint, scalar=scalar))
     if hasattr(r, 'double'):
       return r.double
     return r.string
 
   def sql(self, query, limit=None):
-    r = _send('sql', dict(
+    r = self.connection.send('sql', dict(
       checkpoint=self.checkpoint,
       query=query,
       limit=limit or default_sql_limit,
@@ -79,7 +133,7 @@ class Project(object):
                 mode = "FAILFAST",
                 infer = True,
                 columnsToImport = []):
-    r = _send("importCSV",
+    r = self.connection.send("importCSV",
               dict(
                 files = files,
                 table = table,
@@ -92,7 +146,7 @@ class Project(object):
     return r
 
   def import_hive(self, table, hiveTable, privacy = default_privacy, columnsToImport = []):
-    r = _send("importHive",
+    r = self.connection.send("importHive",
               dict(
                 table = table,
                 privacy = privacy,
@@ -102,7 +156,7 @@ class Project(object):
 
   def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
                   privacy = default_privacy, columnsToImport = []):
-    r = _send("importJdbc",
+    r = self.connection.send("importJdbc",
               dict(
                 table = table,
                 jdbcUrl = jdbcUrl,
@@ -122,7 +176,7 @@ class Project(object):
     self._importFileWithSchema("Json", table, privacy, columnsToImport)
 
   def _importFileWithSchema(format, table, privacy, files, columnsToImport):
-    r = _send("import" + format,
+    r = self.connection.send("import" + format,
               dict(
                 table = table,
                 privacy = privacy,
@@ -133,7 +187,7 @@ class Project(object):
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
-    r = _send('runOperation',
+    r = self.connection.send('runOperation',
         dict(checkpoint=self.checkpoint, operation=operation, parameters=parameters))
     self.checkpoint = r.checkpoint
     return self
@@ -155,41 +209,7 @@ class LynxException(Exception):
     self.error = error
 
 
-def _request(endpoint, payload={}):
-  '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
-  data = json.dumps(payload).encode('utf-8')
-  req = urllib.request.Request(
-      os.environ.get('LYNXKITE_ADDRESS').rstrip('/') + '/' + endpoint.lstrip('/'),
-      data=data,
-      headers={'Content-Type': 'application/json'})
-  max_tries = 3
-  for i in range(max_tries):
-    try:
-      with connection.open(req) as r:
-        return r.read().decode('utf-8')
-    except urllib.error.HTTPError as err:
-      if err.code == 401: # Unauthorized.
-        connect()
-        # And then retry via the "for" loop.
-      if err.code == 500: # Unauthorized.
-        raise LynxException(err.read())
-      else:
-        raise err
-
-
-def _send(command, payload={}, raw=False):
-  '''Sends a command to LynxKite and returns the response when it arrives.'''
-  data = _request('/remote/' + command, payload)
-  if raw:
-    r = json.loads(data)
-  else:
-    r = json.loads(data, object_hook=_asobject)
-  return r
-
 
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
   return types.SimpleNamespace(**dic)
-
-
-connect()
