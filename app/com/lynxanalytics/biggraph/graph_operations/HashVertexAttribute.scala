@@ -38,7 +38,7 @@ object HashVertexAttribute extends OpFromJson {
     val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
     hashedPassword.map("%02X".format(_)).mkString
   }
-  def projectFromLogging(stringToHide: String) = "SECRET(" + stringToHide + ")"
+  def protectFromLogging(stringToHide: String) = "SECRET(" + stringToHide + ")"
   def getContents(maskedString: String): String = {
     maskedString.drop("SECRET(".length).dropRight(1)
   }
