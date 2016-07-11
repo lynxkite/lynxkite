@@ -8,40 +8,52 @@ import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions
 import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
-  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double]
+  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = data.map(_ => 0.0)
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = data
   def details: String
 }
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
     m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
-  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
   def details: String = {
     val weights = "(" + m.weights.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\nweights: $weights"
   }
 }
 
+private class LogisticRegressionModelImpl(
+    m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
+  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = {
+    m.transform(data)
+  }
+  def details: String = {
+    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
+    s"intercept: ${m.intercept}\ncoefficients: $coefficients"
+  }
+}
+
 private class ClusterModelImpl(
     m: ml.clustering.KMeansModel,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
-  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = {
-    val dataDF = {
-      val sc = data.context
-      val sqlContext = new SQLContext(sc)
-      import sqlContext.implicits._
-      data.map(x => Tuple1(x)).toDF("vector")
-    }
-    // Transform the data to a new DataFrame with the schema [vector | prediction].  
-    // Output the second column which is a rdd of the resulting cluster labels.
-    m.transform(dataDF).map { row => row.getAs[Int](1).toDouble }
+  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = {
+    // Helper methods to create an additional column with probability of linalg.Vector[1.0]
+    val transformer: (Int => mllib.linalg.Vector) = (x: Int) => mllib.linalg.Vectors.dense(x)
+    val sqlFunc = functions.udf(transformer)
+
+    m.transform(data)
+      .withColumn("probValue", functions.lit(1))
+      .withColumn("probability", sqlFunc(functions.col("probValue")))
   }
+
   val scaledCenters = {
     val unscaledCenters = m.clusterCenters
     val transformingVector = featureScaler.std
@@ -121,6 +133,8 @@ case class Model(
         new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
       case "Lasso" =>
         new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
+      case "Logistic regression" =>
+        new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), featureScaler)
     }
@@ -179,7 +193,7 @@ object Model extends FromJson[Model] {
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
-    modelName, modelMeta.isClassification, modelMeta.featureNames)
+    modelName, modelMeta.isClassification, modelMeta.nominalOutput, modelMeta.featureNames)
 
   def toFE(m: Model, sc: spark.SparkContext): FEModel = FEModel(
     method = m.method,
@@ -229,6 +243,7 @@ object Model extends FromJson[Model] {
 case class FEModelMeta(
   name: String,
   isClassification: Boolean,
+  nominalOutput: Boolean,
   featureNames: List[String])
 
 case class FEModel(
@@ -240,6 +255,7 @@ case class FEModel(
 
 trait ModelMeta {
   def isClassification: Boolean
+  def nominalOutput: Boolean = false
   def featureNames: List[String]
 }
 

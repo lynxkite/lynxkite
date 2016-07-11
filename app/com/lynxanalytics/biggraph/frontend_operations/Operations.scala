@@ -1542,6 +1542,36 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Train a logistic regression model", new VertexAttributesOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
+      NonNegDouble("threshold", "Threshold in binary classification prediction", defaultValue = "0.5"),
+      NonNegInt("max-iter", "Maximum number of iterations", default = 20))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one predictor.")
+      val featureNames = params("features").split(",", -1).sorted
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val name = params("name")
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val threshold = params("threshold").toDouble
+      val maxIter = params("max-iter").toInt
+      val model = {
+        val op = graph_operations.LogisticRegressionModelTrainer(
+          threshold, maxIter, labelName, featureNames.toList)
+        op(op.label, label)(op.features, features).result.model
+      }
+      project.scalars(name) = model
+    }
+  })
+
   register("Train a k-means clustering model", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
@@ -1617,11 +1647,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
-      val classifiedAttribute = {
-        val op = graph_operations.ClassifyWithModel(features.size)
-        op(op.model, modelValue)(op.features, features).result.classification
-      }
+      val isNominalOutput = models((p \ "modelName").as[String]).nominalOutput
+      val op = graph_operations.ClassifyWithModel(features.size)
+      val result = op(op.model, modelValue)(op.features, features).result
+      val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute, s"classified with ${modelValue.name}")
+      if (isNominalOutput) {
+        val probability = result.probability
+        project.newVertexAttribute(name + "_prob", probability, s"classified with ${modelValue.name}")
+      }
+
     }
   })
 

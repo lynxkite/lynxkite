@@ -26,4 +26,25 @@ class ClassifyWithModelTest extends ModelTestBase {
     // Check that distant data points have different labels 
     assert(clustering(0) != clustering(3))
   }
+
+  test("test the logistic regression model") {
+    val m = model(
+      method = "Logistic regression",
+      labelName = "isSenior",
+      label = Map(0 -> 0, 1 -> 1, 2 -> 0, 3 -> 1),
+      featureNames = List("age"),
+      attrs = Seq(Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60)),
+      graph(4))
+
+    //check data points with similar ages have the same label
+    val g = graph(numVertices = 4)
+    val attrs = (0 until 4).map(_ => Map(0 -> 15.0, 1 -> 20.0, 2 -> 50.0, 3 -> 60.0))
+    val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
+    val op = ClassifyWithModel(4)
+    val result = op(op.features, features)(op.model, m).result
+    val classification = result.classification.rdd.values.collect
+    assert(classification.size == 4)
+    assert(classification(0) == 0.0 && classification(1) == 0.0)
+    assert(classification(2) == 1.0 && classification(3) == 1.0)
+  }
 }
