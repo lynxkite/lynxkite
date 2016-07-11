@@ -9,7 +9,7 @@
        <cleanHistoryOnStart>true</cleanHistoryOnStart>
      </rollingPolicy>
      <encoder>
-       <pattern>%.-1level%date %logger{0}:[%thread] %replace(%msg){'SECRET\(.*\)','***'}%n%xException</pattern>
+       <pattern>%.-1level%date %logger{0}:[%thread] %replace(%msg%n%xException){'SECRET\(.*\)','***'}%nopex</pattern>
      </encoder>
    </appender>
 
@@ -28,7 +28,7 @@
      </filter>
      <target>System.err</target>
      <encoder>
-       <pattern>%date - [%level] - from %logger in %thread %n%replace(%msg){'SECRET\(.*\)','***'}%n%xException%n</pattern>
+       <pattern>%date - [%level] - from %logger in %thread %n%replace(%msg%n%xException){'SECRET\(.*\)','***'}%nopex</pattern>
      </encoder>
    </appender>
 
