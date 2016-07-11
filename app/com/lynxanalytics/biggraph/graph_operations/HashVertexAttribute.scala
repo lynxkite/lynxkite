@@ -48,7 +48,7 @@ object HashVertexAttribute extends OpFromJson {
   }
   def assertSecret(str: String): Unit = {
     assert(str.startsWith("SECRET(") && str.endsWith(")"),
-      "Secret string should be protected with SECRET(...)")
+      "Secret string should be protected. Use SECRET( followed by your secret string, followed by a closing bracket")
     assert(!getSecret(str).contains(")"),
       "Secret string should not contain a closing bracket")
   }

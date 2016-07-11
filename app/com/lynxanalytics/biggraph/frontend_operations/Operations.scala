@@ -1266,16 +1266,17 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Mask vertex attribute", new ImportOperation(_, _) {
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true),
-      Param("salt", "Salt", defaultValue = nextString(15))
+      Param("salt", "Salt",
+        defaultValue = graph_operations.HashVertexAttribute.makeSecret(nextString(15)))
     )
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
 
     def apply(params: Map[String, String]) = {
       assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to mask.")
       val salt = params("salt")
-      assert(salt.nonEmpty, "Please set a salt value.")
-      val maskedSalt = graph_operations.HashVertexAttribute.makeSecret(salt)
-      val op = graph_operations.HashVertexAttribute(maskedSalt.toString)
+      graph_operations.HashVertexAttribute.assertSecret(salt)
+      assert(graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
+      val op = graph_operations.HashVertexAttribute(salt)
       for (attribute <- params("attr").split(",", -1)) {
         val attr = project.vertexAttributes(attribute).asString
         project.newVertexAttribute(attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
