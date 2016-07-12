@@ -1,5 +1,5 @@
-// Trains a logistic regression model. 
-// Currently, this class only supports binary classification.
+// Trains a logistic regression model. Currently, the class only supports for binary 
+// classification.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -73,7 +73,7 @@ case class LogisticRegressionModelTrainer(
       labelName = Some(labelName),
       featureNames = featureNames,
       labelScaler = None,
-      // The feature vectors have been standardized
+      // The feature vectors are standardized by the model. A dummy scaler is used here.
       featureScaler = {
         val dummyVector = Vectors.dense(Array.fill(featureNames.size)(0.0))
         new StandardScalerModel(

@@ -3,8 +3,8 @@
 
 Machine learning models are one of the graph attribute types.
 They are created by a machine learning operation (for example <<train-linear-regression-model>>)
-and used for prediction with the <<predict-from-model>> operation or classification with the
-<<classify-vertices-with-model>> operation.
+and used for prediction with the <<predict-from-model>> operation or for classification with the
+<<classify-vertices-with-a-model>> operation.
 
 Press the plus button
 (+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++)
@@ -50,3 +50,8 @@ For linear regression models:
 For KMeans clustering model:
 
 * `cluster centers` are the vectors of the KMeans cluster centers.
+
+For logistic regression models:
+
+* `intercept` is the constant parameter in the logistic function of the model.
+* `coefficients` is the vector of the coefficients in the logistic function of the model.

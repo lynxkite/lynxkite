@@ -24,17 +24,6 @@ class KMeansClusteringModelTrainerTest extends ModelTestBase {
     assert(m.method == "KMeans clustering")
     assert(m.featureNames == List("age"))
     assert(KMeansModel.load(path).clusterCenters.size == 2)
-
-    // Check that data points with similar ages have the same label. 
-    // Check that data points with distant ages have different labels.
-    val impl = m.load(sparkContext)
-    val ages = vectorsRDD(Array(15), Array(20), Array(50))
-    val clustering = impl.transform(
-      ages.map(v => m.featureScaler.transform(v))).collect
-    assert(clustering(0) == clustering(1),
-      "Age 15 and Age 20 shall be in the same cluster.")
-    assert(clustering(0) != clustering(2),
-      "Age 15 and Age 50 shall be in the different cluster.")
   }
 
   test("larger data set with 20 attributes") {
@@ -47,16 +36,5 @@ class KMeansClusteringModelTrainerTest extends ModelTestBase {
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
     assert(KMeansModel.load(path).clusterCenters.size == k)
-
-    // Check that data points with similar values have the same label. 
-    // Check that data points with distant values have different labels. 
-    val impl = m.load(sparkContext)
-    val data = vectorsRDD(Array.fill(numAttr)(1), Array.fill(numAttr)(5),
-      Array.fill(numAttr)(96), Array.fill(numAttr)(100))
-    val clustering = impl.transform(
-      data.map(v => m.featureScaler.transform(v))).collect
-    assert(clustering(0) == clustering(1))
-    assert(clustering(2) == clustering(3))
-    assert(clustering(0) != clustering(3))
   }
 }
