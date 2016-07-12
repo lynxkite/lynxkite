@@ -914,6 +914,20 @@ class TableFrame(path: SymbolPath)(
   def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
 }
 
+class ViewFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  def initializeFromConfig(config: json.JsObject, notes: String): Unit = manager.synchronized {
+    set(rootDir / "objectType", "view")
+    details = config
+    val editor = new RootProjectEditor(RootProjectState.emptyState)
+    editor.notes = notes
+    val cps = manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
+    checkpoint = cps.checkpoint.get
+  }
+  override def isDirectory: Boolean = false
+  def getConfig: json.JsObject = details.get
+}
+
 abstract class ObjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
@@ -1080,8 +1094,9 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
   def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isTable
+  def isProject = hasCheckpoint && !isTable && !isView
   def isDirectory = exists && !hasCheckpoint
+  def isView = get(rootDir / "objectType", "") == "view"
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1125,7 +1140,20 @@ class DirectoryEntry(val path: SymbolPath)(
     res.writeACL = ""
     res
   }
+
+  def asViewFrame(): ViewFrame = {
+    assert(isInstanceOf[ViewFrame], s"Entry '$path' is not a view")
+    asInstanceOf[ViewFrame]
+  }
+
+  def asNewViewFrame(config: json.JsObject, notes: String): ViewFrame = {
+    assert(!exists, s"Entry '$path' already exists")
+    val res = new ViewFrame(path)
+    res.initializeFromConfig(config, notes)
+    res
+  }
 }
+
 object DirectoryEntry {
   val root = SymbolPath("projects")
 
@@ -1146,6 +1174,8 @@ object DirectoryEntry {
         new ProjectFrame(entry.path)
       } else if (entry.isTable) {
         new TableFrame(entry.path)
+      } else if (entry.isView) {
+        new ViewFrame(entry.path)
       } else {
         new Directory(entry.path)
       }
