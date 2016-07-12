@@ -1656,7 +1656,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val probability = result.probability
         project.newVertexAttribute(name + "_prob", probability, s"classified with ${modelValue.name}")
       }
-
     }
   })
 
