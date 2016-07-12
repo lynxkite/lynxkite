@@ -233,6 +233,15 @@ class SQLController(val env: BigGraphEnvironment) {
       request.privacy,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
+  def saveView[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption = {
+    SQLController.saveView(
+      request.notes,
+      user,
+      request.table,
+      request.privacy,
+      TypedJson.createFromWriter(request).as[json.JsObject])
+  }
+
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
   def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
@@ -240,6 +249,13 @@ class SQLController(val env: BigGraphEnvironment) {
   def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
+
+  def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
+  def createViewJdbc(user: serving.User, request: JsonImportRequest) = saveView(user, request)
+  def createViewParquet(user: serving.User, request: ParquetImportRequest) = saveView(user, request)
+  def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
+  def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
+  def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
 
   // Finds the names of tables from string
   private def findTablesFromQuery(query: String): List[String] = {
@@ -443,5 +459,13 @@ object SQLController {
     importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
+  }
+
+  def saveView(notes: String, user: serving.User, tableName: String, privacy: String, importConfig: json.JsObject)(
+    implicit metaManager: MetaGraphManager,
+    dataManager: DataManager) = {
+    val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
+    val view = entry.asNewViewFrame(importConfig, notes)
+    FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
   }
 }
