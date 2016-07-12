@@ -222,6 +222,9 @@ angular.module('biggraph').directive('projectSelector',
       scope.isTable = function(object) {
         return object.objectType === 'table';
       };
+      scope.isView = function(object) {
+        return object.objectType === 'view';
+      };
 
       scope.importTable = {};
       scope.startTableImport = function() {
