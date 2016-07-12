@@ -21,13 +21,18 @@ angular.module('biggraph').directive('importWizard', function(util) {
       };
 
       scope.requestInProgress = 0;
-      function importStuff(endpoint, parameters) {
+      function importStuff(format, parameters) {
         parameters.table =
           (scope.currentDirectory ? scope.currentDirectory + '/' : '') + scope.tableName;
         parameters.privacy = 'public-read';
         parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
+        parameters.asView = scope.asView;
         scope.requestInProgress += 1;
+
+        var importOrView = scope.asView ? 'createView' : 'import';
+        var endpoint = '/ajax/' + importOrView + format;
         var request = util.post(endpoint, parameters);
+
         request.then(function(result) {
           scope.tableImported = result;
         });
@@ -46,7 +51,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
 
       scope.importCSV = function() {
         importStuff(
-          '/ajax/importCSV',
+          'CSV',
           {
             files: scope.csv.filename,
             columnNames: splitCSVLine(scope.csv.columnNames),
@@ -64,10 +69,10 @@ angular.module('biggraph').directive('importWizard', function(util) {
           });
       }
 
-      scope.$on('fill import from config', function(evt, newConfig, tableName) {
+      scope.$on('fill import from config', function(evt, newConfig, tableName, type) {
         scope.tableName = tableName;
-
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
+        scope.asView = type === 'view';
 
         //com.lynxanalytics.biggraph.controllers.CSVImportRequest
         var requestName = newConfig.class.split('.').pop(); //CSVImportRequest
@@ -77,7 +82,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         var datatypeScope = scope.$eval(datatype);
 
         datatypeScope.filename = newConfig.data.files;
-
+        
         if (datatypeScope === 'jdbc') {
           fillJdbcFromData(datatypeScope, newConfig.data);
         } else if (datatypeScope === 'hive') {
@@ -106,17 +111,17 @@ angular.module('biggraph').directive('importWizard', function(util) {
       }
 
       scope.importParquet = function() {
-        importFilesWith('/ajax/importParquet');
+        importFilesWith('Parquet');
       };
       scope.importORC = function() {
-        importFilesWith('/ajax/importORC');
+        importFilesWith('ORC');
       };
       scope.importJson = function() {
-        importFilesWith('/ajax/importJson');
+        importFilesWith('Json');
       };
       scope.importJdbc = function() {
         importStuff(
-          '/ajax/importJdbc',
+          'Jdbc',
           {
             jdbcUrl: scope.jdbc.url,
             jdbcTable: scope.jdbc.table,
@@ -125,7 +130,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
       };
       scope.importHive = function() {
         importStuff(
-          '/ajax/importHive', {
+          'Hive', {
             hiveTable: scope.hive.tableName,
           });
       };

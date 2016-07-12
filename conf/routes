@@ -41,6 +41,14 @@ POST /ajax/importParquet     com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/importORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importORC
 POST /ajax/importJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJson
 POST /ajax/importHive         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importHive
+POST /ajax/createViewCSV         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewCSV
+POST /ajax/createViewJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJdbc
+POST /ajax/createViewParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewParquet
+POST /ajax/createViewORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewORC
+POST /ajax/createViewJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJson
+POST /ajax/createViewHive        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewHive
+
+
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
