@@ -117,8 +117,10 @@ case class CSVImportRequest(
 
   def notes = s"Imported from CSV files ${files}."
 }
-object CSVImportRequest {
+object CSVImportRequest extends FromJson[CSVImportRequest] {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fCSVImportRequest
+  override def fromJson(j: JsValue): CSVImportRequest = json.Json.fromJson(j).get
 }
 
 object FileImportValidator {
@@ -163,15 +165,20 @@ case class JdbcImportRequest(
   }
 }
 
+object JdbcImportRequest extends FromJson[JdbcImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fJdbcImportRequest
+  override def fromJson(j: JsValue): JdbcImportRequest = json.Json.fromJson(j).get
+}
+
 trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
-
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  override val needHive = true
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
     hadoopFile.assertReadAllowedFrom(user)
     FileImportValidator.checkFileHasContents(hadoopFile)
-    dataManager.masterHiveContext.read.format(format).load(hadoopFile.resolvedName)
+    context.read.format(format).load(hadoopFile.resolvedName)
   }
 
   def notes = s"Imported from ${format} files ${files}."
@@ -185,6 +192,11 @@ case class ParquetImportRequest(
   val format = "parquet"
 }
 
+object ParquetImportRequest extends FromJson[ParquetImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fParquetImportRequest
+  override def fromJson(j: JsValue): ParquetImportRequest = json.Json.fromJson(j).get
+}
+
 case class ORCImportRequest(
     table: String,
     privacy: String,
@@ -193,12 +205,22 @@ case class ORCImportRequest(
   val format = "orc"
 }
 
+object ORCImportRequest extends FromJson[ORCImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fORCImportRequest
+  override def fromJson(j: JsValue): ORCImportRequest = json.Json.fromJson(j).get
+}
+
 case class JsonImportRequest(
     table: String,
     privacy: String,
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "json"
+}
+
+object JsonImportRequest extends FromJson[JsonImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fJsonImportRequest
+  override def fromJson(j: JsValue): JsonImportRequest = json.Json.fromJson(j).get
 }
 
 case class HiveImportRequest(
@@ -214,6 +236,11 @@ case class HiveImportRequest(
     dataManager.masterHiveContext.table(hiveTable)
   }
   def notes = s"Imported from Hive table ${hiveTable}."
+}
+
+object HiveImportRequest extends FromJson[HiveImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
+  override def fromJson(j: JsValue): HiveImportRequest = json.Json.fromJson(j).get
 }
 
 class SQLController(val env: BigGraphEnvironment) {
