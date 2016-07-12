@@ -1,0 +1,9 @@
+## Views
+
+Views are essentially tables, that are created only when they are used. This leads
+to a speedup if only a small part of the data is needed e.g. when you select something
+with the global SQL box.
+
+Please note that because the views are loaded only on use, the accessed resources need to be present when
+the view is used e.g. if you import through JDBC, the database must still be available
+ when the view is used.
