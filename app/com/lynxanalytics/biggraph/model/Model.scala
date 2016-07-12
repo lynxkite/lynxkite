@@ -55,7 +55,6 @@ private class ClusterModelImpl(
     m.transform(data).withColumn("probability", functions.lit(1))
       .withColumn("probability", sqlFunc(functions.col("probability")))
   }
-
   val scaledCenters = {
     val unscaledCenters = m.clusterCenters
     val transformingVector = featureScaler.std

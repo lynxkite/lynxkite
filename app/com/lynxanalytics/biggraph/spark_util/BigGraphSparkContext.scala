@@ -285,8 +285,8 @@ object BigGraphSparkContext {
 
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
-    //assert(versionFound == versionRequired,
-    //s"Needs Apache Spark version $versionRequired. Found $versionFound.")
+    assert(versionFound == versionRequired,
+      s"Needs Apache Spark version $versionRequired. Found $versionFound.")
 
     // Don't forget to review spark.memory.useLegacyMode before upgrading Spark to 2.x
     // Without that setting, Spark 1.6.0 slows down when the cache is full. Other flags can
