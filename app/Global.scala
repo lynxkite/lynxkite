@@ -35,42 +35,47 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
     concurrent.Future.successful(NotFound(escapeIfNeeded(request.toString, request.headers)))
   }
 
-  def notifyStarterScript(msg: String): Unit = {
-    val starterScriptPipe = LoggedEnvironment.envOrNone("KITE_READY_PIPE")
-    if (starterScriptPipe.isEmpty) { // There is no starter script
-      log.error(msg)
-      sys.exit(1)
-    } else {
-      val notifier =
-        scala.concurrent.Future[Unit] {
-          starterScriptPipe.foreach(pipeName =>
-            org.apache.commons.io.FileUtils.writeStringToFile(
-              new java.io.File(pipeName),
-              msg + "\n",
-              "utf8"))
-        }
-      try {
-        Await.result(notifier, 5.seconds)
-      } catch {
-        case _: Throwable => log.info("Timeout - starter script could have been killed")
+  def startedDirectly(): Unit = {
+    serving.ProductionJsonServer
+    println("LynxKite is running.")
+  }
+
+  def notifyStarterScript(msg: String, success: Boolean): Unit = {
+    val notifier =
+      scala.concurrent.Future[Unit] {
+        val pipeName = LoggedEnvironment.envOrNone("KITE_READY_PIPE").get
+        org.apache.commons.io.FileUtils.writeStringToFile(
+          new java.io.File(pipeName), msg + "\n", "utf8")
       }
+    try {
+      Await.result(notifier, 5.seconds)
+      if (!success) System.exit(1)
+    } catch {
+      case _: Throwable =>
+        log.info("Timeout - starter script could have been killed")
+        if (!success) System.exit(1)
+    }
+  }
+
+  def startedByStarterScriptInTheBackground(): Unit = {
+    try {
+      serving.ProductionJsonServer
+      notifyStarterScript("ready", success = true)
+    } catch {
+      case t: ExceptionInInitializerError =>
+        val exceptionMessage = Option(t.getCause).map(_.toString.replace('\n', ' ')).getOrElse(t.toString)
+        notifyStarterScript("failed: " + exceptionMessage, success = false)
+      case t: Throwable =>
+        val exceptionMessage = Option(t.getMessage).map(_.replace('\n', ' ')).getOrElse(t.toString)
+        notifyStarterScript("failed: " + exceptionMessage, success = false)
     }
   }
 
   override def onStart(app: Application) = {
-    try {
-      serving.ProductionJsonServer
-    } catch {
-      case t: ExceptionInInitializerError =>
-        val exceptionMessage = Option(t.getCause).map(_.toString.replace('\n', ' ')).getOrElse(t.toString)
-        notifyStarterScript("failed: " + exceptionMessage)
-        throw t
-      case t: Throwable =>
-        val exceptionMessage = Option(t.getMessage).map(_.replace('\n', ' ')).getOrElse(t.toString)
-        notifyStarterScript("failed: " + exceptionMessage)
-        throw t
+    if (LoggedEnvironment.envOrNone("KITE_READY_PIPE").isEmpty) {
+      startedDirectly()
+    } else {
+      startedByStarterScriptInTheBackground()
     }
-    notifyStarterScript("ready")
-    println("LynxKite is running.")
   }
 }
