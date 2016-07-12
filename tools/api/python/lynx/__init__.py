@@ -54,7 +54,10 @@ class Connection(object):
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
     if username:
-      self.request('/passwordLogin', dict(username=self.username, password=self.password))
+      self.login()
+
+  def login(self):
+    self.request('/passwordLogin', dict(username=self.username, password=self.password))
 
   def request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
@@ -70,7 +73,7 @@ class Connection(object):
           return r.read().decode('utf-8')
       except urllib.error.HTTPError as err:
         if err.code == 401: # Unauthorized.
-          connect()
+          self.login()
           # And then retry via the "for" loop.
         if err.code == 500: # Unauthorized.
           raise LynxException(err.read())
