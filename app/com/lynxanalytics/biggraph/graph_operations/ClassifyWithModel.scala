@@ -43,13 +43,16 @@ case class ClassifyWithModel(numFeatures: Int)
     val scaledRDD = unscaledRDD.mapValues(v => model.featureScaler.transform(v))
     val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
+    // Transform data to an attributeRDD with the attribute (probability, prediction)
     val transformation = model.load(rc.sparkContext).transformDF(scaledDF)
-      .select("ID", "probability", "prediction").map(row =>
+      .select("ID", "probability", "prediction").map { row =>
         (row.getAs[ID]("ID"),
-          (row.getAs[DenseVector]("probability"),
-            row.getAs[java.lang.Number]("prediction").doubleValue)))
+          (row.getAs[DenseVector]("probability"), row.getAs[java.lang.Number]("prediction"))
+        )
+      }
       .sortUnique(partitioner)
+    // Output the probabiliy of the most likely outcome and the classification labels.
     output(o.probability, transformation.mapValues(_._1.toArray.max))
-    output(o.classification, transformation.mapValues(_._2))
+    output(o.classification, transformation.mapValues(_._2.doubleValue))
   }
 }

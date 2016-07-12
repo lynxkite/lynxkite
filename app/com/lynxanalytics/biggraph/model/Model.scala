@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions
 import org.apache.spark
 import play.api.libs.json
@@ -15,7 +14,9 @@ import play.api.libs.json.JsNull
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
+  // A transformation of RDD with the model. It returns a dummy attibute as default.
   def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = data.map(_ => 0.0)
+  // A transformation of dataframe with the model. It returns the input dataframe as default.  
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = data
   def details: String
 }
@@ -32,6 +33,8 @@ private class LinearRegressionModelImpl(
 
 private class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
+  // Transform the data with logistic regression model to a dataframe with the schema [vector |
+  // rawPredition | probability | prediction].
   override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = {
     m.transform(data)
   }
@@ -44,14 +47,13 @@ private class LogisticRegressionModelImpl(
 private class ClusterModelImpl(
     m: ml.clustering.KMeansModel,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
+  // Transform the data with clustering model and append an additional probability column.   
   override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = {
-    // Helper methods to create an additional column with probability of linalg.Vector[1.0]
+    // Helper methods to create an additional column with probability of 1.0.
     val transformer: (Int => mllib.linalg.Vector) = (x: Int) => mllib.linalg.Vectors.dense(x)
     val sqlFunc = functions.udf(transformer)
-
-    m.transform(data)
-      .withColumn("probValue", functions.lit(1))
-      .withColumn("probability", sqlFunc(functions.col("probValue")))
+    m.transform(data).withColumn("probability", functions.lit(1))
+      .withColumn("probability", sqlFunc(functions.col("probability")))
   }
 
   val scaledCenters = {

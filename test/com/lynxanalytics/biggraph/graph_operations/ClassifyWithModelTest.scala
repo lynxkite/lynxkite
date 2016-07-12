@@ -20,10 +20,10 @@ class ClassifyWithModelTest extends ModelTestBase {
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
-    // Check that the first five and the last five data points shall have same labels
+    // Check that the first five and the last five data points shall have same labels.
     assert(clustering(0) == clustering(1))
     assert(clustering(2) == clustering(3))
-    // Check that distant data points have different labels 
+    // Check that distant data points have different labels. 
     assert(clustering(0) != clustering(3))
   }
 
@@ -36,15 +36,20 @@ class ClassifyWithModelTest extends ModelTestBase {
       attrs = Seq(Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60)),
       graph(4))
 
-    //check data points with similar ages have the same label
     val g = graph(numVertices = 4)
-    val attrs = (0 until 4).map(_ => Map(0 -> 15.0, 1 -> 20.0, 2 -> 50.0, 3 -> 60.0))
+    val attrs = (0 until 1).map(_ => Map(0 -> 15.0, 1 -> 20.0, 2 -> 50.0, 3 -> 60.0))
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val op = ClassifyWithModel(4)
+    val op = ClassifyWithModel(1)
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.values.collect
     assert(classification.size == 4)
+    // Check data points with similar ages have the same label.
     assert(classification(0) == 0.0 && classification(1) == 0.0)
     assert(classification(2) == 1.0 && classification(3) == 1.0)
+    val probability = result.probability.rdd.values.collect
+    // Check that each probability is proportional to their attribute values and each  
+    // probability is greater than 0.5.  
+    assert(probability(0) > probability(1) && probability(1) > 0.5)
+    assert(probability(3) > probability(2) && probability(2) > 0.5)
   }
 }

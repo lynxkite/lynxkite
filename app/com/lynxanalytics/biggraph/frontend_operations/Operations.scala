@@ -1545,9 +1545,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Train a logistic regression model", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+      Choice("label", "Attribute to classify", options = vertexAttributes[Double]),
       Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
-      NonNegDouble("threshold", "Threshold in binary classification prediction", defaultValue = "0.5"),
+      NonNegDouble("threshold", "Threshold", defaultValue = "0.5"),
       NonNegInt("max-iter", "Maximum number of iterations", default = 20))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")

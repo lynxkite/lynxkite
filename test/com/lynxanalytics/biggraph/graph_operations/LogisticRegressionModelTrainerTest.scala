@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.ml.classification.LogisticRegressionModel
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class LogisticRegressionModelTrainerTest extends ModelTestBase {
