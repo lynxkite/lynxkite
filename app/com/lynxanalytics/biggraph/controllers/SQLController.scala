@@ -310,7 +310,8 @@ class SQLController(val env: BigGraphEnvironment) {
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
       // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
-      val (projectTableNames, importedTableNames) = tableNames.partition(_._2.contains('|'))
+      val (projectTableNames, tableOrViewNames) = tableNames.partition(_._2.contains('|'))
+
       // For the assumed project tables we select those whose corresponding project really exists and
       // is accessible to the user
       val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
@@ -324,15 +325,21 @@ class SQLController(val env: BigGraphEnvironment) {
           .map { path => ((name, path), proj) }
       }
 
-      val projectTables = goodTablePathsInGoodProjects.map { case ((name, path), proj) => (name, Table(path, proj)) }
+      val projectTables = goodTablePathsInGoodProjects.map {
+        case ((name, path), proj) => (name, Table(path, proj))
+      }
 
-      val importedTableFrames = importedTableNames.mapValues(DirectoryEntry.fromName(_))
-      val goodImportedTables = importedTableFrames.filter {
+      val tableOrViewFrames = tableOrViewNames.mapValues(DirectoryEntry.fromName(_))
+      val goodTablesOrViews = tableOrViewFrames.filter {
         case (name, entry) => entry.exists && entry.readAllowedFrom(user)
       }
-      val importedTables = goodImportedTables.mapValues(_.asTableFrame.table)
 
-      queryTables(spec.sql, projectTables ++ importedTables)
+      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.asObjectFrame.objectType == "table")
+      val importedTables = goodTables.mapValues(_.asTableFrame.table)
+      val importedViews = goodViews.mapValues(a =>
+        TypedJson.read[GenericImportRequest](a.asViewFrame().details.get)
+      )
+      queryTables(spec.sql, projectTables ++ importedTables, user, importedViews)
     }
 
   // Executes an SQL query at the project level.
@@ -349,17 +356,24 @@ class SQLController(val env: BigGraphEnvironment) {
         path => (path.toString -> Table(path, v))
       }
     }
-    queryTables(spec.sql, tables)
+    queryTables(spec.sql, tables, user)
   }
 
-  private def queryTables(sql: String, tables: Iterable[(String, Table)]): spark.sql.DataFrame = {
+  private def queryTables(
+    sql: String,
+    tables: Iterable[(String, Table)], user: serving.User,
+    dataFrames: Iterable[(String, GenericImportRequest)] = List()): spark.sql.DataFrame = {
     // Every query runs in its own SQLContext for isolation.
-    val sqlContext = dataManager.newSQLContext()
+    val context = if (user.isAdmin) dataManager.newHiveContext() else dataManager.newSQLContext()
+
     for ((name, table) <- tables) {
-      table.toDF(sqlContext).registerTempTable(name)
+      table.toDF(context).registerTempTable(name)
+    }
+    for ((name, importRequest) <- dataFrames) {
+      importRequest.restrictedDataFrame(user, Some(context)).registerTempTable(name)
     }
     log.info(s"Trying to execute query: ${sql}")
-    sqlContext.sql(sql)
+    context.sql(sql)
   }
 
   // Creates a DataFrame from an SQL query. If it is a project level query then the computation steps will
