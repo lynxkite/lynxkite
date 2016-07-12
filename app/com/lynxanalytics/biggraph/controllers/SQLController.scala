@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
 object DataFrameSpec {
@@ -62,12 +63,18 @@ trait GenericImportRequest {
   val privacy: String
   // Empty list means all columns.
   val columnsToImport: List[String]
-
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame
+  protected val needHive = false
+  protected def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
-  def restrictedDataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame =
-    restrictToColumns(dataFrame(user), columnsToImport)
+  def restrictedDataFrame(user: serving.User,
+                          context: Option[SQLContext] = None)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    if (context.isDefined) {
+      dataFrame(user, context.get)
+    } else {
+      dataFrame(user, if (needHive) dataManager.masterHiveContext else dataManager.masterSQLContext)
+    }
+  }
 
   private def restrictToColumns(
     full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
@@ -92,8 +99,8 @@ case class CSVImportRequest(
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
-    val reader = dataManager.masterSQLContext
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    val reader = context
       .read
       .format("com.databricks.spark.csv")
       .option("mode", mode)
@@ -138,7 +145,7 @@ case class JdbcImportRequest(
     keyColumn: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
       val connection = java.sql.DriverManager.getConnection(jdbcUrl)
@@ -146,7 +153,7 @@ case class JdbcImportRequest(
       finally connection.close()
     }
     val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
-    dataManager.masterSQLContext
+    context
       .read
       .jdbc(
         jdbcUrl,
@@ -229,11 +236,12 @@ case class HiveImportRequest(
     hiveTable: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  override val needHive = true
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
       dataManager.hiveConfigured,
       "Hive is not configured for this Kite instance. Contact your system administrator.")
-    dataManager.masterHiveContext.table(hiveTable)
+    context.table(hiveTable)
   }
   def notes = s"Imported from Hive table ${hiveTable}."
 }
