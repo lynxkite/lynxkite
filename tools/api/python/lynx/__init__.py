@@ -84,8 +84,9 @@ class Project(object):
                 delimiter = ",",
                 mode = "FAILFAST",
                 infer = True,
-                columnsToImport = []):
-    r = _send("importCSV",
+                columnsToImport = [],
+                 view = False):
+    return self._importOrCreateView("importCSV",
               dict(
                 files = files,
                 table = table,
@@ -95,20 +96,18 @@ class Project(object):
                 mode = mode,
                 infer = infer,
                 columnsToImport = columnsToImport))
-    return r
 
-  def import_hive(self, table, hiveTable, privacy = default_privacy, columnsToImport = []):
-    r = _send("importHive",
+  def import_hive(self, table, hiveTable, privacy = default_privacy, columnsToImport = [], view = False):
+    return self._importOrCreateView("Hive",
               dict(
                 table = table,
                 privacy = privacy,
                 hiveTable = hiveTable,
                 columnsToImport = columnsToImport))
-    return r
 
   def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
-                  privacy = default_privacy, columnsToImport = []):
-    r = _send("importJdbc",
+                  privacy = default_privacy, columnsToImport = [], view = False):
+    return self._importOrCreateView("Jdbc", view,
               dict(
                 table = table,
                 jdbcUrl = jdbcUrl,
@@ -116,26 +115,30 @@ class Project(object):
                 jdbcTable = jdbcTable,
                 keyColumn = keyColumn,
                 columnsToImport = columnsToImport))
-    return r
 
-  def import_parquet(self, table, privacy = default_privacy, columnsToImport = []):
-    self._importFileWithSchema("Parquet", table, privacy, columnsToImport)
 
-  def import_orc(self, table, privacy = default_privacy, columnsToImport = []):
-    self._importFileWithSchema("ORC", table, privacy, columnsToImport)
+  def import_parquet(self, table, privacy = default_privacy, columnsToImport = [], view = False):
+    self._importOrCreateView("Parquet", view,
+                             dict(table = table,
+                                  privacy = privacy,
+                                  columnsToImport = columnsToImport))
 
-  def import_json(self, table, privacy = default_privacy, columnsToImport = []):
-    self._importFileWithSchema("Json", table, privacy, columnsToImport)
+  def import_orc(self, table, privacy = default_privacy, columnsToImport = [], view = False):
+    self._importOrCreateView("ORC", view,
+                             dict(table = table,
+                                  privacy = privacy,
+                                  columnsToImport = columnsToImport))
 
-  def _importFileWithSchema(format, table, privacy, files, columnsToImport):
-    r = _send("import" + format,
-              dict(
-                table = table,
-                privacy = privacy,
-                files = files,
-                columnsToImport = columnsToImport))
-    return r
+  def import_json(self, table, privacy = default_privacy, columnsToImport = [], view = False):
+    return self._importOrCreateView("Json", view,
+                                    dict(table = table,
+                                         privacy = privacy,
+                                         columnsToImport = columnsToImport))
 
+
+  def _importOrCreateView(self, format, view, dict):
+    endpoint = ("createView" if view else "import") + format
+    return _send(endpoint, dict)
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''

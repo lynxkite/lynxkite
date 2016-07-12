@@ -48,6 +48,12 @@ object PipeAPI {
           case "importParquet" => json.Json.toJson(importRequest(payload.as[ParquetImportRequest]))
           case "importORC" => json.Json.toJson(importRequest(payload.as[ORCImportRequest]))
           case "importJson" => json.Json.toJson(importRequest(payload.as[JsonImportRequest]))
+          case "createViewJdbc" => json.Json.toJson(createView(payload.as[JdbcImportRequest]))
+          case "createViewHive" => json.Json.toJson(createView(payload.as[HiveImportRequest]))
+          case "createViewCSV" => json.Json.toJson(createView(payload.as[CSVImportRequest]))
+          case "createViewParquet" => json.Json.toJson(createView(payload.as[ParquetImportRequest]))
+          case "createViewORC" => json.Json.toJson(createView(payload.as[ORCImportRequest]))
+          case "createViewJson" => json.Json.toJson(createView(payload.as[JsonImportRequest]))
         }
       } catch {
         case t: Throwable =>
@@ -158,6 +164,12 @@ object PipeAPI {
 
   def importRequest[T <: GenericImportRequest: json.Writes](request: T): CheckpointResponse = {
     val res = sqlController.doImport(user, request)
+    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
+    CheckpointResponse(cp)
+  }
+
+  def createView[T <: GenericImportRequest: json.Writes](request: T): CheckpointResponse = {
+    val res = sqlController.saveView(user, request)
     val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
     CheckpointResponse(cp)
   }
