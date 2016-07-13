@@ -12,6 +12,13 @@ import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
 
+object Implicits {
+  // Easy access to the ModelMeta class from Scalar[Model].
+  implicit class ModelMetaConverter(self: Scalar[Model]) {
+    def modelMeta = self.source.operation.asInstanceOf[ModelMeta]
+  }
+}
+
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
   def transform(data: RDD[mllib.linalg.Vector]): RDD[Double]
@@ -38,7 +45,7 @@ private class ClusterModelImpl(
       import sqlContext.implicits._
       data.map(x => Tuple1(x)).toDF("vector")
     }
-    // Transform the data to a new DataFrame with the schema [vector | prediction].  
+    // Transform the data to a new DataFrame with the schema [vector | prediction].
     // Output the second column which is a rdd of the resulting cluster labels.
     m.transform(dataDF).map { row => row.getAs[Int](1).toDouble }
   }
