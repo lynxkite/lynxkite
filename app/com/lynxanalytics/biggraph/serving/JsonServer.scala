@@ -303,8 +303,8 @@ object FrontendJson {
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
-  implicit val wUser = User.Writes
-  implicit val wUserList = json.Json.writes[UserList]
+  implicit val wFEUser = json.Json.writes[FEUser]
+  implicit val wFEUserList = json.Json.writes[FEUserList]
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
