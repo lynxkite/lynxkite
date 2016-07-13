@@ -54,7 +54,7 @@ case class ClassifyWithModel(numFeatures: Int)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
     }.sortUnique(partitioner)
-    // Output the probabiliy of the most likely outcome and the classification labels.
+    // Output the probability of the most likely outcome and the classification labels.
     if (o.probability != null) {
       val probability = transformation.select("ID", "probability").map { row =>
         (row.getAs[ID]("ID"), row.getAs[DenseVector]("probability").toArray.max)
