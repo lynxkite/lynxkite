@@ -68,7 +68,7 @@ class WriteAttributesTest extends FunSuite with TestGraphOp {
 
   test("Empty attributes can also be joined") {
     val attrNames = Seq("French military victories")
-    val data = Seq(Seq(), Seq(), Seq(), Seq())
+    val data = Seq(Seq(null), Seq(null), Seq(null), Seq(null))
 
     val res = CreateTestAttributes(attrNames, data).result
 
