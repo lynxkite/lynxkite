@@ -1,11 +1,12 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.scalatest.FunSuite
+
+import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.TestGraphOp
-import org.scalatest.FunSuite
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.graph_operations.NoInput
-import com.lynxanalytics.biggraph.graph_api._
 
 object CreateTestAttributes extends OpFromJson {
 
@@ -23,7 +24,7 @@ case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String
 
   import CreateTestAttributes._
   override val isHeavy = true
-  override val hasCustomSaving = true // Single-pass import.
+  override val hasCustomSaving = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, attrNames, data)
   override def toJson = Json.obj("attrNames" -> attrNames, "data" -> data)
@@ -40,7 +41,7 @@ case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String
 
     val numberOfRows = data.length
     val partitioner = rc.partitionerForNRows(numberOfRows)
-    val ids = (0L until numberOfRows).toSeq
+    val ids = (0L until numberOfRows)
     val lines = sc.parallelize(ids.zip(data)).sortUnique(partitioner)
 
     rc.ioContext.writeAttributes(inOrder, lines)
@@ -65,14 +66,19 @@ class WriteAttributesTest extends FunSuite with TestGraphOp {
     assert(nameCount == 4 && superpowerCount == 3)
   }
 
-  test("Writer is created even if the partition is empty") {
-    val attrNames = Seq("French millitary victories")
+  test("Empty attributes can also be joined") {
+    val attrNames = Seq("French military victories")
     val data = Seq(Seq(), Seq(), Seq(), Seq())
 
     val res = CreateTestAttributes(attrNames, data).result
 
-    val numberOfPartitions = res.attrs("French millitary victories").entity.rdd.partitions.length
-    assert(numberOfPartitions == 1)
+    val frenchVictories = res.attrs("French military victories").entity.rdd
+    val vertices = res.vertices.entity.rdd
+    val joined = vertices.leftOuterJoin(frenchVictories)
+
+    assert(frenchVictories.isEmpty())
+    assert(vertices.collect.toSeq.sorted == Seq((0, ()), (1, ()), (2, ()), (3, ())))
+    assert(joined.collect.toSeq.sorted == Seq((0, ((), None)), (1, ((), None)), (2, ((), None)), (3, ((), None))))
   }
 }
 
