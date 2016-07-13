@@ -1,4 +1,4 @@
-// An API that allows controlling a running LynxKite instance via JSON commands through a Unix pipe.
+// An API that allows controlling a running LynxKite instance via JSON commands.
 package com.lynxanalytics.biggraph.serving
 
 import java.io.FileInputStream
@@ -11,7 +11,7 @@ import org.apache.spark.sql.types
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
+import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
@@ -22,44 +22,7 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 
-object PipeAPI {
-  val env = BigGraphProductionEnvironment
-  implicit val metaManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
-  val ops = new frontend_operations.Operations(env)
-  val sqlController = new SQLController(env)
-
-  def normalize(operation: String) = operation.replace("-", "").toLowerCase
-  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
-
-  case class Command(responsePipe: String, command: String, payload: json.JsObject) {
-    def execute(): Unit = {
-      val response = try {
-        command match {
-          case "getScalar" => json.Json.toJson(getScalar(payload.as[ScalarRequest]))
-          case "newProject" => json.Json.toJson(newProject())
-          case "loadProject" => json.Json.toJson(loadProject(payload.as[ProjectRequest]))
-          case "runOperation" => json.Json.toJson(runOperation(payload.as[OperationRequest]))
-          case "saveProject" => json.Json.toJson(saveProject(payload.as[SaveProjectRequest]))
-          case "sql" => json.Json.toJson(sql(payload.as[SqlRequest]))
-          case "importJdbc" => json.Json.toJson(importRequest(payload.as[JdbcImportRequest]))
-          case "importHive" => json.Json.toJson(importRequest(payload.as[HiveImportRequest]))
-          case "importCSV" => json.Json.toJson(importRequest(payload.as[CSVImportRequest]))
-          case "importParquet" => json.Json.toJson(importRequest(payload.as[ParquetImportRequest]))
-          case "importORC" => json.Json.toJson(importRequest(payload.as[ORCImportRequest]))
-          case "importJson" => json.Json.toJson(importRequest(payload.as[JsonImportRequest]))
-        }
-      } catch {
-        case t: Throwable =>
-          log.error(s"Error while processing $this:", t)
-          json.Json.obj("error" -> t.toString, "request" -> json.Json.toJson(this))
-      }
-      val data = json.Json.asciiStringify(response)
-      org.apache.commons.io.FileUtils.writeStringToFile(
-        new java.io.File(responsePipe), data, "utf-8")
-    }
-  }
-
+object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
@@ -71,7 +34,6 @@ object PipeAPI {
   case class SqlRequest(checkpoint: String, query: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
-  implicit val fCommand = json.Json.format[Command]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
@@ -80,20 +42,50 @@ object PipeAPI {
   implicit val rSqlRequest = json.Json.reads[SqlRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
+}
 
-  val user = User("Pipe API User", isAdmin = true)
+object RemoteAPIServer extends JsonServer {
+  import RemoteAPIProtocol._
+  val userController = ProductionJsonServer.userController
+  val c = new RemoteAPIController(BigGraphProductionEnvironment)
+  def getScalar = jsonPost(c.getScalar)
+  def newProject = jsonPost(c.newProject)
+  def loadProject = jsonPost(c.loadProject)
+  def runOperation = jsonPost(c.runOperation)
+  def saveProject = jsonPost(c.saveProject)
+  def sql = jsonPost(c.sql)
+  private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
+    jsonPost[T, CheckpointResponse](c.importRequest)
+  def importJdbc = importRequest[JdbcImportRequest]
+  def importHive = importRequest[HiveImportRequest]
+  def importCSV = importRequest[CSVImportRequest]
+  def importParquet = importRequest[ParquetImportRequest]
+  def importORC = importRequest[ORCImportRequest]
+  def importJson = importRequest[JsonImportRequest]
+}
 
-  def newProject(): CheckpointResponse = {
+class RemoteAPIController(env: BigGraphEnvironment) {
+  import RemoteAPIProtocol._
+  implicit val metaManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
+  val ops = new frontend_operations.Operations(env)
+  val sqlController = new SQLController(env)
+
+  def normalize(operation: String) = operation.replace("-", "").toLowerCase
+  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
+
+  def newProject(user: User, request: Empty): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
   }
 
-  def loadProject(request: ProjectRequest): CheckpointResponse = {
+  def loadProject(user: User, request: ProjectRequest): CheckpointResponse = {
     val project = controllers.ProjectFrame.fromName(request.project)
+    project.assertReadAllowedFrom(user)
     val cp = project.viewer.rootCheckpoint
     CheckpointResponse(cp)
   }
 
-  def saveProject(request: SaveProjectRequest): CheckpointResponse = {
+  def saveProject(user: User, request: SaveProjectRequest): CheckpointResponse = {
     val entry = controllers.DirectoryEntry.fromName(request.project)
     val project = if (!entry.exists) {
       val p = entry.asNewProjectFrame()
@@ -110,7 +102,7 @@ object PipeAPI {
   def getViewer(cp: String) =
     new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
 
-  def runOperation(request: OperationRequest): CheckpointResponse = {
+  def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
     val normalized = normalize(request.operation)
     assert(normalizedIds.contains(normalized), s"No such operation: ${request.operation}")
     val operation = normalizedIds(normalized)
@@ -121,7 +113,7 @@ object PipeAPI {
     CheckpointResponse(newState.checkpoint.get)
   }
 
-  def getScalar(request: ScalarRequest): DynamicValue = {
+  def getScalar(user: User, request: ScalarRequest): DynamicValue = {
     val viewer = getViewer(request.checkpoint)
     val scalar = viewer.scalars(request.scalar)
     implicit val tt = scalar.typeTag
@@ -129,7 +121,7 @@ object PipeAPI {
     DynamicValue.convert(scalar.value)
   }
 
-  def sql(request: SqlRequest): TableResult = {
+  def sql(user: User, request: SqlRequest): TableResult = {
     val viewer = getViewer(request.checkpoint)
     val sqlContext = dataManager.masterHiveContext.newSession
     for (path <- viewer.allRelativeTablePaths) {
@@ -156,43 +148,9 @@ object PipeAPI {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](request: T): CheckpointResponse = {
+  def importRequest[T <: GenericImportRequest: json.Writes](user: User, request: T): CheckpointResponse = {
     val res = sqlController.doImport(user, request)
     val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
     CheckpointResponse(cp)
-  }
-
-  val pipeFile = LoggedEnvironment.envOrNone("KITE_API_PIPE").map(new java.io.File(_))
-
-  // Starts a daemon thread if KITE_API_PIPE is configured.
-  def maybeStart() = {
-    for (f <- pipeFile) {
-      if (!f.exists) {
-        val mkfifo = sys.process.Process(Seq("mkfifo", f.getAbsolutePath)).run
-        assert(mkfifo.exitValue == 0, s"Could not create Unix pipe $f")
-      }
-      val p = new PipeAPI(f)
-      p.start
-    }
-  }
-}
-class PipeAPI(pipe: java.io.File) extends Thread("Pipe API") {
-  import PipeAPI._
-  setDaemon(true)
-
-  override def run() = {
-    while (true) {
-      val input = scala.io.Source.fromFile(pipe, "utf-8")
-      log.info(s"Pipe API reading from $pipe.")
-      for (line <- input.getLines) {
-        try {
-          log.info(s"Received $line")
-          val cmd = json.Json.parse(line).as[Command]
-          cmd.execute()
-        } catch {
-          case t: Throwable => log.error(s"Error while processing $line:", t)
-        }
-      }
-    }
   }
 }

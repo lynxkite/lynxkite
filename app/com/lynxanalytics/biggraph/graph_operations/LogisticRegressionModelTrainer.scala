@@ -1,4 +1,4 @@
-// Trains a logistic regression model. Currently, the class only supports for binary 
+// Trains a logistic regression model. Currently, the class only supports binary 
 // classification.
 package com.lynxanalytics.biggraph.graph_operations
 
@@ -21,24 +21,21 @@ object LogisticRegressionModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = LogisticRegressionModelTrainer(
-    (j \ "threshold").as[Double],
     (j \ "maxIter").as[Int],
     (j \ "labelName").as[String],
     (j \ "featureNames").as[List[String]])
 }
 import LogisticRegressionModelTrainer._
 case class LogisticRegressionModelTrainer(
-    threshold: Double,
     maxIter: Int,
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = true
-  override val nominalOutput = true
+  override val generatesProbability = true
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "threshold" -> threshold,
     "maxIter" -> maxIter,
     "labelName" -> labelName,
     "featureNames" -> featureNames)
@@ -51,20 +48,20 @@ case class LogisticRegressionModelTrainer(
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val rddArray = inputs.features.toArray.map { v => v.rdd }
+    val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
-
-    // Train a logictic regression model from the scaled vectors
-    val logit = new LogisticRegression()
-      .setThreshold(threshold)
+    // Train a logictic regression model. The model sets the threshold to be 0.5 and 
+    // the feature scaling to be true by default.
+    val logisticRegression = new LogisticRegression()
       .setMaxIter(maxIter)
+      .setTol(0)
       .setFeaturesCol("vector")
       .setLabelCol("label")
-      .setPredictionCol("prediction")
+      .setPredictionCol("classification")
       .setProbabilityCol("probability")
 
-    val model = logit.fit(scaledDF)
+    val model = logisticRegression.fit(scaledDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
