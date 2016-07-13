@@ -12,22 +12,29 @@ import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
 
+object Implicits {
+  // Easy access to the ModelMeta class from Scalar[Model].
+  implicit class ModelMetaConverter(self: Scalar[Model]) {
+    def modelMeta = self.source.operation.asInstanceOf[ModelMeta]
+  }
+}
+
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
-  // A transformation of RDD with the model. It returns a dummy attibute as default.
-  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = data.map(_ => 0.0)
-  // A transformation of dataframe with the model. It returns the input dataframe as default.  
-  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = data
+  // A transformation of RDD with the model. 
+  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = ???
+  // A transformation of dataframe with the model. 
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = ???
   def details: String
 }
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
     m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
-  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = { m.predict(data) }
+  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = m.predict(data)
   def details: String = {
     val weights = "(" + m.weights.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\nweights: $weights"
+    s"intercept: ${m.intercept}\ncoefficients: $weights"
   }
 }
 
@@ -35,9 +42,7 @@ private class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = {
-    m.transform(data)
-  }
+  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
     val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\ncoefficients: $coefficients"
@@ -48,13 +53,7 @@ private class ClusterModelImpl(
     m: ml.clustering.KMeansModel,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
   // Transform the data with clustering model and append an additional probability column.   
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = {
-    // Helper methods to create an additional column with probability of 1.0.
-    val transformer: (Int => mllib.linalg.Vector) = (x: Int) => mllib.linalg.Vectors.dense(x)
-    val sqlFunc = functions.udf(transformer)
-    m.transform(data).withColumn("probability", functions.lit(1))
-      .withColumn("probability", sqlFunc(functions.col("probability")))
-  }
+  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   val scaledCenters = {
     val unscaledCenters = m.clusterCenters
     val transformingVector = featureScaler.std
@@ -194,7 +193,7 @@ object Model extends FromJson[Model] {
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
-    modelName, modelMeta.isClassification, modelMeta.nominalOutput, modelMeta.featureNames)
+    modelName, modelMeta.isClassification, modelMeta.generatesProbability, modelMeta.featureNames)
 
   def toFE(m: Model, sc: spark.SparkContext): FEModel = FEModel(
     method = m.method,
@@ -244,7 +243,7 @@ object Model extends FromJson[Model] {
 case class FEModelMeta(
   name: String,
   isClassification: Boolean,
-  nominalOutput: Boolean,
+  generatesProbability: Boolean,
   featureNames: List[String])
 
 case class FEModel(
@@ -256,7 +255,7 @@ case class FEModel(
 
 trait ModelMeta {
   def isClassification: Boolean
-  def nominalOutput: Boolean = false
+  def generatesProbability: Boolean = false
   def featureNames: List[String]
 }
 

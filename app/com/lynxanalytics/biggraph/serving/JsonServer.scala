@@ -141,8 +141,7 @@ abstract class JsonServer extends mvc.Controller {
   }
 }
 
-case class Empty(
-  fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
+case class Empty()
 
 case class GlobalSettings(
   hasAuth: Boolean,
@@ -205,8 +204,9 @@ object FrontendJson {
   import model.FEModel
   import model.FEModelMeta
 
-  // TODO: do this without a fake field, e.g. by not using inception.
-  implicit val rEmpty = json.Json.reads[Empty]
+  implicit val rEmpty = new json.Reads[Empty] {
+    def reads(j: json.JsValue) = json.JsSuccess(Empty())
+  }
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
   }
@@ -303,8 +303,8 @@ object FrontendJson {
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
-  implicit val wUser = User.Writes
-  implicit val wUserList = json.Json.writes[UserList]
+  implicit val wFEUser = json.Json.writes[FEUser]
+  implicit val wFEUserList = json.Json.writes[FEUserList]
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
@@ -460,5 +460,4 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
-  PipeAPI.maybeStart()
 }

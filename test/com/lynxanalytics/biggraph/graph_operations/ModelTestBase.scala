@@ -26,7 +26,6 @@ class ModelTestBase extends FunSuite with TestGraphOp {
         op(op.features, features)(op.label, l).result.model
       case "Logistic regression" =>
         val op = LogisticRegressionModelTrainer(
-          threshold = 0.5,
           maxIter = 20,
           labelName,
           featureNames)

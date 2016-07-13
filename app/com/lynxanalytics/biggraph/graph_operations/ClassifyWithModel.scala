@@ -2,7 +2,8 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.model.Model
+import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.mllib.linalg.DenseVector
 
@@ -16,7 +17,12 @@ object ClassifyWithModel extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val probability = vertexAttribute[Double](inputs.vertices.entity)
+    val probability = {
+      val modelMeta = inputs.model.entity.modelMeta
+      if (modelMeta.generatesProbability) {
+        vertexAttribute[Double](inputs.vertices.entity)
+      } else { null }
+    }
     val classification = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
@@ -37,22 +43,24 @@ case class ClassifyWithModel(numFeatures: Int)
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val model = inputs.model.value
-    val rddArray = inputs.features.toArray.map { v => v.rdd }
+    val modelValue = inputs.model.value
+    val rddArray = inputs.features.toArray.map(_.rdd)
     val unscaledRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val scaledRDD = unscaledRDD.mapValues(v => model.featureScaler.transform(v))
+    val scaledRDD = unscaledRDD.mapValues(modelValue.featureScaler.transform(_))
     val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
     // Transform data to an attributeRDD with the attribute (probability, prediction)
-    val transformation = model.load(rc.sparkContext).transformDF(scaledDF)
-      .select("ID", "probability", "prediction").map { row =>
-        (row.getAs[ID]("ID"),
-          (row.getAs[DenseVector]("probability"), row.getAs[java.lang.Number]("prediction"))
-        )
-      }
-      .sortUnique(partitioner)
+    val transformation = modelValue.load(rc.sparkContext).transformDF(scaledDF)
+    val classification = transformation.select("ID", "classification").map { row =>
+      (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
+    }.sortUnique(partitioner)
     // Output the probabiliy of the most likely outcome and the classification labels.
-    output(o.probability, transformation.mapValues(_._1.toArray.max))
-    output(o.classification, transformation.mapValues(_._2.doubleValue))
+    if (o.probability != null) {
+      val probability = transformation.select("ID", "probability").map { row =>
+        (row.getAs[ID]("ID"), row.getAs[DenseVector]("probability").toArray.max)
+      }.sortUnique(partitioner)
+      output(o.probability, probability)
+    }
+    output(o.classification, classification)
   }
 }

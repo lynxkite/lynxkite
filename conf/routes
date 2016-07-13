@@ -72,5 +72,18 @@ GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
 POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
 
+POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
+POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
+POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
+POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
+POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveProject
+POST /remote/sql com.lynxanalytics.biggraph.serving.RemoteAPIServer.sql
+POST /remote/importJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJdbc
+POST /remote/importHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.importHive
+POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.importCSV
+POST /remote/importParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.importParquet
+POST /remote/importORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.importORC
+POST /remote/importJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJson
+
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

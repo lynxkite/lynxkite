@@ -42,16 +42,11 @@ The list of the feature attributes that this model uses for predictions.
 
 ### Details
 
-For linear regression models:
+For linear regression and logistic regression models:
 
-* `intercept` is the constant parameter in the linear equation the model uses to predict.
-* `weights` is the vector of the regression coefficients.
+* `intercept` is the constant parameter in the regression equation of the model.
+* `coefficients` is the vector of the coefficients in the regression equation of the model.
 
 For KMeans clustering model:
 
 * `cluster centers` are the vectors of the KMeans cluster centers.
-
-For logistic regression models:
-
-* `intercept` is the constant parameter in the logistic function of the model.
-* `coefficients` is the vector of the coefficients in the logistic function of the model.
