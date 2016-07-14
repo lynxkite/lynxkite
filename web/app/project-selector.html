@@ -58,14 +58,13 @@
     </div>
 
     <div ng-class="showSQL ? 'entry-nohover' : 'entry'"
-         id="global-sql-box" >
-      <span class="icon glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }}"
-             ng-click="showSQL=!showSQL"></span>
-       <span class="lead" ng-click="showSQL=!showSQL">SQL Interface
+         id="global-sql-box" ng-click="showSQL = true">
+      <span class="icon glyphicon glyphicon-plus"></span>
+       <span class="lead">SQL Interface
          <help-popup href="global-sql-box" class="pull-right"></help-popup>
        </span>
       <br/>
-      <sql-box directory="path" ng-if="showSQL"></sql-box>
+      <sql-box directory="path" ng-if="showSQL" on-hide="$parent.showSQL = false"></sql-box>
     </div>
 
     <div id="current-directory" class="path">

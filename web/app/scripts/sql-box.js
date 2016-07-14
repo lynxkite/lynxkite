@@ -7,6 +7,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     scope: {
       side: '=?',
       directory: '=?',
+      onHide: '&?',
      },
     templateUrl: 'sql-box.html',
     link: function(scope) {
@@ -156,6 +157,11 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.reportSQLError = function() {
         util.reportRequestError(scope.result, 'Error executing query.');
       };
+      
+      scope.hide = function(event) {
+        event.stopPropagation();
+        scope.onHide();
+    };
     }
   };
 });
