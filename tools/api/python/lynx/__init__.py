@@ -137,11 +137,11 @@ class Project(object):
                 infer = True,
                 columnsToImport = [],
                  view = False):
-    return self._importOrCreateView("importCSV",
+    return self._import_or_create_view("importCSV",
 
   def import_hive(self, table, hiveTable, privacy = default_privacy, columnsToImport = [], view = False):
-    return self._importOrCreateView("Hive",
-              dict(
+    return self._import_or_create_view("Hive",
+                                       dict(
                 table = table,
                 privacy = privacy,
                 hiveTable = hiveTable,
@@ -149,8 +149,8 @@ class Project(object):
 
   def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
                   privacy = default_privacy, columnsToImport = [], view = False):
-    return self._importOrCreateView("Jdbc", view,
-              dict(
+    return self._import_or_create_view("Jdbc", view,
+                                       dict(
                 table = table,
                 jdbcUrl = jdbcUrl,
                 privacy = privacy,
@@ -161,25 +161,25 @@ class Project(object):
 
 
   def import_parquet(self, table, privacy = default_privacy, columnsToImport = [], view = False):
-    self._importOrCreateView("Parquet", view,
-                             dict(table = table,
+    self._import_or_create_view("Parquet", view,
+                                dict(table = table,
                                   privacy = privacy,
                                   columnsToImport = columnsToImport))
 
   def import_orc(self, table, privacy = default_privacy, columnsToImport = [], view = False):
-    self._importOrCreateView("ORC", view,
-                             dict(table = table,
+    self._import_or_create_view("ORC", view,
+                                dict(table = table,
                                   privacy = privacy,
                                   columnsToImport = columnsToImport))
 
   def import_json(self, table, privacy = default_privacy, columnsToImport = [], view = False):
-    return self._importOrCreateView("Json", view,
-                                    dict(table = table,
+    return self._import_or_create_view("Json", view,
+                                       dict(table = table,
                                          privacy = privacy,
                                          columnsToImport = columnsToImport))
 
 
-  def _importOrCreateView(self, format, view, dict):
+  def _import_or_create_view(self, format, view, dict):
     endpoint = ("createView" if view else "import") + format
     return self.connection.send(endpoint, dict)
 
