@@ -81,8 +81,10 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.datatype = datatype;
         var datatypeScope = scope.$eval(datatype);
 
-        datatypeScope.filename = newConfig.data.files;
-        
+        if (newConfig.data.files) {
+          datatypeScope.filename = newConfig.data.files;
+        }
+
         if (datatypeScope === 'jdbc') {
           fillJdbcFromData(datatypeScope, newConfig.data);
         } else if (datatypeScope === 'hive') {

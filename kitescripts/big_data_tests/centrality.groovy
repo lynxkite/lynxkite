@@ -4,9 +4,8 @@
 
 project = lynx.loadProject('edge_import_result')
 
-project.centrality(algorithm: 'Harmonic', bits: '4', maxDiameter: '5', name: 'centrality')
+name = 'centrality'
 
-centrality_histogram = project.vertexAttributes['centrality'].histogram(
-  logarithmic: true,
-  precise: true)
-println "centrality: $centrality_histogram"
+project.centrality(algorithm: 'Harmonic', bits: '4', maxDiameter: '5', name: name)
+project.computeUncomputed()
+
