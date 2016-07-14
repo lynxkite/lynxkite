@@ -10,14 +10,25 @@ import sys
 
 random.seed(0)
 parser = argparse.ArgumentParser()
-parser.add_argument('--nodes', help='Number of nodes in the graph.', type=int, default=1000)
-parser.add_argument('--tree', help='Generate a tree instead of a random graph.', action='store_true')
+parser.add_argument(
+    '--nodes',
+    help='Number of nodes in the graph.',
+    type=int,
+    default=1000)
+parser.add_argument(
+    '--tree',
+    help='Generate a tree instead of a random graph.',
+    action='store_true')
 
-Person = collections.namedtuple('Person', 'id, age, income, subscription, gender')
+Person = collections.namedtuple(
+    'Person', 'id, age, income, subscription, gender')
+
 
 def rnd():
   """A normal-ish distribution between 0.0 and 1.0."""
-  return (random.random() + random.random() + random.random() + random.random() + random.random()) / 5
+  return (random.random() + random.random() + random.random() +
+          random.random() + random.random()) / 5
+
 
 def vertices(n):
   vs = []
@@ -30,7 +41,8 @@ def vertices(n):
       age_max = 140
     age = rnd() * rnd() * age_max
     income = 100000 * rnd()
-    if gender == 'male': income *= 0.2
+    if gender == 'male':
+      income *= 0.2
     income *= 20 / (abs(age - 40) + 20)
     if random.random() < 0.1:
       subscription = 'Talk Mania'
@@ -52,12 +64,14 @@ def vertices(n):
     vs.append(Person(i, age, income, subscription, gender))
   return vs
 
+
 def treeedges(vs):
   es = []
   for dst in range(1, len(vs)):
     src = random.randrange(dst)
     es.append((src, dst))
   return es
+
 
 def edges(vs):
   es = []
@@ -78,6 +92,7 @@ def edges(vs):
         degree[j] += 1
         degrees += 1
   return es
+
 
 def main():
   args = parser.parse_args()
