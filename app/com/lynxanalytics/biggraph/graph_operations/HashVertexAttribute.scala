@@ -1,4 +1,4 @@
-// Applies a cryptographic hash function to mask an attribute.
+// Applies a cryptographic hash function to an attribute.
 // The salt is given by the user and used to defend against attacks using a list of pre-computed
 // hashes for the probable values (rainbow table attacks) and against known-plaintext attacks.
 

@@ -1272,7 +1272,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
 
     def apply(params: Map[String, String]) = {
-      assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to mask.")
+      assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to hash.")
       val salt = params("salt")
       graph_operations.HashVertexAttribute.assertSecret(salt)
       assert(
