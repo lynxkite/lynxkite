@@ -1,0 +1,33 @@
+### Hash vertex attribute
+
+Uses the https://en.wikipedia.org/wiki/SHA-256[SHA-256] algorithm to hash an attribute: all values
+of the attribute get replaced by a seemingly random value. The same original values get replaced by
+the same new value and different original values get (almost certainly) replaced by different new
+values.
+
+As all operations, this one also can be undone in the project so it would only provide real
+protection if the data is exported outside of the project.
+
+Treat the salt like a password for the data. Choose a long string that the recipient of the data has
+no chance of guessing. (Do not use the name of a person or project.)
+
+The salt must begin with the prefix `SECRET(` and end with the closing bracket ')', for example
+`SECRET(qCXoC7l0VYiN8Qp)`. This is important, because `LynxKite` will replace such strings with
+three asterisks when writing log files. Thus, the salt cannot appear in log files.  Caveat: Please
+note that the salt must still be saved to disk with the operation metadata; only the log files are
+filtered this way.
+
+To illustrate the mechanics of irreversible hashing and the importance of a good salt string,
+consider the following example. We have a data set of phone calls and we have hashed the phone
+numbers. Arthur gets access to the hashed data and learns or guesses the salt. Arthur can now apply
+the same hashing to the phone number of Guinevere as was used on the original data set and look her
+up in the graph. He can also apply hashing to the phone numbers of all the knights of the round
+table and see which knight has Guinevere been making calls to.
+
+====
+[[attr]] Vertex attribute::
+The attribute(s) which will be hashed.
+
+[[salt]] Salt::
+The value of the salt.
+====

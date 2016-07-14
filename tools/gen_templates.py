@@ -12,6 +12,7 @@ anchor = re.compile(r'\#\#\#')
 url = re.compile(r'(http.*)\[(.*)\]')
 bold = re.compile(r'\*(.*)\*')
 
+
 def asciidocToTemplate(src, dst):
   codeBlock = False
   with open(src, 'r') as s:
@@ -35,11 +36,11 @@ def asciidocToTemplate(src, dst):
 app_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 asciidocToTemplate(
-  app_home + '/web/app/admin-manual/installation/configuration/kiterc.asciidoc',
-  app_home + '/conf/kiterc_template')
+    app_home + '/web/app/admin-manual/installation/configuration/kiterc.asciidoc',
+    app_home + '/conf/kiterc_template')
 asciidocToTemplate(
-  app_home + '/web/app/admin-manual/installation/configuration/emr.asciidoc',
-  app_home + '/tools/emr_spec_template')
+    app_home + '/web/app/admin-manual/installation/configuration/emr.asciidoc',
+    app_home + '/tools/emr_spec_template')
 asciidocToTemplate(
-  app_home + '/web/app/admin-manual/installation/configuration/prefix_definitions.asciidoc',
-  app_home + '/conf/prefix_definitions_template.txt')
+    app_home + '/web/app/admin-manual/installation/configuration/prefix_definitions.asciidoc',
+    app_home + '/conf/prefix_definitions_template.txt')
