@@ -63,18 +63,16 @@ trait GenericImportRequest {
   val privacy: String
   // Empty list means all columns.
   val columnsToImport: List[String]
-  protected val needHive = false
+  protected val needHiveContext = false
   protected def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
   def restrictedDataFrame(user: serving.User,
-                          context: Option[SQLContext] = None)(implicit dataManager: DataManager): spark.sql.DataFrame = {
-    if (context.isDefined) {
-      dataFrame(user, context.get)
-    } else {
-      dataFrame(user, if (needHive) dataManager.masterHiveContext else dataManager.masterSQLContext)
-    }
-  }
+                          context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    restrictToColumns(dataFrame(user, context), columnsToImport)
+
+  def defaultContext()(implicit dataManager: DataManager): SQLContext =
+    if (needHiveContext) dataManager.masterHiveContext else dataManager.masterSQLContext
 
   private def restrictToColumns(
     full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
@@ -180,7 +178,7 @@ object JdbcImportRequest extends FromJson[JdbcImportRequest] {
 trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
-  override val needHive = true
+  override val needHiveContext = true
   def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
     hadoopFile.assertReadAllowedFrom(user)
@@ -236,7 +234,7 @@ case class HiveImportRequest(
     hiveTable: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  override val needHive = true
+  override val needHiveContext = true
   def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
       dataManager.hiveConfigured,
@@ -261,7 +259,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
     SQLController.saveTable(
-      request.restrictedDataFrame(user),
+      request.restrictedDataFrame(user, request.defaultContext()),
       request.notes,
       user,
       request.table,
@@ -334,7 +332,7 @@ class SQLController(val env: BigGraphEnvironment) {
         case (name, entry) => entry.exists && entry.readAllowedFrom(user)
       }
 
-      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.asObjectFrame.objectType == "table")
+      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.isTable)
       val importedTables = goodTables.mapValues(_.asTableFrame.table)
       val importedViews = goodViews.mapValues(a =>
         TypedJson.read[GenericImportRequest](a.asViewFrame().details.get)
@@ -370,7 +368,7 @@ class SQLController(val env: BigGraphEnvironment) {
       table.toDF(context).registerTempTable(name)
     }
     for ((name, importRequest) <- dataFrames) {
-      importRequest.restrictedDataFrame(user, Some(context)).registerTempTable(name)
+      importRequest.restrictedDataFrame(user, context).registerTempTable(name)
     }
     log.info(s"Trying to execute query: ${sql}")
     context.sql(sql)
@@ -510,11 +508,11 @@ object SQLController {
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 
-  def saveView(notes: String, user: serving.User, tableName: String, privacy: String, importConfig: json.JsObject)(
+  def saveView(notes: String, user: serving.User, tableName: String, privacy: String, viewRecipe: json.JsObject)(
     implicit metaManager: MetaGraphManager,
     dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
-    val view = entry.asNewViewFrame(importConfig, notes)
+    val view = entry.asNewViewFrame(viewRecipe, notes)
     FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
   }
 }
