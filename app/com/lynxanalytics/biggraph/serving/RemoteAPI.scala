@@ -32,6 +32,7 @@ object RemoteAPIProtocol {
   case class SaveProjectRequest(checkpoint: String, project: String)
   case class ScalarRequest(checkpoint: String, scalar: String)
   case class SqlRequest(checkpoint: String, query: String, limit: Int)
+  case class GlobalSqlRequest(query: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
@@ -40,6 +41,7 @@ object RemoteAPIProtocol {
   implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rSqlRequest = json.Json.reads[SqlRequest]
+  implicit val rGlobalSqlRequest = json.Json.reads[GlobalSqlRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
 }
@@ -54,6 +56,7 @@ object RemoteAPIServer extends JsonServer {
   def runOperation = jsonPost(c.runOperation)
   def saveProject = jsonPost(c.saveProject)
   def sql = jsonPost(c.sql)
+  def globalSql = jsonPost(c.globalSql)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.importRequest)
   def importJdbc = importRequest[JdbcImportRequest]
@@ -122,14 +125,45 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def sql(user: User, request: SqlRequest): TableResult = {
-    val viewer = getViewer(request.checkpoint)
-    val sqlContext = dataManager.masterHiveContext.newSession
-    for (path <- viewer.allRelativeTablePaths) {
-      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(path.toString)
-    }
+    val sqlContext = dataManager.newHiveContext()
+    registerTablesOfRootProject(sqlContext, "", request.checkpoint)
     val df = sqlContext.sql(request.query)
+    dfTotableResult(df, request.limit)
+  }
+
+  // The syntax is SELECT * FROM x\vertices ||x=checkpoint,y=checkpoint,..
+  def globalSql(user: User, request: GlobalSqlRequest): TableResult = {
+    val sqLContext = dataManager.newHiveContext()
+    val split = request.query.split("\\|\\|", -1)
+    assert(split.length == 2, "The query must only have one instance of ||")
+    val sqlQuery = split(0)
+    val checkpoints = split(1)
+
+    def toPair(s: String) = {
+      val ss = s.split("=", -1)
+      assert(ss.length == 2, "alias name for checkpoint must not contain =")
+      ss(0) -> ss(1)
+    }
+    // Maps x -> checkpoint
+    val checkpointMapping = checkpoints.split(",", -1).map(eq => toPair(eq)).toMap
+    // Register tables
+    checkpointMapping.foreach { case (name, cp) => registerTablesOfRootProject(sqLContext, name, cp) }
+    val df = sqLContext.sql(sqlQuery)
+    dfTotableResult(df, request.limit)
+  }
+
+  // Takes all the tables in the rootproject given by the checkpoint and registers all of them with prefixed name
+  private def registerTablesOfRootProject(sqlContext: org.apache.spark.sql.hive.HiveContext,
+                                          prefix: String, checkpoint: String) = {
+    val viewer = getViewer(checkpoint)
+    for (path <- viewer.allRelativeTablePaths) {
+      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(prefix + path.toString)
+    }
+  }
+
+  private def dfTotableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
-    val data = df.take(request.limit)
+    val data = df.take(limit)
     val rows = data.map { row =>
       schema.fields.zipWithIndex.flatMap {
         case (f, i) =>
