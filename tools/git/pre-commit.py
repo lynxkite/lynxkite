@@ -6,6 +6,7 @@ import sys
 color = sys.stderr.isatty()
 warned = False
 
+
 def warn(msg):
   global warned
   warned = True
@@ -15,7 +16,8 @@ def warn(msg):
     print(msg, file=sys.stderr)
 
 protected_branches = ['master']
-branch = subprocess.check_output('git rev-parse --abbrev-ref=strict HEAD'.split()).strip()
+branch = subprocess.check_output(
+    'git rev-parse --abbrev-ref=strict HEAD'.split()).strip()
 if branch in protected_branches:
   warn('You cannot commit directly to {0!r}.'.format(branch))
   warn('Please create a new branch, commit there, and send a pull request on GitHub.')
@@ -35,7 +37,8 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
-files = subprocess.check_output('git diff --name-only --staged'.split()).split('\n')
+files = subprocess.check_output(
+    'git diff --name-only --staged'.split()).split('\n')
 if any(fn.endswith('.js') for fn in files):
   if subprocess.call('cd web; gulp jshint', shell=True):
     warn('JSHint fails.')

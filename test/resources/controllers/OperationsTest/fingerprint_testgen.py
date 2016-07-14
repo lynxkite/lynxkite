@@ -4,14 +4,39 @@ import string
 import sys
 
 
-flags = argparse.ArgumentParser(description='Generates test data for fingerprinting.')
+flags = argparse.ArgumentParser(
+    description='Generates test data for fingerprinting.')
 flags.add_argument('--vertices', type=int, help='Vertex count.', required=True)
-flags.add_argument('--degree', type=float, help='Average out degree.', default=10)
-flags.add_argument('--matched', type=float, help='Ratio of vertices already matched.', default=0.9)
-flags.add_argument('--symmetric', type=float, help='Ratio of symmetric edges.', default=0.5)
-flags.add_argument('--noise', type=float, help='Noise to add after splitting.', default=0.1)
-flags.add_argument('--edge_file', type=str, help='Write edges to this file.', required=True)
-flags.add_argument('--vertex_file', type=str, help='Write vertices to this file.', required=True)
+flags.add_argument(
+    '--degree',
+    type=float,
+    help='Average out degree.',
+    default=10)
+flags.add_argument(
+    '--matched',
+    type=float,
+    help='Ratio of vertices already matched.',
+    default=0.9)
+flags.add_argument(
+    '--symmetric',
+    type=float,
+    help='Ratio of symmetric edges.',
+    default=0.5)
+flags.add_argument(
+    '--noise',
+    type=float,
+    help='Noise to add after splitting.',
+    default=0.1)
+flags.add_argument(
+    '--edge_file',
+    type=str,
+    help='Write edges to this file.',
+    required=True)
+flags.add_argument(
+    '--vertex_file',
+    type=str,
+    help='Write vertices to this file.',
+    required=True)
 
 
 def rndstr(n):
@@ -19,6 +44,7 @@ def rndstr(n):
 
 
 class Vertex(object):
+
   def __init__(self, index):
     self.index = index
     self.email = rndstr(5) + '@' + rndstr(3) + '.com'
