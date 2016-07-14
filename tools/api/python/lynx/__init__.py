@@ -137,46 +137,52 @@ class Project(object):
                 infer = True,
                 columnsToImport = [],
                  view = False):
-    return self._import_or_create_view("importCSV",
+    return self._import_or_create_view("importCSV", view,
+                                       dict(table = table,
+                                          files = files,
+                                          privacy = privacy,
+                                          columnNames = columnNames,
+                                          delimiter = delimiter,
+                                          mode = mode,
+                                          infer = infer,
+                                          columnsToImport = columnsToImport))
 
   def import_hive(self, table, hiveTable, privacy = default_privacy, columnsToImport = [], view = False):
-    return self._import_or_create_view("Hive",
-                                       dict(
-                table = table,
-                privacy = privacy,
-                hiveTable = hiveTable,
-                columnsToImport = columnsToImport))
+    return self._import_or_create_view("Hive", view,
+                                       dict(table = table,
+                                          privacy = privacy,
+                                          hiveTable = hiveTable,
+                                          columnsToImport = columnsToImport))
 
   def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
                   privacy = default_privacy, columnsToImport = [], view = False):
     return self._import_or_create_view("Jdbc", view,
-                                       dict(
-                table = table,
-                jdbcUrl = jdbcUrl,
-                privacy = privacy,
-                jdbcTable = jdbcTable,
-                keyColumn = keyColumn,
-                columnsToImport = columnsToImport))
+                                       dict(table = table,
+                                          jdbcUrl = jdbcUrl,
+                                          privacy = privacy,
+                                          jdbcTable = jdbcTable,
+                                          keyColumn = keyColumn,
+                                          columnsToImport = columnsToImport))
 
 
 
   def import_parquet(self, table, privacy = default_privacy, columnsToImport = [], view = False):
-    self._import_or_create_view("Parquet", view,
-                                dict(table = table,
-                                  privacy = privacy,
-                                  columnsToImport = columnsToImport))
+    return self._import_or_create_view("Parquet", view,
+                                        dict(table = table,
+                                           privacy = privacy,
+columnsToImport = columnsToImport))
 
   def import_orc(self, table, privacy = default_privacy, columnsToImport = [], view = False):
-    self._import_or_create_view("ORC", view,
-                                dict(table = table,
-                                  privacy = privacy,
-                                  columnsToImport = columnsToImport))
+    return self._import_or_create_view("ORC", view,
+                                       dict(table = table,
+                                          privacy = privacy,
+                                          columnsToImport = columnsToImport))
 
   def import_json(self, table, privacy = default_privacy, columnsToImport = [], view = False):
     return self._import_or_create_view("Json", view,
                                        dict(table = table,
-                                         privacy = privacy,
-                                         columnsToImport = columnsToImport))
+                                          privacy = privacy,
+                                          columnsToImport = columnsToImport))
 
 
   def _import_or_create_view(self, format, view, dict):
