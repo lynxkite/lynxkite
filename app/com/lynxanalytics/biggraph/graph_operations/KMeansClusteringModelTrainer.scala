@@ -57,7 +57,7 @@ case class KMeansClusteringModelTrainer(
       .setTol(0) // The convergence of the algorithm is controlled by maximum number of iterations.
       .setSeed(seed)
       .setFeaturesCol("vector")
-      .setPredictionCol("prediction")
+      .setPredictionCol("classification")
     val model = kmeans.fit(scaledDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)

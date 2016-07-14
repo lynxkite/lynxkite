@@ -19,9 +19,6 @@ project.segmentByInterval(
   'interval_size': '0.01',
   name: 'seg_interval',
   overlap: 'no')
-s = project.segmentations['seg_interval']
-println "[seg_interval] vertices: ${s.scalars['vertex_count']} edges: ${s.scalars['edge_count']}"
-
 
 project.segmentByInterval(
   'begin_attr': 'i_begin',
@@ -29,6 +26,6 @@ project.segmentByInterval(
   'interval_size': '0.01',
   name: 'seg_interval_overlap',
   overlap: 'yes')
-s = project.segmentations['seg_interval_overlap']
-println "[seg_interval_overlap] vertices: ${s.scalars['vertex_count']} edges: ${s.scalars['edge_count']}"
 
+project.computeUncomputed()
+project.saveAs('segment_by_interval_result')
