@@ -43,5 +43,9 @@ if any(fn.endswith('.js') for fn in files):
   if subprocess.call('cd web; gulp jshint', shell=True):
     warn('JSHint fails.')
 
+pythons = [fn for fn in files if fn.endswith('.py')]
+if pythons:
+  subprocess.call(['autopep8', '-ia'] + pythons)
+
 if warned:
   sys.exit(1)
