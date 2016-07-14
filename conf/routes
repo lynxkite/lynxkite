@@ -92,6 +92,12 @@ POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.import
 POST /remote/importParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.importParquet
 POST /remote/importORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.importORC
 POST /remote/importJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJson
+POST /remote/createViewJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJdbc
+POST /remote/createViewHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewHive
+POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewCSV
+POST /remote/createViewParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewParquet
+POST /remote/createViewORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewORC
+POST /remote/createViewJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJson
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

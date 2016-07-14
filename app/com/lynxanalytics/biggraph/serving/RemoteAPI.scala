@@ -56,7 +56,7 @@ object RemoteAPIServer extends JsonServer {
   def importJson = importRequest[JsonImportRequest]
   def createViewJdbc = createView[JdbcImportRequest]
   def createViewHive = createView[HiveImportRequest]
-  def createViewCS = createView[CSVImportRequest]
+  def createViewCSV = createView[CSVImportRequest]
   def createViewParquet = createView[ParquetImportRequest]
   def createViewORC = createView[ORCImportRequest]
   def createViewJson = createView[JsonImportRequest]
