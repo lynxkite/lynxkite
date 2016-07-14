@@ -462,6 +462,33 @@ EOF
   aws emr ssh ${MASTER_ACCESS} --command "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
   ;;
 
+rds-up)
+  ID="${CLUSTER_NAME}-${ENGINE}"
+  aws rds create-db-instance \
+    --engine $ENGINE \
+    --db-instance-identifier $ID \
+    --db-name db \
+    --master-username root \
+    --master-user-password rootroot \
+    --db-instance-class db.m4.4xlarge \
+    --allocated-storage 20 > /dev/null
+  ;&
+
+rds-get)
+  ID="${CLUSTER_NAME}-${ENGINE}"
+  aws rds wait db-instance-available \
+    --db-instance-identifier $ID > /dev/null
+  aws rds describe-db-instances \
+    --db-instance-identifier $ID \
+    | grep Address | cut -d'"' -f4
+  ;;
+
+rds-down)
+  ID="${CLUSTER_NAME}-${ENGINE}"
+  aws rds delete-db-instance \
+    --db-instance-identifier $ID
+  ;;
+
 # ======
 *)
   echoerr "Unrecognized option: ${COMMAND}"
