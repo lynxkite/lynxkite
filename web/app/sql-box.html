@@ -14,6 +14,8 @@
     ng-disabled="showExportOptions"
     id="save-results-opener"
     ng-click="showExportOptions = true">Export...</button>
+  <button class="btn btn-primary" ng-click="hide($event)"
+    id="sql-box-hider" ng-if="onHide">Hide</button>
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 </div>
 
