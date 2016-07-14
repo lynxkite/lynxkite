@@ -59,7 +59,8 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-library" % "2.10.3",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
-  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209")
+  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
+  "ai.h2o" % "sparkling-water-core_2.10" % "1.6.2")
 
 resolvers += "Twitter Repository" at "http://maven.twttr.com"
 
