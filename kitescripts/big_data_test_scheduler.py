@@ -22,6 +22,7 @@ import glob
 import os
 import sys
 
+
 def parse_args(argv):
   parser = optparse.OptionParser()
   parser.add_option(
@@ -49,14 +50,16 @@ def parse_args(argv):
   (options, args) = parser.parse_args()
   return options
 
+
 def run_lynx_kite(test_name, options):
   print '{0} batch {1}/{2} {3} 2>&1 | tee {4}/{5}.out.txt'.format(
-    options.remote_lynxkite_path,
-    options.remote_test_dir,
-    test_name,
-    ' '.join(options.lynxkite_arg or []),
-    options.remote_output_dir,
-    test_name.split('.')[0])
+      options.remote_lynxkite_path,
+      options.remote_test_dir,
+      test_name,
+      ' '.join(options.lynxkite_arg or []),
+      options.remote_output_dir,
+      test_name.split('.')[0])
+
 
 def run_test(test_name, options, tests_seen):
   """
@@ -83,6 +86,7 @@ def run_test(test_name, options, tests_seen):
       sys.exit(1)
   run_lynx_kite(test_name, options)
 
+
 def run_tests(scripts, options):
   # Map of tests to results. This is also used for ensuring
   # that one test is executed at most once.
@@ -91,6 +95,7 @@ def run_tests(scripts, options):
     line = line.strip()
     if len(line) > 0 and line[0] != '#':
       run_test(line, options, tests_seen)
+
 
 def get_script_list(options):
   scripts = []
@@ -108,6 +113,7 @@ def get_script_list(options):
   elif (test_selector.endswith('.groovy')):
     scripts.append(test_selector)
   return scripts
+
 
 def main(argv):
   options = parse_args(argv)
