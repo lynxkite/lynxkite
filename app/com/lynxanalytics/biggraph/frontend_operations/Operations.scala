@@ -1263,7 +1263,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Mask vertex attribute", new ImportOperation(_, _) {
+  register("Hash vertex attribute", new ImportOperation(_, _) {
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true),
       Param("salt", "Salt",
@@ -1272,15 +1272,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
 
     def apply(params: Map[String, String]) = {
-      assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to mask.")
+      assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to hash.")
       val salt = params("salt")
       graph_operations.HashVertexAttribute.assertSecret(salt)
-      assert(graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
+      assert(
+        graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
       val op = graph_operations.HashVertexAttribute(salt)
       for (attribute <- params("attr").split(",", -1)) {
         val attr = project.vertexAttributes(attribute).asString
-        project.newVertexAttribute(attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
-          "This attribute has been masked")
+        project.newVertexAttribute(
+          attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed, "hashed")
       }
     }
 

@@ -164,9 +164,10 @@ class Project(object):
                                                 columnsToImport=columnsToImport))
 
     def import_hive(self, table, hiveTable,
-                    privacy=default_privacy, columnsToImport=[], view=False):
-        return self._import_or_create_view("Hive", view,
-                                           dict(table=table,
+                  privacy=default_privacy, columnsToImport=[]):
+    r = self.connection.send('importHive',
+                             dict(
+                                 table=table,
                                                 privacy=privacy,
                                                 hiveTable=hiveTable,
                                                 columnsToImport=columnsToImport))
