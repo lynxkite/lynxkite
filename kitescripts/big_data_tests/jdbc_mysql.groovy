@@ -6,7 +6,7 @@ project = lynx.newProject()
 project.importVertices(
   'id-attr': 'id',
   table: lynx.openTable('test_vertices'))
-before = project.scalars['vertex_count']
+before = project.scalars['vertex_count'].toDouble()
 
 start_time = System.currentTimeMillis()
 
@@ -32,9 +32,9 @@ df = lynx.sqlContext.read().jdbc(
   partitions,
   p)
 project.importVertices(
-  'id-attr': 'id',
+  'id-attr': 'internal-id',
   table: lynx.saveAsTable(df, 't'))
-after = project.scalars['vertex_count']
+after = project.scalars['vertex_count'].toDouble()
 
 read_done = System.currentTimeMillis()
 println "JDBC read: ${ (read_done - write_done) / 1000 } seconds"
