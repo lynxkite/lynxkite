@@ -118,11 +118,12 @@ class Project(object):
     self.checkpoint = r.checkpoint
 
   def save(self, name):
-    self.connection.send(
+    r = self.connection.send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
             project=name))
+    return r.checkpoint
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
@@ -144,11 +145,14 @@ class Project(object):
     return r['rows']
 
   def globalSql(self, query, limit=None, **kwargs):
+    checkpoints = {}
+    for x, cp in kwargs.items():
+      checkpoints[x] = str(cp)
     r = self.connection.send('globalSql', dict(
-      checkpoints=kwargs.items(),
-      query=query,
-      limit=limit or default_sql_limit,
-      ), raw=True)
+        query=query,
+        limit=limit or default_sql_limit,
+        checkpoints=checkpoints
+    ), raw=True)
     return r['rows']
 
   def import_csv(self, files, table,

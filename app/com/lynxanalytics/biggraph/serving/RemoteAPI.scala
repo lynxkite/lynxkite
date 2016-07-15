@@ -134,7 +134,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def globalSql(user: User, request: GlobalSqlRequest): TableResult = {
     val sqLContext = dataManager.newHiveContext()
     // Register tables
-    request.checkpoints.foreach { case (name, cp) => registerTablesOfRootProject(sqLContext, name, cp) }
+    request.checkpoints.foreach { case (name, cp) => registerTablesOfRootProject(sqLContext, name + "|", cp)
+    }
     val df = sqLContext.sql(request.query)
     dfTotableResult(df, request.limit)
   }
