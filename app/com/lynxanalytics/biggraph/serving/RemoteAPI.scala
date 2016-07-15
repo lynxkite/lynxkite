@@ -128,16 +128,16 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val sqlContext = dataManager.newHiveContext()
     registerTablesOfRootProject(sqlContext, "", request.checkpoint)
     val df = sqlContext.sql(request.query)
-    dfTotableResult(df, request.limit)
+    dfToTableResult(df, request.limit)
   }
 
   def globalSql(user: User, request: GlobalSqlRequest): TableResult = {
     val sqLContext = dataManager.newHiveContext()
     // Register tables
-    request.checkpoints.foreach { case (name, cp) => registerTablesOfRootProject(sqLContext, name + "|", cp)
-    }
+    for ((name, cp) <- request.checkpoints)
+      registerTablesOfRootProject(sqLContext, name + "|", cp)
     val df = sqLContext.sql(request.query)
-    dfTotableResult(df, request.limit)
+    dfToTableResult(df, request.limit)
   }
 
   // Takes all the tables in the rootproject given by the checkpoint and registers all of them with prefixed name
@@ -149,7 +149,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     }
   }
 
-  private def dfTotableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
+  private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
     val data = df.take(limit)
     val rows = data.map { row =>

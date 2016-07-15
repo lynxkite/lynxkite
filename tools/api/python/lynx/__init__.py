@@ -118,12 +118,11 @@ class Project(object):
     self.checkpoint = r.checkpoint
 
   def save(self, name):
-    r = self.connection.send(
+    self.connection.send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
             project=name))
-    return r.checkpoint
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
@@ -145,9 +144,11 @@ class Project(object):
     return r['rows']
 
   def globalSql(self, query, limit=None, **kwargs):
+    '''Runs global level SQL query with the syntax: globalSql("select * from `x|vertices`", x=p, limiit=10),
+       where p is a Project object, and giving the limit is optional'''
     checkpoints = {}
-    for x, cp in kwargs.items():
-      checkpoints[x] = str(cp)
+    for x, project in kwargs.items():
+      checkpoints[x] = str(project.checkpoint)
     r = self.connection.send('globalSql', dict(
         query=query,
         limit=limit or default_sql_limit,
