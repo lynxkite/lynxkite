@@ -1,0 +1,26 @@
+### Train a logistic regression model
+
+Trains a logistic regression model using the graph's vertex attributes. The
+algorithm converges when the maximum number of iterations is reached or no
+coefficient has changed in the last iteration. The threshold is set to 0.5.
+
+https://en.wikipedia.org/wiki/Logistic_regression[Logistic regression] measures
+the relationship between the categorical dependent variable and one or more
+independent variables by estimating probabilities using a logistic function.
+
+The current implementation of logistic regression only supports binary classes.
+====
+[[name]] Model name::
+The model will be stored as a scalar attribute using this name.
+
+[[label]] Label attribute::
+The vertex attribute for which the model is trained to classify. The attribute should
+be binary label of either 0.0 or 1.0.
+
+[[features]] Feature attributes::
+Attributes to be used as inputs for the training algorithm.
+
+[[max-iter]] Maximum iterations::
+The maximum number of iterations (>=0).
+
+====
