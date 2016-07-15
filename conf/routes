@@ -77,8 +77,8 @@ POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newPr
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
 POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveProject
-POST /remote/sql com.lynxanalytics.biggraph.serving.RemoteAPIServer.sql
-POST /remote/globalSql com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSql
+POST /remote/projectSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.projectSQL
+POST /remote/globalSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSQL
 POST /remote/importJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJdbc
 POST /remote/importHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.importHive
 POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.importCSV
