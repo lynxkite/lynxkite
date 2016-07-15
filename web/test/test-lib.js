@@ -702,7 +702,7 @@ Selector.prototype = {
   },
 
   runGlobalSql: function(sql) {
-    element(by.id('global-sql-box')).click();
+    this.root.$('#global-sql-box span[class="lead"]').click();
     this.setGlobalSql(sql);
   },
 
