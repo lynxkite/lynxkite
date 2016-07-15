@@ -4,10 +4,10 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class PredictFromModelTest extends ModelTestBase {
-  def checkModel(method: String) {
+  test("test prediction from model") {
     val g = graph(4)
     val m = model(
-      method = method,
+      method = "Linear regression",
       labelName = "age",
       label = Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60),
       featureNames = List("yob"),
@@ -17,11 +17,5 @@ class PredictFromModelTest extends ModelTestBase {
     val yob = Seq(AddVertexAttribute.run(g.vs, Map(0 -> 2000.0)))
     val age = predict(m, yob).rdd.values.collect()(0)
     assertRoughlyEquals(age, 15, 1)
-  }
-
-  test("test prediction from model") {
-    checkModel("Linear regression")
-    checkModel("Ridge regression")
-    checkModel("Lasso")
   }
 }
