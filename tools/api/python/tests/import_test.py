@@ -9,7 +9,6 @@ class TestImport(unittest.TestCase):
     All import calls use the same backend function,
     no need to test them separately.
     """
-
     def stub_test_jdbc(self, view):
         import sqlite3
         path = os.path.abspath("tests/test.db")
