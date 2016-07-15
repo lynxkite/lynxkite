@@ -144,7 +144,7 @@ class Project(object):
     return r['rows']
 
   def globalSql(self, query, limit=None, **kwargs):
-    '''Runs global level SQL query with the syntax: globalSql("select * from `x|vertices`", x=p, limiit=10),
+    '''Runs global level SQL query with the syntax: globalSql("select * from `x|vertices`", x=p, limit=10),
        where p is a Project object, and giving the limit is optional'''
     checkpoints = {}
     for x, project in kwargs.items():
