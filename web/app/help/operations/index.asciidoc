@@ -229,6 +229,8 @@ include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
 
+include::hash-vertex-attribute.asciidoc[]
+
 include::import-edge-attributes.asciidoc[]
 
 include::import-edges-for-existing-vertices.asciidoc[]
@@ -248,8 +250,6 @@ include::import-vertices.asciidoc[]
 include::internal-edge-id-as-attribute.asciidoc[]
 
 include::internal-vertex-id-as-attribute.asciidoc[]
-
-include::mask-vertex-attribute.asciidoc[]
 
 include::maximal-cliques.asciidoc[]
 
@@ -310,6 +310,8 @@ include::split-to-train-and-test-set.asciidoc[]
 include::split-vertices.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
+
+include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 
