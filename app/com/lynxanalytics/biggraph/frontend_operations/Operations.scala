@@ -1516,15 +1516,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("name", "The name of the model"),
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
-      Choice("method", "Method", options = FEOption.list(
-        "Linear regression", "Ridge regression", "Lasso")))
+      NonNegInt("max-iter", "Maximum number of iterations", default = 20),
+      NonNegDouble("elastic-net-param", "Elastic net parameter", defaultValue = "0.0"),
+      NonNegDouble("reg-param", "Regularization parameter", defaultValue = "0.0"))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
-    override def summary(params: Map[String, String]) = {
-      val method = params("method").capitalize
-      val label = params("label")
-      s"build a model using $method for $label"
-    }
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one predictor.")
@@ -1535,10 +1531,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val name = params("name")
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-      val method = params("method")
+      val maxIter = params("max-iter").toInt
+      val elasticNetParam = params("elastic-net-param").toDouble
+      val regParam = params("reg-param").toDouble
       val model = {
         val op = graph_operations.RegressionModelTrainer(
-          method, labelName, featureNames.toList)
+          maxIter, elasticNetParam, regParam, labelName, featureNames.toList)
         op(op.label, label)(op.features, features).result.model
       }
       project.scalars(name) = model

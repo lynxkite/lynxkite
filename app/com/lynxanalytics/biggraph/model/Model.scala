@@ -30,10 +30,10 @@ trait ModelImplementation {
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
-    m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
-  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = m.predict(data)
+    m: ml.regression.LinearRegressionModel) extends ModelImplementation {
+
   def details: String = {
-    val weights = "(" + m.weights.toArray.mkString(", ") + ")"
+    val weights = "(" + m.coefficients.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\ncoefficients: $weights"
   }
 }
@@ -128,11 +128,7 @@ case class Model(
     val path = HadoopFile(symbolicPath).resolvedName
     method match {
       case "Linear regression" =>
-        new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
-      case "Ridge regression" =>
-        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
-      case "Lasso" =>
-        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
+        new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path))
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
       case "KMeans clustering" =>
