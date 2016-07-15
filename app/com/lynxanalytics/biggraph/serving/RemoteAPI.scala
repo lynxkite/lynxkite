@@ -32,7 +32,7 @@ object RemoteAPIProtocol {
   case class SaveProjectRequest(checkpoint: String, project: String)
   case class ScalarRequest(checkpoint: String, scalar: String)
   case class SqlRequest(checkpoint: String, query: String, limit: Int)
-  case class GlobalSqlRequest(query: String, limit: Int)
+  case class GlobalSqlRequest(query: String, checkpoints: Map[String, String], limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
@@ -131,24 +131,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     dfTotableResult(df, request.limit)
   }
 
-  // The syntax is SELECT * FROM x\vertices ||x=checkpoint,y=checkpoint,..
   def globalSql(user: User, request: GlobalSqlRequest): TableResult = {
     val sqLContext = dataManager.newHiveContext()
-    val split = request.query.split("\\|\\|", -1)
-    assert(split.length == 2, "The query must only have one instance of ||")
-    val sqlQuery = split(0)
-    val checkpoints = split(1)
-
-    def toPair(s: String) = {
-      val ss = s.split("=", -1)
-      assert(ss.length == 2, "alias name for checkpoint must not contain =")
-      ss(0) -> ss(1)
-    }
-    // Maps x -> checkpoint
-    val checkpointMapping = checkpoints.split(",", -1).map(eq => toPair(eq)).toMap
     // Register tables
-    checkpointMapping.foreach { case (name, cp) => registerTablesOfRootProject(sqLContext, name, cp) }
-    val df = sqLContext.sql(sqlQuery)
+    request.checkpoints.foreach { case (name, cp) => registerTablesOfRootProject(sqLContext, name, cp) }
+    val df = sqLContext.sql(request.query)
     dfTotableResult(df, request.limit)
   }
 

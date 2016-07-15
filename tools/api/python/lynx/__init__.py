@@ -143,6 +143,14 @@ class Project(object):
     ), raw=True)
     return r['rows']
 
+  def globalSql(self, query, limit=None, **kwargs):
+    r = self.connection.send('globalSql', dict(
+      checkpoints=kwargs.items(),
+      query=query,
+      limit=limit or default_sql_limit,
+      ), raw=True)
+    return r['rows']
+
   def import_csv(self, files, table,
                  privacy=default_privacy,
                  columnNames=[],
