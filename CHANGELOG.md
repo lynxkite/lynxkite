@@ -8,7 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Import options are now stored for each table and can be reused via "Edit import" button
  - Global SQL-box has been added.
- - New operation _"Mask vertex attribute"_ has been added.
+ - New operation _"Hash vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
 
 ### 1.8.0
