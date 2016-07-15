@@ -470,7 +470,7 @@ rds-up)
     --db-name db \
     --master-username root \
     --master-user-password rootroot \
-    --db-instance-class db.m4.4xlarge \
+    --db-instance-class 'db.m3.2xlarge' \
     --allocated-storage 20 > /dev/null
   ;&
 
@@ -486,7 +486,8 @@ rds-get)
 rds-down)
   ID="${CLUSTER_NAME}-${ENGINE}"
   aws rds delete-db-instance \
-    --db-instance-identifier $ID
+    --db-instance-identifier $ID \
+    --skip-final-snapshot
   ;;
 
 # ======
