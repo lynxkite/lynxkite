@@ -3,7 +3,9 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
-import org.apache.spark.mllib
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.mllib.feature.StandardScalerModel
+import org.apache.spark.mllib.linalg.Vectors
 
 object RegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -18,13 +20,17 @@ object RegressionModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
-    (j \ "method").as[String],
+    (j \ "maxIter").as[Int],
+    (j \ "elasticNetParam").as[Double],
+    (j \ "regParam").as[Double],
     (j \ "labelName").as[String],
     (j \ "featureNames").as[List[String]])
 }
 import RegressionModelTrainer._
 case class RegressionModelTrainer(
-    method: String,
+    maxIter: Int,
+    elasticNetParam: Double,
+    regParam: Double,
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = false
@@ -32,7 +38,9 @@ case class RegressionModelTrainer(
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "method" -> method,
+    "maxIter" -> maxIter,
+    "elasticNetParam" -> elasticNetParam,
+    "regParam" -> regParam,
     "labelName" -> labelName,
     "featureNames" -> featureNames)
 
@@ -41,29 +49,36 @@ case class RegressionModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val p = new Scaler(forSGD = true).scale(
-      inputs.label.rdd,
-      inputs.features.toArray.map { v => v.rdd },
-      inputs.vertices.rdd)
+    val sqlContext = rc.dataManager.newSQLContext()
+    import sqlContext.implicits._
 
-    val model = method match {
-      case "Linear regression" =>
-        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
-      case "Ridge regression" =>
-        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
-      case "Lasso" =>
-        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.labeledPoints.get)
-    }
-    Model.checkLinearModel(model)
+    val rddArray = inputs.features.toArray.map(_.rdd)
+    val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
+    val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
 
+    val linearRegrssion = new LinearRegression()
+      .setMaxIter(maxIter)
+      .setElasticNetParam(elasticNetParam)
+      .setRegParam(regParam)
+      .setFeaturesCol("vector")
+      .setLabelCol("label")
+      .setPredictionCol("prediction")
+
+    val model = linearRegrssion.fit(scaledDF)
     val file = Model.newModelFile
-    model.save(rc.sparkContext, file.resolvedName)
+    model.save(file.resolvedName)
     output(o.model, Model(
-      method = method,
+      method = "Linear regression",
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      labelScaler = p.labelScaler,
-      featureScaler = p.featureScaler))
+      // The ML library doesn't use SGD for optimization so label scaler is unnecessary. 
+      labelScaler = None,
+      featureScaler = {
+        val dummyVector = Vectors.dense(Array.fill(featureNames.size)(0.0))
+        new StandardScalerModel(
+          std = dummyVector, mean = dummyVector, withStd = false, withMean = false)
+      })
+    )
   }
 }

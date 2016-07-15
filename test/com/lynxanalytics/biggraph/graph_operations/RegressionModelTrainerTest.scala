@@ -1,5 +1,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark.ml.regression.LinearRegressionModel
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.model._
 
@@ -16,16 +18,12 @@ class RegressionModelTrainerTest extends ModelTestBase {
     assert(m.method == method)
     assert(m.labelName == Some("age"))
     assert(m.featureNames == List("yob"))
-    val impl = m.load(sparkContext)
-    val yob = vectorsRDD(Array(2000))
-    val age = m.scaleBack(impl.transform(
-      yob.map(v => m.featureScaler.transform(v)))).collect()(0)
-    assertRoughlyEquals(age, 15, 1)
+    val symbolicPath = m.symbolicPath
+    val path = HadoopFile(symbolicPath).resolvedName
+    assert(LinearRegressionModel.load(path).coefficients.size == 1)
   }
 
   test("test model parameters") {
     checkModel("Linear regression")
-    checkModel("Ridge regression")
-    checkModel("Lasso")
   }
 }
