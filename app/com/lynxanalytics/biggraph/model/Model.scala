@@ -31,7 +31,7 @@ trait ModelImplementation {
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
     m: ml.regression.LinearRegressionModel) extends ModelImplementation {
-
+  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
     val weights = "(" + m.coefficients.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\ncoefficients: $weights"

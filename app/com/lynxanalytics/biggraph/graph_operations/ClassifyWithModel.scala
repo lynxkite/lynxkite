@@ -49,7 +49,7 @@ case class ClassifyWithModel(numFeatures: Int)
     val scaledRDD = unscaledRDD.mapValues(modelValue.featureScaler.transform(_))
     val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
-    // Transform data to an attributeRDD with the attribute (probability, prediction)
+    // Transform data to an attributeRDD with the attribute (probability, classification)
     val transformation = modelValue.load(rc.sparkContext).transformDF(scaledDF)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
