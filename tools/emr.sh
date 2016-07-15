@@ -400,6 +400,7 @@ s3copy)
   echo "Copy successful."
   ;;
 
+# ======
 download-dir)
   MASTER_HOSTNAME=$(GetMasterHostName)
   rsync -ave "$SSH" -r --copy-dirlinks \
@@ -462,6 +463,7 @@ EOF
   aws emr ssh ${MASTER_ACCESS} --command "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
   ;;
 
+# ======
 rds-up)
   ID="${CLUSTER_NAME}-${ENGINE}"
   aws rds create-db-instance \
@@ -474,6 +476,7 @@ rds-up)
     --allocated-storage 20 > /dev/null
   ;&
 
+# ====== fall-through
 rds-get)
   ID="${CLUSTER_NAME}-${ENGINE}"
   aws rds wait db-instance-available \
@@ -483,6 +486,7 @@ rds-get)
     | grep Address | cut -d'"' -f4
   ;;
 
+# ======
 rds-down)
   ID="${CLUSTER_NAME}-${ENGINE}"
   aws rds delete-db-instance \
