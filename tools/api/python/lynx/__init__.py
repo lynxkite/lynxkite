@@ -175,7 +175,8 @@ class Project(object):
                                  mode=mode,
                                  infer=infer,
                                  columnsToImport=columnsToImport))
-    return r
+    self.checkpoint = r.checkpoint
+    return self
 
   def import_hive(self, table, hiveTable,
                   privacy=default_privacy, columnsToImport=[]):
@@ -185,7 +186,8 @@ class Project(object):
                                  privacy=privacy,
                                  hiveTable=hiveTable,
                                  columnsToImport=columnsToImport))
-    return r
+    self.checkpoint = r.checkpoint
+    return self
 
   def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
                   privacy=default_privacy, columnsToImport=[]):
@@ -197,16 +199,18 @@ class Project(object):
                                  jdbcTable=jdbcTable,
                                  keyColumn=keyColumn,
                                  columnsToImport=columnsToImport))
-    return r
+    self.checkpoint = r.checkpoint
+    return self
 
   def import_parquet(self, table, privacy=default_privacy, columnsToImport=[]):
-    self._importFileWithSchema('Parquet', table, privacy, columnsToImport)
+    return self._importFileWithSchema(
+        'Parquet', table, privacy, columnsToImport)
 
   def import_orc(self, table, privacy=default_privacy, columnsToImport=[]):
-    self._importFileWithSchema('ORC', table, privacy, columnsToImport)
+    return self._importFileWithSchema('ORC', table, privacy, columnsToImport)
 
   def import_json(self, table, privacy=default_privacy, columnsToImport=[]):
-    self._importFileWithSchema('Json', table, privacy, columnsToImport)
+    return self._importFileWithSchema('Json', table, privacy, columnsToImport)
 
   def _importFileWithSchema(format, table, privacy, files, columnsToImport):
     r = self.connection.send('import' + format,
@@ -215,7 +219,8 @@ class Project(object):
                                  privacy=privacy,
                                  files=files,
                                  columnsToImport=columnsToImport))
-    return r
+    self.checkpoint = r.checkpoint
+    return self
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
