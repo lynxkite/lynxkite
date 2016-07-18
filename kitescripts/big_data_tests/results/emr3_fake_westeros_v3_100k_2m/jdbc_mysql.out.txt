@@ -1,6 +1,6 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/jdbc_mysql.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-writing to jdbc:mysql://darabos-test-cluster-mysql.c5gfhghy2wdf.us-east-1.rds.amazonaws.com:3306/db?user=root&password=rootroot
-JDBC write: 3325.051 seconds
-JDBC read: 20.071 seconds
+writing to jdbc:mysql://darabos-test-cluster-mysql.c5gfhghy2wdf.us-east-1.rds.amazonaws.com:3306/db?user=root&password=rootroot&useServerPrepStmts=false&rewriteBatchedStatements=true
+JDBC write: 42.365 seconds
+JDBC read: 21.004 seconds
 vertices before: 2192456.0 after: 2192456.0
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/jdbc_mysql.groovy, took 3346 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/jdbc_mysql.groovy, took 64 seconds

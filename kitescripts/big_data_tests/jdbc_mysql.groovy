@@ -11,20 +11,21 @@ before = project.scalars['vertex_count'].toDouble()
 start_time = System.currentTimeMillis()
 
 db = System.getenv('MYSQL')
-println "writing to jdbc:mysql://$db:3306/db?user=root&password=rootroot"
+url = (
+  "jdbc:mysql://$db:3306/db?user=root&password=rootroot" +
+  '&useServerPrepStmts=false&rewriteBatchedStatements=true')
+println "writing to $url"
 p = new java.util.Properties()
 p.setProperty("driver", "com.mysql.jdbc.Driver")
-project.vertexDF.write().mode('overwrite').jdbc(
-  "jdbc:mysql://$db:3306/db?user=root&password=rootroot",
-  'test_edges',
-  p)
+p.setProperty("batchsize", "10000")
+project.vertexDF.write().mode('overwrite').jdbc(url, 'test_edges', p)
 
 write_done = System.currentTimeMillis()
 println "JDBC write: ${ (write_done - start_time) / 1000 } seconds"
 
 partitions = project.vertexDF.rdd().partitions().length
 df = lynx.sqlContext.read().jdbc(
-  "jdbc:mysql://$db:3306/db?user=root&password=rootroot",
+  url,
   'test_edges',
   'id',
   java.lang.Long.MIN_VALUE,
