@@ -5,6 +5,7 @@ import breeze.linalg._
 import breeze.stats.distributions.RandBasis
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.neural
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -90,7 +91,7 @@ case class NeuralNetwork(
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
     val vertices = data.map(_._1)
     // Initial state contains label and features.
-    val trueState: NeuralGates.GraphData = vertices.map { id =>
+    val trueState: neural.GraphData = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = labels(id) // Label is in position 0.
@@ -104,7 +105,7 @@ case class NeuralNetwork(
     }.toMap
 
     var network = {
-      import NeuralGates._
+      import neural.Gates._
       val vs = Neighbors()
       val eb = V("edge bias")
       val input = Sum(vs * M("edge matrix")) + eb
@@ -112,12 +113,12 @@ case class NeuralNetwork(
       val update = Sigmoid(input * M("update i") + state * M("update h"))
       val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
       val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
-      Network(
+      neural.Network(
         size = networkSize,
         "new state" -> (state - update * state + update * tilde)
       )
     }
-    var finalOutputs: NeuralGates.GraphData = null
+    var finalOutputs: neural.GraphData = null
     val random = new util.Random(0)
     for (i <- 1 to iterations) {
       // Forgets the label.
@@ -157,7 +158,7 @@ case class NeuralNetwork(
       }.toMap
       val errorTotal = errors.values.map(e => e * e).sum
       log.info(s"Total error in iteration $i: $errorTotal")
-      val finalGradient: NeuralGates.GraphData = errors.map {
+      val finalGradient: neural.GraphData = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
           vec(0) = error
