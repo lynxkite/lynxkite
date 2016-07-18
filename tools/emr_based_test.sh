@@ -75,6 +75,14 @@ case $MODE in
         --remote_lynxkite_path=/home/hadoop/biggraphstage/bin/biggraph \
         --remote_output_dir=$REMOTE_OUTPUT_DIR \
         ${COMMAND_ARGS[@]} )
+    START_MYSQL=$(echo "$TESTS_TO_RUN" | grep 'mysql')
+    if [ -n "$START_MYSQL" ]; then
+      if [ -n "$CLUSTERID" ]; then
+        MYSQL=$(ENGINE=MySQL ${EMR_SH} rds-get ${EMR_TEST_SPEC})
+      else
+        MYSQL=$(ENGINE=MySQL ${EMR_SH} rds-up ${EMR_TEST_SPEC})
+      fi
+    fi
 
     ${EMR_SH} ssh ${EMR_TEST_SPEC} <<ENDSSH
       # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
@@ -83,6 +91,8 @@ case $MODE in
       # Prepare output dir.
       rm -Rf ${REMOTE_OUTPUT_DIR}
       mkdir -p ${REMOTE_OUTPUT_DIR}
+      # Export database addresses.
+      export MYSQL=$MYSQL
       # Run tests one by one.
       ${TESTS_TO_RUN[@]}
 ENDSSH
@@ -141,6 +151,9 @@ fi
 case ${answer:0:1} in
   y|Y )
     ${EMR_SH} terminate-yes ${EMR_TEST_SPEC}
+    if [ -n "$START_MYSQL" ]; then
+      ENGINE=MySQL ${EMR_SH} rds-down ${EMR_TEST_SPEC}
+    fi
     ;;
   * )
     echo "Use 'stage/tools/emr.sh ssh ${EMR_TEST_SPEC}' to log in to master."

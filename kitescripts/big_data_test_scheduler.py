@@ -52,13 +52,13 @@ def parse_args(argv):
 
 
 def run_lynx_kite(test_name, options):
-  print '{0} batch {1}/{2} {3} 2>&1 | tee {4}/{5}.out.txt'.format(
-      options.remote_lynxkite_path,
-      options.remote_test_dir,
-      test_name,
-      ' '.join(options.lynxkite_arg or []),
-      options.remote_output_dir,
-      test_name.split('.')[0])
+  print(
+      '{remote_lynxkite_path} batch {remote_test_dir}/{test_name} {test_args}'
+      ' 2>&1 | tee {remote_output_dir}/{test_basename}.out.txt').format(
+      test_name=test_name,
+      test_args=' '.join(options.lynxkite_arg or []),
+      test_basename=test_name.split('.')[0],
+      **vars(options))
 
 
 def run_test(test_name, options, tests_seen):
@@ -117,6 +117,10 @@ def get_script_list(options):
 
 def main(argv):
   options = parse_args(argv)
+  assert options.test_selector, '--test_selector is required'
+  assert options.local_test_dir, '--local_test_dir is required'
+  assert options.remote_output_dir, '--remote_output_dir is required'
+  assert options.remote_test_dir, '--remote_test_dir is required'
 
   scripts = get_script_list(options)
   if scripts == []:
