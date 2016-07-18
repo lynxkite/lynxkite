@@ -13,7 +13,7 @@ start_time = System.currentTimeMillis()
 db = System.getenv('MYSQL')
 url = (
   "jdbc:mysql://$db:3306/db?user=root&password=rootroot" +
-  '&useServerPrepStmts=false&rewriteBatchedStatements=true')
+  '&rewriteBatchedStatements=true')
 println "writing to $url"
 p = new java.util.Properties()
 p.setProperty("driver", "com.mysql.jdbc.Driver")
