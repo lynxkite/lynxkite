@@ -10,5 +10,11 @@
     "Properties": {
       "yarn.nodemanager.container-monitor.procfs-tree.smaps-based-rss.enabled": "true"
     }
+  },
+  {
+    "Classification": "hdfs-site",
+    "Properties": {
+      "dfs.replication": "1"
+    }
   }
 ]

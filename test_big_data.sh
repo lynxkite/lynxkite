@@ -7,10 +7,10 @@
 # into the PR.
 #
 # Usage:
-#   test_big_data.sh test_or_list test_data_set [# of emr instances]
+#   test_big_data.sh test_or_list test_data_set [# of emr executors] [# of emr instances]
 #
 # Default arguments:
-#   test_big_data.sh default.list fake_westeros_v3_25m_799m 3
+#   test_big_data.sh default.list fake_westeros_v3_25m_799m 3 4
 #
 # Examples:
 #   test_big_data.sh visualization.groovy               # Single test.
@@ -39,9 +39,12 @@ trap "echo $0 has failed" ERR
 
 TEST_SELECTOR="${1:-default.list}"
 DATA_SET="${2:-fake_westeros_v3_5m_145m}"
-NUM_EMR_INSTANCES=${3:-3}
+NUM_EMR_EXECUTORS=${3:-3}
+DEFAULT_EMR_INSTANCES=$(($NUM_EMR_EXECUTORS + 1))
+NUM_EMR_INSTANCES=${4:-${DEFAULT_EMR_INSTANCES}}
 
-RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_INSTANCES}_${DATA_SET}"
+
+RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_EXECUTORS}_${DATA_SET}"
 TMP_RESULTS_DIR="${RESULTS_DIR}.new"
 rm -Rf ${TMP_RESULTS_DIR}
 if [ -d ${RESULTS_DIR} ]; then
@@ -50,6 +53,7 @@ fi
 
 # Run test.
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
+NUM_EXECUTORS=${NUM_EMR_EXECUTORS} \
 EMR_RESULTS_DIR=${TMP_RESULTS_DIR} \
   $(dirname $0)/tools/emr_based_test.sh backend \
     --remote_test_dir=/home/hadoop/biggraphstage/kitescripts/big_data_tests \
