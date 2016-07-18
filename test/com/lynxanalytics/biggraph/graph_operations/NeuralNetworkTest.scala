@@ -194,7 +194,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // learn Page Rank
-  test("Page Rank") {
+  ignore("Page Rank") {
     val vs = CreateVertexSet(1000).result.vs
     val es = {
       val eop = FastRandomEdgeBundle(seed = 7, averageDegree = 20)
