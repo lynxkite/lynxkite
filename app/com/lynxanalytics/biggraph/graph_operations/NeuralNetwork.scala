@@ -90,7 +90,7 @@ case class NeuralNetwork(
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
     val vertices = data.map(_._1)
     // Initial state contains label and features.
-    val trueState: Map[ID, Vector] = vertices.map { id =>
+    val trueState: NeuralGates.GraphData = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = labels(id) // Label is in position 0.
@@ -103,24 +103,25 @@ case class NeuralNetwork(
       id -> state
     }.toMap
 
-    val network = {
+    var network = {
       import NeuralGates._
       val vs = Neighbors()
       val eb = V("edge bias")
       val input = Sum(vs * M("edge matrix")) + eb
-      val state = State("state")
+      val state = Input("state")
       val update = Sigmoid(input * M("update i") + state * M("update h"))
       val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
       val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
-      Outputs(
+      Network(
+        size = networkSize,
         "new state" -> (state - update * state + update * tilde)
       )
     }
-    var finalOutputs: NetworkOutputs = null
+    var finalOutputs: NeuralGates.GraphData = null
     val random = new util.Random(0)
     for (i <- 1 to iterations) {
       // Forgets the label.
-      def blanked(state: Vector) = {
+      def blanked(state: DenseVector[Double]) = {
         val s = state.copy
         s(0) = 0.0
         s(1) = 0.0
@@ -156,7 +157,7 @@ case class NeuralNetwork(
       }.toMap
       val errorTotal = errors.values.map(e => e * e).sum
       log.info(s"Total error in iteration $i: $errorTotal")
-      val finalGradient: Map[ID, Vector] = errors.map {
+      val finalGradient: NeuralGates.GraphData = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
           vec(0) = error
@@ -170,7 +171,7 @@ case class NeuralNetwork(
       network = network.update(gradients)
     }
     // Return last predictions.
-    finalOutputs.newState.map {
+    finalOutputs.map {
       case (id, state) => id -> state(0)
     }.iterator
   }
