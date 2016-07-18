@@ -19,9 +19,12 @@ history.
 import http.cookiejar
 import json
 import os
+import sys
 import types
 import urllib
 
+if sys.version_info.major < 3:
+  raise Exception('At least Python version 3 is needed!')
 
 default_sql_limit = 1000
 default_privacy = 'public-read'
