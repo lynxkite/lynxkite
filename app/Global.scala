@@ -35,30 +35,25 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
     concurrent.Future.successful(NotFound(escapeIfNeeded(request.toString, request.headers)))
   }
 
-  def startedDirectly(): Unit = {
-    serving.ProductionJsonServer
-    println("LynxKite is running.")
-  }
-
   def notifyStarterScript(msg: String): Unit = {
     val notifier =
       scala.concurrent.Future[Unit] {
-        val pipeName = LoggedEnvironment.envOrNone("KITE_READY_PIPE").get
-        org.apache.commons.io.FileUtils.writeStringToFile(
-          new java.io.File(pipeName), msg + "\n", "utf8")
+        LoggedEnvironment.envOrNone("KITE_READY_PIPE").foreach(pipeName =>
+          org.apache.commons.io.FileUtils.writeStringToFile(
+            new java.io.File(pipeName),
+            msg + "\n",
+            "utf8"))
       }
     try {
       Await.result(notifier, 5.seconds)
     } catch {
-      case _: Throwable =>
-        log.info("Timeout - starter script could have been killed")
+      case _: Throwable => log.info("Timeout - starter script could have been killed")
     }
   }
 
-  def startedByStarterScriptInTheBackground(): Unit = {
+  override def onStart(app: Application) = {
     try {
       serving.ProductionJsonServer
-      notifyStarterScript("ready")
     } catch {
       case t: ExceptionInInitializerError =>
         val exceptionMessage = Option(t.getCause).map(_.toString.replace('\n', ' ')).getOrElse(t.toString)
@@ -69,13 +64,7 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
         notifyStarterScript("failed: " + exceptionMessage)
         System.exit(1)
     }
-  }
-
-  override def onStart(app: Application) = {
-    if (LoggedEnvironment.envOrNone("KITE_READY_PIPE").isEmpty) {
-      startedDirectly()
-    } else {
-      startedByStarterScriptInTheBackground()
-    }
+    notifyStarterScript("ready")
+    println("LynxKite is running.")
   }
 }
