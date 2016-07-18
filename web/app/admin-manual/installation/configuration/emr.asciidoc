@@ -9,9 +9,14 @@ Specify the name of the cluster.
 CLUSTER_NAME=${USER}-cluster
 ```
 
-Set the number of worker instances in the cluster.
+Set the number of nodes in the cluster.
 ```
 NUM_INSTANCES=3
+```
+
+Set the number of executors running in the cluster.
+```
+NUM_EXECUTORS=3
 ```
 
 Specify the type of the instance to create.

@@ -217,7 +217,7 @@ reconfigure)
 # Override settings created by start_emr_cluster.sh.
 # These will reset some values above. Feel free to edit as necessary.
 export SPARK_MASTER=yarn-client
-export NUM_EXECUTORS=${NUM_INSTANCES}
+export NUM_EXECUTORS=${NUM_EXECUTORS}
 export YARN_CONF_DIR=/etc/hadoop/conf
 export KITE_DATA_DIR=$KITE_DATA_DIR
 export KITE_EPHEMERAL_DATA_DIR=$KITE_EPHEMERAL_DATA_DIR
@@ -230,7 +230,7 @@ export KITE_PREFIX_DEFINITIONS=/home/hadoop/prefix_definitions.txt
 export KITE_AMMONITE_PORT=2203
 export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
-export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
+export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_EXECUTORS}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
 export GRAPHITE_MONITORING_HOST=\$(hostname)
 export GRAPHITE_MONITORING_PORT=9109
 EOF
