@@ -464,7 +464,7 @@ EOF
   ;;
 
 # ======
-rds-up)
+rds-get)
   ID="${CLUSTER_NAME}-${ENGINE}"
   aws rds create-db-instance \
     --engine $ENGINE \
@@ -477,7 +477,7 @@ rds-up)
   ;&
 
 # ====== fall-through
-rds-get)
+rds-x)
   ID="${CLUSTER_NAME}-${ENGINE}"
   aws rds wait db-instance-available \
     --db-instance-identifier $ID > /dev/null
