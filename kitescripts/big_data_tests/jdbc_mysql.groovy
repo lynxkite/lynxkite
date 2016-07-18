@@ -32,10 +32,16 @@ df = lynx.sqlContext.read().jdbc(
   java.lang.Long.MAX_VALUE,
   partitions,
   p)
-project.importVertices(
-  'id-attr': 'internal-id',
-  table: lynx.saveAsTable(df, 't'))
-after = project.scalars['vertex_count'].toDouble()
+
+if (params.export_from_jdbc) {
+  project.importVertices(
+    'id-attr': 'internal-id',
+    table: lynx.saveAsTable(df, 't'))
+  after = project.scalars['vertex_count'].toDouble()
+} else {
+  // Just iterate over the JDBC results to measure JDBC performance on its own.
+  after = df.javaRDD().count()
+}
 
 read_done = System.currentTimeMillis()
 println "JDBC read: ${ (read_done - write_done) / 1000 } seconds"

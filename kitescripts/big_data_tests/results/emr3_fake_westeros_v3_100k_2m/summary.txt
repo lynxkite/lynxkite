@@ -1,2 +1,2 @@
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/jdbc_mysql.groovy:64
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy:25
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/jdbc_mysql.groovy:50
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy:26
