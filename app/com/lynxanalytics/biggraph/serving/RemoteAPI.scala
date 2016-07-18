@@ -16,6 +16,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
+import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
@@ -35,6 +36,14 @@ object RemoteAPIProtocol {
   case class GlobalSQLRequest(query: String, checkpoints: Map[String, String], limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
+  case class DirectoryEntryResult(
+    exists: Boolean,
+    isTable: Boolean,
+    isProject: Boolean,
+    isDirectory: Boolean,
+    isReadable: Boolean,
+    isWriteable: Boolean)
+
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
@@ -44,6 +53,7 @@ object RemoteAPIProtocol {
   implicit val rGlobalSQLRequest = json.Json.reads[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
+  implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -51,6 +61,7 @@ object RemoteAPIServer extends JsonServer {
   val userController = ProductionJsonServer.userController
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
   def getScalar = jsonPost(c.getScalar)
+  def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def runOperation = jsonPost(c.runOperation)
@@ -76,6 +87,18 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
+
+  def getDirectoryEntry(user: User, request: ProjectRequest): DirectoryEntryResult = {
+    val entry = new DirectoryEntry(SymbolPath.parse(request.project))
+    DirectoryEntryResult(
+      exists = entry.exists,
+      isTable = entry.isTable,
+      isProject = entry.isProject,
+      isDirectory = entry.isDirectory,
+      isReadable = entry.readAllowedFrom(user),
+      isWriteable = entry.writeAllowedFrom(user)
+    )
+  }
 
   def newProject(user: User, request: Empty): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
