@@ -126,6 +126,12 @@ class Project(object):
     p.checkpoint = r.checkpoint
     return p
 
+  @staticmethod
+  def exists(name, connection=None):
+    connection = connection or default_connection()
+    r = connection.send('getDirectoryEntry', dict(project=name))
+    return r.exists
+
   def __init__(self, connection=None):
     '''Creates a new blank project.'''
     self.connection = connection or default_connection()
