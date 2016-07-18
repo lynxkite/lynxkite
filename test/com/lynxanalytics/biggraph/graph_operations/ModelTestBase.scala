@@ -21,13 +21,8 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     val l = AddVertexAttribute.run(graph.vs, label)
     val features = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
     method match {
-      case "Linear regression" =>
-        val op = RegressionModelTrainer(
-          maxIter = 20,
-          elasticNetParam = 0,
-          regParam = 0,
-          labelName,
-          featureNames)
+      case "Linear regression" | "Ridge regression" | "Lasso" =>
+        val op = RegressionModelTrainer(method, labelName, featureNames)
         op(op.features, features)(op.label, l).result.model
       case "Logistic regression" =>
         val op = LogisticRegressionModelTrainer(

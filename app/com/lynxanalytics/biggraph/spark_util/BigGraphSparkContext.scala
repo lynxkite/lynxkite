@@ -184,6 +184,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.LogisticAggregator"))
     kryo.register(Class.forName("org.apache.spark.ml.optim.WeightedLeastSquares$Aggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.regression.LeastSquaresAggregator"))
     kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
     kryo.register(Class.forName("[[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))

@@ -21,28 +21,23 @@ object Implicits {
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
-  // A transformation of RDD with the model. 
-  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = ???
   // A transformation of dataframe with the model. 
-  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = ???
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame
   def details: String
 }
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
     m: ml.regression.LinearRegressionModel) extends ModelImplementation {
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  def details: String = {
-    val weights = "(" + m.coefficients.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\ncoefficients: $weights"
-  }
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def details: String = ""
 }
 
 private class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
     val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\ncoefficients: $coefficients"
@@ -53,7 +48,7 @@ private class ClusterModelImpl(
     m: ml.clustering.KMeansModel,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
   // Transform the data with clustering model and append an additional probability column.   
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   val scaledCenters = {
     val unscaledCenters = m.clusterCenters
     val transformingVector = featureScaler.std
@@ -71,7 +66,8 @@ case class Model(
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
   labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
-  featureScaler: mllib.feature.StandardScalerModel) // The scaler used to scale the features.
+  featureScaler: mllib.feature.StandardScalerModel, // The scaler used to scale the features.
+  details: Option[String] = None) // For the details that require training data 
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -127,7 +123,7 @@ case class Model(
   def load(sc: spark.SparkContext): ModelImplementation = {
     val path = HadoopFile(symbolicPath).resolvedName
     method match {
-      case "Linear regression" =>
+      case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path))
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
@@ -196,7 +192,12 @@ object Model extends FromJson[Model] {
     labelName = m.labelName,
     featureNames = m.featureNames,
     scalerDetails = m.scalerDetails,
-    details = m.load(sc).details)
+    details = m.method match {
+      case "Linear regression" | "Ridge regression" | "Lasso" =>
+        m.details.get
+      case "Logistic regression" | "KMeans clustering" =>
+        m.load(sc).details
+    })
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
