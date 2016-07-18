@@ -20,17 +20,13 @@ object RegressionModelTrainer extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
-    (j \ "maxIter").as[Int],
-    (j \ "elasticNetParam").as[Double],
-    (j \ "regParam").as[Double],
+    (j \ "method").as[String],
     (j \ "labelName").as[String],
     (j \ "featureNames").as[List[String]])
 }
 import RegressionModelTrainer._
 case class RegressionModelTrainer(
-    maxIter: Int,
-    elasticNetParam: Double,
-    regParam: Double,
+    method: String,
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = false
@@ -38,9 +34,7 @@ case class RegressionModelTrainer(
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "maxIter" -> maxIter,
-    "elasticNetParam" -> elasticNetParam,
-    "regParam" -> regParam,
+    "method" -> method,
     "labelName" -> labelName,
     "featureNames" -> featureNames)
 
@@ -56,19 +50,34 @@ case class RegressionModelTrainer(
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
 
-    val linearRegrssion = new LinearRegression()
-      .setMaxIter(maxIter)
-      .setElasticNetParam(elasticNetParam)
-      .setRegParam(regParam)
+    val linearRegression = new LinearRegression()
+      .setMaxIter(100)
       .setFeaturesCol("vector")
       .setLabelCol("label")
       .setPredictionCol("prediction")
+    // The following settings are according to the Spark MLLib deprecation codes
+    method match {
+      case "Linear regression" =>
+        linearRegression.setElasticNetParam(0.0).setRegParam(0.0)
+      case "Ridge regression" =>
+        linearRegression.setElasticNetParam(0.0).setRegParam(0.01)
+      case "Lasso" =>
+        linearRegression.setElasticNetParam(1.0).setRegParam(0.01)
+    }
 
-    val model = linearRegrssion.fit(scaledDF)
+    val model = linearRegression.fit(scaledDF)
+    val details: String = {
+      val coefficients = "(" + model.coefficients.toArray.mkString(", ") + ")"
+      val summary = model.summary
+      val r2 = summary.r2
+      val meanAbsolutePercentageError = summary.meanAbsoluteError.toString + "%"
+      val tValues = "(" + summary.tValues.mkString(", ") + ")"
+      s"intercept: ${model.intercept}\ncoefficients: $coefficients\nR-squared: $r2\n" +
+    }
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
-      method = "Linear regression",
+      method = method,
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
@@ -78,7 +87,8 @@ case class RegressionModelTrainer(
         val dummyVector = Vectors.dense(Array.fill(featureNames.size)(0.0))
         new StandardScalerModel(
           std = dummyVector, mean = dummyVector, withStd = false, withMean = false)
-      })
+      },
+      details = Some(details))
     )
   }
 }
