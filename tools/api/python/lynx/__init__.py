@@ -114,6 +114,97 @@ class Connection(object):
     return r
 
 
+class Table(object):
+  '''
+  Contains static methods for importing LynxKite tables.
+  '''
+
+  @staticmethod
+  def import_csv(
+          files,
+          table,
+          privacy=default_privacy,
+          columnNames=[],
+          delimiter=',',
+          mode='FAILFAST',
+          infer=True,
+          columnsToImport=[],
+          connection=None):
+    connection = connection or default_connection()
+    response = connection.send(
+        'importCSV',
+        dict(
+            files=files,
+            table=table,
+            privacy=privacy,
+            columnNames=columnNames,
+            delimiter=delimiter,
+            mode=mode,
+            infer=infer,
+            columnsToImport=columnsToImport))
+    return response.path
+
+  @staticmethod
+  def import_hive(self, table, hiveTable,
+                  privacy=default_privacy, columnsToImport=[],
+                  connection=None):
+    connection = connection or default_connection()
+    response = self.connection.send(
+        'importHive',
+        dict(
+            table=table,
+            privacy=privacy,
+            hiveTable=hiveTable,
+            columnsToImport=columnsToImport))
+    return response.path
+
+  @staticmethod
+  def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
+                  privacy=default_privacy, columnsToImport=[],
+                  connection=None):
+    connection = connection or default_connection()
+    response = connection.send(
+        'importJdbc',
+        dict(
+            table=table,
+            jdbcUrl=jdbcUrl,
+            privacy=privacy,
+            jdbcTable=jdbcTable,
+            keyColumn=keyColumn,
+            columnsToImport=columnsToImport))
+    return reponse.path
+
+  @staticmethod
+  def import_parquet(self, table, privacy=default_privacy,
+                     columnsToImport=[], connection=None):
+    return Table._importFileWithSchema(
+        'Parquet', table, privacy, columnsToImport, connection)
+
+  @staticmethod
+  def import_orc(self, table, privacy=default_privacy,
+                 columnsToImport=[], connection=None):
+    return Table._importFileWithSchema(
+        'ORC', table, privacy, columnsToImport, connection)
+
+  @staticmethod
+  def import_json(self, table, privacy=default_privacy,
+                  columnsToImport=[], connection=None):
+    return Table._importFileWithSchema(
+        'Json', table, privacy, columnsToImport, connection)
+
+  @staticmethod
+  def _importFileWithSchema(format, table, privacy,
+                            files, columnsToImport, connection=None):
+    connection = connection or default_connection()
+    r = connection.send('import' + format,
+                        dict(
+                            table=table,
+                            privacy=privacy,
+                            files=files,
+                            columnsToImport=columnsToImport))
+    return response.path
+
+
 class Project(object):
   '''Represents an unanchored LynxKite project.
 
@@ -165,70 +256,6 @@ class Project(object):
         limit=limit or default_sql_limit,
     ), raw=True)
     return r['rows']
-
-  def import_csv(self, files, table,
-                 privacy=default_privacy,
-                 columnNames=[],
-                 delimiter=',',
-                 mode='FAILFAST',
-                 infer=True,
-                 columnsToImport=[]):
-    r = self.connection.send('importCSV',
-                             dict(
-                                 files=files,
-                                 table=table,
-                                 privacy=privacy,
-                                 columnNames=columnNames,
-                                 delimiter=delimiter,
-                                 mode=mode,
-                                 infer=infer,
-                                 columnsToImport=columnsToImport))
-    self.checkpoint = r.checkpoint
-    return self
-
-  def import_hive(self, table, hiveTable,
-                  privacy=default_privacy, columnsToImport=[]):
-    r = self.connection.send('importHive',
-                             dict(
-                                 table=table,
-                                 privacy=privacy,
-                                 hiveTable=hiveTable,
-                                 columnsToImport=columnsToImport))
-    self.checkpoint = r.checkpoint
-    return self
-
-  def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
-                  privacy=default_privacy, columnsToImport=[]):
-    r = self.connection.send('importJdbc',
-                             dict(
-                                 table=table,
-                                 jdbcUrl=jdbcUrl,
-                                 privacy=privacy,
-                                 jdbcTable=jdbcTable,
-                                 keyColumn=keyColumn,
-                                 columnsToImport=columnsToImport))
-    self.checkpoint = r.checkpoint
-    return self
-
-  def import_parquet(self, table, privacy=default_privacy, columnsToImport=[]):
-    return self._importFileWithSchema(
-        'Parquet', table, privacy, columnsToImport)
-
-  def import_orc(self, table, privacy=default_privacy, columnsToImport=[]):
-    return self._importFileWithSchema('ORC', table, privacy, columnsToImport)
-
-  def import_json(self, table, privacy=default_privacy, columnsToImport=[]):
-    return self._importFileWithSchema('Json', table, privacy, columnsToImport)
-
-  def _importFileWithSchema(format, table, privacy, files, columnsToImport):
-    r = self.connection.send('import' + format,
-                             dict(
-                                 table=table,
-                                 privacy=privacy,
-                                 files=files,
-                                 columnsToImport=columnsToImport))
-    self.checkpoint = r.checkpoint
-    return self
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
