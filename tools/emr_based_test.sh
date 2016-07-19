@@ -96,19 +96,53 @@ case $MODE in
       ORACLE=''
     fi
 
-    ${EMR_SH} ssh ${EMR_TEST_SPEC} <<ENDSSH
-      # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
-      sed -i '/^export DEV_EXTRA_SPARK_OPTIONS/d' .kiterc
-      echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS:-}\"" >>.kiterc
-      # Prepare output dir.
-      rm -Rf ${REMOTE_OUTPUT_DIR}
-      mkdir -p ${REMOTE_OUTPUT_DIR}
-      # Export database addresses.
-      export MYSQL=$MYSQL
+    (
+      ${EMR_SH} ssh ${EMR_TEST_SPEC} <<ENDSSH
+        # We will track completion of the test using this file.
+        # This trickery is needed to handle the case nicely when
+        # the Internet connection is broken.
+        # Possible statuses: not_finished, done
+        echo "not_finished" >~/test_status.txt
+
+        # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
+        sed -i '/^export DEV_EXTRA_SPARK_OPTIONS/d' .kiterc
+        echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS:-}\"" >>.kiterc
+        # Prepare output dir.
+        rm -Rf ${REMOTE_OUTPUT_DIR}
+        mkdir -p ${REMOTE_OUTPUT_DIR}
+        # Export database addresses.
+        export MYSQL=$MYSQL
       export ORACLE=$ORACLE
-      # Run tests one by one.
-      ${TESTS_TO_RUN[@]}
-ENDSSH
+        # Put tests to run into a script file.
+        echo "${TESTS_TO_RUN[@]}" >test_cmds.sh
+        # Last command in the script signals completion.
+        echo "echo \"done\" >~/test_status.txt" >>test_cmds.sh
+        chmod a+x test_cmds.sh
+        # Kill running instance (if any).
+        pkill -f 'sh \./test_cmds.sh'
+        # Use nohup to prevent death when the ssh connection
+        # goes away. We also make sure to set status to "done"
+        # even in case of a failure so that the below polling
+        # loop can exit.
+        nohup ./test_cmds.sh >~/test_output.txt \
+          || echo "done"> ~/test_status.txt &
+        SCRIPT_PID=\$!
+        tail -f ~/test_output.txt --pid=\$SCRIPT_PID
+    ) || echo "SSH failed but not giving up!"
+    echo "SSH connection to cluster is now closed."
+
+    # Keep polling the master whether tests are done.
+    STATUS=""
+    while true; do
+      echo "Polling test status file at master."
+      STATUS=$(${EMR_SH} cmd ${EMR_TEST_SPEC} "cat ~/test_status.txt" || echo "ssh_failed")
+      echo "status: $STATUS"
+      if [[ "$STATUS" == "done" ]]; then
+        break
+      fi
+      sleep 10
+    done
+
 
     # Process output files.
     if [ -n "${EMR_RESULTS_DIR}" ]; then
