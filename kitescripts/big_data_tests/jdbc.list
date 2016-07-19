@@ -1,2 +1,3 @@
 # JDBC tests. RDS databases will be started for these.
+jdbc_mysql.groovy
 jdbc_oracle.groovy

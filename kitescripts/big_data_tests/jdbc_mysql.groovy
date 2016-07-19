@@ -14,10 +14,10 @@ db = System.getenv('MYSQL')
 url = (
   "jdbc:mysql://$db:3306/db?user=root&password=rootroot" +
   '&rewriteBatchedStatements=true')
-println "writing to $url"
+println "writing $before records to $url"
 p = new java.util.Properties()
-p.setProperty("driver", "com.mysql.jdbc.Driver")
-p.setProperty("batchsize", "10000")
+p.setProperty('driver', 'com.mysql.jdbc.Driver')
+p.setProperty('batchsize', '10000')
 project.vertexDF.write().mode('overwrite').jdbc(url, 'test_edges', p)
 
 write_done = System.currentTimeMillis()
@@ -33,16 +33,15 @@ df = lynx.sqlContext.read().jdbc(
   partitions,
   p)
 
-if (params.export_from_jdbc) {
-  project.importVertices(
-    'id-attr': 'internal-id',
-    table: lynx.saveAsTable(df, 't'))
-  after = project.scalars['vertex_count'].toDouble()
-} else {
-  // Just iterate over the JDBC results to measure JDBC performance on its own.
-  after = df.javaRDD().count()
-}
-
+// Just iterate over the JDBC results to measure JDBC performance on its own.
+after = df.javaRDD().count()
 read_done = System.currentTimeMillis()
-println "JDBC read: ${ (read_done - write_done) / 1000 } seconds"
-println "vertices before: $before after: $after"
+println "JDBC read: $after records in ${ (read_done - write_done) / 1000 } seconds"
+
+// Import into a project.
+project.importVertices(
+  'id-attr': 'internal-id',
+  table: lynx.saveAsTable(df, 't'))
+after = project.scalars['vertex_count'].toDouble()
+import_done = System.currentTimeMillis()
+println "JDBC import: $after records in ${ (import_done - read_done) / 1000 } seconds"
