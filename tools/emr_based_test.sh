@@ -112,14 +112,17 @@ case $MODE in
         mkdir -p ${REMOTE_OUTPUT_DIR}
         # Export database addresses.
         export MYSQL=$MYSQL
-      export ORACLE=$ORACLE
+        export ORACLE=$ORACLE
+
         # Put tests to run into a script file.
         echo "${TESTS_TO_RUN[@]}" >test_cmds.sh
         # Last command in the script signals completion.
         echo "echo \"done\" >~/test_status.txt" >>test_cmds.sh
         chmod a+x test_cmds.sh
+
         # Kill running instance (if any).
         pkill -f 'sh \./test_cmds.sh'
+
         # Use nohup to prevent death when the ssh connection
         # goes away. We also make sure to set status to "done"
         # even in case of a failure so that the below polling
@@ -127,6 +130,7 @@ case $MODE in
         nohup ./test_cmds.sh >~/test_output.txt \
           || echo "done"> ~/test_status.txt &
         SCRIPT_PID=\$!
+
         tail -f ~/test_output.txt --pid=\$SCRIPT_PID
     ) || echo "SSH failed but not giving up!"
     echo "SSH connection to cluster is now closed."
