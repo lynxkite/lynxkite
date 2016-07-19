@@ -915,7 +915,8 @@ class TableFrame(path: SymbolPath)(
 
 class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  def initializeFromConfig[T <: GenericImportRequest: json.Writes](recipe: T, notes: String): Unit = manager.synchronized {
+  def initializeFromConfig[T <: ViewRecipe: json.Writes](
+    recipe: T, notes: String): Unit = manager.synchronized {
     set(rootDir / "objectType", "view")
     details = TypedJson.createFromWriter(recipe).as[json.JsObject]
     val editor = new RootProjectEditor(RootProjectState.emptyState)

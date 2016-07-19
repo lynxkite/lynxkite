@@ -368,15 +368,18 @@ class SQLController(val env: BigGraphEnvironment) {
   private def queryTables(
     sql: String,
     tables: Iterable[(String, Table)], user: serving.User,
-    dataFrames: Iterable[(String, GenericImportRequest)] = List()): spark.sql.DataFrame = {
+    viewRecipes: Iterable[(String, ViewRecipe)] = List()): spark.sql.DataFrame = {
     // Every query runs in its own SQLContext for isolation.
+    // Some import requests need a hivecontext to do their imports
+    // (e.g. HiveImportRequest), but we don't want regular users to
+    // do that.
     val context = if (user.isAdmin) dataManager.newHiveContext() else dataManager.newSQLContext()
 
     for ((name, table) <- tables) {
       table.toDF(context).registerTempTable(name)
     }
-    for ((name, importRequest) <- dataFrames) {
-      importRequest.restrictedDataFrame(user, context).registerTempTable(name)
+    for ((name, recipe) <- viewRecipes) {
+      recipe.createDataFrame(user, context).registerTempTable(name)
     }
     log.info(s"Trying to execute query: ${sql}")
     context.sql(sql)
@@ -516,7 +519,8 @@ object SQLController {
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 
-  def saveView[T <: GenericImportRequest: json.Writes](notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
+  def saveView[T <: GenericImportRequest: json.Writes](
+    notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
     implicit metaManager: MetaGraphManager,
     dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
