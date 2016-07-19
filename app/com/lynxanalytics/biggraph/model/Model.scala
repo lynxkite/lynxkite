@@ -67,7 +67,7 @@ case class Model(
   featureNames: List[String], // The name of the feature attributes used to train this model.
   labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
   featureScaler: mllib.feature.StandardScalerModel, // The scaler used to scale the features.
-  details: Option[String] = None) // For the details that require training data 
+  details: Option[String]) // For the details that require training data 
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -115,7 +115,8 @@ case class Model(
       "labelName" -> labelName,
       "featureNames" -> featureNames,
       "labelScaler" -> standardScalerModelToJson(labelScaler),
-      "featureScaler" -> standardScalerModelToJson(Some(featureScaler))
+      "featureScaler" -> standardScalerModelToJson(Some(featureScaler)),
+      "details" -> details
     )
   }
 
@@ -181,7 +182,8 @@ object Model extends FromJson[Model] {
       (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
       standardScalerModelFromJson(j \ "labelScaler"),
-      standardScalerModelFromJson(j \ "featureScaler").get
+      standardScalerModelFromJson(j \ "featureScaler").get,
+      (j \ "details").as[Option[String]]
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
@@ -192,12 +194,12 @@ object Model extends FromJson[Model] {
     labelName = m.labelName,
     featureNames = m.featureNames,
     scalerDetails = m.scalerDetails,
-    details = m.method match {
+    details = m.details.get /*m.method match {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         m.details.get
       case "Logistic regression" | "KMeans clustering" =>
         m.load(sc).details
-    })
+    }*/ )
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString

@@ -75,6 +75,7 @@ case class LogisticRegressionModelTrainer(
         val dummyVector = Vectors.dense(Array.fill(featureNames.size)(0.0))
         new StandardScalerModel(
           std = dummyVector, mean = dummyVector, withStd = false, withMean = false)
-      }))
+      },
+      details = None))
   }
 }
