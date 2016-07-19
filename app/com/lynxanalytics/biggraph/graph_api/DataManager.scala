@@ -440,37 +440,4 @@ class DataManager(sc: spark.SparkContext,
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
     )
   }
-
-  // Compute and print uncomputed attributes and scalars in a project
-  // and in its segmentations recursively.
-  def computeProject(editor: ProjectEditor): Unit = {
-    computeUncomputedAttributes(editor)
-    computeUncomputedScalars(editor)
-
-    val segmentations = editor.viewer.sortedSegmentations
-    segmentations.foreach(s => computeProject(s.editor))
-  }
-
-  private def uncomputed(entity: TypedEntity[_]): Boolean = {
-    val progress = computeProgress(entity)
-    progress < 1.0
-  }
-
-  private def computeUncomputedScalars(editor: ProjectEditor): Unit = {
-    val uncomputedScalars = editor.scalars.filter(x => uncomputed(x._2))
-    for ((name, scalar) <- uncomputedScalars) {
-      val value = get(scalar).value
-      println(s"$name: $value")
-    }
-  }
-
-  private def computeUncomputedAttributes(editor: ProjectEditor): Unit = {
-    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
-    val uncomputedAttributes = attributes.filter(x => uncomputed(x._2))
-
-    for ((name, attr) <- uncomputedAttributes) {
-      val computedAttr = get(attr)
-      println(s"${name}: <computed> ${computedAttr.rdd.hashCode}")
-    }
-  }
 }
