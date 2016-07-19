@@ -439,8 +439,4 @@ class DataManager(sc: spark.SparkContext,
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
     )
   }
-
-  def newHiveContext(): HiveContext = {
-    masterHiveContext.newSession()
-  }
 }
