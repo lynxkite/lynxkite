@@ -10,6 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Views have been added to avoid expensive serialization to tables when it is not required.
  - New operation _"Mask vertex attribute"_ has been added.
  - Import options are now stored for each table and can be reused via "Edit import" button
+ - New operation _"Hash vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
  
 ### 1.8.0

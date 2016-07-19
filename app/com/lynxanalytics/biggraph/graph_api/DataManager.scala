@@ -423,11 +423,21 @@ class DataManager(sc: spark.SparkContext,
 
   def newSQLContext(): SQLContext = {
     val sqlContext = masterSQLContext.newSession()
-    sqlContext.udf.register(
-      "mask",
+    registerUDFs(sqlContext)
+    sqlContext
+  }
+
+  def newHiveContext(): HiveContext = {
+    val hiveContext = masterHiveContext.newSession()
+    registerUDFs(hiveContext)
+    hiveContext
+  }
+
+  private def registerUDFs(sQLContext: SQLContext) = {
+    sQLContext.udf.register(
+      "hash",
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
     )
-    sqlContext
   }
 
   def newHiveContext(): HiveContext = {
