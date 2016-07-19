@@ -23,7 +23,6 @@ class RegressionModelTrainerTest extends ModelTestBase {
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
     assert(LinearRegressionModel.load(path).coefficients.size == 1)
-    //LinearRegressionModel.load(path).summary
   }
 
   test("test model parameters") {

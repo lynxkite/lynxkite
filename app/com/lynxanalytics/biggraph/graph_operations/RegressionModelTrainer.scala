@@ -5,7 +5,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.feature.StandardScalerModel
-import org.apache.spark.mllib.evaluation.RegressionMetrics
 import org.apache.spark.mllib.linalg.Vectors
 
 object RegressionModelTrainer extends OpFromJson {

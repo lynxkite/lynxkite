@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions
 import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
