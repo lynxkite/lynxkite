@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.functions
 import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
@@ -193,12 +194,12 @@ object Model extends FromJson[Model] {
     labelName = m.labelName,
     featureNames = m.featureNames,
     scalerDetails = m.scalerDetails,
-    details = m.details.get /*m.method match {
+    details = m.method match {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         m.details.get
       case "Logistic regression" | "KMeans clustering" =>
         m.load(sc).details
-    }*/ )
+    })
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
