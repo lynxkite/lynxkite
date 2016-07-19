@@ -37,6 +37,8 @@ object RemoteAPIProtocol {
   case class GlobalSQLRequest(query: String, checkpoints: Map[String, String], limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
+  case class DirectoryEntryRequest(
+    path: String)
   case class DirectoryEntryResult(
     exists: Boolean,
     isTable: Boolean,
@@ -55,6 +57,7 @@ object RemoteAPIProtocol {
   implicit val rGlobalSQLRequest = json.Json.reads[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
+  implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
   implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
 }
 
@@ -90,8 +93,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
-  def getDirectoryEntry(user: User, request: ProjectRequest): DirectoryEntryResult = {
-    val entry = new DirectoryEntry(SymbolPath.parse(request.project))
+  def getDirectoryEntry(user: User, request: DirectoryEntryRequest): DirectoryEntryResult = {
+    val entry = new DirectoryEntry(
+      SymbolPath.parse(request.path))
     DirectoryEntryResult(
       exists = entry.exists,
       isTable = entry.isTable,

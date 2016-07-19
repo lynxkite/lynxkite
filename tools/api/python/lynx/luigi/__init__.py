@@ -8,7 +8,10 @@ class ProjectTarget(luigi.target.Target):
     self.project_name = project_name
 
   def exists(self):
-    return lynx.Project.exists(self.project_name)
+    entry = lynx.get_directory_entry(self.project_name)
+    if entry.exists and not entry.isProject:
+      raise Exception('project expected but non-project entry found ', entry)
+    return entry.exists
 
   def load(self):
     return lynx.Project.load(self.project_name)

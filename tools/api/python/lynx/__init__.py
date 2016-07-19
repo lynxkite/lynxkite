@@ -56,6 +56,12 @@ def sql(query, limit=None, **kwargs):
   return r['rows']
 
 
+def get_directory_entry(path, connection=None):
+  connection = connection or default_connection()
+  r = connection.send('getDirectoryEntry', dict(path=path))
+  return r
+
+
 class Connection(object):
   '''A connection to a LynxKite instance.
 
@@ -218,12 +224,6 @@ class Project(object):
     r = connection.send('loadProject', dict(project=name))
     p.checkpoint = r.checkpoint
     return p
-
-  @staticmethod
-  def exists(name, connection=None):
-    connection = connection or default_connection()
-    r = connection.send('getDirectoryEntry', dict(project=name))
-    return r.exists
 
   def __init__(self, connection=None):
     '''Creates a new blank project.'''
