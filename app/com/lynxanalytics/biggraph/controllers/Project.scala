@@ -915,9 +915,9 @@ class TableFrame(path: SymbolPath)(
 
 class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  def initializeFromConfig(recipe: json.JsObject, notes: String): Unit = manager.synchronized {
+  def initializeFromConfig[T <: GenericImportRequest: json.Writes](recipe: T, notes: String): Unit = manager.synchronized {
     set(rootDir / "objectType", "view")
-    details = recipe
+    details = TypedJson.createFromWriter(recipe).as[json.JsObject]
     val editor = new RootProjectEditor(RootProjectState.emptyState)
     editor.notes = notes
     val cps = manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
@@ -1145,7 +1145,7 @@ class DirectoryEntry(val path: SymbolPath)(
     asInstanceOf[ViewFrame]
   }
 
-  def asNewViewFrame(recipe: json.JsObject, notes: String): ViewFrame = {
+  def asNewViewFrame[T <: GenericImportRequest: json.Writes](recipe: T, notes: String): ViewFrame = {
     assert(!exists, s"Entry '$path' already exists")
     val res = new ViewFrame(path)
     res.initializeFromConfig(recipe, notes)

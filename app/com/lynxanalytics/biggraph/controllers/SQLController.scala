@@ -2,8 +2,8 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
-import scala.concurrent.Future
 
+import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -12,9 +12,14 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
+trait ViewRecipe {
+  def createDataFrame(user: serving.User,
+                      context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
+}
 object DataFrameSpec {
   // Utilities for testing.
   def local(project: String, sql: String) =
@@ -58,7 +63,7 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 
-trait GenericImportRequest {
+trait GenericImportRequest extends ViewRecipe {
   val table: String
   val privacy: String
   // Empty list means all columns.
@@ -81,6 +86,10 @@ trait GenericImportRequest {
       full.select(columns: _*)
     } else full
   }
+
+  override def createDataFrame(user: serving.User,
+                               context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    restrictedDataFrame(user, context)
 }
 
 case class CSVImportRequest(
@@ -271,8 +280,7 @@ class SQLController(val env: BigGraphEnvironment) {
       request.notes,
       user,
       request.table,
-      request.privacy,
-      TypedJson.createFromWriter(request).as[json.JsObject])
+      request.privacy, request)
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -508,11 +516,11 @@ object SQLController {
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 
-  def saveView(notes: String, user: serving.User, tableName: String, privacy: String, viewRecipe: json.JsObject)(
+  def saveView[T <: GenericImportRequest: json.Writes](notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
     implicit metaManager: MetaGraphManager,
     dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
-    val view = entry.asNewViewFrame(viewRecipe, notes)
+    val view = entry.asNewViewFrame(recipe, notes)
     FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
   }
 }
