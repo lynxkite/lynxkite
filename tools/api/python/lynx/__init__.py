@@ -221,7 +221,7 @@ class Project(object):
     self.checkpoint = r.checkpoint
     return self
 
-  def computeProject(self):
+  def compute(self):
     return self.connection.send('computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):

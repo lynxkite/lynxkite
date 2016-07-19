@@ -16,6 +16,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
+import com.lynxanalytics.biggraph.graph_api.TypedEntity
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
@@ -181,6 +182,35 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {
     val viewer = getViewer(request.checkpoint)
-    dataManager.computeProject(viewer.editor)
+    computeProject(viewer.editor)
+  }
+
+  private def computeProject(editor: ProjectEditor): Unit = {
+    computeUncomputedAttributes(editor)
+    computeUncomputedScalars(editor)
+
+    val segmentations = editor.viewer.sortedSegmentations
+    segmentations.foreach(s => computeProject(s.editor))
+  }
+
+  private def uncomputed(entity: TypedEntity[_]): Boolean = {
+    val progress = dataManager.computeProgress(entity)
+    progress < 1.0
+  }
+
+  private def computeUncomputedScalars(editor: ProjectEditor): Unit = {
+    val uncomputedScalars = editor.scalars.filter(x => uncomputed(x._2))
+    for ((name, scalar) <- uncomputedScalars) {
+      dataManager.get(scalar)
+    }
+  }
+
+  private def computeUncomputedAttributes(editor: ProjectEditor): Unit = {
+    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+    val uncomputedAttributes = attributes.filter(x => uncomputed(x._2))
+
+    for ((name, attr) <- uncomputedAttributes) {
+      dataManager.get(attr)
+    }
   }
 }
