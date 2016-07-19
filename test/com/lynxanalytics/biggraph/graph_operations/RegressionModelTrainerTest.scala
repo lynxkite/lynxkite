@@ -19,7 +19,7 @@ class RegressionModelTrainerTest extends ModelTestBase {
     assert(m.labelName == Some("age"))
     assert(m.featureNames == List("yob"))
     val impl = m.load(sparkContext)
-    //assert(impl.details.isInstanceOf[String])
+    assert(m.details.get.isInstanceOf[String])
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
     assert(LinearRegressionModel.load(path).coefficients.size == 1)

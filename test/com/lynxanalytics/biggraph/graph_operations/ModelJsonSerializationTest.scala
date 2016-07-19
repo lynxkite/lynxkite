@@ -24,7 +24,8 @@ class ModelJsonSerializationTest extends ModelTestBase {
       Some("three"),
       List[String]("four", "five"),
       Some(createStandardScalerModel(List(100.0, 20.0), List(11.0, 22, 0), false, true)),
-      createStandardScalerModel(List(1.0, 2.0), List(10.0, 20, 0), true, true))
+      createStandardScalerModel(List(1.0, 2.0), List(10.0, 20, 0), true, true),
+      None)
     val out = m1.toJson
     val m2 = Model.fromJson(out)
     assert(m2 == m1)
@@ -37,7 +38,8 @@ class ModelJsonSerializationTest extends ModelTestBase {
       Some("three"),
       List[String]("four", "five"),
       None,
-      createStandardScalerModel(List(1.0, 2.0), List(10.0, 20, 0), true, true))
+      createStandardScalerModel(List(1.0, 2.0), List(10.0, 20, 0), true, true),
+      None)
     val out = m1.toJson
     val m2 = Model.fromJson(out)
     assert(m2 == m1)
@@ -50,7 +52,8 @@ class ModelJsonSerializationTest extends ModelTestBase {
       None,
       List[String]("four", "five"),
       None,
-      createStandardScalerModel(List(1.0, 2.0), List(10.0, 20, 0), true, true))
+      createStandardScalerModel(List(1.0, 2.0), List(10.0, 20, 0), true, true),
+      Some(""))
     val out = m1.toJson
     val m2 = Model.fromJson(out)
     assert(m2 == m1)

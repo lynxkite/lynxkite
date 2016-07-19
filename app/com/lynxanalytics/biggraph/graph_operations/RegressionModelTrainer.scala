@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.feature.StandardScalerModel
+import org.apache.spark.mllib.evaluation.RegressionMetrics
 import org.apache.spark.mllib.linalg.Vectors
 
 object RegressionModelTrainer extends OpFromJson {
@@ -64,15 +65,25 @@ case class RegressionModelTrainer(
       case "Lasso" =>
         linearRegression.setElasticNetParam(1.0).setRegParam(0.01)
     }
-
     val model = linearRegression.fit(scaledDF)
+    val predictions = model.transform(scaledDF)
     val details: String = {
       val coefficients = "(" + model.coefficients.toArray.mkString(", ") + ")"
       val summary = model.summary
       val r2 = summary.r2
-      val meanAbsolutePercentageError = summary.meanAbsoluteError.toString + "%"
-      val tValues = "(" + summary.tValues.mkString(", ") + ")"
-      s"intercept: ${model.intercept}\ncoefficients: $coefficients\nR-squared: $r2\n" +
+      val MAPE = predictions.select("prediction", "label").map {
+        row => math.abs(row.getDouble(0) / row.getDouble(1) - 1.0)
+      }.mean * 100
+      // Only compute the t-values for methods with unbiased solvers (when the elastic 
+      // net parameter equals to 0).
+      if (model.getElasticNetParam > 0.0) {
+        s"intercept: ${model.intercept}\ncoefficients: $coefficients\nR-squared: $r2\n" +
+          s"MAPE: $MAPE%"
+      } else {
+        val tValues = "(" + summary.tValues.mkString(", ") + ")"
+        s"intercept: ${model.intercept}\ncoefficients: $coefficients\nR-squared: $r2\n" +
+          s"MAPE: $MAPE%\nT-values: $tValues"
+      }
     }
     val file = Model.newModelFile
     model.save(file.resolvedName)
