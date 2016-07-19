@@ -221,6 +221,9 @@ class Project(object):
     self.checkpoint = r.checkpoint
     return self
 
+  def computeProject(self):
+    return self.connection.send('computeProject', dict(checkpoint=self.checkpoint))
+
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
     def f(**kwargs):

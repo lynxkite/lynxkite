@@ -33,6 +33,7 @@ object RemoteAPIProtocol {
   case class ScalarRequest(checkpoint: String, scalar: String)
   case class ProjectSQLRequest(checkpoint: String, query: String, limit: Int)
   case class GlobalSQLRequest(query: String, checkpoints: Map[String, String], limit: Int)
+  case class CheckpointRequest(checkpoint: String)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
@@ -44,6 +45,7 @@ object RemoteAPIProtocol {
   implicit val rGlobalSQLRequest = json.Json.reads[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
+  implicit val rCheckpointRequest = json.Json.reads[CheckpointRequest]
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -65,6 +67,7 @@ object RemoteAPIServer extends JsonServer {
   def importParquet = importRequest[ParquetImportRequest]
   def importORC = importRequest[ORCImportRequest]
   def importJson = importRequest[JsonImportRequest]
+  def computeProject = jsonPost(c.computeProject)
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
@@ -174,5 +177,10 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val res = sqlController.doImport(user, request)
     val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
     CheckpointResponse(cp)
+  }
+
+  def computeProject(user: User, request: CheckpointRequest): Unit = {
+    val viewer = getViewer(request.checkpoint)
+    dataManager.computeProject(viewer.editor)
   }
 }

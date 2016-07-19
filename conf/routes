@@ -85,6 +85,7 @@ POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.import
 POST /remote/importParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.importParquet
 POST /remote/importORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.importORC
 POST /remote/importJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJson
+POST /remote/computeProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.computeProject
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
