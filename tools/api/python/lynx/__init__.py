@@ -38,6 +38,7 @@ def default_connection():
         os.environ.get('LYNXKITE_PASSWORD'))
   return _connection
 
+
 def sql(query, limit=None, **kwargs):
   '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
   where p is a Project object, and giving the limit is optional'''
@@ -45,11 +46,12 @@ def sql(query, limit=None, **kwargs):
   for name, project in kwargs.items():
     checkpoints[name] = project.checkpoint
   r = _connection.send('globalSQL', dict(
-    query=query,
-    limit=limit or default_sql_limit,
-    checkpoints=checkpoints
+      query=query,
+      limit=limit or default_sql_limit,
+      checkpoints=checkpoints
   ), raw=True)
   return r['rows']
+
 
 class Connection(object):
 
