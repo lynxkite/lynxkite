@@ -28,7 +28,7 @@ Install Spark:
 For various tools you will require Python and AWS CLI. For automatically formatting Python source
 code, please install AutoPEP8:
 
-    sudo -H pip install autopep8
+    sudo -H pip3 install autopep8
 
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on
