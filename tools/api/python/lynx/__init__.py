@@ -173,7 +173,7 @@ def import_json(
 def _import_or_create_view(format, view, dict, connection):
   connection = connection or default_connection()
   endpoint = ("createView" if view else "import") + format
-  return connection.send(endpoint, dict)
+  return connection.send(endpoint, dict).path
 
 
 class Connection(object):

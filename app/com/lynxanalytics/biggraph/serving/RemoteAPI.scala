@@ -15,7 +15,7 @@ import com.lynxanalytics.biggraph.serving.FrontendJson._
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
-  case class TableCheckpointResponse(path: String)
+  case class TitledCheckpointResponse(path: String)
   case class OperationRequest(
     checkpoint: String,
     operation: String,
@@ -38,7 +38,7 @@ object RemoteAPIProtocol {
     isWriteable: Boolean)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
-  implicit val wTableCheckpointResponse = json.Json.writes[TableCheckpointResponse]
+  implicit val wTitledCheckpointResponse = json.Json.writes[TitledCheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
@@ -64,9 +64,9 @@ object RemoteAPIServer extends JsonServer {
   def projectSQL = jsonPost(c.projectSQL)
   def globalSQL = jsonPost(c.globalSQL)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, TableCheckpointResponse](c.importRequest)
+    jsonPost[T, TitledCheckpointResponse](c.importRequest)
   private def createView[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, CheckpointResponse](c.createView)
+    jsonPost[T, TitledCheckpointResponse](c.createView)
   def importJdbc = importRequest[JdbcImportRequest]
   def importHive = importRequest[HiveImportRequest]
   def importCSV = importRequest[CSVImportRequest]
@@ -200,14 +200,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](user: User, request: T): TableCheckpointResponse = {
+  def importRequest[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
     val res = sqlController.doImport(user, request)
-    TableCheckpointResponse(res.id)
+    TitledCheckpointResponse(res.id)
   }
 
-  def createView[T <: GenericImportRequest: json.Writes](user: User, request: T): CheckpointResponse = {
+  def createView[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
     val res = sqlController.saveView(user, request)
-    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
-    CheckpointResponse(cp)
+    TitledCheckpointResponse(res.id)
   }
 }
