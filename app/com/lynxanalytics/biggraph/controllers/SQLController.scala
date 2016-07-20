@@ -19,7 +19,7 @@ import play.api.libs.json
 
 trait ViewRecipe {
   def createDataFrame(user: serving.User,
-                      context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
+    context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
 }
 object DataFrameSpec {
   // Utilities for testing.
@@ -389,7 +389,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = request.dfSpec.createDataFrame(user, dataManager.newSQLContext())
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
@@ -404,7 +404,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, dataManager.newSQLContext())
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
 
     SQLController.saveTable(
       df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
@@ -443,7 +443,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, dataManager.newSQLContext())
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
@@ -472,7 +472,7 @@ class SQLController(val env: BigGraphEnvironment) {
     file: HadoopFile,
     format: String,
     options: Map[String, String] = Map()): Unit = {
-    val df = dfSpec.createDataFrame(user, dataManager.newSQLContext())
+    val df = dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     // TODO: #2889 (special characters in S3 passwords).
     file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
@@ -522,5 +522,13 @@ object SQLController {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val view = entry.asNewViewFrame(recipe, notes)
     FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
+  }
+
+  def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
+    if (user.isAdmin) {
+      dataManager.newHiveContext()
+    } else {
+      dataManager.newSQLContext()
+    }
   }
 }
