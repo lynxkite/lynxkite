@@ -75,13 +75,25 @@ case $MODE in
         --remote_lynxkite_path=/home/hadoop/biggraphstage/bin/biggraph \
         --remote_output_dir=$REMOTE_OUTPUT_DIR \
         ${COMMAND_ARGS[@]} )
-    START_MYSQL=$(echo "$TESTS_TO_RUN" | grep 'mysql')
+    START_MYSQL=$(echo "$TESTS_TO_RUN" | grep 'mysql' || true)
     if [ -n "$START_MYSQL" ]; then
       if [ -n "$CLUSTERID" ]; then
         MYSQL=$(ENGINE=MySQL ${EMR_SH} rds-get ${EMR_TEST_SPEC})
       else
         MYSQL=$(ENGINE=MySQL ${EMR_SH} rds-up ${EMR_TEST_SPEC})
       fi
+    else
+      MYSQL=''
+    fi
+    START_ORACLE=$(echo "$TESTS_TO_RUN" | grep 'oracle' || true)
+    if [ -n "$START_ORACLE" ]; then
+      if [ -n "$CLUSTERID" ]; then
+        ORACLE=$(ENGINE=oracle-se ${EMR_SH} rds-get ${EMR_TEST_SPEC})
+      else
+        ORACLE=$(ENGINE=oracle-se ${EMR_SH} rds-up ${EMR_TEST_SPEC})
+      fi
+    else
+      ORACLE=''
     fi
 
     ${EMR_SH} ssh ${EMR_TEST_SPEC} <<ENDSSH
@@ -93,6 +105,7 @@ case $MODE in
       mkdir -p ${REMOTE_OUTPUT_DIR}
       # Export database addresses.
       export MYSQL=$MYSQL
+      export ORACLE=$ORACLE
       # Run tests one by one.
       ${TESTS_TO_RUN[@]}
 ENDSSH
@@ -153,6 +166,9 @@ case ${answer:0:1} in
     ${EMR_SH} terminate-yes ${EMR_TEST_SPEC}
     if [ -n "$START_MYSQL" ]; then
       ENGINE=MySQL ${EMR_SH} rds-down ${EMR_TEST_SPEC}
+    fi
+    if [ -n "$START_ORACLE" ]; then
+      ENGINE=oracle-se ${EMR_SH} rds-down ${EMR_TEST_SPEC}
     fi
     ;;
   * )
