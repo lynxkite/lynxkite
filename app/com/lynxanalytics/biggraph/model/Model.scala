@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions
 import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
@@ -28,9 +27,13 @@ trait ModelImplementation {
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
-    m: ml.regression.LinearRegressionModel) extends ModelImplementation {
+    m: ml.regression.LinearRegressionModel,
+    statistics: String) extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  def details: String = ""
+  def details: String = {
+    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
+    s"intercept: ${m.intercept}\ncoefficients: $coefficients\n" + statistics
+  }
 }
 
 private class LogisticRegressionModelImpl(
@@ -65,9 +68,8 @@ case class Model(
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
-  labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
   featureScaler: mllib.feature.StandardScalerModel, // The scaler used to scale the features.
-  details: Option[String]) // For the details that require training data 
+  statistics: Option[String]) // For the details that require training data 
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -93,13 +95,10 @@ case class Model(
   override def equals(other: Any) = {
     if (canEqual(other)) {
       val o = other.asInstanceOf[Model]
-      def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
-        standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
       method == o.method &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
-        labelScalerEquals &&
         standardScalerModelEquals(featureScaler, o.featureScaler)
     } else {
       false
@@ -114,9 +113,8 @@ case class Model(
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "featureNames" -> featureNames,
-      "labelScaler" -> standardScalerModelToJson(labelScaler),
       "featureScaler" -> standardScalerModelToJson(Some(featureScaler)),
-      "details" -> details
+      "statistics" -> statistics
     )
   }
 
@@ -125,7 +123,7 @@ case class Model(
     val path = HadoopFile(symbolicPath).resolvedName
     method match {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
-        new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path))
+        new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
       case "KMeans clustering" =>
@@ -150,15 +148,6 @@ case class Model(
       }
     meanInfo + stdInfo
   }
-
-  // Scales back the labels if needed.
-  def scaleBack(result: RDD[Double]): RDD[Double] = {
-    if (labelScaler.isEmpty) {
-      result
-    } else {
-      Model.scaleBack(result, labelScaler.get)
-    }
-  }
 }
 
 // Helper methods to transform and scale training and prediction data.
@@ -181,9 +170,8 @@ object Model extends FromJson[Model] {
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
-      standardScalerModelFromJson(j \ "labelScaler"),
       standardScalerModelFromJson(j \ "featureScaler").get,
-      (j \ "details").as[Option[String]]
+      (j \ "statistics").as[Option[String]]
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
@@ -194,12 +182,7 @@ object Model extends FromJson[Model] {
     labelName = m.labelName,
     featureNames = m.featureNames,
     scalerDetails = m.scalerDetails,
-    details = m.method match {
-      case "Linear regression" | "Ridge regression" | "Lasso" =>
-        m.details.get
-      case "Logistic regression" | "KMeans clustering" =>
-        m.load(sc).details
-    })
+    details = m.load(sc).details)
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString

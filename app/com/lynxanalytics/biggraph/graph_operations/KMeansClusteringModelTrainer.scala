@@ -66,9 +66,8 @@ case class KMeansClusteringModelTrainer(
       labelName = None,
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
-      labelScaler = None,
       featureScaler = params.featureScaler,
-      details = None)
+      statistics = None)
     )
   }
 }
