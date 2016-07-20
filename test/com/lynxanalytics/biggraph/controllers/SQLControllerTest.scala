@@ -253,7 +253,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         isGlobal = true,
         directory = Some(""),
         project = None,
-        sql = "select vertexId, name, age from `sqlViewTest`"
+        sql = "select vertexId, name, age from `sqlViewTest` order by vertexId"
       ), maxRows = 120)),
       Duration.Inf)
     assert(res.header == colNames)
