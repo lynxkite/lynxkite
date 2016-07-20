@@ -12,6 +12,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Import options are now stored for each table and can be reused via "Edit import" button
  - New operation _"Hash vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
+ - JDBC import can now use `VARCHAR` columns as partitioning keys. For small tables the key can even
+   be omitted.
  
 ### 1.8.0
 
