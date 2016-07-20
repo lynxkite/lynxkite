@@ -282,7 +282,8 @@ object FrontendJson {
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 
-  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
+  implicit val fSQLCreateView = json.Json.format[SQLCreateView]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
