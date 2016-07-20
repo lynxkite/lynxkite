@@ -130,11 +130,13 @@ syntax entirely depends on the database type. Please consult the documentation o
 The name of the database table to import.
 
 [[key-column]] Column used for data partitioning::
-This numerical column is used to partition the SQL query. The range from `min(key)` to `max(key)`
+This column is used to partition the SQL query. The range from `min(key)` to `max(key)`
 will be split into a sub-range for each Spark worker, so they can each query a part of the data in
 parallel.
 +
-Pick a column that is uniformly distributed. Numerical identifiers are ideal.
+Pick a column that is uniformly distributed. Numerical identifiers will give the best performance.
+String (`VARCHAR`) columns are also supported. If the partitioning column is left empty, only a
+fraction of the cluster resources will be used.
 ====
 
 [[import-hive]]
