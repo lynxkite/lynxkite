@@ -41,6 +41,14 @@ POST /ajax/importParquet     com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/importORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importORC
 POST /ajax/importJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJson
 POST /ajax/importHive         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importHive
+POST /ajax/createViewCSV         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewCSV
+POST /ajax/createViewJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJdbc
+POST /ajax/createViewParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewParquet
+POST /ajax/createViewORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewORC
+POST /ajax/createViewJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJson
+POST /ajax/createViewHive        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewHive
+
+
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
@@ -86,6 +94,12 @@ POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.import
 POST /remote/importParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.importParquet
 POST /remote/importORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.importORC
 POST /remote/importJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJson
+POST /remote/createViewJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJdbc
+POST /remote/createViewHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewHive
+POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewCSV
+POST /remote/createViewParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewParquet
+POST /remote/createViewORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewORC
+POST /remote/createViewJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJson
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

@@ -2,8 +2,8 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
-import scala.concurrent.Future
 
+import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -12,8 +12,14 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
+trait ViewRecipe {
+  def createDataFrame(user: serving.User,
+                      context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
+}
 object DataFrameSpec {
   // Utilities for testing.
   def local(project: String, sql: String) =
@@ -57,17 +63,21 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 
-trait GenericImportRequest {
+trait GenericImportRequest extends ViewRecipe {
   val table: String
   val privacy: String
   // Empty list means all columns.
   val columnsToImport: List[String]
-
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame
+  protected val needHiveContext = false
+  protected def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
-  def restrictedDataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame =
-    restrictToColumns(dataFrame(user), columnsToImport)
+  def restrictedDataFrame(user: serving.User,
+                          context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    restrictToColumns(dataFrame(user, context), columnsToImport)
+
+  def defaultContext()(implicit dataManager: DataManager): SQLContext =
+    if (needHiveContext) dataManager.masterHiveContext else dataManager.masterSQLContext
 
   private def restrictToColumns(
     full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
@@ -76,6 +86,10 @@ trait GenericImportRequest {
       full.select(columns: _*)
     } else full
   }
+
+  override def createDataFrame(user: serving.User,
+                               context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+    restrictedDataFrame(user, context)
 }
 
 case class CSVImportRequest(
@@ -92,8 +106,8 @@ case class CSVImportRequest(
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
-    val reader = dataManager.masterSQLContext
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+    val reader = context
       .read
       .format("com.databricks.spark.csv")
       .option("mode", mode)
@@ -117,8 +131,10 @@ case class CSVImportRequest(
 
   def notes = s"Imported from CSV files ${files}."
 }
-object CSVImportRequest {
+object CSVImportRequest extends FromJson[CSVImportRequest] {
   val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fCSVImportRequest
+  override def fromJson(j: JsValue): CSVImportRequest = json.Json.fromJson(j).get
 }
 
 object FileImportValidator {
@@ -136,7 +152,7 @@ case class JdbcImportRequest(
     keyColumn: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
       val connection = java.sql.DriverManager.getConnection(jdbcUrl)
@@ -144,7 +160,7 @@ case class JdbcImportRequest(
       finally connection.close()
     }
     val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
-    dataManager.masterSQLContext
+    context
       .read
       .jdbc(
         jdbcUrl,
@@ -163,15 +179,20 @@ case class JdbcImportRequest(
   }
 }
 
+object JdbcImportRequest extends FromJson[JdbcImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fJdbcImportRequest
+  override def fromJson(j: JsValue): JdbcImportRequest = json.Json.fromJson(j).get
+}
+
 trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
-
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  override val needHiveContext = true
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
     hadoopFile.assertReadAllowedFrom(user)
     FileImportValidator.checkFileHasContents(hadoopFile)
-    dataManager.masterHiveContext.read.format(format).load(hadoopFile.resolvedName)
+    context.read.format(format).load(hadoopFile.resolvedName)
   }
 
   def notes = s"Imported from ${format} files ${files}."
@@ -185,12 +206,22 @@ case class ParquetImportRequest(
   val format = "parquet"
 }
 
+object ParquetImportRequest extends FromJson[ParquetImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fParquetImportRequest
+  override def fromJson(j: JsValue): ParquetImportRequest = json.Json.fromJson(j).get
+}
+
 case class ORCImportRequest(
     table: String,
     privacy: String,
     files: String,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "orc"
+}
+
+object ORCImportRequest extends FromJson[ORCImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fORCImportRequest
+  override def fromJson(j: JsValue): ORCImportRequest = json.Json.fromJson(j).get
 }
 
 case class JsonImportRequest(
@@ -201,19 +232,30 @@ case class JsonImportRequest(
   val format = "json"
 }
 
+object JsonImportRequest extends FromJson[JsonImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fJsonImportRequest
+  override def fromJson(j: JsValue): JsonImportRequest = json.Json.fromJson(j).get
+}
+
 case class HiveImportRequest(
     table: String,
     privacy: String,
     hiveTable: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(user: serving.User)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  override val needHiveContext = true
+  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
       dataManager.hiveConfigured,
       "Hive is not configured for this Kite instance. Contact your system administrator.")
-    dataManager.masterHiveContext.table(hiveTable)
+    context.table(hiveTable)
   }
   def notes = s"Imported from Hive table ${hiveTable}."
+}
+
+object HiveImportRequest extends FromJson[HiveImportRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
+  override def fromJson(j: JsValue): HiveImportRequest = json.Json.fromJson(j).get
 }
 
 class SQLController(val env: BigGraphEnvironment) {
@@ -226,12 +268,20 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
     SQLController.saveTable(
-      request.restrictedDataFrame(user),
+      request.restrictedDataFrame(user, request.defaultContext()),
       request.notes,
       user,
       request.table,
       request.privacy,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
+
+  def saveView[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption = {
+    SQLController.saveView(
+      request.notes,
+      user,
+      request.table,
+      request.privacy, request)
+  }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
@@ -240,6 +290,13 @@ class SQLController(val env: BigGraphEnvironment) {
   def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
   def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
+
+  def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
+  def createViewJdbc(user: serving.User, request: JsonImportRequest) = saveView(user, request)
+  def createViewParquet(user: serving.User, request: ParquetImportRequest) = saveView(user, request)
+  def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
+  def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
+  def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
 
   // Finds the names of tables from string
   private def findTablesFromQuery(query: String): List[String] = {
@@ -259,7 +316,8 @@ class SQLController(val env: BigGraphEnvironment) {
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
       // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
-      val (projectTableNames, importedTableNames) = tableNames.partition(_._2.contains('|'))
+      val (projectTableNames, tableOrViewNames) = tableNames.partition(_._2.contains('|'))
+
       // For the assumed project tables we select those whose corresponding project really exists and
       // is accessible to the user
       val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
@@ -273,15 +331,21 @@ class SQLController(val env: BigGraphEnvironment) {
           .map { path => ((name, path), proj) }
       }
 
-      val projectTables = goodTablePathsInGoodProjects.map { case ((name, path), proj) => (name, Table(path, proj)) }
+      val projectTables = goodTablePathsInGoodProjects.map {
+        case ((name, path), proj) => (name, Table(path, proj))
+      }
 
-      val importedTableFrames = importedTableNames.mapValues(DirectoryEntry.fromName(_))
-      val goodImportedTables = importedTableFrames.filter {
+      val tableOrViewFrames = tableOrViewNames.mapValues(DirectoryEntry.fromName(_))
+      val goodTablesOrViews = tableOrViewFrames.filter {
         case (name, entry) => entry.exists && entry.readAllowedFrom(user)
       }
-      val importedTables = goodImportedTables.mapValues(_.asTableFrame.table)
 
-      queryTables(spec.sql, projectTables ++ importedTables)
+      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.isTable)
+      val importedTables = goodTables.mapValues(_.asTableFrame.table)
+      val importedViews = goodViews.mapValues(a =>
+        TypedJson.read[GenericImportRequest](a.asViewFrame().details.get)
+      )
+      queryTables(spec.sql, projectTables ++ importedTables, user, importedViews)
     }
 
   // Executes an SQL query at the project level.
@@ -298,17 +362,27 @@ class SQLController(val env: BigGraphEnvironment) {
         path => (path.toString -> Table(path, v))
       }
     }
-    queryTables(spec.sql, tables)
+    queryTables(spec.sql, tables, user)
   }
 
-  private def queryTables(sql: String, tables: Iterable[(String, Table)]): spark.sql.DataFrame = {
+  private def queryTables(
+    sql: String,
+    tables: Iterable[(String, Table)], user: serving.User,
+    viewRecipes: Iterable[(String, ViewRecipe)] = List()): spark.sql.DataFrame = {
     // Every query runs in its own SQLContext for isolation.
-    val sqlContext = dataManager.newSQLContext()
+    // Some import requests need a hivecontext to do their imports
+    // (e.g. HiveImportRequest), but we don't want regular users to
+    // do that.
+    val context = if (user.isAdmin) dataManager.newHiveContext() else dataManager.newSQLContext()
+
     for ((name, table) <- tables) {
-      table.toDF(sqlContext).registerTempTable(name)
+      table.toDF(context).registerTempTable(name)
+    }
+    for ((name, recipe) <- viewRecipes) {
+      recipe.createDataFrame(user, context).registerTempTable(name)
     }
     log.info(s"Trying to execute query: ${sql}")
-    sqlContext.sql(sql)
+    context.sql(sql)
   }
 
   // Creates a DataFrame from an SQL query. If it is a project level query then the computation steps will
@@ -443,5 +517,14 @@ object SQLController {
     importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
+  }
+
+  def saveView[T <: GenericImportRequest: json.Writes](
+    notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
+      implicit metaManager: MetaGraphManager,
+      dataManager: DataManager) = {
+    val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
+    val view = entry.asNewViewFrame(recipe, notes)
+    FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
   }
 }

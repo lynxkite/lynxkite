@@ -1,16 +1,9 @@
 // An API that allows controlling a running LynxKite instance via JSON commands.
 package com.lynxanalytics.biggraph.serving
 
-import java.io.FileInputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.net.URL
-
-import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.types
 import play.api.libs.json
 
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
@@ -18,9 +11,6 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 
 object RemoteAPIProtocol {
@@ -75,22 +65,33 @@ object RemoteAPIServer extends JsonServer {
   def globalSQL = jsonPost(c.globalSQL)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
     jsonPost[T, TableCheckpointResponse](c.importRequest)
+  private def createView[T <: GenericImportRequest: json.Writes: json.Reads] =
+    jsonPost[T, CheckpointResponse](c.createView)
   def importJdbc = importRequest[JdbcImportRequest]
   def importHive = importRequest[HiveImportRequest]
   def importCSV = importRequest[CSVImportRequest]
   def importParquet = importRequest[ParquetImportRequest]
   def importORC = importRequest[ORCImportRequest]
   def importJson = importRequest[JsonImportRequest]
+  def createViewJdbc = createView[JdbcImportRequest]
+  def createViewHive = createView[HiveImportRequest]
+  def createViewCSV = createView[CSVImportRequest]
+  def createViewParquet = createView[ParquetImportRequest]
+  def createViewORC = createView[ORCImportRequest]
+  def createViewJson = createView[JsonImportRequest]
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
+
   import RemoteAPIProtocol._
+
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
   val sqlController = new SQLController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
+
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
   def getDirectoryEntry(user: User, request: DirectoryEntryRequest): DirectoryEntryResult = {
@@ -202,5 +203,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def importRequest[T <: GenericImportRequest: json.Writes](user: User, request: T): TableCheckpointResponse = {
     val res = sqlController.doImport(user, request)
     TableCheckpointResponse(res.id)
+  }
+
+  def createView[T <: GenericImportRequest: json.Writes](user: User, request: T): CheckpointResponse = {
+    val res = sqlController.saveView(user, request)
+    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
+    CheckpointResponse(cp)
   }
 }
