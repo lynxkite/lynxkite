@@ -34,8 +34,8 @@ object RemoteAPIProtocol {
     isTable: Boolean,
     isProject: Boolean,
     isDirectory: Boolean,
-    isReadable: Boolean,
-    isWriteable: Boolean)
+    isReadAllowed: Boolean,
+    isWriteAllowed: Boolean)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val wTitledCheckpointResponse = json.Json.writes[TitledCheckpointResponse]
@@ -102,8 +102,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       isTable = entry.isTable,
       isProject = entry.isProject,
       isDirectory = entry.isDirectory,
-      isReadable = entry.readAllowedFrom(user),
-      isWriteable = entry.writeAllowedFrom(user)
+      isReadAllowed = entry.readAllowedFrom(user),
+      isWriteAllowed = entry.writeAllowedFrom(user)
     )
   }
 
