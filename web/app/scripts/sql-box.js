@@ -64,7 +64,8 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
 
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
-            exportFormat === 'segmentation') {
+            exportFormat === 'segmentation' ||
+            exportFormat === 'view') {
           scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
@@ -110,6 +111,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
                 name: scope.exportKiteTable,
                 sql: scope.sql
               });
+        } else if (scope.exportFormat === 'view') {
+          req.name = scope.exportKiteTable;
+          req.privacy = 'public-read';
+          result = util.post('/ajax/createViewDFSpec', req);
         } else if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;
