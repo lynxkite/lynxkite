@@ -155,7 +155,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0),
       ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
       ('C', 3, 'Felix', 'Male', 'Gnome', NULL),
-      (NULL, 4, NULL, NULL, NULL, NULL);
+      ('D', 4, 'Oliver', 'Male', 'Troll', NULL),
+      (NULL, 5, NULL, NULL, NULL, NULL);
     """)
     connection.close()
 
@@ -175,10 +176,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       Map(
         "table" -> tablePath,
         "id-attr" -> "new_id"))
-    assert(vattr[String]("n") == Seq("A", "B", "C"))
+    assert(vattr[String]("n") == Seq("A", "B", "C", "D"))
     assert(vattr[Long]("id") == Seq(1, 2, 3, 4))
-    assert(vattr[String]("name") == Seq("Beata", "Daniel", "Felix"))
-    assert(vattr[String]("race condition") == Seq("Dwarf", "Gnome", "Halfling"))
+    assert(vattr[String]("name") == Seq("Beata", "Daniel", "Felix", "Oliver"))
+    assert(vattr[String]("race condition") == Seq("Dwarf", "Gnome", "Halfling", "Troll"))
     assert(vattr[Double]("level") == Seq(10.0, 20.0))
     assert(subProject.viewer.vertexAttributes.keySet ==
       Set("new_id", "n", "id", "name", "race condition", "level"))
