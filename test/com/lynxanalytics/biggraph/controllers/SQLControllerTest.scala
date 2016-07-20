@@ -143,9 +143,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(vattr[Double]("age") == Seq(18.2, 20.3, 50.3))
   }
 
-  test("import from SQLite") {
-    val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    val connection = java.sql.DriverManager.getConnection(url)
+  val sqliteURL = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+
+  def createSqliteSubscribers() = {
+    val connection = java.sql.DriverManager.getConnection(sqliteURL)
     val statement = connection.createStatement()
     statement.executeUpdate("""
     DROP TABLE IF EXISTS subscribers;
@@ -159,30 +160,77 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       (NULL, 5, NULL, NULL, NULL, NULL);
     """)
     connection.close()
+  }
 
-    val response = sqlController.importJdbc(
-      user,
-      JdbcImportRequest(
-        table = "jdbc-import-test",
-        privacy = "public-read",
-        jdbcUrl = url,
-        jdbcTable = "subscribers",
-        keyColumn = "id",
-        columnsToImport = List("n", "id", "name", "race condition", "level")))
-    val tablePath = response.id
-
+  def checkSqliteSubscribers(table: String) = {
     run(
       "Import vertices",
       Map(
-        "table" -> tablePath,
+        "table" -> table,
         "id-attr" -> "new_id"))
     assert(vattr[String]("n") == Seq("A", "B", "C", "D"))
-    assert(vattr[Long]("id") == Seq(1, 2, 3, 4))
+    assert(vattr[Long]("id") == Seq(1, 2, 3, 4, 5))
     assert(vattr[String]("name") == Seq("Beata", "Daniel", "Felix", "Oliver"))
     assert(vattr[String]("race condition") == Seq("Dwarf", "Gnome", "Halfling", "Troll"))
     assert(vattr[Double]("level") == Seq(10.0, 20.0))
     assert(subProject.viewer.vertexAttributes.keySet ==
       Set("new_id", "n", "id", "name", "race condition", "level"))
+  }
+
+  test("import from SQLite (no partitioning)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = "",
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
+    checkSqliteSubscribers(response.id)
+  }
+
+  test("import from SQLite (INTEGER partitioning)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = "id",
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
+    checkSqliteSubscribers(response.id)
+  }
+
+  test("import from SQLite (DOUBLE partitioning)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = "level",
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
+    checkSqliteSubscribers(response.id)
+  }
+
+  test("import from SQLite (TEXT partitioning)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = "name",
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
+    checkSqliteSubscribers(response.id)
   }
 
   test("sql export to parquet + import back (including tuple columns)") {
@@ -220,5 +268,4 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       (47.5269674, 19.0323968)))
     graph_util.HadoopFile(exportPath).delete
   }
-
 }
