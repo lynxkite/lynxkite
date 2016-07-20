@@ -10,13 +10,12 @@ before = project.scalars['vertex_count'].toDouble()
 
 start_time = System.currentTimeMillis()
 
-db = System.getenv('MYSQL')
-url = (
-  "jdbc:mysql://$db:3306/db?user=root&password=rootroot" +
-  '&rewriteBatchedStatements=true')
+
+db = System.getenv('ORACLE')
+url = "jdbc:oracle:thin:root/rootroot@$db:1521:db"
 println "writing $before records to $url"
 p = new java.util.Properties()
-p.setProperty('driver', 'com.mysql.jdbc.Driver')
+p.setProperty('driver', 'oracle.jdbc.OracleDriver')
 p.setProperty('batchsize', '10000')
 project.vertexDF.write().mode('overwrite').jdbc(url, 'test_edges', p)
 
