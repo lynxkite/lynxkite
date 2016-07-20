@@ -48,7 +48,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
             {
-              df: {
+              dfSpec: {
                 isGlobal: scope.isGlobal,
                 directory: scope.directory,
                 project: scope.project,
@@ -90,7 +90,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           return;
         }
         var req = {
-          df: {
+          dfSpec: {
             isGlobal: scope.isGlobal,
             directory: scope.directory,
             project: scope.project,

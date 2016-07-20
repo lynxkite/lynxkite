@@ -116,30 +116,30 @@ case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], p
     context.sql(sql)
   }
 }
-case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
+case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
 case class SQLExportToTableRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   table: String,
   privacy: String)
 case class SQLExportToCSVRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String,
   header: Boolean,
   delimiter: String,
   quote: String)
 case class SQLExportToJsonRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String)
 case class SQLExportToParquetRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String)
 case class SQLExportToORCRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String)
 case class SQLExportToJdbcRequest(
-    df: DataFrameSpec,
+    dfSpec: DataFrameSpec,
     jdbcUrl: String,
     table: String,
     mode: String) {
@@ -389,7 +389,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = request.df.createDataFrame(user, dataManager.newSQLContext())
+    val df = request.dfSpec.createDataFrame(user, dataManager.newSQLContext())
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
@@ -404,10 +404,10 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = request.df.createDataFrame(user, dataManager.newSQLContext())
+    val df = request.dfSpec.createDataFrame(user, dataManager.newSQLContext())
 
     SQLController.saveTable(
-      df, s"From ${request.df.project} by running ${request.df.sql}",
+      df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
       user, request.table, request.privacy)
   }
 
@@ -415,7 +415,7 @@ class SQLController(val env: BigGraphEnvironment) {
     user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
     downloadableExportToFile(
       user,
-      request.df,
+      request.dfSpec,
       request.path,
       "csv",
       Map(
@@ -428,22 +428,22 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToJson(
     user: serving.User, request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
-    downloadableExportToFile(user, request.df, request.path, "json")
+    downloadableExportToFile(user, request.dfSpec, request.path, "json")
   }
 
   def exportSQLQueryToParquet(
     user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
-    exportToFile(user, request.df, HadoopFile(request.path), "parquet")
+    exportToFile(user, request.dfSpec, HadoopFile(request.path), "parquet")
   }
 
   def exportSQLQueryToORC(
     user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
-    exportToFile(user, request.df, HadoopFile(request.path), "orc")
+    exportToFile(user, request.dfSpec, HadoopFile(request.path), "orc")
   }
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.df.createDataFrame(user, dataManager.newSQLContext())
+    val df = request.dfSpec.createDataFrame(user, dataManager.newSQLContext())
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
