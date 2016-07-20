@@ -16,20 +16,28 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsValue
 
 trait ViewRecipe {
   def createDataFrame(user: serving.User,
-    context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
+                      context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
+  def notes: String
+  val name: String
+  val privacy: String
 }
-object DataFrameSpec {
+object DataFrameSpec extends FromJson[DataFrameSpec] {
   // Utilities for testing.
   def local(project: String, sql: String) =
     new DataFrameSpec(isGlobal = false, directory = None, project = Some(project), sql = sql)
   def global(directory: String, sql: String) =
     new DataFrameSpec(isGlobal = true, directory = Some(directory), project = None, sql = sql)
+
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
+  override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
-case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) extends ViewRecipe {
-  override def createDataFrame(user: User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) {
+  def createDataFrame(user: User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
     if (isGlobal) globalSQL(user, context)
     else projectSQL(user, context)
   }
@@ -150,10 +158,22 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
+case class SQLCreateView(name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe {
+  override def createDataFrame(user: User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
+    dfSpec.createDataFrame(user, context)
+
+  override def notes: String = dfSpec.sql
+}
+
+object SQLCreateView extends FromJson[SQLCreateView] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fSQLCreateView
+  override def fromJson(j: JsValue): SQLCreateView = json.Json.fromJson(j).get
+}
 
 trait GenericImportRequest extends ViewRecipe {
   val table: String
   val privacy: String
+  override val name: String = table
   // Empty list means all columns.
   val columnsToImport: List[String]
   protected val needHiveContext = false
@@ -365,12 +385,12 @@ class SQLController(val env: BigGraphEnvironment) {
       request.privacy,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
-  def saveView[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption = {
+  def saveView[T <: ViewRecipe: json.Writes](user: serving.User, recipe: T): FEOption = {
     SQLController.saveView(
-      request.notes,
+      recipe.notes,
       user,
-      request.table,
-      request.privacy, request)
+      recipe.name,
+      recipe.privacy, recipe)
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -387,6 +407,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
   def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
+  def createViewDFSpec(user: serving.User, spec: SQLCreateView) = saveView(user, spec)
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
@@ -515,13 +536,13 @@ object SQLController {
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 
-  def saveView[T <: GenericImportRequest: json.Writes](
-    notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
+  def saveView[T <: ViewRecipe: json.Writes](
+    notes: String, user: serving.User, name: String, privacy: String, recipe: T)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager) = {
-    val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
+    val entry = assertAccessAndGetTableEntry(user, name, privacy)
     val view = entry.asNewViewFrame(recipe, notes)
-    FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
+    FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
   }
 
   def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
