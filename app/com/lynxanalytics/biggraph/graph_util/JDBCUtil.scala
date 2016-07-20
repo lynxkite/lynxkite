@@ -85,6 +85,9 @@ object JDBCUtil {
       i => '"' + toString(minKeyNumber + i * keyRange / numPartitions) + '"'
     }
     val k = keyColumn
+    // Make sure the same bound is not used twice. That would lead to duplicate data.
+    assert(bounds.size == bounds.toSet.size,
+      s"Could not split the range between $minKey and $maxKey into $numPartitions partitions.")
     if (bounds.isEmpty) {
       assert(numPartitions == 1, s"Unexpected partition count: $numPartitions")
       Array(null)
