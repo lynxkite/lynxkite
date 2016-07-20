@@ -132,6 +132,7 @@ case $MODE in
 
         SCRIPT_PID=\$!
         tail -f ~/test_output.txt --pid=\$SCRIPT_PID
+ENDSSH
     ) || echo "SSH failed but not giving up!"
     echo "SSH connection to cluster is now closed."
 
