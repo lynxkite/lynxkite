@@ -343,7 +343,7 @@ class SQLController(val env: BigGraphEnvironment) {
       val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.isTable)
       val importedTables = goodTables.mapValues(_.asTableFrame.table)
       val importedViews = goodViews.mapValues(a =>
-        TypedJson.read[GenericImportRequest](a.asViewFrame().details.get)
+        a.asViewFrame().getRecipe
       )
       queryTables(spec.sql, projectTables ++ importedTables, user, importedViews)
     }
@@ -521,8 +521,8 @@ object SQLController {
 
   def saveView[T <: GenericImportRequest: json.Writes](
     notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
-    implicit metaManager: MetaGraphManager,
-    dataManager: DataManager) = {
+      implicit metaManager: MetaGraphManager,
+      dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val view = entry.asNewViewFrame(recipe, notes)
     FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
