@@ -925,7 +925,7 @@ class ViewFrame(path: SymbolPath)(
     checkpoint = cps.checkpoint.get
   }
   override def isDirectory: Boolean = false
-  def getRecipe: json.JsObject = details.get
+  def getRecipe: ViewRecipe = TypedJson.read[ViewRecipe](details.get)
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
