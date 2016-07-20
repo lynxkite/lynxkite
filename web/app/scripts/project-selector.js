@@ -206,11 +206,11 @@ angular.module('biggraph').directive('projectSelector',
                 { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
           }
         },
-        editConfig: function(name, config) {
+        editConfig: function(name, config, type) {
           scope.startTableImport();
           $timeout(function () {
             $anchorScroll('import-table');
-            scope.$broadcast('fill import from config', config, name);
+            scope.$broadcast('fill import from config', config, name, type);
           });
         },
         renameMenuItemLabel: 'Rename or move...'
@@ -221,6 +221,9 @@ angular.module('biggraph').directive('projectSelector',
       };
       scope.isTable = function(object) {
         return object.objectType === 'table';
+      };
+      scope.isView = function(object) {
+        return object.objectType === 'view';
       };
 
       scope.importTable = {};

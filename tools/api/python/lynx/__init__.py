@@ -63,6 +63,7 @@ def get_directory_entry(path, connection=None):
 
 
 class Connection(object):
+
   '''A connection to a LynxKite instance.
 
   Some LynxKite API methods take a connection argument which can be used to communicate with
@@ -120,98 +121,8 @@ class Connection(object):
     return r
 
 
-class Table(object):
-  '''
-  Contains static methods for importing LynxKite tables.
-  '''
-
-  @staticmethod
-  def import_csv(
-          files,
-          table,
-          privacy=default_privacy,
-          columnNames=[],
-          delimiter=',',
-          mode='FAILFAST',
-          infer=True,
-          columnsToImport=[],
-          connection=None):
-    connection = connection or default_connection()
-    response = connection.send(
-        'importCSV',
-        dict(
-            files=files,
-            table=table,
-            privacy=privacy,
-            columnNames=columnNames,
-            delimiter=delimiter,
-            mode=mode,
-            infer=infer,
-            columnsToImport=columnsToImport))
-    return response.path
-
-  @staticmethod
-  def import_hive(self, table, hiveTable,
-                  privacy=default_privacy, columnsToImport=[],
-                  connection=None):
-    connection = connection or default_connection()
-    response = self.connection.send(
-        'importHive',
-        dict(
-            table=table,
-            privacy=privacy,
-            hiveTable=hiveTable,
-            columnsToImport=columnsToImport))
-    return response.path
-
-  @staticmethod
-  def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
-                  privacy=default_privacy, columnsToImport=[],
-                  connection=None):
-    connection = connection or default_connection()
-    response = connection.send(
-        'importJdbc',
-        dict(
-            table=table,
-            jdbcUrl=jdbcUrl,
-            privacy=privacy,
-            jdbcTable=jdbcTable,
-            keyColumn=keyColumn,
-            columnsToImport=columnsToImport))
-    return reponse.path
-
-  @staticmethod
-  def import_parquet(self, table, privacy=default_privacy,
-                     columnsToImport=[], connection=None):
-    return Table._importFileWithSchema(
-        'Parquet', table, privacy, columnsToImport, connection)
-
-  @staticmethod
-  def import_orc(self, table, privacy=default_privacy,
-                 columnsToImport=[], connection=None):
-    return Table._importFileWithSchema(
-        'ORC', table, privacy, columnsToImport, connection)
-
-  @staticmethod
-  def import_json(self, table, privacy=default_privacy,
-                  columnsToImport=[], connection=None):
-    return Table._importFileWithSchema(
-        'Json', table, privacy, columnsToImport, connection)
-
-  @staticmethod
-  def _importFileWithSchema(format, table, privacy,
-                            files, columnsToImport, connection=None):
-    connection = connection or default_connection()
-    r = connection.send('import' + format,
-                        dict(
-                            table=table,
-                            privacy=privacy,
-                            files=files,
-                            columnsToImport=columnsToImport))
-    return response.path
-
-
 class Project(object):
+
   '''Represents an unanchored LynxKite project.
 
   This project is not automatically saved to the LynxKite project directories.
@@ -257,6 +168,68 @@ class Project(object):
     ), raw=True)
     return r['rows']
 
+  def import_csv(self, files, table,
+                 privacy=default_privacy,
+                 columnNames=[],
+                 delimiter=',',
+                 mode='FAILFAST',
+                 infer=True,
+                 columnsToImport=[],
+                 view=False):
+    return self._import_or_create_view("importCSV", view,
+                                       dict(table=table,
+                                            files=files,
+                                            privacy=privacy,
+                                            columnNames=columnNames,
+                                            delimiter=delimiter,
+                                            mode=mode,
+                                            infer=infer,
+                                            columnsToImport=columnsToImport))
+
+  def import_hive(self, table, hiveTable,
+                  privacy=default_privacy, columnsToImport=[]):
+    r = self.connection.send('importHive',
+                             dict(
+                                 table=table,
+                                 privacy=privacy,
+                                 hiveTable=hiveTable,
+                                 columnsToImport=columnsToImport))
+
+  def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
+                  privacy=default_privacy, columnsToImport=[], view=False):
+    return self._import_or_create_view("Jdbc", view,
+                                       dict(table=table,
+                                            jdbcUrl=jdbcUrl,
+                                            privacy=privacy,
+                                            jdbcTable=jdbcTable,
+                                            keyColumn=keyColumn,
+                                            columnsToImport=columnsToImport))
+
+  def import_parquet(
+          self, table, privacy=default_privacy, columnsToImport=[], view=False):
+    return self._import_or_create_view("Parquet", view,
+                                       dict(table=table,
+                                            privacy=privacy,
+                                            columnsToImport=columnsToImport))
+
+  def import_orc(self, table, privacy=default_privacy,
+                 columnsToImport=[], view=False):
+    return self._import_or_create_view("ORC", view,
+                                       dict(table=table,
+                                            privacy=privacy,
+                                            columnsToImport=columnsToImport))
+
+  def import_json(self, table, privacy=default_privacy,
+                  columnsToImport=[], view=False):
+    return self._import_or_create_view("Json", view,
+                                       dict(table=table,
+                                            privacy=privacy,
+                                            columnsToImport=columnsToImport))
+
+  def _import_or_create_view(self, format, view, dict):
+    endpoint = ("createView" if view else "import") + format
+    return self.connection.send(endpoint, dict)
+
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
     r = self.connection.send('runOperation',
@@ -275,6 +248,7 @@ class Project(object):
 
 
 class LynxException(Exception):
+
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
 
   def __init__(self, error):
