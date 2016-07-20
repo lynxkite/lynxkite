@@ -129,8 +129,8 @@ case $MODE in
         # loop can exit.
         nohup ./test_cmds.sh >~/test_output.txt \
           || echo "done"> ~/test_status.txt &
-        SCRIPT_PID=\$!
 
+        SCRIPT_PID=\$!
         tail -f ~/test_output.txt --pid=\$SCRIPT_PID
     ) || echo "SSH failed but not giving up!"
     echo "SSH connection to cluster is now closed."
