@@ -558,6 +558,12 @@ object SQLController {
     FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
   }
 
+  // Every query runs in its own SQLContext for isolation.
+  // Some import requests need a hivecontext to do their imports
+  // (e.g. HiveImportRequest), but we don't want regular users to
+  // do that.
+  // With this implementation, if a non-admin calls hive related
+  // stuff, the execution will simply fail
   def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
     if (user.isAdmin) {
       dataManager.newHiveContext()
