@@ -48,18 +48,18 @@ private class LogisticRegressionModelImpl(
 }
 
 private class ClusterModelImpl(
-    m: ml.clustering.KMeansModel,
+    m: ml.clustering.KMeansModel, statistics: String,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
   // Transform the data with clustering model and append an additional probability column.   
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  val scaledCenters = {
+  val scaledCenters = "(" + {
     val unscaledCenters = m.clusterCenters
     val transformingVector = featureScaler.std
     val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
     unscaledCenters.map(transformer.transform(_))
-  }
+  }.mkString(", ") + ")"
   def details: String = {
-    s"cluster centers: ${scaledCenters.mkString}"
+    s"cluster centers: ${scaledCenters}\n" + statistics
   }
 }
 
@@ -68,7 +68,7 @@ case class Model(
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
-  featureScaler: mllib.feature.StandardScalerModel, // The scaler used to scale the features.
+  featureScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the features.
   statistics: Option[String]) // For the details that require training data 
     extends ToJson with Equals {
 
@@ -95,11 +95,13 @@ case class Model(
   override def equals(other: Any) = {
     if (canEqual(other)) {
       val o = other.asInstanceOf[Model]
+      def featureScalerEquals = ((featureScaler.isEmpty && o.featureScaler.isEmpty) ||
+        standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
       method == o.method &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
-        standardScalerModelEquals(featureScaler, o.featureScaler)
+        featureScalerEquals
     } else {
       false
     }
@@ -113,7 +115,7 @@ case class Model(
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "featureNames" -> featureNames,
-      "featureScaler" -> standardScalerModelToJson(Some(featureScaler)),
+      "featureScaler" -> standardScalerModelToJson(featureScaler),
       "statistics" -> statistics
     )
   }
@@ -127,26 +129,39 @@ case class Model(
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
       case "KMeans clustering" =>
-        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), featureScaler)
+        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get, featureScaler.get)
+    }
+  }
+
+  def scaleFeatures(unscaledFeatures: AttributeRDD[mllib.linalg.Vector]): AttributeRDD[mllib.linalg.Vector] = {
+    if (featureScaler.isEmpty) {
+      unscaledFeatures
+    } else {
+      unscaledFeatures.mapValues(featureScaler.get.transform(_))
     }
   }
 
   def scalerDetails: String = {
-    val meanInfo =
-      if (featureScaler.withMean) {
-        val vec = "(" + featureScaler.mean.toArray.mkString(", ") + ")"
-        s"Centered to 0; original mean was $vec\n"
-      } else {
-        ""
-      }
-    val stdInfo =
-      if (featureScaler.withStd) {
-        val vec = "(" + featureScaler.std.toArray.mkString(", ") + ")"
-        s"Scaled to unit standard deviation; original deviation was $vec"
-      } else {
-        ""
-      }
-    meanInfo + stdInfo
+    if (featureScaler.isEmpty) {
+      ""
+    } else {
+      val featureScalerValue = featureScaler.get
+      val meanInfo =
+        if (featureScalerValue.withMean) {
+          val vec = "(" + featureScalerValue.mean.toArray.mkString(", ") + ")"
+          s"Centered to 0; original mean was $vec\n"
+        } else {
+          ""
+        }
+      val stdInfo =
+        if (featureScalerValue.withStd) {
+          val vec = "(" + featureScalerValue.std.toArray.mkString(", ") + ")"
+          s"Scaled to unit standard deviation; original deviation was $vec"
+        } else {
+          ""
+        }
+      meanInfo + stdInfo
+    }
   }
 }
 
@@ -170,7 +185,7 @@ object Model extends FromJson[Model] {
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
-      standardScalerModelFromJson(j \ "featureScaler").get,
+      standardScalerModelFromJson(j \ "featureScaler"),
       (j \ "statistics").as[Option[String]]
     )
   }

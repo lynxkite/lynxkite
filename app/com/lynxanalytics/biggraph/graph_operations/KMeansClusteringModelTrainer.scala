@@ -59,6 +59,7 @@ case class KMeansClusteringModelTrainer(
       .setFeaturesCol("vector")
       .setPredictionCol("classification")
     val model = kmeans.fit(scaledDF)
+    val cost = model.computeCost(scaledDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
@@ -66,8 +67,8 @@ case class KMeansClusteringModelTrainer(
       labelName = None,
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
-      featureScaler = params.featureScaler,
-      statistics = None)
+      featureScaler = Some(params.featureScaler),
+      statistics = Some(s"${cost}"))
     )
   }
 }

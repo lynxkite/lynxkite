@@ -1514,8 +1514,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Train linear regression model", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
-      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
       Choice("method", "Method", options = FEOption.list(
         "Linear regression", "Ridge regression", "Lasso")))
     def enabled =

@@ -46,7 +46,7 @@ case class ClassifyWithModel(numFeatures: Int)
     val modelValue = inputs.model.value
     val rddArray = inputs.features.toArray.map(_.rdd)
     val unscaledRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val scaledRDD = unscaledRDD.mapValues(modelValue.featureScaler.transform(_))
+    val scaledRDD = modelValue.scaleFeatures(unscaledRDD)
     val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
     // Transform data to an attributeRDD with the attribute (probability, classification)
