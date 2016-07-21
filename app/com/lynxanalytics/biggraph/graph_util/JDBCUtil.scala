@@ -19,6 +19,9 @@ object JDBCQuoting {
 }
 
 object JDBCUtil {
+  // Reads a table from JDBC, partitioned by a keyColumn. This is a wrapper around Spark's
+  // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
+  // the partitioning strategy depending on keyColumn.
   def read(context: SQLContext, url: String, table: String, keyColumn: String): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val props = new java.util.Properties
@@ -61,22 +64,29 @@ object JDBCUtil {
     keyColumn: String, minKey: String, maxKey: String, numPartitions: Int): Iterable[String] = {
     assert(minKey < maxKey, s"The database thinks $minKey < $maxKey.")
     // We assume strings are mostly made up of the following characters.
-    val characters = (('0' to '9') ++ ('A' to 'Z') ++ ('a' to 'z')).sorted.mkString
+    val characters = (('0' to '9') ++ ('A' to 'Z') ++ ('a' to 'z') :+ ' ').sorted.mkString
     val base: Double = characters.length
+    // Returns the index of the character in "characters" that is closest in ordering.
     def indexOf(c: Char) = {
       val i = characters.indexWhere(c <= _)
       if (i < 0) characters.length - 1 else i
     }
+    // Converts the string to a number. If "characters" went from A to Z, AAAAAA would be 0.0 and
+    // ZZZZZZ would be 0.999999.
     def toNumber(s: String) = {
       val values = s.map { c => 1.0 min (indexOf(c) / base) max 0.0 }
       values.zipWithIndex.map { case (v, i) => v * Math.pow(base, -i) }.sum
     }
+    // Converts the number to a string. It returns a fixed-length string made up of characters in
+    // "characters", but it should be quite close in lexicographic order to the original string.
     def toString(d: Double) = {
       val numbers = (0 until stringPrefixLength).map {
         i => (d % Math.pow(base, -i)) * Math.pow(base, i)
       }
       numbers.map { n => characters.charAt((n * base).toInt) }.mkString
     }
+    // Now we can convert the start and end of the range to numbers, split it up to N equal slices
+    // (partitions) and return the bounding strings for these intervals.
     val minKeyNumber = toNumber(minKey)
     val maxKeyNumber = toNumber(maxKey)
     assert(minKeyNumber < maxKeyNumber, s"Could not split the range between $minKey and $maxKey.")
@@ -84,7 +94,9 @@ object JDBCUtil {
     val bounds = (1 until numPartitions).map {
       i => '"' + toString(minKeyNumber + i * keyRange / numPartitions) + '"'
     }
-    val k = keyColumn
+    val order = ('"' + minKey + '"') +: bounds :+ ('"' + maxKey + '"')
+    // Make sure we did not mess up.
+    assert(order == order.sorted, s"Unexpected error while partitioning from $minKey to $maxKey.")
     // Make sure the same bound is not used twice. That would lead to duplicate data.
     assert(bounds.size == bounds.toSet.size,
       s"Could not split the range between $minKey and $maxKey into $numPartitions partitions.")
@@ -92,6 +104,7 @@ object JDBCUtil {
       assert(numPartitions == 1, s"Unexpected partition count: $numPartitions")
       Array(null)
     } else {
+      val k = keyColumn
       // Only upper bound for the first partition.
       s"$k < ${bounds.head}" +:
         bounds.zip(bounds.tail).map { case (a, b) => s"$a <= $k AND $k < $b" } :+
@@ -111,6 +124,7 @@ case class TableStats(
   minLongKey: Option[Long] = None, maxLongKey: Option[Long] = None,
   minStringKey: Option[String] = None, maxStringKey: Option[String] = None)
 object TableStats {
+  // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
     val quotedTable = JDBCQuoting.quoteIdentifier(table)
     val quotedKey = JDBCQuoting.quoteIdentifier(keyColumn)
