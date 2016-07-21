@@ -135,8 +135,10 @@ will be split into a sub-range for each Spark worker, so they can each query a p
 parallel.
 +
 Pick a column that is uniformly distributed. Numerical identifiers will give the best performance.
-String (`VARCHAR`) columns are also supported. If the partitioning column is left empty, only a
-fraction of the cluster resources will be used.
+String (`VARCHAR`) columns are also supported but only work well if they mostly contain letters of
+the English alphabet and numbers.
++
+If the partitioning column is left empty, only a fraction of the cluster resources will be used.
 ====
 
 [[import-hive]]
