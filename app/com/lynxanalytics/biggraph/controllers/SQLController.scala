@@ -20,8 +20,8 @@ import play.api.libs.json.JsResult
 import play.api.libs.json.JsValue
 
 trait ViewRecipe {
-  def createDataFrame(user: serving.User,
-                      context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
+  def createDataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
   def notes: String
   val name: String
   val privacy: String
@@ -36,8 +36,10 @@ object DataFrameSpec extends FromJson[DataFrameSpec] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
   override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
-case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) {
-  def createDataFrame(user: User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+case class DataFrameSpec(
+    isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) {
+  def createDataFrame(user: User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
     if (isGlobal) globalSQL(user, context)
     else projectSQL(user, context)
   }
@@ -49,7 +51,8 @@ case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], p
   }
 
   // Creates a DataFrame from a global level SQL query.
-  private def globalSQL(user: serving.User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
+  private def globalSQL(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
     metaManager.synchronized {
       assert(project.isEmpty,
         "The project field in the DataFrameSpec must be empty for global SQL queries.")
@@ -93,7 +96,8 @@ case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], p
     }
 
   // Executes an SQL query at the project level.
-  private def projectSQL(user: serving.User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+  private def projectSQL(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
     val tables = metaManager.synchronized {
       assert(directory.isEmpty,
         "The directory field in the DataFrameSpec must be empty for local SQL queries.")
@@ -113,7 +117,8 @@ case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], p
     sql: String,
     tables: Iterable[(String, Table)], user: serving.User,
     context: SQLContext,
-    viewRecipes: Iterable[(String, ViewRecipe)] = List())(implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+    viewRecipes: Iterable[(String, ViewRecipe)] = List())(
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
     for ((name, table) <- tables) {
       table.toDF(context).registerTempTable(name)
     }
@@ -158,16 +163,19 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
-case class SQLCreateView(name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe {
-  override def createDataFrame(user: User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
+case class SQLCreateViewRequest(
+    name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe {
+  override def createDataFrame(
+    user: User, context: SQLContext)(
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
     dfSpec.createDataFrame(user, context)
 
   override def notes: String = dfSpec.sql
 }
 
-object SQLCreateView extends FromJson[SQLCreateView] {
+object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fSQLCreateView
-  override def fromJson(j: JsValue): SQLCreateView = json.Json.fromJson(j).get
+  override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
 }
 
 trait GenericImportRequest extends ViewRecipe {
@@ -181,8 +189,9 @@ trait GenericImportRequest extends ViewRecipe {
     implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
-  def restrictedDataFrame(user: serving.User,
-                          context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+  def restrictedDataFrame(
+    user: serving.User,
+    context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
     restrictToColumns(dataFrame(user, context), columnsToImport)
 
   def defaultContext()(implicit dataManager: DataManager): SQLContext =
@@ -196,9 +205,9 @@ trait GenericImportRequest extends ViewRecipe {
     } else full
   }
 
-  override def createDataFrame(user: serving.User,
-                               context: SQLContext)(
-                                 implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
+  override def createDataFrame(
+    user: serving.User, context: SQLContext)(
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
     restrictedDataFrame(user, context)
 }
 
@@ -216,7 +225,8 @@ case class CSVImportRequest(
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     val reader = context
       .read
       .format("com.databricks.spark.csv")
@@ -262,7 +272,8 @@ case class JdbcImportRequest(
     keyColumn: String,
     columnsToImport: List[String]) extends GenericImportRequest {
 
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     val stats = {
       val connection = java.sql.DriverManager.getConnection(jdbcUrl)
@@ -298,7 +309,8 @@ trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
   override val needHiveContext = true
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
     hadoopFile.assertReadAllowedFrom(user)
     FileImportValidator.checkFileHasContents(hadoopFile)
@@ -354,7 +366,8 @@ case class HiveImportRequest(
     columnsToImport: List[String]) extends GenericImportRequest {
 
   override val needHiveContext = true
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
       dataManager.hiveConfigured,
       "Hive is not configured for this Kite instance. Contact your system administrator.")
@@ -407,7 +420,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
   def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
-  def createViewDFSpec(user: serving.User, spec: SQLCreateView) = saveView(user, spec)
+  def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
