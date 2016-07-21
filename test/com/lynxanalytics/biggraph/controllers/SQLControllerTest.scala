@@ -130,8 +130,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     sqlController.createViewCSV(
       user,
       CSVImportRequest(
-        // naming is like this because sql doesn't like dashes in table names
-        table = "csvViewTest",
+        table = "csv-view-test",
         privacy = "public-read",
         files = csvFiles,
         columnNames = columns,
@@ -241,20 +240,22 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("export global sql to view + query it again") {
     val colNames = List("vertexId", "name", "age")
     createViewCSV("testgraph/vertex-data", colNames)
-    sqlController.createViewDFSpec(user, SQLCreateView(name = "sqlViewTest", privacy = "public-read",
+    sqlController.createViewDFSpec(user,
+      SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
       DataFrameSpec(
         isGlobal = true,
         directory = Some(""),
         project = None,
-        sql = "select * from `csvViewTest`"
+        sql = "select * from `csv-view-test`"
       )))
-    val res = Await.result(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec(
-        isGlobal = true,
-        directory = Some(""),
-        project = None,
-        sql = "select vertexId, name, age from `sqlViewTest` order by vertexId"
-      ), maxRows = 120)),
+    val res = Await.result(sqlController.runSQLQuery(user,
+      SQLQueryRequest(
+        DataFrameSpec(
+          isGlobal = true,
+          directory = Some(""),
+          project = None,
+          sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
+        ), maxRows = 120)),
       Duration.Inf)
     assert(res.header == colNames)
     assert(res.data == List(
