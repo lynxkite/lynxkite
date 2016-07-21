@@ -6,11 +6,11 @@ class JDBCUtilTest extends FunSuite {
   test("String partitioning: generic case") {
     val r = JDBCUtil.stringPartitionClauses("c", "ablak", "zsiraf", 5)
     assert(r == Seq(
-      "c < \"ff9qVjOnbB\"",
-      "\"ff9qVjOnbB\" <= c AND c < \"kiY6HSnbCF\"",
-      "\"kiY6HSnbCF\" <= c AND c < \"plwM3CCOnI\"",
-      "\"plwM3CCOnI\" <= c AND c < \"upKbovbCOL\"",
-      "\"upKbovbCOL\" <= c"))
+      "c < \"ff9EujBapm\"",
+      "\"ff9EujBapm\" <= c AND c < \"kiXu4SOBcr\"",
+      "\"kiXu4SOBcr\" <= c AND c < \"plwYFBanNC\"",
+      "\"plwYFBanNC\" <= c AND c < \"upKCPvnOAH\"",
+      "\"upKCPvnOAH\" <= c"))
   }
 
   test("String partitioning: single partition") {
@@ -21,17 +21,17 @@ class JDBCUtilTest extends FunSuite {
   test("String partitioning: two partitions") {
     val r = JDBCUtil.stringPartitionClauses("c", "ablak", "zsiraf", 2)
     assert(r == Seq(
-      "c < \"nFFEAKV0z1\"",
-      "\"nFFEAKV0z1\" <= c"
+      "c < \"nEkDfK  0t\"",
+      "\"nEkDfK  0t\" <= c"
     ))
   }
 
   test("String partitioning: tight range") {
     val r = JDBCUtil.stringPartitionClauses("c", "ablak1", "ablak2", 3)
     assert(r == Seq(
-      "c < \"ablak1KfLD\"",
-      "\"ablak1KfLD\" <= c AND c < \"ablak1fKgz\"",
-      "\"ablak1fKgz\" <= c"
+      "c < \"ablak1K 02\"",
+      "\"ablak1K 02\" <= c AND c < \"ablak1f 1B\"",
+      "\"ablak1f 1B\" <= c"
     ))
   }
 
@@ -43,8 +43,8 @@ class JDBCUtilTest extends FunSuite {
     intercept[AssertionError] { JDBCUtil.stringPartitionClauses("c", "❄ snow", "☃ snowman", 3) }
     val r = JDBCUtil.stringPartitionClauses("c", "ablak", "☃ snowman", 3)
     assert(r == Seq(
-      "c < \"ik8f6JaraE\"",
-      "\"ik8f6JaraE\" <= c AND c < \"qsVjSdBjCp\"",
-      "\"qsVjSdBjCp\" <= c"))
+      "c < \"ik8 5dvWdS\"",
+      "\"ik8 5dvWdS\" <= c AND c < \"qsVOSHr3DD\"",
+      "\"qsVOSHr3DD\" <= c"))
   }
 }
