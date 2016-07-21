@@ -150,3 +150,10 @@ use of the data via any of the import operations in a project.
 [[table]] Table::
 The full path of the table to be created.
 ====
+
+[[export-lynxkite-view]]
+### LynxKite view
+
+The results of a query can also be saved as a LynxKite view. This is very similar to a table, but the
+values are obtained dyanmically, i.e. if you export as view, then change data that is referred to by
+the view, further queries on the view will return updated results. See <<views>> for further details.
