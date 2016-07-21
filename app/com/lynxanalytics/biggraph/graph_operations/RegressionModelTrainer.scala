@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.ml.regression.{ LinearRegression, LinearRegressionModel }
+import org.apache.spark.ml
 import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.mllib.linalg.Vectors
 
@@ -51,12 +51,12 @@ case class RegressionModelTrainer(
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
 
-    val linearRegression = new LinearRegression()
-      .setMaxIter(100)
+    val linearRegression = new ml.regression.LinearRegression()
       .setFeaturesCol("vector")
       .setLabelCol("label")
       .setPredictionCol("prediction")
-    // The following settings are according to the Spark MLLib deprecation codes
+    // The following settings are according to the Spark MLLib deprecation codes. For example, see
+    // org/apache/spark/mllib/regression/LinearRegression.scala (branch-2.0, line-106).
     method match {
       case "Linear regression" =>
         linearRegression.setElasticNetParam(0.0).setRegParam(0.0)
@@ -76,19 +76,27 @@ case class RegressionModelTrainer(
       labelName = Some(labelName),
       featureNames = featureNames,
       // The features and labels are standardized by the model. A dummy scaler is used here.
-      featureScaler = new StandardScalerModel(Vectors.dense(0), Vectors.dense(0)),
+      featureScaler = None,
       statistics = Some(statistics))
     )
   }
 
   // Helper method to compute statistics where the training data is required.
   private def getStatistics(
-    model: LinearRegressionModel,
+    model: ml.regression.LinearRegressionModel,
     predictions: DataFrame): String = {
     val summary = model.summary
     val r2 = summary.r2
     val MAPE = predictions.select("prediction", "label").map {
-      row => math.abs(row.getDouble(0) / row.getDouble(1) - 1.0)
+      row =>
+        {
+          // Return an error of 100% if a zero division error occurs
+          if (row.getDouble(1) == 0) {
+            1.0
+          } else {
+            math.abs(row.getDouble(0) / row.getDouble(1) - 1.0)
+          }
+        }
     }.mean * 100
     // Only compute the t-values for methods with unbiased solvers (when the elastic 
     // net parameter equals to 0).

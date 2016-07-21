@@ -50,12 +50,14 @@ For linear regression and logistic regression models:
 For linear regression model:
 
 * `https://en.wikipedia.org/wiki/Coefficient_of_determination[R-squared]` is the coefficient of
-determination in statisitcs.
+determination, an index of the linear correlation between the features and the label.
 * `https://en.wikipedia.org/wiki/Mean_absolute_percentage_error[MAPE]` is the mean absolute percentage
-error, a measure of prediction accuracy in statistics.
+error, a measure of prediction accuracy.
 * `https://en.wikipedia.org/wiki/T-statistic[T-values]` can be used in hypothesis testing. The last T-value
 is for the intercept. This will not appear for the lasso model.
 
 For KMeans clustering model:
 
 * `cluster centers` are the vectors of the KMeans cluster centers.
+* `cost` is the k-means cost (sum of squared distances of points to their nearest center) for this model on
+the training data.

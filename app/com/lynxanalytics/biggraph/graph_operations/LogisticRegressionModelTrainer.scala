@@ -70,11 +70,7 @@ case class LogisticRegressionModelTrainer(
       labelName = Some(labelName),
       featureNames = featureNames,
       // The feature vectors are standardized by the model. A dummy scaler is used here.
-      featureScaler = {
-        val dummyVector = Vectors.dense(Array.fill(featureNames.size)(0.0))
-        new StandardScalerModel(
-          std = dummyVector, mean = dummyVector, withStd = false, withMean = false)
-      },
+      featureScaler = None,
       statistics = None))
   }
 }
