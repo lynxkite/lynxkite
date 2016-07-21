@@ -11,8 +11,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - New operation _"Mask vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
  - New operations _"Train a Logistic regression model"_, _"Classify with a model"_, _"Train a k-means
-   clustering model"_, _"Reduce vertex attributes to two dimensions"_ have been added.
- - Statistics of linear regression models are shown.
+   clustering model"_, and _"Reduce vertex attributes to two dimensions"_ have been added.
+ - Statistics are displayed on the linear regression models.
 
 ### 1.8.0
 
