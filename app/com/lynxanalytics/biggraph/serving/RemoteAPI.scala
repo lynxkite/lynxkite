@@ -221,31 +221,16 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   private def computeProject(editor: ProjectEditor): Unit = {
-    computeUncomputedAttributes(editor)
-    computeUncomputedScalars(editor)
+    for ((name, scalar) <- editor.scalars) {
+      dataManager.get(scalar)
+    }
+
+    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+    for ((name, attr) <- attributes) {
+      dataManager.get(attr)
+    }
 
     val segmentations = editor.viewer.sortedSegmentations
     segmentations.foreach(s => computeProject(s.editor))
-  }
-
-  private def uncomputed(entity: TypedEntity[_]): Boolean = {
-    val progress = dataManager.computeProgress(entity)
-    progress < 1.0
-  }
-
-  private def computeUncomputedScalars(editor: ProjectEditor): Unit = {
-    val uncomputedScalars = editor.scalars.filter(x => uncomputed(x._2))
-    for ((name, scalar) <- uncomputedScalars) {
-      dataManager.get(scalar)
-    }
-  }
-
-  private def computeUncomputedAttributes(editor: ProjectEditor): Unit = {
-    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
-    val uncomputedAttributes = attributes.filter(x => uncomputed(x._2))
-
-    for ((name, attr) <- uncomputedAttributes) {
-      dataManager.get(attr)
-    }
   }
 }
