@@ -8,6 +8,7 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 
 import com.google.common.collect.MapMaker
+import com.lynxanalytics.biggraph.controllers.ProjectEditor
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
@@ -423,10 +424,20 @@ class DataManager(sc: spark.SparkContext,
 
   def newSQLContext(): SQLContext = {
     val sqlContext = masterSQLContext.newSession()
-    sqlContext.udf.register(
-      "mask",
+    registerUDFs(sqlContext)
+    sqlContext
+  }
+
+  def newHiveContext(): HiveContext = {
+    val hiveContext = masterHiveContext.newSession()
+    registerUDFs(hiveContext)
+    hiveContext
+  }
+
+  private def registerUDFs(sQLContext: SQLContext) = {
+    sQLContext.udf.register(
+      "hash",
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
     )
-    sqlContext
   }
 }

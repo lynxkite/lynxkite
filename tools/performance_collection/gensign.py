@@ -11,7 +11,6 @@ The new version of gupload.sh should then be committed
 '''
 
 
-
 from M2Crypto import EVP
 from os.path import expanduser
 from base64 import b64encode
@@ -19,12 +18,14 @@ import sys
 
 policy_files = ['kitelogs-logs.policy', 'kitelogs-ops.policy']
 
+
 def b64_file(filename):
   with open(filename, 'r') as file:
     data = file.read()
     return b64encode(data)
 
 encoded_policies = map(b64_file, policy_files)
+
 
 def generate_signature(encoded_policy):
   pemfile_name = expanduser('~') + '/.ssh/kite-logs.pem'
@@ -80,8 +81,8 @@ print '''#!/bin/bash
 
 print 'LOGSPOL=' + encoded_policies[0]
 print 'LOGSSIG=' + signatures[0]
-print 'OPSPOL='  + encoded_policies[1]
-print 'OPSSIG='  + signatures[1]
+print 'OPSPOL=' + encoded_policies[1]
+print 'OPSSIG=' + signatures[1]
 print 'LOGSBUCKET=kitelogs-logs'
 print 'OPSBUCKET=kitelogs-ops'
 

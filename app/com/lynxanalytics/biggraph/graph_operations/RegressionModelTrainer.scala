@@ -56,7 +56,8 @@ case class RegressionModelTrainer(
       .setLabelCol("label")
       .setPredictionCol("prediction")
     // The following settings are according to the Spark MLLib deprecation codes. For example, see
-    // org/apache/spark/mllib/regression/LinearRegression.scala (branch-2.0, line-106).
+    // org/apache/spark/mllib/regression/LinearRegression.scala (branch-2.0, line-106). And also
+    // RidgeRegression.scala, Lasso.scala.
     method match {
       case "Linear regression" =>
         linearRegression.setElasticNetParam(0.0).setRegParam(0.0)
@@ -88,16 +89,19 @@ case class RegressionModelTrainer(
     val summary = model.summary
     val r2 = summary.r2
     val MAPE = predictions.select("prediction", "label").map {
-      row =>
-        {
-          // Return an error of 100% if a zero division error occurs
-          if (row.getDouble(1) == 0) {
-            1.0
-          } else {
-            math.abs(row.getDouble(0) / row.getDouble(1) - 1.0)
-          }
+      row => {
+        val prediction = row.getDouble(0)
+        val label = row.getDouble(1)
+        // Return an error of 100% if a zero division error occurs.
+        if (prediction == label) {
+          0.0
+        } else if (prediction == 0.0) {
+          1.0
+        } else {
+          math.abs(prediction / label - 1.0)
         }
-    }.mean * 100
+      }
+    }.mean * 100.0
     // Only compute the t-values for methods with unbiased solvers (when the elastic 
     // net parameter equals to 0).
     if (model.getElasticNetParam > 0.0) {
