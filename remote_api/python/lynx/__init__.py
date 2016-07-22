@@ -50,11 +50,30 @@ def sql(query, limit=None, **kwargs):
     checkpoints[name] = p.checkpoint
   r = _connection.send('globalSQL', dict(
       query=query,
-      limit=limit or default_sql_limit,
       checkpoints=checkpoints
-  ), raw=True)
-  return r['rows']
+  ))
+  return View(checkpoint=r['checkpoint'])
 
+class View:
+  def __init__(self, checkpoint):
+    self.checkpoint = checkpoint
+
+  def take(self, limit):
+    r = _connection.send('exportViewToTableResult', dict(
+      checkpoint=self.checkpoint,
+      limit=limit
+    ), raw=True)
+    return r['rows']
+
+  def df(self):
+    """ Will return Pandas DataFrame when implemented. """
+    return 0
+
+  def exportJson(self, path):
+    _connection.send('exportViewToJson', dict(
+      checkpoint = self.checkpoint,
+      path = path
+    ))
 
 def get_directory_entry(path, connection=None):
   connection = connection or default_connection()
