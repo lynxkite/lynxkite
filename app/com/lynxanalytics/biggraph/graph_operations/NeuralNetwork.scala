@@ -281,17 +281,13 @@ case class NeuralNetwork(
     m
   }
 
-  def train(
-    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
-    edges: CompactUndirectedGraph,
-    reversed: CompactUndirectedGraph): Network = {
-    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
-    val data = dataIterator.toSeq
+  def getTrueState(
+    data: Seq[(ID, (Option[Double], Array[Double]))]): Map[ID, Vector] = {
     val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
     val vertices = data.map(_._1)
-    // Initial state contains label and features.
-    val trueState: Map[ID, Vector] = vertices.map { id =>
+    // True state contains label and features.
+    val trueState = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = labels(id) // Label is in position 0.
@@ -303,20 +299,30 @@ case class NeuralNetwork(
       }
       id -> state
     }.toMap
+    trueState
+  }
 
+  // Forgets the label.
+  def blanked(state: Vector) = {
+    val s = state.copy
+    s(0) = 0.0
+    s(1) = 0.0
+    s
+  }
+
+  def train(
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
+    edges: CompactUndirectedGraph,
+    reversed: CompactUndirectedGraph): Network = {
+    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
+    val data = dataIterator.toSeq
+    val vertices = data.map(_._1)
     var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
     val random = new util.Random(0)
-    for (i <- 1 to iterations - 1) {
-      // Forgets the label.
-      def blanked(state: Vector) = {
-        val s = state.copy
-        s(0) = 0.0
-        s(1) = 0.0
-        s
-      }
-      // Initial states.
+    for (i <- 1 to iterations) {
+      val trueState = getTrueState(data)
       val keptState = trueState.map {
         case (id, state) =>
           if (random.nextDouble < forgetFraction) id -> blanked(state)
@@ -379,26 +385,8 @@ case class NeuralNetwork(
     network: Network): Iterator[(ID, Double)] = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
-    val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
-    val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
-    val trueState: Map[ID, Vector] = vertices.map { id =>
-      val state = DenseVector.zeros[Double](networkSize)
-      if (labels.contains(id)) {
-        state(0) = labels(id) // Label is in position 0.
-        state(1) = 1.0 // Mark of a source of truth is in position 1.
-      }
-      val fs = features(id)
-      for (i <- 0 until fs.size) {
-        state(i + 2) = fs(i) // Features start from position 2.
-      }
-      id -> state
-    }.toMap
-    def blanked(state: Vector) = {
-      val s = state.copy
-      s(0) = 0.0
-      s(1) = 0.0
-      s
-    }
+
+    val trueState = getTrueState(data)
     val initialState = if (!hideState) trueState else trueState.map {
       // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
       case (id, state) => id -> blanked(state)
