@@ -75,8 +75,9 @@ case class NeuralNetwork(
     val labelOpt = inputs.vertices.rdd.sortedLeftOuterJoin(inputs.label.rdd).mapValues(_._2)
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
-    val prediction = data1.mapPartitions(data => predict(data, edges, reversed))
 
+    val network = train(data.collect.iterator, edges, reversed)
+    val prediction = data1.mapPartitions(data => predict(data, edges, reversed, network))
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
@@ -280,17 +281,13 @@ case class NeuralNetwork(
     m
   }
 
-  def predict(
-    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
-    edges: CompactUndirectedGraph,
-    reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
-    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
-    val data = dataIterator.toSeq
+  def getTrueState(
+    data: Seq[(ID, (Option[Double], Array[Double]))]): Map[ID, Vector] = {
     val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
     val vertices = data.map(_._1)
-    // Initial state contains label and features.
-    val trueState: Map[ID, Vector] = vertices.map { id =>
+    // True state contains label and features.
+    val trueState = vertices.map { id =>
       val state = DenseVector.zeros[Double](networkSize)
       if (labels.contains(id)) {
         state(0) = labels(id) // Label is in position 0.
@@ -302,24 +299,33 @@ case class NeuralNetwork(
       }
       id -> state
     }.toMap
+    trueState
+  }
 
+  // Forgets the label.
+  def blanked(state: Vector) = {
+    val s = state.copy
+    s(0) = 0.0
+    s(1) = 0.0
+    s
+  }
+
+  def train(
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
+    edges: CompactUndirectedGraph,
+    reversed: CompactUndirectedGraph): Network = {
+    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
+    val data = dataIterator.toSeq
+    val vertices = data.map(_._1)
     var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
     val random = new util.Random(0)
     for (i <- 1 to iterations) {
-      // Forgets the label.
-      def blanked(state: Vector) = {
-        val s = state.copy
-        s(0) = 0.0
-        s(1) = 0.0
-        s
-      }
-      // Initial states.
+      val trueState = getTrueState(data)
       val keptState = trueState.map {
         case (id, state) =>
-          // Make final predictions in the last iteration. No forgetting now!
-          if (i != iterations && random.nextDouble < forgetFraction) id -> blanked(state)
+          if (random.nextDouble < forgetFraction) id -> blanked(state)
           else id -> state
       }
       val initialState = if (!hideState) keptState else keptState.map {
@@ -369,8 +375,28 @@ case class NeuralNetwork(
       network = network.adagrad(adagradMemory, networkGradients)
       finalOutputs = outputs.last
     }
-    // Return last predictions.
-    finalOutputs.newState.map {
+    finalOutputs.network
+  }
+
+  def predict(
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
+    edges: CompactUndirectedGraph,
+    reversed: CompactUndirectedGraph,
+    network: Network): Iterator[(ID, Double)] = {
+    val data = dataIterator.toSeq
+    val vertices = data.map(_._1)
+
+    val trueState = getTrueState(data)
+    val initialState = if (!hideState) trueState else trueState.map {
+      // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
+      case (id, state) => id -> blanked(state)
+    }
+    val outputs = (1 until radius).scanLeft {
+      new NetworkOutputs(network, vertices, edges, initialState, trueState)
+    } { (previous, r) =>
+      new NetworkOutputs(network, vertices, edges, previous.newState, previous.newState)
+    }
+    outputs.last.newState.map {
       case (id, state) => id -> state(0)
     }.iterator
   }
