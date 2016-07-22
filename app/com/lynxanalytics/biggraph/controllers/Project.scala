@@ -35,6 +35,7 @@ import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
@@ -69,10 +70,11 @@ case class RootProjectState(
     previousCheckpoint: Option[String],
     lastOperationDesc: String,
     // This will be set exactly when previousCheckpoint is set.
-    lastOperationRequest: Option[SubProjectOperation]) {
+    lastOperationRequest: Option[SubProjectOperation],
+    viewRecipe: Option[JsObject]) {
 }
 object RootProjectState {
-  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
+  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None, None)
 }
 
 // Complete state of segmentation.
@@ -728,6 +730,12 @@ class RootProjectEditor(
 
   val isSegmentation = false
   def asSegmentation: SegmentationEditor = ???
+
+  def viewRecipe_=[T <: ViewRecipe: json.Writes](r: T) = {
+    val js = TypedJson.createFromWriter(r).as[json.JsObject]
+    rootState = rootState.copy(viewRecipe = Some(js))
+  }
+  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
 // Specialized editor for a SegmentationState.
@@ -918,14 +926,15 @@ class ViewFrame(path: SymbolPath)(
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
     recipe: T, notes: String): Unit = manager.synchronized {
     set(rootDir / "objectType", "view")
-    details = TypedJson.createFromWriter(recipe).as[json.JsObject]
     val editor = new RootProjectEditor(RootProjectState.emptyState)
     editor.notes = notes
+    editor.viewRecipe = recipe
     val cps = manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
     checkpoint = cps.checkpoint.get
   }
+
   override def isDirectory: Boolean = false
-  def getRecipe: ViewRecipe = TypedJson.read[ViewRecipe](details.get)
+  def getRecipe: ViewRecipe = viewer.editor.viewRecipe.get
 }
 
 abstract class ObjectFrame(path: SymbolPath)(

@@ -11,12 +11,12 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.TypedEntity
 import com.lynxanalytics.biggraph.graph_api.SymbolPath
+import com.lynxanalytics.biggraph.graph_api.TypedJson
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
-  case class TitledCheckpointResponse(path: String)
   case class OperationRequest(
     checkpoint: String,
     operation: String,
@@ -40,7 +40,6 @@ object RemoteAPIProtocol {
     isWriteAllowed: Boolean)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
-  implicit val wTitledCheckpointResponse = json.Json.writes[TitledCheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
@@ -68,9 +67,9 @@ object RemoteAPIServer extends JsonServer {
   def projectSQL = jsonPost(c.projectSQL)
   def globalSQL = jsonPost(c.globalSQL)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, TitledCheckpointResponse](c.importRequest)
+    jsonPost[T, CheckpointResponse](c.importRequest)
   private def createView[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, TitledCheckpointResponse](c.createView)
+    jsonPost[T, CheckpointResponse](c.createView)
   def importJdbc = importRequest[JdbcImportRequest]
   def importHive = importRequest[HiveImportRequest]
   def importCSV = importRequest[CSVImportRequest]
@@ -161,7 +160,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def projectSQL(user: User, request: ProjectSQLRequest): TableResult = {
     val sqlContext = dataManager.newHiveContext()
-    registerTablesOfRootProject(sqlContext, "", request.checkpoint)
+    registerTablesOfRootProject(user, sqlContext, "", request.checkpoint)
     val df = sqlContext.sql(request.query)
     dfToTableResult(df, request.limit)
   }
@@ -170,17 +169,22 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val sqlContext = dataManager.newHiveContext()
     // Register tables
     for ((name, cp) <- request.checkpoints)
-      registerTablesOfRootProject(sqlContext, name + "|", cp)
+      registerTablesOfRootProject(user, sqlContext, name, cp)
     val df = sqlContext.sql(request.query)
     dfToTableResult(df, request.limit)
   }
 
   // Takes all the tables in the rootproject given by the checkpoint and registers all of them with prefixed name
-  private def registerTablesOfRootProject(sqlContext: org.apache.spark.sql.hive.HiveContext,
+  private def registerTablesOfRootProject(user: User, sqlContext: org.apache.spark.sql.hive.HiveContext,
                                           prefix: String, checkpoint: String) = {
     val viewer = getViewer(checkpoint)
     for (path <- viewer.allRelativeTablePaths) {
-      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(prefix + path.toString)
+      val df = controllers.Table(path, viewer).toDF(sqlContext)
+      df.registerTempTable(prefix + "|" + path.toString)
+      if (path.toString == "vertices") df.registerTempTable(prefix)
+    }
+    for (r <- viewer.editor.viewRecipe) {
+      r.createDataFrame(user, sqlContext).registerTempTable(prefix)
     }
   }
 
@@ -205,14 +209,18 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
+  def importRequest[T <: GenericImportRequest: json.Writes](
+    user: User, request: T): CheckpointResponse = {
     val res = sqlController.doImport(user, request)
-    TitledCheckpointResponse(res.id)
+    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
+    CheckpointResponse(cp)
   }
 
-  def createView[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
-    val res = sqlController.saveView(user, request)
-    TitledCheckpointResponse(res.id)
+  def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): CheckpointResponse = {
+    val editor = new RootProjectEditor(RootProjectState.emptyState)
+    editor.viewRecipe = recipe
+    val cps = metaManager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
+    CheckpointResponse(cps.checkpoint.get)
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {
