@@ -160,7 +160,8 @@ case class FEProjectListElement(
     // store import configuration
     details: Option[json.JsObject] = None) {
 
-  assert(objectType == "table" || objectType == "project", s"Unrecognized objectType: $objectType")
+  assert(objectType == "table" || objectType == "project" || objectType == "view",
+    s"Unrecognized objectType: $objectType")
 }
 
 case class FEProject(

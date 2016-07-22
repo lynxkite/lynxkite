@@ -33,7 +33,7 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
       };
 
       scope.editConfig = function() {
-        scope.menu.editConfig(scope.name, scope.config);
+        scope.menu.editConfig(scope.name, scope.config, scope.type);
       };
     },
   };

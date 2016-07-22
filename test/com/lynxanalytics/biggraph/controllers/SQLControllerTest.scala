@@ -3,6 +3,9 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 class SQLControllerTest extends BigGraphControllerTestBase {
   val sqlController = new SQLController(this)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
@@ -122,6 +125,21 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         "id-attr" -> "new_id"))
   }
 
+  def createViewCSV(file: String, columns: List[String]): Unit = {
+    val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
+    sqlController.createViewCSV(
+      user,
+      CSVImportRequest(
+        table = "csv-view-test",
+        privacy = "public-read",
+        files = csvFiles,
+        columnNames = columns,
+        delimiter = ",",
+        mode = "FAILFAST",
+        infer = false,
+        columnsToImport = List()))
+  }
+
   test("import from CSV without header") {
     importCSV("testgraph/vertex-data", List("vertexId", "name", "age"), infer = false)
     assert(vattr[String]("vertexId") == Seq("0", "1", "2"))
@@ -219,5 +237,28 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       (47.5269674, 19.0323968)))
     graph_util.HadoopFile(exportPath).delete
   }
-
+  test("export global sql to view + query it again") {
+    val colNames = List("vertexId", "name", "age")
+    createViewCSV("testgraph/vertex-data", colNames)
+    sqlController.createViewDFSpec(user,
+      SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
+        DataFrameSpec(
+          isGlobal = true,
+          directory = Some(""),
+          project = None,
+          sql = "select * from `csv-view-test`"
+        )))
+    val res = Await.result(sqlController.runSQLQuery(user,
+      SQLQueryRequest(
+        DataFrameSpec(
+          isGlobal = true,
+          directory = Some(""),
+          project = None,
+          sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
+        ), maxRows = 120)),
+      Duration.Inf)
+    assert(res.header == colNames)
+    assert(res.data == List(
+      List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
+  }
 }
