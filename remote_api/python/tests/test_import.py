@@ -36,8 +36,7 @@ class TestImport(unittest.TestCase):
         jdbcTable="subscribers",
         keyColumn="id",
         view=view)
-    print(cp)
-    res = lynx.sql("select * from `cp` order by id", cp=cp)
+    res = lk.sql("select * from `cp` order by id", cp=cp)
     self.assertEqual(res, [{'gender': 'Male',
                             'level': 10.0,
                             'name': 'Daniel',
@@ -55,7 +54,12 @@ class TestImport(unittest.TestCase):
                             'n': 'C',
                             'name': 'Felix',
                             'race condition': 'Gnome'},
-                           {'id': 4}])
+                           {'gender': 'Male',
+                            'id': 4,
+                            'n': 'D',
+                            'name': 'Oliver',
+                            'race condition': 'Troll'},
+                           {'id': 5}])
 
   def test_jdbc_import(self):
     self.stub_test_jdbc(False)
