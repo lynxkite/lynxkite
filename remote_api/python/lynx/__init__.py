@@ -9,8 +9,8 @@ The access to the LynxKite instance can be configured through the following envi
 Example usage:
 
     import lynx
-    lc = default_lynx_context()
-    p = lc.new_project()
+    lk = lynx.LynxKite()
+    p = lk.new_project()
     p.newVertexSet(size=100)
     print(p.scalar('vertex_count'))
 
@@ -30,24 +30,8 @@ if sys.version_info.major < 3:
 default_sql_limit = 1000
 default_privacy = 'public-read'
 
-_lynx_context = None
 
-
-def create_lynx_context(username=None, password=None):
-  return LynxContext(
-      os.environ['LYNXKITE_ADDRESS'],
-      username or os.environ.get('LYNXKITE_USERNAME'),
-      password or os.environ.get('LYNXKITE_PASSWORD'))
-
-
-def default_lynx_context():
-  global _lynx_context
-  if _lynx_context is None:
-    _lynx_context = create_lynx_context()
-  return _lynx_context
-
-
-class LynxContext(object):
+class LynxKite(object):
 
   '''A connection to a LynxKite instance.
 
@@ -57,11 +41,11 @@ class LynxContext(object):
   LYNXKITE_USERNAME, and LYNXKITE_PASSWORD environment variables.
   '''
 
-  def __init__(self, address, username=None, password=None):
+  def __init__(self, username=None, password=None, address=None):
     '''Creates a connection object, performing authentication if necessary.'''
-    self.address = address
-    self.username = username
-    self.password = password
+    self.address = address or os.environ['LYNXKITE_ADDRESS']
+    self.username = username or os.environ.get('LYNXKITE_USERNAME')
+    self.password = password or os.environ.get('LYNXKITE_PASSWORD')
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
