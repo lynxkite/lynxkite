@@ -98,7 +98,7 @@ class LynxKite(object):
         query=query,
         checkpoints=checkpoints
     ))
-    return View(r.checkpoint)
+    return View(self, r.checkpoint)
 
   def get_directory_entry(self, path):
     return self.send('getDirectoryEntry', dict(path=path))
@@ -201,11 +201,11 @@ class LynxKite(object):
 
   def _import_or_create_view(self, format, view, dict):
     if view:
-      # TODO: return View object here
-      return self.send('createView' + format, dict)
+      res = self.send('createView' + format, dict)
+      return View(self.lk, res.checkpoint)
     else:
       res = self.send('import' + format, dict)
-      return Table(res.checkpoint)
+      return Table(self.lk, res.checkpoint)
 
   def load_project(self, name):
     '''Loads an existing LynxKite project.'''
@@ -220,30 +220,29 @@ class LynxKite(object):
 
 class Table(object):
 
-  def __init__(self, checkpoint):
+  def __init__(self, lynxkite, checkpoint):
+    self.lk = lynxkite
     self.checkpoint = checkpoint
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
 
 
 class View:
-  def __init__(self, checkpoint):
+
+  def __init__(self, lynxkite, checkpoint):
+    self.lk = lynxkite
     self.checkpoint = checkpoint
 
   def take(self, limit):
-    r = _connection.send('exportViewToTableResult', dict(
-      checkpoint=self.checkpoint,
-      limit=limit
+    r = self.lk.send('takeFromView', dict(
+        checkpoint=self.checkpoint,
+        limit=limit,
     ), raw=True)
     return r['rows']
 
-  def df(self):
-    """ Will return Pandas DataFrame when implemented. """
-    return 0
-
   def exportJson(self, path):
-    _connection.send('exportViewToJson', dict(
-      checkpoint = self.checkpoint,
-      path = path
+    self.lk.send('exportViewToJson', dict(
+        checkpoint=self.checkpoint,
+        path=path,
     ))
 
 
@@ -254,9 +253,9 @@ class Project(object):
   This project is not automatically saved to the LynxKite project directories.
   '''
 
-  def __init__(self, lk, checkpoint):
+  def __init__(self, lynxkite, checkpoint):
     '''Creates a new blank project.'''
-    self.lk = lk
+    self.lk = lynxkite
     self.checkpoint = checkpoint
 
   def save(self, name):
@@ -278,12 +277,11 @@ class Project(object):
     return r.string
 
   def sql(self, query, limit=None):
-    r = self.lk.send('projectSQL', dict(
-        checkpoint=self.checkpoint,
+    r = self.lk.send('globalSQL', dict(
         query=query,
-        limit=limit or default_sql_limit,
-    ), raw=True)
-    return r['rows']
+        checkpoints={'': self.checkpoint},
+    ))
+    return View(self.lk, r.checkpoint)
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
