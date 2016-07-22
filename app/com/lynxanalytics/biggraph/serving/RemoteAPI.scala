@@ -8,10 +8,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
-import com.lynxanalytics.biggraph.graph_api.TypedEntity
-import com.lynxanalytics.biggraph.graph_api.SymbolPath
-import com.lynxanalytics.biggraph.graph_api.TypedJson
-import com.lynxanalytics.biggraph.graph_api.{ DataManager, MetaGraphManager, SymbolPath, TypedEntity }
+import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -26,23 +23,41 @@ object RemoteAPIProtocol {
   case class ProjectRequest(project: String)
   case class SaveProjectRequest(checkpoint: String, project: String)
   case class ScalarRequest(checkpoint: String, scalar: String)
-  case class ProjectSQLRequest(checkpoint: String, query: String, limit: Int)
+
+  object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
+    override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
+  }
   case class GlobalSQLRequest(query: String, checkpoints: Map[String, String]) extends ViewRecipe {
-
-    val controller = RemoteAPIServer.c
-
-    override def createDataFrame(user: User, context: SQLContext)(implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
-
-      for ((name, cp) <- checkpoints) controller.registerTablesOfRootProject(user, context, name + "|", cp)
+    override def createDataFrame(
+      user: User, context: SQLContext)(
+        implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+      for ((name, cp) <- checkpoints) {
+        val viewer =
+          new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
+        registerTablesOfViewer(user, context, viewer, name)
+      }
       context.sql(query)
     }
 
-    override def notes = ""
-    override val name = ""
-    override val privacy = ""
+    // Takes all the tables in the project/table/view given by the viewer and registers all of
+    // them with an optionally prefixed name.
+    private def registerTablesOfViewer(
+      user: User, sqlContext: SQLContext, viewer: controllers.RootProjectViewer,
+      prefix: String = "")(implicit mm: MetaGraphManager, dm: DataManager) = {
+      val fullPrefix = if (prefix.nonEmpty) prefix + "|" else ""
+      for (path <- viewer.allRelativeTablePaths) {
+        val df = controllers.Table(path, viewer).toDF(sqlContext)
+        df.registerTempTable(fullPrefix + path.toString)
+        if (path.toString == "vertices") df.registerTempTable(prefix)
+      }
+      for (r <- viewer.editor.viewRecipe) {
+        r.createDataFrame(user, sqlContext).registerTempTable(prefix)
+      }
+    }
   }
+
   case class CheckpointRequest(checkpoint: String)
-  case class CheckpointRequestWithLimit(checkpoint: String, limit: Int)
+  case class TakeFromViewRequest(checkpoint: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
   case class DirectoryEntryRequest(
@@ -61,12 +76,11 @@ object RemoteAPIProtocol {
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
-  implicit val rProjectSQLRequest = json.Json.reads[ProjectSQLRequest]
-  implicit val rGlobalSQLRequest = json.Json.reads[GlobalSQLRequest]
+  implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
   implicit val rCheckpointRequest = json.Json.reads[CheckpointRequest]
-  implicit val rCheckpointRequestWithLimit = json.Json.reads[CheckpointRequestWithLimit]
+  implicit val rTakeFromViewRequest = json.Json.reads[TakeFromViewRequest]
   implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
   implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
   implicit val rExportViewToJsonRequest = json.Json.reads[ExportViewToJsonRequest]
@@ -83,12 +97,13 @@ object RemoteAPIServer extends JsonServer {
   def loadProject = jsonPost(c.loadProject)
   def runOperation = jsonPost(c.runOperation)
   def saveProject = jsonPost(c.saveProject)
-  def projectSQL = jsonPost(c.projectSQL)
-  def globalSQL = jsonPost(c.globalSQL)
+  def takeFromView = jsonPost(c.takeFromView)
+  def exportViewToJson = jsonPost(c.exportViewToJson)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.importRequest)
-  private def createView[T <: GenericImportRequest: json.Writes: json.Reads] =
+  private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
+  def globalSQL = createView[GlobalSQLRequest]
   def importJdbc = importRequest[JdbcImportRequest]
   def importHive = importRequest[HiveImportRequest]
   def importCSV = importRequest[CSVImportRequest]
@@ -105,7 +120,6 @@ object RemoteAPIServer extends JsonServer {
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
-
   import RemoteAPIProtocol._
 
   implicit val metaManager = env.metaGraphManager
@@ -155,7 +169,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(request.checkpoint)
   }
 
-  def getViewer(cp: String) =
+  def getViewer(cp: String): controllers.RootProjectViewer =
     new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
 
   def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
@@ -175,31 +189,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     implicit val tt = scalar.typeTag
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     DynamicValue.convert(scalar.value)
-  }
-
-  def projectSQL(user: User, request: ProjectSQLRequest): TableResult = {
-    val sqlContext = dataManager.newHiveContext()
-    registerTablesOfRootProject(user, sqlContext, "", request.checkpoint)
-    val df = sqlContext.sql(request.query)
-    dfToTableResult(df, request.limit)
-  }
-
-  def globalSQL(user: User, request: GlobalSQLRequest): CheckpointResponse = {
-    createView(user, GlobalSQLRequest)
-  }
-
-  // Takes all the tables in the rootproject given by the checkpoint and registers all of them with prefixed name
-  def registerTablesOfRootProject(user: User, sqlContext: SQLContext,
-                                  prefix: String, checkpoint: String) = {
-    val viewer = getViewer(checkpoint)
-    for (path <- viewer.allRelativeTablePaths) {
-      val df = controllers.Table(path, viewer).toDF(sqlContext)
-      df.registerTempTable(prefix + "|" + path.toString)
-      if (path.toString == "vertices") df.registerTempTable(prefix)
-    }
-    for (r <- viewer.editor.viewRecipe) {
-      r.createDataFrame(user, sqlContext).registerTempTable(prefix)
-    }
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
@@ -237,14 +226,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(cps.checkpoint.get)
   }
 
-  private def viewToDf(user: User, checkpoint: String) = {
+  private def viewToDF(user: User, checkpoint: String) = {
     val viewer = getViewer(checkpoint)
     val sqlContext = dataManager.newHiveContext()
     viewer.editor.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
-  def exportViewToTableResult(user: User, request: CheckpointRequestWithLimit): TableResult = {
-    val df = viewToDf(user, request.checkpoint)
+  def takeFromView(user: User, request: TakeFromViewRequest): TableResult = {
+    val df = viewToDF(user, request.checkpoint)
     dfToTableResult(df, request.limit)
   }
 
@@ -255,7 +244,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   private def exportToFile(user: serving.User, checkpoint: String, file: HadoopFile,
                            format: String, options: Map[String, String] = Map()): Unit = {
-    val df = viewToDf(user, checkpoint)
+    val df = viewToDF(user, checkpoint)
     df.write.format(format).options(options).save(file.resolvedName)
   }
 

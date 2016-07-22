@@ -87,7 +87,6 @@ POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newPr
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
 POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveProject
-POST /remote/projectSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.projectSQL
 POST /remote/globalSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSQL
 POST /remote/importJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJdbc
 POST /remote/importHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.importHive
@@ -102,7 +101,7 @@ POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.cr
 POST /remote/createViewParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewParquet
 POST /remote/createViewORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewORC
 POST /remote/createViewJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJson
-POST /remote/exportViewToTableResult  com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToTableResult
+POST /remote/takeFromView  com.lynxanalytics.biggraph.serving.RemoteAPIServer.takeFromView
 POST /remote/exportViewToJson  com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJson
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")

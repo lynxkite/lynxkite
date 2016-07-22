@@ -19,13 +19,21 @@ import play.api.libs.json
 import play.api.libs.json.JsResult
 import play.api.libs.json.JsValue
 
+// A ViewRecipe can create a DataFrame representing the view. They are typically JSON request case
+// classes. Instead of executing these requests immediately, they can be stored as recipes and
+// executed later lazily.
 trait ViewRecipe {
   def createDataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
-  def notes: String
-  val name: String
-  val privacy: String
 }
+
+// FrameSettings holds details for creating an ObjectFrame.
+trait FrameSettings {
+  def name: String
+  def notes: String
+  def privacy: String
+}
+
 object DataFrameSpec extends FromJson[DataFrameSpec] {
   // Utilities for testing.
   def local(project: String, sql: String) =
@@ -164,7 +172,7 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 case class SQLCreateViewRequest(
-    name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe {
+    name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe with FrameSettings {
   override def createDataFrame(
     user: User, context: SQLContext)(
       implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
@@ -178,7 +186,7 @@ object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
   override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
 }
 
-trait GenericImportRequest extends ViewRecipe {
+trait GenericImportRequest extends ViewRecipe with FrameSettings {
   val table: String
   val privacy: String
   override val name: String = table
@@ -382,7 +390,8 @@ class SQLController(val env: BigGraphEnvironment) {
       request.privacy,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
-  def saveView[T <: ViewRecipe: json.Writes](user: serving.User, recipe: T): FEOption = {
+  def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
+    user: serving.User, recipe: T): FEOption = {
     SQLController.saveView(
       recipe.notes,
       user,
