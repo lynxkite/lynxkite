@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.mllib
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions
 import org.apache.spark
 import play.api.libs.json
 import play.api.libs.json.JsNull
@@ -21,20 +20,19 @@ object Implicits {
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
-  // A transformation of RDD with the model. 
-  def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = ???
   // A transformation of dataframe with the model. 
-  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = ???
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame
   def details: String
 }
 
 // Helper classes to provide a common abstraction for various types of models.
 private class LinearRegressionModelImpl(
-    m: mllib.regression.GeneralizedLinearModel) extends ModelImplementation {
-  override def transform(data: RDD[mllib.linalg.Vector]): RDD[Double] = m.predict(data)
+    m: ml.regression.LinearRegressionModel,
+    statistics: String) extends ModelImplementation {
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
-    val weights = "(" + m.weights.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\ncoefficients: $weights"
+    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
+    s"intercept: ${m.intercept}\ncoefficients: $coefficients\n" + statistics
   }
 }
 
@@ -42,7 +40,7 @@ private class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
     val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
     s"intercept: ${m.intercept}\ncoefficients: $coefficients"
@@ -50,18 +48,18 @@ private class LogisticRegressionModelImpl(
 }
 
 private class ClusterModelImpl(
-    m: ml.clustering.KMeansModel,
+    m: ml.clustering.KMeansModel, statistics: String,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
   // Transform the data with clustering model and append an additional probability column.   
-  override def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  val scaledCenters = {
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  val scaledCenters = "(" + {
     val unscaledCenters = m.clusterCenters
     val transformingVector = featureScaler.std
     val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
     unscaledCenters.map(transformer.transform(_))
-  }
+  }.mkString(", ") + ")"
   def details: String = {
-    s"cluster centers: ${scaledCenters.mkString}"
+    s"cluster centers: ${scaledCenters}\n" + statistics
   }
 }
 
@@ -70,8 +68,8 @@ case class Model(
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
-  labelScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the labels.
-  featureScaler: mllib.feature.StandardScalerModel) // The scaler used to scale the features.
+  featureScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the features.
+  statistics: Option[String]) // For the details that require training data 
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -97,14 +95,13 @@ case class Model(
   override def equals(other: Any) = {
     if (canEqual(other)) {
       val o = other.asInstanceOf[Model]
-      def labelScalerEquals = ((labelScaler.isEmpty && o.labelScaler.isEmpty) ||
-        standardScalerModelEquals(labelScaler.get, o.labelScaler.get))
+      def featureScalerEquals = ((featureScaler.isEmpty && o.featureScaler.isEmpty) ||
+        standardScalerModelEquals(featureScaler.get, o.featureScaler.get))
       method == o.method &&
         symbolicPath == o.symbolicPath &&
         labelName == o.labelName &&
         featureNames == o.featureNames &&
-        labelScalerEquals &&
-        standardScalerModelEquals(featureScaler, o.featureScaler)
+        featureScalerEquals
     } else {
       false
     }
@@ -118,8 +115,8 @@ case class Model(
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "featureNames" -> featureNames,
-      "labelScaler" -> standardScalerModelToJson(labelScaler),
-      "featureScaler" -> standardScalerModelToJson(Some(featureScaler))
+      "featureScaler" -> standardScalerModelToJson(featureScaler),
+      "statistics" -> statistics
     )
   }
 
@@ -127,43 +124,43 @@ case class Model(
   def load(sc: spark.SparkContext): ModelImplementation = {
     val path = HadoopFile(symbolicPath).resolvedName
     method match {
-      case "Linear regression" =>
-        new LinearRegressionModelImpl(mllib.regression.LinearRegressionModel.load(sc, path))
-      case "Ridge regression" =>
-        new LinearRegressionModelImpl(mllib.regression.RidgeRegressionModel.load(sc, path))
-      case "Lasso" =>
-        new LinearRegressionModelImpl(mllib.regression.LassoModel.load(sc, path))
+      case "Linear regression" | "Ridge regression" | "Lasso" =>
+        new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
       case "KMeans clustering" =>
-        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), featureScaler)
+        new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get, featureScaler.get)
+    }
+  }
+
+  def scaleFeatures(unscaledFeatures: AttributeRDD[mllib.linalg.Vector]): AttributeRDD[mllib.linalg.Vector] = {
+    if (featureScaler.isEmpty) {
+      unscaledFeatures
+    } else {
+      unscaledFeatures.mapValues(featureScaler.get.transform(_))
     }
   }
 
   def scalerDetails: String = {
-    val meanInfo =
-      if (featureScaler.withMean) {
-        val vec = "(" + featureScaler.mean.toArray.mkString(", ") + ")"
-        s"Centered to 0; original mean was $vec\n"
-      } else {
-        ""
-      }
-    val stdInfo =
-      if (featureScaler.withStd) {
-        val vec = "(" + featureScaler.std.toArray.mkString(", ") + ")"
-        s"Scaled to unit standard deviation; original deviation was $vec"
-      } else {
-        ""
-      }
-    meanInfo + stdInfo
-  }
-
-  // Scales back the labels if needed.
-  def scaleBack(result: RDD[Double]): RDD[Double] = {
-    if (labelScaler.isEmpty) {
-      result
+    if (featureScaler.isEmpty) {
+      ""
     } else {
-      Model.scaleBack(result, labelScaler.get)
+      val featureScalerValue = featureScaler.get
+      val meanInfo =
+        if (featureScalerValue.withMean) {
+          val vec = "(" + featureScalerValue.mean.toArray.mkString(", ") + ")"
+          s"Centered to 0; original mean was $vec\n"
+        } else {
+          ""
+        }
+      val stdInfo =
+        if (featureScalerValue.withStd) {
+          val vec = "(" + featureScalerValue.std.toArray.mkString(", ") + ")"
+          s"Scaled to unit standard deviation; original deviation was $vec"
+        } else {
+          ""
+        }
+      meanInfo + stdInfo
     }
   }
 }
@@ -188,8 +185,8 @@ object Model extends FromJson[Model] {
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
-      standardScalerModelFromJson(j \ "labelScaler"),
-      standardScalerModelFromJson(j \ "featureScaler").get
+      standardScalerModelFromJson(j \ "featureScaler"),
+      (j \ "statistics").as[Option[String]]
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(

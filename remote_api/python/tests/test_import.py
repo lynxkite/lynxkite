@@ -28,7 +28,6 @@ class TestImport(unittest.TestCase):
     """)
     conn.commit()
     conn.close()
-
     url = "jdbc:sqlite:{}".format(path)
     lk = lynx.LynxKite()
     cp = lk.import_jdbc(
@@ -37,12 +36,34 @@ class TestImport(unittest.TestCase):
         jdbcTable="subscribers",
         keyColumn="id",
         view=view)
+    print(cp)
+    res = lynx.sql("select * from `cp` order by id", cp=cp)
+    self.assertEqual(res, [{'gender': 'Male',
+                            'level': 10.0,
+                            'name': 'Daniel',
+                            'id': 1,
+                            'race condition': 'Halfling',
+                            'n': 'A'},
+                           {'gender': 'Female',
+                            'level': 20.0,
+                            'name': 'Beata',
+                            'id': 2,
+                            'race condition': 'Dwarf',
+                            'n': 'B'},
+                           {'gender': 'Male',
+                            'id': 3,
+                            'n': 'C',
+                            'name': 'Felix',
+                            'race condition': 'Gnome'},
+                           {'id': 4}])
 
   def test_jdbc_import(self):
     self.stub_test_jdbc(False)
 
+
   def test_jdbc_view(self):
     self.stub_test_jdbc(True)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -30,9 +30,7 @@ if sys.version_info.major < 3:
 default_sql_limit = 1000
 default_privacy = 'public-read'
 
-
 class LynxKite(object):
-
   '''A connection to a LynxKite instance.
 
   Some LynxKite API methods take a connection argument which can be used to communicate with
@@ -91,10 +89,10 @@ class LynxKite(object):
 
   def sql(self, query, limit=None, **kwargs):
     '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
-    where p is a Project object, and giving the limit is optional'''
+    where p is an object that has a checkpoint, and giving the limit is optional'''
     checkpoints = {}
-    for name, project in kwargs.items():
-      checkpoints[name] = project.checkpoint
+    for name, p in kwargs.items():
+      checkpoints[name] = p.checkpoint
     r = self.send('globalSQL', dict(
         query=query,
         limit=limit or default_sql_limit,
@@ -264,6 +262,10 @@ class Project(object):
             parameters=parameters))
     self.checkpoint = r.checkpoint
     return self
+
+  def compute(self):
+    return self.connection.send(
+        'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
