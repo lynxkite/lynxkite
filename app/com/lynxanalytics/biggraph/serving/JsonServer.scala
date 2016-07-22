@@ -407,6 +407,12 @@ object ProductionJsonServer extends JsonServer {
   def importORC = jsonPost(sqlController.importORC)
   def importJson = jsonPost(sqlController.importJson)
   def importHive = jsonPost(sqlController.importHive)
+  def createViewCSV = jsonPost(sqlController.createViewCSV)
+  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
+  def createViewParquet = jsonPost(sqlController.createViewParquet)
+  def createViewORC = jsonPost(sqlController.createViewORC)
+  def createViewJson = jsonPost(sqlController.createViewJson)
+  def createViewHive = jsonPost(sqlController.createViewHive)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
