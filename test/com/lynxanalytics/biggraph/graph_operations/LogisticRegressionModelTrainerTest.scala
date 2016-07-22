@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.ml.classification.LogisticRegressionModel
+import org.apache.spark.ml
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
@@ -19,6 +19,7 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
     assert(m.featureNames == List("age"))
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
-    assert(LogisticRegressionModel.load(path).coefficients.size == 1)
+    assert(ml.PipelineModel.load(path).stages(1).asInstanceOf[ml.classification.LogisticRegressionModel]
+      .coefficients.size == 1)
   }
 }

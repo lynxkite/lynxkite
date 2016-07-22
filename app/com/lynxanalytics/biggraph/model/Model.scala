@@ -37,13 +37,14 @@ private class LinearRegressionModelImpl(
 }
 
 private class LogisticRegressionModelImpl(
-    m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
+    m: ml.PipelineModel) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
-    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\ncoefficients: $coefficients"
+    val logisticRegressionModel = m.stages(1).asInstanceOf[ml.classification.LogisticRegressionModel]
+    val coefficients = "(" + logisticRegressionModel.coefficients.toArray.mkString(", ") + ")"
+    s"intercept: ${logisticRegressionModel.intercept}\ncoefficients: $coefficients"
   }
 }
 
@@ -127,7 +128,7 @@ case class Model(
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
-        new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
+        new LogisticRegressionModelImpl(ml.PipelineModel.load(path))
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get, featureScaler.get)
     }

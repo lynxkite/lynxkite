@@ -1548,7 +1548,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Train a logistic regression model", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("label", "Label", options = vertexAttributes[String]),
       Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
       NonNegInt("max-iter", "Maximum number of iterations", default = 20))
     def enabled =
@@ -1562,7 +1562,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
       val name = params("name")
       val labelName = params("label")
-      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[String]
       val maxIter = params("max-iter").toInt
       val model = {
         val op = graph_operations.LogisticRegressionModelTrainer(
@@ -1619,7 +1619,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue = project.scalars((p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1627,7 +1628,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.PredictFromModel(features.size)
         op(op.model, modelValue)(op.features, features).result.prediction
       }
-      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelValue.name}")
+      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelName}")
     }
   })
 
@@ -1644,8 +1645,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue: Scalar[model.Model] = project.scalars(
-        (p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1655,11 +1656,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
-        s"classification according to ${modelValue.name}")
+        s"classification according to ${modelName}")
       if (generatesProbability) {
         val probability = result.probability
         project.newVertexAttribute(name + "_probability", probability,
-          s"probability according to ${modelValue.name}")
+          s"probability according to ${modelName}")
       }
     }
   })

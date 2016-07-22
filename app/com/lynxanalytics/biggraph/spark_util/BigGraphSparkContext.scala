@@ -189,6 +189,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
     kryo.register(Class.forName("[[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
+    kryo.register(Class.forName("org.apache.spark.mllib.evaluation.binary.BinaryLabelCounter"))
+    kryo.register(Class.forName("[Lorg.apache.spark.mllib.evaluation.binary.BinaryLabelCounter;"))
     kryo.register(Class.forName("scala.collection.mutable.ArraySeq"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!

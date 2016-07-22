@@ -44,8 +44,8 @@ class ClassifyWithModelTest extends ModelTestBase {
     val classification = result.classification.rdd.values.collect
     assert(classification.size == 4)
     // Check data points with similar ages have the same label.
-    assert(classification(0) == 0.0 && classification(1) == 0.0)
-    assert(classification(2) == 1.0 && classification(3) == 1.0)
+    assert(classification(0) == "0.0" && classification(1) == "0.0")
+    assert(classification(2) == "1.0" && classification(3) == "1.0")
     val probability = result.probability.rdd.values.collect
     // Check that each probability is proportional to their attribute values and each  
     // probability is greater than 0.5.  
