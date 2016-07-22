@@ -251,7 +251,8 @@ object ObsoleteProject {
                 getSegmentationPath(projectOperationRequest.project),
                 projectOperationRequest.op)
           }
-          .getOrElse(SubProjectOperation(Seq(), FEOperationSpec("No-operation", Map())))))
+          .getOrElse(SubProjectOperation(Seq(), FEOperationSpec("No-operation", Map())))),
+      viewRecipe = None)
 
   }
   private def oldCheckpoints(p: ObsoleteProject): Seq[ObsoleteProject] = {

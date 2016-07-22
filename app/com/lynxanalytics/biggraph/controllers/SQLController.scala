@@ -10,48 +10,149 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.table.TableImport
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsValue
 
 trait ViewRecipe {
-  def createDataFrame(user: serving.User,
-                      context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
+  def createDataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
+  def notes: String
+  val name: String
+  val privacy: String
 }
-object DataFrameSpec {
+object DataFrameSpec extends FromJson[DataFrameSpec] {
   // Utilities for testing.
   def local(project: String, sql: String) =
     new DataFrameSpec(isGlobal = false, directory = None, project = Some(project), sql = sql)
   def global(directory: String, sql: String) =
     new DataFrameSpec(isGlobal = true, directory = Some(directory), project = None, sql = sql)
+
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
+  override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
-case class DataFrameSpec(isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String)
-case class SQLQueryRequest(df: DataFrameSpec, maxRows: Int)
+case class DataFrameSpec(
+    isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) {
+  def createDataFrame(user: User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+    if (isGlobal) globalSQL(user, context)
+    else projectSQL(user, context)
+  }
+
+  // Finds the names of tables from string
+  private def findTablesFromQuery(query: String): List[String] = {
+    val split = query.split("`", -1)
+    Iterator.range(start = 1, end = split.length, step = 2).map(split(_)).toList
+  }
+
+  // Creates a DataFrame from a global level SQL query.
+  private def globalSQL(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
+    metaManager.synchronized {
+      assert(project.isEmpty,
+        "The project field in the DataFrameSpec must be empty for global SQL queries.")
+
+      val directoryName = directory.get
+      val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
+      val givenTableNames = findTablesFromQuery(sql)
+      // Maps the relative table names used in the sql query with the global name
+      val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
+      // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
+      val (projectTableNames, tableOrViewNames) = tableNames.partition(_._2.contains('|'))
+
+      // For the assumed project tables we select those whose corresponding project really exists and
+      // is accessible to the user
+      val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
+      val usedProjects = usedProjectNames.mapValues(DirectoryEntry.fromName(_))
+      val goodProjectViewers = usedProjects.collect {
+        case (name, proj) if proj.isProject && proj.readAllowedFrom(user) => (name, proj.asProjectFrame.viewer)
+      }
+
+      val goodTablePathsInGoodProjects = goodProjectViewers.flatMap {
+        case (name, proj) => proj.allRelativeTablePaths.find(_.path == name.split('|').tail.toSeq)
+          .map { path => ((name, path), proj) }
+      }
+
+      val projectTables = goodTablePathsInGoodProjects.map {
+        case ((name, path), proj) => (name, Table(path, proj))
+      }
+
+      val tableOrViewFrames = tableOrViewNames.mapValues(DirectoryEntry.fromName(_))
+      val goodTablesOrViews = tableOrViewFrames.filter {
+        case (name, entry) => entry.exists && entry.readAllowedFrom(user)
+      }
+
+      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.isTable)
+      val importedTables = goodTables.mapValues(_.asTableFrame.table)
+      val importedViews = goodViews.mapValues(a =>
+        a.asViewFrame().getRecipe
+      )
+      queryTables(sql, projectTables ++ importedTables, user, context, importedViews)
+    }
+
+  // Executes an SQL query at the project level.
+  private def projectSQL(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+    val tables = metaManager.synchronized {
+      assert(directory.isEmpty,
+        "The directory field in the DataFrameSpec must be empty for local SQL queries.")
+      val p = SubProject.parsePath(project.get)
+      assert(p.frame.exists, s"Project $project does not exist.")
+      p.frame.assertReadAllowedFrom(user)
+
+      val v = p.viewer
+      v.allRelativeTablePaths.map {
+        path => (path.toString -> Table(path, v))
+      }
+    }
+    queryTables(sql, tables, user, context)
+  }
+
+  private def queryTables(
+    sql: String,
+    tables: Iterable[(String, Table)], user: serving.User,
+    context: SQLContext,
+    viewRecipes: Iterable[(String, ViewRecipe)] = List())(
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+    for ((name, table) <- tables) {
+      table.toDF(context).registerTempTable(name)
+    }
+    for ((name, recipe) <- viewRecipes) {
+      recipe.createDataFrame(user, context).registerTempTable(name)
+    }
+    log.info(s"Trying to execute query: ${sql}")
+    context.sql(sql)
+  }
+}
+case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
 case class SQLQueryResult(header: List[String], data: List[List[String]])
 
 case class SQLExportToTableRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   table: String,
   privacy: String)
 case class SQLExportToCSVRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String,
   header: Boolean,
   delimiter: String,
   quote: String)
 case class SQLExportToJsonRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String)
 case class SQLExportToParquetRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String)
 case class SQLExportToORCRequest(
-  df: DataFrameSpec,
+  dfSpec: DataFrameSpec,
   path: String)
 case class SQLExportToJdbcRequest(
-    df: DataFrameSpec,
+    dfSpec: DataFrameSpec,
     jdbcUrl: String,
     table: String,
     mode: String) {
@@ -62,18 +163,35 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
+case class SQLCreateViewRequest(
+    name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe {
+  override def createDataFrame(
+    user: User, context: SQLContext)(
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
+    dfSpec.createDataFrame(user, context)
+
+  override def notes: String = dfSpec.sql
+}
+
+object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fSQLCreateView
+  override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
+}
 
 trait GenericImportRequest extends ViewRecipe {
   val table: String
   val privacy: String
+  override val name: String = table
   // Empty list means all columns.
   val columnsToImport: List[String]
   protected val needHiveContext = false
-  protected def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame
+  protected def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
-  def restrictedDataFrame(user: serving.User,
-                          context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+  def restrictedDataFrame(
+    user: serving.User,
+    context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
     restrictToColumns(dataFrame(user, context), columnsToImport)
 
   def defaultContext()(implicit dataManager: DataManager): SQLContext =
@@ -87,8 +205,9 @@ trait GenericImportRequest extends ViewRecipe {
     } else full
   }
 
-  override def createDataFrame(user: serving.User,
-                               context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
+  override def createDataFrame(
+    user: serving.User, context: SQLContext)(
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
     restrictedDataFrame(user, context)
 }
 
@@ -106,7 +225,8 @@ case class CSVImportRequest(
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     val reader = context
       .read
       .format("com.databricks.spark.csv")
@@ -173,7 +293,8 @@ trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
   override val needHiveContext = true
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
     hadoopFile.assertReadAllowedFrom(user)
     FileImportValidator.checkFileHasContents(hadoopFile)
@@ -229,7 +350,8 @@ case class HiveImportRequest(
     columnsToImport: List[String]) extends GenericImportRequest {
 
   override val needHiveContext = true
-  def dataFrame(user: serving.User, context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame = {
+  def dataFrame(user: serving.User, context: SQLContext)(
+    implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
       dataManager.hiveConfigured,
       "Hive is not configured for this Kite instance. Contact your system administrator.")
@@ -260,12 +382,12 @@ class SQLController(val env: BigGraphEnvironment) {
       request.privacy,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
-  def saveView[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption = {
+  def saveView[T <: ViewRecipe: json.Writes](user: serving.User, recipe: T): FEOption = {
     SQLController.saveView(
-      request.notes,
+      recipe.notes,
       user,
-      request.table,
-      request.privacy, request)
+      recipe.name,
+      recipe.privacy, recipe)
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -282,103 +404,10 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
   def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
-
-  // Finds the names of tables from string
-  private def findTablesFromQuery(query: String): List[String] = {
-    val split = query.split("`", -1)
-    Iterator.range(start = 1, end = split.length, step = 2).map(split(_)).toList
-  }
-
-  // Creates a DataFrame from a global level SQL query.
-  private def globalSQL(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame =
-    metaManager.synchronized {
-      assert(spec.project.isEmpty,
-        "The project field in the DataFrameSpec must be empty for global SQL queries.")
-
-      val directoryName = spec.directory.get
-      val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
-      val givenTableNames = findTablesFromQuery(spec.sql)
-      // Maps the relative table names used in the sql query with the global name
-      val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
-      // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
-      val (projectTableNames, tableOrViewNames) = tableNames.partition(_._2.contains('|'))
-
-      // For the assumed project tables we select those whose corresponding project really exists and
-      // is accessible to the user
-      val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
-      val usedProjects = usedProjectNames.mapValues(DirectoryEntry.fromName(_))
-      val goodProjectViewers = usedProjects.collect {
-        case (name, proj) if proj.isProject && proj.readAllowedFrom(user) => (name, proj.asProjectFrame.viewer)
-      }
-
-      val goodTablePathsInGoodProjects = goodProjectViewers.flatMap {
-        case (name, proj) => proj.allRelativeTablePaths.find(_.path == name.split('|').tail.toSeq)
-          .map { path => ((name, path), proj) }
-      }
-
-      val projectTables = goodTablePathsInGoodProjects.map {
-        case ((name, path), proj) => (name, Table(path, proj))
-      }
-
-      val tableOrViewFrames = tableOrViewNames.mapValues(DirectoryEntry.fromName(_))
-      val goodTablesOrViews = tableOrViewFrames.filter {
-        case (name, entry) => entry.exists && entry.readAllowedFrom(user)
-      }
-
-      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.isTable)
-      val importedTables = goodTables.mapValues(_.asTableFrame.table)
-      val importedViews = goodViews.mapValues(a =>
-        TypedJson.read[GenericImportRequest](a.asViewFrame().details.get)
-      )
-      queryTables(spec.sql, projectTables ++ importedTables, user, importedViews)
-    }
-
-  // Executes an SQL query at the project level.
-  private def projectSQL(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
-    val tables = metaManager.synchronized {
-      assert(spec.directory.isEmpty,
-        "The directory field in the DataFrameSpec must be empty for local SQL queries.")
-      val p = SubProject.parsePath(spec.project.get)
-      assert(p.frame.exists, s"Project ${spec.project} does not exist.")
-      p.frame.assertReadAllowedFrom(user)
-
-      val v = p.viewer
-      v.allRelativeTablePaths.map {
-        path => (path.toString -> Table(path, v))
-      }
-    }
-    queryTables(spec.sql, tables, user)
-  }
-
-  private def queryTables(
-    sql: String,
-    tables: Iterable[(String, Table)], user: serving.User,
-    viewRecipes: Iterable[(String, ViewRecipe)] = List()): spark.sql.DataFrame = {
-    // Every query runs in its own SQLContext for isolation.
-    // Some import requests need a hivecontext to do their imports
-    // (e.g. HiveImportRequest), but we don't want regular users to
-    // do that.
-    val context = if (user.isAdmin) dataManager.newHiveContext() else dataManager.newSQLContext()
-
-    for ((name, table) <- tables) {
-      table.toDF(context).registerTempTable(name)
-    }
-    for ((name, recipe) <- viewRecipes) {
-      recipe.createDataFrame(user, context).registerTempTable(name)
-    }
-    log.info(s"Trying to execute query: ${sql}")
-    context.sql(sql)
-  }
-
-  // Creates a DataFrame from an SQL query. If it is a project level query then the computation steps will
-  // also be entered into the Metagraph.
-  private def dfFromSpec(user: serving.User, spec: DataFrameSpec): spark.sql.DataFrame = {
-    if (spec.isGlobal) globalSQL(user, spec)
-    else projectSQL(user, spec)
-  }
+  def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = dfFromSpec(user, request.df)
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
@@ -393,10 +422,10 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = dfFromSpec(user, request.df)
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
 
     SQLController.saveTable(
-      df, s"From ${request.df.project} by running ${request.df.sql}",
+      df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
       user, request.table, request.privacy)
   }
 
@@ -404,7 +433,7 @@ class SQLController(val env: BigGraphEnvironment) {
     user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
     downloadableExportToFile(
       user,
-      request.df,
+      request.dfSpec,
       request.path,
       "csv",
       Map(
@@ -417,22 +446,22 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def exportSQLQueryToJson(
     user: serving.User, request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
-    downloadableExportToFile(user, request.df, request.path, "json")
+    downloadableExportToFile(user, request.dfSpec, request.path, "json")
   }
 
   def exportSQLQueryToParquet(
     user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
-    exportToFile(user, request.df, HadoopFile(request.path), "parquet")
+    exportToFile(user, request.dfSpec, HadoopFile(request.path), "parquet")
   }
 
   def exportSQLQueryToORC(
     user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
-    exportToFile(user, request.df, HadoopFile(request.path), "orc")
+    exportToFile(user, request.dfSpec, HadoopFile(request.path), "orc")
   }
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = dfFromSpec(user, request.df)
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
@@ -461,7 +490,7 @@ class SQLController(val env: BigGraphEnvironment) {
     file: HadoopFile,
     format: String,
     options: Map[String, String] = Map()): Unit = {
-    val df = dfFromSpec(user, dfSpec)
+    val df = dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     // TODO: #2889 (special characters in S3 passwords).
     file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
@@ -504,12 +533,26 @@ object SQLController {
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 
-  def saveView[T <: GenericImportRequest: json.Writes](
-    notes: String, user: serving.User, tableName: String, privacy: String, recipe: T)(
+  def saveView[T <: ViewRecipe: json.Writes](
+    notes: String, user: serving.User, name: String, privacy: String, recipe: T)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager) = {
-    val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
+    val entry = assertAccessAndGetTableEntry(user, name, privacy)
     val view = entry.asNewViewFrame(recipe, notes)
-    FEOption.titledCheckpoint(view.checkpoint, tableName, s"|${tableName}")
+    FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
+  }
+
+  // Every query runs in its own SQLContext for isolation.
+  // Some import requests need a hivecontext to do their imports
+  // (e.g. HiveImportRequest), but we don't want regular users to
+  // do that.
+  // With this implementation, if a non-admin calls hive related
+  // stuff, the execution will simply fail
+  def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
+    if (user.isAdmin) {
+      dataManager.newHiveContext()
+    } else {
+      dataManager.newSQLContext()
+    }
   }
 }

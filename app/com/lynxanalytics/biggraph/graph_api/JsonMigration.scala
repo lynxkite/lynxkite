@@ -221,7 +221,8 @@ object MetaRepositoryManager {
         rootState.checkpoint,
         rootState.previousCheckpoint,
         rootState.lastOperationDesc,
-        rootState.lastOperationRequest)
+        rootState.lastOperationRequest,
+        rootState.viewRecipe)
 
     val oldRepo = MetaGraphManager.getCheckpointRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {

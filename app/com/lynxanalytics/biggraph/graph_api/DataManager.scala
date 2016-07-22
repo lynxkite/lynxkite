@@ -8,6 +8,7 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 
 import com.google.common.collect.MapMaker
+import com.lynxanalytics.biggraph.controllers.ProjectEditor
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
