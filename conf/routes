@@ -95,6 +95,7 @@ POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.import
 POST /remote/importParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.importParquet
 POST /remote/importORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.importORC
 POST /remote/importJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJson
+POST /remote/computeProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.computeProject
 POST /remote/createViewJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJdbc
 POST /remote/createViewHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewHive
 POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewCSV

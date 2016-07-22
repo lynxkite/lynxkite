@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
+import com.lynxanalytics.biggraph.graph_api.TypedEntity
 import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -25,6 +26,7 @@ object RemoteAPIProtocol {
   case class ScalarRequest(checkpoint: String, scalar: String)
   case class ProjectSQLRequest(checkpoint: String, query: String, limit: Int)
   case class GlobalSQLRequest(query: String, checkpoints: Map[String, String], limit: Int)
+  case class CheckpointRequest(checkpoint: String)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
   case class TableResult(rows: List[Map[String, json.JsValue]])
   case class DirectoryEntryRequest(
@@ -47,8 +49,10 @@ object RemoteAPIProtocol {
   implicit val rGlobalSQLRequest = json.Json.reads[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
+  implicit val rCheckpointRequest = json.Json.reads[CheckpointRequest]
   implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
   implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
+
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -73,6 +77,7 @@ object RemoteAPIServer extends JsonServer {
   def importParquet = importRequest[ParquetImportRequest]
   def importORC = importRequest[ORCImportRequest]
   def importJson = importRequest[JsonImportRequest]
+  def computeProject = jsonPost(c.computeProject)
   def createViewJdbc = createView[JdbcImportRequest]
   def createViewHive = createView[HiveImportRequest]
   def createViewCSV = createView[CSVImportRequest]
@@ -208,5 +213,24 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def createView[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
     val res = sqlController.saveView(user, request)
     TitledCheckpointResponse(res.id)
+  }
+
+  def computeProject(user: User, request: CheckpointRequest): Unit = {
+    val viewer = getViewer(request.checkpoint)
+    computeProject(viewer.editor)
+  }
+
+  private def computeProject(editor: ProjectEditor): Unit = {
+    for ((name, scalar) <- editor.scalars) {
+      dataManager.get(scalar)
+    }
+
+    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+    for ((name, attr) <- attributes) {
+      dataManager.get(attr)
+    }
+
+    val segmentations = editor.viewer.sortedSegmentations
+    segmentations.foreach(s => computeProject(s.editor))
   }
 }
