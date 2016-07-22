@@ -9,7 +9,8 @@ The access to the LynxKite instance can be configured through the following envi
 Example usage:
 
     import lynx
-    p = lynx.Project()
+    lk = lynx.LynxKite()
+    p = lk.new_project()
     p.newVertexSet(size=100)
     print(p.scalar('vertex_count'))
 
@@ -29,168 +30,20 @@ if sys.version_info.major < 3:
 default_sql_limit = 1000
 default_privacy = 'public-read'
 
-_connection = None
-
-
-def default_connection():
-  global _connection
-  if _connection is None:
-    _connection = Connection(
-        os.environ['LYNXKITE_ADDRESS'],
-        os.environ.get('LYNXKITE_USERNAME'),
-        os.environ.get('LYNXKITE_PASSWORD'))
-  return _connection
-
-
-def sql(query, limit=None, **kwargs):
-  '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
-  where p is an object that has a checkpoint, and giving the limit is optional'''
-  checkpoints = {}
-  for name, p in kwargs.items():
-    checkpoints[name] = p.checkpoint
-  r = _connection.send('globalSQL', dict(
-      query=query,
-      limit=limit or default_sql_limit,
-      checkpoints=checkpoints
-  ), raw=True)
-  return r['rows']
-
-
-def get_directory_entry(path, connection=None):
-  connection = connection or default_connection()
-  r = connection.send('getDirectoryEntry', dict(path=path))
-  return r
-
-
-def import_csv(
-        files,
-        table,
-        privacy=default_privacy,
-        columnNames=[],
-        delimiter=',',
-        mode='FAILFAST',
-        infer=True,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "CSV",
-      view,
-      dict(table=table,
-           files=files,
-           privacy=privacy,
-           columnNames=columnNames,
-           delimiter=delimiter,
-           mode=mode,
-           infer=infer,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_hive(
-        table,
-        hiveTable,
-        privacy=default_privacy,
-        columnsToImport=[],
-        connection=None):
-  return _import_or_create_view(
-      "Hive",
-      view,
-      dict(
-          table=table,
-          privacy=privacy,
-          hiveTable=hiveTable,
-          columnsToImport=columnsToImport),
-      connection)
-
-
-def import_jdbc(
-        table,
-        jdbcUrl,
-        jdbcTable,
-        keyColumn,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "Jdbc",
-      view,
-      dict(table=table,
-           jdbcUrl=jdbcUrl,
-           privacy=privacy,
-           jdbcTable=jdbcTable,
-           keyColumn=keyColumn,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_parquet(
-        table,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "Parquet",
-      view,
-      dict(table=table,
-           privacy=privacy,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_orc(
-        table,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "ORC",
-      view,
-      dict(table=table,
-           privacy=privacy,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_json(
-        table,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "Json",
-      view,
-      dict(table=table,
-           privacy=privacy,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def _import_or_create_view(format, view, dict, connection):
-  connection = connection or default_connection()
-  endpoint = ("createView" if view else "import") + format
-  return connection.send(endpoint, dict)
-
-
-class Connection(object):
-
+class LynxKite(object):
   '''A connection to a LynxKite instance.
 
   Some LynxKite API methods take a connection argument which can be used to communicate with
-  multiple LynxKite instances from the same session. If this argument is not provided, the default
-  connection is used instead. The default connection is configured via the LYNXKITE_ADDRESS,
-  LYNXKITE_USERNAME, and LYNXKITE_PASSWORD environment variables.
+  multiple LynxKite instances from the same session. If no arguments to the constructor are
+  provided, then a connection is created using the following environment variables:
+  LYNXKITE_ADDRESS, LYNXKITE_USERNAME, and LYNXKITE_PASSWORD.
   '''
 
-  def __init__(self, address, username=None, password=None):
+  def __init__(self, username=None, password=None, address=None):
     '''Creates a connection object, performing authentication if necessary.'''
-    self.address = address
-    self.username = username
-    self.password = password
+    self.address = address or os.environ['LYNXKITE_ADDRESS']
+    self.username = username or os.environ.get('LYNXKITE_USERNAME')
+    self.password = password or os.environ.get('LYNXKITE_PASSWORD')
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
@@ -234,6 +87,142 @@ class Connection(object):
       r = json.loads(data, object_hook=_asobject)
     return r
 
+  def sql(self, query, limit=None, **kwargs):
+    '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
+    where p is an object that has a checkpoint, and giving the limit is optional'''
+    checkpoints = {}
+    for name, p in kwargs.items():
+      checkpoints[name] = p.checkpoint
+    r = self.send('globalSQL', dict(
+        query=query,
+        limit=limit or default_sql_limit,
+        checkpoints=checkpoints
+    ), raw=True)
+    return r['rows']
+
+  def get_directory_entry(self, path):
+    return self.send('getDirectoryEntry', dict(path=path))
+
+  def import_csv(
+          self,
+          files,
+          table,
+          privacy=default_privacy,
+          columnNames=[],
+          delimiter=',',
+          mode='FAILFAST',
+          infer=True,
+          columnsToImport=[],
+          view=False):
+    return self._import_or_create_view(
+        "CSV",
+        view,
+        dict(table=table,
+             files=files,
+             privacy=privacy,
+             columnNames=columnNames,
+             delimiter=delimiter,
+             mode=mode,
+             infer=infer,
+             columnsToImport=columnsToImport))
+
+  def import_hive(
+          self,
+          table,
+          hiveTable,
+          privacy=default_privacy,
+          columnsToImport=[]):
+    return self._import_or_create_view(
+        "Hive",
+        view,
+        dict(
+            table=table,
+            privacy=privacy,
+            hiveTable=hiveTable,
+            columnsToImport=columnsToImport))
+
+  def import_jdbc(
+          self,
+          table,
+          jdbcUrl,
+          jdbcTable,
+          keyColumn,
+          privacy=default_privacy,
+          columnsToImport=[],
+          view=False):
+    return self._import_or_create_view(
+        "Jdbc",
+        view,
+        dict(table=table,
+             jdbcUrl=jdbcUrl,
+             privacy=privacy,
+             jdbcTable=jdbcTable,
+             keyColumn=keyColumn,
+             columnsToImport=columnsToImport))
+
+  def import_parquet(
+          self,
+          table,
+          privacy=default_privacy,
+          columnsToImport=[],
+          view=False):
+    return self._import_or_create_view(
+        "Parquet",
+        view,
+        dict(table=table,
+             privacy=privacy,
+             columnsToImport=columnsToImport))
+
+  def import_orc(
+          self,
+          table,
+          privacy=default_privacy,
+          columnsToImport=[],
+          view=False):
+    return self._import_or_create_view(
+        "ORC",
+        view,
+        dict(table=table,
+             privacy=privacy,
+             columnsToImport=columnsToImport))
+
+  def import_json(
+          self,
+          table,
+          privacy=default_privacy,
+          columnsToImport=[],
+          view=False):
+    return self._import_or_create_view(
+        "Json",
+        view,
+        dict(table=table,
+             privacy=privacy,
+             columnsToImport=columnsToImport))
+
+  def _import_or_create_view(self, format, view, dict):
+    if view:
+      # TODO: return View object here
+      return self.send('createView' + format, dict)
+    else:
+      res = self.send('import' + format, dict)
+      return Table(res.checkpoint)
+
+  def load_project(self, name):
+    '''Loads an existing LynxKite project.'''
+    r = self.send('loadProject', dict(project=name))
+    return Project(self, r.checkpoint)
+
+  def new_project(self):
+    '''Creates a new unnamed empty LynxKite project.'''
+    r = self.send('newProject')
+    return Project(self, r.checkpoint)
+
+
+class Table(object):
+  def __init__(self, checkpoint):
+    self.checkpoint = checkpoint
+    self.name = '!checkpoint(%s,)|vertices' % checkpoint
+
 
 class Project(object):
 
@@ -241,23 +230,14 @@ class Project(object):
 
   This project is not automatically saved to the LynxKite project directories.
   '''
-  @staticmethod
-  def load(name, connection=None):
-    '''Loads an existing LynxKite project.'''
-    connection = connection or default_connection()
-    p = Project(connection)
-    r = connection.send('loadProject', dict(project=name))
-    p.checkpoint = r.checkpoint
-    return p
 
-  def __init__(self, connection=None):
+  def __init__(self, lk, checkpoint):
     '''Creates a new blank project.'''
-    self.connection = connection or default_connection()
-    r = self.connection.send('newProject')
-    self.checkpoint = r.checkpoint
+    self.lk = lk
+    self.checkpoint = checkpoint
 
   def save(self, name):
-    self.connection.send(
+    self.lk.send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
@@ -265,7 +245,7 @@ class Project(object):
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = self.connection.send(
+    r = self.lk.send(
         'getScalar',
         dict(
             checkpoint=self.checkpoint,
@@ -275,7 +255,7 @@ class Project(object):
     return r.string
 
   def sql(self, query, limit=None):
-    r = self.connection.send('projectSQL', dict(
+    r = self.lk.send('projectSQL', dict(
         checkpoint=self.checkpoint,
         query=query,
         limit=limit or default_sql_limit,
@@ -284,13 +264,17 @@ class Project(object):
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
-    r = self.connection.send('runOperation',
-                             dict(checkpoint=self.checkpoint, operation=operation, parameters=parameters))
+    r = self.lk.send(
+        'runOperation',
+        dict(
+            checkpoint=self.checkpoint,
+            operation=operation,
+            parameters=parameters))
     self.checkpoint = r.checkpoint
     return self
 
   def compute(self):
-    return self.connection.send(
+    return self.lk.send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
