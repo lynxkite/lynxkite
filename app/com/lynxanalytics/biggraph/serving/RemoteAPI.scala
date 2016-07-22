@@ -17,7 +17,6 @@ import com.lynxanalytics.biggraph.serving.FrontendJson._
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
-  case class TitledCheckpointResponse(path: String)
   case class OperationRequest(
     checkpoint: String,
     operation: String,
@@ -41,7 +40,6 @@ object RemoteAPIProtocol {
     isWriteAllowed: Boolean)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
-  implicit val wTitledCheckpointResponse = json.Json.writes[TitledCheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
@@ -69,9 +67,9 @@ object RemoteAPIServer extends JsonServer {
   def projectSQL = jsonPost(c.projectSQL)
   def globalSQL = jsonPost(c.globalSQL)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, TitledCheckpointResponse](c.importRequest)
+    jsonPost[T, CheckpointResponse](c.importRequest)
   private def createView[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, TitledCheckpointResponse](c.createView)
+    jsonPost[T, CheckpointResponse](c.createView)
   def importJdbc = importRequest[JdbcImportRequest]
   def importHive = importRequest[HiveImportRequest]
   def importCSV = importRequest[CSVImportRequest]
@@ -181,12 +179,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
                                           prefix: String, checkpoint: String) = {
     val viewer = getViewer(checkpoint)
     for (path <- viewer.allRelativeTablePaths) {
-      controllers.Table(path, viewer).toDF(sqlContext)
-        .registerTempTable(prefix + "|" + path.toString)
+      val df = controllers.Table(path, viewer).toDF(sqlContext)
+      df.registerTempTable(prefix + "|" + path.toString)
+      if (path.toString == "vertices") df.registerTempTable(prefix)
     }
-    viewer.editor.viewRecipe.foreach(
-      r => r.createDataFrame(user, sqlContext).registerTempTable(prefix)
-    )
+    for (r <- viewer.editor.viewRecipe) {
+      r.createDataFrame(user, sqlContext).registerTempTable(prefix)
+    }
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
@@ -210,12 +209,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
+  def importRequest[T <: GenericImportRequest: json.Writes](
+    user: User, request: T): CheckpointResponse = {
     val res = sqlController.doImport(user, request)
-    TitledCheckpointResponse(res.id)
+    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
+    CheckpointResponse(cp)
   }
 
-  def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): TitledCheckpointResponse = {
+  def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): CheckpointResponse = {
     val editor = new RootProjectEditor(RootProjectState.emptyState)
     editor.viewRecipe = recipe
     val cps = metaManager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
