@@ -69,7 +69,13 @@ object RemoteAPIProtocol {
     isDirectory: Boolean,
     isReadAllowed: Boolean,
     isWriteAllowed: Boolean)
+  case class ExportViewToCSVRequest(
+    checkpoint: String, path: String, header: Boolean, delimiter: String, quote: String)
   case class ExportViewToJsonRequest(checkpoint: String, path: String)
+  case class ExportViewToORCRequest(checkpoint: String, path: String)
+  case class ExportViewToParquetRequest(checkpoint: String, path: String)
+  case class ExportViewToJdbcRequest(
+    checkpoint: String, jdbcUrl: String, table: String, mode: String)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
@@ -83,7 +89,11 @@ object RemoteAPIProtocol {
   implicit val rTakeFromViewRequest = json.Json.reads[TakeFromViewRequest]
   implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
   implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
+  implicit val rExportViewToCSVRequest = json.Json.reads[ExportViewToCSVRequest]
   implicit val rExportViewToJsonRequest = json.Json.reads[ExportViewToJsonRequest]
+  implicit val rExportViewToORCRequest = json.Json.reads[ExportViewToORCRequest]
+  implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
+  implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
 
 }
 
@@ -98,7 +108,11 @@ object RemoteAPIServer extends JsonServer {
   def runOperation = jsonPost(c.runOperation)
   def saveProject = jsonPost(c.saveProject)
   def takeFromView = jsonPost(c.takeFromView)
+  def exportViewToCSV = jsonPost(c.exportViewToCSV)
   def exportViewToJson = jsonPost(c.exportViewToJson)
+  def exportViewToORC = jsonPost(c.exportViewToORC)
+  def exportViewToParquet = jsonPost(c.exportViewToParquet)
+  def exportViewToJdbc = jsonPost(c.exportViewToJdbc)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.importRequest)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
@@ -237,13 +251,37 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     dfToTableResult(df, request.limit)
   }
 
-  def exportViewToJson(user: User, request: ExportViewToJsonRequest): Unit = {
-    val file = HadoopFile(request.path)
-    exportToFile(user, request.checkpoint, file, "json")
+  def exportViewToCSV(user: User, request: ExportViewToCSVRequest): Unit = {
+    exportViewToFile(
+      user, request.checkpoint, request.path, "csv", Map(
+        "delimiter" -> request.delimiter,
+        "quote" -> request.quote,
+        "nullValue" -> "",
+        "header" -> (if (request.header) "true" else "false")))
   }
 
-  private def exportToFile(user: serving.User, checkpoint: String, file: HadoopFile,
-                           format: String, options: Map[String, String] = Map()): Unit = {
+  def exportViewToJson(user: User, request: ExportViewToJsonRequest): Unit = {
+    exportViewToFile(user, request.checkpoint, request.path, "json")
+  }
+
+  def exportViewToORC(user: User, request: ExportViewToORCRequest): Unit = {
+    exportViewToFile(user, request.checkpoint, request.path, "orc")
+  }
+
+  def exportViewToParquet(user: User, request: ExportViewToParquetRequest): Unit = {
+    exportViewToFile(user, request.checkpoint, request.path, "parquet")
+  }
+
+  def exportViewToJdbc(user: User, request: ExportViewToJdbcRequest): Unit = {
+    val df = viewToDF(user, request.checkpoint)
+    df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
+  }
+
+  private def exportViewToFile(
+    user: serving.User, checkpoint: String, path: String,
+    format: String, options: Map[String, String] = Map()): Unit = {
+    val file = HadoopFile(path)
+    file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
     df.write.format(format).options(options).save(file.resolvedName)
   }

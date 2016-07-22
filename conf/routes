@@ -49,8 +49,6 @@ POST /ajax/createViewORC         com.lynxanalytics.biggraph.serving.ProductionJs
 POST /ajax/createViewJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJson
 POST /ajax/createViewHive        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewHive
 
-
-
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
 GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
@@ -101,8 +99,12 @@ POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.cr
 POST /remote/createViewParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewParquet
 POST /remote/createViewORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewORC
 POST /remote/createViewJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJson
-POST /remote/takeFromView  com.lynxanalytics.biggraph.serving.RemoteAPIServer.takeFromView
-POST /remote/exportViewToJson  com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJson
+POST /remote/takeFromView com.lynxanalytics.biggraph.serving.RemoteAPIServer.takeFromView
+POST /remote/exportViewToCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToCSV
+POST /remote/exportViewToJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJson
+POST /remote/exportViewToORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToORC
+POST /remote/exportViewToParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToParquet
+POST /remote/exportViewToJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJdbc
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
