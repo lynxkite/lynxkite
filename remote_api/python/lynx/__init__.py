@@ -19,9 +19,12 @@ history.
 import http.cookiejar
 import json
 import os
+import sys
 import types
 import urllib
 
+if sys.version_info.major < 3:
+  raise Exception('At least Python version 3 is needed!')
 
 default_sql_limit = 1000
 default_privacy = 'public-read'
@@ -41,16 +44,136 @@ def default_connection():
 
 def sql(query, limit=None, **kwargs):
   '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
-  where p is a Project object, and giving the limit is optional'''
+  where p is an object that has a checkpoint, and giving the limit is optional'''
   checkpoints = {}
-  for name, project in kwargs.items():
-    checkpoints[name] = project.checkpoint
+  for name, p in kwargs.items():
+    checkpoints[name] = p.checkpoint
   r = _connection.send('globalSQL', dict(
       query=query,
       limit=limit or default_sql_limit,
       checkpoints=checkpoints
   ), raw=True)
   return r['rows']
+
+
+def get_directory_entry(path, connection=None):
+  connection = connection or default_connection()
+  r = connection.send('getDirectoryEntry', dict(path=path))
+  return r
+
+
+def import_csv(
+        files,
+        table,
+        privacy=default_privacy,
+        columnNames=[],
+        delimiter=',',
+        mode='FAILFAST',
+        infer=True,
+        columnsToImport=[],
+        view=False,
+        connection=None):
+  return _import_or_create_view(
+      "CSV",
+      view,
+      dict(table=table,
+           files=files,
+           privacy=privacy,
+           columnNames=columnNames,
+           delimiter=delimiter,
+           mode=mode,
+           infer=infer,
+           columnsToImport=columnsToImport),
+      connection)
+
+
+def import_hive(
+        table,
+        hiveTable,
+        privacy=default_privacy,
+        columnsToImport=[],
+        connection=None):
+  return _import_or_create_view(
+      "Hive",
+      view,
+      dict(
+          table=table,
+          privacy=privacy,
+          hiveTable=hiveTable,
+          columnsToImport=columnsToImport),
+      connection)
+
+
+def import_jdbc(
+        table,
+        jdbcUrl,
+        jdbcTable,
+        keyColumn,
+        privacy=default_privacy,
+        columnsToImport=[],
+        view=False,
+        connection=None):
+  return _import_or_create_view(
+      "Jdbc",
+      view,
+      dict(table=table,
+           jdbcUrl=jdbcUrl,
+           privacy=privacy,
+           jdbcTable=jdbcTable,
+           keyColumn=keyColumn,
+           columnsToImport=columnsToImport),
+      connection)
+
+
+def import_parquet(
+        table,
+        privacy=default_privacy,
+        columnsToImport=[],
+        view=False,
+        connection=None):
+  return _import_or_create_view(
+      "Parquet",
+      view,
+      dict(table=table,
+           privacy=privacy,
+           columnsToImport=columnsToImport),
+      connection)
+
+
+def import_orc(
+        table,
+        privacy=default_privacy,
+        columnsToImport=[],
+        view=False,
+        connection=None):
+  return _import_or_create_view(
+      "ORC",
+      view,
+      dict(table=table,
+           privacy=privacy,
+           columnsToImport=columnsToImport),
+      connection)
+
+
+def import_json(
+        table,
+        privacy=default_privacy,
+        columnsToImport=[],
+        view=False,
+        connection=None):
+  return _import_or_create_view(
+      "Json",
+      view,
+      dict(table=table,
+           privacy=privacy,
+           columnsToImport=columnsToImport),
+      connection)
+
+
+def _import_or_create_view(format, view, dict, connection):
+  connection = connection or default_connection()
+  endpoint = ("createView" if view else "import") + format
+  return connection.send(endpoint, dict)
 
 
 class Connection(object):
@@ -159,74 +282,16 @@ class Project(object):
     ), raw=True)
     return r['rows']
 
-  def import_csv(self, files, table,
-                 privacy=default_privacy,
-                 columnNames=[],
-                 delimiter=',',
-                 mode='FAILFAST',
-                 infer=True,
-                 columnsToImport=[],
-                 view=False):
-    return self._import_or_create_view("importCSV", view,
-                                       dict(table=table,
-                                            files=files,
-                                            privacy=privacy,
-                                            columnNames=columnNames,
-                                            delimiter=delimiter,
-                                            mode=mode,
-                                            infer=infer,
-                                            columnsToImport=columnsToImport))
-
-  def import_hive(self, table, hiveTable,
-                  privacy=default_privacy, columnsToImport=[]):
-  r = self.connection.send('importHive',
-                           dict(
-                               table=table,
-                               privacy=privacy,
-                               hiveTable=hiveTable,
-                               columnsToImport=columnsToImport))
-
-  def import_jdbc(self, table, jdbcUrl, jdbcTable, keyColumn,
-                  privacy=default_privacy, columnsToImport=[], view=False):
-    return self._import_or_create_view("Jdbc", view,
-                                       dict(table=table,
-                                            jdbcUrl=jdbcUrl,
-                                            privacy=privacy,
-                                            jdbcTable=jdbcTable,
-                                            keyColumn=keyColumn,
-                                            columnsToImport=columnsToImport))
-
-  def import_parquet(
-          self, table, privacy=default_privacy, columnsToImport=[], view=False):
-    return self._import_or_create_view("Parquet", view,
-                                       dict(table=table,
-                                            privacy=privacy,
-                                            columnsToImport=columnsToImport))
-
-  def import_orc(self, table, privacy=default_privacy,
-                 columnsToImport=[], view=False):
-    return self._import_or_create_view("ORC", view,
-                                       dict(table=table,
-                                            privacy=privacy,
-                                            columnsToImport=columnsToImport))
-
-  def import_json(self, table, privacy=default_privacy,
-                  columnsToImport=[], view=False):
-    return self._import_or_create_view("Json", view,
-                                       dict(table=table,
-                                            privacy=privacy,
-                                            columnsToImport=columnsToImport))
-
-  def _import_or_create_view(self, format, view, dict):
-    endpoint = ("createView" if view else "import") + format
-    return self.connection.send(endpoint, dict)
-
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
     r = self.connection.send('runOperation',
                              dict(checkpoint=self.checkpoint, operation=operation, parameters=parameters))
     self.checkpoint = r.checkpoint
     return self
+
+  def compute(self):
+    return self.connection.send(
+        'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
