@@ -23,14 +23,15 @@ class TestImport(unittest.TestCase):
     ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0),
     ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
     ('C', 3, 'Felix', 'Male', 'Gnome', NULL),
-    (NULL, 4, NULL, NULL, NULL, NULL);
+    ('D', 4, 'Oliver', 'Male', 'Troll', NULL),
+    (NULL, 5, NULL, NULL, NULL, NULL);
     """)
     conn.commit()
     conn.close()
 
     url = "jdbc:sqlite:{}".format(path)
-    p = lynx.Project()
-    p.import_jdbc(
+    lc = lynx.default_lynx_context()
+    cp = lc.import_jdbc(
         table="jdbc-" + str(view),
         jdbcUrl=url,
         jdbcTable="subscribers",
