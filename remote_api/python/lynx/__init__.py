@@ -290,7 +290,8 @@ class Project(object):
     return self
 
   def compute(self):
-    return self.connection.send('computeProject', dict(checkpoint=self.checkpoint))
+    return self.connection.send(
+        'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
