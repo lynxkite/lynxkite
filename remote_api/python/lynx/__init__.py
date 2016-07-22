@@ -44,10 +44,10 @@ def default_connection():
 
 def sql(query, limit=None, **kwargs):
   '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
-  where p is a Project object, and giving the limit is optional'''
+  where p is an object that has a checkpoint, and giving the limit is optional'''
   checkpoints = {}
-  for name, project in kwargs.items():
-    checkpoints[name] = project.checkpoint
+  for name, p in kwargs.items():
+    checkpoints[name] = p.checkpoint
   r = _connection.send('globalSQL', dict(
       query=query,
       limit=limit or default_sql_limit,
@@ -173,7 +173,7 @@ def import_json(
 def _import_or_create_view(format, view, dict, connection):
   connection = connection or default_connection()
   endpoint = ("createView" if view else "import") + format
-  return connection.send(endpoint, dict).path
+  return connection.send(endpoint, dict)
 
 
 class Connection(object):
