@@ -30,8 +30,8 @@ class TestImport(unittest.TestCase):
     conn.close()
 
     url = "jdbc:sqlite:{}".format(path)
-    lc = lynx.default_lynx_context()
-    cp = lc.import_jdbc(
+    lk = lynx.LynxKite()
+    cp = lk.import_jdbc(
         table="jdbc-" + str(view),
         jdbcUrl=url,
         jdbcTable="subscribers",
