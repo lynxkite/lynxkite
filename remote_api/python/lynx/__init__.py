@@ -239,10 +239,44 @@ class View:
     ), raw=True)
     return r['rows']
 
+  def exportCSV(self, path, header=true, delimiter=',', quote='"'):
+    self.lk.send('exportViewToCSV', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        header=header,
+        delimiter=delimiter,
+        quote=quote,
+    ))
+
   def exportJson(self, path):
     self.lk.send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
+    ))
+
+  def exportORC(self, path):
+    self.lk.send('exportViewToORC', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+    ))
+
+  def exportParquet(self, path):
+    self.lk.send('exportViewToParquet', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+    ))
+
+  def exportJdbc(self, url, table, mode='error'):
+    '''Exports the view into a database table via JDBC.
+
+    The "mode" argument describes what happens if the table already exists. Valid values are
+    "error", "overwrite", and "append".
+    '''
+    self.lk.send('exportViewToJdbc', dict(
+        checkpoint=self.checkpoint,
+        jdbcUrl=url,
+        table=table,
+        mode=mode,
     ))
 
 
