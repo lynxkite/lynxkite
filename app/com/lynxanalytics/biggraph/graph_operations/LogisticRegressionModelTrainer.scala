@@ -101,6 +101,7 @@ case class LogisticRegressionModelTrainer(
   private def getStatistics(
     model: ml.classification.LogisticRegressionModel,
     predictions: sql.DataFrame): String = {
+    val nullModel = ml.LogisticRegressionModelHelper.nullModel(model)
     ""
   }
 }
