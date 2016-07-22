@@ -925,7 +925,7 @@ class ViewFrame(path: SymbolPath)(
     checkpoint = cps.checkpoint.get
   }
   override def isDirectory: Boolean = false
-  def getRecipe: json.JsObject = details.get
+  def getRecipe: ViewRecipe = TypedJson.read[ViewRecipe](details.get)
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
@@ -1146,7 +1146,7 @@ class DirectoryEntry(val path: SymbolPath)(
     asInstanceOf[ViewFrame]
   }
 
-  def asNewViewFrame[T <: GenericImportRequest: json.Writes](recipe: T, notes: String): ViewFrame = {
+  def asNewViewFrame[T <: ViewRecipe: json.Writes](recipe: T, notes: String): ViewFrame = {
     assert(!exists, s"Entry '$path' already exists")
     val res = new ViewFrame(path)
     res.initializeFromConfig(recipe, notes)
