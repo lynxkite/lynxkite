@@ -8,11 +8,13 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Global SQL-box has been added.
  - Views have been added to avoid expensive serialization to tables when it is not required.
- - New operation _"Mask vertex attribute"_ has been added.
  - Import options are now stored for each table and can be reused via "Edit import" button
  - New operation _"Hash vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
- 
+ - New operations _"Train a Logistic regression model"_, _"Classify with a model"_, _"Train a k-means
+   clustering model"_, and _"Reduce vertex attributes to two dimensions"_ have been added.
+ - Statistics are displayed on the linear regression models.
+
 ### 1.8.0
 
  - Major performance and scalability improvements.
