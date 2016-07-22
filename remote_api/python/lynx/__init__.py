@@ -30,6 +30,7 @@ if sys.version_info.major < 3:
 default_sql_limit = 1000
 default_privacy = 'public-read'
 
+
 class LynxKite(object):
   '''A connection to a LynxKite instance.
 
@@ -70,10 +71,10 @@ class LynxKite(object):
         with self.opener.open(req) as r:
           return r.read().decode('utf-8')
       except urllib.error.HTTPError as err:
-        if err.code == 401:  # Unauthorized.
+        if err.code == 401 and i + 1 < max_tries:  # Unauthorized.
           self.login()
           # And then retry via the "for" loop.
-        if err.code == 500:  # Unauthorized.
+        elif err.code == 500:  # Internal server error.
           raise LynxException(err.read())
         else:
           raise err
@@ -219,6 +220,7 @@ class LynxKite(object):
 
 
 class Table(object):
+
   def __init__(self, checkpoint):
     self.checkpoint = checkpoint
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
