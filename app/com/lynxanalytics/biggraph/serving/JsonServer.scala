@@ -282,7 +282,8 @@ object FrontendJson {
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 
-  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
+  implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -407,6 +408,13 @@ object ProductionJsonServer extends JsonServer {
   def importORC = jsonPost(sqlController.importORC)
   def importJson = jsonPost(sqlController.importJson)
   def importHive = jsonPost(sqlController.importHive)
+  def createViewCSV = jsonPost(sqlController.createViewCSV)
+  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
+  def createViewParquet = jsonPost(sqlController.createViewParquet)
+  def createViewORC = jsonPost(sqlController.createViewORC)
+  def createViewJson = jsonPost(sqlController.createViewJson)
+  def createViewHive = jsonPost(sqlController.createViewHive)
+  def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)

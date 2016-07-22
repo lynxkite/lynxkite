@@ -113,13 +113,6 @@ export KITE_EXTRA_JARS=
 # export KITE_AMMONITE_USER=lynx
 # export KITE_AMMONITE_PASSWD=kite
 
-# API access to LynxKite is available by sending JSON commands through a Unix pipe.
-# LynxKite will create this pipe on startup. This pipe gives full administrative access, so use
-# the file system permissions on the containing directory to limit access to it, if you enable this
-# option. The API protocol is not documented at the moment but we provide a Python client in
-# tools/api/python.
-# export KITE_API_PIPE=$HOME/secure/api-pipe
-
 # Options needed if you want to use authentication and HTTPS.
 
 # Just use the following configurations with default values for a simple, fake certificate setup.

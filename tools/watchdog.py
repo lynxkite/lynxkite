@@ -13,30 +13,33 @@ import sys
 import logging
 
 flags = argparse.ArgumentParser(
-  description='Runs a script if a URL is not responsive or when requested through a web UI.')
+    description='Runs a script if a URL is not responsive or when requested through a web UI.')
 flags.add_argument('--status_port', type=int,
-    help='Port for the web UI.', required=True)
+                   help='Port for the web UI.', required=True)
+
+
 def splitURLRecord(record):
   url, timeout = record.split('@')
   return (url, int(timeout))
 flags.add_argument('--watched_urls', type=lambda s: [splitURLRecord(r) for r in s.split(',')],
-    help='URLs to watch. A comma separated list of URL@timeout pairs.', required=True)
+                   help='URLs to watch. A comma separated list of URL@timeout pairs.', required=True)
 flags.add_argument('--sleep_seconds', type=int,
-    help='Time between health checks.', required=True)
+                   help='Time between health checks.', required=True)
 flags.add_argument('--max_failures', type=int,
-    help='Number of failures before the script is run.', required=True)
+                   help='Number of failures before the script is run.', required=True)
 flags.add_argument('--script',
-    help='Script to run when the port is unresponsive.', required=True)
+                   help='Script to run when the port is unresponsive.', required=True)
 flags.add_argument('--pid_file',
-    help='Where to put the PID file for this watchdof.', required=True)
+                   help='Where to put the PID file for this watchdof.', required=True)
 flags = flags.parse_args()
 
 
 logging.basicConfig(
-  destination = sys.stderr,
-  level = logging.DEBUG,
-  format = "%(asctime)s  %(message)s",
-  datefmt = "%d/%h/%Y %H:%M:%S")
+    destination=sys.stderr,
+    level=logging.DEBUG,
+    format="%(asctime)s  %(message)s",
+    datefmt="%d/%h/%Y %H:%M:%S")
+
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -72,6 +75,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
     msg = "client: " + self.client_address[0] + " -- " + format % args
     logging.info(msg)
 
+
 class Server(BaseHTTPServer.HTTPServer):
 
   def __init__(self):
@@ -104,9 +108,9 @@ class Server(BaseHTTPServer.HTTPServer):
   def restart(self):
     self.log.append('!')
     subprocess.call(
-      flags.script,
-      shell=True,
-      preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+        flags.script,
+        shell=True,
+        preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
 
 
 def monitor_thread(server):
@@ -139,7 +143,7 @@ if __name__ == '__main__':
   else:
     with file(pidfile, 'w') as f:
       f.write(str(os.getpid()))
-  
+
   server = Server()
   thread.start_new_thread(monitor_thread, (server,))
   server.serve_forever()

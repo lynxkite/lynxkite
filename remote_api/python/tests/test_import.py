@@ -2,12 +2,15 @@ import unittest
 import lynx
 import os
 
+
 class TestImport(unittest.TestCase):
+
   """
   All import calls use the same backend function,
   no need to test them separately.
   """
-  def test_jdbc(self):
+
+  def stub_test_jdbc(self, view):
     import sqlite3
     path = os.path.abspath("tests/test.db")
     conn = sqlite3.connect(path)
@@ -27,7 +30,18 @@ class TestImport(unittest.TestCase):
 
     url = "jdbc:sqlite:{}".format(path)
     p = lynx.Project()
-    p.import_jdbc(table="jdbc-import", jdbcUrl=url, jdbcTable="subscribers", keyColumn="id")
+    p.import_jdbc(
+        table="jdbc-" + str(view),
+        jdbcUrl=url,
+        jdbcTable="subscribers",
+        keyColumn="id",
+        view=view)
+
+  def test_jdbc_import(self):
+    self.stub_test_jdbc(False)
+
+  def test_jdbc_view(self):
+    self.stub_test_jdbc(True)
 
 if __name__ == '__main__':
   unittest.main()
