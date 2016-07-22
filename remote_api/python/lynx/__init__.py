@@ -46,8 +46,8 @@ def sql(query, limit=None, **kwargs):
   '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
   where p is a Project object, and giving the limit is optional'''
   checkpoints = {}
-  for name, project in kwargs.items():
-    checkpoints[name] = project.checkpoint
+  for name, p in kwargs.items():
+    checkpoints[name] = p.checkpoint if hasattr(p,"checkpoint") else p
   r = _connection.send('globalSQL', dict(
       query=query,
       limit=limit or default_sql_limit,

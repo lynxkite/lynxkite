@@ -27,10 +27,9 @@ class TestImport(unittest.TestCase):
     """)
     conn.commit()
     conn.close()
-
     url = "jdbc:sqlite:{}".format(path)
-    p = lynx.Project()
-    p.import_jdbc(
+
+    return lynx.import_jdbc(
         table="jdbc-" + str(view),
         jdbcUrl=url,
         jdbcTable="subscribers",
@@ -38,10 +37,30 @@ class TestImport(unittest.TestCase):
         view=view)
 
   def test_jdbc_import(self):
-    self.stub_test_jdbc(False)
+    tcp = self.stub_test_jdbc(False)
+    print(tcp)
 
   def test_jdbc_view(self):
-    self.stub_test_jdbc(True)
+    cp = self.stub_test_jdbc(True)
+    res = lynx.sql("select * from `cp`", cp=cp)
+    self.assertEqual(res, [{'gender': 'Male',
+                    'level': 10.0,
+                    'name': 'Daniel',
+                    'id': 1,
+                    'race condition': 'Halfling',
+                    'n': 'A'},
+                   {'gender': 'Female',
+                    'level': 20.0,
+                    'name': 'Beata',
+                    'id': 2,
+                    'race condition': 'Dwarf',
+                    'n': 'B'},
+                   {'gender': 'Male',
+                    'id': 3,
+                    'n': 'C',
+                    'name': 'Felix',
+                    'race condition': 'Gnome'},
+                   {'id': 4}])
 
 if __name__ == '__main__':
   unittest.main()

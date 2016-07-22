@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.TypedEntity
 import com.lynxanalytics.biggraph.graph_api.SymbolPath
+import com.lynxanalytics.biggraph.graph_api.TypedJson
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 
@@ -161,7 +162,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def projectSQL(user: User, request: ProjectSQLRequest): TableResult = {
     val sqlContext = dataManager.newHiveContext()
-    registerTablesOfRootProject(sqlContext, "", request.checkpoint)
+    registerTablesOfRootProject(user, sqlContext, "", request.checkpoint)
     val df = sqlContext.sql(request.query)
     dfToTableResult(df, request.limit)
   }
@@ -170,18 +171,22 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val sqlContext = dataManager.newHiveContext()
     // Register tables
     for ((name, cp) <- request.checkpoints)
-      registerTablesOfRootProject(sqlContext, name + "|", cp)
+      registerTablesOfRootProject(user, sqlContext, name, cp)
     val df = sqlContext.sql(request.query)
     dfToTableResult(df, request.limit)
   }
 
   // Takes all the tables in the rootproject given by the checkpoint and registers all of them with prefixed name
-  private def registerTablesOfRootProject(sqlContext: org.apache.spark.sql.hive.HiveContext,
+  private def registerTablesOfRootProject(user: User, sqlContext: org.apache.spark.sql.hive.HiveContext,
                                           prefix: String, checkpoint: String) = {
     val viewer = getViewer(checkpoint)
     for (path <- viewer.allRelativeTablePaths) {
-      controllers.Table(path, viewer).toDF(sqlContext).registerTempTable(prefix + path.toString)
+      controllers.Table(path, viewer).toDF(sqlContext)
+        .registerTempTable(prefix + "|" + path.toString)
     }
+    viewer.editor.viewRecipe.foreach(
+      r => r.createDataFrame(user, sqlContext).registerTempTable(prefix)
+    )
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
@@ -210,9 +215,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     TitledCheckpointResponse(res.id)
   }
 
-  def createView[T <: GenericImportRequest: json.Writes](user: User, request: T): TitledCheckpointResponse = {
-    val res = sqlController.saveView(user, request)
-    TitledCheckpointResponse(res.id)
+  def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): TitledCheckpointResponse = {
+    val editor = new RootProjectEditor(RootProjectState.emptyState)
+    editor.viewRecipe = recipe
+    val cps = metaManager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
+    CheckpointResponse(cps.checkpoint.get)
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {
