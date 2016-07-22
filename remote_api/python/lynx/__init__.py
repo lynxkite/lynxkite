@@ -34,9 +34,9 @@ class LynxKite(object):
   '''A connection to a LynxKite instance.
 
   Some LynxKite API methods take a connection argument which can be used to communicate with
-  multiple LynxKite instances from the same session. If this argument is not provided, the default
-  connection is used instead. The default connection is configured via the LYNXKITE_ADDRESS,
-  LYNXKITE_USERNAME, and LYNXKITE_PASSWORD environment variables.
+  multiple LynxKite instances from the same session. If no arguments to the constructor are
+  provided, then a connection is created using the following environment variables:
+  LYNXKITE_ADDRESS, LYNXKITE_USERNAME, and LYNXKITE_PASSWORD.
   '''
 
   def __init__(self, username=None, password=None, address=None):
@@ -200,8 +200,12 @@ class LynxKite(object):
              columnsToImport=columnsToImport))
 
   def _import_or_create_view(self, format, view, dict):
-    endpoint = ("createView" if view else "import") + format
-    return self.send(endpoint, dict).path
+    if view:
+      # TODO: return View object here
+      return self.send('createView' + format, dict)
+    else:
+      res = self.send('import' + format, dict)
+      return Table(res.checkpoint)
 
   def load_project(self, name):
     '''Loads an existing LynxKite project.'''
@@ -214,6 +218,12 @@ class LynxKite(object):
     return Project(self, r.checkpoint)
 
 
+class Table(object):
+  def __init__(self, checkpoint):
+    self.checkpoint = checkpoint
+    self.name = '!checkpoint(%s,)|vertices' % checkpoint
+
+
 class Project(object):
 
   '''Represents an unanchored LynxKite project.
@@ -221,13 +231,13 @@ class Project(object):
   This project is not automatically saved to the LynxKite project directories.
   '''
 
-  def __init__(self, lc, checkpoint):
+  def __init__(self, lk, checkpoint):
     '''Creates a new blank project.'''
-    self.lc = lc
+    self.lk = lk
     self.checkpoint = checkpoint
 
   def save(self, name):
-    self.lc.send(
+    self.lk.send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
@@ -235,7 +245,7 @@ class Project(object):
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = self.lc.send(
+    r = self.lk.send(
         'getScalar',
         dict(
             checkpoint=self.checkpoint,
@@ -245,7 +255,7 @@ class Project(object):
     return r.string
 
   def sql(self, query, limit=None):
-    r = self.lc.send('projectSQL', dict(
+    r = self.lk.send('projectSQL', dict(
         checkpoint=self.checkpoint,
         query=query,
         limit=limit or default_sql_limit,
@@ -254,7 +264,7 @@ class Project(object):
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
-    r = self.lc.send(
+    r = self.lk.send(
         'runOperation',
         dict(
             checkpoint=self.checkpoint,
@@ -264,7 +274,7 @@ class Project(object):
     return self
 
   def compute(self):
-    return self.connection.send(
+    return self.lk.send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
