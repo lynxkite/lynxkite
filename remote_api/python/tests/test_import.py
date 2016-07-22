@@ -59,7 +59,6 @@ class TestImport(unittest.TestCase):
   def test_jdbc_import(self):
     self.stub_test_jdbc(False)
 
-
   def test_jdbc_view(self):
     self.stub_test_jdbc(True)
 
