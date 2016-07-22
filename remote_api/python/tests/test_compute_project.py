@@ -6,7 +6,7 @@ import os
 class TestComputeProject(unittest.TestCase):
 
   def test_force(self):
-    p = lynx.Project()
+    p = lynx.LynxKite().new_project()
     p.newVertexSet(size=5000)
     p.compute()
 
