@@ -11,6 +11,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Import options are now stored for each table and can be reused via "Edit import" button
  - New operation _"Hash vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
+ - JDBC import can now use `VARCHAR` columns as partitioning keys. For small tables the key can even
+   be omitted.
  - New operations _"Train a Logistic regression model"_, _"Classify with a model"_, _"Train a k-means
    clustering model"_, and _"Reduce vertex attributes to two dimensions"_ have been added.
  - Statistics are displayed on the linear regression models.

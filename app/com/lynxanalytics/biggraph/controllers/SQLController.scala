@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.TableStats
+import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.serving.User
@@ -274,23 +274,7 @@ case class JdbcImportRequest(
 
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
-    assert(jdbcUrl.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
-    val stats = {
-      val connection = java.sql.DriverManager.getConnection(jdbcUrl)
-      try TableStats(jdbcTable, keyColumn)(connection)
-      finally connection.close()
-    }
-    val numPartitions = dataManager.runtimeContext.partitionerForNRows(stats.count).numPartitions
-    context
-      .read
-      .jdbc(
-        jdbcUrl,
-        jdbcTable,
-        keyColumn,
-        stats.minKey,
-        stats.maxKey,
-        numPartitions,
-        new java.util.Properties)
+    JDBCUtil.read(context, jdbcUrl, jdbcTable, keyColumn)
   }
 
   def notes: String = {
