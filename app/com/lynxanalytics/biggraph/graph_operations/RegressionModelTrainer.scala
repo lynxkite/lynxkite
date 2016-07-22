@@ -88,15 +88,14 @@ case class RegressionModelTrainer(
     val summary = model.summary
     val r2 = summary.r2
     val MAPE = predictions.select("prediction", "label").map {
-      row =>
-        {
-          // Return an error of 100% if a zero division error occurs
-          if (row.getDouble(1) == 0) {
-            1.0
-          } else {
-            math.abs(row.getDouble(0) / row.getDouble(1) - 1.0)
-          }
+      row => {
+        // Return an error of 100% if a zero division error occurs
+        if (row.getDouble(1) == 0) {
+          1.0
+        } else {
+          math.abs(row.getDouble(0) / row.getDouble(1) - 1.0)
         }
+      }
     }.mean * 100
     // Only compute the t-values for methods with unbiased solvers (when the elastic 
     // net parameter equals to 0).
