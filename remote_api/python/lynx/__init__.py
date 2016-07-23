@@ -239,7 +239,7 @@ class View:
     ), raw=True)
     return r['rows']
 
-  def exportCSV(self, path, header=true, delimiter=',', quote='"'):
+  def export_csv(self, path, header=True, delimiter=',', quote='"'):
     self.lk.send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -248,25 +248,25 @@ class View:
         quote=quote,
     ))
 
-  def exportJson(self, path):
+  def export_json(self, path):
     self.lk.send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
-  def exportORC(self, path):
+  def export_orc(self, path):
     self.lk.send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
-  def exportParquet(self, path):
+  def export_parquet(self, path):
     self.lk.send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
-  def exportJdbc(self, url, table, mode='error'):
+  def export_jdbc(self, url, table, mode='error'):
     '''Exports the view into a database table via JDBC.
 
     The "mode" argument describes what happens if the table already exists. Valid values are
@@ -279,9 +279,12 @@ class View:
         mode=mode,
     ))
 
+  def to_table(self):
+    res = self.lk.send('exportViewToTable', dict(checkpoint=self.checkpoint))
+    return Table(self.lk, res.checkpoint)
+
 
 class Project(object):
-
   '''Represents an unanchored LynxKite project.
 
   This project is not automatically saved to the LynxKite project directories.
