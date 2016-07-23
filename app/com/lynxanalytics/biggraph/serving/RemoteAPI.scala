@@ -20,7 +20,7 @@ object RemoteAPIProtocol {
     checkpoint: String,
     operation: String,
     parameters: Map[String, String])
-  case class ProjectRequest(project: String)
+  case class LoadNameRequest(name: String)
   case class SaveCheckpointRequest(checkpoint: String, name: String)
   case class ScalarRequest(checkpoint: String, scalar: String)
 
@@ -80,7 +80,7 @@ object RemoteAPIProtocol {
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
-  implicit val rProjectRequest = json.Json.reads[ProjectRequest]
+  implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
   implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
@@ -106,6 +106,8 @@ object RemoteAPIServer extends JsonServer {
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
+  def loadTable = jsonPost(c.loadTable)
+  def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
   def saveProject = jsonPost(c.saveProject)
   def saveTable = jsonPost(c.saveTable)
@@ -166,11 +168,22 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse("") // Blank checkpoint.
   }
 
-  def loadProject(user: User, request: ProjectRequest): CheckpointResponse = {
-    val project = controllers.ProjectFrame.fromName(request.project)
-    project.assertReadAllowedFrom(user)
-    val cp = project.viewer.rootCheckpoint
-    CheckpointResponse(cp)
+  def loadProject(user: User, request: LoadNameRequest): CheckpointResponse = {
+    val frame = controllers.DirectoryEntry.fromName(request.name).asProjectFrame
+    frame.assertReadAllowedFrom(user)
+    CheckpointResponse(frame.checkpoint)
+  }
+
+  def loadTable(user: User, request: LoadNameRequest): CheckpointResponse = {
+    val frame = controllers.DirectoryEntry.fromName(request.name).asTableFrame
+    frame.assertReadAllowedFrom(user)
+    CheckpointResponse(frame.checkpoint)
+  }
+
+  def loadView(user: User, request: LoadNameRequest): CheckpointResponse = {
+    val frame = controllers.DirectoryEntry.fromName(request.name).asViewFrame
+    frame.assertReadAllowedFrom(user)
+    CheckpointResponse(frame.checkpoint)
   }
 
   def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {

@@ -83,6 +83,8 @@ POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServe
 POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
+POST /remote/loadTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadTable
+POST /remote/loadView com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadView
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
 POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveProject
 POST /remote/saveTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveTable
