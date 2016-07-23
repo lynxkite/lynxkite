@@ -21,7 +21,7 @@ object RemoteAPIProtocol {
     operation: String,
     parameters: Map[String, String])
   case class ProjectRequest(project: String)
-  case class SaveProjectRequest(checkpoint: String, project: String)
+  case class SaveCheckpointRequest(checkpoint: String, name: String)
   case class ScalarRequest(checkpoint: String, scalar: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -81,7 +81,7 @@ object RemoteAPIProtocol {
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
-  implicit val rSaveProjectRequest = json.Json.reads[SaveProjectRequest]
+  implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
@@ -108,6 +108,8 @@ object RemoteAPIServer extends JsonServer {
   def loadProject = jsonPost(c.loadProject)
   def runOperation = jsonPost(c.runOperation)
   def saveProject = jsonPost(c.saveProject)
+  def saveTable = jsonPost(c.saveTable)
+  def saveView = jsonPost(c.saveView)
   def takeFromView = jsonPost(c.takeFromView)
   def exportViewToCSV = jsonPost(c.exportViewToCSV)
   def exportViewToJson = jsonPost(c.exportViewToJson)
@@ -171,8 +173,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(cp)
   }
 
-  def saveProject(user: User, request: SaveProjectRequest): CheckpointResponse = {
-    val entry = controllers.DirectoryEntry.fromName(request.project)
+  def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
+    val entry = controllers.DirectoryEntry.fromName(request.name)
+    entry.assertWriteAllowedFrom(user)
     val project = if (!entry.exists) {
       val p = entry.asNewProjectFrame()
       p.writeACL = user.email
@@ -182,6 +185,24 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       entry.asProjectFrame
     }
     project.setCheckpoint(request.checkpoint)
+    CheckpointResponse(request.checkpoint)
+  }
+
+  def saveTable(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
+    val entry = controllers.DirectoryEntry.fromName(request.name)
+    entry.assertWriteAllowedFrom(user)
+    val p = entry.asNewTableFrame(request.checkpoint)
+    p.writeACL = user.email
+    p.readACL = user.email
+    CheckpointResponse(request.checkpoint)
+  }
+
+  def saveView(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
+    val entry = controllers.DirectoryEntry.fromName(request.name)
+    entry.assertWriteAllowedFrom(user)
+    val p = entry.asNewViewFrame(request.checkpoint)
+    p.writeACL = user.email
+    p.readACL = user.email
     CheckpointResponse(request.checkpoint)
   }
 
