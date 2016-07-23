@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
-//import com.lynxanalytics.biggraph.controllers.ViewRecipe
+import com.lynxanalytics.biggraph.table.TableImport
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
@@ -76,6 +76,7 @@ object RemoteAPIProtocol {
   case class ExportViewToParquetRequest(checkpoint: String, path: String)
   case class ExportViewToJdbcRequest(
     checkpoint: String, jdbcUrl: String, table: String, mode: String)
+  case class ExportViewToTableRequest(checkpoint: String)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
@@ -94,7 +95,7 @@ object RemoteAPIProtocol {
   implicit val rExportViewToORCRequest = json.Json.reads[ExportViewToORCRequest]
   implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
   implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
-
+  implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -113,6 +114,7 @@ object RemoteAPIServer extends JsonServer {
   def exportViewToORC = jsonPost(c.exportViewToORC)
   def exportViewToParquet = jsonPost(c.exportViewToParquet)
   def exportViewToJdbc = jsonPost(c.exportViewToJdbc)
+  def exportViewToTable = jsonPost(c.exportViewToTable)
   private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.importRequest)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
@@ -284,6 +286,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
     df.write.format(format).options(options).save(file.resolvedName)
+  }
+
+  def exportViewToTable(user: User, request: ExportViewToTableRequest): CheckpointResponse = {
+    val df = viewToDF(user, request.checkpoint)
+    val table = TableImport.importDataFrameAsync(df)
+    val cp = table.saveAsCheckpoint("Created from a view via the Remote API.")
+    CheckpointResponse(cp)
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {
