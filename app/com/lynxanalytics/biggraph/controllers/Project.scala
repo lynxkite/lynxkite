@@ -933,6 +933,11 @@ class ViewFrame(path: SymbolPath)(
     checkpoint = cps.checkpoint.get
   }
 
+  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
+    set(rootDir / "objectType", "view")
+    checkpoint = cp
+  }
+
   override def isDirectory: Boolean = false
   def getRecipe: ViewRecipe = viewer.editor.viewRecipe.get
 }
@@ -1159,6 +1164,11 @@ class DirectoryEntry(val path: SymbolPath)(
     assert(!exists, s"Entry '$path' already exists")
     val res = new ViewFrame(path)
     res.initializeFromConfig(recipe, notes)
+    res
+  }
+  def asNewViewFrame(checkpoint: String): ViewFrame = {
+    val res = new ViewFrame(path)
+    res.initializeFromCheckpoint(checkpoint)
     res
   }
 }

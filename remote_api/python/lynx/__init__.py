@@ -225,12 +225,22 @@ class Table(object):
     self.checkpoint = checkpoint
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
 
+  def save(self, name):
+    self.lk.send('saveTable', dict(
+        checkpoint=self.checkpoint,
+        name=name))
+
 
 class View:
 
   def __init__(self, lynxkite, checkpoint):
     self.lk = lynxkite
     self.checkpoint = checkpoint
+
+  def save(self, name):
+    self.lk.send('saveView', dict(
+        checkpoint=self.checkpoint,
+        name=name))
 
   def take(self, limit):
     r = self.lk.send('takeFromView', dict(
