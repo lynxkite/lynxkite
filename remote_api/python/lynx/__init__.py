@@ -209,8 +209,18 @@ class LynxKite(object):
 
   def load_project(self, name):
     '''Loads an existing LynxKite project.'''
-    r = self.send('loadProject', dict(project=name))
+    r = self.send('loadProject', dict(name=name))
     return Project(self, r.checkpoint)
+
+  def load_table(self, name):
+    '''Loads an existing LynxKite table.'''
+    r = self.send('loadTable', dict(name=name))
+    return Table(self, r.checkpoint)
+
+  def load_view(self, name):
+    '''Loads an existing LynxKite view.'''
+    r = self.send('loadView', dict(name=name))
+    return View(self, r.checkpoint)
 
   def new_project(self):
     '''Creates a new unnamed empty LynxKite project.'''
