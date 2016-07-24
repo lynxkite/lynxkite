@@ -30,6 +30,7 @@ class TestImport(unittest.TestCase):
     conn.close()
     url = "jdbc:sqlite:{}".format(path)
     lk = lynx.LynxKite()
+    lk.request('/ajax/discardAllReallyIMeanIt')
     cp = lk.import_jdbc(
         table="jdbc-" + str(view),
         jdbcUrl=url,
