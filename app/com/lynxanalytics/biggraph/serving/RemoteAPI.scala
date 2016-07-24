@@ -50,7 +50,7 @@ object RemoteAPIProtocol {
         df.registerTempTable(fullPrefix + path.toString)
         if (path.toString == "vertices") df.registerTempTable(prefix)
       }
-      for (r <- viewer.editor.viewRecipe) {
+      for (r <- viewer.viewRecipe) {
         r.createDataFrame(user, sqlContext).registerTempTable(prefix)
       }
     }
@@ -279,7 +279,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   private def viewToDF(user: User, checkpoint: String) = {
     val viewer = getViewer(checkpoint)
     val sqlContext = dataManager.newHiveContext()
-    viewer.editor.viewRecipe.get.createDataFrame(user, sqlContext)
+    viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
   def takeFromView(user: User, request: TakeFromViewRequest): TableResult = {
