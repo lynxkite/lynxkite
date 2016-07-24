@@ -10,7 +10,7 @@ class TestImport(unittest.TestCase):
   no need to test them separately.
   """
 
-  def stub_test_jdbc(self, view):
+  def stub_test_jdbc(self):
     import sqlite3
     path = os.path.abspath("tests/test.db")
     conn = sqlite3.connect(path)
@@ -30,42 +30,40 @@ class TestImport(unittest.TestCase):
     conn.close()
     url = "jdbc:sqlite:{}".format(path)
     lk = lynx.LynxKite()
-    cp = lk.import_jdbc(
-        table="jdbc-" + str(view),
+    lk.request('/ajax/discardAllReallyIMeanIt')
+    view = lk.import_jdbc(
         jdbcUrl=url,
         jdbcTable="subscribers",
-        keyColumn="id",
-        view=view)
-    res = lk.sql("select * from `cp` order by id", cp=cp)
-    self.assertEqual(res, [{'gender': 'Male',
-                            'level': 10.0,
-                            'name': 'Daniel',
-                            'id': 1,
-                            'race condition': 'Halfling',
+        keyColumn="id")
+    res = lk.sql("select * from `cp` order by id", cp=view)
+    self.assertEqual(
+        res.take(5),
+        [{'gender': 'Male',
+          'level': 10.0,
+          'name': 'Daniel',
+          'id': 1,
+          'race condition': 'Halfling',
                             'n': 'A'},
-                           {'gender': 'Female',
-                            'level': 20.0,
-                            'name': 'Beata',
-                            'id': 2,
-                            'race condition': 'Dwarf',
+         {'gender': 'Female',
+          'level': 20.0,
+          'name': 'Beata',
+          'id': 2,
+          'race condition': 'Dwarf',
                             'n': 'B'},
-                           {'gender': 'Male',
-                            'id': 3,
-                            'n': 'C',
-                            'name': 'Felix',
-                            'race condition': 'Gnome'},
-                           {'gender': 'Male',
-                            'id': 4,
-                            'n': 'D',
-                            'name': 'Oliver',
-                            'race condition': 'Troll'},
-                           {'id': 5}])
-
-  def test_jdbc_import(self):
-    self.stub_test_jdbc(False)
+            {'gender': 'Male',
+             'id': 3,
+             'n': 'C',
+             'name': 'Felix',
+             'race condition': 'Gnome'},
+            {'gender': 'Male',
+             'id': 4,
+             'n': 'D',
+             'name': 'Oliver',
+             'race condition': 'Troll'},
+            {'id': 5}])
 
   def test_jdbc_view(self):
-    self.stub_test_jdbc(True)
+    self.stub_test_jdbc()
 
 
 if __name__ == '__main__':

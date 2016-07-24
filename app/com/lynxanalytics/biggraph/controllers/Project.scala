@@ -927,11 +927,7 @@ class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
     recipe: T, notes: String): Unit = manager.synchronized {
-    val editor = new RootProjectEditor(RootProjectState.emptyState)
-    editor.notes = notes
-    editor.viewRecipe = recipe
-    val cps = manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
-    initializeFromCheckpoint(cps.checkpoint.get)
+    initializeFromCheckpoint(ViewRecipe.saveAsCheckpoint(recipe, notes))
   }
 
   def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {

@@ -78,6 +78,10 @@ object RemoteAPIProtocol {
   case class ExportViewToJdbcRequest(
     checkpoint: String, jdbcUrl: String, table: String, mode: String)
   case class ExportViewToTableRequest(checkpoint: String)
+  case class PrefixedPathExistsRequest(
+    path: String)
+  case class PrefixedPathExistsResult(
+    exists: Boolean)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
@@ -97,6 +101,9 @@ object RemoteAPIProtocol {
   implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
   implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
   implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
+  implicit val rPrefixedPathExistsRequest = json.Json.reads[PrefixedPathExistsRequest]
+  implicit val wPrefixedPathExistsResponse = json.Json.writes[PrefixedPathExistsResult]
+
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -105,6 +112,7 @@ object RemoteAPIServer extends JsonServer {
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
   def getScalar = jsonPost(c.getScalar)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
+  def prefixedPathExists = jsonPost(c.prefixedPathExists)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def loadTable = jsonPost(c.loadTable)
@@ -120,18 +128,8 @@ object RemoteAPIServer extends JsonServer {
   def exportViewToParquet = jsonPost(c.exportViewToParquet)
   def exportViewToJdbc = jsonPost(c.exportViewToJdbc)
   def exportViewToTable = jsonPost(c.exportViewToTable)
-  private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, CheckpointResponse](c.importRequest)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
-  def globalSQL = createView[GlobalSQLRequest]
-  def importJdbc = importRequest[JdbcImportRequest]
-  def importHive = importRequest[HiveImportRequest]
-  def importCSV = importRequest[CSVImportRequest]
-  def importParquet = importRequest[ParquetImportRequest]
-  def importORC = importRequest[ORCImportRequest]
-  def importJson = importRequest[JsonImportRequest]
-  def computeProject = jsonPost(c.computeProject)
   def createViewJdbc = createView[JdbcImportRequest]
   def createViewHive = createView[HiveImportRequest]
   def createViewCSV = createView[CSVImportRequest]
@@ -139,6 +137,8 @@ object RemoteAPIServer extends JsonServer {
   def createViewORC = createView[ORCImportRequest]
   def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
+  def globalSQL = createView[GlobalSQLRequest]
+  def computeProject = jsonPost(c.computeProject)
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
@@ -164,6 +164,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       isDirectory = entry.isDirectory,
       isReadAllowed = entry.readAllowedFrom(user),
       isWriteAllowed = entry.writeAllowedFrom(user)
+    )
+  }
+
+  def prefixedPathExists(user: User, request: PrefixedPathExistsRequest): PrefixedPathExistsResult = {
+    val file = HadoopFile(request.path)
+    return PrefixedPathExistsResult(
+      exists = file.exists()
     )
   }
 
@@ -262,18 +269,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](
-    user: User, request: T): CheckpointResponse = {
-    val res = sqlController.doImport(user, request)
-    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
-    CheckpointResponse(cp)
-  }
-
   def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): CheckpointResponse = {
-    val editor = new RootProjectEditor(RootProjectState.emptyState)
-    editor.viewRecipe = recipe
-    val cps = metaManager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
-    CheckpointResponse(cps.checkpoint.get)
+    CheckpointResponse(ViewRecipe.saveAsCheckpoint(recipe))
   }
 
   private def viewToDF(user: User, checkpoint: String) = {
