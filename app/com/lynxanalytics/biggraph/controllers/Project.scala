@@ -292,6 +292,8 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
       Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
+
+  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -735,7 +737,7 @@ class RootProjectEditor(
     val js = TypedJson.createFromWriter(r).as[json.JsObject]
     rootState = rootState.copy(viewRecipe = Some(js))
   }
-  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
+  def viewRecipe = viewer.viewRecipe
 }
 
 // Specialized editor for a SegmentationState.
@@ -925,12 +927,11 @@ class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
     recipe: T, notes: String): Unit = manager.synchronized {
-    set(rootDir / "objectType", "view")
     val editor = new RootProjectEditor(RootProjectState.emptyState)
     editor.notes = notes
     editor.viewRecipe = recipe
     val cps = manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
-    checkpoint = cps.checkpoint.get
+    initializeFromCheckpoint(cps.checkpoint.get)
   }
 
   def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
@@ -939,7 +940,7 @@ class ViewFrame(path: SymbolPath)(
   }
 
   override def isDirectory: Boolean = false
-  def getRecipe: ViewRecipe = viewer.editor.viewRecipe.get
+  def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
