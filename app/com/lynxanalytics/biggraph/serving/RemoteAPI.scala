@@ -168,22 +168,27 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse("") // Blank checkpoint.
   }
 
-  def loadProject(user: User, request: LoadNameRequest): CheckpointResponse = {
-    val frame = controllers.DirectoryEntry.fromName(request.name).asProjectFrame
+  def loadObject(
+    user: User,
+    request: LoadNameRequest,
+    validator: controllers.DirectoryEntry => Boolean): CheckpointResponse = {
+    val entry = controllers.DirectoryEntry.fromName(request.name)
+    assert(validator(entry), "Invalid frame type")
+    val frame = entry.asObjectFrame
     frame.assertReadAllowedFrom(user)
     CheckpointResponse(frame.checkpoint)
+  }
+
+  def loadProject(user: User, request: LoadNameRequest): CheckpointResponse = {
+    loadObject(user, request, _.isProject)
   }
 
   def loadTable(user: User, request: LoadNameRequest): CheckpointResponse = {
-    val frame = controllers.DirectoryEntry.fromName(request.name).asTableFrame
-    frame.assertReadAllowedFrom(user)
-    CheckpointResponse(frame.checkpoint)
+    loadObject(user, request, _.isTable)
   }
 
   def loadView(user: User, request: LoadNameRequest): CheckpointResponse = {
-    val frame = controllers.DirectoryEntry.fromName(request.name).asViewFrame
-    frame.assertReadAllowedFrom(user)
-    CheckpointResponse(frame.checkpoint)
+    loadObject(user, request, _.isView)
   }
 
   def saveFrame(
