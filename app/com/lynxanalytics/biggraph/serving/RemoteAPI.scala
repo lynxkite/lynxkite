@@ -186,37 +186,29 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(frame.checkpoint)
   }
 
-  def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
+  def saveFrame(
+    user: User,
+    request: SaveCheckpointRequest,
+    saver: (controllers.DirectoryEntry, String) => controllers.ObjectFrame): CheckpointResponse = {
+
     val entry = controllers.DirectoryEntry.fromName(request.name)
     entry.assertWriteAllowedFrom(user)
-    val project = if (!entry.exists) {
-      val p = entry.asNewProjectFrame()
-      p.writeACL = user.email
-      p.readACL = user.email
-      p
-    } else {
-      entry.asProjectFrame
-    }
-    project.setCheckpoint(request.checkpoint)
+    val p = saver(entry, request.checkpoint)
+    p.writeACL = user.email
+    p.readACL = user.email
     CheckpointResponse(request.checkpoint)
+  }
+
+  def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
+    saveFrame(user, request, _.asNewProjectFrame(_))
   }
 
   def saveTable(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
-    val entry = controllers.DirectoryEntry.fromName(request.name)
-    entry.assertWriteAllowedFrom(user)
-    val p = entry.asNewTableFrame(request.checkpoint)
-    p.writeACL = user.email
-    p.readACL = user.email
-    CheckpointResponse(request.checkpoint)
+    saveFrame(user, request, _.asNewTableFrame(_))
   }
 
   def saveView(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
-    val entry = controllers.DirectoryEntry.fromName(request.name)
-    entry.assertWriteAllowedFrom(user)
-    val p = entry.asNewViewFrame(request.checkpoint)
-    p.writeACL = user.email
-    p.readACL = user.email
-    CheckpointResponse(request.checkpoint)
+    saveFrame(user, request, _.asNewViewFrame(_))
   }
 
   def getViewer(cp: String): controllers.RootProjectViewer =

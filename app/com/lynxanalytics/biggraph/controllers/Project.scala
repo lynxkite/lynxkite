@@ -1123,17 +1123,24 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initialize()
     res
   }
+  def asNewProjectFrame(checkpoint: String): ProjectFrame = {
+    val res = asNewProjectFrame()
+    res.setCheckpoint(checkpoint)
+    res
+  }
 
   def asTableFrame: TableFrame = {
     assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table, notes: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromTable(table, notes)
     res
   }
   def asNewTableFrame(checkpoint: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromCheckpoint(checkpoint)
     res
