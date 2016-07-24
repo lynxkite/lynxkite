@@ -34,7 +34,7 @@ class TestImport(unittest.TestCase):
         jdbcUrl=url,
         jdbcTable="subscribers",
         keyColumn="id")
-    res = lk.sql("select * from `cp` order by id", cp=cp)
+    res = lk.sql("select * from `cp` order by id", cp=view)
     self.assertEqual(
         res.take(5),
         [{'gender': 'Male',
