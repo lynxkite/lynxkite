@@ -1,4 +1,4 @@
-// Core classes for representing columnar data using meta graph entities.
+// Core classes for representing LynxKite Views.
 
 package com.lynxanalytics.biggraph.controllers
 
