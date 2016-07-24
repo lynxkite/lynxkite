@@ -3,10 +3,11 @@ import lynx
 import os
 import time
 
+
 class TestACL(unittest.TestCase):
 
   def test_acl(self):
-    name = "acl-table"
+    name = 'acl-table'
     lk = lynx.LynxKite()
     lk.request('/ajax/discardAllReallyIMeanIt')
     p = lk.new_project()
