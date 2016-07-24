@@ -77,6 +77,10 @@ object RemoteAPIProtocol {
   case class ExportViewToJdbcRequest(
     checkpoint: String, jdbcUrl: String, table: String, mode: String)
   case class ExportViewToTableRequest(checkpoint: String)
+  case class PrefixedPathExistsRequest(
+    path: String)
+  case class PrefixedPathExistsResult(
+    exists: Boolean)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
@@ -96,6 +100,9 @@ object RemoteAPIProtocol {
   implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
   implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
   implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
+  implicit val rPrefixedPathExistsRequest = json.Json.reads[PrefixedPathExistsRequest]
+  implicit val wPrefixedPathExistsResponse = json.Json.writes[PrefixedPathExistsResult]
+
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -104,6 +111,7 @@ object RemoteAPIServer extends JsonServer {
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
   def getScalar = jsonPost(c.getScalar)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
+  def prefixedPathExists = jsonPost(c.prefixedPathExists)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def loadTable = jsonPost(c.loadTable)
@@ -161,6 +169,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       isDirectory = entry.isDirectory,
       isReadAllowed = entry.readAllowedFrom(user),
       isWriteAllowed = entry.writeAllowedFrom(user)
+    )
+  }
+
+  def prefixedPathExists(user: User, request: PrefixedPathExistsRequest): PrefixedPathExistsResult = {
+    val file = HadoopFile(request.path)
+    return PrefixedPathExistsResult(
+      exists = file.exists()
     )
   }
 
