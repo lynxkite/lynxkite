@@ -103,6 +103,9 @@ class LynxKite(object):
   def get_directory_entry(self, path):
     return self.send('getDirectoryEntry', dict(path=path))
 
+  def prefixed_path_exists(self, path):
+    return self.send('prefixedPathExists', dict(path=path)).exists
+
   def import_csv(
           self,
           files,
@@ -286,7 +289,7 @@ class Project(object):
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
-            project=name))
+            name=name))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
