@@ -199,6 +199,10 @@ class LynxKite(object):
     r = self.send('newProject')
     return Project(self, r.checkpoint)
 
+  def change_acl(self, file, readACL, writeACL):
+    self.send("changeACL",
+              dict(project=file, readACL=readACL, writeACL=writeACL))
+
 
 class Table(object):
 
@@ -207,10 +211,10 @@ class Table(object):
     self.checkpoint = checkpoint
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
 
-  def save(self, name):
+  def save(self, name, writeACL, readACL):
     self.lk.send('saveTable', dict(
         checkpoint=self.checkpoint,
-        name=name))
+        name=name, acl=dict(project=name, writeACL=writeACL, readACL=readACL)))
 
 
 class View:
@@ -219,10 +223,11 @@ class View:
     self.lk = lynxkite
     self.checkpoint = checkpoint
 
-  def save(self, name):
+  def save(self, name, writeACL, readACL):
     self.lk.send('saveView', dict(
         checkpoint=self.checkpoint,
-        name=name))
+        name=name,
+        acl=dict(project=name, writeACL=writeACL, readACL=readACL)))
 
   def take(self, limit):
     r = self.lk.send('takeFromView', dict(
@@ -287,12 +292,13 @@ class Project(object):
     self.lk = lynxkite
     self.checkpoint = checkpoint
 
-  def save(self, name):
+  def save(self, name, writeACL, readACL):
     self.lk.send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
-            name=name))
+            name=name,
+            acl=dict(project=name, writeACL=writeACL, readACL=readACL)))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
