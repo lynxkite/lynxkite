@@ -109,20 +109,14 @@ class LynxKite(object):
   def import_csv(
           self,
           files,
-          table,
-          privacy=default_privacy,
           columnNames=[],
           delimiter=',',
           mode='FAILFAST',
           infer=True,
-          columnsToImport=[],
-          view=False):
-    return self._import_or_create_view(
+          columnsToImport=[]):
+    return self._create_view(
         "CSV",
-        view,
-        dict(table=table,
-             files=files,
-             privacy=privacy,
+        dict(files=files,
              columnNames=columnNames,
              delimiter=delimiter,
              mode=mode,
@@ -131,84 +125,56 @@ class LynxKite(object):
 
   def import_hive(
           self,
-          table,
           hiveTable,
-          privacy=default_privacy,
           columnsToImport=[]):
-    return self._import_or_create_view(
+    return self._create_view(
         "Hive",
-        view,
         dict(
-            table=table,
-            privacy=privacy,
             hiveTable=hiveTable,
             columnsToImport=columnsToImport))
 
   def import_jdbc(
           self,
-          table,
           jdbcUrl,
           jdbcTable,
           keyColumn,
-          privacy=default_privacy,
-          columnsToImport=[],
-          view=False):
-    return self._import_or_create_view(
+          columnsToImport=[]):
+    return self._create_view(
         "Jdbc",
-        view,
-        dict(table=table,
-             jdbcUrl=jdbcUrl,
-             privacy=privacy,
+        dict(jdbcUrl=jdbcUrl,
              jdbcTable=jdbcTable,
              keyColumn=keyColumn,
              columnsToImport=columnsToImport))
 
   def import_parquet(
           self,
-          table,
-          privacy=default_privacy,
-          columnsToImport=[],
-          view=False):
-    return self._import_or_create_view(
+          columnsToImport=[]):
+    return self._create_view(
         "Parquet",
-        view,
-        dict(table=table,
-             privacy=privacy,
-             columnsToImport=columnsToImport))
+        dict(columnsToImport=columnsToImport))
 
   def import_orc(
           self,
-          table,
-          privacy=default_privacy,
-          columnsToImport=[],
-          view=False):
-    return self._import_or_create_view(
+          columnsToImport=[]):
+    return self._create_view(
         "ORC",
-        view,
-        dict(table=table,
-             privacy=privacy,
-             columnsToImport=columnsToImport))
+        dict(columnsToImport=columnsToImport))
 
   def import_json(
           self,
-          table,
-          privacy=default_privacy,
-          columnsToImport=[],
-          view=False):
-    return self._import_or_create_view(
+          columnsToImport=[]):
+    return self._create_view(
         "Json",
-        view,
-        dict(table=table,
-             privacy=privacy,
-             columnsToImport=columnsToImport))
+        dict(columnsToImport=columnsToImport))
 
-  def _import_or_create_view(self, format, view, dict):
-    if view:
-      res = self.send('createView' + format, dict)
-      return View(self, res.checkpoint)
-    else:
-      res = self.send('import' + format, dict)
-      return Table(self, res.checkpoint)
+  def _create_view(self, format, dict):
+    # TODO: remove this once #3859 is resolved.
+    # These are required (as present in the case class), but are actually not read by the API
+    # implementation. :(
+    dict['table'] = ''
+    dict['privacy'] = ''
+    res = self.send('createView' + format, dict)
+    return View(self, res.checkpoint)
 
   def load_project(self, name):
     '''Loads an existing LynxKite project.'''

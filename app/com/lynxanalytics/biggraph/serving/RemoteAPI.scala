@@ -127,24 +127,16 @@ object RemoteAPIServer extends JsonServer {
   def exportViewToParquet = jsonPost(c.exportViewToParquet)
   def exportViewToJdbc = jsonPost(c.exportViewToJdbc)
   def exportViewToTable = jsonPost(c.exportViewToTable)
-  private def importRequest[T <: GenericImportRequest: json.Writes: json.Reads] =
-    jsonPost[T, CheckpointResponse](c.importRequest)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
-  def globalSQL = createView[GlobalSQLRequest]
-  def importJdbc = importRequest[JdbcImportRequest]
-  def importHive = importRequest[HiveImportRequest]
-  def importCSV = importRequest[CSVImportRequest]
-  def importParquet = importRequest[ParquetImportRequest]
-  def importORC = importRequest[ORCImportRequest]
-  def importJson = importRequest[JsonImportRequest]
-  def computeProject = jsonPost(c.computeProject)
   def createViewJdbc = createView[JdbcImportRequest]
   def createViewHive = createView[HiveImportRequest]
   def createViewCSV = createView[CSVImportRequest]
   def createViewParquet = createView[ParquetImportRequest]
   def createViewORC = createView[ORCImportRequest]
   def createViewJson = createView[JsonImportRequest]
+  def globalSQL = createView[GlobalSQLRequest]
+  def computeProject = jsonPost(c.computeProject)
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
@@ -274,18 +266,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     TableResult(rows = rows.toList)
   }
 
-  def importRequest[T <: GenericImportRequest: json.Writes](
-    user: User, request: T): CheckpointResponse = {
-    val res = sqlController.doImport(user, request)
-    val (cp, _, _) = FEOption.unpackTitledCheckpoint(res.id)
-    CheckpointResponse(cp)
-  }
-
   def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): CheckpointResponse = {
-    val editor = new RootProjectEditor(RootProjectState.emptyState)
-    editor.viewRecipe = recipe
-    val cps = metaManager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
-    CheckpointResponse(cps.checkpoint.get)
+    CheckpointResponse(ViewRecipe.saveAsCheckpoint(recipe))
   }
 
   private def viewToDF(user: User, checkpoint: String) = {
