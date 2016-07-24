@@ -323,7 +323,7 @@ class Project(object):
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
-            project=name))
+            name=name))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
