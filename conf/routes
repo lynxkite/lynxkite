@@ -80,6 +80,7 @@ GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonSer
 POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
+POST /remote/prefixedPathExists com.lynxanalytics.biggraph.serving.RemoteAPIServer.prefixedPathExists
 POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
