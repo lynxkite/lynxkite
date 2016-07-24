@@ -19,14 +19,6 @@ import play.api.libs.json
 import play.api.libs.json.JsResult
 import play.api.libs.json.JsValue
 
-// A ViewRecipe can create a DataFrame representing the view. They are typically JSON request case
-// classes. Instead of executing these requests immediately, they can be stored as recipes and
-// executed later lazily.
-trait ViewRecipe {
-  def createDataFrame(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame
-}
-
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {
   def name: String
