@@ -103,6 +103,9 @@ class LynxKite(object):
   def get_directory_entry(self, path):
     return self.send('getDirectoryEntry', dict(path=path))
 
+  def prefixed_path_exists(self, path):
+    return self.send('prefixedPathExists', dict(path=path)).exists
+
   def import_csv(
           self,
           files,
@@ -202,10 +205,10 @@ class LynxKite(object):
   def _import_or_create_view(self, format, view, dict):
     if view:
       res = self.send('createView' + format, dict)
-      return View(self.lk, res.checkpoint)
+      return View(self, res.checkpoint)
     else:
       res = self.send('import' + format, dict)
-      return Table(self.lk, res.checkpoint)
+      return Table(self, res.checkpoint)
 
   def load_project(self, name):
     '''Loads an existing LynxKite project.'''
