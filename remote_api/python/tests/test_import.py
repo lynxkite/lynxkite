@@ -10,7 +10,7 @@ class TestImport(unittest.TestCase):
   no need to test them separately.
   """
 
-  def stub_test_jdbc(self, view):
+  def stub_test_jdbc(self):
     import sqlite3
     path = os.path.abspath("tests/test.db")
     conn = sqlite3.connect(path)
@@ -30,13 +30,11 @@ class TestImport(unittest.TestCase):
     conn.close()
     url = "jdbc:sqlite:{}".format(path)
     lk = lynx.LynxKite()
-    cp = lk.import_jdbc(
-        table="jdbc-" + str(view),
+    view = lk.import_jdbc(
         jdbcUrl=url,
         jdbcTable="subscribers",
-        keyColumn="id",
-        view=view)
-    res = lk.sql("select * from `cp` order by id", cp=cp)
+        keyColumn="id")
+    res = lk.sql("select * from `cp` order by id", cp=view).take(10)
     self.assertEqual(res, [{'gender': 'Male',
                             'level': 10.0,
                             'name': 'Daniel',
@@ -61,11 +59,8 @@ class TestImport(unittest.TestCase):
                             'race condition': 'Troll'},
                            {'id': 5}])
 
-  def test_jdbc_import(self):
-    self.stub_test_jdbc(False)
-
   def test_jdbc_view(self):
-    self.stub_test_jdbc(True)
+    self.stub_test_jdbc()
 
 
 if __name__ == '__main__':

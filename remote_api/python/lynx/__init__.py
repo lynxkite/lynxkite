@@ -165,8 +165,13 @@ class LynxKite(object):
         dict(columnsToImport=columnsToImport))
 
   def _create_view(self, format, dict):
+    # TODO: remove this once #3859 is resolved.
+    # These are required (as present in the case class), but are actually not read by the API
+    # implementation. :(
+    dict['table'] = ''
+    dict['privacy'] = ''
     res = self.send('createView' + format, dict)
-    return View(self.lk, res.checkpoint)
+    return View(self, res.checkpoint)
 
   def load_project(self, name):
     '''Loads an existing LynxKite project.'''
