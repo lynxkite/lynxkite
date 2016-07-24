@@ -21,7 +21,8 @@ object RemoteAPIProtocol {
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
-  case class SaveCheckpointRequest(checkpoint: String, name: String)
+  case class SaveCheckpointRequest(
+    checkpoint: String, name: String, acl: ACLSettingsRequest)
   case class ScalarRequest(checkpoint: String, scalar: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -135,6 +136,7 @@ object RemoteAPIServer extends JsonServer {
   def createViewParquet = createView[ParquetImportRequest]
   def createViewORC = createView[ORCImportRequest]
   def createViewJson = createView[JsonImportRequest]
+  def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
   def computeProject = jsonPost(c.computeProject)
 }
@@ -146,6 +148,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
   val sqlController = new SQLController(env)
+  val bigGraphController = new BigGraphController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
 
@@ -206,8 +209,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val entry = controllers.DirectoryEntry.fromName(request.name)
     entry.assertWriteAllowedFrom(user)
     val p = saver(entry, request.checkpoint)
-    p.writeACL = user.email
-    p.readACL = user.email
+    bigGraphController.changeACLSettings(
+      user, ACLSettingsRequest(request.name, request.acl.readACL, request.acl.writeACL))
     CheckpointResponse(request.checkpoint)
   }
 
@@ -340,5 +343,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
     val segmentations = editor.viewer.sortedSegmentations
     segmentations.foreach(s => computeProject(s.editor))
+  }
+
+  def changeACL(user: User, request: ACLSettingsRequest) = {
+    bigGraphController.changeACLSettings(user, request)
   }
 }
