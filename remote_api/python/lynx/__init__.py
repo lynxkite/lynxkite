@@ -31,44 +31,6 @@ default_sql_limit = 1000
 default_privacy = 'public-read'
 
 
-def _username_or_default(username=None):
-  return username or os.environ.get('LYNXKITE_USERNAME')
-
-
-def _password_or_default(password=None):
-  return password or os.environ.get('LYNXKITE_PASSWORD')
-
-
-def _address_or_default(address=None):
-  return address or os.environ['LYNXKITE_ADDRESS']
-
-
-class LynxKiteConnectionRegistry(object):
-  """
-  Stores connections to LynxKite instances keyed by
-  username@host
-  """
-
-  _connections = {}
-
-  @staticmethod
-  def _connection_key(username, address):
-    return '{}@{}'.format(
-        _username_or_default(username),
-        _password_or_default(address))
-
-  def register(self, username=None, password=None, address=None):
-    key = LynxKiteConnectionRegistry._connection_key(username, address)
-    self._connections[key] = LynxKite(username, password, address)
-
-  def get(self, username=None, address=None):
-    key = LynxKiteConnectionRegistry._connection_key(username, address)
-    if key not in self._connections and username is None and address is None:
-      # The default connections is automatically registered.
-      self.register()
-    return self._connections[key]
-
-
 class LynxKite(object):
   '''A connection to a LynxKite instance.
 
@@ -80,9 +42,9 @@ class LynxKite(object):
 
   def __init__(self, username=None, password=None, address=None):
     '''Creates a connection object, performing authentication if necessary.'''
-    self.address = _address_or_default(address)
-    self.username = _username_or_default(username)
-    self.password = _password_or_default(password)
+    self.address = address or os.environ['LYNXKITE_ADDRESS']
+    self.username = username or os.environ.get('LYNXKITE_USERNAME')
+    self.password = password or os.environ.get('LYNXKITE_PASSWORD')
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
