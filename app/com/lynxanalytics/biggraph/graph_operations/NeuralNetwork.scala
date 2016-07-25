@@ -325,12 +325,20 @@ case class NeuralNetwork(
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
+
+    val random = new util.Random(0)
+    val baseVertex = vertices(random.nextInt(vertices.size))
+    val trainingVertices = (0 until trainingRadius).foldLeft(Seq(baseVertex)) {
+      (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
+    }.take(maxTrainingVertices)
+    val trainingEdgeLists = trainingVertices.map(id => id -> edgeLists(id).filter(trainingVertices.contains(_))).toMap
+    val trainingData = data.filter(vertex => trainingVertices.contains(vertex._1))
+
     var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
-    val random = new util.Random(0)
     for (i <- 1 to iterations) {
-      val trueState = getTrueState(data)
+      val trueState = getTrueState(trainingData)
       val keptState = trueState.map {
         case (id, state) =>
           if (random.nextDouble < forgetFraction) id -> blanked(state)
@@ -343,13 +351,13 @@ case class NeuralNetwork(
 
       // Forward pass.
       val outputs = (1 until radius).scanLeft {
-        new NetworkOutputs(network, vertices, edgeLists, initialState, keptState)
+        new NetworkOutputs(network, trainingVertices, trainingEdgeLists, initialState, keptState)
       } { (previous, r) =>
-        new NetworkOutputs(network, vertices, edgeLists, previous.newState, previous.newState)
+        new NetworkOutputs(network, trainingVertices, trainingEdgeLists, previous.newState, previous.newState)
       }
 
       // Backward pass.
-      val errors: Map[ID, Double] = data.map {
+      val errors: Map[ID, Double] = trainingData.map {
         case (id, (Some(label), features)) =>
           // The label is predicted in position 0.
           id -> (outputs.last.newState(id)(0) - label)
@@ -365,9 +373,9 @@ case class NeuralNetwork(
           id -> vec
       }
       val gradients = outputs.init.scanRight {
-        new NetworkGradients(network, vertices, edgeLists, finalGradient, outputs.last)
+        new NetworkGradients(network, trainingVertices, trainingEdgeLists, finalGradient, outputs.last)
       } { (outputs, next) =>
-        new NetworkGradients(network, vertices, edgeLists, next.prevStateGradient, outputs)
+        new NetworkGradients(network, trainingVertices, trainingEdgeLists, next.prevStateGradient, outputs)
       }
       val networkGradients = new Network(
         size = network.size,
