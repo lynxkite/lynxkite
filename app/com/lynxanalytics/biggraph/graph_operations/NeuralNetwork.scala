@@ -28,7 +28,9 @@ object NeuralNetwork extends OpFromJson {
     (j \ "learningRate").as[Double],
     (j \ "radius").as[Int],
     (j \ "hideState").as[Boolean],
-    (j \ "forgetFraction").as[Double])
+    (j \ "forgetFraction").as[Double],
+    (j \ "trainingRadius").as[Int],
+    (j \ "maxTrainingVertices").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -38,7 +40,9 @@ case class NeuralNetwork(
     learningRate: Double,
     radius: Int,
     hideState: Boolean,
-    forgetFraction: Double) extends TypedMetaGraphOp[Input, Output] {
+    forgetFraction: Double,
+    trainingRadius: Int,
+    maxTrainingVertices: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -48,7 +52,9 @@ case class NeuralNetwork(
     "learningRate" -> learningRate,
     "radius" -> radius,
     "hideState" -> hideState,
-    "forgetFraction" -> forgetFraction)
+    "forgetFraction" -> forgetFraction,
+    "trainingRadius" -> trainingRadius,
+    "maxTrainingVertices" -> maxTrainingVertices)
 
   def execute(inputDatas: DataSet,
               o: Output,
