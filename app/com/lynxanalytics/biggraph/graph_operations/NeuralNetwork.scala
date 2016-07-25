@@ -30,7 +30,8 @@ object NeuralNetwork extends OpFromJson {
     (j \ "hideState").as[Boolean],
     (j \ "forgetFraction").as[Double],
     (j \ "trainingRadius").as[Int],
-    (j \ "maxTrainingVertices").as[Int])
+    (j \ "maxTrainingVertices").as[Int],
+    (j \ "minTrainingVertices").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -42,7 +43,8 @@ case class NeuralNetwork(
     hideState: Boolean,
     forgetFraction: Double,
     trainingRadius: Int,
-    maxTrainingVertices: Int) extends TypedMetaGraphOp[Input, Output] {
+    maxTrainingVertices: Int,
+    minTrainingVertices: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -54,7 +56,8 @@ case class NeuralNetwork(
     "hideState" -> hideState,
     "forgetFraction" -> forgetFraction,
     "trainingRadius" -> trainingRadius,
-    "maxTrainingVertices" -> maxTrainingVertices)
+    "maxTrainingVertices" -> maxTrainingVertices,
+    "minTrainingVertices" -> minTrainingVertices)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -326,11 +329,18 @@ case class NeuralNetwork(
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
 
+    def verticesAround(vertex: ID): Seq[ID] = {
+      (0 until trainingRadius).foldLeft(Seq(vertex)) {
+        (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
+      }
+    }
+    var trainingVertices: Seq[ID] = Seq()
     val random = new util.Random(0)
-    val baseVertex = vertices(random.nextInt(vertices.size))
-    val trainingVertices = (0 until trainingRadius).foldLeft(Seq(baseVertex)) {
-      (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
-    }.take(maxTrainingVertices)
+    while (trainingVertices.size < minTrainingVertices) {
+      val baseVertex = vertices(random.nextInt(vertices.size))
+      trainingVertices = trainingVertices ++ verticesAround(baseVertex)
+    }
+    trainingVertices = trainingVertices.take(maxTrainingVertices)
     val trainingEdgeLists = trainingVertices.map(id => id -> edgeLists(id).filter(trainingVertices.contains(_))).toMap
     val trainingData = data.filter(vertex => trainingVertices.contains(vertex._1))
 
