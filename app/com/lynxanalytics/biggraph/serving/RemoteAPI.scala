@@ -22,7 +22,12 @@ object RemoteAPIProtocol {
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
   case class SaveCheckpointRequest(
-    checkpoint: String, name: String, acl: ACLSettingsRequest)
+    checkpoint: String,
+    name: String,
+    // Defaults to read access only for the creating user.
+    readACL: Option[String],
+    // Defaults to write access only for the creating user.
+    writeACL: Option[String])
   case class ScalarRequest(checkpoint: String, scalar: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -210,7 +215,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     entry.assertWriteAllowedFrom(user)
     val p = saver(entry, request.checkpoint)
     bigGraphController.changeACLSettings(
-      user, ACLSettingsRequest(request.name, request.acl.readACL, request.acl.writeACL))
+      user,
+      ACLSettingsRequest(
+        request.name,
+        request.readACL.getOrElse(user.email),
+        request.writeACL.getOrElse(user.email)))
     CheckpointResponse(request.checkpoint)
   }
 
