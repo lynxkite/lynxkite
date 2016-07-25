@@ -136,6 +136,7 @@ object TableStats {
       val statement = connection.prepareStatement(query)
       try {
         val rs = statement.executeQuery()
+        rs.next()
         try {
           val md = rs.getMetaData
           val count = rs.getLong("count")
