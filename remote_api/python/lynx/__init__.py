@@ -148,24 +148,27 @@ class LynxKite(object):
 
   def import_parquet(
           self,
+          files,
           columnsToImport=[]):
     return self._create_view(
         "Parquet",
-        dict(columnsToImport=columnsToImport))
+        dict(columnsToImport=columnsToImport, files=files))
 
   def import_orc(
           self,
+          files,
           columnsToImport=[]):
     return self._create_view(
         "ORC",
-        dict(columnsToImport=columnsToImport))
+        dict(columnsToImport=columnsToImport, files=files))
 
   def import_json(
           self,
+          files,
           columnsToImport=[]):
     return self._create_view(
         "Json",
-        dict(columnsToImport=columnsToImport))
+        dict(columnsToImport=columnsToImport, files=files))
 
   def _create_view(self, format, dict):
     # TODO: remove this once #3859 is resolved.
@@ -208,10 +211,12 @@ class Table(object):
     self.checkpoint = checkpoint
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
 
-  def save(self, name, writeACL, readACL):
+  def save(self, name, writeACL=None, readACL=None):
     self.lk.send('saveTable', dict(
         checkpoint=self.checkpoint,
-        name=name, acl=dict(project=name, writeACL=writeACL, readACL=readACL)))
+        name=name,
+        writeACL=writeACL,
+        readACL=readACL))
 
 
 class View:
@@ -220,11 +225,12 @@ class View:
     self.lk = lynxkite
     self.checkpoint = checkpoint
 
-  def save(self, name, writeACL, readACL):
+  def save(self, name, writeACL=None, readACL=None):
     self.lk.send('saveView', dict(
         checkpoint=self.checkpoint,
         name=name,
-        acl=dict(project=name, writeACL=writeACL, readACL=readACL)))
+        writeACL=writeACL,
+        readACL=readACL))
 
   def take(self, limit):
     r = self.lk.send('takeFromView', dict(
@@ -289,13 +295,14 @@ class Project(object):
     self.lk = lynxkite
     self.checkpoint = checkpoint
 
-  def save(self, name, writeACL, readACL):
+  def save(self, name, writeACL=None, readACL=None):
     self.lk.send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
             name=name,
-            acl=dict(project=name, writeACL=writeACL, readACL=readACL)))
+            writeACL=writeACL,
+            readACL=readACL))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
