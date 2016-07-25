@@ -62,11 +62,14 @@ case class NeuralNetwork(
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
-    val edges = CompactUndirectedGraph(rc, inputs.edges.rdd, needsBothDirections = false)
-    val reversed = {
-      val rdd = inputs.edges.rdd.mapValues { case Edge(src, dst) => Edge(dst, src) }
-      CompactUndirectedGraph(rc, rdd, needsBothDirections = false)
-    }
+    val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
+    val edges: Seq[Edge] = inputs.edges.rdd.values.collect
+    val edgeLists: Map[ID, Seq[ID]] = isolatedVertices ++ edges.groupBy(_.src).mapValues(_.map(_.dst))
+    //val edges = CompactUndirectedGraph(rc, inputs.edges.rdd, needsBothDirections = false)
+    //val reversed = {
+    //  val rdd = inputs.edges.rdd.mapValues { case Edge(src, dst) => Edge(dst, src) }
+    //  CompactUndirectedGraph(rc, rdd, needsBothDirections = false)
+    //}
     val features = {
       val arrays = inputs.vertices.rdd.mapValues(_ => new Array[Double](featureCount))
       inputs.features.zipWithIndex.foldLeft(arrays) {
@@ -82,8 +85,8 @@ case class NeuralNetwork(
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
 
-    val network = train(data.collect.iterator, edges, reversed)
-    val prediction = data1.mapPartitions(data => predict(data, edges, reversed, network))
+    val network = train(data.collect.iterator, edgeLists)
+    val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
@@ -179,12 +182,12 @@ case class NeuralNetwork(
   case class NetworkOutputs(
       network: Network,
       vertices: Iterable[ID],
-      edges: CompactUndirectedGraph,
+      edgeLists: Map[ID, Seq[ID]],
       state: Map[ID, Vector],
       visibleState: Map[ID, Vector]) {
     import breeze.numerics._
     val input: Map[ID, Vector] = vertices.map { id =>
-      val inputs = edges.getNeighbors(id).map(network.edgeMatrix * visibleState(_))
+      val inputs = edgeLists(id).map(network.edgeMatrix * visibleState(_))
       id -> (vectorSum(network.size, inputs) + network.edgeBias)
     }.toMap
     val reset: Map[ID, Vector] = vertices.map { id =>
@@ -204,7 +207,7 @@ case class NeuralNetwork(
   class NetworkGradients(
       network: Network,
       vertices: Iterable[ID],
-      edges: CompactUndirectedGraph,
+      edgeLists: Map[ID, Seq[ID]],
       stateGradient: Map[ID, Vector],
       outputs: NetworkOutputs) {
     import breeze.numerics._
@@ -235,7 +238,7 @@ case class NeuralNetwork(
         network.resetInput.t * resetRawGradient(id))
     }.toMap
     val prevStateGradient: Map[ID, Vector] = vertices.map { id =>
-      val edgeGradients = edges.getNeighbors(id).map(network.edgeMatrix.t * inputGradient(_))
+      val edgeGradients = edgeLists(id).map(network.edgeMatrix.t * inputGradient(_))
       id -> (
         network.updateHidden.t * updateRawGradient(id) +
         network.resetHidden.t * resetRawGradient(id) +
@@ -318,8 +321,7 @@ case class NeuralNetwork(
 
   def train(
     dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
-    edges: CompactUndirectedGraph,
-    reversed: CompactUndirectedGraph): Network = {
+    edgeLists: Map[ID, Seq[ID]]): Network = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
@@ -341,9 +343,9 @@ case class NeuralNetwork(
 
       // Forward pass.
       val outputs = (1 until radius).scanLeft {
-        new NetworkOutputs(network, vertices, edges, initialState, keptState)
+        new NetworkOutputs(network, vertices, edgeLists, initialState, keptState)
       } { (previous, r) =>
-        new NetworkOutputs(network, vertices, edges, previous.newState, previous.newState)
+        new NetworkOutputs(network, vertices, edgeLists, previous.newState, previous.newState)
       }
 
       // Backward pass.
@@ -363,9 +365,9 @@ case class NeuralNetwork(
           id -> vec
       }
       val gradients = outputs.init.scanRight {
-        new NetworkGradients(network, vertices, edges, finalGradient, outputs.last)
+        new NetworkGradients(network, vertices, edgeLists, finalGradient, outputs.last)
       } { (outputs, next) =>
-        new NetworkGradients(network, vertices, edges, next.prevStateGradient, outputs)
+        new NetworkGradients(network, vertices, edgeLists, next.prevStateGradient, outputs)
       }
       val networkGradients = new Network(
         size = network.size,
@@ -386,8 +388,8 @@ case class NeuralNetwork(
 
   def predict(
     dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
-    edges: CompactUndirectedGraph,
-    reversed: CompactUndirectedGraph,
+    edgeLists: Map[ID, Seq[ID]],
+    //reversed: CompactUndirectedGraph,
     network: Network): Iterator[(ID, Double)] = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
@@ -398,9 +400,9 @@ case class NeuralNetwork(
       case (id, state) => id -> blanked(state)
     }
     val outputs = (1 until radius).scanLeft {
-      new NetworkOutputs(network, vertices, edges, initialState, trueState)
+      new NetworkOutputs(network, vertices, edgeLists, initialState, trueState)
     } { (previous, r) =>
-      new NetworkOutputs(network, vertices, edges, previous.newState, previous.newState)
+      new NetworkOutputs(network, vertices, edgeLists, previous.newState, previous.newState)
     }
     outputs.last.newState.map {
       case (id, state) => id -> state(0)
