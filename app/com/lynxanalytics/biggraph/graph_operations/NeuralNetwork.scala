@@ -68,11 +68,6 @@ case class NeuralNetwork(
     val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
     val edges: Seq[Edge] = inputs.edges.rdd.values.collect
     val edgeLists: Map[ID, Seq[ID]] = isolatedVertices ++ edges.groupBy(_.src).mapValues(_.map(_.dst))
-    //val edges = CompactUndirectedGraph(rc, inputs.edges.rdd, needsBothDirections = false)
-    //val reversed = {
-    //  val rdd = inputs.edges.rdd.mapValues { case Edge(src, dst) => Edge(dst, src) }
-    //  CompactUndirectedGraph(rc, rdd, needsBothDirections = false)
-    //}
     val features = {
       val arrays = inputs.vertices.rdd.mapValues(_ => new Array[Double](featureCount))
       inputs.features.zipWithIndex.foldLeft(arrays) {
@@ -407,7 +402,6 @@ case class NeuralNetwork(
   def predict(
     dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
     edgeLists: Map[ID, Seq[ID]],
-    //reversed: CompactUndirectedGraph,
     network: Network): Iterator[(ID, Double)] = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
