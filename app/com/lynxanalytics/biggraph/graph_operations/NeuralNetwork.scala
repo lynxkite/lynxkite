@@ -83,8 +83,11 @@ case class NeuralNetwork(
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
 
-    val network = train(data.collect.iterator, edgeLists)
+    val (trainingVertices, trainingEdgeLists, trainingData) =
+      selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius, maxTrainingVertices, minTrainingVertices)
+    val network = train(trainingVertices, trainingEdgeLists, trainingData)
     val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
+
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
@@ -288,6 +291,29 @@ case class NeuralNetwork(
     m
   }
 
+  def selectRandomSubgraph(
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
+    edgeLists: Map[ID, Seq[ID]],
+    selectionRadius: Int,
+    maxNumberOfVertices: Int,
+    minNumberOfVertices: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
+    val data = dataIterator.toSeq
+    val vertices = data.map(_._1)
+    def verticesAround(vertex: ID): Seq[ID] = (0 until selectionRadius).foldLeft(Seq(vertex)) {
+      (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
+    }
+    var subsetOfVertices: Seq[ID] = Seq()
+    val random = new util.Random(0)
+    while (subsetOfVertices.size < minNumberOfVertices) {
+      val baseVertex = vertices(random.nextInt(vertices.size))
+      subsetOfVertices = subsetOfVertices ++ verticesAround(baseVertex)
+    }
+    subsetOfVertices = subsetOfVertices.take(maxNumberOfVertices)
+    val subsetOfEdges = subsetOfVertices.map(id => id -> edgeLists(id).filter(subsetOfVertices.contains(_))).toMap
+    val subsetOfData = data.filter(vertex => subsetOfVertices.contains(vertex._1))
+    (subsetOfVertices, subsetOfEdges, subsetOfData)
+  }
+
   def getTrueState(
     data: Seq[(ID, (Option[Double], Array[Double]))]): Map[ID, Vector] = {
     val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
@@ -318,32 +344,16 @@ case class NeuralNetwork(
   }
 
   def train(
-    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
-    edgeLists: Map[ID, Seq[ID]]): Network = {
+    trainingVertices: Seq[ID],
+    trainingEdgeLists: Map[ID, Seq[ID]],
+    trainingData: Seq[(ID, (Option[Double], Array[Double]))]): Network = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
-    val data = dataIterator.toSeq
-    val vertices = data.map(_._1)
-
-    def verticesAround(vertex: ID): Seq[ID] = {
-      (0 until trainingRadius).foldLeft(Seq(vertex)) {
-        (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
-      }
-    }
-    var trainingVertices: Seq[ID] = Seq()
-    val random = new util.Random(0)
-    while (trainingVertices.size < minTrainingVertices) {
-      val baseVertex = vertices(random.nextInt(vertices.size))
-      trainingVertices = trainingVertices ++ verticesAround(baseVertex)
-    }
-    trainingVertices = trainingVertices.take(maxTrainingVertices)
-    val trainingEdgeLists = trainingVertices.map(id => id -> edgeLists(id).filter(trainingVertices.contains(_))).toMap
-    val trainingData = data.filter(vertex => trainingVertices.contains(vertex._1))
-
     var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
     for (i <- 1 to iterations) {
       val trueState = getTrueState(trainingData)
+      val random = new util.Random(1)
       val keptState = trueState.map {
         case (id, state) =>
           if (random.nextDouble < forgetFraction) id -> blanked(state)
