@@ -79,7 +79,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         var suffixLength = 'ImportRequest'.length;
         var datatype = requestName.slice(0, -suffixLength).toLowerCase();
         scope.datatype = datatype;
-        var datatypeScope = scope.$eval(datatype);
+        var datatypeScope = scope.$eval(datatype) || scope.files;
 
         if (newConfig.data.files) {
           datatypeScope.filename = newConfig.data.files;
