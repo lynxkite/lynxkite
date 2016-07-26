@@ -90,9 +90,9 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 25, learningRate = 0.2, radius = 3,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        featureCount = 0, networkSize = 4, iterations = 50, learningRate = 0.1, radius = 3,
+        hideState = true, forgetFraction = 0.0, trainingRadius = 3, maxTrainingVertices = 40,
+        minTrainingVertices = 30)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
@@ -110,9 +110,9 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 30, learningRate = 0.2, radius = 3,
-        hideState = false, forgetFraction = 0.5, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        featureCount = 0, networkSize = 4, iterations = 30, learningRate = 0.1, radius = 3,
+        hideState = false, forgetFraction = 0.5, trainingRadius = 3, maxTrainingVertices = 30,
+        minTrainingVertices = 30)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
