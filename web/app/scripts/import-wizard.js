@@ -27,6 +27,8 @@ angular.module('biggraph').directive('importWizard', function(util) {
         parameters.privacy = 'public-read';
         parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
         parameters.asView = scope.asView;
+        // Allow overwriting the same name when editing an existing config.
+        parameters.overwrite = scope.oldTableName === scope.tableName;
         scope.requestInProgress += 1;
 
         var importOrView = scope.asView ? 'createView' : 'import';
@@ -71,6 +73,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
 
       scope.$on('fill import from config', function(evt, newConfig, tableName, type) {
         scope.tableName = tableName;
+        scope.oldTableName = tableName;
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
         scope.asView = type === 'view';
 
