@@ -116,6 +116,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         delimiter = ",",
         mode = "FAILFAST",
         infer = infer,
+        overwrite = false,
         columnsToImport = List()))
     val tablePath = response.id
     run(
@@ -137,6 +138,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         delimiter = ",",
         mode = "FAILFAST",
         infer = false,
+        overwrite = false,
         columnsToImport = List()))
   }
 
@@ -205,6 +207,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "",
+        overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
   }
@@ -219,6 +222,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "id",
+        overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
   }
@@ -233,6 +237,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "level",
+        overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
   }
@@ -247,6 +252,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "name",
+        overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
   }
@@ -270,6 +276,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         table = "csv-import-test",
         privacy = "public-read",
         files = exportPath + "/part*",
+        overwrite = false,
         columnsToImport = List("name", "location")))
     val tablePath = response.id
     run(
