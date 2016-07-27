@@ -181,6 +181,7 @@ object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
 trait GenericImportRequest extends ViewRecipe with FrameSettings {
   val table: String
   val privacy: String
+  val overwrite: Boolean
   override val name: String = table
   // Empty list means all columns.
   val columnsToImport: List[String]
@@ -221,6 +222,7 @@ case class CSVImportRequest(
     // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
     mode: String,
     infer: Boolean,
+    overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
@@ -270,6 +272,7 @@ case class JdbcImportRequest(
     jdbcUrl: String,
     jdbcTable: String,
     keyColumn: String,
+    overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
 
   def dataFrame(user: serving.User, context: SQLContext)(
@@ -308,6 +311,7 @@ case class ParquetImportRequest(
     table: String,
     privacy: String,
     files: String,
+    overwrite: Boolean,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "parquet"
 }
@@ -321,6 +325,7 @@ case class ORCImportRequest(
     table: String,
     privacy: String,
     files: String,
+    overwrite: Boolean,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "orc"
 }
@@ -334,6 +339,7 @@ case class JsonImportRequest(
     table: String,
     privacy: String,
     files: String,
+    overwrite: Boolean,
     columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
   val format = "json"
 }
@@ -347,6 +353,7 @@ case class HiveImportRequest(
     table: String,
     privacy: String,
     hiveTable: String,
+    overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
 
   override val needHiveContext = true
@@ -380,6 +387,7 @@ class SQLController(val env: BigGraphEnvironment) {
       user,
       request.table,
       request.privacy,
+      request.overwrite,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
@@ -521,6 +529,7 @@ object SQLController {
     user: serving.User,
     tableName: String,
     privacy: String,
+    overwrite: Boolean = false,
     importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
@@ -528,6 +537,7 @@ object SQLController {
     val table = TableImport.importDataFrameAsync(df)
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
     val checkpoint = table.saveAsCheckpoint(notes)
+    if (overwrite) entry.remove()
     val frame = entry.asNewTableFrame(checkpoint)
     importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)

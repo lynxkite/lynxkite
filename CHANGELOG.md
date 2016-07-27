@@ -51,7 +51,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### 1.7.3
 
  - New configuration option: `KITE_INSTANCE` added; this should be a string identifying the
-   instance (e.g., Westeros). It is strongly recommended that you set it at installation: it
+   instance (e.g., MyClient). It is strongly recommended that you set it at installation: it
    will be used to identity the cluster in logs.
  - Changes in vertex and edge count after an operation are reported on the UI.
  - Fixed data export in Amazon EMR.
