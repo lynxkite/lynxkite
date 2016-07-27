@@ -33,7 +33,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(differenceSquareSum(prediction, a) < 1)
   }
 
-  // Learn to use a feature. Not possible with this GRU.
+  // Learn to use a feature.
   test("feature, trivial") {
     // The label and one of the features are the same random attribute.
     val vs = CreateVertexSet(1000).result.vs
@@ -49,7 +49,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(differenceSquareSum(prediction, a) < 1)
   }
 
-  // Learn to use a feature with depth. Not possible with this GRU.
+  // Learn to use a feature with depth.
   test("feature, trivial, deep") {
     // The label and one of the features are the same random attribute.
     // Propagates through 3 full layers.
@@ -154,8 +154,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(isWrong.rdd.values.sum == 0)
   }
 
-  //Learn parity of the containing path in a graph consisting of paths. Not possible with this GRU.
-  ignore("parity of containing path") {
+  //Learn parity of the containing path in a graph consisting of paths.
+  test("parity of containing path") {
     val numberOfVertices = 1000
     val numberOfPaths = 200
 
