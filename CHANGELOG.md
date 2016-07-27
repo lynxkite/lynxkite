@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.9.0
+
  - Global SQL-box has been added.
  - Views have been added to avoid expensive serialization to tables when it is not required.
  - Import options are now stored for each table and can be reused via "Edit import" button
