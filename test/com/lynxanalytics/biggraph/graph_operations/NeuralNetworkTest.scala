@@ -34,7 +34,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Learn to use a feature. Not possible with this GRU.
-  ignore("feature, trivial") {
+  test("feature, trivial") {
     // The label and one of the features are the same random attribute.
     val vs = CreateVertexSet(1000).result.vs
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
@@ -50,7 +50,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Learn to use a feature with depth. Not possible with this GRU.
-  ignore("feature, trivial, deep") {
+  test("feature, trivial, deep") {
     // The label and one of the features are the same random attribute.
     // Propagates through 3 full layers.
     val vs = CreateVertexSet(1000).result.vs
@@ -187,7 +187,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.4, radius = 4,
+        featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.1, radius = 4,
         hideState = true, forgetFraction = 0.3, trainingRadius = 4, maxTrainingVertices = 20,
         minTrainingVertices = 10)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction

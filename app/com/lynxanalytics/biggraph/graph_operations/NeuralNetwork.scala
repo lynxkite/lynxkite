@@ -63,8 +63,8 @@ case class NeuralNetwork(
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val iterationsInTraining = 10
-    val subgraphsInTraining = 20
+    val iterationsInTraining = 50
+    val subgraphsInTraining = 10
     val numberOfTrainings = 10
 
     implicit val id = inputDatas
