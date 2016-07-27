@@ -1,12 +1,12 @@
 '''Python interface for the LynxKite Remote API.
 
-The access to the LynxKite instance can be configured through the following environment variables:
+The access to the LynxKite instance can be configured through the following environment variables::
 
     LYNXKITE_ADDRESS=https://lynxkite.example.com/
     LYNXKITE_USERNAME=user@company
     LYNXKITE_PASSWORD=my_password
 
-Example usage:
+Example usage::
 
     import lynx
     lk = lynx.LynxKite()
@@ -31,13 +31,13 @@ default_sql_limit = 1000
 default_privacy = 'public-read'
 
 
-class LynxKite(object):
+class LynxKite:
   '''A connection to a LynxKite instance.
 
   Some LynxKite API methods take a connection argument which can be used to communicate with
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
-  LYNXKITE_ADDRESS, LYNXKITE_USERNAME, and LYNXKITE_PASSWORD.
+  ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, and ``LYNXKITE_PASSWORD``.
   '''
 
   def __init__(self, username=None, password=None, address=None):
@@ -49,16 +49,16 @@ class LynxKite(object):
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
     if username:
-      self.login()
+      self._login()
 
-  def login(self):
-    self.request(
+  def _login(self):
+    self._request(
         '/passwordLogin',
         dict(
             username=self.username,
             password=self.password))
 
-  def request(self, endpoint, payload={}):
+  def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
@@ -72,39 +72,52 @@ class LynxKite(object):
           return r.read().decode('utf-8')
       except urllib.error.HTTPError as err:
         if err.code == 401 and i + 1 < max_tries:  # Unauthorized.
-          self.login()
+          self._login()
           # And then retry via the "for" loop.
         elif err.code == 500:  # Internal server error.
           raise LynxException(err.read())
         else:
           raise err
 
-  def send(self, command, payload={}, raw=False):
+  def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self.request('/remote/' + command, payload)
+    data = self._request('/remote/' + command, payload)
     if raw:
       r = json.loads(data)
     else:
       r = json.loads(data, object_hook=_asobject)
     return r
 
-  def sql(self, query, limit=None, **kwargs):
-    '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
-    where p is an object that has a checkpoint, and giving the limit is optional'''
+  def sql(self, query, **mapping):
+    '''Runs global level SQL query and returns a :class:`View` for the results.
+
+    ``mapping`` maps :class:`Project`, :class:`Table`, or :class:`View` objects to names in your
+    query. For example::
+
+        my_view = lynx.sql('select * from `x`', x=my_table)
+        lynx.sql('select * from `my_view`', my_view=my_view).export_csv('out.csv')
+
+    '''
     checkpoints = {}
-    for name, p in kwargs.items():
+    for name, p in mapping.items():
       checkpoints[name] = p.checkpoint
-    r = self.send('globalSQL', dict(
+    r = self._send('globalSQL', dict(
         query=query,
         checkpoints=checkpoints
     ))
     return View(self, r.checkpoint)
 
   def get_directory_entry(self, path):
-    return self.send('getDirectoryEntry', dict(path=path))
+    '''Returns details about a LynxKite path. The returned object has the following fields:
+    ``exists``, ``isProject``, ``isTable``, ``isView``
+    '''
+    return self._send('getDirectoryEntry', dict(path=path))
 
   def prefixed_path_exists(self, path):
-    return self.send('prefixedPathExists', dict(path=path)).exists
+    '''Checks if a path on a distributed file system exists. The path has to be specified using
+    LynxKite's prefixed path syntax. (E.g. ``DATA$/my_file.csv``.)
+    '''
+    return self._send('prefixedPathExists', dict(path=path)).exists
 
   def import_csv(
           self,
@@ -114,6 +127,7 @@ class LynxKite(object):
           mode='FAILFAST',
           infer=True,
           columnsToImport=[]):
+    '''Imports a CSV as a :class:`View`.'''
     return self._create_view(
         "CSV",
         dict(files=files,
@@ -127,6 +141,7 @@ class LynxKite(object):
           self,
           hiveTable,
           columnsToImport=[]):
+    '''Imports a Hive table as a :class:`View`.'''
     return self._create_view(
         "Hive",
         dict(
@@ -139,6 +154,7 @@ class LynxKite(object):
           jdbcTable,
           keyColumn,
           columnsToImport=[]):
+    '''Imports a database table as a :class:`View` via JDBC.'''
     return self._create_view(
         "Jdbc",
         dict(jdbcUrl=jdbcUrl,
@@ -150,6 +166,7 @@ class LynxKite(object):
           self,
           files,
           columnsToImport=[]):
+    '''Imports a Parquet file as a :class:`View`.'''
     return self._create_view(
         "Parquet",
         dict(columnsToImport=columnsToImport, files=files))
@@ -158,6 +175,7 @@ class LynxKite(object):
           self,
           files,
           columnsToImport=[]):
+    '''Imports a Parquet file as a :class:`View`.'''
     return self._create_view(
         "ORC",
         dict(columnsToImport=columnsToImport, files=files))
@@ -166,6 +184,7 @@ class LynxKite(object):
           self,
           files,
           columnsToImport=[]):
+    '''Imports a JSON file as a :class:`View`.'''
     return self._create_view(
         "Json",
         dict(columnsToImport=columnsToImport, files=files))
@@ -176,35 +195,37 @@ class LynxKite(object):
     # implementation. :(
     dict['table'] = ''
     dict['privacy'] = ''
-    res = self.send('createView' + format, dict)
+    res = self._send('createView' + format, dict)
     return View(self, res.checkpoint)
 
   def load_project(self, name):
-    '''Loads an existing LynxKite project.'''
-    r = self.send('loadProject', dict(name=name))
+    '''Loads an existing LynxKite project. Returns a :class:`Project`.'''
+    r = self._send('loadProject', dict(name=name))
     return Project(self, r.checkpoint)
 
   def load_table(self, name):
-    '''Loads an existing LynxKite table.'''
-    r = self.send('loadTable', dict(name=name))
+    '''Loads an existing LynxKite table. Returns a :class:`Table`.'''
+    r = self._send('loadTable', dict(name=name))
     return Table(self, r.checkpoint)
 
   def load_view(self, name):
-    '''Loads an existing LynxKite view.'''
-    r = self.send('loadView', dict(name=name))
+    '''Loads an existing LynxKite view. Returns a :class:`View`.'''
+    r = self._send('loadView', dict(name=name))
     return View(self, r.checkpoint)
 
   def new_project(self):
-    '''Creates a new unnamed empty LynxKite project.'''
-    r = self.send('newProject')
+    '''Creates a new unnamed empty LynxKite :class:`Project`.'''
+    r = self._send('newProject')
     return Project(self, r.checkpoint)
 
   def change_acl(self, file, readACL, writeACL):
-    self.send("changeACL",
+    '''Sets the read and write access control list for a path (directory, project, etc) in LynxKite.
+    '''
+    self._send("changeACL",
               dict(project=file, readACL=readACL, writeACL=writeACL))
 
 
-class Table(object):
+class Table:
 
   def __init__(self, lynxkite, checkpoint):
     self.lk = lynxkite
@@ -212,7 +233,7 @@ class Table(object):
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
 
   def save(self, name, writeACL=None, readACL=None):
-    self.lk.send('saveTable', dict(
+    self.lk._send('saveTable', dict(
         checkpoint=self.checkpoint,
         name=name,
         writeACL=writeACL,
@@ -220,27 +241,28 @@ class Table(object):
 
 
 class View:
+  '''A LynxKite View is a definition of a data source.'''
 
   def __init__(self, lynxkite, checkpoint):
     self.lk = lynxkite
     self.checkpoint = checkpoint
 
   def save(self, name, writeACL=None, readACL=None):
-    self.lk.send('saveView', dict(
+    self.lk._send('saveView', dict(
         checkpoint=self.checkpoint,
         name=name,
         writeACL=writeACL,
         readACL=readACL))
 
   def take(self, limit):
-    r = self.lk.send('takeFromView', dict(
+    r = self.lk._send('takeFromView', dict(
         checkpoint=self.checkpoint,
         limit=limit,
     ), raw=True)
     return r['rows']
 
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
-    self.lk.send('exportViewToCSV', dict(
+    self.lk._send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
         path=path,
         header=header,
@@ -249,19 +271,19 @@ class View:
     ))
 
   def export_json(self, path):
-    self.lk.send('exportViewToJson', dict(
+    self.lk._send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_orc(self, path):
-    self.lk.send('exportViewToORC', dict(
+    self.lk._send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_parquet(self, path):
-    self.lk.send('exportViewToParquet', dict(
+    self.lk._send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
@@ -272,7 +294,7 @@ class View:
     The "mode" argument describes what happens if the table already exists. Valid values are
     "error", "overwrite", and "append".
     '''
-    self.lk.send('exportViewToJdbc', dict(
+    self.lk._send('exportViewToJdbc', dict(
         checkpoint=self.checkpoint,
         jdbcUrl=url,
         table=table,
@@ -280,11 +302,11 @@ class View:
     ))
 
   def to_table(self):
-    res = self.lk.send('exportViewToTable', dict(checkpoint=self.checkpoint))
+    res = self.lk._send('exportViewToTable', dict(checkpoint=self.checkpoint))
     return Table(self.lk, res.checkpoint)
 
 
-class Project(object):
+class Project:
   '''Represents an unanchored LynxKite project.
 
   This project is not automatically saved to the LynxKite project directories.
@@ -296,7 +318,7 @@ class Project(object):
     self.checkpoint = checkpoint
 
   def save(self, name, writeACL=None, readACL=None):
-    self.lk.send(
+    self.lk._send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
@@ -306,7 +328,7 @@ class Project(object):
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = self.lk.send(
+    r = self.lk._send(
         'getScalar',
         dict(
             checkpoint=self.checkpoint,
@@ -316,7 +338,7 @@ class Project(object):
     return r.string
 
   def sql(self, query, limit=None):
-    r = self.lk.send('globalSQL', dict(
+    r = self.lk._send('globalSQL', dict(
         query=query,
         checkpoints={'': self.checkpoint},
     ))
@@ -324,7 +346,7 @@ class Project(object):
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
-    r = self.lk.send(
+    r = self.lk._send(
         'runOperation',
         dict(
             checkpoint=self.checkpoint,
@@ -334,7 +356,7 @@ class Project(object):
     return self
 
   def compute(self):
-    return self.lk.send(
+    return self.lk._send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
@@ -348,7 +370,6 @@ class Project(object):
 
 
 class LynxException(Exception):
-
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
 
   def __init__(self, error):
