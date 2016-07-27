@@ -195,6 +195,7 @@ class LynxKite:
     # implementation. :(
     dict['table'] = ''
     dict['privacy'] = ''
+    dict['overwrite'] = False
     res = self._send('createView' + format, dict)
     return View(self, res.checkpoint)
 
