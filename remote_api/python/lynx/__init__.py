@@ -235,7 +235,7 @@ class View:
         readACL=readACL))
 
   def take(self, limit):
-    '''Computes the view and returns the result as a list. Only the first `limit` number of rows are returned'''
+    '''Computes the view and returns the result as a list. Only the first ``limit`` number of rows are returned.'''
     r = self.lk.send('takeFromView', dict(
         checkpoint=self.checkpoint,
         limit=limit,
@@ -260,14 +260,14 @@ class View:
     ))
 
   def export_orc(self, path):
-    '''Export the view to orc file.'''
+    '''Export the view to ORC file.'''
     self.lk.send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_parquet(self, path):
-    '''Export the view to parquet file.'''
+    '''Export the view to Parquet file.'''
     self.lk.send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -287,7 +287,7 @@ class View:
     ))
 
   def to_table(self):
-    '''Exports the view to a LynxKite Table'''
+    '''Exports the view to a :class: table.'''
     res = self.lk.send('exportViewToTable', dict(checkpoint=self.checkpoint))
     return Table(self.lk, res.checkpoint)
 
@@ -324,7 +324,7 @@ class Project(object):
       return r.double
     return r.string
 
-  def sql(self, query, limit=None):
+  def sql(self, query):
     '''Runs SQL queries.'''
     r = self.lk.send('globalSQL', dict(
         query=query,
