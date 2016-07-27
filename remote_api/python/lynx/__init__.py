@@ -114,11 +114,14 @@ class LynxKite:
     '''
     return self._send('getDirectoryEntry', dict(path=path))
 
-  def prefixed_path_exists(self, path):
-    '''Checks if a path on a distributed file system exists. The path has to be specified using
+  def get_prefixed_path(self, path):
+    '''Resolves a path on a distributed file system. The path has to be specified using
     LynxKite's prefixed path syntax. (E.g. ``DATA$/my_file.csv``.)
+
+    The returned object has an ``exists`` and a ``resolved`` attribute. ``resolved`` is a string
+    containing the absolute path.
     '''
-    return self._send('prefixedPathExists', dict(path=path)).exists
+    return self._send('getPrefixedPath', dict(path=path))
 
   def import_csv(
           self,
