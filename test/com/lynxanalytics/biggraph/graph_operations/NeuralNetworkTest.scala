@@ -83,7 +83,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by hiding state.
-  test("lattice, hiding") {
+  ignore("lattice, hiding") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val sideNum = g.attr[String]("side").deriveX[Double](
@@ -103,7 +103,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by forgetting.
-  test("lattice, forgetting") {
+  ignore("lattice, forgetting") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val sideNum = g.attr[String]("side").deriveX[Double](
@@ -135,13 +135,13 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       (0 until total).map(v => if (v < partition1) (v, 1.0) else (v, -1.0)).toMap
     }
 
-    val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(10, 5))
+    val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(1000, 400))
     val vertices = g.result.vs
-    val partition = AddVertexAttribute.run(vertices, inWhichPartition(10, 5))
+    val partition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 11, learningRate = 0.2, radius = 3,
+        featureCount = 0, networkSize = 4, iterations = 11, learningRate = 0.02, radius = 3,
         hideState = true, forgetFraction = 0.0, trainingRadius = 1, maxTrainingVertices = 8,
         minTrainingVertices = 7)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
