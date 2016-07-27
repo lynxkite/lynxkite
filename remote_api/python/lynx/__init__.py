@@ -48,10 +48,11 @@ class LynxKite:
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
-    if username:
-      self._login()
+    # We defer login to the first actual request.
+    self._should_login_before_request = username is not None
 
   def _login(self):
+    self._should_login_before_request = False
     self._request(
         '/passwordLogin',
         dict(
@@ -60,6 +61,8 @@ class LynxKite:
 
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
+    if self._should_login_before_request:
+      self._login()
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
         self.address.rstrip('/') + '/' + endpoint.lstrip('/'),
