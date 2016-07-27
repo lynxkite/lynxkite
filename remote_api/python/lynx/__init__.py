@@ -222,7 +222,7 @@ class LynxKite:
     '''Sets the read and write access control list for a path (directory, project, etc) in LynxKite.
     '''
     self._send("changeACL",
-              dict(project=file, readACL=readACL, writeACL=writeACL))
+               dict(project=file, readACL=readACL, writeACL=writeACL))
 
 
 class Table:
