@@ -287,7 +287,7 @@ class View:
     ))
 
   def to_table(self):
-    '''Exports the view to a :class: `Table`.'''
+    '''Exports the view to a :class:`Table`.'''
     res = self.lk.send('exportViewToTable', dict(checkpoint=self.checkpoint))
     return Table(self.lk, res.checkpoint)
 
