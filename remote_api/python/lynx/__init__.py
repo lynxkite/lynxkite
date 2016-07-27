@@ -94,8 +94,9 @@ class LynxKite:
     ``mapping`` maps :class:`Project`, :class:`Table`, or :class:`View` objects to names in your
     query. For example::
 
-        my_view = lynx.sql('select * from `x`', x=my_table)
-        lynx.sql('select * from `my_view`', my_view=my_view).export_csv('out.csv')
+        my_view = lynx.sql('select * from `t`', t=my_table)
+        result = lynx.sql('select * from `v`', v=my_view)
+        result.export_csv('out.csv')
 
     '''
     checkpoints = {}
