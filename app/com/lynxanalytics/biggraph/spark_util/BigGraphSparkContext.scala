@@ -183,9 +183,20 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.sql.types.ArrayType"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.LogisticAggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.WeightedLeastSquares$Aggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.regression.LeastSquaresAggregator"))
+    kryo.register(Class.forName("org.apache.spark.util.StatCounter"))
     kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
     kryo.register(Class.forName("[[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
+    kryo.register(Class.forName("scala.collection.mutable.ArraySeq"))
+    kryo.register(classOf[scala.math.Ordering$$anon$4])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.InterpretedOrdering])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.SortOrder])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.BoundReference])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.trees.Origin])
+    kryo.register(org.apache.spark.sql.catalyst.expressions.Ascending.getClass)
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.Literal])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -233,7 +244,9 @@ object BigGraphSparkContext {
     // Make sure spark will wait for the data to be available locally
     assert(sparkVersion.startsWith("1."),
       s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
-    conf.set("spark.locality.wait", "99m")
+    conf
+      .setIfMissing("spark.locality.wait", "3s")
+      .setIfMissing("spark.locality.wait.process", "99m")
     conf
   }
 

@@ -3,7 +3,10 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
-import org.apache.spark.mllib
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.ml
+import org.apache.spark.mllib.feature.StandardScalerModel
+import org.apache.spark.mllib.linalg.Vectors
 
 object RegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -41,29 +44,72 @@ case class RegressionModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val p = new Scaler(forSGD = true).scale(
-      inputs.label.rdd,
-      inputs.features.toArray.map { v => v.rdd },
-      inputs.vertices.rdd)
+    val sqlContext = rc.dataManager.newSQLContext()
+    import sqlContext.implicits._
 
-    val model = method match {
+    val rddArray = inputs.features.toArray.map(_.rdd)
+    val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
+    val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
+
+    val linearRegression = new ml.regression.LinearRegression()
+      .setFeaturesCol("vector")
+      .setLabelCol("label")
+      .setPredictionCol("prediction")
+    // The following settings are according to the Spark MLLib deprecation codes. For example, see
+    // org/apache/spark/mllib/regression/LinearRegression.scala (branch-2.0, line-106). And also
+    // RidgeRegression.scala, Lasso.scala.
+    method match {
       case "Linear regression" =>
-        new mllib.regression.LinearRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
+        linearRegression.setElasticNetParam(0.0).setRegParam(0.0)
       case "Ridge regression" =>
-        new mllib.regression.RidgeRegressionWithSGD().setIntercept(true).run(p.labeledPoints.get)
+        linearRegression.setElasticNetParam(0.0).setRegParam(0.01)
       case "Lasso" =>
-        new mllib.regression.LassoWithSGD().setIntercept(true).run(p.labeledPoints.get)
+        linearRegression.setElasticNetParam(1.0).setRegParam(0.01)
     }
-    Model.checkLinearModel(model)
-
+    val model = linearRegression.fit(scaledDF)
+    val predictions = model.transform(scaledDF)
+    val statistics: String = getStatistics(model, predictions)
     val file = Model.newModelFile
-    model.save(rc.sparkContext, file.resolvedName)
+    model.save(file.resolvedName)
     output(o.model, Model(
       method = method,
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      labelScaler = p.labelScaler,
-      featureScaler = p.featureScaler))
+      // The features and labels are standardized by the model. A dummy scaler is used here.
+      featureScaler = None,
+      statistics = Some(statistics))
+    )
+  }
+
+  // Helper method to compute statistics where the training data is required.
+  private def getStatistics(
+    model: ml.regression.LinearRegressionModel,
+    predictions: DataFrame): String = {
+    val summary = model.summary
+    val r2 = summary.r2
+    val MAPE = predictions.select("prediction", "label").map {
+      row =>
+        {
+          val prediction = row.getDouble(0)
+          val label = row.getDouble(1)
+          // Return an error of 100% if a zero division error occurs.
+          if (prediction == label) {
+            0.0
+          } else if (prediction == 0.0) {
+            1.0
+          } else {
+            math.abs(prediction / label - 1.0)
+          }
+        }
+    }.mean * 100.0
+    // Only compute the t-values for methods with unbiased solvers (when the elastic 
+    // net parameter equals to 0).
+    if (model.getElasticNetParam > 0.0) {
+      s"R-squared: $r2\nMAPE: $MAPE%"
+    } else {
+      val tValues = "(" + summary.tValues.mkString(", ") + ")"
+      s"R-squared: $r2\nMAPE: $MAPE%\nT-values: $tValues"
+    }
   }
 }
