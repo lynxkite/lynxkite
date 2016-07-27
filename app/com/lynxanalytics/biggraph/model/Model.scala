@@ -37,14 +37,13 @@ private class LinearRegressionModelImpl(
 }
 
 private class LogisticRegressionModelImpl(
-    m: ml.PipelineModel) extends ModelImplementation {
+    m: ml.PipelineModel,
+    statistics: String) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
-    val logisticRegressionModel = m.stages(1).asInstanceOf[ml.classification.LogisticRegressionModel]
-    val coefficients = "(" + logisticRegressionModel.coefficients.toArray.mkString(", ") + ")"
-    s"intercept: ${logisticRegressionModel.intercept}\ncoefficients: $coefficients"
+    statistics
   }
 }
 
@@ -128,7 +127,7 @@ case class Model(
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
-        new LogisticRegressionModelImpl(ml.PipelineModel.load(path))
+        new LogisticRegressionModelImpl(ml.PipelineModel.load(path), statistics.get)
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get, featureScaler.get)
     }
@@ -236,6 +235,50 @@ object Model extends FromJson[Model] {
     }
     fullArrays.mapValues(a => new mllib.linalg.DenseVector(a): mllib.linalg.Vector)
   }
+
+  def getMAPE(predictionAndLabels: spark.sql.DataFrame): Double = {
+    predictionAndLabels.map {
+      row =>
+        {
+          val prediction = row.getDouble(0)
+          val label = row.getDouble(1)
+          if (prediction == label) {
+            0.0
+            // Return an error of 100% if a zero division error occurs.
+          } else if (prediction == 0.0) {
+            1.0
+          } else {
+            math.abs(prediction / label - 1.0)
+          }
+        }
+    }.mean * 100.0
+  }
+}
+
+object Tabulator {
+  def format(table: Array[Array[String]]) = table match {
+    case Array() => ""
+    case _ =>
+      val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
+      val colSizes = for (col <- sizes.transpose) yield col.max
+      val rows = for (row <- table) yield formatRow(row, colSizes)
+      formatRows(rowSeparator(colSizes), rows)
+  }
+
+  def formatRows(rowSeparator: String, rows: Array[String]): String = (
+    rowSeparator ::
+    rows.head ::
+    rowSeparator ::
+    rows.tail.toList :::
+    rowSeparator ::
+    List()).mkString("\n")
+
+  def formatRow(row: Array[String], colSizes: Array[Int]) = {
+    val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
+    cells.mkString("|", "|", "|")
+  }
+
+  def rowSeparator(colSizes: Array[Int]) = colSizes map { "-" * _ } mkString ("+", "+", "+")
 }
 
 case class FEModelMeta(
