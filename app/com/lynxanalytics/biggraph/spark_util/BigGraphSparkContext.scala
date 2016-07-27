@@ -233,6 +233,7 @@ object BigGraphSparkContext {
     // Make sure spark will wait for the data to be available locally
     assert(sparkVersion.startsWith("1."),
       s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
+    conf.set("spark.locality.wait", "99m")
     conf
   }
 
