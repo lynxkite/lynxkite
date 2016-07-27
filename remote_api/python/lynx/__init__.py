@@ -267,7 +267,7 @@ class View:
     return r['rows']
 
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
-    '''Export the view to CSV file.'''
+    '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -277,21 +277,21 @@ class View:
     ))
 
   def export_json(self, path):
-    '''Export the view to JSON file. '''
+    '''Exports the view to JSON file. '''
     self.lk._send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_orc(self, path):
-    '''Export the view to ORC file.'''
+    '''Exports the view to ORC file.'''
     self.lk._send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_parquet(self, path):
-    '''Export the view to Parquet file.'''
+    '''Exports the view to Parquet file.'''
     self.lk._send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
