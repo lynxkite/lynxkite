@@ -83,10 +83,10 @@ object RemoteAPIProtocol {
   case class ExportViewToJdbcRequest(
     checkpoint: String, jdbcUrl: String, table: String, mode: String)
   case class ExportViewToTableRequest(checkpoint: String)
-  case class PrefixedPathExistsRequest(
+  case class PrefixedPathRequest(
     path: String)
-  case class PrefixedPathExistsResult(
-    exists: Boolean)
+  case class PrefixedPathResult(
+    exists: Boolean, resolved: String)
 
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
@@ -106,8 +106,8 @@ object RemoteAPIProtocol {
   implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
   implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
   implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
-  implicit val rPrefixedPathExistsRequest = json.Json.reads[PrefixedPathExistsRequest]
-  implicit val wPrefixedPathExistsResponse = json.Json.writes[PrefixedPathExistsResult]
+  implicit val rPrefixedPathRequest = json.Json.reads[PrefixedPathRequest]
+  implicit val wPrefixedPathResponse = json.Json.writes[PrefixedPathResult]
 
 }
 
@@ -117,7 +117,7 @@ object RemoteAPIServer extends JsonServer {
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
   def getScalar = jsonPost(c.getScalar)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
-  def prefixedPathExists = jsonPost(c.prefixedPathExists)
+  def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def loadTable = jsonPost(c.loadTable)
@@ -172,11 +172,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     )
   }
 
-  def prefixedPathExists(user: User, request: PrefixedPathExistsRequest): PrefixedPathExistsResult = {
+  def getPrefixedPath(user: User, request: PrefixedPathRequest): PrefixedPathResult = {
     val file = HadoopFile(request.path)
-    return PrefixedPathExistsResult(
-      exists = file.exists()
-    )
+    return PrefixedPathResult(
+      exists = file.exists(),
+      resolved = file.resolvedName)
   }
 
   def newProject(user: User, request: Empty): CheckpointResponse = {
