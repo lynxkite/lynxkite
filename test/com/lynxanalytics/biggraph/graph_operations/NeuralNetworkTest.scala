@@ -155,7 +155,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learn parity of the containing path in a graph consisting of paths.
-  test("parity of containing path") {
+  ignore("parity of containing path") {
     val numberOfVertices = 1000
     val numberOfPaths = 200
 
