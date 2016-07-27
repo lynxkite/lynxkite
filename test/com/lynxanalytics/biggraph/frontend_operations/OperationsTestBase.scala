@@ -33,6 +33,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       delimiter = ",",
       mode = "FAILFAST",
       infer = false,
+      overwrite = false,
       columnsToImport = List()))
     f.id
   }

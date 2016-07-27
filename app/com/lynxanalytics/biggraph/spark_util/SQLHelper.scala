@@ -134,7 +134,7 @@ object SQLHelper {
         TypeTagUtil.mapTypeTag(typeTagFromDataType(mt.keyType), typeTagFromDataType(mt.valueType))
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
-      case _: types.TimestampType => typeTag[java.sql.Timestamp]
+      case _: types.TimestampType => typeTag[java.util.Date]
       case st: types.StructType if isTuple2Type(st) =>
         TypeTagUtil.tuple2TypeTag(
           typeTagFromDataType(st(0).dataType),

@@ -35,6 +35,7 @@ import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
@@ -69,10 +70,11 @@ case class RootProjectState(
     previousCheckpoint: Option[String],
     lastOperationDesc: String,
     // This will be set exactly when previousCheckpoint is set.
-    lastOperationRequest: Option[SubProjectOperation]) {
+    lastOperationRequest: Option[SubProjectOperation],
+    viewRecipe: Option[JsObject]) {
 }
 object RootProjectState {
-  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
+  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None, None)
 }
 
 // Complete state of segmentation.
@@ -290,6 +292,8 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
       Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
+
+  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -728,6 +732,12 @@ class RootProjectEditor(
 
   val isSegmentation = false
   def asSegmentation: SegmentationEditor = ???
+
+  def viewRecipe_=[T <: ViewRecipe: json.Writes](r: T) = {
+    val js = TypedJson.createFromWriter(r).as[json.JsObject]
+    rootState = rootState.copy(viewRecipe = Some(js))
+  }
+  def viewRecipe = viewer.viewRecipe
 }
 
 // Specialized editor for a SegmentationState.
@@ -913,6 +923,22 @@ class TableFrame(path: SymbolPath)(
   def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
 }
 
+class ViewFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  def initializeFromConfig[T <: ViewRecipe: json.Writes](
+    recipe: T, notes: String): Unit = manager.synchronized {
+    initializeFromCheckpoint(ViewRecipe.saveAsCheckpoint(recipe, notes))
+  }
+
+  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
+    set(rootDir / "objectType", "view")
+    checkpoint = cp
+  }
+
+  override def isDirectory: Boolean = false
+  def getRecipe: ViewRecipe = viewer.viewRecipe.get
+}
+
 abstract class ObjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
@@ -1079,8 +1105,9 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
   def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isTable
+  def isProject = hasCheckpoint && !isTable && !isView
   def isDirectory = exists && !hasCheckpoint
+  def isView = get(rootDir / "objectType", "") == "view"
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1092,17 +1119,24 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initialize()
     res
   }
+  def asNewProjectFrame(checkpoint: String): ProjectFrame = {
+    val res = asNewProjectFrame()
+    res.setCheckpoint(checkpoint)
+    res
+  }
 
   def asTableFrame: TableFrame = {
     assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table, notes: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromTable(table, notes)
     res
   }
   def asNewTableFrame(checkpoint: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromCheckpoint(checkpoint)
     res
@@ -1124,7 +1158,25 @@ class DirectoryEntry(val path: SymbolPath)(
     res.writeACL = ""
     res
   }
+
+  def asViewFrame(): ViewFrame = {
+    assert(isInstanceOf[ViewFrame], s"Entry '$path' is not a view")
+    asInstanceOf[ViewFrame]
+  }
+
+  def asNewViewFrame[T <: ViewRecipe: json.Writes](recipe: T, notes: String): ViewFrame = {
+    assert(!exists, s"Entry '$path' already exists")
+    val res = new ViewFrame(path)
+    res.initializeFromConfig(recipe, notes)
+    res
+  }
+  def asNewViewFrame(checkpoint: String): ViewFrame = {
+    val res = new ViewFrame(path)
+    res.initializeFromCheckpoint(checkpoint)
+    res
+  }
 }
+
 object DirectoryEntry {
   val root = SymbolPath("projects")
 
@@ -1145,6 +1197,8 @@ object DirectoryEntry {
         new ProjectFrame(entry.path)
       } else if (entry.isTable) {
         new TableFrame(entry.path)
+      } else if (entry.isView) {
+        new ViewFrame(entry.path)
       } else {
         new Directory(entry.path)
       }
