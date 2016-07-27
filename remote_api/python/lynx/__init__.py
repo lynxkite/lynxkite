@@ -153,7 +153,7 @@ class LynxKite:
           self,
           jdbcUrl,
           jdbcTable,
-          keyColumn,
+          keyColumn='',
           columnsToImport=[]):
     '''Imports a database table as a :class:`View` via JDBC.'''
     return self._create_view(
