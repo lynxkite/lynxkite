@@ -234,9 +234,6 @@ object BigGraphSparkContext {
     assert(sparkVersion.startsWith("1."),
       s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
     conf
-      .setIfMissing("spark.locality.wait", "3s")
-      .setIfMissing("spark.locality.wait.process", "99m")
-    conf
   }
 
   def setupCustomMonitoring(sc: spark.SparkContext) = {
