@@ -83,8 +83,9 @@ case class NeuralNetwork(
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
 
+    val random = new util.Random(0)
     val (trainingVertices, trainingEdgeLists, trainingData) =
-      selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius, maxTrainingVertices, minTrainingVertices)
+      selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius, maxTrainingVertices, minTrainingVertices, random.nextInt)
     val network = train(trainingVertices, trainingEdgeLists, trainingData)
     val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
 
@@ -296,14 +297,15 @@ case class NeuralNetwork(
     edgeLists: Map[ID, Seq[ID]],
     selectionRadius: Int,
     maxNumberOfVertices: Int,
-    minNumberOfVertices: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
+    minNumberOfVertices: Int,
+    seed: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
+    val random = new util.Random(seed)
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
     def verticesAround(vertex: ID): Seq[ID] = (0 until selectionRadius).foldLeft(Seq(vertex)) {
       (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
     }
     var subsetOfVertices: Seq[ID] = Seq()
-    val random = new util.Random(0)
     while (subsetOfVertices.size < minNumberOfVertices) {
       val baseVertex = vertices(random.nextInt(vertices.size))
       subsetOfVertices = subsetOfVertices ++ verticesAround(baseVertex)
