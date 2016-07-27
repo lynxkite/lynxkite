@@ -137,7 +137,7 @@ class LynxKite(object):
           self,
           jdbcUrl,
           jdbcTable,
-          keyColumn,
+          keyColumn='',
           columnsToImport=[]):
     return self._create_view(
         "Jdbc",
