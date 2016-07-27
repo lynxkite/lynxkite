@@ -212,6 +212,7 @@ class Table(object):
     self.name = '!checkpoint(%s,)|vertices' % checkpoint
 
   def save(self, name, writeACL=None, readACL=None):
+    '''Saves the table under given name, with given writeACL and readACL.'''
     self.lk.send('saveTable', dict(
         checkpoint=self.checkpoint,
         name=name,
@@ -226,6 +227,7 @@ class View:
     self.checkpoint = checkpoint
 
   def save(self, name, writeACL=None, readACL=None):
+    '''Saves the view under given name, with given writeACL and readACL.'''
     self.lk.send('saveView', dict(
         checkpoint=self.checkpoint,
         name=name,
@@ -233,6 +235,7 @@ class View:
         readACL=readACL))
 
   def take(self, limit):
+    '''Computes the view and returns the result as a list. Only the first ``limit`` number of rows are returned.'''
     r = self.lk.send('takeFromView', dict(
         checkpoint=self.checkpoint,
         limit=limit,
@@ -240,6 +243,7 @@ class View:
     return r['rows']
 
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
+    '''Export the view to CSV file.'''
     self.lk.send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -249,18 +253,21 @@ class View:
     ))
 
   def export_json(self, path):
+    '''Export the view to JSON file. '''
     self.lk.send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_orc(self, path):
+    '''Export the view to ORC file.'''
     self.lk.send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
     ))
 
   def export_parquet(self, path):
+    '''Export the view to Parquet file.'''
     self.lk.send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -280,6 +287,7 @@ class View:
     ))
 
   def to_table(self):
+    '''Exports the view to a :class:`Table`.'''
     res = self.lk.send('exportViewToTable', dict(checkpoint=self.checkpoint))
     return Table(self.lk, res.checkpoint)
 
@@ -296,6 +304,7 @@ class Project(object):
     self.checkpoint = checkpoint
 
   def save(self, name, writeACL=None, readACL=None):
+    '''Saves the project under given name, with given writeACL and readACL.'''
     self.lk.send(
         'saveProject',
         dict(
@@ -315,7 +324,8 @@ class Project(object):
       return r.double
     return r.string
 
-  def sql(self, query, limit=None):
+  def sql(self, query):
+    '''Runs SQL queries.'''
     r = self.lk.send('globalSQL', dict(
         query=query,
         checkpoints={'': self.checkpoint},
@@ -334,6 +344,7 @@ class Project(object):
     return self
 
   def compute(self):
+    '''Computes all scalars and attributes of the project.'''
     return self.lk.send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
