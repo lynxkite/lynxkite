@@ -63,8 +63,11 @@ case class NeuralNetwork(
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
+    val iterationsInTraining = 10
+    val subgraphsInTraining = 20
+    val numberOfTrainings = 10
 
+    implicit val id = inputDatas
     val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
     val edges: Seq[Edge] = inputs.edges.rdd.values.collect
     val edgeLists: Map[ID, Seq[ID]] = isolatedVertices ++ edges.groupBy(_.src).mapValues(_.map(_.dst))
@@ -79,16 +82,24 @@ case class NeuralNetwork(
           }
       }
     }
+    val random = new util.Random(0)
     val labelOpt = inputs.vertices.rdd.sortedLeftOuterJoin(inputs.label.rdd).mapValues(_._2)
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
 
-    val random = new util.Random(0)
-    val (trainingVertices, trainingEdgeLists, trainingData) =
-      selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius, maxTrainingVertices, minTrainingVertices, random.nextInt)
-    val network = train(trainingVertices, trainingEdgeLists, trainingData)
-    val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
+    val initialNetwork = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
+    val network = (1 to numberOfTrainings).foldLeft(initialNetwork) {
+      (previous, current) =>
+        averageNetwork((1 to subgraphsInTraining).map { i =>
+          val (trainingVertices, trainingEdgeLists, trainingData) =
+            selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius,
+              maxTrainingVertices, minTrainingVertices, random.nextInt)
+          train(trainingVertices, trainingEdgeLists, trainingData,
+            previous, iterationsInTraining)
+        })
+    }
 
+    val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
@@ -179,6 +190,21 @@ case class NeuralNetwork(
     val sum = DenseVector.zeros[Double](size)
     for (v <- vectors) { sum += v }
     sum
+  }
+
+  def averageNetwork(networks: Seq[Network]) = {
+    val size: Double = networks.size
+    val sumNetwork = networks.reduce((previous, current) => previous.plus(current))
+    new Network(
+      sumNetwork.size,
+      edgeMatrix = sumNetwork.edgeMatrix / size,
+      edgeBias = sumNetwork.edgeBias / size,
+      resetInput = sumNetwork.resetInput / size,
+      resetHidden = sumNetwork.resetHidden / size,
+      updateInput = sumNetwork.updateInput / size,
+      updateHidden = sumNetwork.updateHidden / size,
+      activationInput = sumNetwork.activationInput / size,
+      activationHidden = sumNetwork.activationHidden / size)
   }
 
   case class NetworkOutputs(
@@ -348,12 +374,14 @@ case class NeuralNetwork(
   def train(
     trainingVertices: Seq[ID],
     trainingEdgeLists: Map[ID, Seq[ID]],
-    trainingData: Seq[(ID, (Option[Double], Array[Double]))]): Network = {
+    trainingData: Seq[(ID, (Option[Double], Array[Double]))],
+    startingNetwork: Network,
+    iterationsInTraining: Int): Network = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
-    var network = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
+    var network = startingNetwork
     var adagradMemory = Network.zeros(networkSize)
     var finalOutputs: NetworkOutputs = null
-    for (i <- 1 to iterations) {
+    for (i <- 1 to iterationsInTraining) {
       val trueState = getTrueState(trainingData)
       val random = new util.Random(1)
       val keptState = trueState.map {
