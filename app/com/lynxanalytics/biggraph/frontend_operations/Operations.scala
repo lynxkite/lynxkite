@@ -1549,7 +1549,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Train a logistic regression model", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Label", options = vertexAttributes[String]),
+      Choice("label", "Label", options = vertexAttributes[Double]),
       Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
       NonNegInt("max-iter", "Maximum number of iterations", default = 20))
     def enabled =
@@ -1563,7 +1563,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
       val name = params("name")
       val labelName = params("label")
-      val label = project.vertexAttributes(labelName).runtimeSafeCast[String]
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val maxIter = params("max-iter").toInt
       val model = {
         val op = graph_operations.LogisticRegressionModelTrainer(

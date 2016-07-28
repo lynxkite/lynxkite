@@ -9,7 +9,7 @@ import org.apache.spark.sql
 import org.apache.spark.ml
 import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.mllib
-import breeze.linalg
+import breeze.{ linalg => linalgBreeze }
 
 object LogisticRegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -17,7 +17,7 @@ object LogisticRegressionModelTrainer extends OpFromJson {
     val features = (0 until numFeatures).map {
       i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
     }
-    val label = vertexAttribute[String](vertices)
+    val label = vertexAttribute[Double](vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -54,32 +54,23 @@ case class LogisticRegressionModelTrainer(
     val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val labeledFeaturesDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
-    val labelIndexer = new ml.feature.StringIndexer()
-      .setInputCol("label")
-      .setOutputCol("indexedLabel").fit(labeledFeaturesDF)
-    val indexedFeaturesDF = labelIndexer.transform(labeledFeaturesDF)
+
     // Train a logictic regression model. The model sets the threshold to be 0.5 and 
     // the feature scaling to be true by default.
     val logisticRegression = new ml.classification.LogisticRegression()
       .setMaxIter(maxIter)
       .setTol(0)
       .setFeaturesCol("vector")
-      .setLabelCol("indexedLabel")
+      .setLabelCol("label")
       .setRawPredictionCol("rawClassification")
       .setPredictionCol("indexedClassification")
       .setProbabilityCol("probability")
-    val logisticRegressionModel = logisticRegression.fit(indexedFeaturesDF)
-    val (fMeasure, threshold) = getFMeasureAndThreshold(logisticRegressionModel)
-    logisticRegressionModel.setThreshold(threshold)
-    val prediction = logisticRegressionModel.transform(indexedFeaturesDF)
-    // Convert indexed labels back to original labels.
-    val labelConverter = new ml.feature.IndexToString()
-      .setInputCol("indexedClassification")
-      .setOutputCol("classification")
-      .setLabels(labelIndexer.labels)
-    val pipeline = new ml.Pipeline().setStages(Array(labelIndexer, logisticRegressionModel, labelConverter))
-    val model = pipeline.fit(labeledFeaturesDF)
-    val statistics = getStatistics(logisticRegressionModel, prediction, featureNames) + s"F score: $fMeasure"
+    val model = logisticRegression.fit(labeledFeaturesDF)
+    val (fMeasure, threshold) = getFMeasureAndThreshold(model)
+    model.setThreshold(threshold)
+    val prediction = model.transform(labeledFeaturesDF)
+    val statistics = getStatistics(model, prediction, featureNames) +
+      s"threshold: $threshold, F-score: $fMeasure\n"
 
     val file = Model.newModelFile
     model.save(file.resolvedName)
@@ -109,45 +100,44 @@ case class LogisticRegressionModelTrainer(
     featureNames: List[String]): String = {
     val numFeatures = regModel.coefficients.size
     val numData = predictions.count.toInt
-    val predictionAndLabels = predictions.select("rawClassification", "indexedLabel")
-    val coefAndIntercept = regModel.coefficients.toArray ++ Array(regModel.intercept)
-    val mcfaddenR2 = {
-      val logLikFull = predictionAndLabels.map {
+    val coefficientsAndIntercept = regModel.coefficients.toArray :+ regModel.intercept
+    val mcfaddenR2: Double = {
+      val logLikCurrent = predictions.map {
         row =>
           {
-            val rawClassification = row.getAs[mllib.linalg.DenseVector](0)(1)
-            val label = row.getDouble(1)
+            val rawClassification = row.getAs[mllib.linalg.DenseVector]("rawClassification")(1)
+            val label = row.getAs[Double]("label")
             rawClassification * label - Math.log(1 + Math.exp(rawClassification))
           }
       }.sum
       val logLikIntercept = {
-        val labelArray = predictionAndLabels.map(_.getDouble(1)).collect
-        val labelSum = labelArray.sum
-        val nullProb = labelSum / numData
-        val nullIntercept = Math.log(nullProb / (1 - nullProb))
+        val labelSum = predictions.map(_.getAs[Double]("label")).sum
+        val nullProbability = labelSum / numData
+        val nullIntercept = Math.log(nullProbability / (1 - nullProbability))
         nullIntercept * labelSum - numData * Math.log(1 + Math.exp(nullIntercept))
       }
-      1 - logLikFull / logLikIntercept
+      1 - logLikCurrent / logLikIntercept
     }
-    val zValues = {
-      val vectors = predictions.map(_.getAs[mllib.linalg.Vector]("vector"))
-      val flattenMatrix = vectors.map(_.toArray ++ Array(1.0)).reduce(_ ++ _)
-      val matrix = new linalg.DenseMatrix(
+    val zValues: Array[Double] = {
+      val vectors = predictions.map(_.getAs[mllib.linalg.DenseVector]("vector"))
+      val probability = predictions.map(_.getAs[mllib.linalg.DenseVector]("probability"))
+      // The constant field is added in order to get the statistics for the intercept
+      val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
+      val matrix = new linalgBreeze.DenseMatrix(
         rows = numFeatures + 1,
         cols = numData,
         data = flattenMatrix)
-      val probability = predictions.map(_.getAs[mllib.linalg.Vector]("probability"))
       val cost = probability.map(prob => prob(0) * prob(1)).collect
-      val matrixCost = linalg.diag(linalg.DenseVector(cost))
-      val covariance = linalg.inv((matrix * (matrixCost * matrix.t)))
-      val coefStdErr = linalg.diag(covariance).map(Math.sqrt(_))
-      val zValues = linalg.DenseVector(coefAndIntercept) :/ coefStdErr
+      val matrixCost = linalgBreeze.diag(linalgBreeze.DenseVector(cost))
+      val covariance = linalgBreeze.inv((matrix * (matrixCost * matrix.t)))
+      val coefficientsStdErr = linalgBreeze.diag(covariance).map(Math.sqrt(_))
+      val zValues = linalgBreeze.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
       zValues.toArray
     }
-    val tableEntry: Array[Array[String]] = Array(featureNames.toArray ++ Array("intercept"),
-      coefAndIntercept.map(_.toFloat.toString), zValues.map(_.toFloat.toString)).transpose
-    val table = model.Tabulator.format(Array(Array("names", "estimate", "Z-values")) ++
-      tableEntry)
-    s"coefficients:\n$table\npseudo R-squared: $mcfaddenR2, "
+    val table = model.Tabulator.getTable(
+      headers = Array("names", "estimates", "Z-values"),
+      rowNames = featureNames.toArray :+ "intercept",
+      columnData = Array(coefficientsAndIntercept, zValues))
+    s"coefficients:\n$table\npseudo R-squared: $mcfaddenR2\n"
   }
 }
