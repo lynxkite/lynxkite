@@ -261,7 +261,8 @@ object Tabulator {
     assert(headers.size == tails.size)
     format(headers +: tails.transpose)
   }
-
+  // The following codes refer to an stackOverflow issue. http://stackoverflow.com/questions/7539831/
+  // scala-draw-table-to-console. 
   def format(table: Array[Array[String]]): String = table match {
     case Array() => ""
     case _ =>
@@ -270,7 +271,6 @@ object Tabulator {
       val rows = for (row <- table) yield formatRow(row, colSizes)
       formatRows(rowSeparator(colSizes), rows)
   }
-
   def formatRows(rowSeparator: String, rows: Array[String]): String = (
     rowSeparator ::
     rows.head ::
@@ -278,12 +278,10 @@ object Tabulator {
     rows.tail.toList :::
     rowSeparator ::
     List()).mkString("\n")
-
   def formatRow(row: Array[String], colSizes: Array[Int]) = {
     val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
     cells.mkString("|", "|", "|")
   }
-
   def rowSeparator(colSizes: Array[Int]) = colSizes map { "-" * _ } mkString ("+", "+", "+")
 }
 
