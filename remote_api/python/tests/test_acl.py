@@ -9,7 +9,7 @@ class TestACL(unittest.TestCase):
   def test_acl(self):
     name = 'acl-table'
     lk = lynx.LynxKite()
-    lk.request('/ajax/discardAllReallyIMeanIt')
+    lk._request('/ajax/discardAllReallyIMeanIt')
     p = lk.new_project()
     p.save(name, 'user', 'user')
     lk.change_acl(name, '*', '*')

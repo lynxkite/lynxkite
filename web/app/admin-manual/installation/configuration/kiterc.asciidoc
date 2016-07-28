@@ -4,7 +4,7 @@
 This file contains various configurations used when launching a LynxKite instance.
 
 [[kite-instance]]
-Specify this to be the instance (client) where the program is run. E.g., Westeros
+Specify this to be the instance (client) where the program is run. E.g., MyCLient.
 ```
 export KITE_INSTANCE=
 ```
