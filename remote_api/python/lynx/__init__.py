@@ -42,7 +42,7 @@ class LynxKite:
 
   def __init__(self, username=None, password=None, address=None):
     '''Creates a connection object.'''
-    # Authentication and querying environment variables is deffered until the
+    # Authentication and querying environment variables is deferred until the
     # first request.
     self._address = address
     self._username = username
