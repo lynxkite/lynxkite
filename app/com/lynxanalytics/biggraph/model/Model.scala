@@ -30,10 +30,7 @@ private class LinearRegressionModelImpl(
     m: ml.regression.LinearRegressionModel,
     statistics: String) extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  def details: String = {
-    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\ncoefficients: $coefficients\n" + statistics
-  }
+  def details: String = statistics
 }
 
 private class LogisticRegressionModelImpl(
@@ -42,9 +39,7 @@ private class LogisticRegressionModelImpl(
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  def details: String = {
-    statistics
-  }
+  def details: String = statistics
 }
 
 private class ClusterModelImpl(
@@ -255,6 +250,7 @@ object Model extends FromJson[Model] {
   }
 }
 
+// Helper method to print statistical tables of the models.
 object Tabulator {
   def getTable(
     headers: Array[String],

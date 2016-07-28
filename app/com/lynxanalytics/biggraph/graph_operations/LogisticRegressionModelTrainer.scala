@@ -1,13 +1,11 @@
-// Trains a logistic regression model. Currently, the class only supports binary 
-// classification.
+// Trains a logistic regression model. Currently, the class only supports binary classification.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.{ model => modelClass }
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql
 import org.apache.spark.ml
-import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.mllib
 import breeze.{ linalg => linalgBreeze }
 
@@ -67,6 +65,7 @@ case class LogisticRegressionModelTrainer(
       .setProbabilityCol("probability")
     val model = logisticRegression.fit(labeledFeaturesDF)
     val (fMeasure, threshold) = getFMeasureAndThreshold(model)
+    // If the estimated probability of class label 1 is > threshold, then predict 1, else 0.
     model.setThreshold(threshold)
     val prediction = model.transform(labeledFeaturesDF)
     val statistics = getStatistics(model, prediction, featureNames) +
@@ -79,29 +78,32 @@ case class LogisticRegressionModelTrainer(
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      // The feature vectors are standardized by the model. A dummy scaler is used here.
+      // The features and labels are standardized by the model.
       featureScaler = None,
       statistics = Some(statistics)))
   }
   // Helper method to find the best threshold.
   private def getFMeasureAndThreshold(
-    rawModel: ml.classification.LogisticRegressionModel): (Double, Double) = {
-    val binarySummary = rawModel.summary.asInstanceOf[ml.classification.BinaryLogisticRegressionSummary]
+    model: ml.classification.LogisticRegressionModel): (Double, Double) = {
+    val binarySummary = model.summary.asInstanceOf[ml.classification.BinaryLogisticRegressionSummary]
     val fMeasure = binarySummary.fMeasureByThreshold
     val maxFMeasure = fMeasure.select(sql.functions.max("F-Measure")).head().getDouble(0)
     val bestThreshold = fMeasure.where(fMeasure("F-Measure") === maxFMeasure)
       .select("threshold").head().getDouble(0)
     (maxFMeasure, bestThreshold)
   }
-  // Helper method to compute statistics where the training data is required.
+  // Helper method to compute more complex statistics.
   private def getStatistics(
-    regModel: ml.classification.LogisticRegressionModel,
+    model: ml.classification.LogisticRegressionModel,
     predictions: sql.DataFrame,
     featureNames: List[String]): String = {
-    val numFeatures = regModel.coefficients.size
+    val numFeatures = model.coefficients.size
     val numData = predictions.count.toInt
-    val coefficientsAndIntercept = regModel.coefficients.toArray :+ regModel.intercept
+    val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
     val mcfaddenR2: Double = {
+      // The log likelihood of logistic regression is calculated according to the equation: 
+      // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
+      // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).  
       val logLikCurrent = predictions.map {
         row =>
           {
@@ -118,10 +120,12 @@ case class LogisticRegressionModelTrainer(
       }
       1 - logLikCurrent / logLikIntercept
     }
+    // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient 
+    // values to coefficient standard errors.  
     val zValues: Array[Double] = {
       val vectors = predictions.map(_.getAs[mllib.linalg.DenseVector]("vector"))
       val probability = predictions.map(_.getAs[mllib.linalg.DenseVector]("probability"))
-      // The constant field is added in order to get the statistics for the intercept
+      // The constant field is added in order to get the statistics of the intercept.
       val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
       val matrix = new linalgBreeze.DenseMatrix(
         rows = numFeatures + 1,
@@ -129,12 +133,15 @@ case class LogisticRegressionModelTrainer(
         data = flattenMatrix)
       val cost = probability.map(prob => prob(0) * prob(1)).collect
       val matrixCost = linalgBreeze.diag(linalgBreeze.DenseVector(cost))
+      // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is 
+      // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
+      // whose diagnol elements are probability_i * (1 - probability_i).
       val covariance = linalgBreeze.inv((matrix * (matrixCost * matrix.t)))
       val coefficientsStdErr = linalgBreeze.diag(covariance).map(Math.sqrt(_))
       val zValues = linalgBreeze.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
       zValues.toArray
     }
-    val table = model.Tabulator.getTable(
+    val table = modelClass.Tabulator.getTable(
       headers = Array("names", "estimates", "Z-values"),
       rowNames = featureNames.toArray :+ "intercept",
       columnData = Array(coefficientsAndIntercept, zValues))
