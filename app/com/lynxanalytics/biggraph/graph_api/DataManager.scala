@@ -133,6 +133,14 @@ class DataManager(sc: spark.SparkContext,
     loggedFutures.put(f, ())
   }
 
+  // Runs something on the DataManager threadpool.
+  // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
+  def async[T](fn: => T): concurrent.Future[T] = {
+    SafeFuture {
+      fn
+    }.future
+  }
+
   private def execute(instance: MetaGraphOperationInstance,
                       logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
