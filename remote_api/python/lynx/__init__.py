@@ -41,16 +41,15 @@ class LynxKite:
   '''
 
   def __init__(self, username=None, password=None, address=None):
-    '''Creates a connection object. Authentication and querying environment variables
-    is deffered until the first request.'''
+    '''Creates a connection object.'''
+    # Authentication and querying environment variables is deffered until the
+    # first request.
     self._address = address
     self._username = username
     self._password = password
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
-    # _login(), if needed, will be done at the first failed _request()
-    # attempt.
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
