@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is the script that Jenkins calls when the user wants to run 
+# This is the script that Jenkins calls when the user wants to run
 # a "big data" test on a Pull Request. It fires up an EMR cluster,
 # runs groovy scripts in it and creates a file with the results.
 # In case of Jenkins, it also dumps the test results as a commit

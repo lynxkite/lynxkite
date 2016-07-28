@@ -41,28 +41,37 @@ class LynxKite:
   '''
 
   def __init__(self, username=None, password=None, address=None):
-    '''Creates a connection object, performing authentication if necessary.'''
-    self.address = address or os.environ['LYNXKITE_ADDRESS']
-    self.username = username or os.environ.get('LYNXKITE_USERNAME')
-    self.password = password or os.environ.get('LYNXKITE_PASSWORD')
+    '''Creates a connection object.'''
+    # Authentication and querying environment variables is deferred until the
+    # first request.
+    self._address = address
+    self._username = username
+    self._password = password
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
-    # _login(), if needed, will be done at the first failed _request()
-    # attempt.
+
+  def address(self):
+    return self._address or os.environ['LYNXKITE_ADDRESS']
+
+  def username(self):
+    return self._username or os.environ.get('LYNXKITE_USERNAME')
+
+  def password(self):
+    return self._password or os.environ.get('LYNXKITE_PASSWORD')
 
   def _login(self):
     self._request(
         '/passwordLogin',
         dict(
-            username=self.username,
-            password=self.password))
+            username=self.username(),
+            password=self.password()))
 
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
-        self.address.rstrip('/') + '/' + endpoint.lstrip('/'),
+        self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
         data=data,
         headers={'Content-Type': 'application/json'})
     max_tries = 3
