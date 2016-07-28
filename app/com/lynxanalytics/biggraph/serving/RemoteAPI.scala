@@ -1,6 +1,7 @@
 // An API that allows controlling a running LynxKite instance via JSON commands.
 package com.lynxanalytics.biggraph.serving
 
+import scala.concurrent.Future
 import org.apache.spark.sql.{ DataFrame, SQLContext, types }
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
@@ -126,13 +127,13 @@ object RemoteAPIServer extends JsonServer {
   def saveProject = jsonPost(c.saveProject)
   def saveTable = jsonPost(c.saveTable)
   def saveView = jsonPost(c.saveView)
-  def takeFromView = jsonPost(c.takeFromView)
-  def exportViewToCSV = jsonPost(c.exportViewToCSV)
-  def exportViewToJson = jsonPost(c.exportViewToJson)
-  def exportViewToORC = jsonPost(c.exportViewToORC)
-  def exportViewToParquet = jsonPost(c.exportViewToParquet)
-  def exportViewToJdbc = jsonPost(c.exportViewToJdbc)
-  def exportViewToTable = jsonPost(c.exportViewToTable)
+  def takeFromView = jsonFuturePost(c.takeFromView)
+  def exportViewToCSV = jsonFuturePost(c.exportViewToCSV)
+  def exportViewToJson = jsonFuturePost(c.exportViewToJson)
+  def exportViewToORC = jsonFuturePost(c.exportViewToORC)
+  def exportViewToParquet = jsonFuturePost(c.exportViewToParquet)
+  def exportViewToJdbc = jsonFuturePost(c.exportViewToJdbc)
+  def exportViewToTable = jsonFuturePost(c.exportViewToTable)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
   def createViewJdbc = createView[JdbcImportRequest]
@@ -282,18 +283,19 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(ViewRecipe.saveAsCheckpoint(recipe))
   }
 
-  private def viewToDF(user: User, checkpoint: String) = {
+  private def viewToDF(user: User, checkpoint: String): DataFrame = {
     val viewer = getViewer(checkpoint)
     val sqlContext = dataManager.newHiveContext()
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
-  def takeFromView(user: User, request: TakeFromViewRequest): TableResult = {
+  def takeFromView(
+    user: User, request: TakeFromViewRequest): Future[TableResult] = dataManager.async {
     val df = viewToDF(user, request.checkpoint)
     dfToTableResult(df, request.limit)
   }
 
-  def exportViewToCSV(user: User, request: ExportViewToCSVRequest): Unit = {
+  def exportViewToCSV(user: User, request: ExportViewToCSVRequest) = {
     exportViewToFile(
       user, request.checkpoint, request.path, "csv", Map(
         "delimiter" -> request.delimiter,
@@ -302,33 +304,35 @@ class RemoteAPIController(env: BigGraphEnvironment) {
         "header" -> (if (request.header) "true" else "false")))
   }
 
-  def exportViewToJson(user: User, request: ExportViewToJsonRequest): Unit = {
+  def exportViewToJson(user: User, request: ExportViewToJsonRequest) = {
     exportViewToFile(user, request.checkpoint, request.path, "json")
   }
 
-  def exportViewToORC(user: User, request: ExportViewToORCRequest): Unit = {
+  def exportViewToORC(user: User, request: ExportViewToORCRequest) = {
     exportViewToFile(user, request.checkpoint, request.path, "orc")
   }
 
-  def exportViewToParquet(user: User, request: ExportViewToParquetRequest): Unit = {
+  def exportViewToParquet(user: User, request: ExportViewToParquetRequest) = {
     exportViewToFile(user, request.checkpoint, request.path, "parquet")
   }
 
-  def exportViewToJdbc(user: User, request: ExportViewToJdbcRequest): Unit = {
+  def exportViewToJdbc(
+    user: User, request: ExportViewToJdbcRequest): Future[Unit] = dataManager.async {
     val df = viewToDF(user, request.checkpoint)
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
   private def exportViewToFile(
     user: serving.User, checkpoint: String, path: String,
-    format: String, options: Map[String, String] = Map()): Unit = {
+    format: String, options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
     df.write.format(format).options(options).save(file.resolvedName)
   }
 
-  def exportViewToTable(user: User, request: ExportViewToTableRequest): CheckpointResponse = {
+  def exportViewToTable(
+    user: User, request: ExportViewToTableRequest): Future[CheckpointResponse] = dataManager.async {
     val df = viewToDF(user, request.checkpoint)
     val table = TableImport.importDataFrameAsync(df)
     val cp = table.saveAsCheckpoint("Created from a view via the Remote API.")
