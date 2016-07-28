@@ -34,8 +34,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(differenceSquareSum(prediction, a) < 1)
   }
 
-  // Learn to use a feature. Not possible with this GRU.
-  ignore("feature, trivial") {
+  // Learn to use a feature.
+  test("feature, trivial") {
     // The label and one of the features are the same random attribute.
     val vs = CreateVertexSet(1000).result.vs
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
@@ -50,8 +50,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(differenceSquareSum(prediction, a) < 1)
   }
 
-  // Learn to use a feature with depth. Not possible with this GRU.
-  ignore("feature, trivial, deep") {
+  // Learn to use a feature with depth.
+  test("feature, trivial, deep") {
     // The label and one of the features are the same random attribute.
     // Propagates through 3 full layers.
     val vs = CreateVertexSet(1000).result.vs
@@ -84,16 +84,16 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by hiding state.
-  test("lattice, hiding") {
+  ignore("lattice, hiding") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 25, learningRate = 0.2, radius = 3,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        featureCount = 0, networkSize = 4, iterations = 50, learningRate = 0.1, radius = 3,
+        hideState = true, forgetFraction = 0.0, trainingRadius = 3, maxTrainingVertices = 40,
+        minTrainingVertices = 30)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
@@ -104,16 +104,16 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by forgetting.
-  test("lattice, forgetting") {
+  ignore("lattice, forgetting") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 30, learningRate = 0.2, radius = 3,
-        hideState = false, forgetFraction = 0.5, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        featureCount = 0, networkSize = 4, iterations = 30, learningRate = 0.1, radius = 3,
+        hideState = false, forgetFraction = 0.5, trainingRadius = 3, maxTrainingVertices = 30,
+        minTrainingVertices = 30)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
@@ -136,13 +136,13 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       (0 until total).map(v => if (v < partition1) (v, 1.0) else (v, -1.0)).toMap
     }
 
-    val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(10, 5))
+    val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(1000, 400))
     val vertices = g.result.vs
-    val partition = AddVertexAttribute.run(vertices, inWhichPartition(10, 5))
+    val partition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, iterations = 11, learningRate = 0.2, radius = 3,
+        featureCount = 0, networkSize = 4, iterations = 11, learningRate = 0.02, radius = 3,
         hideState = true, forgetFraction = 0.0, trainingRadius = 1, maxTrainingVertices = 8,
         minTrainingVertices = 7)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
@@ -155,7 +155,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     assert(isWrong.rdd.values.sum == 0)
   }
 
-  //Learn parity of the containing path in a graph consisting of paths. Not possible with this GRU.
+  //Learn parity of the containing path in a graph consisting of paths.
   ignore("parity of containing path") {
     val numberOfVertices = 1000
     val numberOfPaths = 200
@@ -188,7 +188,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.4, radius = 4,
+        featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.1, radius = 4,
         hideState = true, forgetFraction = 0.3, trainingRadius = 4, maxTrainingVertices = 20,
         minTrainingVertices = 10)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
