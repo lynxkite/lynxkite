@@ -4,10 +4,6 @@ package com.lynxanalytics.biggraph.neural
 import breeze.stats.distributions.RandBasis
 import com.lynxanalytics.biggraph.graph_api._
 
-trait NetworkOutputs {
-  def apply(output: String): GraphData
-}
-
 object Gates {
   import breeze.linalg._
   import breeze.numerics._
@@ -69,7 +65,7 @@ object Gates {
     def forward(ctx: ForwardContext) = ctx.neighbors
   }
   case class Input(name: String) extends Vector {
-    def forward(ctx: ForwardContext) = ???
+    def forward(ctx: ForwardContext) = ctx.inputs(name)
   }
   case class Sigmoid(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_))
@@ -78,17 +74,17 @@ object Gates {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_))
   }
 
-  // Trained vector or matrix of weights.
-  trait Trained[T] {
+  // Trained matrix of weights.
+  trait Trained {
     def name: String
-    def random(size: Int)(implicit r: RandBasis): T
+    def random(size: Int)(implicit r: RandBasis): DoubleMatrix
   }
   val initialRandomAmplitude = 0.01
-  case class V(name: String) extends Trained[DoubleVector] {
+  case class V(name: String) extends Trained {
     def random(size: Int)(implicit r: RandBasis) =
-      randn(size) * initialRandomAmplitude
+      randn((size, 1)) * initialRandomAmplitude
   }
-  case class M(name: String) extends Trained[DoubleMatrix] {
+  case class M(name: String) extends Trained {
     def random(size: Int)(implicit r: RandBasis) =
       randn((size, size)) * initialRandomAmplitude
   }
@@ -109,15 +105,13 @@ private case class ForwardContext(
     vertices.map { id => id -> (g1(id), g2(id)) }.toMap
   }
   def apply(v: Vector): GraphData = {
-    vectorCache.getOrElseUpdate(v.id, v match {
-      case Input(name) => inputs(name)
-      case v => v.forward(this)
-    })
+    vectorCache.getOrElseUpdate(v.id, v.forward(this))
   }
   def apply(vs: Vectors): GraphVectors = {
     vectorsCache.getOrElseUpdate(vs.id, vs.forward(this))
   }
-  def apply[T](t: Trained[T]) = network(t)
+  def apply(m: M): DoubleMatrix = network(m)
+  def apply(v: V): DoubleVector = network(v)(::, 0)
   def neighbors: GraphVectors = {
     vertices.map { id =>
       id -> edges.getNeighbors(id).map(neighborState(_))
@@ -130,20 +124,31 @@ object Network {
   def apply(size: Int, outputs: (String, Vector)*) = new Network(size, Map(), outputs.toMap)
 }
 case class Network private (
-    size: Int, weights: Map[String, Trained[_]], outputs: Map[String, Vector]) {
+    size: Int, weights: Map[String, DoubleMatrix], outputs: Map[String, Vector]) {
   implicit val randBasis = RandBasis.mt0
-  def apply[T](t: Trained[T]): T = weights.getOrElse(t.name, t.random(size)).asInstanceOf[T]
+  val allWeights = collection.mutable.Map(weights.toSeq: _*)
+  def apply(t: Trained): DoubleMatrix = allWeights.getOrElseUpdate(t.name, t.random(size))
   def forward(
     vertices: Seq[ID],
     edges: CompactUndirectedGraph,
     neighbors: GraphData,
-    inputs: (String, GraphData)*): NetworkOutputs = ???
+    inputs: (String, GraphData)*): NetworkOutputs = {
+    val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
+    val result = outputs.map { case (name, v) => name -> ctx(v) }
+    NetworkOutputs(result)
+  }
 
   def backward(
     vertices: Seq[ID],
     edges: CompactUndirectedGraph,
     outputs: NetworkOutputs,
-    gradients: (String, GraphData)*): GraphData = ???
+    gradients: (String, GraphData)*): GraphData = {
+    ???
+  }
 
   def update(gradients: Iterable[GraphData]): Network = ???
+}
+
+case class NetworkOutputs(outputs: Map[String, GraphData]) {
+  def apply(output: String): GraphData = outputs(output)
 }
