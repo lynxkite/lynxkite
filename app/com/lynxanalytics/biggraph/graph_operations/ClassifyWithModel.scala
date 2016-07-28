@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model.Model
 import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.ml
 
@@ -58,8 +59,8 @@ case class ClassifyWithModel(numFeatures: Int)
     }.sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
-      val threshold = ml.classification.LogisticRegressionModel.load(
-        modelValue.symbolicPath).getThreshold
+      val path = HadoopFile(modelValue.symbolicPath).resolvedName
+      val threshold = ml.classification.LogisticRegressionModel.load(path).getThreshold
       val probability = transformation.select("ID", "probability").map { row =>
         var probabilityValue = row.getAs[DenseVector]("probability")(1)
         if (probabilityValue < threshold) { probabilityValue = 1 - probabilityValue }

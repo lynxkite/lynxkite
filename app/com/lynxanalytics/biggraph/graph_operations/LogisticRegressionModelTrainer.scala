@@ -61,7 +61,7 @@ case class LogisticRegressionModelTrainer(
       .setFeaturesCol("vector")
       .setLabelCol("label")
       .setRawPredictionCol("rawClassification")
-      .setPredictionCol("indexedClassification")
+      .setPredictionCol("classification")
       .setProbabilityCol("probability")
     val model = logisticRegression.fit(labeledFeaturesDF)
     val (fMeasure, threshold) = getFMeasureAndThreshold(model)
