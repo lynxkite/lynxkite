@@ -134,6 +134,7 @@ class DataManager(sc: spark.SparkContext,
   }
 
   // Runs something on the DataManager threadpool.
+  // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
   def async[T](fn: => T): concurrent.Future[T] = {
     SafeFuture {
       fn
