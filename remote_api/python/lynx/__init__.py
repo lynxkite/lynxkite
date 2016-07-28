@@ -1,15 +1,16 @@
 '''Python interface for the LynxKite Remote API.
 
-The access to the LynxKite instance can be configured through the following environment variables:
+The access to the LynxKite instance can be configured through the following environment variables::
 
     LYNXKITE_ADDRESS=https://lynxkite.example.com/
     LYNXKITE_USERNAME=user@company
     LYNXKITE_PASSWORD=my_password
 
-Example usage:
+Example usage::
 
     import lynx
-    p = lynx.Project()
+    lk = lynx.LynxKite()
+    p = lk.new_project()
     p.newVertexSet(size=100)
     print(p.scalar('vertex_count'))
 
@@ -29,186 +30,48 @@ if sys.version_info.major < 3:
 default_sql_limit = 1000
 default_privacy = 'public-read'
 
-_connection = None
 
-
-def default_connection():
-  global _connection
-  if _connection is None:
-    _connection = Connection(
-        os.environ['LYNXKITE_ADDRESS'],
-        os.environ.get('LYNXKITE_USERNAME'),
-        os.environ.get('LYNXKITE_PASSWORD'))
-  return _connection
-
-
-def sql(query, limit=None, **kwargs):
-  '''Runs global level SQL query with the syntax: lynx.sql("select * from `x|vertices`", x=p, limit=10),
-  where p is a Project object, and giving the limit is optional'''
-  checkpoints = {}
-  for name, project in kwargs.items():
-    checkpoints[name] = project.checkpoint
-  r = _connection.send('globalSQL', dict(
-      query=query,
-      limit=limit or default_sql_limit,
-      checkpoints=checkpoints
-  ), raw=True)
-  return r['rows']
-
-
-def get_directory_entry(path, connection=None):
-  connection = connection or default_connection()
-  r = connection.send('getDirectoryEntry', dict(path=path))
-  return r
-
-
-def import_csv(
-        files,
-        table,
-        privacy=default_privacy,
-        columnNames=[],
-        delimiter=',',
-        mode='FAILFAST',
-        infer=True,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "CSV",
-      view,
-      dict(table=table,
-           files=files,
-           privacy=privacy,
-           columnNames=columnNames,
-           delimiter=delimiter,
-           mode=mode,
-           infer=infer,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_hive(
-        table,
-        hiveTable,
-        privacy=default_privacy,
-        columnsToImport=[],
-        connection=None):
-  return _import_or_create_view(
-      "Hive",
-      view,
-      dict(
-          table=table,
-          privacy=privacy,
-          hiveTable=hiveTable,
-          columnsToImport=columnsToImport),
-      connection)
-
-
-def import_jdbc(
-        table,
-        jdbcUrl,
-        jdbcTable,
-        keyColumn,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "Jdbc",
-      view,
-      dict(table=table,
-           jdbcUrl=jdbcUrl,
-           privacy=privacy,
-           jdbcTable=jdbcTable,
-           keyColumn=keyColumn,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_parquet(
-        table,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "Parquet",
-      view,
-      dict(table=table,
-           privacy=privacy,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_orc(
-        table,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "ORC",
-      view,
-      dict(table=table,
-           privacy=privacy,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def import_json(
-        table,
-        privacy=default_privacy,
-        columnsToImport=[],
-        view=False,
-        connection=None):
-  return _import_or_create_view(
-      "Json",
-      view,
-      dict(table=table,
-           privacy=privacy,
-           columnsToImport=columnsToImport),
-      connection)
-
-
-def _import_or_create_view(format, view, dict, connection):
-  connection = connection or default_connection()
-  endpoint = ("createView" if view else "import") + format
-  return connection.send(endpoint, dict).path
-
-
-class Connection(object):
-
+class LynxKite:
   '''A connection to a LynxKite instance.
 
   Some LynxKite API methods take a connection argument which can be used to communicate with
-  multiple LynxKite instances from the same session. If this argument is not provided, the default
-  connection is used instead. The default connection is configured via the LYNXKITE_ADDRESS,
-  LYNXKITE_USERNAME, and LYNXKITE_PASSWORD environment variables.
+  multiple LynxKite instances from the same session. If no arguments to the constructor are
+  provided, then a connection is created using the following environment variables:
+  ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, and ``LYNXKITE_PASSWORD``.
   '''
 
-  def __init__(self, address, username=None, password=None):
-    '''Creates a connection object, performing authentication if necessary.'''
-    self.address = address
-    self.username = username
-    self.password = password
+  def __init__(self, username=None, password=None, address=None):
+    '''Creates a connection object.'''
+    # Authentication and querying environment variables is deferred until the
+    # first request.
+    self._address = address
+    self._username = username
+    self._password = password
     cj = http.cookiejar.CookieJar()
     self.opener = urllib.request.build_opener(
         urllib.request.HTTPCookieProcessor(cj))
-    if username:
-      self.login()
 
-  def login(self):
-    self.request(
+  def address(self):
+    return self._address or os.environ['LYNXKITE_ADDRESS']
+
+  def username(self):
+    return self._username or os.environ.get('LYNXKITE_USERNAME')
+
+  def password(self):
+    return self._password or os.environ.get('LYNXKITE_PASSWORD')
+
+  def _login(self):
+    self._request(
         '/passwordLogin',
         dict(
-            username=self.username,
-            password=self.password))
+            username=self.username(),
+            password=self.password()))
 
-  def request(self, endpoint, payload={}):
+  def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
-        self.address.rstrip('/') + '/' + endpoint.lstrip('/'),
+        self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
         data=data,
         headers={'Content-Type': 'application/json'})
     max_tries = 3
@@ -217,55 +80,278 @@ class Connection(object):
         with self.opener.open(req) as r:
           return r.read().decode('utf-8')
       except urllib.error.HTTPError as err:
-        if err.code == 401:  # Unauthorized.
-          self.login()
+        if err.code == 401 and i + 1 < max_tries:  # Unauthorized.
+          self._login()
           # And then retry via the "for" loop.
-        if err.code == 500:  # Unauthorized.
+        elif err.code == 500:  # Internal server error.
           raise LynxException(err.read())
         else:
           raise err
 
-  def send(self, command, payload={}, raw=False):
+  def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self.request('/remote/' + command, payload)
+    data = self._request('/remote/' + command, payload)
     if raw:
       r = json.loads(data)
     else:
       r = json.loads(data, object_hook=_asobject)
     return r
 
+  def sql(self, query, **mapping):
+    '''Runs global level SQL query and returns a :class:`View` for the results.
 
-class Project(object):
+    ``mapping`` maps :class:`Project`, :class:`Table`, or :class:`View` objects to names in your
+    query. For example::
 
+        my_view = lynx.sql('select * from `t`', t=my_table)
+        result = lynx.sql('select * from `v`', v=my_view)
+        result.export_csv('out.csv')
+
+    '''
+    checkpoints = {}
+    for name, p in mapping.items():
+      checkpoints[name] = p.checkpoint
+    r = self._send('globalSQL', dict(
+        query=query,
+        checkpoints=checkpoints
+    ))
+    return View(self, r.checkpoint)
+
+  def get_directory_entry(self, path):
+    '''Returns details about a LynxKite path. The returned object has the following fields:
+    ``exists``, ``isProject``, ``isTable``, ``isView``
+    '''
+    return self._send('getDirectoryEntry', dict(path=path))
+
+  def get_prefixed_path(self, path):
+    '''Resolves a path on a distributed file system. The path has to be specified using
+    LynxKite's prefixed path syntax. (E.g. ``DATA$/my_file.csv``.)
+
+    The returned object has an ``exists`` and a ``resolved`` attribute. ``resolved`` is a string
+    containing the absolute path.
+    '''
+    return self._send('getPrefixedPath', dict(path=path))
+
+  def import_csv(
+          self,
+          files,
+          columnNames=[],
+          delimiter=',',
+          mode='FAILFAST',
+          infer=True,
+          columnsToImport=[]):
+    '''Imports a CSV as a :class:`View`.'''
+    return self._create_view(
+        "CSV",
+        dict(files=files,
+             columnNames=columnNames,
+             delimiter=delimiter,
+             mode=mode,
+             infer=infer,
+             columnsToImport=columnsToImport))
+
+  def import_hive(
+          self,
+          hiveTable,
+          columnsToImport=[]):
+    '''Imports a Hive table as a :class:`View`.'''
+    return self._create_view(
+        "Hive",
+        dict(
+            hiveTable=hiveTable,
+            columnsToImport=columnsToImport))
+
+  def import_jdbc(
+          self,
+          jdbcUrl,
+          jdbcTable,
+          keyColumn='',
+          columnsToImport=[]):
+    '''Imports a database table as a :class:`View` via JDBC.'''
+    return self._create_view(
+        "Jdbc",
+        dict(jdbcUrl=jdbcUrl,
+             jdbcTable=jdbcTable,
+             keyColumn=keyColumn,
+             columnsToImport=columnsToImport))
+
+  def import_parquet(
+          self,
+          files,
+          columnsToImport=[]):
+    '''Imports a Parquet file as a :class:`View`.'''
+    return self._create_view(
+        "Parquet",
+        dict(columnsToImport=columnsToImport, files=files))
+
+  def import_orc(
+          self,
+          files,
+          columnsToImport=[]):
+    '''Imports a Parquet file as a :class:`View`.'''
+    return self._create_view(
+        "ORC",
+        dict(columnsToImport=columnsToImport, files=files))
+
+  def import_json(
+          self,
+          files,
+          columnsToImport=[]):
+    '''Imports a JSON file as a :class:`View`.'''
+    return self._create_view(
+        "Json",
+        dict(columnsToImport=columnsToImport, files=files))
+
+  def _create_view(self, format, dict):
+    # TODO: remove this once #3859 is resolved.
+    # These are required (as present in the case class), but are actually not read by the API
+    # implementation. :(
+    dict['table'] = ''
+    dict['privacy'] = ''
+    dict['overwrite'] = False
+    res = self._send('createView' + format, dict)
+    return View(self, res.checkpoint)
+
+  def load_project(self, name):
+    '''Loads an existing LynxKite project. Returns a :class:`Project`.'''
+    r = self._send('loadProject', dict(name=name))
+    return Project(self, r.checkpoint)
+
+  def load_table(self, name):
+    '''Loads an existing LynxKite table. Returns a :class:`Table`.'''
+    r = self._send('loadTable', dict(name=name))
+    return Table(self, r.checkpoint)
+
+  def load_view(self, name):
+    '''Loads an existing LynxKite view. Returns a :class:`View`.'''
+    r = self._send('loadView', dict(name=name))
+    return View(self, r.checkpoint)
+
+  def new_project(self):
+    '''Creates a new unnamed empty LynxKite :class:`Project`.'''
+    r = self._send('newProject')
+    return Project(self, r.checkpoint)
+
+  def change_acl(self, file, readACL, writeACL):
+    '''Sets the read and write access control list for a path (directory, project, etc) in LynxKite.
+    '''
+    self._send("changeACL",
+               dict(project=file, readACL=readACL, writeACL=writeACL))
+
+
+class Table:
+
+  def __init__(self, lynxkite, checkpoint):
+    self.lk = lynxkite
+    self.checkpoint = checkpoint
+    self.name = '!checkpoint(%s,)|vertices' % checkpoint
+
+  def save(self, name, writeACL=None, readACL=None):
+    '''Saves the table under given name, with given writeACL and readACL.'''
+    self.lk._send('saveTable', dict(
+        checkpoint=self.checkpoint,
+        name=name,
+        writeACL=writeACL,
+        readACL=readACL))
+
+
+class View:
+  '''A LynxKite View is a definition of a data source.'''
+
+  def __init__(self, lynxkite, checkpoint):
+    self.lk = lynxkite
+    self.checkpoint = checkpoint
+
+  def save(self, name, writeACL=None, readACL=None):
+    '''Saves the view under given name, with given writeACL and readACL.'''
+    self.lk._send('saveView', dict(
+        checkpoint=self.checkpoint,
+        name=name,
+        writeACL=writeACL,
+        readACL=readACL))
+
+  def take(self, limit):
+    '''Computes the view and returns the result as a list. Only the first ``limit`` number of rows are returned.'''
+    r = self.lk._send('takeFromView', dict(
+        checkpoint=self.checkpoint,
+        limit=limit,
+    ), raw=True)
+    return r['rows']
+
+  def export_csv(self, path, header=True, delimiter=',', quote='"'):
+    '''Exports the view to CSV file.'''
+    self.lk._send('exportViewToCSV', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        header=header,
+        delimiter=delimiter,
+        quote=quote,
+    ))
+
+  def export_json(self, path):
+    '''Exports the view to JSON file. '''
+    self.lk._send('exportViewToJson', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+    ))
+
+  def export_orc(self, path):
+    '''Exports the view to ORC file.'''
+    self.lk._send('exportViewToORC', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+    ))
+
+  def export_parquet(self, path):
+    '''Exports the view to Parquet file.'''
+    self.lk._send('exportViewToParquet', dict(
+        checkpoint=self.checkpoint,
+        path=path,
+    ))
+
+  def export_jdbc(self, url, table, mode='error'):
+    '''Exports the view into a database table via JDBC.
+
+    The "mode" argument describes what happens if the table already exists. Valid values are
+    "error", "overwrite", and "append".
+    '''
+    self.lk._send('exportViewToJdbc', dict(
+        checkpoint=self.checkpoint,
+        jdbcUrl=url,
+        table=table,
+        mode=mode,
+    ))
+
+  def to_table(self):
+    '''Exports the view to a :class:`Table`.'''
+    res = self.lk._send('exportViewToTable', dict(checkpoint=self.checkpoint))
+    return Table(self.lk, res.checkpoint)
+
+
+class Project:
   '''Represents an unanchored LynxKite project.
 
   This project is not automatically saved to the LynxKite project directories.
   '''
-  @staticmethod
-  def load(name, connection=None):
-    '''Loads an existing LynxKite project.'''
-    connection = connection or default_connection()
-    p = Project(connection)
-    r = connection.send('loadProject', dict(project=name))
-    p.checkpoint = r.checkpoint
-    return p
 
-  def __init__(self, connection=None):
+  def __init__(self, lynxkite, checkpoint):
     '''Creates a new blank project.'''
-    self.connection = connection or default_connection()
-    r = self.connection.send('newProject')
-    self.checkpoint = r.checkpoint
+    self.lk = lynxkite
+    self.checkpoint = checkpoint
 
-  def save(self, name):
-    self.connection.send(
+  def save(self, name, writeACL=None, readACL=None):
+    '''Saves the project under given name, with given writeACL and readACL.'''
+    self.lk._send(
         'saveProject',
         dict(
             checkpoint=self.checkpoint,
-            project=name))
+            name=name,
+            writeACL=writeACL,
+            readACL=readACL))
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = self.connection.send(
+    r = self.lk._send(
         'getScalar',
         dict(
             checkpoint=self.checkpoint,
@@ -274,23 +360,28 @@ class Project(object):
       return r.double
     return r.string
 
-  def sql(self, query, limit=None):
-    r = self.connection.send('projectSQL', dict(
-        checkpoint=self.checkpoint,
+  def sql(self, query):
+    '''Runs SQL queries.'''
+    r = self.lk._send('globalSQL', dict(
         query=query,
-        limit=limit or default_sql_limit,
-    ), raw=True)
-    return r['rows']
+        checkpoints={'': self.checkpoint},
+    ))
+    return View(self.lk, r.checkpoint)
 
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
-    r = self.connection.send('runOperation',
-                             dict(checkpoint=self.checkpoint, operation=operation, parameters=parameters))
+    r = self.lk._send(
+        'runOperation',
+        dict(
+            checkpoint=self.checkpoint,
+            operation=operation,
+            parameters=parameters))
     self.checkpoint = r.checkpoint
     return self
 
   def compute(self):
-    return self.connection.send(
+    '''Computes all scalars and attributes of the project.'''
+    return self.lk._send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def __getattr__(self, attr):
@@ -304,7 +395,6 @@ class Project(object):
 
 
 class LynxException(Exception):
-
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
 
   def __init__(self, error):

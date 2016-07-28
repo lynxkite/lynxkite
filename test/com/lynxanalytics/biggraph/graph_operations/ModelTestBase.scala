@@ -29,8 +29,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
           maxIter = 20,
           labelName,
           featureNames)
-        val stringLabel = AddVertexAttribute.run(graph.vs, label.mapValues(_.toString))
-        op(op.features, features)(op.label, stringLabel).result.model
+        op(op.features, features)(op.label, l).result.model
     }
   }
 

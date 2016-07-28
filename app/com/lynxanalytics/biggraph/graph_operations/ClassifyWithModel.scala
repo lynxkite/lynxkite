@@ -23,7 +23,7 @@ object ClassifyWithModel extends OpFromJson {
         vertexAttribute[Double](inputs.vertices.entity)
       } else { null }
     }
-    val classification = vertexAttribute[String](inputs.vertices.entity)
+    val classification = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
 }
@@ -52,7 +52,7 @@ case class ClassifyWithModel(numFeatures: Int)
     // Transform data to an attributeRDD with the attribute (probability, classification)
     val transformation = modelValue.load(rc.sparkContext).transformDF(scaledDF)
     val classification = transformation.select("ID", "classification").map { row =>
-      (row.getAs[ID]("ID"), row.getAs[Any]("classification").toString)
+      (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
     }.sortUnique(partitioner)
     // Output the probability of the most likely outcome and the classification labels.
     if (o.probability != null) {

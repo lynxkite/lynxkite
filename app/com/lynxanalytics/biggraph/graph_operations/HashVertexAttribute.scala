@@ -19,10 +19,12 @@ object HashVertexAttribute extends OpFromJson {
   def fromJson(j: JsValue) = HashVertexAttribute(
     (j \ "salt").as[String])
 
-  val algorithm: java.security.MessageDigest = java.security.MessageDigest.getInstance("SHA-256")
+  val algorithm = new ThreadLocal[java.security.MessageDigest] {
+    override def initialValue() = java.security.MessageDigest.getInstance("SHA-256")
+  }
 
   def hash(string: String, salt: String) = {
-    val hashedPassword: Array[Byte] = algorithm.digest((string + salt).getBytes("utf8"))
+    val hashedPassword: Array[Byte] = algorithm.get().digest((string + salt).getBytes("utf8"))
     hashedPassword.map("%02X".format(_)).mkString
   }
 

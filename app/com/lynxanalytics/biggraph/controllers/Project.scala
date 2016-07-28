@@ -35,6 +35,7 @@ import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
@@ -69,10 +70,11 @@ case class RootProjectState(
     previousCheckpoint: Option[String],
     lastOperationDesc: String,
     // This will be set exactly when previousCheckpoint is set.
-    lastOperationRequest: Option[SubProjectOperation]) {
+    lastOperationRequest: Option[SubProjectOperation],
+    viewRecipe: Option[JsObject]) {
 }
 object RootProjectState {
-  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
+  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None, None)
 }
 
 // Complete state of segmentation.
@@ -290,6 +292,8 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
       Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
+
+  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -728,6 +732,12 @@ class RootProjectEditor(
 
   val isSegmentation = false
   def asSegmentation: SegmentationEditor = ???
+
+  def viewRecipe_=[T <: ViewRecipe: json.Writes](r: T) = {
+    val js = TypedJson.createFromWriter(r).as[json.JsObject]
+    rootState = rootState.copy(viewRecipe = Some(js))
+  }
+  def viewRecipe = viewer.viewRecipe
 }
 
 // Specialized editor for a SegmentationState.
@@ -917,15 +927,16 @@ class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
     recipe: T, notes: String): Unit = manager.synchronized {
-    set(rootDir / "objectType", "view")
-    details = TypedJson.createFromWriter(recipe).as[json.JsObject]
-    val editor = new RootProjectEditor(RootProjectState.emptyState)
-    editor.notes = notes
-    val cps = manager.checkpointRepo.checkpointState(editor.rootState, prevCheckpoint = "")
-    checkpoint = cps.checkpoint.get
+    initializeFromCheckpoint(ViewRecipe.saveAsCheckpoint(recipe, notes))
   }
+
+  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
+    set(rootDir / "objectType", "view")
+    checkpoint = cp
+  }
+
   override def isDirectory: Boolean = false
-  def getRecipe: ViewRecipe = TypedJson.read[ViewRecipe](details.get)
+  def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
@@ -1108,17 +1119,24 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initialize()
     res
   }
+  def asNewProjectFrame(checkpoint: String): ProjectFrame = {
+    val res = asNewProjectFrame()
+    res.setCheckpoint(checkpoint)
+    res
+  }
 
   def asTableFrame: TableFrame = {
     assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table, notes: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromTable(table, notes)
     res
   }
   def asNewTableFrame(checkpoint: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromCheckpoint(checkpoint)
     res
@@ -1150,6 +1168,11 @@ class DirectoryEntry(val path: SymbolPath)(
     assert(!exists, s"Entry '$path' already exists")
     val res = new ViewFrame(path)
     res.initializeFromConfig(recipe, notes)
+    res
+  }
+  def asNewViewFrame(checkpoint: String): ViewFrame = {
+    val res = new ViewFrame(path)
+    res.initializeFromCheckpoint(checkpoint)
     res
   }
 }

@@ -37,7 +37,7 @@ private class LinearRegressionModelImpl(
 }
 
 private class LogisticRegressionModelImpl(
-    m: ml.PipelineModel,
+    m: ml.classification.LogisticRegressionModel,
     statistics: String) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
@@ -127,7 +127,7 @@ case class Model(
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
-        new LogisticRegressionModelImpl(ml.PipelineModel.load(path), statistics.get)
+        new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get, featureScaler.get)
     }
@@ -256,7 +256,17 @@ object Model extends FromJson[Model] {
 }
 
 object Tabulator {
-  def format(table: Array[Array[String]]) = table match {
+  def getTable(
+    headers: Array[String],
+    rowNames: Array[String],
+    columnData: Array[Array[Double]]): String = {
+    assert(rowNames.size == columnData(0).size)
+    val tails = rowNames +: columnData.map(_.map(_.toFloat.toString))
+    assert(headers.size == tails.size)
+    format(headers +: tails.transpose)
+  }
+
+  def format(table: Array[Array[String]]): String = table match {
     case Array() => ""
     case _ =>
       val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)

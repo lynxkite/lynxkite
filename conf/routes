@@ -49,8 +49,6 @@ POST /ajax/createViewORC         com.lynxanalytics.biggraph.serving.ProductionJs
 POST /ajax/createViewJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJson
 POST /ajax/createViewHive        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewHive
 
-
-
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
 GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
@@ -82,19 +80,17 @@ GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonSer
 POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
+POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath
 POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
+POST /remote/loadTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadTable
+POST /remote/loadView com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadView
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
 POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveProject
-POST /remote/projectSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.projectSQL
+POST /remote/saveTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveTable
+POST /remote/saveView com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveView
 POST /remote/globalSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSQL
-POST /remote/importJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJdbc
-POST /remote/importHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.importHive
-POST /remote/importCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.importCSV
-POST /remote/importParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.importParquet
-POST /remote/importORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.importORC
-POST /remote/importJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.importJson
 POST /remote/computeProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.computeProject
 POST /remote/createViewJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJdbc
 POST /remote/createViewHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewHive
@@ -102,6 +98,14 @@ POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.cr
 POST /remote/createViewParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewParquet
 POST /remote/createViewORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewORC
 POST /remote/createViewJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJson
+POST /remote/takeFromView com.lynxanalytics.biggraph.serving.RemoteAPIServer.takeFromView
+POST /remote/exportViewToCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToCSV
+POST /remote/exportViewToJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJson
+POST /remote/exportViewToORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToORC
+POST /remote/exportViewToParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToParquet
+POST /remote/exportViewToJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJdbc
+POST /remote/exportViewToTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToTable
+POST /remote/changeACL com.lynxanalytics.biggraph.serving.RemoteAPIServer.changeACL
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
