@@ -3,13 +3,13 @@ import lynx
 from datetime import datetime
 
 
-class TestComputeProject(unittest.TestCase):
+class Test_views_and_global_sql(unittest.TestCase):
 
   lk = lynx.LynxKite()
   p = lk.new_project()
   p.exampleGraph()
 
-  def generate_view(self, frame = p):
+  def generate_view(self, frame=p):
     '''Used to generate views for the tests. The first test should test if it really works.'''
     return self.lk.sql('SELECT name, age FROM `p`', p=frame)
 
@@ -47,7 +47,7 @@ class TestComputeProject(unittest.TestCase):
   def test_export_view_to_csv_and_load_back(self):
     view = self.generate_view()
     date = datetime.now().strftime('%Y-%m-%d %Hh %Mm %Ss')
-    path = 'DATA$/tmp/test_export_view_to_csv(' + date +').csv'
+    path = 'DATA$/tmp/test_export_view_to_csv(' + date + ').csv'
     view.export_csv(path)
     view2 = self.lk.import_csv(path)
     self.check_view(view2)
@@ -55,7 +55,7 @@ class TestComputeProject(unittest.TestCase):
   def test_export_view_to_parquet_and_load_back(self):
     view = self.generate_view()
     date = datetime.now().strftime('%Y-%m-%d %Hh %Mm %Ss')
-    path = 'DATA$/tmp/test_export_view_to_parquet(' + date +').parquet'
+    path = 'DATA$/tmp/test_export_view_to_parquet(' + date + ').parquet'
     view.export_parquet(path)
     view2 = self.lk.import_parquet(path)
     self.check_view(view2)
@@ -63,7 +63,7 @@ class TestComputeProject(unittest.TestCase):
   def test_export_view_to_json_and_load_back(self):
     view = self.generate_view()
     date = datetime.now().strftime('%Y-%m-%d %Hh %Mm %Ss')
-    path = 'DATA$/tmp/test_export_view_to_json(' + date +').json'
+    path = 'DATA$/tmp/test_export_view_to_json(' + date + ').json'
     view.export_json(path)
     view2 = self.lk.import_json(path)
     self.check_view(view2)
@@ -71,7 +71,7 @@ class TestComputeProject(unittest.TestCase):
   def test_export_view_to_orc_and_load_back(self):
     view = self.generate_view()
     date = datetime.now().strftime('%Y-%m-%d %Hh %Mm %Ss')
-    path = 'DATA$/tmp/test_export_view_to_orc(' + date +').orc'
+    path = 'DATA$/tmp/test_export_view_to_orc(' + date + ').orc'
     view.export_orc(path)
     view2 = self.lk.import_orc(path)
     self.check_view(view2)
