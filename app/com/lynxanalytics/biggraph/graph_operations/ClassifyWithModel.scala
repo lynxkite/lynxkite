@@ -1,11 +1,11 @@
 // Creates a classification attribute from a machine learning model.
 package com.lynxanalytics.biggraph.graph_operations
 
+import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model.Model
 import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.ml
 
@@ -59,11 +59,13 @@ case class ClassifyWithModel(numFeatures: Int)
     }.sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
-      val path = HadoopFile(modelValue.symbolicPath).resolvedName
-      val threshold = ml.classification.LogisticRegressionModel.load(path).getThreshold
+      val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
+        .getThreshold
       val probability = transformation.select("ID", "probability").map { row =>
         var probabilityValue = row.getAs[DenseVector]("probability")(1)
-        if (probabilityValue < threshold) { probabilityValue = 1 - probabilityValue }
+        if (probabilityValue < threshold) { 
+          probabilityValue = 1 - probabilityValue 
+        }
         (row.getAs[ID]("ID"), probabilityValue)
       }.sortUnique(partitioner)
       output(o.probability, probability)

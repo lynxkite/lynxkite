@@ -26,34 +26,35 @@ trait ModelImplementation {
 }
 
 // Helper classes to provide a common abstraction for various types of models.
-private class LinearRegressionModelImpl(
+private[biggraph] class LinearRegressionModelImpl(
     m: ml.regression.LinearRegressionModel,
     statistics: String) extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
 }
 
-private class LogisticRegressionModelImpl(
+private[biggraph] class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel,
     statistics: String) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
+  def getThreshold: Double = m.getThreshold
 }
 
-private class ClusterModelImpl(
+private[biggraph] class ClusterModelImpl(
     m: ml.clustering.KMeansModel, statistics: String,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
-  // Transform the data with clustering model and append an additional probability column.   
+  // Transform the data with clustering model. 
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  val scaledCenters = "(" + {
-    val unscaledCenters = m.clusterCenters
-    val transformingVector = featureScaler.std
-    val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
-    unscaledCenters.map(transformer.transform(_))
-  }.mkString(", ") + ")"
   def details: String = {
+    val scaledCenters = "(" + {
+      val unscaledCenters = m.clusterCenters
+      val transformingVector = featureScaler.std
+      val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
+      unscaledCenters.map(transformer.transform(_))
+    }.mkString(", ") + ")"
     s"cluster centers: ${scaledCenters}\n" + statistics
   }
 }

@@ -2,12 +2,10 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.{ model => modelClass }
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql
 import org.apache.spark.ml
 import org.apache.spark.mllib
-import breeze.{ linalg => linalgBreeze }
 
 object LogisticRegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -121,27 +119,28 @@ case class LogisticRegressionModelTrainer(
       1 - logLikCurrent / logLikIntercept
     }
     // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient 
-    // values to coefficient standard errors.  
+    // values to coefficient standard errors. See more information at http://www.real-statistics.com/
+    // logistic-regression/significance-testing-logistic-regression-coefficients. 
     val zValues: Array[Double] = {
       val vectors = predictions.map(_.getAs[mllib.linalg.DenseVector]("vector"))
       val probability = predictions.map(_.getAs[mllib.linalg.DenseVector]("probability"))
       // The constant field is added in order to get the statistics of the intercept.
       val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
-      val matrix = new linalgBreeze.DenseMatrix(
+      val matrix = new breeze.linalg.DenseMatrix(
         rows = numFeatures + 1,
         cols = numData,
         data = flattenMatrix)
       val cost = probability.map(prob => prob(0) * prob(1)).collect
-      val matrixCost = linalgBreeze.diag(linalgBreeze.DenseVector(cost))
+      val matrixCost = breeze.linalg.diag(breeze.linalg.DenseVector(cost))
       // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is 
       // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
       // whose diagnol elements are probability_i * (1 - probability_i).
-      val covariance = linalgBreeze.inv((matrix * (matrixCost * matrix.t)))
-      val coefficientsStdErr = linalgBreeze.diag(covariance).map(Math.sqrt(_))
-      val zValues = linalgBreeze.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
+      val covariance = breeze.linalg.inv((matrix * (matrixCost * matrix.t)))
+      val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt(_))
+      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
       zValues.toArray
     }
-    val table = modelClass.Tabulator.getTable(
+    val table = Tabulator.getTable(
       headers = Array("names", "estimates", "Z-values"),
       rowNames = featureNames.toArray :+ "intercept",
       columnData = Array(coefficientsAndIntercept, zValues))
