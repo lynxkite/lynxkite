@@ -166,6 +166,7 @@ class LynxKite:
           jdbcUrl,
           jdbcTable,
           keyColumn='',
+          predicates=[],
           columnsToImport=[]):
     '''Imports a database table as a :class:`View` via JDBC.'''
     return self._create_view(
@@ -173,6 +174,7 @@ class LynxKite:
         dict(jdbcUrl=jdbcUrl,
              jdbcTable=jdbcTable,
              keyColumn=keyColumn,
+             predicates=predicates,
              columnsToImport=columnsToImport))
 
   def import_parquet(

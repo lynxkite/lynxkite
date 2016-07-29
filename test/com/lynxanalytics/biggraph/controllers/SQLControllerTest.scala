@@ -207,6 +207,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "",
+        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -222,6 +223,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "id",
+        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -237,6 +239,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "level",
+        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -252,6 +255,23 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "name",
+        predicates = List(),
+        overwrite = false,
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
+    checkSqliteSubscribers(response.id)
+  }
+
+  test("import from SQLite (predicates)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = "",
+        predicates = List("id <= 2", "id >= 3"),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
