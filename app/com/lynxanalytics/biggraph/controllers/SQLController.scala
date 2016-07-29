@@ -272,12 +272,13 @@ case class JdbcImportRequest(
     jdbcUrl: String,
     jdbcTable: String,
     keyColumn: String,
+    predicates: List[String],
     overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
 
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
-    JDBCUtil.read(context, jdbcUrl, jdbcTable, keyColumn)
+    JDBCUtil.read(context, jdbcUrl, jdbcTable, keyColumn, predicates)
   }
 
   def notes: String = {
