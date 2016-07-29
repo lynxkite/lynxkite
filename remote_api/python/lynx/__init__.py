@@ -107,6 +107,14 @@ class LynxKite:
         result = lynx.sql('select * from `v`', v=my_view)
         result.export_csv('out.csv')
 
+    Predicate pushdown is when the filtering happens on the database instead of Spark.
+    If it does not happen, the whole database is pulled into Spark and filtered there.
+    To avoid this, the query parameters can only use ANDs (BETWEENs) and functions are not
+    allowed in the filter (not even when defined in SELECT).
+    You need to cast to the specific datatype, so if the type of the field is date, you need
+    to cast to date (``date('2016-07-29')``) and if its a datetime, you need to cast to timestamp
+    (``timestamp('2016-07-29 15:51:00')`` The 'second' part (``:00``) is non-optional here).
+    These are actually constructors, not functions.
     '''
     checkpoints = {}
     for name, p in mapping.items():
