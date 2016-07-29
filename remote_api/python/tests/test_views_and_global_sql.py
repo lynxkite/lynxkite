@@ -3,7 +3,7 @@ import lynx
 from datetime import datetime
 
 
-class Test_views_and_global_sql(unittest.TestCase):
+class TestViewsAndGlobalSql(unittest.TestCase):
 
   lk = lynx.LynxKite()
   p = lk.new_project()
