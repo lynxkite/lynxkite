@@ -1,3 +1,5 @@
 # List of all the big data tests. To be run before releases and
 # risky global changes.
 *
+-jdbc_mysql.groovy
+-jdbc_oracle.groovy
