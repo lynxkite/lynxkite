@@ -38,21 +38,33 @@ object Gates {
 
   case class MultiplyWeights(v: Vector, w: M) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
+    def backward(ctx: BackwardContext) = ctx.add(this, v)(gradient => ctx(w).t * gradient)
   }
   case class MultiplyScalar(v: Vector, s: Double) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
+    def backward(ctx: BackwardContext) = ctx.add(this, v)(gradient => gradient / s)
   }
   case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
+    def backward(ctx: BackwardContext) = {
+      ctx.add(this, v1)(gradient => ctx(v2) :* gradient)
+      ctx.add(this, v2)(gradient => ctx(v1) :* gradient)
+    }
   }
   case class AddElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 + v2 }
+    def backward(ctx: BackwardContext) = {
+      ctx.add(this, v1)(identity)
+      ctx.add(this, v2)(identity)
+    }
   }
   case class AddWeights(v: Vector, w: V) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) + _)
+    def backward(ctx: BackwardContext) = ctx.add(this, v)(identity)
   }
   case class MultiplyVectors(vs: Vectors, w: M) extends Vectors {
     def forward(ctx: ForwardContext) = ctx(vs).mapValues(_.map(ctx(w) * _))
+    def backward(ctx: BackwardContext) = ctx.add(this, vs)(identity)
   }
   case class Sum(vs: Vectors) extends Vector {
     def forward(ctx: ForwardContext) = ctx(vs).mapValues { vectors =>
@@ -60,18 +72,27 @@ object Gates {
       for (v <- vectors) sum += v
       sum
     }
+    def backward(ctx: BackwardContext) = ctx.add(this, vs)(identity)
   }
   case class Neighbors() extends Vectors {
     def forward(ctx: ForwardContext) = ctx.neighbors
+    def backward(ctx: BackwardContext) = ctx.addNeighbors(this)
   }
   case class Input(name: String) extends Vector {
     def forward(ctx: ForwardContext) = ctx.inputs(name)
+    def backward(ctx: BackwardContext) = ctx.addInput(this)
   }
   case class Sigmoid(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_))
+    def backward(ctx: BackwardContext) = ctx.add(this, v) {
+      gradient => ctx(this) :* (1.0 - ctx(this)) :* gradient
+    }
   }
   case class Tanh(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_))
+    def backward(ctx: BackwardContext) = ctx.add(this, v) {
+      gradient => (1.0 - (ctx(this) :* ctx(this))) :* gradient
+    }
   }
 
   // Trained matrix of weights.
