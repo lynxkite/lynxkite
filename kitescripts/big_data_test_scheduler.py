@@ -110,7 +110,7 @@ def get_script_list(options):
         matches = glob.glob(options.local_test_dir + '/*.groovy')
         scripts += map(lambda path: path.split('/')[-1], matches)
       elif sline.startswith('-'):
-        excluded_scripts.append(sline[1::])
+        excluded_scripts.append(sline[1:])
       else:
         scripts.append(sline)
   elif (test_selector.endswith('.groovy')):
