@@ -469,6 +469,7 @@ rds-up)
   aws rds create-db-instance \
     --engine $ENGINE \
     --db-instance-identifier $ID \
+    --backup-retention-period 0 \
     --db-name db \
     --master-username root \
     --master-user-password rootroot \
