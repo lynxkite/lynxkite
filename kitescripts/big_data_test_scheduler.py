@@ -100,6 +100,7 @@ def run_tests(scripts, options):
 
 def get_script_list(options):
   scripts = []
+  excluded_scripts = []
   test_selector = options.test_selector
   if (test_selector.endswith('.list')):
     for line in open(options.local_test_dir + '/' + test_selector, 'r'):
@@ -109,11 +110,13 @@ def get_script_list(options):
       elif sline == '*':
         matches = glob.glob(options.local_test_dir + '/*.groovy')
         scripts += map(lambda path: path.split('/')[-1], matches)
+      elif sline.startswith('-'):
+        excluded_scripts.append(sline[1:])
       else:
         scripts.append(sline)
   elif (test_selector.endswith('.groovy')):
     scripts.append(test_selector)
-  return scripts
+  return filter(lambda script: script not in excluded_scripts, scripts)
 
 
 def main(argv):
