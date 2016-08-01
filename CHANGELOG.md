@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - A new machine learning operations category is created and added to the toolbox. 
+ 
 ### 1.9.0
 
  - Global SQL-box has been added.
