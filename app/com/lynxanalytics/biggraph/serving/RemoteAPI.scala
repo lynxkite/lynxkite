@@ -144,6 +144,7 @@ object RemoteAPIServer extends JsonServer {
   def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
+  def isComputed = jsonPost(c.isComputed)
   def computeProject = jsonPost(c.computeProject)
 }
 
@@ -339,18 +340,39 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(cp)
   }
 
+  private def uncomputed(entity: TypedEntity[_]): Boolean = {
+    val progress = dataManager.computeProgress(entity)
+    progress < 1.0
+  }
+
+  def isComputed(user: User, request: CheckpointRequest): Boolean = {
+    val editor = getViewer(request.checkpoint).editor
+    isComputed(editor)
+  }
+
+  private def isComputed(editor: ProjectEditor): Boolean = {
+    val scalars = editor.scalars.iterator.map { case (name, scalar) => scalar }
+    val attributes = (editor.vertexAttributes ++ editor.edgeAttributes).values
+    val segmentations = editor.viewer.sortedSegmentations
+
+    if (scalars.exists(uncomputed)) return false
+    else if (attributes.exists(uncomputed)) return false
+    else if (segmentations.map(_.editor).exists(isComputed)) return false
+    else return true
+  }
+
   def computeProject(user: User, request: CheckpointRequest): Unit = {
     val viewer = getViewer(request.checkpoint)
     computeProject(viewer.editor)
   }
 
   private def computeProject(editor: ProjectEditor): Unit = {
-    for ((name, scalar) <- editor.scalars) {
+    for ((name, scalar) <- editor.scalars if uncomputed(scalar)) {
       dataManager.get(scalar)
     }
 
     val attributes = editor.vertexAttributes ++ editor.edgeAttributes
-    for ((name, attr) <- attributes) {
+    for ((name, attr) <- attributes if uncomputed(attr)) {
       dataManager.get(attr)
     }
 
