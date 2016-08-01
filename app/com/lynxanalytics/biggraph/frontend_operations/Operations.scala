@@ -235,7 +235,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
 
   abstract class MachineLearningOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "bishop"))
+    extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "knight"))
 
   import OperationParams._
 
