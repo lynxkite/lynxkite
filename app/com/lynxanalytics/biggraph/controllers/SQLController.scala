@@ -271,8 +271,8 @@ case class JdbcImportRequest(
     privacy: String,
     jdbcUrl: String,
     jdbcTable: String,
-    keyColumn: String,
-    predicates: Option[List[String]] = None,
+    keyColumn: String = "",
+    predicates: List[String] = List(),
     overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
 
