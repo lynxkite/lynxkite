@@ -207,7 +207,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "",
-        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -223,7 +222,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "id",
-        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -239,7 +237,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "level",
-        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -255,7 +252,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "name",
-        predicates = List(),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
@@ -271,7 +267,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "",
-        predicates = List("id <= 2", "id >= 3"),
+        predicates = Some(List("id <= 2", "id >= 3")),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)

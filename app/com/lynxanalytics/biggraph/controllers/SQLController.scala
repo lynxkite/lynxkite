@@ -272,7 +272,7 @@ case class JdbcImportRequest(
     jdbcUrl: String,
     jdbcTable: String,
     keyColumn: String,
-    predicates: List[String],
+    predicates: Option[List[String]] = None,
     overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
 
