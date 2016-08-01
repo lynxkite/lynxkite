@@ -31,12 +31,17 @@ class TestViewsAndGlobalSql(unittest.TestCase):
     view = self.generate_view()
     table = view.to_table()
     table.save('test_table')
+    table2 = self.lk.load_table('test_table')
+    self.assertTrue(table2.checkpoint is not None)
+    self.assertEqual(table.checkpoint, table2.checkpoint)
+
 
   def test_global_sql_with_table_input(self):
     '''It is also used to see if the table generated above really is a table containing what we want.'''
     view = self.generate_view()
     table = view.to_table()
     view2 = self.generate_view(table)
+    self.check_view(view2)
 
   def test_save_and_load_view(self):
     view = self.generate_view()
