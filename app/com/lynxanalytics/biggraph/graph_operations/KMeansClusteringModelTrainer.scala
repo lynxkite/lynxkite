@@ -68,7 +68,7 @@ case class KMeansClusteringModelTrainer(
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
       featureScaler = Some(params.featureScaler),
-      statistics = Some(s"${cost}"))
+      statistics = Some(s"cost: ${cost}"))
     )
   }
 }
