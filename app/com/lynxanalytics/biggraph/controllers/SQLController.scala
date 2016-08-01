@@ -271,14 +271,19 @@ case class JdbcImportRequest(
     privacy: String,
     jdbcUrl: String,
     jdbcTable: String,
-    keyColumn: String = "",
-    predicates: List[String] = List(),
+    keyColumn: Option[String] = None,
+    predicates: Option[List[String]] = None,
     overwrite: Boolean,
     columnsToImport: List[String]) extends GenericImportRequest {
 
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
-    JDBCUtil.read(context, jdbcUrl, jdbcTable, keyColumn, predicates)
+    JDBCUtil.read(
+      context,
+      jdbcUrl,
+      jdbcTable,
+      keyColumn.getOrElse(""),
+      predicates.getOrElse(List()))
   }
 
   def notes: String = {
