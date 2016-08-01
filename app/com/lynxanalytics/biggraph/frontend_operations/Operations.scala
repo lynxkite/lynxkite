@@ -234,6 +234,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   abstract class StructureOperation(t: String, c: Context)
     extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
 
+  abstract class MachineLearningOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "knight"))
+
   import OperationParams._
 
   register("Discard vertices", new StructureOperation(_, _) {
@@ -1010,7 +1013,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
+  register("Reduce vertex attributes to two dimensions", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
       Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
@@ -1481,7 +1484,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
+  register("Predict vertex attribute", new MachineLearningOperation(_, _) {
     def parameters = List(
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
@@ -1512,7 +1515,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train linear regression model", new VertexAttributesOperation(_, _) {
+  register("Train linear regression model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = vertexAttributes[Double]),
@@ -1546,7 +1549,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train a logistic regression model", new VertexAttributesOperation(_, _) {
+  register("Train a logistic regression model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = vertexAttributes[Double]),
@@ -1574,7 +1577,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train a k-means clustering model", new VertexAttributesOperation(_, _) {
+  register("Train a k-means clustering model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
@@ -1607,7 +1610,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict from model", new VertexAttributesOperation(_, _) {
+  register("Predict from model", new MachineLearningOperation(_, _) {
     val models = project.viewer.models.filterNot(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the predictions"),
@@ -1633,7 +1636,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Classify vertices with a model", new VertexAttributesOperation(_, _) {
+  register("Classify vertices with a model", new MachineLearningOperation(_, _) {
     val models = project.viewer.models.filter(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the classifications"),
@@ -3180,7 +3183,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Split to train and test set", new VertexAttributesOperation(_, _) {
+  register("Split to train and test set", new MachineLearningOperation(_, _) {
     override def parameters = List(
       Choice("source", "Source attribute",
         options = vertexAttributes),
