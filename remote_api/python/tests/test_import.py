@@ -17,7 +17,7 @@ class TestImport(unittest.TestCase):
     c.executescript("""
     DROP TABLE IF EXISTS subscribers;
     CREATE TABLE subscribers
-    (n TEXT, id INTEGER, name TEXT, gender TEXT, "race condition" TEXT, level DOUBLE PRECISION);
+    (n TEXT, id INTEGER, name TEXT, gender TEXT, 'race condition' TEXT, level DOUBLE PRECISION);
     INSERT INTO subscribers VALUES
     ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0),
     ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
@@ -29,29 +29,29 @@ class TestImport(unittest.TestCase):
     conn.close()
 
   def stub_test_jdbc(self):
-    path = os.path.abspath("tests/test.db")
+    path = os.path.abspath('tests/test.db')
     self.setup(path)
-    url = "jdbc:sqlite:{}".format(path)
+    url = 'jdbc:sqlite:{}'.format(path)
     lk = lynx.LynxKite()
     lk._request('/ajax/discardAllReallyIMeanIt')
     view = lk.import_jdbc(
         jdbcUrl=url,
-        jdbcTable="subscribers",
-        keyColumn="id")
-    res = lk.sql("select * from `cp` order by id", cp=view)
+        jdbcTable='subscribers',
+        keyColumn='id')
+    res = lk.sql('select * from `cp` order by id', cp=view)
     self.check_result(res)
 
   def stub_test_jdbc_predicates(self):
-    path = os.path.abspath("tests/test.db")
+    path = os.path.abspath('tests/test.db')
     self.setup(path)
-    url = "jdbc:sqlite:{}".format(path)
+    url = 'jdbc:sqlite:{}'.format(path)
     lk = lynx.LynxKite()
     lk._request('/ajax/discardAllReallyIMeanIt')
     view = lk.import_jdbc(
         jdbcUrl=url,
-        jdbcTable="subscribers",
-        predicates=["id<=2", "id>=3"])
-    res = lk.sql("select * from `cp` order by id", cp=view)
+        jdbcTable='subscribers',
+        predicates=['id<=2', 'id>=3'])
+    res = lk.sql('select * from `cp` order by id', cp=view)
     self.check_result(res)
 
   def check_result(self, res):

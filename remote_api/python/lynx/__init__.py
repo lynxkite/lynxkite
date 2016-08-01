@@ -168,7 +168,24 @@ class LynxKite:
           keyColumn='',
           predicates=[],
           columnsToImport=[]):
-    '''Imports a database table as a :class:`View` via JDBC.'''
+    '''Imports a database table as a :class:`View` via JDBC.
+    Parameters
+    ----------
+    jdbcUrl : string
+      The JDBC URL to connect to for this import task.
+    jdbcTable : string
+      The name of the table to import in the source database.
+    keyColumn : string
+      Optional. The key column in the source table for Spark partitioning. The table should be
+      partitioned or indexed for this column in the source database table for efficiency. Cannot
+      be specified together with 'predicates'.
+    predicates : list of strings
+      Optional. List of SparkSQL where clauses to be executed on the source table for Spark
+      partitioning. The table should be partitioned or indexed for this column in the source
+      database table for efficiency. Cannot be specified together with 'keyColumn'.
+    columnsToImport : list of string
+      Optional. List of columns to import from the source table.
+    '''
     return self._create_view(
         "Jdbc",
         dict(jdbcUrl=jdbcUrl,
