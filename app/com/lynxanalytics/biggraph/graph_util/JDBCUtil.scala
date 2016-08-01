@@ -24,7 +24,7 @@ object JDBCUtil {
   // the partitioning strategy depending on keyColumn.
   def read(context: SQLContext, url: String, table: String, keyColumn: String, predicates: Option[List[String]]): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
-    assert(keyColumn.isEmpty || predicates.isEmpty || predicates.get.isEmpty, s"Cannot define both keyColumn and predicates.")
+    assert(keyColumn.isEmpty || predicates.isEmpty || predicates.get.isEmpty, "Cannot define both keyColumn and predicates.")
     val props = new java.util.Properties
     if (keyColumn.isEmpty) {
       if (predicates.isEmpty && predicates.get.isEmpty) {
