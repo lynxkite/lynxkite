@@ -63,8 +63,8 @@ case class ClassifyWithModel(numFeatures: Int)
         .getThreshold
       val probability = transformation.select("ID", "probability").map { row =>
         var probabilityValue = row.getAs[DenseVector]("probability")(1)
-        if (probabilityValue < threshold) { 
-          probabilityValue = 1 - probabilityValue 
+        if (probabilityValue < threshold) {
+          probabilityValue = 1 - probabilityValue
         }
         (row.getAs[ID]("ID"), probabilityValue)
       }.sortUnique(partitioner)
