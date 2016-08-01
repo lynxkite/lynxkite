@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Fix startup script to support RHEL 6.
+
 ### 1.9.0
 
  - Global SQL-box has been added.
