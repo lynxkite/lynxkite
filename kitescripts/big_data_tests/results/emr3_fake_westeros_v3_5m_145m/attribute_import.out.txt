@@ -1,3 +1,5 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/attribute_import.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-vertex attr: {"labelType":"bucket","labels":["0.06291431717007179","0.5927844241348981","0.33989388649958585","0.5041631731312708","0.7696512101215746","0.9654775233375423","0.19141935656025433","0.45729141212419855","0.8572510147330034","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/attribute_import.groovy, took 24 seconds
+id: {"labelType":"bucket","labels":["1693521","1694443","1695194","1695581","1697622","1698379","1698411","1699015","1699729","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
+attr2: {"labelType":"bucket","labels":["0.3317926314256987","0.4144020411322342","0.5594091344624323","0.961230128013831","0.16685783133339316","0.3921002486568427","0.01833428896242384","0.09741132233949912","0.23416931710188194","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
+attr1: {"labelType":"bucket","labels":["0.3469973727033906","0.5927844241348981","0.33989388649958585","0.20286753375254185","0.5041631731312708","0.98337586100375","0.3138767766653333","0.3511632658664001","0.45729141212419855","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/attribute_import.groovy, took 45 seconds
