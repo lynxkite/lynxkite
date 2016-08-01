@@ -1,3 +1,7 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-segmentation vertices: 16237 segmentation edges: null
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy, took 110 seconds
+id: <computed>
+size: {"labelType":"between","labels":["3.00","3.00"],"sizes":[16237]}
+!coverage: 36879
+!nonEmpty: 16237
+!belongsToEdges: 48711
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy, took 130 seconds
