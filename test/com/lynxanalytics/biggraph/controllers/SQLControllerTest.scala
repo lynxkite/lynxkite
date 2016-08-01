@@ -267,7 +267,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         keyColumn = "",
-        predicates = Some(List("id <= 2", "id >= 3")),
+        predicates = List("id <= 2", "id >= 3"),
         overwrite = false,
         columnsToImport = List("n", "id", "name", "race condition", "level")))
     checkSqliteSubscribers(response.id)
