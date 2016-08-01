@@ -27,7 +27,7 @@ class TestImport(unittest.TestCase):
     """)
     conn.commit()
     conn.close()
- 
+
   def stub_test_jdbc(self):
     path = os.path.abspath("tests/test.db")
     self.setup(path)
