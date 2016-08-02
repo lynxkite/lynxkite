@@ -112,6 +112,44 @@ object Gates {
 }
 import Gates._
 
+object Network {
+  // The public constructor does not set weights, so they get randomly initialized.
+  def apply(size: Int, outputs: (String, Vector)*) = new Network(size, Map(), outputs.toMap)
+}
+case class Network private (
+    size: Int, weights: Map[String, DoubleMatrix], outputs: Map[String, Vector]) {
+  implicit val randBasis = RandBasis.mt0
+  val allWeights = collection.mutable.Map(weights.toSeq: _*)
+  def apply(t: Trained): DoubleMatrix = allWeights.getOrElseUpdate(t.name, t.random(size))
+
+  def forward(
+    vertices: Seq[ID],
+    edges: CompactUndirectedGraph,
+    neighbors: GraphData,
+    inputs: (String, GraphData)*): GateValues = {
+    val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
+    for (o <- outputs.values) {
+      ctx(o)
+    }
+    ctx.values(outputs)
+  }
+
+  def backward(
+    vertices: Seq[ID],
+    edges: CompactUndirectedGraph,
+    values: GateValues,
+    gradients: (String, GraphData)*): NetworkGradients = {
+    val grads = gradients.toMap
+    val ctx = BackwardContext(this, vertices, edges, values, grads)
+    for (g <- grads.keys) {
+      outputs(g).backward(ctx)
+    }
+    ctx.gradients
+  }
+
+  def update(gradients: Iterable[NetworkGradients]): Network = ???
+}
+
 private case class ForwardContext(
     network: Network,
     vertices: Seq[ID],
@@ -120,6 +158,7 @@ private case class ForwardContext(
     inputs: Map[String, GraphData]) {
   val vectorCache = collection.mutable.Map[String, GraphData]()
   val vectorsCache = collection.mutable.Map[String, GraphVectors]()
+
   def apply(v1: Vector, v2: Vector): Map[ID, (DoubleVector, DoubleVector)] = {
     val g1 = this(v1)
     val g2 = this(v2)
@@ -138,38 +177,37 @@ private case class ForwardContext(
       id -> edges.getNeighbors(id).map(neighborState(_))
     }.toMap
   }
+
+  def values(names: Map[String, Vector]) = GateValues(vectorCache, vectorsCache, names)
 }
 
-object Network {
-  // The public constructor does not set weights, so they get randomly initialized.
-  def apply(size: Int, outputs: (String, Vector)*) = new Network(size, Map(), outputs.toMap)
+case class GateValues(
+  vectorData: Iterable[(String, GraphData)],
+  vectorsData: Iterable[(String, GraphVectors)],
+  names: Map[String, Vector]) {
+  val vectorMap = vectorData.toMap
+  val vectorsMap = vectorsData.toMap
+  def apply(v: Vector): GraphData = vectorMap(v.id)
+  def apply(vs: Vectors): GraphData = vectorsMap(vs.id)
+  def apply(name: String): GraphData = this(names(name))
 }
-case class Network private (
-    size: Int, weights: Map[String, DoubleMatrix], outputs: Map[String, Vector]) {
-  implicit val randBasis = RandBasis.mt0
-  val allWeights = collection.mutable.Map(weights.toSeq: _*)
-  def apply(t: Trained): DoubleMatrix = allWeights.getOrElseUpdate(t.name, t.random(size))
-  def forward(
+
+private case class BackwardContext(
+    network: Network,
     vertices: Seq[ID],
     edges: CompactUndirectedGraph,
-    neighbors: GraphData,
-    inputs: (String, GraphData)*): NetworkOutputs = {
-    val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
-    val result = outputs.map { case (name, v) => name -> ctx(v) }
-    NetworkOutputs(result)
-  }
+    values: GateValues,
+    gradients: Map[String, GraphData]) {
+  val vectorGradients = collection.mutable.Map[String, GraphData]()
+  val vectorsGradients = collection.mutable.Map[String, GraphVectors]()
+  def apply(v: Vector): GraphData = values(v)
+  def apply(vs: Vectors): GraphVectors = values(vs)
+  def apply(m: M): DoubleMatrix = network(m)
+  def apply(v: V): DoubleVector = network(v)(::, 0)
 
-  def backward(
-    vertices: Seq[ID],
-    edges: CompactUndirectedGraph,
-    outputs: NetworkOutputs,
-    gradients: (String, GraphData)*): GraphData = {
-    ???
-  }
-
-  def update(gradients: Iterable[GraphData]): Network = ???
+  // ctx.add(this, v)(gradient => ctx(w).t * gradient)
+  def add(
 }
 
-case class NetworkOutputs(outputs: Map[String, GraphData]) {
-  def apply(output: String): GraphData = outputs(output)
+trait NetworkGradients {
 }
