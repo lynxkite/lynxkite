@@ -35,7 +35,6 @@ class TestViewsAndGlobalSql(unittest.TestCase):
     self.assertTrue(table2.checkpoint is not None)
     self.assertEqual(table.checkpoint, table2.checkpoint)
 
-
   def test_global_sql_with_table_input(self):
     '''It is also used to see if the table generated above really is a table containing what we want.'''
     view = self.generate_view()
