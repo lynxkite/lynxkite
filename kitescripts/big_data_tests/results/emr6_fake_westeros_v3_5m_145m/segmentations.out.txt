@@ -1,0 +1,23 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segmentations.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+[seg] vertices: 8078 edges: null
+[seg_overlap] vertices: 16132 edges: null
+x: {"labelType":"bucket","labels":["0.8998568","0.4283977","0.4426867","0.5965476","0.6639575","0.7610853","0.3043277","0.3116514","0.8645754","Other"],"sizes":[1,3,2,3,2,4,2,3,2,4999980]}
+id: <computed>
+ordinal: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.2","2236.1","10456.4","48896.6","228652.6","1069234.8","5000001.0"],"sizes":[1,4,17,81,376,1758,8220,38440,179756,840582,3930767]}
+id: <computed>
+size: {"labelType":"between","labels":["1.0","2.2","4.6","10.0","21.5","46.2","99.4","214.0","460.6","991.5","2134.0"],"sizes":[803,307,429,529,525,591,676,798,1063,2357]}
+!coverage: 5000002
+!nonEmpty: 8078
+!belongsToEdges: 5000002
+id: <computed>
+size: {"labelType":"between","labels":["1.0","2.2","4.6","10.0","21.5","46.2","99.4","214.0","460.6","991.5","2134.0"],"sizes":[1562,616,876,1065,1046,1177,1348,1602,2121,4719]}
+!coverage: 5000002
+!nonEmpty: 16132
+!belongsToEdges: 10000004
+id: <computed>
+size: {"labelType":"between","labels":["1.00","1.21","1.48","1.79","2.18","2.65","3.21","3.90","4.74","5.76","7.00"],"sizes":[3032573,0,0,757891,0,126669,0,15742,1567,138]}
+x: {"labelType":"bucket","labels":["0.8993760","0.8994227","0.8995774","0.8996495","0.8997767","0.8998157","0.8998860","0.8999174","0.8999677","Other"],"sizes":[1,1,1,1,1,1,1,1,1,3934571]}
+!coverage: 5000002
+!nonEmpty: 3934580
+!belongsToEdges: 5000002
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segmentations.groovy, took 118 seconds

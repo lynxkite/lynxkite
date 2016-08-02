@@ -1,0 +1,11 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+dst: {"labelType":"bucket","labels":["103039","122416","125485","310938","634932","903378","2071","2706","2852","Other"],"sizes":[50,47,50,22,18,13,2202,1688,1599,71616859]}
+out_degree: {"labelType":"between","labels":["2.0","4.1","8.3","17.0","34.7","70.7","144.2","294.3","600.4","1224.9","2499.0"],"sizes":[671,60656,2154423,2546644,156008,46585,18786,8472,4002,1926]}
+degree: {"labelType":"between","labels":["4.0","8.2","16.6","34.0","69.3","141.4","288.5","588.5","1200.7","2449.8","4998.0"],"sizes":[671,60656,2154423,2546644,156008,46585,18786,8472,4002,1926]}
+in_degree: {"labelType":"between","labels":["2.0","4.1","8.3","17.0","34.7","70.7","144.2","294.3","600.4","1224.9","2499.0"],"sizes":[671,60656,2154423,2546644,156008,46585,18786,8472,4002,1926]}
+stringID: {"labelType":"bucket","labels":["1695194","1696005","1697470","1697622","1698379","1698411","1699015","1699283","1699729","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4998164]}
+id: <computed>
+src: {"labelType":"bucket","labels":["1946","1985","1995","2727","2728","2877","3645","5135","2113","Other"],"sizes":[2348,2297,2288,1675,1671,1586,1258,893,2157,71606375]}
+!vertex_count_delta: -1829
+!edge_count_delta: -73562690
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 645 seconds

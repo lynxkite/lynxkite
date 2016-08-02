@@ -1,0 +1,7 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_to_segmentation.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+id: <computed>
+ordinal: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.2","2236.1","10456.4","48896.6","228652.6","1069234.8","5000001.0"],"sizes":[1,4,17,81,376,1758,8220,38440,179756,840582,3930767]}
+id: <computed>
+rnd_std_normal2_weighted_sum_by_rnd_std_uniform: {"labelType":"between","labels":["-1013.38","0.03","0.08","0.22","0.64","1.82","5.23","14.98","42.94","123.10","352.91","1011.72"],"sizes":[607,2,9,18,8,57,59,49,82,150,189]}
+id: <computed>
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_to_segmentation.groovy, took 780 seconds
