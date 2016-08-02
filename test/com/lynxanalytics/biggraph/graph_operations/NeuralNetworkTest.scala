@@ -223,7 +223,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 20, iterations = 1000, learningRate = 0.5, radius = 4,
-        hideState = true, forgetFraction = 0.0)
+        hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
+        minTrainingVertices = 10)
       op(op.edges, es)(op.label, pr).result.prediction
     }
     prediction.rdd.count
