@@ -367,12 +367,12 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   private def computeProject(editor: ProjectEditor): Unit = {
-    for ((name, scalar) <- editor.scalars if uncomputed(scalar)) {
+    for ((name, scalar) <- editor.scalars) {
       dataManager.get(scalar)
     }
 
     val attributes = editor.vertexAttributes ++ editor.edgeAttributes
-    for ((name, attr) <- attributes if uncomputed(attr)) {
+    for ((name, attr) <- attributes) {
       dataManager.get(attr)
     }
 
