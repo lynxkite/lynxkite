@@ -1,8 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/modular_clustering.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-id: <computed>
-size: {"labelType":"between","labels":["1.0","2.8","7.9","22.3","62.8","176.9","497.9","1401.9","3946.7","11111.3","31282.0"],"sizes":[39318,10,0,0,0,0,0,0,6,313]}
-!belongsToEdges: 4998173
-!nonEmpty: 39647
-!coverage: 4998173
-modularity: 0.14447318888333413
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/modular_clustering.groovy, took 2501 seconds
