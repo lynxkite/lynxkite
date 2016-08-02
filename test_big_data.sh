@@ -43,12 +43,6 @@ NUM_EMR_EXECUTORS=${3:-3}
 DEFAULT_EMR_INSTANCES=$(($NUM_EMR_EXECUTORS + 1))
 NUM_EMR_INSTANCES=${4:-${DEFAULT_EMR_INSTANCES}}
 
-if [ "$TEST_SELECTOR" == "all.list" ]; then
-  USE_EXTRA_STORAGE=1
-else
-  USE_EXTRA_STORAGE=0
-fi
-
 RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_EXECUTORS}_${DATA_SET}"
 TMP_RESULTS_DIR="${RESULTS_DIR}.new"
 rm -Rf ${TMP_RESULTS_DIR}
@@ -60,7 +54,6 @@ fi
 NUM_INSTANCES=${NUM_EMR_INSTANCES} \
 NUM_EXECUTORS=${NUM_EMR_EXECUTORS} \
 EMR_RESULTS_DIR=${TMP_RESULTS_DIR} \
-USE_EXTRA_STORAGE=${USE_EXTRA_STORAGE} \
   $(dirname $0)/tools/emr_based_test.sh backend \
     --remote_test_dir=/home/hadoop/biggraphstage/kitescripts/big_data_tests \
     --local_test_dir=$(dirname $0)/kitescripts/big_data_tests \
