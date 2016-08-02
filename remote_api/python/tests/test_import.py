@@ -10,15 +10,14 @@ class TestImport(unittest.TestCase):
   no need to test them separately.
   """
 
-  def stub_test_jdbc(self):
+  def setup(self, path):
     import sqlite3
-    path = os.path.abspath("tests/test.db")
     conn = sqlite3.connect(path)
     c = conn.cursor()
     c.executescript("""
     DROP TABLE IF EXISTS subscribers;
     CREATE TABLE subscribers
-    (n TEXT, id INTEGER, name TEXT, gender TEXT, "race condition" TEXT, level DOUBLE PRECISION);
+    (n TEXT, id INTEGER, name TEXT, gender TEXT, 'race condition' TEXT, level DOUBLE PRECISION);
     INSERT INTO subscribers VALUES
     ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0),
     ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
@@ -28,14 +27,34 @@ class TestImport(unittest.TestCase):
     """)
     conn.commit()
     conn.close()
-    url = "jdbc:sqlite:{}".format(path)
+
+  def stub_test_jdbc(self):
+    path = os.path.abspath('tests/test.db')
+    self.setup(path)
+    url = 'jdbc:sqlite:{}'.format(path)
     lk = lynx.LynxKite()
     lk._request('/ajax/discardAllReallyIMeanIt')
     view = lk.import_jdbc(
         jdbcUrl=url,
-        jdbcTable="subscribers",
-        keyColumn="id")
-    res = lk.sql("select * from `cp` order by id", cp=view)
+        jdbcTable='subscribers',
+        keyColumn='id')
+    res = lk.sql('select * from `cp` order by id', cp=view)
+    self.check_result(res)
+
+  def stub_test_jdbc_predicates(self):
+    path = os.path.abspath('tests/test.db')
+    self.setup(path)
+    url = 'jdbc:sqlite:{}'.format(path)
+    lk = lynx.LynxKite()
+    lk._request('/ajax/discardAllReallyIMeanIt')
+    view = lk.import_jdbc(
+        jdbcUrl=url,
+        jdbcTable='subscribers',
+        predicates=['id<=2', 'id>=3'])
+    res = lk.sql('select * from `cp` order by id', cp=view)
+    self.check_result(res)
+
+  def check_result(self, res):
     self.assertEqual(
         res.take(5),
         [{'gender': 'Male',
@@ -64,6 +83,7 @@ class TestImport(unittest.TestCase):
 
   def test_jdbc_view(self):
     self.stub_test_jdbc()
+    self.stub_test_jdbc_predicates()
 
 
 if __name__ == '__main__':
