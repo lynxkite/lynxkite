@@ -263,7 +263,8 @@ case class NeuralNetwork(
     val inputGradient: Map[ID, Vector] = vertices.map { id =>
       id -> (
         network.updateInput.t * updateRawGradient(id) +
-        network.resetInput.t * resetRawGradient(id))
+        network.resetInput.t * resetRawGradient(id) +
+        network.activationInput.t * tildeRawGradient(id))
     }.toMap
     val prevStateGradient: Map[ID, Vector] = vertices.map { id =>
       val edgeGradients = edgeLists(id).map(network.edgeMatrix.t * inputGradient(_))
