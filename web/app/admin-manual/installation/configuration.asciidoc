@@ -48,6 +48,9 @@ you have to enable HTTPS (see next section). To securely set up user authenticat
 - Restart LynxKite with authentication. Confirm that user credentials are now required for login.
 - You can now make LynxKite externally accessible.
 
+Note that there is a related, but separate level of access control that controls user
+ access to files, see <<prefix-based-access-control>>.
+
 ### HTTPS setup
 
 To enable HTTPS, a certificate is required. For testing purposes a self-signed certificate is
