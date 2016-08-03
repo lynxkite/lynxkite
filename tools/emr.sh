@@ -151,18 +151,7 @@ RestartMonitoring() {
   ExecuteOnMaster ./biggraphstage/tools/monitoring/restart_monitoring_master.sh
 }
 
-if [ ! -f "${SSH_KEY}" ]; then
-  echoerr "${SSH_KEY} does not exist."
-  exit 1
-fi
-
-SSH="ssh -i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no -o ServerAliveInterval=30"
-
-# ==== Handling the cases ===
-case $COMMAND in
-
-# ======
-start)
+StartCluster() {
   if [ -n "${S3_DATAREPO:-}" ]; then
     CheckDataRepo
   fi
@@ -177,7 +166,7 @@ start)
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
     --service-role EMR_DefaultRole \
-    --release-label emr-4.2.0 \
+    --release-label emr-4.7.2 \
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
@@ -189,7 +178,26 @@ start)
   # because Amazon's default value is only supported with Amazon's JAR files: #3234
 
   aws emr wait cluster-running --cli-input-json "${CREATE_CLUSTER_RESULT}"
+}
 
+if [ ! -f "${SSH_KEY}" ]; then
+  echoerr "${SSH_KEY} does not exist."
+  exit 1
+fi
+
+SSH="ssh -i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no -o ServerAliveInterval=30"
+
+# ==== Handling the cases ===
+case $COMMAND in
+
+# ======
+start-cluster)
+  StartCluster
+  ;;
+
+# ======
+start)
+  StartCluster
   ;&
 
 # ====== fall-through
@@ -406,6 +414,14 @@ download-dir)
   rsync -ave "$SSH" -r --copy-dirlinks \
     hadoop@${MASTER_HOSTNAME}:$1 \
     $2
+  ;;
+
+# ======
+upload-dir)
+  MASTER_HOSTNAME=$(GetMasterHostName)
+  rsync -ave "$SSH" -r --copy-dirlinks \
+    $1 \
+    hadoop@${MASTER_HOSTNAME}:$2
   ;;
 
 # ======
