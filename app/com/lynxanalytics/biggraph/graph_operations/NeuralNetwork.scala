@@ -24,7 +24,6 @@ object NeuralNetwork extends OpFromJson {
   def fromJson(j: JsValue) = NeuralNetwork(
     (j \ "featureCount").as[Int],
     (j \ "networkSize").as[Int],
-    (j \ "iterations").as[Int],
     (j \ "learningRate").as[Double],
     (j \ "radius").as[Int],
     (j \ "hideState").as[Boolean],
@@ -40,7 +39,6 @@ import NeuralNetwork._
 case class NeuralNetwork(
     featureCount: Int,
     networkSize: Int,
-    iterations: Int,
     learningRate: Double,
     radius: Int,
     hideState: Boolean,
@@ -56,7 +54,6 @@ case class NeuralNetwork(
   override def toJson = Json.obj(
     "featureCount" -> featureCount,
     "networkSize" -> networkSize,
-    "iterations" -> iterations,
     "learningRate" -> learningRate,
     "radius" -> radius,
     "hideState" -> hideState,
