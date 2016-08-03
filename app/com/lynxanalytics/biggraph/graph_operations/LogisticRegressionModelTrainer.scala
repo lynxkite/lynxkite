@@ -50,6 +50,7 @@ case class LogisticRegressionModelTrainer(
     val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val labeledFeaturesDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
+    assert(!labeledFeaturesDF.rdd.isEmpty, "No training available for empty data set.")
 
     // Train a logictic regression model. The model sets the threshold to be 0.5 and 
     // the feature scaling to be true by default.
@@ -67,7 +68,7 @@ case class LogisticRegressionModelTrainer(
     model.setThreshold(threshold)
     val prediction = model.transform(labeledFeaturesDF)
     val statistics = getStatistics(model, prediction, featureNames) +
-      s"threshold: $threshold, F-score: $fMeasure\n"
+      s"threshold: $threshold\nF-score: $fMeasure\n"
 
     val file = Model.newModelFile
     model.save(file.resolvedName)
@@ -98,47 +99,59 @@ case class LogisticRegressionModelTrainer(
     val numFeatures = model.coefficients.size
     val numData = predictions.count.toInt
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
+    val labelSum = predictions.map(_.getAs[Double]("label")).sum
     val mcfaddenR2: Double = {
-      // The log likelihood of logistic regression is calculated according to the equation: 
-      // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
-      // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).  
-      val logLikCurrent = predictions.map {
-        row =>
-          {
-            val rawClassification = row.getAs[mllib.linalg.DenseVector]("rawClassification")(1)
-            val label = row.getAs[Double]("label")
-            rawClassification * label - Math.log(1 + Math.exp(rawClassification))
-          }
-      }.sum
-      val logLikIntercept = {
-        val labelSum = predictions.map(_.getAs[Double]("label")).sum
-        val nullProbability = labelSum / numData
-        val nullIntercept = Math.log(nullProbability / (1 - nullProbability))
-        nullIntercept * labelSum - numData * Math.log(1 + Math.exp(nullIntercept))
+      if (labelSum == 0.0 || labelSum == numData) {
+        0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
+      } else {
+        // The log likelihood of logistic regression is calculated according to the equation: 
+        // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
+        // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).  
+        val logLikCurrent = predictions.map {
+          row =>
+            {
+              val rawClassification = row.getAs[mllib.linalg.DenseVector]("rawClassification")(1)
+              val label = row.getAs[Double]("label")
+              rawClassification * label - Math.log(1 + Math.exp(rawClassification))
+            }
+        }.sum
+        val logLikIntercept = {
+          val nullProbability = labelSum / numData
+          val nullIntercept = Math.log(nullProbability / (1 - nullProbability))
+          nullIntercept * labelSum - numData * Math.log(1 + Math.exp(nullIntercept))
+        }
+        1 - logLikCurrent / logLikIntercept
       }
-      1 - logLikCurrent / logLikIntercept
     }
     // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient 
     // values to coefficient standard errors. See more information at http://www.real-statistics.com/
     // logistic-regression/significance-testing-logistic-regression-coefficients. 
     val zValues: Array[Double] = {
-      val vectors = predictions.map(_.getAs[mllib.linalg.DenseVector]("vector"))
-      val probability = predictions.map(_.getAs[mllib.linalg.DenseVector]("probability"))
-      // The constant field is added in order to get the statistics of the intercept.
-      val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
-      val matrix = new breeze.linalg.DenseMatrix(
-        rows = numFeatures + 1,
-        cols = numData,
-        data = flattenMatrix)
-      val cost = probability.map(prob => prob(0) * prob(1)).collect
-      val matrixCost = breeze.linalg.diag(breeze.linalg.DenseVector(cost))
-      // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is 
-      // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
-      // whose diagnol elements are probability_i * (1 - probability_i).
-      val covariance = breeze.linalg.inv((matrix * (matrixCost * matrix.t)))
-      val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt(_))
-      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
-      zValues.toArray
+      if (labelSum == 0.0) {
+        // In this extreme case, all coefficients equal to 0 and the intercept equals to -inf
+        Array.fill(numFeatures)(0.0) :+ Double.NegativeInfinity
+      } else if (labelSum == numData) {
+        // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
+        Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
+      } else {
+        val vectors = predictions.map(_.getAs[mllib.linalg.DenseVector]("vector"))
+        val probability = predictions.map(_.getAs[mllib.linalg.DenseVector]("probability"))
+        // The constant field is added in order to get the statistics of the intercept.
+        val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
+        val matrix = new breeze.linalg.DenseMatrix(
+          rows = numFeatures + 1,
+          cols = numData,
+          data = flattenMatrix)
+        val cost = probability.map(prob => prob(0) * prob(1)).collect
+        val matrixCost = breeze.linalg.diag(breeze.linalg.DenseVector(cost))
+        // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is 
+        // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
+        // whose diagnol elements are probability_i * (1 - probability_i).
+        val covariance = breeze.linalg.inv((matrix * (matrixCost * matrix.t)))
+        val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt(_))
+        val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
+        zValues.toArray
+      }
     }
     val table = Tabulator.getTable(
       headers = Array("names", "estimates", "Z-values"),
