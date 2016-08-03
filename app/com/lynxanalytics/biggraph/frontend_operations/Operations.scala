@@ -1623,7 +1623,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue = project.scalars((p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1631,7 +1632,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.PredictFromModel(features.size)
         op(op.model, modelValue)(op.features, features).result.prediction
       }
-      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelValue.name}")
+      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelName}")
     }
   })
 
@@ -1648,8 +1649,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue: Scalar[model.Model] = project.scalars(
-        (p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1659,11 +1660,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
-        s"classification according to ${modelValue.name}")
+        s"classification according to ${modelName}")
       if (generatesProbability) {
         val probability = result.probability
         project.newVertexAttribute(name + "_probability", probability,
-          s"probability according to ${modelValue.name}")
+          s"probability according to ${modelName}")
       }
     }
   })

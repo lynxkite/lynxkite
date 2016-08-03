@@ -1,11 +1,13 @@
 // Creates a classification attribute from a machine learning model.
 package com.lynxanalytics.biggraph.graph_operations
 
+import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model.Model
 import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.ml
 
 object ClassifyWithModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -49,15 +51,22 @@ case class ClassifyWithModel(numFeatures: Int)
     val scaledRDD = modelValue.scaleFeatures(unscaledRDD)
     val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
+    val classificationModel = modelValue.load(rc.sparkContext)
     // Transform data to an attributeRDD with the attribute (probability, classification)
-    val transformation = modelValue.load(rc.sparkContext).transformDF(scaledDF)
+    val transformation = classificationModel.transformDF(scaledDF)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
     }.sortUnique(partitioner)
-    // Output the probability of the most likely outcome and the classification labels.
+    // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
+      val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
+        .getThreshold
       val probability = transformation.select("ID", "probability").map { row =>
-        (row.getAs[ID]("ID"), row.getAs[DenseVector]("probability").toArray.max)
+        var probabilityValue = row.getAs[DenseVector]("probability")(1)
+        if (probabilityValue < threshold) {
+          probabilityValue = 1 - probabilityValue
+        }
+        (row.getAs[ID]("ID"), probabilityValue)
       }.sortUnique(partitioner)
       output(o.probability, probability)
     }
