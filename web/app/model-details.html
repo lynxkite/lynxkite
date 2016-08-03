@@ -4,23 +4,20 @@
 
   <div ng-show="model.$resolved && !model.$error" id="model-details-parameters">
     Method:
-    <label class="form-control" disabled>{{ model.method }}</label>
+    <label class="form-control model-details-text" disabled>{{ model.method }}</label>
     <div ng-show="model.labelName">
       Label:
-      <label class="form-control" disabled>{{ model.labelName }}</label>
+      <label class="form-control model-details-text" disabled>{{ model.labelName }}</label>
     </div>
     <div ng-show="model.scalerDetails">
       Scaling:
-      <textarea class="form-control" rows="2" disabled>{{ model.scalerDetails }}</textarea>
+      <textarea class="form-control model-details-text" rows="2" disabled>{{ model.scalerDetails }}</textarea>
     </div>
     Features:
-    <div class="form-control" disabled>
-      <span ng-repeat="featureName in model.featureNames">
-        {{ featureName }}{{ $last ? '': ', ' }}
-      </span>
-    </div>
+    <textarea class="form-control model-details-text" rows="1" disabled>{{ model.featureNames.join(', ') }}
+    </textarea>
     Details:
-    <textarea class="form-control" rows="2" disabled>{{ model.details }}</textarea>
+    <textarea class="form-control model-details-text" rows="5" disabled>{{ model.details }}</textarea>
   </div>
 
   <div id="model-details-error" ng-show="model.$error">
