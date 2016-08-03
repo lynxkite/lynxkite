@@ -105,6 +105,7 @@ case class RegressionModelTrainer(
           columnData = Array(coefficientsAndIntercept, summary.tValues))
       }
     }
-    s"coefficients:\n$table\nR-squared: $r2\nMAPE: $MAPE%\n"
+    s"coefficients: \n$table\n" + "%11s".format("R-squared: ") + f"$r2%1.6f\n" +
+      "%11s".format("MAPE: ") + f"$MAPE%1.6f%\n"
   }
 }

@@ -67,9 +67,8 @@ case class LogisticRegressionModelTrainer(
     // If the estimated probability of class label 1 is > threshold, then predict 1, else 0.
     model.setThreshold(threshold)
     val prediction = model.transform(labeledFeaturesDF)
-    val statistics = getStatistics(model, prediction, featureNames) +
-      s"threshold: $threshold\nF-score: $fMeasure\n"
-
+    val statistics = getStatistics(model, prediction, featureNames) + "%18s".format("threshold: ") +
+      f"$threshold%1.6f\n" + "%18s".format("F-score: ") + f"$fMeasure%1.6f\n"
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
@@ -157,6 +156,6 @@ case class LogisticRegressionModelTrainer(
       headers = Array("names", "estimates", "Z-values"),
       rowNames = featureNames.toArray :+ "intercept",
       columnData = Array(coefficientsAndIntercept, zValues))
-    s"coefficients:\n$table\npseudo R-squared: $mcfaddenR2\n"
+    s"coefficients:\n$table\n" + "%18s".format("pseudo R-squared: ") + f"$mcfaddenR2%1.6f\n"
   }
 }
