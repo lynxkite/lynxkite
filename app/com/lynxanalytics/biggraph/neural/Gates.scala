@@ -59,7 +59,7 @@ object Gates {
   case class MultiplyScalar(v: Vector, s: Double) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
     def backward(ctx: BackwardContext) =
-      ctx.add(this, v)(perVertex(gradient => gradient / s))
+      ctx.add(this, v)(perVertex(gradient => s * gradient))
   }
   case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
@@ -219,16 +219,22 @@ private case class BackwardContext(
     edges: CompactUndirectedGraph,
     values: GateValues,
     gradients: Map[String, GraphData]) {
-  val vectorGradients = collection.mutable.Map[String, GraphData]()
-  val vectorsGradients = collection.mutable.Map[String, GraphVectors]()
+  type AnyFunc = Nothing => Any
+  val gateGradientFunctions = collection.mutable.Map[String, Map[String, AnyFunc]]()
   def apply(v: Vector): GraphData = values(v)
   def apply(vs: Vectors): GraphVectors = values(vs)
   def apply(m: M): DoubleMatrix = network(m)
   def apply(v: V): DoubleVector = network(v)(::, 0)
 
-  // ctx.add(this, v)(gradient => ctx(w).t * gradient)
-  def add(gate: Vector, previous: Vector)(gradientFunc: DoubleVector => DoubleVector): Unit = {
+  // Registers a gradient function for a previous gate and collects the gradient functions from that
+  // gate too.
+  def add[T, Prev](gate: Gate[T], previous: Gate[Prev])(gradientFunc: T => Prev): Unit = {
+    gateGradientFunctions(previous.id) =
+      gateGradientFunctions.getOrElse(previous.id, Map()) + (gate.id, gradientFunc)
+    previous.backward(this)
   }
+
+  def gradients: NetworkGradients = ???
 }
 
 trait NetworkGradients {
