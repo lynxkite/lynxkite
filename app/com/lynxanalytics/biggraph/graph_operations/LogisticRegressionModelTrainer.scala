@@ -67,8 +67,16 @@ case class LogisticRegressionModelTrainer(
     // If the estimated probability of class label 1 is > threshold, then predict 1, else 0.
     model.setThreshold(threshold)
     val prediction = model.transform(labeledFeaturesDF)
-    val statistics = getStatistics(model, prediction, featureNames) + "%18s".format("threshold: ") +
-      f"$threshold%1.6f\n" + "%18s".format("F-score: ") + f"$fMeasure%1.6f\n"
+    val coefficientsTable = getCoefficientsTable(model, prediction, featureNames)
+    val mcfaddenR2 = getMcfaddenR2(prediction)
+    val table = Tabulator.getTable(
+      headers = Array("", ""),
+      rowNames = Array("pseudo R-squared:", "threshold:", "F-score"),
+      columnData = Array(Array(mcfaddenR2, threshold, fMeasure))
+    )
+    val statistics = coefficientsTable + table
+    // "%18s".format("threshold: ") +
+    // f"$threshold%1.6f\n" + "%18s".format("F-score: ") + f"$fMeasure%1.6f\n"
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
@@ -90,8 +98,35 @@ case class LogisticRegressionModelTrainer(
       .select("threshold").head().getDouble(0)
     (maxFMeasure, bestThreshold)
   }
-  // Helper method to compute more complex statistics.
-  private def getStatistics(
+  // Helper method to find the pseudo R-squared.
+  private def getMcfaddenR2(
+    predictions: sql.DataFrame): Double = {
+    val numData = predictions.count.toInt
+    val labelSum = predictions.map(_.getAs[Double]("label")).sum
+    if (labelSum == 0.0 || labelSum == numData) {
+      0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
+    } else {
+      // The log likelihood of logistic regression is calculated according to the equation: 
+      // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
+      // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).  
+      val logLikCurrent = predictions.map {
+        row =>
+          {
+            val rawClassification = row.getAs[mllib.linalg.DenseVector]("rawClassification")(1)
+            val label = row.getAs[Double]("label")
+            rawClassification * label - Math.log(1 + Math.exp(rawClassification))
+          }
+      }.sum
+      val logLikIntercept = {
+        val nullProbability = labelSum / numData
+        val nullIntercept = Math.log(nullProbability / (1 - nullProbability))
+        nullIntercept * labelSum - numData * Math.log(1 + Math.exp(nullIntercept))
+      }
+      1 - logLikCurrent / logLikIntercept
+    }
+  }
+  // Helper method to get the table of coefficients and Z-values.
+  private def getCoefficientsTable(
     model: ml.classification.LogisticRegressionModel,
     predictions: sql.DataFrame,
     featureNames: List[String]): String = {
@@ -99,29 +134,6 @@ case class LogisticRegressionModelTrainer(
     val numData = predictions.count.toInt
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
     val labelSum = predictions.map(_.getAs[Double]("label")).sum
-    val mcfaddenR2: Double = {
-      if (labelSum == 0.0 || labelSum == numData) {
-        0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
-      } else {
-        // The log likelihood of logistic regression is calculated according to the equation: 
-        // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
-        // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).  
-        val logLikCurrent = predictions.map {
-          row =>
-            {
-              val rawClassification = row.getAs[mllib.linalg.DenseVector]("rawClassification")(1)
-              val label = row.getAs[Double]("label")
-              rawClassification * label - Math.log(1 + Math.exp(rawClassification))
-            }
-        }.sum
-        val logLikIntercept = {
-          val nullProbability = labelSum / numData
-          val nullIntercept = Math.log(nullProbability / (1 - nullProbability))
-          nullIntercept * labelSum - numData * Math.log(1 + Math.exp(nullIntercept))
-        }
-        1 - logLikCurrent / logLikIntercept
-      }
-    }
     // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient 
     // values to coefficient standard errors. See more information at http://www.real-statistics.com/
     // logistic-regression/significance-testing-logistic-regression-coefficients. 
@@ -155,7 +167,8 @@ case class LogisticRegressionModelTrainer(
     val table = Tabulator.getTable(
       headers = Array("names", "estimates", "Z-values"),
       rowNames = featureNames.toArray :+ "intercept",
-      columnData = Array(coefficientsAndIntercept, zValues))
-    s"coefficients:\n$table\n" + "%18s".format("pseudo R-squared: ") + f"$mcfaddenR2%1.6f\n"
+      columnData = Array(coefficientsAndIntercept, zValues)
+    )
+    s"coefficients:\n$table\n"
   }
 }

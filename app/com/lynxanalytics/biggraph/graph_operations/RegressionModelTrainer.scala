@@ -90,7 +90,7 @@ case class RegressionModelTrainer(
     val MAPE = Model.getMAPE(predictions.select("prediction", "label"))
     // Only compute the t-values for methods with unbiased solvers (when the elastic 
     // net parameter equals to 0).
-    val table = {
+    val coefficientsTable = {
       val rowNames = featureNames.toArray :+ "intercept"
       val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
       if (model.getElasticNetParam > 0.0) {
@@ -105,7 +105,11 @@ case class RegressionModelTrainer(
           columnData = Array(coefficientsAndIntercept, summary.tValues))
       }
     }
-    s"coefficients: \n$table\n" + "%11s".format("R-squared: ") + f"$r2%1.6f\n" +
-      "%11s".format("MAPE: ") + f"$MAPE%1.6f%\n"
+    val table = Tabulator.getTable(
+      headers = Array("", ""),
+      rowNames = Array("R-squared:", "MAPE:"),
+      columnData = Array(Array(r2, MAPE))
+    )
+    s"coefficients: \n$coefficientsTable\n$table"
   }
 }
