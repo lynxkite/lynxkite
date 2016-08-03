@@ -20,7 +20,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Just output the label.
-  ignore("label, trivial") {
+  test("label, trivial") {
     // The label is a random attribute. It is visible to the vertex.
     val vs = CreateVertexSet(1000).result.vs
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
@@ -36,7 +36,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Learn to use a feature.
-  ignore("feature, trivial") {
+  test("feature, trivial") {
     // The label and one of the features are the same random attribute.
     val vs = CreateVertexSet(1000).result.vs
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
@@ -88,7 +88,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by hiding state.
-  test("lattice, hiding") {
+  ignore("lattice, hiding") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val sideNum = g.attr[String]("side").deriveX[Double](
@@ -130,7 +130,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learning partition in a bipartite graph
-  test("bipartite") {
+  ignore("bipartite") {
     def neighbors(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
       if (vertex < partition1) partition1 until total
       else 0 until partition1
