@@ -50,7 +50,7 @@ case class LogisticRegressionModelTrainer(
     val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val labeledFeaturesDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
-    assert(!labeledFeaturesDF.rdd.isEmpty, "No training available for empty data set.")
+    assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     // Train a logictic regression model. The model sets the threshold to be 0.5 and 
     // the feature scaling to be true by default.
