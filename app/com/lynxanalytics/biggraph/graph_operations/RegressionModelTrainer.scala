@@ -48,7 +48,7 @@ case class RegressionModelTrainer(
     val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
-    assert(!scaledDF.rdd.isEmpty, "No training available for empty data set.")
+    assert(!scaledDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     val linearRegression = new ml.regression.LinearRegression()
       .setFeaturesCol("vector")
