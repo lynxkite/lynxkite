@@ -271,7 +271,7 @@ object Tabulator {
         row.map {
           case (data, size) => ("%" + size + "s").format(data)
         }.mkString("  ")
-    }.mkString("", "\n", "\n")
+    }.mkString("\n")
   }
 }
 
