@@ -17,54 +17,72 @@ object Gates {
         case _ => None
       }.toSeq
     }
+
     // Plain toString on case classes is enough to uniquely identify vectors.
     private[neural] def id = this.toString
     private[neural] def forward(ctx: ForwardContext): Output
   }
 
   trait Vector extends Gate[GraphData] {
-    def *(m: M) = MultiplyWeights(this, m)
+    // Translate operations to gates.
+    def *(m: M) = MatrixVector(this, m)
     def *(v: Vector) = MultiplyElements(this, v)
     def *(s: Double) = MultiplyScalar(this, s)
     def unary_- = this * (-1)
     def +(v: Vector) = AddElements(this, v)
     def -(v: Vector) = AddElements(this, -v)
     def +(v: V) = AddWeights(this, v)
+
+    // Utilities for applying simple functions to GraphData.
+    def perVertex(f: DoubleVector => DoubleVector): GraphData => GraphData =
+      _.mapValues(f)
+    def withData(data: =>GraphData)(
+      f: (DoubleVector, DoubleVector) => DoubleVector): GraphData => GraphData = {
+      val d = data
+      _.map { case (id, v) => id -> f(v, d(id)) }
+    }
   }
 
   trait Vectors extends Gate[GraphVectors] {
-    def *(m: M) = MultiplyVectors(this, m)
+    def *(m: M) = MatrixVectors(this, m)
+
+    // Utility for applying simple functions to GraphVectors.
+    def perVertex(f: DoubleVector => DoubleVector): GraphVectors => GraphVectors =
+      _.mapValues(_.map(f))
   }
 
-  case class MultiplyWeights(v: Vector, w: M) extends Vector {
+  case class MatrixVector(v: Vector, w: M) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
-    def backward(ctx: BackwardContext) = ctx.add(this, v)(gradient => ctx(w).t * gradient)
+    def backward(ctx: BackwardContext) =
+      ctx.add(this, v)(perVertex(gradient => ctx(w).t * gradient))
   }
   case class MultiplyScalar(v: Vector, s: Double) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
-    def backward(ctx: BackwardContext) = ctx.add(this, v)(gradient => gradient / s)
+    def backward(ctx: BackwardContext) =
+      ctx.add(this, v)(perVertex(gradient => gradient / s))
   }
   case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
     def backward(ctx: BackwardContext) = {
-      ctx.add(this, v1)(gradient => ctx(v2) :* gradient)
-      ctx.add(this, v2)(gradient => ctx(v1) :* gradient)
+      ctx.add(this, v1)(withData(ctx(v2))((gradient, data) => data :* gradient)
+      ctx.add(this, v2)(withData(ctx(v1))((gradient, data) => data :* gradient)
     }
   }
   case class AddElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 + v2 }
     def backward(ctx: BackwardContext) = {
-      ctx.add(this, v1)(identity)
-      ctx.add(this, v2)(identity)
+      ctx.add(this, v1)(perVertex(identity))
+      ctx.add(this, v2)(perVertex(identity))
     }
   }
   case class AddWeights(v: Vector, w: V) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) + _)
-    def backward(ctx: BackwardContext) = ctx.add(this, v)(identity)
+    def backward(ctx: BackwardContext) = ctx.add(this, v)(perVertex(identity))
   }
-  case class MultiplyVectors(vs: Vectors, w: M) extends Vectors {
+  case class MatrixVectors(vs: Vectors, w: M) extends Vectors {
     def forward(ctx: ForwardContext) = ctx(vs).mapValues(_.map(ctx(w) * _))
-    def backward(ctx: BackwardContext) = ctx.add(this, vs)(identity)
+    def backward(ctx: BackwardContext) =
+      ctx.add(this, v)(perVertex(gradient => ctx(w).t * gradient))
   }
   case class Sum(vs: Vectors) extends Vector {
     def forward(ctx: ForwardContext) = ctx(vs).mapValues { vectors =>
@@ -72,7 +90,10 @@ object Gates {
       for (v <- vectors) sum += v
       sum
     }
-    def backward(ctx: BackwardContext) = ctx.add(this, vs)(identity)
+    def backward(ctx: BackwardContext) = ctx.add(this, vs) { gradients =>
+      val vectors = ctx(vs) // We need this to know the cardinality of vs.
+      vectors.mapValues(_.map(_ => gradients))
+    }
   }
   case class Neighbors() extends Vectors {
     def forward(ctx: ForwardContext) = ctx.neighbors
@@ -84,15 +105,15 @@ object Gates {
   }
   case class Sigmoid(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_))
-    def backward(ctx: BackwardContext) = ctx.add(this, v) {
-      gradient => ctx(this) :* (1.0 - ctx(this)) :* gradient
-    }
+    def backward(ctx: BackwardContext) = ctx.add(this, v)(withData(ctx(this)) {
+      (gradient, data) => data :* (1.0 - data) :* gradient
+    })
   }
   case class Tanh(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_))
-    def backward(ctx: BackwardContext) = ctx.add(this, v) {
-      gradient => (1.0 - (ctx(this) :* ctx(this))) :* gradient
-    }
+    def backward(ctx: BackwardContext) = ctx.add(this, v)(withData(ctx(this)) {
+      (gradient, data) => (1.0 - (data :* data)) :* gradient
+    })
   }
 
   // Trained matrix of weights.
@@ -206,7 +227,8 @@ private case class BackwardContext(
   def apply(v: V): DoubleVector = network(v)(::, 0)
 
   // ctx.add(this, v)(gradient => ctx(w).t * gradient)
-  def add(
+  def add(gate: Vector, previous: Vector)(gradientFunc: DoubleVector => DoubleVector): Unit = {
+  }
 }
 
 trait NetworkGradients {
