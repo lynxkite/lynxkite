@@ -31,7 +31,10 @@ object NeuralNetwork extends OpFromJson {
     (j \ "forgetFraction").as[Double],
     (j \ "trainingRadius").as[Int],
     (j \ "maxTrainingVertices").as[Int],
-    (j \ "minTrainingVertices").as[Int])
+    (j \ "minTrainingVertices").as[Int],
+    (j \ "iterationsInTraining").as[Int],
+    (j \ "subgraphsInTraining").as[Int],
+    (j \ "numberOfTrainings").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -44,7 +47,10 @@ case class NeuralNetwork(
     forgetFraction: Double,
     trainingRadius: Int,
     maxTrainingVertices: Int,
-    minTrainingVertices: Int) extends TypedMetaGraphOp[Input, Output] {
+    minTrainingVertices: Int,
+    iterationsInTraining: Int,
+    subgraphsInTraining: Int,
+    numberOfTrainings: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -57,15 +63,15 @@ case class NeuralNetwork(
     "forgetFraction" -> forgetFraction,
     "trainingRadius" -> trainingRadius,
     "maxTrainingVertices" -> maxTrainingVertices,
-    "minTrainingVertices" -> minTrainingVertices)
+    "minTrainingVertices" -> minTrainingVertices,
+    "iterationsInTraining" -> iterationsInTraining,
+    "subgraphsInTraining" -> subgraphsInTraining,
+    "numberOfTrainings" -> numberOfTrainings)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val iterationsInTraining = 50
-    val subgraphsInTraining = 10
-    val numberOfTrainings = 10
 
     implicit val id = inputDatas
     val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
@@ -267,13 +273,14 @@ case class NeuralNetwork(
         network.activationInput.t * tildeRawGradient(id))
     }.toMap
     val prevStateGradient: Map[ID, Vector] = vertices.map { id =>
-      val edgeGradients = edgeLists(id).map(network.edgeMatrix.t * inputGradient(_))
+      //val edgeGradients = edgeLists(id).map(network.edgeMatrix.t * inputGradient(_))
       id -> (
         network.updateHidden.t * updateRawGradient(id) +
         network.resetHidden.t * resetRawGradient(id) +
         (1.0 - outputs.update(id)) :* stateGradient(id) +
-        (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id) +
-        vectorSum(network.size, edgeGradients))
+        (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id)
+      //vectorSum(network.size, edgeGradients)
+      )
     }.toMap
     // Network gradients.
     val activationInputGradient: Matrix = vertices.map { id =>

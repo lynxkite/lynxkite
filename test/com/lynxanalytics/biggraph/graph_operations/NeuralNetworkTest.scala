@@ -28,7 +28,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 2, iterations = 100, learningRate = 0.1, radius = 0,
         hideState = false, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, vs.emptyEdgeBundle)(op.label, a).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -44,7 +45,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 2, networkSize = 4, iterations = 30, learningRate = 0.1, radius = 0,
         hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, vs.emptyEdgeBundle)(op.label, a)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -61,7 +63,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 2, networkSize = 4, iterations = 10, learningRate = 0.2, radius = 3,
         hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, vs.emptyEdgeBundle)(op.label, a)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -77,7 +80,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 2, networkSize = 4, iterations = 1, learningRate = 0.2, radius = 0,
         hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, vs.emptyEdgeBundle)(op.label, c)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, c) < 1)
@@ -93,7 +97,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 4, iterations = 50, learningRate = 0.1, radius = 3,
         hideState = true, forgetFraction = 0.0, trainingRadius = 3, maxTrainingVertices = 40,
-        minTrainingVertices = 30)
+        minTrainingVertices = 30, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
@@ -113,7 +118,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 4, iterations = 30, learningRate = 0.1, radius = 3,
         hideState = false, forgetFraction = 0.5, trainingRadius = 3, maxTrainingVertices = 30,
-        minTrainingVertices = 30)
+        minTrainingVertices = 30, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
@@ -144,7 +150,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 4, iterations = 11, learningRate = 0.02, radius = 3,
         hideState = true, forgetFraction = 0.0, trainingRadius = 1, maxTrainingVertices = 8,
-        minTrainingVertices = 7)
+        minTrainingVertices = 7, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
     }
     prediction.rdd.count // HACK: NullPointerException otherwise.
@@ -190,7 +197,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 10, iterations = 50, learningRate = 0.1, radius = 4,
         hideState = true, forgetFraction = 0.3, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
     }
     prediction.rdd.count
@@ -224,7 +232,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 20, iterations = 1000, learningRate = 0.5, radius = 4,
         hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10)
+        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        numberOfTrainings = 10)
       op(op.edges, es)(op.label, pr).result.prediction
     }
     prediction.rdd.count
