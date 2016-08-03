@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
-import com.lynxanalytics.biggraph.{ model => modelClass }
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.ml
 
@@ -49,6 +48,7 @@ case class RegressionModelTrainer(
     val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
+    assert(!scaledDF.rdd.isEmpty, "No training available for empty data set.")
 
     val linearRegression = new ml.regression.LinearRegression()
       .setFeaturesCol("vector")
@@ -94,17 +94,17 @@ case class RegressionModelTrainer(
       val rowNames = featureNames.toArray :+ "intercept"
       val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
       if (model.getElasticNetParam > 0.0) {
-        modelClass.Tabulator.getTable(
+        Tabulator.getTable(
           headers = Array("names", "estimates"),
           rowNames = rowNames,
           columnData = Array(coefficientsAndIntercept))
       } else {
-        modelClass.Tabulator.getTable(
+        Tabulator.getTable(
           headers = Array("names", "estimates", "T-values"),
           rowNames = rowNames,
           columnData = Array(coefficientsAndIntercept, summary.tValues))
       }
     }
-    s"coefficients:\n$table\nR-squared: $r2, MAPE: $MAPE%\n"
+    s"coefficients:\n$table\nR-squared: $r2\nMAPE: $MAPE%\n"
   }
 }
