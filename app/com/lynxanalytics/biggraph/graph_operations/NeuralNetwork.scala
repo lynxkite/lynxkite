@@ -270,14 +270,13 @@ case class NeuralNetwork(
         network.activationInput.t * tildeRawGradient(id))
     }.toMap
     val prevStateGradient: Map[ID, Vector] = vertices.map { id =>
-      //val edgeGradients = edgeLists(id).map(network.edgeMatrix.t * inputGradient(_))
+      val edgeGradients = edgeLists(id).map(network.edgeMatrix.t * inputGradient(_))
       id -> (
         network.updateHidden.t * updateRawGradient(id) +
         network.resetHidden.t * resetRawGradient(id) +
         (1.0 - outputs.update(id)) :* stateGradient(id) +
-        (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id)
-      //vectorSum(network.size, edgeGradients)
-      )
+        (network.activationHidden.t * tildeRawGradient(id)) :* outputs.reset(id) +
+        vectorSum(network.size, edgeGradients))
     }.toMap
     // Network gradients.
     val activationInputGradient: Matrix = vertices.map { id =>
