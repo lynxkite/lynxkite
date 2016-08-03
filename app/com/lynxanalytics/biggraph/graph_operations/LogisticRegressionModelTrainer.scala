@@ -71,7 +71,7 @@ case class LogisticRegressionModelTrainer(
     val mcfaddenR2 = getMcfaddenR2(prediction)
     val table = Tabulator.getTable(
       headers = Array("", ""),
-      rowNames = Array("pseudo R-squared:", "threshold:", "F-score"),
+      rowNames = Array("pseudo R-squared:", "threshold:", "F-score:"),
       columnData = Array(Array(mcfaddenR2, threshold, fMeasure))
     )
     val statistics = coefficientsTable + table
