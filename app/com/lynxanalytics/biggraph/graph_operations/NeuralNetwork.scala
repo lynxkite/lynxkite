@@ -167,7 +167,8 @@ case class NeuralNetwork(
       val gradients = outputs.init.scanRight {
         network.backward(vertices, edges, outputs.last, "new state" -> finalGradient)
       } { (outputs, next) =>
-        network.backward(vertices, edges, outputs, "new state" -> next)
+        import neural.Implicits._
+        network.backward(vertices, edges, outputs, "new state" -> (next("state") + next.neighbors))
       }
       network = network.update(gradients)
     }
