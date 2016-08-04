@@ -1,143 +1,105 @@
 #!/usr/bin/python3
 
+import argparse
 import boto3
-import subprocess
-import tempfile
+import os
+from utils.emr_lib import EMRLib
 
-print('hello, world')
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '--cluster_name',
+    default=os.environ['USER'] + '-boto-cluster',
+    help='Name of the cluster to start')
+parser.add_argument(
+    '--biggraph_releases_dir',
+    default=os.environ['HOME'] + '/biggraph_releases',
+    help='''Directory containing the downloader script, typically the root of
+         the biggraph_releases repo. The downloader script will have the form of
+         BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
+parser.add_argument(
+    '--lynx_version',
+    default='1.9.0',
+    help='''Version of the ecosystem release to test. A downloader script of the
+          following form will be used for obtaining the release:
+         BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
+parser.add_argument(
+    '--ec2_key_file',
+    default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
+parser.add_argument(
+    '--ec2_key_name',
+    default='lynx-cli')
 
-emr_client = boto3.client('emr')
 
-print(emr_client.waiter_names)
+def main(args):
+  lib = EMRLib(
+      ec2_key_file=args.ec2_key_file,
+      ec2_key_name=args.ec2_key_name)
+  cluster = lib.create_or_connect(name=args.cluster_name)
+  mysql_instance = lib.create_or_connect_db(
+      name=args.cluster_name + '-mysql')
 
-_, ssh_tmp_hosts_file = tempfile.mkstemp() 
+  lib.wait_for_services([cluster, mysql_instance])
 
-def call_cmd(cmd_list, input=None):
-  print('CALL ', cmd_list)
-  proc = subprocess.Popen(
-      cmd_list,
-      stdin=subprocess.PIPE,
-      stderr=subprocess.STDOUT,
-      stdout=subprocess.PIPE,
-      universal_newlines=True,
-      bufsize=0)
-  if input:
-    proc.stdin.write(input)
-  proc.stdin.close()
-  #print(stdout)
-  while True:
-    line = proc.stdout.readline()
-    print(line, end='')
-    if not line: break
+  mysql_address = mysql_instance.get_address()
+  jdbc_url = 'jdbc:mysql://{mysql_address!s}/db?user=root&password=rootroot'.format(
+      mysql_address=mysql_address)
 
-class EMRCluster:
-  def __init__(self, id):
-    self.id = id
-    desc = emr_client.describe_cluster(ClusterId=id)
-    print(desc)
-    self.master = desc['Cluster']['MasterPublicDnsName']
-    print(self.master)
-    self.ssh_cmd = [
-          'ssh',
-          '-T',
-          '-i', '/home/gfeher/.ssh/lynx-cli.pem',
-          '-o', 'UserKnownHostsFile=' + ssh_tmp_hosts_file,
-          '-o', 'CheckHostIP=no',
-          '-o', 'StrictHostKeyChecking=no',
-          '-o', 'ServerAliveInterval=30',
-        ]
+  ecosystem_base_dir = '/mnt/lynx-' + args.lynx_version
+  ecosystem_home_dir = ecosystem_base_dir + '/lynx'
+  ecosystem_task_dir = ecosystem_home_dir + '/luigi_tasks/test_tasks'
 
-  def ssh(self, cmds):
-    call_cmd(self.ssh_cmd + ['hadoop@' + self.master], input=cmds)
+  # Upload installer script.
+  cluster.rsync_up(
+      src='{dir!s}/download-lynx-{version!s}.sh'.format(
+          dir=args.biggraph_releases_dir,
+          version=args.lynx_version),
+      dst='/mnt/')
 
-  def rsync_up(self, src, dst):
-    call_cmd(
-        [
-          'rsync',
-          '-ave',
-          ' '.join(self.ssh_cmd),
-          '-r',
-          '--copy-dirlinks',
-          src,
-          'hadoop@' + self.master + ':' + dst
-        ])
-    
-    
+  # Upload tasks.
+  cluster.ssh('mkdir -p ' + ecosystem_task_dir)
+  cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
 
-  @staticmethod
-  def connect(name='gfeher-boto-cluster'):
-    l = emr_client.list_clusters(ClusterStates=['RUNNING','WAITING'])
-    for cluster in l['Clusters']:
-      print(cluster)
-      if cluster['Name'] == name:
-        print('reusing')
-        return EMRCluster(cluster['Id'])
-    print('creating')
-    res = emr_client.run_job_flow(
-      Name="gfeher-boto-cluster",
-      ReleaseLabel="emr-4.7.2",
-      Instances={
-          'MasterInstanceType': 'm3.xlarge',
-          'SlaveInstanceType': 'm3.xlarge',
-          'InstanceCount': 2,
-          'Ec2KeyName':'lynx-cli',
-          'KeepJobFlowAliveWhenNoSteps':True
-      },
-      JobFlowRole="EMR_EC2_DefaultRole",
-      VisibleToAllUsers=True,
-      ServiceRole="EMR_DefaultRole")
+  # Install Docker and LynxKite ecosystem.
+  cluster.ssh('''
+    set -x
+    cd /mnt
 
-    print(res)
+    if [ ! -f "./lynx-{version!s}/lynx/start.sh" ]; then
+      # Not yet installed.
+      ./download-lynx-{version!s}.sh
+      tar xfz lynx-{version!s}.tgz
+    fi
 
-    waiter = emr_client.get_waiter('cluster_running')
-    waiter.wait(ClusterId=res['JobFlowId'])
-    return EMRCluster(res['JobFlowId'])
+    cd lynx-{version!s}
 
-cc = EMRCluster.connect()
-print(cc)
-cc.ssh('''
-set -x
-cd /mnt
+    if ! hash docker 2>/dev/null; then
+      echo "docker not found, installing"
+      sudo LYNXKITE_USER=hadoop ./install-docker.sh
+    fi
 
-export SIGNED='https://d955izgyg907d.cloudfront.net/lynx-1.9.0.tgz?Expires=1501238130&Signature=CbukS7jQ8TjSjZZIACl0AXPpag61iDA1tpnvkjcd~eJq0ZTCOBKNxyfLpcTLTrHdTh-VToI9YXfcr2GvCKZ-z8iXhidXwmJNyywhjelTpEyIybBpOTPbmd1oIyL1zz84sR1-YxQ~xm78MAyJV8n5NTq7a7qL5qBkbuVkec1kc3mw-sSl-ncoARV6m3woiIooHYuBaO9sNd25z5lfCizdhed4g44RDZ0GC1GCu7zeuCxZTHKdl2O6Z-~MCGb0GDeBBNpoHMHVd5VaSs8IweqaXmhueYMOdDHMD3Bduq5gxZww7Ei3uQ-bjUV~plsb0O2uA3lUEt8YisSB7Ze-HhH2ew__&Key-Pair-Id=APKAJBDZZHY2ZM7ELY2A'
+    # no need for scheduled tasks today
+    echo "scheduling: []" >lynx/luigi_tasks/chronomaster.yml
 
-if [ ! -d "./lynx-1.9.0" ]; then
-  wget -q --show-progress "$SIGNED" -O 'lynx-1.9.0.tgz'
-  tar xfz lynx-1.9.0.tgz
-fi
+    # log out to refresh docker user group
+  '''.format(version=args.lynx_version))
+  cluster.ssh('''
+    cd /mnt/lynx-{version!s}/lynx
+    if [[ $(docker ps -qf name=lynx_luigi_worker_1) ]]; then
+      echo "Ecosystem is running. Cleanup and Luigi restart is needed."
+      hadoop fs -rm -r /user/hadoop/lynxkite_data
+      sudo rm -Rf ./lynxkite_metadata/*
+      ./reload_luigi_tasks.sh
+    else
+      ./start.sh
+    fi
 
-cd lynx-1.9.0
+    docker exec -i lynx_luigi_worker_1 luigi \
+      --module test_tasks.smoke_test \
+      JDBCTest \
+      --jdbc-url '{jdbc_url!s}' \
 
-if [ hash docker 2>/dev/null ]; then
-  echo "docker was found!"
-else
-  sudo LYNXKITE_USER=hadoop ./install-docker.sh
-fi
+  '''.format(jdbc_url=jdbc_url, version=args.lynx_version))
 
-cd lynx/luigi_tasks
-# no need for scheduled tasks today. just have sthg dummy
-echo "scheduling: []" >chronomaster.yml
-
-mkdir test_tasks || true
-''')
-
-cc.rsync_up(
-  'ecosystem/tests/',
-  '/mnt/lynx-1.9.0/lynx/luigi_tasks/test_tasks')
-
-cc.ssh('''
-  cd /mnt/lynx-1.9.0/lynx
-
-  ./start.sh
-
-  echo "start OK"
-
-  docker exec -i lynx_luigi_worker_1 luigi \
-    --module test_tasks.smoke_test \
-    LynxKiteBackup \
-    --date '2016-01-01T1010'
-
-  echo "docker OK"
-
-''')
-
+if __name__ == '__main__':
+  args = parser.parse_args()
+  main(args)
