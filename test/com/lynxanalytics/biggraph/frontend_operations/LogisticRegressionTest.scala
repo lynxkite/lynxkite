@@ -10,11 +10,15 @@ class LogisticRegressionTest extends OperationsTestBase {
     run("Train a logistic regression model",
       Map("name" -> "model", "label" -> "label", "features" -> "age", "max-iter" -> "20"))
     run("Classify vertices with a model",
-      Map("name" -> "classification", "model" -> """{
-        "modelName" : "model", 
-        "isClassification" : true, 
-        "generatesProbability" : true, 
-        "features" : ["age"]}"""))
+      Map(
+        "name" -> "classification", 
+        "model" -> """{
+            "modelName" : "model", 
+            "isClassification" : true, 
+            "generatesProbability" : true, 
+            "features" : ["age"]}"""
+      )
+    )
     val classification = project.vertexAttributes("classification").runtimeSafeCast[Double]
     val probability = project.vertexAttributes("classification_probability").runtimeSafeCast[Double]
     val probabilityMap = probability.rdd.collect.toMap
