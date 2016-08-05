@@ -442,10 +442,24 @@ class DataManager(sc: spark.SparkContext,
     hiveContext
   }
 
-  private def registerUDFs(sQLContext: SQLContext) = {
-    sQLContext.udf.register(
+  private def registerUDFs(sqlContext: SQLContext) = {
+    sqlContext.udf.register(
       "hash",
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
     )
+  }
+}
+
+object DataManager {
+  def sqlWith(
+    ctx: SQLContext,
+    query: String,
+    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {
+    for ((name, df) <- dfs) {
+      assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
+      df.registerTempTable(name)
+    }
+    log.info(s"Executing query: $query")
+    ctx.sql(query)
   }
 }

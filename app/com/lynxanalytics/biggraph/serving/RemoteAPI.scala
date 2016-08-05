@@ -38,28 +38,27 @@ object RemoteAPIProtocol {
     override def createDataFrame(
       user: User, context: SQLContext)(
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
-      for ((name, cp) <- checkpoints) {
-        val viewer =
-          new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
-        registerTablesOfViewer(user, context, viewer, name)
+      val dfs = checkpoints.flatMap {
+        case (name, cp) =>
+          val viewer =
+            new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
+          getDFsOfViewer(user, context, viewer, name)
       }
-      context.sql(query)
+      DataManager.sqlWith(context, query, dfs.toList)
     }
 
-    // Takes all the tables in the project/table/view given by the viewer and registers all of
-    // them with an optionally prefixed name.
-    private def registerTablesOfViewer(
+    // Lists all the DataFrames in the project/table/view given by the viewer.
+    private def getDFsOfViewer(
       user: User, sqlContext: SQLContext, viewer: controllers.RootProjectViewer,
       prefix: String = "")(implicit mm: MetaGraphManager, dm: DataManager) = {
       val fullPrefix = if (prefix.nonEmpty) prefix + "|" else ""
-      for (path <- viewer.allRelativeTablePaths) {
+      val tableDFs = viewer.allRelativeTablePaths.flatMap { path =>
         val df = controllers.Table(path, viewer).toDF(sqlContext)
-        df.registerTempTable(fullPrefix + path.toString)
-        if (path.toString == "vertices") df.registerTempTable(prefix)
+        Some((fullPrefix + path.toString) -> df) ++
+          (if (path.toString == "vertices") Some(prefix -> df) else None)
       }
-      for (r <- viewer.viewRecipe) {
-        r.createDataFrame(user, sqlContext).registerTempTable(prefix)
-      }
+      val recipeDFs = viewer.viewRecipe.map(prefix -> _.createDataFrame(user, sqlContext))
+      tableDFs ++ recipeDFs
     }
   }
 
