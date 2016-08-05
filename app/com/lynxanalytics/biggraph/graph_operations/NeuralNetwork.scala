@@ -33,7 +33,8 @@ object NeuralNetwork extends OpFromJson {
     (j \ "minTrainingVertices").as[Int],
     (j \ "iterationsInTraining").as[Int],
     (j \ "subgraphsInTraining").as[Int],
-    (j \ "numberOfTrainings").as[Int])
+    (j \ "numberOfTrainings").as[Int],
+    (j \ "boostForgotten").as[Double])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -48,7 +49,8 @@ case class NeuralNetwork(
     minTrainingVertices: Int,
     iterationsInTraining: Int,
     subgraphsInTraining: Int,
-    numberOfTrainings: Int) extends TypedMetaGraphOp[Input, Output] {
+    numberOfTrainings: Int,
+    boostForgotten: Double) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -63,7 +65,8 @@ case class NeuralNetwork(
     "minTrainingVertices" -> minTrainingVertices,
     "iterationsInTraining" -> iterationsInTraining,
     "subgraphsInTraining" -> subgraphsInTraining,
-    "numberOfTrainings" -> numberOfTrainings)
+    "numberOfTrainings" -> numberOfTrainings,
+    "boostForgotten" -> boostForgotten)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -409,8 +412,10 @@ case class NeuralNetwork(
       val errors: Map[ID, Double] = trainingData.map {
         case (id, (Some(label), features)) if (keptState(id)(0) == 0 || forgetFraction == 0) =>
           // The label is predicted in position 0.
-          id -> (outputs.last.newState(id)(0) - label)
-        case (id, data) =>
+          id -> (outputs.last.newState(id)(0) - label) * (1 + boostForgotten)
+        case (id, (Some(label), features)) =>
+          id -> (outputs.last.newState(id)(0) - label) * (1 - boostForgotten)
+        case (id, (None, features)) =>
           id -> 0.0
       }.toMap
       val errorTotal = errors.values.map(e => e * e).sum
