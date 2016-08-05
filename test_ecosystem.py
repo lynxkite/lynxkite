@@ -9,7 +9,7 @@ from utils.emr_lib import EMRLib
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '--cluster_name',
-    default=os.environ['USER'] + '-boto-cluster',
+    default=os.environ['USER'] + '-ecosystem-test',
     help='Name of the cluster to start')
 parser.add_argument(
     '--biggraph_releases_dir',
