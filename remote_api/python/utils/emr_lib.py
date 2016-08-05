@@ -178,10 +178,7 @@ class EMRCluster:
     '''Is the cluster started up and ready?'''
     if desc is None:
       desc = self.desc()
-    print('cluster.is_ready')
-    print(desc)
     state = desc['Cluster']['Status']['State']
-    print(state)
     return state == 'RUNNING' or state == 'WAITING'
 
   def ssh(self, cmds, print_output=True, verbose=True):
