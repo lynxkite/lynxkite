@@ -3,6 +3,7 @@
 import argparse
 import boto3
 import os
+import time
 from utils.emr_lib import EMRLib
 
 parser = argparse.ArgumentParser()
@@ -31,22 +32,19 @@ parser.add_argument(
 
 
 def main(args):
+  # Create EMR cluster and MySQL database in RDS.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
       ec2_key_name=args.ec2_key_name)
-  cluster = lib.create_or_connect(name=args.cluster_name)
-  mysql_instance = lib.create_or_connect_db(
+  cluster = lib.create_or_connect_to_emr_cluster(name=args.cluster_name)
+  mysql_instance = lib.create_or_connect_to_rds_instance(
       name=args.cluster_name + '-mysql')
-
+  # Wait for startup of both.
   lib.wait_for_services([cluster, mysql_instance])
 
   mysql_address = mysql_instance.get_address()
   jdbc_url = 'jdbc:mysql://{mysql_address!s}/db?user=root&password=rootroot'.format(
       mysql_address=mysql_address)
-
-  ecosystem_base_dir = '/mnt/lynx-' + args.lynx_version
-  ecosystem_home_dir = ecosystem_base_dir + '/lynx'
-  ecosystem_task_dir = ecosystem_home_dir + '/luigi_tasks/test_tasks'
 
   # Upload installer script.
   cluster.rsync_up(
@@ -56,10 +54,20 @@ def main(args):
       dst='/mnt/')
 
   # Upload tasks.
+  ecosystem_task_dir = '/mnt/lynx-' + args.lynx_version + '/lynx/luigi_tasks/test_tasks'
   cluster.ssh('mkdir -p ' + ecosystem_task_dir)
   cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
 
-  # Install Docker and LynxKite ecosystem.
+  install_docker_and_lynx(cluster, args.lynx_version)
+  start_or_reset_ecosystem(cluster, args.lynx_version)
+  start_tests(cluster, jdbc_url)
+  print('Tests are now running in the background. Waiting for results.')
+  process_output(cluster)
+  # TODO: shut down cluster here
+  print("Please don't forget to shut down the cluster!")
+
+
+def install_docker_and_lynx(cluster, version):
   cluster.ssh('''
     set -x
     cd /mnt
@@ -78,12 +86,16 @@ def main(args):
     fi
 
     # no need for scheduled tasks today
-    echo "scheduling: []" >lynx/luigi_tasks/chronomaster.yml
+    echo "sleep_period_seconds: 1000000000\nscheduling: []" >lynx/luigi_tasks/chronomaster.yml
 
-    # log out to refresh docker user group
-  '''.format(version=args.lynx_version))
-  cluster.ssh('''
+    # Log out here to refresh docker user group.
+  '''.format(version=version))
+
+
+def start_or_reset_ecosystem(cluster, version):
+  res = cluster.ssh('''
     cd /mnt/lynx-{version!s}/lynx
+    # Start ecosystem.
     if [[ $(docker ps -qf name=lynx_luigi_worker_1) ]]; then
       echo "Ecosystem is running. Cleanup and Luigi restart is needed."
       hadoop fs -rm -r /user/hadoop/lynxkite_data
@@ -93,12 +105,45 @@ def main(args):
       ./start.sh
     fi
 
-    docker exec -i lynx_luigi_worker_1 luigi \
-      --module test_tasks.smoke_test \
-      JDBCTest \
-      --jdbc-url '{jdbc_url!s}' \
+    # Wait for ecosystem startup completion.
+    # (We keep retrying a dummy task until it succeeds.)
+    docker exec lynx_luigi_worker_1 rm -f /tasks_data/smoke_test_marker.txt
+    while [[ $(docker exec lynx_luigi_worker_1 cat /tasks_data/smoke_test_marker.txt) != "done" ]]; do
+      docker exec lynx_luigi_worker_1 luigi --module test_tasks.smoke_test SmokeTest 2>/dev/null
+      sleep 1
+    done'''.format(version=args.lynx_version))
 
-  '''.format(jdbc_url=jdbc_url, version=args.lynx_version))
+
+def start_tests(cluster, jdbc_url):
+  cluster.ssh('''
+    cat >/home/hadoop/run_test.sh <<EOF
+      docker exec lynx_luigi_worker_1 luigi --module test_tasks.jdbc JDBCTest --jdbc-url '{jdbc_url!s}'
+      echo 'done' >/home/hadoop/test_status.txt
+    echo
+EOF
+    chmod a+x /home/hadoop/run_test.sh
+    rm -f /home/hadoop/test_status.txt
+    nohup /home/hadoop/run_test.sh >/home/hadoop/test_results.txt 2>&1 &
+  '''.format(jdbc_url=jdbc_url))
+
+
+def process_output(cluster):
+  output_lines_seen = 0
+  status_is_done = False
+  while not status_is_done:
+    # Check status.
+    status_is_done = 'done' == cluster.ssh(
+        'cat /home/hadoop/test_status.txt 2>/dev/null',
+        print_output=False,
+        verbose=False).strip()
+    # Print unseen log lines.
+    output_results = cluster.ssh(
+        'tail -n +{first_line!s} /home/hadoop/test_results.txt'.format(
+            first_line=output_lines_seen + 1),
+        verbose=False)
+    output_lines_seen += output_results.count('\n')
+    time.sleep(5)
+
 
 if __name__ == '__main__':
   args = parser.parse_args()

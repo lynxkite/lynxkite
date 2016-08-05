@@ -1,3 +1,6 @@
+# Utility API for starting EMR and RDS instances, and manipulating them with
+# ssh and rsync.
+
 import boto3
 import botocore
 import subprocess
@@ -6,7 +9,16 @@ import tempfile
 import time
 
 
-def call_cmd(cmd_list, input=None):
+def call_cmd(cmd_list, input=None, print_output=True):
+  '''
+  Invoked an OS command with arguments.
+  cmd_list: the command and its arguments in a list
+  input: A string that is passed to the stding of the invoked
+    command.
+  print_ouput: Whether to print the output (stdout+stderr) of the
+    command to stdout of Python.
+  returns: The combined (stdout+stderr) response of the command.
+  '''
   proc = subprocess.Popen(
       cmd_list,
       stdin=subprocess.PIPE,
@@ -17,19 +29,14 @@ def call_cmd(cmd_list, input=None):
   if input:
     proc.stdin.write(input)
   proc.stdin.close()
+  result = ''
   while True:
     line = proc.stdout.readline()
-    print(line, end='')
+    result += line
+    if print_output:
+      print(line, end='')
     if not line:
-      break
-
-
-def trunc(s):
-  s = s.replace('\n', ' ')
-  if len(s) >= 97:
-    return s[:97] + '...'
-  else:
-    return s
+      return result
 
 
 class EMRLib:
@@ -42,6 +49,7 @@ class EMRLib:
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
 
   def wait_for_services(self, services):
+    '''Waits and pools until all the items in 'services' have is_ready() == True'''
     if len(services) == 0:
       return
     print('Waiting for {n!s} services to start...'.format(n=len(services)))
@@ -58,9 +66,9 @@ class EMRLib:
           i += 1
         if len(services) == 0:
           return
-      time.sleep(30)
+      time.sleep(15)
 
-  def create_or_connect(self, name):
+  def create_or_connect_to_emr_cluster(self, name):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -84,7 +92,7 @@ class EMRLib:
         ServiceRole="EMR_DefaultRole")
     return EMRCluster(res['JobFlowId'], self)
 
-  def create_or_connect_db(self, name):
+  def create_or_connect_to_rds_instance(self, name):
     if RDSInstance.get_description(self.rds_client, name) is None:
       print('Creating new DB instance.')
       self.rds_client.create_db_instance(
@@ -102,6 +110,7 @@ class EMRLib:
 
 
 class RDSInstance:
+  '''Represents a connection to an RDS instance.'''
 
   def __init__(self, name, lib):
     self.name = name
@@ -134,6 +143,7 @@ class RDSInstance:
 
 
 class EMRCluster:
+  '''Represents a connection to an EMR cluster'''
 
   def __init__(self, id, lib):
     self.id = id
@@ -147,29 +157,50 @@ class EMRCluster:
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'ServerAliveInterval=30',
     ]
-    self._desc = None
+    self._master = None
 
   def __str__(self):
     return 'EMR(' + self.id + ')'
 
   def desc(self):
-    if not self._desc:
-      self._desc = self.emr_client.describe_cluster(ClusterId=self.id)
-    return self._desc
+    '''Raw description of the cluster.'''
+    return self.emr_client.describe_cluster(ClusterId=self.id)
 
   def master(self):
-    return self.desc()['Cluster']['MasterPublicDnsName']
+    '''DNS name of the master host.'''
+    if self._master is None:
+      desc = self.desc()
+      if self.is_ready(desc=desc):
+        self._master = desc['Cluster']['MasterPublicDnsName']
+    return self._master
 
-  def is_ready(self):
-    res = self.desc()
-    state = res['Cluster']['Status']['State']
+  def is_ready(self, desc=None):
+    '''Is the cluster started up and ready?'''
+    if desc is None:
+      desc = self.desc()
+    print('cluster.is_ready')
+    print(desc)
+    state = desc['Cluster']['Status']['State']
+    print(state)
     return state == 'RUNNING' or state == 'WAITING'
 
-  def ssh(self, cmds):
-    print('[EMR EXECUTE] {cmd!s}'.format(cmd=trunc(cmds)))
-    call_cmd(self.ssh_cmd + ['hadoop@' + self.master()], input=cmds)
+  def ssh(self, cmds, print_output=True, verbose=True):
+    '''Send shell commands to the cluster via invoking ssh.'''
+    if verbose:
+      def trunc(s):
+        s = s.replace('\n', ' ')
+        if len(s) >= 97:
+          return s[:97] + '...'
+        else:
+          return s
+      print('[EMR EXECUTE] {cmd!s}'.format(cmd=trunc(cmds)))
+    return call_cmd(
+        self.ssh_cmd + ['hadoop@' + self.master()],
+        input=cmds,
+        print_output=print_output)
 
   def rsync_up(self, src, dst):
+    '''Copy files to the cluster via invoking rsync.'''
     print('[EMR UPLOAD] {src!s} TO {dst!s}'.format(src=src, dst=dst))
     call_cmd(
         [
