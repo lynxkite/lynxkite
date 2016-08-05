@@ -43,10 +43,16 @@ you have to enable HTTPS (see next section). To securely set up user authenticat
 
 - Make sure LynxKite is not accessible externally.
 - Start LynxKite without authentication. Go to http://<lynxkite_url>/#/users and add at
-  least one new administrator user. (Administrator users can create more users later.)
+  least one new administrator user. (Administrator users can create more users.)
 - Enable HTTPS in the `.kiterc` file.
 - Restart LynxKite with authentication. Confirm that user credentials are now required for login.
 - You can now make LynxKite externally accessible.
+
+### Access control setup
+
+After the users are created, HDFS/Linux directory level access control can be enabled
+as explained in <<prefix-based-access-control>>. LynxKite level access control can be managed
+directly on the LynxKite Web UI.
 
 ### HTTPS setup
 
