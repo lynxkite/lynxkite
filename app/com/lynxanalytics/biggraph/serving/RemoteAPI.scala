@@ -49,8 +49,12 @@ object RemoteAPIProtocol {
 
     // Lists all the DataFrames in the project/table/view given by the viewer.
     private def getDFsOfViewer(
-      user: User, sqlContext: SQLContext, viewer: controllers.RootProjectViewer,
-      prefix: String = "")(implicit mm: MetaGraphManager, dm: DataManager) = {
+      user: User,
+      sqlContext: SQLContext,
+      viewer: controllers.RootProjectViewer,
+      prefix: String = "")(
+        implicit mm: MetaGraphManager,
+        dm: DataManager): Iterable[(String, DataFrame)] = {
       val fullPrefix = if (prefix.nonEmpty) prefix + "|" else ""
       val tableDFs = viewer.allRelativeTablePaths.flatMap { path =>
         val df = controllers.Table(path, viewer).toDF(sqlContext)
