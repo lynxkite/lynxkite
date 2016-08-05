@@ -353,7 +353,7 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     val dfs = editor.viewer.allRelativeTablePaths.map {
       path => path.toString -> Table(path, editor.viewer).toDF(sqlContext)
     }
-    DataManager.sqlWith(sqlContext, query, dfs.toList)
+    DataManager.sql(sqlContext, query, dfs.toList)
   }
 
   private def uncomputed(entity: TypedEntity[_]): Boolean = {

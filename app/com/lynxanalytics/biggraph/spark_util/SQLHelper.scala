@@ -80,7 +80,7 @@ class SQLHelper(
         )).toDF
       tableName -> dataFrame
     }
-    val df = DataManager.sqlWith(sqlContext, sqlQuery, dfs.toList)
+    val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
     sql.SQLHelperHelper.explainQuery(df)
     (columnAccumulator.toMap, df)
   }
