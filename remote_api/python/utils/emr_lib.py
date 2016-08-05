@@ -14,10 +14,11 @@ def call_cmd(cmd_list, input=None, print_output=True):
   Invoked an OS command with arguments.
   cmd_list: the command and its arguments in a list
   input: A string that is passed to the stding of the invoked
-    command.
+    process.
   print_ouput: Whether to print the output (stdout+stderr) of the
-    command to stdout of Python.
-  returns: The combined (stdout+stderr) response of the command.
+    process to stdout of Python.
+  returns: A tuple of the combined stdout+stderr and the return code
+    of the process.
   '''
   proc = subprocess.Popen(
       cmd_list,
@@ -36,7 +37,10 @@ def call_cmd(cmd_list, input=None, print_output=True):
     if print_output:
       print(line, end='')
     if not line:
-      return result
+      break
+  while proc.poll() is None:
+    time.sleep(0.1)
+  return result, proc.returncode
 
 
 class EMRLib:

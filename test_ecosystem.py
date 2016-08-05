@@ -132,16 +132,22 @@ def process_output(cluster):
   status_is_done = False
   while not status_is_done:
     # Check status.
-    status_is_done = 'done' == cluster.ssh(
+    status, ssh_retcode = cluster.ssh(
         'cat /home/hadoop/test_status.txt 2>/dev/null',
         print_output=False,
-        verbose=False).strip()
-    # Print unseen log lines.
-    output_results = cluster.ssh(
-        'tail -n +{first_line!s} /home/hadoop/test_results.txt'.format(
-            first_line=output_lines_seen + 1),
         verbose=False)
-    output_lines_seen += output_results.count('\n')
+    status_is_done = ssh_retcode == 0 and 'done' == status.strip()
+    # Print unseen log lines.
+    output_results, return_code = cluster.ssh(
+        'tail -n +{offset!s} /home/hadoop/test_results.txt'.format(
+            offset=output_lines_seen + 1),
+        verbose=False,
+        print_output=False)
+    if return_code == 0:
+      # We only use the output of ssh if it was successful. Otherwise we'll
+      # try again with the same offset in the next round.
+      print(output_results, end='')
+      output_lines_seen += output_results.count('\n')
     time.sleep(5)
 
 
