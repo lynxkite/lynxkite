@@ -87,7 +87,7 @@ case class ExecuteSQL(
         val tableRelation = new TableRelation(rawTable, sqlContext)(rc.dataManager)
         tableName -> tableRelation.toDF
     }
-    var dataFrame = DataManager.sqlWith(sqlContext, sqlQuery, dfs.toList)
+    var dataFrame = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
     o.populateOutput(rc, outputSchema, dataFrame)
   }
 }

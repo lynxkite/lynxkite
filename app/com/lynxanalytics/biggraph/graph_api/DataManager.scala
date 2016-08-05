@@ -451,7 +451,7 @@ class DataManager(sc: spark.SparkContext,
 }
 
 object DataManager {
-  def sqlWith(
+  def sql(
     ctx: SQLContext,
     query: String,
     dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {

@@ -44,7 +44,7 @@ object RemoteAPIProtocol {
             new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
           getDFsOfViewer(user, context, viewer, name)
       }
-      DataManager.sqlWith(context, query, dfs.toList)
+      DataManager.sql(context, query, dfs.toList)
     }
 
     // Lists all the DataFrames in the project/table/view given by the viewer.

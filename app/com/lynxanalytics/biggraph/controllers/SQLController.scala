@@ -122,7 +122,7 @@ case class DataFrameSpec(
     val dfs =
       tables.map { case (name, table) => name -> table.toDF(context) } ++
         viewRecipes.map { case (name, recipe) => name -> recipe.createDataFrame(user, context) }
-    DataManager.sqlWith(context, sql, dfs.toList)
+    DataManager.sql(context, sql, dfs.toList)
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
