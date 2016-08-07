@@ -31,11 +31,11 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
-bad_lines = [l for l in new_lines if '\t' in l]
-if bad_lines:
-  warn('TAB found in your diff:')
-  for l in bad_lines:
-    warn('  ' + l)
+#bad_lines = [l for l in new_lines if '\t' in l]
+#if bad_lines:
+#  warn('TAB found in your diff:')
+#  for l in bad_lines:
+#    warn('  ' + l)
 
 files = subprocess.check_output(
     'git diff --name-only --staged'.split()).split('\n')
