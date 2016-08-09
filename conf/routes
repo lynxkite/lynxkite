@@ -91,6 +91,7 @@ POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.save
 POST /remote/saveTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveTable
 POST /remote/saveView com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveView
 POST /remote/globalSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSQL
+POST /remote/isComputed com.lynxanalytics.biggraph.serving.RemoteAPIServer.isComputed
 POST /remote/computeProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.computeProject
 POST /remote/createViewJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJdbc
 POST /remote/createViewHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewHive
