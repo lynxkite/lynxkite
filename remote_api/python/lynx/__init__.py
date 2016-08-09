@@ -400,6 +400,7 @@ class Project:
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def is_computed(self):
+    '''Checks Whether all the scalars, attributes and segmentations of the project are already computed.'''
     r = self.lk._send('isComputed', dict(
         checkpoint=self.checkpoint
     ))

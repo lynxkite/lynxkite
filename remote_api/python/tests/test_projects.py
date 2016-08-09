@@ -20,7 +20,7 @@ class TestProjects(unittest.TestCase):
     greeting = p.scalar('greeting')
     self.assertEqual(greeting, 'Hello world!')
 
-  def test_force(self):
+  def test_compute(self):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=10)
     p.compute()

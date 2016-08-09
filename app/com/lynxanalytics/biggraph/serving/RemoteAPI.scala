@@ -340,11 +340,12 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(cp)
   }
 
-  private def uncomputed(entity: TypedEntity[_]): Boolean = {
+  private def isUncomputed(entity: TypedEntity[_]): Boolean = {
     val progress = dataManager.computeProgress(entity)
     progress < 1.0
   }
 
+  // Checks Whether all the scalars, attributes and segmentations of the project are already computed.
   def isComputed(user: User, request: CheckpointRequest): Boolean = {
     val editor = getViewer(request.checkpoint).editor
     isComputed(editor)
@@ -355,10 +356,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val attributes = (editor.vertexAttributes ++ editor.edgeAttributes).values
     val segmentations = editor.viewer.sortedSegmentations
 
-    if (scalars.exists(uncomputed)) return false
-    else if (attributes.exists(uncomputed)) return false
-    else if (segmentations.map(_.editor).exists(isComputed)) return false
-    else return true
+    if (scalars.exists(isUncomputed)) false
+    else {
+      if (attributes.exists(isUncomputed)) false
+      else {
+        if (segmentations.map(_.editor).exists(isComputed)) false
+        else true
+      }
+    }
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {
