@@ -34,18 +34,8 @@ parser.add_argument(
     default=3)
 
 
-def shut_down_instances(cluster, db):
-  print('Terminate instances? [y/n] ', end='')
-  choice = input().lower()
-  if choice != 'y':
-    print('''Please don't forget to terminate the instances!''')
-    return
-  cluster.terminate()
-  db.terminate()
-
-
 def main(args):
-  # Create EMR cluster and MySQL database in RDS.
+  # Create an EMR cluster and a MySQL database in RDS.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
       ec2_key_name=args.ec2_key_name)
@@ -78,7 +68,6 @@ def main(args):
   start_tests(cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
   process_output(cluster)
-  # TODO: shut down cluster here
   shut_down_instances(cluster, mysql_instance)
 
 
@@ -119,7 +108,7 @@ def start_or_reset_ecosystem(cluster, version):
     NUM_EXECUTORS: {num_executors!s}
     EXECUTOR_MEMORY: 18g
     NUM_CORES_PER_EXECUTOR: 8
-'''.format(num_executors=args.emr_instance_count)
+'''.format(num_executors=args.emr_instance_count - 1)
 
   res = cluster.ssh('''
     cd /mnt/lynx-{version!s}/lynx
@@ -154,6 +143,7 @@ def start_or_reset_ecosystem(cluster, version):
 
 
 def start_tests(cluster, jdbc_url):
+  '''Start running the tests in the background.'''
   cluster.ssh('''
     cat >/home/hadoop/run_test.sh <<EOF
       docker exec lynx_luigi_worker_1 luigi --module test_tasks.jdbc JDBCTest --jdbc-url '{jdbc_url!s}'
@@ -167,6 +157,11 @@ EOF
 
 
 def process_output(cluster):
+  '''Periodically connects to the master and downloads and prints
+  the output log of the running experiment. Also monitors a status
+  file at the master, and quits the loop in case of done status.
+  It would be simpler to have a continuous ssh connection to the
+  master, but that breaks if the Internet connection flakes.'''
   output_lines_seen = 0
   status_is_done = False
   while not status_is_done:
@@ -188,6 +183,16 @@ def process_output(cluster):
       print(output_results, end='')
       output_lines_seen += output_results.count('\n')
     time.sleep(5)
+
+
+def shut_down_instances(cluster, db):
+  print('Terminate instances? [y/N] ', end='')
+  choice = input().lower()
+  if choice != 'y':
+    print('''Please don't forget to terminate the instances!''')
+    return
+  cluster.terminate()
+  db.terminate()
 
 
 if __name__ == '__main__':
