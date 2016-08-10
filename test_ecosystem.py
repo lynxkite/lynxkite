@@ -105,6 +105,11 @@ def start_or_reset_ecosystem(cluster, version):
       hadoop fs -rm -r /user/hadoop/lynxkite_data
       sudo rm -Rf ./lynxkite_metadata/*
       ./reload_luigi_tasks.sh
+
+      export VERSION=$(cat version)
+      # We need to restart the deamon to have a clean state.
+      docker-compose -f docker-compose-services.yml kill luigi_daemon
+      docker-compose -f docker-compose-services.yml up -d luigi_daemon
     else
       ./start.sh
     fi
