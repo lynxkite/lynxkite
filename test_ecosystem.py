@@ -29,6 +29,9 @@ parser.add_argument(
 parser.add_argument(
     '--ec2_key_name',
     default='lynx-cli')
+parser.add_argument(
+    '--emr_instance_count',
+    default=3)
 
 
 def shut_down_instances(cluster, db):
@@ -46,7 +49,9 @@ def main(args):
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
       ec2_key_name=args.ec2_key_name)
-  cluster = lib.create_or_connect_to_emr_cluster(name=args.cluster_name)
+  cluster = lib.create_or_connect_to_emr_cluster(
+      name=args.cluster_name,
+      instance_count=args.emr_instance_count)
   mysql_instance = lib.create_or_connect_to_rds_instance(
       name=args.cluster_name + '-mysql')
   # Wait for startup of both.
@@ -107,6 +112,15 @@ def install_docker_and_lynx(cluster, version):
 
 
 def start_or_reset_ecosystem(cluster, version):
+  kite_config = '''
+    KITE_INSTANCE: ecosystem-test
+    KITE_DATA_DIR: hdfs://\$HOSTNAME:8020/user/\$USER/lynxkite_data/
+    KITE_MASTER_MEMORY_MB: 8000
+    NUM_EXECUTORS: {num_executors!s}
+    EXECUTOR_MEMORY: 18g
+    NUM_CORES_PER_EXECUTOR: 8
+'''.format(num_executors=args.emr_instance_count)
+
   res = cluster.ssh('''
     cd /mnt/lynx-{version!s}/lynx
     # Start ecosystem.
@@ -121,6 +135,9 @@ def start_or_reset_ecosystem(cluster, version):
       docker-compose -f docker-compose-services.yml kill luigi_daemon
       docker-compose -f docker-compose-services.yml up -d luigi_daemon
     else
+      # Update configuration:
+      sed -i.bak '/Please configure/q' docker-compose-lynxkite.yml
+      cat >>docker-compose-lynxkite.yml <<EOF{kite_config!s}EOF
       ./start.sh
     fi
 
@@ -130,7 +147,9 @@ def start_or_reset_ecosystem(cluster, version):
     while [[ $(docker exec lynx_luigi_worker_1 cat /tasks_data/smoke_test_marker.txt) != "done" ]]; do
       docker exec lynx_luigi_worker_1 luigi --module test_tasks.smoke_test SmokeTest 2>/dev/null
       sleep 1
-    done'''.format(version=args.lynx_version))
+    done'''.format(
+      version=args.lynx_version,
+      kite_config=kite_config))
 
 
 def start_tests(cluster, jdbc_url):
