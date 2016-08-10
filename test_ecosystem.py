@@ -146,7 +146,7 @@ def start_tests(cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh('''
     cat >/home/hadoop/run_test.sh <<EOF
-      docker exec lynx_luigi_worker_1 luigi --module test_tasks.jdbc JDBCTest --jdbc-url '{jdbc_url!s}'
+      docker exec lynx_luigi_worker_1 luigi --module test_tasks.jdbc JDBCTestAll --jdbc-url '{jdbc_url!s}'
       echo 'done' >/home/hadoop/test_status.txt
     echo
 EOF
