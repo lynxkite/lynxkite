@@ -72,7 +72,8 @@ class EMRLib:
           return
       time.sleep(15)
 
-  def create_or_connect_to_emr_cluster(self, name):
+  def create_or_connect_to_emr_cluster(
+          self, name, instance_count=2):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -85,9 +86,9 @@ class EMRLib:
         Name=name,
         ReleaseLabel="emr-4.7.2",
         Instances={
-            'MasterInstanceType': 'm3.xlarge',
-            'SlaveInstanceType': 'm3.xlarge',
-            'InstanceCount': 2,
+            'MasterInstanceType': 'm3.2xlarge',
+            'SlaveInstanceType': 'm3.2xlarge',
+            'InstanceCount': instance_count,
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True
         },
@@ -146,9 +147,9 @@ class RDSInstance:
     return desc is not None
 
   def terminate(self):
-   self.client.delete_db_instance(
-      DBInstanceIdentifier=self.name,
-      SkipFinalSnapshot=True)
+    self.client.delete_db_instance(
+        DBInstanceIdentifier=self.name,
+        SkipFinalSnapshot=True)
 
 
 class EMRCluster:
