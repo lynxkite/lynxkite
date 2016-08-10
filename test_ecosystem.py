@@ -31,6 +31,16 @@ parser.add_argument(
     default='lynx-cli')
 
 
+def shut_down_instances(cluster, db):
+  print('Terminate instances? [y/n] ', end='')
+  choice = input().lower()
+  if choice != 'y':
+    print('''Please don't forget to terminate the instances!''')
+    return
+  cluster.terminate()
+  db.terminate()
+
+
 def main(args):
   # Create EMR cluster and MySQL database in RDS.
   lib = EMRLib(
@@ -64,7 +74,7 @@ def main(args):
   print('Tests are now running in the background. Waiting for results.')
   process_output(cluster)
   # TODO: shut down cluster here
-  print("Please don't forget to shut down the cluster!")
+  shut_down_instances(cluster, mysql_instance)
 
 
 def install_docker_and_lynx(cluster, version):
