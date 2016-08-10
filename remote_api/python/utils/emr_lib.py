@@ -145,6 +145,11 @@ class RDSInstance:
     desc = self.get_description(self.client, self.name)
     return desc is not None
 
+  def terminate(self):
+   self.client.delete_db_instance(
+      DBInstanceIdentifier=self.name,
+      SkipFinalSnapshot=True)
+
 
 class EMRCluster:
   '''Represents a connection to an EMR cluster'''
@@ -213,3 +218,7 @@ class EMRCluster:
             src,
             'hadoop@' + self.master() + ':' + dst
         ])
+
+  def terminate(self):
+    self.emr_client.terminate_job_flows(
+        JobFlowIds=[self.id])
