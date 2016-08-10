@@ -19,7 +19,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='1.9.0',
+    default='1.9.0-hotfix1',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
@@ -76,6 +76,10 @@ def install_docker_and_lynx(cluster, version):
       # Not yet installed.
       ./download-lynx-{version!s}.sh
       tar xfz lynx-{version!s}.tgz
+      # Temprary fix over 1.9.0-hotfix1
+      pushd lynx-{version!s}/lynx
+      chmod a+x *.sh
+      popd
     fi
 
     cd lynx-{version!s}
