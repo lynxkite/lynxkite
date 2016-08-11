@@ -43,10 +43,10 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
     val (simpleEdges, doubledEdges) =
       if (needsBothDirections) {
         val dE = filteredEdges.intersection(filteredEdges.map { case (src, dst) => (dst, src) })
-        val sE = dE.map { case (src, dst) => (src min dst, dst max src) }.distinct()
+        val sE = dE.map(sortTuple).distinct()
         (sE, dE)
       } else {
-        val sE = filteredEdges.map { case (src, dst) => (src min dst, dst max src) }.distinct()
+        val sE = filteredEdges.map(sortTuple).distinct()
         val dE = sE.flatMap { case (src, dst) => List((src, dst), (dst, src)) }
         (sE, dE)
       }
@@ -63,7 +63,7 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
     val triangleList = edgesWithNeighbours.flatMap {
       case ((src, dst), (nSrc: Seq[ID], nDst: Seq[ID])) => {
         val collector = mutable.ArrayBuffer[List[ID]]()
-        CheckNeighbours(
+        checkNeighbours(
           src,
           dst,
           nSrc.filter(v => v < src && v < dst),
@@ -81,7 +81,7 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
     }.randomNumbered(outputPartitioner))
   }
 
-  def CheckNeighbours(src: ID,
+  def checkNeighbours(src: ID,
                       dst: ID,
                       nSrc: Seq[ID],
                       nDst: Seq[ID],
@@ -89,5 +89,10 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
     for (commonNeighbour <- nSrc.intersect(nDst)) {
       triangleCollector += List(src, dst, commonNeighbour)
     }
+  }
+
+  def sortTuple(tuple: Tuple2[ID, ID]) = {
+    if (tuple._1 > tuple._2) tuple.swap
+    else tuple
   }
 }
