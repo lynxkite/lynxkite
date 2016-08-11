@@ -52,11 +52,15 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
       }
 
     // construct the adjacencyArray, and join it on the edge set
-    val adjacencyArray = doubledEdges.sort(outputPartitioner).groupBySortedKey(outputPartitioner)
+    val adjacencyArray = doubledEdges
+      .sort(outputPartitioner)
+      .groupBySortedKey(outputPartitioner)
     val edgesWithNeighbours = simpleEdges
-      .sort(outputPartitioner).sortedJoin(adjacencyArray)
+      .sort(outputPartitioner)
+      .sortedJoin(adjacencyArray)
       .map { case (src, (dst, nSrc)) => (dst, (src, nSrc)) }
-      .sort(outputPartitioner).sortedJoin(adjacencyArray)
+      .sort(outputPartitioner)
+      .sortedJoin(adjacencyArray)
       .map { case (dst, ((src, nSrc), nDst)) => ((src, dst), (nSrc, nDst)) }
 
     // collect triangles
