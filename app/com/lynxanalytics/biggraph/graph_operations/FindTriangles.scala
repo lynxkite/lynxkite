@@ -35,7 +35,7 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
 
     // remove loop- and parallel edges, keep non-parallel multiple edges
     val filteredEdges = inputs.es.rdd.filter { case (_, Edge(src, dst)) => src != dst }
-      .map { case (_, Edge(src, dst)) => (src, dst) }.sort(outputPartitioner).distinctByKey()
+      .map { case (_, Edge(src, dst)) => (src, dst) }.distinct()
 
     // now apply the needsBothDirections constraint
     // simpleEdges - simple graph, the edges we will actually work on
@@ -43,10 +43,10 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
     val (simpleEdges, doubledEdges) =
       if (needsBothDirections) {
         val dE = filteredEdges.intersection(filteredEdges.map { case (src, dst) => (dst, src) })
-        val sE = dE.map(sortTuple).sort(outputPartitioner).distinctByKey()
+        val sE = dE.map(sortTuple).distinct()
         (sE, dE)
       } else {
-        val sE = filteredEdges.map(sortTuple).sort(outputPartitioner).distinctByKey()
+        val sE = filteredEdges.map(sortTuple)distinct()
         val dE = sE.flatMap { case (src, dst) => List((src, dst), (dst, src)) }
         (sE, dE)
       }
