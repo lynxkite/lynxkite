@@ -44,6 +44,19 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
+// Creating a second HiveContext fails. This only happens in tests, and this will be removed when
+// upgrading to Spark 2.0.0 since there will be no HiveContext anymore.
+object HiveContextHolder {
+  var hiveContext: HiveContext = null
+  def apply(sc: spark.SparkContext): HiveContext = {
+    if (hiveContext == null)
+      hiveContext = new HiveContext(sc)
+    assert(sc == hiveContext.sparkContext,
+      "HiveContext already exists for a different SparkContext.")
+    hiveContext
+  }
+}
+
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
@@ -55,7 +68,7 @@ class DataManager(sc: spark.SparkContext,
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = new SQLContext(sc)
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
-  lazy val masterHiveContext = new HiveContext(sc)
+  lazy val masterHiveContext = HiveContextHolder(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
