@@ -2,7 +2,8 @@
 
 Trains a logistic regression model using the graph's vertex attributes. The
 algorithm converges when the maximum number of iterations is reached or no
-coefficient has changed in the last iteration. The threshold is set to 0.5.
+coefficient has changed in the last iteration. The threshold of the model is
+chosen to maximize the https://en.wikipedia.org/wiki/F1_score[F-score].
 
 https://en.wikipedia.org/wiki/Logistic_regression[Logistic regression] measures
 the relationship between the categorical dependent variable and one or more

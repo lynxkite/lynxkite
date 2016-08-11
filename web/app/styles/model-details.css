@@ -14,3 +14,7 @@
 #model-details-parameters {
   padding-top: 10px;
 }
+
+.model-details-text {
+  font-family: "Andale Mono", AndaleMono, monospace;
+}

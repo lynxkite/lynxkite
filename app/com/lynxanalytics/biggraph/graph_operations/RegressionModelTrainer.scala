@@ -5,8 +5,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.ml
-import org.apache.spark.mllib.feature.StandardScalerModel
-import org.apache.spark.mllib.linalg.Vectors
 
 object RegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -50,6 +48,7 @@ case class RegressionModelTrainer(
     val rddArray = inputs.features.toArray.map(_.rdd)
     val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
     val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
+    assert(!scaledDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     val linearRegression = new ml.regression.LinearRegression()
       .setFeaturesCol("vector")
@@ -68,7 +67,7 @@ case class RegressionModelTrainer(
     }
     val model = linearRegression.fit(scaledDF)
     val predictions = model.transform(scaledDF)
-    val statistics: String = getStatistics(model, predictions)
+    val statistics: String = getStatistics(model, predictions, featureNames)
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
@@ -76,40 +75,41 @@ case class RegressionModelTrainer(
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      // The features and labels are standardized by the model. A dummy scaler is used here.
+      // The features and label are standardized by the model. 
       featureScaler = None,
       statistics = Some(statistics))
     )
   }
-
-  // Helper method to compute statistics where the training data is required.
+  // Helper method to compute more complex statistics.
   private def getStatistics(
     model: ml.regression.LinearRegressionModel,
-    predictions: DataFrame): String = {
+    predictions: DataFrame,
+    featureNames: List[String]): String = {
     val summary = model.summary
     val r2 = summary.r2
-    val MAPE = predictions.select("prediction", "label").map {
-      row =>
-        {
-          val prediction = row.getDouble(0)
-          val label = row.getDouble(1)
-          // Return an error of 100% if a zero division error occurs.
-          if (prediction == label) {
-            0.0
-          } else if (prediction == 0.0) {
-            1.0
-          } else {
-            math.abs(prediction / label - 1.0)
-          }
-        }
-    }.mean * 100.0
+    val MAPE = Model.getMAPE(predictions.select("prediction", "label"))
     // Only compute the t-values for methods with unbiased solvers (when the elastic 
     // net parameter equals to 0).
-    if (model.getElasticNetParam > 0.0) {
-      s"R-squared: $r2\nMAPE: $MAPE%"
-    } else {
-      val tValues = "(" + summary.tValues.mkString(", ") + ")"
-      s"R-squared: $r2\nMAPE: $MAPE%\nT-values: $tValues"
+    val coefficientsTable = {
+      val rowNames = featureNames.toArray :+ "intercept"
+      val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
+      if (model.getElasticNetParam > 0.0) {
+        Tabulator.getTable(
+          headers = Array("names", "estimates"),
+          rowNames = rowNames,
+          columnData = Array(coefficientsAndIntercept))
+      } else {
+        Tabulator.getTable(
+          headers = Array("names", "estimates", "T-values"),
+          rowNames = rowNames,
+          columnData = Array(coefficientsAndIntercept, summary.tValues))
+      }
     }
+    val table = Tabulator.getTable(
+      headers = Array("", ""),
+      rowNames = Array("R-squared:", "MAPE:"),
+      columnData = Array(Array(r2, MAPE))
+    )
+    s"coefficients: \n$coefficientsTable\n$table"
   }
 }
