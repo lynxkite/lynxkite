@@ -26,39 +26,35 @@ trait ModelImplementation {
 }
 
 // Helper classes to provide a common abstraction for various types of models.
-private class LinearRegressionModelImpl(
+private[biggraph] class LinearRegressionModelImpl(
     m: ml.regression.LinearRegressionModel,
     statistics: String) extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  def details: String = {
-    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\ncoefficients: $coefficients\n" + statistics
-  }
+  def details: String = statistics
 }
 
-private class LogisticRegressionModelImpl(
-    m: ml.classification.LogisticRegressionModel) extends ModelImplementation {
+private[biggraph] class LogisticRegressionModelImpl(
+    m: ml.classification.LogisticRegressionModel,
+    statistics: String) extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  def details: String = {
-    val coefficients = "(" + m.coefficients.toArray.mkString(", ") + ")"
-    s"intercept: ${m.intercept}\ncoefficients: $coefficients"
-  }
+  def details: String = statistics
+  def getThreshold: Double = m.getThreshold
 }
 
-private class ClusterModelImpl(
+private[biggraph] class ClusterModelImpl(
     m: ml.clustering.KMeansModel, statistics: String,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
-  // Transform the data with clustering model and append an additional probability column.   
+  // Transform the data with clustering model. 
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-  val scaledCenters = "(" + {
-    val unscaledCenters = m.clusterCenters
-    val transformingVector = featureScaler.std
-    val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
-    unscaledCenters.map(transformer.transform(_))
-  }.mkString(", ") + ")"
   def details: String = {
+    val scaledCenters = "(" + {
+      val unscaledCenters = m.clusterCenters
+      val transformingVector = featureScaler.std
+      val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
+      unscaledCenters.map(transformer.transform(_))
+    }.mkString(", ") + ")"
     s"cluster centers: ${scaledCenters}\n" + statistics
   }
 }
@@ -127,7 +123,7 @@ case class Model(
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
-        new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path))
+        new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get, featureScaler.get)
     }
@@ -234,6 +230,48 @@ object Model extends FromJson[Model] {
         }
     }
     fullArrays.mapValues(a => new mllib.linalg.DenseVector(a): mllib.linalg.Vector)
+  }
+
+  def getMAPE(predictionAndLabels: spark.sql.DataFrame): Double = {
+    predictionAndLabels.map {
+      row =>
+        {
+          val prediction = row.getDouble(0)
+          val label = row.getDouble(1)
+          if (prediction == label) {
+            0.0
+            // Return an error of 100% if a zero division error occurs.
+          } else if (prediction == 0.0) {
+            1.0
+          } else {
+            math.abs(prediction / label - 1.0)
+          }
+        }
+    }.mean * 100.0
+  }
+}
+
+// Helper method to print statistical tables of the models.
+object Tabulator {
+  def getTable(
+    headers: Array[String],
+    rowNames: Array[String],
+    columnData: Array[Array[Double]]): String = {
+    assert(rowNames.size == columnData(0).size)
+    val tails = rowNames +: columnData.map(_.map(x => f"$x%1.6f"))
+    assert(headers.size == tails.size)
+    format(headers +: tails.transpose)
+  }
+
+  def format(table: Array[Array[String]]): String = {
+    val colSizes = table.transpose.map(_.map(_.length).max)
+    val dataAndSizes = table.map(_.zip(colSizes))
+    dataAndSizes.map {
+      row =>
+        row.map {
+          case (data, size) => ("%" + size + "s").format(data)
+        }.mkString("  ")
+    }.mkString("\n")
   }
 }
 

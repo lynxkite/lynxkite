@@ -144,6 +144,7 @@ object RemoteAPIServer extends JsonServer {
   def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
+  def isComputed = jsonPost(c.isComputed)
   def computeProject = jsonPost(c.computeProject)
 }
 
@@ -337,6 +338,32 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val table = TableImport.importDataFrameAsync(df)
     val cp = table.saveAsCheckpoint("Created from a view via the Remote API.")
     CheckpointResponse(cp)
+  }
+
+  private def isUncomputed(entity: TypedEntity[_]): Boolean = {
+    val progress = dataManager.computeProgress(entity)
+    progress < 1.0
+  }
+
+  // Checks Whether all the scalars, attributes and segmentations of the project are already computed.
+  def isComputed(user: User, request: CheckpointRequest): Boolean = {
+    val editor = getViewer(request.checkpoint).editor
+    isComputed(editor)
+  }
+
+  private def isComputed(editor: ProjectEditor): Boolean = {
+    val scalars = editor.scalars.iterator.map { case (name, scalar) => scalar }
+    val attributes = (editor.vertexAttributes ++ editor.edgeAttributes).values
+    val segmentations = editor.viewer.sortedSegmentations
+
+    if (scalars.exists(isUncomputed)) false
+    else {
+      if (attributes.exists(isUncomputed)) false
+      else {
+        if (segmentations.map(_.editor).exists(isComputed)) false
+        else true
+      }
+    }
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {

@@ -234,6 +234,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   abstract class StructureOperation(t: String, c: Context)
     extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
 
+  abstract class MachineLearningOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "knight"))
+
   import OperationParams._
 
   register("Discard vertices", new StructureOperation(_, _) {
@@ -1010,7 +1013,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
+  register("Reduce vertex attributes to two dimensions", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
       Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
@@ -1481,7 +1484,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
+  register("Predict vertex attribute", new MachineLearningOperation(_, _) {
     def parameters = List(
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
@@ -1512,7 +1515,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train linear regression model", new VertexAttributesOperation(_, _) {
+  register("Train linear regression model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = vertexAttributes[Double]),
@@ -1546,7 +1549,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train a logistic regression model", new VertexAttributesOperation(_, _) {
+  register("Train a logistic regression model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = vertexAttributes[Double]),
@@ -1574,7 +1577,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train a k-means clustering model", new VertexAttributesOperation(_, _) {
+  register("Train a k-means clustering model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
@@ -1607,7 +1610,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict from model", new VertexAttributesOperation(_, _) {
+  register("Predict from model", new MachineLearningOperation(_, _) {
     val models = project.viewer.models.filterNot(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the predictions"),
@@ -1620,7 +1623,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue = project.scalars((p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1628,11 +1632,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.PredictFromModel(features.size)
         op(op.model, modelValue)(op.features, features).result.prediction
       }
-      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelValue.name}")
+      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelName}")
     }
   })
 
-  register("Classify vertices with a model", new VertexAttributesOperation(_, _) {
+  register("Classify vertices with a model", new MachineLearningOperation(_, _) {
     val models = project.viewer.models.filter(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the classifications"),
@@ -1645,8 +1649,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue: Scalar[model.Model] = project.scalars(
-        (p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1656,11 +1660,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
-        s"classification according to ${modelValue.name}")
+        s"classification according to ${modelName}")
       if (generatesProbability) {
         val probability = result.probability
         project.newVertexAttribute(name + "_probability", probability,
-          s"probability according to ${modelValue.name}")
+          s"probability according to ${modelName}")
       }
     }
   })
@@ -3179,7 +3183,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Split to train and test set", new VertexAttributesOperation(_, _) {
+  register("Split to train and test set", new MachineLearningOperation(_, _) {
     override def parameters = List(
       Choice("source", "Source attribute",
         options = vertexAttributes),
