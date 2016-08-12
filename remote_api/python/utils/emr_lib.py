@@ -1,5 +1,7 @@
-# Utility API for starting EMR and RDS instances, and manipulating them with
-# ssh and rsync.
+'''
+Utilities for starting EMR and RDS instances, and manipulating them with
+ssh and rsync.
+'''
 
 import boto3
 import botocore
@@ -31,6 +33,7 @@ def call_cmd(cmd_list, input=None, print_output=True):
     proc.stdin.write(input)
   proc.stdin.close()
   result = ''
+  # Print stdout of the child process line by line as it is generated.
   while True:
     line = proc.stdout.readline()
     result += line
