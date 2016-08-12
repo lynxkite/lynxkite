@@ -58,12 +58,12 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
       case t: ExceptionInInitializerError =>
         val exceptionMessage = Option(t.getCause).map(_.toString.replace('\n', ' ')).getOrElse(t.toString)
         notifyStarterScript("failed: " + exceptionMessage)
-        log.error(exceptionMessage)
+        log.error("Startup failed", t)
         System.exit(1)
       case t: Throwable =>
         val exceptionMessage = Option(t.getMessage).map(_.replace('\n', ' ')).getOrElse(t.toString)
         notifyStarterScript("failed: " + exceptionMessage)
-        log.error(exceptionMessage)
+        log.error("Startup failed", t)
         System.exit(1)
     }
     notifyStarterScript("ready")
