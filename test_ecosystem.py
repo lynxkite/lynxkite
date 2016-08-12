@@ -24,7 +24,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='1.9.0-hotfix1',
+    default='1.9.1',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
@@ -218,6 +218,7 @@ def save_output(output):
   with open(args.results_dir + '/result.txt', 'w') as f:
     f.write('\n'.join(output_lines))
     f.write('\n')
+
 
 def prompt_delete():
   if args.rm:
