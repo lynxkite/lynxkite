@@ -5,6 +5,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util._
 
 object ConcatenateBundlesMulti extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -55,9 +56,8 @@ case class ConcatenateBundlesMulti() extends TypedMetaGraphOp[Input, Output] {
 
     val partitionerAB = edgesAB.partitioner.get
     val partitionerBC = edgesBC.partitioner.get
-    val partitionerAC =
-      if (partitionerAB.numPartitions > partitionerBC.numPartitions) partitionerAB
-      else partitionerBC
+    val partitionerAC = RDDUtils.maxPartitioner(partitionerAB, partitionerBC)
+
     val numberedAC = AC.randomNumbered(partitionerAC) //(idAC,(Edge,(idAB,idBC)))
 
     val resAC = numberedAC.mapValues { case (edge, (_, _)) => edge }

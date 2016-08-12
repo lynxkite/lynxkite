@@ -1759,8 +1759,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-
-
   private def segmentationSizesSquareSum(seg: SegmentationEditor, parent: ProjectEditor)(
     implicit manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
@@ -3209,14 +3207,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       source: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
       val op = graph_operations.PartitionAttribute[T]()
       op(op.attr, source)(op.role, roles).result
-    }
-  })
-
-  register("Triadic closure", new StructureOperation(_, _) {
-    def parameters = List()
-    def enabled = hasVertexSet && hasEdgeBundle
-    def apply(params: Map[String,String]) = {
-
     }
   })
 
