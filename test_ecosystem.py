@@ -98,7 +98,7 @@ def install_docker_and_lynx(cluster, version):
       # Not yet installed.
       ./download-lynx-{version!s}.sh
       tar xfz lynx-{version!s}.tgz
-      # Temprary fix over 1.9.0-hotfix1
+      # Temporary fix over 1.9.0-hotfix1
       pushd lynx-{version!s}/lynx
       chmod a+x *.sh
       popd
