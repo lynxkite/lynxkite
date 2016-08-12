@@ -20,7 +20,7 @@ class TestValkyrie(unittest.TestCase):
         SN(datetime=datetime.datetime(2016, 8, 1, 15, 32), path='old, long ttl [ttl=7d]'),
         SN(datetime=datetime.datetime(2016, 8, 12, 9, 22), path='new, long ttl [ttl=7d]'),
         SN(datetime=datetime.datetime(2016, 8, 12, 9, 22), path='new, short ttl [ttl=1h]'),
-        ]
+    ]
     v = valkyrie.ValkyrieCleanup(date=datetime.datetime(2016, 8, 12, 12, 5, 0))
     output = mock.MagicMock()
     with mock.patch.multiple(v, output=mock.DEFAULT, lk=mock.DEFAULT) as mocks:

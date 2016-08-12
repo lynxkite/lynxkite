@@ -4,6 +4,7 @@ import lynx.luigi
 from unittest import mock
 import types
 
+
 class TestTask(lynx.luigi.SCPTask):
 
   def destination(self): return 'dsthost', 'dstpath'
