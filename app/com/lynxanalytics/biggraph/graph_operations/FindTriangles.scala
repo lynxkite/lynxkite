@@ -46,7 +46,7 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
         val sE = dE.map(sortTuple).distinct()
         (sE, dE)
       } else {
-        val sE = filteredEdges.map(sortTuple)distinct()
+        val sE = filteredEdges.map(sortTuple).distinct()
         val dE = sE.flatMap { case (src, dst) => List((src, dst), (dst, src)) }
         (sE, dE)
       }
