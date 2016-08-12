@@ -46,6 +46,9 @@ parser.add_argument(
 parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/')
+parser.add_argument(
+    '--rm',
+    help='''Delete the cluster after completion.''')
 
 
 def main(args):
@@ -216,15 +219,21 @@ def save_output(output):
     f.write('\n'.join(output_lines))
     f.write('\n')
 
-
-def shut_down_instances(cluster, db):
+def prompt_delete():
+  if args.rm:
+    return True
   print('Terminate instances? [y/N] ', end='')
   choice = input().lower()
   if choice != 'y':
     print('''Please don't forget to terminate the instances!''')
     return
-  cluster.terminate()
-  db.terminate()
+
+
+def shut_down_instances(cluster, db):
+  if prompt_delete():
+    print('Shutting down instances.')
+    cluster.terminate()
+    db.terminate()
 
 
 if __name__ == '__main__':
