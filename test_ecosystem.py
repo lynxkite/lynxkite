@@ -146,7 +146,7 @@ def start_or_reset_ecosystem(cluster, version):
     # Wait for ecosystem startup completion.
     # (We keep retrying a dummy task until it succeeds.)
     docker exec lynx_luigi_worker_1 rm -f /tasks_data/smoke_test_marker.txt
-    docker exec lynx_luigi_worker_1 rm -f /tmp/luigi/*
+    docker exec lynx_luigi_worker_1 rm -Rf /tmp/luigi/
     while [[ $(docker exec lynx_luigi_worker_1 cat /tasks_data/smoke_test_marker.txt) != "done" ]]; do
       docker exec lynx_luigi_worker_1 luigi --module test_tasks.smoke_test SmokeTest 2>/dev/null
       sleep 1
