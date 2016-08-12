@@ -1,4 +1,9 @@
 #!/usr/bin/python3
+'''
+Command-line utility to spin up an EMR cluster with an RDS
+database, and run Luigi task based performance tests on it.
+'''
+#!/usr/bin/python3
 
 import argparse
 import boto3
