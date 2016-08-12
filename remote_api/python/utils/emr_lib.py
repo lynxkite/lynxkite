@@ -108,7 +108,7 @@ class EMRLib:
           MasterUsername='root',
           MasterUserPassword='rootroot',
           DBInstanceClass='db.m3.2xlarge',
-          AllocatedStorage=20)
+          AllocatedStorage=50)
     else:
       print('Reusing existing DB instance')
     return RDSInstance(name, self)
