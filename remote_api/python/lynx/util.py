@@ -64,7 +64,8 @@ class HDFS:
     # to escape those. This is absolutely necessary for ``[ttl=...]`` but is also useful for not
     # deleting a bunch of files in case a file name contains a ``*``.
     escaped = (
-        path.replace('[', '\\[').replace(']', '\\]')
+        path.replace('\\', '\\\\')
+        .replace('[', '\\[').replace(']', '\\]')
         .replace('*', '\\*').replace('?', '\\?')
         .replace('{', '\\{').replace('}', '\\}'))
     cmd = ['hadoop', 'fs', '-rm', '-r', escaped]
