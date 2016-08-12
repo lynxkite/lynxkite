@@ -199,6 +199,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.sql.catalyst.trees.Origin])
     kryo.register(org.apache.spark.sql.catalyst.expressions.Ascending.getClass)
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.Literal])
+    // More classes for SPARK-6497.
+    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$1])
+    kryo.register(classOf[Object])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
