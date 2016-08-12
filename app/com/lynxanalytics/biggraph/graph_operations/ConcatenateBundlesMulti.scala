@@ -1,5 +1,5 @@
 // For n A->B edges and m B->C edges, creates nm new edge A->C.
-// Also creates two functions:  new_AC->old_AB and newAC -> old_BC
+// Also creates two functions:  new_AC->old_AB and new_AC -> old_BC
 
 package com.lynxanalytics.biggraph.graph_operations
 
