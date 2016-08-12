@@ -24,6 +24,12 @@ parser.add_argument(
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
+    '--task_module',
+    default='test_tasks.jdbc')
+parser.add_argument(
+    '--task',
+    default='JDBCTest1k')
+parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
 parser.add_argument(
@@ -146,14 +152,17 @@ def start_tests(cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh('''
     cat >/home/hadoop/run_test.sh <<EOF
-      docker exec lynx_luigi_worker_1 luigi --module test_tasks.jdbc JDBCTestAll --jdbc-url '{jdbc_url!s}'
+      docker exec lynx_luigi_worker_1 luigi --module {luigi_module!s} {luigi_task!s} --jdbc-url '{jdbc_url!s}'
       echo 'done' >/home/hadoop/test_status.txt
     echo
 EOF
     chmod a+x /home/hadoop/run_test.sh
     rm -f /home/hadoop/test_status.txt
     nohup /home/hadoop/run_test.sh >/home/hadoop/test_results.txt 2>&1 &
-  '''.format(jdbc_url=jdbc_url))
+  '''.format(
+      jdbc_url=jdbc_url,
+      luigi_module=args.task_module,
+      luigi_task=args.task))
 
 
 def process_output(cluster):
