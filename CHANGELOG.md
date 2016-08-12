@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.9.1
+
  - Fix startup script to support RHEL 6.
  - A new machine learning operations category is created and added to the toolbox.
  - SQL-related bug fixes.
