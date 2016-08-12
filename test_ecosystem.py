@@ -38,6 +38,9 @@ parser.add_argument(
 parser.add_argument(
     '--emr_instance_count',
     default=3)
+parser.add_argument(
+    '--results_dir',
+    default='./ecosystem/tests/results/')
 
 
 def main(args):
@@ -73,7 +76,8 @@ def main(args):
   start_or_reset_ecosystem(cluster, args.lynx_version)
   start_tests(cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
-  process_output(cluster)
+  output = fetch_output(cluster)
+  save_output(output)
   shut_down_instances(cluster, mysql_instance)
 
 
@@ -165,12 +169,13 @@ EOF
       luigi_task=args.task))
 
 
-def process_output(cluster):
+def fetch_output(cluster):
   '''Periodically connects to the master and downloads and prints
   the output log of the running experiment. Also monitors a status
   file at the master, and quits the loop in case of done status.
   It would be simpler to have a continuous ssh connection to the
   master, but that breaks if the Internet connection flakes.'''
+  all_output = ''
   output_lines_seen = 0
   status_is_done = False
   while not status_is_done:
@@ -190,8 +195,26 @@ def process_output(cluster):
       # We only use the output of ssh if it was successful. Otherwise we'll
       # try again with the same offset in the next round.
       print(output_results, end='')
+      all_output += output_results
       output_lines_seen += output_results.count('\n')
     time.sleep(5)
+  return all_output
+
+
+def save_output(output):
+  if not args.results_dir:
+    return
+
+  output_lines = []
+  for line in output.split('\n'):
+    if line.startswith('[time='):
+      output_lines.append(line)
+
+  if not os.path.exists(args.results_dir):
+    os.makedirs(args.results_dir)
+  with open(args.results_dir + '/result.txt', 'w') as f:
+    f.write('\n'.join(output_lines))
+    f.write('\n')
 
 
 def shut_down_instances(cluster, db):
