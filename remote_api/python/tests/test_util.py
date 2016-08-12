@@ -68,6 +68,10 @@ Found 3 items
   def test_rm(self, check_call):
     ls = util.HDFS.rm('my dir')
     check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', 'my dir'])
+    # Check that special characters are escaped.
+    check_call.reset_mock()
+    ls = util.HDFS.rm('my \\ dir [ttl=7d]')
+    check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', 'my \\\\ dir \\[ttl=7d\\]'])
 
 
 if __name__ == '__main__':
