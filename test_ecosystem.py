@@ -48,6 +48,7 @@ parser.add_argument(
     default='./ecosystem/tests/results/')
 parser.add_argument(
     '--rm',
+    action='store_true',
     help='''Delete the cluster after completion.''')
 
 
