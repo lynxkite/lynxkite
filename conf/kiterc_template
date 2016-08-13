@@ -94,7 +94,7 @@ export KITE_LOCAL_TMP=/tmp
 # The LynxKite extra JARS is a colon (:) delimited list of JAR files that should be loaded on the
 # LynxKite CLASSPATH. (It will be loaded on the master and distributed to the workers.)
 
-# - Wildcards are somewhat supported, you can use /dir/*, but you cannot use /dir/*.jar.
+# - Some wildcards are supported, you can use /dir/*, but you cannot use /dir/*.jar.
 # - Filenames have to be absolute paths.
 
 # One typical use case is to configure additional JDBC drivers. To do that, all you need to do is to
