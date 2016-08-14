@@ -50,7 +50,7 @@ object Gates {
     // Plain toString on case classes is enough to uniquely identify vectors.
     private[neural] def id = this.toString
     private[neural] def forward(ctx: ForwardContext): Output
-    private[neural] def backward(ctx: BackwardContext): Unit
+    private[neural] def backward(ctx: BackwardContext, gradient: Output): Unit
   }
 
   trait Vector extends Gate[GraphData] {
@@ -82,42 +82,51 @@ object Gates {
 
   case class MatrixVector(v: Vector, w: M) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
-    def backward(ctx: BackwardContext) = {
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
       val wt = ctx(w).t
-      ctx.add(this, v)(perVertex(gradient => wt * gradient))
-      def sum(fn: GraphData => Graph[DoubleMatrix]): GraphData => DoubleMatrix = {
-        gd => fn(gd).values.reduce(_ + _)
-      }
-      ctx.add(this, w)(sum(withData(ctx(v))((gradient, data) => gradient * data.t)))
+      ctx.add(v, gradient.mapValues(g => wt * g))
+      val vd = ctx(v)
+      ctx.add(w, gradient.map { case (id, g) => g * vd(id).t }.reduce(_ + _))
     }
   }
   case class MultiplyScalar(v: Vector, s: Double) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
-    def backward(ctx: BackwardContext) =
-      ctx.add(this, v)(perVertex(gradient => gradient / s))
+    def backward(ctx: BackwardContext, gradient: GraphData) =
+      ctx.add(v, gradient.mapValues(g => g / s))
   }
   case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
-    def backward(ctx: BackwardContext) = {
-      ctx.add(this, v1)(withData(ctx(v2))((gradient, data) => data :* gradient))
-      ctx.add(this, v2)(withData(ctx(v1))((gradient, data) => data :* gradient))
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
+      val v1d = ctx(v1)
+      val v2d = ctx(v2)
+      ctx.add(v1, gradient.map { case (id, g) => id -> (v2d(id) :* g) })
+      ctx.add(v2, gradient.map { case (id, g) => id -> (v1d(id) :* g) })
     }
   }
   case class AddElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 + v2 }
-    def backward(ctx: BackwardContext) = {
-      ctx.add(this, v1)(perVertex(identity))
-      ctx.add(this, v2)(perVertex(identity))
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
+      ctx.add(v1, gradient)
+      ctx.add(v2, gradient)
     }
   }
   case class AddWeights(v: Vector, w: V) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) + _)
-    def backward(ctx: BackwardContext) = ctx.add(this, v)(perVertex(identity))
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
+      ctx.add(v, gradient)
+      ctx.add(w, gradient.values.reduce(_ + _))
+    }
   }
   case class MatrixVectors(vs: Vectors, w: M) extends Vectors {
     def forward(ctx: ForwardContext) = ctx(vs).mapValues(_.map(ctx(w) * _))
-    def backward(ctx: BackwardContext) =
-      ctx.add(this, vs)(perVertex(gradient => ctx(w).t * gradient))
+    def backward(ctx: BackwardContext, gradients: GraphVectors) = {
+      val wt = ctx(w).t
+      ctx.add(vs, gradients.mapValues(_.map(g => wt * g)))
+      val vsd = ctx(vs)
+      ctx.add(w, gradients.flatMap {
+        case (id, gs) => gs.zip(vsd(id)).map { case (g, d) => g * d.t }
+      }.reduce(_ + _))
+    }
   }
   case class Sum(vs: Vectors) extends Vector {
     def forward(ctx: ForwardContext) = ctx(vs).mapValues { vectors =>
@@ -125,30 +134,32 @@ object Gates {
       for (v <- vectors) sum += v
       sum
     }
-    def backward(ctx: BackwardContext) = ctx.add(this, vs) { gradients =>
-      val vectors = ctx(vs) // We need this to know the cardinality of vs.
-      vectors.map { case (id, vs) => id -> vs.map(_ => gradients(id)) }
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
+      val vsd = ctx(vs) // We need this to know the cardinality of vs.
+      ctx.add(vs, gradient.map { case (id, g) => id -> vsd(id).map(_ => g) })
     }
   }
   case class Neighbors() extends Vectors {
     def forward(ctx: ForwardContext) = ctx.neighbors
-    def backward(ctx: BackwardContext) = ctx.addNeighbors(this)
+    def backward(ctx: BackwardContext, gradients: GraphVectors) = ctx.addNeighbors(gradients)
   }
   case class Input(name: String) extends Vector {
     def forward(ctx: ForwardContext) = ctx.inputs(name)
-    def backward(ctx: BackwardContext) = ctx.addInput(this)
+    def backward(ctx: BackwardContext, gradient: GraphData) = {}
   }
   case class Sigmoid(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_))
-    def backward(ctx: BackwardContext) = ctx.add(this, v)(withData(ctx(this)) {
-      (gradient, data) => data :* (1.0 - data) :* gradient
-    })
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
+      val d = ctx(this)
+      ctx.add(v, gradient.map { case (id, g) => id -> (d(id) :* (1.0 - d(id)) :* g) })
+    }
   }
   case class Tanh(v: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_))
-    def backward(ctx: BackwardContext) = ctx.add(this, v)(withData(ctx(this)) {
-      (gradient, data) => (1.0 - (data :* data)) :* gradient
-    })
+    def backward(ctx: BackwardContext, gradient: GraphData) = {
+      val d = ctx(this)
+      ctx.add(v, gradient.map { case (id, g) => id -> ((1.0 - (d(id) :* d(id))) :* g) })
+    }
   }
 
   // Trained matrix of weights.
@@ -195,10 +206,9 @@ case class Network private (
     edges: CompactUndirectedGraph,
     values: GateValues,
     gradients: (String, GraphData)*): NetworkGradients = {
-    val grads = gradients.toMap
-    val ctx = BackwardContext(this, vertices, edges, values, grads)
-    for (g <- grads.keys) {
-      outputs(g).backward(ctx)
+    val ctx = BackwardContext(this, vertices, edges, values)
+    for ((id, g) <- gradients) {
+      outputs(id).backward(ctx, g)
     }
     ctx.gradients
   }
@@ -234,10 +244,10 @@ private case class ForwardContext(
     }.toMap
   }
 
-  def values(names: Map[String, Vector]) = GateValues(vectorCache, vectorsCache, names)
+  def values(names: Map[String, Vector]) = new GateValues(vectorCache, vectorsCache, names)
 }
 
-case class GateValues(
+class GateValues(
     vectorData: Iterable[(String, GraphData)],
     vectorsData: Iterable[(String, GraphVectors)],
     names: Map[String, Vector]) {
@@ -252,58 +262,52 @@ private case class BackwardContext(
     network: Network,
     vertices: Seq[ID],
     edges: CompactUndirectedGraph,
-    values: GateValues,
-    outputGradients: Map[String, GraphData]) {
-  type AnyFunc = Nothing => Any
-  // Earlier gate -> (later gate, backpropagation).
-  type GateGradientFunctions = Map[String, Map[String, (AnyFunc, Adder[_])]]
-  var gateGradientFunctions = new GateGradientFunctions()
-  var neighbors = collection.mutable.Set[String]()
-  var inputs = collection.mutable.Set[String]()
+    values: GateValues) {
+  val vectorGradients = collection.mutable.Map[String, GraphData]()
+  val vectorsGradients = collection.mutable.Map[String, GraphVectors]()
+  val trainedGradients = collection.mutable.Map[String, DoubleMatrix]()
+  var neighborGradients: GraphData = null
   def apply(v: Vector): GraphData = values(v)
   def apply(vs: Vectors): GraphVectors = values(vs)
   def apply(m: M): DoubleMatrix = network(m)
   def apply(v: V): DoubleVector = network(v)(::, 0)
 
-  // Registers a gradient function for a previous gate and collects the gradient functions from that
-  // gate too.
-  def add[T, Prev: Adder](gate: Gate[T], previous: Gate[Prev])(gradientFunc: T => Prev): Unit = {
-    gateGradientFunctions += previous.id ->
-      (gateGradientFunctions.getOrElse(previous.id, Map()) +
-        (gate.id, gradientFunc, implicitly[Adder[Prev]]))
-    previous.backward(this)
+  def add(v: Vector, gradient: GraphData): Unit = {
+    vectorGradients(v.id) =
+      vectorGradients.get(v.id).map(_ + gradient).getOrElse(gradient)
+  }
+  def add(vs: Vectors, gradients: GraphVectors): Unit = {
+    vectorsGradients(vs.id) =
+      vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
+  }
+  def add(m: M, gradient: DoubleMatrix): Unit = {
+    trainedGradients(m.name) =
+      trainedGradients.get(m.name).map(_ + gradient).getOrElse(gradient)
+  }
+  def add(v: V, gradient: DoubleVector): Unit = {
+    val mgrad = gradient.asDenseMatrix
+    trainedGradients(v.name) =
+      trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
   }
 
-  def addNeighbors(vs: Vectors): Unit = neighbors.add(vs.id)
-  def addInput(v: Vector): Unit = inputs.add(v.id)
-
-  // Partitions ggfs into two sets: those that have no inputs and those that do.
-  // The point is that we can calculate the gradients of those that have no inputs in ggfs.
-  def readyOrNot(ggfs: GateGradientFunctions): (GateGradientFunctions, GateGradientFunctions) = {
-    val inputs = ggfs.values.flatMap(_.keys).toSet
-    ggfs.partition { case (k, v) => !inputs.contains(k) }
+  def addNeighbors(gradients: GraphVectors): Unit = {
+    val ngrad: GraphData = gradients.flatMap {
+      case (id, gs) => edges.getNeighbors(id).zip(gs)
+    }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
+    if (neighborGradients == null) neighborGradients = ngrad
+    else neighborGradients = neighborGradients + ngrad
   }
 
-  @annotation.tailrec
-  private def readyGradients(
-    ggfs: GateGradientFunctions, gradients: Map[String, Any]): Map[String, Any] = {
-    val (ready, not) = readyOrNot(ggfs)
-    val newGradients = gradients + ready.mapValues { inputs =>
-      val adder = inputs.values.head._2
-      inputs.map { case (source, (fn, adder)) => fn(gradients(source)) }.reduce(adder.add)
-    }
-    if (not.isEmpty) newGradients
-    else readyGradients(not, newGradients)
-  }
-
-  def gradients: NetworkGradients = {
-    val gds = readyGradients(gateGradientFunctions, outputGradients)
-    println(gds)
-    null
-  }
+  def gradients = new NetworkGradients(
+    vectorGradients, vectorsGradients, trainedGradients, neighborGradients)
 }
 
-trait NetworkGradients {
-  def apply(name: String): GraphData
-  def neighbors: GraphData
+class NetworkGradients(
+    vectorGradients: Iterable[(String, GraphData)],
+    vectorsGradients: Iterable[(String, GraphVectors)],
+    trainedGradients: Iterable[(String, DoubleMatrix)],
+    neighborGradients: GraphData) {
+  val inputMap = vectorGradients.toMap
+  def apply(name: String): GraphData = inputMap(Gates.Input(name).id)
+  def neighbors = neighborGradients
 }
