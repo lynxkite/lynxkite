@@ -1,0 +1,6 @@
+autopep8
+awscli
+boto3
+luigi
+Sphinx
+sphinx-rtd-theme
