@@ -1,0 +1,8 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
+dst: {"labelType":"bucket","labels":["11","9","7","6","5","4","3","2","1","Other"],"sizes":[8275,10114,13002,15159,18188,22732,30318,45465,90919,1938284]}
+out_degree: {"labelType":"between","labels":["2.0","5.8","17.1","49.9","145.9","426.4","1246.2","3642.2","10644.6","31109.4","90919.0"],"sizes":[709,77913,18993,1714,455,145,48,17,6,2]}
+in_degree: {"labelType":"between","labels":["2.0","5.8","17.1","49.9","145.9","426.4","1246.2","3642.2","10644.6","31109.4","90919.0"],"sizes":[709,77913,18993,1714,455,145,48,17,6,2]}
+stringID: {"labelType":"bucket","labels":["99901","99902","99908","99926","99936","99940","99951","99968","99980","Other"],"sizes":[1,1,1,1,1,1,1,1,1,99993]}
+id: <computed>
+src: {"labelType":"bucket","labels":["7","10","8","6","5","4","3","2","1","Other"],"sizes":[13002,9096,11381,15159,18188,22732,30318,45465,90919,1936196]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy, took 37 seconds

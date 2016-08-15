@@ -1,0 +1,11 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
+dst: {"labelType":"bucket","labels":["51","37","90","38","43","39","41","61","44","Other"],"sizes":[1788,2465,1021,2400,2122,2335,2225,1500,2078,1414950]}
+out_degree: {"labelType":"between","labels":["2.0","4.1","8.3","16.9","34.5","70.2","143.1","291.5","594.0","1210.3","2466.0"],"sizes":[233,7904,65232,22676,2430,844,361,167,80,39]}
+degree: {"labelType":"between","labels":["4.0","8.1","16.6","33.8","68.9","140.5","286.2","583.1","1188.0","2420.6","4932.0"],"sizes":[233,7904,65232,22676,2430,844,361,167,80,39]}
+in_degree: {"labelType":"between","labels":["2.0","4.1","8.3","16.9","34.5","70.2","143.1","291.5","594.0","1210.3","2466.0"],"sizes":[233,7904,65232,22676,2430,844,361,167,80,39]}
+stringID: {"labelType":"bucket","labels":["99901","99902","99908","99926","99936","99940","99951","99968","99980","Other"],"sizes":[1,1,1,1,1,1,1,1,1,99957]}
+id: <computed>
+src: {"labelType":"bucket","labels":["45","48","52","73","37","41","42","49","40","Other"],"sizes":[2027,1898,1750,1250,2465,2225,2167,1861,2287,1414954]}
+!vertex_count_delta: -36
+!edge_count_delta: -759572
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 76 seconds
