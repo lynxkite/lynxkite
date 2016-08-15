@@ -89,7 +89,6 @@ case class NeuralNetwork(
     val random = new util.Random(0)
     val labelOpt = inputs.vertices.rdd.sortedLeftOuterJoin(inputs.label.rdd).mapValues(_._2)
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
-    val data1 = data.coalesce(1)
 
     val initialNetwork = {
       import neural.Gates._
@@ -116,8 +115,9 @@ case class NeuralNetwork(
         })
     }
 
-    val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
-    output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
+    val prediction = predict(data.collect.iterator, edgeLists, network).toSeq
+    output(o.prediction,
+      rc.sparkContext.parallelize(prediction).sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
   def averageNetworks(networks: Seq[neural.Network]) =
