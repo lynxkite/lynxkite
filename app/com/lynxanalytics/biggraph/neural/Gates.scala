@@ -187,22 +187,24 @@ object Network {
 }
 case class Network private (
     size: Int, outputs: Map[String, Vector],
-    weights: Map[String, DoubleMatrix] = Map(),
+    weights: Iterable[(String, DoubleMatrix)] = Iterable(),
     adagradMemory: Map[String, DoubleMatrix] = Map()) {
   implicit val randBasis = RandBasis.mt0
   val allWeights = collection.mutable.Map(weights.toSeq: _*)
   def +(other: Network): Network = this.copy(
-    weights = weights.map {
-      case (name, value) => name -> (value + other.weights(name))
+    weights = allWeights.map {
+      case (name, value) => name -> (value + other.allWeights(name))
     },
     adagradMemory = adagradMemory.map {
       case (name, value) => name -> (value + other.adagradMemory(name))
     })
   def /(s: Double): Network = this.copy(
-    weights = weights.mapValues(_ / s),
+    weights = allWeights.mapValues(_ / s),
     adagradMemory = adagradMemory.mapValues(_ / s))
 
-  def apply(t: Trained): DoubleMatrix = allWeights.getOrElseUpdate(t.name, t.random(size))
+  def apply(t: Trained): DoubleMatrix = {
+    allWeights.getOrElseUpdate(t.name, t.random(size))
+  }
 
   def forward(
     vertices: Seq[ID],
@@ -231,8 +233,10 @@ case class Network private (
   def update(gradients: Iterable[NetworkGradients], learningRate: Double): Network = {
     import breeze.linalg._
     import breeze.numerics._
-    val sums = weights.keys.map {
-      name => name -> gradients.map(_.trained(name)).reduce(_ + _)
+    val sums = allWeights.keys.flatMap { name =>
+      val gs = gradients.flatMap(_.trained.get(name))
+      if (gs.isEmpty) None
+      else Some(name -> gs.reduce(_ + _))
     }.toMap
     for ((k, v) <- sums) {
       clip.inPlace(v, -5.0, 5.0)
@@ -243,11 +247,15 @@ case class Network private (
         case None => name -> (s :* s)
       }
     }
-    val newWeights = weights.map {
-      case (name, w) =>
-        name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name)) + 1e-6)
+    val newWeights = allWeights ++ sums.map {
+      case (name, s) =>
+        name -> (allWeights(name) - learningRate * s / sqrt(newAdagradMemory(name)) + 1e-6)
     }
     this.copy(weights = newWeights, adagradMemory = newAdagradMemory)
+  }
+
+  def toDebugString = {
+    allWeights.map { case (k, v) => s"$k: $v" }.mkString("\n")
   }
 }
 
@@ -322,7 +330,7 @@ private case class BackwardContext(
       trainedGradients.get(m.name).map(_ + gradient).getOrElse(gradient)
   }
   def add(v: V, gradient: DoubleVector): Unit = {
-    val mgrad = gradient.asDenseMatrix
+    val mgrad = gradient.asDenseMatrix.t
     trainedGradients(v.name) =
       trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
   }
