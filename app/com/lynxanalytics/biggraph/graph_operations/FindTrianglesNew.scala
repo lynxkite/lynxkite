@@ -54,7 +54,7 @@ case class FindTrianglesNew(needsBothDirections: Boolean = false) extends TypedM
           .distinct()
           .sort(outputPartitioner)
 
-     val degrees = simpleEdges
+    val degrees = simpleEdges
       .flatMap { case (src, dst) => List((src, 1), (dst, 1)) }
       .sort(outputPartitioner)
       .reduceBySortedKey(outputPartitioner, _ + _)
