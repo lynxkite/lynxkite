@@ -14,7 +14,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - A new machine learning operations category is created and added to the toolbox.
  - SQL-related bug fixes.
 
->>>>>>> origin/master
 ### 1.9.0
 
  - Global SQL-box has been added.
