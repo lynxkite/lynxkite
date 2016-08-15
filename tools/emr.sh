@@ -172,11 +172,6 @@ start)
 
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   set -x
-  if [ "$USE_EXTRA_STORAGE" == "1" ]; then
-    EBS_CONFIG=',"EbsConfiguration":{"EbsOptimized":true,"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"VolumeType":"io1","SizeInGB":100,"Iops":100},"VolumesPerInstance":1}]}'
-  else
-    EBS_CONFIG=""
-  fi
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
     --applications Name=Hadoop \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
@@ -185,7 +180,7 @@ start)
     --release-label emr-4.2.0 \
     --name "${CLUSTER_NAME}" \
     --tags "Name=${CLUSTER_NAME}" \
-    --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}${EBS_CONFIG}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
+    --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
     ${CREATE_CLUSTER_EXTRA_PARAMS} \
   )
   set +x

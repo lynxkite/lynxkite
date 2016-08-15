@@ -24,11 +24,6 @@ Specify the type of the instance to create.
 TYPE=m3.2xlarge
 ```
 
-If set to 1, an ebs volume of 100G will be added to each worker instance to increase storage.
-```
-USE_EXTRA_STORAGE=0
-```
-
 Specify the id of the SSH key that you want to use to connect to the cluster.
 ```
 SSH_ID=lynx-cli
