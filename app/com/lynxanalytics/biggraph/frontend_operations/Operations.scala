@@ -5,10 +5,10 @@
 // the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.frontend_operations
 
+import java.util.UUID
+
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
-import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
-import com.lynxanalytics.biggraph.graph_operations.PartitionAttribute
+import com.lynxanalytics.biggraph.graph_operations.{ EdgeBundleAsAttribute, PartitionAttribute, PulledOverVertexAttribute, RandomDistribution }
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -21,8 +21,8 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import com.lynxanalytics.biggraph.table.TableImport
-
 import play.api.libs.json
+
 import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
@@ -2043,6 +2043,34 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.edgeBundle.idSet,
         Seq(FEVertexAttributeFilter(guid, "!=")))
       project.pullBackEdges(embedding)
+    }
+  })
+
+  register("Triadic closure", new StructureOperation(_, _) {
+    def parameters = List()
+    def enabled = hasVertexSet && hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.ConcatenateBundlesMulti()
+      val result = op(op.vsA, project.vertexSet)(
+        op.vsB, project.vertexSet)(
+          op.vsB, project.vertexSet)(
+            op.edgesAB, project.edgeBundle)(
+              op.edgesBC, project.edgeBundle).result
+
+      // saving attributes and original edges
+      var origEdgeAttrs = project.edgeAttributes.toIndexedSeq
+
+      // new edges after closure
+      project.edgeBundle = result.edgesAC
+
+      // pulling old edge attributes
+      val prefixAB = "ab_"
+      val prefixBC = "bc_"
+
+      for ((name, attr) <- origEdgeAttrs) {
+        project.newEdgeAttribute(prefixAB + name, attr.pullVia(result.projectionFirst))
+        project.newEdgeAttribute(prefixBC + name, attr.pullVia(result.projectionSecond))
+      }
     }
   })
 
