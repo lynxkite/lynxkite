@@ -187,11 +187,16 @@ case class Network private (
     size: Int, weights: Map[String, DoubleMatrix], outputs: Map[String, Vector]) {
   implicit val randBasis = RandBasis.mt0
   val allWeights = collection.mutable.Map(weights.toSeq: _*)
+  def +(other: Network): Network = this.copy(weights = weights.map {
+    case (name, value) => name -> (value + other.weights(name))
+  })
+  def /(s: Double): Network = this.copy(weights = weights.mapValues(_ / s))
+
   def apply(t: Trained): DoubleMatrix = allWeights.getOrElseUpdate(t.name, t.random(size))
 
   def forward(
     vertices: Seq[ID],
-    edges: CompactUndirectedGraph,
+    edges: Map[ID, Seq[ID]],
     neighbors: GraphData,
     inputs: (String, GraphData)*): GateValues = {
     val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
@@ -203,7 +208,7 @@ case class Network private (
 
   def backward(
     vertices: Seq[ID],
-    edges: CompactUndirectedGraph,
+    edges: Map[ID, Seq[ID]],
     values: GateValues,
     gradients: (String, GraphData)*): NetworkGradients = {
     val ctx = BackwardContext(this, vertices, edges, values)
@@ -219,7 +224,7 @@ case class Network private (
 private case class ForwardContext(
     network: Network,
     vertices: Seq[ID],
-    edges: CompactUndirectedGraph,
+    edges: Map[ID, Seq[ID]],
     neighborState: GraphData,
     inputs: Map[String, GraphData]) {
   val vectorCache = collection.mutable.Map[String, GraphData]()
@@ -240,7 +245,7 @@ private case class ForwardContext(
   def apply(v: V): DoubleVector = network(v)(::, 0)
   def neighbors: GraphVectors = {
     vertices.map { id =>
-      id -> edges.getNeighbors(id).map(neighborState(_))
+      id -> edges(id).map(neighborState(_))
     }.toMap
   }
 
@@ -261,7 +266,7 @@ class GateValues(
 private case class BackwardContext(
     network: Network,
     vertices: Seq[ID],
-    edges: CompactUndirectedGraph,
+    edges: Map[ID, Seq[ID]],
     values: GateValues) {
   val vectorGradients = collection.mutable.Map[String, GraphData]()
   val vectorsGradients = collection.mutable.Map[String, GraphVectors]()
@@ -292,7 +297,7 @@ private case class BackwardContext(
 
   def addNeighbors(gradients: GraphVectors): Unit = {
     val ngrad: GraphData = gradients.flatMap {
-      case (id, gs) => edges.getNeighbors(id).zip(gs)
+      case (id, gs) => edges(id).zip(gs)
     }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
     if (neighborGradients == null) neighborGradients = ngrad
     else neighborGradients = neighborGradients + ngrad
