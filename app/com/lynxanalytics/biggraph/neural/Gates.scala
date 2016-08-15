@@ -24,7 +24,17 @@ object Implicits {
   }
   class GraphAdder[T](adder: Adder[T]) extends Adder[Graph[T]] {
     def add(a: Graph[T], b: Graph[T]): Graph[T] = {
-      a.map { case (id, v) => id -> adder.add(v, b(id)) }
+      val keys = a.keys ++ b.keys
+      keys.map { id =>
+        id -> {
+          (a.get(id), b.get(id)) match {
+            case (Some(a), Some(b)) => adder.add(a, b)
+            case (Some(a), None) => a
+            case (None, Some(b)) => b
+            case (None, None) => ???
+          }
+        }
+      }.toMap
     }
   }
   // For some reason making GraphAdder implicit did not achieve the same thing.
@@ -38,15 +48,6 @@ object Gates {
   import breeze.numerics._
 
   trait Gate[Output] extends Product {
-    // Finds all instances of a type in the network leading up to this node.
-    protected def find[T: reflect.ClassTag]: Seq[T] = {
-      this.productIterator.flatMap {
-        case x if (reflect.classTag[T].runtimeClass.isInstance(x)) => Some(x.asInstanceOf[T])
-        case x: Gate[_] => x.find[T]
-        case _ => None
-      }.toSeq
-    }
-
     // Plain toString on case classes is enough to uniquely identify vectors.
     private[neural] def id = this.toString
     private[neural] def forward(ctx: ForwardContext): Output
@@ -123,9 +124,10 @@ object Gates {
       val wt = ctx(w).t
       ctx.add(vs, gradients.mapValues(_.map(g => wt * g)))
       val vsd = ctx(vs)
-      ctx.add(w, gradients.flatMap {
+      val netgrads = gradients.flatMap {
         case (id, gs) => gs.zip(vsd(id)).map { case (g, d) => g * d.t }
-      }.reduce(_ + _))
+      }
+      if (netgrads.nonEmpty) ctx.add(w, netgrads.reduce(_ + _))
     }
   }
   case class Sum(vs: Vectors) extends Vector {
