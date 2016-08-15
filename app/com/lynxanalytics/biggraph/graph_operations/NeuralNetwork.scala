@@ -130,23 +130,27 @@ case class NeuralNetwork(
     maxNumberOfVertices: Int,
     minNumberOfVertices: Int,
     seed: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
-    val random = new util.Random(seed)
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
-    def verticesAround(vertex: ID): Seq[ID] = (0 until selectionRadius).foldLeft(Seq(vertex)) {
-      (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
+    if (selectionRadius < 0) { // Return the whole graph, for testing.
+      (vertices, edgeLists, data)
+    } else {
+      val random = new util.Random(seed)
+      def verticesAround(vertex: ID): Seq[ID] = (0 until selectionRadius).foldLeft(Seq(vertex)) {
+        (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
+      }
+      var subsetOfVertices: Seq[ID] = Seq()
+      while (subsetOfVertices.size < minNumberOfVertices) {
+        val baseVertex = vertices(random.nextInt(vertices.size))
+        subsetOfVertices = subsetOfVertices ++ verticesAround(baseVertex)
+      }
+      subsetOfVertices = subsetOfVertices.take(maxNumberOfVertices)
+      val subsetOfEdges = subsetOfVertices.map {
+        id => id -> edgeLists(id).filter(subsetOfVertices.contains(_))
+      }.toMap
+      val subsetOfData = data.filter(vertex => subsetOfVertices.contains(vertex._1))
+      (subsetOfVertices, subsetOfEdges, subsetOfData)
     }
-    var subsetOfVertices: Seq[ID] = Seq()
-    while (subsetOfVertices.size < minNumberOfVertices) {
-      val baseVertex = vertices(random.nextInt(vertices.size))
-      subsetOfVertices = subsetOfVertices ++ verticesAround(baseVertex)
-    }
-    subsetOfVertices = subsetOfVertices.take(maxNumberOfVertices)
-    val subsetOfEdges = subsetOfVertices.map {
-      id => id -> edgeLists(id).filter(subsetOfVertices.contains(_))
-    }.toMap
-    val subsetOfData = data.filter(vertex => subsetOfVertices.contains(vertex._1))
-    (subsetOfVertices, subsetOfEdges, subsetOfData)
   }
 
   def getTrueState(
