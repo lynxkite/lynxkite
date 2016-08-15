@@ -97,9 +97,9 @@ tells emr.sh to upload the local Spark installation instead.
 ```
 
 Provides a part of the name for the `KITE_INSTANCE` variable that identifies the instance. E.g.,
-leaving it at the default `emr` could result in such name: `emr-3-m3.2xlarge-8cores-18g`.
+leaving it at the default `emr` could result in such name: `emr-3e-4i-m3.2xlarge-8cores-18g`.
 (The `KITE_INSTANCE` variable is assembled like this:
-`${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g`)
+`${KITE_INSTANCE_BASE_NAME}-${NUM_EXECUTORS}e-${NUM_INSTANCES}i-${TYPE}-${CORES}cores-${USE_RAM_GB}g`)
 
 
 ```

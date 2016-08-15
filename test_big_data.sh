@@ -49,7 +49,7 @@ NUM_EMR_EXECUTORS=${3:-3}
 DEFAULT_EMR_INSTANCES=$(($NUM_EMR_EXECUTORS + 1))
 NUM_EMR_INSTANCES=${4:-${DEFAULT_EMR_INSTANCES}}
 
-RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_EXECUTORS}_${DATA_SET}"
+RESULTS_DIR="$(dirname $0)/kitescripts/big_data_tests/results/emr${NUM_EMR_EXECUTORS}_${NUM_EMR_INSTANCES}_${DATA_SET}"
 TMP_RESULTS_DIR="${RESULTS_DIR}.new"
 rm -Rf ${TMP_RESULTS_DIR}
 if [ -d ${RESULTS_DIR} ]; then
