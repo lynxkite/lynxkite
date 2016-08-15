@@ -54,16 +54,28 @@ case class FindTrianglesNew(needsBothDirections: Boolean = false) extends TypedM
           .distinct()
           .sort(outputPartitioner)
 
+     val degrees = simpleEdges
+      .flatMap { case (src, dst) => List((src, 1), (dst, 1)) }
+      .sort(outputPartitioner)
+      .reduceBySortedKey(outputPartitioner, _ + _)
+    val ultimateEdges = simpleEdges
+      .sortedJoin(degrees)
+      .map { case (src, (dst, srcDeg)) => (dst, (src, srcDeg)) }
+      .sort(outputPartitioner)
+      .sortedJoin(degrees)
+      .map { case (dst, ((src, srcDeg), dstDeg)) => ((src, dst), (srcDeg, dstDeg)) }
+    val mofoEdges = ultimateEdges.map { case ((src, dst), (srcDeg, dstDeg)) => sortTuple(srcDeg * 10000000L + src, dstDeg * 10000000L + dst) }.sort(outputPartitioner)
+
     // get all pairs of connected edges
-    val semiTriangles = simpleEdges
-      .sortedJoinWithDuplicates(simpleEdges)
+    val semiTriangles = mofoEdges
+      .sortedJoinWithDuplicates(mofoEdges)
       .filter { case (a, (b, c)) => c > b }
       .map(_.swap)
       .sort(outputPartitioner)
 
     // collect triangles
     val triangleList = semiTriangles
-      .sortedJoinWithDuplicates(simpleEdges.map((_, ())).sort(outputPartitioner)) // x => (x, ())
+      .sortedJoinWithDuplicates(mofoEdges.map((_, ())).sort(outputPartitioner)) // x => (x, ())
       .map { case ((a, b), (c, ())) => List(a, b, c) }
 
     val indexedTriangleList = triangleList.randomNumbered(outputPartitioner)
