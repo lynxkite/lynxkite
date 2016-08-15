@@ -93,7 +93,7 @@ object Gates {
   case class MultiplyScalar(v: Vector, s: Double) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
     def backward(ctx: BackwardContext, gradient: GraphData) =
-      ctx.add(v, gradient.mapValues(g => g / s))
+      ctx.add(v, gradient.mapValues(s * _))
   }
   case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
     def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
