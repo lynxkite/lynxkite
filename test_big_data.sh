@@ -4,7 +4,7 @@
 # a "big data" test on a Pull Request. It fires up an EMR cluster,
 # runs groovy scripts in it and creates a file with the results.
 # In case of Jenkins, it also dumps the test results as a commit
-# into the PR.
+# into the PR. (Jenkins runs this command as: test_big_data.sh default.list)
 #
 # Usage:
 #   test_big_data.sh test_or_list test_data_set [# of emr executors] [# of emr instances]
@@ -13,13 +13,19 @@
 #   test_big_data.sh default.list fake_westeros_v3_25m_799m 3 4
 #
 # Examples:
-#   test_big_data.sh visualization.groovy               # Single test.
-#   test_big_data.sh all.list                           # All tests (hopefully).
-#   test_big_data.sh all.list fake_westeros_v3_25m_799m # Big graphs.
-#   test_big_data.sh all.list fake_westeros_v3_100k_2m  # Small graphs.
-#
+#   test_big_data.sh visualization.groovy                                         # Single test.
 #   test_big_data.sh default.list fake_westeros_v3_100k_2m
 #   CLUSTER_NAME=$USER-xyz test_big_data.sh default.list fake_westeros_v3_100k_2m
+#
+# all.list examples:
+# These require special treatment, because we have so many tests that they fill up the available
+# hdfs space. The extra parameters (number of executors and number of instances) come in handy
+# in this case: Getting a large enough number of instances increases the available hdfs space,
+# while you can keep the number of executors at 3.
+#
+#   test_big_data.sh all.list 3 7                           # All tests (hopefully).
+#   test_big_data.sh all.list 3 7 fake_westeros_v3_25m_799m # Big graphs. (TODO: Test this setting)
+#   test_big_data.sh all.list 3 4 fake_westeros_v3_100k_2m  # Small graphs. (No need for many extra instances).
 #
 # Location of tests: kitescripts/big_data_tests
 # Location of data sets: s3://lynxkite-test-data/
