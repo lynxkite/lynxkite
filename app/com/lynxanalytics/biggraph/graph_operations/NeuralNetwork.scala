@@ -228,7 +228,7 @@ case class NeuralNetwork(
         import neural.Implicits._
         network.backward(vertices, edges, outputs, "new state" -> (next("state") + next.neighbors))
       }
-      network = network.update(gradients)
+      network = network.update(gradients, learningRate)
     }
     network
   }
