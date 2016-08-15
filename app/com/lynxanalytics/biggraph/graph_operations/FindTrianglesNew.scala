@@ -33,7 +33,7 @@ case class FindTrianglesNew(needsBothDirections: Boolean = false) extends TypedM
     val numTasks = (rc.sparkContext.defaultParallelism * 5) max inputPartitioner.numPartitions
     val outputPartitioner = new HashPartitioner(numTasks)
 
-    // remove loop- and parallel edges, keep non-parallel multiple edges
+    // remove loop edges
     val filteredEdges = inputs.es.rdd.filter { case (_, Edge(src, dst)) => src != dst }
       .map { case (_, Edge(src, dst)) => (src, dst) }
 
