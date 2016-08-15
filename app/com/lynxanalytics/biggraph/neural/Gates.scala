@@ -280,10 +280,12 @@ private case class BackwardContext(
   def add(v: Vector, gradient: GraphData): Unit = {
     vectorGradients(v.id) =
       vectorGradients.get(v.id).map(_ + gradient).getOrElse(gradient)
+    v.backward(this, gradient)
   }
   def add(vs: Vectors, gradients: GraphVectors): Unit = {
     vectorsGradients(vs.id) =
       vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
+    vs.backward(this, gradients)
   }
   def add(m: M, gradient: DoubleMatrix): Unit = {
     trainedGradients(m.name) =
