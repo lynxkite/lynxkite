@@ -1,0 +1,25 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
+1: visualize one graph
+  vertex sets:
+    0: size= 41
+  edge bundles:
+    0: size= 84
+2. Visualize one graph with filters
+  vertex sets:
+    0: size= 34
+  edge bundles:
+    0: size= 70
+3. Get visualization of a graph plus a segmentation
+  vertex sets:
+    0: size= 41
+    1: size= 45
+  edge bundles:
+    0: size= 84
+    1: size= 245
+    2: size= 19
+4. Bucketed view
+  vertex sets:
+    0: size= 100
+  edge bundles:
+    0: size= 10000
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy, took 68 seconds
