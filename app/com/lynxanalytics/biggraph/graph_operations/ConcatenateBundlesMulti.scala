@@ -21,10 +21,12 @@ object ConcatenateBundlesMulti extends OpFromJson {
       inputs.edgesAB.properties.isFunction && inputs.edgesBC.properties.isFunction
     val isReversedFunction =
       inputs.edgesAB.properties.isReversedFunction && inputs.edgesBC.properties.isReversedFunction
+    val isIdPreserving =
+      inputs.edgesAB.properties.isIdPreserving && inputs.edgesBC.properties.isIdPreserving
     val edgesAC = edgeBundle(
       inputs.vsA.entity,
       inputs.vsC.entity,
-      EdgeBundleProperties(isFunction = isFunction, isReversedFunction = isReversedFunction))
+      EdgeBundleProperties(isFunction = isFunction, isReversedFunction = isReversedFunction, isIdPreserving = isIdPreserving))
     val projectionFirst = edgeBundle(edgesAC.idSet, inputs.edgesAB.idSet, EdgeBundleProperties.partialFunction)
     val projectionSecond = edgeBundle(edgesAC.idSet, inputs.edgesBC.idSet, EdgeBundleProperties.partialFunction)
 
