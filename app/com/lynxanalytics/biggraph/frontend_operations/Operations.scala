@@ -2061,12 +2061,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       project.edgeBundle = result.edgesAC
 
       // pulling old edge attributes
-      val prefixAB = "ab_"
-      val prefixBC = "bc_"
-
       for ((name, attr) <- origEdgeAttrs) {
-        project.newEdgeAttribute(prefixAB + name, attr.pullVia(result.projectionFirst))
-        project.newEdgeAttribute(prefixBC + name, attr.pullVia(result.projectionSecond))
+        project.newEdgeAttribute("ab_" + name, attr.pullVia(result.projectionFirst))
+        project.newEdgeAttribute("bc_" + name, attr.pullVia(result.projectionSecond))
       }
     }
   })
