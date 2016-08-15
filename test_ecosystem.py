@@ -160,7 +160,9 @@ def start_tests(cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh('''
     cat >/home/hadoop/run_test.sh <<EOF
+      echo "START TIME: $(date) $(date +%s)"
       docker exec lynx_luigi_worker_1 luigi --module {luigi_module!s} {luigi_task!s} --jdbc-url '{jdbc_url!s}'
+      echo "END TIME: ($date) $(date +%s)"
       echo 'done' >/home/hadoop/test_status.txt
     echo
 EOF
