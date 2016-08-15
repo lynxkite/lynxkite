@@ -23,8 +23,7 @@
 # in this case: Getting a large enough number of instances increases the available hdfs space,
 # while you can keep the number of executors at 3.
 #
-#   test_big_data.sh all.list 3 7                            # All tests (hopefully).
-#   test_big_data.sh all.list fake_westeros_v3_25m_799m 3 7  # Big graphs. (TODO: Test this setting)
+#   test_big_data.sh all.list fake_westeros_v3_25m_799m 3 7  # Test all data for big graphs. (Hopefully)
 #   test_big_data.sh all.list fake_westeros_v3_100k_2m  3 4  # Small graphs. (No need for many extra instances).
 #
 # Location of tests: kitescripts/big_data_tests
