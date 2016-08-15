@@ -25,43 +25,56 @@ object NeuralNetwork extends OpFromJson {
   def fromJson(j: JsValue) = NeuralNetwork(
     (j \ "featureCount").as[Int],
     (j \ "networkSize").as[Int],
-    (j \ "iterations").as[Int],
     (j \ "learningRate").as[Double],
     (j \ "radius").as[Int],
     (j \ "hideState").as[Boolean],
-    (j \ "forgetFraction").as[Double])
+    (j \ "forgetFraction").as[Double],
+    (j \ "trainingRadius").as[Int],
+    (j \ "maxTrainingVertices").as[Int],
+    (j \ "minTrainingVertices").as[Int],
+    (j \ "iterationsInTraining").as[Int],
+    (j \ "subgraphsInTraining").as[Int],
+    (j \ "numberOfTrainings").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
     featureCount: Int,
     networkSize: Int,
-    iterations: Int,
     learningRate: Double,
     radius: Int,
     hideState: Boolean,
-    forgetFraction: Double) extends TypedMetaGraphOp[Input, Output] {
+    forgetFraction: Double,
+    trainingRadius: Int,
+    maxTrainingVertices: Int,
+    minTrainingVertices: Int,
+    iterationsInTraining: Int,
+    subgraphsInTraining: Int,
+    numberOfTrainings: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "featureCount" -> featureCount,
     "networkSize" -> networkSize,
-    "iterations" -> iterations,
     "learningRate" -> learningRate,
     "radius" -> radius,
     "hideState" -> hideState,
-    "forgetFraction" -> forgetFraction)
+    "forgetFraction" -> forgetFraction,
+    "trainingRadius" -> trainingRadius,
+    "maxTrainingVertices" -> maxTrainingVertices,
+    "minTrainingVertices" -> minTrainingVertices,
+    "iterationsInTraining" -> iterationsInTraining,
+    "subgraphsInTraining" -> subgraphsInTraining,
+    "numberOfTrainings" -> numberOfTrainings)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
 
-    val edges = CompactUndirectedGraph(rc, inputs.edges.rdd, needsBothDirections = false)
-    val reversed = {
-      val rdd = inputs.edges.rdd.mapValues { case Edge(src, dst) => Edge(dst, src) }
-      CompactUndirectedGraph(rc, rdd, needsBothDirections = false)
-    }
+    implicit val id = inputDatas
+    val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
+    val edges: Seq[Edge] = inputs.edges.rdd.values.collect
+    val edgeLists: Map[ID, Seq[ID]] = isolatedVertices ++ edges.groupBy(_.src).mapValues(_.map(_.dst))
     val features = {
       val arrays = inputs.vertices.rdd.mapValues(_ => new Array[Double](featureCount))
       inputs.features.zipWithIndex.foldLeft(arrays) {
@@ -73,38 +86,12 @@ case class NeuralNetwork(
           }
       }
     }
+    val random = new util.Random(0)
     val labelOpt = inputs.vertices.rdd.sortedLeftOuterJoin(inputs.label.rdd).mapValues(_._2)
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
-    val prediction = data1.mapPartitions(data => predict(data, edges, reversed))
 
-    output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
-  }
-
-  def predict(
-    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
-    edges: CompactUndirectedGraph,
-    reversed: CompactUndirectedGraph): Iterator[(ID, Double)] = {
-    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
-    val data = dataIterator.toSeq
-    val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
-    val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
-    val vertices = data.map(_._1)
-    // Initial state contains label and features.
-    val trueState: neural.GraphData = vertices.map { id =>
-      val state = DenseVector.zeros[Double](networkSize)
-      if (labels.contains(id)) {
-        state(0) = labels(id) // Label is in position 0.
-        state(1) = 1.0 // Mark of a source of truth is in position 1.
-      }
-      val fs = features(id)
-      for (i <- 0 until fs.size) {
-        state(i + 2) = fs(i) // Features start from position 2.
-      }
-      id -> state
-    }.toMap
-
-    var network = {
+    val initialNetwork = {
       import neural.Gates._
       val vs = Neighbors()
       val eb = V("edge bias")
@@ -118,21 +105,92 @@ case class NeuralNetwork(
         "new state" -> (state - update * state + update * tilde)
       )
     }
-    var finalOutputs: neural.GraphData = null
-    val random = new util.Random(0)
-    for (i <- 1 to iterations) {
-      // Forgets the label.
-      def blanked(state: DenseVector[Double]) = {
-        val s = state.copy
-        s(0) = 0.0
-        s(1) = 0.0
-        s
+    val network = (1 to numberOfTrainings).foldLeft(initialNetwork) {
+      (previous, current) =>
+        averageNetworks((1 to subgraphsInTraining).map { i =>
+          val (trainingVertices, trainingEdgeLists, trainingData) =
+            selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius,
+              maxTrainingVertices, minTrainingVertices, random.nextInt)
+          train(trainingVertices, trainingEdgeLists, trainingData,
+            previous, iterationsInTraining)
+        })
+    }
+
+    val prediction = data1.mapPartitions(data => predict(data, edgeLists, network))
+    output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
+  }
+
+  def averageNetworks(networks: Seq[neural.Network]) =
+    networks.reduce(_ + _) / networks.size
+
+  def selectRandomSubgraph(
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
+    edgeLists: Map[ID, Seq[ID]],
+    selectionRadius: Int,
+    maxNumberOfVertices: Int,
+    minNumberOfVertices: Int,
+    seed: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
+    val random = new util.Random(seed)
+    val data = dataIterator.toSeq
+    val vertices = data.map(_._1)
+    def verticesAround(vertex: ID): Seq[ID] = (0 until selectionRadius).foldLeft(Seq(vertex)) {
+      (previous, current) => previous.flatMap(id => id +: edgeLists(id)).distinct
+    }
+    var subsetOfVertices: Seq[ID] = Seq()
+    while (subsetOfVertices.size < minNumberOfVertices) {
+      val baseVertex = vertices(random.nextInt(vertices.size))
+      subsetOfVertices = subsetOfVertices ++ verticesAround(baseVertex)
+    }
+    subsetOfVertices = subsetOfVertices.take(maxNumberOfVertices)
+    val subsetOfEdges = subsetOfVertices.map {
+      id => id -> edgeLists(id).filter(subsetOfVertices.contains(_))
+    }.toMap
+    val subsetOfData = data.filter(vertex => subsetOfVertices.contains(vertex._1))
+    (subsetOfVertices, subsetOfEdges, subsetOfData)
+  }
+
+  def getTrueState(
+    data: Seq[(ID, (Option[Double], Array[Double]))]): neural.GraphData = {
+    val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
+    val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
+    val vertices = data.map(_._1)
+    // True state contains label and features.
+    vertices.map { id =>
+      val state = DenseVector.zeros[Double](networkSize)
+      if (labels.contains(id)) {
+        state(0) = labels(id) // Label is in position 0.
+        state(1) = 1.0 // Mark of a source of truth is in position 1.
       }
-      // Initial states.
+      val fs = features(id)
+      for (i <- 0 until fs.size) {
+        state(i + 2) = fs(i) // Features start from position 2.
+      }
+      id -> state
+    }.toMap
+  }
+
+  // Forgets the label.
+  def blanked(state: neural.DoubleVector) = {
+    val s = state.copy
+    s(0) = 0.0
+    s(1) = 0.0
+    s
+  }
+
+  def train(
+    vertices: Seq[ID],
+    edges: Map[ID, Seq[ID]],
+    data: Seq[(ID, (Option[Double], Array[Double]))],
+    startingNetwork: neural.Network,
+    iterations: Int): neural.Network = {
+    assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
+    var network = startingNetwork
+    for (i <- 1 to iterations) {
+      val trueState = getTrueState(data)
+      val random = new util.Random(1)
       val keptState = trueState.map {
         case (id, state) =>
-          // Make final predictions in the last iteration. No forgetting now!
-          if (i != iterations && random.nextDouble < forgetFraction) id -> blanked(state)
+          if (random.nextDouble < forgetFraction) id -> blanked(state)
           else id -> state
       }
       val initialState = if (!hideState) keptState else keptState.map {
@@ -146,7 +204,7 @@ case class NeuralNetwork(
       } { (previous, r) =>
         network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
       }
-      finalOutputs = outputs.last("new state")
+      val finalOutputs = outputs.last("new state")
 
       // Backward pass.
       val errors: Map[ID, Double] = data.map {
@@ -172,8 +230,28 @@ case class NeuralNetwork(
       }
       network = network.update(gradients)
     }
-    // Return last predictions.
-    finalOutputs.map {
+    network
+  }
+
+  def predict(
+    dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
+    edges: Map[ID, Seq[ID]],
+    network: neural.Network): Iterator[(ID, Double)] = {
+    val data = dataIterator.toSeq
+    val vertices = data.map(_._1)
+
+    val trueState = getTrueState(data)
+    val initialState = if (!hideState) trueState else trueState.map {
+      // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
+      case (id, state) => id -> blanked(state)
+    }
+
+    val outputs = (1 until radius).scanLeft {
+      network.forward(vertices, edges, initialState, "state" -> initialState)
+    } { (previous, r) =>
+      network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
+    }
+    outputs.last("new state").map {
       case (id, state) => id -> state(0)
     }.iterator
   }
