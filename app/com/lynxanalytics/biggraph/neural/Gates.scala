@@ -183,16 +183,24 @@ import Gates._
 
 object Network {
   // The public constructor does not set weights, so they get randomly initialized.
-  def apply(size: Int, outputs: (String, Vector)*) = new Network(size, Map(), outputs.toMap)
+  def apply(size: Int, outputs: (String, Vector)*) = new Network(size, outputs.toMap)
 }
 case class Network private (
-    size: Int, weights: Map[String, DoubleMatrix], outputs: Map[String, Vector]) {
+    size: Int, outputs: Map[String, Vector],
+    weights: Map[String, DoubleMatrix] = Map(),
+    adagradMemory: Map[String, DoubleMatrix] = Map()) {
   implicit val randBasis = RandBasis.mt0
   val allWeights = collection.mutable.Map(weights.toSeq: _*)
-  def +(other: Network): Network = this.copy(weights = weights.map {
-    case (name, value) => name -> (value + other.weights(name))
-  })
-  def /(s: Double): Network = this.copy(weights = weights.mapValues(_ / s))
+  def +(other: Network): Network = this.copy(
+    weights = weights.map {
+      case (name, value) => name -> (value + other.weights(name))
+    },
+    adagradMemory = adagradMemory.map {
+      case (name, value) => name -> (value + other.adagradMemory(name))
+    })
+  def /(s: Double): Network = this.copy(
+    weights = weights.mapValues(_ / s),
+    adagradMemory = adagradMemory.mapValues(_ / s))
 
   def apply(t: Trained): DoubleMatrix = allWeights.getOrElseUpdate(t.name, t.random(size))
 
@@ -220,7 +228,27 @@ case class Network private (
     ctx.gradients
   }
 
-  def update(gradients: Iterable[NetworkGradients]): Network = ???
+  def update(gradients: Iterable[NetworkGradients], learningRate: Double): Network = {
+    import breeze.linalg._
+    import breeze.numerics._
+    val sums = weights.keys.map {
+      name => name -> gradients.map(_.trained(name)).reduce(_ + _)
+    }.toMap
+    for ((k, v) <- sums) {
+      clip.inPlace(v, -5.0, 5.0)
+    }
+    val newAdagradMemory = sums.map {
+      case (name, s) => adagradMemory.get(name) match {
+        case Some(mem) => name -> (mem + (s :* s))
+        case None => name -> (s :* s)
+      }
+    }
+    val newWeights = weights.map {
+      case (name, w) =>
+        name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name)) + 1e-6)
+    }
+    this.copy(weights = newWeights, adagradMemory = newAdagradMemory)
+  }
 }
 
 private case class ForwardContext(
@@ -315,8 +343,9 @@ class NetworkGradients(
     vectorGradients: Iterable[(String, GraphData)],
     vectorsGradients: Iterable[(String, GraphVectors)],
     trainedGradients: Iterable[(String, DoubleMatrix)],
-    neighborGradients: GraphData) {
-  val inputMap = vectorGradients.toMap
-  def apply(name: String): GraphData = inputMap(Gates.Input(name).id)
-  def neighbors = neighborGradients
+    val neighbors: GraphData) {
+  val vector = vectorGradients.toMap
+  val vectors = vectorsGradients.toMap
+  val trained = trainedGradients.toMap
+  def apply(name: String): GraphData = vector(Gates.Input(name).id)
 }
