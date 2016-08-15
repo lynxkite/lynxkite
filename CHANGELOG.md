@@ -7,7 +7,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Fix startup script to support RHEL 6.
- - A new machine learning operations category is created and added to the toolbox. 
+ - A new machine learning operations category is created and added to the toolbox.
+ - New operation _"Triadic closure"_ has been created.
  
 ### 1.9.0
 
