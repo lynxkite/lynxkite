@@ -47,13 +47,12 @@ case class FindTrianglesNew(needsBothDirections: Boolean = false) extends TypedM
           .reduceBySortedKey(outputPartitioner, _ + _)
           .filter { _._2 == 2 }
           .map { _._1 }
-          .sortUnique(outputPartitioner)
+          .sort(outputPartitioner)
       else
         filteredEdges
           .map(sortTuple)
-          //.sort(outputPartitioner)
           .distinct()
-          .sortUnique(outputPartitioner)
+          .sort(outputPartitioner)
 
     // get all pairs of connected edges
     val semiTriangles = simpleEdges
