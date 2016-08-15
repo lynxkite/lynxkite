@@ -8,12 +8,12 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ConcatenateBundlesMultiTest extends FunSuite with TestGraphOp {
-  def concatEdges(abSeq: Seq[(Seq[Int], Int)], bcSeq: Seq[(Seq[Int], Int)]): Seq[(Int, Int)] = {
-    val abES = abSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
-    val bcES = bcSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
-    val aVS = abES.map(_._1)
-    val bVS = abES.map(_._2) ++ bcES.map(_._1)
-    val cVS = bcES.map(_._2)
+  def concatEdges(abSeq: Seq[(Int, Int)], bcSeq: Seq[(Int, Int)]): Seq[(Int, Int)] = {
+    val abES = abSeq.map { case (a, b) => a.toLong -> b.toLong }
+    val bcES = bcSeq.map { case (a, b) => a.toLong -> b.toLong }
+    val aVS = abSeq.map(_._1)
+    val bVS = abSeq.map(_._2) ++ bcSeq.map(_._1)
+    val cVS = bcSeq.map(_._2)
     // Create three vertex sets.
     val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap).result
     val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap).result
@@ -29,14 +29,12 @@ class ConcatenateBundlesMultiTest extends FunSuite with TestGraphOp {
       acOp.edgesAB, ab.es)(
         acOp.edgesBC, bc.es).result
 
-    // join edge bundle and weight data to make an output that is easy to read
+    // create readable output
     ac.edgesAC.rdd.map {
       case (id, edge) =>
         (edge.src.toInt, edge.dst.toInt)
     }.collect.toSeq.sorted
   }
-
-  implicit def toSeqMap(x: Seq[(Int, Int)]): Seq[(Seq[Int], Int)] = x.map { case (a, b) => Seq(a) -> b }
 
   test("no edge") {
     val ab = Seq(1 -> 10)
@@ -47,17 +45,17 @@ class ConcatenateBundlesMultiTest extends FunSuite with TestGraphOp {
   test("isolated edges") {
     val ab = Seq(1 -> 10, 2 -> 20)
     val bc = Seq(10 -> 100, 20 -> 200)
-    assert(concatEdges(ab, bc) === Seq((1, 100), (2, 200)).sorted)
+    assert(concatEdges(ab, bc) === Seq(1 -> 100, 2 -> 200).sorted)
   }
 
   test("one to many to one") {
     val ab = Seq(1 -> 10, 1 -> 20, 1 -> 30, 1 -> 40)
-    val bc = Seq(Seq(10, 20, 30, 40) -> 100)
-    assert(concatEdges(ab, bc) === Seq((1, 100), (1, 100), (1, 100), (1, 100)))
+    val bc = Seq(10 -> 100, 20 -> 100, 30 -> 100, 40 -> 100)
+    assert(concatEdges(ab, bc) === Seq(1 -> 100, 1 -> 100, 1 -> 100, 1 -> 100).sorted)
   }
 
   test("many to one to many") {
-    val ab = Seq(Seq(1, 2, 3, 4) -> 10)
+    val ab = Seq(1 -> 10, 2 -> 10, 3 -> 10, 4 -> 10)
     val bc = Seq(10 -> 100, 10 -> 200, 10 -> 300, 10 -> 400)
     assert(concatEdges(ab, bc) === Seq(
       (1, 100), (1, 200), (1, 300), (1, 400),
@@ -67,8 +65,8 @@ class ConcatenateBundlesMultiTest extends FunSuite with TestGraphOp {
   }
 
   test("mix of the above") {
-    val ab = Seq(Seq(1, 2) -> 10, Seq(1, 3) -> 20, Seq(4) -> 30)
-    val bc = Seq(Seq(10, 20) -> 100, Seq(20) -> 200, Seq(30) -> 300, Seq(40) -> 400)
+    val ab = Seq(1 -> 10, 2 -> 10, 1 -> 20, 3 -> 20, 4 -> 30)
+    val bc = Seq(10 -> 100, 20 -> 100, 20 -> 200, 30 -> 300, 40 -> 400)
     assert(concatEdges(ab, bc) === Seq(
       (1, 100), (1, 100), (2, 100), (3, 100), (1, 200), (3, 200), (4, 300)).sorted)
   }
