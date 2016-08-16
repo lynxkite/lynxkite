@@ -85,7 +85,7 @@ def main(args):
   start_or_reset_ecosystem(cluster, args.lynx_version)
   start_tests(cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
-  fetch_output(cluster)
+  cluster.fetch_output()
   cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
   shut_down_instances(cluster, mysql_instance)
 
@@ -158,56 +158,18 @@ def start_or_reset_ecosystem(cluster, version):
 
 def start_tests(cluster, jdbc_url):
   '''Start running the tests in the background.'''
-  cluster.ssh('''
-    cat >/home/hadoop/run_test.sh <<'EOF'
+  cluster.ssh_nohup('''
       docker exec lynx_luigi_worker_1 python3 tasks/test_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
           --task-param jdbc_url '{jdbc_url!s}' \
           --result_file /tmp/test_results.txt
       docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
-      echo 'done' >/home/hadoop/test_status.txt
-    echo
-EOF
-    chmod a+x /home/hadoop/run_test.sh
-    rm -f /home/hadoop/test_status.txt
-    nohup /home/hadoop/run_test.sh >/home/hadoop/test_output.txt 2>&1 &
   '''.format(
-      jdbc_url=jdbc_url,
       luigi_module=args.task_module,
-      luigi_task=args.task))
-
-
-def fetch_output(cluster):
-  '''Periodically connects to the master and downloads and prints
-  the output log of the running experiment. Also monitors a status
-  file at the master, and quits the loop in case of done status.
-  It would be simpler to have a continuous ssh connection to the
-  master, but that breaks if the Internet connection flakes.'''
-  all_output = ''
-  output_lines_seen = 0
-  status_is_done = False
-  while not status_is_done:
-    # Check status.
-    status, ssh_retcode = cluster.ssh(
-        'cat /home/hadoop/test_status.txt 2>/dev/null',
-        print_output=False,
-        verbose=False)
-    status_is_done = ssh_retcode == 0 and 'done' == status.strip()
-    # Print unseen log lines.
-    output_results, return_code = cluster.ssh(
-        'tail -n +{offset!s} /home/hadoop/test_output.txt'.format(
-            offset=output_lines_seen + 1),
-        verbose=False,
-        print_output=False)
-    if return_code == 0:
-      # We only use the output of ssh if it was successful. Otherwise we'll
-      # try again with the same offset in the next round.
-      print(output_results, end='')
-      all_output += output_results
-      output_lines_seen += output_results.count('\n')
-    time.sleep(5)
-  return all_output
+      luigi_task=args.task,
+      jdbc_url=jdbc_url
+  ))
 
 
 def prompt_delete():
