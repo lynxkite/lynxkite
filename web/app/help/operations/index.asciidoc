@@ -323,6 +323,8 @@ include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 
+include::triadic-closure.asciidoc[]
+
 include::union-with-another-project.asciidoc[]
 
 include::vertex-attribute-to-double.asciidoc[]
