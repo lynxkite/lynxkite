@@ -410,7 +410,7 @@ case class NeuralNetwork(
 
       // Backward pass.
       val errors: Map[ID, Double] = trainingData.map {
-        case (id, (Some(label), features)) if (keptState(id)(0) == 0 || forgetFraction == 0) =>
+        case (id, (Some(label), features)) if (keptState(id)(1) == 0) =>
           // The label is predicted in position 0.
           id -> (outputs.last.newState(id)(0) - label)
         case (id, (Some(label), features)) =>
