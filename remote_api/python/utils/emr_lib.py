@@ -209,6 +209,64 @@ class EMRCluster:
         input=cmds,
         print_output=print_output)
 
+  def ssh_nohup(
+          self,
+          cmds,
+          script_file='/home/hadoop/run_cmd.sh',
+          output_file='/home/hadoop/cmd_output.txt',
+          status_file='/home/hadoop/cmd_status.txt',
+          print_output=True,
+          verbose=True):
+    '''Send shell commands to the cluster via ssh, and run them with nohup in
+    the background.'''
+    self.ssh('''
+      cat >{script_file!s} <<'EOF'
+        {cmds!s}
+        echo "done" >{status_file!s}
+EOF
+      rm -f {status_file!s}
+      nohup bash {script_file!s} >{output_file!s} 2>&1 &
+    '''.format(
+        cmds=cmds,
+        script_file=script_file,
+        output_file=output_file,
+        status_file=status_file))
+
+  def fetch_output(
+          self,
+          output_file='/home/hadoop/cmd_output.txt',
+          status_file='/home/hadoop/cmd_status.txt'):
+    '''Periodically connects to the master and downloads and prints
+    the output log of the running script. Also monitors a status
+    file at the master, and quits the loop in case of done status.
+    It would be simpler to have a continuous ssh connection to the
+    master, but that breaks if the Internet connection flakes.'''
+    all_output = ''
+    output_lines_seen = 0
+    status_is_done = False
+    while not status_is_done:
+      # Check status.
+      status, ssh_retcode = self.ssh(
+          'cat ' + status_file + ' 2>/dev/null',
+          print_output=False,
+          verbose=False)
+      status_is_done = ssh_retcode == 0 and 'done' == status.strip()
+      # Print unseen log lines.
+      output_results, return_code = self.ssh(
+          'tail -n +{offset!s} {output_file!s}'.format(
+              output_file=output_file,
+              offset=output_lines_seen + 1),
+          verbose=False,
+          print_output=False)
+      if return_code == 0:
+        # We only use the output of ssh if it was successful. Otherwise we'll
+        # try again with the same offset in the next round.
+        print(output_results, end='')
+        all_output += output_results
+        output_lines_seen += output_results.count('\n')
+      time.sleep(5)
+    return all_output
+
   def rsync_up(self, src, dst):
     '''Copy files to the cluster via invoking rsync.'''
     print('[EMR UPLOAD] {src!s} TO {dst!s}'.format(src=src, dst=dst))
@@ -221,6 +279,20 @@ class EMRCluster:
             '--copy-dirlinks',
             src,
             'hadoop@' + self.master() + ':' + dst
+        ])
+
+  def rsync_down(self, src, dst):
+    '''Copy files from the cluster via invoking rsync.'''
+    print('[EMR DOWNLOAD] {src!s} TO {dst!s}'.format(src=src, dst=dst))
+    call_cmd(
+        [
+            'rsync',
+            '-ave',
+            ' '.join(self.ssh_cmd),
+            '-r',
+            '--copy-dirlinks',
+            'hadoop@' + self.master() + ':' + src,
+            dst
         ])
 
   def terminate(self):
