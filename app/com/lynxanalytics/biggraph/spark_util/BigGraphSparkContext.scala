@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
-import com.google.cloud.hadoop.fs.gcs
 import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
