@@ -144,12 +144,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(1000, 400))
     val vertices = g.result.vs
-    val partition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
+    val truePartition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
+    val a = vertices.randomAttribute(13)
+    val partition = DeriveJS.deriveFromAttributes[Double](
+      "a < -0.7 ? undefined : truePartition",
+      Seq("a" -> a, "truePartition" -> truePartition),
+      vertices)
 
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 4, learningRate = 0.02, radius = 3,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 1, maxTrainingVertices = 8,
+        hideState = false, forgetFraction = 0.3, trainingRadius = 1, maxTrainingVertices = 8,
         minTrainingVertices = 7, iterationsInTraining = 50, subgraphsInTraining = 10,
         numberOfTrainings = 10)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
@@ -157,7 +162,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     prediction.rdd.count // HACK: NullPointerException otherwise.
     val isWrong = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
-      Seq("prediction" -> prediction, "truth" -> partition),
+      Seq("prediction" -> prediction, "truth" -> truePartition),
       g.result.vs)
     assert(isWrong.rdd.values.sum == 0)
   }
