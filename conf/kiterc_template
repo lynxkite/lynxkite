@@ -1,7 +1,7 @@
 
 # This file contains various configurations used when launching a LynxKite instance.
 
-# Specify this to be the instance (client) where the program is run. E.g., Westeros
+# Specify this to be the instance (client) where the program is run. E.g., MyCLient.
 export KITE_INSTANCE=
 
 # Specify the directory containing your Spark installation.
@@ -94,7 +94,7 @@ export KITE_LOCAL_TMP=/tmp
 # The LynxKite extra JARS is a colon (:) delimited list of JAR files that should be loaded on the
 # LynxKite CLASSPATH. (It will be loaded on the master and distributed to the workers.)
 
-# - Wildcards are not supported.
+# - Some wildcards are supported, you can use /dir/*, but you cannot use /dir/*.jar.
 # - Filenames have to be absolute paths.
 
 # One typical use case is to configure additional JDBC drivers. To do that, all you need to do is to
@@ -112,13 +112,6 @@ export KITE_EXTRA_JARS=
 # export KITE_AMMONITE_PORT=2203
 # export KITE_AMMONITE_USER=lynx
 # export KITE_AMMONITE_PASSWD=kite
-
-# API access to LynxKite is available by sending JSON commands through a Unix pipe.
-# LynxKite will create this pipe on startup. This pipe gives full administrative access, so use
-# the file system permissions on the containing directory to limit access to it, if you enable this
-# option. The API protocol is not documented at the moment but we provide a Python client in
-# tools/api/python.
-# export KITE_API_PIPE=$HOME/secure/api-pipe
 
 # Options needed if you want to use authentication and HTTPS.
 

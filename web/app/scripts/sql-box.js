@@ -4,11 +4,24 @@
 angular.module('biggraph').directive('sqlBox', function($window, side, util) {
   return {
     restrict: 'E',
-    scope: { side: '=' },
+    scope: {
+      side: '=?',
+      directory: '=?',
+     },
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
-      scope.sql = 'select * from vertices';
+      scope.directoryDefined = (typeof scope.directory !== 'undefined');
+      if(!!scope.side && scope.directoryDefined) {
+        throw 'can not be both defined: scope.side, scope.directory';
+      }
+      if(!scope.side && !scope.directoryDefined) {
+        throw 'one of them needs to be defined: scope.side, scope.directory';
+      }
+      scope.isGlobal = !scope.side;
+      scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
+       'select * from vertices';
+      scope.project = scope.project = scope.side && scope.side.state.projectName;
       scope.sort = {
         column: undefined,
         reverse: false,
@@ -35,8 +48,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
             {
-              df: {
-                project: scope.side.state.projectName,
+              dfSpec: {
+                isGlobal: scope.isGlobal,
+                directory: scope.directory,
+                project: scope.project,
                 sql: scope.sql,
               },
               maxRows: 10,
@@ -49,7 +64,8 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
 
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
-            exportFormat === 'segmentation') {
+            exportFormat === 'segmentation' ||
+            exportFormat === 'view') {
           scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
@@ -75,8 +91,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           return;
         }
         var req = {
-          df: {
-            project: scope.side.state.projectName,
+          dfSpec: {
+            isGlobal: scope.isGlobal,
+            directory: scope.directory,
+            project: scope.project,
             sql: scope.sql,
           },
         };
@@ -93,6 +111,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
                 name: scope.exportKiteTable,
                 sql: scope.sql
               });
+        } else if (scope.exportFormat === 'view') {
+          req.name = scope.exportKiteTable;
+          req.privacy = 'public-read';
+          result = util.post('/ajax/createViewDFSpec', req);
         } else if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;

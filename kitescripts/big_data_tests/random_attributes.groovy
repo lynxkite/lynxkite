@@ -12,30 +12,33 @@ project.addRandomEdgeAttribute(
   name: 'rnd_std_uniform',
   dist: 'Standard Uniform',
   seed: '12341')
-println "rnd_std_uniform (edges): ${ project.edgeAttributes['rnd_std_uniform'].histogram(precise: true) }"
 
 project.addRandomVertexAttribute(
   name: 'rnd_std_uniform',
   dist: 'Standard Uniform',
   seed: '12342')
-println "rnd_std_uniform (vertices): ${ project.vertexAttributes['rnd_std_uniform'].histogram(precise: true) }"
 
 project.addRandomEdgeAttribute(
   name: 'rnd_std_normal',
   dist: 'Standard Normal',
   seed: '12343')
-println "rnd_std_normal (edges): ${ project.edgeAttributes['rnd_std_normal'].histogram(precise: true) }"
 
 project.addRandomVertexAttribute(
   name: 'rnd_std_normal',
   dist: 'Standard Normal',
   seed: '12344')
-println "rnd_std_normal (vertices): ${ project.vertexAttributes['rnd_std_normal'].histogram(precise: true) }"
+
 
 project.addRandomVertexAttribute(
   name: 'rnd_std_normal2',
   dist: 'Standard Normal',
   seed: '12345')
-println "rnd_std_normal2 (vertices): ${ project.vertexAttributes['rnd_std_normal2'].histogram(precise: true) }"
 
+project.addRankAttribute(
+  'rankattr': 'ordinal',
+  'keyattr': 'rnd_std_uniform',
+  'order': 'ascending'
+)
+
+project.computeUncomputed()
 project.saveAs('random_attributes')

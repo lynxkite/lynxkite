@@ -374,10 +374,13 @@
         <help-popup href="segmentations" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
-
       <li class="list-group-item">
+        <div class="clearfix">
+          <span class="lead de-emph"><i>SQL</i></span>
+          <help-popup href="sql-box" class="pull-right" ></help-popup>
+        </div>
         <sql-box side="side"></sql-box>
-      </i>
+      </li>
     </div>
   </div>
 </div>

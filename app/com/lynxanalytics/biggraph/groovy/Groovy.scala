@@ -350,10 +350,58 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
     import ctx.metaManager
     import ctx.dataManager
     val sqlContext = ctx.dataManager.newSQLContext()
-    for (path <- editor.viewer.allRelativeTablePaths) {
-      Table(path, editor.viewer).toDF(sqlContext).registerTempTable(path.toString)
+    val dfs = editor.viewer.allRelativeTablePaths.map {
+      path => path.toString -> Table(path, editor.viewer).toDF(sqlContext)
     }
-    sqlContext.sql(query)
+    DataManager.sql(sqlContext, query, dfs.toList)
+  }
+
+  private def uncomputed(entity: TypedEntity[_]): Boolean = {
+    val dataManager = ctx.dataManager
+    val progress = dataManager.computeProgress(entity)
+    progress < 1.0
+  }
+
+  private def computeUncomputedScalars(): Unit = {
+    val uncomputedScalars = editor.scalars.filter(x => uncomputed(x._2))
+
+    for ((name, scalar) <- uncomputedScalars) {
+      val value = ctx.dataManager.get(scalar).value
+      println(s"$name: $value")
+    }
+  }
+
+  private def computeUncomputedAttributes(): Unit = {
+    val attributes = editor.vertexAttributes ++ editor.edgeAttributes
+    val uncomputedAttributes = attributes.filter(x => uncomputed(x._2))
+
+    for ((name, attr) <- uncomputedAttributes) {
+      if (attr.is[String] || attr.is[Double]) {
+        val groovyAttr = new GroovyAttribute(ctx, attr)
+        val histogramOptions = new java.util.HashMap[String, Any]
+        histogramOptions.put("numBuckets", 10)
+        histogramOptions.put("precise", true)
+        if (attr.is[Double]) histogramOptions.put("logarithmic", true)
+        val histogram = groovyAttr.histogram(histogramOptions)
+        println(s"${name}: ${histogram}")
+      } else {
+        ctx.dataManager.get(attr)
+        println(s"${name}: <computed>")
+      }
+    }
+  }
+
+  // Compute and print uncomputed attributes and scalars in a project
+  // and in its segmentations recursively.
+  def computeUncomputed(): Unit = {
+    computeUncomputedAttributes()
+    computeUncomputedScalars()
+
+    val segmentations = editor.viewer.sortedSegmentations
+    for (segmentation <- segmentations) {
+      val groovySegm = new GroovyBatchProject(ctx, segmentation.editor)
+      groovySegm.computeUncomputed()
+    }
   }
 
   // Creates a string that can be used as the value for a Choice that expects a titled
@@ -412,7 +460,7 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
   }
 }
 
-class GroovyScalar(ctx: GroovyContext, scalar: Scalar[_]) {
+class GroovyScalar(ctx: GroovyContext, val scalar: Scalar[_]) {
   override def toString = {
     import ctx.dataManager
     scalar.value.toString

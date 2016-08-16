@@ -54,7 +54,18 @@
        current-directory="path"
        ng-if="importTable.expanded"
        on-cancel="importTable.expanded = false"
-       table-imported="importTable.tableImported">
+       table-imported="importTable.tableImported"></import-wizard>
+    </div>
+
+    <div ng-class="showSQL ? 'entry-nohover' : 'entry'"
+         id="global-sql-box" >
+      <span class="icon glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }}"
+             ng-click="showSQL=!showSQL"></span>
+       <span class="lead" ng-click="showSQL=!showSQL">SQL Interface
+         <help-popup href="global-sql-box" class="pull-right"></help-popup>
+       </span>
+      <br/>
+      <sql-box directory="path" ng-if="showSQL"></sql-box>
     </div>
 
     <div id="current-directory" class="path">
@@ -120,12 +131,17 @@
         ng-if="isTable(object)"
         class="icon glyphicon glyphicon-align-justify pull-left">
       </span>
+      <span
+        ng-if="isView(object)"
+        class="icon glyphicon glyphicon-eye-close pull-left">
+      </span>
       <span class="lead">
         <item-name-and-menu
           menu="menu"
           name="{{object.name}}"
           short-name="{{pathInside(object.name)}}"
-          type="{{object.objectType}}">
+          type="{{object.objectType}}"
+          config="object.details">
         </item-name-and-menu>
         <a ng-if="isProject(object)" href="#/project/{{object.name}}" target="_blank"
           ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
