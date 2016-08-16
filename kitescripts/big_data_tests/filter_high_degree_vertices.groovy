@@ -5,7 +5,7 @@
 project = lynx.loadProject('edge_import_result')
 
 project.degree(direction: 'all edges', name: 'degree')
-project.filterByAttributes('filterva-degree': '< 100')
+project.filterByAttributes('filterva-degree': '< 5000')
 
 project.computeUncomputed()
 
