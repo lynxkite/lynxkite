@@ -2048,11 +2048,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet && hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ConcatenateBundlesMulti()
-      val result = op(op.vsA, project.vertexSet)(
-        op.vsB, project.vertexSet)(
-          op.vsB, project.vertexSet)(
-            op.edgesAB, project.edgeBundle)(
-              op.edgesBC, project.edgeBundle).result
+      val result = op(op.edgesAB, project.edgeBundle)(
+        op.edgesBC, project.edgeBundle).result
 
       // saving attributes and original edges
       var origEdgeAttrs = project.edgeAttributes.toIndexedSeq

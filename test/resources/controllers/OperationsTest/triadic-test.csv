@@ -1,7 +1,0 @@
-src,dst,type
-1,2,"weak"
-2,3,"strong"
-3,4,"strong"
-4,5,"weak"
-1,3,"weak"
-3,5,"weak"
