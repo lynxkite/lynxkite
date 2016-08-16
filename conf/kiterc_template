@@ -80,6 +80,11 @@ export KITE_HTTP_PORT=2200
 # as well which will automatically restart the LynxKite server if it detects any problem.
 # export KITE_WATCHDOG_PORT=2202
 
+# Enable this to start an internal watchdog thread inside LynxKite's
+# driver JVM. This watchdog will kill LynxKite if health checks are
+# failing.
+# export ENABLE_KITE_INTERNAL_WATCHDOG=true
+
 # The LynxKite local temp directory is a local path that exists on all workers and the master and will
 # be used for storing temporary Spark/Hadoop files. This directory can potentially use a lot of
 # space, so if you have a small root filesystem and an extra large drive mounted somewhere then you
