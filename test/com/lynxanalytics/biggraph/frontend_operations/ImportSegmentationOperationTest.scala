@@ -17,6 +17,7 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("base_name", "seg_name", "base_id")
     val table = TableImport.importDataFrameAsync(dataFrame)
+    DirectoryEntry.fromName("test_segmentation_import").remove()
     val tableFrame = DirectoryEntry.fromName("test_segmentation_import").asNewTableFrame(table, "")
     s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
   }

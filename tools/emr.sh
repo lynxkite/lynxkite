@@ -400,6 +400,7 @@ s3copy)
   echo "Copy successful."
   ;;
 
+# ======
 download-dir)
   MASTER_HOSTNAME=$(GetMasterHostName)
   rsync -ave "$SSH" -r --copy-dirlinks \
@@ -460,6 +461,38 @@ EOF
     ${MASTER_BATCH_DIR}/ \
     hadoop@${MASTER_HOSTNAME}:${REMOTE_BATCH_DIR}
   aws emr ssh ${MASTER_ACCESS} --command "${REMOTE_BATCH_DIR}/kite_batch_job.sh"
+  ;;
+
+# ======
+rds-up)
+  ID="${CLUSTER_NAME}-${ENGINE}"
+  aws rds create-db-instance \
+    --engine $ENGINE \
+    --db-instance-identifier $ID \
+    --backup-retention-period 0 \
+    --db-name db \
+    --master-username root \
+    --master-user-password rootroot \
+    --db-instance-class 'db.m3.2xlarge' \
+    --allocated-storage 20 > /dev/null
+  ;&
+
+# ====== fall-through
+rds-get)
+  ID="${CLUSTER_NAME}-${ENGINE}"
+  aws rds wait db-instance-available \
+    --db-instance-identifier $ID > /dev/null
+  aws rds describe-db-instances \
+    --db-instance-identifier $ID \
+    | grep Address | cut -d'"' -f4
+  ;;
+
+# ======
+rds-down)
+  ID="${CLUSTER_NAME}-${ENGINE}"
+  aws rds delete-db-instance \
+    --db-instance-identifier $ID \
+    --skip-final-snapshot
   ;;
 
 # ======

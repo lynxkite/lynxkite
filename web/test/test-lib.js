@@ -565,6 +565,10 @@ Selector.prototype = {
     return element(by.id('table-' + toID(name)));
   },
 
+  view: function(name) {
+    return element(by.id('view-' + toID(name)));
+  },
+
   expectNumProjects: function(n) {
     return expect($$('.project-entry').count()).toEqual(n);
   },
@@ -577,6 +581,10 @@ Selector.prototype = {
     return expect($$('.table-entry').count()).toEqual(n);
   },
 
+  expectNumViews: function(n) {
+      return expect($$('.view-entry').count()).toEqual(n);
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
@@ -587,15 +595,25 @@ Selector.prototype = {
     element(by.id('import-table')).click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile) {
-    this.root.$('import-wizard #table-name input').sendKeys(tableName);
-    this.root.$('#datatype select option[value="csv"]').click();
-    var csvFileParameter = $('#csv-filename file-parameter');
-    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
+  clickAndWaitForImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
     testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
     importCsvButton.click();
+  },
+
+  importLocalCSVFile: function(tableName, localCsvFile, columns, view) {
+    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    if (columns) {
+      this.root.$('import-wizard #columns-to-import input').sendKeys(columns);
+    }
+    this.root.$('#datatype select option[value="csv"]').click();
+    var csvFileParameter = $('#csv-filename file-parameter');
+    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
+    if (view) {
+      this.root.$('import-wizard #as-view input').click();
+    }
+    this.clickAndWaitForImport();
   },
 
   newDirectory: function(name) {
@@ -630,21 +648,14 @@ Selector.prototype = {
 
   deleteProject: function(name) {
     testLib.menuClick(this.project(name), 'discard');
-    // We need to give the browser time to display the alert, see angular/protractor#1486.
-    testLib.wait(protractor.ExpectedConditions.alertIsPresent());
-    var confirmation = browser.switchTo().alert();
-    expect(confirmation.getText()).toContain('delete project ');
-    expect(confirmation.getText()).toContain(name);
-    confirmation.accept();
   },
 
   deleteDirectory: function(name) {
     testLib.menuClick(this.directory(name), 'discard');
-    // We need to give the browser time to display the alert, see angular/protractor#1486.
-    testLib.wait(protractor.ExpectedConditions.alertIsPresent());
-    var confirmation = browser.switchTo().alert();
-    expect(confirmation.getText()).toContain('delete directory ' + name);
-    confirmation.accept();
+  },
+
+  editImport: function(name) {
+    testLib.menuClick(this.table(name), 'edit-import');
   },
 
   expectProjectListed: function(name) {
@@ -671,12 +682,34 @@ Selector.prototype = {
     testLib.expectNotElement(this.table(name));
   },
 
+  expectViewListed: function(name) {
+    testLib.expectElement(this.view(name));
+  },
+
   enterSearchQuery: function(query) {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
   },
 
   clearSearchQuery: function() {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+  },
+
+  globalSqlEditor: function() {
+    return element(by.id('sql-editor'));
+  },
+  setGlobalSql: function(sql) {
+    testLib.sendKeysToACE(this.globalSqlEditor(), sql);
+  },
+
+  runGlobalSql: function(sql) {
+    this.root.$('#global-sql-box span[class="lead"]').click();
+    this.setGlobalSql(sql);
+  },
+
+  saveGlobalSqlToCSV: function() {
+    element(by.id('save-results-opener')).click();
+    this.root.$('#exportFormat option[value="csv"]').click();
+    element(by.id('save-results')).click();
   },
 };
 

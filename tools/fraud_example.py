@@ -7,9 +7,11 @@ entities can be all considered suspect and banned/verified by the operator.
 import random
 import sys
 
+
 def rnd():
   """A random number from 0 to 1."""
   return random.random()
+
 
 def skewedchoice(s):
   """Randomly picks a word from "s". Earlier entries have higher probabilities."""
@@ -20,27 +22,34 @@ def skewedchoice(s):
       options.append(options[i])
   return random.choice(options)
 
+
 def choice(s):
   """Randomly picks a word from "s" with uniform distribution."""
   options = s.split()
   return random.choice(options)
 
+
 class Node(object):
+
   def __init__(self, ID):
     self.ID = ID
     self.suspect = 0
     self.reported = 0
 
   def __str__(self):
-    return '{ID},{kind},{label},{icon},{reported},{suspect}'.format(**self.__dict__)
+    return '{ID},{kind},{label},{icon},{reported},{suspect}'.format(
+        **self.__dict__)
+
 
 class Edge(object):
+
   def __init__(self, a, b):
     self.src = a.ID
     self.dst = b.ID
 
   def __str__(self):
     return '{src},{dst}'.format(**self.__dict__)
+
 
 class RandomGraph(object):
   """A random entity graph with a given number of nodes."""
@@ -76,7 +85,8 @@ class RandomGraph(object):
     n = Node(len(self.nodes))
     n.kind = 'developer'
     n.icon = 'person'
-    n.label = '*' * random.randrange(3, 5) + '@' + skewedchoice('gmail.com yahoo.com hotmail.com mail.ru')
+    n.label = '*' * random.randrange(3, 5) + '@' + \
+        skewedchoice('gmail.com yahoo.com hotmail.com mail.ru')
     if n.label.endswith('.ru') and rnd() < 0.1:
       n.suspect = 1
       self.suspects.append(n)
@@ -120,6 +130,7 @@ class RandomGraph(object):
         n.reported = 1
     self.nodes.append(n)
 
+
 def nodeHeader():
   """The header for nodes.csv."""
   header = Node('ID')
@@ -127,13 +138,15 @@ def nodeHeader():
   header.label = 'label'
   header.icon = 'icon'
   header.reported = 'reported'
-  header.suspect = 'suspect' # For debugging.
+  header.suspect = 'suspect'  # For debugging.
   return header
+
 
 def edgeHeader():
   """The header for edges.csv."""
   header = Edge(Node('src'), Node('dst'))
   return header
+
 
 def main():
   n = int(sys.argv[1])

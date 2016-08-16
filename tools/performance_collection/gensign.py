@@ -4,12 +4,11 @@ Generates a script that can upload kite logs and the extracted operation perform
 to the google storage. Only needs to be run when changes are made to the *.policy
 files in this directory. Run it like this:
 
-python gensign.sy > gupload.sh
+python gensign.py > gupload.sh
 
 The new version of gupload.sh should then be committed
 
 '''
-
 
 
 from M2Crypto import EVP
@@ -19,12 +18,14 @@ import sys
 
 policy_files = ['kitelogs-logs.policy', 'kitelogs-ops.policy']
 
+
 def b64_file(filename):
   with open(filename, 'r') as file:
     data = file.read()
     return b64encode(data)
 
 encoded_policies = map(b64_file, policy_files)
+
 
 def generate_signature(encoded_policy):
   pemfile_name = expanduser('~') + '/.ssh/kite-logs.pem'
@@ -80,8 +81,8 @@ print '''#!/bin/bash
 
 print 'LOGSPOL=' + encoded_policies[0]
 print 'LOGSSIG=' + signatures[0]
-print 'OPSPOL='  + encoded_policies[1]
-print 'OPSSIG='  + signatures[1]
+print 'OPSPOL=' + encoded_policies[1]
+print 'OPSSIG=' + signatures[1]
 print 'LOGSBUCKET=kitelogs-logs'
 print 'OPSBUCKET=kitelogs-ops'
 
@@ -128,7 +129,7 @@ curl \\
 $TRACE \\
 --form policy=$POL \\
 --form signature=$SIG \\
---form acl=bucket-owner-read \\
+--form acl=project-private \\
 --form key=$OUTPUT \\
 --form GoogleAccessId=kite-logs-upload@big-graph-gc1.iam.gserviceaccount.com \\
 --form file=@$INPUT \\

@@ -22,7 +22,6 @@ val sparkVersion = SettingKey[String]("spark-version", "The version of Spark use
 sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 
 libraryDependencies ++= Seq(
-  anorm, // Play library for making SQL queries.
   ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
   // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.4.4
@@ -46,7 +45,7 @@ libraryDependencies ++= Seq(
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
-  "org.xerial" % "sqlite-jdbc" % "3.8.7",
+  "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,

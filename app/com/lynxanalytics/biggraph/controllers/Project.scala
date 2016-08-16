@@ -35,6 +35,7 @@ import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
@@ -69,10 +70,11 @@ case class RootProjectState(
     previousCheckpoint: Option[String],
     lastOperationDesc: String,
     // This will be set exactly when previousCheckpoint is set.
-    lastOperationRequest: Option[SubProjectOperation]) {
+    lastOperationRequest: Option[SubProjectOperation],
+    viewRecipe: Option[JsObject]) {
 }
 object RootProjectState {
-  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
+  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None, None)
 }
 
 // Complete state of segmentation.
@@ -111,11 +113,10 @@ sealed trait ProjectViewer {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq.sorted
   def models: Map[String, model.ModelMeta] = {
-    scalars
-      .filter { case (_, v) => typeOf(v.typeTag) =:= typeOf[model.Model] }
-      .map {
-        case (k, v) => k -> v.source.operation.asInstanceOf[model.ModelMeta]
-      }
+    import model.Implicits._
+    scalars.collect {
+      case (k, v) if v.is[model.Model] => k -> v.runtimeSafeCast[model.Model].modelMeta
+    }
   }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =
@@ -149,14 +150,15 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String, objectType: String)(
+  def toListElementFE(projectName: String, objectType: String, details: Option[json.JsObject])(
     implicit epm: EntityProgressManager): FEProjectListElement = {
     FEProjectListElement(
       projectName,
       objectType,
       state.notes,
       feScalar("vertex_count"),
-      feScalar("edge_count"))
+      feScalar("edge_count"),
+      details = details)
   }
 
   // Returns the FE attribute representing the seq of members for
@@ -290,6 +292,8 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
       Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
+
+  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -728,6 +732,12 @@ class RootProjectEditor(
 
   val isSegmentation = false
   def asSegmentation: SegmentationEditor = ???
+
+  def viewRecipe_=[T <: ViewRecipe: json.Writes](r: T) = {
+    val js = TypedJson.createFromWriter(r).as[json.JsObject]
+    rootState = rootState.copy(viewRecipe = Some(js))
+  }
+  def viewRecipe = viewer.viewRecipe
 }
 
 // Specialized editor for a SegmentationState.
@@ -844,6 +854,12 @@ class ProjectFrame(path: SymbolPath)(
 object ProjectFrame {
   val separator = "|"
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
+  val reservedWords = Set(
+    "readACL", "writeACL",
+    "checkpoint", "nextCheckpoint",
+    "farthestCheckpoint",
+    "objectType", "details")
+  // Do not add to the set above, begin internal names with '!'.
 
   def validateName(name: String, what: String = "Name",
                    allowSlash: Boolean = false,
@@ -852,6 +868,11 @@ object ProjectFrame {
     assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
     assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
     assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
+    val path = SymbolPath.parse(name)
+    if (path.nonEmpty) {
+      val name = path.last.name
+      assert(!reservedWords.contains(name), s"$name is a reserved word")
+    }
   }
 
   def fromName(name: String)(implicit manager: MetaGraphManager) =
@@ -895,8 +916,27 @@ class TableFrame(path: SymbolPath)(
     set(rootDir / "objectType", "table")
     checkpoint = cp
   }
+
+  def setImportConfig(obj: json.JsObject) = details = obj
+
   override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
   def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
+}
+
+class ViewFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  def initializeFromConfig[T <: ViewRecipe: json.Writes](
+    recipe: T, notes: String): Unit = manager.synchronized {
+    initializeFromCheckpoint(ViewRecipe.saveAsCheckpoint(recipe, notes))
+  }
+
+  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
+    set(rootDir / "objectType", "view")
+    checkpoint = cp
+  }
+
+  override def isDirectory: Boolean = false
+  def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
@@ -916,13 +956,20 @@ abstract class ObjectFrame(path: SymbolPath)(
 
   def currentState: RootProjectState = getCheckpointState(checkpoint)
 
+  def details: Option[json.JsObject] = {
+    val path = rootDir / "details"
+    existing(path).map(get).map(s => json.Json.parse(s).as[json.JsObject])
+  }
+
+  protected def details_=(x: json.JsObject): Unit = set(rootDir / "details", json.Json.stringify(x))
+
   def viewer = new RootProjectViewer(currentState)
 
   def objectType: String = get(rootDir / "objectType", "project")
 
   def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
-      viewer.toListElementFE(name, objectType)
+      viewer.toListElementFE(name, objectType, details)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
@@ -1058,8 +1105,9 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
   def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isTable
+  def isProject = hasCheckpoint && !isTable && !isView
   def isDirectory = exists && !hasCheckpoint
+  def isView = get(rootDir / "objectType", "") == "view"
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1071,17 +1119,24 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initialize()
     res
   }
+  def asNewProjectFrame(checkpoint: String): ProjectFrame = {
+    val res = asNewProjectFrame()
+    res.setCheckpoint(checkpoint)
+    res
+  }
 
   def asTableFrame: TableFrame = {
     assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
     asInstanceOf[TableFrame]
   }
   def asNewTableFrame(table: Table, notes: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromTable(table, notes)
     res
   }
   def asNewTableFrame(checkpoint: String): TableFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
     val res = new TableFrame(path)
     res.initializeFromCheckpoint(checkpoint)
     res
@@ -1103,7 +1158,25 @@ class DirectoryEntry(val path: SymbolPath)(
     res.writeACL = ""
     res
   }
+
+  def asViewFrame(): ViewFrame = {
+    assert(isInstanceOf[ViewFrame], s"Entry '$path' is not a view")
+    asInstanceOf[ViewFrame]
+  }
+
+  def asNewViewFrame[T <: ViewRecipe: json.Writes](recipe: T, notes: String): ViewFrame = {
+    assert(!exists, s"Entry '$path' already exists")
+    val res = new ViewFrame(path)
+    res.initializeFromConfig(recipe, notes)
+    res
+  }
+  def asNewViewFrame(checkpoint: String): ViewFrame = {
+    val res = new ViewFrame(path)
+    res.initializeFromCheckpoint(checkpoint)
+    res
+  }
 }
+
 object DirectoryEntry {
   val root = SymbolPath("projects")
 
@@ -1124,6 +1197,8 @@ object DirectoryEntry {
         new ProjectFrame(entry.path)
       } else if (entry.isTable) {
         new TableFrame(entry.path)
+      } else if (entry.isView) {
+        new ViewFrame(entry.path)
       } else {
         new Directory(entry.path)
       }

@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/bin/bash -xe
 
-set -x
-set -e
-
+cd $(dirname $0)
 pushd web
 bower install --silent --config.interactive=false
 npm install --silent

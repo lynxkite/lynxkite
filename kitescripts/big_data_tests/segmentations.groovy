@@ -27,7 +27,5 @@ project.derivedVertexAttribute(
 project.segmentByStringAttribute(
   name: 'seg_string',
   attr: 'x')
-s = project.segmentations['seg_string']
-println "[seg_string] vertices: ${s.scalars['vertex_count']} edges: ${s.scalars['edge_count']}"
-
+project.computeUncomputed()
 project.saveAs("segmentations")
