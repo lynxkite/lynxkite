@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - New operation _"Triadic closure"_ has been created.
+
 ### 1.9.1
 
  - Fix startup script to support RHEL 6.
