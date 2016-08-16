@@ -210,13 +210,13 @@ class EMRCluster:
         print_output=print_output)
 
   def ssh_nohup(
-      self,
-      cmds,
-      script_file='/home/hadoop/run_cmd.sh',
-      output_file='/home/hadoop/cmd_output.txt',
-      status_file='/home/hadoop/cmd_status.txt',
-      print_output=True,
-      verbose=True):
+          self,
+          cmds,
+          script_file='/home/hadoop/run_cmd.sh',
+          output_file='/home/hadoop/cmd_output.txt',
+          status_file='/home/hadoop/cmd_status.txt',
+          print_output=True,
+          verbose=True):
     '''Send shell commands to the cluster via ssh, and run them with nohup in
     the background.'''
     self.ssh('''
@@ -234,9 +234,9 @@ EOF
         status_file=status_file))
 
   def fetch_output(
-      self,
-      output_file='/home/hadoop/cmd_output.txt',
-      status_file='/home/hadoop/cmd_status.txt'):
+          self,
+          output_file='/home/hadoop/cmd_output.txt',
+          status_file='/home/hadoop/cmd_status.txt'):
     '''Periodically connects to the master and downloads and prints
     the output log of the running script. Also monitors a status
     file at the master, and quits the loop in case of done status.
