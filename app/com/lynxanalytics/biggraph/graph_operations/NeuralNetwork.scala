@@ -409,21 +409,30 @@ case class NeuralNetwork(
       }
 
       // Backward pass.
+      var numberOfForgotten = 0.0
+      var numberOfKnown = 0.0
       val errors: Map[ID, Double] = trainingData.map {
-        case (id, (Some(label), features)) if (keptState(id)(1) == 0) =>
+        case (id, (Some(label), features)) if (keptState(id)(1) == 0 || forgetFraction == 0.0) =>
+          numberOfForgotten += 1
           // The label is predicted in position 0.
           id -> (outputs.last.newState(id)(0) - label)
         case (id, (Some(label), features)) =>
+          numberOfKnown += 1
           id -> (outputs.last.newState(id)(0) - label) * knownLabelWeight
         case (id, (None, features)) =>
           id -> 0.0
       }.toMap
+      val correctionRatio = {
+        if (forgetFraction != 0.0) {
+          (numberOfKnown + numberOfForgotten) / (numberOfKnown * knownLabelWeight + numberOfForgotten)
+        } else 1
+      }
       val errorTotal = errors.values.map(e => e * e).sum
       log.info(s"Total error in iteration $i: $errorTotal")
       val finalGradient: Map[ID, Vector] = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
-          vec(0) = error
+          vec(0) = error * correctionRatio
           id -> vec
       }
       val gradients = outputs.init.scanRight {
