@@ -1,0 +1,4 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/triadic_closure.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+2016-08-16 09:39:18,001 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-0 
+Task 1 in stage 1.1 failed 4 times; aborting job
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/triadic_closure.groovy, took 158 seconds
