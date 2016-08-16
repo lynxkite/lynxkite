@@ -224,9 +224,8 @@ class EMRCluster:
         {cmds!s}
         echo "done" >{status_file!s}
 EOF
-      chmod a+x {script_file!s}
       rm -f {status_file!s}
-      nohup {script_file!s} >{output_file!s} 2>&1 &
+      nohup bash {script_file!s} >{output_file!s} 2>&1 &
     '''.format(
         cmds=cmds,
         script_file=script_file,
