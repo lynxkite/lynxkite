@@ -33,22 +33,21 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
     val outputPartitioner = rc.partitionerForNRows(inputs.es.rdd.count())
 
     // remove loop- and parallel edges, keep non-parallel multiple edges
-    val filteredEdges = inputs.es.rdd.filter { case (_, Edge(src, dst)) => src != dst }
-      .map { case (_, Edge(src, dst)) => (src, dst) }.distinct()
+    val filteredEdges = inputs.es.rdd
+      .filter { case (_, Edge(src, dst)) => src != dst }
+      .map { case (_, Edge(src, dst)) => (sortTuple(src, dst), if (src < dst) 1 else 2) }
+      .sort(outputPartitioner)
+      .reduceBySortedKey(outputPartitioner, _ | _)
 
     // now apply the needsBothDirections constraint
     // simpleEdges - simple graph, the edges we will actually work on
     // doubledEdges - simpleEdges plus its reversed, will be used to construct the adjacencyArray
-    val (simpleEdges, doubledEdges) =
-      if (needsBothDirections) {
-        val dE = filteredEdges.intersection(filteredEdges.map { case (src, dst) => (dst, src) })
-        val sE = dE.map(sortTuple).distinct()
-        (sE, dE)
-      } else {
-        val sE = filteredEdges.map(sortTuple).distinct()
-        val dE = sE.flatMap { case (src, dst) => List((src, dst), (dst, src)) }
-        (sE, dE)
-      }
+    val simpleEdges =
+      if (needsBothDirections)
+        filteredEdges.filter(_._2 == 3).map(_._1)
+      else
+        filteredEdges.map(_._1)
+    val doubledEdges = simpleEdges.flatMap { case (src, dst) => List((src, dst), (dst, src)) }
 
     // construct the adjacencyArray, and join it on the edge set
     val adjacencyArray = doubledEdges
@@ -60,7 +59,10 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
       .map { case (src, (dst, nSrc)) => (dst, (src, nSrc)) }
       .sort(outputPartitioner)
       .sortedJoin(adjacencyArray)
-      .map { case (dst, ((src, nSrc), nDst)) => ((src, dst), (nSrc, nDst)) }
+      .map {
+        case (dst, ((src, nSrc), nDst)) =>
+          ((src, dst), (nSrc.filter(v => v < src), nDst.filter(v => v < dst)))
+      }
 
     // collect triangles
     val triangleList = edgesWithNeighbours.flatMap {
@@ -69,8 +71,8 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
         checkNeighbours(
           src,
           dst,
-          nSrc.filter(v => v < src && v < dst),
-          nDst.filter(v => v < src && v < dst),
+          nSrc.filter(v => v < dst),
+          nDst.filter(v => v < src),
           collector)
         collector
       }
