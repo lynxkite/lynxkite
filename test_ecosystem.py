@@ -85,8 +85,8 @@ def main(args):
   start_or_reset_ecosystem(cluster, args.lynx_version)
   start_tests(cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
-  output = fetch_output(cluster)
-  save_output(output)
+  fetch_output(cluster)
+  cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
   shut_down_instances(cluster, mysql_instance)
 
 
@@ -159,16 +159,19 @@ def start_or_reset_ecosystem(cluster, version):
 def start_tests(cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh('''
-    cat >/home/hadoop/run_test.sh <<EOF
-      echo "START TIME: $(date) $(date +%s)"
-      docker exec lynx_luigi_worker_1 luigi --module {luigi_module!s} {luigi_task!s} --jdbc-url '{jdbc_url!s}'
-      echo "END TIME: ($date) $(date +%s)"
+    cat >/home/hadoop/run_test.sh <<'EOF'
+      docker exec lynx_luigi_worker_1 python3 tasks/test_tasks/test_runner.py \
+          --module {luigi_module!s} \
+          --task {luigi_task!s} \
+          --task-param jdbc_url '{jdbc_url!s}' \
+          --result_file /tmp/test_results.txt
+      docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
       echo 'done' >/home/hadoop/test_status.txt
     echo
 EOF
     chmod a+x /home/hadoop/run_test.sh
     rm -f /home/hadoop/test_status.txt
-    nohup /home/hadoop/run_test.sh >/home/hadoop/test_results.txt 2>&1 &
+    nohup /home/hadoop/run_test.sh >/home/hadoop/test_output.txt 2>&1 &
   '''.format(
       jdbc_url=jdbc_url,
       luigi_module=args.task_module,
@@ -193,7 +196,7 @@ def fetch_output(cluster):
     status_is_done = ssh_retcode == 0 and 'done' == status.strip()
     # Print unseen log lines.
     output_results, return_code = cluster.ssh(
-        'tail -n +{offset!s} /home/hadoop/test_results.txt'.format(
+        'tail -n +{offset!s} /home/hadoop/test_output.txt'.format(
             offset=output_lines_seen + 1),
         verbose=False,
         print_output=False)
@@ -205,22 +208,6 @@ def fetch_output(cluster):
       output_lines_seen += output_results.count('\n')
     time.sleep(5)
   return all_output
-
-
-def save_output(output):
-  if not args.results_dir:
-    return
-
-  output_lines = []
-  for line in output.split('\n'):
-    if line.startswith('[time='):
-      output_lines.append(line)
-
-  if not os.path.exists(args.results_dir):
-    os.makedirs(args.results_dir)
-  with open(args.results_dir + '/result.txt', 'w') as f:
-    f.write('\n'.join(output_lines))
-    f.write('\n')
 
 
 def prompt_delete():
