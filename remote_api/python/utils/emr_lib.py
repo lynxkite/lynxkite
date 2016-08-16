@@ -223,6 +223,20 @@ class EMRCluster:
             'hadoop@' + self.master() + ':' + dst
         ])
 
+  def rsync_down(self, src, dst):
+    '''Copy files from the cluster via invoking rsync.'''
+    print('[EMR DOWNLOAD] {src!s} TO {dst!s}'.format(src=src, dst=dst))
+    call_cmd(
+        [
+            'rsync',
+            '-ave',
+            ' '.join(self.ssh_cmd),
+            '-r',
+            '--copy-dirlinks',
+            'hadoop@' + self.master() + ':' + src,
+            dst
+        ])
+
   def terminate(self):
     self.emr_client.terminate_job_flows(
         JobFlowIds=[self.id])
