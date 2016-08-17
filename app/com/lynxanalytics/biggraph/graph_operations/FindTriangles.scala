@@ -28,9 +28,8 @@ case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMeta
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-
-    val inputPartitioner = inputs.vs.rdd.partitioner.get
-    val outputPartitioner = rc.partitionerForNRows(inputs.es.rdd.count())
+    
+    val outputPartitioner = inputs.es.rdd.partitioner.get
 
     // remove loop- and parallel edges, keep non-parallel multiple edges
     val filteredEdges = inputs.es.rdd

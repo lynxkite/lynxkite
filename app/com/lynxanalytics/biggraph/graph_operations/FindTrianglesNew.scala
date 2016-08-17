@@ -29,8 +29,7 @@ case class FindTrianglesNew(needsBothDirections: Boolean = false) extends TypedM
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
-    val inputPartitioner = inputs.vs.rdd.partitioner.get
-    val outputPartitioner = rc.partitionerForNRows(inputs.es.rdd.count())
+    val outputPartitioner = inputs.es.rdd.partitioner.get
 
     // remove loop edges
     val filteredEdges = inputs.es.rdd.filter { case (_, Edge(src, dst)) => src != dst }
