@@ -328,8 +328,8 @@ class InternalWatchdogThread(
 
   // If there was no successful status in the past this amount of
   // then LynxKite exits.
-  val SHUTDOWN_TIMEOUT_SECONDS = 10
-  val WARN_TIMEOUT_SECONDS = 5
+  val SHUTDOWN_TIMEOUT_SECONDS = 60
+  val WARN_TIMEOUT_SECONDS = 30
   val CHECK_PERIOD_SECONDS = 1
 
   def checkExitCondition(lastOkStatusTime: Long): Unit = {
