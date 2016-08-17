@@ -115,18 +115,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     testPerformance(10000, 0.9, 5, 100)
     testPerformance(100000, 0.9, 5, 100)
     testPerformance(1000000, 0.9, 5, 100)
-    /*testPerformance(10000, 0.9, 15, 1000)
+    testPerformance(10000, 0.9, 15, 1000)
     testPerformance(100000, 0.9, 15, 1000)
-    testPerformance(100000, 0.7, 10, 200)*/
-    println("[info] PerformanceNew test started")
-    testPerformanceNew(1000, 0.9, 5, 100)
-    testPerformanceNew(10000, 0.9, 5, 100)
-    testPerformanceNew(100000, 0.9, 5, 100)
-    testPerformanceNew(1000000, 0.9, 5, 100)
-    /*testPerformanceNew(10000, 0.9, 15, 1000)
-    testPerformanceNew(100000, 0.9, 15, 1000)
-    testPerformanceNew(100000, 0.7, 10, 200)*/
-    //assert(true)
+    testPerformance(100000, 0.7, 10, 200)
   }
 
   def testPerformance(n: Int,
@@ -147,30 +138,6 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     val g = SmallTestGraph(adjacencyArray.toMap).result
     val t0 = System.nanoTime()
     val op = FindTriangles(needsBothDirections = false)
-    val ftOut = op(op.vs, g.vs)(op.es, g.es).result
-    print("[info] - " + ftOut.segments.rdd.count + " triangles found in ")
-    val t1 = System.nanoTime()
-    println((t1 - t0) / 1000000000.0 + " seconds")
-  }
-
-  def testPerformanceNew(n: Int,
-                         ratio: Double,
-                         lowDegree: Int,
-                         highDegree: Int): Unit = {
-    val random = new Random(19910306)
-    val adjacencyArray = mutable.Map[Int, Seq[Int]]()
-    for (i <- 1 to n) {
-      val maxdegree = if (i < n * ratio) lowDegree else highDegree
-      val degree = random.nextInt(maxdegree)
-      val neighbours = mutable.ArrayBuffer[Int]()
-      for (j <- 1 to degree) {
-        neighbours += random.nextInt(n)
-      }
-      adjacencyArray += (i -> neighbours)
-    }
-    val g = SmallTestGraph(adjacencyArray.toMap).result
-    val t0 = System.nanoTime()
-    val op = FindTrianglesNew(needsBothDirections = false)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     print("[info] - " + ftOut.segments.rdd.count + " triangles found in ")
     val t1 = System.nanoTime()
