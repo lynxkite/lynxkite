@@ -98,18 +98,18 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     testPerformance(1000, 0.9, 5, 100)
     testPerformance(10000, 0.9, 5, 100)
     testPerformance(100000, 0.9, 5, 100)
-    /*testPerformance(1000000, 0.9, 5, 100)
+    testPerformance(1000000, 0.9, 5, 100)
     testPerformance(10000, 0.9, 15, 1000)
     testPerformance(100000, 0.9, 15, 1000)
-    testPerformance(100000, 0.7, 10, 200)*/
+    testPerformance(100000, 0.7, 10, 200)
     println("[info] PerformanceNew test started")
     testPerformanceNew(1000, 0.9, 5, 100)
     testPerformanceNew(10000, 0.9, 5, 100)
     testPerformanceNew(100000, 0.9, 5, 100)
-    /*testPerformanceNew(1000000, 0.9, 5, 100)
+    testPerformanceNew(1000000, 0.9, 5, 100)
     testPerformanceNew(10000, 0.9, 15, 1000)
     testPerformanceNew(100000, 0.9, 15, 1000)
-    testPerformanceNew(100000, 0.7, 10, 200)*/
+    testPerformanceNew(100000, 0.7, 10, 200)
     //assert(true)
   }
 
@@ -117,10 +117,10 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
                       ratio: Double,
                       lowDegree: Int,
                       highDegree: Int): Unit = {
-    val random = Random
+    val random = new Random(19910306)
     val adjacencyArray = mutable.Map[Int, Seq[Int]]()
     for (i <- 1 to n) {
-      val maxdegree = if (i > n * (1 - ratio)) lowDegree else highDegree
+      val maxdegree = if (i < n * ratio) lowDegree else highDegree
       val degree = random.nextInt(maxdegree)
       val neighbours = mutable.ArrayBuffer[Int]()
       for (j <- 1 to degree) {
@@ -141,10 +141,10 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
                          ratio: Double,
                          lowDegree: Int,
                          highDegree: Int): Unit = {
-    val random = Random
+    val random = new Random(19910306)
     val adjacencyArray = mutable.Map[Int, Seq[Int]]()
     for (i <- 1 to n) {
-      val maxdegree = if (i > n * (1 - ratio)) lowDegree else highDegree
+      val maxdegree = if (i < n * ratio) lowDegree else highDegree
       val degree = random.nextInt(maxdegree)
       val neighbours = mutable.ArrayBuffer[Int]()
       for (j <- 1 to degree) {
