@@ -321,42 +321,51 @@ class KiteMonitorThread(
   setDaemon(true)
 }
 
+// This is a thread that can be used to watch the healthiness
+// of LynxKite and kill the whole process if it has been unhealthy
+// for too long.
+// - LynxKite will be killed if shutDownTimeoutSecs passes after
+//   the last successful and positive health check.
+// - listener and controller are used for performing the health
+//   checks.
+object InternalWatchdogThread {
+  val NanosPerSeconds = 1000 * 1000 * 1000
+  val CheckPeriodMillis = 1000
+}
 class InternalWatchdogThread(
+  shutdownTimeoutSecs: Int,
   listener: KiteListener,
   controller: SparkClusterController)
-    extends Thread("internal-monitor-thread") {
+    extends Thread("internal-watchdog-thread") {
 
-  // If there was no successful status in the past this amount of
-  // then LynxKite exits.
-  val SHUTDOWN_TIMEOUT_SECONDS = 60
-  val WARN_TIMEOUT_SECONDS = 30
-  val CHECK_PERIOD_SECONDS = 1
+  val warningTimeoutSecs = shutdownTimeoutSecs / 2
 
-  def checkExitCondition(lastOkStatusTime: Long): Unit = {
-    val unhealthySinceSeconds = (System.currentTimeMillis - lastOkStatusTime) / 1000
+  def checkExitCondition(lastOkStatusTimeNanos: Long): Unit = {
+    val unhealthySinceSeconds = (System.nanoTime - lastOkStatusTimeNanos) /
+      InternalWatchdogThread.NanosPerSeconds
     def msg = {
       s"Watchdog: LynxKite has been unhealthy for ${unhealthySinceSeconds} seconds."
     }
 
-    if (unhealthySinceSeconds > SHUTDOWN_TIMEOUT_SECONDS) {
+    if (unhealthySinceSeconds > shutdownTimeoutSecs) {
       log.error(msg + " Exiting LynxKite.")
       System.exit(1)
     }
-    if (unhealthySinceSeconds > WARN_TIMEOUT_SECONDS) {
+    if (unhealthySinceSeconds > warningTimeoutSecs) {
       log.warn(msg)
     }
   }
 
   override def run(): Unit = {
-    var lastOkStatusTime = System.currentTimeMillis
+    var lastOkStatusTimeNanos = System.nanoTime
     while (true) {
       var status = listener.getCurrentResponse
       if (controller.getForceReportHealthy() ||
         (status.sparkWorking && status.kiteCoreWorking)) {
-        lastOkStatusTime = System.currentTimeMillis
+        lastOkStatusTimeNanos = System.nanoTime
       }
-      checkExitCondition(lastOkStatusTime)
-      Thread.sleep(CHECK_PERIOD_SECONDS * 1000)
+      checkExitCondition(lastOkStatusTimeNanos)
+      Thread.sleep(InternalWatchdogThread.CheckPeriodMillis)
     }
   }
 
@@ -369,12 +378,15 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   private var forceReportHealthy = false
   val sc = environment.sparkContext
   val listener = new KiteListener(sc)
-  if (LoggedEnvironment.envOrElse(
-    "ENABLE_KITE_INTERNAL_WATCHDOG", "") == "true") {
-    val watchdog = new InternalWatchdogThread(listener, this)
-    watchdog.start()
-  }
   sc.addSparkListener(listener)
+  LoggedEnvironment.envOrNone(
+    "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS") match {
+      case Some(timeoutSecs) =>
+        val watchdog = new InternalWatchdogThread(
+          timeoutSecs.toInt, listener, this)
+        watchdog.start()
+      case _ => // Internal watchdog is disabled.
+    }
 
   def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
 
