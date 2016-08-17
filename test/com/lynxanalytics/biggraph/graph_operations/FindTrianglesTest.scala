@@ -93,7 +93,7 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (3, 3))
   }
 
-  test("performance test") {
+  ignore("performance test") {
     println("[info] Performance test started")
     testPerformance(1000, 0.9, 5, 100)
     testPerformance(10000, 0.9, 5, 100)
