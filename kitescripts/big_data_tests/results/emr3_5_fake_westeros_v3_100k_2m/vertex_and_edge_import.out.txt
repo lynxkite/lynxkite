@@ -1,7 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-dst: {"labelType":"bucket","labels":["11","9","7","6","5","4","3","2","1","Other"],"sizes":[8273,10114,13002,15158,18188,22731,30318,45465,90918,1938251]}
-out_degree: {"labelType":"between","labels":["2.0","5.8","17.1","49.9","145.9","426.4","1246.2","3642.2","10644.5","31109.1","90918.0"],"sizes":[708,77913,18992,1714,455,145,48,17,6,2]}
-in_degree: {"labelType":"between","labels":["2.0","5.8","17.1","49.9","145.9","426.4","1246.2","3642.2","10644.5","31109.1","90918.0"],"sizes":[708,77913,18992,1714,455,145,48,17,6,2]}
-id: <computed>
-src: {"labelType":"bucket","labels":["7","10","8","6","5","4","3","2","1","Other"],"sizes":[13002,9096,11381,15158,18188,22731,30318,45465,90918,1936161]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy, took 50 seconds
