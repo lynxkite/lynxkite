@@ -9,7 +9,7 @@
 # Installing proper version of aws: 
 # sudo pip2 instal awscli==1.10.20 .
 # 
-# Installing awscli with pip2, if the pip3 version already installed:
+# Installing awscli with pip2, if the pip3 version is already installed:
 # sudo apt-get install python2.7
 # sudo pip3 uninstall awscli
 # sudo pip install awscli=1.10.20 or sudo pip2 install awscli=1.10.20
