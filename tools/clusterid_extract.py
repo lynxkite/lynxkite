@@ -7,12 +7,12 @@ argument)
 import json
 import sys
 
-cluster_info=sys.stdin.read()
-name=sys.argv[1]
+cluster_info = sys.stdin.read()
+name = sys.argv[1]
 
-clusters=json.loads(cluster_info)['Clusters']
+clusters = json.loads(cluster_info)['Clusters']
 
-my_clusters=list(filter(lambda cluster: cluster['Name'] == name, clusters))
+my_clusters = list(filter(lambda cluster: cluster['Name'] == name, clusters))
 
 
 if not my_clusters:
@@ -20,7 +20,8 @@ if not my_clusters:
   sys.exit(1)
 
 if len(my_clusters) > 1:
-  msg = 'Name: "' + name + '" occurs in several clusters:\n' + '\n'.join(' -> ' + str(c) for c in my_clusters)
+  msg = 'Name: "' + name + '" occurs in several clusters:\n' + \
+      '\n'.join(' -> ' + str(c) for c in my_clusters)
   sys.stderr.write(msg + '\n')
   sys.exit(1)
 
