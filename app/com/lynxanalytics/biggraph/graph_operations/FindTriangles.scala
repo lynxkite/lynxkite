@@ -1,7 +1,9 @@
 // Finds triangles in the graph.
+// Currently it uses a naive but more or less optimized edge-iterator algorithm
+// A possible way to further improve it:
+// Park, Ha-Myung, Sung-Hyon Myaeng, and U. Kang. "PTE: Enumerating Trillion Triangles On Distributed Systems."
+// http://www.kdd.org/kdd2016/papers/files/rfp0276-parkA.pdf
 package com.lynxanalytics.biggraph.graph_operations
-
-import org.apache.spark.HashPartitioner
 
 import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
@@ -11,7 +13,8 @@ object FindTriangles extends OpFromJson {
   def fromJson(j: JsValue) = FindTriangles(
     (j \ "needsBothDirections").as[Boolean])
 }
-case class FindTriangles(needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+case class FindTriangles(needsBothDirections: Boolean = false)
+    extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
