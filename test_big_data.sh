@@ -4,10 +4,11 @@
 # a "big data" test on a Pull Request. It fires up an EMR cluster,
 # runs groovy scripts in it and creates a file with the results.
 # In case of Jenkins, it also dumps the test results as a commit
-# into the PR. (Jenkins runs this command as: test_big_data.sh default.list)
+# into the PR. (Jenkins runs this command as: test_big_data.sh; this stands for
+# test_big_data.sh default.list fake_westeros_v3_5m_145m 3 4)
 #
 # Usage:
-#   test_big_data.sh test_or_list test_data_set [# of emr executors] [# of emr instances]
+#   test_big_data.sh [test_or_list] [test_data_set] [# of emr executors] [# of emr instances]
 #
 # Default arguments:
 #   test_big_data.sh default.list fake_westeros_v3_5m_145m 3 4
