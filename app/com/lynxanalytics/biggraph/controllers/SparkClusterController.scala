@@ -324,7 +324,7 @@ class KiteMonitorThread(
 // This is a thread that can be used to watch the healthiness
 // of LynxKite and kill the whole process if it has been unhealthy
 // for too long.
-// - LynxKite will be killed if shutDownTimeoutSecs passes after
+// - LynxKite will be shut down if shutDownTimeoutSecs pass after
 //   the last successful and positive health check.
 // - listener and controller are used for performing the health
 //   checks.
