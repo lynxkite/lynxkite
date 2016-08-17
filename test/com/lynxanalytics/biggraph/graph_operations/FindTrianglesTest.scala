@@ -18,7 +18,7 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       5 -> Seq(6),
       6 -> Seq(3)
     )).result
-    val op = FindTrianglesNew(needsBothDirections = false)
+    val op = FindTriangles(needsBothDirections = false)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(ftOut.segments.rdd.count == 0)
   }
@@ -29,7 +29,7 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       1 -> Seq(0, 2, 2),
       2 -> Seq(0, 0, 1)
     )).result
-    val op = FindTrianglesNew(needsBothDirections = true)
+    val op = FindTriangles(needsBothDirections = true)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(ftOut.segments.rdd.count == 0)
   }
@@ -40,9 +40,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       1 -> Seq(2, 2, 2, 0, 0),
       2 -> Seq(0, 0, 1, 1)
     )).result
-    val opF = FindTrianglesNew(needsBothDirections = false)
+    val opF = FindTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTrianglesNew(needsBothDirections = true)
+    val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
     assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (1, 1))
   }
@@ -55,9 +55,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       3 -> Seq(4),
       4 -> Seq()
     )).result
-    val opF = FindTrianglesNew(needsBothDirections = false)
+    val opF = FindTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTrianglesNew(needsBothDirections = true)
+    val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
     assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (10, 0))
   }
@@ -70,9 +70,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       3 -> Seq(0, 1, 2, 4),
       4 -> Seq(0, 1, 2, 3)
     )).result
-    val opF = FindTrianglesNew(needsBothDirections = false)
+    val opF = FindTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTrianglesNew(needsBothDirections = true)
+    val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
     assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (10, 10))
   }
@@ -86,11 +86,27 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       4 -> Seq(3, 5),
       5 -> Seq(3, 4)
     )).result
-    val opF = FindTrianglesNew(needsBothDirections = false)
+    val opF = FindTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTrianglesNew(needsBothDirections = true)
+    val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
     assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (3, 3))
+  }
+
+  test("directed and non-directed triangles") {
+    val g = SmallTestGraph(Map(
+      0 -> Seq(1),
+      1 -> Seq(2),
+      2 -> Seq(0),
+      3 -> Seq(4, 5),
+      4 -> Seq(5),
+      5 -> Seq()
+    )).result
+    val opF = FindTriangles(needsBothDirections = false)
+    val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
+    val opT = FindTriangles(needsBothDirections = true)
+    val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
+    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (2, 0))
   }
 
   ignore("performance test") {
@@ -99,17 +115,17 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     testPerformance(10000, 0.9, 5, 100)
     testPerformance(100000, 0.9, 5, 100)
     testPerformance(1000000, 0.9, 5, 100)
-    testPerformance(10000, 0.9, 15, 1000)
+    /*testPerformance(10000, 0.9, 15, 1000)
     testPerformance(100000, 0.9, 15, 1000)
-    testPerformance(100000, 0.7, 10, 200)
+    testPerformance(100000, 0.7, 10, 200)*/
     println("[info] PerformanceNew test started")
     testPerformanceNew(1000, 0.9, 5, 100)
     testPerformanceNew(10000, 0.9, 5, 100)
     testPerformanceNew(100000, 0.9, 5, 100)
     testPerformanceNew(1000000, 0.9, 5, 100)
-    testPerformanceNew(10000, 0.9, 15, 1000)
+    /*testPerformanceNew(10000, 0.9, 15, 1000)
     testPerformanceNew(100000, 0.9, 15, 1000)
-    testPerformanceNew(100000, 0.7, 10, 200)
+    testPerformanceNew(100000, 0.7, 10, 200)*/
     //assert(true)
   }
 
