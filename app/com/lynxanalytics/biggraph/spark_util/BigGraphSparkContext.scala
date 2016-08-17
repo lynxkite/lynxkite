@@ -264,7 +264,7 @@ object BigGraphSparkContext {
       // sparkling-water's implementation of setting up workers on
       // each Spark executor. They go to great lengths of making sure
       // they exactly know the number of hosts and fail if they can't
-      // realiably count them. Here we are just going to do a
+      // reliably count them. Here we are just going to do a
       // best-effort hack.
       val numExecutors = LoggedEnvironment
         .envOrElse("NUM_EXECUTORS", "1")
