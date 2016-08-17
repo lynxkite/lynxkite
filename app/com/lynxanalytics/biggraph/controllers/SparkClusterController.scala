@@ -341,17 +341,17 @@ class InternalWatchdogThread(
   val warningTimeoutSecs = shutdownTimeoutSecs / 2
 
   def checkExitCondition(lastOkStatusTimeNanos: Long): Unit = {
-    val unhealthySinceSeconds = (System.nanoTime - lastOkStatusTimeNanos) /
+    val unhealthyForSeconds = (System.nanoTime - lastOkStatusTimeNanos) /
       InternalWatchdogThread.NanosPerSeconds
     def msg = {
-      s"Watchdog: LynxKite has been unhealthy for ${unhealthySinceSeconds} seconds."
+      s"Watchdog: LynxKite has been unhealthy for ${unhealthyForSeconds} seconds."
     }
 
-    if (unhealthySinceSeconds > shutdownTimeoutSecs) {
+    if (unhealthyForSeconds > shutdownTimeoutSecs) {
       log.error(msg + " Exiting LynxKite.")
       System.exit(1)
     }
-    if (unhealthySinceSeconds > warningTimeoutSecs) {
+    if (unhealthyForSeconds > warningTimeoutSecs) {
       log.warn(msg)
     }
   }
