@@ -3,10 +3,17 @@
 # Last successful tested with: aws-cli/1.10.20 Python/2.7.6 botocore/1.4.11
 # TODO: rewrite this in Python using boto directly
 
-# awscli only works with python2.7 and aws1.10.20, otherwise json output is not deterministic, 
-# which causes parse error in script
-# installing proper version of aws:
-# sudo pip2 instal awscli==1.10.20
+# The awscli script only works with python2.7 and aws1.10.20, otherwise json output is not deterministic, 
+# which causes parse error in script.
+#
+# Installing proper version of aws: 
+# sudo pip2 instal awscli==1.10.20 .
+# 
+# Installing awscli with pip2, if the pip3 version already installed:
+# sudo apt-get install python2.7
+# sudo pip3 uninstall awscli
+# sudo pip install awscli=1.10.20 or sudo pip2 install awscli=1.10.20
+# (it depends on which version pip points to).
 
 source "$(dirname $0)/biggraph_common.sh"
 
