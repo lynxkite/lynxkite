@@ -106,7 +106,6 @@ class LynxKite:
         my_view = lynx.sql('select * from `t`', t=my_table)
         result = lynx.sql('select * from `v`', v=my_view)
         result.export_csv('out.csv')
-
     '''
     checkpoints = {}
     for name, p in mapping.items():
@@ -166,13 +165,28 @@ class LynxKite:
           jdbcUrl,
           jdbcTable,
           keyColumn='',
+          predicates=[],
           columnsToImport=[]):
-    '''Imports a database table as a :class:`View` via JDBC.'''
+    '''Imports a database table as a :class:`View` via JDBC.
+
+    Args:
+      jdbcUrl (str): The JDBC URL to connect to for this import task.
+      jdbcTable (str): The name of the table to import in the source database.
+      keyColumn (str, optional): The key column in the source table for Spark partitioning.
+        The table should be partitioned or indexed for this column in the source database table
+        for efficiency. Cannot be specified together with ``predicates``.
+      predicates (list of str, optional): List of SparkSQL where clauses to be executed on the
+        source table for Spark partitioning. The table should be partitioned or indexed for this
+        column in the source database table for efficiency. Cannot be specified together with
+        ``keyColumn``.
+      columnsToImport (list of str, optional): List of columns to import from the source table.
+    '''
     return self._create_view(
         "Jdbc",
         dict(jdbcUrl=jdbcUrl,
              jdbcTable=jdbcTable,
              keyColumn=keyColumn,
+             predicates=predicates,
              columnsToImport=columnsToImport))
 
   def import_parquet(
@@ -383,6 +397,13 @@ class Project:
     '''Computes all scalars and attributes of the project.'''
     return self.lk._send(
         'computeProject', dict(checkpoint=self.checkpoint))
+
+  def is_computed(self):
+    '''Checks Whether all the scalars, attributes and segmentations of the project are already computed.'''
+    r = self.lk._send('isComputed', dict(
+        checkpoint=self.checkpoint
+    ))
+    return r
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''

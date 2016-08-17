@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
-import com.google.cloud.hadoop.fs.gcs
 import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
@@ -189,6 +188,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
     kryo.register(Class.forName("[[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
+    kryo.register(Class.forName("org.apache.spark.mllib.evaluation.binary.BinaryLabelCounter"))
+    kryo.register(Class.forName("[Lorg.apache.spark.mllib.evaluation.binary.BinaryLabelCounter;"))
     kryo.register(Class.forName("scala.collection.mutable.ArraySeq"))
     kryo.register(classOf[scala.math.Ordering$$anon$4])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.InterpretedOrdering])
