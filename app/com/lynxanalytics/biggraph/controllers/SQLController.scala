@@ -119,14 +119,10 @@ case class DataFrameSpec(
     context: SQLContext,
     viewRecipes: Iterable[(String, ViewRecipe)] = List())(
       implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
-    for ((name, table) <- tables) {
-      table.toDF(context).registerTempTable(name)
-    }
-    for ((name, recipe) <- viewRecipes) {
-      recipe.createDataFrame(user, context).registerTempTable(name)
-    }
-    log.info(s"Trying to execute query: ${sql}")
-    context.sql(sql)
+    val dfs =
+      tables.map { case (name, table) => name -> table.toDF(context) } ++
+        viewRecipes.map { case (name, recipe) => name -> recipe.createDataFrame(user, context) }
+    DataManager.sql(context, sql, dfs.toList)
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)

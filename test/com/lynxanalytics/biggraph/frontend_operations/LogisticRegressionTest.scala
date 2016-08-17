@@ -11,7 +11,7 @@ class LogisticRegressionTest extends OperationsTestBase {
       Map("name" -> "model", "label" -> "label", "features" -> "age", "max-iter" -> "20"))
     run("Classify vertices with a model",
       Map(
-        "name" -> "classification", 
+        "name" -> "classification",
         "model" -> """{
             "modelName" : "model", 
             "isClassification" : true, 

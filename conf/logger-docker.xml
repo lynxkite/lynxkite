@@ -1,0 +1,25 @@
+<configuration>
+  <!-- This configuration is intended for LynxKite running in docker containers. -->
+
+  <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
+
+   <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+     <target>System.err</target>
+     <encoder>
+         <!-- We should replace all occurrences of SECRET(...) in both message and exception.
+         But then logback does not realize that the exception was in fact logged, and attaches the
+         unfiltered version at the end. That's why we need the final nopex -->
+       <pattern>%.-1level%date %logger{0}:[%thread] %replace(%msg%n%xException){'SECRET\(.*\)','***'}%nopex</pattern>
+     </encoder>
+   </appender>
+
+  <logger name="play" level="INFO" />
+  <logger name="application" level="INFO" />
+  <logger name="org.apache.spark" level="INFO" />
+  <logger name="LynxKite" level="INFO" />
+
+  <root level="ERROR">
+    <appender-ref ref="STDERR" />
+  </root>
+
+</configuration>

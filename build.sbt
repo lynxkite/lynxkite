@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
-  "org.xerial" % "sqlite-jdbc" % "3.8.7",
+  "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,
