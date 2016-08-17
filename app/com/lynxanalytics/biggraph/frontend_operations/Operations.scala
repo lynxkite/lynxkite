@@ -6,9 +6,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
-import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
-import com.lynxanalytics.biggraph.graph_operations.PartitionAttribute
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -21,8 +18,8 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import com.lynxanalytics.biggraph.table.TableImport
-
 import play.api.libs.json
+
 import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
@@ -901,7 +898,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Add random vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Choice("dist", "Distribution", options = FEOption.list(RandomDistribution.getNames)),
+      Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -915,7 +912,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Add random edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Choice("dist", "Distribution", options = FEOption.list(RandomDistribution.getNames)),
+      Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -2061,6 +2058,28 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.edgeBundle.idSet,
         Seq(FEVertexAttributeFilter(guid, "!=")))
       project.pullBackEdges(embedding)
+    }
+  })
+
+  register("Triadic closure", new StructureOperation(_, _) {
+    def parameters = List()
+    def enabled = hasVertexSet && hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.ConcatenateBundlesMulti()
+      val result = op(op.edgesAB, project.edgeBundle)(
+        op.edgesBC, project.edgeBundle).result
+
+      // saving attributes and original edges
+      var origEdgeAttrs = project.edgeAttributes.toIndexedSeq
+
+      // new edges after closure
+      project.edgeBundle = result.edgesAC
+
+      // pulling old edge attributes
+      for ((name, attr) <- origEdgeAttrs) {
+        project.newEdgeAttribute("ab_" + name, attr.pullVia(result.projectionFirst))
+        project.newEdgeAttribute("bc_" + name, attr.pullVia(result.projectionSecond))
+      }
     }
   })
 
@@ -3222,7 +3241,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       project.newVertexAttribute(s"${sourceName}_train", parted.train)
     }
     def partitionVariable[T](
-      source: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
+      source: Attribute[T], roles: Attribute[String]): graph_operations.PartitionAttribute.Output[T] = {
       val op = graph_operations.PartitionAttribute[T]()
       op(op.attr, source)(op.role, roles).result
     }

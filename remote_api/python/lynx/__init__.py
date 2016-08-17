@@ -106,7 +106,6 @@ class LynxKite:
         my_view = lynx.sql('select * from `t`', t=my_table)
         result = lynx.sql('select * from `v`', v=my_view)
         result.export_csv('out.csv')
-
     '''
     checkpoints = {}
     for name, p in mapping.items():
