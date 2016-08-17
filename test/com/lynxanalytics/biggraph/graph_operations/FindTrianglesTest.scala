@@ -100,13 +100,19 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       2 -> Seq(0),
       3 -> Seq(4, 5),
       4 -> Seq(5),
-      5 -> Seq()
+      5 -> Seq(),
+      6 -> Seq(),
+      7 -> Seq(6),
+      8 -> Seq(6, 7),
+      9 -> Seq(10, 11),
+      10 -> Seq(),
+      11 -> Seq(10)
     )).result
     val opF = FindTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
-    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (2, 0))
+    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (4, 0))
   }
 
   ignore("performance test") {
