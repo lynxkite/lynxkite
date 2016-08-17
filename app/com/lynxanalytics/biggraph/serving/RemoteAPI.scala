@@ -38,28 +38,31 @@ object RemoteAPIProtocol {
     override def createDataFrame(
       user: User, context: SQLContext)(
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
-      for ((name, cp) <- checkpoints) {
-        val viewer =
-          new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
-        registerTablesOfViewer(user, context, viewer, name)
+      val dfs = checkpoints.flatMap {
+        case (name, cp) =>
+          val viewer =
+            new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
+          getDFsOfViewer(user, context, viewer, name)
       }
-      context.sql(query)
+      DataManager.sql(context, query, dfs.toList)
     }
 
-    // Takes all the tables in the project/table/view given by the viewer and registers all of
-    // them with an optionally prefixed name.
-    private def registerTablesOfViewer(
-      user: User, sqlContext: SQLContext, viewer: controllers.RootProjectViewer,
-      prefix: String = "")(implicit mm: MetaGraphManager, dm: DataManager) = {
+    // Lists all the DataFrames in the project/table/view given by the viewer.
+    private def getDFsOfViewer(
+      user: User,
+      sqlContext: SQLContext,
+      viewer: controllers.RootProjectViewer,
+      prefix: String = "")(
+        implicit mm: MetaGraphManager,
+        dm: DataManager): Iterable[(String, DataFrame)] = {
       val fullPrefix = if (prefix.nonEmpty) prefix + "|" else ""
-      for (path <- viewer.allRelativeTablePaths) {
+      val tableDFs = viewer.allRelativeTablePaths.flatMap { path =>
         val df = controllers.Table(path, viewer).toDF(sqlContext)
-        df.registerTempTable(fullPrefix + path.toString)
-        if (path.toString == "vertices") df.registerTempTable(prefix)
+        Some((fullPrefix + path.toString) -> df) ++
+          (if (path.toString == "vertices") Some(prefix -> df) else None)
       }
-      for (r <- viewer.viewRecipe) {
-        r.createDataFrame(user, sqlContext).registerTempTable(prefix)
-      }
+      val recipeDFs = viewer.viewRecipe.map(prefix -> _.createDataFrame(user, sqlContext))
+      tableDFs ++ recipeDFs
     }
   }
 
@@ -144,6 +147,7 @@ object RemoteAPIServer extends JsonServer {
   def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
+  def isComputed = jsonPost(c.isComputed)
   def computeProject = jsonPost(c.computeProject)
 }
 
@@ -337,6 +341,32 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val table = TableImport.importDataFrameAsync(df)
     val cp = table.saveAsCheckpoint("Created from a view via the Remote API.")
     CheckpointResponse(cp)
+  }
+
+  private def isUncomputed(entity: TypedEntity[_]): Boolean = {
+    val progress = dataManager.computeProgress(entity)
+    progress < 1.0
+  }
+
+  // Checks Whether all the scalars, attributes and segmentations of the project are already computed.
+  def isComputed(user: User, request: CheckpointRequest): Boolean = {
+    val editor = getViewer(request.checkpoint).editor
+    isComputed(editor)
+  }
+
+  private def isComputed(editor: ProjectEditor): Boolean = {
+    val scalars = editor.scalars.iterator.map { case (name, scalar) => scalar }
+    val attributes = (editor.vertexAttributes ++ editor.edgeAttributes).values
+    val segmentations = editor.viewer.sortedSegmentations
+
+    if (scalars.exists(isUncomputed)) false
+    else {
+      if (attributes.exists(isUncomputed)) false
+      else {
+        if (segmentations.map(_.editor).exists(isComputed)) false
+        else true
+      }
+    }
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {

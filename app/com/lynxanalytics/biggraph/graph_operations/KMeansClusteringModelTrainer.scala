@@ -49,6 +49,7 @@ case class KMeansClusteringModelTrainer(
     val featuresArray = inputs.features.map(_.rdd).toArray
     val params = new Scaler(forSGD = false).scaleFeatures(featuresArray, inputs.vertices.rdd)
     val scaledDF = params.features.toDF("ID", "vector")
+    assert(!scaledDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     // Train a k-means model from the scaled vectors.
     val kmeans = new KMeans()
@@ -68,7 +69,7 @@ case class KMeansClusteringModelTrainer(
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
       featureScaler = Some(params.featureScaler),
-      statistics = Some(s"${cost}"))
+      statistics = Some(s"cost: ${cost}"))
     )
   }
 }
