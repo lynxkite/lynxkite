@@ -1,7 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/random_attributes.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-rnd_std_uniform: {"labelType":"between","labels":["0.0000005","0.0000020","0.0000086","0.0000371","0.0001594","0.0006845","0.0029398","0.0126253","0.0542203","0.2328525","0.9999999"],"sizes":[4,10,52,271,1173,4944,21314,91224,391578,1681886]}
-rnd_std_normal2: {"labelType":"between","labels":["-4.48227","0.00004","0.00011","0.00037","0.00119","0.00385","0.01245","0.04032","0.13053","0.42258","1.36812","4.42931"],"sizes":[49977,4,12,27,119,335,1115,3642,11122,25077,8572]}
-rnd_std_normal: {"labelType":"between","labels":["-5.1484338","0.0000005","0.0000026","0.0000129","0.0000650","0.0003262","0.0016382","0.0082263","0.0413085","0.2074318","1.0416250","5.2305496"],"sizes":[1096198,2,5,48,232,1126,5832,28779,144121,590224,325889]}
-id: <computed>
-ordinal: {"labelType":"between","labels":["0.0","1.0","3.2","10.0","31.6","100.0","316.2","1000.0","3162.3","10000.1","31623.1","100001.0"],"sizes":[1,3,7,21,69,216,684,2162,6838,21623,68378]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/random_attributes.groovy, took 18 seconds

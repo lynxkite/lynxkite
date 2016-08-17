@@ -1,4 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_edges_from_co-occurrence.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-maximal_cliques_id: <computed>
-maximal_cliques_size: {"labelType":"between","labels":["3.00","3.00"],"sizes":[146133]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_edges_from_co-occurrence.groovy, took 14 seconds
