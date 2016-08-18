@@ -61,7 +61,7 @@ case class FindTriangles(needsBothDirections: Boolean = false)
     // (3)
     // construct the adjacencyArray, and join it on the edge set
     // this is necessary, because for this algorithm to work optimally
-    // we need to access the neighbour set of the source and destination
+    // we need to access the neighbour sets of the source and the destination
     // of an edge in constant time
     val adjacencyArray = simpleEdges
       .sort(outputPartitioner)
