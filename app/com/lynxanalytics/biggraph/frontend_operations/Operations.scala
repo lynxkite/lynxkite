@@ -2067,10 +2067,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Snowball sample", new StructureOperation(_, _) {
     def parameters = List(
-      Ratio("percentage", "Relative size of the set of snowball centers", defaultValue = "0.001"),
+      Ratio("percentage", "Ratio of starting points to vertices", defaultValue = "0.001"),
       NonNegInt("radius", "Radius", default = 10),
-      RandomSeed("seed", "Seed"),
-      Param("attrName", "Attribute name", defaultValue = "distance_from_starting_vertex")
+      Param("attrName", "Attribute name", defaultValue = "distance_from_starting_vertex"),
+      RandomSeed("seed", "Seed")
     )
     def enabled = hasVertexSet && hasEdgeBundle
     def apply(params: Map[String, String]) = {
