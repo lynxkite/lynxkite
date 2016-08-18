@@ -81,7 +81,7 @@ case class FindTriangles(needsBothDirections: Boolean = false)
     // collect triangles
     val triangleList = edgesWithNeighbours.flatMap {
       case ((src, dst), (nSrc: Seq[ID], nDst: Seq[ID])) => {
-        checkNeighbours(
+        heldTriangles(
           src,
           dst,
           nSrc,
@@ -103,10 +103,10 @@ case class FindTriangles(needsBothDirections: Boolean = false)
   // at this point the graph is guaranteed to be acyclic - see (1) -
   // so every triangle (as an induced subgraph) has exactly 1 vertex of indegree 2
   // which means this finds every triangle exactly once
-  def checkNeighbours(src: ID,
-                      dst: ID,
-                      nSrc: Seq[ID],
-                      nDst: Seq[ID]) = {
+  def heldTriangles(src: ID,
+                    dst: ID,
+                    nSrc: Seq[ID],
+                    nDst: Seq[ID]) = {
     val triangleCollector = mutable.ArrayBuffer[List[ID]]()
     for (commonNeighbour <- nSrc.intersect(nDst)) {
       triangleCollector += List(src, dst, commonNeighbour)
