@@ -380,12 +380,10 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
   LoggedEnvironment.envOrNone(
-    "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS") match {
-      case Some(timeoutSecs) =>
-        val watchdog = new InternalWatchdogThread(
-          timeoutSecs.toInt, listener, this)
-        watchdog.start()
-      case _ => // Internal watchdog is disabled.
+    "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS").foreach { timeoutSecs =>
+      val watchdog = new InternalWatchdogThread(
+        timeoutSecs.toInt, listener, this)
+      watchdog.start()
     }
 
   def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
