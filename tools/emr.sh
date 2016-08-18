@@ -81,10 +81,7 @@ GetMasterHostName() {
 
 GetClusterId() {
   aws emr list-clusters --cluster-states STARTING BOOTSTRAPPING RUNNING WAITING --output=json | \
-    grep -B 1 "\"Name\": \"${CLUSTER_NAME}\"" | \
-    head -1 | \
-    grep '"Id":' | \
-    cut -d'"' -f 4
+    ${DIR}/clusterid_extract.py ${CLUSTER_NAME}
 }
 
 GetMasterAccessParams() {
