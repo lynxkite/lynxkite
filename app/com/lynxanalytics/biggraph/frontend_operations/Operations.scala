@@ -3227,7 +3227,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         NonNegInt("iterationsInTraining", "Iterations in training", default = 2),
         NonNegInt("subgraphsInTraining", "Subgraphs in training", default = 10),
         NonNegDouble("knownLabelWeight", "Weight for known labels"),
-        NonNegInt("numberOfTrainings", "Number of trainings", default = 50)
+        NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
+        RandomSeed("seed", "Seed")
       )
       def enabled = hasVertexSet
       def apply(params: Map[String, String]) = {
@@ -3255,7 +3256,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             iterationsInTraining = params("iterationsInTraining").toInt,
             subgraphsInTraining = params("subgraphsInTraining").toInt,
             numberOfTrainings = params("numberOfTrainings").toInt,
-            knownLabelWeight = params("knownLabelWeight").toDouble)
+            knownLabelWeight = params("knownLabelWeight").toDouble,
+            seed = params("seed").toInt)
           op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
         }
         project.vertexAttributes(params("output")) = prediction
