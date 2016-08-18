@@ -3234,16 +3234,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       def apply(params: Map[String, String]) = {
         val labelName = params("label")
         val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-        val features = {
-          if (params("features") == FEOption.unset.id) { Seq() }
+        val features: Seq[Attribute[Double]] =
+          if (params("features") == FEOption.unset.id) Seq()
           else {
             val featureNames = params("features").split(",", -1)
-            featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double]).toSeq
+            featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
           }
-        }
         val prediction = {
           val op = graph_operations.NeuralNetwork(
-            featureCount = features.size,
+            featureCount = features.length,
             networkSize = params("networkSize").toInt,
             learningRate = params("learningRate").toDouble,
             radius = params("radius").toInt,

@@ -10,7 +10,6 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.math3.random.MersenneTwister
-import java.util.concurrent.atomic.AtomicInteger
 
 object NeuralNetwork extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
@@ -100,8 +99,7 @@ case class NeuralNetwork(
     val data1 = data.coalesce(1)
 
     def withSeed(seed: Int) = {
-      val int = new AtomicInteger(seed)
-      new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(int.getAndIncrement())))
+      new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
     }
 
     val initialNetwork = Network.random(networkSize)(withSeed(seed))
