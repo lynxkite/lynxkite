@@ -1,4 +1,4 @@
-// Finds triangles in the graph.
+// Finds triangles in the graph and creates a segment for each of them.
 // Currently it uses a naive but more or less optimized edge-iterator algorithm
 // A possible way to further improve it:
 // Park, Ha-Myung, Sung-Hyon Myaeng, and U. Kang. "PTE: Enumerating Trillion Triangles On Distributed Systems."
