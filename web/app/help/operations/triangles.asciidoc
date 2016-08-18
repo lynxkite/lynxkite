@@ -11,7 +11,7 @@ Since one vertex can be part of multiple triangles this segmentation might be ov
 The new segmentation will be saved under this name.
 
 [[bothdir]] Edges required in both directions::
-Whether edges have to exist in both directions between all members of a clique.
+Whether edges have to exist in both directions between all members of a triangle.
 +
 If the direction of the edges is not important, set this to `false`. This will allow placing two
 vertices into the same clique even if they are only connected in one direction.
