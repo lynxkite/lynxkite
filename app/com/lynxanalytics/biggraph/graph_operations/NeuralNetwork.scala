@@ -2,12 +2,15 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import breeze.linalg._
-import breeze.stats.distributions.RandBasis
+import breeze.stats.distributions.{ RandBasis, ThreadLocalRandomGenerator }
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
+import org.apache.commons.math3.random.MersenneTwister
+import java.util.concurrent.atomic.AtomicInteger
 
 object NeuralNetwork extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
@@ -34,7 +37,8 @@ object NeuralNetwork extends OpFromJson {
     (j \ "iterationsInTraining").as[Int],
     (j \ "subgraphsInTraining").as[Int],
     (j \ "numberOfTrainings").as[Int],
-    (j \ "knownLabelWeight").as[Double])
+    (j \ "knownLabelWeight").as[Double],
+    (j \ "seed").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -50,7 +54,8 @@ case class NeuralNetwork(
     iterationsInTraining: Int,
     subgraphsInTraining: Int,
     numberOfTrainings: Int,
-    knownLabelWeight: Double) extends TypedMetaGraphOp[Input, Output] {
+    knownLabelWeight: Double,
+    seed: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -66,7 +71,8 @@ case class NeuralNetwork(
     "iterationsInTraining" -> iterationsInTraining,
     "subgraphsInTraining" -> subgraphsInTraining,
     "numberOfTrainings" -> numberOfTrainings,
-    "knownLabelWeight" -> knownLabelWeight)
+    "knownLabelWeight" -> knownLabelWeight,
+    "seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -93,7 +99,12 @@ case class NeuralNetwork(
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
     val data1 = data.coalesce(1)
 
-    val initialNetwork = Network.random(networkSize)(RandBasis.mt0) // Deterministic due to mt0.
+    def withSeed(seed: Int) = {
+      val int = new AtomicInteger(seed)
+      new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(int.getAndIncrement())))
+    }
+
+    val initialNetwork = Network.random(networkSize)(withSeed(seed))
     val network = (1 to numberOfTrainings).foldLeft(initialNetwork) {
       (previous, current) =>
         averageNetwork((1 to subgraphsInTraining).map { i =>
