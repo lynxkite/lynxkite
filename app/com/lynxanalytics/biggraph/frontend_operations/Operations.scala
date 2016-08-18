@@ -2067,9 +2067,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Snowball sample", new StructureOperation(_, _) {
     def parameters = List(
-      Ratio("percentage", "Relative size of sample", defaultValue = "0.001"),
+      Ratio("percentage", "Relative size of the set of snowball centers", defaultValue = "0.001"),
       NonNegInt("radius", "Radius", default = 10),
-      RandomSeed("seed", "Seed")
+      RandomSeed("seed", "Seed"),
+      Param("attrName", "Attribute name", defaultValue = "distance_from_starting_vertex")
     )
     def enabled = hasVertexSet && hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -2079,16 +2080,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Uniform")
         op(op.vs, project.vertexSet).result.attr
       }
-      project.newVertexAttribute("test_rnd", rnd)
 
       // 2. creating derived attribute based on rnd end percentage parameter
       // starting_distance = rnd < percentage ? 0.0 : undefined
       val starting_vertex = rnd.deriveX[Double](s"x < ${params("percentage")} ? 0.0 : undefined")
-      project.newVertexAttribute("test_starting_vertex", starting_vertex)
 
       // 3. constant unit length for all edges
       val edgeLength = project.edgeBundle.const(1.0)
-      project.newEdgeAttribute("test_edge_length", edgeLength)
 
       // 4. running shortest path from vertices with attribute starting_vertex
       val distance = {
@@ -2098,7 +2096,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             op.edgeDistance, edgeLength)(
               op.startingDistance, starting_vertex).result.distance
       }
-      project.newVertexAttribute("test_distance", distance)
+      project.newVertexAttribute(params("attrName"), distance)
 
       // 5. filtering on distance attribute
       val guid = distance.entity.gUID.toString
