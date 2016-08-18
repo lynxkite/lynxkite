@@ -3230,21 +3230,20 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
         RandomSeed("seed", "Seed")
       )
-      def enabled = hasVertexSet
+      def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes[Double].nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         val labelName = params("label")
         val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-        val (features, featureCount) = {
-          if (params("features") == FEOption.unset.id) { (Seq(), 0) }
+        val features = {
+          if (params("features") == FEOption.unset.id) { Seq() }
           else {
             val featureNames = params("features").split(",", -1)
-            (featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double]).toSeq,
-              featureNames.length)
+            featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double]).toSeq
           }
         }
         val prediction = {
           val op = graph_operations.NeuralNetwork(
-            featureCount = featureCount,
+            featureCount = features.size,
             networkSize = params("networkSize").toInt,
             learningRate = params("learningRate").toDouble,
             radius = params("radius").toInt,
