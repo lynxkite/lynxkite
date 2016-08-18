@@ -2065,6 +2065,50 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Snowball sample", new StructureOperation(_, _) {
+    def parameters = List(
+      Ratio("percentage", "Relative size of sample", defaultValue = "0.001"),
+      NonNegInt("radius", "Radius", default = 10),
+      RandomSeed("seed", "Seed")
+    )
+    def enabled = hasVertexSet && hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+
+      // 1. creating random attr for filtering the original center vertices of the "snowballs"
+      val rnd = {
+        val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Uniform")
+        op(op.vs, project.vertexSet).result.attr
+      }
+      project.newVertexAttribute("test_rnd", rnd)
+
+      // 2. creating derived attribute based on rnd end percentage parameter
+      // starting_distance = rnd < percentage ? 0.0 : undefined
+      val starting_vertex = rnd.deriveX[Double](s"x < ${params("percentage")} ? 0.0 : undefined")
+      project.newVertexAttribute("test_starting_vertex", starting_vertex)
+
+      // 3. constant unit length for all edges
+      val edgeLength = project.edgeBundle.const(1.0)
+      project.newEdgeAttribute("test_edge_length", edgeLength)
+
+      // 4. running shortest path from vertices with attribute starting_vertex
+      val distance = {
+        val op = graph_operations.ShortestPath(params("radius").toInt)
+        op(op.vs, project.vertexSet)(
+          op.es, project.edgeBundle)(
+            op.edgeDistance, edgeLength)(
+              op.startingDistance, starting_vertex).result.distance
+      }
+      project.newVertexAttribute("test_distance", distance)
+
+      // 5. filtering on distance attribute
+      val guid = distance.entity.gUID.toString
+      val vertexEmbedding = FEFilters.embedFilteredVertices(
+        project.vertexSet, Seq(FEVertexAttributeFilter(guid, ">-1")), heavy = true)
+      project.pullBack(vertexEmbedding)
+
+    }
+  })
+
   register("Aggregate vertex attribute globally", new GlobalOperation(_, _) {
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
