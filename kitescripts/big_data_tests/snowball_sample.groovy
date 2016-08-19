@@ -5,8 +5,8 @@
 project = lynx.loadProject('edge_import_result')
 
 project.snowballSample(
-        ratio: '0.001',
-        radius: '5',
+        ratio: '0.0001',
+        radius: '1',
         attrName: 'distance_from_start_point',
         seed: '123454321'
 )

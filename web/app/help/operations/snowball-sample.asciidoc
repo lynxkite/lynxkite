@@ -15,7 +15,7 @@ For example, you can create a random sample of the project's graph to test your 
 
 ====
 [[ratio]] Start point ratio::
-The (approximate) ratio of the size of start point set to the size of the original vertex set.
+The (approximate) fraction of vertices to use as starting points.
 
 [[radius]] Radius::
 Limits the size of the neighborhoods of the start points.

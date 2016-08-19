@@ -2067,38 +2067,37 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Snowball sample", new StructureOperation(_, _) {
     def parameters = List(
-      Ratio("ratio", "Ratio of starting points to vertices", defaultValue = "0.001"),
+      Ratio("ratio", "Fraction of vertices to use as starting points", defaultValue = "0.001"),
       NonNegInt("radius", "Radius", default = 10),
       Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
       RandomSeed("seed", "Seed")
     )
     def enabled = hasVertexSet && hasEdgeBundle
     def apply(params: Map[String, String]) = {
-
-      // 1. creating random attr for filtering the original center vertices of the "snowballs"
+      val ratio = params("ratio")
+      // Creating random attr for filtering the original center vertices of the "snowballs".
       val rnd = {
         val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Uniform")
         op(op.vs, project.vertexSet).result.attr
       }
 
-      // 2. creating derived attribute based on rnd end percentage parameter
-      // starting_distance = rnd < percentage ? 0.0 : undefined
-      val starting_vertex = rnd.deriveX[Double](s"x < ${params("ratio")} ? 0.0 : undefined")
+      // Creating derived attribute based on rnd and ratio parameter.
+      val startingDistance = rnd.deriveX[Double](s"x < ${ratio} ? 0.0 : undefined")
 
-      // 3. constant unit length for all edges
+      // Constant unit length for all edges.
       val edgeLength = project.edgeBundle.const(1.0)
 
-      // 4. running shortest path from vertices with attribute starting_vertex
+      // Running shortest path from vertices with attribute startingDistance.
       val distance = {
         val op = graph_operations.ShortestPath(params("radius").toInt)
         op(op.vs, project.vertexSet)(
           op.es, project.edgeBundle)(
             op.edgeDistance, edgeLength)(
-              op.startingDistance, starting_vertex).result.distance
+              op.startingDistance, startingDistance).result.distance
       }
       project.newVertexAttribute(params("attrName"), distance)
 
-      // 5. filtering on distance attribute
+      // Filtering on distance attribute.
       val guid = distance.entity.gUID.toString
       val vertexEmbedding = FEFilters.embedFilteredVertices(
         project.vertexSet, Seq(FEVertexAttributeFilter(guid, ">-1")), heavy = true)

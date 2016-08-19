@@ -19,7 +19,7 @@ class SnowballSampleTest extends OperationsTestBase {
       Map("ratio" -> "0.0", "radius" -> "0", "seed" -> "123454321", "attrName" -> "distance_from_start_point")
     )
 
-    val size = project.vertexSet.rdd.count.toInt
+    val size = project.vertexSet.rdd.count
     assert(size == 0)
   }
 
@@ -30,8 +30,8 @@ class SnowballSampleTest extends OperationsTestBase {
       Map("ratio" -> "0.1", "radius" -> "0", "seed" -> "123454321", "attrName" -> "distance_from_start_point")
     )
 
-    val size = project.vertexSet.rdd.count.toInt
-    assert(size >= 50 && size <= 150, "sample size in [50,150]") // prob = 0.9999997166
+    val size = project.vertexSet.rdd.count
+    assert(size == 110) // Calculated with seed = 123454321.
 
   }
 
