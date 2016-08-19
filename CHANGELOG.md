@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - New operation _"Triadic closure"_ has been created.
+ - New operation _"Triangles"_ has been created.
 
 ### 1.9.1
 
