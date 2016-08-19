@@ -57,13 +57,16 @@ case class FindTriangles(needsBothDirections: Boolean = false)
         filteredEdges.map(_._1)
 
     // (3)
-    // The next step is to construct the adjacencyArray, and join it on the edge set.
+    // The adjecencyArray will contain the list of neighbors
+    // for each vertex according to simpleEdges.
     // This is necessary, because for this algorithm to work optimally
     // we need to access the neighbour sets of the source and the destination
     // of an edge in constant time.
     val adjacencyArray = simpleEdges
       .sort(outputPartitioner)
       .groupBySortedKey(outputPartitioner)
+    // edgesWithNeigbors will be keyed by vertex pairs
+    // and the values will be the neighbour lists of both vertices
     val edgesWithNeighbours = simpleEdges
       .sort(outputPartitioner)
       .sortedJoin(adjacencyArray)
