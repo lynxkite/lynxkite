@@ -1,11 +1,11 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/snowball_sample.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-dst: {"labelType":"bucket","labels":["9","8","6","7","5","4","3","2","1","Other"],"sizes":[505060,568193,757590,649359,909101,1136380,1515169,2272746,4545478,132326162]}
-out_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61327,4734779,172990,24250,5145,1162,269,62,14,4]}
-in_degree: {"labelType":"between","labels":["2.0","8.6","37.4","161.4","697.7","3015.1","13030.5","56313.8","243371.5","1051779.3","4545478.0"],"sizes":[61327,4734779,172990,24250,5145,1162,269,62,14,4]}
-stringID: {"labelType":"bucket","labels":["1694884","1695194","1695581","1696243","1696732","1697622","1698379","1698411","1699015","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999993]}
-distance_from_start_point: {"labelType":"between","labels":["0.00","1.00","1.12","1.25","1.39","1.55","1.73","1.93","2.16","2.41","2.69","3.00"],"sizes":[4942,85119,0,0,0,0,0,4909223,0,0,718]}
+dst: {"labelType":"bucket","labels":["8","4950","7","6","4","5","3","2","1","Other"],"sizes":[962,931,1033,1216,1842,1499,2410,3652,7251,98682]}
+out_degree: {"labelType":"between","labels":["6.0","23.2","90.0","348.3","1348.7","5222.3","20221.3","78298.1","303175.4","1173915.2","4545478.0"],"sizes":[4172,1561,677,590,538,357,150,44,11,3]}
+in_degree: {"labelType":"between","labels":["6.0","23.2","90.0","348.3","1348.7","5222.3","20221.3","78298.1","303175.4","1173915.2","4545478.0"],"sizes":[4172,1561,677,590,538,357,150,44,11,3]}
+stringID: {"labelType":"bucket","labels":["1694861","1694876","1695737","1696120","1696806","1697234","1697851","1698147","1699920","Other"],"sizes":[1,1,1,1,1,1,1,1,1,8094]}
+distance_from_start_point: {"labelType":"between","labels":["0.00000000000","1.00000000000","1.00000000000"],"sizes":[479,7624]}
 id: <computed>
-src: {"labelType":"bucket","labels":["14","9","8","6","4","5","3","2","1","Other"],"sizes":[324691,505060,568193,757590,1136380,909101,1515169,2272746,4545478,132650830]}
-!vertex_count_delta: 0
-!edge_count_delta: 0
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/snowball_sample.groovy, took 927 seconds
+src: {"labelType":"bucket","labels":["7","8","4950","6","5","4","3","2","1","Other"],"sizes":[1033,962,931,1216,1499,1842,2410,3652,7251,98682]}
+!vertex_count_delta: -4991899
+!edge_count_delta: -145065760
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/snowball_sample.groovy, took 259 seconds
