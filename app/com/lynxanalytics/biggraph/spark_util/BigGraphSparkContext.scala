@@ -282,7 +282,7 @@ object BigGraphSparkContext {
     val currentTimeMillis = System.currentTimeMillis
     val deletionThresholdMillis = currentTimeMillis - 60 * 24 * 3600 * 1000
     for (file <- LogController.getLogDir.listFiles) {
-      if (file.isFile() && file.getName().endsWith("lz4")) {
+      if (file.isFile() && (file.getName.endsWith("lz4") || file.getName.endsWith("lz4.inprogress"))) {
         if (file.lastModified() < deletionThresholdMillis) {
           file.delete()
         }
