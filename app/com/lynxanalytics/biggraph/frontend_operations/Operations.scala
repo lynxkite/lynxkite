@@ -2067,9 +2067,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Snowball sample", new StructureOperation(_, _) {
     def parameters = List(
-      Ratio("percentage", "Ratio of starting points to vertices", defaultValue = "0.001"),
+      Ratio("ratio", "Ratio of starting points to vertices", defaultValue = "0.001"),
       NonNegInt("radius", "Radius", default = 10),
-      Param("attrName", "Attribute name", defaultValue = "distance_from_starting_vertex"),
+      Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
       RandomSeed("seed", "Seed")
     )
     def enabled = hasVertexSet && hasEdgeBundle
@@ -2083,7 +2083,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       // 2. creating derived attribute based on rnd end percentage parameter
       // starting_distance = rnd < percentage ? 0.0 : undefined
-      val starting_vertex = rnd.deriveX[Double](s"x < ${params("percentage")} ? 0.0 : undefined")
+      val starting_vertex = rnd.deriveX[Double](s"x < ${params("ratio")} ? 0.0 : undefined")
 
       // 3. constant unit length for all edges
       val edgeLength = project.edgeBundle.const(1.0)
