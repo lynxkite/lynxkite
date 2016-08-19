@@ -5,8 +5,11 @@
 # Specify the name of the cluster.
 CLUSTER_NAME=${USER}-cluster
 
-# Set the number of worker instances in the cluster.
+# Set the number of nodes in the cluster.
 NUM_INSTANCES=3
+
+# Set the number of executors running in the cluster.
+NUM_EXECUTORS=3
 
 # Specify the type of the instance to create.
 TYPE=m3.2xlarge
@@ -64,9 +67,9 @@ CREATE_CLUSTER_EXTRA_EC2_ATTRS=""
 # DEPLOY_SPARK_FROM=local
 
 # Provides a part of the name for the KITE_INSTANCE variable that identifies the instance. E.g.,
-# leaving it at the default emr could result in such name: emr-3-m3.2xlarge-8cores-18g.
+# leaving it at the default emr could result in such name: emr-3e-4i-m3.2xlarge-8cores-18g.
 # (The KITE_INSTANCE variable is assembled like this:
-# ${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g)
+# ${KITE_INSTANCE_BASE_NAME}-${NUM_EXECUTORS}e-${NUM_INSTANCES}i-${TYPE}-${CORES}cores-${USE_RAM_GB}g)
 
 
 KITE_INSTANCE_BASE_NAME=emr
