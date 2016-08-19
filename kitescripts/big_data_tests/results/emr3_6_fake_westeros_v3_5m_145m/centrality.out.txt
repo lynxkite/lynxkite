@@ -1,0 +1,4 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+id: <computed>
+centrality: {"labelType":"between","labels":["1891823.3","2096951.9","2324322.5","2576346.5","2855697.4","3165337.9","3508552.5","3888981.5","4310660.1","4778060.9","5296141.5"],"sizes":[13,8997,685338,744545,2989914,548589,22601,3,0,2]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 620 seconds
