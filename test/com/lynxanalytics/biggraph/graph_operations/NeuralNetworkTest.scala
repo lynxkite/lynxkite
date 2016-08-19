@@ -220,9 +220,11 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val weight = es.idSet.const(1.0)
       val op = PageRank(dampingFactor = 0.5, iterations = 3)
       val realPr = op(op.es, es)(op.weights, weight).result.pagerank
+      val maxPr = vs.const(realPr.rdd.values.max)
+      val minPr = vs.const(realPr.rdd.values.min)
       DeriveJS.deriveFromAttributes[Double](
-        "realPr * 2 - 1", Seq("realPr" -> realPr), vs)
-
+        "(realPr - minPr) / (maxPr - minPr) * 2 - 1",
+        Seq("realPr" -> realPr, "minPr" -> minPr, "maxPr" -> maxPr), vs)
     }
     val a = vs.randomAttribute(6)
     val pr = DeriveJS.deriveFromAttributes[Double](
