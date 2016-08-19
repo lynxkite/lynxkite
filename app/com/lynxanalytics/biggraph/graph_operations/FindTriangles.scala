@@ -35,23 +35,21 @@ case class FindTriangles(needsBothDirections: Boolean = false)
     val outputPartitioner = inputs.es.rdd.partitioner.get
 
     // (1)
-    // remove loop- and parallel edges, keep non-parallel multiple edges
-    // label edges based on their orientation, see (2)
-    // direct edges from smaller to bigger id, this makes the graph acyclic, see (5)
-    // then finally reduceByKey, which turned out to be faster than a 'distinct' here
-    // and also made this clever labeling possible
+    // This removes all loop- and parallel edges, but keeps non-parallel multiple edges,
+    // then labels remaining edges based on their orientation - see (2).
+    // Also directs edges from smaller id to bigger id, making the graph acyclic - see (5).
     val filteredEdges = inputs.es.rdd
       .filter { case (_, Edge(src, dst)) => src != dst }
       .map { case (_, Edge(src, dst)) => (sortTuple(src, dst), if (src < dst) 1 else 2) }
       .sort(outputPartitioner)
+      // As the last step it removes duplicates and computes the final labels.
       .reduceBySortedKey(outputPartitioner, _ | _)
 
     // (2)
-    // now apply the needsBothDirections constraint
-    // lsb is set means there was an edge directed from smaller to bigger id
-    // bit above lsb is set means there was a reversed one
-    // if needsBothDirection then only keep the ones where both bits are set
-    // simpleEdges is the edge set of a simple graph, the edges we will actually work on
+    // Now we can apply the needsBothDirections constraint.
+    // When lsb is set that means there was an edge directed from smaller id to bigger id.
+    // When the bit above lsb is set that means there was a reversed one.
+    // If needsBothDirections then only keep the edges where both bits are set.
     val simpleEdges =
       if (needsBothDirections)
         filteredEdges.filter(_._2 == 3).map(_._1)
@@ -59,10 +57,10 @@ case class FindTriangles(needsBothDirections: Boolean = false)
         filteredEdges.map(_._1)
 
     // (3)
-    // construct the adjacencyArray, and join it on the edge set
-    // this is necessary, because for this algorithm to work optimally
+    // The next step is to construct the adjacencyArray, and join it on the edge set.
+    // This is necessary, because for this algorithm to work optimally
     // we need to access the neighbour sets of the source and the destination
-    // of an edge in constant time
+    // of an edge in constant time.
     val adjacencyArray = simpleEdges
       .sort(outputPartitioner)
       .groupBySortedKey(outputPartitioner)
@@ -78,7 +76,7 @@ case class FindTriangles(needsBothDirections: Boolean = false)
       }
 
     // (4)
-    // collect triangles
+    // Finally we can enumerate the triangles.
     val triangleList = edgesWithNeighbours.flatMap {
       case ((src, dst), (nSrc: Seq[ID], nDst: Seq[ID])) => {
         heldTriangles(
@@ -98,11 +96,11 @@ case class FindTriangles(needsBothDirections: Boolean = false)
   }
 
   // (5)
-  // check if the source and the destination of an edge have common neighbours
-  // if so, then we found some triangles, return all of them
-  // at this point the graph is guaranteed to be acyclic - see (1) -
+  // This method checks if the source and the destination of an edge have common neighbours.
+  // If so, then we found some triangles, and return all of them.
+  // At this point the graph is guaranteed to be acyclic - see (1) -
   // so every triangle (as an induced subgraph) has exactly 1 vertex of indegree 2
-  // which means this finds every triangle exactly once
+  // which means the algorithm finds every triangle exactly once.
   def heldTriangles(src: ID,
                     dst: ID,
                     nSrc: Seq[ID],
@@ -115,7 +113,7 @@ case class FindTriangles(needsBothDirections: Boolean = false)
   }
 
   // (6)
-  // direct the edge described as an (src, dst) tuple from smaller to bigger id
+  // This method directs the edge described as an (src, dst) tuple from smaller id to bigger id.
   def sortTuple(tuple: Tuple2[ID, ID]) = {
     if (tuple._1 > tuple._2) tuple.swap
     else tuple
