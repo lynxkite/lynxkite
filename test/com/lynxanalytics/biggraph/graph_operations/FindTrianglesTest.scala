@@ -173,8 +173,8 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     belongsTo.rdd
       .map { case (id, Edge(vertex, segment)) => (segment, vertex) }
       .groupByKey()
-      .map { case (segment, list) => list.toArray.sorted.mkString("-") }
       .collect()
+      .map { case (segment, list) => list.toArray.sorted.mkString("-") }
       .toArray
       .sorted
       .mkString(" ")
