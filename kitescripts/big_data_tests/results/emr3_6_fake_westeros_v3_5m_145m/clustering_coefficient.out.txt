@@ -1,0 +1,20 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/clustering_coefficient.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+2016-08-16 14:00:38,060 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-7 
+Lost executor 1 on ip-10-41-188-105.ec2.internal: Container marked as failed: container_1471342582179_0015_01_000002 on host: ip-10-41-188-105.ec2.internal. Exit status: -100. Diagnostics: Container released on a *lost* node
+2016-08-16 14:02:41,335 - [ERROR] - from org.apache.spark.network.client.TransportClient in shuffle-server-2 
+Failed to send RPC 8852312435762301456 to ip-10-140-244-122.ec2.internal/10.140.244.122:57534: java.nio.channels.ClosedChannelException
+java.nio.channels.ClosedChannelException: null
+2016-08-16 14:02:41,340 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-2 
+Lost executor 4 on ip-10-146-68-154.ec2.internal: Slave lost
+2016-08-16 14:02:41,515 - [ERROR] - from org.apache.spark.network.client.TransportClient in shuffle-server-2 
+Failed to send RPC 6656770027836213150 to ip-10-140-244-122.ec2.internal/10.140.244.122:57534: java.nio.channels.ClosedChannelException
+java.nio.channels.ClosedChannelException: null
+2016-08-16 14:02:41,517 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-5 
+Lost executor 2 on ip-10-187-63-48.ec2.internal: Slave lost
+2016-08-16 14:02:41,737 - [ERROR] - from org.apache.spark.network.client.TransportClient in shuffle-server-2 
+Failed to send RPC 5049192223801275041 to ip-10-140-244-122.ec2.internal/10.140.244.122:57534: java.nio.channels.ClosedChannelException
+java.nio.channels.ClosedChannelException: null
+2016-08-16 14:02:41,739 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-1 
+Lost executor 3 on ip-10-140-244-122.ec2.internal: Slave lost
+clustering_coefficient: {"labelType":"between","labels":["0.00000000","0.00000033","0.00000147","0.00000654","0.00002909","0.00012936","0.00057523","0.00255785","0.01137383","0.05057524","0.22488939","1.00000000"],"sizes":[4959801,251,3781,3508,2517,2297,2656,7518,13479,862,1503]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/clustering_coefficient.groovy, took 1561 seconds
