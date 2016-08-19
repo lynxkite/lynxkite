@@ -794,14 +794,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Triangles", new CreateSegmentationOperation(_, _) {
+  register("Enumerate triangles", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "triangles"),
       Choice("bothdir", "Edges required in both directions", options = FEOption.bools))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val bothDir = params("bothdir").toBoolean
-      val op = graph_operations.FindTriangles(bothDir)
+      val op = graph_operations.EnumerateTriangles(bothDir)
       val result = op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.segments, idAttr = "id")

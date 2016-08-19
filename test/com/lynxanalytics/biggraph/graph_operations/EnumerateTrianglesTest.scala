@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import scala.collection.mutable
 import scala.util.Random
 
-class FindTrianglesTest extends FunSuite with TestGraphOp {
+class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
   test("no triangles 1") {
     val g = SmallTestGraph(Map(
       0 -> Seq(0, 0, 1, 1, 2),
@@ -18,7 +18,7 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       5 -> Seq(6),
       6 -> Seq(3)
     )).result
-    val op = FindTriangles(needsBothDirections = false)
+    val op = EnumerateTriangles(needsBothDirections = false)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(ftOut.segments.rdd.count == 0)
   }
@@ -29,7 +29,7 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       1 -> Seq(0, 2, 2),
       2 -> Seq(0, 0, 1)
     )).result
-    val op = FindTriangles(needsBothDirections = true)
+    val op = EnumerateTriangles(needsBothDirections = true)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(ftOut.segments.rdd.count == 0)
   }
@@ -40,9 +40,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       1 -> Seq(2, 2, 2, 0, 0),
       2 -> Seq(0, 0, 1, 1)
     )).result
-    val opF = FindTriangles(needsBothDirections = false)
+    val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTriangles(needsBothDirections = true)
+    val opT = EnumerateTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
 
     val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
@@ -58,9 +58,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       3 -> Seq(4),
       4 -> Seq()
     )).result
-    val opF = FindTriangles(needsBothDirections = false)
+    val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTriangles(needsBothDirections = true)
+    val opT = EnumerateTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
 
     val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
@@ -78,9 +78,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       3 -> Seq(0, 1, 2, 4),
       4 -> Seq(0, 1, 2, 3)
     )).result
-    val opF = FindTriangles(needsBothDirections = false)
+    val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTriangles(needsBothDirections = true)
+    val opT = EnumerateTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
 
     val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
@@ -99,9 +99,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       4 -> Seq(3, 5),
       5 -> Seq(3, 4)
     )).result
-    val opF = FindTriangles(needsBothDirections = false)
+    val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTriangles(needsBothDirections = true)
+    val opT = EnumerateTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
 
     val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
@@ -124,9 +124,9 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
       10 -> Seq(),
       11 -> Seq(10)
     )).result
-    val opF = FindTriangles(needsBothDirections = false)
+    val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
-    val opT = FindTriangles(needsBothDirections = true)
+    val opT = EnumerateTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
 
     val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
@@ -162,7 +162,7 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     }
     val g = SmallTestGraph(adjacencyArray.toMap).result
     val t0 = System.nanoTime()
-    val op = FindTriangles(needsBothDirections = false)
+    val op = EnumerateTriangles(needsBothDirections = false)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     print("[info] - " + ftOut.segments.rdd.count + " triangles found in ")
     val t1 = System.nanoTime()

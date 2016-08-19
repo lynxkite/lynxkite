@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - New operation _"Find triangles"_ has been created.
+ - New operation _"Enumerate triangles"_ has been created.
 
 ### 1.9.2
 
