@@ -9,11 +9,11 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object FindTriangles extends OpFromJson {
-  def fromJson(j: JsValue) = FindTriangles(
+object EnumerateTriangles extends OpFromJson {
+  def fromJson(j: JsValue) = EnumerateTriangles(
     (j \ "needsBothDirections").as[Boolean])
 }
-case class FindTriangles(needsBothDirections: Boolean = false)
+case class EnumerateTriangles(needsBothDirections: Boolean = false)
     extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
@@ -82,7 +82,7 @@ case class FindTriangles(needsBothDirections: Boolean = false)
     // Finally we can enumerate the triangles.
     val triangleList = edgesWithNeighbours.flatMap {
       case ((src, dst), (nSrc: Seq[ID], nDst: Seq[ID])) => {
-        heldTriangles(
+        enumerateHeldTriangles(
           src,
           dst,
           nSrc,
@@ -104,10 +104,10 @@ case class FindTriangles(needsBothDirections: Boolean = false)
   // At this point the graph is guaranteed to be acyclic - see (1) -
   // so every triangle (as an induced subgraph) has exactly 1 vertex of indegree 2
   // which means the algorithm finds every triangle exactly once.
-  def heldTriangles(src: ID,
-                    dst: ID,
-                    nSrc: Seq[ID],
-                    nDst: Seq[ID]) = {
+  def enumerateHeldTriangles(src: ID,
+                             dst: ID,
+                             nSrc: Seq[ID],
+                             nDst: Seq[ID]) = {
     val triangleCollector = mutable.ArrayBuffer[List[ID]]()
     for (commonNeighbour <- nSrc.intersect(nDst)) {
       triangleCollector += List(src, dst, commonNeighbour)

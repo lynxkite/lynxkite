@@ -233,6 +233,8 @@ include::filter-by-attributes.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
 
+include::enumerate-triangles.asciidoc[]
+
 include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
@@ -324,8 +326,6 @@ include::train-a-logistic-regression-model.asciidoc[]
 include::train-linear-regression-model.asciidoc[]
 
 include::triadic-closure.asciidoc[]
-
-include::triangles.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 
