@@ -225,9 +225,11 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val weight = es.idSet.const(1.0)
       val op = PageRank(dampingFactor = 0.5, iterations = 3)
       val realPr = op(op.es, es)(op.weights, weight).result.pagerank
+      val maxPr = vs.const(realPr.rdd.values.max)
+      val minPr = vs.const(realPr.rdd.values.min)
       DeriveJS.deriveFromAttributes[Double](
-        "realPr * 2 - 1", Seq("realPr" -> realPr), vs)
-
+        "(realPr - minPr) / (maxPr - minPr) * 2 - 1",
+        Seq("realPr" -> realPr, "minPr" -> minPr, "maxPr" -> maxPr), vs)
     }
     val a = vs.randomAttribute(6)
     val pr = DeriveJS.deriveFromAttributes[Double](
@@ -235,10 +237,10 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 20, learningRate = 0.5, radius = 4,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
-        numberOfTrainings = 10, knownLabelWeight = 0.5, seed = 15)
+        featureCount = 0, networkSize = 4, learningRate = 0.01, radius = 3,
+        hideState = false, forgetFraction = 0.25, trainingRadius = 3, maxTrainingVertices = 10,
+        minTrainingVertices = 5, iterationsInTraining = 2, subgraphsInTraining = 30,
+        numberOfTrainings = 50, knownLabelWeight = 0.4, seed = 15)
       op(op.edges, es)(op.label, pr).result.prediction
     }
     prediction.rdd.count
