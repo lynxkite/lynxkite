@@ -44,7 +44,10 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
-    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (1, 1))
+
+    val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
+    val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
+    assert((trianglesF, trianglesT) == ("0-1-2", "0-1-2"))
   }
 
   test("5-size clique") {
@@ -59,7 +62,12 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
-    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (10, 0))
+
+    val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
+    val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
+    assert((trianglesF, trianglesT) ==
+      ("0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4",
+        ""))
   }
 
   test("5-size clique both directions") {
@@ -74,7 +82,12 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
-    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (10, 10))
+
+    val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
+    val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
+    assert((trianglesF, trianglesT) ==
+      ("0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4",
+        "0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4"))
   }
 
   test("planar graph neighbouring triangles") {
@@ -90,7 +103,10 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
-    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (3, 3))
+
+    val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
+    val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
+    assert((trianglesF, trianglesT) == ("0-1-2 1-2-3 3-4-5", "0-1-2 1-2-3 3-4-5"))
   }
 
   test("directed and non-directed triangles") {
@@ -112,7 +128,10 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = FindTriangles(needsBothDirections = true)
     val ftTOut = opT(opT.vs, g.vs)(opT.es, g.es).result
-    assert((ftFOut.segments.rdd.count, ftTOut.segments.rdd.count) == (4, 0))
+
+    val trianglesF = getSortedTrianglesFromBelongsTo(ftFOut.belongsTo)
+    val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
+    assert((trianglesF, trianglesT) == ("0-1-2 3-4-5 6-7-8 9-10-11", ""))
   }
 
   ignore("performance test") {
@@ -148,5 +167,16 @@ class FindTrianglesTest extends FunSuite with TestGraphOp {
     print("[info] - " + ftOut.segments.rdd.count + " triangles found in ")
     val t1 = System.nanoTime()
     println((t1 - t0) / 1000000000.0 + " seconds")
+  }
+
+  def getSortedTrianglesFromBelongsTo(belongsTo: EdgeBundle) = {
+    belongsTo.rdd
+      .map { case (id, Edge(vertex, segment)) => (segment, vertex) }
+      .groupByKey()
+      .map { case (segment, list) => list.toArray.sorted.mkString("-") }
+      .collect()
+      .toArray
+      .sorted
+      .mkString(" ")
   }
 }
