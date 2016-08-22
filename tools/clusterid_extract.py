@@ -25,4 +25,4 @@ if len(my_clusters) > 1:
   sys.stderr.write(msg + '\n')
   sys.exit(1)
 
-print (my_clusters[0]['Id'])
+print(my_clusters[0]['Id'])
