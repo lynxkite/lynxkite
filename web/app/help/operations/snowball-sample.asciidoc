@@ -1,0 +1,30 @@
+### Create snowball sample
+
+This operation creates a small smart sample of a graph. First, a subset of the original vertices is chosen
+for start points; the ratio of the size of this subset to the size of the original vertex set
+is the first parameter for the operation.
+Then a certain neighbourhood of each start point is added to the sample; the radius of this neighborhood
+is controlled by another parameter.
+The result of the operation is a subgraph of the original graph consisting of the vertices of the sample and
+the edges between them.
+This operation also creates a new attribute which shows how far the sample vertices are from the
+closest start point. (One vertex can be in more than one neighborhood.)
+This attribute can be used to decide whether a sample vertex is near to a start point or not.
+
+For example, you can create a random sample of the project's graph to test your model on smaller data set.
+
+====
+[[ratio]] Start point ratio::
+The (approximate) fraction of vertices to use as starting points.
+
+[[radius]] Radius::
+Limits the size of the neighborhoods of the start points.
+
+[[attrName]] Attribute name::
+The name of the attribute which shows how far the the sample vertices are from the closest start point.
+
+[[seed]] Seed::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

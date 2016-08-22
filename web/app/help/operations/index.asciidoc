@@ -315,6 +315,8 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::shortest-path.asciidoc[]
 
+include::snowball-sample.asciidoc[]
+
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
