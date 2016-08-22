@@ -1,12 +1,13 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Scripting._
+
+import scala.concurrent.{ Await, duration }
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
@@ -447,7 +448,12 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
     val g = graph_operations.ExampleGraph()().result
     val scalar = graph_operations.Count.run(g.vertices)
     val req = ScalarValueRequest(scalarId = scalar.gUID.toString)
-    val res = controller.getScalarValue(user, req)
+    val res = Await.result(controller.getScalarValue(user, req), duration.Duration.Inf)
+    println(res.string)
+    println(res.double)
+    println(res.x)
+    println(res.y)
+    println(res.defined)
     assert(res.defined == true)
     assert(res.string == "4")
     assert(res.double == Some(4))
