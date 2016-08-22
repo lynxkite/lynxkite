@@ -9,7 +9,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### 1.9.2
 
  - New operation _"Triadic closure"_ has been created.
- - New operation _"Snowball sample"_ has been created.
+ - New operation _"Create snowball sample"_ has been created.
  - Internal watchdog in ecosystem mode.
 
 ### 1.9.1
