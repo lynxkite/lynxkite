@@ -2,10 +2,10 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class SnowballSampleTest extends OperationsTestBase {
+class CreateSnowballSampleTest extends OperationsTestBase {
   test("Snowball sample with ratio=1.0") {
     run("Example Graph")
-    run("Snowball sample",
+    run("Create snowball sample",
       Map("ratio" -> "1.0", "radius" -> "0", "seed" -> "123454321", "attrName" -> "distance_from_start_point")
     )
 
@@ -15,7 +15,7 @@ class SnowballSampleTest extends OperationsTestBase {
 
   test("Snowball sample with ratio=0.0") {
     run("Example Graph")
-    run("Snowball sample",
+    run("Create snowball sample",
       Map("ratio" -> "0.0", "radius" -> "0", "seed" -> "123454321", "attrName" -> "distance_from_start_point")
     )
 
@@ -26,7 +26,7 @@ class SnowballSampleTest extends OperationsTestBase {
   test("Snowball sample with small graph (1000 vertices, ratio=0.1)") {
     run("New vertex set", Map("size" -> "1000"))
     run("Create random edge bundle", Map("degree" -> "10.0", "seed" -> "12321"))
-    run("Snowball sample",
+    run("Create snowball sample",
       Map("ratio" -> "0.1", "radius" -> "0", "seed" -> "123454321", "attrName" -> "distance_from_start_point")
     )
 

@@ -1,10 +1,10 @@
-// Tests the "Snowball sample" FE operation
+// Tests the "Create snowball sample" FE operation
 
 /// REQUIRE_SCRIPT edge_import.groovy
 
 project = lynx.loadProject('edge_import_result')
 
-project.snowballSample(
+project.createSnowballSample(
         ratio: '0.0001',
         radius: '1',
         attrName: 'distance_from_start_point',

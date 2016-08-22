@@ -2065,7 +2065,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Snowball sample", new StructureOperation(_, _) {
+  register("Create snowball sample", new StructureOperation(_, _) {
     def parameters = List(
       Ratio("ratio", "Fraction of vertices to use as starting points", defaultValue = "0.0001"),
       NonNegInt("radius", "Radius", default = 3),
