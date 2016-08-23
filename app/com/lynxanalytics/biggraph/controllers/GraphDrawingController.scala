@@ -663,8 +663,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    implicit val executionContext = env.dataManager.executionContext
-    dataManager.getFuture(scalar).map(dynamicValue(_)).future
+    implicit val executionContext = dataManager.executionContext
+    dataManager.getFuture(scalar).map(scalarData => dynamicValue(scalarData.scalar)).future
   }
 
   def getModel(user: User, request: ScalarValueRequest): model.FEModel = {
@@ -672,8 +672,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     model.Model.toFE(m, dataManager.runtimeContext.sparkContext)
   }
 
-  private def dynamicValue[T](scalar: ScalarData[T]) = {
+  private def dynamicValue[T](scalar: Scalar[T]) = {
     implicit val tt = scalar.typeTag
-    graph_operations.DynamicValue.convert(scalar)
+    graph_operations.DynamicValue.convert(scalar.value)
   }
 }
