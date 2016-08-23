@@ -163,10 +163,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       };
 
       scope.onLoad = function(editor) {
-              editor.setOptions({
-                     autoScrollEditorIntoView : true,
-                     maxLines : 500
-              });
+        editor.setOptions({
+          autoScrollEditorIntoView : true,
+          maxLines : 500
+        });
       };
     }
   };
