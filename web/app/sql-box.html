@@ -1,9 +1,10 @@
-<div
+<div ng-if="onLoad"
   ui-ace="{
     mode: 'sql',
     showGutter: false,
     rendererOptions: { fontSize: '16px' },
     advanced: { behavioursEnabled: false },
+    onLoad: onLoad,
   }"
   id="sql-editor"
   ng-model="sql"></div>

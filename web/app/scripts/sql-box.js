@@ -161,6 +161,13 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.reportSQLError = function() {
         util.reportRequestError(scope.result, 'Error executing query.');
       };
+
+      scope.onLoad = function(editor) {
+              editor.setOptions({
+                     autoScrollEditorIntoView : true,
+                     maxLines : 500
+              });
+      };
     }
   };
 });
