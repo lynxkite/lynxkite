@@ -17,6 +17,7 @@ import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.spark_util
 
 import scala.collection.mutable
+import scala.concurrent.Future
 
 case class VertexDiagramSpec(
   vertexSetId: String,
@@ -659,9 +660,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0L)))
   }
 
-  def getScalarValue(user: User, request: ScalarValueRequest): DynamicValue = {
+  def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    dynamicValue(scalar)
+    import dataManager.executionContext
+    dataManager
+      .getFuture(scalar)
+      .map(scalarData => dynamicValue(scalarData)).future
   }
 
   def getModel(user: User, request: ScalarValueRequest): model.FEModel = {
@@ -669,7 +673,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     model.Model.toFE(m, dataManager.runtimeContext.sparkContext)
   }
 
-  private def dynamicValue[T](scalar: Scalar[T]) = {
+  private def dynamicValue[T](scalar: ScalarData[T]) = {
     implicit val tt = scalar.typeTag
     graph_operations.DynamicValue.convert(scalar.value)
   }
