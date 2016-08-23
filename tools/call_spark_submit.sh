@@ -142,7 +142,9 @@ fi
 
 FULL_CLASSPATH=${app_classpath}
 if [ -n "${KITE_EXTRA_JARS}" ]; then
-  FULL_CLASSPATH=${FULL_CLASSPATH}:${KITE_EXTRA_JARS}
+    export EXPANDED_EXTRA_JARS=$(python -c \
+        "import glob; print(':'.join(sum([glob.glob(p) for p in '${KITE_EXTRA_JARS}'.split(':')], [])))")
+    FULL_CLASSPATH=${FULL_CLASSPATH}:${EXPANDED_EXTRA_JARS}
 fi
 
 if [ "${mode}" == "batch" ]; then
