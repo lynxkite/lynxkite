@@ -77,29 +77,33 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
         scope.asView = type === 'view';
 
-        //com.lynxanalytics.biggraph.controllers.CSVImportRequest
-        var requestName = newConfig.class.split('.').pop(); //CSVImportRequest
+        // e.g.: com.lynxanalytics.biggraph.controllers.CSVImportRequest..
+        var requestName = newConfig.class.split('.').pop(); //.. becomes CSVImportRequest
         var suffixLength = 'ImportRequest'.length;
         var datatype = requestName.slice(0, -suffixLength).toLowerCase();
         scope.datatype = datatype;
-        var datatypeScope = scope.$eval(datatype) || scope.files;
 
-        if (newConfig.data.files) {
-          datatypeScope.filename = newConfig.data.files;
-        }
-
-        if (datatypeScope === 'jdbc') {
-          fillJdbcFromData(datatypeScope, newConfig.data);
-        } else if (datatypeScope === 'hive') {
-          fillHiveFromData(datatypeScope, newConfig.data);
+        if (datatype === 'jdbc') {
+          scope.jdbc = {};
+          fillJdbcFromData(scope.jdbc, newConfig.data);
+        } else if (datatype === 'hive') {
+          scope.hive = {};
+          fillHiveFromData(scope.hive, newConfig.data);
+        } else if (datatype === 'csv') {
+          scope.csv = {};
+          fillScopeFromData(scope.csv, newConfig.data);
         } else {
-          fillScopeFromData(datatypeScope, newConfig.data);
+          scope.files = {};
+          fillScopeFromData(scope.files, newConfig.data);
         }
       });
 
       function fillScopeFromData(datatypeScope, data) {
+        if (data.files) {
+          datatypeScope.filename = data.files;
+        }
         for (var newConfigItem in data) {
-          if (newConfigItem in datatypeScope) {
+          if (newConfigItem in data) {
             datatypeScope[newConfigItem] = data[newConfigItem];
           }
         }
