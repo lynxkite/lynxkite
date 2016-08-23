@@ -9,7 +9,7 @@ after sql-box.js is executed, and the function scope.onLoad is defined. -->
     onLoad: onLoad,
   }"
   id="sql-editor"
-  ng-model="sql"></div>
+  ng-model="$parent.sql"></div>
 
 <div>
   <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
