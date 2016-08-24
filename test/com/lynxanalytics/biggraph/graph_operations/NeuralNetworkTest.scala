@@ -130,7 +130,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learning partition in a bipartite graph
-  test("bipartite") {
+  ignore("bipartite") {
     def neighbors(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
       if (vertex < partition1) partition1 until total
       else 0 until partition1
