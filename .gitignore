@@ -8,13 +8,13 @@ __pycache__
 .cache/
 .history/
 .lib/
-dist/*
+/dist/*
 target/
-logs/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
+/logs/
+/lib_managed/
+/src_managed/
+/project/boot/
+/project/plugins/project/
 
 # Scala-IDE specific
 .scala_dependencies
