@@ -30,7 +30,7 @@ module.exports = function(fw) {
     },
     function() {
       expect(lib.left.vertexCount()).toEqual(3);
-      expect(lib.left.attributeCount()).toEqual(2);
+      expect(lib.left.attributeCount()).toEqual(2);  // id,name
     }
   );
   fw.statePreservingTest(
@@ -49,6 +49,29 @@ module.exports = function(fw) {
       lib.splash.expectNumTables(1);
       lib.splash.expectTableListed(tableName);
       lib.splash.expectTableRows(tableName, '3');
+    }
+  );
+
+  fw.transitionTest(
+    'empty splash',
+    'CSV file imported as table with header',
+    function() {
+      var importPath = path.resolve(__dirname, 'data/import_csv_test_hdr.csv');
+      lib.splash.startTableImport();
+      lib.splash.importLocalCSVFile(tableName, importPath, '', '');
+      // Check if table was created:
+      lib.splash.expectNumProjects(0);
+      lib.splash.expectNumDirectories(0);
+      lib.splash.expectNumTables(1);
+      lib.splash.computeTable(tableName);
+      lib.splash.expectTableWithRows(tableName, '3');
+      // Import into project:
+      lib.splash.openNewProject('csv imported project2');
+      lib.left.runOperation('Import vertices', {table: tableName});
+    },
+    function() {
+      expect(lib.left.vertexCount()).toEqual(3);
+      expect(lib.left.attributeCount()).toEqual(3);  // id,name,age
     }
   );
 
