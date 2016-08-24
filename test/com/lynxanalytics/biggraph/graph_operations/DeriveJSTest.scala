@@ -29,7 +29,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       op.vs, g.vertices)(
         op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
     val elements = derived.rdd.collect()
-    assert(elements.size == 4 && elements.forall(_._2 == "Hello world!"))
+    assert(elements.size == 4 && elements.forall(_._2 == "Hello world! 😀 "))
   }
 
   test("example graph: 'name.length * 10 + age + greeting.length'") {
@@ -42,7 +42,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       op.attrs,
       VertexAttributeToJSValue.seq(g.age.entity, g.name.entity))(
         op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
-    assert(derived.rdd.collect.sorted.toList == List(0 -> 72.3, 1 -> 60.2, 2 -> 92.3, 3 -> 134.0))
+    assert(derived.rdd.collect.sorted.toList == List(0 -> 76.3, 1 -> 64.2, 2 -> 96.3, 3 -> 138.0))
   }
 
   test("example graph: cons string gets converted back to String correctly") {

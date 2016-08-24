@@ -23,7 +23,8 @@ class TestImport(unittest.TestCase):
     ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
     ('C', 3, 'Felix', 'Male', 'Gnome', NULL),
     ('D', 4, 'Oliver', 'Male', 'Troll', NULL),
-    (NULL, 5, NULL, NULL, NULL, NULL);
+    (NULL, 5, NULL, NULL, NULL, NULL),
+    (NULL, 6, '☃', 'Unicode', 'Snowman', 999.999);
     """)
     conn.commit()
     conn.close()
@@ -56,30 +57,34 @@ class TestImport(unittest.TestCase):
 
   def check_result(self, res):
     self.assertEqual(
-        res.take(5),
+        res.take(100),
         [{'gender': 'Male',
           'level': 10.0,
           'name': 'Daniel',
           'id': 1,
-          'race condition': 'Halfling',
-                            'n': 'A'},
+          'race condition': 'Halfling', 'n': 'A'},
          {'gender': 'Female',
           'level': 20.0,
           'name': 'Beata',
           'id': 2,
-          'race condition': 'Dwarf',
-                            'n': 'B'},
-            {'gender': 'Male',
-             'id': 3,
-             'n': 'C',
-             'name': 'Felix',
-             'race condition': 'Gnome'},
-            {'gender': 'Male',
-             'id': 4,
-             'n': 'D',
-             'name': 'Oliver',
-             'race condition': 'Troll'},
-            {'id': 5}])
+          'race condition': 'Dwarf', 'n': 'B'},
+         {'gender': 'Male',
+          'id': 3,
+          'n': 'C',
+          'name': 'Felix',
+          'race condition': 'Gnome'},
+         {'gender': 'Male',
+          'id': 4,
+          'n': 'D',
+          'name': 'Oliver',
+          'race condition': 'Troll'},
+         {'id': 5},
+         {'gender': 'Unicode',
+          'id': 6,
+          'name': '☃',
+          'race condition': 'Snowman',
+          'level': 999.999},
+         ])
 
   def test_jdbc_view(self):
     self.stub_test_jdbc()
