@@ -38,8 +38,8 @@ module.exports = function(fw) {
     'Editing imported CSV configuration is possible',
     function() {
       lib.splash.editImport('csv imported');
-      expect(element(by.model('tableName')).getAttribute('value')).toEqual(tableName);
-      expect(element(by.model('columnsToImport')).getAttribute('value')).toEqual(columns);
+      expect(element(by.css('#table-name input')).getAttribute('value')).toEqual(tableName);
+      expect(element(by.css('#csv-column-names input')).getAttribute('value')).toEqual(columns);
 
       lib.splash.clickAndWaitForImport();
       expect(lib.errors()).toEqual([]);
