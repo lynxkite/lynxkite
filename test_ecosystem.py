@@ -3,12 +3,14 @@
 Command-line utility to spin up an EMR cluster with an RDS
 database, and run Luigi task based performance tests on it.
 '''
-#!/usr/bin/python3
-
 import argparse
 import boto3
 import os
 import time
+import sys
+# Set up import path for our modules.
+os.chdir(os.path.dirname(__file__))
+sys.path.append('remote_api/python')
 from utils.emr_lib import EMRLib
 
 parser = argparse.ArgumentParser()
