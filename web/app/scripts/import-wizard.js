@@ -77,8 +77,9 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
         scope.asView = type === 'view';
 
-        // e.g.: com.lynxanalytics.biggraph.controllers.CSVImportRequest..
-        var requestName = newConfig.class.split('.').pop(); //.. becomes CSVImportRequest
+        // E.g.: "com.lynxanalytics.biggraph.controllers.CSVImportRequest"
+        // becomes "CSVImportRequest".
+        var requestName = newConfig.class.split('.').pop();
         var suffixLength = 'ImportRequest'.length;
         var datatype = requestName.slice(0, -suffixLength).toLowerCase();
         scope.datatype = datatype;
