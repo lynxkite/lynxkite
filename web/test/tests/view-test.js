@@ -10,9 +10,10 @@ module.exports = function(fw) {
     'empty splash',
     'CSV file imported as view',
     function() {
-      var importPath = path.resolve(__dirname, 'import_csv_test.csv');
+      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
       lib.splash.startTableImport();
-      lib.splash.importLocalCSVFile(viewName, importPath, columns, true);
+      lib.splash.importLocalCSVFile(
+          viewName, importPath, columns, columns, true);
     },
     function() {
       lib.splash.expectNumProjects(0);

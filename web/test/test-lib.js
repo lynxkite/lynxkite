@@ -582,7 +582,19 @@ Selector.prototype = {
   },
 
   expectNumViews: function(n) {
-      return expect($$('.view-entry').count()).toEqual(n);
+    return expect($$('.view-entry').count()).toEqual(n);
+  },
+
+  computeTable: function(name) {
+    this.table(name).element(by.css('.value-retry')).click();
+  },
+
+  // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
+  expectTableWithNumRows: function(name, n) {
+    var table = this.table(name);
+    // Look up the number of rows shown inside a <value>
+    // element.
+    return expect(table.$('value').getText()).toEqual(n.toString);
   },
 
   openNewProject: function(name) {
@@ -595,25 +607,37 @@ Selector.prototype = {
     element(by.id('import-table')).click();
   },
 
-  clickAndWaitForImport: function() {
+  clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
     testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
     importCsvButton.click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile, columns, view) {
+  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
-    if (columns) {
-      this.root.$('import-wizard #columns-to-import input').sendKeys(columns);
+    if (columnsToImport) {
+      this.root.$('import-wizard #columns-to-import input').sendKeys(columnsToImport);
     }
     this.root.$('#datatype select option[value="csv"]').click();
+    if (csvColumns) {
+      this.root.$('import-wizard #csv-column-names input').sendKeys(csvColumns);
+    }
     var csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     if (view) {
       this.root.$('import-wizard #as-view input').click();
     }
-    this.clickAndWaitForImport();
+    this.clickAndWaitForCsvImport();
+  },
+
+  importJDBC: function(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn) {
+    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    this.root.$('#datatype select option[value="jdbc"]').click();
+    this.root.$('#jdbc-url input').sendKeys(jdbcUrl);
+    this.root.$('#jdbc-table input').sendKeys(jdbcTable);
+    this.root.$('#jdbc-key-column input').sendKeys(jdbcKeyColumn);
+    this.root.$('#import-jdbc-button').click();
   },
 
   newDirectory: function(name) {

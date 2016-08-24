@@ -3,7 +3,7 @@
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
   var path = require('path');
-  var importPath = path.resolve(__dirname, 'regression_data.csv');
+  var importPath = path.resolve(__dirname, 'data/regression_data.csv');
 
   fw.transitionTest(
     'empty test-example project',
