@@ -18,7 +18,7 @@ module.exports = function(fw) {
       lib.splash.expectNumProjects(0);
       lib.splash.expectNumDirectories(0);
       lib.splash.expectNumTables(1);
-      lib.splash.expectTableRows(tableName, '3');
+      lib.splash.expectTableWithNumRows(tableName, '3');
     }
   );
   fw.transitionTest(
@@ -48,7 +48,7 @@ module.exports = function(fw) {
       lib.splash.expectNumDirectories(0);
       lib.splash.expectNumTables(1);
       lib.splash.expectTableListed(tableName);
-      lib.splash.expectTableRows(tableName, '3');
+      lib.splash.expectTableWithNumRows(tableName, '3');
     }
   );
 
@@ -64,7 +64,7 @@ module.exports = function(fw) {
       lib.splash.expectNumDirectories(0);
       lib.splash.expectNumTables(1);
       lib.splash.computeTable(tableName);
-      lib.splash.expectTableWithRows(tableName, '3');
+      lib.splash.expectTableWithNumRows(tableName, '3');
       // Import into project:
       lib.splash.openNewProject('csv imported project2');
       lib.left.runOperation('Import vertices', {table: tableName});
@@ -93,7 +93,7 @@ module.exports = function(fw) {
       lib.splash.expectNumProjects(0);
       lib.splash.expectNumDirectories(0);
       lib.splash.expectNumTables(1);
-      lib.splash.expectTableRows('jdbc imported', '3');
+      lib.splash.expectTableWithNumRows('jdbc imported', '3');
     });
   fw.transitionTest(
     'Sqlite file imported via JDBC as table',
@@ -112,7 +112,7 @@ module.exports = function(fw) {
       lib.splash.expectNumProjects(0);
       lib.splash.expectNumDirectories(0);
       lib.splash.expectNumTables(1);
-      lib.splash.expectTableRows('jdbc imported', '4');
+      lib.splash.expectTableWithNumRows('jdbc imported', '4');
     });
 
 };
