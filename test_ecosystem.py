@@ -26,7 +26,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='1.9.1',
+    default='1.9.2',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
@@ -179,9 +179,11 @@ def prompt_delete():
     return True
   print('Terminate instances? [y/N] ', end='')
   choice = input().lower()
-  if choice != 'y':
+  if choice == 'y':
+    return True
+  else:
     print('''Please don't forget to terminate the instances!''')
-    return
+    return False
 
 
 def shut_down_instances(cluster, db):
