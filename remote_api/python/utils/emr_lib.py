@@ -48,11 +48,11 @@ def call_cmd(cmd_list, input=None, print_output=True):
 
 class EMRLib:
 
-  def __init__(self, ec2_key_file, ec2_key_name):
+  def __init__(self, ec2_key_file, ec2_key_name, region='us-east-1'):
     self.ec2_key_file = ec2_key_file
     self.ec2_key_name = ec2_key_name
-    self.emr_client = boto3.client('emr')
-    self.rds_client = boto3.client('rds')
+    self.emr_client = boto3.client('emr', region_name=region)
+    self.rds_client = boto3.client('rds', region_name=region)
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
 
   def wait_for_services(self, services):
