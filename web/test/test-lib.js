@@ -589,13 +589,12 @@ Selector.prototype = {
     this.table(name).element(by.css('.value-retry')).click();
   },
 
-  // Verifies that a computed table exists by the name 'name' and contains
-  //'n' rows.
+  // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
   expectTableWithNumRows: function(name, n) {
     var table = this.table(name);
     // Look up the number of rows shown inside a <value>
     // element.
-    return expect(table.$('value').getText()).toEqual(n);
+    return expect(table.$('value').getText()).toEqual(n.toString);
   },
 
   openNewProject: function(name) {
