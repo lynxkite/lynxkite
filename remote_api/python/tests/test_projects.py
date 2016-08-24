@@ -18,7 +18,7 @@ class TestProjects(unittest.TestCase):
     p = lk.new_project()
     p.exampleGraph()
     greeting = p.scalar('greeting')
-    self.assertEqual(greeting, 'Hello world!')
+    self.assertEqual(greeting, 'Hello world! 😀 ')
 
   def test_compute(self):
     p = lynx.LynxKite().new_project()

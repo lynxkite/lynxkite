@@ -171,6 +171,6 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
     output(o.weight, sc.parallelize((firstEdge to lastEdge).map { x => (x, x.toDouble) })
       .sortUnique(partitioner))
 
-    output(o.greeting, "Hello world!")
+    output(o.greeting, "Hello world! 😀 ")
   }
 }

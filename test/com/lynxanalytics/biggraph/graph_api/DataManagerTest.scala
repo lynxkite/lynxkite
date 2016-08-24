@@ -45,7 +45,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(1,Eve loves Adam)\n" +
       "(2,Bob envies Adam)\n" +
       "(3,Bob loves Eve)")
-    assert(dataManager.get(instance.outputs.scalars('greeting)).value == "Hello world!")
+    assert(dataManager.get(instance.outputs.scalars('greeting)).value == "Hello world! 😀 ")
   }
 
   test("We can reload a graph from disk without recomputing it") {

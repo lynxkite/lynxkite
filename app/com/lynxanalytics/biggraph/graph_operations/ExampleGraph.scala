@@ -89,6 +89,6 @@ case class ExampleGraph() extends TypedMetaGraphOp[NoInput, Output] {
       (1L, 2.0),
       (2L, 3.0),
       (3L, 4.0))).sortUnique(partitioner))
-    output(o.greeting, "Hello world!")
+    output(o.greeting, "Hello world! 😀 ")
   }
 }
