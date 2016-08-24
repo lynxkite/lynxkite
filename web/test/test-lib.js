@@ -591,7 +591,7 @@ Selector.prototype = {
 
   // Verifies that a computed table exists by the name 'name' and contains
   //'n' rows.
-  expectTableWithRows: function(name, n) {
+  expectTableWithNumRows: function(name, n) {
     var table = this.table(name);
     // Look up the number of rows shown inside a <value>
     // element.
