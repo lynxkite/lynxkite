@@ -193,7 +193,7 @@ certificate for LynxKite that the browsers can validate. Follow the instructions
 http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creating a keystore file.
 ```
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
-# export KITE_HTTPS_KEYSTORE_PWD=asdasd
+# export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 ```
 ===========================================================
 

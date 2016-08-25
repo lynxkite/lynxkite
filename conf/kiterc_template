@@ -136,7 +136,7 @@ export KITE_EXTRA_JARS=
 # certificate for LynxKite that the browsers can validate. Follow the instructions at
 # Apache Tomcat (http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html) for creating a keystore file.
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
-# export KITE_HTTPS_KEYSTORE_PWD=asdasd
+# export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 # ===========================================================
 
 # The LynxKite Google client secret is only needed for Google Authenticator. Ask the Lynx R&D
