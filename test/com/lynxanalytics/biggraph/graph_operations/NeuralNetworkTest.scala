@@ -130,7 +130,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learning partition in a bipartite graph
-  ignore("bipartite") {
+  test("bipartite") {
     def neighbors(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
       if (vertex < partition1) partition1 until total
       else 0 until partition1
@@ -153,10 +153,10 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, learningRate = 0.02, radius = 3,
-        hideState = false, forgetFraction = 0.3, trainingRadius = 1, maxTrainingVertices = 11,
-        minTrainingVertices = 7, iterationsInTraining = 50, subgraphsInTraining = 10,
-        numberOfTrainings = 10, knownLabelWeight = 0.5, seed = 15)
+        featureCount = 0, networkSize = 4, learningRate = 0.1, radius = 5,
+        hideState = true, forgetFraction = 0.0, trainingRadius = 1, maxTrainingVertices = 7,
+        minTrainingVertices = 5, iterationsInTraining = 11, subgraphsInTraining = 10,
+        numberOfTrainings = 9, knownLabelWeight = 1.0, seed = 15)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
     }
     prediction.rdd.count // HACK: NullPointerException otherwise.
