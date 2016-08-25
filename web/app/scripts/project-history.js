@@ -174,25 +174,12 @@ function(util, $timeout, removeOptionalDefaults) {
         return undefined;
       };
 
-      function findOp(cats, opId) {
-        for (var i = 0; i < cats.length; ++i) {
-          for (var j = 0; j < cats[i].ops.length; ++j) {
-            var op = cats[i].ops[j];
-            if (opId === op.id) {
-              return op;
-            }
-          }
-        }
-        return undefined;
-      }
-
       function opNamesForSteps(steps) {
         var names = [];
         for (var i = 0; i < steps.length; ++i) {
-          var step = steps[i];
-          var op = findOp(step.opCategoriesBefore, step.request.op.id);
+          var op = steps[i].opMeta;
           if (op) {
-            names.push(findOp(step.opCategoriesBefore, step.request.op.id).title);
+            names.push(op.title);
           }
         }
         return names;
@@ -316,7 +303,7 @@ function(util, $timeout, removeOptionalDefaults) {
         for (var i = 0; i < steps.length; ++i) {
           var step = steps[i];
           var request = step.request;
-          var op = findOp(step.opCategoriesBefore, request.op.id);
+          var op = step.opMeta;
           var line = [];
           line.push('project');
           for (var j = 0; j < request.path.length; ++j) {
