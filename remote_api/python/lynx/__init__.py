@@ -1,10 +1,12 @@
 '''Python interface for the LynxKite Remote API.
 
-The access to the LynxKite instance can be configured through the following environment variables::
+The default LynxKite connection parameters can be configured through the following environment
+variables::
 
     LYNXKITE_ADDRESS=https://lynxkite.example.com/
     LYNXKITE_USERNAME=user@company
     LYNXKITE_PASSWORD=my_password
+    LYNXKITE_PUBLIC_SSL_CERT=/tmp/lynxkite.crt
 
 Example usage::
 
@@ -20,6 +22,7 @@ history.
 import http.cookiejar
 import json
 import os
+import ssl
 import sys
 import types
 import urllib
@@ -37,19 +40,31 @@ class LynxKite:
   Some LynxKite API methods take a connection argument which can be used to communicate with
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
-  ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, and ``LYNXKITE_PASSWORD``.
+  ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
+  ``LYNXKITE_PUBLIC_SSL_CERT``.
   '''
 
-  def __init__(self, username=None, password=None, address=None):
+  def __init__(self, username=None, password=None, address=None, certfile=None):
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
     self._address = address
     self._username = username
     self._password = password
+    self._certfile = certfile
+    self.opener = self.build_opener()
+
+  def build_opener(self):
     cj = http.cookiejar.CookieJar()
-    self.opener = urllib.request.build_opener(
-        urllib.request.HTTPCookieProcessor(cj))
+    cp = urllib.request.HTTPCookieProcessor(cj)
+    if self.certfile():
+      sslctx = ssl.create_default_context(
+          ssl.Purpose.SERVER_AUTH,
+          cafile=self.certfile())
+      https = urllib.request.HTTPSHandler(context=sslctx)
+      return urllib.request.build_opener(https, cp)
+    else:
+      return urllib.request.build_opener(cp)
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -59,6 +74,9 @@ class LynxKite:
 
   def password(self):
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
+
+  def certfile(self):
+    return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
   def _login(self):
     self._request(
