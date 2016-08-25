@@ -119,14 +119,6 @@ case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
 
-abstract class FEOperation {
-  val id: String = getClass.getName
-  val title: String
-  val category: String
-  val parameters: List[FEOperationParameterMeta]
-  def apply(params: Map[String, String]): Unit
-}
-
 case class FEAttribute(
   id: String,
   title: String,
@@ -242,6 +234,7 @@ case class ProjectHistoryStep(
   segmentationsBefore: List[FESegmentation],
   segmentationsAfter: List[FESegmentation],
   opCategoriesBefore: List[OperationCategory],
+  opMeta: Option[FEOperationMeta],
   checkpoint: Option[String])
 
 case class SaveWorkflowRequest(
@@ -566,6 +559,13 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
 
     val op = ops.opById(context, request.op.id)
+    println(op.toFE)
+    println(request.op.id)
+
+    val opMeta = opCategoriesBefore
+      .flatMap(_.ops.find(catOp => catOp.id == request.op.id))
+      .headOption
+    println(opMeta)
 
     // Remove parameters from the request that no longer exist.
     val restrictedRequest = {
@@ -603,6 +603,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
         segmentationsBefore,
         segmentationsAfter,
         opCategoriesBefore,
+        opMeta,
         nextStateOpt.flatMap(_.checkpoint)))
   }
 
