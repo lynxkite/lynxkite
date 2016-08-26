@@ -231,7 +231,7 @@ case class Network private (
   def update(gradients: Iterable[NetworkGradients], learningRate: Double): Network = {
     import breeze.linalg._
     import breeze.numerics._
-    val sums = weights.keys.map {
+    val sums = allWeights.keys.map {
       name => name -> gradients.map(_.trained(name)).reduce(_ + _)
     }.toMap
     for ((k, v) <- sums) {
@@ -243,7 +243,7 @@ case class Network private (
         case None => name -> (s :* s)
       }
     }
-    val newWeights = weights.map {
+    val newWeights = allWeights.toMap.map {
       case (name, w) =>
         name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name)) + 1e-6)
     }
