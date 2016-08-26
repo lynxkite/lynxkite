@@ -594,7 +594,7 @@ Selector.prototype = {
     var table = this.table(name);
     // Look up the number of rows shown inside a <value>
     // element.
-    return expect(table.$('value').getText()).toEqual(n.toString);
+    return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
   openNewProject: function(name) {
