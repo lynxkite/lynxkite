@@ -172,6 +172,7 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
+  import dataManager.executionContext
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
@@ -662,7 +663,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    import dataManager.executionContext
     dataManager
       .getFuture(scalar)
       .map(dynamicValue(_)).future
