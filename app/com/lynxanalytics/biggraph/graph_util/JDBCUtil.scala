@@ -22,10 +22,20 @@ object JDBCUtil {
   // Reads a table from JDBC, partitioned by a keyColumn. This is a wrapper around Spark's
   // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
   // the partitioning strategy depending on keyColumn and predicates.
-  def read(context: SQLContext, url: String, table: String, keyColumn: String, predicates: List[String]): DataFrame = {
+  def read(
+    context: SQLContext,
+    url: String,
+    table: String,
+    keyColumn: String,
+    predicates: List[String],
+    fetchSize: String): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     assert(keyColumn.isEmpty || predicates.isEmpty, "Cannot define both keyColumn and predicates.")
     val props = new java.util.Properties
+
+    if (fetchSize.nonEmpty)
+      props.setProperty("fetchsize", fetchSize)
+
     if (keyColumn.isEmpty) {
       if (predicates.isEmpty) {
         // Inefficiently read into a single partition.
