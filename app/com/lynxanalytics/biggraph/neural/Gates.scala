@@ -324,7 +324,7 @@ private case class BackwardContext(
       trainedGradients.get(m.name).map(_ + gradient).getOrElse(gradient)
   }
   def add(v: V, gradient: DoubleVector): Unit = {
-    val mgrad = gradient.asDenseMatrix
+    val mgrad = gradient.asDenseMatrix.t
     trainedGradients(v.name) =
       trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
   }
