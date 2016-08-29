@@ -274,8 +274,10 @@ private case class ForwardContext(
   def apply(m: M): DoubleMatrix = network(m)
   def apply(v: V): DoubleVector = network(v)(::, 0)
   def neighbors: GraphVectors = {
+    import breeze.linalg._
     vertices.map { id =>
-      id -> edges(id).map(neighborState(_))
+      if (edges(id) == List()) id -> List(0).map(_ => DenseVector.zeros[Double](network.size))
+      else id -> edges(id).map(neighborState(_))
     }.toMap
   }
 
