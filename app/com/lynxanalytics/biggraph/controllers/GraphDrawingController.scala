@@ -665,7 +665,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     import dataManager.executionContext
     dataManager
       .getFuture(scalar)
-      .map(scalarData => dynamicValue(scalarData)).future
+      .map(dynamicValue(_)).future
   }
 
   def getModel(user: User, request: ScalarValueRequest): model.FEModel = {
