@@ -200,7 +200,7 @@ case class NeuralNetwork(
 
       // Forward pass.
       val outputs = (1 until radius).scanLeft {
-        network.forward(vertices, edges, initialState, "state" -> keptState)
+        network.forward(vertices, edges, keptState, "state" -> initialState)
       } { (previous, r) =>
         network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
       }
