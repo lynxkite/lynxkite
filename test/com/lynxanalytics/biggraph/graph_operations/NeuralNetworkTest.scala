@@ -46,7 +46,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         featureCount = 2, networkSize = 4, learningRate = 0.1, radius = 0,
         hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
         minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
-        numberOfTrainings = 10)
+        numberOfTrainings = 50)
       op(op.edges, vs.emptyEdgeBundle)(op.label, a)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
