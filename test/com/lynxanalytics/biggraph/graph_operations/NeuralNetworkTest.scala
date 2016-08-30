@@ -138,7 +138,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learning partition in a bipartite graph
-  ignore("bipartite") {
+  test("bipartite") {
     def neighbors(total: Int, partition1: Int, vertex: Int): Seq[Int] = {
       if (vertex < partition1) partition1 until total
       else 0 until partition1
@@ -152,12 +152,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val g = SmallTestGraph(edgeListsOfCompleteBipartiteGraph(1000, 400))
     val vertices = g.result.vs
-    val partition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
+    val truePartition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
+    val a = vertices.randomAttribute(13)
+    val partition = DeriveJS.deriveFromAttributes[Double](
+      "a < -0.7 ? undefined : truePartition",
+      Seq("a" -> a, "truePartition" -> truePartition),
+      vertices)
 
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 4, learningRate = 0.02, radius = 3,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 1, maxTrainingVertices = 8,
+        hideState = false, forgetFraction = 0.3, trainingRadius = 1, maxTrainingVertices = 8,
         minTrainingVertices = 7, iterationsInTraining = 50, subgraphsInTraining = 10,
         numberOfTrainings = 10)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
@@ -165,7 +170,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     prediction.rdd.count // HACK: NullPointerException otherwise.
     val isWrong = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
-      Seq("prediction" -> prediction, "truth" -> partition),
+      Seq("prediction" -> prediction, "truth" -> truePartition),
       g.result.vs)
     assert(isWrong.rdd.values.sum == 0)
   }
@@ -228,9 +233,11 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val weight = es.idSet.const(1.0)
       val op = PageRank(dampingFactor = 0.5, iterations = 3)
       val realPr = op(op.es, es)(op.weights, weight).result.pagerank
+      val maxPr = vs.const(realPr.rdd.values.max)
+      val minPr = vs.const(realPr.rdd.values.min)
       DeriveJS.deriveFromAttributes[Double](
-        "realPr * 2 - 1", Seq("realPr" -> realPr), vs)
-
+        "(realPr - minPr) / (maxPr - minPr) * 2 - 1",
+        Seq("realPr" -> realPr, "minPr" -> minPr, "maxPr" -> maxPr), vs)
     }
     val a = vs.randomAttribute(6)
     val pr = DeriveJS.deriveFromAttributes[Double](

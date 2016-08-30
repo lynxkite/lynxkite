@@ -233,10 +233,8 @@ case class Network private (
   def update(gradients: Iterable[NetworkGradients], learningRate: Double): Network = {
     import breeze.linalg._
     import breeze.numerics._
-    val sums = allWeights.keys.flatMap { name =>
-      val gs = gradients.flatMap(_.trained.get(name))
-      if (gs.isEmpty) None
-      else Some(name -> gs.reduce(_ + _))
+    val sums = allWeights.keys.map {
+      name => name -> gradients.map(_.trained(name)).reduce(_ + _)
     }.toMap
     for ((k, v) <- sums) {
       clip.inPlace(v, -5.0, 5.0)
@@ -247,9 +245,9 @@ case class Network private (
         case None => name -> (s :* s)
       }
     }
-    val newWeights = allWeights ++ sums.map {
-      case (name, s) =>
-        name -> (allWeights(name) - learningRate * s / sqrt(newAdagradMemory(name)) + 1e-6)
+    val newWeights = allWeights.toMap.map {
+      case (name, w) =>
+        name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name) + 1e-6))
     }
     this.copy(weights = newWeights, adagradMemory = newAdagradMemory)
   }
@@ -282,8 +280,10 @@ private case class ForwardContext(
   def apply(m: M): DoubleMatrix = network(m)
   def apply(v: V): DoubleVector = network(v)(::, 0)
   def neighbors: GraphVectors = {
+    import breeze.linalg._
     vertices.map { id =>
-      id -> edges(id).map(neighborState(_))
+      if (edges(id) == List()) id -> List(0).map(_ => DenseVector.zeros[Double](network.size))
+      else id -> edges(id).map(neighborState(_))
     }.toMap
   }
 
