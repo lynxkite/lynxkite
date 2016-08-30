@@ -629,19 +629,15 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
-    val filtered = dataManager
-      .getFuture(vertexSet)
-      .map(_.vertexSet)
-      .map(FEFilters.filter(_, request.filters))
-    val op = graph_operations.SampleVertices(request.count)
-    val sampled = filtered
-      .map {
-        val op = graph_operations.SampleVertices(request.count);
-        op(op.vs, _).result.sample.value.map(v => v.toString)
-      }
-      .map(CenterResponse(_))
+    val filtered = FEFilters.filter(vertexSet, request.filters)
+    val sampled = {
+      val op = graph_operations.SampleVertices(request.count)
+      op(op.vs, filtered).result.sample
+    }
+    dataManager
+      .getFuture(sampled)
+      .map(s => CenterResponse(s.value.map(_.toString)))
       .future
-    sampled
   }
 
   def getHistogram(user: User, request: HistogramSpec): HistogramResponse = {
