@@ -410,7 +410,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
   def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
-  def createViewJdbc(user: serving.User, request: JsonImportRequest) = saveView(user, request)
+  def createViewJdbc(user: serving.User, request: JdbcImportRequest) = saveView(user, request)
   def createViewParquet(user: serving.User, request: ParquetImportRequest) = saveView(user, request)
   def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
   def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)

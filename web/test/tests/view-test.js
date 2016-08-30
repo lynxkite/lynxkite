@@ -5,6 +5,9 @@ module.exports = function(fw) {
   var path = require('path');
   var columns = 'name,age';
   var viewName = 'csv view';
+  var jdbcViewName = 'jdbc view';
+  var jdbcImportPath = path.resolve(__dirname, 'data/import_jdbc_test.sqlite');
+  var jdbcUrl = 'jdbc:sqlite:' + jdbcImportPath;
 
   fw.transitionTest(
     'empty splash',
@@ -25,7 +28,7 @@ module.exports = function(fw) {
   );
   fw.statePreservingTest(
     'CSV file imported as view',
-    'Global sql box returns results',
+    'Global sql box returns results for CSV view',
     function() {
       lib.splash.runGlobalSql('select * from `' + viewName + '`');
       lib.startDownloadWatch();
@@ -37,6 +40,37 @@ module.exports = function(fw) {
         'Adam,24\n' +
         'Eve,32\n' +
         'Bob,41\n');
+    }
+  );
+  fw.transitionTest(
+    'empty splash',
+    'Sqlite file imported via JDBC as view',
+    function() {
+      lib.splash.startTableImport();
+      lib.splash.importJDBC(jdbcViewName, jdbcUrl, 'table1', 'a', true);
+      expect(lib.errors()).toEqual([]);
+    },
+    function() {
+      lib.splash.expectNumProjects(0);
+      lib.splash.expectNumDirectories(0);
+      lib.splash.expectNumTables(0);
+      lib.splash.expectNumViews(1);
+      lib.splash.expectViewListed(jdbcViewName);
+    });
+  fw.statePreservingTest(
+    'Sqlite file imported via JDBC as view',
+    'Global sql box returns results for JDBC view',
+    function() {
+      lib.splash.runGlobalSql('select * from `' + jdbcViewName + '`');
+      lib.startDownloadWatch();
+      lib.splash.saveGlobalSqlToCSV();
+      var downloadedFileName = lib.waitForNewDownload(/\.csv$/);
+      lib.expectFileContents(
+        downloadedFileName,
+        'a,b\n' +
+        '1,2\n' +
+        '1,3\n' +
+        '42,42\n');
     }
   );
 };
