@@ -97,6 +97,8 @@ case class NeuralNetwork(
     val random = new util.Random(0)
     val labelOpt = inputs.vertices.rdd.sortedLeftOuterJoin(inputs.label.rdd).mapValues(_._2)
     val data: SortedRDD[ID, (Option[Double], Array[Double])] = labelOpt.sortedJoin(features)
+    implicit val randBasis =
+      new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
 
     val initialNetwork = {
       import neural.Gates._
@@ -221,7 +223,7 @@ case class NeuralNetwork(
       // Backward pass.
       var numberOfForgotten = 0.0
       var numberOfKnown = 0.0
-      val errors: Map[ID, Double] = trainingData.map {
+      val errors: Map[ID, Double] = data.map {
         case (id, (Some(label), features)) if (keptState(id)(1) == 0 || forgetFraction == 0.0) =>
           numberOfForgotten += 1
           // The label is predicted in position 0.

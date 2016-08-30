@@ -183,13 +183,14 @@ import Gates._
 
 object Network {
   // The public constructor does not set weights, so they get randomly initialized.
-  def apply(size: Int, outputs: (String, Vector)*) = new Network(size, outputs.toMap)
+  def apply(size: Int, outputs: (String, Vector)*)(implicit r: RandBasis) =
+    new Network(size, outputs.toMap)
 }
 case class Network private (
     size: Int, outputs: Map[String, Vector],
     weights: Iterable[(String, DoubleMatrix)] = Iterable(),
-    adagradMemory: Map[String, DoubleMatrix] = Map()) {
-  implicit val randBasis = RandBasis.mt0
+    adagradMemory: Map[String, DoubleMatrix] = Map())(
+        implicit r: RandBasis) {
   val allWeights = collection.mutable.Map(weights.toSeq: _*)
   def +(other: Network): Network = this.copy(
     weights = allWeights.map {
