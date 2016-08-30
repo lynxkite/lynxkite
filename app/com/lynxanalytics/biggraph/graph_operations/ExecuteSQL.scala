@@ -74,20 +74,20 @@ case class ExecuteSQL(
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
-    val sqlContext = rc.sqlContext.newSession()
-    for ((tableName, tableVs) <- inputs.tables) {
-      val tableColumnList: Iterable[(String, Attribute[_])] = inputs
-        .tableColumns(tableName)
-        .map {
-          case (columnName, columnAttr) =>
-            (columnName, columnAttr.entity(output.instance))
-        }
-      val rawTable = RawTable(tableVs.entity(output.instance), tableColumnList.toMap)
-      val tableRelation = new TableRelation(rawTable, sqlContext)(rc.dataManager)
-      val tableDataFrame = tableRelation.toDF
-      tableDataFrame.registerTempTable(tableName)
+    val sqlContext = rc.dataManager.newSQLContext()
+    val dfs = inputs.tables.map {
+      case (tableName, tableVs) =>
+        val tableColumnList: Iterable[(String, Attribute[_])] = inputs
+          .tableColumns(tableName)
+          .map {
+            case (columnName, columnAttr) =>
+              (columnName, columnAttr.entity(output.instance))
+          }
+        val rawTable = RawTable(tableVs.entity(output.instance), tableColumnList.toMap)
+        val tableRelation = new TableRelation(rawTable, sqlContext)(rc.dataManager)
+        tableName -> tableRelation.toDF
     }
-    var dataFrame = sqlContext.sql(sqlQuery)
+    var dataFrame = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
     o.populateOutput(rc, outputSchema, dataFrame)
   }
 }

@@ -61,14 +61,15 @@ class SQLHelper(
   // Given a project and a query, collects the the guids of the
   // input attributes required to execute the query.
   // The result is a map of tableName -> Seq(guid, columnName)
-  def getInputColumns(project: controllers.ProjectViewer, sqlQuery: String): (Map[String, Seq[(UUID, String)]], DataFrame) = {
+  def getInputColumns(project: controllers.ProjectViewer,
+                      sqlQuery: String): (Map[String, Seq[(UUID, String)]], DataFrame) = {
     // This implementation exploits that DataFrame.explain()
     // scans all the input columns. We create fake input table
     // relations below, and collect the scanned columns in
     // `columnAccumulator`.
     val columnAccumulator = mutable.Map[String, Seq[(UUID, String)]]()
     val sqlContext = dataManager.newSQLContext()
-    for (path <- project.allRelativeTablePaths) {
+    val dfs = project.allRelativeTablePaths.map { path =>
       val tableName = path.toString
       val dataFrame = (
         new InputGUIDCollectingFakeTableRelation(
@@ -77,9 +78,9 @@ class SQLHelper(
           sparkContext,
           columnList => { columnAccumulator(tableName) = columnList }
         )).toDF
-      dataFrame.registerTempTable(tableName)
+      tableName -> dataFrame
     }
-    val df = sqlContext.sql(sqlQuery)
+    val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
     sql.SQLHelperHelper.explainQuery(df)
     (columnAccumulator.toMap, df)
   }
@@ -133,7 +134,7 @@ object SQLHelper {
         TypeTagUtil.mapTypeTag(typeTagFromDataType(mt.keyType), typeTagFromDataType(mt.valueType))
       case _: types.ShortType => typeTag[Short]
       case _: types.StringType => typeTag[String]
-      case _: types.TimestampType => typeTag[java.sql.Timestamp]
+      case _: types.TimestampType => typeTag[java.util.Date]
       case st: types.StructType if isTuple2Type(st) =>
         TypeTagUtil.tuple2TypeTag(
           typeTagFromDataType(st(0).dataType),

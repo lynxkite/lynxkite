@@ -234,6 +234,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   abstract class StructureOperation(t: String, c: Context)
     extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
 
+  abstract class MachineLearningOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "knight"))
+
   import OperationParams._
 
   register("Discard vertices", new StructureOperation(_, _) {
@@ -1010,7 +1013,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Reduce vertex attributes to two dimensions", new VertexAttributesOperation(_, _) {
+  register("Reduce vertex attributes to two dimensions", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
       Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
@@ -1263,6 +1266,41 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Hash vertex attribute", new ImportOperation(_, _) {
+    def parameters = List(
+      Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true),
+      Param("salt", "Salt",
+        defaultValue = graph_operations.HashVertexAttribute.makeSecret(nextString(15)))
+    )
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+
+    def apply(params: Map[String, String]) = {
+      assert(params("attr").nonEmpty, "Please choose at least one vertex attribute to hash.")
+      val salt = params("salt")
+      graph_operations.HashVertexAttribute.assertSecret(salt)
+      assert(
+        graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
+      val op = graph_operations.HashVertexAttribute(salt)
+      for (attribute <- params("attr").split(",", -1)) {
+        val attr = project.vertexAttributes(attribute).asString
+        project.newVertexAttribute(
+          attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed, "hashed")
+      }
+    }
+
+    // To have a more secure default salt value than just using Random.nextInt.toString
+    def nextString(length: Int): String = {
+      val validCharacters: Array[Char] = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toArray
+      val srand: java.security.SecureRandom = new java.security.SecureRandom()
+      val rand: java.util.Random = new java.util.Random()
+
+      rand.setSeed(srand.nextLong())
+
+      val chars: Array[Char] = new Array[Char](length)
+      chars.map(_ => validCharacters(rand.nextInt(validCharacters.length))).mkString("")
+    }
+  })
+
   private val toStringHelpText = "Converts the selected %s attributes to string type."
   register("Vertex attribute to string", new VertexAttributesOperation(_, _) {
     def parameters = List(
@@ -1446,7 +1484,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict vertex attribute", new VertexAttributesOperation(_, _) {
+  register("Predict vertex attribute", new MachineLearningOperation(_, _) {
     def parameters = List(
       Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
       Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
@@ -1477,11 +1515,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Train linear regression model", new VertexAttributesOperation(_, _) {
+  register("Train linear regression model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
-      Choice("features", "Predictors", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
       Choice("method", "Method", options = FEOption.list(
         "Linear regression", "Ridge regression", "Lasso")))
     def enabled =
@@ -1511,20 +1549,82 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict from model", new VertexAttributesOperation(_, _) {
-    val models = project.viewer.models
+  register("Train a logistic regression model", new MachineLearningOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
+      NonNegInt("max-iter", "Maximum number of iterations", default = 20))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one feature.")
+      val featureNames = params("features").split(",", -1).sorted
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val name = params("name")
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val maxIter = params("max-iter").toInt
+      val model = {
+        val op = graph_operations.LogisticRegressionModelTrainer(
+          maxIter, labelName, featureNames.toList)
+        op(op.label, label)(op.features, features).result.model
+      }
+      project.scalars(name) = model
+    }
+  })
+
+  register("Train a k-means clustering model", new MachineLearningOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
+      NonNegInt("k", "Number of clusters", default = 2),
+      NonNegInt("max-iter", "Maximum number of iterations", default = 20),
+      RandomSeed("seed", "Seed"))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val k = params("k")
+      s"Train a k-means clustering model (k=$k)"
+    }
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one predictor.")
+      val featureNames = params("features").split(",", -1).sorted
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val name = params("name")
+      val k = params("k").toInt
+      val maxIter = params("max-iter").toInt
+      val seed = params("seed").toLong
+      val model = {
+        val op = graph_operations.KMeansClusteringModelTrainer(
+          k, maxIter, seed, featureNames.toList)
+        op(op.features, features).result.model
+      }
+      project.scalars(name) = model
+    }
+  })
+
+  register("Predict from model", new MachineLearningOperation(_, _) {
+    val models = project.viewer.models.filterNot(_._2.isClassification)
     def parameters = List(
       Param("name", "The name of the attribute of the predictions"),
       ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
     def enabled =
-      FEStatus.assert(models.nonEmpty, "No models.") &&
+      FEStatus.assert(models.nonEmpty, "No regression models.") &&
         FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")
       val name = params("name")
       val p = json.Json.parse(params("model"))
-      val modelValue = project.scalars((p \ "modelName").as[String]).runtimeSafeCast[model.Model]
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
       val features = (p \ "features").as[List[String]].map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1532,7 +1632,40 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.PredictFromModel(features.size)
         op(op.model, modelValue)(op.features, features).result.prediction
       }
-      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelValue.name}")
+      project.newVertexAttribute(name, predictedAttribute, s"predicted from ${modelName}")
+    }
+  })
+
+  register("Classify vertices with a model", new MachineLearningOperation(_, _) {
+    val models = project.viewer.models.filter(_._2.isClassification)
+    def parameters = List(
+      Param("name", "The name of the attribute of the classifications"),
+      ModelParams("model", "The parameters of the model", models, vertexAttributes[Double]))
+    def enabled =
+      FEStatus.assert(models.nonEmpty, "No classification models.") &&
+        FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of attribute.")
+      assert(params("model").nonEmpty, "Please select a model.")
+      val name = params("name")
+      val p = json.Json.parse(params("model"))
+      val modelName = (p \ "modelName").as[String]
+      val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
+      val features = (p \ "features").as[List[String]].map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      import model.Implicits._
+      val generatesProbability = modelValue.modelMeta.generatesProbability
+      val op = graph_operations.ClassifyWithModel(features.size)
+      val result = op(op.model, modelValue)(op.features, features).result
+      val classifiedAttribute = result.classification
+      project.newVertexAttribute(name, classifiedAttribute,
+        s"classification according to ${modelName}")
+      if (generatesProbability) {
+        val probability = result.probability
+        project.newVertexAttribute(name + "_probability", probability,
+          s"probability according to ${modelName}")
+      }
     }
   })
 
@@ -3050,7 +3183,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Split to train and test set", new VertexAttributesOperation(_, _) {
+  register("Split to train and test set", new MachineLearningOperation(_, _) {
     override def parameters = List(
       Choice("source", "Source attribute",
         options = vertexAttributes),
@@ -3076,6 +3209,58 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       op(op.attr, source)(op.role, roles).result
     }
   })
+
+  register("Train neural network and use it to predict an attribute",
+    new MachineLearningOperation(_, _) {
+      def parameters = List(
+        Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+        Param("output", "Save as"),
+        Choice("features", "Predictors", options = FEOption.unset +: vertexAttributes[Double], multipleChoice = true),
+        NonNegInt("networkSize", "Size of the network", default = 3),
+        NonNegDouble("learningRate", "Learning rate"),
+        NonNegInt("radius", "Iterations in prediction", default = 3),
+        Choice("hideState", "Hide own state", options = FEOption.bools),
+        NonNegDouble("forgetFraction", "Forget fraction"),
+        NonNegInt("trainingRadius", "Radius for training subgraphs", default = 3),
+        NonNegInt("maxTrainingVertices", "Maximum training subgraph size", default = 20),
+        NonNegInt("minTrainingVertices", "Minimum training subgraph size", default = 10),
+        NonNegInt("iterationsInTraining", "Iterations in training", default = 2),
+        NonNegInt("subgraphsInTraining", "Subgraphs in training", default = 10),
+        NonNegDouble("knownLabelWeight", "Weight for known labels"),
+        NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
+        RandomSeed("seed", "Seed")
+      )
+      def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes[Double].nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]) = {
+        val labelName = params("label")
+        val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+        val features: Seq[Attribute[Double]] =
+          if (params("features") == FEOption.unset.id) Seq()
+          else {
+            val featureNames = params("features").split(",", -1)
+            featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
+          }
+        val prediction = {
+          val op = graph_operations.NeuralNetwork(
+            featureCount = features.length,
+            networkSize = params("networkSize").toInt,
+            learningRate = params("learningRate").toDouble,
+            radius = params("radius").toInt,
+            hideState = params("hideState").toBoolean,
+            forgetFraction = params("forgetFraction").toDouble,
+            trainingRadius = params("trainingRadius").toInt,
+            maxTrainingVertices = params("maxTrainingVertices").toInt,
+            minTrainingVertices = params("minTrainingVertices").toInt,
+            iterationsInTraining = params("iterationsInTraining").toInt,
+            subgraphsInTraining = params("subgraphsInTraining").toInt,
+            numberOfTrainings = params("numberOfTrainings").toInt,
+            knownLabelWeight = params("knownLabelWeight").toDouble,
+            seed = params("seed").toInt)
+          op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
+        }
+        project.vertexAttributes(params("output")) = prediction
+      }
+    })
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()

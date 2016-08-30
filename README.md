@@ -17,15 +17,11 @@ Install `sbt` (Scala Build Tool):
 
 Install Spark:
 
-   - Go to https://spark.apache.org/downloads.html and download appropriate version,
-     e.g., spark-1.3.0-bin-hadoop2.4.tgz. (Check the file conf/SPARK_VERSION to see what spark
-     version you need - 1.3.0 in this example.) Then:
+    tools/install_spark.sh
 
-         cd
-         tar xf Downloads/spark-1.3.0-bin-hadoop2.4.tgz
-         ln -s spark-1.3.0-bin-hadoop2.4/ spark-1.3.0
+For various tools you will require Python and AWS CLI. To install dependencies please run:
 
-For various tools you will require Python and AWS CLI.
+    sudo -H pip3 install -r python_requirements.txt
 
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on

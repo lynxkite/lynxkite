@@ -32,15 +32,19 @@ case class PredictFromModel(numFeatures: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val model = inputs.model.value
-    val scaled = Model.toLinalgVector(
-      inputs.features.toArray.map { v => v.rdd },
-      inputs.vertices.rdd).mapValues(v => model.featureScaler.transform(v))
+    val sqlContext = rc.dataManager.newSQLContext()
+    import sqlContext.implicits._
 
-    val predictions = model.scaleBack(model.load(rc.sparkContext).predict(scaled.values))
-    val ids = scaled.keys // We just put back the keys with a zip.
-    output(
-      o.prediction,
-      ids.zip(predictions).filter(!_._2.isNaN).asUniqueSortedRDD(scaled.partitioner.get))
+    val modelValue = inputs.model.value
+    val rddArray = inputs.features.toArray.map(_.rdd)
+    val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
+    val featuresDF = featuresRDD.toDF("ID", "vector")
+    val partitioner = featuresRDD.partitioner.get
+    // Transform data to an attributeRDD with the attribute prediction
+    val transformation = modelValue.load(rc.sparkContext).transformDF(featuresDF)
+    val prediction = transformation.select("ID", "prediction").map { row =>
+      (row.getAs[ID]("ID"), row.getAs[Double]("prediction"))
+    }.sortUnique(partitioner)
+    output(o.prediction, prediction)
   }
 }
