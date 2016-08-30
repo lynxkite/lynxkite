@@ -245,7 +245,7 @@ case class Network private (
     }
     val newWeights = allWeights.toMap.map {
       case (name, w) =>
-        name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name)) + 1e-6)
+        name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name) + 1e-6))
     }
     this.copy(weights = newWeights, adagradMemory = newAdagradMemory)
   }
