@@ -679,8 +679,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model]
     dataManager
       .getFuture(m)
-      .map(_.value)
-      .map(model.Model.toFE(_, dataManager.runtimeContext.sparkContext))
+      .map(scalar => model.Model.toFE(scalar.value, dataManager.runtimeContext.sparkContext))
       .future
   }
 
