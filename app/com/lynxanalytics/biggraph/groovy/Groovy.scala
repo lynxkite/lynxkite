@@ -2,7 +2,7 @@
 
 package com.lynxanalytics.biggraph.groovy
 
-import groovy.lang.{Binding, GroovyShell}
+import groovy.lang.{ Binding, GroovyShell }
 import org.apache.spark
 import org.kohsuke.groovy.sandbox
 import play.api.libs.json
@@ -17,7 +17,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
 
-import scala.concurrent.{Await, duration}
+import scala.concurrent.{ Await, duration }
 
 object GroovyContext {
   def runScript(scriptFileName: String, params: (String, String)*): Unit = {
