@@ -625,16 +625,23 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     FilteredEdges(ids, trips.srcEdges, trips.dstEdges)
   }
 
-  def getCenter(user: User, request: CenterRequest): CenterResponse = {
+  def getCenter(user: User, request: CenterRequest): Future[CenterResponse] = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
-    val filtered = FEFilters.filter(vertexSet, request.filters)
-    val sampled = {
-      val op = graph_operations.SampleVertices(request.count)
-      op(op.vs, filtered).result.sample.value
-    }
-    CenterResponse(sampled.map(_.toString))
+    val filtered = dataManager
+      .getFuture(vertexSet)
+      .map(_.vertexSet)
+      .map(FEFilters.filter(_, request.filters))
+    val op = graph_operations.SampleVertices(request.count)
+    val sampled = filtered
+      .map {
+        val op = graph_operations.SampleVertices(request.count);
+        op(op.vs, _).result.sample.value.map(v => v.toString)
+      }
+      .map(CenterResponse(_))
+      .future
+    sampled
   }
 
   def getHistogram(user: User, request: HistogramSpec): HistogramResponse = {
