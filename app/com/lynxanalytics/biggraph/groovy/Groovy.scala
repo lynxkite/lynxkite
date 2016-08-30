@@ -496,7 +496,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
       sampleSize = if (precise) -1 else 50000)
     val res = drawing.getHistogram(ctx.user, req)
     import com.lynxanalytics.biggraph.serving.FrontendJson._
-    json.Json.toJson(res).toString
+    json.Json.toJson(Await.result(res, duration.Duration.Inf)).toString
   }
 }
 
