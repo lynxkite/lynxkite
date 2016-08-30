@@ -134,7 +134,7 @@ object TableStats {
     val quotedTable = JDBCQuoting.quoteIdentifier(table)
     val quotedKey = JDBCQuoting.quoteIdentifier(keyColumn)
     val query =
-      s"SELECT COUNT(*) as cnt, MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable"
+      s"SELECT COUNT(*) as cnt, MIN($quotedKey) AS minKey, MAX($quotedKey) AS maxKey FROM $quotedTable"
     log.info(s"Executing query: $query")
     val connection = sql.DriverManager.getConnection(url)
     try {
@@ -149,13 +149,13 @@ object TableStats {
           keyType match {
             case sql.Types.VARCHAR =>
               new TableStats(
-                count, KeyTypes.String, minStringKey = Some(rs.getString("min")),
-                maxStringKey = Some(rs.getString("max")))
+                count, KeyTypes.String, minStringKey = Some(rs.getString("minKey")),
+                maxStringKey = Some(rs.getString("maxKey")))
             case _ =>
               // Everything else we will try to treat as numbers and see what happens.
               new TableStats(
-                count, KeyTypes.Number, minLongKey = Some(rs.getLong("min")),
-                maxLongKey = Some(rs.getLong("max")))
+                count, KeyTypes.Number, minLongKey = Some(rs.getLong("minKey")),
+                maxLongKey = Some(rs.getLong("maxKey")))
           }
         } finally rs.close()
       } finally statement.close()
