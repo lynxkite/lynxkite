@@ -19,7 +19,7 @@ class TestSCP(unittest.TestCase):
     hdfs_list.return_value = [SN(path='input/_SUCCESS'), SN(path='input/one'), SN(path='input/two')]
     t = TestTask()
     with mock.patch.object(t, 'input') as inp:
-      inp().hdfs_path.return_value = 'input'
+      inp().resolved_path.return_value = 'input'
       t.run()
     check_call.assert_any_call(['ssh', 'dsthost', "mkdir -p 'dstpath'"])
     check_call.assert_any_call(
