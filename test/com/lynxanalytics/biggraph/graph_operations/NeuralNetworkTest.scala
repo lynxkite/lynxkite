@@ -85,11 +85,9 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val b = vs.randomAttribute(200)
     val c = DeriveJS.deriveFromAttributes[Double]("a - b", Seq("a" -> a, "b" -> b), vs)
     val prediction = {
-      val op = NeuralNetwork(
-        featureCount = 2, networkSize = 4, learningRate = 0.2, radius = 0,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
-        numberOfTrainings = 10)
+      val op = simpleNeuralNetwork(
+        featureCount = 2, networkSize = 10, learningRate = 0.2, radius = 0,
+        hideState = true, forgetFraction = 0.0, iterations = 50)
       op(op.edges, vs.emptyEdgeBundle)(op.label, c)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, c) < 1)
@@ -102,11 +100,9 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
-      val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, learningRate = 1, radius = 3,
-        hideState = true, forgetFraction = 0.0, trainingRadius = 3, maxTrainingVertices = 20,
-        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
-        numberOfTrainings = 9)
+      val op = simpleNeuralNetwork(
+        featureCount = 0, networkSize = 10, learningRate = 1, radius = 3,
+        hideState = true, forgetFraction = 0.0, iterations = 50)
       op(op.edges, g.edges)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
