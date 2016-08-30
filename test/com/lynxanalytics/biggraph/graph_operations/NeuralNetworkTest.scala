@@ -30,6 +30,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
                           seed: Int = 15,
                           knownLabelWeight: Double = 0.5) = NeuralNetwork(
     featureCount, networkSize, learningRate, radius, hideState, forgetFraction,
+    knownLabelWeight = knownLabelWeight,
     seed = seed,
     iterationsInTraining = iterations,
     trainingRadius = -1, // No sampling.
