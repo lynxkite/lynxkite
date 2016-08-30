@@ -20,7 +20,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq())
-    val res = controller.getCenter(user, req)
+    val res = Await.result(controller.getCenter(user, req), duration.Duration.Inf)
     assert(res.centers.toSet == Set("0"))
   }
 
@@ -30,7 +30,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       vertexSetId = g.vertices.gUID.toString,
       count = 5,
       filters = Seq())
-    val res = controller.getCenter(user, req)
+    val res = Await.result(controller.getCenter(user, req), duration.Duration.Inf)
     assert(res.centers.toSet == Set("0", "1", "2", "3"))
   }
 
@@ -43,7 +43,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq(f))
-    val res = controller.getCenter(user, req)
+    val res = Await.result(controller.getCenter(user, req), duration.Duration.Inf)
     assert(res.centers.toSet == Set("3"))
   }
 
