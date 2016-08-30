@@ -167,7 +167,6 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         numberOfTrainings = 1)
       op(op.edges, g.result.es)(op.label, partition).result.prediction
     }
-    prediction.rdd.count // HACK: NullPointerException otherwise.
     val isWrong = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
       Seq("prediction" -> prediction, "truth" -> truePartition),
@@ -214,7 +213,6 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         numberOfTrainings = 10)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
     }
-    prediction.rdd.count
     val isWrong = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
       Seq("prediction" -> prediction, "truth" -> trueParityAttr),
@@ -251,7 +249,6 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         numberOfTrainings = 10)
       op(op.edges, es)(op.label, pr).result.prediction
     }
-    prediction.rdd.count
     assert(differenceSquareSum(prediction, truePr) < 10)
   }
 }
