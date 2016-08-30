@@ -134,7 +134,7 @@ object TableStats {
     val quotedTable = JDBCQuoting.quoteIdentifier(table)
     val quotedKey = JDBCQuoting.quoteIdentifier(keyColumn)
     val query =
-      s"SELECT COUNT(*) as count, MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable"
+      s"SELECT COUNT(*) as cnt, MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable"
     log.info(s"Executing query: $query")
     val connection = sql.DriverManager.getConnection(url)
     try {
@@ -144,7 +144,7 @@ object TableStats {
         rs.next()
         try {
           val md = rs.getMetaData
-          val count = rs.getLong("count")
+          val count = rs.getLong("cnt")
           val keyType = md.getColumnType(2)
           keyType match {
             case sql.Types.VARCHAR =>
