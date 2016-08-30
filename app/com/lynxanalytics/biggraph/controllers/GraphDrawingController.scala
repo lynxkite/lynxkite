@@ -640,7 +640,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .future
   }
 
-  def getHistogram(user: User, request: HistogramSpec): HistogramResponse = {
+  def getHistogram(user: User, request: HistogramSpec): Future[HistogramResponse] = {
     val attribute = metaManager.attribute(request.attributeId.asUUID)
     dataManager.cache(attribute.vertexSet)
     dataManager.cache(attribute)
@@ -656,12 +656,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
     }
     val histogram = bucketedAttr.toHistogram(filteredVS, request.sampleSize)
-    val counts = histogram.counts.value
+    val counts = histogram.counts
     spark_util.Counters.printAll
-    HistogramResponse(
-      bucketedAttr.bucketer.labelType,
-      bucketedAttr.bucketer.bucketLabels,
-      (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0L)))
+    dataManager
+      .getFuture(counts)
+      .map(c =>
+        HistogramResponse(
+          bucketedAttr.bucketer.labelType,
+          bucketedAttr.bucketer.bucketLabels,
+          (0 until bucketedAttr.bucketer.numBuckets).map(c.value.getOrElse(_, 0L))))
+      .future
   }
 
   def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
