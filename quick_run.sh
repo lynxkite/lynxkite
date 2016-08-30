@@ -1,6 +1,5 @@
-#!/bin/sh
+#!/bin/bash -ue
+# Start LynxKite in interactive mode without rebuilding it.
 
-set -x
-set -e
-
+cd $(dirname $0)
 stage/bin/biggraph "$@" interactive
