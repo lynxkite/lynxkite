@@ -2,13 +2,15 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import breeze.linalg._
-import breeze.stats.distributions.RandBasis
+import breeze.stats.distributions.{ RandBasis, ThreadLocalRandomGenerator }
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.neural
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
+import org.apache.commons.math3.random.MersenneTwister
 
 object NeuralNetwork extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
@@ -34,7 +36,9 @@ object NeuralNetwork extends OpFromJson {
     (j \ "minTrainingVertices").as[Int],
     (j \ "iterationsInTraining").as[Int],
     (j \ "subgraphsInTraining").as[Int],
-    (j \ "numberOfTrainings").as[Int])
+    (j \ "numberOfTrainings").as[Int],
+    (j \ "knownLabelWeight").as[Double],
+    (j \ "seed").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -49,7 +53,9 @@ case class NeuralNetwork(
     minTrainingVertices: Int,
     iterationsInTraining: Int,
     subgraphsInTraining: Int,
-    numberOfTrainings: Int) extends TypedMetaGraphOp[Input, Output] {
+    numberOfTrainings: Int,
+    knownLabelWeight: Double,
+    seed: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -64,7 +70,9 @@ case class NeuralNetwork(
     "minTrainingVertices" -> minTrainingVertices,
     "iterationsInTraining" -> iterationsInTraining,
     "subgraphsInTraining" -> subgraphsInTraining,
-    "numberOfTrainings" -> numberOfTrainings)
+    "numberOfTrainings" -> numberOfTrainings,
+    "knownLabelWeight" -> knownLabelWeight,
+    "seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -211,19 +219,30 @@ case class NeuralNetwork(
       val finalOutputs = outputs.last("new state")
 
       // Backward pass.
-      val errors: Map[ID, Double] = data.map {
-        case (id, (Some(label), features)) =>
+      var numberOfForgotten = 0.0
+      var numberOfKnown = 0.0
+      val errors: Map[ID, Double] = trainingData.map {
+        case (id, (Some(label), features)) if (keptState(id)(1) == 0 || forgetFraction == 0.0) =>
+          numberOfForgotten += 1
           // The label is predicted in position 0.
           id -> (finalOutputs(id)(0) - label)
+        case (id, (Some(label), features)) =>
+          numberOfKnown += 1
+          id -> (finalOutputs(id)(0) - label) * knownLabelWeight
         case (id, (None, features)) =>
           id -> 0.0
       }.toMap
+      val correctionRatio = {
+        if (forgetFraction != 0.0) {
+          (numberOfKnown + numberOfForgotten) / (numberOfKnown * knownLabelWeight + numberOfForgotten)
+        } else 1
+      }
       val errorTotal = errors.values.map(e => e * e).sum
       log.info(s"Total error in iteration $i: $errorTotal")
       val finalGradient: neural.GraphData = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
-          vec(0) = error
+          vec(0) = error * correctionRatio
           id -> vec
       }
       val gradients = outputs.init.scanRight {

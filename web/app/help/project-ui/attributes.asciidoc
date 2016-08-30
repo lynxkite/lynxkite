@@ -76,7 +76,7 @@ you can make a copy of the attribute and run the operation on the copy.
 
 #### CSV export/import and undefined
 
-When exporting attributes, Lynxkite differentiates between undefined attributes and
+When exporting attributes, LynxKite differentiates between undefined attributes and
 empty strings. For example, if attribute `attr` is undefined for Adam and Eve, but
 is defined to be the empty string for Bob and Joe, here's what the output looks like.
 Note that the empty string is denoted by `""`, whereas the undefined value is
@@ -121,7 +121,7 @@ Label::
 Shows the value of the attribute as a label on the displayed vertices.
 
 Color::
-Colors vertices based on this attribute. A different color will be selected for each value 
+Colors vertices based on this attribute. A different color will be selected for each value
 of the attribute. If the attribute is numeric, the selected color will be a continuous function of
 the attribute value. This is available for `String` and `Double` attributes.
 
@@ -150,8 +150,8 @@ coordinates on the plane and vertices will be laid out on the screen based on th
 <<vertex-attributes-to-position>> operation.)
 
 Geo coordinates::
-Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a 
-latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate. 
+Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
+latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
 (You can create a `(Double, Double)` attribute from two double attributes using the
 <<vertex-attributes-to-position>> operation.)
 
@@ -161,9 +161,9 @@ Edge label::
 Will show the value of the attribute as a label on each edge.
 
 Edge color::
-Will color edges based on this attribute. A different color will be selected for each value 
+Will color edges based on this attribute. A different color will be selected for each value
 of the attribute. If the attribute is numeric, the selected color will be a continuous function of
 the attribute value. Coloring is available for `String` and `Double` attributes.
 
-Width:: 
+Width::
 The width of edge will be set based on this attribute. Only available for numeric attributes.

@@ -141,8 +141,7 @@ abstract class JsonServer extends mvc.Controller {
   }
 }
 
-case class Empty(
-  fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
+case class Empty()
 
 case class GlobalSettings(
   hasAuth: Boolean,
@@ -205,8 +204,9 @@ object FrontendJson {
   import model.FEModel
   import model.FEModelMeta
 
-  // TODO: do this without a fake field, e.g. by not using inception.
-  implicit val rEmpty = json.Json.reads[Empty]
+  implicit val rEmpty = new json.Reads[Empty] {
+    def reads(j: json.JsValue) = json.JsSuccess(Empty())
+  }
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
   }
@@ -282,7 +282,8 @@ object FrontendJson {
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 
-  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
+  implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -292,19 +293,19 @@ object FrontendJson {
   implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
-  implicit val rCSVImportRequest = json.Json.reads[CSVImportRequest]
-  implicit val rJdbcImportRequest = json.Json.reads[JdbcImportRequest]
-  implicit val rParquetImportRequest = json.Json.reads[ParquetImportRequest]
-  implicit val rORCImportRequest = json.Json.reads[ORCImportRequest]
-  implicit val rJsonImportRequest = json.Json.reads[JsonImportRequest]
-  implicit val rHiveImportRequest = json.Json.reads[HiveImportRequest]
+  implicit val fCSVImportRequest = json.Json.format[CSVImportRequest]
+  implicit val fJdbcImportRequest = json.Json.format[JdbcImportRequest]
+  implicit val fParquetImportRequest = json.Json.format[ParquetImportRequest]
+  implicit val fORCImportRequest = json.Json.format[ORCImportRequest]
+  implicit val fJsonImportRequest = json.Json.format[JsonImportRequest]
+  implicit val fHiveImportRequest = json.Json.format[HiveImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
-  implicit val wUser = json.Json.writes[User]
-  implicit val wUserList = json.Json.writes[UserList]
+  implicit val wFEUser = json.Json.writes[FEUser]
+  implicit val wFEUserList = json.Json.writes[FEUserList]
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
@@ -401,12 +402,19 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def importCSV = jsonFuturePost(sqlController.importCSV)
-  def importJdbc = jsonFuturePost(sqlController.importJdbc)
-  def importParquet = jsonFuturePost(sqlController.importParquet)
-  def importORC = jsonFuturePost(sqlController.importORC)
-  def importJson = jsonFuturePost(sqlController.importJson)
-  def importHive = jsonFuturePost(sqlController.importHive)
+  def importCSV = jsonPost(sqlController.importCSV)
+  def importJdbc = jsonPost(sqlController.importJdbc)
+  def importParquet = jsonPost(sqlController.importParquet)
+  def importORC = jsonPost(sqlController.importORC)
+  def importJson = jsonPost(sqlController.importJson)
+  def importHive = jsonPost(sqlController.importHive)
+  def createViewCSV = jsonPost(sqlController.createViewCSV)
+  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
+  def createViewParquet = jsonPost(sqlController.createViewParquet)
+  def createViewORC = jsonPost(sqlController.createViewORC)
+  def createViewJson = jsonPost(sqlController.createViewJson)
+  def createViewHive = jsonPost(sqlController.createViewHive)
+  def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -460,5 +468,4 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
-  PipeAPI.maybeStart()
 }

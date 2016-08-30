@@ -135,8 +135,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     val edges = HybridRDD(
       distinctEdges,
       partitioner,
-      false)
-    distinctEdges.persist(StorageLevel.DISK_ONLY)
+      even = true) // The RDD should be even after distinct.
+    edges.persist(StorageLevel.DISK_ONLY)
     // Hll counters are used to estimate set sizes.
     val hyperBallCounters = vertices.mapValuesWithKeys {
       // Initialize a counter for every vertex

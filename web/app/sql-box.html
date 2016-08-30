@@ -1,8 +1,3 @@
-<div class="clearfix">
-  <span class="lead de-emph">SQL</span>
-  <help-popup href="sql-box" class="pull-right"></help-popup>
-</div>
-
 <div
   ui-ace="{
     mode: 'sql',
@@ -30,6 +25,7 @@
     <div class="col-sm-8">
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
         <option value="table">LynxKite table</option>
+        <option value="view">LynxKite view</option>
         <option value="segmentation">Segmentation</option>
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
@@ -40,7 +36,8 @@
     </div>
   </div>
 
-  <div class="form-group" ng-show="exportFormat === 'table' || exportFormat === 'segmentation'">
+  <div class="form-group" ng-show=
+    "exportFormat === 'table' || exportFormat === 'segmentation' || exportFormat === 'view'">
     <label for="exportKiteTable" class="col-sm-4 control-label">
       Table name <help-popup href="export-lynxkite-table-table"></help-popup>
     </label>

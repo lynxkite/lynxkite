@@ -61,6 +61,14 @@ One might say that this category is about metrics that describe the graph struct
 
 These operations import external data to LynxKite. Example: <<import-edge-attributes>>.
 
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="glyphicon glyphicon-knight"></i></div></div></div>+++ Machine learning operations
+
+These operations perform machine learning. A machine learning model is trained on a set of data, and
+it can perform prediction or classification on a new set of data. For example, a logistic regression
+model can be trained by the operation <<train-a-logistic-regression-model>> and it can classify new
+data with the operation <<classify-vertices-with-a-model>>.
+
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-fullscreen"></i></div></div></div>+++ Propagation operations
 
 These operations compute vertex attributes from attributes of their neighboring elements.
@@ -122,6 +130,8 @@ include::centrality.asciidoc[]
 include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
+
+include::classify-vertices-with-a-model.asciidoc[]
 
 include::clustering-coefficient.asciidoc[]
 
@@ -227,6 +237,8 @@ include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
 
+include::hash-vertex-attribute.asciidoc[]
+
 include::import-edge-attributes.asciidoc[]
 
 include::import-edges-for-existing-vertices.asciidoc[]
@@ -304,6 +316,10 @@ include::shortest-path.asciidoc[]
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
+
+include::train-a-kmeans-clustering-model.asciidoc[]
+
+include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 

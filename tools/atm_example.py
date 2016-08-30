@@ -8,16 +8,33 @@ import time
 
 random.seed(0)
 parser = argparse.ArgumentParser()
-parser.add_argument('--people', help='Number of people.', type=int, default=1000)
-parser.add_argument('--friends', help='Number of pairs that co-occur often.', type=int, default=1000)
-parser.add_argument('--friendship', help='Number total friendly co-occurrences.', type=int, default=10000)
+parser.add_argument(
+    '--people',
+    help='Number of people.',
+    type=int,
+    default=1000)
+parser.add_argument(
+    '--friends',
+    help='Number of pairs that co-occur often.',
+    type=int,
+    default=1000)
+parser.add_argument(
+    '--friendship',
+    help='Number total friendly co-occurrences.',
+    type=int,
+    default=10000)
 parser.add_argument('--atms', help='Number of ATMs.', type=int, default=1000)
-parser.add_argument('--events', help='Number of events.', type=int, default=1000000)
+parser.add_argument(
+    '--events',
+    help='Number of events.',
+    type=int,
+    default=1000000)
 
 time_start = time.mktime(time.strptime('2015', '%Y'))
 time_end = time.mktime(time.strptime('2016', '%Y'))
 
 rnd = random.randrange
+
 
 def main():
   args = parser.parse_args()

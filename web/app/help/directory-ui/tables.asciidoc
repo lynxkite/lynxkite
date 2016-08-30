@@ -14,7 +14,8 @@ details.
 Access the dropdown menu for a table in the project browser
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
 to discard, duplicate, or rename the table. The rename command also makes it possible to move the
-table to a different path.
+table to a different path. +++ <i class="glyphicon glyphicon-adjust"></i> Edit import +++ loads the
+configuration into the import wizard that was used to create the table.
 
 The import operations also allow creating tables, but a table can also be created from the project
 browser.
@@ -129,11 +130,15 @@ syntax entirely depends on the database type. Please consult the documentation o
 The name of the database table to import.
 
 [[key-column]] Column used for data partitioning::
-This numerical column is used to partition the SQL query. The range from `min(key)` to `max(key)`
+This column is used to partition the SQL query. The range from `min(key)` to `max(key)`
 will be split into a sub-range for each Spark worker, so they can each query a part of the data in
 parallel.
 +
-Pick a column that is uniformly distributed. Numerical identifiers are ideal.
+Pick a column that is uniformly distributed. Numerical identifiers will give the best performance.
+String (`VARCHAR`) columns are also supported but only work well if they mostly contain letters of
+the English alphabet and numbers.
++
+If the partitioning column is left empty, only a fraction of the cluster resources will be used.
 ====
 
 [[import-hive]]

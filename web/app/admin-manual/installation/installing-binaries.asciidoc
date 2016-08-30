@@ -10,3 +10,6 @@ The LynxKite archive contains the following:
 Simply uncompress the archive to a directory. Make sure to unpack the archive on the target
 Linux platform. Unpacking on Windows then copying is known to cause problems.
 
+Optionally you can also download the pre-built Apache Spark from the
+http://spark.apache.org/downloads.html/[Spark webpage] after determining the right Spark version
+from the `conf/SPARK_VERSION` file and the version of Hadoop.

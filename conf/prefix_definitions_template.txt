@@ -41,7 +41,7 @@
 # EMPTY$s3n://key:password@somedir/somefile or EMPTY$file://etc/passwd.
 
 
-# Prefix symbol endings _READ_ACL and WRITE_ACL have a special meaning: instead of specifying
+# Prefix symbol endings _READ_ACL and _WRITE_ACL have a special meaning: instead of specifying
 # a path, they specify user access privileges for a given prefix. Suppose you have defined the
 # following prefix:
 

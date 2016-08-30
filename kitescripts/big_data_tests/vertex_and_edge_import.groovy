@@ -17,7 +17,6 @@ project.importEdgesForExistingVertices(
 project.degree(direction: 'incoming edges', name: 'in_degree')
 project.degree(direction: 'outgoing edges', name: 'out_degree')
 
-println "in_degree: ${ project.vertexAttributes['in_degree'].histogram(logarithmic: true, precise: true) }"
-println "out_degree: ${ project.vertexAttributes['out_degree'].histogram(logarithmic: true, precise: true) }"
+project.computeUncomputed()
 
 project.saveAs('vertex_and_edge_import_result')
