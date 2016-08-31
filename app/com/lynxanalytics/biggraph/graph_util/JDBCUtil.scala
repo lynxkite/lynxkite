@@ -28,13 +28,14 @@ object JDBCUtil {
     table: String,
     keyColumn: String,
     predicates: List[String],
-    fetchSize: String): DataFrame = {
+    properties: Map[String, String]): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     assert(keyColumn.isEmpty || predicates.isEmpty, "Cannot define both keyColumn and predicates.")
     val props = new java.util.Properties
 
-    if (fetchSize.nonEmpty)
-      props.setProperty("fetchsize", fetchSize)
+    for ((k, v) <- properties) {
+      props.setProperty(k, v)
+    }
 
     if (keyColumn.isEmpty) {
       if (predicates.isEmpty) {
