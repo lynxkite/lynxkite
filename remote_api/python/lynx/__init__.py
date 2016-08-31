@@ -185,7 +185,7 @@ class LynxKite:
           keyColumn='',
           predicates=[],
           columnsToImport=[],
-          fetchSize=''):
+          properties={}):
     '''Imports a database table as a :class:`View` via JDBC.
 
     Args:
@@ -199,9 +199,8 @@ class LynxKite:
         column in the source database table for efficiency. Cannot be specified together with
         ``keyColumn``.
       columnsToImport (list of str, optional): List of columns to import from the source table.
-      fetch size (str, optional): Set the fetch size for the jdbc connection. This might be required
-        in some cases (e.g. mysql needs Integer.MIN_VALUE as fetchsize, otherwise the whole table
-        is loaded into memory.
+      properties (dict, optional): Extra settings for the JDBC connection. See the Spark
+        documentation.
     '''
     return self._create_view(
         "Jdbc",
@@ -210,7 +209,7 @@ class LynxKite:
              keyColumn=keyColumn,
              predicates=predicates,
              columnsToImport=columnsToImport,
-             fetchSize=fetchSize))
+             properties=properties))
 
   def import_parquet(
           self,
