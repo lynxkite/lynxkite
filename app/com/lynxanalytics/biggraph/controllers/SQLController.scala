@@ -270,7 +270,8 @@ case class JdbcImportRequest(
     keyColumn: Option[String] = None,
     predicates: Option[List[String]] = None,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends GenericImportRequest {
+    columnsToImport: List[String],
+    fetchSize: Option[String] = None) extends GenericImportRequest {
 
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
@@ -279,7 +280,8 @@ case class JdbcImportRequest(
       jdbcUrl,
       jdbcTable,
       keyColumn.getOrElse(""),
-      predicates.getOrElse(List()))
+      predicates.getOrElse(List()),
+      fetchSize.getOrElse(""))
   }
 
   def notes: String = {
