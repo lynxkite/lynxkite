@@ -172,6 +172,7 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
+  import dataManager.executionContext
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
@@ -624,19 +625,22 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     FilteredEdges(ids, trips.srcEdges, trips.dstEdges)
   }
 
-  def getCenter(user: User, request: CenterRequest): CenterResponse = {
+  def getCenter(user: User, request: CenterRequest): Future[CenterResponse] = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
     val sampled = {
       val op = graph_operations.SampleVertices(request.count)
-      op(op.vs, filtered).result.sample.value
+      op(op.vs, filtered).result.sample
     }
-    CenterResponse(sampled.map(_.toString))
+    dataManager
+      .getFuture(sampled)
+      .map(s => CenterResponse(s.value.map(_.toString)))
+      .future
   }
 
-  def getHistogram(user: User, request: HistogramSpec): HistogramResponse = {
+  def getHistogram(user: User, request: HistogramSpec): Future[HistogramResponse] = {
     val attribute = metaManager.attribute(request.attributeId.asUUID)
     dataManager.cache(attribute.vertexSet)
     dataManager.cache(attribute)
@@ -652,25 +656,31 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
     }
     val histogram = bucketedAttr.toHistogram(filteredVS, request.sampleSize)
-    val counts = histogram.counts.value
+    val counts = histogram.counts
     spark_util.Counters.printAll
-    HistogramResponse(
-      bucketedAttr.bucketer.labelType,
-      bucketedAttr.bucketer.bucketLabels,
-      (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0L)))
+    dataManager
+      .getFuture(counts)
+      .map(c =>
+        HistogramResponse(
+          bucketedAttr.bucketer.labelType,
+          bucketedAttr.bucketer.bucketLabels,
+          (0 until bucketedAttr.bucketer.numBuckets).map(c.value.getOrElse(_, 0L))))
+      .future
   }
 
   def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    import dataManager.executionContext
     dataManager
       .getFuture(scalar)
-      .map(scalarData => dynamicValue(scalarData)).future
+      .map(dynamicValue(_)).future
   }
 
-  def getModel(user: User, request: ScalarValueRequest): model.FEModel = {
-    val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model].value
-    model.Model.toFE(m, dataManager.runtimeContext.sparkContext)
+  def getModel(user: User, request: ScalarValueRequest): Future[model.FEModel] = {
+    val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model]
+    dataManager
+      .getFuture(m)
+      .map(scalar => model.Model.toFE(scalar.value, dataManager.runtimeContext.sparkContext))
+      .future
   }
 
   private def dynamicValue[T](scalar: ScalarData[T]) = {
