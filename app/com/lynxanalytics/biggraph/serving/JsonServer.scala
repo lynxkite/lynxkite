@@ -423,10 +423,10 @@ object ProductionJsonServer extends JsonServer {
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def complexView = jsonGet(drawingController.getComplexView)
-  def center = jsonGet(drawingController.getCenter)
-  def histo = jsonGet(drawingController.getHistogram)
+  def center = jsonFuture(drawingController.getCenter)
+  def histo = jsonFuture(drawingController.getHistogram)
   def scalarValue = jsonFuture(drawingController.getScalarValue)
-  def model = jsonGet(drawingController.getModel)
+  def model = jsonFuture(drawingController.getModel)
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
