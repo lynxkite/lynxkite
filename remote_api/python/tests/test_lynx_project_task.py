@@ -20,9 +20,8 @@ class TestProject(unittest.TestCase):
     try:
       tt.run()
     except lynx.LynxException:
-      self.assertTrue(True)
-    else:
-      self.assertTrue(tt.output().exists())
+      pass
+    self.assertTrue(tt.output().exists())
 
 
 if __name__ == '__main__':
