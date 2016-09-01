@@ -10,7 +10,7 @@ class TestTask(lynx.luigi.ProjectTask):
     return self.lk.new_project().examplegraph()
 
   def output_name(self):
-    return 'ILoveTestingSoMuch5'
+    return 'ILoveTestingSoMuch'
 
 
 class TestProject(unittest.TestCase):
