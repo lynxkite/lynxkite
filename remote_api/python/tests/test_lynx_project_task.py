@@ -1,7 +1,9 @@
 import unittest
 import lynx.luigi
 from unittest import mock
-import types
+
+
+lk = lynx.LynxKite()
 
 
 class TestTask(lynx.luigi.ProjectTask):
@@ -10,17 +12,15 @@ class TestTask(lynx.luigi.ProjectTask):
     return self.lk.new_project().examplegraph()
 
   def output_name(self):
-    return 'ILoveTestingSoMuch'
+    return 'ILoveProjectTestingSoMuch'
 
 
 class TestProject(unittest.TestCase):
 
   def test_run(self):
+    lk._request('/ajax/discardAllReallyIMeanIt')
     tt = TestTask()
-    try:
-      tt.run()
-    except lynx.LynxException:
-      pass
+    tt.run()
     self.assertTrue(tt.output().exists())
 
 
