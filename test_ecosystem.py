@@ -63,62 +63,64 @@ parser.add_argument(
 
 
 def main(args):
-    # Create an EMR cluster and a MySQL database in RDS.
-    lib = EMRLib(
-        ec2_key_file=args.ec2_key_file,
-        ec2_key_name=args.ec2_key_name)
-    cluster = lib.create_or_connect_to_emr_cluster(
-        name=args.cluster_name,
-        instance_count=args.emr_instance_count)
-    mysql_instance = lib.create_or_connect_to_rds_instance(
-        name=args.cluster_name + '-mysql')
-    # Wait for startup of both.
-    lib.wait_for_services([cluster, mysql_instance])
+  # Create an EMR cluster and a MySQL database in RDS.
+  lib = EMRLib(
+      ec2_key_file=args.ec2_key_file,
+      ec2_key_name=args.ec2_key_name)
+  cluster = lib.create_or_connect_to_emr_cluster(
+      name=args.cluster_name,
+      instance_count=args.emr_instance_count)
+  mysql_instance = lib.create_or_connect_to_rds_instance(
+      name=args.cluster_name + '-mysql')
+  # Wait for startup of both.
+  lib.wait_for_services([cluster, mysql_instance])
 
-    mysql_address = mysql_instance.get_address()
-    jdbc_url = 'jdbc:mysql://{mysql_address!s}/db?user=root&password=rootroot'.format(
-        mysql_address=mysql_address)
+  mysql_address = mysql_instance.get_address()
+  jdbc_url = 'jdbc:mysql://{mysql_address!s}/db?user=root&password=rootroot'.format(
+      mysql_address=mysql_address)
 
-    upload_installer_script(cluster, args)
-    upload_tasks(cluster, args)
-    download_and_unpack_release(cluster, args)
-    if not args.dockerized:
-        install_dockerless(cluster)
-        config_and_prepare_dockerless(cluster,args)
-        start_supervisor_dockerless(cluster)
-        start_tests_dockerless(cluster, jdbc_url, args)
-    else:
-        install_docker_and_lynx(cluster, args.lynx_version)
-        start_or_reset_ecosystem(cluster, args.lynx_version)
-        start_tests(cluster, jdbc_url)
-    print('Tests are now running in the background. Waiting for results.')
-    cluster.fetch_output()
-    cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
-    shut_down_instances(cluster, mysql_instance)
+  upload_installer_script(cluster, args)
+  upload_tasks(cluster, args)
+  download_and_unpack_release(cluster, args)
+  if not args.dockerized:
+    install_dockerless(cluster)
+    config_and_prepare_dockerless(cluster, args)
+    start_supervisor_dockerless(cluster)
+    start_tests_dockerless(cluster, jdbc_url, args)
+  else:
+    install_docker_and_lynx(cluster, args.lynx_version)
+    start_or_reset_ecosystem(cluster, args.lynx_version)
+    start_tests(cluster, jdbc_url)
+  print('Tests are now running in the background. Waiting for results.')
+  cluster.fetch_output()
+  cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
+  shut_down_instances(cluster, mysql_instance)
+
 
 def upload_installer_script(cluster, args):
-    if not args.dockerized:
-        cluster.rsync_up(
-            # we only have one native release so far
-            src='{dir!s}/download-lynx-1.9.3-native-preview-3.sh'.format(
-                dir=args.biggraph_releases_dir),
-            dst='/mnt/')
-    else:
-        cluster.rsync_up(
-            src='{dir!s}/download-lynx-{version!s}.sh'.format(
-                dir=args.biggraph_releases_dir,
-                version=args.lynx_version),
-            dst='/mnt/')
+  if not args.dockerized:
+    cluster.rsync_up(
+        # we only have one native release so far
+        src='{dir!s}/download-lynx-1.9.3-native-preview-3.sh'.format(
+            dir=args.biggraph_releases_dir),
+        dst='/mnt/')
+  else:
+    cluster.rsync_up(
+        src='{dir!s}/download-lynx-{version!s}.sh'.format(
+            dir=args.biggraph_releases_dir,
+            version=args.lynx_version),
+        dst='/mnt/')
+
 
 def upload_tasks(cluster, args):
-    if not args.dockerized:
-        ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
-    else:
-        ecosystem_task_dir = '/mnt/lynx/lynx/luigi_tasks/test_tasks'
-    cluster.ssh('mkdir -p ' + ecosystem_task_dir)
-    cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
-    if not args.dockerized:
-        cluster.ssh('''
+  if not args.dockerized:
+    ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
+  else:
+    ecosystem_task_dir = '/mnt/lynx/lynx/luigi_tasks/test_tasks'
+  cluster.ssh('mkdir -p ' + ecosystem_task_dir)
+  cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
+  if not args.dockerized:
+    cluster.ssh('''
         set -x
         cd /mnt/lynx/luigi_tasks/test_tasks
         mv test_runner.py /mnt/lynx/luigi_tasks
@@ -126,7 +128,7 @@ def upload_tasks(cluster, args):
 
 
 def install_dockerless(cluster):
-    cluster.ssh('''
+  cluster.ssh('''
     set -x
     cd /mnt/lynx
     sudo yum install -y python34-pip mysql-server gcc libffi-devel
@@ -138,8 +140,8 @@ def install_dockerless(cluster):
   ''')
 
 
-def config_and_prepare_dockerless(cluster,args):
-    cluster.ssh('''
+def config_and_prepare_dockerless(cluster, args):
+  cluster.ssh('''
     cd /mnt/lynx
     # Dirty solution because kiterc keeps growing:
     echo 'Setting up environment variables.'
@@ -163,8 +165,9 @@ EOF
     sudo chmod a+rwx /tasks_data
   '''.format(num_executors=args.emr_instance_count - 1))
 
+
 def start_supervisor_dockerless(cluster):
-    cluster.ssh_nohup('''
+  cluster.ssh_nohup('''
     set -x
     source /mnt/lynx/config/central
     export HADOOP_CONF_DIR=/etc/hadoop/conf
@@ -172,11 +175,12 @@ def start_supervisor_dockerless(cluster):
     /usr/local/bin/supervisord -c config/supervisord.conf
     ''')
 
+
 def start_tests_dockerless(cluster, jdbc_url, args):
-    '''Start running the tests in the background.'''
-    cluster.ssh_nohup('''
+  '''Start running the tests in the background.'''
+  cluster.ssh_nohup('''
       echo 'Waiting for the ecosystem to start...(30 sec)'
-      sleep 60
+      sleep 30
       echo 'Ecosystem started.'
       #run_task doesn't use config
       source /mnt/lynx/config/central
@@ -186,19 +190,20 @@ def start_tests_dockerless(cluster, jdbc_url, args):
           --task-param jdbc_url '{jdbc_url!s}' \
           --result_file /home/hadoop/test_results.txt
   '''.format(
-        luigi_module=args.task_module,
-        luigi_task=args.task,
-        jdbc_url=jdbc_url
-    ))
+      luigi_module=args.task_module,
+      luigi_task=args.task,
+      jdbc_url=jdbc_url
+  ))
+
 
 def download_and_unpack_release(cluster, args):
-    path = args.lynx_release_dir
+  path = args.lynx_release_dir
 
-    if path:
-        cluster.rsync_up(path + '/', '/mnt/lynx')
-    else:
-        if not args.dockerized:
-            cluster.ssh('''
+  if path:
+    cluster.rsync_up(path + '/', '/mnt/lynx')
+  else:
+    if not args.dockerized:
+      cluster.ssh('''
           set -x
           cd /mnt
           # only one native release so far
@@ -208,9 +213,9 @@ def download_and_unpack_release(cluster, args):
             tar xfz lynx-native-1.9.3-preview-3.tgz -C lynx --strip-components 1
           fi
           ''')
-        else:
-            version = args.lynx_version
-            cluster.ssh('''
+    else:
+      version = args.lynx_version
+      cluster.ssh('''
           set -x
           cd /mnt
           if [ ! -f "./lynx-{version!s}.tgz" ]; then
@@ -222,7 +227,7 @@ def download_and_unpack_release(cluster, args):
 
 
 def install_docker_and_lynx(cluster, version):
-    cluster.ssh('''
+  cluster.ssh('''
     set -x
     cd /mnt/lynx
     if ! hash docker 2>/dev/null; then
@@ -236,7 +241,7 @@ def install_docker_and_lynx(cluster, version):
 
 
 def start_or_reset_ecosystem(cluster, version):
-    kite_config = '''
+  kite_config = '''
     KITE_INSTANCE: ecosystem-test
     KITE_DATA_DIR: hdfs://\$HOSTNAME:8020/user/\$USER/lynxkite_data/
     KITE_MASTER_MEMORY_MB: 8000
@@ -245,7 +250,7 @@ def start_or_reset_ecosystem(cluster, version):
     NUM_CORES_PER_EXECUTOR: 8
 '''.format(num_executors=args.emr_instance_count - 1)
 
-    res = cluster.ssh('''
+  res = cluster.ssh('''
     cd /mnt/lynx/lynx
     # Start ecosystem.
     if [[ $(docker ps -qf name=lynx_luigi_worker_1) ]]; then
@@ -267,13 +272,13 @@ def start_or_reset_ecosystem(cluster, version):
       docker exec lynx_luigi_worker_1 luigi --module test_tasks.smoke_test SmokeTest
       sleep 1
     done'''.format(
-        version=args.lynx_version,
-        kite_config=kite_config))
+      version=args.lynx_version,
+      kite_config=kite_config))
 
 
 def start_tests(cluster, jdbc_url):
-    '''Start running the tests in the background.'''
-    cluster.ssh_nohup('''
+  '''Start running the tests in the background.'''
+  cluster.ssh_nohup('''
       docker exec lynx_luigi_worker_1 python3 tasks/test_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
@@ -281,31 +286,31 @@ def start_tests(cluster, jdbc_url):
           --result_file /tmp/test_results.txt
       docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
   '''.format(
-        luigi_module=args.task_module,
-        luigi_task=args.task,
-        jdbc_url=jdbc_url
-    ))
+      luigi_module=args.task_module,
+      luigi_task=args.task,
+      jdbc_url=jdbc_url
+  ))
 
 
 def prompt_delete():
-    if args.rm:
-        return True
-    print('Terminate instances? [y/N] ', end='')
-    choice = input().lower()
-    if choice == 'y':
-        return True
-    else:
-        print('''Please don't forget to terminate the instances!''')
-        return False
+  if args.rm:
+    return True
+  print('Terminate instances? [y/N] ', end='')
+  choice = input().lower()
+  if choice == 'y':
+    return True
+  else:
+    print('''Please don't forget to terminate the instances!''')
+    return False
 
 
 def shut_down_instances(cluster, db):
-    if prompt_delete():
-        print('Shutting down instances.')
-        cluster.terminate()
-        db.terminate()
+  if prompt_delete():
+    print('Shutting down instances.')
+    cluster.terminate()
+    db.terminate()
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    main(args)
+  args = parser.parse_args()
+  main(args)
