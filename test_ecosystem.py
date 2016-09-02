@@ -155,7 +155,7 @@ def config_and_prepare_dockerless(cluster, args):
       export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
       export KITE_DATA_DIR=hdfs://$HOSTNAME:8020/user/$USER/lynxkite/
       export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
-      export PYTHONPATH=/mnt/lynx/apps/remote_api/python/
+      export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
 EOF
     echo 'Creating hdfs directory.'
     source config/central
@@ -179,11 +179,17 @@ def start_supervisor_dockerless(cluster):
 def start_tests_dockerless(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
-      echo 'Waiting for the ecosystem to start...(30 sec)'
-      sleep 30
+      echo 'Waiting for the ecosystem to start...'
+      source /mnt/lynx/config/central
+      rm -f /tasks_data/smoke_test_marker.txt
+      rm -Rf /tmp/luigi/
+      touch /mnt/lynx/luigi_tasks/test_tasks/__init__.py
+      while [[ $(cat /tasks_data/smoke_test_marker.txt 2>/dev/null) != "done" ]]; do
+        luigi --module test_tasks.smoke_test SmokeTest
+        sleep 1
+      done
       echo 'Ecosystem started.'
       #run_task doesn't use config
-      source /mnt/lynx/config/central
       python3 /mnt/lynx/luigi_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
