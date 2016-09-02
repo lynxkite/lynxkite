@@ -87,7 +87,7 @@
         invalid: !step.status.enabled,
         uneditable: !step.editable,
       }"
-      ng-init="cat = findCategory(step.opCategoriesBefore, step.request)">
+      ng-init="cat = step.opMeta.category">
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{step.status.disabledReason}}
@@ -96,8 +96,9 @@
         <i class="glyphicon glyphicon-arrow-right"></i> {{segmentationName(step)}}
       </div>
       <operation-toolbox
-        categories="step.opCategoriesBefore"
+        categories=""
         op="step.request.op.id"
+        op-meta="step.opMeta"
         category="cat"
         params="step.request.op.parameters"
         editable="step.editable"

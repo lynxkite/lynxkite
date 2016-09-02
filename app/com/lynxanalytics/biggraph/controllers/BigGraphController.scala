@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.frontend_operations.{ OperationParams, Operati
 import com.lynxanalytics.biggraph.graph_operations
 import java.util.regex.Pattern
 
+import com.lynxanalytics.biggraph.serving.RemoteAPIProtocol.CheckpointRequest
 import com.lynxanalytics.biggraph.serving.User
 import play.api.libs.json
 
@@ -84,7 +85,8 @@ case class FEOperationMeta(
   status: FEStatus = FEStatus.enabled,
   description: String = "",
   isWorkflow: Boolean = false,
-  workflowAuthor: String = "")
+  workflowAuthor: String = "",
+  color: Option[String] = None)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -233,9 +235,9 @@ case class ProjectHistoryStep(
   status: FEStatus,
   segmentationsBefore: List[FESegmentation],
   segmentationsAfter: List[FESegmentation],
-  opCategoriesBefore: List[OperationCategory],
   opMeta: Option[FEOperationMeta],
   checkpoint: Option[String])
+case class OPCategories(categories: List[OperationCategory])
 
 case class SaveWorkflowRequest(
   workflowName: String,
@@ -544,6 +546,16 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     extended
   }
 
+  def getOPCategories(user: serving.User,
+                      checkpoint: CheckpointRequest): OPCategories = {
+    val x: RootProjectState = metaManager.checkpointRepo.readCheckpoint(checkpoint.checkpoint)
+    val startStateRootViewer = new RootProjectViewer(x)
+    val opreq: SubProjectOperation = x.lastOperationRequest.get
+    val context = Operation.Context(user,
+      startStateRootViewer.offspringViewer(opreq.path))
+    OPCategories(opCategoriesForRequest(ops, context, opreq))
+  }
+
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
@@ -554,18 +566,16 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
     val startStateRootViewer = new RootProjectViewer(startState)
-    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
+
     val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
-    val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
-
+    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val op = ops.opById(context, request.op.id)
-    println(op.toFE)
-    println(request.op.id)
 
-    val opMeta = opCategoriesBefore
-      .flatMap(_.ops.find(catOp => catOp.id == request.op.id))
-      .headOption
-    println(opMeta)
+    val category = opCategoriesForRequest(ops, context, request)
+      .find(cat => cat.ops.exists(catOp => catOp.id == request.op.id))
+
+    val opMeta = category.flatMap(_.ops.find(_.id == request.op.id))
+      .map(f => f.copy(color = category.map(_.color)))
 
     // Remove parameters from the request that no longer exist.
     val restrictedRequest = {
@@ -602,7 +612,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
         status,
         segmentationsBefore,
         segmentationsAfter,
-        opCategoriesBefore,
         opMeta,
         nextStateOpt.flatMap(_.checkpoint)))
   }
