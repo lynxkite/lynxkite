@@ -1,7 +1,7 @@
 // The toolbox shows the list of operation categories and the operations.
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function($rootScope) {
+angular.module('biggraph').directive('operationToolbox', function($rootScope, util) {
   return {
     restrict: 'E',
     // A lot of internals are exposed, because this directive is used both in
@@ -26,6 +26,13 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       scope.editMode = !scope.historyMode;
       if (scope.historyMode) {
         scope.enterEditMode = function() {
+          if (!scope.categories) {
+          var req = util.nocache('/ajax/getOPCategories', { checkpoint: scope.step.checkpoint});
+          req.then(
+            function (result) {
+              scope.categories = result.categories;
+            });
+          }
           scope.editMode = true;
           $rootScope.$broadcast('close all other history toolboxes', scope);
         };
@@ -56,6 +63,10 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];
+        if (!cats) {
+          return;
+        }
+
         for (var i = 0; i < cats.length; ++i) {
           scope.allOps = scope.allOps.concat(cats[i].ops);
         }
@@ -99,6 +110,12 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
         if (op === undefined) {
           return;
         }
+
+        if (op.color) {
+          scope.opColor = op.color;
+            return;
+        }
+
         for (var i = 0; i < scope.categories.length; ++i) {
           var cat = scope.categories[i];
           if (op.category === cat.title) {
@@ -106,10 +123,13 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
             return;
           }
         }
-        console.error('Could not find category for', op.id);
       });
 
       scope.$watch('op', function(opId) {
+        if (!scope.categories){
+          return;
+        }
+
         for (var i = 0; i < scope.categories.length; ++i) {
           for (var j = 0; j < scope.categories[i].ops.length; ++j) {
             var op = scope.categories[i].ops[j];
@@ -138,6 +158,8 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
         }
       };
       scope.searchClicked = function() {
+      console.log(scope.opMeta);
+      console.log(scope.categories);
         if (scope.searching) {
           scope.searching = undefined;
           scope.op = undefined;
