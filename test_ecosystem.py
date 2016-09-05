@@ -101,7 +101,7 @@ def upload_installer_script(cluster, args):
   if not args.dockerized:
     cluster.rsync_up(
         # we only have one native release so far
-        src='{dir!s}/download-lynx-1.9.3-native-preview-3.sh'.format(
+        src='{dir!s}/download-lynx-1.9.3-native-preview-0831.sh'.format(
             dir=args.biggraph_releases_dir),
         dst='/mnt/')
   else:
@@ -213,10 +213,10 @@ def download_and_unpack_release(cluster, args):
           set -x
           cd /mnt
           # only one native release so far
-          if [ ! -f "./lynx-native-1.9.3-preview-3.tgz" ]; then
-            ./download-lynx-1.9.3-native-preview-3.sh
+          if [ ! -f "./lynx-native-1.9.3-preview-0831.tgz" ]; then
+            ./download-lynx-1.9.3-native-preview-0831.sh
             mkdir -p lynx
-            tar xfz lynx-native-1.9.3-preview-3.tgz -C lynx --strip-components 1
+            tar xfz lynx-native-1.9.3-preview-0831.tgz -C lynx --strip-components 1
           fi
           ''')
     else:
