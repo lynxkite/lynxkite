@@ -11,16 +11,16 @@ import org.apache.spark.sql.SQLContext
 object JDBCQuoting {
   private val SimpleTableIdentifier = "[a-zA-Z0-9_.]+".r
   private val SimpleColumnIdentifier = "[a-zA-Z0-9_]+".r
-  // Quote and return s iff r does not match s (s does not contain "special" characters).
+  // Quote and return s iff r does not match s (s contains "special" characters).
   // Otherwise return s.
-  private def quoteIdentifier(s: String, r: scala.util.matching.Regex) = {
+  private def quoteIdentifier(s: String, r: scala.util.matching.Regex): String = {
     s match {
       case r() => s
       case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
     }
   }
-  def quoteTable(s: String) = quoteIdentifier(s, SimpleTableIdentifier)
-  def quoteColumn(s: String) = quoteIdentifier(s, SimpleColumnIdentifier)
+  def quoteTable(s: String): String = quoteIdentifier(s, SimpleTableIdentifier)
+  def quoteColumn(s: String): String = quoteIdentifier(s, SimpleColumnIdentifier)
 }
 
 object JDBCUtil {
