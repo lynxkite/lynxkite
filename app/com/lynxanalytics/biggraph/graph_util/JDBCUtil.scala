@@ -9,13 +9,16 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 
 object JDBCQuoting {
-  private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
-  def quoteIdentifier(s: String) = {
+  private val SimpleTableIdentifier = "[a-zA-Z0-9_.]+".r
+  private val SimpleColumnIdentifier = "[a-zA-Z0-9_]+".r
+  private def quoteIdentifier(s: String, r: scala.util.matching.Regex) = {
     s match {
-      case SimpleIdentifier() => s
+      case r() => s
       case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
     }
   }
+  def quoteTable(s: String) = quoteIdentifier(s, SimpleTableIdentifier)
+  def quoteColumn(s: String) = quoteIdentifier(s, SimpleColumnIdentifier)
 }
 
 object JDBCUtil {
@@ -142,8 +145,8 @@ case class TableStats(
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
-    val quotedTable = JDBCQuoting.quoteIdentifier(table)
-    val quotedKey = JDBCQuoting.quoteIdentifier(keyColumn)
+    val quotedTable = JDBCQuoting.quoteTable(table)
+    val quotedKey = JDBCQuoting.quoteColumn(keyColumn)
     val query =
       s"SELECT COUNT(*) as cnt, MIN($quotedKey) AS minKey, MAX($quotedKey) AS maxKey FROM $quotedTable"
     log.info(s"Executing query: $query")
