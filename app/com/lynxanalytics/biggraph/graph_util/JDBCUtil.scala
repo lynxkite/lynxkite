@@ -11,6 +11,8 @@ import org.apache.spark.sql.SQLContext
 object JDBCQuoting {
   private val SimpleTableIdentifier = "[a-zA-Z0-9_.]+".r
   private val SimpleColumnIdentifier = "[a-zA-Z0-9_]+".r
+  // Quote and return s iff r does not match s (s does not contain "special" characters).
+  // Otherwise return s.
   private def quoteIdentifier(s: String, r: scala.util.matching.Regex) = {
     s match {
       case r() => s
