@@ -27,10 +27,12 @@ object JDBCUtil {
     url: String,
     table: String,
     keyColumn: String,
+    numPartitions: Int,
     predicates: List[String],
     properties: Map[String, String]): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     assert(keyColumn.isEmpty || predicates.isEmpty, "Cannot define both keyColumn and predicates.")
+    assert(numPartitions <= 0 || !keyColumn.isEmpty, "Cannot define numPartitions without keyColumn.")
     val props = new java.util.Properties
 
     for ((k, v) <- properties) {
@@ -46,7 +48,11 @@ object JDBCUtil {
       }
     } else {
       val stats = try TableStats(url, table, keyColumn)
-      val numPartitions = RuntimeContext.partitionerForNRows(stats.count).numPartitions
+      val p = if (numPartitions <= 0) {
+        RuntimeContext.partitionerForNRows(stats.count).numPartitions
+      } else {
+        numPartitions
+      }
       stats.keyType match {
         case KeyTypes.String =>
           context.read.jdbc(
@@ -56,7 +62,7 @@ object JDBCUtil {
               keyColumn,
               stats.minStringKey.get,
               stats.maxStringKey.get,
-              numPartitions).toArray,
+              p).toArray,
             props)
         case KeyTypes.Number =>
           context.read.jdbc(
@@ -65,7 +71,7 @@ object JDBCUtil {
             keyColumn,
             stats.minLongKey.get,
             stats.maxLongKey.get,
-            numPartitions,
+            p,
             props)
       }
     }
