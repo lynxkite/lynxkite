@@ -256,6 +256,22 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     checkSqliteSubscribers(response.id)
   }
 
+  test("import from SQLite (INTEGER partitioning - custom number of partitions)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = Some("id"),
+        numPartitions = Some(2),
+        overwrite = false,
+        columnsToImport = List("n", "id", "name", "race condition", "level")))
+    checkSqliteSubscribers(response.id)
+  }
+
   test("import from SQLite (predicates)") {
     createSqliteSubscribers()
     val response = sqlController.importJdbc(
