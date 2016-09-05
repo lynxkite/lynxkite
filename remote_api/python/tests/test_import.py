@@ -55,6 +55,20 @@ class TestImport(unittest.TestCase):
     res = lk.sql('select * from `cp` order by id', cp=view)
     self.check_result(res)
 
+  def stub_test_jdbc_partitions(self):
+    path = os.path.abspath('tests/test.db')
+    self.setup(path)
+    url = 'jdbc:sqlite:{}'.format(path)
+    lk = lynx.LynxKite()
+    lk._request('/ajax/discardAllReallyIMeanIt')
+    view = lk.import_jdbc(
+        jdbcUrl=url,
+        jdbcTable='subscribers',
+        keyColumn='id',
+        numPartitions=2)
+    res = lk.sql('select * from `cp` order by id', cp=view)
+    self.check_result(res)
+
   def check_result(self, res):
     self.assertEqual(
         res.take(100),
@@ -89,6 +103,7 @@ class TestImport(unittest.TestCase):
   def test_jdbc_view(self):
     self.stub_test_jdbc()
     self.stub_test_jdbc_predicates()
+    self.stub_test_jdbc_partitions()
 
 
 if __name__ == '__main__':

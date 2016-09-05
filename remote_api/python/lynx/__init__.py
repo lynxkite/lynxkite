@@ -183,6 +183,7 @@ class LynxKite:
           jdbcUrl,
           jdbcTable,
           keyColumn='',
+          numPartitions=0,
           predicates=[],
           columnsToImport=[],
           properties={}):
@@ -194,6 +195,7 @@ class LynxKite:
       keyColumn (str, optional): The key column in the source table for Spark partitioning.
         The table should be partitioned or indexed for this column in the source database table
         for efficiency. Cannot be specified together with ``predicates``.
+      numPartitions (int, optional): The number of Spark partitions to create.
       predicates (list of str, optional): List of SparkSQL where clauses to be executed on the
         source table for Spark partitioning. The table should be partitioned or indexed for this
         column in the source database table for efficiency. Cannot be specified together with
@@ -207,6 +209,7 @@ class LynxKite:
         dict(jdbcUrl=jdbcUrl,
              jdbcTable=jdbcTable,
              keyColumn=keyColumn,
+             numPartitions=numPartitions,
              predicates=predicates,
              columnsToImport=columnsToImport,
              properties=properties))
