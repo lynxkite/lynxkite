@@ -4,4 +4,4 @@ size: {"labelType":"between","labels":["3.00","3.00"],"sizes":[16237]}
 !coverage: 36879
 !nonEmpty: 16237
 !belongsToEdges: 48711
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy, took 129 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy, took 118 seconds
