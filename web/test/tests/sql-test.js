@@ -55,6 +55,22 @@ module.exports = function(fw) {
         ]);
     });
 
+  fw.statePreservingTest(
+    'test-example project with example graph',
+    '"order by" works right',
+    function() {
+      left.runSql('select id, name from vertices order by name');
+
+      left.expectSqlResult(
+        ['id', 'name'],
+        [
+          [ '0', 'Adam' ],
+          [ '2', 'Bob' ],
+          [ '1', 'Eve' ],
+          [ '3', 'Isolated Joe' ],
+        ]);
+    });
+
   fw.transitionTest(
     'empty test-example project',
     'SQL runs nice on belongs to reached from project and segmentation',
