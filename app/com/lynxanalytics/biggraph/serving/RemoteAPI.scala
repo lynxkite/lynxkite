@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Future
-import org.apache.spark.sql.{ DataFrame, SQLContext, types }
+import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -332,7 +332,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
-    df.write.format(format).options(options).save(file.resolvedName)
+    df.write.mode(SaveMode.Overwrite).format(format).options(options).save(file.resolvedName)
   }
 
   def exportViewToTable(
