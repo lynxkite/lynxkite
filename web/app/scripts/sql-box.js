@@ -28,9 +28,18 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         select: function(index) {
           index = index.toString();
           if (scope.sort.column === index) {
-            scope.sort.reverse = !scope.sort.reverse;
+            if (scope.sort.reverse) {
+              // Already reversed by this column. This click turns off sorting.
+              scope.sort.column = undefined;
+            } else {
+              // Already sorting by this column. This click reverses.
+              scope.sort.reverse = true;
+            }
+          } else {
+            // Not sorted yet. This click sorts by this column.
+            scope.sort.column = index;
+            scope.sort.reverse = false;
           }
-          scope.sort.column = index;
         },
         style: function(index) {
           index = index.toString();
