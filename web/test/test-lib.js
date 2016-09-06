@@ -317,8 +317,9 @@ Side.prototype = {
   },
 
   expectSqlResult: function(header, rows) {
-    expect(this.sqlEditor().evaluate('result.header')).toEqual(header);
-    expect(this.sqlEditor().evaluate('result.data')).toEqual(rows);
+    var res = this.side.$('#sql-result');
+    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   startSqlSaving: function() {
