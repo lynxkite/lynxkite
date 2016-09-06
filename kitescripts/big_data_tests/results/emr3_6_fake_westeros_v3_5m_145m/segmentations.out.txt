@@ -16,8 +16,8 @@ size: {"labelType":"between","labels":["1.0","2.2","4.6","10.0","21.5","46.4","9
 !belongsToEdges: 10000004
 id: <computed>
 size: {"labelType":"between","labels":["1.00","1.21","1.48","1.79","2.18","2.65","3.21","3.90","4.74","5.76","7.00"],"sizes":[3033133,0,0,757696,0,126749,0,15617,1593,131]}
-x: {"labelType":"bucket","labels":["0.8994016","0.8994197","0.8995156","0.8995238","0.8997682","0.8997694","0.8998457","0.8999046","0.8999731","Other"],"sizes":[1,1,1,1,1,1,1,1,1,3934910]}
+x: {"labelType":"bucket","labels":["0.8990781","0.8992353","0.8994016","0.8994197","0.8994612","0.8994624","0.8997682","0.8997694","0.8998457","Other"],"sizes":[1,1,1,1,1,1,1,1,1,3934910]}
 !coverage: 5000002
 !nonEmpty: 3934919
 !belongsToEdges: 5000002
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segmentations.groovy, took 108 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segmentations.groovy, took 111 seconds
