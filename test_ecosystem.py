@@ -82,15 +82,15 @@ def main(args):
   upload_installer_script(cluster, args)
   upload_tasks(cluster, args)
   download_and_unpack_release(cluster, args)
-  if not args.dockerized:
-    install_dockerless(cluster)
-    config_and_prepare_dockerless(cluster, args)
-    start_supervisor_dockerless(cluster)
-    start_tests_dockerless(cluster, jdbc_url, args)
-  else:
+  if args.dockerized:
     install_docker_and_lynx(cluster, args.lynx_version)
     start_or_reset_ecosystem(cluster, args.lynx_version)
     start_tests(cluster, jdbc_url)
+  else:
+    install_native(cluster)
+    config_and_prepare_native(cluster, args)
+    start_supervisor_native(cluster)
+    start_tests_native(cluster, jdbc_url, args)
   print('Tests are now running in the background. Waiting for results.')
   cluster.fetch_output()
   cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
@@ -98,25 +98,25 @@ def main(args):
 
 
 def upload_installer_script(cluster, args):
-  if not args.dockerized:
-    cluster.rsync_up(
-        # we only have one native release so far
-        src='{dir!s}/download-lynx-1.9.3-native-preview-0831.sh'.format(
-            dir=args.biggraph_releases_dir),
-        dst='/mnt/')
-  else:
+  if args.dockerized:
     cluster.rsync_up(
         src='{dir!s}/download-lynx-{version!s}.sh'.format(
             dir=args.biggraph_releases_dir,
             version=args.lynx_version),
         dst='/mnt/')
+  else:
+    cluster.rsync_up(
+        # we only have one native release so far
+        src='{dir!s}/download-lynx-1.9.3-native-preview-0831.sh'.format(
+            dir=args.biggraph_releases_dir),
+        dst='/mnt/')
 
 
 def upload_tasks(cluster, args):
-  if not args.dockerized:
-    ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
-  else:
+  if args.dockerized:
     ecosystem_task_dir = '/mnt/lynx/lynx/luigi_tasks/test_tasks'
+  else:
+    ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
   cluster.ssh('mkdir -p ' + ecosystem_task_dir)
   cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
   if not args.dockerized:
@@ -127,7 +127,7 @@ def upload_tasks(cluster, args):
         ''')
 
 
-def install_dockerless(cluster):
+def install_native(cluster):
   cluster.ssh('''
     set -x
     cd /mnt/lynx
@@ -140,7 +140,7 @@ def install_dockerless(cluster):
   ''')
 
 
-def config_and_prepare_dockerless(cluster, args):
+def config_and_prepare_native(cluster, args):
   cluster.ssh('''
     cd /mnt/lynx
     # Dirty solution because kiterc keeps growing:
@@ -156,6 +156,8 @@ def config_and_prepare_dockerless(cluster, args):
       export KITE_DATA_DIR=hdfs://$HOSTNAME:8020/user/$USER/lynxkite/
       export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
       export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
+      export HADOOP_CONF_DIR=/etc/hadoop/conf
+      export LYNX=/mnt/lynx
 EOF
     echo 'Creating hdfs directory.'
     source config/central
@@ -166,17 +168,15 @@ EOF
   '''.format(num_executors=args.emr_instance_count - 1))
 
 
-def start_supervisor_dockerless(cluster):
+def start_supervisor_native(cluster):
   cluster.ssh_nohup('''
     set -x
     source /mnt/lynx/config/central
-    export HADOOP_CONF_DIR=/etc/hadoop/conf
-    export LYNX=/mnt/lynx
     /usr/local/bin/supervisord -c config/supervisord.conf
     ''')
 
 
-def start_tests_dockerless(cluster, jdbc_url, args):
+def start_tests_native(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
       echo 'Waiting for the ecosystem to start...'
@@ -204,32 +204,31 @@ def start_tests_dockerless(cluster, jdbc_url, args):
 
 def download_and_unpack_release(cluster, args):
   path = args.lynx_release_dir
-
   if path:
     cluster.rsync_up(path + '/', '/mnt/lynx')
   else:
-    if not args.dockerized:
-      cluster.ssh('''
-          set -x
-          cd /mnt
-          # only one native release so far
-          if [ ! -f "./lynx-native-1.9.3-preview-0831.tgz" ]; then
-            ./download-lynx-1.9.3-native-preview-0831.sh
-            mkdir -p lynx
-            tar xfz lynx-native-1.9.3-preview-0831.tgz -C lynx --strip-components 1
-          fi
-          ''')
-    else:
+    if args.dockerized:
       version = args.lynx_version
       cluster.ssh('''
-          set -x
-          cd /mnt
-          if [ ! -f "./lynx-{version!s}.tgz" ]; then
-            ./download-lynx-{version!s}.sh
-            mkdir -p lynx
-            tar xfz lynx-{version!s}.tgz -C lynx --strip-components 1
-          fi
-          '''.format(version=version))
+        set -x
+        cd /mnt
+        if [ ! -f "./lynx-{version!s}.tgz" ]; then
+          ./download-lynx-{version!s}.sh
+          mkdir -p lynx
+          tar xfz lynx-{version!s}.tgz -C lynx --strip-components 1
+        fi
+        '''.format(version=version))
+    else:
+      cluster.ssh('''
+        set -x
+        cd /mnt
+        # only one native release so far
+        if [ ! -f "./lynx-native-1.9.3-preview-0831.tgz" ]; then
+          ./download-lynx-1.9.3-native-preview-0831.sh
+          mkdir -p lynx
+          tar xfz lynx-native-1.9.3-preview-0831.tgz -C lynx --strip-components 1
+        fi
+        ''')
 
 
 def install_docker_and_lynx(cluster, version):
