@@ -26,7 +26,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='1.9.2',
+    default='native-1.9.3',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
@@ -98,18 +98,12 @@ def main(args):
 
 
 def upload_installer_script(cluster, args):
-  if args.dockerized:
+  if not args.lynx_release_dir:
     cluster.rsync_up(
-        src='{dir!s}/download-lynx-{version!s}.sh'.format(
-            dir=args.biggraph_releases_dir,
-            version=args.lynx_version),
-        dst='/mnt/')
-  else:
-    cluster.rsync_up(
-        # we only have one native release so far
-        src='{dir!s}/download-lynx-1.9.3-native-preview-0831.sh'.format(
-            dir=args.biggraph_releases_dir),
-        dst='/mnt/')
+      src='{dir!s}/download-lynx-{version!s}.sh'.format(
+          dir=args.biggraph_releases_dir,
+          version=args.lynx_version),
+      dst='/mnt/')
 
 
 def upload_tasks(cluster, args):
@@ -212,28 +206,16 @@ def download_and_unpack_release(cluster, args):
   if path:
     cluster.rsync_up(path + '/', '/mnt/lynx')
   else:
-    if args.dockerized:
-      version = args.lynx_version
-      cluster.ssh('''
-        set -x
-        cd /mnt
-        if [ ! -f "./lynx-{version!s}.tgz" ]; then
-          ./download-lynx-{version!s}.sh
-          mkdir -p lynx
-          tar xfz lynx-{version!s}.tgz -C lynx --strip-components 1
-        fi
-        '''.format(version=version))
-    else:
-      cluster.ssh('''
-        set -x
-        cd /mnt
-        # only one native release so far
-        if [ ! -f "./lynx-native-1.9.3-preview-0831.tgz" ]; then
-          ./download-lynx-1.9.3-native-preview-0831.sh
-          mkdir -p lynx
-          tar xfz lynx-native-1.9.3-preview-0831.tgz -C lynx --strip-components 1
-        fi
-        ''')
+    version = args.lynx_version
+    cluster.ssh('''
+      set -x
+      cd /mnt
+      if [ ! -f "./lynx-{version!s}.tgz" ]; then
+        ./download-lynx-{version!s}.sh
+        mkdir -p lynx
+        tar xfz lynx-{version!s}.tgz -C lynx --strip-components 1
+      fi
+      '''.format(version=version))
 
 
 def install_docker_and_lynx(cluster, version):
