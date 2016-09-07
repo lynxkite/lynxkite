@@ -9,11 +9,14 @@ Install `nvm` (https://github.com/creationix/nvm). Then:
     nvm alias default 5.7
     npm install -g gulp bower
 
-Install `sbt` (Scala Build Tool):
+Install `Java SDK` and `sbt` (Scala Build Tool):
 
     echo "deb http://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
     sudo apt-get update
+    sudo apt-get install openjdk-8-jdk
     sudo apt-get install sbt
+
+(Actually sbt installation would automatically pull a JDK, but in the current Ubuntu 16.04 LTS for some reason it installs the not-even-released-yet JDK 9. No good.)
 
 Install Spark:
 
@@ -29,6 +32,23 @@ LynxKite startup, add a line to `/etc/avahi/hosts`:
 
     0.0.0.0 any.local
 
+Install Docker using https://get.docker.com/.
+
+Install Inkscape:
+
+    sudo apt-get install inkscape
+
+Install wkhtmltopdf (0.12.3 or newer). Just download from http://wkhtmltopdf.org/downloads.html and copy the binary to `/usr/local/bin`.
+
+Install LaTex:
+
+    sudo apt-get install texlive-latex-recommended
+    sudo apt-get install texlive-fonts-recommended
+    sudo apt-get install texlive-formats-extra
+
+Install `hub`, the command line interface for GitHub. Download from https://github.com/github/hub/releases and copy the binary to `/usr/local/bin`.
+
+To be able to create signed CloudFront URLs for releases, obtain `pk-APKAJBDZZHY2ZM7ELY2A.der` and put it in the `$HOME/.ssh` directory. Just ask a collegue to give it to you. (TODO: copy this to our secrets repo)
 
 ## Per repository setup
 
