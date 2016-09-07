@@ -8,16 +8,6 @@ import java.sql
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 
-object JDBCQuoting {
-  private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
-  def quoteIdentifier(s: String) = {
-    s match {
-      case SimpleIdentifier() => s
-      case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
-    }
-  }
-}
-
 object JDBCUtil {
   // Reads a table from JDBC, partitioned by a keyColumn. This is a wrapper around Spark's
   // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
@@ -148,10 +138,8 @@ case class TableStats(
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
-    val quotedTable = JDBCQuoting.quoteIdentifier(table)
-    val quotedKey = JDBCQuoting.quoteIdentifier(keyColumn)
     val query =
-      s"SELECT COUNT(*) as cnt, MIN($quotedKey) AS minKey, MAX($quotedKey) AS maxKey FROM $quotedTable"
+      s"SELECT COUNT(*) AS cnt, MIN($keyColumn) AS minKey, MAX($keyColumn) AS maxKey FROM $table"
     log.info(s"Executing query: $query")
     val connection = sql.DriverManager.getConnection(url)
     try {
