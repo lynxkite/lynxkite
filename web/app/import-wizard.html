@@ -234,7 +234,7 @@
       <button
         id="import-jdbc-button"
         ng-show="datatype === 'jdbc'"
-        ng-disabled="!jdbc.url || !jdbc.table || !jdbc.keyColumn || requestInProgress || !tableName"
+        ng-disabled="!jdbc.url || !jdbc.table || requestInProgress || !tableName"
         ng-click="importJdbc()"
         class="btn btn-default">
         Import JDBC table
