@@ -293,7 +293,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     statement.executeUpdate(s"""
       DROP TABLE IF EXISTS 'name with space';
       CREATE TABLE 'name with space' (id INTEGER, 'colname with space' INTEGER, a TEXT);
-      INSERT INTO 'name with space' VALUES(1, 1, 'x');"""
+      INSERT INTO 'name with space' VALUES(1, 1, 'x');""")
     connection.close()
   }
 
