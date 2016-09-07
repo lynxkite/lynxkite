@@ -268,6 +268,7 @@ case class JdbcImportRequest(
     jdbcUrl: String,
     jdbcTable: String,
     keyColumn: Option[String] = None,
+    numPartitions: Option[Int] = None,
     predicates: Option[List[String]] = None,
     overwrite: Boolean,
     columnsToImport: List[String],
@@ -280,6 +281,7 @@ case class JdbcImportRequest(
       jdbcUrl,
       jdbcTable,
       keyColumn.getOrElse(""),
+      numPartitions.getOrElse(0),
       predicates.getOrElse(List()),
       properties.getOrElse(Map()))
   }

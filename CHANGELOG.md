@@ -6,6 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.9.3
+
+ - Assorted ecosystem bugfixes and improvements
+ - Dockerless installation option :(
  - New operation _"Enumerate triangles"_ has been created.
 
 ### 1.9.2
