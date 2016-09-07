@@ -179,8 +179,13 @@ def start_supervisor_native(cluster):
 def start_tests_native(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
-      echo 'Waiting for the ecosystem to start...'
       source /mnt/lynx/config/central
+      echo 'cleaning up previous test data'
+      cd /mnt/lynx
+      hadoop fs -rm -r /user/hadoop/lynxkite
+      sudo rm -Rf metadata/lynxkite/*
+      ./reload_luigi_tasks.sh
+      echo 'Waiting for the ecosystem to start...'
       rm -f /tasks_data/smoke_test_marker.txt
       rm -Rf /tmp/luigi/
       touch /mnt/lynx/luigi_tasks/test_tasks/__init__.py
