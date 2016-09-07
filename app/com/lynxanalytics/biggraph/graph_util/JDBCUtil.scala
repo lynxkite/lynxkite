@@ -8,19 +8,6 @@ import java.sql
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 
-object JDBCQuoting {
-  private val SimpleTableIdentifier = "[a-zA-Z0-9_.]+".r
-  private val SimpleColumnIdentifier = "[a-zA-Z0-9_]+".r
-  private def quoteIdentifier(s: String, r: scala.util.matching.Regex) = {
-    s match {
-      case r() => s
-      case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
-    }
-  }
-  def quoteTable(s: String) = quoteIdentifier(s, SimpleTableIdentifier)
-  def quoteColumn(s: String) = quoteIdentifier(s, SimpleColumnIdentifier)
-}
-
 object JDBCUtil {
   // Reads a table from JDBC, partitioned by a keyColumn. This is a wrapper around Spark's
   // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
@@ -145,10 +132,8 @@ case class TableStats(
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
-    val quotedTable = JDBCQuoting.quoteTable(table)
-    val quotedKey = JDBCQuoting.quoteColumn(keyColumn)
     val query =
-      s"SELECT COUNT(*) as cnt, MIN($quotedKey) AS minKey, MAX($quotedKey) AS maxKey FROM $quotedTable"
+      s"SELECT COUNT(*) as cnt, MIN($keyColumn) AS minKey, MAX($keyColumn) AS maxKey FROM $table"
     log.info(s"Executing query: $query")
     val connection = sql.DriverManager.getConnection(url)
     try {
