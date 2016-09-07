@@ -3458,21 +3458,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    // The String.matches() function consider all non-word character as word boundaries
-    // so e.g. src$id will match for id. To escape this situation we can replace the
-    // problematic non-word characters with a suitably random string for each.
-    val NonWordCharactersToStringMap = Map(
-      "\\$" -> "LoremIpsumDolorSitAmet"
-    )
-
-    var modified_expr = expr
-    var modified_identifier = identifier
-    for ((nonWordChar, string) <- NonWordCharactersToStringMap) {
-      modified_expr = modified_expr.replaceAll(nonWordChar, string)
-      modified_identifier = modified_identifier.replaceAll(nonWordChar, string)
-    }
-    val re = "(?s).*\\b" + java.util.regex.Pattern.quote(modified_identifier) + "\\b.*"
-    modified_expr.matches(re)
+    val nonIdentifiers = """+-/*%="'`^\\|:?!()\]\[{}&<>,.\s"""
+    val re = s"(?s)(^|.*[$nonIdentifiers])" +
+      java.util.regex.Pattern.quote(identifier) + s"(?s)(${'$'}|[$nonIdentifiers].*)"
+    expr.matches(re)
   }
 }
 
