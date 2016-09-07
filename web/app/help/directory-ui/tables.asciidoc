@@ -129,7 +129,7 @@ syntax entirely depends on the database type. Please consult the documentation o
 [[table]] Table::
 The name of the database table to import.
 +
-All identifiers have to be properly quoted according to the syntax of the source database.
+All identifiers have to be properly quoted according to the SQL syntax of the source database.
 +
 The following formats may work depending on the type of the source database:
 +
@@ -148,7 +148,7 @@ the English alphabet and numbers.
 +
 If the partitioning column is left empty, only a fraction of the cluster resources will be used.
 +
-The column name has to be properly quoted according to the syntax of the source database.
+The column name has to be properly quoted according to the SQL syntax of the source database.
 ====
 
 [[import-hive]]
