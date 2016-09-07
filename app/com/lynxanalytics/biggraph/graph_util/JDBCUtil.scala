@@ -138,8 +138,21 @@ case class TableStats(
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
-    val query =
-      s"SELECT COUNT(*) as cnt, MIN($keyColumn) AS minKey, MAX($keyColumn) AS maxKey FROM $table"
+    val aliasedSubQuery = """\(.*\) [A-Za-z0-9_]+$""".r
+    val (tableNameWithAlias, tableAlias) = table match {
+      // If the table is an aliased subquery use its alias.
+      case aliasedSubQuery() => (table, table.substring(table.lastIndexOf(' ') + 1))
+      // Otherwise alias the table as "t".
+      case _ => (table + " t", "t")
+    }
+    // We need to use tableAlias.keyColumn format in the query in case the keyColumn contains
+    // quotes (otherwise it's interpreted as a string).
+    val query = s"""
+    SELECT
+      COUNT(*) AS cnt,
+      MIN($tableAlias.$keyColumn) AS minKey,
+      MAX($tableAlias.$keyColumn) AS maxKey
+    FROM $tableNameWithAlias"""
     log.info(s"Executing query: $query")
     val connection = sql.DriverManager.getConnection(url)
     try {

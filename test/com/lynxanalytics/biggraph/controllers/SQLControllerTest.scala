@@ -287,6 +287,145 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     checkSqliteSubscribers(response.id)
   }
 
+  def createSqliteNonConventionalTable() = {
+    val connection = java.sql.DriverManager.getConnection(sqliteURL)
+    val statement = connection.createStatement()
+    statement.executeUpdate(s"""
+      DROP TABLE IF EXISTS 'name with space';
+      CREATE TABLE 'name with space' (id INTEGER, 'colname with space' INTEGER, a TEXT);
+      INSERT INTO 'name with space' VALUES(1, 1, 'x');"""
+    connection.close()
+  }
+
+  def checkSqliteNonConventionalTable(table: String) = {
+    run(
+      "Import vertices",
+      Map(
+        "table" -> table,
+        "id-attr" -> "new_id"))
+    assert(vattr[Long]("id") == Seq(1L))
+    assert(vattr[Long]("colname with space") == Seq(1L))
+    assert(vattr[String]("a") == Seq("x"))
+  }
+
+  test("import from SQLite (non conventional table name - double quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "\"name with space\"",
+        keyColumn = Some("id"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non conventional key column name - double quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "\"name with space\"",
+        keyColumn = Some("\"colname with space\""),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non conventional table name - single quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "'name with space'",
+        keyColumn = Some("id"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non conventional key column name - single quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "'name with space'",
+        keyColumn = Some("'colname with space'"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (aliased native sql - no keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space') source_table",
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (aliased native sql - with keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space') source_table",
+        keyColumn = Some("'colname with space'"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non aliased native sql - no keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space')",
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non aliased native sql - with keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space')",
+        keyColumn = Some("'colname with space'"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a")))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
   test("sql export to parquet + import back (including tuple columns)") {
     val exportPath = "IMPORTGRAPHTEST$/example.parquet"
     graph_util.HadoopFile(exportPath).deleteIfExists
