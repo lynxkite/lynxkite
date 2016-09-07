@@ -100,10 +100,10 @@ def main(args):
 def upload_installer_script(cluster, args):
   if not args.lynx_release_dir:
     cluster.rsync_up(
-      src='{dir!s}/download-lynx-{version!s}.sh'.format(
-          dir=args.biggraph_releases_dir,
-          version=args.lynx_version),
-      dst='/mnt/')
+        src='{dir!s}/download-lynx-{version!s}.sh'.format(
+            dir=args.biggraph_releases_dir,
+            version=args.lynx_version),
+        dst='/mnt/')
 
 
 def upload_tasks(cluster, args):
