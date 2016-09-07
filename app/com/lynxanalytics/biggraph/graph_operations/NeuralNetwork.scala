@@ -12,6 +12,8 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.math3.random.MersenneTwister
 
+import scala.collection.mutable.ListBuffer
+
 object NeuralNetwork extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
     val vertices = vertexSet
@@ -199,6 +201,8 @@ case class NeuralNetwork(
     iterations: Int): neural.Network = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
+    val weightsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
+    val gradientsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
     for (i <- 1 to iterations) {
       val trueState = getTrueState(data)
       val random = new util.Random(1)
@@ -218,6 +222,7 @@ case class NeuralNetwork(
       } { (previous, r) =>
         network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
       }
+      weightsForGradientCheck += network.allWeights.toMap
       val finalOutputs = outputs.last("new state")
 
       // Backward pass.
@@ -253,7 +258,9 @@ case class NeuralNetwork(
         import neural.Implicits._
         network.backward(vertices, edges, outputs, "new state" -> (next("state") + next.neighbors))
       }
-      network = network.update(gradients, learningRate)
+      val updated = network.update(gradients, learningRate)
+      network = updated._1
+      gradientsForGradientCheck += updated._2
     }
     network
   }
