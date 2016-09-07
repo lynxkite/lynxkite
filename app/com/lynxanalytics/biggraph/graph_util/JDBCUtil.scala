@@ -139,11 +139,12 @@ object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
     val aliasedSubQuery = """\(.*\) [A-Za-z0-9_]+$""".r
-    val (tableNameWithAlias, tableAlias) = table match {
+    val trimmedTable = table.trim()
+    val (tableNameWithAlias, tableAlias) = trimmedTable match {
       // If the table is an aliased subquery use its alias.
-      case aliasedSubQuery() => (table, table.substring(table.lastIndexOf(' ') + 1))
+      case aliasedSubQuery() => (trimmedTable, trimmedTable.substring(trimmedTable.lastIndexOf(' ') + 1))
       // Otherwise alias the table as "t".
-      case _ => (table + " t", "t")
+      case _ => (trimmedTable + " t", "t")
     }
     // We need to use tableAlias.keyColumn format in the query in case the keyColumn contains
     // quotes (otherwise it's interpreted as a string).
