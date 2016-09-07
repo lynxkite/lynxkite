@@ -361,8 +361,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         table = "jdbc-import-test",
         privacy = "public-read",
         jdbcUrl = sqliteURL,
-        jdbcTable = "'name with space'",
-        keyColumn = Some("'colname with space'"),
+        jdbcTable = "'name with space' t",
+        keyColumn = Some("t.'colname with space'"),
         overwrite = false,
         columnsToImport = List("id", "colname with space", "a")))
     checkSqliteNonConventionalTable(response.id)
@@ -376,7 +376,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         table = "jdbc-import-test",
         privacy = "public-read",
         jdbcUrl = sqliteURL,
-        jdbcTable = "(SELECT * FROM 'name with space') source_table",
+        jdbcTable = "(SELECT * FROM 'name with space') t",
         overwrite = false,
         columnsToImport = List("id", "colname with space", "a")))
     checkSqliteNonConventionalTable(response.id)
@@ -390,8 +390,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         table = "jdbc-import-test",
         privacy = "public-read",
         jdbcUrl = sqliteURL,
-        jdbcTable = "(SELECT * FROM 'name with space') source_table",
-        keyColumn = Some("'colname with space'"),
+        jdbcTable = "(SELECT * FROM 'name with space') t",
+        keyColumn = Some("t.'colname with space'"),
         overwrite = false,
         columnsToImport = List("id", "colname with space", "a")))
     checkSqliteNonConventionalTable(response.id)
@@ -406,21 +406,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         privacy = "public-read",
         jdbcUrl = sqliteURL,
         jdbcTable = "(SELECT * FROM 'name with space')",
-        overwrite = false,
-        columnsToImport = List("id", "colname with space", "a")))
-    checkSqliteNonConventionalTable(response.id)
-  }
-
-  test("import from SQLite (non aliased native sql - with keyColumn)") {
-    createSqliteNonConventionalTable()
-    val response = sqlController.importJdbc(
-      user,
-      JdbcImportRequest(
-        table = "jdbc-import-test",
-        privacy = "public-read",
-        jdbcUrl = sqliteURL,
-        jdbcTable = "(SELECT * FROM 'name with space')",
-        keyColumn = Some("'colname with space'"),
         overwrite = false,
         columnsToImport = List("id", "colname with space", "a")))
     checkSqliteNonConventionalTable(response.id)
