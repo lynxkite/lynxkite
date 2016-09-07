@@ -8,6 +8,7 @@ import java.sql
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 
+
 object JDBCUtil {
   // Reads a table from JDBC, partitioned by a keyColumn. This is a wrapper around Spark's
   // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
