@@ -131,6 +131,8 @@ def install_native(cluster):
     # mysql setup
     sudo service mysqld start
     mysqladmin  -u root password 'root'
+    #remote access for the executors
+    mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
   ''')
 
 
@@ -152,6 +154,8 @@ def config_and_prepare_native(cluster, args):
       export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
       export HADOOP_CONF_DIR=/etc/hadoop/conf
       export LYNX=/mnt/lynx
+      #for tests with mysql server on master
+      export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
 EOF
     echo 'Creating hdfs directory.'
     source config/central
