@@ -122,11 +122,12 @@ case class NeuralNetwork(
           val (trainingVertices, trainingEdgeLists, trainingData) =
             selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius,
               maxTrainingVertices, minTrainingVertices, random.nextInt)
-          train(trainingVertices, trainingEdgeLists, trainingData,
+          val (net, weights, grads, trueState, initialState) = train(trainingVertices, trainingEdgeLists, trainingData,
             previous, iterationsInTraining)
+          gradientCheck(trainingVertices, trainingEdgeLists, trueState, initialState, initialNetwork, weights, grads)
+          net
         })
     }
-
     val prediction = predict(data.collect.iterator, edgeLists, network).toSeq
     output(o.prediction,
       rc.sparkContext.parallelize(prediction).sortUnique(inputs.vertices.rdd.partitioner.get))
@@ -211,7 +212,7 @@ case class NeuralNetwork(
     edges: Map[ID, Seq[ID]],
     data: Seq[(ID, (Option[Double], Array[Double]))],
     startingNetwork: neural.Network,
-    iterations: Int): neural.Network = {
+    iterations: Int): Tuple5[neural.Network, ListBuffer[Map[String, neural.DoubleMatrix]], ListBuffer[Map[String, neural.DoubleMatrix]], neural.GraphData, neural.GraphData] = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
     val weightsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
@@ -270,7 +271,77 @@ case class NeuralNetwork(
       network = updated._1
       gradientsForGradientCheck += updated._2
     }
-    network
+    Tuple5(network, weightsForGradientCheck, gradientsForGradientCheck, trueState, initialState)
+  }
+
+  def gradientCheck(
+    vertices: Seq[ID],
+    edges: Map[ID, Seq[ID]],
+    trueState: neural.GraphData,
+    initialState: neural.GraphData,
+    initialNetwork: neural.Network,
+    weights: ListBuffer[Map[String, neural.DoubleMatrix]],
+    gradients: ListBuffer[Map[String, neural.DoubleMatrix]]): Unit = {
+    val epsilon = 1e-5
+    implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
+    val realGradients = weights.map { w =>
+      {
+        w.map {
+          case (name, values) => {
+            // println(name)
+            val rows = values.rows
+            val cols = values.cols
+            (0 until rows).map { row =>
+              (0 until cols).map { col =>
+                {
+                  val epsilonMatrix = DenseMatrix.zeros[Double](rows, cols)
+                  epsilonMatrix(row, col) = epsilon
+                  //Increase weigth and predict with it.
+                  val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
+                  val outputsWithIncreased = forwardPass(
+                    vertices, edges, initialState, initialState,
+                    initialNetwork.copy(weights = partialIncreasedWeights))
+                  val errorsWithIncreased = outputsWithIncreased.last("new state").map {
+                    case (id, state) =>
+                      id -> (state(0) - trueState(id)(0))
+                  }
+                  val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum / vertices.size
+                  //Decrease weight and predict with it.
+                  val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
+                  val outputsWithDecreased = forwardPass(
+                    vertices, edges, initialState, initialState,
+                    initialNetwork.copy(weights = partialDecreasedWeights))
+                  val errorsWithDecreased = outputsWithDecreased.last("new state").map {
+                    case (id, state) =>
+                      id -> (state(0) - trueState(id)(0))
+                  }
+                  val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum / vertices.size
+                  // println((errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon))
+                  (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
+                }
+              }
+            }.flatten
+          }
+        }.flatten
+      }
+    }
+    val flattenGradients = gradients.map { g =>
+      {
+        g.map {
+          case (name, values) => {
+            val rows = values.rows
+            val cols = values.cols
+            (0 until rows).map { row =>
+              (0 until cols).map { col =>
+                {
+                  values(row, col)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   def predict(
