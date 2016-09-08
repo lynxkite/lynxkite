@@ -1,1 +1,37 @@
-git log --pretty=format:user:%ae%n%ct --reverse --raw --encoding=UTF-8 --no-renames | gource --path - --log-format git -i 0 -s 1 --hide filenames --camera-mode overview --highlight-dirs --highlight-users --key --padding 1.5 -o - --stop-at-end --max-user-speed 100 | avconv -y -r 60 -f image2pipe -vcodec ppm -i - -vcodec libx264 -preset ultrafast -pix_fmt yuv420p -crf 1 -threads 0 -bf 0 gource.mp4
+#!/bin/bash -xue
+
+set -o pipefail
+
+git log \
+  --pretty=format:user:%ae%n%ct \
+  --reverse \
+  --raw \
+  --encoding=UTF-8 \
+  --no-renames \
+  > /tmp/gource$$
+
+gource \
+  --path /tmp/gource$$ \
+  --seconds-per-day 0.01 \
+  --log-format git \
+  --hide filenames \
+  --camera-mode overview \
+  --highlight-dirs \
+  --highlight-users \
+  --key \
+  --padding 1.5 \
+  --stop-at-end \
+  --max-user-speed 1000 \
+  -o - \
+  | avconv \
+  -y \
+  -r 60 \
+  -f image2pipe \
+  -vcodec ppm \
+  -i - \
+  -vcodec libx264 \
+  -preset ultrafast \
+  -tune animation \
+  gource.mp4
+
+rm -f /tmp/gource$$
