@@ -251,12 +251,13 @@ case class NeuralNetwork(
           (numberOfKnown + numberOfForgotten) / (numberOfKnown * knownLabelWeight + numberOfForgotten)
         } else 1
       }
-      val errorTotal = errors.values.map(e => e * e).sum
+      val size = vertices.size
+      val errorTotal = errors.values.map(e => e * e).sum / size
       log.info(s"Total error in iteration $i: $errorTotal")
       val finalGradient: neural.GraphData = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
-          vec(0) = error * correctionRatio
+          vec(0) = error * correctionRatio * errorTotal
           id -> vec
       }
       val gradients = outputs.init.scanRight {
