@@ -193,6 +193,19 @@ case class NeuralNetwork(
     s
   }
 
+  def forwardPass(
+    vertices: Seq[ID],
+    edges: Map[ID, Seq[ID]],
+    keptState: neural.GraphData,
+    initialState: neural.GraphData,
+    network: neural.Network): Seq[neural.GateValues] = {
+    (1 until radius).scanLeft {
+      network.forward(vertices, edges, keptState, "state" -> initialState)
+    } { (previous, r) =>
+      network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
+    }
+  }
+
   def train(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
@@ -203,25 +216,19 @@ case class NeuralNetwork(
     var network = startingNetwork
     val weightsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
     val gradientsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
+    val trueState = getTrueState(data)
+    val initialState = if (!hideState) trueState else trueState.map {
+      // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
+      case (id, state) => id -> blanked(state)
+    }
     for (i <- 1 to iterations) {
-      val trueState = getTrueState(data)
       val random = new util.Random(1)
       val keptState = trueState.map {
         case (id, state) =>
           if (random.nextDouble < forgetFraction) id -> blanked(state)
           else id -> state
       }
-      val initialState = if (!hideState) keptState else keptState.map {
-        // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
-        case (id, state) => id -> blanked(state)
-      }
-
-      // Forward pass.
-      val outputs = (1 until radius).scanLeft {
-        network.forward(vertices, edges, keptState, "state" -> initialState)
-      } { (previous, r) =>
-        network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
-      }
+      val outputs = forwardPass(vertices, edges, keptState, initialState, network)
       weightsForGradientCheck += network.allWeights.toMap
       val finalOutputs = outputs.last("new state")
 
@@ -278,11 +285,7 @@ case class NeuralNetwork(
       case (id, state) => id -> blanked(state)
     }
 
-    val outputs = (1 until radius).scanLeft {
-      network.forward(vertices, edges, initialState, "state" -> initialState)
-    } { (previous, r) =>
-      network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
-    }
+    val outputs = forwardPass(vertices, edges, initialState, initialState, network)
     outputs.last("new state").map {
       case (id, state) => id -> state(0)
     }.iterator
