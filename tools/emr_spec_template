@@ -65,10 +65,8 @@ CREATE_CLUSTER_EXTRA_EC2_ATTRS=""
 # AWS_NO_KEY=1
 
 # The list of applications needed on the cluster:
-EMR_APPLICATIONS="Name=Hadoop"
-
-# More applications can also be listed:
 # EMR_APPLICATIONS="Name=Hadoop Name=Ganglia Name=Hive Name=Hue Name=Spark"
+EMR_APPLICATIONS="Name=Hadoop"
 
 # The release label for the emr cluster to be created:
 EMR_RELEASE_LABEL=emr-4.2.0
