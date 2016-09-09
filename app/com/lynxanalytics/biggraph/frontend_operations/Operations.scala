@@ -3469,8 +3469,8 @@ object JSUtilities {
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
     val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
       "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
-    val re = s"(?s)(^|.*[^$validJSCharacters])" +
-      java.util.regex.Pattern.quote(identifier) + s"($$|[^$validJSCharacters].*)"
+    val quoted_identifer = java.util.regex.Pattern.quote(identifier)
+    val re = s"(?s)(^|.*[^$validJSCharacters])${quoted_identifer}($$|[^$validJSCharacters].*)"
     expr.matches(re)
   }
 }
