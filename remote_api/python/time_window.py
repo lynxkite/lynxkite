@@ -6,7 +6,7 @@ import lynx
 
 
 class TimeWindowTarget(luigi.target.Target):
-  
+
   def __init__(self, earliest, latest):
     self.earliest_start_time = earliest
     self.latest_start_time = latest
@@ -17,12 +17,13 @@ class TimeWindowTarget(luigi.target.Target):
 
 
 class TimeWindowTask(luigi.task.ExternalTask):
-  
+
   earliest_start_time = luigi.Parameter()
   latest_start_time = luigi.Parameter()
 
   def output(self):
-    return TimeWindowTarget(dateutil.parser.parse(self.earliest_start_time).time(), dateutil.parser.parse(self.latest_start_time).time())
+    return TimeWindowTarget(dateutil.parser.parse(self.earliest_start_time).time(),
+                            dateutil.parser.parse(self.latest_start_time).time())
 
 
 class TestTask(luigi.task.Task):
@@ -34,8 +35,6 @@ class TestTask(luigi.task.Task):
     return luigi.LocalTarget('testoutput.txt')
 
   def run(self):
-    f = open('testoutput.txt','w')
+    f = open('testoutput.txt', 'w')
     f.write('just testing')
     f.close()
-
-
