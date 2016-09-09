@@ -2,56 +2,40 @@ import datetime
 import dateutil
 from dateutil import parser
 import luigi
-import lynx.luigi
-import lynx.util
-import re
-import subprocess
-import types
+import lynx
 
 
-def time_windowed_method(func):
-  def wrapper(self):
+class TimeWindowTarget(luigi.target.Target):
+  
+  def __init__(self, earliest, latest):
+    self.earliest_start_time = earliest
+    self.latest_start_time = latest
+
+  def exists(self):
     now = datetime.datetime.now().time()
-    if (self.earliest_start_time() < now and now < self.latest_start_time()):
-      func(self)
-    else:
-      print("Can't run.")
-  return wrapper
+    return (self.earliest_start_time < now and now < self.latest_start_time)
 
 
-class TimeWindowedTask(luigi.Task):
+class TimeWindowTask(luigi.task.ExternalTask):
+  
+  earliest_start_time = luigi.Parameter()
+  latest_start_time = luigi.Parameter()
 
-  def earliest_start_time(self):
-    """Override this to return the earliest time of the day windowed methods can be started,
-       as a datetime.time object"""
-    #raise NotImplementedError
-    return dateutil.parser.parse('18:35').time()
-
-  def latest_start_time(self):
-    """Override this to return the latest time of the day windowed methods can be started,
-       as a datetime.time object"""
-    #raise NotImplementedError
-    return dateutil.parser.parse('23:00').time()
-
-  def run(self):
-    pass
-
-  def __new__(self):
-    obj = luigi.Task.__new__(self)
-    self.run = time_windowed_method(self.run)
-    return obj
+  def output(self):
+    return TimeWindowTarget(dateutil.parser.parse(self.earliest_start_time).time(), dateutil.parser.parse(self.latest_start_time).time())
 
 
-class ThisIsANormalTask:
+class TestTask(luigi.task.Task):
+
+  def requires(self):
+    return [TimeWindowTask('15:35', '23:00')]
+
+  def output(self):
+    return luigi.LocalTarget('testoutput.txt')
 
   def run(self):
-    print("I'm running.")
+    f = open('testoutput.txt','w')
+    f.write('just testing')
+    f.close()
 
 
-class ActualTask(ThisIsANormalTask, TimeWindowedTask):
-  pass
-
-
-print('testing')
-at = ActualTask()
-at.run()
