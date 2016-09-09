@@ -114,12 +114,12 @@ The service role. The default service role works fine, unless the cluster is in 
 EMR_SERVICE_ROLE=EMR_DefaultRole
 ```
 
-The cluster name is added as a tag to the emr cluster. To add further tags, `EMR_EXTRA_TAGS` can
-be used, for example:
+The cluster name is added as a tag to the emr cluster. Additional tags can also be specified:
 ```
-# Uncomment and edit appropriately for extra tags:
-# EMR_EXTRA_TAGS='"Department=My Department" "Project=My Project" "Team=My Team" "Shutdown=By Request"'
+# EMR_TAGS=( Name=${CLUSTER_NAME} Department='My Department' Project='My project' Team='My Team' )
+EMR_TAGS=( Name=${CLUSTER_NAME} )
 ```
+
 By default, emr.sh installs Spark by downloading an official version from cloudfront.net
 directly to the master machine. This may be undesired in a Virtual Private Cluster setup,
 where the master has no Internet access. In such cases, setting the below flag to "local"
