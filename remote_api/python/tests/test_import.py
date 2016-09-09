@@ -18,13 +18,12 @@ class TestImport(unittest.TestCase):
     DROP TABLE IF EXISTS subscribers;
     CREATE TABLE subscribers
     (n TEXT, id INTEGER, name TEXT, gender TEXT, 'race condition' TEXT, level DOUBLE PRECISION);
-    INSERT INTO subscribers VALUES
-    ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0),
-    ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0),
-    ('C', 3, 'Felix', 'Male', 'Gnome', NULL),
-    ('D', 4, 'Oliver', 'Male', 'Troll', NULL),
-    (NULL, 5, NULL, NULL, NULL, NULL),
-    (NULL, 6, '☃', 'Unicode', 'Snowman', 999.999);
+    INSERT INTO subscribers VALUES ('A', 1, 'Daniel', 'Male', 'Halfling', 10.0);
+    INSERT INTO subscribers VALUES ('B', 2, 'Beata', 'Female', 'Dwarf', 20.0);
+    INSERT INTO subscribers VALUES ('C', 3, 'Felix', 'Male', 'Gnome', NULL);
+    INSERT INTO subscribers VALUES ('D', 4, 'Oliver', 'Male', 'Troll', NULL);
+    INSERT INTO subscribers VALUES (NULL, 5, NULL, NULL, NULL, NULL);
+    INSERT INTO subscribers VALUES (NULL, 6, '☃', 'Unicode', 'Snowman', 999.999);
     """)
     conn.commit()
     conn.close()

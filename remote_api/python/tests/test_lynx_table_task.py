@@ -18,11 +18,10 @@ class TestTask(lynx.luigi.TableTask):
     DROP TABLE IF EXISTS testtable;
     CREATE TABLE testtable
     (id INTEGER, name TEXT);
-    INSERT INTO testtable VALUES
-    (1, 'Test1'),
-    (2, 'Test2'),
-    (3, 'Test3'),
-    (4, 'Test4');
+    INSERT INTO testtable VALUES (1, 'Test1');
+    INSERT INTO testtable VALUES (2, 'Test2');
+    INSERT INTO testtable VALUES (3, 'Test3');
+    INSERT INTO testtable VALUES (4, 'Test4');
     """)
     conn.commit()
     conn.close()
@@ -33,7 +32,7 @@ class TestTask(lynx.luigi.TableTask):
     url = 'jdbc:sqlite:{}'.format(path)
     view = lk.import_jdbc(
         jdbcUrl=url,
-        jdbcTable='subscribers',
+        jdbcTable='testtable',
         keyColumn='id')
     return view
 
