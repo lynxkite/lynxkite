@@ -8,8 +8,8 @@ import lynx
 class TimeWindowTarget(luigi.target.Target):
 
   def __init__(self, earliest, latest):
-    self.earliest_start_time = earliest
-    self.latest_start_time = latest
+    self.earliest_start_time = dateutil.parser.parse(earliest).time()
+    self.latest_start_time = dateutil.parser.parse(latest).time()
 
   def exists(self):
     now = datetime.datetime.now().time()
@@ -22,8 +22,7 @@ class TimeWindowTask(luigi.task.ExternalTask):
   latest_start_time = luigi.Parameter()
 
   def output(self):
-    return TimeWindowTarget(dateutil.parser.parse(self.earliest_start_time).time(),
-                            dateutil.parser.parse(self.latest_start_time).time())
+    return TimeWindowTarget(self.earliest_start_time, self.latest_start_time)
 
 
 class TestTask(luigi.task.Task):
