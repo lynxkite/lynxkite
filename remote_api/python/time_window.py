@@ -32,7 +32,7 @@ class TimeWindowedTask(luigi.Task):
        as a datetime.time object"""
     #raise NotImplementedError
     return dateutil.parser.parse('23:00').time()
-  
+
   def run(self):
     pass
 
@@ -40,6 +40,7 @@ class TimeWindowedTask(luigi.Task):
     obj = luigi.Task.__new__(self)
     self.run = time_windowed_method(self.run)
     return obj
+
 
 class ThisIsANormalTask:
 
