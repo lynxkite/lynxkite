@@ -96,12 +96,8 @@ in the same VPN). Uncomment the following line to configure this situation:
 
 The list of applications needed on the cluster:
 ```
-EMR_APPLICATIONS="Name=Hadoop"
-```
-
-More applications can also be listed:
-```
 # EMR_APPLICATIONS="Name=Hadoop Name=Ganglia Name=Hive Name=Hue Name=Spark"
+EMR_APPLICATIONS="Name=Hadoop"
 ```
 
 The release label for the emr cluster to be created:
