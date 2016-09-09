@@ -102,14 +102,33 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       "assertion failed: JavaScript('hello') with values: {} did not return a number: NaN")
   }
 
-  test("The containsIdentifierJS function") {
+  test("The containsIdentifierJS function identifier name ending characters") {
     val expr =
-      """a$a+b-c*d/e%f==g.h,i;j:k'l"m`n
+      """a+b-c*d/e%f==g.h,i;j:k'l"m`n
          !o@p#q(r{s[t]u}v)w^x>y<z"""
 
     val identified = ('a' to 'z').map(i => i -> JSUtilities.containsIdentifierJS(expr, i.toString)).toMap
-    val shouldBe = ('a' to 'z').map(i => if (i == 'a') i -> false else i -> true).toMap
+    val shouldBe = ('a' to 'z').map(i => i -> true).toMap
     assert(identified == shouldBe)
+  }
+
+  test("The containsIdentifierJS function with substring conflicts") {
+    val expr = "ArsenalFC and FCBarcelona are$the \\be\\sts."
+    val testResults = Map(
+      "Match starting subtsring" -> JSUtilities.containsIdentifierJS(expr, "Arsenal"),
+      "Match ending substring" -> JSUtilities.containsIdentifierJS(expr, "Barcelona"),
+      "Match with $ on right side" -> JSUtilities.containsIdentifierJS(expr, "are"),
+      "Match with $ on left side" -> JSUtilities.containsIdentifierJS(expr, "the"),
+      "Finds identifiers with special regex characters" -> JSUtilities.containsIdentifierJS(expr, "\\be\\sts")
+    )
+    val resultShouldBe = Map(
+      "Match starting subtsring" -> false,
+      "Match ending substring" -> false,
+      "Match with $ on right side" -> false,
+      "Match with $ on left side" -> false,
+      "Finds identifiers with special regex characters" -> true
+    )
+    assert(testResults == resultShouldBe)
   }
 
   test("Derived vertex attribute with substring conflict (#1676)") {
