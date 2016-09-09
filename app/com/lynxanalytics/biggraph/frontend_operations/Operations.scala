@@ -3467,6 +3467,10 @@ object JSUtilities {
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
+    // Listing the valid characters for JS variable names. The \\p{*} syntax if for specifying
+    // Unicode categories for scala regex.
+    // The full names of the Unicode categories used here can be found here:
+    // http://stackoverflow.com/questions/1661197/what-characters-are-valid-for-javascript-variable-names
     val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
       "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
     val quoted_identifer = java.util.regex.Pattern.quote(identifier)
