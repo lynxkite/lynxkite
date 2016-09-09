@@ -79,9 +79,13 @@ source ${SPEC}
 export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always use the default
 
 if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
-  echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
-  echoerr "to work."
-  exit 1
+  if [ -z "${AWS_NO_KEY}" ]; then
+    echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script"
+    echoerr "to work."
+    echoerr "You can set AWS_NO_KEY to 1 in the cluster specification file and try again "
+    echoerr "if you really wish to continue without access keys"
+    exit 1
+   fi
 fi
 
 GetMasterHostName() {
