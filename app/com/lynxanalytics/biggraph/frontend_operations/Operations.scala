@@ -1398,15 +1398,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  def collectIdentifiers[T <: MetaGraphEntity](
-    holder: StateMapHolder[T],
-    expr: String,
-    prefix: String = ""): IndexedSeq[(String, T)] = {
-    holder.filter {
-      case (name, _) => containsIdentifierJS(expr, prefix + name)
-    }.toIndexedSeq
-  }
-
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
@@ -1421,8 +1412,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
-      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
 
       val result = params("type") match {
         case "string" =>
@@ -1448,16 +1439,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
-      val namedEdgeAttributes = collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
+      val namedEdgeAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
       val namedSrcVertexAttributes =
-        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
+        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
           .map {
             case (name, attr) =>
               "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
           }
-      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val namedDstVertexAttributes =
-        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
+        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
           .map {
             case (name, attr) =>
               "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
@@ -1488,7 +1479,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
-      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val result = params("type") match {
         case "string" =>
           graph_operations.DeriveJSScalar.deriveFromScalars[String](expr, namedScalars)
@@ -3455,18 +3446,31 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     op.result.created
   }
 
-  // Whether a JavaScript expression contains a given identifier.
-  // It's a best-effort implementation with no guarantees of correctness.
-  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    val nonIdentifiers = """+-/*%="'`^\\|:?!()\]\[{}&<>,.\s"""
-    val re = s"(?s)(^|.*[$nonIdentifiers])" +
-      java.util.regex.Pattern.quote(identifier) + s"(?s)(${'$'}|[$nonIdentifiers].*)"
-    expr.matches(re)
-  }
 }
 
 object Operations {
   def addNotesOperation(notes: String): FEOperationSpec = {
     FEOperationSpec("Change-project-notes", Map("notes" -> notes))
+  }
+}
+
+object JSUtilities {
+  def collectIdentifiers[T <: MetaGraphEntity](
+    holder: StateMapHolder[T],
+    expr: String,
+    prefix: String = ""): IndexedSeq[(String, T)] = {
+    holder.filter {
+      case (name, _) => containsIdentifierJS(expr, prefix + name)
+    }.toIndexedSeq
+  }
+
+  // Whether a JavaScript expression contains a given identifier.
+  // It's a best-effort implementation with no guarantees of correctness.
+  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
+    val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
+      "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
+    val re = s"(?s)(^|.*[^$validJSCharacters])" +
+      java.util.regex.Pattern.quote(identifier) + s"($$|[^$validJSCharacters].*)"
+    expr.matches(re)
   }
 }

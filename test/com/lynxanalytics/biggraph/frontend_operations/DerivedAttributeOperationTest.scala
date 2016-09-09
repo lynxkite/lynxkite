@@ -102,6 +102,16 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       "assertion failed: JavaScript('hello') with values: {} did not return a number: NaN")
   }
 
+  test("The containsIdentifierJS function") {
+    val expr =
+      """a$a+b-c*d/e%f==g.h,i;j:k'l"m`n
+         !o@p#q(r{s[t]u}v)w^x>y<z"""
+
+    val identified = ('a' to 'z').map(i => i -> JSUtilities.containsIdentifierJS(expr, i.toString)).toMap
+    val shouldBe = ('a' to 'z').map(i => if (i == 'a') i -> false else i -> true).toMap
+    assert(identified == shouldBe)
+  }
+
   test("Derived vertex attribute with substring conflict (#1676)") {
     run("Example Graph")
     run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
