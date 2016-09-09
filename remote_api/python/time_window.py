@@ -35,4 +35,3 @@ class InTimeWindow(luigi.task.ExternalTask):
 
   def output(self):
     return TimeWindowTarget(self.earliest_start_time, self.latest_start_time)
-
