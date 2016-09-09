@@ -1,8 +1,6 @@
 import datetime
-import dateutil
-from dateutil import parser
+import dateutil.parser
 import luigi
-import lynx
 
 
 class TimeWindowTarget(luigi.target.Target):
