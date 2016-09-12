@@ -18,13 +18,19 @@ class SCPtoHDFSTask(lynx.luigi.SCPtoHDFSTask):
     return 'hdfs://localhost:9000/user/root/lynxkite/overwrite_test_dir/file.txt'
 
 
-class MyTask(LynxTableFileTask):
+class HDFStoSCPTask(lynx.luigi.SCPTask):
+
+  def requires(self):
+    return MyTask()
+
+  def destination(self):
+    return 'localhost', '/user/root/lynxkite/overwrite_test_dir/'
+
+
+class MyTask(lynx.luigi.LynxTableFileTask):
 
   def compute_view(self):
     return self.lk.sql('SELECT 1')
-
-
-class HDFStoSCPTask()
 
 
 class TestTable(unittest.TestCase):
@@ -48,6 +54,20 @@ class TestTable(unittest.TestCase):
     subprocess.call(['hadoop', 'fs', '-rm', '-r', '/user/root/lynxkite/overwrite_test_dir'])
     subprocess.call(['hadoop', 'fs', '-mkdir', '-p', '/user/root/lynxkite/overwrite_test_dir'])
     task = SCPtoHDFSTask()
+    task.run()
+    self.assertTrue(task.output().exists())
+
+  def test_hdfs_to_scp(self):
+    lk._request('/ajax/discardAllReallyIMeanIt')
+    # Preparing hdfs dir with _SUCCESS.
+    subprocess.call(['hadoop', 'fs', '-rm', '-r', '/user/root/lynxkite/table_files'])
+    tabletask = MyTask()
+    tabletask.run()
+    # Preparing scp dir without _SUCCESS file.
+    subprocess.call(['rm', '-rf', '/root/lynx/overwrite_test_dir'])
+    subprocess.call(['mkdir', '-p', '/root/lynx/overwrite_test_dir'])
+    # Runninf SCPTask
+    task = HDFStoSCPTask()
     task.run()
     self.assertTrue(task.output().exists())
 

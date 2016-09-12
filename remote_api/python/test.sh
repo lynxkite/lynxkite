@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run Python API tests. You need a running LynxKite instance for this.
 
-# To setup thew environment, you have to run source /root/lynx/config/central
+# To setup the environment, you have to run source /root/lynx/config/central
 # before using lynx.
 
 cd $(dirname $0)
