@@ -18,7 +18,7 @@ During deployment, the `COMPANY_S3` prefix has been configured:
 
 In this case the file can be referenced for the import operation as:
 
- COMPANY_S3$data/file.csv
+ COMPANY_S3$/data/file.csv
 
 This scheme has a number of benefits:
 

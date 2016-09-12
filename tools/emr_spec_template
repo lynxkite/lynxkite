@@ -59,6 +59,25 @@ CREATE_CLUSTER_EXTRA_PARAMS="--log-uri s3n://${S3_DATAREPO}/emr-logs/ --enable-d
 # CREATE_CLUSTER_EXTRA_EC2_ATTRS='"SubnetId": "subnet-XXXX","AdditionalMasterSecurityGroups":["sg-YYYY"]'
 CREATE_CLUSTER_EXTRA_EC2_ATTRS=""
 
+# In most cases, aws command line tools rely on the presence on AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
+# However, this is not always necessary (e.g., when an emr cluster and the start script reside
+# in the same VPN). Uncomment the following line to configure this situation:
+# AWS_NO_KEY=1
+
+# The list of applications needed on the cluster:
+# EMR_APPLICATIONS="Name=Hadoop Name=Ganglia Name=Hive Name=Hue Name=Spark"
+EMR_APPLICATIONS="Name=Hadoop"
+
+# The release label for the emr cluster to be created:
+EMR_RELEASE_LABEL=emr-4.2.0
+
+# The service role. The default service role works fine, unless the cluster is in a private subnet:
+EMR_SERVICE_ROLE=EMR_DefaultRole
+
+# The cluster name is added as a tag to the emr cluster. Additional tags can also be specified:
+# EMR_TAGS=( Name=${CLUSTER_NAME} Department='My Department' Project='My project' Team='My Team' )
+EMR_TAGS=( Name=${CLUSTER_NAME} )
+
 # By default, emr.sh installs Spark by downloading an official version from cloudfront.net
 # directly to the master machine. This may be undesired in a Virtual Private Cluster setup,
 # where the master has no Internet access. In such cases, setting the below flag to "local"

@@ -268,9 +268,11 @@ case class JdbcImportRequest(
     jdbcUrl: String,
     jdbcTable: String,
     keyColumn: Option[String] = None,
+    numPartitions: Option[Int] = None,
     predicates: Option[List[String]] = None,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends GenericImportRequest {
+    columnsToImport: List[String],
+    properties: Option[Map[String, String]] = None) extends GenericImportRequest {
 
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
@@ -279,7 +281,9 @@ case class JdbcImportRequest(
       jdbcUrl,
       jdbcTable,
       keyColumn.getOrElse(""),
-      predicates.getOrElse(List()))
+      numPartitions.getOrElse(0),
+      predicates.getOrElse(List()),
+      properties.getOrElse(Map()))
   }
 
   def notes: String = {
@@ -410,7 +414,7 @@ class SQLController(val env: BigGraphEnvironment) {
   def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
 
   def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
-  def createViewJdbc(user: serving.User, request: JsonImportRequest) = saveView(user, request)
+  def createViewJdbc(user: serving.User, request: JdbcImportRequest) = saveView(user, request)
   def createViewParquet(user: serving.User, request: ParquetImportRequest) = saveView(user, request)
   def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
   def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
