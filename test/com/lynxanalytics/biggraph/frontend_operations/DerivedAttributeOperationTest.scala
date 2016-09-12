@@ -115,14 +115,14 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   test("The containsIdentifierJS function with substring conflicts") {
     val expr = "ArsenalFC and FCBarcelona are$the \\be\\sts."
     val testResults = Map(
-      "Match starting subtsring" -> JSUtilities.containsIdentifierJS(expr, "Arsenal"),
+      "Match starting substring" -> JSUtilities.containsIdentifierJS(expr, "Arsenal"),
       "Match ending substring" -> JSUtilities.containsIdentifierJS(expr, "Barcelona"),
       "Match with $ on right side" -> JSUtilities.containsIdentifierJS(expr, "are"),
       "Match with $ on left side" -> JSUtilities.containsIdentifierJS(expr, "the"),
       "Finds identifiers with special regex characters" -> JSUtilities.containsIdentifierJS(expr, "\\be\\sts")
     )
     val resultShouldBe = Map(
-      "Match starting subtsring" -> false,
+      "Match starting substring" -> false,
       "Match ending substring" -> false,
       "Match with $ on right side" -> false,
       "Match with $ on left side" -> false,
