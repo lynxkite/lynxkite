@@ -42,6 +42,21 @@ if [ -f "${KITE_SITE_CONFIG_OVERRIDES}" ]; then
   source ${KITE_SITE_CONFIG_OVERRIDES}
 fi
 
+randomString () {
+    RND1=`cat /dev/urandom | od -x --address-radix=n | head -n1 | tr -d " "`
+    RND2=`cat /dev/urandom | od -x --address-radix=n | head -n1 | tr -d " "`
+    echo "${RND1}${RND2}"
+}
+
+if [ "$KITE_USE_APPLICATION_SECRET" ]; then
+    SEC=$(randomString)
+    KITE_APPLICATION_SECRET="SECRET(${SEC})"
+else
+    KITE_APPLICATION_SECRET=""
+fi
+
+echo "Application secret: $KITE_APPLICATION_SECRET"
+
 addJPropIfNonEmpty () {
   if [ -n "$2" ]; then
     addJava "-D$1=$2"
