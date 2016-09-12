@@ -17,9 +17,12 @@ class SCPtoHDFSTask(lynx.luigi.SCPtoHDFSTask):
   def destination(self):
     return 'hdfs://localhost:9000/user/root/lynxkite/overwrite_test_dir/file.txt'
 
+
 class MyTask(LynxTableFileTask):
-    def compute_view(self):
-        return self.lk.sql('SELECT 1')
+
+  def compute_view(self):
+    return self.lk.sql('SELECT 1')
+
 
 class HDFStoSCPTask()
 
