@@ -20,7 +20,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
       step: '=',  // (Input.) If historyMode is true, this is the history step of the operation.
       discardStep: '&', // (Method.) For manipulating history.
       discardChanges: '&', // (Method.) For manipulating history.
-      index: '=' // (Input.) Index of step in history.
+      categoriesCallback: '&' // (Input.) Callback for when there is no categories or checkpoint.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
@@ -36,10 +36,11 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
                 function (result) {
                   scope.categories = result.categories;
                 });
-            } else if (!scope.reqInProgress) {
-              console.log('im calling');
-              scope.reqInProgress = true;
-              $rootScope.$broadcast('get op categories no checkpoint', scope.index);
+            } else {
+              scope.categoriesCallback().then(
+                function (result) {
+                  scope.categories = result.categories;
+                });
             }
           }
           scope.editMode = true;

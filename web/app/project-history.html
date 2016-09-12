@@ -107,7 +107,7 @@
         step="step"
         discard-changes="discardChanges()"
         discard-step="discard(step)"
-        index="$index">
+        categories-callback="categoriesCallback($index)">
       </operation-toolbox>
       <project-history-adder
         ng-hide="localChanges || !step.editable"
