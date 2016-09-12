@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 '''Generates configuration template files from AsciiDoc sources.
 
 The idea is that this way the same documentation can be present in the file, and also in the
