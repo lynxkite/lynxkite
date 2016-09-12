@@ -29,7 +29,6 @@ function(util, $timeout, removeOptionalDefaults) {
             setupHistoryStep(i);
           }
         }
-        console.log('updtd');
       }
       function setupHistoryStep(i) {
         var history = scope.history;
@@ -286,23 +285,13 @@ function(util, $timeout, removeOptionalDefaults) {
         };
       }
 
-      scope.$on(
-        'get op categories no checkpoint',
-        function(event, index){
-          console.log('ops');
-          console.log(event);
+      scope.categoriesCallback = function(index) {
           var altHist = alternateHistory();
           var totalRealHistoryLength = scope.history.steps.length - altHist.requests.length;
           var required = index - totalRealHistoryLength;
           altHist.requests = altHist.requests.slice(0, required + 1);
-          console.log(altHist);
-//          var req = util.nocache('/ajax/getOPCategories', altHist);
-//          req.then(
-//            function (result) {
-//              console.log(result);
-//              console.log(index);
-//          });
-      });
+          return util.get('/ajax/getOPCategories', altHist);
+      };
 
       function toGroovyId(name) {
         return name

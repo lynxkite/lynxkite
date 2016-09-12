@@ -226,8 +226,8 @@ case class AlternateHistory(
   startingPoint: String, // The checkpoint where to start to apply requests below.
   requests: List[SubProjectOperation])
 case class OpCategoriesRequest(
-                            startingPoint: String,
-                            operations: Option[List[SubProjectOperation]])
+  startingPoint: String,
+  requests: Option[List[SubProjectOperation]])
 case class SaveHistoryRequest(
   oldProject: String, // Old project is used to copy ProjectFrame level metadata.
   newProject: String,
@@ -491,7 +491,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     iteration: Int = 1): Stream[(RootProjectState, ProjectHistoryStep)] = {
     if (operations.isEmpty) Stream()
     else {
-      println(start.checkpoint)
       val (nextState, step) = historyStep(user, start, operations.head, None, rootCheckpoint, iteration)
       (nextState, step) #:: extendedHistory(user, nextState, operations.tail, rootCheckpoint, iteration + 1)
     }
@@ -554,14 +553,19 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   def getOpCategories(user: serving.User,
-    println(request)
-    val root: RootProjectState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
-    val startStateRootViewer = new RootProjectViewer(root)
-    val opreq: SubProjectOperation = root.lastOperationRequest.get
-    val context = Operation.Context(user,
-      startStateRootViewer.offspringViewer(opreq.path))
-    OPCategories(opCategoriesForRequest(ops, context, opreq))
                       request: OpCategoriesRequest): OpCategories = {
+    val rootState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
+
+    val currentState = request.requests match {
+      case Some(requests) =>
+        extendedHistory(user, rootState, requests, rootState.checkpoint.getOrElse("")).last._1
+      case None => rootState
+    }
+
+    val viewer = new RootProjectViewer(currentState)
+    val op = currentState.lastOperationRequest.getOrElse(request.requests.get.head)
+    val context = Operation.Context(user, viewer.offspringViewer(op.path))
+    OpCategories(opCategoriesForRequest(ops, context, op))
   }
 
   // Tries to execute the requested operation on the project.
