@@ -20,6 +20,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
       step: '=',  // (Input.) If historyMode is true, this is the history step of the operation.
       discardStep: '&', // (Method.) For manipulating history.
       discardChanges: '&', // (Method.) For manipulating history.
+      index: '=' // (Input.) Index of step in history.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
@@ -27,11 +28,19 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
       if (scope.historyMode) {
         scope.enterEditMode = function() {
           if (!scope.categories) {
-          var req = util.nocache('/ajax/getOPCategories', { checkpoint: scope.step.checkpoint});
-          req.then(
-            function (result) {
-              scope.categories = result.categories;
-            });
+            if (scope.step.checkpoint) {
+              var req = util.nocache(
+                '/ajax/getOPCategories', { startingPoint: scope.step.checkpoint});
+              scope.reqInProgress = true;
+              req.then(
+                function (result) {
+                  scope.categories = result.categories;
+                });
+            } else if (!scope.reqInProgress) {
+              console.log('im calling');
+              scope.reqInProgress = true;
+              $rootScope.$broadcast('get op categories no checkpoint', scope.index);
+            }
           }
           scope.editMode = true;
           $rootScope.$broadcast('close all other history toolboxes', scope);
