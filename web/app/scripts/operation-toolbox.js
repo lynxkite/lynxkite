@@ -29,7 +29,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
         scope.enterEditMode = function() {
           if (!scope.categories) {
             if (scope.step.checkpoint) {
-              var req = util.nocache(
+              var req = util.get(
                 '/ajax/getOPCategories', { startingPoint: scope.step.checkpoint});
               scope.reqInProgress = true;
               req.then(
@@ -122,7 +122,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
 
         if (op.color) {
           scope.opColor = op.color;
-            return;
+          return;
         }
 
         for (var i = 0; i < scope.categories.length; ++i) {
@@ -131,6 +131,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
             scope.opColor = cat.color;
             return;
           }
+          console.error('Could not find category for', op.id);
         }
       });
 
@@ -167,8 +168,6 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
         }
       };
       scope.searchClicked = function() {
-      console.log(scope.opMeta);
-      console.log(scope.categories);
         if (scope.searching) {
           scope.searching = undefined;
           scope.op = undefined;
