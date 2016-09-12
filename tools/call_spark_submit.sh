@@ -22,8 +22,6 @@ popd > /dev/null
 
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
-export KITE_RANDOM_SECRET=$(python -c \
-  'import random, string; print("".join(random.choice(string.ascii_letters) for i in range(32)))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
 export KITE_LOG_DIR=${log_dir}
@@ -48,14 +46,12 @@ randomString () {
     echo "${RND1}${RND2}"
 }
 
-if [ "$KITE_USE_APPLICATION_SECRET" ]; then
+if [ -n "$KITE_USE_APPLICATION_SECRET" ]; then
     SEC=$(randomString)
     KITE_APPLICATION_SECRET="SECRET(${SEC})"
 else
     KITE_APPLICATION_SECRET=""
 fi
-
-echo "Application secret: $KITE_APPLICATION_SECRET"
 
 addJPropIfNonEmpty () {
   if [ -n "$2" ]; then
@@ -198,7 +194,7 @@ startKite () {
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
   fi
-  export KITE_READY_PIPE=/tmp/kite_pipe_${KITE_RANDOM_SECRET}
+  export KITE_READY_PIPE=/tmp/kite_pipe_$(randomString)
   mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   PID=$!
