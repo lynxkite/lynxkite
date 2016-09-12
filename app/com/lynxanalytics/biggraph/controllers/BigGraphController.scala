@@ -225,9 +225,9 @@ case class HistoryRequest(project: String)
 case class AlternateHistory(
   startingPoint: String, // The checkpoint where to start to apply requests below.
   requests: List[SubProjectOperation])
-case class GetOpcategories(
-  startingPoint: String,
-  requests: Option[List[SubProjectOperation]])
+case class OpCategoriesRequest(
+                            startingPoint: String,
+                            operations: Option[List[SubProjectOperation]])
 case class SaveHistoryRequest(
   oldProject: String, // Old project is used to copy ProjectFrame level metadata.
   newProject: String,
@@ -241,7 +241,7 @@ case class ProjectHistoryStep(
   opMeta: Option[FEOperationMeta],
   checkpoint: Option[String])
 
-case class OPCategories(categories: List[OperationCategory])
+case class OpCategories(categories: List[OperationCategory])
 
 case class SaveWorkflowRequest(
   workflowName: String,
@@ -554,7 +554,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   def getOpCategories(user: serving.User,
-                      request: GetOpcategories): OPCategories = {
     println(request)
     val root: RootProjectState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
     val startStateRootViewer = new RootProjectViewer(root)
@@ -562,6 +561,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val context = Operation.Context(user,
       startStateRootViewer.offspringViewer(opreq.path))
     OPCategories(opCategoriesForRequest(ops, context, opreq))
+                      request: OpCategoriesRequest): OpCategories = {
   }
 
   // Tries to execute the requested operation on the project.

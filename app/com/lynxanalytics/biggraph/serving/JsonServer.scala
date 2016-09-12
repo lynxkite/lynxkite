@@ -266,7 +266,7 @@ object FrontendJson {
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
   implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
   implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
-  implicit val rGetOpCategories = json.Json.reads[GetOpcategories]
+  implicit val rGetOpCategories = json.Json.reads[OpCategoriesRequest]
   implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
   implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
   implicit val rWorkflowRequest = json.Json.reads[WorkflowRequest]
@@ -282,7 +282,7 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
-  implicit val wOPCategories = json.Json.writes[OPCategories]
+  implicit val wOPCategories = json.Json.writes[OpCategories]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
