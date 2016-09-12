@@ -266,6 +266,7 @@ object FrontendJson {
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
   implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
   implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
+  implicit val rGetOpCategories = json.Json.reads[GetOpcategories]
   implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
   implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
   implicit val rWorkflowRequest = json.Json.reads[WorkflowRequest]
@@ -390,7 +391,7 @@ object ProductionJsonServer extends JsonServer {
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
-  def getOPCategories = jsonGet(bigGraphController.getOPCategories)
+  def getOPCategories = jsonGet(bigGraphController.getOpCategories)
   def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
