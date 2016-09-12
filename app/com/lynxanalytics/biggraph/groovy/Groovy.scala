@@ -6,8 +6,8 @@ import groovy.lang.{ Binding, GroovyShell }
 import org.apache.spark
 import org.kohsuke.groovy.sandbox
 import play.api.libs.json
-import scala.collection.JavaConversions
 
+import scala.collection.JavaConversions
 import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
@@ -16,6 +16,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.table
+
+import scala.concurrent.{ Await, duration }
 
 object GroovyContext {
   def runScript(scriptFileName: String, params: (String, String)*): Unit = {
@@ -450,7 +452,7 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
       count = count,
       filters = Seq())
     val res = drawing.getCenter(ctx.user, req)
-    res.centers
+    Await.result(res, duration.Duration.Inf).centers
   }
 
   // Intended for testing only.
@@ -494,7 +496,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
       sampleSize = if (precise) -1 else 50000)
     val res = drawing.getHistogram(ctx.user, req)
     import com.lynxanalytics.biggraph.serving.FrontendJson._
-    json.Json.toJson(res).toString
+    json.Json.toJson(Await.result(res, duration.Duration.Inf)).toString
   }
 }
 

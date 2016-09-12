@@ -10,4 +10,4 @@ size: {"labelType":"between","labels":["3.00","3.00"],"sizes":[16237]}
 !vertex_count_delta: 0
 !nonEmpty: 16237
 !coverage: 36879
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/find_infocom_communities.groovy, took 135 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/find_infocom_communities.groovy, took 131 seconds

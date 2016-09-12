@@ -1,7 +1,7 @@
 // Tests the "Import segmentation links" operation
 
 
-/// REQUIRE_SCRIPT create_segmentation_from_sql.groovy
+/// REQUIRE_SCRIPT define_segmentation_links_from_matching_attributes.groovy
 
 name = 'create_segmentation_from_sql_result'
 

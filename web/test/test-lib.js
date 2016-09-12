@@ -317,8 +317,9 @@ Side.prototype = {
   },
 
   expectSqlResult: function(header, rows) {
-    expect(this.sqlEditor().evaluate('result.header')).toEqual(header);
-    expect(this.sqlEditor().evaluate('result.data')).toEqual(rows);
+    var res = this.side.$('#sql-result');
+    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   startSqlSaving: function() {
@@ -594,7 +595,7 @@ Selector.prototype = {
     var table = this.table(name);
     // Look up the number of rows shown inside a <value>
     // element.
-    return expect(table.$('value').getText()).toEqual(n.toString);
+    return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
   openNewProject: function(name) {
@@ -631,12 +632,15 @@ Selector.prototype = {
     this.clickAndWaitForCsvImport();
   },
 
-  importJDBC: function(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn) {
+  importJDBC: function(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn, view) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
     this.root.$('#datatype select option[value="jdbc"]').click();
     this.root.$('#jdbc-url input').sendKeys(jdbcUrl);
     this.root.$('#jdbc-table input').sendKeys(jdbcTable);
     this.root.$('#jdbc-key-column input').sendKeys(jdbcKeyColumn);
+    if (view) {
+      this.root.$('import-wizard #as-view input').click();
+    }
     this.root.$('#import-jdbc-button').click();
   },
 
