@@ -16,12 +16,12 @@ object Assets extends Controller {
   }
 
   def notFound(request: Request[AnyContent]) = {
-    val static = java.nio.file.Paths.get("./static").toAbsolutePath
-    val resource = java.nio.file.Paths.get("./static" + request.path).toAbsolutePath
-    val valid = resource.startsWith(static)
-    if (valid && resource.toFile.exists) {
+    val static = new java.io.File("./static").getCanonicalPath
+    val requested = new java.io.File("./static/" + request.path).getCanonicalPath
+    val file = new java.io.File(requested)
+    if (requested.startsWith(static) && file.exists) {
       // Send file from ./static if it exists.
-      Ok.sendFile(resource.toFile)
+      Ok.sendFile(file)
     } else {
       // Redirect e.g. /project/x to /#/project/x.
       // Absolutely bogus URLs get redirected then to the main page by Angular.
