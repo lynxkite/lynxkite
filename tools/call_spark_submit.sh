@@ -52,8 +52,6 @@ if [ -n "$KITE_APPLICATION_SECRET" ]; then
   KITE_APPLICATION_SECRET="SECRET(${KITE_APPLICATION_SECRET})"
 fi
 
-# DO NOT SUBMIT
-echo "Secret: $KITE_APPLICATION_SECRET"
 
 addJPropIfNonEmpty () {
   if [ -n "$2" ]; then
