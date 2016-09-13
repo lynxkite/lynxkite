@@ -584,11 +584,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val op = ops.opById(context, request.op.id)
 
-    val category = opCategoriesForRequest(ops, context, request)
-      .find(cat => cat.ops.exists(catOp => catOp.id == request.op.id))
-
-    val opMeta = category.flatMap(_.ops.find(_.id == request.op.id))
-      .map(f => f.copy(color = category.map(_.color)))
+    val opMeta: Option[FEOperationMeta] = Some(op.toFE.copy(color = Some(op.category.color)))
 
     // Remove parameters from the request that no longer exist.
     val restrictedRequest = {
