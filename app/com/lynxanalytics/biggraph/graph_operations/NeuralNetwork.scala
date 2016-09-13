@@ -305,7 +305,7 @@ case class NeuralNetwork(
                     case (id, state) =>
                       id -> (state(0) - trueState(id)(0))
                   }
-                  val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum / vertices.size
+                  val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
                   //Decrease weight and predict with it.
                   val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
                   val outputsWithDecreased = forwardPass(
@@ -315,7 +315,7 @@ case class NeuralNetwork(
                     case (id, state) =>
                       id -> (state(0) - trueState(id)(0))
                   }
-                  val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum / vertices.size
+                  val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
                   val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
                   (s"$name $row $col", gradient)
                 }
