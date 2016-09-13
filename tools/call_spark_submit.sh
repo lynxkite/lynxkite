@@ -46,6 +46,7 @@ randomString () {
 
 if [ -n "$KITE_USE_APPLICATION_SECRET" ]; then
     SEC=$(randomString)
+    # SECRET(secret_string) is converted to *** when logged.
     KITE_APPLICATION_SECRET="SECRET(${SEC})"
 else
     KITE_APPLICATION_SECRET=""

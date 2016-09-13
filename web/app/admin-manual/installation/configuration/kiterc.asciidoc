@@ -175,7 +175,7 @@ Options needed if you want to use authentication and HTTPS.
 Just use the following configurations with default values for a simple, fake certificate setup.
 
 ===========================================================
-An application secret will be used by Play! framework for various tasks, such as signing cookies and
+An application secret will be used by the Play! framework for various tasks, such as signing cookies and
 encryption, if the flag below is enabled. More details can be found
 https://playframework.com/documentation/latest/ApplicationSecret[here].
 ```
