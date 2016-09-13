@@ -1,7 +1,7 @@
 // The toolbox shows the list of operation categories and the operations.
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function($rootScope, util) {
+angular.module('biggraph').directive('operationToolbox', function($rootScope) {
   return {
     restrict: 'E',
     // A lot of internals are exposed, because this directive is used both in
@@ -28,20 +28,10 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ut
       if (scope.historyMode) {
         scope.enterEditMode = function() {
           if (!scope.categories) {
-            if (scope.step.checkpoint) {
-              var req = util.get(
-                '/ajax/getOPCategories', { startingPoint: scope.step.checkpoint});
-              scope.reqInProgress = true;
-              req.then(
-                function (result) {
-                  scope.categories = result.categories;
-                });
-            } else {
-              scope.categoriesCallback().then(
-                function (result) {
-                  scope.categories = result.categories;
-                });
-            }
+            scope.categoriesCallback().then(
+              function (result) {
+                scope.categories = result.categories;
+            });
           }
           scope.editMode = true;
           $rootScope.$broadcast('close all other history toolboxes', scope);

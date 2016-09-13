@@ -10,7 +10,6 @@ import com.lynxanalytics.biggraph.frontend_operations.{ OperationParams, Operati
 import com.lynxanalytics.biggraph.graph_operations
 import java.util.regex.Pattern
 
-import com.lynxanalytics.biggraph.serving.RemoteAPIProtocol.CheckpointRequest
 import com.lynxanalytics.biggraph.serving.User
 import play.api.libs.json
 
@@ -225,9 +224,6 @@ case class HistoryRequest(project: String)
 case class AlternateHistory(
   startingPoint: String, // The checkpoint where to start to apply requests below.
   requests: List[SubProjectOperation])
-case class OpCategoriesRequest(
-  startingPoint: String,
-  requests: Option[List[SubProjectOperation]])
 case class SaveHistoryRequest(
   oldProject: String, // Old project is used to copy ProjectFrame level metadata.
   newProject: String,
@@ -553,17 +549,17 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   def getOpCategories(user: serving.User,
-                      request: OpCategoriesRequest): OpCategories = {
-    val rootState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
+                      history: AlternateHistory): OpCategories = {
+    val rootState = metaManager.checkpointRepo.readCheckpoint(history.startingPoint)
 
-    val currentState = request.requests match {
-      case Some(requests) =>
-        extendedHistory(user, rootState, requests, rootState.checkpoint.getOrElse("")).last._1
-      case None => rootState
+    val currentState = if (history.requests.nonEmpty) {
+      extendedHistory(user, rootState, history.requests, rootState.checkpoint.get).last._1
+    } else {
+      rootState
     }
 
     val viewer = new RootProjectViewer(currentState)
-    val op = currentState.lastOperationRequest.getOrElse(request.requests.get.head)
+    val op = currentState.lastOperationRequest.getOrElse(history.requests.head)
     val context = Operation.Context(user, viewer.offspringViewer(op.path))
     OpCategories(opCategoriesForRequest(ops, context, op))
   }
