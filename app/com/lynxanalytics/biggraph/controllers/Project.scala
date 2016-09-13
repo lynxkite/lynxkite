@@ -28,6 +28,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
 
@@ -429,7 +430,7 @@ class CheckpointRepository(val baseDir: String) {
     }
   }
 
-  val cache = mutable.WeakHashMap[String, RootProjectState]()
+  val cache = new SoftHashMap[String, RootProjectState]()
   def readCheckpoint(checkpoint: String): RootProjectState = {
     if (checkpoint == "") {
       CheckpointRepository.startingState

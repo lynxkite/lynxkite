@@ -290,7 +290,7 @@ function(util, $timeout, removeOptionalDefaults) {
           var totalRealHistoryLength = scope.history.steps.length - altHist.requests.length;
           var required = index - totalRealHistoryLength;
           altHist.requests = altHist.requests.slice(0, required + 1);
-          return util.get('/ajax/getOPCategories', altHist);
+          return util.get('/ajax/getOpCategories', altHist);
       };
 
       function toGroovyId(name) {
