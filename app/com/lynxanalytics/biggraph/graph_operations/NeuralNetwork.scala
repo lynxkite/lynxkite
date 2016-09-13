@@ -124,7 +124,9 @@ case class NeuralNetwork(
               maxTrainingVertices, minTrainingVertices, random.nextInt)
           val (net, weights, grads, trueState, initialState) = train(trainingVertices, trainingEdgeLists, trainingData,
             previous, iterationsInTraining)
-          gradientCheck(trainingVertices, trainingEdgeLists, trueState, initialState, initialNetwork, weights, grads)
+          if (!gradientCheck(trainingVertices, trainingEdgeLists, trueState, initialState, initialNetwork, weights, grads)) {
+            println("Gradient check failed.")
+          }
           net
         })
     }
@@ -212,7 +214,7 @@ case class NeuralNetwork(
     edges: Map[ID, Seq[ID]],
     data: Seq[(ID, (Option[Double], Array[Double]))],
     startingNetwork: neural.Network,
-    iterations: Int): Tuple5[neural.Network, ListBuffer[Map[String, neural.DoubleMatrix]], ListBuffer[Map[String, neural.DoubleMatrix]], neural.GraphData, neural.GraphData] = {
+    iterations: Int): Tuple5[neural.Network, List[Map[String, neural.DoubleMatrix]], List[Map[String, neural.DoubleMatrix]], neural.GraphData, neural.GraphData] = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
     val weightsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
@@ -271,7 +273,7 @@ case class NeuralNetwork(
       network = updated._1
       gradientsForGradientCheck += updated._2
     }
-    Tuple5(network, weightsForGradientCheck, gradientsForGradientCheck, trueState, initialState)
+    Tuple5(network, weightsForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialState)
   }
 
   def gradientCheck(
@@ -280,15 +282,16 @@ case class NeuralNetwork(
     trueState: neural.GraphData,
     initialState: neural.GraphData,
     initialNetwork: neural.Network,
-    weights: ListBuffer[Map[String, neural.DoubleMatrix]],
-    gradients: ListBuffer[Map[String, neural.DoubleMatrix]]): Unit = {
+    weights: List[Map[String, neural.DoubleMatrix]],
+    gradients: List[Map[String, neural.DoubleMatrix]]): Boolean = {
     val epsilon = 1e-5
+    val threshold = 1e-2
     implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
-    val realGradients = weights.map { w =>
+    //Approximate the derivatives.
+    val approximatedGradients = weights.map { w =>
       {
         w.map {
           case (name, values) => {
-            // println(name)
             val rows = values.rows
             val cols = values.cols
             (0 until rows).map { row =>
@@ -316,16 +319,17 @@ case class NeuralNetwork(
                       id -> (state(0) - trueState(id)(0))
                   }
                   val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum / vertices.size
-                  // println((errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon))
-                  (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
+                  val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
+                  (s"$name $row $col", gradient)
                 }
               }
             }.flatten
           }
         }.flatten
-      }
+      }.toMap
     }
-    val flattenGradients = gradients.map { g =>
+    // Gradients calculated with bacpropagation.
+    val backPropGradients = gradients.map { g =>
       {
         g.map {
           case (name, values) => {
@@ -334,14 +338,35 @@ case class NeuralNetwork(
             (0 until rows).map { row =>
               (0 until cols).map { col =>
                 {
-                  values(row, col)
+                  (s"$name $row $col", values(row, col))
                 }
               }
-            }
+            }.flatten
           }
-        }
-      }
+        }.flatten
+      }.toMap
     }
+
+    var gradientsOK = true
+    val relativeErrors = (0 until approximatedGradients.length).map { i =>
+      {
+        approximatedGradients(i).map {
+          case (name, value) =>
+            val otherValue = backPropGradients(i)(name)
+            val relativeError = {
+              if (value != otherValue) {
+                math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
+              } else 0
+            }
+            if (relativeError > threshold) {
+              gradientsOK = false
+            }
+            (name, relativeError)
+        }
+      }.toMap
+    }
+    // println(relativeErrors)
+    gradientsOK
   }
 
   def predict(
