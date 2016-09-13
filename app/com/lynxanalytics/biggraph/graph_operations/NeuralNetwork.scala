@@ -12,8 +12,6 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.math3.random.MersenneTwister
 
-import scala.collection.mutable.ListBuffer
-
 object NeuralNetwork extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
     val vertices = vertexSet
@@ -124,7 +122,7 @@ case class NeuralNetwork(
               maxTrainingVertices, minTrainingVertices, random.nextInt)
           val (net, weights, grads, trueState, initialState) = train(trainingVertices, trainingEdgeLists, trainingData,
             previous, iterationsInTraining)
-          if (!gradientCheck(trainingVertices, trainingEdgeLists, trueState, initialState, initialNetwork, weights, grads)) {
+          if (!gradientCheck(trainingVertices, trainingEdgeLists, trueState, initialState, previous, weights, grads)) {
             println("Gradient check failed.")
           }
           net
@@ -217,8 +215,8 @@ case class NeuralNetwork(
     iterations: Int): Tuple5[neural.Network, List[Map[String, neural.DoubleMatrix]], List[Map[String, neural.DoubleMatrix]], neural.GraphData, neural.GraphData] = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
-    val weightsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
-    val gradientsForGradientCheck = new ListBuffer[Map[String, neural.DoubleMatrix]]
+    val weightsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
+    val gradientsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val trueState = getTrueState(data)
     val initialState = if (!hideState) trueState else trueState.map {
       // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
@@ -254,8 +252,7 @@ case class NeuralNetwork(
           (numberOfKnown + numberOfForgotten) / (numberOfKnown * knownLabelWeight + numberOfForgotten)
         } else 1
       }
-      val size = vertices.size
-      val errorTotal = errors.values.map(e => e * e).sum / size
+      val errorTotal = errors.values.map(e => e * e).sum / vertices.size
       log.info(s"Total error in iteration $i: $errorTotal")
       val finalGradient: neural.GraphData = errors.map {
         case (id, error) =>
@@ -302,7 +299,7 @@ case class NeuralNetwork(
                   //Increase weigth and predict with it.
                   val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
                   val outputsWithIncreased = forwardPass(
-                    vertices, edges, initialState, initialState,
+                    vertices, edges, trueState, initialState,
                     initialNetwork.copy(weights = partialIncreasedWeights))
                   val errorsWithIncreased = outputsWithIncreased.last("new state").map {
                     case (id, state) =>
@@ -312,7 +309,7 @@ case class NeuralNetwork(
                   //Decrease weight and predict with it.
                   val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
                   val outputsWithDecreased = forwardPass(
-                    vertices, edges, initialState, initialState,
+                    vertices, edges, trueState, initialState,
                     initialNetwork.copy(weights = partialDecreasedWeights))
                   val errorsWithDecreased = outputsWithDecreased.last("new state").map {
                     case (id, state) =>
@@ -382,7 +379,7 @@ case class NeuralNetwork(
       case (id, state) => id -> blanked(state)
     }
 
-    val outputs = forwardPass(vertices, edges, initialState, initialState, network)
+    val outputs = forwardPass(vertices, edges, trueState, initialState, network)
     outputs.last("new state").map {
       case (id, state) => id -> state(0)
     }.iterator
