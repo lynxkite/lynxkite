@@ -41,9 +41,7 @@ if [ -f "${KITE_SITE_CONFIG_OVERRIDES}" ]; then
 fi
 
 randomString () {
-    RND1=`cat /dev/urandom | od -x --address-radix=n | head -n1 | tr -d " "`
-    RND2=`cat /dev/urandom | od -x --address-radix=n | head -n1 | tr -d " "`
-    echo "${RND1}${RND2}"
+    echo `cat /dev/urandom | od -x --read-bytes=16  --address-radix=n | tr -d " \n"`
 }
 
 if [ -n "$KITE_USE_APPLICATION_SECRET" ]; then
