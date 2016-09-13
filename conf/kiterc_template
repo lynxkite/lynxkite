@@ -123,10 +123,11 @@ export KITE_EXTRA_JARS=
 # Just use the following configurations with default values for a simple, fake certificate setup.
 
 # ===========================================================
-# An application secret will be used by the Play! framework for various tasks, such as signing cookies and
-# encryption, if the flag below is enabled. More details can be found
+# Application secret used by Play! framework for various tasks, such as signing cookies and
+# encryption. Setting this to <random> will regenerate a secret key at each restart.
+# More details can be found
 # here (https://playframework.com/documentation/latest/ApplicationSecret).
-# export KITE_USE_APPLICATION_SECRET=1
+# export KITE_APPLICATION_SECRET='<random>'
 
 # Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 # export KITE_HTTPS_PORT=2201
