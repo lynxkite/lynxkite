@@ -197,11 +197,11 @@ case class NeuralNetwork(
   def forwardPass(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    keptState: neural.GraphData,
-    initialState: neural.GraphData,
+    neighborsState: neural.GraphData,
+    ownState: neural.GraphData,
     network: neural.Network): Seq[neural.GateValues] = {
     (1 until radius).scanLeft {
-      network.forward(vertices, edges, keptState, "state" -> initialState)
+      network.forward(vertices, edges, neighborsState, "state" -> ownState)
     } { (previous, r) =>
       network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
     }
