@@ -44,13 +44,16 @@ randomString () {
     echo `cat /dev/urandom | od -x --read-bytes=16  --address-radix=n | tr -d " \n"`
 }
 
-if [ -n "$KITE_USE_APPLICATION_SECRET" ]; then
-    SEC=$(randomString)
-    # SECRET(secret_string) is converted to *** when logged.
-    KITE_APPLICATION_SECRET="SECRET(${SEC})"
-else
-    KITE_APPLICATION_SECRET=""
+if [ -n "$KITE_APPLICATION_SECRET" ]; then
+  if [ "$KITE_APPLICATION_SECRET" == "<random>" ]; then
+    KITE_APPLICATION_SECRET=$(randomString)
+  fi
+  # SECRET(secret_string) is converted to *** when logged.
+  KITE_APPLICATION_SECRET="SECRET(${KITE_APPLICATION_SECRET})"
 fi
+
+# DO NOT SUBMIT
+echo "Secret: $KITE_APPLICATION_SECRET"
 
 addJPropIfNonEmpty () {
   if [ -n "$2" ]; then
