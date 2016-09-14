@@ -194,7 +194,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     validator: controllers.DirectoryEntry => Boolean): CheckpointResponse = {
     val entry = controllers.DirectoryEntry.fromName(request.name)
     assert(entry.exists, s"Entry '$entry' does not exist.")
-    assert(validator(entry), "Invalid frame type for '$entry'.")
+    assert(validator(entry), s"Invalid frame type for '$entry'.")
     val frame = entry.asObjectFrame
     frame.assertReadAllowedFrom(user)
     CheckpointResponse(frame.checkpoint)
