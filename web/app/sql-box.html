@@ -14,6 +14,10 @@ instead of ng-model="sql" -->
   ng-model="$parent.sql"></div>
 
 <div>
+  <input class="form-control ng-pristine ng-valid ng-touched"
+    id="max-rows"
+    ng-model="maxRows"
+    placeholder="number of rows to show">
   <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
   <button class="btn btn-primary"
     ng-disabled="showExportOptions"
