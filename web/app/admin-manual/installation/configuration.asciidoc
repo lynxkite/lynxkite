@@ -48,6 +48,11 @@ you have to enable HTTPS (see next section). To securely set up user authenticat
 - Restart LynxKite with authentication. Confirm that user credentials are now required for login.
 - You can now make LynxKite externally accessible.
 
+In addition to this, LynxKite can be authenticated using a remote LDAP service. LDAP authenticated
+users will always be non-administrators. Regular LynxKite and LDAP user authentication can coexist.
+The details of setting up LDAP authentication are specified in the
+<<ldap-authentication,LDAP authentication section>> of the `.kiterc` chapter.
+
 ### Access control setup
 
 After the users are created, HDFS/Linux directory level access control can be enabled
