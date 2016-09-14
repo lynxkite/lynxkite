@@ -167,6 +167,7 @@ EOF
     sudo chmod a+rwx /tasks_data
   '''.format(num_executors=args.emr_instance_count - 1))
 
+
 def config_aws_s3_native(cluster):
   cluster.ssh('''
     cd /mnt/lynx
@@ -183,6 +184,7 @@ EOF
     export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
 EOF
   ''')
+
 
 def start_supervisor_native(cluster):
   cluster.ssh_nohup('''
