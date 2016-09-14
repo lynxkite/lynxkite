@@ -124,9 +124,10 @@ export KITE_EXTRA_JARS=
 
 # ===========================================================
 # Application secret used by Play! framework for various tasks, such as signing cookies and
-# encryption. More details can be found
+# encryption. Setting this to <random> will regenerate a secret key at each restart.
+# More details can be found
 # here (https://playframework.com/documentation/latest/ApplicationSecret).
-# export KITE_APPLICATION_SECRET=${KITE_RANDOM_SECRET}
+# export KITE_APPLICATION_SECRET='<random>'
 
 # Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 # export KITE_HTTPS_PORT=2201
