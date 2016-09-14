@@ -3255,7 +3255,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             subgraphsInTraining = params("subgraphsInTraining").toInt,
             numberOfTrainings = params("numberOfTrainings").toInt,
             knownLabelWeight = params("knownLabelWeight").toDouble,
-            seed = params("seed").toInt)
+            seed = params("seed").toInt,
+            gradientCheckOn = false)
           op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
         }
         project.vertexAttributes(params("output")) = prediction
