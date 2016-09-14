@@ -38,7 +38,8 @@ object NeuralNetwork extends OpFromJson {
     (j \ "subgraphsInTraining").as[Int],
     (j \ "numberOfTrainings").as[Int],
     (j \ "knownLabelWeight").as[Double],
-    (j \ "seed").as[Int])
+    (j \ "seed").as[Int],
+    (j \ "gradientCheckOn").as[Boolean])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -55,7 +56,8 @@ case class NeuralNetwork(
     subgraphsInTraining: Int,
     numberOfTrainings: Int,
     knownLabelWeight: Double,
-    seed: Int) extends TypedMetaGraphOp[Input, Output] {
+    seed: Int,
+    gradientCheckOn: Boolean) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -72,13 +74,13 @@ case class NeuralNetwork(
     "subgraphsInTraining" -> subgraphsInTraining,
     "numberOfTrainings" -> numberOfTrainings,
     "knownLabelWeight" -> knownLabelWeight,
-    "seed" -> seed)
+    "seed" -> seed,
+    "gradientCheckOn" -> gradientCheckOn)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-
     implicit val id = inputDatas
     val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
     val edges: Seq[Edge] = inputs.edges.rdd.values.collect
@@ -122,8 +124,10 @@ case class NeuralNetwork(
               maxTrainingVertices, minTrainingVertices, random.nextInt)
           val (net, dataForGradientCheck) = train(trainingVertices, trainingEdgeLists, trainingData,
             previous, iterationsInTraining)
-          if (!gradientCheck(trainingVertices, trainingEdgeLists, previous, dataForGradientCheck)) {
-            println("Gradient check failed.")
+          if (gradientCheckOn) {
+            if (!NeuralNetworkDebugging.gradientCheck(trainingVertices, trainingEdgeLists, previous, dataForGradientCheck)) {
+              println("Gradient check failed.")
+            }
           }
           net
         })
@@ -207,18 +211,12 @@ case class NeuralNetwork(
     }
   }
 
-  case class DataForGradientCheck(
-    weights: List[Map[String, neural.DoubleMatrix]],
-    gradients: List[Map[String, neural.DoubleMatrix]],
-    trueState: neural.GraphData,
-    initialStates: List[neural.GraphData])
-
   def train(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     data: Seq[(ID, (Option[Double], Array[Double]))],
     startingNetwork: neural.Network,
-    iterations: Int): (neural.Network, DataForGradientCheck) = {
+    iterations: Int): (neural.Network, NeuralNetworkDebugging.DataForGradientCheck) = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
     val weightsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
@@ -278,81 +276,7 @@ case class NeuralNetwork(
       network = updated._1
       gradientsForGradientCheck += updated._2
     }
-    (network, DataForGradientCheck(weightsForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialStates.toList))
-  }
-
-  def gradientCheck(
-    vertices: Seq[ID],
-    edges: Map[ID, Seq[ID]],
-    initialNetwork: neural.Network,
-    data: DataForGradientCheck): Boolean = {
-    val epsilon = 1e-5
-    val threshold = 1e-2
-    implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
-    val trueState = data.trueState
-    val initialState = data.initialStates(0) //now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
-    val weights = data.weights
-    val gradients = data.gradients
-    //Approximate the derivatives.
-    val approximatedGradients = weights.map { w =>
-      w.flatMap {
-        case (name, values) =>
-          val rows = values.rows
-          val cols = values.cols
-          for (row <- 0 until rows; col <- 0 until cols) yield {
-            val epsilonMatrix = DenseMatrix.zeros[Double](rows, cols)
-            epsilonMatrix(row, col) = epsilon
-            //Increase weigth and predict with it.
-            val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
-            val outputsWithIncreased = forwardPass(
-              vertices, edges, trueState, initialState,
-              initialNetwork.copy(weights = partialIncreasedWeights))
-            val errorsWithIncreased = outputsWithIncreased.last("new state").map {
-              case (id, state) =>
-                id -> (state(0) - trueState(id)(0))
-            }
-            val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
-            //Decrease weight and predict with it.
-            val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
-            val outputsWithDecreased = forwardPass(
-              vertices, edges, trueState, initialState,
-              initialNetwork.copy(weights = partialDecreasedWeights))
-            val errorsWithDecreased = outputsWithDecreased.last("new state").map {
-              case (id, state) =>
-                id -> (state(0) - trueState(id)(0))
-            }
-            val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
-            val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
-            (s"$name $row $col", gradient)
-          }
-      }.toMap
-    }
-    // Gradients calculated with backpropagation.
-    val backPropGradients = gradients.map { g =>
-      g.flatMap {
-        case (name, values) =>
-          val rows = values.rows
-          val cols = values.cols
-          for (row <- 0 until rows; col <- 0 until cols) yield (s"$name $row $col", values(row, col))
-      }.toMap
-    }
-
-    var gradientsOK = true
-    val relativeErrors = (0 until approximatedGradients.length).map { i =>
-      approximatedGradients(i).map {
-        case (name, value) =>
-          val otherValue = backPropGradients(i)(name)
-          val relativeError = {
-            if (value != otherValue) {
-              math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
-            } else 0
-          }
-          if (relativeError > threshold) gradientsOK = false
-          (name, relativeError)
-      }.toMap
-    }
-    println(relativeErrors)
-    gradientsOK
+    (network, NeuralNetworkDebugging.DataForGradientCheck(weightsForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialStates.toList))
   }
 
   def predict(
@@ -372,5 +296,87 @@ case class NeuralNetwork(
     outputs.last("new state").map {
       case (id, state) => id -> state(0)
     }.iterator
+  }
+
+  object NeuralNetworkDebugging extends Serializable {
+    def gradientCheck(
+      vertices: Seq[ID],
+      edges: Map[ID, Seq[ID]],
+      initialNetwork: neural.Network,
+      data: DataForGradientCheck): Boolean = {
+      val epsilon = 1e-5
+      val threshold = 1e-2
+      implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
+      val trueState = data.trueState
+      val initialState = data.initialStates(0) //now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
+      val weights = data.weights
+      val gradients = data.gradients
+      //Approximate the derivatives.
+      val approximatedGradients = weights.map { w =>
+        w.flatMap {
+          case (name, values) =>
+            val rows = values.rows
+            val cols = values.cols
+            for (row <- 0 until rows; col <- 0 until cols) yield {
+              val epsilonMatrix = DenseMatrix.zeros[Double](rows, cols)
+              epsilonMatrix(row, col) = epsilon
+              //Increase weigth and predict with it.
+              val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
+              val outputsWithIncreased = forwardPass(
+                vertices, edges, trueState, initialState,
+                initialNetwork.copy(weights = partialIncreasedWeights))
+              val errorsWithIncreased = outputsWithIncreased.last("new state").map {
+                case (id, state) =>
+                  id -> (state(0) - trueState(id)(0))
+              }
+              val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
+              //Decrease weight and predict with it.
+              val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
+              val outputsWithDecreased = forwardPass(
+                vertices, edges, trueState, initialState,
+                initialNetwork.copy(weights = partialDecreasedWeights))
+              val errorsWithDecreased = outputsWithDecreased.last("new state").map {
+                case (id, state) =>
+                  id -> (state(0) - trueState(id)(0))
+              }
+              val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
+              val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
+              (s"$name $row $col", gradient)
+            }
+        }.toMap
+      }
+      // Gradients calculated with backpropagation.
+      val backPropGradients = gradients.map { g =>
+        g.flatMap {
+          case (name, values) =>
+            val rows = values.rows
+            val cols = values.cols
+            for (row <- 0 until rows; col <- 0 until cols) yield (s"$name $row $col", values(row, col))
+        }.toMap
+      }
+
+      var gradientsOK = true
+      val relativeErrors = (0 until approximatedGradients.length).map { i =>
+        approximatedGradients(i).map {
+          case (name, value) =>
+            val otherValue = backPropGradients(i)(name)
+            val relativeError = {
+              if (value != otherValue) {
+                math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
+              } else 0
+            }
+            if (relativeError > threshold) gradientsOK = false
+            (name, relativeError)
+        }.toMap
+      }
+      println(relativeErrors)
+      gradientsOK
+    }
+
+    case class DataForGradientCheck(
+      weights: List[Map[String, neural.DoubleMatrix]],
+      gradients: List[Map[String, neural.DoubleMatrix]],
+      trueState: neural.GraphData,
+      initialStates: List[neural.GraphData])
   }
 }
