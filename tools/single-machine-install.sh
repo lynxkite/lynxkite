@@ -271,10 +271,6 @@ elif type systemctl > /dev/null 2>&1; then
 ################
 # Temporary patch for cat /dev/urandom  
 # We can remove this later, but wanted to have a working script with the older releases
-    cp ${KITE_DIST_FOLDER}/bin/biggraph ${KITE_DIST_FOLDER}/bin/biggraph.beforepatch
-    cat ${KITE_DIST_FOLDER}/bin/biggraph.beforepatch | \
-     sed "/export KITE_RANDOM_SECRET=.cat \/dev\/urandom/c\export KITE_RANDOM_SECRET=\$(python -c 'import random, string; print(\"\".join(random.choice(string.ascii_letters) for i in range(32)))')" > \
-     ${KITE_DIST_FOLDER}/bin/biggraph
     chown -R ${TARGET_USER} ${KITE_DIST_FOLDER}/bin/biggraph 
     chgrp -R ${TARGET_GROUP} ${KITE_DIST_FOLDER}/bin/biggraph
 ################
