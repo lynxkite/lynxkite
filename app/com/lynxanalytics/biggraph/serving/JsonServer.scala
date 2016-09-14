@@ -306,6 +306,7 @@ object FrontendJson {
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
+  implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
   implicit val wFEUser = json.Json.writes[FEUser]
   implicit val wFEUserList = json.Json.writes[FEUserList]
@@ -443,6 +444,7 @@ object ProductionJsonServer extends JsonServer {
   val logout = userController.logout
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def changeUser = jsonPost(userController.changeUser, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
   def getUserData = jsonGet(userController.getUserData)
 
