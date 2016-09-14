@@ -212,11 +212,11 @@ The URL of the LDAP server, e.g. `ldap://localhost:389`.
 # export LDAP_URL=
 ```
 
-The authentication method, e.g. `simple` or `DIGEST-MD5` as explained
-http://docs.oracle.com/javase/jndi/tutorial/ldap/security/index.html[here] and
-http://docs.oracle.com/javase/jndi/tutorial/ldap/security/sasl.html[here].
+The authentication method, e.g. `simple` or `DIGEST-MD5` as explained in
+http://docs.oracle.com/javase/jndi/tutorial/ldap/security/index.html[the Java LDAP documentation]
+and http://docs.oracle.com/javase/jndi/tutorial/ldap/security/sasl.html[SASL documentation].
 ```
-# export LDAP_AUTHENTICATION=
+# export LDAP_AUTHENTICATION=simple
 ```
 
 The template for the principal. It must contain the word `<USERNAME>` to be substituted with the
