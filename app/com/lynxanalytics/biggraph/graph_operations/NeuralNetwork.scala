@@ -120,9 +120,9 @@ case class NeuralNetwork(
           val (trainingVertices, trainingEdgeLists, trainingData) =
             selectRandomSubgraph(data.collect.iterator, edgeLists, trainingRadius,
               maxTrainingVertices, minTrainingVertices, random.nextInt)
-          val (net, weights, grads, trueState, initialState) = train(trainingVertices, trainingEdgeLists, trainingData,
+          val (net, dataForGradientCheck) = train(trainingVertices, trainingEdgeLists, trainingData,
             previous, iterationsInTraining)
-          if (!gradientCheck(trainingVertices, trainingEdgeLists, trueState, initialState, previous, weights, grads)) {
+          if (!gradientCheck(trainingVertices, trainingEdgeLists, previous, dataForGradientCheck)) {
             println("Gradient check failed.")
           }
           net
@@ -207,21 +207,24 @@ case class NeuralNetwork(
     }
   }
 
+  case class DataForGradientCheck(
+    weights: List[Map[String, neural.DoubleMatrix]],
+    gradients: List[Map[String, neural.DoubleMatrix]],
+    trueState: neural.GraphData,
+    initialStates: List[neural.GraphData])
+
   def train(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     data: Seq[(ID, (Option[Double], Array[Double]))],
     startingNetwork: neural.Network,
-    iterations: Int): Tuple5[neural.Network, List[Map[String, neural.DoubleMatrix]], List[Map[String, neural.DoubleMatrix]], neural.GraphData, neural.GraphData] = {
+    iterations: Int): (neural.Network, DataForGradientCheck) = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
     val weightsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val gradientsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val trueState = getTrueState(data)
-    val initialState = if (!hideState) trueState else trueState.map {
-      // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
-      case (id, state) => id -> blanked(state)
-    }
+    val initialStates = scala.collection.mutable.ListBuffer[neural.GraphData]()
     for (i <- 1 to iterations) {
       val random = new util.Random(1)
       val keptState = trueState.map {
@@ -229,6 +232,11 @@ case class NeuralNetwork(
           if (random.nextDouble < forgetFraction) id -> blanked(state)
           else id -> state
       }
+      val initialState = if (!hideState) keptState else keptState.map {
+        // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
+        case (id, state) => id -> blanked(state)
+      }
+      initialStates += initialState
       val outputs = forwardPass(vertices, edges, keptState, initialState, network)
       weightsForGradientCheck += network.allWeights.toMap
       val finalOutputs = outputs.last("new state")
@@ -270,99 +278,80 @@ case class NeuralNetwork(
       network = updated._1
       gradientsForGradientCheck += updated._2
     }
-    Tuple5(network, weightsForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialState)
+    (network, DataForGradientCheck(weightsForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialStates.toList))
   }
 
   def gradientCheck(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    trueState: neural.GraphData,
-    initialState: neural.GraphData,
     initialNetwork: neural.Network,
-    weights: List[Map[String, neural.DoubleMatrix]],
-    gradients: List[Map[String, neural.DoubleMatrix]]): Boolean = {
+    data: DataForGradientCheck): Boolean = {
     val epsilon = 1e-5
     val threshold = 1e-2
     implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
+    val trueState = data.trueState
+    val initialState = data.initialStates(0) //now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
+    val weights = data.weights
+    val gradients = data.gradients
     //Approximate the derivatives.
     val approximatedGradients = weights.map { w =>
-      {
-        w.map {
-          case (name, values) => {
-            val rows = values.rows
-            val cols = values.cols
-            (0 until rows).map { row =>
-              (0 until cols).map { col =>
-                {
-                  val epsilonMatrix = DenseMatrix.zeros[Double](rows, cols)
-                  epsilonMatrix(row, col) = epsilon
-                  //Increase weigth and predict with it.
-                  val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
-                  val outputsWithIncreased = forwardPass(
-                    vertices, edges, trueState, initialState,
-                    initialNetwork.copy(weights = partialIncreasedWeights))
-                  val errorsWithIncreased = outputsWithIncreased.last("new state").map {
-                    case (id, state) =>
-                      id -> (state(0) - trueState(id)(0))
-                  }
-                  val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
-                  //Decrease weight and predict with it.
-                  val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
-                  val outputsWithDecreased = forwardPass(
-                    vertices, edges, trueState, initialState,
-                    initialNetwork.copy(weights = partialDecreasedWeights))
-                  val errorsWithDecreased = outputsWithDecreased.last("new state").map {
-                    case (id, state) =>
-                      id -> (state(0) - trueState(id)(0))
-                  }
-                  val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
-                  val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
-                  (s"$name $row $col", gradient)
-                }
-              }
-            }.flatten
+      w.flatMap {
+        case (name, values) =>
+          val rows = values.rows
+          val cols = values.cols
+          for (row <- 0 until rows; col <- 0 until cols) yield {
+            val epsilonMatrix = DenseMatrix.zeros[Double](rows, cols)
+            epsilonMatrix(row, col) = epsilon
+            //Increase weigth and predict with it.
+            val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
+            val outputsWithIncreased = forwardPass(
+              vertices, edges, trueState, initialState,
+              initialNetwork.copy(weights = partialIncreasedWeights))
+            val errorsWithIncreased = outputsWithIncreased.last("new state").map {
+              case (id, state) =>
+                id -> (state(0) - trueState(id)(0))
+            }
+            val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
+            //Decrease weight and predict with it.
+            val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
+            val outputsWithDecreased = forwardPass(
+              vertices, edges, trueState, initialState,
+              initialNetwork.copy(weights = partialDecreasedWeights))
+            val errorsWithDecreased = outputsWithDecreased.last("new state").map {
+              case (id, state) =>
+                id -> (state(0) - trueState(id)(0))
+            }
+            val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
+            val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
+            (s"$name $row $col", gradient)
           }
-        }.flatten
       }.toMap
     }
-    // Gradients calculated with bacpropagation.
+    // Gradients calculated with backpropagation.
     val backPropGradients = gradients.map { g =>
-      {
-        g.map {
-          case (name, values) => {
-            val rows = values.rows
-            val cols = values.cols
-            (0 until rows).map { row =>
-              (0 until cols).map { col =>
-                {
-                  (s"$name $row $col", values(row, col))
-                }
-              }
-            }.flatten
-          }
-        }.flatten
+      g.flatMap {
+        case (name, values) =>
+          val rows = values.rows
+          val cols = values.cols
+          for (row <- 0 until rows; col <- 0 until cols) yield (s"$name $row $col", values(row, col))
       }.toMap
     }
 
     var gradientsOK = true
     val relativeErrors = (0 until approximatedGradients.length).map { i =>
-      {
-        approximatedGradients(i).map {
-          case (name, value) =>
-            val otherValue = backPropGradients(i)(name)
-            val relativeError = {
-              if (value != otherValue) {
-                math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
-              } else 0
-            }
-            if (relativeError > threshold) {
-              gradientsOK = false
-            }
-            (name, relativeError)
-        }
+      approximatedGradients(i).map {
+        case (name, value) =>
+          val otherValue = backPropGradients(i)(name)
+          val relativeError = {
+            if (value != otherValue) {
+              math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
+            } else 0
+          }
+          if (relativeError > threshold) gradientsOK = false
+          (name, relativeError)
       }.toMap
     }
-    // println(relativeErrors)
+    println(relativeErrors)
     gradientsOK
   }
 

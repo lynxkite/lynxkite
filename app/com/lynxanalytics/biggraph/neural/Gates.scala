@@ -231,7 +231,7 @@ case class Network private (
     ctx.gradients
   }
 
-  def update(gradients: Iterable[NetworkGradients], learningRate: Double): Tuple2[Network, Map[String, DoubleMatrix]] = {
+  def update(gradients: Iterable[NetworkGradients], learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
     import breeze.linalg._
     import breeze.numerics._
     val sums = allWeights.keys.map {
@@ -250,7 +250,7 @@ case class Network private (
       case (name, w) =>
         name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name) + 1e-6))
     }
-    new Tuple2(this.copy(weights = newWeights, adagradMemory = newAdagradMemory), sums)
+    (this.copy(weights = newWeights, adagradMemory = newAdagradMemory), sums)
   }
 
   def toDebugString = {
