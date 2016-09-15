@@ -83,7 +83,8 @@ class LynxKite:
         '/passwordLogin',
         dict(
             username=self.username(),
-            password=self.password()))
+            password=self.password(),
+            method='lynxkite'))
 
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
