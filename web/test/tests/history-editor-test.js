@@ -228,5 +228,37 @@ module.exports = function(fw) {
       lib.left.history.close(false);
     });
 
+  fw.transitionTest(
+      'empty test-example project',
+      'test-example project with history with different categories',
+      function() {
+        lib.left.runOperation('new vertex set', { size: '10' });
+        lib.left.runOperation('add random vertex attribute', { seed: 1 });
+      },
+      function() {
+        lib.left.history.open();
+        var enabledClasses = ['list-group-item operation ng-binding ng-scope ng-isolate-scope'];
+        var disabledClasses =
+          ['list-group-item operation ng-binding ng-scope ng-isolate-scope disabled'];
+          
+        var first = lib.left.history.getOperation(0);
+        lib.left.history.enterEditMode(first);
+        expect(lib.left.history.getOperationInCategoryByName(
+          first, 'Structure operations', 'New vertex set'
+          ).getAttribute('class')).toEqual(enabledClasses);
+        expect(lib.left.history.getOperationInCategoryByName(
+          first, 'Vertex attribute operations', 'Add random vertex attribute'
+          ).getAttribute('class')).toEqual(disabledClasses);
+        lib.left.history.discardEdits(first);
 
+        var second = lib.left.history.getOperation(1);
+        lib.left.history.enterEditMode(second);
+        expect(lib.left.history.getOperationInCategoryByName(
+          second, 'Structure operations', 'New vertex set'
+          ).getAttribute('class')).toEqual(disabledClasses);
+        expect(lib.left.history.getOperationInCategoryByName(
+          second, 'Vertex attribute operations', 'Add random vertex attribute'
+          ).getAttribute('class')).toEqual(enabledClasses);
+        lib.left.history.discardEdits(second);
+      });
 };
