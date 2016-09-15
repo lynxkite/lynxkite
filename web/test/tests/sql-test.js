@@ -196,7 +196,7 @@ module.exports = function(fw) {
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
     },
     function() {
-    },true
+    }
     );
 
 };
