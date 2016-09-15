@@ -183,11 +183,20 @@ module.exports = function(fw) {
     'test-example project with 100 vertices',
     function() {
       left.runOperation('New vertex set', { size: '100'});
+      var maxRows = left.side.element(by.css('#max-rows'));
+
+      maxRows.clear().sendKeys('1000');
       left.runSql('select * from vertices');
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      maxRows.clear().sendKeys('100');
+      left.runSql('select * from vertices');
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      maxRows.clear().sendKeys('17');
+      left.runSql('select * from vertices');
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
     },
     function() {
-      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
-    }
+    },true
     );
 
 };
