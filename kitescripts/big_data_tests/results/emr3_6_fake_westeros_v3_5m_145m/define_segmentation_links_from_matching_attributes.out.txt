@@ -5,4 +5,8 @@ dst: {"labelType":"bucket","labels":["746168","782809","810970","832175","842983
 !coverage: 3000003
 !nonEmpty: 5000002
 !belongsToEdges: 15000006
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/define_segmentation_links_from_matching_attributes.groovy, took 506 seconds
+2016-09-06 01:15:49,546 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-3 
+Lost executor 2 on ip-10-169-165-112.ec2.internal: Container marked as failed: container_1473093320364_0031_01_000003 on host: ip-10-169-165-112.ec2.internal. Exit status: -100. Diagnostics: Container released on a *lost* node
+2016-09-06 01:15:49,858 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-7 
+Lost an executor 2 (already removed): Pending loss reason.
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/define_segmentation_links_from_matching_attributes.groovy, took 521 seconds

@@ -183,8 +183,10 @@ class LynxKite:
           jdbcUrl,
           jdbcTable,
           keyColumn='',
+          numPartitions=0,
           predicates=[],
-          columnsToImport=[]):
+          columnsToImport=[],
+          properties={}):
     '''Imports a database table as a :class:`View` via JDBC.
 
     Args:
@@ -193,19 +195,24 @@ class LynxKite:
       keyColumn (str, optional): The key column in the source table for Spark partitioning.
         The table should be partitioned or indexed for this column in the source database table
         for efficiency. Cannot be specified together with ``predicates``.
+      numPartitions (int, optional): The number of Spark partitions to create.
       predicates (list of str, optional): List of SparkSQL where clauses to be executed on the
         source table for Spark partitioning. The table should be partitioned or indexed for this
         column in the source database table for efficiency. Cannot be specified together with
         ``keyColumn``.
       columnsToImport (list of str, optional): List of columns to import from the source table.
+      properties (dict, optional): Extra settings for the JDBC connection. See the Spark
+        documentation.
     '''
     return self._create_view(
         "Jdbc",
         dict(jdbcUrl=jdbcUrl,
              jdbcTable=jdbcTable,
              keyColumn=keyColumn,
+             numPartitions=numPartitions,
              predicates=predicates,
-             columnsToImport=columnsToImport))
+             columnsToImport=columnsToImport,
+             properties=properties))
 
   def import_parquet(
           self,
