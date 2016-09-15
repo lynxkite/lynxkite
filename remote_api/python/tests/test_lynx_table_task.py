@@ -29,6 +29,10 @@ class TestTask(lynx.luigi.TableTask):
 
   def compute_view(self):
     path = os.path.abspath('tests/test.db')
+    try:
+      os.remove(path)
+    except OSError:
+      pass
     self.setup(path)
     url = 'jdbc:sqlite:{}'.format(path)
     view = lk.import_jdbc(
