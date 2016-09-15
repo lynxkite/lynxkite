@@ -286,11 +286,18 @@ function(util, $timeout, removeOptionalDefaults) {
       }
 
       scope.categoriesCallback = function(index) {
-          var altHist = alternateHistory();
-          var totalRealHistoryLength = scope.history.steps.length - altHist.requests.length;
-          var required = index - totalRealHistoryLength;
-          altHist.requests = altHist.requests.slice(0, required + 1);
-          return util.get('/ajax/getOpCategories', altHist);
+          if (scope.history.steps[index].checkpoint) {
+            return util.get('/ajax/getOpCategories', {
+              startingPoint: index > 0 ? scope.history.steps[index - 1].checkpoint : '',
+              requests: []
+            });
+          } else {
+            var altHist = alternateHistory();
+            var totalRealHistoryLength = scope.history.steps.length - altHist.requests.length;
+            var required = index - totalRealHistoryLength;
+            altHist.requests = altHist.requests.slice(0, required + 1);
+            return util.get('/ajax/getOpCategories', altHist);
+          }
       };
 
       function toGroovyId(name) {
