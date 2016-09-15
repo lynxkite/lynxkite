@@ -177,12 +177,13 @@ S3="s3://"
 EOF
     echo 'Setting AWS CLASSPATH.'
     cat >>spark/conf/spark-env.sh <<'EOF'
-AWS_CLASSPATH1=\$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\n' ':')
-AWS_CLASSPATH2=\$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\n' ':')
-AWS_CLASSPATH3=\$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\n' ':')
-AWS_CLASSPATH_ALL=\$AWS_CLASSPATH1\$AWS_CLASSPATH2\$AWS_CLASSPATH3
-export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
+AWS_CLASSPATH1=$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH2=$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH3=$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH_ALL=$AWS_CLASSPATH1$AWS_CLASSPATH2$AWS_CLASSPATH3
+export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:${AWS_CLASSPATH_ALL::-1}
 EOF
+    chmod a+x spark/conf/spark-env.sh
   ''')
 
 
