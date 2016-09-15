@@ -517,37 +517,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     })
   }
 
-  // Returns the list of operation categories (including the operations) for a historical request.
-  // If the requested operation is a deprecated workflow operation, it is added in an extra
-  // category. If the parameters used in the request are not available on the operation, they are
-  // added back.
-  private def opCategoriesForRequest(
-    ops: Operations,
-    context: Operation.Context,
-    request: SubProjectOperation): List[OperationCategory] = {
-    val op = ops.opById(context, request.op.id)
-    val base = ops.categories(context, includeDeprecated = true)
-    // If it's a deprecated workflow operation, display it in a special category.
-    val withOp =
-      if (base.find(_.containsOperation(op)).isEmpty &&
-        op.isInstanceOf[WorkflowOperation]) {
-        val deprCat = WorkflowOperation.deprecatedCategory
-        val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
-        base :+ deprCatFE
-      } else {
-        base
-      }
-    // Add the selected options if they are not present.
-    val extended = withOp.map { category =>
-      category.copy(
-        ops = category.ops.map { op =>
-          if (op.id == request.op.id) extendOpWithSelectedOption(request.op.parameters, op)
-          else op
-        })
-    }
-    extended
-  }
-
   def getOpCategories(user: serving.User,
                       history: AlternateHistory): OpCategories = {
     val rootState = metaManager.checkpointRepo.readCheckpoint(history.startingPoint)
@@ -559,9 +528,11 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     }
 
     val viewer = new RootProjectViewer(currentState)
-    val op = currentState.lastOperationRequest.getOrElse(history.requests.head)
+    val op = currentState.lastOperationRequest.getOrElse(
+      history.requests.headOption.getOrElse(
+        SubProjectOperation(Seq(), FEOperationSpec("No-operation", Map()))))
     val context = Operation.Context(user, viewer.offspringViewer(op.path))
-    OpCategories(opCategoriesForRequest(ops, context, op))
+    OpCategories(ops.categories(context, includeDeprecated = true))
   }
 
   // Tries to execute the requested operation on the project.
