@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Future
-import org.apache.spark.sql.{ DataFrame, SQLContext, types }
+import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -193,7 +193,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     request: LoadNameRequest,
     validator: controllers.DirectoryEntry => Boolean): CheckpointResponse = {
     val entry = controllers.DirectoryEntry.fromName(request.name)
-    assert(validator(entry), "Invalid frame type")
+    assert(entry.exists, s"Entry '$entry' does not exist.")
+    assert(validator(entry), s"Invalid frame type for '$entry'.")
     val frame = entry.asObjectFrame
     frame.assertReadAllowedFrom(user)
     CheckpointResponse(frame.checkpoint)
@@ -332,7 +333,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
-    df.write.format(format).options(options).save(file.resolvedName)
+    df.write.mode(SaveMode.Overwrite).format(format).options(options).save(file.resolvedName)
   }
 
   def exportViewToTable(

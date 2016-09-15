@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 '''Outputs a matrix with minimal intersection sizes for cliques to be in the same community'''
 
