@@ -143,8 +143,11 @@ abstract class JsonServer extends mvc.Controller {
 
 case class Empty()
 
+case class AuthMethod(id: String, name: String)
+
 case class GlobalSettings(
   hasAuth: Boolean,
+  authMethods: List[AuthMethod],
   title: String,
   tagline: String,
   version: String)
@@ -307,6 +310,7 @@ object FrontendJson {
   implicit val wFEUser = json.Json.writes[FEUser]
   implicit val wFEUserList = json.Json.writes[FEUserList]
 
+  implicit val wAuthMethod = json.Json.writes[AuthMethod]
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
@@ -456,9 +460,19 @@ object ProductionJsonServer extends JsonServer {
 
   val version = KiteInstanceInfo.kiteVersion
 
+  def getAuthMethods = {
+    val authMethods = scala.collection.mutable.ListBuffer[AuthMethod]()
+    if (productionMode) {
+      authMethods += AuthMethod("lynxkite", "LynxKite")
+      if (LDAPProps.hasLDAP) { authMethods += AuthMethod("ldap", "LDAP") }
+    }
+    authMethods.toList
+  }
+
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
+      authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       version = version)
