@@ -434,7 +434,7 @@ class CheckpointRepository(val baseDir: String) {
   def readCheckpoint(checkpoint: String): RootProjectState = {
     if (checkpoint == "") {
       CheckpointRepository.startingState
-    } else {
+    } else synchronized {
       cache.getOrElseUpdate(checkpoint,
         Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
           .as[RootProjectState].copy(checkpoint = Some(checkpoint)))

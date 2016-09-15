@@ -122,8 +122,8 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
             scope.opColor = cat.color;
             return;
           }
-          console.error('Could not find category for', op.id);
         }
+        console.error('Could not find category for', op.id);
       });
 
       scope.$watch('op', function(opId) {
