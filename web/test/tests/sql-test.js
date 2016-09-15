@@ -177,4 +177,17 @@ module.exports = function(fw) {
       // id, name, age, gender, income
       expect(lib.left.attributeCount()).toEqual(5);
     });
+
+  fw.transitionTest(
+    'empty test-example project',
+    'test-example project with 100 vertices',
+    function() {
+      left.runOperation('New vertex set', { size: '100'});
+      left.runSql('select * from vertices');
+    },
+    function() {
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+    }
+    );
+
 };
