@@ -37,7 +37,7 @@
   </form>
 
   <table class="table table-striped">
-    <tr><th>User name</th><th>Administrator</th></tr>
+    <tr><th>User name</th><th>Password</th><th>Administrator</th><th>Change user</th></tr>
     <tr ng-if="!list.$resolved"><td colspan="2">
       <progressbar class="progress-striped active" value="100">loading...</progressbar>
     </td></tr>
@@ -48,7 +48,9 @@
     </td></tr>
     <tr ng-repeat="user in list.users">
       <td>{{ user.email }}</td>
-      <td><input type="checkbox" disabled ng-checked="{{ user.isAdmin }}"></td>
+      <td><input type="text" ng-model="password[user.email]"></td>
+      <td><input type="checkbox" ng-init="userIsAdmin[user.email]=user.isAdmin" ng-model="userIsAdmin[user.email]"></td>
+      <td><button type="submit" class="btn btn-success" ng-click="changeUser(user.email)">Change user</button></td>
     </tr>
   </table>
 
