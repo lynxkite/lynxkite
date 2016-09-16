@@ -19,7 +19,6 @@ angular.module('biggraph')
     };
 
     $scope.changeUser = function(email) {
-      console.log($scope.userIsAdmin);
       util
         .post('/ajax/changeUser', {
           email: email,
