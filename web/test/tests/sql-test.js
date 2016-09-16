@@ -183,7 +183,7 @@ module.exports = function(fw) {
     'test-example project with 100 vertices',
     function() {
       left.runOperation('New vertex set', { size: '100'});
-      left.runSql('select * from verticess');
+      left.side.element(by.id('run-sql-button')).click();
     },
     function() {
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
