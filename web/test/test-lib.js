@@ -313,7 +313,6 @@ Side.prototype = {
     if (sql !== undefined) {
       this.setSql(sql);
     }
-    browser.driver.sleep(1000);
     this.side.element(by.id('run-sql-button')).click();
   },
 
