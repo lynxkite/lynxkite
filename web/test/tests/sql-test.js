@@ -186,7 +186,7 @@ module.exports = function(fw) {
       left.runSql('select * from vertices');
     },
     function() {
-      expect(left.side.element.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
     }
     );
 
