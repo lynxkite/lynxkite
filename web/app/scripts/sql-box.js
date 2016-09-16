@@ -56,6 +56,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         } else if (isNaN(parseInt(scope.maxRows))) {
           scope.result = { $error: 'Input string "' + scope.maxRows + '" is not a number.' };
         } else {
+          console.log('SQL QUERY= ', scope.sql);
           scope.inProgress += 1;
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
