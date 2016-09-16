@@ -187,7 +187,7 @@ module.exports = function(fw) {
     },
     function() {
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
-    },true
+    }
     );
 
 };
