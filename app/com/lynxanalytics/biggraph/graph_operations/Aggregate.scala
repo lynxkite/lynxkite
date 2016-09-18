@@ -7,9 +7,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+
+import org.apache.spark.rdd.RDD
 
 object AggregateByEdgeBundle extends OpFromJson {
   class Input[From] extends MagicInputSignature {
@@ -42,18 +46,19 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val ct = inputs.attr.data.classTag
+    implicit val fct = inputs.attr.data.typeTag
+    implicit val oct = o.attr.classTag
+    implicit val runtimeContext = rc
+    val partitioner = inputs.connection.rdd.partitioner.get
 
-    val bySrc = inputs.connection.rdd.map {
+    val withAttr = HybridRDD(inputs.connection.rdd.map {
       case (id, edge) => edge.src -> edge.dst
-    }.groupBySortedKey(inputs.src.rdd.partitioner.get)
-    val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
-    val byDst = withAttr.flatMap {
-      case (src, (dsts, attr)) => dsts.map(_ -> attr)
+    }, partitioner, even = true).lookup(inputs.attr.rdd)
+    val byDst = withAttr.map {
+      case (_, (dst, attr)) => dst -> attr
     }
-    val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
-    val aggregated = grouped.mapValues(aggregator.aggregate(_))
-    output(o.attr, aggregated)
+    val aggregated = aggregator.aggregate(byDst)
+    output(o.attr, aggregated.sortUnique(inputs.attr.rdd.partitioner.get))
   }
 }
 
@@ -88,7 +93,8 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val ct = inputs.eattr.data.classTag
+    implicit val ftt = inputs.eattr.data.typeTag
+    implicit val oct = o.dstAttr.classTag
 
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
@@ -97,8 +103,8 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     val edgesWAttr = edges.sortedJoin(eattr)
     val byDst = edgesWAttr.map {
       case (eid, (edge, value)) => edge.dst -> value
-    }.groupBySortedKey(dst.partitioner.get)
-    output(o.dstAttr, byDst.mapValues(aggregator.aggregate(_)))
+    }
+    output(o.dstAttr, aggregator.aggregate(byDst).sortUnique(inputs.dst.rdd.partitioner.get))
   }
 }
 
@@ -133,14 +139,8 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
     implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(aggregator.intermediateTypeTag(ftt))
-    output(
-      o.aggregated,
-      aggregator.finalize(
-        attr
-          .values
-          .mapPartitions(it => Iterator(aggregator.aggregatePartition(it)))
-          .collect
-          .foldLeft(aggregator.zero)(aggregator.combine _)))
+    val valueMap = aggregator.aggregate(attr.map { case (_, value) => 1l -> value }).collect.toMap
+    output(o.aggregated, valueMap(1L))
   }
 }
 
@@ -148,28 +148,37 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
 trait LocalAggregator[From, To] extends ToJson {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   // aggregate() can assume that values is non-empty.
-  def aggregate(values: Iterable[From]): To
+  def aggregate[K: ClassTag](values: RDD[(K, From)])(implicit ftt: TypeTag[From]): RDD[(K, To)]
 
   // Aggregates all values belonging to the same key using this aggregator.
-  def aggregateByKey[K](input: Seq[(K, From)]): Map[K, To] = {
-    val groupped = input.groupBy(_._1)
-    groupped.mapValues(group => aggregate(group.map(_._2)))
+  def aggregateByKey[K: ClassTag](input: RDD[(K, From)])(implicit ftt: TypeTag[From]): Map[K, To] = {
+    aggregate(input).collect.toMap
   }
 }
+
+trait StatAggregator[From, To] extends LocalAggregator[From, To] {
+  def combine(a: (From, Long), b: (From, Long)): (From, Long)
+  def finalize(i: (From, Long)): To
+  def aggregate[K: ClassTag](values: RDD[(K, From)])(implicit ftt: TypeTag[From]): RDD[(K, To)] = {
+    // implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
+    val counts = values.map { case (id, value) => (id, value) -> 1L }.reduceByKey(_ + _)
+    counts.map { case ((id, value), cnt) => id -> (value, cnt) }.reduceByKey(combine).mapValues(finalize(_))
+  }
+}
+
 // Aggregates from From to Intermediate and at the end calls finalize() to turn
 // Intermediate into To. So Intermediate can contain extra data over what is
 // required in the result. The merge() and combine() methods make it possible to
 // use Aggregator in a distributed setting.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
-  def zero: Intermediate
-  def merge(a: Intermediate, b: From): Intermediate
+  def init(a: From): Intermediate
   def combine(a: Intermediate, b: Intermediate): Intermediate
   def finalize(i: Intermediate): To
-  def aggregatePartition(values: Iterator[From]): Intermediate =
-    values.foldLeft(zero)(merge _)
-  def aggregate(values: Iterable[From]): To =
-    finalize(aggregatePartition(values.iterator))
+  def aggregate[K: ClassTag](values: RDD[(K, From)])(implicit ftt: TypeTag[From]): RDD[(K, To)] = {
+    implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
+    values.map { case (id, value) => id -> init(value) }.reduceByKey(combine).mapValues(finalize(_))
+  }
 }
 // A distributed aggregator where Intermediate is not different from To.
 trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
@@ -184,9 +193,7 @@ trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
     extends Aggregator[From, (Intermediate1, Intermediate2), To] {
   val agg1: Aggregator[From, Intermediate1, To1]
   val agg2: Aggregator[From, Intermediate2, To2]
-  def zero = (agg1.zero, agg2.zero)
-  def merge(a: (Intermediate1, Intermediate2), b: From) =
-    (agg1.merge(a._1, b), agg2.merge(a._2, b))
+  def init(a: From) = (agg1.init(a), agg2.init(a))
   def combine(a: (Intermediate1, Intermediate2), b: (Intermediate1, Intermediate2)) =
     (agg1.combine(a._1, b._1), agg2.combine(a._2, b._2))
   def finalize(i: (Intermediate1, Intermediate2)): To =
@@ -214,68 +221,54 @@ object Aggregator {
   object Count extends AggregatorFromJson { def fromJson(j: JsValue) = Count() }
   case class Count[T]() extends SimpleAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
-    def zero = 0
-    def merge(a: Double, b: T) = a + 1
+    def init(a: T) = 1
     def combine(a: Double, b: Double) = a + b
   }
 
   object Sum extends AggregatorFromJson { def fromJson(j: JsValue) = Sum() }
   case class Sum() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    def zero = 0
-    def merge(a: Double, b: Double) = a + b
+    def init(a: Double) = a
     def combine(a: Double, b: Double) = a + b
   }
 
   object WeightedSum extends AggregatorFromJson { def fromJson(j: JsValue) = WeightedSum() }
   case class WeightedSum() extends SimpleAggregator[(Double, Double), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
-    def zero = 0
-    def merge(a: Double, b: (Double, Double)) = a + b._1 * b._2
+    def init(a: (Double, Double)) = a._1 * a._2
     def combine(a: Double, b: Double) = a + b
   }
 
   object Max extends AggregatorFromJson { def fromJson(j: JsValue) = Max() }
   case class Max() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    def zero = Double.NegativeInfinity
-    def merge(a: Double, b: Double) = math.max(a, b)
+    def init(a: Double) = a
     def combine(a: Double, b: Double) = math.max(a, b)
   }
 
   object Min extends AggregatorFromJson { def fromJson(j: JsValue) = Min() }
   case class Min() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    def zero = Double.PositiveInfinity
-    def merge(a: Double, b: Double) = math.min(a, b)
+    def init(a: Double) = a
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
   abstract class MaxBy[Weight: Ordering, Value]
-      extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
+      extends Aggregator[(Weight, Value), (Weight, Value), Value] with Serializable {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
       // The intermediate type is Option[(Weight, Value)], which is None for empty input and
       // Some(maximal element) otherwise.
-      TypeTagUtil.optionTypeTag[(Weight, Value)]
+      typeTag[(Weight, Value)]
     }
     def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) =
       TypeTagUtil.typeArgs(inputTypeTag).last.asInstanceOf[TypeTag[Value]]
-    def zero = None
-    def merge(aOpt: Option[(Weight, Value)], b: (Weight, Value)) = {
-      aOpt match {
-        case Some(a) => if (a._1 < b._1) Some(b) else Some(a)
-        case None => Some(b)
-      }
+    def init(a: (Weight, Value)) = a
+    def combine(a: (Weight, Value), b: (Weight, Value)) = {
+      if (a._1 < b._1) b else a
     }
-    def combine(aOpt: Option[(Weight, Value)], bOpt: Option[(Weight, Value)]) = {
-      (aOpt, bOpt) match {
-        case (Some(a), Some(b)) => if (a._1 < b._1) Some(b) else Some(a)
-        case _ => aOpt.orElse(bOpt)
-      }
-    }
-    def finalize(opt: Option[(Weight, Value)]) = opt.get._2
+    def finalize(i: (Weight, Value)) = i._2
   }
   object MaxByDouble extends AggregatorFromJson { def fromJson(j: JsValue) = MaxByDouble() }
   case class MaxByDouble[T]() extends MaxBy[Double, T]
@@ -293,8 +286,7 @@ object Aggregator {
   object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights() }
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, T)]) = typeTag[Double]
-    def zero = 0
-    def merge(a: Double, b: (Double, T)) = a + b._1
+    def init(a: (Double, T)) = a._1
     def combine(a: Double, b: Double) = a + b
   }
 
@@ -324,16 +316,21 @@ object Aggregator {
   object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
   case class MostCommon[T]() extends LocalAggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
-    def aggregate(values: Iterable[T]) = {
-      values.groupBy(identity).maxBy(_._2.size)._1
+    def combine(a: (T, Double), b: (T, Double)) = if (a._2 > b._2) { a } else { b }
+    def aggregate[K: ClassTag](values: RDD[(K, T)])(implicit ftt: TypeTag[T]): RDD[(K, T)] = {
+      values.map { case (id, value) => (id, value) -> 1.0 }
+        .reduceByKey(_ + _)
+        .map { case ((id, value), cnt) => id -> (value, cnt) }
+        .reduceByKey(combine)
+        .mapValues(_._1)
     }
   }
 
   object CountDistinct extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
   case class CountDistinct[T]() extends LocalAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
-    def aggregate(values: Iterable[T]) = {
-      values.toSet.size
+    def aggregate[K: ClassTag](values: RDD[(K, T)])(implicit ftt: TypeTag[T]): RDD[(K, Double)] = {
+      values.map { case (id, value) => (id, value) }.distinct.map { case (id, value) => id -> 1.0 }.reduceByKey(_ + _)
     }
   }
 
@@ -351,37 +348,30 @@ object Aggregator {
   }
 
   object First extends AggregatorFromJson { def fromJson(j: JsValue) = First() }
-  case class First[T]() extends Aggregator[T, Option[T], T] {
+  case class First[T]() extends SimpleAggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
-    def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
-      implicit val tt = inputTypeTag
-      typeTag[Option[T]]
-    }
-    def zero = None
-    def merge(a: Option[T], b: T) = a.orElse(Some(b))
-    def combine(a: Option[T], b: Option[T]) = a.orElse(b)
-    def finalize(opt: Option[T]) = {
-      assert(opt.nonEmpty, "Average of 0 weight set")
-      opt.get
-    }
+    def init(a: T) = a
+    def combine(a: T, b: T) = a
   }
 
   object AsVector extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsVector() }
-  case class AsVector[T]() extends LocalAggregator[T, Vector[T]] {
+  case class AsVector[T]() extends SimpleAggregator[T, Vector[T]] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = {
       implicit val tt = inputTypeTag
       typeTag[Vector[T]]
     }
-    def aggregate(values: Iterable[T]): Vector[T] = values.toVector
+    def init(a: T) = Vector(a)
+    def combine(a: Vector[T], b: Vector[T]) = a ++ b
   }
 
   object AsSet extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsSet() }
-  case class AsSet[T]() extends LocalAggregator[T, Set[T]] {
+  case class AsSet[T]() extends SimpleAggregator[T, Set[T]] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = {
       implicit val tt = inputTypeTag
       typeTag[Set[T]]
     }
-    def aggregate(values: Iterable[T]): Set[T] = values.toSet
+    def init(a: T) = Set(a)
+    def combine(a: Set[T], b: Set[T]) = a ++ b
   }
 
   object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev() }
@@ -391,15 +381,8 @@ object Aggregator {
       implicit val tt = inputTypeTag
       typeTag[Stats]
     }
-    def zero = Stats(0, 0, 0)
+    def init(a: Double) = Stats(1, a, 0)
     // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Incremental_algorithm
-    def merge(a: Stats, b: Double) = {
-      val n = a.n + 1
-      val delta = b - a.mean
-      val mean = a.mean + delta / n
-      val sigma = a.sigma + delta * (b - mean) // = a.sigma + delta * delta * (n-1) / n
-      Stats(n, mean, sigma)
-    }
     // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
     // http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
     def combine(a: Stats, b: Stats) = {
