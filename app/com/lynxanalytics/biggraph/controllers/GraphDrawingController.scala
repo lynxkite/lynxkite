@@ -413,10 +413,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     attributeWithAggregator: AttributeWithLocalAggregator[From, To],
     idToCoordMapping: Map[ID, (Int, Int)]): Map[(Int, Int), DynamicValue] = {
 
-    val attrMap = graph_operations.RestrictAttributeToIds.run(
-      attributeWithAggregator.attr, ids).value.toMap
+    import com.lynxanalytics.biggraph.spark_util.Implicits._
+    import com.lynxanalytics.biggraph.graph_api._
+    val attrMap =
+      attributeWithAggregator.attr.rdd.restrictToIdSet(ids.toArray)
+    implicit val ftt = attributeWithAggregator.attr.typeTag
     val byCoordMap = attributeWithAggregator.aggregator.aggregateByKey(
-      attrMap.toSeq.flatMap { case (id, value) => idToCoordMapping.get(id).map(_ -> value) })
+      attrMap.map { case (id, value) => idToCoordMapping.get(id).map(_ -> value) }.filter(_.nonEmpty).map { _.get })
     implicit val ttT = attributeWithAggregator.aggregator.outputTypeTag(
       attributeWithAggregator.attr.typeTag)
     byCoordMap.mapValues(DynamicValue.convert[To](_))
