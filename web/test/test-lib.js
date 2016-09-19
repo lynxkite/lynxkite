@@ -209,7 +209,7 @@ Side.prototype = {
   submitOperation: function(parentElement) {
     var button = parentElement.$('.ok-button');
     // Wait for uploads or whatever.
-    testLib.wait(protractor.until.elementTextMatches(button, /OK/));
+    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
     button.click();
   },
 
