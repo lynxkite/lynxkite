@@ -8,6 +8,7 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 
 import com.google.common.collect.MapMaker
+import com.lynxanalytics.biggraph.controllers.ProjectEditor
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
@@ -43,6 +44,19 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
+// Creating a second HiveContext fails. This only happens in tests, and this will be removed when
+// upgrading to Spark 2.0.0 since there will be no HiveContext anymore.
+object HiveContextHolder {
+  var hiveContext: HiveContext = null
+  def apply(sc: spark.SparkContext): HiveContext = {
+    if (hiveContext == null)
+      hiveContext = new HiveContext(sc)
+    assert(sc == hiveContext.sparkContext,
+      "HiveContext already exists for a different SparkContext.")
+    hiveContext
+  }
+}
+
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
@@ -54,7 +68,7 @@ class DataManager(sc: spark.SparkContext,
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = new SQLContext(sc)
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
-  lazy val masterHiveContext = new HiveContext(sc)
+  lazy val masterHiveContext = HiveContextHolder(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -130,6 +144,14 @@ class DataManager(sc: spark.SparkContext,
       }
     }
     loggedFutures.put(f, ())
+  }
+
+  // Runs something on the DataManager threadpool.
+  // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
+  def async[T](fn: => T): concurrent.Future[T] = {
+    SafeFuture {
+      fn
+    }.future
   }
 
   private def execute(instance: MetaGraphOperationInstance,
@@ -423,10 +445,34 @@ class DataManager(sc: spark.SparkContext,
 
   def newSQLContext(): SQLContext = {
     val sqlContext = masterSQLContext.newSession()
+    registerUDFs(sqlContext)
+    sqlContext
+  }
+
+  def newHiveContext(): HiveContext = {
+    val hiveContext = masterHiveContext.newSession()
+    registerUDFs(hiveContext)
+    hiveContext
+  }
+
+  private def registerUDFs(sqlContext: SQLContext) = {
     sqlContext.udf.register(
-      "mask",
+      "hash",
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
     )
-    sqlContext
+  }
+}
+
+object DataManager {
+  def sql(
+    ctx: SQLContext,
+    query: String,
+    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {
+    for ((name, df) <- dfs) {
+      assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
+      df.registerTempTable(name)
+    }
+    log.info(s"Executing query: $query")
+    ctx.sql(query)
   }
 }

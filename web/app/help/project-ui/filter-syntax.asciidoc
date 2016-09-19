@@ -35,7 +35,7 @@ can be useful:
 * For the `Double` type multiple options are available.
 ** You can enter a simple number to match values exactly.
 For example `3` would select only the values that are exactly 3.0.
-** You can specify bounds, with the `<`, `>`, `<=`, `>=` operators.
+** You can specify bounds, with the `<`, `>`, `&lt;=`, `>=` operators.
 For example `>=12.5` will match values no less than 12.5.
 ** `=` and `==` are also accepted as operators, providing exact matching.
 ** Intervals can be specified with brackets. The parenthesis (`( )`) denotes an exclusive boundary

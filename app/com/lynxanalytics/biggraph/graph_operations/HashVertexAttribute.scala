@@ -1,17 +1,11 @@
-// Applies the PBKDF2 algorithm to mask an attribute: https://en.wikipedia.org/wiki/PBKDF2
-// The salt is given by the user and used to defend against attacks using a list of pre-computed hashes for the
-// probable values (rainbow table attacks).
-// The algorithm can made quicker or slower by setting the number iterations. Higher speed also means that attacker
-// can make guesses for cheaper.
+// Applies a cryptographic hash function to an attribute.
+// The salt is given by the user and used to defend against attacks using a list of pre-computed
+// hashes for the probable values (rainbow table attacks) and against known-plaintext attacks.
 
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import javax.crypto.spec.PBEKeySpec
-
-object SecretKeyFactory {
-  val secretKeyFactory: javax.crypto.SecretKeyFactory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-}
 
 object HashVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -25,19 +19,16 @@ object HashVertexAttribute extends OpFromJson {
   def fromJson(j: JsValue) = HashVertexAttribute(
     (j \ "salt").as[String])
 
-  // The preferred length of the hash. The length was choosen according to the probabilities listed in
-  // https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
-  val keyLength = 96
-  val iterations = 1
+  val algorithm = new ThreadLocal[java.security.MessageDigest] {
+    override def initialValue() = java.security.MessageDigest.getInstance("SHA-256")
+  }
 
-  val secretKeyFactory = SecretKeyFactory.secretKeyFactory
-
-  // Using the javax.crypto library to create the hash function
   def hash(string: String, salt: String) = {
-    val spec: PBEKeySpec = new PBEKeySpec(string.toCharArray, salt.getBytes, iterations, keyLength)
-    val hashedPassword: Array[Byte] = secretKeyFactory.generateSecret(spec).getEncoded
+    val hashedPassword: Array[Byte] = algorithm.get().digest((string + salt).getBytes("utf8"))
     hashedPassword.map("%02X".format(_)).mkString
   }
+
+  // "Secret" mechanism, used for holding back sensitive strings from logging.
   def makeSecret(stringToHide: String) = {
     val ret = "SECRET(" + stringToHide + ")"
     assertSecret(ret)

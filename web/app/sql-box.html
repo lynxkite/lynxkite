@@ -1,12 +1,17 @@
-<div
+<!-- Because of the 'ng-if="onLoad"' attribute, this DIV is (re)created
+after sql-box.js is executed, and the function scope.onLoad is defined.
+The ng-if creates a new scope, so we need ng-model="$parent.sql"
+instead of ng-model="sql" -->
+<div ng-if="onLoad"
   ui-ace="{
     mode: 'sql',
     showGutter: false,
     rendererOptions: { fontSize: '16px' },
     advanced: { behavioursEnabled: false },
+    onLoad: onLoad,
   }"
   id="sql-editor"
-  ng-model="sql"></div>
+  ng-model="$parent.sql"></div>
 
 <div>
   <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
@@ -27,6 +32,7 @@
     <div class="col-sm-8">
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
         <option value="table">LynxKite table</option>
+        <option value="view">LynxKite view</option>
         <option value="segmentation">Segmentation</option>
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
@@ -37,7 +43,8 @@
     </div>
   </div>
 
-  <div class="form-group" ng-show="exportFormat === 'table' || exportFormat === 'segmentation'">
+  <div class="form-group" ng-show=
+    "exportFormat === 'table' || exportFormat === 'segmentation' || exportFormat === 'view'">
     <label for="exportKiteTable" class="col-sm-4 control-label">
       Table name <help-popup href="export-lynxkite-table-table"></help-popup>
     </label>
@@ -149,7 +156,12 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="row in result.data | orderBy:sort.column:sort.reverse track by $index">
+      <tr ng-if="!sort.column"
+          ng-repeat="row in result.data">
+        <td ng-repeat="item in row track by $index">{{ item }}</td>
+      </tr>
+      <tr ng-if="sort.column"
+        ng-repeat="row in result.data | orderBy:sort.column:sort.reverse track by $index">
         <td ng-repeat="item in row track by $index">{{ item }}</td>
       </tr>
     </tbody>

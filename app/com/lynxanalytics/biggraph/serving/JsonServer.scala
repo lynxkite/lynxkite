@@ -141,11 +141,13 @@ abstract class JsonServer extends mvc.Controller {
   }
 }
 
-case class Empty(
-  fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
+case class Empty()
+
+case class AuthMethod(id: String, name: String)
 
 case class GlobalSettings(
   hasAuth: Boolean,
+  authMethods: List[AuthMethod],
   title: String,
   tagline: String,
   version: String)
@@ -205,8 +207,9 @@ object FrontendJson {
   import model.FEModel
   import model.FEModelMeta
 
-  // TODO: do this without a fake field, e.g. by not using inception.
-  implicit val rEmpty = json.Json.reads[Empty]
+  implicit val rEmpty = new json.Reads[Empty] {
+    def reads(j: json.JsValue) = json.JsSuccess(Empty())
+  }
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
   }
@@ -282,7 +285,8 @@ object FrontendJson {
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 
-  implicit val rDataFrameSpec = json.Json.reads[DataFrameSpec]
+  implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
+  implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -302,10 +306,12 @@ object FrontendJson {
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
+  implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
-  implicit val wUser = User.Writes
-  implicit val wUserList = json.Json.writes[UserList]
+  implicit val wFEUser = json.Json.writes[FEUser]
+  implicit val wFEUserList = json.Json.writes[FEUserList]
 
+  implicit val wAuthMethod = json.Json.writes[AuthMethod]
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
@@ -407,6 +413,13 @@ object ProductionJsonServer extends JsonServer {
   def importORC = jsonPost(sqlController.importORC)
   def importJson = jsonPost(sqlController.importJson)
   def importHive = jsonPost(sqlController.importHive)
+  def createViewCSV = jsonPost(sqlController.createViewCSV)
+  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
+  def createViewParquet = jsonPost(sqlController.createViewParquet)
+  def createViewORC = jsonPost(sqlController.createViewORC)
+  def createViewJson = jsonPost(sqlController.createViewJson)
+  def createViewHive = jsonPost(sqlController.createViewHive)
+  def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -415,10 +428,10 @@ object ProductionJsonServer extends JsonServer {
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def complexView = jsonGet(drawingController.getComplexView)
-  def center = jsonGet(drawingController.getCenter)
-  def histo = jsonGet(drawingController.getHistogram)
-  def scalarValue = jsonGet(drawingController.getScalarValue)
-  def model = jsonGet(drawingController.getModel)
+  def center = jsonFuture(drawingController.getCenter)
+  def histo = jsonFuture(drawingController.getHistogram)
+  def scalarValue = jsonFuture(drawingController.getScalarValue)
+  def model = jsonFuture(drawingController.getModel)
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
@@ -431,6 +444,7 @@ object ProductionJsonServer extends JsonServer {
   val logout = userController.logout
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def changeUser = jsonPost(userController.changeUser, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
   def getUserData = jsonGet(userController.getUserData)
 
@@ -448,9 +462,19 @@ object ProductionJsonServer extends JsonServer {
 
   val version = KiteInstanceInfo.kiteVersion
 
+  def getAuthMethods = {
+    val authMethods = scala.collection.mutable.ListBuffer[AuthMethod]()
+    if (productionMode) {
+      authMethods += AuthMethod("lynxkite", "LynxKite")
+      if (LDAPProps.hasLDAP) { authMethods += AuthMethod("ldap", "LDAP") }
+    }
+    authMethods.toList
+  }
+
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
+      authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       version = version)
@@ -460,5 +484,4 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   Ammonite.maybeStart()
-  PipeAPI.maybeStart()
 }

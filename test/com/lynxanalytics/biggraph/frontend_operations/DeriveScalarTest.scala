@@ -8,6 +8,6 @@ class DeriveScalarTest extends OperationsTestBase {
     run("Derive scalar",
       Map("type" -> "double", "output" -> "output", "expr" -> "20 + greeting.length"))
     val sc = project.scalars("output").runtimeSafeCast[Double]
-    assert(sc.value == 32)
+    assert(sc.value == 36)
   }
 }

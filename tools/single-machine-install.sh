@@ -97,7 +97,7 @@ fi
 
 
 echo "Installing LynxKite version ${KITE_TOINSTALL} in size ${KITE_SIZE}"    
-echo "Setting up Lynxkite for ${KITE_NUM_CORES} core(s) and ${KITE_MEMORY}MBytes of memory"
+echo "Setting up LynxKite for ${KITE_NUM_CORES} core(s) and ${KITE_MEMORY}MBytes of memory"
 
 #Check if target user and group exists and create if not
 if id -u ${TARGET_USER} > /dev/null 2>&1; then
@@ -241,7 +241,7 @@ echo "Setting up LynxKite as server"
 if type initctl > /dev/null 2>&1; then
     echo "Creating upstart configuration file for initctl"
     cat <<EOM > /etc/init/lynxkite.conf
-#Lynxkite
+#LynxKite
 description "LynxKite server"
 
 start on runlevel [2345]
@@ -271,10 +271,6 @@ elif type systemctl > /dev/null 2>&1; then
 ################
 # Temporary patch for cat /dev/urandom  
 # We can remove this later, but wanted to have a working script with the older releases
-    cp ${KITE_DIST_FOLDER}/bin/biggraph ${KITE_DIST_FOLDER}/bin/biggraph.beforepatch
-    cat ${KITE_DIST_FOLDER}/bin/biggraph.beforepatch | \
-     sed "/export KITE_RANDOM_SECRET=.cat \/dev\/urandom/c\export KITE_RANDOM_SECRET=\$(python -c 'import random, string; print(\"\".join(random.choice(string.ascii_letters) for i in range(32)))')" > \
-     ${KITE_DIST_FOLDER}/bin/biggraph
     chown -R ${TARGET_USER} ${KITE_DIST_FOLDER}/bin/biggraph 
     chgrp -R ${TARGET_GROUP} ${KITE_DIST_FOLDER}/bin/biggraph
 ################

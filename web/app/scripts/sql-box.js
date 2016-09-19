@@ -29,9 +29,18 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         select: function(index) {
           index = index.toString();
           if (scope.sort.column === index) {
-            scope.sort.reverse = !scope.sort.reverse;
+            if (scope.sort.reverse) {
+              // Already reversed by this column. This click turns off sorting.
+              scope.sort.column = undefined;
+            } else {
+              // Already sorting by this column. This click reverses.
+              scope.sort.reverse = true;
+            }
+          } else {
+            // Not sorted yet. This click sorts by this column.
+            scope.sort.column = index;
+            scope.sort.reverse = false;
           }
-          scope.sort.column = index;
         },
         style: function(index) {
           index = index.toString();
@@ -49,7 +58,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
             {
-              df: {
+              dfSpec: {
                 isGlobal: scope.isGlobal,
                 directory: scope.directory,
                 project: scope.project,
@@ -65,7 +74,8 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
 
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
-            exportFormat === 'segmentation') {
+            exportFormat === 'segmentation' ||
+            exportFormat === 'view') {
           scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
@@ -91,7 +101,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           return;
         }
         var req = {
-          df: {
+          dfSpec: {
             isGlobal: scope.isGlobal,
             directory: scope.directory,
             project: scope.project,
@@ -111,6 +121,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
                 name: scope.exportKiteTable,
                 sql: scope.sql
               });
+        } else if (scope.exportFormat === 'view') {
+          req.name = scope.exportKiteTable;
+          req.privacy = 'public-read';
+          result = util.post('/ajax/createViewDFSpec', req);
         } else if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;
@@ -157,11 +171,13 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.reportSQLError = function() {
         util.reportRequestError(scope.result, 'Error executing query.');
       };
-      
-      scope.hide = function(event) {
-        event.stopPropagation();
-        scope.onHide();
-    };
+
+      scope.onLoad = function(editor) {
+        editor.setOptions({
+          autoScrollEditorIntoView : true,
+          maxLines : 500
+        });
+      };
     }
   };
 });

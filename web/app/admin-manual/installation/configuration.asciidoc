@@ -5,7 +5,7 @@
 You need to create a site configuration to be able to run LynxKite. If you don’t have a config file
 created yet, running the runner script will warn you and point you to a template config file. Just
 copy that template to your home directory with name `.kiterc` and edit the settings as necessary.
-The settings are documented inside the template file and in the <kiterc-file> section. This
+The settings are documented inside the template file and in the <<kiterc-file>> section. This
 information is also available in the template file as comments.
 
 [[configure-directories]]
@@ -43,15 +43,26 @@ you have to enable HTTPS (see next section). To securely set up user authenticat
 
 - Make sure LynxKite is not accessible externally.
 - Start LynxKite without authentication. Go to http://<lynxkite_url>/#/users and add at
-  least one new administrator user. (Administrator users can create more users later.)
+  least one new administrator user. (Administrator users can create more users.)
 - Enable HTTPS in the `.kiterc` file.
 - Restart LynxKite with authentication. Confirm that user credentials are now required for login.
 - You can now make LynxKite externally accessible.
 
+In addition to this, LynxKite can be authenticated using a remote LDAP service. LDAP authenticated
+users will always be non-administrators. Regular LynxKite and LDAP user authentication can coexist.
+The details of setting up LDAP authentication are specified in the
+<<ldap-authentication,LDAP authentication section>> of the `.kiterc` chapter.
+
+### Access control setup
+
+After the users are created, HDFS/Linux directory level access control can be enabled
+as explained in <<prefix-based-access-control>>. LynxKite level access control can be managed
+directly on the LynxKite Web UI.
+
 ### HTTPS setup
 
 To enable HTTPS, a certificate is required. For testing purposes a self-signed certificate is
-included (`conf/localhost.self-signed.cert`). Its password is “asdasd”. This certificate does
+included (`conf/localhost.self-signed.cert`). Its password is “keystore-password”. This certificate does
 not provide proper protection. (Lacking a trusted CA, the self-signed certificate can easily
 be spoofed.) Using it will trigger a certificate warning in the user’s browser. It is recommended
 to install a real certificate in its place.

@@ -3,10 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricSet
 import com.codahale.metrics.Metric
-import com.codahale.metrics.MetricRegistry
 
-import org.apache.spark.metrics.sink.GraphiteSink
-import org.apache.spark.metrics.sink.ConsoleSink
 import org.apache.spark.metrics.source.BigGraphJvmMonitoringSource
 
 import java.lang.management.BufferPoolMXBean
@@ -17,8 +14,6 @@ object SetupMetricsSingleton {
   // The below code will only be run once per singleton.
   def dummy = ()
 
-  val metricRegistry = new MetricRegistry()
-  metricRegistry.registerAll(new BigGraphMetricSet)
   val ms = org.apache.spark.SparkEnv.get.metricsSystem
   ms.registerSource(new BigGraphJvmMonitoringSource)
 }
