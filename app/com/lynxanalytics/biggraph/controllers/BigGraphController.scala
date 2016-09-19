@@ -482,13 +482,11 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   private def extendedHistory(
     user: serving.User,
     start: RootProjectState,
-    operations: List[SubProjectOperation],
-    rootCheckpoint: String,
-    iteration: Int = 1): Stream[(RootProjectState, ProjectHistoryStep)] = {
+    operations: List[SubProjectOperation]): Stream[(RootProjectState, ProjectHistoryStep)] = {
     if (operations.isEmpty) Stream()
     else {
-      val (nextState, step) = historyStep(user, start, operations.head, None, rootCheckpoint, iteration)
-      (nextState, step) #:: extendedHistory(user, nextState, operations.tail, rootCheckpoint, iteration + 1)
+      val (nextState, step) = historyStep(user, start, operations.head, None)
+      (nextState, step) #:: extendedHistory(user, nextState, operations.tail)
     }
   }
 
@@ -522,7 +520,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val rootState = metaManager.checkpointRepo.readCheckpoint(history.startingPoint)
 
     val currentState = if (history.requests.nonEmpty) {
-      extendedHistory(user, rootState, history.requests, rootState.checkpoint.get).last._1
+      extendedHistory(user, rootState, history.requests).last._1
     } else {
       rootState
     }
@@ -542,8 +540,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     user: serving.User,
     startState: RootProjectState,
     request: SubProjectOperation,
-    nextStateOpt: Option[RootProjectState],
-    rootCheckpoint: String = "", rootDistance: Int = 0): (RootProjectState, ProjectHistoryStep) = {
+    nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
     val startStateRootViewer = new RootProjectViewer(startState)
 
@@ -597,7 +594,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
     val startingState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
     val checkpointHistory = stateHistory(user, startingState)
-    val historyExtension = extendedHistory(user, startingState, request.requests, request.startingPoint)
+    val historyExtension = extendedHistory(user, startingState, request.requests)
     ProjectHistory(
       checkpointHistory ++ historyExtension.map(_._2))
   }
@@ -608,9 +605,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val historyExtension = extendedHistory(
       user,
       metaManager.checkpointRepo.readCheckpoint(startingPoint),
-      request.history.requests,
-      startingPoint
-    )
+      request.history.requests)
+
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
     var finalCheckpoint = startingPoint
