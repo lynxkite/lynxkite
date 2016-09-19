@@ -96,7 +96,6 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     implicit val id = inputDatas
     implicit val ftt = inputs.eattr.data.typeTag
     implicit val oct = o.dstAttr.classTag
-
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
@@ -154,16 +153,6 @@ trait LocalAggregator[From, To] extends ToJson {
   // Aggregates all values belonging to the same key using this aggregator.
   def aggregateByKey[K: ClassTag](input: RDD[(K, From)])(implicit ftt: TypeTag[From]): Map[K, To] = {
     aggregate(input).collect.toMap
-  }
-}
-
-trait StatAggregator[From, To] extends LocalAggregator[From, To] {
-  def combine(a: (From, Long), b: (From, Long)): (From, Long)
-  def finalize(i: (From, Long)): To
-  def aggregate[K: ClassTag](values: RDD[(K, From)])(implicit ftt: TypeTag[From]): RDD[(K, To)] = {
-    // implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
-    val counts = values.map { case (id, value) => (id, value) -> 1L }.reduceByKey(_ + _)
-    counts.map { case ((id, value), cnt) => id -> (value, cnt) }.reduceByKey(combine).mapValues(finalize(_))
   }
 }
 
