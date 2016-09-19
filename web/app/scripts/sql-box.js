@@ -7,7 +7,6 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     scope: {
       side: '=?',
       directory: '=?',
-      onHide: '&?',
      },
     templateUrl: 'sql-box.html',
     link: function(scope) {
