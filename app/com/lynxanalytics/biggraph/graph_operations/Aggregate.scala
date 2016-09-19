@@ -46,19 +46,20 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val fct = inputs.attr.data.typeTag
+    implicit val ftt = inputs.attr.data.typeTag
+    implicit val fct = inputs.attr.data.classTag
     implicit val oct = o.attr.classTag
     implicit val runtimeContext = rc
     val partitioner = inputs.connection.rdd.partitioner.get
 
     val withAttr = HybridRDD(inputs.connection.rdd.map {
       case (id, edge) => edge.src -> edge.dst
-    }, partitioner, even = true).lookup(inputs.attr.rdd)
+    }, partitioner, even = true).lookup(inputs.attr.rdd.sortedRepartition(partitioner))
     val byDst = withAttr.map {
       case (_, (dst, attr)) => dst -> attr
     }
     val aggregated = aggregator.aggregate(byDst)
-    output(o.attr, aggregated.sortUnique(inputs.attr.rdd.partitioner.get))
+    output(o.attr, aggregated.sortUnique(inputs.dst.rdd.partitioner.get))
   }
 }
 
@@ -303,13 +304,15 @@ object Aggregator {
   object Median extends LocalAggregatorFromJson { def fromJson(j: JsValue) = Median() }
   case class Median() extends LocalAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
-    def aggregate(values: Iterable[Double]) = {
-      val cnt: Int = values.size
-      val (halfCount1, halfCount2) =
-        if (cnt % 2 == 0) (cnt / 2 - 1, cnt / 2)
-        else ((cnt - 1) / 2, (cnt - 1) / 2)
-      val sortedValues = values.toSeq.sorted
-      (sortedValues(halfCount1) + sortedValues(halfCount2)) / 2
+    def aggregate[K: ClassTag](values: RDD[(K, Double)])(implicit ftt: TypeTag[Double]): RDD[(K, Double)] = {
+      values.groupByKey.mapValues(values => {
+        val cnt: Int = values.size
+        val (halfCount1, halfCount2) =
+          if (cnt % 2 == 0) (cnt / 2 - 1, cnt / 2)
+          else ((cnt - 1) / 2, (cnt - 1) / 2)
+        val sortedValues = values.toSeq.sorted
+        (sortedValues(halfCount1) + sortedValues(halfCount2)) / 2
+      })
     }
   }
 
@@ -341,9 +344,11 @@ object Aggregator {
   case class Majority(fraction: Double) extends LocalAggregator[String, String] {
     override def toJson = Json.obj("fraction" -> fraction)
     def outputTypeTag(inputTypeTag: TypeTag[String]) = typeTag[String]
-    def aggregate(values: Iterable[String]) = {
-      val (mode, count) = values.groupBy(identity).mapValues(_.size).maxBy(_._2)
-      if (count >= fraction * values.size) mode else ""
+    def aggregate[K: ClassTag](values: RDD[(K, String)])(implicit ftt: TypeTag[String]): RDD[(K, String)] = {
+      values.groupByKey.mapValues(values => {
+        val (mode, count) = values.groupBy(identity).mapValues(_.size).maxBy(_._2)
+        if (count >= fraction * values.size) mode else ""
+      })
     }
   }
 
