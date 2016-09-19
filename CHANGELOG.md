@@ -6,10 +6,36 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Import options are now stored for each table and can be reused via "Edit import" button
+### 1.9.3
+
+ - Assorted ecosystem bugfixes and improvements
+ - Dockerless installation option :(
+ - New operation _"Enumerate triangles"_ has been created.
+
+### 1.9.2
+
+ - New operation _"Triadic closure"_ has been created.
+ - New operation _"Create snowball sample"_ has been created.
+ - Internal watchdog in ecosystem mode.
+
+### 1.9.1
+
+ - Fix startup script to support RHEL 6.
+ - A new machine learning operations category is created and added to the toolbox.
+ - SQL-related bug fixes.
+
+### 1.9.0
+
  - Global SQL-box has been added.
- - New operation _"Mask vertex attribute"_ has been added.
+ - Views have been added to avoid expensive serialization to tables when it is not required.
+ - Import options are now stored for each table and can be reused via "Edit import" button
+ - New operation _"Hash vertex attribute"_ has been added.
  - Discarded projects and tables are moved to _Trash_ instead of immediate permanent deletion.
+ - JDBC import can now use `VARCHAR` columns as partitioning keys. For small tables the key can even
+   be omitted.
+ - New operations _"Train a Logistic regression model"_, _"Classify with a model"_, _"Train a k-means
+   clustering model"_, and _"Reduce vertex attributes to two dimensions"_ have been added.
+ - Statistics are displayed on the linear regression models.
 
 ### 1.8.0
 
@@ -45,7 +71,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### 1.7.3
 
  - New configuration option: `KITE_INSTANCE` added; this should be a string identifying the
-   instance (e.g., Westeros). It is strongly recommended that you set it at installation: it
+   instance (e.g., MyClient). It is strongly recommended that you set it at installation: it
    will be used to identity the cluster in logs.
  - Changes in vertex and edge count after an operation are reported on the UI.
  - Fixed data export in Amazon EMR.

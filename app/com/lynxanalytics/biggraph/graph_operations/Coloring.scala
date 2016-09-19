@@ -133,7 +133,7 @@ case class Coloring()
       val startingColoring = vertices.mapValues(_ => 1.0)
       val directedEdgesToDegreeOrdering = directEdgesFromOrdering(degree)
       val (numberOfColorsSoFar, coloringByDegreeOrdering) = pertColoring(directedEdgesToDegreeOrdering,
-        startingColoring, 2, vertexCount).result.get
+        startingColoring, 2, vertexCount + 1).result.get
 
       findBetterColoring(coloringByDegreeOrdering, numberOfColorsSoFar, iteration)
     }

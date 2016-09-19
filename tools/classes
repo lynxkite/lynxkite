@@ -11,8 +11,9 @@ wantedclass = sys.argv[2]
 with file(fn) as f:
   words = f.read().split()
 
+
 def token(word):
- return word.split('(')[0].split('[')[0]
+  return word.split('(')[0].split('[')[0]
 
 superclass = {}
 curclass = None
@@ -25,8 +26,10 @@ for i in range(1, len(words) - 1):
   if words[i] == 'extends':
     superclass[curclass] = token(words[i + 1])
 
+
 def wanted(cls):
-  return cls != None and (cls == wantedclass or wanted(superclass.get(cls)))
+  return cls is not None and (
+      cls == wantedclass or wanted(superclass.get(cls)))
 
 for cls in concrete:
   if wanted(cls):

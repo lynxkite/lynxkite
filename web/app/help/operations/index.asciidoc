@@ -61,6 +61,14 @@ One might say that this category is about metrics that describe the graph struct
 
 These operations import external data to LynxKite. Example: <<import-edge-attributes>>.
 
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="glyphicon glyphicon-knight"></i></div></div></div>+++ Machine learning operations
+
+These operations perform machine learning. A machine learning model is trained on a set of data, and
+it can perform prediction or classification on a new set of data. For example, a logistic regression
+model can be trained by the operation <<train-a-logistic-regression-model>> and it can classify new
+data with the operation <<classify-vertices-with-a-model>>.
+
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-fullscreen"></i></div></div></div>+++ Propagation operations
 
 These operations compute vertex attributes from attributes of their neighboring elements.
@@ -225,9 +233,13 @@ include::filter-by-attributes.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
 
+include::enumerate-triangles.asciidoc[]
+
 include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
+
+include::hash-vertex-attribute.asciidoc[]
 
 include::import-edge-attributes.asciidoc[]
 
@@ -248,8 +260,6 @@ include::import-vertices.asciidoc[]
 include::internal-edge-id-as-attribute.asciidoc[]
 
 include::internal-vertex-id-as-attribute.asciidoc[]
-
-include::mask-vertex-attribute.asciidoc[]
 
 include::maximal-cliques.asciidoc[]
 
@@ -305,13 +315,19 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::shortest-path.asciidoc[]
 
+include::snowball-sample.asciidoc[]
+
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 
+include::train-a-logistic-regression-model.asciidoc[]
+
 include::train-linear-regression-model.asciidoc[]
+
+include::triadic-closure.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 

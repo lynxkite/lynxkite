@@ -22,8 +22,6 @@ popd > /dev/null
 
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
-export KITE_RANDOM_SECRET=$(python -c \
-  'import random, string; print("".join(random.choice(string.ascii_letters) for i in range(32)))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
 export KITE_LOG_DIR=${log_dir}
@@ -41,6 +39,19 @@ if [ -f "${KITE_SITE_CONFIG_OVERRIDES}" ]; then
   >&2 echo "Loading configuration overrides from: ${KITE_SITE_CONFIG_OVERRIDES}"
   source ${KITE_SITE_CONFIG_OVERRIDES}
 fi
+
+randomString () {
+    echo `cat /dev/urandom | od -x --read-bytes=16  --address-radix=n | tr -d " \n"`
+}
+
+if [ -n "$KITE_APPLICATION_SECRET" ]; then
+  if [ "$KITE_APPLICATION_SECRET" == "<random>" ]; then
+    KITE_APPLICATION_SECRET=$(randomString)
+  fi
+  # SECRET(secret_string) is converted to *** when logged.
+  KITE_APPLICATION_SECRET="SECRET(${KITE_APPLICATION_SECRET})"
+fi
+
 
 addJPropIfNonEmpty () {
   if [ -n "$2" ]; then
@@ -102,9 +113,9 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
     RATIO_PERCENT=20
     LAST_CHAR=${EXECUTOR_MEMORY: -1}
     if [ "${LAST_CHAR}" == "m" ]; then
-      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * $RATIO_PERCENT / 100))
+      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY%?} * $RATIO_PERCENT / 100))
     elif [ "${LAST_CHAR}" == "g" ]; then
-      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY::-1} * 1024 * $RATIO_PERCENT / 100))
+      COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB=$((${EXECUTOR_MEMORY%?} * 1024 * $RATIO_PERCENT / 100))
     else
       <&2 echo "Cannot parse: EXECUTOR_MEMORY=${EXECUTOR_MEMORY}. Should be NNNg or NNNm"
       exit 1
@@ -142,7 +153,11 @@ fi
 
 FULL_CLASSPATH=${app_classpath}
 if [ -n "${KITE_EXTRA_JARS}" ]; then
-  FULL_CLASSPATH=${FULL_CLASSPATH}:${KITE_EXTRA_JARS}
+    EXPANDED_EXTRA_JARS=$(python -c \
+        "import glob; print(':'.join(sum([glob.glob(p) for p in '${KITE_EXTRA_JARS}'.split(':')], [])))")
+    if [ -n "$EXPANDED_EXTRA_JARS" ]; then
+      FULL_CLASSPATH=${FULL_CLASSPATH}:${EXPANDED_EXTRA_JARS}
+    fi
 fi
 
 if [ "${mode}" == "batch" ]; then
@@ -179,7 +194,7 @@ startKite () {
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
   fi
-  export KITE_READY_PIPE=/tmp/kite_pipe_${KITE_RANDOM_SECRET}
+  export KITE_READY_PIPE=/tmp/kite_pipe_$(randomString)
   mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   PID=$!

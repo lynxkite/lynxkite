@@ -9,23 +9,23 @@ Install `nvm` (https://github.com/creationix/nvm). Then:
     nvm alias default 5.7
     npm install -g gulp bower
 
-Install `sbt` (Scala Build Tool):
+Install `Java SDK` and `sbt` (Scala Build Tool):
 
     echo "deb http://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
     sudo apt-get update
+    sudo apt-get install openjdk-8-jdk
     sudo apt-get install sbt
+
+(Actually sbt installation would automatically pull a JDK, but in the current
+Ubuntu 16.04 LTS for some reason it installs the not-even-released-yet JDK 9. No good.)
 
 Install Spark:
 
-   - Go to https://spark.apache.org/downloads.html and download appropriate version,
-     e.g., spark-1.3.0-bin-hadoop2.4.tgz. (Check the file conf/SPARK_VERSION to see what spark
-     version you need - 1.3.0 in this example.) Then:
+    tools/install_spark.sh
 
-         cd
-         tar xf Downloads/spark-1.3.0-bin-hadoop2.4.tgz
-         ln -s spark-1.3.0-bin-hadoop2.4/ spark-1.3.0
+For various tools you will require Python and AWS CLI. To install dependencies please run:
 
-For various tools you will require Python and AWS CLI.
+    sudo -H pip3 install -r python_requirements.txt
 
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on
@@ -33,6 +33,29 @@ LynxKite startup, add a line to `/etc/avahi/hosts`:
 
     0.0.0.0 any.local
 
+Install Docker using https://get.docker.com/.
+
+Install Inkscape:
+
+    sudo apt-get install inkscape
+
+Install wkhtmltopdf (0.12.3 or newer).
+Just download from http://wkhtmltopdf.org/downloads.html and copy the binary to `/usr/local/bin`.
+
+Install LaTex:
+
+    sudo apt-get install texlive-latex-recommended
+    sudo apt-get install texlive-fonts-recommended
+    sudo apt-get install texlive-formats-extra
+
+Install `hub`, the command line interface for GitHub.
+Download from https://github.com/github/hub/releases and copy the binary to `/usr/local/bin`.
+
+To be able to create signed CloudFront URLs for releases,
+obtain `pk-APKAJBDZZHY2ZM7ELY2A.der` and put it in the `$HOME/.ssh` directory.
+You can find this file in the secrets repository:
+https://github.com/biggraph/secrets
+See `README.md` file in that repository on usage.
 
 ## Per repository setup
 

@@ -6,9 +6,11 @@ import random
 import math
 
 # http://mathworld.wolfram.com/RandomNumber.html
+
+
 def powerLaw(e):
   y = random.random()
-  return math.pow(y, 1.0/(e + 1.0))
+  return math.pow(y, 1.0 / (e + 1.0))
 
 NUM_KEYS = 1000000      # Total number of distinct keys.
 PARTITION_SIZE = 20000  # KITE_VERTICES_PER_PARTITION.
@@ -49,4 +51,3 @@ print "min size:", min(partition_load)
 # Avg is less then PARTITION_SIZE if we had large keys.
 print "avg size:", sum(partition_load) / len(partition_load)
 print "max size:", max(partition_load)
-  

@@ -8,6 +8,8 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 
+import scala.concurrent.{ Await, duration }
+
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
   val user = com.lynxanalytics.biggraph.serving.User.fake
@@ -18,7 +20,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq())
-    val res = controller.getCenter(user, req)
+    val res = Await.result(controller.getCenter(user, req), duration.Duration.Inf)
     assert(res.centers.toSet == Set("0"))
   }
 
@@ -28,7 +30,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       vertexSetId = g.vertices.gUID.toString,
       count = 5,
       filters = Seq())
-    val res = controller.getCenter(user, req)
+    val res = Await.result(controller.getCenter(user, req), duration.Duration.Inf)
     assert(res.centers.toSet == Set("0", "1", "2", "3"))
   }
 
@@ -41,7 +43,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq(f))
-    val res = controller.getCenter(user, req)
+    val res = Await.result(controller.getCenter(user, req), duration.Duration.Inf)
     assert(res.centers.toSet == Set("3"))
   }
 
@@ -333,7 +335,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(),
       sampleSize = 50000)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("2.0", "14.1", "26.2", "38.2", "50.3"))
     assert(res.sizes == Seq(1, 2, 0, 1))
@@ -347,7 +349,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(),
       sampleSize = 50000)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1000.0", "1250.0", "1500.0", "1750.0", "2000.0"))
     assert(res.sizes == Seq(1, 0, 0, 1))
@@ -361,7 +363,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(logarithmic = true),
       sampleSize = 50000)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("2.0", "4.5", "10.0", "22.5", "50.3"))
     assert(res.sizes == Seq(1, 0, 2, 1))
@@ -375,7 +377,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(),
       sampleSize = 50000)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "bucket")
     assert(res.labels == Seq("Female", "Male"))
     assert(res.sizes == Seq(1, 3))
@@ -391,7 +393,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString,
       sampleSize = 50000)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
     assert(res.sizes == Seq(1, 1, 1, 1))
@@ -410,7 +412,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString,
       sampleSize = 50000)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
     assert(res.sizes == Seq(0, 1, 1, 1))
@@ -425,7 +427,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       numBuckets = 10,
       axisOptions = AxisOptions(),
       sampleSize = 1)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.sizes.count(x => x == 100) == 1)
   }
@@ -438,7 +440,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(),
       sampleSize = -1)
-    val res = controller.getHistogram(user, req)
+    val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "bucket")
     assert(res.sizes == Seq(1, 1, 1, 1))
   }
@@ -447,7 +449,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
     val g = graph_operations.ExampleGraph()().result
     val scalar = graph_operations.Count.run(g.vertices)
     val req = ScalarValueRequest(scalarId = scalar.gUID.toString)
-    val res = controller.getScalarValue(user, req)
+    val res = Await.result(controller.getScalarValue(user, req), duration.Duration.Inf)
     assert(res.defined == true)
     assert(res.string == "4")
     assert(res.double == Some(4))

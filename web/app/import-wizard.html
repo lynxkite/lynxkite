@@ -176,6 +176,21 @@
     </div>
   </div>
 
+  <div class="form-group">
+    <label for="as-view" class="col-sm-4 control-label">
+      Import as view
+      <help-popup href="views"></help-popup>
+    </label>
+    <div class="col-sm-8 checkbox" id="as-view">
+      <label>
+        <input
+             type="checkbox"
+             ng-model="asView"
+             ng-disabled="requestInProgress">
+      </label>
+    </div>
+  </div>
+
   <div class="form-group" ng-show="requestInProgress">
     <div class="col-sm-offset-4 col-sm-8">
       <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
@@ -219,7 +234,7 @@
       <button
         id="import-jdbc-button"
         ng-show="datatype === 'jdbc'"
-        ng-disabled="!jdbc.url || !jdbc.table || !jdbc.keyColumn || requestInProgress || !tableName"
+        ng-disabled="!jdbc.url || !jdbc.table || requestInProgress || !tableName"
         ng-click="importJdbc()"
         class="btn btn-default">
         Import JDBC table

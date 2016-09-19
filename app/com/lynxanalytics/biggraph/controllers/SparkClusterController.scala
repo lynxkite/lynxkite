@@ -321,6 +321,57 @@ class KiteMonitorThread(
   setDaemon(true)
 }
 
+// This is a thread that can be used to watch the healthiness
+// of LynxKite and kill the whole process if it has been unhealthy
+// for too long.
+// - LynxKite will be shut down if shutDownTimeoutSecs pass after
+//   the last successful and positive health check.
+// - listener and controller are used for performing the health
+//   checks.
+object InternalWatchdogThread {
+  val NanosPerSeconds = 1000 * 1000 * 1000
+  val CheckPeriodMillis = 1000
+}
+class InternalWatchdogThread(
+  shutdownTimeoutSecs: Int,
+  listener: KiteListener,
+  controller: SparkClusterController)
+    extends Thread("internal-watchdog-thread") {
+
+  val warningTimeoutSecs = shutdownTimeoutSecs / 2
+
+  def checkExitCondition(lastOkStatusTimeNanos: Long): Unit = {
+    val unhealthyForSeconds = (System.nanoTime - lastOkStatusTimeNanos) /
+      InternalWatchdogThread.NanosPerSeconds
+    def msg = {
+      s"Watchdog: LynxKite has been unhealthy for ${unhealthyForSeconds} seconds."
+    }
+
+    if (unhealthyForSeconds > shutdownTimeoutSecs) {
+      log.error(msg + " Exiting LynxKite.")
+      System.exit(1)
+    }
+    if (unhealthyForSeconds > warningTimeoutSecs) {
+      log.warn(msg)
+    }
+  }
+
+  override def run(): Unit = {
+    var lastOkStatusTimeNanos = System.nanoTime
+    while (true) {
+      var status = listener.getCurrentResponse
+      if (controller.getForceReportHealthy() ||
+        (status.sparkWorking && status.kiteCoreWorking)) {
+        lastOkStatusTimeNanos = System.nanoTime
+      }
+      checkExitCondition(lastOkStatusTimeNanos)
+      Thread.sleep(InternalWatchdogThread.CheckPeriodMillis)
+    }
+  }
+
+  setDaemon(true)
+}
+
 class SparkClusterController(environment: BigGraphEnvironment) {
   // The health checks are always running, but if the below flag is true, then their results
   // are going to be ignored.
@@ -328,6 +379,12 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   val sc = environment.sparkContext
   val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
+  LoggedEnvironment.envOrNone(
+    "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS").foreach { timeoutSecs =>
+      val watchdog = new InternalWatchdogThread(
+        timeoutSecs.toInt, listener, this)
+      watchdog.start()
+    }
 
   def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
 

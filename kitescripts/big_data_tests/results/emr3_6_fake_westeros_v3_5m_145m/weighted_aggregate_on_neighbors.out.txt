@@ -1,0 +1,5 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_on_neighbors.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+id: <computed>
+ordinal: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.2","2236.1","10456.4","48896.6","228652.6","1069234.8","5000001.0"],"sizes":[1,4,17,81,376,1758,8220,38440,179756,840582,3930767]}
+rnd_std_normal_weighted_average_by_rnd_std_uniform: {"labelType":"between","labels":["-3.0034771","0.0000002","0.0000010","0.0000052","0.0000261","0.0001302","0.0006504","0.0032489","0.0162289","0.0810665","0.4049421","2.0227606"],"sizes":[1162750,11,30,126,610,2978,14558,74048,396601,2129571,1218719]}
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_on_neighbors.groovy, took 3324 seconds

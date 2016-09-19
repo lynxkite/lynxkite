@@ -23,9 +23,16 @@ shift
 CLUSTER_NAME=${CLUSTER_NAME:-${USER}-test-cluster}
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
 NUM_INSTANCES=${NUM_INSTANCES:-3}
+NUM_EXECUTORS=${NUM_EXECUTORS:-3}
+
 
 if [[ ! $NUM_INSTANCES =~ ^[1-9][0-9]*$ ]]; then
-  echo "Variable NUM_INSTANCES=$NUM_INSTANCES. This is not a valid instance quantity."
+  echo "Variable NUM_INSTANCES=$NUM_INSTANCES. This is not a number."
+  exit 1
+fi
+
+if [[ ! $NUM_EXECUTORS =~ ^[1-9][0-9]*$ ]]; then
+  echo "Variable NUM_EXECUTORS=$NUM_EXECUTORS. This is not a number."
   exit 1
 fi
 
@@ -49,6 +56,7 @@ cat >>${EMR_TEST_SPEC} <<EOF
 # Override values for the test setup:
 CLUSTER_NAME=${CLUSTER_NAME}
 NUM_INSTANCES=${NUM_INSTANCES}
+NUM_EXECUTORS=${NUM_EXECUTORS}
 S3_DATAREPO=""
 KITE_INSTANCE_BASE_NAME=testemr
 EOF
@@ -75,17 +83,79 @@ case $MODE in
         --remote_lynxkite_path=/home/hadoop/biggraphstage/bin/biggraph \
         --remote_output_dir=$REMOTE_OUTPUT_DIR \
         ${COMMAND_ARGS[@]} )
+    START_MYSQL=$(echo "$TESTS_TO_RUN" | grep 'mysql' || true)
+    if [ -n "$START_MYSQL" ]; then
+      if [ -n "$CLUSTERID" ]; then
+        MYSQL=$(ENGINE=MySQL ${EMR_SH} rds-get ${EMR_TEST_SPEC})
+      else
+        MYSQL=$(ENGINE=MySQL ${EMR_SH} rds-up ${EMR_TEST_SPEC})
+      fi
+    else
+      MYSQL=''
+    fi
+    START_ORACLE=$(echo "$TESTS_TO_RUN" | grep 'oracle' || true)
+    if [ -n "$START_ORACLE" ]; then
+      if [ -n "$CLUSTERID" ]; then
+        ORACLE=$(ENGINE=oracle-se ${EMR_SH} rds-get ${EMR_TEST_SPEC})
+      else
+        ORACLE=$(ENGINE=oracle-se ${EMR_SH} rds-up ${EMR_TEST_SPEC})
+      fi
+    else
+      ORACLE=''
+    fi
 
-    ${EMR_SH} ssh ${EMR_TEST_SPEC} <<ENDSSH
-      # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
-      sed -i '/^export DEV_EXTRA_SPARK_OPTIONS/d' .kiterc
-      echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS:-}\"" >>.kiterc
-      # Prepare output dir.
-      rm -Rf ${REMOTE_OUTPUT_DIR}
-      mkdir -p ${REMOTE_OUTPUT_DIR}
-      # Run tests one by one.
-      ${TESTS_TO_RUN[@]}
+    (
+      ${EMR_SH} ssh ${EMR_TEST_SPEC} <<ENDSSH
+        # We will track completion of the test using this file.
+        # This trickery is needed to handle the case nicely when
+        # the Internet connection is broken.
+        # Possible statuses: not_finished, done
+        echo "not_finished" >~/test_status.txt
+
+        # Update value of DEV_EXTRA_SPARK_OPTIONS in .kiterc
+        sed -i '/^export DEV_EXTRA_SPARK_OPTIONS/d' .kiterc
+        echo "export DEV_EXTRA_SPARK_OPTIONS=\"${DEV_EXTRA_SPARK_OPTIONS:-}\"" >>.kiterc
+        # Prepare output dir.
+        rm -Rf ${REMOTE_OUTPUT_DIR}
+        mkdir -p ${REMOTE_OUTPUT_DIR}
+        # Export database addresses.
+        export MYSQL=$MYSQL
+        export ORACLE=$ORACLE
+
+        # Put tests to run into a script file.
+        echo "${TESTS_TO_RUN[@]}" >test_cmds.sh
+        # Last command in the script signals completion.
+        echo "echo \"done\" >~/test_status.txt" >>test_cmds.sh
+        chmod a+x test_cmds.sh
+
+        # Kill running instance (if any).
+        pkill -f 'sh \./test_cmds.sh'
+
+        # Use nohup to prevent death when the ssh connection
+        # goes away. We also make sure to set status to "done"
+        # even in case of a failure so that the below polling
+        # loop can exit.
+        nohup ./test_cmds.sh >~/test_output.txt \
+          || echo "done"> ~/test_status.txt &
+
+        SCRIPT_PID=\$!
+        tail -f ~/test_output.txt --pid=\$SCRIPT_PID
 ENDSSH
+    ) || echo "SSH failed but not giving up!"
+    echo "SSH connection to cluster is now closed."
+
+    # Keep polling the master whether tests are done.
+    STATUS=""
+    while true; do
+      echo "Polling test status file at master."
+      STATUS=$(${EMR_SH} cmd ${EMR_TEST_SPEC} "cat ~/test_status.txt" || echo "ssh_failed")
+      echo "status: $STATUS"
+      if [[ "$STATUS" == "done" ]]; then
+        break
+      fi
+      sleep 10
+    done
+
 
     # Process output files.
     if [ -n "${EMR_RESULTS_DIR}" ]; then
@@ -141,6 +211,12 @@ fi
 case ${answer:0:1} in
   y|Y )
     ${EMR_SH} terminate-yes ${EMR_TEST_SPEC}
+    if [ -n "$START_MYSQL" ]; then
+      ENGINE=MySQL ${EMR_SH} rds-down ${EMR_TEST_SPEC}
+    fi
+    if [ -n "$START_ORACLE" ]; then
+      ENGINE=oracle-se ${EMR_SH} rds-down ${EMR_TEST_SPEC}
+    fi
     ;;
   * )
     echo "Use 'stage/tools/emr.sh ssh ${EMR_TEST_SPEC}' to log in to master."

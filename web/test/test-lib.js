@@ -317,8 +317,9 @@ Side.prototype = {
   },
 
   expectSqlResult: function(header, rows) {
-    expect(this.sqlEditor().evaluate('result.header')).toEqual(header);
-    expect(this.sqlEditor().evaluate('result.data')).toEqual(rows);
+    var res = this.side.$('#sql-result');
+    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   startSqlSaving: function() {
@@ -565,6 +566,10 @@ Selector.prototype = {
     return element(by.id('table-' + toID(name)));
   },
 
+  view: function(name) {
+    return element(by.id('view-' + toID(name)));
+  },
+
   expectNumProjects: function(n) {
     return expect($$('.project-entry').count()).toEqual(n);
   },
@@ -577,6 +582,22 @@ Selector.prototype = {
     return expect($$('.table-entry').count()).toEqual(n);
   },
 
+  expectNumViews: function(n) {
+    return expect($$('.view-entry').count()).toEqual(n);
+  },
+
+  computeTable: function(name) {
+    this.table(name).element(by.css('.value-retry')).click();
+  },
+
+  // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
+  expectTableWithNumRows: function(name, n) {
+    var table = this.table(name);
+    // Look up the number of rows shown inside a <value>
+    // element.
+    return expect(table.$('value').getText()).toEqual(n.toString());
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
@@ -587,22 +608,40 @@ Selector.prototype = {
     element(by.id('import-table')).click();
   },
 
-  clickAndWaitForImport: function() {
+  clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
     testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
     importCsvButton.click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile, columns) {
+  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
-    if (columns) {
-      this.root.$('import-wizard #columns-to-import input').sendKeys(columns);
+    if (columnsToImport) {
+      this.root.$('import-wizard #columns-to-import input').sendKeys(columnsToImport);
     }
     this.root.$('#datatype select option[value="csv"]').click();
+    if (csvColumns) {
+      this.root.$('import-wizard #csv-column-names input').sendKeys(csvColumns);
+    }
     var csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
-    this.clickAndWaitForImport();
+    if (view) {
+      this.root.$('import-wizard #as-view input').click();
+    }
+    this.clickAndWaitForCsvImport();
+  },
+
+  importJDBC: function(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn, view) {
+    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    this.root.$('#datatype select option[value="jdbc"]').click();
+    this.root.$('#jdbc-url input').sendKeys(jdbcUrl);
+    this.root.$('#jdbc-table input').sendKeys(jdbcTable);
+    this.root.$('#jdbc-key-column input').sendKeys(jdbcKeyColumn);
+    if (view) {
+      this.root.$('import-wizard #as-view input').click();
+    }
+    this.root.$('#import-jdbc-button').click();
   },
 
   newDirectory: function(name) {
@@ -671,12 +710,34 @@ Selector.prototype = {
     testLib.expectNotElement(this.table(name));
   },
 
+  expectViewListed: function(name) {
+    testLib.expectElement(this.view(name));
+  },
+
   enterSearchQuery: function(query) {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
   },
 
   clearSearchQuery: function() {
     element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+  },
+
+  globalSqlEditor: function() {
+    return element(by.id('sql-editor'));
+  },
+  setGlobalSql: function(sql) {
+    testLib.sendKeysToACE(this.globalSqlEditor(), sql);
+  },
+
+  runGlobalSql: function(sql) {
+    this.root.$('#global-sql-box span[class="lead"]').click();
+    this.setGlobalSql(sql);
+  },
+
+  saveGlobalSqlToCSV: function() {
+    element(by.id('save-results-opener')).click();
+    this.root.$('#exportFormat option[value="csv"]').click();
+    element(by.id('save-results')).click();
   },
 };
 

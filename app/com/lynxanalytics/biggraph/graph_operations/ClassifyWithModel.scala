@@ -1,9 +1,13 @@
 // Creates a classification attribute from a machine learning model.
 package com.lynxanalytics.biggraph.graph_operations
 
+import com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.model._
+import com.lynxanalytics.biggraph.model.Model
+import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.ml
 
 object ClassifyWithModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -15,6 +19,12 @@ object ClassifyWithModel extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
+    val probability = {
+      val modelMeta = inputs.model.entity.modelMeta
+      if (modelMeta.generatesProbability) {
+        vertexAttribute[Double](inputs.vertices.entity)
+      } else { null }
+    }
     val classification = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
@@ -32,15 +42,34 @@ case class ClassifyWithModel(numFeatures: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val model = inputs.model.value
-    val rddArray = inputs.features.toArray.map { v => v.rdd }
+    val sqlContext = rc.dataManager.newSQLContext()
+    import sqlContext.implicits._
+
+    val modelValue = inputs.model.value
+    val rddArray = inputs.features.toArray.map(_.rdd)
     val unscaledRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val scaledRDD = unscaledRDD.mapValues(v => model.featureScaler.transform(v))
+    val scaledRDD = modelValue.scaleFeatures(unscaledRDD)
+    val scaledDF = scaledRDD.toDF("ID", "vector")
     val partitioner = scaledRDD.partitioner.get
-    val ids = scaledRDD.keys // We will put back the keys with a zip.
-    def classification = model.scaleBack(model.load(rc.sparkContext).transform(scaledRDD.values))
-    output(
-      o.classification,
-      ids.zip(classification).filter(!_._2.isNaN).asUniqueSortedRDD(partitioner))
+    val classificationModel = modelValue.load(rc.sparkContext)
+    // Transform data to an attributeRDD with the attribute (probability, classification)
+    val transformation = classificationModel.transformDF(scaledDF)
+    val classification = transformation.select("ID", "classification").map { row =>
+      (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
+    }.sortUnique(partitioner)
+    // Output the probability corresponded to the classification labels.
+    if (o.probability != null) {
+      val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
+        .getThreshold
+      val probability = transformation.select("ID", "probability").map { row =>
+        var probabilityValue = row.getAs[DenseVector]("probability")(1)
+        if (probabilityValue < threshold) {
+          probabilityValue = 1 - probabilityValue
+        }
+        (row.getAs[ID]("ID"), probabilityValue)
+      }.sortUnique(partitioner)
+      output(o.probability, probability)
+    }
+    output(o.classification, classification)
   }
 }

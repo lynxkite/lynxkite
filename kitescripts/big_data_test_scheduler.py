@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 Generates a list of shell commands to be used for running
@@ -21,6 +21,7 @@ import optparse
 import glob
 import os
 import sys
+
 
 def parse_args(argv):
   parser = optparse.OptionParser()
@@ -49,14 +50,17 @@ def parse_args(argv):
   (options, args) = parser.parse_args()
   return options
 
+
 def run_lynx_kite(test_name, options):
-  print '{0} batch {1}/{2} {3} 2>&1 | tee {4}/{5}.out.txt'.format(
-    options.remote_lynxkite_path,
-    options.remote_test_dir,
-    test_name,
-    ' '.join(options.lynxkite_arg or []),
-    options.remote_output_dir,
-    test_name.split('.')[0])
+  print('hadoop fs -df')
+  print(
+      '{remote_lynxkite_path} batch {remote_test_dir}/{test_name} {test_args}'
+      ' 2>&1 | tee {remote_output_dir}/{test_basename}.out.txt').format(
+      test_name=test_name,
+      test_args=' '.join(options.lynxkite_arg or []),
+      test_basename=test_name.split('.')[0],
+      **vars(options))
+
 
 def run_test(test_name, options, tests_seen):
   """
@@ -83,6 +87,7 @@ def run_test(test_name, options, tests_seen):
       sys.exit(1)
   run_lynx_kite(test_name, options)
 
+
 def run_tests(scripts, options):
   # Map of tests to results. This is also used for ensuring
   # that one test is executed at most once.
@@ -92,8 +97,10 @@ def run_tests(scripts, options):
     if len(line) > 0 and line[0] != '#':
       run_test(line, options, tests_seen)
 
+
 def get_script_list(options):
   scripts = []
+  excluded_scripts = []
   test_selector = options.test_selector
   if (test_selector.endswith('.list')):
     for line in open(options.local_test_dir + '/' + test_selector, 'r'):
@@ -103,14 +110,21 @@ def get_script_list(options):
       elif sline == '*':
         matches = glob.glob(options.local_test_dir + '/*.groovy')
         scripts += map(lambda path: path.split('/')[-1], matches)
+      elif sline.startswith('-'):
+        excluded_scripts.append(sline[1:])
       else:
         scripts.append(sline)
   elif (test_selector.endswith('.groovy')):
     scripts.append(test_selector)
-  return scripts
+  return filter(lambda script: script not in excluded_scripts, scripts)
+
 
 def main(argv):
   options = parse_args(argv)
+  assert options.test_selector, '--test_selector is required'
+  assert options.local_test_dir, '--local_test_dir is required'
+  assert options.remote_output_dir, '--remote_output_dir is required'
+  assert options.remote_test_dir, '--remote_test_dir is required'
 
   scripts = get_script_list(options)
   if scripts == []:
