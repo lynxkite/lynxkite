@@ -33,8 +33,9 @@ sql-box > * {
 }
 
 input.form-control#max-rows {
-  width: 120px;
+  width: 65px;
   display: inline-block;
+  vertical-align: middle;
 }
 
 #sql-result {
