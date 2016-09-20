@@ -203,6 +203,7 @@ def start_tests_native(cluster, jdbc_url, args):
       cd /mnt/lynx
       hadoop fs -rm -r /user/hadoop/lynxkite
       sudo rm -Rf metadata/lynxkite/*
+      supervisorctl restart lynxkite
       ./reload_luigi_tasks.sh
       echo 'Waiting for the ecosystem to start...'
       rm -f /tasks_data/smoke_test_marker.txt
