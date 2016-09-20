@@ -9,6 +9,8 @@ exports.config = {
   jasmineNodeOpts: {
     defaultTimeoutInterval: 120000,
   },
+  // https://github.com/angular/webdriver-manager/issues/98
+  chromeDriver: '../node_modules/webdriver-manager/selenium/chromedriver_2.24',
   capabilities: {
     browserName: 'chrome',
     platform: 'ANY',
