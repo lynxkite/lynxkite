@@ -214,7 +214,6 @@ def start_tests_native(cluster, jdbc_url, args):
         sleep 1
       done
       echo 'Ecosystem started.'
-      #run_task doesn't use config
       python3 /mnt/lynx/luigi_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
