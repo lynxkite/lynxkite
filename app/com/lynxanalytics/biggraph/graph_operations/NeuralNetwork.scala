@@ -305,7 +305,8 @@ case class NeuralNetwork(
       initialNetwork: neural.Network,
       data: DataForGradientCheck): Boolean = {
       val epsilon = 1e-5
-      val threshold = 1e-2
+      val relativeThreshold = 1e-2
+      val absoluteThreshold = 1e-10
       implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
       val trueState = data.trueState
       val initialState = data.initialStates(0) //now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
@@ -361,11 +362,11 @@ case class NeuralNetwork(
           case (name, value) =>
             val otherValue = backPropGradients(i)(name)
             val relativeError = {
-              if (value != otherValue) {
+              if (math.abs(value - otherValue) > absoluteThreshold) {
                 math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
               } else 0
             }
-            if (relativeError > threshold) gradientsOK = false
+            if (relativeError > relativeThreshold) gradientsOK = false
             (name, relativeError)
         }.toMap
       }
