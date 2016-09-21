@@ -183,10 +183,11 @@ import Gates._
 
 object Network {
   // The public constructor does not set weights, so they get randomly initialized.
-  def apply(size: Int, outputs: (String, Vector)*)(implicit r: RandBasis) =
-    new Network(size, outputs.toMap)
+  def apply(clipGradients: Boolean, size: Int, outputs: (String, Vector)*)(implicit r: RandBasis) =
+    new Network(clipGradients, size, outputs.toMap)
 }
 case class Network private (
+    clipGradients: Boolean,
     size: Int, outputs: Map[String, Vector],
     weights: Iterable[(String, DoubleMatrix)] = Iterable(),
     adagradMemory: Map[String, DoubleMatrix] = Map())(
@@ -237,8 +238,10 @@ case class Network private (
     val sums = allWeights.keys.map {
       name => name -> gradients.map(_.trained(name)).reduce(_ + _)
     }.toMap
-    for ((k, v) <- sums) {
-      clip.inPlace(v, -5.0, 5.0)
+    if (clipGradients) {
+      for ((k, v) <- sums) {
+        clip.inPlace(v, -5.0, 5.0)
+      }
     }
     val newAdagradMemory = sums.map {
       case (name, s) => adagradMemory.get(name) match {
