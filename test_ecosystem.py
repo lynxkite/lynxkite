@@ -34,7 +34,8 @@ parser.add_argument(
     '--lynx_release_dir',
     default='',
     help='''If non-empty, then this local directory is directly uploaded instead of
-         using LYNX_VERSION and BIGGRAPH_RELEASES_DIR''')
+         using LYNX_VERSION and BIGGRAPH_RELEASES_DIR. The directory of the current
+         native code is ecosystem/native/dist.''')
 parser.add_argument(
     '--task_module',
     default='test_tasks.jdbc')
@@ -84,9 +85,9 @@ def main(args):
   download_and_unpack_release(cluster, args)
   if args.dockerized:
     install_docker_and_lynx(cluster, args.lynx_version)
-    # config_aws_s3(cluster)
-    start_or_reset_ecosystem(cluster, args.lynx_version)
-    start_tests(cluster, jdbc_url)
+    # TODO: config_aws_s3_docker(cluster)
+    start_or_reset_ecosystem_docker(cluster, args.lynx_version)
+    start_tests_docker(cluster, jdbc_url)
   else:
     install_native(cluster)
     config_and_prepare_native(cluster, args)
@@ -143,7 +144,10 @@ def config_and_prepare_native(cluster, args):
     cd /mnt/lynx
     # Dirty solution because kiterc keeps growing:
     echo 'Setting up environment variables.'
+    #http://stackoverflow.com/questions/5227295/how-do-i-delete-all-lines-in-a-file-starting-from-after-a-matching-line
+    sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
     cat >>config/central <<'EOF'
+# ---- the below lines were added by test_ecosystem.py ----
       export KITE_INSTANCE=ecosystem-test
       export KITE_MASTER_MEMORY_MB=8000
       export NUM_EXECUTORS={num_executors!s}
@@ -163,6 +167,7 @@ EOF
     source config/central
     hdfs dfs -mkdir -p $KITE_DATA_DIR/table_files
     echo 'Creating tasks_data directory.'
+    # TODO: Find a more sane directory.
     sudo mkdir /tasks_data
     sudo chmod a+rwx /tasks_data
   '''.format(num_executors=args.emr_instance_count - 1))
@@ -257,7 +262,7 @@ def install_docker_and_lynx(cluster, version):
   '''.format(version=version))
 
 
-def start_or_reset_ecosystem(cluster, version):
+def start_or_reset_ecosystem_docker(cluster, version):
   kite_config = '''
     KITE_INSTANCE: ecosystem-test
     KITE_DATA_DIR: hdfs://\$HOSTNAME:8020/user/\$USER/lynxkite_data/
@@ -293,7 +298,7 @@ def start_or_reset_ecosystem(cluster, version):
       kite_config=kite_config))
 
 
-def start_tests(cluster, jdbc_url):
+def start_tests_docker(cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
       docker exec lynx_luigi_worker_1 python3 tasks/test_tasks/test_runner.py \
