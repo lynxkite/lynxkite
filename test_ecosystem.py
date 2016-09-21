@@ -144,7 +144,6 @@ def config_and_prepare_native(cluster, args):
     cd /mnt/lynx
     # Dirty solution because kiterc keeps growing:
     echo 'Setting up environment variables.'
-    #http://stackoverflow.com/questions/5227295/how-do-i-delete-all-lines-in-a-file-starting-from-after-a-matching-line
     sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
     cat >>config/central <<'EOF'
 # ---- the below lines were added by test_ecosystem.py ----
