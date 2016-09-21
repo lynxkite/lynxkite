@@ -60,7 +60,8 @@ parser.add_argument(
     help='''Delete the cluster after completion.''')
 parser.add_argument(
     '--dockerized',
-    action='store_true')
+    action='store_true',
+    help='Start the docker version. Without this switch the default is native.')
 
 
 def main(args):
@@ -134,7 +135,8 @@ def install_native(cluster):
     # mysql setup
     sudo service mysqld start
     mysqladmin  -u root password 'root'
-    #remote access for the executors
+    # This mysql database is used for many things, including the testing of JDBC tasks.
+    # For that purpose access needs to be granted for all executors.
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
   ''')
 
@@ -144,6 +146,7 @@ def config_and_prepare_native(cluster, args):
     cd /mnt/lynx
     # Dirty solution because kiterc keeps growing:
     echo 'Setting up environment variables.'
+    # Removes the given and following lines.
     sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
     cat >>config/central <<'EOF'
 # ---- the below lines were added by test_ecosystem.py ----
