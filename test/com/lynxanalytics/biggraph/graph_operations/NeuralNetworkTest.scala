@@ -46,7 +46,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val prediction = {
       val op = simpleNeuralNetwork(
         featureCount = 0, networkSize = 2, learningRate = 0.5, radius = 0,
-        hideState = false, forgetFraction = 0.0, iterations = 6, gradientCheckOn = true)
+        hideState = false, forgetFraction = 0.0, iterations = 6, gradientCheckOn = false)
       op(op.edges, vs.emptyEdgeBundle)(op.label, a).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -99,16 +99,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by hiding state.
-  ignore("lattice, hiding") {
+  test("lattice, hiding") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
+    val es = g.edges.addReversed
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = simpleNeuralNetwork(
-        featureCount = 0, networkSize = 10, learningRate = 1, radius = 3,
-        hideState = true, forgetFraction = 0.0, iterations = 50, gradientCheckOn = false)
-      op(op.edges, g.edges)(op.label, sideNum).result.prediction
+        featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 3,
+        hideState = true, forgetFraction = 0.0, iterations = 25, gradientCheckOn = false)
+      op(op.edges, es)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? 'left' : 'right'; p === truth ? 0.0 : 1.0;",
@@ -118,18 +119,19 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Lattice problem, by forgetting.
-  ignore("lattice, forgetting") {
+  test("lattice, forgetting") {
     val g = TestGraph.fromCSV(
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
+    val es = g.edges.addReversed
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, learningRate = 0.1, radius = 3,
-        hideState = false, forgetFraction = 0.5, trainingRadius = 3, maxTrainingVertices = 30,
-        minTrainingVertices = 30, iterationsInTraining = 50, subgraphsInTraining = 10,
+        featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 3,
+        hideState = false, forgetFraction = 0.5, trainingRadius = 4, maxTrainingVertices = 20,
+        minTrainingVertices = 10, iterationsInTraining = 10, subgraphsInTraining = 10,
         numberOfTrainings = 10, knownLabelWeight = 0.5, seed = 15, gradientCheckOn = false)
-      op(op.edges, g.edges)(op.label, sideNum).result.prediction
+      op(op.edges, es)(op.label, sideNum).result.prediction
     }
     val isWrong = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? 'left' : 'right'; p === truth ? 0.0 : 1.0;",
