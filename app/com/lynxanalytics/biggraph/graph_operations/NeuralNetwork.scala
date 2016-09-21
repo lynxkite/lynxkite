@@ -112,6 +112,7 @@ case class NeuralNetwork(
       val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
       val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
       neural.Network(
+        clipGradients = !gradientCheckOn,
         size = networkSize,
         "new state" -> (state - update * state + update * tilde)
       )
