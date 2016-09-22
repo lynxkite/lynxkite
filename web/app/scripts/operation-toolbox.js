@@ -39,6 +39,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
         scope.discardChangesAndFinishEdit = function() {
           scope.discardChanges();
           scope.editMode = false;
+          scope.categories = undefined;
         };
         scope.$watch('step.localChanges', function() {
           if (scope.step.localChanges) {
@@ -51,6 +52,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
           function(event, src) {
             if (src !== scope) {
               scope.editMode = false;
+              scope.categories = undefined;
             }
           });
         if (scope.step.request.op.id === 'No-operation') {
