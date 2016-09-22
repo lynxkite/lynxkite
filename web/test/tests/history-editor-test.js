@@ -237,28 +237,25 @@ module.exports = function(fw) {
       },
       function() {
         lib.left.history.open();
-        var enabledClasses = ['list-group-item operation ng-binding ng-scope ng-isolate-scope'];
-        var disabledClasses =
-          ['list-group-item operation ng-binding ng-scope ng-isolate-scope disabled'];
-          
+
         var first = lib.left.history.getOperation(0);
         lib.left.history.enterEditMode(first);
-        expect(lib.left.history.getOperationInCategoryByName(
+        lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
           first, 'Structure operations', 'New vertex set'
-          ).getAttribute('class')).toEqual(enabledClasses);
-        expect(lib.left.history.getOperationInCategoryByName(
+          ), 'disabled');
+        lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
           first, 'Vertex attribute operations', 'Add random vertex attribute'
-          ).getAttribute('class')).toEqual(disabledClasses);
+          ), 'disabled');
         lib.left.history.discardEdits(first);
 
         var second = lib.left.history.getOperation(1);
         lib.left.history.enterEditMode(second);
-        expect(lib.left.history.getOperationInCategoryByName(
+        lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
           second, 'Structure operations', 'New vertex set'
-          ).getAttribute('class')).toEqual(disabledClasses);
-        expect(lib.left.history.getOperationInCategoryByName(
+          ), 'disabled');
+        lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
           second, 'Vertex attribute operations', 'Add random vertex attribute'
-          ).getAttribute('class')).toEqual(enabledClasses);
+          ), 'disabled');
         lib.left.history.discardEdits(second);
-      });
+      }, 'solo');
 };

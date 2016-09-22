@@ -377,7 +377,7 @@ History.prototype = {
     var ops = operation.$('operation-toolbox').$$('div[class="list-group"] > div');
     return ops.filter(function(element) {
         return element.getText().then(function(text) { return text === name; });
-      });
+      }).get(0);
   },
 
   getInsertMenu: function(position) {
@@ -987,6 +987,20 @@ testLib = {
   expectFileContents: function(filename, expectedContents) {
     filename.then(function(fn) {
       expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
+    });
+  },
+
+  expectHasClass(element, cls) {
+    expect(element.getAttribute('class')).toBeDefined();
+    element.getAttribute('class').then(function(classes) {
+      expect(classes.split(' ').indexOf(cls)).not.toBe(-1);
+    });
+  },
+
+  expectNoClass(element, cls) {
+    expect(element.getAttribute('class')).toBeDefined();
+    element.getAttribute('class').then(function(classes) {
+          expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
