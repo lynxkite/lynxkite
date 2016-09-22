@@ -178,7 +178,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learn parity of the containing path in a graph consisting of paths.
-  ignore("parity of containing path") {
+  test("parity of containing path") {
     val numberOfVertices = 1000
     val numberOfPaths = 200
 
@@ -190,12 +190,12 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       else if (pathStarts.contains(v + 1) || v == numberOfVertices - 1) v -> List(v - 1)
       else v -> List(v - 1, v + 1)).toMap
 
-    val extendedPathStarts = 0 +: pathStarts :+ (numberOfVertices - 1)
+    val extendedPathStarts = 0 +: pathStarts :+ (numberOfVertices)
     def inWhichPath(v: Int): Int = {
       (0 until numberOfPaths).indexWhere(i => (extendedPathStarts(i) <= v && v < extendedPathStarts(i + 1)))
     }
     val parityOfContainingPath = {
-      (0 until numberOfVertices - 1).map(v =>
+      (0 until numberOfVertices).map(v =>
         (v, ((extendedPathStarts(inWhichPath(v) + 1) - extendedPathStarts(inWhichPath(v))) % 2) * 2 - 1.0)).toMap
     }
 
@@ -211,8 +211,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val prediction = {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 10, learningRate = 0.1, radius = 4,
-        hideState = true, forgetFraction = 0.3, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10, iterationsInTraining = 50, subgraphsInTraining = 10,
+        hideState = false, forgetFraction = 0.6, trainingRadius = 4, maxTrainingVertices = 20,
+        minTrainingVertices = 10, iterationsInTraining = 10, subgraphsInTraining = 10,
         numberOfTrainings = 10, knownLabelWeight = 0.5, seed = 15, gradientCheckOn = false)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
     }
