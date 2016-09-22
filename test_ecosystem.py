@@ -38,10 +38,10 @@ parser.add_argument(
          native code is ecosystem/native/dist.''')
 parser.add_argument(
     '--task_module',
-    default='test_tasks.jdbc')
+    default='test_tasks.bigdata_tests')
 parser.add_argument(
     '--task',
-    default='JDBCTest1k')
+    default='DefaultTests')
 parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
@@ -62,9 +62,18 @@ parser.add_argument(
     '--dockerized',
     action='store_true',
     help='Start the docker version. Without this switch the default is native.')
+parser.add_argument(
+    '--bigdata',
+    action='store_true',
+    help='The given task is a big data test task. A bigdata_test_set parameter also have to be given.')
+parser.add_argument(
+    '--bigdata_test_set',
+    default='small',
+    help='Test set for big data tests. Possible values: small, normal, large, xlarge.')
 
 
 def main(args):
+  checking_arguments(args)
   # Create an EMR cluster and a MySQL database in RDS.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
@@ -88,17 +97,67 @@ def main(args):
     install_docker_and_lynx(cluster, args.lynx_version)
     # TODO: config_aws_s3_docker(cluster)
     start_or_reset_ecosystem_docker(cluster, args.lynx_version)
-    start_tests_docker(cluster, jdbc_url)
+    start_tests_docker(args, cluster, jdbc_url)
   else:
     install_native(cluster)
     config_and_prepare_native(cluster, args)
     config_aws_s3_native(cluster)
     start_supervisor_native(cluster)
-    start_tests_native(cluster, jdbc_url, args)
+    start_tests_native(args, cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
   cluster.fetch_output()
   cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
   shut_down_instances(cluster, mysql_instance)
+
+
+def check_docker_vs_native(args):
+  if args.dockerized:
+    if args.lynx_release_dir:
+      if 'native' in args.lynx_release_dir:
+        raise ValueError('You cannot use a native release dir to test a dockerized version.')
+    else:
+      if 'native' in args.lynx_version:
+        raise ValueError('You cannot use a native release to test a dockerized version.')
+  else:
+    if args.lynx_release_dir:
+      if not ('native' in args.lynx_release_dir):
+        raise ValueError('You need a native release dir to test the native ecosystem.')
+    else:
+      if not ('native' in args.lynx_version):
+        raise ValueError('You need a native release to test the native ecosystem.')
+
+
+def check_bigdata(args):
+  if args.bigdata:
+    possible = ['small', 'normal', 'large', 'xlarge']
+    if not any(args.bigdata_test_set in x for x in possible):
+      raise ValueError('Parameter = '
+                       + args.bigdata_test_set
+                       + ', possible values are: small, normal, large, xlarge.')
+
+
+def checking_arguments(args):
+  check_docker_vs_native(args)
+  check_bigdata(args)
+
+
+def bigdata_test_set(test_set):
+  dataset = 'fake_westeros_v3_'
+  if test_set == 'small':
+    return dataset + '100k_2m'
+  elif test_set == 'normal':
+    return dataset + '5m_145m'
+  elif test_set == 'large':
+    return dataset + '10m_303m'
+  else:  # 'xlarge'
+    return dataset + '25m_799m'
+
+
+def task_param(args, jdbc_url):
+  if args.bigdata:
+    return '--dataset ' + bigdata_test_set(args.bigdata_test_set)
+  else:  # Jdbc test
+    return '--jdbc_url ' + "'{jdbc_url!s}'".format(jdbc_url=jdbc_url)
 
 
 def upload_installer_script(cluster, args):
@@ -202,7 +261,7 @@ def start_supervisor_native(cluster):
     ''')
 
 
-def start_tests_native(cluster, jdbc_url, args):
+def start_tests_native(args, cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
       source /mnt/lynx/config/central
@@ -224,12 +283,12 @@ def start_tests_native(cluster, jdbc_url, args):
       python3 /mnt/lynx/luigi_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
-          --task-param jdbc_url '{jdbc_url!s}' \
+          --task-param {task_param!s} \
           --result_file /home/hadoop/test_results.txt
   '''.format(
       luigi_module=args.task_module,
       luigi_task=args.task,
-      jdbc_url=jdbc_url
+      task_param=task_param(args, jdbc_url)
   ))
 
 
@@ -300,19 +359,19 @@ def start_or_reset_ecosystem_docker(cluster, version):
       kite_config=kite_config))
 
 
-def start_tests_docker(cluster, jdbc_url):
+def start_tests_docker(args, cluster, jdbc_url):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
       docker exec lynx_luigi_worker_1 python3 tasks/test_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
-          --task-param jdbc_url '{jdbc_url!s}' \
+          --task-param {task_param!s} \
           --result_file /tmp/test_results.txt
       docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
   '''.format(
       luigi_module=args.task_module,
       luigi_task=args.task,
-      jdbc_url=jdbc_url
+      task_param=task_param(args, jdbc_url)
   ))
 
 
