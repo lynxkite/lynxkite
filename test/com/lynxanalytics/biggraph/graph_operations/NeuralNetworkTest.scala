@@ -178,19 +178,33 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   //Learn parity of the containing path in a graph consisting of paths.
-  test("parity of containing path") {
+  ignore("parity of containing path") {
     val numberOfVertices = 1000
     val numberOfPaths = 200
+    val lengthOfUnlabeledPaths = 1 to 5
 
     val r = new Random(9)
     val pathStarts = r.shuffle(1 to numberOfVertices - 1).drop(numberOfVertices - numberOfPaths).sorted
-    val edgeList = (0 until numberOfVertices).map(v =>
+    val edgesOfLabeledVertices = (0 until numberOfVertices).map(v =>
       if (pathStarts.contains(v) && pathStarts.contains(v + 1)) v -> List()
       else if (pathStarts.contains(v) || v == 0) v -> List(v + 1)
       else if (pathStarts.contains(v + 1) || v == numberOfVertices - 1) v -> List(v - 1)
       else v -> List(v - 1, v + 1)).toMap
+    var currentVertex = numberOfVertices - 1
+    val edgesOfUnlabeledVertices = lengthOfUnlabeledPaths.flatMap { i =>
+      (1 to i).map { j =>
+        currentVertex += 1
+        if (j == 1 && j == i) currentVertex -> List()
+        else j match {
+          case 1 => currentVertex -> List(currentVertex + 1)
+          case `i` => currentVertex -> List(currentVertex - 1)
+          case j => currentVertex -> List(currentVertex - 1, currentVertex + 1)
+        }
+      }
+    }
+    val edgeList = edgesOfLabeledVertices ++ edgesOfUnlabeledVertices
 
-    val extendedPathStarts = 0 +: pathStarts :+ (numberOfVertices)
+    val extendedPathStarts = 0 +: pathStarts :+ numberOfVertices
     def inWhichPath(v: Int): Int = {
       (0 until numberOfPaths).indexWhere(i => (extendedPathStarts(i) <= v && v < extendedPathStarts(i + 1)))
     }
@@ -199,13 +213,22 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         (v, ((extendedPathStarts(inWhichPath(v) + 1) - extendedPathStarts(inWhichPath(v))) % 2) * 2 - 1.0)).toMap
     }
 
+    currentVertex = numberOfVertices - 1
+    val unlabeledParityOfContainingPath = lengthOfUnlabeledPaths.flatMap { i =>
+      (1 to i).map { j =>
+        currentVertex += 1
+        currentVertex -> ((i % 2) * 2 - 1.0)
+      }
+    }.toMap
+
     val g = SmallTestGraph(edgeList)
     val vertices = g.result.vs
-    val trueParityAttr = AddVertexAttribute.run(vertices, parityOfContainingPath)
+    val trueParityAttrOnLabeledVertices = AddVertexAttribute.run(vertices, parityOfContainingPath)
+    val trueParityAttrOnUnlabeledVertices = AddVertexAttribute.run(vertices, unlabeledParityOfContainingPath)
     val a = vertices.randomAttribute(8)
     val parityAttr = DeriveJS.deriveFromAttributes[Double](
       "a < -1 ? undefined : trueParityAttr",
-      Seq("a" -> a, "trueParityAttr" -> trueParityAttr),
+      Seq("a" -> a, "trueParityAttr" -> trueParityAttrOnLabeledVertices),
       vertices)
 
     val prediction = {
@@ -216,11 +239,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         numberOfTrainings = 10, knownLabelWeight = 0.5, seed = 15, gradientCheckOn = false)
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
     }
-    val isWrong = DeriveJS.deriveFromAttributes[Double](
+    val isWrongOnLabeled = DeriveJS.deriveFromAttributes[Double](
       "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
-      Seq("prediction" -> prediction, "truth" -> trueParityAttr),
+      Seq("prediction" -> prediction, "truth" -> trueParityAttrOnLabeledVertices),
       g.result.vs)
-    assert(isWrong.rdd.values.sum == 0)
+    assert(isWrongOnLabeled.rdd.values.sum == 0)
+
+    val isWrongOnUnlabeled = DeriveJS.deriveFromAttributes[Double](
+      "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
+      Seq("prediction" -> prediction, "truth" -> trueParityAttrOnUnlabeledVertices),
+      g.result.vs)
+    assert(isWrongOnUnlabeled.rdd.values.sum == 0)
   }
 
   // learn Page Rank
