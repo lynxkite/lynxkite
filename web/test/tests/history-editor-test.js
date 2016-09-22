@@ -257,5 +257,5 @@ module.exports = function(fw) {
           second, 'Vertex attribute operations', 'Add random vertex attribute'
           ), 'disabled');
         lib.left.history.discardEdits(second);
-      }, 'solo');
+      });
 };
