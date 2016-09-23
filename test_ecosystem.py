@@ -73,6 +73,7 @@ parser.add_argument(
 
 
 def main(args):
+  # Checking argument dependencies.
   checking_arguments(args)
   # Create an EMR cluster and a MySQL database in RDS.
   lib = EMRLib(
@@ -106,11 +107,42 @@ def main(args):
     start_tests_native(args, cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
   cluster.fetch_output()
-  cluster.rsync_down('/home/hadoop/test_results.txt', args.results_dir + '/result.txt')
+  if not os.path.exists(results_local_dir(args)):
+    os.makedirs(results_local_dir(args))
+  cluster.rsync_down('/home/hadoop/test_results.txt', results_local_dir(args) + results_name(args))
   shut_down_instances(cluster, mysql_instance)
 
 
+def results_local_dir(args):
+  '''
+  In case of big data tests, the name of the result dir includes the number of instances,
+  the number of executors and the name of the test data set.
+  '''
+  if args.bigdata:
+    basedir = args.results_dir
+    dataset = bigdata_test_set(args.bigdata_test_set)
+    instance_count = args.emr_instance_count
+    executors = instance_count - 1
+    return "{bd!s}emr_{e!s}_{i!s}_{ds!s}".format(
+      bd=basedir,
+      e=executors,
+      i=instance_count,
+      ds=dataset
+    )
+  else:
+    return args.results_dir
+
+
+def results_name(args):
+  return "/{task!s}-result.txt".format(
+    task=args.task
+  )
+
+
 def check_docker_vs_native(args):
+  '''
+  Try to check if the given release is a docker release if and only if the `--dockerized` switch is used.
+  '''
   if args.dockerized:
     if args.lynx_release_dir:
       if 'native' in args.lynx_release_dir:
@@ -128,6 +160,9 @@ def check_docker_vs_native(args):
 
 
 def check_bigdata(args):
+  '''
+  Possible values of `--bigdata_test_set`.
+  '''
   if args.bigdata:
     possible = ['small', 'normal', 'large', 'xlarge']
     if not any(args.bigdata_test_set in x for x in possible):
@@ -142,6 +177,13 @@ def checking_arguments(args):
 
 
 def bigdata_test_set(test_set):
+  '''
+  Big data test sets in the  `s3://lynxkite-test-data/` bucket.
+  fake_westeros_v3_100k_2m     100k vertices, 2m edges (small)
+  fake_westeros_v3_5m_145m     5m vertices, 145m edges (normal)
+  fake_westeros_v3_10m_303m    10m vertices, 303m edges (large)
+  fake_westeros_v3_25m_799m    25m vertices 799m edges (xlarge)
+  '''
   dataset = 'fake_westeros_v3_'
   if test_set == 'small':
     return dataset + '100k_2m'
@@ -154,10 +196,13 @@ def bigdata_test_set(test_set):
 
 
 def task_param(args, jdbc_url):
+  '''
+  For big data tests we need the `dataset` parameter, for jdbc tests we need `jdbc_url`.
+  '''
   if args.bigdata:
-    return '--dataset ' + bigdata_test_set(args.bigdata_test_set)
+    return 'dataset ' + bigdata_test_set(args.bigdata_test_set)
   else:  # Jdbc test
-    return '--jdbc_url ' + "'{jdbc_url!s}'".format(jdbc_url=jdbc_url)
+    return 'jdbc_url ' + "'{jdbc_url!s}'".format(jdbc_url=jdbc_url)
 
 
 def upload_installer_script(cluster, args):
@@ -203,7 +248,6 @@ def install_native(cluster):
 def config_and_prepare_native(cluster, args):
   cluster.ssh('''
     cd /mnt/lynx
-    # Dirty solution because kiterc keeps growing:
     echo 'Setting up environment variables.'
     # Removes the given and following lines.
     sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
