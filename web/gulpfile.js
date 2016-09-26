@@ -172,7 +172,7 @@ var protractorDir = 'node_modules/protractor/';
 // Checks for webdriver updates.
 gulp.task('webdriver-update', function(done) {
   spawn(
-    protractorDir + 'bin/webdriver-manager', ['update'],
+    protractorDir + 'bin/webdriver-manager', ['update', '--versions.chrome=2.24'],
     { stdio: 'inherit' }).once('close', done);
 });
 

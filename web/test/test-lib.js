@@ -209,7 +209,7 @@ Side.prototype = {
   submitOperation: function(parentElement) {
     var button = parentElement.$('.ok-button');
     // Wait for uploads or whatever.
-    testLib.wait(protractor.until.elementTextMatches(button, /OK/));
+    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
     button.click();
   },
 
@@ -228,7 +228,7 @@ Side.prototype = {
   setAttributeFilter: function(attributeName, filterValue) {
     var filterBox = this.side.$('.attribute input[name="' + attributeName + '"]');
     filterBox.clear();
-    filterBox.sendKeys(filterValue, K.ENTER);
+    filterBox.sendKeys(filterValue).submit();
   },
 
   toggleSampledVisualization: function() {
@@ -610,7 +610,8 @@ Selector.prototype = {
 
   openNewProject: function(name) {
     element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+    element(by.id('new-project-name')).sendKeys(name);
+    $('#new-project button[type=submit]').click();
     this.hideSparkStatus();
   },
 
@@ -656,7 +657,8 @@ Selector.prototype = {
 
   newDirectory: function(name) {
     element(by.id('new-directory')).click();
-    element(by.id('new-directory-name')).sendKeys(name, K.ENTER);
+    element(by.id('new-directory-name')).sendKeys(name);
+    $('#new-directory button[type=submit]').click();
   },
 
   openProject: function(name) {
@@ -681,7 +683,7 @@ Selector.prototype = {
   renameProject: function(name, newName) {
     var project = this.project(name);
     testLib.menuClick(project, 'rename');
-    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName, K.ENTER);
+    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
   },
 
   deleteProject: function(name) {
@@ -740,7 +742,7 @@ Selector.prototype = {
   },
 
   runGlobalSql: function(sql) {
-    this.root.$('#global-sql-box span[class="lead"]').click();
+    element(by.id('global-sql-box')).click();
     this.setGlobalSql(sql);
   },
 
@@ -812,11 +814,6 @@ testLib = {
 
   helpPopup: function(helpId) {
     return $('div[help-id="' + helpId + '"]');
-  },
-
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
   },
 
   sendKeysToACE: function(e, keys) {

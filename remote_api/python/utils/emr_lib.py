@@ -95,6 +95,26 @@ class EMRLib:
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True
         },
+        Configurations=[
+            {
+                'Classification': 'mapred-site',
+                'Properties': {
+                    'mapred.output.committer.class': 'org.apache.hadoop.mapred.FileOutputCommitter'
+                }
+            },
+            {
+                'Classification': 'yarn-site',
+                'Properties': {
+                    'yarn.nodemanager.container-monitor.procfs-tree.smaps-based-rss.enabled': 'true'
+                }
+            },
+            {
+                'Classification': 'hdfs-site',
+                'Properties': {
+                    'dfs.replication': '1'
+                }
+            }
+        ],
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole")
