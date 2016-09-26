@@ -126,7 +126,7 @@ comments in `test_big_data.sh`.
 ## Test results on Jenkins
 
 To see the details of the automatic Jenkins tests, you have to create an ssh tunnel to the
-Jenkins machine. For this to work, you nedd a) Google Cloud SDK and b) FoxyProxy Chrome extemsion.
+Jenkins machine. For this to work, you nedd a) Google Cloud SDK and b) FoxyProxy Chrome extension.
 The required steps to see the test results:
 
  1. Install [Google Cloud SDK](https://cloud.google.com/sdk/).
@@ -139,7 +139,11 @@ The required steps to see the test results:
 
  4. Set FoxyProxy to port 9999 and turn it on: "Use proxy localhost:9999 for all URLs".
 
+<<<<<<< HEAD
  5. Click on `Details` link on GitHub in the box that showing the tests.
+=======
+ 5. Click on `Details` link in GitHub in box showing the tests.
+>>>>>>> 56b235b1026d02e178eb0c7ceba4a66ba7e64a3e
 
  6. Change `http://localhost:8888/` to `jenkins/`.
 
