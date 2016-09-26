@@ -13,6 +13,21 @@ os.chdir(os.path.dirname(__file__))
 sys.path.append('remote_api/python')
 from utils.emr_lib import EMRLib
 
+
+#  Big data test sets in the  `s3://lynxkite-test-data/` bucket.
+#  fake_westeros_v3_100k_2m     100k vertices, 2m edges (small)
+#  fake_westeros_v3_5m_145m     5m vertices, 145m edges (normal)
+#  fake_westeros_v3_10m_303m    10m vertices, 303m edges (large)
+#  fake_westeros_v3_25m_799m    25m vertices 799m edges (xlarge)
+
+test_sets = {
+    'small': 'fake_westeros_v3_100k_2m',
+    'normal': 'fake_westeros_v3_5m_145m',
+    'large': 'fake_westeros_v3_10m_303m',
+    'xlarge': 'fake_westeros_v3_25m_799m'
+}
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '--cluster_name',
@@ -74,7 +89,7 @@ parser.add_argument(
 
 def main(args):
   # Checking argument dependencies.
-  checking_arguments(args)
+  check_arguments(args)
   # Create an EMR cluster and a MySQL database in RDS.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
@@ -124,10 +139,10 @@ def results_local_dir(args):
     instance_count = args.emr_instance_count
     executors = instance_count - 1
     return "{bd!s}emr_{e!s}_{i!s}_{ds!s}".format(
-      bd=basedir,
-      e=executors,
-      i=instance_count,
-      ds=dataset
+        bd=basedir,
+        e=executors,
+        i=instance_count,
+        ds=dataset
     )
   else:
     return args.results_dir
@@ -135,7 +150,7 @@ def results_local_dir(args):
 
 def results_name(args):
   return "/{task!s}-result.txt".format(
-    task=args.task
+      task=args.task
   )
 
 
@@ -152,10 +167,10 @@ def check_docker_vs_native(args):
         raise ValueError('You cannot use a native release to test a dockerized version.')
   else:
     if args.lynx_release_dir:
-      if not ('native' in args.lynx_release_dir):
+      if 'native' not in args.lynx_release_dir:
         raise ValueError('You need a native release dir to test the native ecosystem.')
     else:
-      if not ('native' in args.lynx_version):
+      if 'native' not in args.lynx_version:
         raise ValueError('You need a native release to test the native ecosystem.')
 
 
@@ -164,35 +179,20 @@ def check_bigdata(args):
   Possible values of `--bigdata_test_set`.
   '''
   if args.bigdata:
-    possible = ['small', 'normal', 'large', 'xlarge']
-    if not any(args.bigdata_test_set in x for x in possible):
+    if args.bigdata_test_set not in test_sets.keys():
       raise ValueError('Parameter = '
                        + args.bigdata_test_set
-                       + ', possible values are: small, normal, large, xlarge.')
+                       + ', possible values are: '
+                       + ", ".join(test_sets.keys()))
 
 
-def checking_arguments(args):
+def check_arguments(args):
   check_docker_vs_native(args)
   check_bigdata(args)
 
 
 def bigdata_test_set(test_set):
-  '''
-  Big data test sets in the  `s3://lynxkite-test-data/` bucket.
-  fake_westeros_v3_100k_2m     100k vertices, 2m edges (small)
-  fake_westeros_v3_5m_145m     5m vertices, 145m edges (normal)
-  fake_westeros_v3_10m_303m    10m vertices, 303m edges (large)
-  fake_westeros_v3_25m_799m    25m vertices 799m edges (xlarge)
-  '''
-  dataset = 'fake_westeros_v3_'
-  if test_set == 'small':
-    return dataset + '100k_2m'
-  elif test_set == 'normal':
-    return dataset + '5m_145m'
-  elif test_set == 'large':
-    return dataset + '10m_303m'
-  else:  # 'xlarge'
-    return dataset + '25m_799m'
+  return test_sets[test_set]
 
 
 def task_param(args, jdbc_url):
