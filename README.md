@@ -139,9 +139,9 @@ The required steps to see the test results:
 
  4. Set FoxyProxy to port 9999 and turn it on: "Use proxy localhost:9999 for all URLs".
 
- 5. Click on `Details` link on GitHub in the box that showing the tests.
+ 5. Click on `Details` link on GitHub in the box that is showing the tests.
 
- 6. Change `http://localhost:8888/` to `jenkins/`.
+ 6. Change `localhost:8888/` to `localhost/` or `jenkins/`.
 
 ## Run executors on different JVM-s.
 
