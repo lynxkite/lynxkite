@@ -20,18 +20,26 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       step: '=',  // (Input.) If historyMode is true, this is the history step of the operation.
       discardStep: '&', // (Method.) For manipulating history.
       discardChanges: '&', // (Method.) For manipulating history.
+      categoriesCallback: '&' // (Input.) Callback for when there is no categories or checkpoint.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
       scope.editMode = !scope.historyMode;
       if (scope.historyMode) {
         scope.enterEditMode = function() {
+          if (!scope.categories) {
+            scope.categoriesCallback().then(
+              function (result) {
+                scope.categories = result.categories;
+            });
+          }
           scope.editMode = true;
           $rootScope.$broadcast('close all other history toolboxes', scope);
         };
         scope.discardChangesAndFinishEdit = function() {
           scope.discardChanges();
           scope.editMode = false;
+          scope.categories = undefined;
         };
         scope.$watch('step.localChanges', function() {
           if (scope.step.localChanges) {
@@ -44,6 +52,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
           function(event, src) {
             if (src !== scope) {
               scope.editMode = false;
+              scope.categories = undefined;
             }
           });
         if (scope.step.request.op.id === 'No-operation') {
@@ -56,6 +65,10 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];
+        if (!cats) {
+          return;
+        }
+
         for (var i = 0; i < cats.length; ++i) {
           scope.allOps = scope.allOps.concat(cats[i].ops);
         }
@@ -99,6 +112,12 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
         if (op === undefined) {
           return;
         }
+
+        if (op.color) {
+          scope.opColor = op.color;
+          return;
+        }
+
         for (var i = 0; i < scope.categories.length; ++i) {
           var cat = scope.categories[i];
           if (op.category === cat.title) {
@@ -110,6 +129,10 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       });
 
       scope.$watch('op', function(opId) {
+        if (!scope.categories){
+          return;
+        }
+
         for (var i = 0; i < scope.categories.length; ++i) {
           for (var j = 0; j < scope.categories[i].ops.length; ++j) {
             var op = scope.categories[i].ops[j];

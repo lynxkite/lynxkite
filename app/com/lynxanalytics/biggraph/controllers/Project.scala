@@ -28,6 +28,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
 
@@ -37,6 +38,8 @@ import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+
+import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
 sealed abstract class ElementKind(kindName: String) {
@@ -427,12 +430,14 @@ class CheckpointRepository(val baseDir: String) {
     }
   }
 
+  val cache = new SoftHashMap[String, RootProjectState]()
   def readCheckpoint(checkpoint: String): RootProjectState = {
     if (checkpoint == "") {
       CheckpointRepository.startingState
-    } else {
-      Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
-        .as[RootProjectState].copy(checkpoint = Some(checkpoint))
+    } else synchronized {
+      cache.getOrElseUpdate(checkpoint,
+        Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
+          .as[RootProjectState].copy(checkpoint = Some(checkpoint)))
     }
   }
 }
