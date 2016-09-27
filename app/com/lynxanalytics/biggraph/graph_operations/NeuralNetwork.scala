@@ -337,7 +337,7 @@ case class NeuralNetwork(
               val outputsWithIncreased = forwardPass(
                 vertices, edges, trueState, initialState, initialState,
                 initialNetwork.copy(weights = partialIncreasedWeights))
-              val errorsWithIncreased = outputsWithIncreased.last("new state").map {
+              val errorsWithIncreased = outputsWithIncreased.last("new hidden").map {
                 case (id, state) =>
                   id -> (state(0) - trueState(id)(0))
               }
@@ -347,7 +347,7 @@ case class NeuralNetwork(
               val outputsWithDecreased = forwardPass(
                 vertices, edges, trueState, initialState, initialState,
                 initialNetwork.copy(weights = partialDecreasedWeights))
-              val errorsWithDecreased = outputsWithDecreased.last("new state").map {
+              val errorsWithDecreased = outputsWithDecreased.last("new hidden").map {
                 case (id, state) =>
                   id -> (state(0) - trueState(id)(0))
               }
