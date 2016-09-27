@@ -106,15 +106,20 @@ case class NeuralNetwork(
       import neural.Gates._
       val vs = Neighbors()
       val eb = V("edge bias")
-      val input = Sum(vs * M("edge matrix")) + eb
-      val state = Input("state")
-      val update = Sigmoid(input * M("update i") + state * M("update h"))
-      val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
-      val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
+      val input = Sum(vs) * M("edge matrix") + eb
+      val cell = Input("cell")
+      val hidden = Input("hidden")
+      val forget = Sigmoid(hiddenState * M("forget h") + input * M("forget i") + V("forget b"))
+      val chooseUpdate = Sigmoid(hiddenState * M("choose update h") + input * M("choose update i") + V("choose update b"))
+      val tilde = Tanh(hiddenState * M("tilde h") + input * M("tilde i") + B("tilde b"))
+      val newCell = cell * forget + chooseUpdate * tilde
+      val chooseOutput = Sigmoid(hiddenState * M("choose output h") + input * M("choose output i") + V("choose output b"))
+      val newHidden = chooseOutput * Tanh(newCell)
       neural.Network(
         clipGradients = !gradientCheckOn,
         size = networkSize,
-        "new state" -> (state - update * state + update * tilde)
+        "new cell" -> newCell,
+        "new hidden" -> newHidden
       )
     }
     val network = (1 to numberOfTrainings).foldLeft(initialNetwork) {
