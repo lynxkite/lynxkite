@@ -123,6 +123,20 @@ You can manually run these tests using `test_big_data.sh`, and you can also spec
 that way, e.g. `test_big_data.sh pagerank 'fake_westeros_xt_25m'`. For further use cases, see the
 comments in `test_big_data.sh`.
 
+## Test results on Jenkins
+
+To see the details of the automatic Jenkins tests, you have to create an ssh tunnel to the
+Jenkins machine. For this to work, you need Google Cloud SDK.
+The required steps to see the test results:
+
+ 1. Install [Google Cloud SDK](https://cloud.google.com/sdk/).
+
+ 2. Create ssh tunnel to Jenkins.
+
+        gcloud compute ssh --zone=europe-west1-b jenkins --ssh-flag="-L8888:localhost:80"
+
+ 3. Click on `Details` link on GitHub in the box that is showing the tests.
+
 
 ## Run executors on different JVM-s.
 
