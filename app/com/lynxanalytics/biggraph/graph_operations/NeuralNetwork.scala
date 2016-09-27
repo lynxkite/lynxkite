@@ -106,7 +106,7 @@ case class NeuralNetwork(
       import neural.Gates._
       val vs = Neighbors()
       val eb = V("edge bias")
-      val input = Sum(vs * M("edge matrix")) + eb
+      val input = Sum(vs) * M("edge matrix") + eb
       val state = Input("state")
       val update = Sigmoid(input * M("update i") + state * M("update h"))
       val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
@@ -128,7 +128,7 @@ case class NeuralNetwork(
           if (gradientCheckOn) {
             if (!NeuralNetworkDebugging.gradientCheck(trainingVertices, trainingEdgeLists, previous, dataForGradientCheck)) {
               println("Gradient check failed.")
-            }
+            } else println("Gradient check passed.")
           }
           net
         })
@@ -307,10 +307,10 @@ case class NeuralNetwork(
       data: DataForGradientCheck): Boolean = {
       val epsilon = 1e-5
       val relativeThreshold = 1e-2
-      val absoluteThreshold = 1e-10
+      val absoluteThreshold = 1e-4 //It's a friendly threshold!
       implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
       val trueState = data.trueState
-      val initialState = data.initialStates(0) //now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
+      val initialState = data.initialStates(0) //Now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
       val weights = data.weights
       val gradients = data.gradients
       //Approximate the derivatives.
@@ -367,11 +367,14 @@ case class NeuralNetwork(
                 math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
               } else 0
             }
-            if (relativeError > relativeThreshold) gradientsOK = false
+            if (relativeError > relativeThreshold) {
+              println(s"Gradient check fails on $name, backprop grad = $otherValue, approximated grad = $value")
+              gradientsOK = false
+            }
+
             (name, relativeError)
         }.toMap
       }
-      println(relativeErrors)
       gradientsOK
     }
 
