@@ -109,11 +109,11 @@ case class NeuralNetwork(
       val input = Sum(vs) * M("edge matrix") + eb
       val cell = Input("cell")
       val hidden = Input("hidden")
-      val forget = Sigmoid(hiddenState * M("forget h") + input * M("forget i") + V("forget b"))
-      val chooseUpdate = Sigmoid(hiddenState * M("choose update h") + input * M("choose update i") + V("choose update b"))
-      val tilde = Tanh(hiddenState * M("tilde h") + input * M("tilde i") + B("tilde b"))
+      val forget = Sigmoid(hidden * M("forget h") + input * M("forget i") + V("forget b"))
+      val chooseUpdate = Sigmoid(hidden * M("choose update h") + input * M("choose update i") + V("choose update b"))
+      val tilde = Tanh(hidden * M("tilde h") + input * M("tilde i") + V("tilde b"))
       val newCell = cell * forget + chooseUpdate * tilde
-      val chooseOutput = Sigmoid(hiddenState * M("choose output h") + input * M("choose output i") + V("choose output b"))
+      val chooseOutput = Sigmoid(hidden * M("choose output h") + input * M("choose output i") + V("choose output b"))
       val newHidden = chooseOutput * Tanh(newCell)
       neural.Network(
         clipGradients = !gradientCheckOn,
@@ -208,12 +208,15 @@ case class NeuralNetwork(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     neighborsState: neural.GraphData,
-    ownState: neural.GraphData,
+    ownCell: neural.GraphData,
+    ownHidden: neural.GraphData,
     network: neural.Network): Seq[neural.GateValues] = {
     (1 until radius).scanLeft {
-      network.forward(vertices, edges, neighborsState, "state" -> ownState)
+      network.forward(vertices, edges, neighborsState,
+        "cell" -> ownCell, "hidden" -> ownHidden)
     } { (previous, r) =>
-      network.forward(vertices, edges, previous("new state"), "state" -> previous("new state"))
+      network.forward(vertices, edges, previous("new cell"),
+        "cell" -> previous("new cell"), "hidden" -> previous("new hidden"))
     }
   }
 
@@ -241,9 +244,9 @@ case class NeuralNetwork(
         case (id, state) => id -> blanked(state)
       }
       initialStates += initialState
-      val outputs = forwardPass(vertices, edges, keptState, initialState, network)
+      val outputs = forwardPass(vertices, edges, keptState, initialState, initialState, network)
       weightsForGradientCheck += network.allWeights.toMap
-      val finalOutputs = outputs.last("new state")
+      val finalOutputs = outputs.last("new hidden")
 
       // Backward pass.
       var numberOfForgotten = 0.0
@@ -273,10 +276,12 @@ case class NeuralNetwork(
           id -> vec
       }
       val gradients = outputs.init.scanRight {
-        network.backward(vertices, edges, outputs.last, "new state" -> finalGradient)
+        network.backward(vertices, edges, outputs.last, "new hidden" -> finalGradient)
       } { (outputs, next) =>
         import neural.Implicits._
-        network.backward(vertices, edges, outputs, "new state" -> (next("state") + next.neighbors))
+        network.backward(vertices, edges, outputs,
+          "new cell" -> (next("cell") + next.neighbors),
+          "new hidden" -> next("hidden"))
       }
       val updated = network.update(gradients, learningRate)
       network = updated._1
@@ -298,8 +303,8 @@ case class NeuralNetwork(
       case (id, state) => id -> blanked(state)
     }
 
-    val outputs = forwardPass(vertices, edges, trueState, initialState, network)
-    outputs.last("new state").map {
+    val outputs = forwardPass(vertices, edges, trueState, initialState, initialState, network)
+    outputs.last("new hidden").map {
       case (id, state) => id -> state(0)
     }.iterator
   }
@@ -330,7 +335,7 @@ case class NeuralNetwork(
               //Increase weigth and predict with it.
               val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
               val outputsWithIncreased = forwardPass(
-                vertices, edges, trueState, initialState,
+                vertices, edges, trueState, initialState, initialState,
                 initialNetwork.copy(weights = partialIncreasedWeights))
               val errorsWithIncreased = outputsWithIncreased.last("new state").map {
                 case (id, state) =>
@@ -340,7 +345,7 @@ case class NeuralNetwork(
               //Decrease weight and predict with it.
               val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
               val outputsWithDecreased = forwardPass(
-                vertices, edges, trueState, initialState,
+                vertices, edges, trueState, initialState, initialState,
                 initialNetwork.copy(weights = partialDecreasedWeights))
               val errorsWithDecreased = outputsWithDecreased.last("new state").map {
                 case (id, state) =>
