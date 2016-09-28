@@ -22,11 +22,14 @@ class HDFS:
   '''HDFS utilities.'''
 
   @staticmethod
-  def list(path):
-    '''Returns a list of objects for the direct contents of the directory.'''
+  def list(path, env=None):
+    '''Returns a list of objects for the direct contents of the directory.
+
+    Set ``env`` to customize environment variables, such as ``HADOOP_CONF_DIR``.
+    '''
     cmd = ['hadoop', 'fs', '-ls', path]
     print(cmd)
-    output = subprocess.check_output(cmd)
+    output = subprocess.check_output(cmd, env=env)
     return HDFS._parse_hadoop_ls(output)
 
   @staticmethod
