@@ -12,7 +12,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     link: function(scope) {
       scope.inProgress = 0;
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
-      scope.maxRows = '10';
+      scope.maxRows = 10;
       if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
       }
@@ -53,8 +53,6 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.runSQLQuery = function() {
         if (!scope.sql) {
           scope.result = { $error: 'SQL script must be specified.' };
-        } else if (isNaN(parseInt(scope.maxRows))) {
-          scope.result = { $error: 'Input string "' + scope.maxRows + '" is not a number.' };
         } else {
           scope.inProgress += 1;
           scope.result = util.nocache(
