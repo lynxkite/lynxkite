@@ -224,9 +224,10 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
       ssh {options!s} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
     done'''.format(options=ssh_options))
 
-  cluster.shh('''
-  /mnt/lynx/apps/scripts/service_explorer.sh
+  cluster.ssh('''
+  /mnt/lynx/scripts/service_explorer.sh
   ''')
+
 
 def start_tests_native(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
