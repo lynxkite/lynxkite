@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.9.5
+
 ### 1.9.4
 
 ### 1.9.4
