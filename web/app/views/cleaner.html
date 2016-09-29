@@ -4,13 +4,19 @@
   <div class="alert alert-danger" ng-show="fileStatus.$error">
     {{ fileStatus.$error }}
   </div>
-  <form ng-show="!fileStatus.$error">
+  <form ng-show="!fileStatus.$error" ng-disabled="inProgress">
     <table class="table table-striped">
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>
-        <td>All entities</td>
+        <td>All unmarked entities</td>
         <td><value ref="asScalar(fileStatus.total.fileCount)"></value></td>
         <td><value ref="asScalar(fileStatus.total.totalSize)"></value></td>
+        <td/>
+      </tr>
+      <tr>
+        <td>All marked entities</td>
+        <td><value ref="asScalar(fileStatus.marked.fileCount)"></value></td>
+        <td><value ref="asScalar(fileStatus.marked.totalSize)"></value></td>
         <td/>
       </tr>
       <tr ng-repeat="method in fileStatus.methods">
@@ -36,6 +42,7 @@
       </div>
     </div>
   </form>
+  <span id="cleaner-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 
   <bottom-links info="list"></bottom-links>
 </div>
