@@ -8,11 +8,26 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.9.5
 
-### 1.9.4
+ - Relax the Luigi API Python version requirement from 3.5+ to 3.4+.
 
 ### 1.9.4
 
-### 1.9.4
+LynxKite:
+
+ - SQL boxes can now show as many rows as you like.
+ - History page performance significantly improved.
+ - SQL box on the project browser can be opened more intuitively.
+ - User passwords and admin status can be changed from the UI by administrators.
+ - LDAP authentication.
+
+Ecosystem:
+
+ - Node-level monitoring.
+ - Flexible transfers, including to secured HDFS clusters.
+ - Support for unusual DB2 features.
+ - `no_repeat` option added to Chronomaster configuration.
+ - Tasks can be constrained to time windows.
+ - New Luigi task types for creating tables and projects.
 
 ### 1.9.3
 
