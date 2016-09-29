@@ -61,8 +61,11 @@ class HDFS:
     return ns
 
   @staticmethod
-  def rm(path):
-    '''Recursively deletes a path.'''
+  def rm(path, env=None):
+    '''Recursively deletes a path.
+
+    Set ``env`` to customize environment variables, such as ``HADOOP_CONF_DIR``.
+    '''
     # ``hadoop fs -rm`` accepts globs, so if the filename contains characters used in globs we have
     # to escape those. This is absolutely necessary for ``[ttl=...]`` but is also useful for not
     # deleting a bunch of files in case a file name contains a ``*``.
@@ -73,4 +76,4 @@ class HDFS:
         .replace('{', '\\{').replace('}', '\\}'))
     cmd = ['hadoop', 'fs', '-rm', '-r', escaped]
     print(cmd)
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd, env=env)
