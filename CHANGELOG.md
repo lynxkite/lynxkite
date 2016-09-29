@@ -8,6 +8,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.9.4
 
+### 1.9.4
+
 ### 1.9.3
 
  - Assorted ecosystem bugfixes and improvements
