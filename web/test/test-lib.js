@@ -370,6 +370,16 @@ History.prototype = {
     return list.get(position);
   },
 
+  // Beware, the category is left open, so calling this the second time for the same category
+  // does not work.
+  getOperationInCategoryByName: function(operation, tooltip, name) {
+    operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
+    var ops = operation.$('operation-toolbox').$$('div[class="list-group"] > div');
+    return ops.filter(function(element) {
+        return element.getText().then(function(text) { return text === name; });
+      }).get(0);
+  },
+
   getInsertMenu: function(position) {
     var list = this.side.side.
       $$('project-history div.list-group > li > project-history-adder');
@@ -974,6 +984,20 @@ testLib = {
   expectFileContents: function(filename, expectedContents) {
     filename.then(function(fn) {
       expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
+    });
+  },
+
+  expectHasClass(element, cls) {
+    expect(element.getAttribute('class')).toBeDefined();
+    element.getAttribute('class').then(function(classes) {
+      expect(classes.split(' ').indexOf(cls)).not.toBe(-1);
+    });
+  },
+
+  expectNoClass(element, cls) {
+    expect(element.getAttribute('class')).toBeDefined();
+    element.getAttribute('class').then(function(classes) {
+          expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 

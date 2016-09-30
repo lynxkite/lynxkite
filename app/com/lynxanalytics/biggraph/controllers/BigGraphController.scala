@@ -84,7 +84,8 @@ case class FEOperationMeta(
   status: FEStatus = FEStatus.enabled,
   description: String = "",
   isWorkflow: Boolean = false,
-  workflowAuthor: String = "")
+  workflowAuthor: String = "",
+  color: Option[String] = None)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -118,14 +119,6 @@ case class FEOperationParameterMeta(
 case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
-
-abstract class FEOperation {
-  val id: String = getClass.getName
-  val title: String
-  val category: String
-  val parameters: List[FEOperationParameterMeta]
-  def apply(params: Map[String, String]): Unit
-}
 
 case class FEAttribute(
   id: String,
@@ -241,8 +234,10 @@ case class ProjectHistoryStep(
   status: FEStatus,
   segmentationsBefore: List[FESegmentation],
   segmentationsAfter: List[FESegmentation],
-  opCategoriesBefore: List[OperationCategory],
+  opMeta: Option[FEOperationMeta],
   checkpoint: Option[String])
+
+case class OpCategories(categories: List[OperationCategory])
 
 case class SaveWorkflowRequest(
   workflowName: String,
@@ -520,35 +515,22 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     })
   }
 
-  // Returns the list of operation categories (including the operations) for a historical request.
-  // If the requested operation is a deprecated workflow operation, it is added in an extra
-  // category. If the parameters used in the request are not available on the operation, they are
-  // added back.
-  private def opCategoriesForRequest(
-    ops: Operations,
-    context: Operation.Context,
-    request: SubProjectOperation): List[OperationCategory] = {
-    val op = ops.opById(context, request.op.id)
-    val base = ops.categories(context, includeDeprecated = true)
-    // If it's a deprecated workflow operation, display it in a special category.
-    val withOp =
-      if (base.find(_.containsOperation(op)).isEmpty &&
-        op.isInstanceOf[WorkflowOperation]) {
-        val deprCat = WorkflowOperation.deprecatedCategory
-        val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
-        base :+ deprCatFE
-      } else {
-        base
-      }
-    // Add the selected options if they are not present.
-    val extended = withOp.map { category =>
-      category.copy(
-        ops = category.ops.map { op =>
-          if (op.id == request.op.id) extendOpWithSelectedOption(request.op.parameters, op)
-          else op
-        })
+  def getOpCategories(user: serving.User,
+                      history: AlternateHistory): OpCategories = {
+    val rootState = metaManager.checkpointRepo.readCheckpoint(history.startingPoint)
+
+    val currentState = if (history.requests.nonEmpty) {
+      extendedHistory(user, rootState, history.requests).last._1
+    } else {
+      rootState
     }
-    extended
+
+    val viewer = new RootProjectViewer(currentState)
+    val op = currentState.lastOperationRequest.getOrElse(
+      history.requests.headOption.getOrElse(
+        SubProjectOperation(Seq(), FEOperationSpec("No-operation", Map()))))
+    val context = Operation.Context(user, viewer.offspringViewer(op.path))
+    OpCategories(ops.categories(context, includeDeprecated = true))
   }
 
   // Tries to execute the requested operation on the project.
@@ -561,11 +543,12 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
     val startStateRootViewer = new RootProjectViewer(startState)
-    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
-    val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
-    val opCategoriesBefore = opCategoriesForRequest(ops, context, request)
 
+    val segmentationsBefore = startStateRootViewer.allOffspringFESegmentations("dummy")
+    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val op = ops.opById(context, request.op.id)
+
+    val opMeta: Option[FEOperationMeta] = Some(op.toFE.copy(color = Some(op.category.color)))
 
     // Remove parameters from the request that no longer exist.
     val restrictedRequest = {
@@ -596,14 +579,16 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       else startState)
     val nextStateRootViewer = new RootProjectViewer(nextState)
     val segmentationsAfter = nextStateRootViewer.allOffspringFESegmentations("dummy")
+    val checkPointOpt = nextStateOpt.flatMap(_.checkpoint)
     (nextState,
       ProjectHistoryStep(
         restrictedRequest,
         status,
         segmentationsBefore,
         segmentationsAfter,
-        opCategoriesBefore,
-        nextStateOpt.flatMap(_.checkpoint)))
+        opMeta,
+        checkPointOpt
+      ))
   }
 
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
@@ -621,6 +606,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       user,
       metaManager.checkpointRepo.readCheckpoint(startingPoint),
       request.history.requests)
+
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
     var finalCheckpoint = startingPoint

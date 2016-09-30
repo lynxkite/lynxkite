@@ -12,6 +12,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
     link: function(scope) {
       scope.inProgress = 0;
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
+      scope.maxRows = 10;
       if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
       }
@@ -63,7 +64,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
                 project: scope.project,
                 sql: scope.sql,
               },
-              maxRows: 10,
+              maxRows: parseInt(scope.maxRows),
             });
           scope.result.finally(function() {
             scope.inProgress -= 1;

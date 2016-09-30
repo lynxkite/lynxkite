@@ -118,6 +118,7 @@ def main(args):
     install_native(cluster)
     config_and_prepare_native(cluster, args)
     config_aws_s3_native(cluster)
+    start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
     start_supervisor_native(cluster)
     start_tests_native(args, cluster, jdbc_url)
   print('Tests are now running in the background. Waiting for results.')
@@ -305,7 +306,33 @@ def start_supervisor_native(cluster):
     ''')
 
 
-def start_tests_native(args, cluster, jdbc_url):
+def start_monitoring_on_extra_nodes_native(keyfile, cluster):
+  cluster_keyfile = 'cluster_key.pem'
+  cluster.rsync_up(src=keyfile, dst='/home/hadoop/.ssh/' + cluster_keyfile)
+  ssh_options = '''-o UserKnownHostsFile=/dev/null \
+    -o CheckHostIP=no \
+    -o StrictHostKeyChecking=no \
+    -i /home/hadoop/.ssh/{keyfile!s}'''.format(keyfile=cluster_keyfile)
+
+  cluster.ssh('''
+    yarn node -list -all | grep RUNNING | cut -d':' -f 1 > nodes.txt
+    ''')
+
+  cluster.ssh('''
+    for node in `cat nodes.txt`; do
+      scp {options!s} \
+      /mnt/lynx/other_nodes/other_nodes.tgz \
+      hadoop@${{node}}:/home/hadoop/other_nodes.tgz
+      ssh {options!s} hadoop@${{node}} tar xf other_nodes.tgz
+      ssh {options!s} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
+    done'''.format(options=ssh_options))
+
+  cluster.ssh('''
+  /mnt/lynx/scripts/service_explorer.sh
+  ''')
+
+
+def start_tests_native(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
       source /mnt/lynx/config/central
