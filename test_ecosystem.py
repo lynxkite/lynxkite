@@ -50,6 +50,7 @@ parser.add_argument(
     default='lynx-cli')
 parser.add_argument(
     '--emr_instance_count',
+    type=int,
     default=3)
 parser.add_argument(
     '--results_dir',
