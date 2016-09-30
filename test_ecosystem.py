@@ -218,14 +218,22 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
   cluster.ssh('''
     for node in `cat nodes.txt`; do
       scp {options!s} \
-      /mnt/lynx/other_nodes/other_nodes.tgz \
-      hadoop@${{node}}:/home/hadoop/other_nodes.tgz
+        /mnt/lynx/other_nodes/other_nodes.tgz \
+        hadoop@${{node}}:/home/hadoop/other_nodes.tgz
       ssh {options!s} hadoop@${{node}} tar xf other_nodes.tgz
       ssh {options!s} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
     done'''.format(options=ssh_options))
 
+# Uncomment services in configs
   cluster.ssh('''
-  /mnt/lynx/scripts/service_explorer.sh
+    cat /mnt/lynx/config/monitoring/prometheus.yml  | sed 's/#  /  /' > /tmp/prometheus.yml
+    cp /tmp/prometheus.yml /mnt/lynx/config/monitoring/prometheus.yml
+    cat /mnt/lynx/config/supervisord.conf  | sed 's/^;//' > /tmp/supervisord.conf
+    cp /tmp/supervisord.conf /mnt/lynx/config/supervisord.conf
+    ''')
+
+  cluster.ssh('''
+    /mnt/lynx/scripts/service_explorer.sh
   ''')
 
 
