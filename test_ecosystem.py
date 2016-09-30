@@ -120,7 +120,7 @@ def main(args):
     config_aws_s3_native(cluster)
     start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
     start_supervisor_native(cluster)
-    start_tests_native(args, cluster, jdbc_url)
+    start_tests_native(cluster, jdbc_url, args)
   print('Tests are now running in the background. Waiting for results.')
   cluster.fetch_output()
   if not os.path.exists(results_local_dir(args)):
@@ -283,11 +283,15 @@ def config_aws_s3_native(cluster):
   cluster.ssh('''
     cd /mnt/lynx
     echo 'Setting s3 prefix.'
+    sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/prefix_definitions.txt
     cat >>config/prefix_definitions.txt <<'EOF'
+# ---- the below lines were added by test_ecosystem.py ----
 S3="s3://"
 EOF
     echo 'Setting AWS CLASSPATH.'
+    sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  spark/conf/spark-env.sh
     cat >>spark/conf/spark-env.sh <<'EOF'
+# ---- the below lines were added by test_ecosystem.py ----
 AWS_CLASSPATH1=$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\\n' ':')
 AWS_CLASSPATH2=$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\\n' ':')
 AWS_CLASSPATH3=$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\\n' ':')
