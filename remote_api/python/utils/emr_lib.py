@@ -109,6 +109,21 @@ class EMRLib:
                 }
             },
             {
+                'Classification': 'hadoop-env',
+                'Properties': {},
+                'Configurations': [
+                    {
+                        'Classification': 'export',
+                        'Properties': {
+                            'HADOOP_NAMENODE_OPTS': '"-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false '
+                            '-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8004"',
+                            'HADOOP_DATANODE_OPTS': '"-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false '
+                            '-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8005"'
+                        }
+                    }
+                ]
+            },
+            {
                 'Classification': 'hdfs-site',
                 'Properties': {
                     'dfs.replication': '1'
