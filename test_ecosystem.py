@@ -41,7 +41,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='native-1.9.3',
+    default='native-1.9.5',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
@@ -65,6 +65,7 @@ parser.add_argument(
     default='lynx-cli')
 parser.add_argument(
     '--emr_instance_count',
+    type=int,
     default=3)
 parser.add_argument(
     '--results_dir',
