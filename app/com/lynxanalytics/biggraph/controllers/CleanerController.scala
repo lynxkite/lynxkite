@@ -24,6 +24,7 @@ case class DataFilesStats(
 
 case class DataFilesStatus(
   total: DataFilesStats,
+  marked: DataFilesStats,
   methods: List[DataFilesStats])
 
 case class CleanerMethod(
@@ -66,35 +67,40 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
-    val files = getAllFiles()
+    val files = getAllFiles(marked = false)
     val allFiles = files.partitioned ++ files.entities ++ files.operations ++ files.scalars
+    val markedFiles = getAllFiles(marked = true)
+    val allMarkedFiles = markedFiles.partitioned ++ markedFiles.entities ++ markedFiles.operations ++ markedFiles.scalars
 
     DataFilesStatus(
       DataFilesStats(
         fileCount = allFiles.size,
         totalSize = allFiles.map(_._2).sum),
+      DataFilesStats(
+        fileCount = allMarkedFiles.size,
+        totalSize = allMarkedFiles.map(_._2).sum),
       methods.map { m =>
         getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
       })
   }
 
-  private def getAllFiles(): AllFiles = {
+  private def getAllFiles(marked: Boolean): AllFiles = {
     AllFiles(
-      getAllFilesInDir(io.PartitionedDir),
-      getAllFilesInDir(io.EntitiesDir),
-      getAllFilesInDir(io.OperationsDir),
-      getAllFilesInDir(io.ScalarsDir))
+      getAllFilesInDir(io.PartitionedDir, marked),
+      getAllFilesInDir(io.EntitiesDir, marked),
+      getAllFilesInDir(io.OperationsDir, marked),
+      getAllFilesInDir(io.ScalarsDir, marked))
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
   // certain directory. Directories marked as deleted are not included.
-  private def getAllFilesInDir(dir: String): Map[String, Long] = {
+  private def getAllFilesInDir(dir: String, marked: Boolean): Map[String, Long] = {
     val hadoopFileDir = environment.dataManager.writablePath / dir
     if (!hadoopFileDir.exists) {
       Map[String, Long]()
     } else {
-      hadoopFileDir.listStatus.filterNot {
-        subDir => subDir.getPath().toString contains io.DeletedSfx
+      hadoopFileDir.listStatus.filter {
+        subDir => (subDir.getPath().toString contains io.DeletedSfx) == marked
       }.map { subDir =>
         val baseName = subDir.getPath().getName()
         baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
@@ -200,7 +206,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     assert(methods.map { m => m.id } contains req.method,
       s"Unknown orphan file marking method: ${req.method}")
     log.info(s"${user.email} attempting to mark orphan files deleted using '${req.method}'.")
-    val files = getAllFiles()
+    val files = getAllFiles(marked = false)
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
     markDeleted(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
     markDeleted(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
