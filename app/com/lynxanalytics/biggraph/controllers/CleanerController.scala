@@ -12,6 +12,7 @@ import scala.collection.mutable.Queue
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
@@ -23,8 +24,9 @@ case class DataFilesStats(
   totalSize: Long)
 
 case class DataFilesStatus(
+  freeSpace: Long,
   total: DataFilesStats,
-  marked: DataFilesStats,
+  trash: DataFilesStats,
   methods: List[DataFilesStats])
 
 case class CleanerMethod(
@@ -33,7 +35,7 @@ case class CleanerMethod(
   desc: String,
   filesToKeep: () => Set[String])
 
-case class MarkDeletedRequest(method: String)
+case class MoveToTrashRequest(method: String)
 
 case class AllFiles(
   partitioned: Map[String, Long],
@@ -67,40 +69,41 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
-    val files = getAllFiles(marked = false)
+    val files = getAllFiles(trash = false)
     val allFiles = files.partitioned ++ files.entities ++ files.operations ++ files.scalars
-    val markedFiles = getAllFiles(marked = true)
-    val allMarkedFiles = markedFiles.partitioned ++ markedFiles.entities ++ markedFiles.operations ++ markedFiles.scalars
+    val trashFiles = getAllFiles(trash = true)
+    val allTrashFiles = trashFiles.partitioned ++ trashFiles.entities ++ trashFiles.operations ++ trashFiles.scalars
 
     DataFilesStatus(
+      HadoopFile.defaultFs.getStatus().getRemaining(),
       DataFilesStats(
         fileCount = allFiles.size,
         totalSize = allFiles.map(_._2).sum),
       DataFilesStats(
-        fileCount = allMarkedFiles.size,
-        totalSize = allMarkedFiles.map(_._2).sum),
+        fileCount = allTrashFiles.size,
+        totalSize = allTrashFiles.map(_._2).sum),
       methods.map { m =>
         getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
       })
   }
 
-  private def getAllFiles(marked: Boolean): AllFiles = {
+  private def getAllFiles(trash: Boolean): AllFiles = {
     AllFiles(
-      getAllFilesInDir(io.PartitionedDir, marked),
-      getAllFilesInDir(io.EntitiesDir, marked),
-      getAllFilesInDir(io.OperationsDir, marked),
-      getAllFilesInDir(io.ScalarsDir, marked))
+      getAllFilesInDir(io.PartitionedDir, trash),
+      getAllFilesInDir(io.EntitiesDir, trash),
+      getAllFilesInDir(io.OperationsDir, trash),
+      getAllFilesInDir(io.ScalarsDir, trash))
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
-  // certain directory. Directories marked as deleted are not included.
-  private def getAllFilesInDir(dir: String, marked: Boolean): Map[String, Long] = {
+  // certain directory. Directories in trash are included iff the trash param is true.
+  private def getAllFilesInDir(dir: String, trash: Boolean): Map[String, Long] = {
     val hadoopFileDir = environment.dataManager.writablePath / dir
     if (!hadoopFileDir.exists) {
       Map[String, Long]()
     } else {
       hadoopFileDir.listStatus.filter {
-        subDir => (subDir.getPath().toString contains io.DeletedSfx) == marked
+        subDir => (subDir.getPath().toString contains io.DeletedSfx) == trash
       }.map { subDir =>
         val baseName = subDir.getPath().getName()
         baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
@@ -201,39 +204,39 @@ class CleanerController(environment: BigGraphEnvironment) {
     DataFilesStats(id, name, desc, filesToDelete.size, filesToDelete.map(_._2).sum)
   }
 
-  def markFilesDeleted(user: serving.User, req: MarkDeletedRequest): Unit = synchronized {
-    assert(user.isAdmin, "Only administrators can mark files deleted.")
+  def moveToCleanerTrash(user: serving.User, req: MoveToTrashRequest): Unit = synchronized {
+    assert(user.isAdmin, "Only administrators can move data files to trash.")
     assert(methods.map { m => m.id } contains req.method,
-      s"Unknown orphan file marking method: ${req.method}")
-    log.info(s"${user.email} attempting to mark orphan files deleted using '${req.method}'.")
-    val files = getAllFiles(marked = false)
+      s"Unknown data file trashing method: ${req.method}")
+    log.info(s"${user.email} attempting to move data files to trash using '${req.method}'.")
+    val files = getAllFiles(trash = false)
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
-    markDeleted(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
-    markDeleted(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
-    markDeleted(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
-    markDeleted(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
+    moveToTrash(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
+    moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
+    moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
+    moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
   }
 
-  private def markDeleted(dir: String, files: Set[String]): Unit = {
+  private def moveToTrash(dir: String, files: Set[String]): Unit = {
     val hadoopFileDir = environment.dataManager.writablePath / dir
     if (hadoopFileDir.exists()) {
       for (file <- files) {
         (hadoopFileDir / file).renameTo(hadoopFileDir / (file + io.DeletedSfx))
       }
-      log.info(s"${files.size} files marked deleted in ${hadoopFileDir.path}.")
+      log.info(s"${files.size} files moved to trash in ${hadoopFileDir.path}.")
     }
   }
 
-  def deleteMarkedFiles(user: serving.User, req: serving.Empty): Unit = synchronized {
-    assert(user.isAdmin, "Only administrators can delete marked files.")
-    log.info(s"${user.email} attempting to delete marked files.")
-    deleteMarkedFilesInDir(io.PartitionedDir)
-    deleteMarkedFilesInDir(io.EntitiesDir)
-    deleteMarkedFilesInDir(io.OperationsDir)
-    deleteMarkedFilesInDir(io.ScalarsDir)
+  def emptyCleanerTrash(user: serving.User, req: serving.Empty): Unit = synchronized {
+    assert(user.isAdmin, "Only administrators can delete trash files.")
+    log.info(s"${user.email} attempting to delete trash files.")
+    deleteTrashFilesInDir(io.PartitionedDir)
+    deleteTrashFilesInDir(io.EntitiesDir)
+    deleteTrashFilesInDir(io.OperationsDir)
+    deleteTrashFilesInDir(io.ScalarsDir)
   }
 
-  private def deleteMarkedFilesInDir(dir: String): Unit = {
+  private def deleteTrashFilesInDir(dir: String): Unit = {
     val hadoopFileDir = environment.dataManager.writablePath / dir
     if (hadoopFileDir.exists()) {
       hadoopFileDir.listStatus.filter {
@@ -241,7 +244,7 @@ class CleanerController(environment: BigGraphEnvironment) {
       }.map { subDir =>
         (hadoopFileDir / subDir.getPath().getName()).delete()
       }
-      log.info(s"Deleted the marked files in ${hadoopFileDir.path}.")
+      log.info(s"Deleted the trash files in ${hadoopFileDir.path}.")
     }
   }
 }
