@@ -244,7 +244,7 @@ class CleanerController(environment: BigGraphEnvironment) {
       }.map { subDir =>
         (hadoopFileDir / subDir.getPath().getName()).delete()
       }
-      log.info(s"Deleted the trash files in ${hadoopFileDir.path}.")
+      log.info(s"Emptied the cleaner trash in ${hadoopFileDir.path}.")
     }
   }
 }
