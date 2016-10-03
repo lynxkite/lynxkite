@@ -227,7 +227,7 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
 
 # Uncomment services in configs
   cluster.ssh('''
-    /mnt/lynx/scripts/uncomment_config.py /tmp/prometheus.yml /mnt/lynx/config/monitoring/prometheus.yml
+    /mnt/lynx/scripts/uncomment_config.py /mnt/lynx/config/monitoring/prometheus.yml
     /mnt/lynx/scripts/uncomment_config.py /mnt/lynx/config/supervisord.conf
     ''')
 
