@@ -38,10 +38,13 @@ case class CleanerMethod(
 case class MoveToTrashRequest(method: String)
 
 case class AllFiles(
-  partitioned: Map[String, Long],
-  entities: Map[String, Long],
-  operations: Map[String, Long],
-  scalars: Map[String, Long])
+    partitioned: Map[String, Long],
+    entities: Map[String, Long],
+    operations: Map[String, Long],
+    scalars: Map[String, Long]) {
+
+  lazy val all = partitioned ++ entities ++ operations ++ scalars
+}
 
 class CleanerController(environment: BigGraphEnvironment) {
   implicit val manager = environment.metaGraphManager
@@ -70,18 +73,16 @@ class CleanerController(environment: BigGraphEnvironment) {
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
     val files = getAllFiles(trash = false)
-    val allFiles = files.partitioned ++ files.entities ++ files.operations ++ files.scalars
     val trashFiles = getAllFiles(trash = true)
-    val allTrashFiles = trashFiles.partitioned ++ trashFiles.entities ++ trashFiles.operations ++ trashFiles.scalars
 
     DataFilesStatus(
       HadoopFile.defaultFs.getStatus().getRemaining(),
       DataFilesStats(
-        fileCount = allFiles.size,
-        totalSize = allFiles.map(_._2).sum),
+        fileCount = files.all.size,
+        totalSize = files.all.map(_._2).sum),
       DataFilesStats(
-        fileCount = allTrashFiles.size,
-        totalSize = allTrashFiles.map(_._2).sum),
+        fileCount = trashFiles.all.size,
+        totalSize = trashFiles.all.map(_._2).sum),
       methods.map { m =>
         getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
       })
@@ -198,9 +199,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     desc: String,
     filesToKeep: Set[String],
     allFiles: AllFiles): DataFilesStats = {
-    val filesToDelete =
-      (allFiles.partitioned ++ allFiles.entities ++ allFiles.operations ++ allFiles.scalars) --
-        filesToKeep
+    val filesToDelete = allFiles.all -- filesToKeep
     DataFilesStats(id, name, desc, filesToDelete.size, filesToDelete.map(_._2).sum)
   }
 
