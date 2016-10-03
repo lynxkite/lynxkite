@@ -226,10 +226,8 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
 
 # Uncomment services in configs
   cluster.ssh('''
-    cat /mnt/lynx/config/monitoring/prometheus.yml  | sed 's/#  /  /' > /tmp/prometheus.yml
-    cp /tmp/prometheus.yml /mnt/lynx/config/monitoring/prometheus.yml
-    cat /mnt/lynx/config/supervisord.conf  | sed 's/^;//' > /tmp/supervisord.conf
-    cp /tmp/supervisord.conf /mnt/lynx/config/supervisord.conf
+    /mnt/lynx/scripts/uncomment_config.py /tmp/prometheus.yml /mnt/lynx/config/monitoring/prometheus.yml
+    /mnt/lynx/scripts/uncomment_config.py /mnt/lynx/config/supervisord.conf
     ''')
 
   cluster.ssh('''
