@@ -114,7 +114,7 @@ def main(args):
   lib.wait_for_services([cluster, mysql_instance])
 
   mysql_address = mysql_instance.get_address()
-  jdbc_url = 'jdbc:mysql://{mysql_address!s}/db?user=root&password=rootroot'.format(
+  jdbc_url = 'jdbc:mysql://{mysql_address}/db?user=root&password=rootroot'.format(
       mysql_address=mysql_address)
 
   upload_installer_script(cluster, args)
@@ -150,7 +150,7 @@ def results_local_dir(args):
     dataset = bigdata_test_set(args.bigdata_test_set)
     instance_count = args.emr_instance_count
     executors = instance_count - 1
-    return "{bd!s}emr_{e!s}_{i!s}_{ds!s}".format(
+    return "{bd}emr_{e}_{i}_{ds}".format(
         bd=basedir,
         e=executors,
         i=instance_count,
@@ -161,7 +161,7 @@ def results_local_dir(args):
 
 
 def results_name(args):
-  return "/{task!s}-result.txt".format(
+  return "/{task}-result.txt".format(
       task=args.task
   )
 
@@ -187,9 +187,7 @@ def check_docker_vs_native(args):
 
 
 def check_bigdata(args):
-  '''
-  Possible values of `--bigdata_test_set`.
-  '''
+  '''Possible values of `--bigdata_test_set`.'''
   if args.bigdata:
     if args.bigdata_test_set not in test_sets.keys():
       raise ValueError('Parameter = '
@@ -210,7 +208,7 @@ def bigdata_test_set(test_set):
 def upload_installer_script(cluster, args):
   if not args.lynx_release_dir:
     cluster.rsync_up(
-        src='{dir!s}/download-lynx-{version!s}.sh'.format(
+        src='{dir}/download-lynx-{version}.sh'.format(
             dir=args.biggraph_releases_dir,
             version=args.lynx_version),
         dst='/mnt/')
@@ -260,7 +258,7 @@ def config_and_prepare_native(cluster, args):
 # ---- the below lines were added by test_ecosystem.py ----
       export KITE_INSTANCE=ecosystem-test
       export KITE_MASTER_MEMORY_MB=8000
-      export NUM_EXECUTORS={num_executors!s}
+      export NUM_EXECUTORS={num_executors}
       export EXECUTOR_MEMORY=18g
       export NUM_CORES_PER_EXECUTOR=8
       # port differs from the one used in central/config
@@ -320,7 +318,7 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
   ssh_options = '''-o UserKnownHostsFile=/dev/null \
     -o CheckHostIP=no \
     -o StrictHostKeyChecking=no \
-    -i /home/hadoop/.ssh/{keyfile!s}'''.format(keyfile=cluster_keyfile)
+    -i /home/hadoop/.ssh/{keyfile}'''.format(keyfile=cluster_keyfile)
 
   cluster.ssh('''
     yarn node -list -all | grep RUNNING | cut -d':' -f 1 > nodes.txt
@@ -328,11 +326,11 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
 
   cluster.ssh('''
     for node in `cat nodes.txt`; do
-      scp {options!s} \
+      scp {options} \
       /mnt/lynx/other_nodes/other_nodes.tgz \
       hadoop@${{node}}:/home/hadoop/other_nodes.tgz
-      ssh {options!s} hadoop@${{node}} tar xf other_nodes.tgz
-      ssh {options!s} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
+      ssh {options} hadoop@${{node}} tar xf other_nodes.tgz
+      ssh {options} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
     done'''.format(options=ssh_options))
 
   cluster.ssh('''
@@ -359,10 +357,10 @@ def start_tests_native(cluster, jdbc_url, args):
         sleep 1
       done
       echo 'Ecosystem started.'
-      JDBC_URL='{jdbc_url!s}' DATASET={dataset!s} \
+      JDBC_URL='{jdbc_url}' DATASET={dataset} \
       python3 /mnt/lynx/luigi_tasks/test_runner.py \
-          --module {luigi_module!s} \
-          --task {luigi_task!s} \
+          --module {luigi_module} \
+          --task {luigi_task} \
           --result_file /home/hadoop/test_results.txt
   '''.format(
       luigi_module=args.task_module,
@@ -381,10 +379,10 @@ def download_and_unpack_release(cluster, args):
     cluster.ssh('''
       set -x
       cd /mnt
-      if [ ! -f "./lynx-{version!s}.tgz" ]; then
-        ./download-lynx-{version!s}.sh
+      if [ ! -f "./lynx-{version}.tgz" ]; then
+        ./download-lynx-{version}.sh
         mkdir -p lynx
-        tar xfz lynx-{version!s}.tgz -C lynx --strip-components 1
+        tar xfz lynx-{version}.tgz -C lynx --strip-components 1
       fi
       '''.format(version=version))
 
@@ -408,7 +406,7 @@ def start_or_reset_ecosystem_docker(cluster, version):
     KITE_INSTANCE: ecosystem-test
     KITE_DATA_DIR: hdfs://\$HOSTNAME:8020/user/\$USER/lynxkite_data/
     KITE_MASTER_MEMORY_MB: 8000
-    NUM_EXECUTORS: {num_executors!s}
+    NUM_EXECUTORS: {num_executors}
     EXECUTOR_MEMORY: 18g
     NUM_CORES_PER_EXECUTOR: 8
 '''.format(num_executors=args.emr_instance_count - 1)
@@ -424,7 +422,7 @@ def start_or_reset_ecosystem_docker(cluster, version):
     else
       # Update configuration:
       sed -i.bak '/Please configure/q' docker-compose-lynxkite.yml
-      cat >>docker-compose-lynxkite.yml <<EOF{kite_config!s}EOF
+      cat >>docker-compose-lynxkite.yml <<EOF{kite_config}EOF
       ./start.sh
     fi
     # Wait for ecosystem startup completion.
@@ -443,10 +441,10 @@ def start_tests_docker(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
       docker exec lynx_luigi_worker_1 \
-      JDBC_URL='{jdbc_url!s}' DATASET={dataset!s} \
+      JDBC_URL='{jdbc_url}' DATASET={dataset} \
       python3 tasks/test_tasks/test_runner.py \
-          --module {luigi_module!s} \
-          --task {luigi_task!s} \
+          --module {luigi_module} \
+          --task {luigi_task} \
           --result_file /tmp/test_results.txt
       docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
   '''.format(
