@@ -273,11 +273,11 @@ object MetaGraphManager {
   }
 
   // Read operations as file -> JSON from a repo.
-  def loadOperations(repo: String): Seq[(File, json.JsValue)] = {
+  def loadOperations(repo: String): Iterator[(File, json.JsValue)] = {
     val opdir = new File(repo, "operations")
     if (!opdir.exists) opdir.mkdirs
     val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
-    files.map { f =>
+    files.iterator.map { f =>
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
     }
   }

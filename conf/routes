@@ -9,6 +9,7 @@ POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.Production
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
 GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getHistory
+GET  /ajax/getOpCategories    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOPCategories
 POST /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
 POST /ajax/saveHistory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveHistory
 POST /ajax/saveWorkflow   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveWorkflow
@@ -60,8 +61,8 @@ POST /ajax/createUser          com.lynxanalytics.biggraph.serving.ProductionJson
 GET  /ajax/getUserData         com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUserData
 
 GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
-POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJsonServer.markFilesDeleted
-POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
+POST /ajax/moveToCleanerTrash    com.lynxanalytics.biggraph.serving.ProductionJsonServer.moveToCleanerTrash
+POST /ajax/emptyCleanerTrash     com.lynxanalytics.biggraph.serving.ProductionJsonServer.emptyCleanerTrash
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload

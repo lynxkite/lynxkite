@@ -177,4 +177,26 @@ module.exports = function(fw) {
       // id, name, age, gender, income
       expect(lib.left.attributeCount()).toEqual(5);
     });
+
+  fw.transitionTest(
+    'empty test-example project',
+    'test-example project with 100 vertices',
+    function() {
+      left.runOperation('New vertex set', { size: '100'});
+      var maxRows = left.side.element(by.css('#max-rows'));
+
+      maxRows.clear().sendKeys('1000');
+      left.side.element(by.id('run-sql-button')).click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      maxRows.clear().sendKeys('100');
+      left.side.element(by.id('run-sql-button')).click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      maxRows.clear().sendKeys('17');
+      left.side.element(by.id('run-sql-button')).click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
+    },
+    function() {
+    }
+    );
+
 };

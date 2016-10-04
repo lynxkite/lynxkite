@@ -284,6 +284,7 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
+  implicit val wOPCategories = json.Json.writes[OpCategories]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -318,7 +319,7 @@ object FrontendJson {
   implicit val wLogFiles = json.Json.writes[LogFiles]
   implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
 
-  implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
+  implicit val rMoveToTrashRequest = json.Json.reads[MoveToTrashRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
 }
@@ -394,6 +395,7 @@ object ProductionJsonServer extends JsonServer {
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
+  def getOPCategories = jsonGet(bigGraphController.getOpCategories)
   def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
@@ -450,8 +452,8 @@ object ProductionJsonServer extends JsonServer {
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
-  def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
-  def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
+  def moveToCleanerTrash = jsonPost(cleanerController.moveToCleanerTrash)
+  def emptyCleanerTrash = jsonPost(cleanerController.emptyCleanerTrash)
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)

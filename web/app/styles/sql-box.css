@@ -32,6 +32,12 @@ sql-box > * {
   color: green;
 }
 
+input.form-control#max-rows {
+  width: 65px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 #sql-result {
   overflow-x: auto; /* Scroll if there are many columns. */
 }

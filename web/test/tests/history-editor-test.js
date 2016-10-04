@@ -228,5 +228,34 @@ module.exports = function(fw) {
       lib.left.history.close(false);
     });
 
+  fw.transitionTest(
+      'empty test-example project',
+      'test-example project with history with different categories',
+      function() {
+        lib.left.runOperation('new vertex set', { size: '10' });
+        lib.left.runOperation('add random vertex attribute', { seed: 1 });
+      },
+      function() {
+        lib.left.history.open();
 
+        var first = lib.left.history.getOperation(0);
+        lib.left.history.enterEditMode(first);
+        lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
+          first, 'Structure operations', 'New vertex set'
+          ), 'disabled');
+        lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
+          first, 'Vertex attribute operations', 'Add random vertex attribute'
+          ), 'disabled');
+        lib.left.history.discardEdits(first);
+
+        var second = lib.left.history.getOperation(1);
+        lib.left.history.enterEditMode(second);
+        lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
+          second, 'Structure operations', 'New vertex set'
+          ), 'disabled');
+        lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
+          second, 'Vertex attribute operations', 'Add random vertex attribute'
+          ), 'disabled');
+        lib.left.history.discardEdits(second);
+      });
 };
