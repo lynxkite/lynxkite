@@ -76,7 +76,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, instance_count=2):
+          self, name, log_uri, instance_count=2):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -87,6 +87,7 @@ class EMRLib:
     print('Creating new cluster.')
     res = self.emr_client.run_job_flow(
         Name=name,
+        LogUri=log_uri,
         ReleaseLabel="emr-4.7.2",
         Instances={
             'MasterInstanceType': 'm3.2xlarge',
