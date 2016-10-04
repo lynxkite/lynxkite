@@ -327,9 +327,10 @@ case class NeuralNetwork(
               val outputsWithIncreased = forwardPass(
                 vertices, edges, trueState, initialState,
                 initialNetwork.copy(weights = partialIncreasedWeights))
-              val errorsWithIncreased = outputsWithIncreased.last("new state").map {
-                case (id, state) =>
-                  id -> (state(0) - trueState(id)(0))
+              val finalOutputWithIncreased = outputsWithIncreased.last("new state")
+              val errorsWithIncreased = trueState.map {
+                case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithIncreased(id)(0))
+                case (id, state) => id -> 0.0
               }
               val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
               //Decrease weight and predict with it.
@@ -337,9 +338,11 @@ case class NeuralNetwork(
               val outputsWithDecreased = forwardPass(
                 vertices, edges, trueState, initialState,
                 initialNetwork.copy(weights = partialDecreasedWeights))
-              val errorsWithDecreased = outputsWithDecreased.last("new state").map {
-                case (id, state) =>
-                  id -> (state(0) - trueState(id)(0))
+
+              val finalOutputWithDecreased = outputsWithDecreased.last("new state")
+              val errorsWithDecreased = trueState.map {
+                case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithDecreased(id)(0))
+                case (id, state) => id -> 0.0
               }
               val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
               val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
