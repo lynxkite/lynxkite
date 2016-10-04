@@ -207,16 +207,6 @@ def bigdata_test_set(test_set):
   return test_sets[test_set]
 
 
-def task_param(args, jdbc_url):
-  '''
-  For big data tests we need the `dataset` parameter, for jdbc tests we need `jdbc_url`.
-  '''
-  if args.bigdata:
-    return 'dataset ' + bigdata_test_set(args.bigdata_test_set)
-  else:  # Jdbc test
-    return 'jdbc_url ' + "'{jdbc_url!s}'".format(jdbc_url=jdbc_url)
-
-
 def upload_installer_script(cluster, args):
   if not args.lynx_release_dir:
     cluster.rsync_up(
