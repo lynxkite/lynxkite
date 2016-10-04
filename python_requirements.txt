@@ -2,5 +2,6 @@ autopep8
 awscli
 boto3
 luigi
+python-dateutil
 Sphinx
 sphinx-rtd-theme

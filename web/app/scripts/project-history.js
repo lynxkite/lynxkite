@@ -174,25 +174,12 @@ function(util, $timeout, removeOptionalDefaults) {
         return undefined;
       };
 
-      function findOp(cats, opId) {
-        for (var i = 0; i < cats.length; ++i) {
-          for (var j = 0; j < cats[i].ops.length; ++j) {
-            var op = cats[i].ops[j];
-            if (opId === op.id) {
-              return op;
-            }
-          }
-        }
-        return undefined;
-      }
-
       function opNamesForSteps(steps) {
         var names = [];
         for (var i = 0; i < steps.length; ++i) {
-          var step = steps[i];
-          var op = findOp(step.opCategoriesBefore, step.request.op.id);
+          var op = steps[i].opMeta;
           if (op) {
-            names.push(findOp(step.opCategoriesBefore, step.request.op.id).title);
+            names.push(op.title);
           }
         }
         return names;
@@ -298,6 +285,21 @@ function(util, $timeout, removeOptionalDefaults) {
         };
       }
 
+      scope.categoriesCallback = function(index) {
+        if (scope.history.steps[index].checkpoint) {
+          return util.get('/ajax/getOpCategories', {
+            startingPoint: index > 0 ? scope.history.steps[index - 1].checkpoint : '',
+            requests: []
+          });
+        } else {
+          var altHist = alternateHistory();
+          var totalRealHistoryLength = scope.history.steps.length - altHist.requests.length;
+          var required = index - totalRealHistoryLength;
+          altHist.requests = altHist.requests.slice(0, required + 1);
+          return util.get('/ajax/getOpCategories', altHist);
+        }
+      };
+
       function toGroovyId(name) {
         return name
           .replace(/^./, function(first) { return first.toLowerCase(); })
@@ -316,7 +318,7 @@ function(util, $timeout, removeOptionalDefaults) {
         for (var i = 0; i < steps.length; ++i) {
           var step = steps[i];
           var request = step.request;
-          var op = findOp(step.opCategoriesBefore, request.op.id);
+          var op = step.opMeta;
           var line = [];
           line.push('project');
           for (var j = 0; j < request.path.length; ++j) {

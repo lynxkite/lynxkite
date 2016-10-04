@@ -16,8 +16,18 @@ object Assets extends Controller {
   }
 
   def notFound(request: Request[AnyContent]) = {
-    // Redirect e.g. /project/x to /#/project/x.
-    // Absolutely bogus URLs get redirected then to the main page by Angular.
-    Redirect("/#" + request.path)
+    val static = new java.io.File("./static").getCanonicalPath
+    val requested = new java.io.File("./static/" + request.path).getCanonicalPath
+    val file = new java.io.File(requested)
+    // To be safe against "../../../etc/passwd" attacks we check that the normalized (canonical)
+    // path is still inside the "static" directory.
+    if (requested.startsWith(static) && file.exists) {
+      // Send file from ./static if it exists.
+      Ok.sendFile(file)
+    } else {
+      // Redirect e.g. /project/x to /#/project/x.
+      // Absolutely bogus URLs get redirected then to the main page by Angular.
+      Redirect("/#" + request.path)
+    }
   }
 }

@@ -76,7 +76,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, instance_count=2):
+          self, name, log_uri, instance_count=2):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -87,6 +87,7 @@ class EMRLib:
     print('Creating new cluster.')
     res = self.emr_client.run_job_flow(
         Name=name,
+        LogUri=log_uri,
         ReleaseLabel="emr-4.7.2",
         Instances={
             'MasterInstanceType': 'm3.2xlarge',
@@ -95,6 +96,41 @@ class EMRLib:
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True
         },
+        Configurations=[
+            {
+                'Classification': 'mapred-site',
+                'Properties': {
+                    'mapred.output.committer.class': 'org.apache.hadoop.mapred.FileOutputCommitter'
+                }
+            },
+            {
+                'Classification': 'yarn-site',
+                'Properties': {
+                    'yarn.nodemanager.container-monitor.procfs-tree.smaps-based-rss.enabled': 'true'
+                }
+            },
+            {
+                'Classification': 'hadoop-env',
+                'Properties': {},
+                'Configurations': [
+                    {
+                        'Classification': 'export',
+                        'Properties': {
+                            'HADOOP_NAMENODE_OPTS': '"-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false '
+                            '-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8004"',
+                            'HADOOP_DATANODE_OPTS': '"-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false '
+                            '-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8005"'
+                        }
+                    }
+                ]
+            },
+            {
+                'Classification': 'hdfs-site',
+                'Properties': {
+                    'dfs.replication': '1'
+                }
+            }
+        ],
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole")
