@@ -17,4 +17,4 @@ top: {"labelType":"between","labels":["-5.1000","0.0050","0.0103","0.0214","0.04
 !coverage: 5000002
 !nonEmpty: 2459
 !belongsToEdges: 807769411
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segment_by_interval.groovy, took 3741 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segment_by_interval.groovy, took 3799 seconds
