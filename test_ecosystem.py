@@ -53,10 +53,12 @@ parser.add_argument(
          native code is ecosystem/native/dist.''')
 parser.add_argument(
     '--task_module',
-    default='test_tasks.bigdata_tests')
+    default='test_tasks.bigdata_tests',
+    help='Module of the luigi task which will run on the cluster.')
 parser.add_argument(
     '--task',
-    default='DefaultTests')
+    default='DefaultTests',
+    help='Luigi task to run when the cluster is started.')
 parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
@@ -66,7 +68,8 @@ parser.add_argument(
 parser.add_argument(
     '--emr_instance_count',
     type=int,
-    default=3)
+    default=3,
+    help='Number of instances on EMR cluster, including master.')
 parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/')
@@ -121,7 +124,7 @@ def main(args):
     install_docker_and_lynx(cluster, args.lynx_version)
     # TODO: config_aws_s3_docker(cluster)
     start_or_reset_ecosystem_docker(cluster, args.lynx_version)
-    start_tests_docker(args, cluster, jdbc_url)
+    start_tests_docker(cluster, jdbc_url, args)
   else:
     install_native(cluster)
     config_and_prepare_native(cluster, args)
@@ -365,15 +368,16 @@ def start_tests_native(cluster, jdbc_url, args):
         sleep 1
       done
       echo 'Ecosystem started.'
+      JDBC_URL='{jdbc_url!s}' DATASET={dataset!s} \
       python3 /mnt/lynx/luigi_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
-          --task-param {task_param!s} \
           --result_file /home/hadoop/test_results.txt
   '''.format(
       luigi_module=args.task_module,
       luigi_task=args.task,
-      task_param=task_param(args, jdbc_url)
+      jdbc_url=jdbc_url,
+      dataset=bigdata_test_set(args.bigdata_test_set)
   ))
 
 
@@ -444,19 +448,21 @@ def start_or_reset_ecosystem_docker(cluster, version):
       kite_config=kite_config))
 
 
-def start_tests_docker(args, cluster, jdbc_url):
+def start_tests_docker(cluster, jdbc_url, args):
   '''Start running the tests in the background.'''
   cluster.ssh_nohup('''
-      docker exec lynx_luigi_worker_1 python3 tasks/test_tasks/test_runner.py \
+      docker exec lynx_luigi_worker_1 \
+      JDBC_URL='{jdbc_url!s}' DATASET={dataset!s} \
+      python3 tasks/test_tasks/test_runner.py \
           --module {luigi_module!s} \
           --task {luigi_task!s} \
-          --task-param {task_param!s} \
           --result_file /tmp/test_results.txt
       docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
   '''.format(
       luigi_module=args.task_module,
       luigi_task=args.task,
-      task_param=task_param(args, jdbc_url)
+      jdbc_url=jdbc_url,
+      dataset=bigdata_test_set(args.bigdata_test_set)
   ))
 
 
