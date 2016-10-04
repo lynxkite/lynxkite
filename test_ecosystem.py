@@ -104,7 +104,7 @@ def main(args):
       name=args.cluster_name,
       log_uri=args.emr_log_uri,
       instance_count=args.emr_instance_count
-      )
+  )
   mysql_instance = lib.create_or_connect_to_rds_instance(
       name=args.cluster_name + '-mysql')
   # Wait for startup of both.
