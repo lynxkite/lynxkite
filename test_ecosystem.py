@@ -86,6 +86,11 @@ parser.add_argument(
     '--bigdata_test_set',
     default='small',
     help='Test set for big data tests. Possible values: small, normal, large, xlarge.')
+parser.add_argument(
+    '--emr_log_uri',
+    default='s3://test-ecosystem-log',
+    help='URI of the S3 bucket where the EMR logs will be written.'
+)
 
 
 def main(args):
@@ -97,7 +102,9 @@ def main(args):
       ec2_key_name=args.ec2_key_name)
   cluster = lib.create_or_connect_to_emr_cluster(
       name=args.cluster_name,
-      instance_count=args.emr_instance_count)
+      log_uri=args.emr_log_uri,
+      instance_count=args.emr_instance_count
+      )
   mysql_instance = lib.create_or_connect_to_rds_instance(
       name=args.cluster_name + '-mysql')
   # Wait for startup of both.
