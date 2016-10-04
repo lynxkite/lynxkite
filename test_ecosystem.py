@@ -133,6 +133,7 @@ def install_native(cluster):
     cd /mnt/lynx
     sudo yum install -y python34-pip mysql-server gcc libffi-devel
     sudo pip-3.4 install --upgrade luigi sqlalchemy mysqlclient PyYAML prometheus_client
+    # Temporary workaround needed because of the pycparser 2.14 bug.
     sudo pip-2.6 install pycparser==2.13
     sudo pip-2.6 install cryptography
     sudo pip-2.6 install --upgrade requests[security] supervisor
