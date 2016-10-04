@@ -9,8 +9,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 import org.apache.spark.rdd.RDD
@@ -52,6 +52,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     implicit val runtimeContext = rc
 
     if (aggregator.isInstanceOf[Aggregator[From, _, To]]) {
+      // Scalable aggregation for non-local Aggregators.
       val partitioner = inputs.connection.rdd.partitioner.get
       val withAttr = HybridRDD(inputs.connection.rdd.map {
         case (id, edge) => edge.src -> edge.dst
@@ -62,6 +63,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
       val aggregated = aggregator.asInstanceOf[Aggregator[From, _, To]].aggregateRDD(byDst)
       output(o.attr, aggregated.sortUnique(inputs.dst.rdd.partitioner.get))
     } else {
+      // Regular aggregation for local Aggregators.
       val bySrc = inputs.connection.rdd.map {
         case (id, edge) => edge.src -> edge.dst
       }.groupBySortedKey(inputs.src.rdd.partitioner.get)
@@ -120,9 +122,11 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
       case (eid, (edge, value)) => edge.dst -> value
     }
     if (aggregator.isInstanceOf[Aggregator[From, _, To]]) {
+      // Scalable aggregation for non-local Aggregators.
       output(o.dstAttr, aggregator.asInstanceOf[Aggregator[From, _, To]]
         .aggregateRDD(byDst).sortUnique(inputs.dst.rdd.partitioner.get))
     } else {
+      // Regular aggregation for local Aggregators.
       output(o.dstAttr,
         byDst.groupBySortedKey(dst.partitioner.get).mapValues(aggregator.aggregate(_)))
     }
@@ -186,7 +190,7 @@ trait LocalAggregator[From, To] extends ToJson {
 // Aggregates from From to Intermediate and at the end calls finalize() to turn
 // Intermediate into To. So Intermediate can contain extra data over what is
 // required in the result. The merge() and combine() methods make it possible to
-// use Aggregator in a distributed setting.
+// use Aggregator in a distributed setting. Provides a scalable aggregateRDD() method.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
@@ -197,6 +201,7 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
     values.foldLeft(zero)(merge _)
   def aggregate(values: Iterable[From]): To =
     finalize(aggregatePartition(values.iterator))
+  // Aggregates the RDD by key in a scalable (hotspot resistant) way.
   def aggregateRDD[K: ClassTag](values: RDD[(K, From)])(implicit ftt: TypeTag[From]): RDD[(K, To)] = {
     implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
     implicit val fct = RuntimeSafeCastable.classTagFromTypeTag(ftt)
