@@ -3,17 +3,19 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 // Helper class for creating segmentations by an attribute.
-case class Bucketing[T: Ordering: reflect.ClassTag](attrIdsToBuckets: SortedRDD[ID, T]) {
+case class Bucketing[T: Ordering: reflect.ClassTag](attrIdsToBuckets: SortedRDD[ID, T])(implicit rc: RuntimeContext) {
   // This implementation assumes many small buckets. (#1481)
   private val partitioner = attrIdsToBuckets.partitioner.get
   private val segToValue = attrIdsToBuckets.values.distinct.randomNumbered(partitioner)
   private val vToSeg = {
     val valueToSeg = segToValue.map(_.swap).sortUnique(partitioner)
-    val valueToV = attrIdsToBuckets.map(_.swap).sort(partitioner)
-    valueToV.sortedJoin(valueToSeg).map { case (value, (v, seg)) => (v, seg) }
+    HybridRDD(attrIdsToBuckets.map(_.swap), partitioner, even = true)
+      .lookup(valueToSeg)
+      .map { case (value, (v, seg)) => (v, seg) }
   }
   val segments = segToValue.mapValues(_ => ())
   val label = segToValue
@@ -43,6 +45,7 @@ case class StringBucketing()
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
+    implicit val runtimeContext = rc
     val bucketing = Bucketing(inputs.attr.rdd)
     output(o.segments, bucketing.segments)
     output(o.label, bucketing.label)
@@ -88,6 +91,7 @@ case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
+    implicit val runtimeContext = rc
     val bucketStep = if (overlap) bucketWidth / 2 else bucketWidth
     val buckets = inputs.attr.rdd.flatMapValues { value =>
       val bucket = (value / bucketStep).floor.round
@@ -141,6 +145,7 @@ case class IntervalBucketing(bucketWidth: Double, overlap: Boolean)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val runtimeContext = rc
     val bucketStep = if (overlap) bucketWidth / 2 else bucketWidth
     // vertexid -> (begin, end):
     val inputIntervals = inputs.beginAttr.rdd.sortedJoin(inputs.endAttr.rdd)
