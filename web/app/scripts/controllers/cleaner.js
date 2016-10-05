@@ -6,11 +6,11 @@ angular.module('biggraph')
     $scope.inProgress = 0;
     $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
 
-    $scope.markFilesDeleted = function() {
+    $scope.moveToTrash = function(method) {
       $scope.inProgress += 1;
       util
-        .post('/ajax/markFilesDeleted', {
-          method: $scope.selectedMethod,
+        .post('/ajax/moveToCleanerTrash', {
+          method: method,
         }).finally(function() {
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
           $scope.fileStatus.finally(function() {
@@ -19,10 +19,10 @@ angular.module('biggraph')
         });
     };
 
-    $scope.deleteMarkedFiles = function() {
+    $scope.emptyTrash = function() {
       $scope.inProgress += 1;
       util
-        .post('/ajax/deleteMarkedFiles', {
+        .post('/ajax/emptyCleanerTrash', {
           fake: 0,
         }).finally(function() {
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
