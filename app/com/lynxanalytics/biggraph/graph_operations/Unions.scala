@@ -29,7 +29,7 @@ case class VertexSetUnion(numVertexSets: Int)
 
   override val isHeavy = true
 
-  assert(numVertexSets >= 1)
+  assert(numVertexSets >= 1, s"Cannot take the union of $numVertexSets vertex sets.")
   @transient override lazy val inputs = new Input(numVertexSets)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(numVertexSets)(instance, inputs)
@@ -93,7 +93,7 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
 
   override val isHeavy = true
 
-  assert(numEdgeBundles >= 1)
+  assert(numEdgeBundles >= 1, s"Cannot take the union of $numEdgeBundles edge bundles.")
   @transient override lazy val inputs = new Input(numEdgeBundles)
 
   def outputMeta(instance: MetaGraphOperationInstance) =

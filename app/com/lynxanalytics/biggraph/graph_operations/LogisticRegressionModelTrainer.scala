@@ -52,7 +52,7 @@ case class LogisticRegressionModelTrainer(
     val labeledFeaturesDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
-    // Train a logictic regression model. The model sets the threshold to be 0.5 and 
+    // Train a logictic regression model. The model sets the threshold to be 0.5 and
     // the feature scaling to be true by default.
     val logisticRegression = new ml.classification.LogisticRegression()
       .setMaxIter(maxIter)
@@ -106,9 +106,9 @@ case class LogisticRegressionModelTrainer(
     if (labelSum == 0.0 || labelSum == numData) {
       0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
     } else {
-      // The log likelihood of logistic regression is calculated according to the equation: 
+      // The log likelihood of logistic regression is calculated according to the equation:
       // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
-      // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).  
+      // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).
       val logLikCurrent = predictions.map {
         row =>
           {
@@ -134,9 +134,9 @@ case class LogisticRegressionModelTrainer(
     val numData = predictions.count.toInt
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
     val labelSum = predictions.map(_.getAs[Double]("label")).sum
-    // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient 
+    // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient
     // values to coefficient standard errors. See more information at http://www.real-statistics.com/
-    // logistic-regression/significance-testing-logistic-regression-coefficients. 
+    // logistic-regression/significance-testing-logistic-regression-coefficients.
     val zValues: Array[Double] = {
       if (labelSum == 0.0) {
         // In this extreme case, all coefficients equal to 0 and the intercept equals to -inf
@@ -155,7 +155,7 @@ case class LogisticRegressionModelTrainer(
           data = flattenMatrix)
         val cost = probability.map(prob => prob(0) * prob(1)).collect
         val matrixCost = breeze.linalg.diag(breeze.linalg.DenseVector(cost))
-        // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is 
+        // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is
         // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
         // whose diagnol elements are probability_i * (1 - probability_i).
         val covariance = breeze.linalg.inv((matrix * (matrixCost * matrix.t)))

@@ -169,8 +169,11 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     // Do some additional checking on the inputs.
     val tripletMapping = inputs.tripletMapping.entity
     val tripletMappingInstance = tripletMapping.source
-    assert(tripletMappingInstance.operation.isInstanceOf[TripletMapping])
-    assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity)
+    assert(tripletMappingInstance.operation.isInstanceOf[TripletMapping],
+      "tripletMapping is not a TripletMapping")
+    assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
+      s"tripletMapping is for ${tripletMappingInstance.inputs.edgeBundles('edges)}" +
+        s" instead of ${inputs.edges.entity}")
     new Output()(instance, inputs)
   }
 

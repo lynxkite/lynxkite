@@ -86,7 +86,7 @@ object AndFilter extends FromJson[AndFilter[_]] {
   }
 }
 case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
-  assert(filters.size > 0)
+  assert(filters.size > 0, "Cannot take the conjunction of 0 filters.")
   def matches(value: T) = filters.forall(_.matches(value))
   override def toJson = {
     Json.obj("filters" -> play.api.libs.json.JsArray(filters.map(_.toTypedJson)))
