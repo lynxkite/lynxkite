@@ -75,7 +75,7 @@ case class RegressionModelTrainer(
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      // The features and label are standardized by the model. 
+      // The features and label are standardized by the model.
       featureScaler = None,
       statistics = Some(statistics))
     )
@@ -88,7 +88,7 @@ case class RegressionModelTrainer(
     val summary = model.summary
     val r2 = summary.r2
     val MAPE = Model.getMAPE(predictions.select("prediction", "label"))
-    // Only compute the t-values for methods with unbiased solvers (when the elastic 
+    // Only compute the t-values for methods with unbiased solvers (when the elastic
     // net parameter equals to 0).
     val coefficientsTable = {
       val rowNames = featureNames.toArray :+ "intercept"

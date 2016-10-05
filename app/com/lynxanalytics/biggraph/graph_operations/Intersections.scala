@@ -31,7 +31,7 @@ case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
 
   override val isHeavy = heavy
 
-  assert(numVertexSets >= 1)
+  assert(numVertexSets >= 1, s"Cannot take intersection of $numVertexSets vertex sets.")
   @transient override lazy val inputs = new Input(numVertexSets)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
