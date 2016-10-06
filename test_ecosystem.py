@@ -139,7 +139,7 @@ def main(args):
   cluster.rsync_down('/home/hadoop/test_results.txt', results_local_dir(args) + results_name(args))
   if args.dockerized:
     pass
-    #TODO download_logs_docker()
+    # TODO download_logs_docker()
   else:
     download_logs_native(cluster, args)
   shut_down_instances(cluster, mysql_instance)
@@ -275,6 +275,8 @@ def config_and_prepare_native(cluster, args):
       export LYNX=/mnt/lynx
       #for tests with mysql server on master
       export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
+      export GRAPHITE_MONITORING_HOST=$HOSTNAME
+      export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=7200
 EOF
     echo 'Creating hdfs directory.'
     source config/central
@@ -375,10 +377,10 @@ def start_tests_native(cluster, jdbc_url, args):
   ))
 
 
-
 def download_logs_native(cluster, args):
   cluster.rsync_down('/mnt/lynx/logs/', results_local_dir(args) + '/logs/')
   cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', results_local_dir(args) + '/lynxkite-logs/')
+
 
 def download_and_unpack_release(cluster, args):
   path = args.lynx_release_dir
