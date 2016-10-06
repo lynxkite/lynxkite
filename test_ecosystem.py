@@ -177,7 +177,7 @@ def check_docker_vs_native(args):
   '''
   if args.dockerized:
     if args.monitor_nodes:
-        raise ValueError('Dockerized version does not support monitor_nodes')
+      raise ValueError('Dockerized version does not support monitor_nodes')
     if args.lynx_release_dir:
       if 'native' in args.lynx_release_dir:
         raise ValueError('You cannot use a native release dir to test a dockerized version.')
