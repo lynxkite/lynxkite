@@ -82,6 +82,10 @@ parser.add_argument(
     action='store_true',
     help='Start the docker version. Without this switch the default is native.')
 parser.add_argument(
+    '--monitor_nodes',
+    action='store_true',
+    help='Setup and start monitoring on the extra nodes. The default is false.')
+parser.add_argument(
     '--bigdata',
     action='store_true',
     help='The given task is a big data test task. A bigdata_test_set parameter also have to be given.')
@@ -129,7 +133,8 @@ def main(args):
     install_native(cluster)
     config_and_prepare_native(cluster, args)
     config_aws_s3_native(cluster)
-    start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
+    if args.monitor_nodes:
+      start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
     start_supervisor_native(cluster)
     start_tests_native(cluster, jdbc_url, args)
   print('Tests are now running in the background. Waiting for results.')
@@ -171,6 +176,8 @@ def check_docker_vs_native(args):
   Try to check if the given release is a docker release if and only if the `--dockerized` switch is used.
   '''
   if args.dockerized:
+    if args.monitor_nodes:
+        raise ValueError('Dockerized version does not support monitor_nodes')
     if args.lynx_release_dir:
       if 'native' in args.lynx_release_dir:
         raise ValueError('You cannot use a native release dir to test a dockerized version.')
