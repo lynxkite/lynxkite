@@ -236,11 +236,13 @@ def upload_tasks(cluster, args):
         mv test_runner.py /mnt/lynx/luigi_tasks
         ''')
 
+
 def upload_tools(cluster, args):
   if not args.dockerized:
-      target_dir = '/mnt/lynx/tools'
-      cluster.ssh('mkdir -p ' + target_dir)
-      cluster.rsync_up('ecosystem/native/tools/', target_dir)
+    target_dir = '/mnt/lynx/tools'
+    cluster.ssh('mkdir -p ' + target_dir)
+    cluster.rsync_up('ecosystem/native/tools/', target_dir)
+
 
 def install_native(cluster):
   cluster.ssh('''
@@ -323,6 +325,7 @@ def start_supervisor_native(cluster):
     source /mnt/lynx/config/central
     /usr/local/bin/supervisord -c config/supervisord.conf
     ''')
+
 
 def start_monitoring_on_extra_nodes_native(keyfile, cluster):
   cluster_keyfile = 'cluster_key.pem'
