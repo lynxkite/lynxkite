@@ -99,7 +99,7 @@ class DataManager(sc: spark.SparkContext,
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
-    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio}")
+    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted &&

@@ -57,7 +57,7 @@ object StringStruct {
 
 case class VertexSet(source: MetaGraphOperationInstance,
                      name: Symbol) extends MetaGraphEntity {
-  assert(name != null)
+  assert(name != null, s"name is null for $this")
 }
 
 /*
@@ -128,7 +128,7 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
                       idSet: VertexSet, // The edge IDs as a VertexSet.
                       autogenerateIdSet: Boolean) // The RDD for idSet will be auto-generated.
     extends MetaGraphEntity {
-  assert(name != null)
+  assert(name != null, s"name is null for $this")
   val isLocal = srcVertexSet == dstVertexSet
 }
 
@@ -142,14 +142,14 @@ case class Attribute[T: TypeTag](source: MetaGraphOperationInstance,
                                  name: Symbol,
                                  vertexSet: VertexSet)
     extends TypedEntity[T] with RuntimeSafeCastable[T, Attribute] {
-  assert(name != null)
+  assert(name != null, s"name is null for $this")
   val typeTag = implicitly[TypeTag[T]]
 }
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
                               name: Symbol)
     extends TypedEntity[T] with RuntimeSafeCastable[T, Scalar] {
-  assert(name != null)
+  assert(name != null, s"name is null for $this")
   val typeTag = implicitly[TypeTag[T]]
 }
 
@@ -581,8 +581,7 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
     vertexSets ++ edgeBundles ++ attributes ++ scalars
   assert(all.size ==
     vertexSets.size + edgeBundles.size + attributes.size + scalars.size,
-    "Cross type collision %s %s %s".format(
-      vertexSets, edgeBundles, attributes))
+    s"Cross type collision in $this")
 
   def asStringMap: Map[String, String] =
     all.toSeq.sortBy(_._1.name).map {
@@ -657,7 +656,8 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
     val gUID = data.gUID
     val entity = data.entity
     // Check that it's indeed a known output.
-    assert(outputMeta.all(entity.name).gUID == entity.gUID)
+    assert(outputMeta.all(entity.name).gUID == entity.gUID,
+      s"$entity is not an output of $instance")
     internalDataMap(gUID) = data
   }
 
