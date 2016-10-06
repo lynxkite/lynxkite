@@ -333,11 +333,11 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
 
   cluster.ssh('''
     for node in `cat nodes.txt`; do
-      scp {options!s} \
+      scp {options} \
         /mnt/lynx/other_nodes/other_nodes.tgz \
         hadoop@${{node}}:/home/hadoop/other_nodes.tgz
-      ssh {options!s} hadoop@${{node}} tar xf other_nodes.tgz
-      ssh {options!s} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
+      ssh {options} hadoop@${{node}} tar xf other_nodes.tgz
+      ssh {options} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
     done'''.format(options=ssh_options))
 
 # Uncomment services in configs
