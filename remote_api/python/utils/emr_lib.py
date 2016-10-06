@@ -90,7 +90,7 @@ class EMRLib:
     jmx_options = '"-Dcom.sun.management.jmxremote ' \
         '-Dcom.sun.management.jmxremote.authenticate=false ' \
         '-Dcom.sun.management.jmxremote.ssl=false ' \
-        '-Dcom.sun.management.jmxremote.port={port!s} ${{{name!s}}}"'
+        '-Dcom.sun.management.jmxremote.port={port} ${{{name}}}"'
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
