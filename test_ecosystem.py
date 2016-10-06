@@ -123,6 +123,7 @@ def main(args):
 
   upload_installer_script(cluster, args)
   upload_tasks(cluster, args)
+  upload_tools(cluster, args)
   download_and_unpack_release(cluster, args)
   if args.dockerized:
     install_docker_and_lynx(cluster, args.lynx_version)
@@ -235,6 +236,11 @@ def upload_tasks(cluster, args):
         mv test_runner.py /mnt/lynx/luigi_tasks
         ''')
 
+def upload_tools(cluster, args):
+  if not args.dockerized:
+      target_dir = '/mnt/lynx/tools'
+      cluster.ssh('mkdir -p ' + target_dir)
+      cluster.rsync_up('ecosystem/native/tools/', target_dir)
 
 def install_native(cluster):
   cluster.ssh('''
@@ -318,7 +324,6 @@ def start_supervisor_native(cluster):
     /usr/local/bin/supervisord -c config/supervisord.conf
     ''')
 
-
 def start_monitoring_on_extra_nodes_native(keyfile, cluster):
   cluster_keyfile = 'cluster_key.pem'
   cluster.rsync_up(src=keyfile, dst='/home/hadoop/.ssh/' + cluster_keyfile)
@@ -342,8 +347,8 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
 
 # Uncomment services in configs
   cluster.ssh('''
-    /mnt/lynx/scripts/uncomment_config.py /mnt/lynx/config/monitoring/prometheus.yml
-    /mnt/lynx/scripts/uncomment_config.py /mnt/lynx/config/supervisord.conf
+    /mnt/lynx/tools/uncomment_config.sh /mnt/lynx/config/monitoring/prometheus.yml
+    /mnt/lynx/tools/uncomment_config.sh /mnt/lynx/config/supervisord.conf
     ''')
 
   cluster.ssh('''
