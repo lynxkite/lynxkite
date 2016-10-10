@@ -21,7 +21,8 @@ class OperationLogger(instance: MetaGraphOperationInstance,
   private var stopTime = -1L
 
   private def elapsedMs(): Long = {
-    assert(startTime != -1 && stopTime != -1)
+    assert(startTime != -1, "elapsedMs() called before startTimer()")
+    assert(stopTime != -1, "elapsedMs() called before stopTimer()")
     stopTime - startTime
   }
 
@@ -38,12 +39,12 @@ class OperationLogger(instance: MetaGraphOperationInstance,
   }
 
   def startTimer(): Unit = {
-    assert(startTime == -1)
+    assert(startTime == -1, "startTimer() called more than once")
     startTime = System.currentTimeMillis()
   }
 
   def stopTimer(): Unit = {
-    assert(stopTime == -1)
+    assert(stopTime == -1, "stopTimer() called more than once")
     stopTime = System.currentTimeMillis()
   }
   def addInput(name: String, input: EntityData): Unit = {
