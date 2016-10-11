@@ -159,7 +159,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             $window.location =
               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
           }
-          $rootScope.$broadcast('refresh project list', scope);
+          $rootScope.$broadcast('new table or view', scope);
         });
       };
 
