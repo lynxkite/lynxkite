@@ -37,7 +37,7 @@ module.exports = function(fw) {
     'CSV file imported as table',
     'Editing imported CSV configuration is possible',
     function() {
-      lib.splash.editImport('csv imported');
+      lib.splash.editTable('csv imported');
       expect(element(by.css('#table-name input')).getAttribute('value')).toEqual(tableName);
       expect(element(by.css('#csv-column-names input')).getAttribute('value')).toEqual('name,age');
       expect(element(by.css('#columns-to-import input')).getAttribute('value')).toEqual('name');
@@ -99,7 +99,7 @@ module.exports = function(fw) {
     'Sqlite file imported via JDBC as table',
     'Editing imported JDBC configuration is possible',
     function() {
-      lib.splash.editImport('jdbc imported');
+      lib.splash.editTable('jdbc imported');
       expect(element(by.model('tableName')).getAttribute('value')).toEqual('jdbc imported');
       var jdbcInput = element(by.css('#jdbc-url input'));
       expect(jdbcInput.getAttribute('value')).toEqual(jdbcUrl);

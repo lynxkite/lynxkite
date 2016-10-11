@@ -73,4 +73,24 @@ module.exports = function(fw) {
         '42,42\n');
     }
   );
+  fw.transitionTest(
+  'empty splash',
+  'Global sql view can be edited',
+  function() {
+    lib.splash.runGlobalSql('select 1 as n');
+    lib.splash.saveGlobalSqlToTable('table');
+
+    lib.splash.runGlobalSql('select 2 as n');
+    lib.splash.saveGlobalSqlToView('view');
+    browser.refresh();
+  },
+  function(){
+    lib.splash.editTable('table');
+    element(by.id('run-sql-button')).click();
+    lib.splash.expectGlobalSqlResult(['n'], [['1']]);
+    lib.splash.editView('view');
+    element(by.id('run-sql-button')).click();
+    lib.splash.expectGlobalSqlResult(['n'], [['2']]);
+
+  });
 };
