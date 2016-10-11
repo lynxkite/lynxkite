@@ -199,4 +199,27 @@ module.exports = function(fw) {
     }
     );
 
+  fw.transitionTest(
+    'test-example project with 100 vertices',
+    'table and view export of 100 vertices',
+    function() {
+      left.side.element(by.id('save-results-opener')).click();
+      left.side.element(by.css('#exportFormat > option[value=table]')).click();
+      left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedtable');
+      left.side.element(by.id('save-results')).click();
+
+      left.side.element(by.id('save-results-opener')).click();
+      left.side.element(by.css('#exportFormat > option[value=view]')).click();
+      left.side.element(by.id('exportKiteTable')).sendKeys('exportedview');
+      left.side.element(by.id('save-results')).click();
+
+      right.side.element(by.id('show-selector-button')).click();
+    },
+    function() {
+      expect(right.side.all(by.css(
+        '.project-list > #table-exportedtable , .project-list > #view-exportedview'
+      )).count()).toEqual(2);
+    }
+    );
+
 };
