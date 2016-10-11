@@ -211,10 +211,9 @@ module.exports = function(fw) {
       left.side.element(by.css('#exportFormat > option[value=view]')).click();
       left.side.element(by.id('exportKiteTable')).sendKeys('exportedview');
       left.side.element(by.id('save-results')).click();
-
-      right.side.element(by.id('show-selector-button')).click();
     },
     function() {
+      right.side.element(by.id('show-selector-button')).click();
       lib.splash.expectTableListed('exportedtable');
       lib.splash.expectViewListed('exportedview');
     });
