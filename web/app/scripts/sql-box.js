@@ -159,7 +159,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             $window.location =
               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
           }
-          if (scope.exportFormat === 'table' && scope.exportFormat === 'view') {
+          if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
             $rootScope.$broadcast('new table or view', scope);
           }
         });
