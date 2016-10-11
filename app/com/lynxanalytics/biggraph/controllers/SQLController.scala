@@ -438,10 +438,11 @@ class SQLController(val env: BigGraphEnvironment) {
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-
+    TypedJson.createFromWriter(request)
     SQLController.saveTable(
       df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
-      user, request.table, request.privacy)
+      user, request.table, request.privacy,
+      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
   }
 
   def exportSQLQueryToCSV(
