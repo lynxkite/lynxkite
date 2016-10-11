@@ -1,7 +1,7 @@
 // Presents the parameters for running SQL scripts.
 'use strict';
 
-angular.module('biggraph').directive('sqlBox', function($window, side, util) {
+angular.module('biggraph').directive('sqlBox', function($rootScope, $window, side, util) {
   return {
     restrict: 'E',
     scope: {
@@ -159,6 +159,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             $window.location =
               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
           }
+          $rootScope.$broadcast('refresh project list', scope);
         });
       };
 
