@@ -178,6 +178,10 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           maxLines : 500
         });
       };
+
+      scope.$on('fill sql-box from config', function(evt, config) {
+        scope.sql = config.data.dfSpec.sql;
+      });
     }
   };
 });
