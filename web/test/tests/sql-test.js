@@ -196,8 +196,7 @@ module.exports = function(fw) {
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
     },
     function() {
-    }
-    );
+    });
 
   fw.transitionTest(
     'test-example project with 100 vertices',
@@ -219,7 +218,6 @@ module.exports = function(fw) {
       expect(right.side.all(by.css(
         '.project-list > #table-exportedtable , .project-list > #view-exportedview'
       )).count()).toEqual(2);
-    }
-    );
+    });
 
 };
