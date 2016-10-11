@@ -91,7 +91,7 @@ angular.module('biggraph').directive('projectSelector',
       }
       scope.$on('$destroy', abandonScalars);
 
-      scope.$on('refresh project list', scope.reload);
+      scope.$on('new table or view', scope.reload);
 
       scope.createProject = function() {
         scope.newProject.sending = true;
