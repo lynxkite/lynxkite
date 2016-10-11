@@ -933,6 +933,7 @@ class ViewFrame(path: SymbolPath)(
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
     recipe: T, notes: String): Unit = manager.synchronized {
     initializeFromCheckpoint(ViewRecipe.saveAsCheckpoint(recipe, notes))
+    details = TypedJson.createFromWriter(recipe).as[json.JsObject]
   }
 
   def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
