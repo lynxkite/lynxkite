@@ -26,6 +26,18 @@ module.exports = function(fw) {
       lib.splash.expectViewListed(viewName);
     }
   );
+
+  fw.statePreservingTest(
+    'CSV file imported as view',
+    'CSV file edited',
+    function() {
+      lib.splash.editView(viewName);
+      expect(element(by.css('#table-name input')).getAttribute('value')).toEqual(viewName);
+      expect(element(by.css('#csv-column-names input')).getAttribute('value')).toEqual(columns);
+      expect(element(by.css('#columns-to-import input')).getAttribute('value')).toEqual(columns);
+    }
+  );
+
   fw.statePreservingTest(
     'CSV file imported as view',
     'Global sql box returns results for CSV view',
