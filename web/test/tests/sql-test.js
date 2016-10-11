@@ -215,9 +215,8 @@ module.exports = function(fw) {
       right.side.element(by.id('show-selector-button')).click();
     },
     function() {
-      expect(right.side.all(by.css(
-        '.project-list > #table-exportedtable , .project-list > #view-exportedview'
-      )).count()).toEqual(2);
+      lib.splash.expectTableListed('exportedtable');
+      lib.splash.expectViewListed('exportedview');
     });
 
 };
