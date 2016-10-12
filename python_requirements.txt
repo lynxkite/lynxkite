@@ -1,6 +1,7 @@
 autopep8
 awscli
 boto3
+croniter
 luigi
 python-dateutil
 Sphinx
