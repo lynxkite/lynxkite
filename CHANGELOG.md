@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 LynxKite:
 
+ - Performance and scalability improvements for aggregating operations.
  - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
    Apologies for the pun.)
  - Assorted UI fixes.
