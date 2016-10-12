@@ -16,7 +16,8 @@ Ecosystem:
 
  - Fix Chronomaster per-task metrics when `num_workers` is greater than one.
  - Flexible date template strings.
- - Task repeat period is now specified in Cron format instead of human-readable strings.
+ - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
+   intervals.
 
 ### 1.9.5.3
 
