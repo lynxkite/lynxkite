@@ -85,6 +85,12 @@ class EMRLib:
         print('Reusing existing cluster: ' + cluster_id)
         return EMRCluster(cluster_id, self)
     print('Creating new cluster.')
+    # We're passing these options to the namenode and to the hdfs datanodes so
+    # that they will make their monitoring data accessible via the jmx interface.
+    jmx_options = '"-Dcom.sun.management.jmxremote ' \
+        '-Dcom.sun.management.jmxremote.authenticate=false ' \
+        '-Dcom.sun.management.jmxremote.ssl=false ' \
+        '-Dcom.sun.management.jmxremote.port={port} ${{{name}}}"'
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
@@ -116,10 +122,8 @@ class EMRLib:
                     {
                         'Classification': 'export',
                         'Properties': {
-                            'HADOOP_NAMENODE_OPTS': '"-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false '
-                            '-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8004"',
-                            'HADOOP_DATANODE_OPTS': '"-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false '
-                            '-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8005"'
+                            'HADOOP_NAMENODE_OPTS': jmx_options.format(port=8004, name='HADOOP_NAMENODE_OPTS'),
+                            'HADOOP_DATANODE_OPTS': jmx_options.format(port=8005, name='HADOOP_DATANODE_OPTS')
                         }
                     }
                 ]

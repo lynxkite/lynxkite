@@ -8,18 +8,22 @@ import com.lynxanalytics.biggraph.graph_operations.AddConstantAttribute
 class BundleChain(bundles: Seq[EdgeBundle],
                   weightsParam: Option[Seq[Attribute[Double]]] = None) {
 
-  assert(bundles.size > 0)
+  assert(bundles.nonEmpty, "Cannot chain an empty list of edge bundles.")
   for (weightsSeq <- weightsParam) {
-    assert(weightsSeq.size == bundles.size)
+    assert(weightsSeq.size == bundles.size,
+      s"Got ${weightsSeq.size} weights for ${bundles.size} bundles.")
     for ((bundle, weight) <- bundles.zip(weightsSeq)) {
-      assert(bundle.idSet == weight.vertexSet)
+      assert(bundle.idSet == weight.vertexSet,
+        s"$weight is for ${weight.vertexSet} not for $bundle's idSet.")
     }
   }
   val weights = weightsParam
     .getOrElse(bundles.map(bundle => AddConstantAttribute.run(bundle.idSet, 1.0)))
 
-  assert((0 until (bundles.size - 1))
-    .forall(i => bundles(i).dstVertexSet == bundles(i + 1).srcVertexSet))
+  for (i <- 0 until (bundles.size - 1)) {
+    assert(bundles(i).dstVertexSet == bundles(i + 1).srcVertexSet,
+      s"The destination of bundles($i) is not the source of bundles(${i + 1}).")
+  }
   val vertexSets = bundles.head.srcVertexSet +: bundles.map(_.dstVertexSet)
 
   def getCompositeEdgeBundle: (EdgeBundle, Attribute[Double]) = {

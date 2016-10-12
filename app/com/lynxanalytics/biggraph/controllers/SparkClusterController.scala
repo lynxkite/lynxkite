@@ -161,7 +161,8 @@ class SparkCheckThread(
     while (true) {
       if (synchronized { shouldRun }) {
         try {
-          assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
+          val result = sc.parallelize(Seq(1, 2, 3), 1).count
+          assert(result == 3, s"Incorrect result from Spark: $result != 3")
         } catch {
           // We don't care about errors here, we just want to start some Spark job
           // that can be observed by the listener to succeed (or not). So we just catch all
