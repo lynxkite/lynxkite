@@ -6,6 +6,40 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+LynxKite:
+
+ - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
+   Apologies for the pun.)
+ - Assorted UI fixes.
+
+Ecosystem:
+
+ - Fix Chronomaster per-task metrics when `num_workers` is greater than one.
+ - Flexible date template strings.
+ - Task repeat period is now specified in Cron format instead of human-readable strings.
+
+### 1.9.5.3
+
+Ecosystem:
+
+ - Add extra date template strings, like `yesterday_minus_1month_mm_str`.
+
+### 1.9.5.2
+
+Fixes a bug in the HDFS transfer performance improvement in 1.9.5.1.
+
+### 1.9.5.1
+
+Cherry-pick release with just the changes below.
+
+Ecosystem:
+
+ - Much improved `TransferTask` performance for HDFS to HDFS copy. (Up to 20 times faster in some
+   cases.)
+ - `count` feature in `helper.sh` to help with verification testing.
+ - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
+   more detailed performance data.
+
 ### 1.9.5
 
  - Relax the Luigi API Python version requirement from 3.5+ to 3.4+.
