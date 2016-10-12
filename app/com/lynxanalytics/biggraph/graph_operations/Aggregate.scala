@@ -6,10 +6,14 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+
+import org.apache.spark.rdd.RDD
 
 object AggregateByEdgeBundle extends OpFromJson {
   class Input[From] extends MagicInputSignature {
@@ -42,18 +46,36 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val ct = inputs.attr.data.classTag
+    implicit val ftt = inputs.attr.data.typeTag
+    implicit val fct = inputs.attr.data.classTag
+    implicit val oct = o.attr.classTag
+    implicit val runtimeContext = rc
 
-    val bySrc = inputs.connection.rdd.map {
-      case (id, edge) => edge.src -> edge.dst
-    }.groupBySortedKey(inputs.src.rdd.partitioner.get)
-    val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
-    val byDst = withAttr.flatMap {
-      case (src, (dsts, attr)) => dsts.map(_ -> attr)
+    aggregator match {
+      case aggregator: Aggregator[From, _, To] =>
+        // Scalable aggregation for non-local Aggregators.
+        val partitioner = inputs.connection.rdd.partitioner.get
+        val withAttr = HybridRDD(inputs.connection.rdd.map {
+          case (id, edge) => edge.src -> edge.dst
+        }, partitioner, even = true).lookup(inputs.attr.rdd.sortedRepartition(partitioner))
+        val byDst = withAttr.map {
+          case (_, (dst, attr)) => dst -> attr
+        }
+        val aggregated = aggregator.aggregateRDD(byDst)
+        output(o.attr, aggregated.sortUnique(inputs.dst.rdd.partitioner.get))
+      case _ =>
+        // Regular aggregation for local Aggregators.
+        val bySrc = inputs.connection.rdd.map {
+          case (id, edge) => edge.src -> edge.dst
+        }.groupBySortedKey(inputs.src.rdd.partitioner.get)
+        val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
+        val byDst = withAttr.flatMap {
+          case (src, (dsts, attr)) => dsts.map(_ -> attr)
+        }
+        val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
+        val aggregated = grouped.mapValues(aggregator.aggregate(_))
+        output(o.attr, aggregated)
     }
-    val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
-    val aggregated = grouped.mapValues(aggregator.aggregate(_))
-    output(o.attr, aggregated)
   }
 }
 
@@ -88,7 +110,9 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val ct = inputs.eattr.data.classTag
+    implicit val ftt = inputs.eattr.data.typeTag
+    implicit val fct = inputs.eattr.data.classTag
+    implicit val oct = o.dstAttr.classTag
 
     val src = inputs.src.rdd
     val dst = inputs.dst.rdd
@@ -97,8 +121,16 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     val edgesWAttr = edges.sortedJoin(eattr)
     val byDst = edgesWAttr.map {
       case (eid, (edge, value)) => edge.dst -> value
-    }.groupBySortedKey(dst.partitioner.get)
-    output(o.dstAttr, byDst.mapValues(aggregator.aggregate(_)))
+    }
+    aggregator match {
+      case aggregator: Aggregator[From, _, To] =>
+        // Scalable aggregation for non-local Aggregators.
+        output(o.dstAttr, aggregator.aggregateRDD(byDst).sortUnique(inputs.dst.rdd.partitioner.get))
+      case _ =>
+        // Regular aggregation for local Aggregators.
+        output(o.dstAttr,
+          byDst.groupBySortedKey(dst.partitioner.get).mapValues(aggregator.aggregate(_)))
+    }
   }
 }
 
@@ -159,7 +191,7 @@ trait LocalAggregator[From, To] extends ToJson {
 // Aggregates from From to Intermediate and at the end calls finalize() to turn
 // Intermediate into To. So Intermediate can contain extra data over what is
 // required in the result. The merge() and combine() methods make it possible to
-// use Aggregator in a distributed setting.
+// use Aggregator in a distributed setting. Provides a scalable aggregateRDD() method.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
@@ -170,6 +202,12 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
     values.foldLeft(zero)(merge _)
   def aggregate(values: Iterable[From]): To =
     finalize(aggregatePartition(values.iterator))
+  // Aggregates the RDD by key in a scalable (hotspot resistant) way.
+  def aggregateRDD[K: ClassTag](values: RDD[(K, From)])(implicit ftt: TypeTag[From]): RDD[(K, To)] = {
+    implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
+    implicit val fct = RuntimeSafeCastable.classTagFromTypeTag(ftt)
+    values.aggregateByKey(zero)(merge, combine).mapValues { i => finalize(i) }
+  }
 }
 // A distributed aggregator where Intermediate is not different from To.
 trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
