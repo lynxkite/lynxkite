@@ -51,29 +51,30 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     implicit val oct = o.attr.classTag
     implicit val runtimeContext = rc
 
-    if (aggregator.isInstanceOf[Aggregator[From, _, To]]) {
-      // Scalable aggregation for non-local Aggregators.
-      val partitioner = inputs.connection.rdd.partitioner.get
-      val withAttr = HybridRDD(inputs.connection.rdd.map {
-        case (id, edge) => edge.src -> edge.dst
-      }, partitioner, even = true).lookup(inputs.attr.rdd.sortedRepartition(partitioner))
-      val byDst = withAttr.map {
-        case (_, (dst, attr)) => dst -> attr
-      }
-      val aggregated = aggregator.asInstanceOf[Aggregator[From, _, To]].aggregateRDD(byDst)
-      output(o.attr, aggregated.sortUnique(inputs.dst.rdd.partitioner.get))
-    } else {
-      // Regular aggregation for local Aggregators.
-      val bySrc = inputs.connection.rdd.map {
-        case (id, edge) => edge.src -> edge.dst
-      }.groupBySortedKey(inputs.src.rdd.partitioner.get)
-      val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
-      val byDst = withAttr.flatMap {
-        case (src, (dsts, attr)) => dsts.map(_ -> attr)
-      }
-      val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
-      val aggregated = grouped.mapValues(aggregator.aggregate(_))
-      output(o.attr, aggregated)
+    aggregator match {
+      case aggregator: Aggregator[From, _, To] =>
+        // Scalable aggregation for non-local Aggregators.
+        val partitioner = inputs.connection.rdd.partitioner.get
+        val withAttr = HybridRDD(inputs.connection.rdd.map {
+          case (id, edge) => edge.src -> edge.dst
+        }, partitioner, even = true).lookup(inputs.attr.rdd.sortedRepartition(partitioner))
+        val byDst = withAttr.map {
+          case (_, (dst, attr)) => dst -> attr
+        }
+        val aggregated = aggregator.aggregateRDD(byDst)
+        output(o.attr, aggregated.sortUnique(inputs.dst.rdd.partitioner.get))
+      case _ =>
+        // Regular aggregation for local Aggregators.
+        val bySrc = inputs.connection.rdd.map {
+          case (id, edge) => edge.src -> edge.dst
+        }.groupBySortedKey(inputs.src.rdd.partitioner.get)
+        val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
+        val byDst = withAttr.flatMap {
+          case (src, (dsts, attr)) => dsts.map(_ -> attr)
+        }
+        val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
+        val aggregated = grouped.mapValues(aggregator.aggregate(_))
+        output(o.attr, aggregated)
     }
   }
 }
@@ -121,14 +122,14 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     val byDst = edgesWAttr.map {
       case (eid, (edge, value)) => edge.dst -> value
     }
-    if (aggregator.isInstanceOf[Aggregator[From, _, To]]) {
-      // Scalable aggregation for non-local Aggregators.
-      output(o.dstAttr, aggregator.asInstanceOf[Aggregator[From, _, To]]
-        .aggregateRDD(byDst).sortUnique(inputs.dst.rdd.partitioner.get))
-    } else {
-      // Regular aggregation for local Aggregators.
-      output(o.dstAttr,
-        byDst.groupBySortedKey(dst.partitioner.get).mapValues(aggregator.aggregate(_)))
+    aggregator match {
+      case aggregator: Aggregator[From, _, To] =>
+        // Scalable aggregation for non-local Aggregators.
+        output(o.dstAttr, aggregator.aggregateRDD(byDst).sortUnique(inputs.dst.rdd.partitioner.get))
+      case _ =>
+        // Regular aggregation for local Aggregators.
+        output(o.dstAttr,
+          byDst.groupBySortedKey(dst.partitioner.get).mapValues(aggregator.aggregate(_)))
     }
   }
 }
