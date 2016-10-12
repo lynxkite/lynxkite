@@ -275,7 +275,6 @@ def config_and_prepare_native(cluster, args):
       export LYNX=/mnt/lynx
       #for tests with mysql server on master
       export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
-      export GRAPHITE_MONITORING_HOST=$HOSTNAME
       export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=7200
 EOF
     echo 'Creating hdfs directory.'
