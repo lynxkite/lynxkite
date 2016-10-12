@@ -258,8 +258,12 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def getScalar(user: User, request: ScalarRequest): DynamicValue = {
     val viewer = getViewer(request.checkpoint)
     val scalar = viewer.scalars(request.scalar)
-    implicit val tt = scalar.typeTag
     import com.lynxanalytics.biggraph.graph_api.Scripting._
+    dynamicValue(scalar)
+  }
+
+  private def dynamicValue[T](scalar: ScalarData[T]) = {
+    implicit val tt = scalar.typeTag
     DynamicValue.convert(scalar.value)
   }
 
