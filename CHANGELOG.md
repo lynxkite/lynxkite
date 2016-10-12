@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Make non local aggregators scalable.
+ - Performance and scalability improvements for non local aggregators.
 
 ### 1.9.5
 
