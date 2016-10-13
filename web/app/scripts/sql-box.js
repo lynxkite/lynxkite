@@ -13,49 +13,6 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
       scope.inProgress = 0;
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
       scope.maxRows = 10;
-      //scope.sqlHistory = [];
-      function SqlHistory() {
-        this.maxLength = 100;
-        this.currentQuery = scope.sql;
-
-        try {
-          this.history = angular.fromJson(localStorage.getItem('sqlHistory'));
-        } catch(e) {
-          this.history = [];
-        }
-        this.index = -1;
-
-        this.add = function(query) {
-          this.index = -1;
-          this.history.unshift(query);
-          if (history.length >= this.maxLength) {
-            this.history.pop();
-          }
-          localStorage.setItem('sqlHistory', angular.toJson(this.history));
-        };
-        this.navigateUp = function() {
-          if (this.index === -1) {
-            this.currentQuery = scope.sql;
-          }
-          if (this.index < this.history.length - 1) {
-            this.index++;
-            scope.sql = this.history[this.index];
-          }
-        };
-        this.navigateDown = function() {
-          if (this.index > -1) {
-            this.index--;
-          }
-          if (this.index === - 1) {
-            scope.sql = this.currentQuery;
-          }
-          else
-          {
-            scope.sql = this.history[this.index];
-          }
-        };
-      }
-      scope.sqlHistory = new SqlHistory();
 
       if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
@@ -66,6 +23,56 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
       scope.isGlobal = !scope.side;
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
+
+      function SqlHistory() {
+        this.addFirst = function(query) {
+          this.history.unshift(query);
+          if (history.length >= this.maxLength) {
+            this.history.pop();
+          }
+        };
+        this.load = function() {
+          try {
+            this.history = angular.fromJson(localStorage.getItem('sqlHistory'));
+          } catch(e) {
+            this.history = [];
+          }
+          this.addFirst(scope.sql);
+          this.index = 0;
+        };
+
+        // Initialize
+        this.maxLength = 100;
+        this.history = [];
+        this.load();
+        window.addEventListener('storage', function() {
+          console.log('fdkjshfkjdshfjkdshfkjsdhfjkdhskjfhjdkhfkjdshfkjdhsfjkdskjfhds');
+        }, false);
+
+        this.save = function() {
+          this.index = 0;
+          this.history[0] = scope.sql;
+          localStorage.setItem('sqlHistory', angular.toJson(this.history));
+          this.addFirst(scope.sql);
+        };
+        this.navigateUp = function() {
+          if (this.index < this.history.length - 1) {
+            this.index++;
+            scope.sql = this.history[this.index];
+          }
+        };
+        this.navigateDown = function() {
+          if (this.index > 0) {
+            this.index--;
+            scope.sql = this.history[this.index];
+          }
+        };
+      }
+      scope.sqlHistory = new SqlHistory();
+
+      window.addEventListener('storage', function() {
+        console.log('fdkjshfkjdshfjkdshfkjsdhfjkdhskjfhjdkhfkjdshfkjdhsfjkdskjfhds');
+      }, false);
 
       hotkeys.bindTo(scope)
         .add({
@@ -110,7 +117,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
         if (!scope.sql) {
           scope.result = { $error: 'SQL script must be specified.' };
         } else {
-          scope.sqlHistory.add(scope.sql);
+          scope.sqlHistory.save();
           scope.inProgress += 1;
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
