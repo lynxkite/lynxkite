@@ -72,11 +72,23 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         }
       };
 
+      scope.offerWithPath = function() {
+         if (typeof scope.project === 'undefined') {
+            return '';
+         }
+         var proj = scope.project;
+         var lastSepIndex = proj.lastIndexOf('/');
+         if (lastSepIndex === -1) {
+            return '';
+         }
+         return proj.substring(0, lastSepIndex+1);
+      };
+
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
             exportFormat === 'segmentation' ||
             exportFormat === 'view') {
-          scope.exportKiteTable = '';
+          scope.exportKiteTable = scope.offerWithPath();
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
