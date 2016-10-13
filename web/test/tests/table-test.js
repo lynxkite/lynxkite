@@ -43,6 +43,7 @@ module.exports = function(fw) {
       expect(element(by.css('#columns-to-import input')).getAttribute('value')).toEqual('name');
 
       lib.splash.clickAndWaitForCsvImport();
+      lib.splash.computeTable(tableName);
       expect(lib.errors()).toEqual([]);
       lib.splash.expectNumProjects(0);
       lib.splash.expectNumDirectories(0);
