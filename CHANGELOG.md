@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Performance and scalability improvements for non local aggregators.
+ - Views can now be edited. Views and tables exported from the global sql box can also be edited.
 
 ### 1.9.5
 

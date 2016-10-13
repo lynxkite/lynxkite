@@ -94,9 +94,8 @@ module.exports = function(fw) {
 
     lib.splash.runGlobalSql('select 2 as n');
     lib.splash.saveGlobalSqlToView('view');
-    browser.refresh();
   },
-  function(){
+  function() {
     lib.splash.editTable('table');
     element(by.id('run-sql-button')).click();
     lib.splash.expectGlobalSqlResult(['n'], [['1']]);
