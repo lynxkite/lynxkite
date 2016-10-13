@@ -273,7 +273,7 @@ class LynxKite:
     return Project(self, r.checkpoint)
 
   def remove_name(self, name):
-    '''Removes an object named `name`.'''
+    '''Removes an object named ``name``.'''
     self._send('removeName', dict(name=name))
 
   def change_acl(self, file, readACL, writeACL):
