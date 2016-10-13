@@ -13,6 +13,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
       scope.inProgress = 0;
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
       scope.maxRows = 10;
+      scope.maxPersistedHistoryLength = 100;
 
       if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
@@ -24,39 +25,41 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
 
-      function SqlHistory() {
-        this.addFirst = function(query) {
-          this.history.unshift(query);
-          if (history.length >= this.maxLength) {
-            this.history.pop();
-          }
-        };
+      function SqlHistory(maxLength) {
         this.load = function() {
           try {
             this.history = angular.fromJson(localStorage.getItem('sqlHistory'));
+            if (!this.history) {
+              throw 'sqlHistory is null';
+            }
           } catch(e) {
             this.history = [];
           }
-          this.addFirst(scope.sql);
+          this.history.unshift(scope.sql);
           this.index = 0;
         };
 
         // Initialize
-        this.maxLength = 100;
+        this.maxLength = maxLength;
         this.history = [];
         this.load();
-        window.addEventListener('storage', function() {
-          console.log('fdkjshfkjdshfjkdshfkjsdhfjkdhskjfhjdkhfkjdshfkjdhsfjkdskjfhds');
-        }, false);
 
         this.save = function() {
           this.index = 0;
           this.history[0] = scope.sql;
-          localStorage.setItem('sqlHistory', angular.toJson(this.history));
-          this.addFirst(scope.sql);
+          this.history.unshift(this.history[0]);
+          var history = angular.fromJson(localStorage.getItem('sqlHistory'));
+          history.unshift(this.history[0]);
+          if (history.length > maxLength) {
+            history.pop();
+          }
+          localStorage.setItem('sqlHistory', angular.toJson(history));
         };
         this.navigateUp = function() {
           if (this.index < this.history.length - 1) {
+            if (this.index === 0) {
+              this.history[0] = scope.sql;
+            }
             this.index++;
             scope.sql = this.history[this.index];
           }
@@ -68,11 +71,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
           }
         };
       }
-      scope.sqlHistory = new SqlHistory();
-
-      window.addEventListener('storage', function() {
-        console.log('fdkjshfkjdshfjkdshfkjsdhfjkdhskjfhjdkhfkjdshfkjdhsfjkdskjfhds');
-      }, false);
+      scope.sqlHistory = new SqlHistory(scope.maxPersistedHistoryLength);
 
       hotkeys.bindTo(scope)
         .add({
