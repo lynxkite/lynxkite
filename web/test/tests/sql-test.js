@@ -196,7 +196,28 @@ module.exports = function(fw) {
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
     },
     function() {
-    }
-    );
+    });
+
+  fw.transitionTest(
+    'test-example project with 100 vertices',
+    'table and view export of 100 vertices',
+    function() {
+      // Create new table
+      left.side.element(by.id('save-results-opener')).click();
+      left.side.element(by.css('#exportFormat > option[value=table]')).click();
+      left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedtable');
+      left.side.element(by.id('save-results')).click();
+
+      // Create new view
+      left.side.element(by.id('save-results-opener')).click();
+      left.side.element(by.css('#exportFormat > option[value=view]')).click();
+      left.side.element(by.id('exportKiteTable')).sendKeys('exportedview');
+      left.side.element(by.id('save-results')).click();
+    },
+    function() {
+      right.side.element(by.id('show-selector-button')).click();
+      lib.splash.expectTableListed('exportedtable');
+      lib.splash.expectViewListed('exportedview');
+    });
 
 };

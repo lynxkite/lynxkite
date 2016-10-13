@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Performance and scalability improvements for non local aggregators.
+
 ### 1.9.5
 
  - Relax the Luigi API Python version requirement from 3.5+ to 3.4+.
