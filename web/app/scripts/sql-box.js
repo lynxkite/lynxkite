@@ -22,7 +22,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.isGlobal = !scope.side;
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
-      scope.project = scope.project = scope.side && scope.side.state.projectName;
+      scope.project = scope.side && scope.side.state.projectName;
       scope.sort = {
         column: undefined,
         reverse: false,
