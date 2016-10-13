@@ -29,11 +29,12 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
         this.load = function() {
           try {
             this.history = angular.fromJson(localStorage.getItem('sqlHistory'));
-            if (!this.history) {
-              throw 'sqlHistory is null';
+            if (!Array.isArray(this.history)) {
+              throw 'sqlHistory is not an array';
             }
           } catch(e) {
             this.history = [];
+            localStorage.setItem('sqlHistory', angular.toJson([]));
           }
           this.history.unshift(scope.sql);
           this.index = 0;
