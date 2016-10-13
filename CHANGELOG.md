@@ -15,10 +15,17 @@ LynxKite:
 
 Ecosystem:
 
- - Fix Chronomaster per-task metrics when `num_workers` is greater than one.
  - Flexible date template strings.
  - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
    intervals.
+
+### 1.9.5.4
+
+Ecosystem:
+
+ - Extra date template strings `{to,yester}day_{yyyy,mm,dd}`.
+ - Fix Chronomaster metrics reporting when `num_workers` is greater than one.
+ - Work around Scala 2.10 reflection thread safety issue. (SI-6240)
 
 ### 1.9.5.3
 
