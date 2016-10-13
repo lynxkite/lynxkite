@@ -1,7 +1,7 @@
 // Presents the parameters for running SQL scripts.
 'use strict';
 
-angular.module('biggraph').directive('sqlBox', function($rootScope, $window, side, util) {
+angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $window, side, util) {
   return {
     restrict: 'E',
     scope: {
@@ -13,6 +13,50 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.inProgress = 0;
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
       scope.maxRows = 10;
+      //scope.sqlHistory = [];
+      function SqlHistory() {
+        this.maxLength = 100;
+        this.currentQuery = scope.sql;
+
+        try {
+          this.history = angular.fromJson(localStorage.getItem('sqlHistory'));
+        } catch(e) {
+          this.history = [];
+        }
+        this.index = -1;
+
+        this.add = function(query) {
+          this.index = -1;
+          this.history.unshift(query);
+          if (history.length >= this.maxLength) {
+            this.history.pop();
+          }
+          localStorage.setItem('sqlHistory', angular.toJson(this.history));
+        };
+        this.navigateUp = function() {
+          if (this.index === -1) {
+            this.currentQuery = scope.sql;
+          }
+          if (this.index < this.history.length - 1) {
+            this.index++;
+            scope.sql = this.history[this.index];
+          }
+        };
+        this.navigateDown = function() {
+          if (this.index > -1) {
+            this.index--;
+          }
+          if (this.index === - 1) {
+            scope.sql = this.currentQuery;
+          }
+          else
+          {
+            scope.sql = this.history[this.index];
+          }
+        };
+      }
+      scope.sqlHistory = new SqlHistory();
+
       if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
       }
@@ -22,6 +66,18 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.isGlobal = !scope.side;
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
+
+      hotkeys.bindTo(scope)
+        .add({
+          combo: 'w', description: 'Create new project',
+          callback: function(e) { e.preventDefault(); scope.sqlHistory.navigateUp(); },
+        });
+      hotkeys.bindTo(scope)
+        .add({
+          combo: 's', description: 'Create new project',
+          callback: function(e) { e.preventDefault(); scope.sqlHistory.navigateDown(); },
+        });
+
       scope.project = scope.side && scope.side.state.projectName;
       scope.sort = {
         column: undefined,
@@ -54,6 +110,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         if (!scope.sql) {
           scope.result = { $error: 'SQL script must be specified.' };
         } else {
+          scope.sqlHistory.add(scope.sql);
           scope.inProgress += 1;
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
