@@ -884,7 +884,7 @@ object ProjectFrame {
     DirectoryEntry.fromName(name).asProjectFrame
 }
 
-// Represents a named but not necessarily root project. A SubProject is identifed by a ProjectFrame
+// Represents a named but not necessarily root project. A SubProject is identified by a ProjectFrame
 // representing the named root project and a sequence of segmentation names which show how one
 // should climb down the project tree.
 // When referring to SubProjects via a single string, we use the format:
