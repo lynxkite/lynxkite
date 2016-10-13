@@ -22,6 +22,7 @@ object RemoteAPIProtocol {
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
+  case class RemoveNameRequest(name: String)
   case class SaveCheckpointRequest(
     checkpoint: String,
     name: String,
@@ -95,6 +96,7 @@ object RemoteAPIProtocol {
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
+  implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
   implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
@@ -124,6 +126,7 @@ object RemoteAPIServer extends JsonServer {
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
+  def removeName = jsonPost(c.removeName)
   def loadTable = jsonPost(c.loadTable)
   def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
@@ -210,6 +213,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def loadView(user: User, request: LoadNameRequest): CheckpointResponse = {
     loadObject(user, request, _.isView)
+  }
+
+  def removeName(
+    user: User,
+    request: RemoveNameRequest): Unit = {
+    val entry = controllers.DirectoryEntry.fromName(request.name)
+    assert(entry.exists, s"Entry '$entry' does not exist.")
+    entry.remove()
   }
 
   def saveFrame(
