@@ -74,17 +74,6 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
       }
       scope.sqlHistory = new SqlHistory(scope.maxPersistedHistoryLength);
 
-      hotkeys.bindTo(scope)
-        .add({
-          combo: 'w', description: 'Create new project',
-          callback: function(e) { e.preventDefault(); scope.sqlHistory.navigateUp(); },
-        });
-      hotkeys.bindTo(scope)
-        .add({
-          combo: 's', description: 'Create new project',
-          callback: function(e) { e.preventDefault(); scope.sqlHistory.navigateDown(); },
-        });
-
       scope.project = scope.side && scope.side.state.projectName;
       scope.sort = {
         column: undefined,
@@ -243,6 +232,25 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
         editor.setOptions({
           autoScrollEditorIntoView : true,
           maxLines : 500
+        });
+
+        editor.commands.addCommand({
+          name: 'navigateUp',
+          bindKey: {
+            win: 'Ctrl-Up',
+            mac: 'Command-Up',
+            sender: 'editor|cli'
+          },
+          exec: function() { scope.sqlHistory.navigateUp(); scope.$apply(); }
+        });
+        editor.commands.addCommand({
+          name: 'navigateDown',
+          bindKey: {
+            win: 'Ctrl-Down',
+            mac: 'Command-Down',
+            sender: 'editor|cli'
+          },
+          exec: function() { scope.sqlHistory.navigateDown(); scope.$apply(); }
         });
       };
     }
