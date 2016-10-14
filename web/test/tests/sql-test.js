@@ -220,4 +220,30 @@ module.exports = function(fw) {
       lib.splash.expectViewListed('exportedview');
     });
 
+  fw.transitionTest(
+    'empty test-example project',
+    'test-example project with sql history',
+    function() {
+      right.side.element(by.id('show-selector-button')).click();
+      right.side.element(by.id('global-sql-box')).click();
+
+      left.runSql('1');
+      right.runSql('2');
+      left.runSql('3');
+      right.runSql('4');
+      left.runSql('5');
+      right.runSql('6');
+      left.runSql('7');
+      right.runSql('8');
+      left.runSql('9');
+      right.runSql('10');
+    },
+    function() {
+      for (var i = 0; i < 5; i++) {
+        left.element(by.id('run-sql-button'))
+        .sendKeys(protractor.Key.chord(protractor.Key.CONTROL, protractor.Key.ARROW_UP));
+        expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
+      }
+    },true);
+
 };
