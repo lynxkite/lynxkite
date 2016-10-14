@@ -198,6 +198,48 @@ module.exports = function(fw) {
     function() {
     });
 
+     fw.transitionTest(
+        'segmentation opens',
+        'Tables and views are saved in the project directory',
+        function() {
+        lib.left.saveProjectAs('somesubdir/someproject');
+          // Create new table
+          left.side.element(by.id('save-results-opener')).click();
+          left.side.element(by.css('#exportFormat > option[value=table]')).click();
+          left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
+          left.side.element(by.id('save-results')).click();
+
+          // Create new view
+          left.side.element(by.id('save-results-opener')).click();
+          left.side.element(by.css('#exportFormat > option[value=view]')).click();
+          left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirview');
+          left.side.element(by.id('save-results')).click();
+
+          lib.left.openSegmentation('bucketing');
+
+          // Create table for segmentation
+          right.side.element(by.id('save-results-opener')).click();
+          right.side.element(by.css('#exportFormat > option[value=table]')).click();
+          right.side.element(by.id('exportKiteTable')).sendKeys('segmtable');
+          right.side.element(by.id('save-results')).click();
+
+          // Create view for segmentation
+          right.side.element(by.id('save-results-opener')).click();
+          right.side.element(by.css('#exportFormat > option[value=view]')).click();
+          right.side.element(by.id('exportKiteTable')).sendKeys('segmview');
+          right.side.element(by.id('save-results')).click();
+        },
+        function() {
+          right.side.element(by.id('close-project')).click();
+          right.side.element(by.id('show-selector-button')).click();
+          right.side.element(by.id('directory-somesubdir')).click();
+          lib.splash.expectTableListed('somesubdirtable');
+          lib.splash.expectViewListed('somesubdirview');
+          lib.splash.expectTableListed('segmtable');
+          lib.splash.expectViewListed('segmview');
+          lib.left.saveProjectAs('test-example');
+        });
+
   fw.transitionTest(
     'test-example project with 100 vertices',
     'table and view export of 100 vertices',
