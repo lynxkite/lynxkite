@@ -81,7 +81,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
          if (lastSepIndex === -1) {
             return '';
          }
-         return proj.substring(0, lastSepIndex+1);
+         return proj.substring(0, lastSepIndex + 1);
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
