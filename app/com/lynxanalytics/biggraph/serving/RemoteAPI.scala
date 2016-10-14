@@ -19,6 +19,7 @@ object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
+    path: List[String],
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
@@ -30,7 +31,7 @@ object RemoteAPIProtocol {
     readACL: Option[String],
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
-  case class ScalarRequest(checkpoint: String, scalar: String)
+  case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -255,11 +256,21 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def getViewer(cp: String): controllers.RootProjectViewer =
     new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
 
+  // Get a viewer for a project which can be a root project or a segmentation.
+  def getViewer(cp: String, path: List[String]): controllers.ProjectViewer = {
+    val rootProjectViewer = getViewer(cp)
+    if (!path.isEmpty)
+      rootProjectViewer.offspringViewer(path)
+    else
+      rootProjectViewer
+  }
+
+  // Run an operation on a root project or a segmentation
   def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
     val normalized = normalize(request.operation)
     assert(normalizedIds.contains(normalized), s"No such operation: ${request.operation}")
     val operation = normalizedIds(normalized)
-    val viewer = getViewer(request.checkpoint)
+    val viewer = getViewer(request.checkpoint, request.path)
     val context = controllers.Operation.Context(user, viewer)
     val spec = controllers.FEOperationSpec(operation, request.parameters)
     val newState = ops.applyAndCheckpoint(context, spec)
@@ -267,7 +278,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def getScalar(user: User, request: ScalarRequest): DynamicValue = {
-    val viewer = getViewer(request.checkpoint)
+    val viewer = getViewer(request.checkpoint, request.path)
     val scalar = viewer.scalars(request.scalar)
     dynamicValue(dataManager.get(scalar))
   }
