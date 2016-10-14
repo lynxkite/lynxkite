@@ -59,8 +59,8 @@ class LynxKite:
     cp = urllib.request.HTTPCookieProcessor(cj)
     if self.certfile():
       sslctx = ssl.create_default_context(
-        ssl.Purpose.SERVER_AUTH,
-        cafile=self.certfile())
+          ssl.Purpose.SERVER_AUTH,
+          cafile=self.certfile())
       https = urllib.request.HTTPSHandler(context=sslctx)
       return urllib.request.build_opener(https, cp)
     else:
@@ -80,19 +80,19 @@ class LynxKite:
 
   def _login(self):
     self._request(
-      '/passwordLogin',
-      dict(
-        username=self.username(),
-        password=self.password(),
-        method='lynxkite'))
+        '/passwordLogin',
+        dict(
+            username=self.username(),
+            password=self.password(),
+            method='lynxkite'))
 
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
-      self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
-      data=data,
-      headers={'Content-Type': 'application/json'})
+        self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
+        data=data,
+        headers={'Content-Type': 'application/json'})
     max_tries = 3
     for i in range(max_tries):
       try:
@@ -130,8 +130,8 @@ class LynxKite:
     for name, p in mapping.items():
       checkpoints[name] = p.checkpoint
     r = self._send('globalSQL', dict(
-      query=query,
-      checkpoints=checkpoints
+        query=query,
+        checkpoints=checkpoints
     ))
     return View(self, r.checkpoint)
 
@@ -151,43 +151,43 @@ class LynxKite:
     return self._send('getPrefixedPath', dict(path=path))
 
   def import_csv(
-      self,
-      files,
-      columnNames=[],
-      delimiter=',',
-      mode='FAILFAST',
-      infer=True,
-      columnsToImport=[]):
+          self,
+          files,
+          columnNames=[],
+          delimiter=',',
+          mode='FAILFAST',
+          infer=True,
+          columnsToImport=[]):
     '''Imports a CSV as a :class:`View`.'''
     return self._create_view(
-      "CSV",
-      dict(files=files,
-           columnNames=columnNames,
-           delimiter=delimiter,
-           mode=mode,
-           infer=infer,
-           columnsToImport=columnsToImport))
+        "CSV",
+        dict(files=files,
+             columnNames=columnNames,
+             delimiter=delimiter,
+             mode=mode,
+             infer=infer,
+             columnsToImport=columnsToImport))
 
   def import_hive(
-      self,
-      hiveTable,
-      columnsToImport=[]):
+          self,
+          hiveTable,
+          columnsToImport=[]):
     '''Imports a Hive table as a :class:`View`.'''
     return self._create_view(
-      "Hive",
-      dict(
-        hiveTable=hiveTable,
-        columnsToImport=columnsToImport))
+        "Hive",
+        dict(
+            hiveTable=hiveTable,
+            columnsToImport=columnsToImport))
 
   def import_jdbc(
-      self,
-      jdbcUrl,
-      jdbcTable,
-      keyColumn='',
-      numPartitions=0,
-      predicates=[],
-      columnsToImport=[],
-      properties={}):
+          self,
+          jdbcUrl,
+          jdbcTable,
+          keyColumn='',
+          numPartitions=0,
+          predicates=[],
+          columnsToImport=[],
+          properties={}):
     '''Imports a database table as a :class:`View` via JDBC.
 
     Args:
@@ -206,41 +206,41 @@ class LynxKite:
         documentation.
     '''
     return self._create_view(
-      "Jdbc",
-      dict(jdbcUrl=jdbcUrl,
-           jdbcTable=jdbcTable,
-           keyColumn=keyColumn,
-           numPartitions=numPartitions,
-           predicates=predicates,
-           columnsToImport=columnsToImport,
-           properties=properties))
+        "Jdbc",
+        dict(jdbcUrl=jdbcUrl,
+             jdbcTable=jdbcTable,
+             keyColumn=keyColumn,
+             numPartitions=numPartitions,
+             predicates=predicates,
+             columnsToImport=columnsToImport,
+             properties=properties))
 
   def import_parquet(
-      self,
-      files,
-      columnsToImport=[]):
+          self,
+          files,
+          columnsToImport=[]):
     '''Imports a Parquet file as a :class:`View`.'''
     return self._create_view(
-      "Parquet",
-      dict(columnsToImport=columnsToImport, files=files))
+        "Parquet",
+        dict(columnsToImport=columnsToImport, files=files))
 
   def import_orc(
-      self,
-      files,
-      columnsToImport=[]):
+          self,
+          files,
+          columnsToImport=[]):
     '''Imports a Parquet file as a :class:`View`.'''
     return self._create_view(
-      "ORC",
-      dict(columnsToImport=columnsToImport, files=files))
+        "ORC",
+        dict(columnsToImport=columnsToImport, files=files))
 
   def import_json(
-      self,
-      files,
-      columnsToImport=[]):
+          self,
+          files,
+          columnsToImport=[]):
     '''Imports a JSON file as a :class:`View`.'''
     return self._create_view(
-      "Json",
-      dict(columnsToImport=columnsToImport, files=files))
+        "Json",
+        dict(columnsToImport=columnsToImport, files=files))
 
   def _create_view(self, format, dict):
     # TODO: remove this once #3859 is resolved.
@@ -293,10 +293,10 @@ class Table:
   def save(self, name, writeACL=None, readACL=None):
     '''Saves the table under given name, with given writeACL and readACL.'''
     self.lk._send('saveTable', dict(
-      checkpoint=self.checkpoint,
-      name=name,
-      writeACL=writeACL,
-      readACL=readACL))
+        checkpoint=self.checkpoint,
+        name=name,
+        writeACL=writeACL,
+        readACL=readACL))
 
 
 class View:
@@ -309,48 +309,48 @@ class View:
   def save(self, name, writeACL=None, readACL=None):
     '''Saves the view under given name, with given writeACL and readACL.'''
     self.lk._send('saveView', dict(
-      checkpoint=self.checkpoint,
-      name=name,
-      writeACL=writeACL,
-      readACL=readACL))
+        checkpoint=self.checkpoint,
+        name=name,
+        writeACL=writeACL,
+        readACL=readACL))
 
   def take(self, limit):
     '''Computes the view and returns the result as a list. Only the first ``limit`` number of rows are returned.'''
     r = self.lk._send('takeFromView', dict(
-      checkpoint=self.checkpoint,
-      limit=limit,
+        checkpoint=self.checkpoint,
+        limit=limit,
     ), raw=True)
     return r['rows']
 
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
     '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
-      checkpoint=self.checkpoint,
-      path=path,
-      header=header,
-      delimiter=delimiter,
-      quote=quote,
+        checkpoint=self.checkpoint,
+        path=path,
+        header=header,
+        delimiter=delimiter,
+        quote=quote,
     ))
 
   def export_json(self, path):
     '''Exports the view to JSON file. '''
     self.lk._send('exportViewToJson', dict(
-      checkpoint=self.checkpoint,
-      path=path,
+        checkpoint=self.checkpoint,
+        path=path,
     ))
 
   def export_orc(self, path):
     '''Exports the view to ORC file.'''
     self.lk._send('exportViewToORC', dict(
-      checkpoint=self.checkpoint,
-      path=path,
+        checkpoint=self.checkpoint,
+        path=path,
     ))
 
   def export_parquet(self, path):
     '''Exports the view to Parquet file.'''
     self.lk._send('exportViewToParquet', dict(
-      checkpoint=self.checkpoint,
-      path=path,
+        checkpoint=self.checkpoint,
+        path=path,
     ))
 
   def export_jdbc(self, url, table, mode='error'):
@@ -360,10 +360,10 @@ class View:
     "error", "overwrite", and "append".
     '''
     self.lk._send('exportViewToJdbc', dict(
-      checkpoint=self.checkpoint,
-      jdbcUrl=url,
-      table=table,
-      mode=mode,
+        checkpoint=self.checkpoint,
+        jdbcUrl=url,
+        table=table,
+        mode=mode,
     ))
 
   def to_table(self):
@@ -381,12 +381,12 @@ class ProjectCheckpoint:
   def save(self, name, writeACL, readACL):
     '''Saves the project having this project checkpoint under given name, with given writeACL and readACL.'''
     self.lk._send(
-      'saveProject',
-      dict(
-        checkpoint=self.checkpoint,
-        name=name,
-        writeACL=writeACL,
-        readACL=readACL))
+        'saveProject',
+        dict(
+            checkpoint=self.checkpoint,
+            name=name,
+            writeACL=writeACL,
+            readACL=readACL))
 
 
 class SubProject:
@@ -400,11 +400,11 @@ class SubProject:
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
     r = self.lk._send(
-      'getScalar',
-      dict(
-        checkpoint=self.project_checkpoint.checkpoint,
-        path=self.path,
-        scalar=scalar))
+        'getScalar',
+        dict(
+            checkpoint=self.project_checkpoint.checkpoint,
+            path=self.path,
+            scalar=scalar))
     if hasattr(r, 'double'):
       return r.double
     return r.string
@@ -412,12 +412,12 @@ class SubProject:
   def run_operation(self, operation, parameters):
     '''Runs an operation on the project with the given parameters.'''
     r = self.lk._send(
-      'runOperation',
-      dict(
-        checkpoint=self.project_checkpoint.checkpoint,
-        path=self.path,
-        operation=operation,
-        parameters=parameters))
+        'runOperation',
+        dict(
+            checkpoint=self.project_checkpoint.checkpoint,
+            path=self.path,
+            operation=operation,
+            parameters=parameters))
     self.project_checkpoint.checkpoint = r.checkpoint
     return self
 
@@ -445,8 +445,8 @@ class RootProject(SubProject):
   def sql(self, query):
     '''Runs SQL queries.'''
     r = self.lk._send('globalSQL', dict(
-      query=query,
-      checkpoints={'': self.project_checkpoint.checkpoint},
+        query=query,
+        checkpoints={'': self.project_checkpoint.checkpoint},
     ))
     return View(self.lk, r.checkpoint)
 
@@ -456,12 +456,12 @@ class RootProject(SubProject):
   def compute(self):
     '''Computes all scalars and attributes of the project.'''
     return self.lk._send(
-      'computeProject', dict(checkpoint=self.project_checkpoint.checkpoint))
+        'computeProject', dict(checkpoint=self.project_checkpoint.checkpoint))
 
   def is_computed(self):
     '''Checks Whether all the scalars, attributes and segmentations of the project are already computed.'''
     r = self.lk._send('isComputed', dict(
-      checkpoint=self.project_checkpoint.checkpoint
+        checkpoint=self.project_checkpoint.checkpoint
     ))
     return r
 
