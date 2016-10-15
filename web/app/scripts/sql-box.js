@@ -28,13 +28,13 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
       function SqlHistory(maxLength) {
         this.load = function() {
           try {
-            this.history = angular.fromJson(localStorage.getItem('sqlHistory'));
+            this.history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
             if (!Array.isArray(this.history)) {
               throw 'sqlHistory is not an array';
             }
           } catch(e) {
             this.history = [];
-            localStorage.setItem('sqlHistory', angular.toJson([]));
+            window.localStorage.setItem('sqlHistory', angular.toJson([]));
           }
           this.history.unshift(scope.sql);
           this.index = 0;
@@ -49,12 +49,12 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, hotkeys, $wi
           this.index = 0;
           this.history[0] = scope.sql;
           this.history.unshift(this.history[0]);
-          var history = angular.fromJson(localStorage.getItem('sqlHistory'));
+          var history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
           history.unshift(this.history[0]);
           if (history.length > maxLength) {
             history.pop();
           }
-          localStorage.setItem('sqlHistory', angular.toJson(history));
+          window.localStorage.setItem('sqlHistory', angular.toJson(history));
         };
         this.navigateUp = function() {
           if (this.index < this.history.length - 1) {
