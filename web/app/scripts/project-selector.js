@@ -213,7 +213,7 @@ angular.module('biggraph').directive('projectSelector',
             scope.showSQL=true;
             $anchorScroll('global-sql-box');
             $timeout(function () {
-              scope.$broadcast('fill sql-box from config', config);
+              scope.$broadcast('fill sql-box from config', name, config, type);
             });
             return;
           } else {

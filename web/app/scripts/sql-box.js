@@ -73,10 +73,11 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
-        if (exportFormat === 'table' ||
+        if ((exportFormat === 'table' ||
             exportFormat === 'segmentation' ||
-            exportFormat === 'view') {
-          scope.exportKiteTable = '';
+            exportFormat === 'view') &&
+            !scope.exportKiteTable) {
+            scope.exportKiteTable = '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
@@ -182,8 +183,10 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         });
       };
 
-      scope.$on('fill sql-box from config', function(evt, config) {
+      scope.$on('fill sql-box from config', function(evt, name, config, type) {
         scope.sql = config.data.dfSpec.sql;
+        scope.exportFormat = type;
+        scope.exportKiteTable = name;
       });
     }
   };
