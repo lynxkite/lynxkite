@@ -40,8 +40,8 @@ case class DataFrameSpec(
     isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) {
   def createDataFrame(user: User, context: SQLContext)(
     implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
-    if (isGlobal) globalSQL(user, context)
-    else projectSQL(user, context)
+    if (project.isDefined) projectSQL(user, context)
+    else globalSQL(user, context)
   }
 
   // Finds the names of tables from string
