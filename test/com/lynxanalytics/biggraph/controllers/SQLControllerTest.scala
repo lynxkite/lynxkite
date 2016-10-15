@@ -454,7 +454,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     sqlController.createViewDFSpec(user,
       SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
         DataFrameSpec(
-          isGlobal = true,
           directory = Some(""),
           project = None,
           sql = "select * from `csv-view-test`"
@@ -462,7 +461,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val res = Await.result(sqlController.runSQLQuery(user,
       SQLQueryRequest(
         DataFrameSpec(
-          isGlobal = true,
           directory = Some(""),
           project = None,
           sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
