@@ -274,6 +274,6 @@ module.exports = function(fw) {
       }
       left.side.element(by.id('run-sql-button')).click();
       left.expectSqlResult(['number'], [['6']]);
-    },true);
+    });
 
 };
