@@ -89,19 +89,16 @@ module.exports = function(fw) {
   'empty splash',
   'Global sql view can be edited',
   function() {
-    lib.splash.runGlobalSql('select 1 as n');
-    lib.splash.saveGlobalSqlToTable('table');
-
     lib.splash.runGlobalSql('select 2 as n');
     lib.splash.saveGlobalSqlToView('view');
+    lib.splash.editView('view');
+    element(by.id('save-results-opener')).click();
+    element(by.id('save-results')).click();
   },
   function() {
-    lib.splash.editTable('table');
-    element(by.id('run-sql-button')).click();
-    lib.splash.expectGlobalSqlResult(['n'], [['1']]);
-    lib.splash.editView('view');
-    element(by.id('run-sql-button')).click();
-    lib.splash.expectGlobalSqlResult(['n'], [['2']]);
-
+    expect(lib.errors()).toEqual([]);
+    lib.splash.expectNumProjects(0);
+    lib.splash.expectNumDirectories(0);
+    lib.splash.expectNumViews(1);
   });
 };
