@@ -457,7 +457,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
           directory = Some(""),
           project = None,
           sql = "select * from `csv-view-test`"
-        )))
+        ), overwrite = false))
     val res = Await.result(sqlController.runSQLQuery(user,
       SQLQueryRequest(
         DataFrameSpec(

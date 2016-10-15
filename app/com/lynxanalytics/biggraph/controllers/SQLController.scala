@@ -24,20 +24,20 @@ trait FrameSettings {
   def name: String
   def notes: String
   def privacy: String
+  def overwrite: Boolean
 }
 
 object DataFrameSpec extends FromJson[DataFrameSpec] {
   // Utilities for testing.
   def local(project: String, sql: String) =
-    new DataFrameSpec(isGlobal = false, directory = None, project = Some(project), sql = sql)
+    new DataFrameSpec(directory = None, project = Some(project), sql = sql)
   def global(directory: String, sql: String) =
-    new DataFrameSpec(isGlobal = true, directory = Some(directory), project = None, sql = sql)
+    new DataFrameSpec(directory = Some(directory), project = None, sql = sql)
 
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
   override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
-case class DataFrameSpec(
-    isGlobal: Boolean = false, directory: Option[String], project: Option[String], sql: String) {
+case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
   def createDataFrame(user: User, context: SQLContext)(
     implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
     if (project.isDefined) projectSQL(user, context)
@@ -131,7 +131,8 @@ case class SQLQueryResult(header: List[String], data: List[List[String]])
 case class SQLExportToTableRequest(
   dfSpec: DataFrameSpec,
   table: String,
-  privacy: String)
+  privacy: String,
+  overwrite: Boolean)
 case class SQLExportToCSVRequest(
   dfSpec: DataFrameSpec,
   path: String,
@@ -160,7 +161,7 @@ case class SQLExportToJdbcRequest(
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 case class SQLCreateViewRequest(
-    name: String, privacy: String, dfSpec: DataFrameSpec) extends ViewRecipe with FrameSettings {
+    name: String, privacy: String, dfSpec: DataFrameSpec, overwrite: Boolean) extends ViewRecipe with FrameSettings {
   override def createDataFrame(
     user: User, context: SQLContext)(
       implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
@@ -398,11 +399,12 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
     user: serving.User, recipe: T): FEOption = {
+    recipe.name
     SQLController.saveView(
       recipe.notes,
       user,
       recipe.name,
-      recipe.privacy, recipe)
+      recipe.privacy, recipe.overwrite, recipe)
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
@@ -441,7 +443,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
     SQLController.saveTable(
       df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
-      user, request.table, request.privacy,
+      user, request.table, request.privacy, request.overwrite,
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
   }
 
@@ -552,10 +554,11 @@ object SQLController {
   }
 
   def saveView[T <: ViewRecipe: json.Writes](
-    notes: String, user: serving.User, name: String, privacy: String, recipe: T)(
+    notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, name, privacy)
+    if (overwrite) entry.remove()
     val view = entry.asNewViewFrame(recipe, notes)
     FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
   }
