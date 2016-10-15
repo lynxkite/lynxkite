@@ -824,6 +824,14 @@ testLib = {
     aceInput.sendKeys(testLib.selectAllKey + keys);
   },
 
+  sendKeyCombinationToACE: function(e, key1, key2) {
+    var aceContent = e.$('div.ace_content');
+    var aceInput = e.$('textarea.ace_text-input');
+    // The double click on the text area focuses it properly.
+    browser.actions().doubleClick(aceContent).perform();
+    aceInput.sendKeys(K.chord(key1,key2));
+  },
+
   setParameter: function(e, value) {
     // Special parameter types need different handling.
     e.evaluate('param.kind').then(

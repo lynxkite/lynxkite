@@ -227,23 +227,53 @@ module.exports = function(fw) {
       right.side.element(by.id('show-selector-button')).click();
       right.side.element(by.id('global-sql-box')).click();
 
-      left.runSql('1');
-      right.runSql('2');
-      left.runSql('3');
-      right.runSql('4');
-      left.runSql('5');
-      right.runSql('6');
-      left.runSql('7');
-      right.runSql('8');
-      left.runSql('9');
-      right.runSql('10');
+      left.runSql('select 0 as number');
+      right.runSql('select 1 as number');
+      left.runSql('select 2 as number');
+      right.runSql('select 3 as number');
+      left.runSql('select 4 as number');
+      right.runSql('select 5 as number');
+      left.runSql('select 6 as number');
+      right.runSql('select 7 as number');
+      left.runSql('select 8 as number');
+      right.runSql('select 9 as number');
+
+      // Close then reopen global sql box to synchronize its query history
+      // Apparently webdriver can't close the box by simply clicking on it
+      right.side.element(by.css('#global-sql-box > .glyphicon-minus')).click();
+      right.side.element(by.id('global-sql-box')).click();
     },
     function() {
-      for (var i = 0; i < 5; i++) {
-        left.element(by.id('run-sql-button'))
-        .sendKeys(protractor.Key.chord(protractor.Key.CONTROL, protractor.Key.ARROW_UP));
-        expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
+      var K = protractor.Key;
+      var i, j;
+
+      // Test synchronized sql box
+      for (i = 0; i < 10; i++) {
+        for (j = 0; j < 10; j++) {
+          lib.sendKeyCombinationToACE(right.sqlEditor(), K.CONTROL, K.ARROW_UP);
+        }
+        right.side.element(by.id('run-sql-button')).click();
+        right.expectSqlResult(['number'], [[i.toString()]]);
       }
+      // Test non-synchronized sql box
+      for (i = 0; i <= 8; i += 2) {
+        for (j = 0; j < 5; j++) {
+          lib.sendKeyCombinationToACE(left.sqlEditor(), K.CONTROL, K.ARROW_UP);
+        }
+        left.side.element(by.id('run-sql-button')).click();
+        left.expectSqlResult(['number'], [[i.toString()]]);
+      }
+      // Test arrow down, 4 steps up then 2 steps down
+      for (i = 0; i < 6; i++) {
+        if (i < 4) {
+          lib.sendKeyCombinationToACE(left.sqlEditor(), K.CONTROL, K.ARROW_UP);
+        }
+        else {
+          lib.sendKeyCombinationToACE(left.sqlEditor(), K.CONTROL, K.ARROW_DOWN);
+        }
+      }
+      left.side.element(by.id('run-sql-button')).click();
+      left.expectSqlResult(['number'], [['6']]);
     },true);
 
 };
