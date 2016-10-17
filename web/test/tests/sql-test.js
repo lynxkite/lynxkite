@@ -158,7 +158,6 @@ module.exports = function(fw) {
       lib.splash.editTable('Random Edges');
       element(by.id('save-results-opener')).click();
       element(by.id('save-results')).click();
-      expect(lib.errors()).toEqual([]);
     },
     function() {
       expect(lib.errors()).toEqual([]);
