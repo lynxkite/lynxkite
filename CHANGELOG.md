@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Performance and scalability improvements for non local aggregators.
+ - SQL boxes now persist their query history into the browser's localStorage
 
 ### 1.9.5
 
