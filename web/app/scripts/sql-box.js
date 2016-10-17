@@ -37,7 +37,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             this.history = [];
             window.localStorage.setItem('sqlHistory', angular.toJson([]));
           }
-          // Store currrent query as first element
+          // Store current query as first element
           this.history.unshift(scope.sql);
           this.index = 0;
         };

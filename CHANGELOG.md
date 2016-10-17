@@ -11,7 +11,7 @@ LynxKite:
  - Performance and scalability improvements for aggregating operations.
  - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
    Apologies for the pun.)
- - SQL boxes now persist their query history into the browser's localStorage
+ - SQL boxes now persist their query history into the browser's local storage.
  - Assorted UI fixes.
 
 Ecosystem:
