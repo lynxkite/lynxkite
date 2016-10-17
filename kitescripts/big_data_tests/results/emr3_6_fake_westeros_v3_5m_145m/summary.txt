@@ -30,7 +30,7 @@
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/union_with_another_project.groovy:2383
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy:1022
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy:191
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_edge_attribute_to_vertices.groovy:3773
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_from_segmentation.groovy:641
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_on_neighbors.groovy:3324
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_to_segmentation.groovy:933
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_edge_attribute_to_vertices.groovy:935
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_from_segmentation.groovy:551
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_on_neighbors.groovy:420
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_to_segmentation.groovy:305
