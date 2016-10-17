@@ -26,35 +26,43 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
        'select * from vertices';
 
       function SqlHistory(maxLength) {
+        // This is a helper class for storing sql query history in localStorage.
+        // The localStorage contains a limited number of the most recent queries, and all
+        // sql boxes synchronize with it on creation. Every sql box maintains an array of its
+        // own local history, but also pushes newly executed queries into localStorage.
+        // Although the query currently being edited is not yet part of the history, it's
+        // stored as the first element of the history array for syntactic convenience.
+
         // Load persisted sql history
-        this.load = function() {
+        this.loadGlobalHistory = function() {
+          var history;
           try {
-            this.history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
-            if (!Array.isArray(this.history)) {
+            history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
+            if (!Array.isArray(history)) {
               throw 'sqlHistory is not an array';
             }
           } catch(e) {
-            this.history = [];
+            history = [];
             window.localStorage.setItem('sqlHistory', angular.toJson([]));
           }
-          // Store current query as first element
-          this.history.unshift(scope.sql);
-          this.index = 0;
+          return history;
         };
 
         // Initialize
         this.maxLength = maxLength;
-        this.history = [];
-        this.load();
+        this.history = this.loadGlobalHistory();
+        // Store current query as first element
+        this.history.unshift(scope.sql);
+        this.index = 0;
 
         // Save current query
-        this.save = function() {
+        this.saveCurrentQuery = function() {
           this.index = 0;
           this.history[0] = scope.sql;
           // Insert current query into our local subset of history
           this.history.unshift(this.history[0]);
           // Insert current query into a copy of global history
-          var history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
+          var history = this.loadGlobalHistory();
           history.unshift(this.history[0]);
           while (history.length > maxLength) {
             history.pop();
@@ -115,7 +123,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         if (!scope.sql) {
           scope.result = { $error: 'SQL script must be specified.' };
         } else {
-          scope.sqlHistory.save();
+          scope.sqlHistory.saveCurrentQuery();
           scope.inProgress += 1;
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
