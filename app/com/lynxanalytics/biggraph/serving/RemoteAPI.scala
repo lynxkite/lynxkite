@@ -259,10 +259,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   // Get a viewer for a project which can be a root project or a segmentation.
   def getViewer(cp: String, path: List[String]): controllers.ProjectViewer = {
     val rootProjectViewer = getViewer(cp)
-    if (!path.isEmpty)
-      rootProjectViewer.offspringViewer(path)
-    else
-      rootProjectViewer
+    rootProjectViewer.offspringViewer(path)
   }
 
   // Run an operation on a root project or a segmentation
