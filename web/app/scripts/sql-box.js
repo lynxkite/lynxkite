@@ -26,6 +26,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
        'select * from vertices';
 
       function SqlHistory(maxLength) {
+        // Load persisted sql history
         this.load = function() {
           try {
             this.history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
@@ -36,6 +37,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             this.history = [];
             window.localStorage.setItem('sqlHistory', angular.toJson([]));
           }
+          // Store currrent query as first element
           this.history.unshift(scope.sql);
           this.index = 0;
         };
@@ -45,26 +47,33 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         this.history = [];
         this.load();
 
+        // Save current query
         this.save = function() {
           this.index = 0;
           this.history[0] = scope.sql;
+          // Insert current query into our local subset of history
           this.history.unshift(this.history[0]);
+          // Insert current query into a copy of global history
           var history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
           history.unshift(this.history[0]);
-          if (history.length > maxLength) {
+          while (history.length > maxLength) {
             history.pop();
           }
+          // Update global history
           window.localStorage.setItem('sqlHistory', angular.toJson(history));
         };
+        // Move one row up in local history
         this.navigateUp = function() {
           if (this.index < this.history.length - 1) {
             if (this.index === 0) {
+              // Update current query in local history
               this.history[0] = scope.sql;
             }
             this.index++;
             scope.sql = this.history[this.index];
           }
         };
+        // Move one row down in local history
         this.navigateDown = function() {
           if (this.index > 0) {
             this.index--;
@@ -241,7 +250,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             mac: 'Command-Up',
             sender: 'editor|cli'
           },
-          exec: function() { scope.sqlHistory.navigateUp(); scope.$apply(); }
+          exec: function() { scope.$apply(function() { scope.sqlHistory.navigateUp(); }); }
         });
         editor.commands.addCommand({
           name: 'navigateDown',
@@ -250,7 +259,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             mac: 'Command-Down',
             sender: 'editor|cli'
           },
-          exec: function() { scope.sqlHistory.navigateDown(); scope.$apply(); }
+          exec: function() { scope.$apply(function() { scope.sqlHistory.navigateDown(); }); }
         });
       };
     }
