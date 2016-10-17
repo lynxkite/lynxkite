@@ -6,8 +6,49 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Performance and scalability improvements for non local aggregators.
+LynxKite:
+
+ - Performance and scalability improvements for aggregating operations.
+ - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
+   Apologies for the pun.)
  - SQL boxes now persist their query history into the browser's localStorage
+ - Assorted UI fixes.
+
+Ecosystem:
+
+ - Flexible date template strings.
+ - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
+   intervals.
+
+### 1.9.5.4
+
+Ecosystem:
+
+ - Extra date template strings `{to,yester}day_{yyyy,mm,dd}`.
+ - Fix Chronomaster metrics reporting when `num_workers` is greater than one.
+ - Work around Scala 2.10 reflection thread safety issue. (SI-6240)
+
+### 1.9.5.3
+
+Ecosystem:
+
+ - Add extra date template strings, like `yesterday_minus_1month_mm_str`.
+
+### 1.9.5.2
+
+Fixes a bug in the HDFS transfer performance improvement in 1.9.5.1.
+
+### 1.9.5.1
+
+Cherry-pick release with just the changes below.
+
+Ecosystem:
+
+ - Much improved `TransferTask` performance for HDFS to HDFS copy. (Up to 20 times faster in some
+   cases.)
+ - `count` feature in `helper.sh` to help with verification testing.
+ - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
+   more detailed performance data.
 
 ### 1.9.5
 
