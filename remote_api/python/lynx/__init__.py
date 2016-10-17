@@ -255,7 +255,8 @@ class LynxKite:
   def load_project(self, name):
     '''Loads an existing LynxKite project. Returns a :class:`RootProject`.'''
     r = self._send('loadProject', dict(name=name))
-    return RootProject(self, r.checkpoint)
+    project_checkpoint = ProjectCheckpoint(self, r.checkpoint)
+    return RootProject(project_checkpoint)
 
   def load_table(self, name):
     '''Loads an existing LynxKite table. Returns a :class:`Table`.'''
@@ -270,7 +271,8 @@ class LynxKite:
   def new_project(self):
     '''Creates a new unnamed empty LynxKite :class:`RootProject`.'''
     r = self._send('newProject')
-    return RootProject(self, r.checkpoint)
+    project_checkpoint = ProjectCheckpoint(self, r.checkpoint)
+    return RootProject(project_checkpoint)
 
   def remove_name(self, name):
     '''Removes an object named ``name``.'''
@@ -466,10 +468,10 @@ class SubProject:
 class RootProject(SubProject):
   '''Represents a project.'''
 
-  def __init__(self, lynxkite, checkpoint):
-    project_checkpoint = ProjectCheckpoint(lynxkite, checkpoint)
+  def __init__(self, project_checkpoint):
+    project_checkpoint = project_checkpoint
     super().__init__(project_checkpoint, [])
-    self.lk = lynxkite
+    self.lk = project_checkpoint.lk
 
   def sql(self, query):
     '''Runs SQL queries.'''
