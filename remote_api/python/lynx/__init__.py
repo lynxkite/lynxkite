@@ -272,6 +272,10 @@ class LynxKite:
     r = self._send('newProject')
     return Project(self, r.checkpoint)
 
+  def remove_name(self, name):
+    '''Removes an object named ``name``.'''
+    self._send('removeName', dict(name=name))
+
   def change_acl(self, file, readACL, writeACL):
     '''Sets the read and write access control list for a path (directory, project, etc) in LynxKite.
     '''
