@@ -227,53 +227,37 @@ module.exports = function(fw) {
       right.side.element(by.id('show-selector-button')).click();
       right.side.element(by.id('global-sql-box')).click();
 
-      left.runSql('select 0 as number');
-      right.runSql('select 1 as number');
-      left.runSql('select 2 as number');
-      right.runSql('select 3 as number');
-      left.runSql('select 4 as number');
-      right.runSql('select 5 as number');
-      left.runSql('select 6 as number');
-      right.runSql('select 7 as number');
-      left.runSql('select 8 as number');
-      right.runSql('select 9 as number');
+      left.runSql('0');
+      right.runSql('1');
+      left.runSql('2');
+      right.runSql('3');
 
       // Close then reopen global sql box to synchronize its query history
-      // Apparently webdriver can't close the box by simply clicking on it
       right.side.element(by.css('#global-sql-box > .glyphicon-minus')).click();
       right.side.element(by.id('global-sql-box')).click();
     },
     function() {
       var K = protractor.Key;
-      var i, j;
 
       // Test synchronized sql box
-      for (i = 0; i < 10; i++) {
-        for (j = 0; j < 10; j++) {
-          lib.sendKeyCombinationToACE(right.sqlEditor(), K.CONTROL, K.ARROW_UP);
-        }
-        right.side.element(by.id('run-sql-button')).click();
-        right.expectSqlResult(['number'], [[i.toString()]]);
-      }
+      var aceContent = right.sqlEditor().$('.ace_content');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('3');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('2');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('1');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('0');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.DOWN)]);
+      expect(aceContent.getText()).toBe('1');
+
       // Test non-synchronized sql box
-      for (i = 0; i <= 8; i += 2) {
-        for (j = 0; j < 5; j++) {
-          lib.sendKeyCombinationToACE(left.sqlEditor(), K.CONTROL, K.ARROW_UP);
-        }
-        left.side.element(by.id('run-sql-button')).click();
-        left.expectSqlResult(['number'], [[i.toString()]]);
-      }
-      // Test arrow down, 4 steps up then 2 steps down
-      for (i = 0; i < 6; i++) {
-        if (i < 4) {
-          lib.sendKeyCombinationToACE(left.sqlEditor(), K.CONTROL, K.ARROW_UP);
-        }
-        else {
-          lib.sendKeyCombinationToACE(left.sqlEditor(), K.CONTROL, K.ARROW_DOWN);
-        }
-      }
-      left.side.element(by.id('run-sql-button')).click();
-      left.expectSqlResult(['number'], [['6']]);
+      aceContent = left.sqlEditor().$('.ace_content');
+      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('2');
+      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('0');
     });
 
 };
