@@ -391,43 +391,43 @@ class ProjectCheckpoint:
   def compute(self):
     '''Computes all scalars and attributes of the project.'''
     return self.lk._send(
-      'computeProject', dict(checkpoint=self.checkpoint))
+        'computeProject', dict(checkpoint=self.checkpoint))
 
   def is_computed(self):
     '''Checks whether all the scalars, attributes and segmentations of the project are already computed.'''
     r = self.lk._send('isComputed', dict(
-      checkpoint=self.checkpoint
+        checkpoint=self.checkpoint
     ))
     return r
 
   def sql(self, query):
     '''Runs SQL queries.'''
     r = self.lk._send('globalSQL', dict(
-      query=query,
-      checkpoints={'': self.checkpoint}
+        query=query,
+        checkpoints={'': self.checkpoint}
     ))
     return View(self.lk, r.checkpoint)
 
   def run_operation(self, operation, parameters, path):
     '''Runs an operation on the project with the given parameters.'''
     r = self.lk._send(
-      'runOperation',
-      dict(
-        checkpoint=self.checkpoint,
-        path=path,
-        operation=operation,
-        parameters=parameters))
+        'runOperation',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            operation=operation,
+            parameters=parameters))
     self.checkpoint = r.checkpoint
     return self
 
   def scalar(self, scalar, path):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
     r = self.lk._send(
-      'getScalar',
-      dict(
-        checkpoint=self.checkpoint,
-        path=path,
-        scalar=scalar))
+        'getScalar',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            scalar=scalar))
     if hasattr(r, 'double'):
       return r.double
     return r.string
