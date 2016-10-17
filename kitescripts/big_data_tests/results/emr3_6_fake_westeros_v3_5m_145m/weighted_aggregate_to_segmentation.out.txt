@@ -4,4 +4,4 @@ ordinal: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.
 id: <computed>
 rnd_std_normal2_weighted_sum_by_rnd_std_uniform: {"labelType":"between","labels":["-1304.35","0.14","0.34","0.80","1.89","4.46","10.54","24.89","58.81","138.96","328.32","775.70"],"sizes":[703,2,11,12,21,57,48,48,65,125,138]}
 id: <computed>
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_to_segmentation.groovy, took 933 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/weighted_aggregate_to_segmentation.groovy, took 305 seconds

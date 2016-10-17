@@ -1,7 +1,7 @@
 // Presents the parameters for running SQL scripts.
 'use strict';
 
-angular.module('biggraph').directive('sqlBox', function($window, side, util) {
+angular.module('biggraph').directive('sqlBox', function($rootScope, $window, side, util) {
   return {
     restrict: 'E',
     scope: {
@@ -22,7 +22,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.isGlobal = !scope.side;
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
-      scope.project = scope.project = scope.side && scope.side.state.projectName;
+      scope.project = scope.side && scope.side.state.projectName;
       scope.sort = {
         column: undefined,
         reverse: false,
@@ -158,6 +158,9 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             // Fire off the download.
             $window.location =
               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
+          }
+          if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
+            $rootScope.$broadcast('new table or view', scope);
           }
         });
       };

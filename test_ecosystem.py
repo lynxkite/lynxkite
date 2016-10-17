@@ -82,6 +82,10 @@ parser.add_argument(
     action='store_true',
     help='Start the docker version. Without this switch the default is native.')
 parser.add_argument(
+    '--monitor_nodes',
+    action='store_true',
+    help='Setup and start monitoring on the extra nodes. The default is false.')
+parser.add_argument(
     '--bigdata',
     action='store_true',
     help='The given task is a big data test task. A bigdata_test_set parameter also have to be given.')
@@ -119,6 +123,7 @@ def main(args):
 
   upload_installer_script(cluster, args)
   upload_tasks(cluster, args)
+  upload_tools(cluster, args)
   download_and_unpack_release(cluster, args)
   if args.dockerized:
     install_docker_and_lynx(cluster, args.lynx_version)
@@ -129,7 +134,8 @@ def main(args):
     install_native(cluster)
     config_and_prepare_native(cluster, args)
     config_aws_s3_native(cluster)
-    start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
+    if args.monitor_nodes:
+      start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
     start_supervisor_native(cluster)
     start_tests_native(cluster, jdbc_url, args)
   print('Tests are now running in the background. Waiting for results.')
@@ -137,6 +143,11 @@ def main(args):
   if not os.path.exists(results_local_dir(args)):
     os.makedirs(results_local_dir(args))
   cluster.rsync_down('/home/hadoop/test_results.txt', results_local_dir(args) + results_name(args))
+  if args.dockerized:
+    pass
+    # TODO download_logs_docker()
+  else:
+    download_logs_native(cluster, args)
   shut_down_instances(cluster, mysql_instance)
 
 
@@ -171,6 +182,8 @@ def check_docker_vs_native(args):
   Try to check if the given release is a docker release if and only if the `--dockerized` switch is used.
   '''
   if args.dockerized:
+    if args.monitor_nodes:
+      raise ValueError('Dockerized version does not support monitor_nodes')
     if args.lynx_release_dir:
       if 'native' in args.lynx_release_dir:
         raise ValueError('You cannot use a native release dir to test a dockerized version.')
@@ -229,6 +242,13 @@ def upload_tasks(cluster, args):
         ''')
 
 
+def upload_tools(cluster, args):
+  if not args.dockerized:
+    target_dir = '/mnt/lynx/tools'
+    cluster.ssh('mkdir -p ' + target_dir)
+    cluster.rsync_up('ecosystem/native/tools/', target_dir)
+
+
 def install_native(cluster):
   cluster.ssh('''
     set -x
@@ -270,6 +290,7 @@ def config_and_prepare_native(cluster, args):
       export LYNX=/mnt/lynx
       #for tests with mysql server on master
       export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
+      export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=7200
 EOF
     echo 'Creating hdfs directory.'
     source config/central
@@ -327,14 +348,20 @@ def start_monitoring_on_extra_nodes_native(keyfile, cluster):
   cluster.ssh('''
     for node in `cat nodes.txt`; do
       scp {options} \
-      /mnt/lynx/other_nodes/other_nodes.tgz \
-      hadoop@${{node}}:/home/hadoop/other_nodes.tgz
+        /mnt/lynx/other_nodes/other_nodes.tgz \
+        hadoop@${{node}}:/home/hadoop/other_nodes.tgz
       ssh {options} hadoop@${{node}} tar xf other_nodes.tgz
       ssh {options} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
     done'''.format(options=ssh_options))
 
+# Uncomment services in configs
   cluster.ssh('''
-  /mnt/lynx/scripts/service_explorer.sh
+    /mnt/lynx/tools/uncomment_config.sh /mnt/lynx/config/monitoring/prometheus.yml
+    /mnt/lynx/tools/uncomment_config.sh /mnt/lynx/config/supervisord.conf
+    ''')
+
+  cluster.ssh('''
+    /mnt/lynx/scripts/service_explorer.sh
   ''')
 
 
@@ -368,6 +395,11 @@ def start_tests_native(cluster, jdbc_url, args):
       jdbc_url=jdbc_url,
       dataset=bigdata_test_set(args.bigdata_test_set)
   ))
+
+
+def download_logs_native(cluster, args):
+  cluster.rsync_down('/mnt/lynx/logs/', results_local_dir(args) + '/logs/')
+  cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', results_local_dir(args) + '/lynxkite-logs/')
 
 
 def download_and_unpack_release(cluster, args):
