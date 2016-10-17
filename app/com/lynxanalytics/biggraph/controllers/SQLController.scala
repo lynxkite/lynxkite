@@ -38,6 +38,8 @@ object DataFrameSpec extends FromJson[DataFrameSpec] {
   override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
 case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
+  assert(directory.isDefined ^ project.isDefined,
+    "Exaclty one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
     implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
     if (project.isDefined) projectSQL(user, context)
@@ -399,7 +401,6 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
     user: serving.User, recipe: T): FEOption = {
-    recipe.name
     SQLController.saveView(
       recipe.notes,
       user,

@@ -73,11 +73,10 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
-        if ((exportFormat === 'table' ||
+        if (exportFormat === 'table' ||
             exportFormat === 'segmentation' ||
-            exportFormat === 'view') &&
-            !scope.exportKiteTable) {
-            scope.exportKiteTable = '';
+            exportFormat === 'view') {
+            scope.exportKiteTable = scope.exportKiteTable || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
