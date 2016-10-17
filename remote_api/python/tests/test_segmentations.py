@@ -33,8 +33,8 @@ class TestSegmentations(unittest.TestCase):
     p = lynx.LynxKite().new_project()
     p.exampleGraph()
     p.connectedComponents(**{
-      'directions': 'ignore directions',
-      'name' : 'connected_components'})
+        'directions': 'ignore directions',
+        'name': 'connected_components'})
     s = p.segmentation('connected_components')
     num = s.scalar('vertex_count')
     self.assertEqual(num, 2.0)
@@ -44,21 +44,21 @@ class TestSegmentations(unittest.TestCase):
     p = lk.new_project()
     p.newVertexSet(size=30)
     p.createRandomEdgeBundle(**{
-      'degree': '1',
-      'seed': '112233'})
+        'degree': '1',
+        'seed': '112233'})
     p.connectedComponents(**{
-      'directions': 'ignore directions',
-      'name' : 'connected_components'})
+        'directions': 'ignore directions',
+        'name': 'connected_components'})
     s = p.segmentation('connected_components')
     s.addRankAttribute(**{
-      'keyattr': 'size',
-      'order': 'ascending',
-      'rankattr': 'ranking'})
+        'keyattr': 'size',
+        'order': 'ascending',
+        'rankattr': 'ranking'})
     s.segmentByDoubleAttribute(**{
-      'attr': 'ranking',
-      'interval-size': '2',
-      'name': 'bucketing',
-      'overlap': 'no'})
+        'attr': 'ranking',
+        'interval-size': '2',
+        'name': 'bucketing',
+        'overlap': 'no'})
     s2 = s.segmentation('bucketing')
     num = s2.scalar('vertex_count')
     self.assertEqual(num, 4.0)
