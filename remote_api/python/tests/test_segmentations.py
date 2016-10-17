@@ -31,27 +31,38 @@ class TestSegmentations(unittest.TestCase):
 
   def test_get_segmentation_scalar(self):
     p = lynx.LynxKite().new_project()
-    p.newVertexSet(size=100)
-    p.addRandomVertexAttribute(**{
-        'name': 'rnd1',
-        'dist': 'Standard Uniform',
-        'seed': '12343'})
-    p.segmentByDoubleAttribute(**{
-        'name': 'seg1',
-        'attr': 'rnd1',
-        'interval-size': '0.001',
-        'overlap': 'no'})
-    p.deriveScalar(**{
-        'expr': '123',
-        'output': 'derived-scalar',
-        'type': 'double'})
-    seg1 = p.segmentation('seg1')
-    seg1.deriveScalar(**{
-        'expr': '42',
-        'output': 'derived-scalar',
-        'type': 'double'})
-    num = seg1.scalar('derived-scalar')
-    self.assertEqual(num, 42.0)
+    p.exampleGraph()
+    p.connectedComponents(**{
+      'directions': 'ignore directions',
+      'name' : 'connected_components'})
+    s = p.segmentation('connected_components')
+    num = s.scalar('vertex_count')
+    self.assertEqual(num, 2.0)
+
+  def test_segmentation_operations(self):
+    lk = lynx.LynxKite()
+    p = lk.new_project()
+    p.newVertexSet(size=30)
+    p.createRandomEdgeBundle(**{
+      'degree': '1',
+      'seed': '112233'})
+    p.connectedComponents(**{
+      'directions': 'ignore directions',
+      'name' : 'connected_components'})
+    s = p.segmentation('connected_components')
+    s.addRankAttribute(**{
+      'keyattr': 'size',
+      'order': 'ascending',
+      'rankattr': 'ranking'})
+    s.segmentByDoubleAttribute(**{
+      'attr': 'ranking',
+      'interval-size': '2',
+      'name': 'bucketing',
+      'overlap': 'no'})
+    s2 = s.segmentation('bucketing')
+    num = s2.scalar('vertex_count')
+    self.assertEqual(num, 4.0)
+
 
 if __name__ == '__main__':
   unittest.main()
