@@ -31,7 +31,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         // sql boxes synchronize with it on creation. Every sql box maintains an array of its
         // own local history, but also pushes newly executed queries into localStorage.
         // Although the query currently being edited is not yet part of the history, it's
-        // stored as the first element of the history array for syntactic convenience.
+        // stored as this.history[0] for syntactic convenience.
 
         // Load persisted sql history
         this.loadGlobalHistory = function() {
