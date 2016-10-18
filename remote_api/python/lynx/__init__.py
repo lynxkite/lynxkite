@@ -435,7 +435,7 @@ class ProjectCheckpoint:
 
 
 class SubProject:
-  '''Represents a segmentation.'''
+  '''Represents a root project or a segmentation.'''
 
   def __init__(self, project_checkpoint, path):
     self.project_checkpoint = project_checkpoint
@@ -452,6 +452,7 @@ class SubProject:
     return self
 
   def segmentation(self, name):
+    '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
     return SubProject(self.project_checkpoint, self.path + [name])
 
   def __getattr__(self, attr):
@@ -476,6 +477,7 @@ class RootProject(SubProject):
     return self.project_checkpoint.sql(query)
 
   def save(self, name, writeACL=None, readACL=None):
+    '''Saves the project under given name, with given writeACL and readACL.'''
     self.project_checkpoint.save(name, writeACL, readACL)
 
   def compute(self):
