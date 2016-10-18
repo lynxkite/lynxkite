@@ -1,0 +1,22 @@
+/*#column-browser {
+  white-space: nowrap;
+}
+
+#column-browser span.marked {
+  font-weight: bold;
+}*/
+
+#column-browser #table-list {
+  margin-left: 0px;
+  padding-left: 0px;
+}
+
+/*
+#colummn-browser ol span {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+}
+*/
+

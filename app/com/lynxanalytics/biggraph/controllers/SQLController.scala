@@ -379,6 +379,17 @@ case class HiveImportRequest(
   def notes = s"Imported from Hive table ${hiveTable}."
 }
 
+case class GetAllTablesRequest(path: String)
+case class SimpleColumnDesc(name: String)
+case class SimpleTableDesc(
+  framePath: String,
+  subTablePath: String,
+  name: String)
+case class GetAllTablesResponse(list: Seq[SimpleTableDesc])
+
+case class GetColumnsRequest(framePath: String, subTablePath: String)
+case class GetColumnsResponse(columns: Seq[SimpleColumnDesc])
+
 object HiveImportRequest extends FromJson[HiveImportRequest] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
   override def fromJson(j: JsValue): HiveImportRequest = json.Json.fromJson(j).get
@@ -426,6 +437,106 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
+
+  trait TableLikeRef {
+    def toDesc(stripPathSteps: Int, x: Int): SimpleTableDesc
+  }
+
+  case class TableRef(frame: ObjectFrame, path: AbsoluteTablePath) extends TableLikeRef {
+
+    println(s"TABLEREF ${frame} ${path}")
+
+    override def toDesc(stripPathSteps: Int, stripSegPathSteps: Int): SimpleTableDesc = {
+      val cutFramePath = SymbolPath.fromIterable(
+        frame.path.path.drop(stripPathSteps)
+      )
+      val tablePath = (if (cutFramePath.path.isEmpty) "" else "|") +
+        path.path.drop(stripSegPathSteps - 1).mkString("|").toString
+      val s = SimpleTableDesc(
+        framePath = frame.path.toString,
+        subTablePath = path.toString,
+        name = cutFramePath + tablePath
+      )
+      println(s)
+      s
+    }
+
+  }
+
+  /*
+  case class ViewFrame(frame: ViewFrame) extebds TableLikeRef {
+    override def toDesc(stripPathSteps: Int): SimpleTableDesc = {
+      SimpleTableDesc(
+        name = frame.path.path
+        path = path.toGlobal(frame.checkpoint, frame.name).toString
+      )
+    }
+  }
+*/
+
+  def getAllTablesForObjectFrame(frame: ObjectFrame, subPath: Seq[String] = Seq()): Seq[TableRef] = {
+    frame.viewer.offspringViewer(subPath).allRelativeTablePaths.map {
+      path => TableRef(frame, path.toAbsolute(subPath))
+    }
+  }
+
+  def getAllTablesForDir(user: serving.User, dirEntry: DirectoryEntry): Seq[TableRef] = {
+    dirEntry.assertReadAllowedFrom(user)
+    val dir = dirEntry.asDirectory
+    val entries = dir.list
+    val (dirs, objects) = entries.partition(_.isDirectory)
+    val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
+
+    val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
+
+    println(dirEntry)
+    println(objects.toList)
+    println(visibleObjectFrames.toList)
+    println()
+
+    visibleDirs.flatMap(getAllTablesForDir(user, _)) ++
+      visibleObjectFrames.flatMap(getAllTablesForObjectFrame(_))
+  }
+
+  def getAllTables(user: serving.User, request: GetAllTablesRequest) = async[GetAllTablesResponse] {
+    print(s"GET ALL TABLES ${request}")
+
+    val pathParts = request.path.split("\\|")
+    val entry = DirectoryEntry.fromName(pathParts.head)
+    if (!entry.isProject) {
+      assert(pathParts.length == 1)
+    }
+    entry.assertReadAllowedFrom(user)
+
+    val list = if (entry.isDirectory) {
+      getAllTablesForDir(user, entry)
+    } else {
+      getAllTablesForObjectFrame(entry.asProjectFrame, pathParts.tail)
+    }
+
+    GetAllTablesResponse(
+      list = list.map(_.toDesc(entry.path.path.size, pathParts.size)))
+  }
+
+  def getColumns(user: serving.User, request: GetColumnsRequest) = async[GetColumnsResponse] {
+
+    val objectPath = request.framePath
+    val tablePath = request.subTablePath
+
+    val entry = DirectoryEntry.fromName(objectPath)
+    entry.assertReadAllowedFrom(user)
+    val viewer = entry.asObjectFrame.viewer
+    val table = Table(AbsoluteTablePath(tablePath.split("\\|").toSeq.tail), viewer)
+
+    GetColumnsResponse(
+      columns = table.columns.keys.map {
+        name => SimpleColumnDesc(name = name)
+      }.toSeq
+    )
+
+    /* Seq(
+      SimpleColumnDesc(name = "alma"), SimpleColumnDesc(name = "korte")))*/
+  }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))

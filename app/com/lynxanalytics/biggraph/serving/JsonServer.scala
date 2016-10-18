@@ -296,6 +296,8 @@ object FrontendJson {
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
+  implicit val rSQLGetAllTablesRequest = json.Json.reads[GetAllTablesRequest]
+  implicit val rSQLGetColumnsRequest = json.Json.reads[GetColumnsRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -303,6 +305,10 @@ object FrontendJson {
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
   implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
   implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
+  implicit val wSimpleColumnDesc = json.Json.writes[SimpleColumnDesc]
+  implicit val wSimpleTableDesc = json.Json.writes[SimpleTableDesc]
+  implicit val wGetAllTablesResponse = json.Json.writes[GetAllTablesResponse]
+  implicit val wGetColumnsResponse = json.Json.writes[GetColumnsResponse]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val fCSVImportRequest = json.Json.format[CSVImportRequest]
@@ -410,6 +416,8 @@ object ProductionJsonServer extends JsonServer {
   def workflow = jsonGet(bigGraphController.workflow)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
+  def getAllTables = jsonFuture(sqlController.getAllTables)
+  def getColumns = jsonFuture(sqlController.getColumns)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
