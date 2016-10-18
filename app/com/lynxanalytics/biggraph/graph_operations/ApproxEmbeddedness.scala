@@ -42,15 +42,18 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
       .map { case (_, e) => e.dst -> hll.hllFromObject(e.src) }
       .reduceByKey(hll.union)
       .sortUnique(edgePartitioner)
+    // For every non isolated vertex a HLL of all its incoming and outgoing neighbors.
     val allNeighborHLLs = outNeighborHLLs.fullOuterJoin(inNeighborHLLs)
       .mapValues { case (out, in) => hll.union(out, in) }
 
+    // Join the HLL of neighbors on both the dsts and srcs of the edges.
     val bySrc = nonLoopEdges.map { case (eid, e) => e.src -> (e.dst, eid) }
     val bySrcHLLs = HybridRDD(bySrc, edgePartitioner, even = true)
       .lookupAndRepartition(allNeighborHLLs)
     val byDst = bySrcHLLs.map { case (src, ((dst, eid), srcHLL)) => dst -> (src, eid, srcHLL) }
     val byDstHLLs = HybridRDD(byDst, edgePartitioner, even = true)
       .lookup(allNeighborHLLs)
+    // Embeddedness is the size of the intersect of the src and dst HLLs.
     val embeddedness = byDstHLLs.map {
       case (dst, ((src, eid, srcHLL), dstHLL)) => eid -> hll.intersectSize(srcHLL, dstHLL).toDouble
     }.sortUnique(edgePartitioner)
