@@ -106,7 +106,9 @@ case class HLLUtils(bits: Int) {
   }
 
   def intersectSize(hll1: HyperLogLogPlus, hll2: HyperLogLogPlus): Long = {
-    (hll1.cardinality + hll2.cardinality - union(hll1, hll2).cardinality) max 0
+    val c1 = hll1.cardinality
+    val c2 = hll2.cardinality
+    ((c1 + c2 - union(hll1, hll2).cardinality) max 0) min (c1 min c2)
   }
 }
 
