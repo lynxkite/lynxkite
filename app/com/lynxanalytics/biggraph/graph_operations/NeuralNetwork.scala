@@ -133,7 +133,7 @@ case class NeuralNetwork(
           if (gradientCheckOn) {
             if (!NeuralNetworkDebugging.gradientCheck(trainingVertices, trainingEdgeLists, previous, dataForGradientCheck)) {
               println("Gradient check failed.")
-            }
+            } else println("Gradient check passed.")
           }
           net
         })
@@ -317,10 +317,10 @@ case class NeuralNetwork(
       data: DataForGradientCheck): Boolean = {
       val epsilon = 1e-5
       val relativeThreshold = 1e-2
-      val absoluteThreshold = 1e-10
+      val absoluteThreshold = 1e-4 //It's a friendly threshold!
       implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
       val trueState = data.trueState
-      val initialState = data.initialStates(0) //now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
+      val initialState = data.initialStates(0) //Now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
       val weights = data.weights
       val gradients = data.gradients
       //Approximate the derivatives.
@@ -337,9 +337,10 @@ case class NeuralNetwork(
               val outputsWithIncreased = forwardPass(
                 vertices, edges, trueState, initialState, initialState,
                 initialNetwork.copy(weights = partialIncreasedWeights))
-              val errorsWithIncreased = outputsWithIncreased.last("new hidden").map {
-                case (id, state) =>
-                  id -> (state(0) - trueState(id)(0))
+              val finalOutputWithIncreased = outputsWithIncreased.last("new hidden")
+              val errorsWithIncreased = trueState.map {
+                case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithIncreased(id)(0))
+                case (id, state) => id -> 0.0
               }
               val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
               //Decrease weight and predict with it.
@@ -347,9 +348,10 @@ case class NeuralNetwork(
               val outputsWithDecreased = forwardPass(
                 vertices, edges, trueState, initialState, initialState,
                 initialNetwork.copy(weights = partialDecreasedWeights))
-              val errorsWithDecreased = outputsWithDecreased.last("new hidden").map {
-                case (id, state) =>
-                  id -> (state(0) - trueState(id)(0))
+              val finalOutputWithDecreased = outputsWithDecreased.last("new hidden")
+              val errorsWithDecreased = trueState.map {
+                case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithDecreased(id)(0))
+                case (id, state) => id -> 0.0
               }
               val errorTotalWithDecreased = errorsWithDecreased.values.map(e => e * e).sum
               val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
@@ -377,11 +379,14 @@ case class NeuralNetwork(
                 math.abs(value - otherValue) / math.max(math.abs(value), math.abs(otherValue))
               } else 0
             }
-            if (relativeError > relativeThreshold) gradientsOK = false
+            if (relativeError > relativeThreshold) {
+              println(s"Gradient check fails on $name, backprop grad = $otherValue, approximated grad = $value")
+              gradientsOK = false
+            }
+
             (name, relativeError)
         }.toMap
       }
-      println(relativeErrors)
       gradientsOK
     }
 
