@@ -340,7 +340,7 @@ private case class BackwardContext(
   }
 
   def addNeighbors(gradients: GraphVectors): Unit = {
-    val ngrad: GraphData = gradients.flatMap {
+    val ngrad: GraphData = gradients.toSeq.flatMap {
       case (id, gs) => edges(id).zip(gs)
     }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
     if (neighborGradients == null) neighborGradients = ngrad
