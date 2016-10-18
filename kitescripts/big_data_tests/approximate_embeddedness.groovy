@@ -6,7 +6,7 @@ project = lynx.loadProject('edge_import_result')
 
 project.approximateembeddedness(
         'name': 'embeddedness',
-        'bits': '12',
+        'bits': '8',
 )
 
 project.saveAs('approximate_embeddedness_result')
