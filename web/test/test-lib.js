@@ -694,8 +694,12 @@ Selector.prototype = {
     testLib.menuClick(this.directory(name), 'discard');
   },
 
-  editImport: function(name) {
+  editTable: function(name) {
     testLib.menuClick(this.table(name), 'edit-import');
+  },
+
+  editView: function(name) {
+    testLib.menuClick(this.view(name), 'edit-import');
   },
 
   expectProjectListed: function(name) {
@@ -744,11 +748,33 @@ Selector.prototype = {
   runGlobalSql: function(sql) {
     element(by.id('global-sql-box')).click();
     this.setGlobalSql(sql);
+    element(by.id('run-sql-button')).click();
+  },
+
+
+  expectGlobalSqlResult: function(header, rows) {
+    var res = element(by.id('sql-result'));
+    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   saveGlobalSqlToCSV: function() {
     element(by.id('save-results-opener')).click();
     this.root.$('#exportFormat option[value="csv"]').click();
+    element(by.id('save-results')).click();
+  },
+
+  saveGlobalSqlToTable: function(name) {
+    element(by.id('save-results-opener')).click();
+    this.root.$('#exportFormat option[value="table"]').click();
+    this.root.$('#exportKiteTable').sendKeys(name);
+    element(by.id('save-results')).click();
+  },
+
+  saveGlobalSqlToView: function(name) {
+    element(by.id('save-results-opener')).click();
+    this.root.$('#exportFormat option[value="view"]').click();
+    this.root.$('#exportKiteTable').sendKeys(name);
     element(by.id('save-results')).click();
   },
 };

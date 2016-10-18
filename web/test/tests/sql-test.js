@@ -151,6 +151,19 @@ module.exports = function(fw) {
     });
 
   fw.transitionTest(
+    'table export and reimport',
+    'exported table can be edited',
+    function() {
+      lib.left.close();
+      lib.splash.editTable('Random Edges');
+      element(by.id('save-results-opener')).click();
+      element(by.id('save-results')).click();
+    },
+    function() {
+      expect(lib.errors()).toEqual([]);
+    });
+
+  fw.transitionTest(
     'test-example project with example graph',
     'parquet export and reimport right from the operation',
     function() {
@@ -211,7 +224,7 @@ module.exports = function(fw) {
       // Create new view
       left.side.element(by.id('save-results-opener')).click();
       left.side.element(by.css('#exportFormat > option[value=view]')).click();
-      left.side.element(by.id('exportKiteTable')).sendKeys('exportedview');
+      left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedview');
       left.side.element(by.id('save-results')).click();
     },
     function() {

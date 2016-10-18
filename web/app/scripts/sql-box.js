@@ -92,6 +92,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.sqlHistory = new SqlHistory(scope.maxPersistedHistoryLength);
 
       scope.project = scope.side && scope.side.state.projectName;
+      scope.overwrite = false;
       scope.sort = {
         column: undefined,
         reverse: false,
@@ -129,7 +130,6 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             '/ajax/runSQLQuery',
             {
               dfSpec: {
-                isGlobal: scope.isGlobal,
                 directory: scope.directory,
                 project: scope.project,
                 sql: scope.sql,
@@ -146,7 +146,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         if (exportFormat === 'table' ||
             exportFormat === 'segmentation' ||
             exportFormat === 'view') {
-          scope.exportKiteTable = '';
+            scope.exportKiteTable = scope.exportKiteTable || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
@@ -177,6 +177,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             project: scope.project,
             sql: scope.sql,
           },
+          overwrite: scope.overwrite,
         };
         scope.inProgress += 1;
         var result;
@@ -270,6 +271,15 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           exec: function() { scope.$apply(function() { scope.sqlHistory.navigateDown(); }); }
         });
       };
+
+      scope.$on('fill sql-box from config', function(evt, name, config, type) {
+        scope.sql = config.data.dfSpec.sql;
+        scope.directory = config.data.dfSpec.directory;
+        scope.project = config.data.dfSpec.project;
+        scope.exportFormat = type;
+        scope.exportKiteTable = name;
+        scope.overwrite = true;
+      });
     }
   };
 });
