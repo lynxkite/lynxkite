@@ -13,6 +13,7 @@ LynxKite:
    Apologies for the pun.)
  - SQL boxes now persist their query history into the browser's local storage.
  - Assorted UI fixes.
+ - Views can now be edited. Views and tables exported from the global sql box can also be edited.
 
 Ecosystem:
 
@@ -49,6 +50,7 @@ Ecosystem:
  - `count` feature in `helper.sh` to help with verification testing.
  - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
    more detailed performance data.
+>>>>>>> origin/master
 
 ### 1.9.5
 
