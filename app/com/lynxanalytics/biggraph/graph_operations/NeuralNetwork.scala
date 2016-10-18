@@ -245,7 +245,6 @@ case class NeuralNetwork(
       }
       initialStates += initialState
       val outputs = forwardPass(vertices, edges, keptState, initialState, initialState, network)
-      weightsForGradientCheck += network.allWeights.toMap
       val finalOutputs = outputs.last("new hidden")
 
       // Backward pass.
@@ -283,6 +282,7 @@ case class NeuralNetwork(
           "new cell" -> (next("cell") + next.neighbors),
           "new hidden" -> next("hidden"))
       }
+      weightsForGradientCheck += network.allWeights.toMap
       val updated = network.update(gradients, learningRate)
       network = updated._1
       gradientsForGradientCheck += updated._2
@@ -316,8 +316,8 @@ case class NeuralNetwork(
       initialNetwork: neural.Network,
       data: DataForGradientCheck): Boolean = {
       val epsilon = 1e-5
-      val relativeThreshold = 1e-2
-      val absoluteThreshold = 1e-4 //It's a friendly threshold!
+      val relativeThreshold = 1e-7
+      val absoluteThreshold = 1e-5
       implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
       val trueState = data.trueState
       val initialState = data.initialStates(0) //Now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
