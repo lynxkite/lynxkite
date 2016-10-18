@@ -420,7 +420,6 @@ class ProjectCheckpoint:
             operation=operation,
             parameters=parameters))
     self.checkpoint = r.checkpoint
-    return self
 
   def scalar(self, scalar, path):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
@@ -469,7 +468,6 @@ class RootProject(SubProject):
   '''Represents a project.'''
 
   def __init__(self, project_checkpoint):
-    project_checkpoint = project_checkpoint
     super().__init__(project_checkpoint, [])
     self.lk = project_checkpoint.lk
 
