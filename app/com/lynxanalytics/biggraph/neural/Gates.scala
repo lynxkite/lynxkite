@@ -66,7 +66,7 @@ object Gates {
 
     // Utilities for applying simple functions to GraphData.
     def perVertex(fn: DoubleVector => DoubleVector): GraphData => GraphData =
-      _.mapValues(fn)
+      _.mapValues(fn).view.force
     def withData[T](data: GraphData)(
       fn: (DoubleVector, DoubleVector) => T): GraphData => Graph[T] = {
       _.map { case (id, v) => id -> fn(v, data(id)) }
@@ -78,25 +78,26 @@ object Gates {
 
     // Utility for applying simple functions to GraphVectors.
     def perVertex(fn: DoubleVector => DoubleVector): GraphVectors => GraphVectors =
-      _.mapValues(_.map(fn))
+      _.mapValues(_.map(fn)).view.force
   }
 
   case class MatrixVector(v: Vector, w: M) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
+    //http://stackoverflow.com/questions/14882642/scala-why-mapvalues-produces-a-view-and-is-there-any-stable-alternatives
+    def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _).view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val wt = ctx(w).t
-      ctx.add(v, gradient.mapValues(g => wt * g))
+      ctx.add(v, gradient.mapValues(g => wt * g).view.force)
       val vd = ctx(v)
       ctx.add(w, gradient.map { case (id, g) => g * vd(id).t }.reduce(_ + _))
     }
   }
   case class MultiplyScalar(v: Vector, s: Double) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
+    def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _).view.force
     def backward(ctx: BackwardContext, gradient: GraphData) =
-      ctx.add(v, gradient.mapValues(s * _))
+      ctx.add(v, gradient.mapValues(s * _).view.force)
   }
   case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
+    def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }.view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val v1d = ctx(v1)
       val v2d = ctx(v2)
@@ -105,24 +106,24 @@ object Gates {
     }
   }
   case class AddElements(v1: Vector, v2: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 + v2 }
+    def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 + v2 }.view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       ctx.add(v1, gradient)
       ctx.add(v2, gradient)
     }
   }
   case class AddWeights(v: Vector, w: V) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) + _)
+    def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) + _).view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       ctx.add(v, gradient)
       ctx.add(w, gradient.values.reduce(_ + _))
     }
   }
   case class MatrixVectors(vs: Vectors, w: M) extends Vectors {
-    def forward(ctx: ForwardContext) = ctx(vs).mapValues(_.map(ctx(w) * _))
+    def forward(ctx: ForwardContext) = ctx(vs).mapValues(_.map(ctx(w) * _)).view.force
     def backward(ctx: BackwardContext, gradients: GraphVectors) = {
       val wt = ctx(w).t
-      ctx.add(vs, gradients.mapValues(_.map(g => wt * g)))
+      ctx.add(vs, gradients.mapValues(_.map(g => wt * g)).view.force)
       val vsd = ctx(vs)
       val netgrads = gradients.flatMap {
         case (id, gs) => gs.zip(vsd(id)).map { case (g, d) => g * d.t }
@@ -135,7 +136,7 @@ object Gates {
       val sum = DenseVector.zeros[Double](ctx.network.size)
       for (v <- vectors) sum += v
       sum
-    }
+    }.view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val vsd = ctx(vs) // We need this to know the cardinality of vs.
       ctx.add(vs, gradient.map { case (id, g) => id -> vsd(id).map(_ => g) })
@@ -150,14 +151,14 @@ object Gates {
     def backward(ctx: BackwardContext, gradient: GraphData) = {}
   }
   case class Sigmoid(v: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_))
+    def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_)).view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val d = ctx(this)
       ctx.add(v, gradient.map { case (id, g) => id -> (d(id) :* (1.0 - d(id)) :* g) })
     }
   }
   case class Tanh(v: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_))
+    def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_)).view.force
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val d = ctx(this)
       ctx.add(v, gradient.map { case (id, g) => id -> ((1.0 - (d(id) :* d(id))) :* g) })
@@ -201,8 +202,8 @@ case class Network private (
       case (name, value) => name -> (value + other.adagradMemory(name))
     })
   def /(s: Double): Network = this.copy(
-    weights = allWeights.mapValues(_ / s),
-    adagradMemory = adagradMemory.mapValues(_ / s))
+    weights = allWeights.mapValues(_ / s).view.force,
+    adagradMemory = adagradMemory.mapValues(_ / s).view.force)
 
   def apply(t: Trained): DoubleMatrix = {
     allWeights.getOrElseUpdate(t.name, t.random(size))
@@ -342,7 +343,7 @@ private case class BackwardContext(
   def addNeighbors(gradients: GraphVectors): Unit = {
     val ngrad: GraphData = gradients.toSeq.flatMap {
       case (id, gs) => edges(id).zip(gs)
-    }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
+    }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _)).view.force
     if (neighborGradients == null) neighborGradients = ngrad
     else neighborGradients = neighborGradients + ngrad
   }
