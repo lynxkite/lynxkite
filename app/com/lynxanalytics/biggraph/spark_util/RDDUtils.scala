@@ -79,6 +79,7 @@ class CountOrdering[T] extends Ordering[(T, Long)] with Serializable {
   }
 }
 
+// Utility class for HLL.
 case class HLLUtils(bits: Int) {
   def hllFromObject(obj: Any): HyperLogLogPlus = {
     val hll = new HyperLogLogPlus(bits)
