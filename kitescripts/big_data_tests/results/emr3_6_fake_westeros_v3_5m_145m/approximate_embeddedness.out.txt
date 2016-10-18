@@ -1,2 +1,4 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy, took 0 seconds
+2016-10-18 22:39:34,475 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-1 
+Task 1 in stage 28.0 failed 4 times; aborting job
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy, took 1796 seconds

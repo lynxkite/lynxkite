@@ -41,6 +41,7 @@ case class Embeddedness() extends TypedMetaGraphOp[GraphInput, Output] {
       case (dst, ((eid, srcNeighbors), dstNeighbors)) =>
         eid -> ClusteringCoefficient.sortedIntersectionSize(srcNeighbors, dstNeighbors).toDouble
     }.sortUnique(edgePartitioner)
+
     output(o.embeddedness, embeddedness)
   }
 }
