@@ -1,4 +1,4 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-2016-10-18 23:55:41,148 - [ERROR] - from org.apache.spark.scheduler.TaskSetManager in task-result-getter-2 
-Task 0 in stage 8.1 failed 4 times; aborting job
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy, took 296 seconds
+embeddedness: {"labelType":"between","labels":["0.0","1.0","4.1","16.6","67.6","275.3","1121.4","4568.0","18607.1","75793.4","308734.7","1257591.0"],"sizes":[39729314,28448084,36134904,39961448,769750,117224,20562,3278,520,110,24]}
+id: <computed>
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy, took 1195 seconds
