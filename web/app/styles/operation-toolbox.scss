@@ -3,23 +3,18 @@ div.operation-toolboxes {
   width: 100%;
 }
 
-.operation-toolbox {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-}
-
 side-operation-toolbox .operation-toolbox {
   position: absolute;
   z-index: 2;
   left: 100%;
-  margin-left: -66px;
+  margin-left: -35px;
 }
 
 .operation-toolbox.open {
   width: 100%;
 }
 .rightmost .operation-toolbox.open {
-  left: -31px;
+  left: 0;
   margin-left: 0;
 }
 .rightmost .operation-toolbox.open .box {
@@ -27,8 +22,6 @@ side-operation-toolbox .operation-toolbox {
 }
 .rightmost .operation-toolbox.open .categories {
   float: right;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
 }
 .operation-toolbox .box {
   background: rgba(0, 0, 0, 0.75);
@@ -39,14 +32,8 @@ side-operation-toolbox .operation-toolbox {
   padding: 15px;
   margin: 0;
   color: black;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
 }
 
-.operation-toolbox .box .list-group-item {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-}
 .operation-toolbox .categories {
   background: rgba(0, 0, 0, 0.75);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
@@ -54,13 +41,10 @@ side-operation-toolbox .operation-toolbox {
   cursor: pointer;
   width: 35px;
   padding: 0;
-  margin-top: 40px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
+  padding-top: 40px;
 }
 .operation-toolbox.open .categories {
   box-shadow: none;
-  border-radius: 0;
 }
 .operation-toolbox .category {
   padding: 10px;
@@ -98,11 +82,10 @@ side-operation-toolbox .operation-toolbox {
 @include make-color("red", #f44);
 @include make-color("yellow", gold);
 
-.operation-toolbox .panel .list-group-item {
-  border: 0;
-}
 .operation {
   cursor: pointer;
+  padding: 5px;
+  color: rgba(255, 255, 255, 0.8);
 }
 .operation:hover {
   background: black !important;
@@ -124,6 +107,7 @@ side-operation-toolbox .operation-toolbox {
   overflow-wrap: break-word;
 }
 .operation-toolbox .ok-button {
+  padding: 15px;
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
 }
@@ -134,6 +118,7 @@ side-operation-toolbox .operation-toolbox {
 
 .operation-toolbox .box .description {
   color: rgba(255, 255, 255, 0.8);
+  padding: 15px;
 }
 
 .operation-toolbox #filter {

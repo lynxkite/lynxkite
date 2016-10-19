@@ -1,4 +1,4 @@
-<div class="panel box col-sm-11 {{color}}">
+<div class="box col-sm-11 {{color}}">
   <h1>
     {{op.title}}
     <div class="btn-group pull-right">
@@ -14,12 +14,12 @@
 
   <!-- For workflows. -->
   <div ng-if="op.isWorkflow">
-    <p class="list-group-item description">
+    <p class="description">
       User defined workflow saved by
       {{op.workflowAuthor}} at
       {{op.id.split('/')[2] | date : 'dd-MM-yyyy hh:mm a'}}
     </p>
-    <p ng-if="op.description" class="list-group-item description">
+    <p ng-if="op.description" class="description">
       {{op.description}}
     </p>
   </div>
@@ -28,15 +28,15 @@
      help-id="{{op.id}}"
      remove-header="yes"
      scalars="scalars"
-     class="list-group-item description"></p>
+     class="description"></p>
 
-  <p ng-if="op.parameters.length === 0" class="list-group-item text-center">
+  <p ng-if="op.parameters.length === 0" class="text-center">
     No parameters
   </p>
-  <form ng-if="op.parameters" class="form-horizontal list-group-item" ng-submit="apply()">
+  <form ng-if="op.parameters" class="form-horizontal" ng-submit="apply()">
     <operation-parameters op="op" output="params" busy="$parent.busy" editable="editable"></operation-parameters>
   </form>
-  <div tabindex="0" ng-click="apply()" class="list-group-item ok-button text-center operation-apply-button">
+  <div tabindex="0" ng-click="apply()" class="ok-button text-center operation-apply-button">
     <span ng-if="applying">
       <i class="glyphicon glyphicon-hourglass"></i>
     </span>
