@@ -15,8 +15,6 @@ import scala.reflect._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 
-import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
-
 // A container for storing ID counts per bucket and a sample.
 class IDBuckets[T](
   val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
@@ -76,39 +74,6 @@ class CountOrdering[T] extends Ordering[(T, Long)] with Serializable {
     else if (xh < yh) -1
     else if (xh > yh) 1
     else 0
-  }
-}
-
-// Utility class for HLL.
-case class HLLUtils(bits: Int) {
-  def hllFromObject(obj: Any): HyperLogLogPlus = {
-    val hll = new HyperLogLogPlus(bits)
-    hll.offer(obj)
-    hll
-  }
-
-  def union(hll1: HyperLogLogPlus, hll2: HyperLogLogPlus): HyperLogLogPlus = {
-    val hll3 = new HyperLogLogPlus(bits)
-    hll3.addAll(hll1)
-    hll3.addAll(hll2)
-    hll3
-  }
-
-  def union(hll1: Option[HyperLogLogPlus], hll2: Option[HyperLogLogPlus]): HyperLogLogPlus = {
-    val hll3 = new HyperLogLogPlus(bits)
-    if (hll1.nonEmpty) {
-      hll3.addAll(hll1.get)
-    }
-    if (hll2.nonEmpty) {
-      hll3.addAll(hll2.get)
-    }
-    hll3
-  }
-
-  def intersectSize(hll1: HyperLogLogPlus, hll2: HyperLogLogPlus): Long = {
-    val c1 = hll1.cardinality
-    val c2 = hll2.cardinality
-    ((c1 + c2 - union(hll1, hll2).cardinality) max 0) min (c1 min c2)
   }
 }
 
