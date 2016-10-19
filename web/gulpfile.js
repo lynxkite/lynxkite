@@ -24,7 +24,6 @@ var httpProxy = require('http-proxy');
 var lazypipe = require('lazypipe');
 var merge = require('merge-stream');
 var wiredep = require('wiredep').stream;
-var exec = require('gulp-exec');
 var $ = require('gulp-load-plugins')();
 
 // Builds HTML files from AsciiDoctor documentation.
@@ -123,10 +122,9 @@ gulp.task('clean:dist', function() {
   return del('dist');
 });
 
-// Generates template files form asciidoc.
-gulp.task('genTemplates', function() {
-  return gulp.src('app/**/*.asciidoc')
-    .pipe(exec(tools + '/gen_templates.py'));
+// Generates template files from AsciiDoc.
+gulp.task('genTemplates', function(done) {
+  spawn(tools + '/gen_templates.py', { stdio: 'inherit' }).once('close', done);
 });
 
 // Starts a development proxy.
