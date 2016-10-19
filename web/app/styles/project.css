@@ -24,7 +24,7 @@ input[type=range] {
   width: 100%;
 }
 .project {
-  margin-right: 50px;
+  margin-right: 35px;
 }
 .version {
   color: rgba(0, 0, 0, 0.3);
@@ -55,6 +55,10 @@ input.save-as {
 .project .sublist .clicky.zeroclipboard-is-hover,
 .project .sublist .clicky:hover {
   color: black;
+}
+
+.attribute-section-label { 
+  font-size: 50%;
 }
 
 .entry-bottom {
@@ -152,8 +156,16 @@ input.save-as {
 .split-screen > .ui-splitbar {
   background: black;
 }
-.project-sides {
-  padding-top: 10px;
+
+.side {
+  padding: 0;
+}
+.side .panel {
+  border-top: none;
+  border-radius: 0;
+}
+#side-left .panel {
+  border-left: none;
 }
 
 .acl-settings {

@@ -48,6 +48,22 @@ angular.module('biggraph')
       this.workflowEditor = { enabled: false };
     }
 
+    // Returns the number of Bootstrap columns to use for this side.
+    Side.prototype.columnWidth = function() {
+      var selectorWidth = 3;
+      if (this.state.projectName === undefined) {
+        return selectorWidth;
+      }
+      var remaining = 12; // Bootstrap columns.
+      var selectors = 0;
+      for (var i = 0; i < this.sides.length; ++i) {
+        if (this.sides[i].state.projectName === undefined) {
+          selectors += 1;
+        }
+      }
+      return (remaining - selectors * selectorWidth) / (this.sides.length - selectors);
+    };
+
     // Creates a JSON formatted version of the current UI state of this side. The output is
     // abstracted a bit away from the exact status so that it can be reapplied in slighly different
     // circumctances as well. E.g. project name is omitted, as the same visualization makes

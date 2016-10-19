@@ -1,4 +1,4 @@
-<div class="col-sm-6 side" id="side-{{side.direction}}">
+<div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
 
   <div ng-if="side.state.projectName === undefined">
     <button id="show-selector-button" ng-hide="showProjectSelector" style="width: 100%;"
@@ -344,15 +344,15 @@
         </p>
       </li>
 
-      <li class="list-group-item">
-        <span class="lead"><span class="de-emph">Attributes of the</span> graph</span>
+      <li class="list-group-item attribute-section-label">
+        <span class="de-emph">Attributes of the</span> graph
         <help-popup href="graph-attributes" class="pull-right"></help-popup>
       </li>
-      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar"
+      <li class="sublist list-group-item attribute scalar-attribute" ng-repeat="scalar in side.project.scalars | filter: commonScalar"
         scalar="scalar" value="side.scalars[scalar.title]" side="side"></li>
 
-      <li class="list-group-item">
-        <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
+      <li class="list-group-item attribute-section-label">
+        <span class="de-emph">Attributes of</span> vertices
         <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item attribute vertex-attribute"
@@ -360,8 +360,8 @@
         id="attribute-{{ attr.title | id }}"
         vertex-attribute="attr" side="side"></li>
 
-      <li class="list-group-item">
-        <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
+      <li class="list-group-item attribute-section-label">
+        <span class="de-emph">Attributes of</span> edges
         <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item attribute edge-attribute"
@@ -370,13 +370,13 @@
         edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">
-        <span class="lead de-emph">Segmentations</span>
+        <span class="de-emph attribute-section-label">Segmentations</span>
         <help-popup href="segmentations" class="pull-right"></help-popup>
       </li>
-      <li class="sublist list-group-item segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
-      <li class="list-group-item">
+      <li class="sublist list-group-item attribute segmentation" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
+      <li class="list-group-item sql-box-section">
         <div class="clearfix">
-          <span class="lead de-emph"><i>SQL</i></span>
+          <span class="lead de-emph">SQL</span>
           <help-popup href="sql-box" class="pull-right" ></help-popup>
         </div>
         <sql-box side="side"></sql-box>
