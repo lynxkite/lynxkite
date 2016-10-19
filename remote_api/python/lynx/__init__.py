@@ -409,7 +409,7 @@ class _ProjectCheckpoint:
 
   def sql(self, query):
     '''Runs SQL queries.'''
-    return self.lk.sql(query, {'': self.checkpoint})
+    return self.lk.sql(query, **{'': self})
 
   def run_operation(self, operation, parameters, path):
     '''Runs an operation on the project with the given parameters.'''
