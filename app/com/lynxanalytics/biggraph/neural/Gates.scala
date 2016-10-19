@@ -1,8 +1,9 @@
 // Collection of classes for building a neural network.
 package com.lynxanalytics.biggraph.neural
 
-import breeze.stats.distributions.RandBasis
+import breeze.stats.distributions.{ RandBasis, ThreadLocalRandomGenerator }
 import com.lynxanalytics.biggraph.graph_api._
+import org.apache.commons.math3.random.MersenneTwister
 
 trait Adder[T] {
   def add(a: T, b: T): T
@@ -360,4 +361,60 @@ class NetworkGradients(
   val vectors = vectorsGradients.toMap
   val trained = trainedGradients.toMap
   def apply(name: String): GraphData = vector(Gates.Input(name).id)
+}
+
+abstract class Layouts {
+  def getNetwork: Network
+  def inputGates: Seq[String]
+  def toNeighbors: String
+  def toItself: Map[String, String]
+  def outputGate: String
+}
+class GRU(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layouts {
+  implicit val randBasis =
+    new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
+  def getNetwork = {
+    val vs = Neighbors()
+    val eb = V("edge bias")
+    val input = Sum(vs) * M("edge matrix") + eb
+    val state = Input("state")
+    val update = Sigmoid(input * M("update i") + state * M("update h"))
+    val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
+    val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
+    Network(
+      clipGradients = !gradientCheckOn,
+      size = networkSize,
+      "new state" -> (state - update * state + update * tilde))
+  }
+  def inputGates = Seq("new state")
+  def toNeighbors = "new state"
+  def toItself = Map("state" -> "new state")
+  def outputGate = "new state"
+}
+class LSTM(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layouts {
+  implicit val randBasis =
+    new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
+  def getNetwork = {
+    val vs = Neighbors()
+    val eb = V("edge bias")
+    val input = Sum(vs) * M("edge matrix") + eb
+    val cell = Input("cell")
+    val hidden = Input("hidden")
+    val forget = Sigmoid(hidden * M("forget h") + input * M("forget i") + V("forget b"))
+    val chooseUpdate = Sigmoid(hidden * M("choose update h") + input * M("choose update i") + V("choose update b"))
+    val tilde = Tanh(hidden * M("tilde h") + input * M("tilde i") + V("tilde b"))
+    val newCell = cell * forget + chooseUpdate * tilde
+    val chooseOutput = Sigmoid(hidden * M("choose output h") + input * M("choose output i") + V("choose output b"))
+    val newHidden = chooseOutput * Tanh(newCell)
+    Network(
+      clipGradients = !gradientCheckOn,
+      size = networkSize,
+      "new cell" -> newCell,
+      "new hidden" -> newHidden
+    )
+  }
+  def inputGates = Seq("cell", "hidden")
+  def toNeighbors = "new state"
+  def toItself = Map("cell" -> "new cell", "hidden" -> "new hidden")
+  def outputGate = "new hidden"
 }
