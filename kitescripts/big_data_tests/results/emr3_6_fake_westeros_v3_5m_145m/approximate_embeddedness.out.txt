@@ -1,4 +1,4 @@
 STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-embeddedness: {"labelType":"between","labels":["0.0","1.0","4.1","16.6","67.6","275.3","1121.4","4568.0","18607.1","75793.4","308734.7","1257591.0"],"sizes":[39729314,28448084,36134904,39961448,769750,117224,20562,3278,520,110,24]}
+embeddedness: {"labelType":"between","labels":["0.0","1.0","4.1","16.5","67.1","272.8","1108.8","4506.5","18315.2","74436.2","302522.2","1229505.0"],"sizes":[41280156,28078394,35336330,39579384,766804,119206,20840,3390,580,110,24]}
 id: <computed>
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy, took 1195 seconds
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy, took 1639 seconds

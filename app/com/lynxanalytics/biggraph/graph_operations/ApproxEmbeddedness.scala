@@ -35,7 +35,7 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
     val edges = inputs.es.rdd
     val nonLoopEdges = edges.filter { case (_, e) => e.src != e.dst }
     // Data size is ~2^bits bytes, we would use ~24 bytes for just edges.
-    val effectivePartitions = (edges.partitioner.size * (1 << bits) / 24) max 1
+    val effectivePartitions = (edges.partitioner.get.numPartitions * (1 << bits) / 24) max 1
     val partitioner = new spark.HashPartitioner(effectivePartitions)
     val hll = HLLUtils(bits)
 
