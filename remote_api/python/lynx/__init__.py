@@ -380,6 +380,7 @@ class _ProjectCheckpoint:
   The `checkpoint` field is a checkpoint of a root project. The :class:`RootProject` and :class:`SubProject`
   classes can access and modify the checkpoint of a root project through this class.
   '''
+
   def __init__(self, lynxkite, checkpoint):
     self.checkpoint = checkpoint
     self.lk = lynxkite
@@ -408,11 +409,9 @@ class _ProjectCheckpoint:
 
   def sql(self, query):
     '''Runs SQL queries.'''
-    r = self.lk._send('globalSQL', dict(
-        query=query,
-        checkpoints={'': self.checkpoint}
-    ))
-    return View(self.lk, r.checkpoint)
+    checkpoints = {}
+    checkpoints[''] = self.checkpoint
+    return self.lk.sql(query, checkpoints)
 
   def run_operation(self, operation, parameters, path):
     '''Runs an operation on the project with the given parameters.'''
