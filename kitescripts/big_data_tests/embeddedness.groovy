@@ -1,8 +1,11 @@
 // Tests the "Embeddedness" operation.
 
-/// REQUIRE_SCRIPT filter_high_degree_vertices.groovy
+/// REQUIRE_SCRIPT edge_import.groovy
 
-project = lynx.loadProject('filter_high_degree_vertices_result')
+project = lynx.loadProject('edge_import_result')
+
+project.degree(direction: 'all edges', name: 'degree')
+project.filterByAttributes('filterva-degree': '< 1000')
 
 project.embeddedness(
         'name': 'embeddedness',
