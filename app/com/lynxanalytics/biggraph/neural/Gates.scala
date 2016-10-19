@@ -364,16 +364,15 @@ class NetworkGradients(
   def apply(name: String): GraphData = vector(Gates.Input(name).id)
 }
 
-abstract class Layouts {
+trait Layouts {
   def getNetwork: Network
   def inputGates: Seq[String]
   def toNeighbors: String
-  def toItself: Map[String, String]
+  def toItself: Map[String, String] //It describes the inputs from the same node: (s1 -> s2)
+  //means that s1 gets its initial value from s2.
   def outputGate: String
 }
-class GRU(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layouts {
-  implicit val randBasis =
-    new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
+class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layouts {
   def getNetwork = {
     val vs = Neighbors()
     val eb = V("edge bias")
@@ -392,9 +391,7 @@ class GRU(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layouts
   def toItself = Map("state" -> "new state")
   def outputGate = "new state"
 }
-class LSTM(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layouts {
-  implicit val randBasis =
-    new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
+class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layouts {
   def getNetwork = {
     val vs = Neighbors()
     val eb = V("edge bias")

@@ -105,12 +105,10 @@ case class NeuralNetwork(
     implicit val randBasis =
       new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
 
-    val possibleLayouts = Set("GRU", "LSTM")
-    assert(possibleLayouts.contains(networkLayout),
-      s"networkLayout must be chosen from ${possibleLayouts}.")
     val layout = networkLayout match {
-      case "LSTM" => new neural.LSTM(networkSize, seed, gradientCheckOn)
-      case "GRU" => new neural.GRU(networkSize, seed, gradientCheckOn)
+      case "LSTM" => new neural.LSTM(networkSize, gradientCheckOn)
+      case "GRU" => new neural.GRU(networkSize, gradientCheckOn)
+      case _ => throw new AssertionError("Unknown network layout.")
     }
     val initialNetwork = layout.getNetwork
     val network = (1 to numberOfTrainings).foldLeft(initialNetwork) {
