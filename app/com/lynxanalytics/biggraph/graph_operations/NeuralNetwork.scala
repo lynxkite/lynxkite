@@ -105,15 +105,14 @@ case class NeuralNetwork(
     implicit val randBasis =
       new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
 
-    val possibleLayouts = List("GRU", "LSTM")
-    assert(possibleLayouts.contains(networkLayout), s"networkLayout must be chosen from ${possibleLayouts}.")
-    // import neural.Layouts
+    val possibleLayouts = Set("GRU", "LSTM")
+    assert(possibleLayouts.contains(networkLayout),
+      s"networkLayout must be chosen from ${possibleLayouts}.")
     val layout = networkLayout match {
       case "LSTM" => new neural.LSTM(networkSize, seed, gradientCheckOn)
       case "GRU" => new neural.GRU(networkSize, seed, gradientCheckOn)
     }
     val initialNetwork = layout.getNetwork
-
     val network = (1 to numberOfTrainings).foldLeft(initialNetwork) {
       (previous, current) =>
         averageNetworks((1 to subgraphsInTraining).map { i =>
@@ -123,7 +122,8 @@ case class NeuralNetwork(
           val (net, dataForGradientCheck) = train(trainingVertices, trainingEdgeLists, trainingData,
             previous, iterationsInTraining, layout)
           if (gradientCheckOn) {
-            if (!NeuralNetworkDebugging.gradientCheck(trainingVertices, trainingEdgeLists, previous, dataForGradientCheck, layout)) {
+            if (!NeuralNetworkDebugging.gradientCheck(trainingVertices, trainingEdgeLists,
+              previous, dataForGradientCheck, layout)) {
               println("Gradient check failed.")
             } else println("Gradient check passed.")
           }
@@ -207,7 +207,7 @@ case class NeuralNetwork(
       network.forward(vertices, edges, neighborsState,
         layout.inputGates.map(i => i -> ownState): _*)
     } { (previous, r) =>
-      network.forward(vertices, edges, previous("new cell"),
+      network.forward(vertices, edges, previous(layout.toNeighbors),
         layout.toItself.mapValues(previous(_)).toSeq: _*)
     }
   }
@@ -272,8 +272,12 @@ case class NeuralNetwork(
       } { (outputs, next) =>
         import neural.Implicits._
         network.backward(vertices, edges, outputs,
-          "new cell" -> (next("cell") + next.neighbors),
-          "new hidden" -> next("hidden"))
+          layout.toItself.map {
+            case (s1, s2) => {
+              if (s2 == layout.toNeighbors) { s2 -> (next(s1) + next.neighbors) }
+              else { s2 -> next(s1) }
+            }
+          }.toSeq: _*)
       }
       weightsForGradientCheck += network.allWeights.toMap
       val updated = network.update(gradients, learningRate)
