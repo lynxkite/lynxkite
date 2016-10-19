@@ -435,7 +435,20 @@ class ProjectCheckpoint:
 
 
 class SubProject:
-  '''Represents a root project or a segmentation.'''
+  '''Represents a root project or a segmentation.
+
+  Example usage::
+
+      import lynx
+      p = lynx.LynxKite().new_project()
+      p.exampleGraph()
+      p.connectedComponents(**{
+        'directions': 'ignore directions',
+        'name': 'connected_components'})
+      s = p.segmentation('connected_components')
+      print(s.scalar('vertex_count'))
+
+  '''
 
   def __init__(self, project_checkpoint, path):
     self.project_checkpoint = project_checkpoint
