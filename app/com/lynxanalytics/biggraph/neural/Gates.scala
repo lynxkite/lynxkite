@@ -83,6 +83,7 @@ object Gates {
   }
 
   case class MatrixVector(v: Vector, w: M) extends Vector {
+    //http://stackoverflow.com/questions/14882642/scala-why-mapvalues-produces-a-view-and-is-there-any-stable-alternatives
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val wt = ctx(w).t
@@ -216,7 +217,7 @@ case class Network private (
     inputs: (String, GraphData)*): GateValues = {
     val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
     for (o <- outputs.values) {
-      ctx(o)
+      ctx(o).view.force
     }
     ctx.values(outputs)
   }
