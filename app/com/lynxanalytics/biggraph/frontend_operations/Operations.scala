@@ -3258,7 +3258,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             knownLabelWeight = params("knownLabelWeight").toDouble,
             seed = params("seed").toInt,
             gradientCheckOn = false,
-            networkLayout = "LSTM")
+            networkLayout = params("networkLayout"))
           op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
         }
         project.vertexAttributes(params("output")) = prediction

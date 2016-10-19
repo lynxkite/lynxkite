@@ -273,10 +273,9 @@ case class NeuralNetwork(
         import neural.Implicits._
         network.backward(vertices, edges, outputs,
           layout.toItself.map {
-            case (s1, s2) => {
-              if (s2 == layout.toNeighbors) { s2 -> (next(s1) + next.neighbors) }
-              else { s2 -> next(s1) }
-            }
+            case (s1, s2) =>
+              if (s2 == layout.toNeighbors) s2 -> (next(s1) + next.neighbors)
+              else s2 -> next(s1)
           }.toSeq: _*)
       }
       weightsForGradientCheck += network.allWeights.toMap
