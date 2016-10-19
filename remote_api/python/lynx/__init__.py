@@ -253,9 +253,10 @@ class LynxKite:
     return View(self, res.checkpoint)
 
   def load_project(self, name):
-    '''Loads an existing LynxKite project. Returns a :class:`Project`.'''
+    '''Loads an existing LynxKite project. Returns a :class:`RootProject`.'''
     r = self._send('loadProject', dict(name=name))
-    return Project(self, r.checkpoint)
+    project_checkpoint = _ProjectCheckpoint(self, r.checkpoint)
+    return RootProject(project_checkpoint)
 
   def load_table(self, name):
     '''Loads an existing LynxKite table. Returns a :class:`Table`.'''
@@ -268,9 +269,10 @@ class LynxKite:
     return View(self, r.checkpoint)
 
   def new_project(self):
-    '''Creates a new unnamed empty LynxKite :class:`Project`.'''
+    '''Creates a new unnamed empty LynxKite :class:`RootProject`.'''
     r = self._send('newProject')
-    return Project(self, r.checkpoint)
+    project_checkpoint = _ProjectCheckpoint(self, r.checkpoint)
+    return RootProject(project_checkpoint)
 
   def remove_name(self, name):
     '''Removes an object named ``name``.'''
@@ -372,19 +374,19 @@ class View:
     return Table(self.lk, res.checkpoint)
 
 
-class Project:
-  '''Represents an unanchored LynxKite project.
+class _ProjectCheckpoint:
+  '''Class for storing the mutable state of a project.
 
-  This project is not automatically saved to the LynxKite project directories.
+  The `checkpoint` field is a checkpoint of a root project. The :class:`RootProject` and :class:`SubProject`
+  classes can access and modify the checkpoint of a root project through this class.
   '''
 
   def __init__(self, lynxkite, checkpoint):
-    '''Creates a new blank project.'''
-    self.lk = lynxkite
     self.checkpoint = checkpoint
+    self.lk = lynxkite
 
-  def save(self, name, writeACL=None, readACL=None):
-    '''Saves the project under given name, with given writeACL and readACL.'''
+  def save(self, name, writeACL, readACL):
+    '''Saves the project having this project checkpoint under given name, with given writeACL and readACL.'''
     self.lk._send(
         'saveProject',
         dict(
@@ -393,47 +395,79 @@ class Project:
             writeACL=writeACL,
             readACL=readACL))
 
-  def scalar(self, scalar):
-    '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = self.lk._send(
-        'getScalar',
-        dict(
-            checkpoint=self.checkpoint,
-            scalar=scalar))
-    if hasattr(r, 'double'):
-      return r.double
-    return r.string
-
-  def sql(self, query):
-    '''Runs SQL queries.'''
-    r = self.lk._send('globalSQL', dict(
-        query=query,
-        checkpoints={'': self.checkpoint},
-    ))
-    return View(self.lk, r.checkpoint)
-
-  def run_operation(self, operation, parameters):
-    '''Runs an operation on the project with the given parameters.'''
-    r = self.lk._send(
-        'runOperation',
-        dict(
-            checkpoint=self.checkpoint,
-            operation=operation,
-            parameters=parameters))
-    self.checkpoint = r.checkpoint
-    return self
-
   def compute(self):
     '''Computes all scalars and attributes of the project.'''
     return self.lk._send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def is_computed(self):
-    '''Checks Whether all the scalars, attributes and segmentations of the project are already computed.'''
+    '''Checks whether all the scalars, attributes and segmentations of the project are already computed.'''
     r = self.lk._send('isComputed', dict(
         checkpoint=self.checkpoint
     ))
     return r
+
+  def sql(self, query):
+    '''Runs SQL queries.'''
+    return self.lk.sql(query, **{'': self})
+
+  def run_operation(self, operation, parameters, path):
+    '''Runs an operation on the project with the given parameters.'''
+    r = self.lk._send(
+        'runOperation',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            operation=operation,
+            parameters=parameters))
+    self.checkpoint = r.checkpoint
+
+  def scalar(self, scalar, path):
+    '''Fetches the value of a scalar. Returns either a double or a string.'''
+    r = self.lk._send(
+        'getScalar',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            scalar=scalar))
+    if hasattr(r, 'double'):
+      return r.double
+    return r.string
+
+
+class SubProject:
+  '''Represents a root project or a segmentation.
+
+  Example usage::
+
+      import lynx
+      p = lynx.LynxKite().new_project()
+      p.exampleGraph()
+      p.connectedComponents(**{
+        'directions': 'ignore directions',
+        'name': 'connected_components'})
+      s = p.segmentation('connected_components')
+      print(s.scalar('vertex_count'))
+
+  '''
+
+  def __init__(self, project_checkpoint, path):
+    self.project_checkpoint = project_checkpoint
+    self.path = path
+    self.lk = project_checkpoint.lk
+
+  def scalar(self, scalar):
+    '''Fetches the value of a scalar. Returns either a double or a string.'''
+    return self.project_checkpoint.scalar(scalar, self.path)
+
+  def run_operation(self, operation, parameters):
+    '''Runs an operation on the project with the given parameters.'''
+    self.project_checkpoint.run_operation(operation, parameters, self.path)
+    return self
+
+  def segmentation(self, name):
+    '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
+    return SubProject(self.project_checkpoint, self.path + [name])
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -443,6 +477,34 @@ class Project:
         params[k] = str(v)
       return self.run_operation(attr, params)
     return f
+
+
+class RootProject(SubProject):
+  '''Represents a project.'''
+
+  def __init__(self, project_checkpoint):
+    super().__init__(project_checkpoint, [])
+    self.lk = project_checkpoint.lk
+
+  def sql(self, query):
+    '''Runs SQL queries.'''
+    return self.project_checkpoint.sql(query)
+
+  def save(self, name, writeACL=None, readACL=None):
+    '''Saves the project under given name, with given writeACL and readACL.'''
+    self.project_checkpoint.save(name, writeACL, readACL)
+
+  def compute(self):
+    '''Computes all scalars and attributes of the project.'''
+    return self.project_checkpoint.compute()
+
+  def is_computed(self):
+    '''Checks whether all the scalars, attributes and segmentations of the project are already computed.'''
+    return self.project_checkpoint.is_computed()
+
+  @property
+  def checkpoint(self):
+    return self.project_checkpoint.checkpoint
 
 
 class LynxException(Exception):

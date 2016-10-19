@@ -209,11 +209,20 @@ angular.module('biggraph').directive('projectSelector',
           }
         },
         editConfig: function(name, config, type) {
-          scope.startTableImport();
-          $timeout(function () {
-            $anchorScroll('import-table');
-            scope.$broadcast('fill import from config', config, name, type);
-          });
+          if (config.class.includes('SQL')) {
+            scope.showSQL=true;
+            $anchorScroll('global-sql-box');
+            $timeout(function () {
+              scope.$broadcast('fill sql-box from config', name, config, type);
+            });
+            return;
+          } else {
+            scope.startTableImport();
+            $timeout(function () {
+              $anchorScroll('import-table');
+              scope.$broadcast('fill import from config', config, name, type);
+            });
+          }
         },
         renameMenuItemLabel: 'Rename or move...'
       };
