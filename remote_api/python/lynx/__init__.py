@@ -255,7 +255,7 @@ class LynxKite:
   def load_project(self, name):
     '''Loads an existing LynxKite project. Returns a :class:`RootProject`.'''
     r = self._send('loadProject', dict(name=name))
-    project_checkpoint = ProjectCheckpoint(self, r.checkpoint)
+    project_checkpoint = _ProjectCheckpoint(self, r.checkpoint)
     return RootProject(project_checkpoint)
 
   def load_table(self, name):
@@ -271,7 +271,7 @@ class LynxKite:
   def new_project(self):
     '''Creates a new unnamed empty LynxKite :class:`RootProject`.'''
     r = self._send('newProject')
-    project_checkpoint = ProjectCheckpoint(self, r.checkpoint)
+    project_checkpoint = _ProjectCheckpoint(self, r.checkpoint)
     return RootProject(project_checkpoint)
 
   def remove_name(self, name):
@@ -374,8 +374,12 @@ class View:
     return Table(self.lk, res.checkpoint)
 
 
-class ProjectCheckpoint:
+class _ProjectCheckpoint:
+  '''Class for storing the mutable state of a project.
 
+  The `checkpoint` field is a checkpoint of a root project. The :class:`RootProject` and :class:`SubProject`
+  classes can access and modify the checkpoint of a root project through this class.
+  '''
   def __init__(self, lynxkite, checkpoint):
     self.checkpoint = checkpoint
     self.lk = lynxkite
