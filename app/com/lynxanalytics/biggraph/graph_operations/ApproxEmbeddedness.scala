@@ -12,19 +12,18 @@ import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
 import org.apache.spark
 
 object ApproxEmbeddedness extends OpFromJson {
-  private val bitsParameter = NewParameter("bits", 8)
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val embeddedness = edgeAttribute[Double](inputs.es.entity)
   }
-  def fromJson(j: JsValue) = ApproxEmbeddedness(bitsParameter.fromJson(j))
+  def fromJson(j: JsValue) = ApproxEmbeddedness((j \ "bits").as[Int])
 }
 import ApproxEmbeddedness._
 case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = bitsParameter.toJson(bits)
+  override def toJson = Json.obj("bits" -> bits)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -50,7 +49,6 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
       .mapValues { case (out, in) => hll.union(out, in) }
 
     allNeighborHLLs.persist(spark.storage.StorageLevel.DISK_ONLY)
-    allNeighborHLLs.foreach(identity)
 
     // Join the HLL of neighbors on both the dsts and srcs of the non loop edges.
     val bySrc = nonLoopEdges.map { case (eid, e) => e.src -> (e.dst, eid) }
