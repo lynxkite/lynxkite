@@ -1,7 +1,7 @@
 // Presents the parameters for running SQL scripts.
 'use strict';
 
-angular.module('biggraph').directive('sqlBox', function($window, side, util) {
+angular.module('biggraph').directive('sqlBox', function($rootScope, $window, side, util) {
   return {
     restrict: 'E',
     scope: {
@@ -13,6 +13,8 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.inProgress = 0;
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
       scope.maxRows = 10;
+      scope.maxPersistedHistoryLength = 100;
+
       if(!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
       }
@@ -22,7 +24,75 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
       scope.isGlobal = !scope.side;
       scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
        'select * from vertices';
-      scope.project = scope.project = scope.side && scope.side.state.projectName;
+
+      function SqlHistory(maxLength) {
+        // This is a helper class for storing sql query history in localStorage.
+        // The localStorage contains a limited number of the most recent queries, and all
+        // sql boxes synchronize with it on creation. Every sql box maintains an array of its
+        // own local history, but also pushes newly executed queries into localStorage.
+        // Although the query currently being edited is not yet part of the history, it's
+        // stored as this.history[0] for syntactic convenience.
+
+        // Load persisted sql history
+        this.loadGlobalHistory = function() {
+          var history;
+          try {
+            history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
+            if (!Array.isArray(history)) {
+              throw 'sqlHistory is not an array';
+            }
+          } catch(e) {
+            history = [];
+            window.localStorage.setItem('sqlHistory', angular.toJson([]));
+          }
+          return history;
+        };
+
+        // Initialize
+        this.maxLength = maxLength;
+        this.history = this.loadGlobalHistory();
+        // Store current query as first element
+        this.history.unshift(scope.sql);
+        this.index = 0;
+
+        // Save current query
+        this.saveCurrentQuery = function() {
+          this.index = 0;
+          this.history[0] = scope.sql;
+          // Insert current query into our local subset of history
+          this.history.unshift(this.history[0]);
+          // Insert current query into a copy of global history
+          var history = this.loadGlobalHistory();
+          history.unshift(this.history[0]);
+          while (history.length > maxLength) {
+            history.pop();
+          }
+          // Update global history
+          window.localStorage.setItem('sqlHistory', angular.toJson(history));
+        };
+        // Move one row up in local history
+        this.navigateUp = function() {
+          if (this.index < this.history.length - 1) {
+            if (this.index === 0) {
+              // Update current query in local history
+              this.history[0] = scope.sql;
+            }
+            this.index++;
+            scope.sql = this.history[this.index];
+          }
+        };
+        // Move one row down in local history
+        this.navigateDown = function() {
+          if (this.index > 0) {
+            this.index--;
+            scope.sql = this.history[this.index];
+          }
+        };
+      }
+      scope.sqlHistory = new SqlHistory(scope.maxPersistedHistoryLength);
+
+      scope.project = scope.side && scope.side.state.projectName;
+      scope.overwrite = false;
       scope.sort = {
         column: undefined,
         reverse: false,
@@ -54,12 +124,12 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         if (!scope.sql) {
           scope.result = { $error: 'SQL script must be specified.' };
         } else {
+          scope.sqlHistory.saveCurrentQuery();
           scope.inProgress += 1;
           scope.result = util.nocache(
             '/ajax/runSQLQuery',
             {
               dfSpec: {
-                isGlobal: scope.isGlobal,
                 directory: scope.directory,
                 project: scope.project,
                 sql: scope.sql,
@@ -76,7 +146,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
         if (exportFormat === 'table' ||
             exportFormat === 'segmentation' ||
             exportFormat === 'view') {
-          scope.exportKiteTable = '';
+            scope.exportKiteTable = scope.exportKiteTable || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
@@ -107,6 +177,7 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             project: scope.project,
             sql: scope.sql,
           },
+          overwrite: scope.overwrite,
         };
         scope.inProgress += 1;
         var result;
@@ -159,6 +230,9 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
             $window.location =
               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
           }
+          if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
+            $rootScope.$broadcast('new table or view', scope);
+          }
         });
       };
 
@@ -177,7 +251,35 @@ angular.module('biggraph').directive('sqlBox', function($window, side, util) {
           autoScrollEditorIntoView : true,
           maxLines : 500
         });
+
+        editor.commands.addCommand({
+          name: 'navigateUp',
+          bindKey: {
+            win: 'Ctrl-Up',
+            mac: 'Command-Up',
+            sender: 'editor|cli'
+          },
+          exec: function() { scope.$apply(function() { scope.sqlHistory.navigateUp(); }); }
+        });
+        editor.commands.addCommand({
+          name: 'navigateDown',
+          bindKey: {
+            win: 'Ctrl-Down',
+            mac: 'Command-Down',
+            sender: 'editor|cli'
+          },
+          exec: function() { scope.$apply(function() { scope.sqlHistory.navigateDown(); }); }
+        });
       };
+
+      scope.$on('fill sql-box from config', function(evt, name, config, type) {
+        scope.sql = config.data.dfSpec.sql;
+        scope.directory = config.data.dfSpec.directory;
+        scope.project = config.data.dfSpec.project;
+        scope.exportFormat = type;
+        scope.exportKiteTable = name;
+        scope.overwrite = true;
+      });
     }
   };
 });

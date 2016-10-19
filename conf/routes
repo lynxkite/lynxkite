@@ -86,6 +86,7 @@ POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.
 POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
+POST /remote/removeName com.lynxanalytics.biggraph.serving.RemoteAPIServer.removeName
 POST /remote/loadTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadTable
 POST /remote/loadView com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadView
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation

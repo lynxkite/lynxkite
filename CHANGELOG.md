@@ -6,6 +6,52 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+LynxKite:
+
+ - Performance and scalability improvements for aggregating operations.
+ - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
+   Apologies for the pun.)
+ - SQL boxes now persist their query history into the browser's local storage.
+ - Assorted UI fixes.
+ - Views can now be edited. Views and tables exported from the global sql box can also be edited.
+
+Ecosystem:
+
+ - Flexible date template strings.
+ - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
+   intervals.
+
+### 1.9.5.4
+
+Ecosystem:
+
+ - Extra date template strings `{to,yester}day_{yyyy,mm,dd}`.
+ - Fix Chronomaster metrics reporting when `num_workers` is greater than one.
+ - Work around Scala 2.10 reflection thread safety issue. (SI-6240)
+
+### 1.9.5.3
+
+Ecosystem:
+
+ - Add extra date template strings, like `yesterday_minus_1month_mm_str`.
+
+### 1.9.5.2
+
+Fixes a bug in the HDFS transfer performance improvement in 1.9.5.1.
+
+### 1.9.5.1
+
+Cherry-pick release with just the changes below.
+
+Ecosystem:
+
+ - Much improved `TransferTask` performance for HDFS to HDFS copy. (Up to 20 times faster in some
+   cases.)
+ - `count` feature in `helper.sh` to help with verification testing.
+ - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
+   more detailed performance data.
+>>>>>>> origin/master
+
 ### 1.9.5
 
  - Relax the Luigi API Python version requirement from 3.5+ to 3.4+.
