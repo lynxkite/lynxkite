@@ -387,7 +387,7 @@ class GRU(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layouts
       size = networkSize,
       "new state" -> (state - update * state + update * tilde))
   }
-  def inputGates = Seq("new state")
+  def inputGates = Seq("state")
   def toNeighbors = "new state"
   def toItself = Map("state" -> "new state")
   def outputGate = "new state"
@@ -415,7 +415,7 @@ class LSTM(networkSize: Int, seed: Int, gradientCheckOn: Boolean) extends Layout
     )
   }
   def inputGates = Seq("cell", "hidden")
-  def toNeighbors = "new state"
+  def toNeighbors = "new cell"
   def toItself = Map("cell" -> "new cell", "hidden" -> "new hidden")
   def outputGate = "new hidden"
 }
