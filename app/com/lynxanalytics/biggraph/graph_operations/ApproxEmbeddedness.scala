@@ -9,6 +9,8 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
 
+import org.apache.spark
+
 object ApproxEmbeddedness extends OpFromJson {
   private val bitsParameter = NewParameter("bits", 8)
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
@@ -34,7 +36,7 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
     val nonLoopEdges = edges.filter { case (_, e) => e.src != e.dst }
     // Data size is ~2^bits bytes, we would use ~24 bytes for just edges.
     val effectivePartitions = (edges.partitioner.size * (1 << bits) / 24) max 1
-    val partitioner = new org.apache.spark.HashPartitioner(effectivePartitions)
+    val partitioner = new spark.HashPartitioner(effectivePartitions)
     val hll = HLLUtils(bits)
 
     val outNeighborHLLs = nonLoopEdges
@@ -48,6 +50,9 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
     // For every non isolated vertex a HLL of all its incoming and outgoing neighbors.
     val allNeighborHLLs = outNeighborHLLs.fullOuterJoin(inNeighborHLLs)
       .mapValues { case (out, in) => hll.union(out, in) }
+
+    allNeighborHLLs.persist(spark.storage.StorageLevel.DISK_ONLY)
+    allNeighborHLLs.foreach(identity)
 
     // Join the HLL of neighbors on both the dsts and srcs of the non loop edges.
     val bySrc = nonLoopEdges.map { case (eid, e) => e.src -> (e.dst, eid) }
