@@ -19,9 +19,11 @@ object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
+    path: List[String],
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
+  case class RemoveNameRequest(name: String)
   case class SaveCheckpointRequest(
     checkpoint: String,
     name: String,
@@ -29,7 +31,7 @@ object RemoteAPIProtocol {
     readACL: Option[String],
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
-  case class ScalarRequest(checkpoint: String, scalar: String)
+  case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -95,6 +97,7 @@ object RemoteAPIProtocol {
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
+  implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
   implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
@@ -124,6 +127,7 @@ object RemoteAPIServer extends JsonServer {
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
+  def removeName = jsonPost(c.removeName)
   def loadTable = jsonPost(c.loadTable)
   def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
@@ -212,6 +216,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     loadObject(user, request, _.isView)
   }
 
+  def removeName(
+    user: User,
+    request: RemoveNameRequest): Unit = {
+    val entry = controllers.DirectoryEntry.fromName(request.name)
+    assert(entry.exists, s"Entry '$entry' does not exist.")
+    entry.remove()
+  }
+
   def saveFrame(
     user: User,
     request: SaveCheckpointRequest,
@@ -244,11 +256,18 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def getViewer(cp: String): controllers.RootProjectViewer =
     new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
 
+  // Get a viewer for a project which can be a root project or a segmentation.
+  def getViewer(cp: String, path: List[String]): controllers.ProjectViewer = {
+    val rootProjectViewer = getViewer(cp)
+    rootProjectViewer.offspringViewer(path)
+  }
+
+  // Run an operation on a root project or a segmentation
   def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
     val normalized = normalize(request.operation)
     assert(normalizedIds.contains(normalized), s"No such operation: ${request.operation}")
     val operation = normalizedIds(normalized)
-    val viewer = getViewer(request.checkpoint)
+    val viewer = getViewer(request.checkpoint, request.path)
     val context = controllers.Operation.Context(user, viewer)
     val spec = controllers.FEOperationSpec(operation, request.parameters)
     val newState = ops.applyAndCheckpoint(context, spec)
@@ -256,10 +275,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def getScalar(user: User, request: ScalarRequest): DynamicValue = {
-    val viewer = getViewer(request.checkpoint)
+    val viewer = getViewer(request.checkpoint, request.path)
     val scalar = viewer.scalars(request.scalar)
+    dynamicValue(dataManager.get(scalar))
+  }
+
+  private def dynamicValue[T](scalar: ScalarData[T]) = {
     implicit val tt = scalar.typeTag
-    import com.lynxanalytics.biggraph.graph_api.Scripting._
     DynamicValue.convert(scalar.value)
   }
 

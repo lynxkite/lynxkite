@@ -64,10 +64,10 @@ class CSVExportTest extends FunSuite with TestGraphOp {
 
     val dirSnapshot = TestUtils.runShellCommand(
       """|cd %s
-         |for file in `find . -type f | LC_COLLATE=C sort | grep -v crc`; do
+         |for file in `find . -type f | LC_ALL=C sort | grep -v crc`; do
          |  echo $file
          |  echo '========'
-         |  cat $file | LC_COLLATE=C sort
+         |  cat $file | LC_ALL=C sort
          |  echo '********'
          |done""".stripMargin.format(targetDir.toString))
     assert(dirSnapshot ==
