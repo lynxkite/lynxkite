@@ -10,7 +10,9 @@
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_segmentation_from_sql.groovy:64
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/define_segmentation_links_from_matching_attributes.groovy:521
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy:791
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/embeddedness.groovy:206
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/enumerate_triangles.groovy:453
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices_1000.groovy:982
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy:973
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/find_infocom_communities.groovy:131
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/import_segmentation_links.groovy:0

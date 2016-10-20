@@ -1,5 +1,5 @@
-// Calculates approximate embeddedness using HLLs, the number of mutual friends between
-// two people, as an edge attribute. The attribute is only defined on non-loop edges.
+// Calculates for each vertex how close its neighborhood is to a clique approximetaly.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -70,7 +70,7 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
 
     val clusteringCoeff =
       vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
-        .mapValues { case (_, cc) => cc.getOrElse(1.0) }
+        .mapValues { case (_, cc) => cc.getOrElse(1.0) max 1.0 }
     output(o.clustering, clusteringCoeff)
   }
 }
