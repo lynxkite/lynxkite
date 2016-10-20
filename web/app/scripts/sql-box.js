@@ -143,15 +143,21 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       };
 
       scope.offerWithPath = function() {
-         if (typeof scope.project === 'undefined') {
-            return '';
+         if (typeof scope.directory === 'undefined') {
+           if (typeof scope.project === 'undefined') {
+             return '';
+           } else {
+             var proj = scope.project;
+             var lastSepIndex = proj.lastIndexOf('/');
+             return proj.substring(0, lastSepIndex + 1);
+           }
+         } else { // scope.directory is defined
+           if (scope.directory === '') {
+             return '';
+           } else {
+             return scope.directory + '/';
+           }
          }
-         var proj = scope.project;
-         var lastSepIndex = proj.lastIndexOf('/');
-         if (lastSepIndex === -1) {
-            return '';
-         }
-         return proj.substring(0, lastSepIndex + 1);
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
