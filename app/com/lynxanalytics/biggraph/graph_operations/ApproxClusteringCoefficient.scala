@@ -45,7 +45,6 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
     val simpleGraphEdges = (
       nonLoopEdges.map { case (_, e) => e.src -> e.dst } ++
       nonLoopEdges.map { case (_, e) => e.dst -> e.src }).distinct
-    simpleGraphEdges.persist(spark.storage.StorageLevel.DISK_ONLY)
 
     val bySrcHLLs = HybridRDD(simpleGraphEdges, partitioner, even = true)
       .lookupAndRepartition(n.allNeighborHLLs)
