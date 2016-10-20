@@ -1,7 +1,7 @@
 // Collection of classes for building a neural network.
 package com.lynxanalytics.biggraph.neural
 
-import breeze.stats.distributions.{ RandBasis, ThreadLocalRandomGenerator }
+import breeze.stats.distributions.RandBasis
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.commons.math3.random.MersenneTwister
 
