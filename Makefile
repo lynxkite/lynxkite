@@ -5,18 +5,18 @@ all: backend
 .build/bower-done: web/bower.json web/.bowerrc
 	cd web && bower install --silent --config.interactive=false && touch ../$@
 .build/node-done: web/package.json
-	cd web && npm install --silent
+	cd web && npm install --silent && touch ../$@
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js .build/node-done .build/bower-done
-	gulp --cwd web
-.build/documentation-verified: $(shell $(find) app web) .build/gulp-done
+	gulp --cwd web && touch $@
+.build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 
 .build/backend-done: $(shell $(find) app project tools lib conf) build.sbt .build/gulp-done
 	./.stage.sh && touch $@
-.build/backend-test-passed: $(shell $(find) app test project) build.sbt
+.build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./.test_backend.sh && touch $@
 .build/frontend-test-passed: $(shell $(find) web/test) build.sbt .build/backend-done \
-                          .build/documentation-verified
+                          .build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
 
 # Short alias:
