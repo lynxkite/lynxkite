@@ -2,7 +2,7 @@
 
 DIR=$(dirname $0)
 cd $DIR/..
-if [ ! -f "stage.sh" ]; then
+if [ ! -f ".stage.sh" ]; then
   echo "You must run this script from the source tree, not from inside a stage!"
   exit 1
 fi
