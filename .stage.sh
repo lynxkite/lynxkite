@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -xue
 
 cd $(dirname $0)
 sbt stage

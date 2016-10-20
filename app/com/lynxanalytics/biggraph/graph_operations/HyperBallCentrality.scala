@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import org.apache.spark._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.HLLUtils
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -140,11 +141,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     // Hll counters are used to estimate set sizes.
     val hyperBallCounters = vertices.mapValuesWithKeys {
       // Initialize a counter for every vertex
-      case (vid, _) => {
-        val hll = new HyperLogLogPlus(bits)
-        hll.offer(vid)
-        hll
-      }
+      case (vid, _) => HLLUtils(bits).hllFromObject(vid)
     }
 
     val result = getMeasures(
@@ -218,12 +215,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
       .reduceBySortedKey(
         partitioner,
         {
-          case (hll1, hll2) => {
-            val hll3 = new HyperLogLogPlus(bits)
-            hll3.addAll(hll1)
-            hll3.addAll(hll2)
-            hll3
-          }
+          case (hll1, hll2) => HLLUtils(bits).union(hll1, hll2)
         })
   }
 
