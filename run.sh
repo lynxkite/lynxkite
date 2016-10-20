@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/sh -xue
 
 set -x
 set -e
 
-./stage.sh
+make backend
 
-./quick_run.sh "$@"
+tage/bin/biggraph "$@" interactive
