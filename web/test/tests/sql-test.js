@@ -213,15 +213,19 @@ module.exports = function(fw) {
 
      fw.transitionTest(
         'segmentation opens',
-        'Tables and views are saved in the project directory',
+        'tables and views are saved in the project directory',
         function() {
-        lib.left.saveProjectAs('somesubdir/someproject');
+          lib.right.close();
+          lib.left.close();
+          lib.splash.duplicateProject('test-example', 'dirproj');
+          lib.splash.openProject('dirproj');
+          lib.left.saveProjectAs('somesubdir/someproject');
+
           // Create new table
           left.side.element(by.id('save-results-opener')).click();
           left.side.element(by.css('#exportFormat > option[value=table]')).click();
           left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
           left.side.element(by.id('save-results')).click();
-
           // Create new view
           left.side.element(by.id('save-results-opener')).click();
           left.side.element(by.css('#exportFormat > option[value=view]')).click();
@@ -250,7 +254,8 @@ module.exports = function(fw) {
           lib.splash.expectViewListed('somesubdirview');
           lib.splash.expectTableListed('segmtable');
           lib.splash.expectViewListed('segmview');
-          lib.left.saveProjectAs('test-example');
+          lib.left.close();
+          lib.splash.popDirectory();
         });
 
   fw.transitionTest(
