@@ -5,4 +5,4 @@ set -e
 
 make backend
 
-tage/bin/biggraph "$@" interactive
+stage/bin/biggraph "$@" interactive
