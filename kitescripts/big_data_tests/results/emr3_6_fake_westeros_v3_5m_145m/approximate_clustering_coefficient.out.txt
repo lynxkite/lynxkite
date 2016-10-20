@@ -1,0 +1,4 @@
+STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_clustering_coefficient.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
+clustering_coefficient: {"labelType":"between","labels":["0.000000","0.000010","0.000032","0.000108","0.000361","0.001206","0.004026","0.013436","0.044839","0.149643","0.499404","1.666667"],"sizes":[400,4,17,76,294,1624,8688,31350,164168,2882550,1910831]}
+id: <computed>
+FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_clustering_coefficient.groovy, took 1212 seconds
