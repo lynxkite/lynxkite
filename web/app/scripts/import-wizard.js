@@ -92,7 +92,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
           fillHiveFromData(scope.hive, newConfig.data);
         } else if (datatype === 'csv') {
           scope.csv = {};
-          fillScopeFromData(scope.csv, newConfig.data);
+          fillCSVFromData(scope.csv, newConfig.data);
         } else {
           scope.files = {};
           fillScopeFromData(scope.files, newConfig.data);
@@ -108,6 +108,14 @@ angular.module('biggraph').directive('importWizard', function(util) {
             datatypeScope[newConfigItem] = data[newConfigItem];
           }
         }
+      }
+
+      function fillCSVFromData(csv, data) {
+        csv.filename  = data.files;
+        csv.columnNames  = joinCSVLine(data.columnNames);
+        csv.delimiter = data.delimiter;
+        csv.mode = data.mode;
+        csv.infer = data.infer;
       }
 
       function fillJdbcFromData(jdbc, data) {

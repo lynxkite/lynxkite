@@ -289,7 +289,7 @@ object FrontendJson {
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
-  implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
+  implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
   implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
