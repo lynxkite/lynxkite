@@ -372,7 +372,7 @@ class NetworkGradients(
   def apply(name: String): GraphData = vector(Gates.Input(name).id)
 }
 
-trait Layouts {
+trait Layout {
   def getNetwork: Network
   def inputGates: Seq[String]
   def toNeighbors: String
@@ -380,9 +380,9 @@ trait Layouts {
   //means that s1 gets its initial value from s2.
   def outputGate: String
 }
-class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layouts {
+class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layout {
   def getNetwork = {
-    val vs = Neighbors()
+    val vs: Vectors = Neighbors()
     val eb = V("edge bias")
     val input = Sum(vs) * M("edge matrix") + eb
     val state = Input("state")
@@ -399,9 +399,9 @@ class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) e
   def toItself = Map("state" -> "new state")
   def outputGate = "new state"
 }
-class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layouts {
+class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layout {
   def getNetwork = {
-    val vs = Neighbors()
+    val vs: Vectors = Neighbors()
     val eb = V("edge bias")
     val input = Sum(vs) * M("edge matrix") + eb
     val cell = Input("cell")
@@ -423,4 +423,32 @@ class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) 
   def toNeighbors = "new cell"
   def toItself = Map("cell" -> "new cell", "hidden" -> "new hidden")
   def outputGate = "new hidden"
+}
+class MLP(networkSize: Int, gradientCheckOn: Boolean, depth: Int)(implicit rnd: RandBasis) extends Layout {
+  def getNetwork = {
+    val finalState = {
+      (1 until depth).foldLeft {
+        val vs = Neighbors()
+        val input = Sum(vs) * M("edge matrix 0") + V("edge bias 0")
+        val state = Sigmoid(Input("state") * M(s"state matrix 0") +
+          input * M(s"neighbors matrix 0" + V(s"bias 0")))
+        state
+      } { (previous, current) =>
+        val vs = NeighborsVector(previous)
+        val input = Sum(vs) * M(s"edge matrix ${current}") + V(s"edge bias ${current}")
+        val state = Sigmoid(previous * M(s"state matrix ${current}") +
+          input * M(s"neighbors matrix ${current}" + V(s"bias ${current}")))
+        state
+      }
+    }
+    Network(
+      clipGradients = !gradientCheckOn,
+      size = networkSize,
+      "final state" -> finalState
+    )
+  }
+  def inputGates = Seq("state")
+  def toNeighbors = ""
+  def toItself = Map()
+  def outputGate = "final state"
 }

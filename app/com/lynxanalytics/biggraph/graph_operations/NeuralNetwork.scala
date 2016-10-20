@@ -40,7 +40,8 @@ object NeuralNetwork extends OpFromJson {
     (j \ "knownLabelWeight").as[Double],
     (j \ "seed").as[Int],
     (j \ "gradientCheckOn").as[Boolean],
-    (j \ "networkLayout").as[String])
+    (j \ "networkLayout").as[String],
+    (j \ "depthForMLP").as[Int])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -59,7 +60,8 @@ case class NeuralNetwork(
     knownLabelWeight: Double,
     seed: Int,
     gradientCheckOn: Boolean,
-    networkLayout: String) extends TypedMetaGraphOp[Input, Output] {
+    networkLayout: String,
+    depthForMLP: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -78,7 +80,8 @@ case class NeuralNetwork(
     "knownLabelWeight" -> knownLabelWeight,
     "seed" -> seed,
     "gradientCheckOn" -> gradientCheckOn,
-    "networkLayout" -> networkLayout)
+    "networkLayout" -> networkLayout,
+    "depthForMLP" -> depthForMLP)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -108,6 +111,7 @@ case class NeuralNetwork(
     val layout = networkLayout match {
       case "LSTM" => new neural.LSTM(networkSize, gradientCheckOn)
       case "GRU" => new neural.GRU(networkSize, gradientCheckOn)
+      case "MLP" => new neural.MLP(networkSize, gradientCheckOn, depthForMLP)
       case _ => throw new AssertionError("Unknown network layout.")
     }
     val initialNetwork = layout.getNetwork
@@ -200,7 +204,7 @@ case class NeuralNetwork(
     neighborsState: neural.GraphData,
     ownState: neural.GraphData,
     network: neural.Network,
-    layout: neural.Layouts): Seq[neural.GateValues] = {
+    layout: neural.Layout): Seq[neural.GateValues] = {
     (1 until radius).scanLeft {
       network.forward(vertices, edges, neighborsState,
         layout.inputGates.map(i => i -> ownState): _*)
@@ -216,7 +220,7 @@ case class NeuralNetwork(
     data: Seq[(ID, (Option[Double], Array[Double]))],
     startingNetwork: neural.Network,
     iterations: Int,
-    layout: neural.Layouts): (neural.Network, NeuralNetworkDebugging.DataForGradientCheck) = {
+    layout: neural.Layout): (neural.Network, NeuralNetworkDebugging.DataForGradientCheck) = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
     val weightsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
@@ -288,7 +292,7 @@ case class NeuralNetwork(
     dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
     edges: Map[ID, Seq[ID]],
     network: neural.Network,
-    layout: neural.Layouts): Iterator[(ID, Double)] = {
+    layout: neural.Layout): Iterator[(ID, Double)] = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
 
@@ -310,7 +314,7 @@ case class NeuralNetwork(
       edges: Map[ID, Seq[ID]],
       initialNetwork: neural.Network,
       data: DataForGradientCheck,
-      layout: neural.Layouts): Boolean = {
+      layout: neural.Layout): Boolean = {
       val epsilon = 1e-5
       val relativeThreshold = 1e-7
       val absoluteThreshold = 1e-5
