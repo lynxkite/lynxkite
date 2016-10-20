@@ -147,6 +147,14 @@ object Gates {
     def forward(ctx: ForwardContext) = ctx.neighbors
     def backward(ctx: BackwardContext, gradients: GraphVectors) = ctx.addNeighbors(gradients)
   }
+  case class NeighborsVector(v: Vector) extends Vectors {
+    def forward(ctx: ForwardContext) = ctx.neighborsVector(ctx(v))
+    def backward(ctx: BackwardContext, gradients: GraphVectors) = {
+      ctx.add(v, gradients.toSeq.flatMap {
+        case (id, gs) => ctx.edges(id).zip(gs)
+      }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _)))
+    }
+  }
   case class Input(name: String) extends Vector {
     def forward(ctx: ForwardContext) = ctx.inputs(name)
     def backward(ctx: BackwardContext, gradient: GraphData) = {}
@@ -285,14 +293,14 @@ private case class ForwardContext(
   }
   def apply(m: M): DoubleMatrix = network(m)
   def apply(v: V): DoubleVector = network(v)(::, 0)
-  def neighbors: GraphVectors = {
+  def neighborsVector(d: GraphData): GraphVectors = {
     import breeze.linalg._
     vertices.map { id =>
       if (edges(id) == List()) id -> List(0).map(_ => DenseVector.zeros[Double](network.size))
-      else id -> edges(id).map(neighborState(_))
+      else id -> edges(id).map(d(_))
     }.toMap
   }
-
+  def neighbors: GraphVectors = neighborsVector(neighborState)
   def values(names: Map[String, Vector]) = new GateValues(vectorCache, vectorsCache, names)
 }
 
