@@ -690,6 +690,12 @@ Selector.prototype = {
     testLib.menuClick(this.project(name), 'discard');
   },
 
+  duplicateProject: function(name, newName) {
+     var project = this.project(name);
+     testLib.menuClick(project, 'duplicate');
+     this.renameProject('Copy of ' + name, newName);
+   },
+
   deleteDirectory: function(name) {
     testLib.menuClick(this.directory(name), 'discard');
   },
