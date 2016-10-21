@@ -17,7 +17,11 @@ instead of ng-model="sql" -->
   ng-model="$parent.sql"></div>
 <div>
   <span class="ng-binding" ng-hide="renaming">number of rows</span>
-  <input type="number" class="form-control ng-pristine ng-valid ng-touched" id="max-rows" ng-model="maxRows">
+  <input class="form-control ng-pristine ng-valid ng-touched"
+    type="number"
+    min="0"
+    id="max-rows"
+    ng-model="maxRows">
   <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
   <button class="btn btn-primary"
     ng-disabled="showExportOptions"
@@ -168,6 +172,10 @@ instead of ng-model="sql" -->
       </tr>
     </tbody>
   </table>
+  <button id="show-more"
+    ng-show="result.data.length === maxRows"
+    class="btn btn-primary"
+    ng-click="showMoreRows()">Show {{ showMoreRowsIncrement() }} more rows</button>
 </div>
 <div id="sql-error" ng-show="result.$error">
   {{ result.$error }}
