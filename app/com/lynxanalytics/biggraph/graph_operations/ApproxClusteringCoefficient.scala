@@ -42,8 +42,8 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
     n.allNeighborHLLs.persist(spark.storage.StorageLevel.DISK_ONLY)
 
     // Make the graph bi-directed and remove parallel edges.
-    val simpleGraphEdges = (
-      flatMap { case (_, e) => Iterator(e.src -> e.dst, e.dst -> e.src) }).distinct
+    val simpleGraphEdges =
+      nonLoopEdges.flatMap { case (_, e) => Iterator(e.src -> e.dst, e.dst -> e.src) }.distinct
 
     val bySrcHLLs = HybridRDD(simpleGraphEdges, partitioner, even = true)
       .lookupAndRepartition(n.allNeighborHLLs)
