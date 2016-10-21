@@ -31,14 +31,14 @@ class ApproxClusteringCoefficientTest extends FunSuite with TestGraphOp {
     val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq()))().result
     val op = ApproxClusteringCoefficient(bits = 8)
     val out = op(op.es, g.es).result
-    assert(out.clustering.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0))
+    assert(out.clustering.rdd.collect.toMap == Map(0 -> 1.0, 1 -> 1.0, 2 -> 1.0))
   }
 
   test("loop edge") {
     val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(1, 2)))().result
     val op = ApproxClusteringCoefficient(bits = 8)
     val out = op(op.es, g.es).result
-    assert(out.clustering.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0))
+    assert(out.clustering.rdd.collect.toMap == Map(0 -> 1.0, 1 -> 1.0))
   }
 
   test("parallel edges") {

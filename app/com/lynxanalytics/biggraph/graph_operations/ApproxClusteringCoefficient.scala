@@ -52,25 +52,27 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
     val byDstHLLs = HybridRDD(byDst, partitioner, even = true)
       .lookup(n.outNeighborHLLs)
 
-    // For every edge sum up the common neighbors of src and dst and divide the sum
-    // with the total neighbors of src.
+    // For every edge sum up the common neighbors of src and dst and the size of the neighborhood.
     val commonNeighbors = byDstHLLs.map {
       case (dst, ((src, srcHLL), dstHLL)) => {
-        val n = srcHLL.cardinality
-        if (n > 1) {
-          src -> hll.intersectSize(srcHLL, dstHLL).toDouble / (n * (n - 1))
-        } else {
-          src -> 0.0
-        }
+        src -> (hll.intersectSize(srcHLL, dstHLL).toDouble, 1L)
       }
     }
     val clusteringCoeffNonIsolated = commonNeighbors
-      .reduceByKey(_ + _)
+      .reduceByKey((x, y) => (x._1 + y._1, x._2 + y._2))
+      .mapValues {
+        case (numEdges, n) =>
+          if (n > 1) {
+            numEdges / (n * (n - 1))
+          } else {
+            1.0
+          }
+      }
       .sortUnique(vertices.partitioner.get)
 
     val clusteringCoeff =
       vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
-        .mapValues { case (_, cc) => cc.getOrElse(1.0) max 1.0 }
+        .mapValues { case (_, cc) => cc.getOrElse(1.0) }
     output(o.clustering, clusteringCoeff)
   }
 }
