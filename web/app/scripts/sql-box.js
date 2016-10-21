@@ -280,6 +280,15 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         scope.exportKiteTable = name;
         scope.overwrite = true;
       });
+
+      scope.showMoreRowsIncrement = function() {
+        return Math.max(10, Math.pow(10, Math.floor(Math.log10(scope.maxRows))));
+      };
+
+      scope.showMoreRows = function() {
+        scope.maxRows += scope.showMoreRowsIncrement();
+        scope.runSQLQuery();
+      };
     }
   };
 });

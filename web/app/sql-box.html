@@ -168,6 +168,10 @@ instead of ng-model="sql" -->
       </tr>
     </tbody>
   </table>
+  <button id="show-more"
+    ng-show="result.data.length === maxRows"
+    class="btn btn-primary"
+    ng-click="showMoreRows()">Show {{ showMoreRowsIncrement() }} more rows</button>
 </div>
 <div id="sql-error" ng-show="result.$error">
   {{ result.$error }}
