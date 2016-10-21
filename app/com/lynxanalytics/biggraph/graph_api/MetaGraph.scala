@@ -228,6 +228,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     private lazy val dst = dstF
     private lazy val idSet = idSetF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
+      assert(Option(eb).nonEmpty, "The project has no edge bundle")
       assert(
         eb.properties.compliesWith(requiredProperties),
         s"Edge bundle $eb (${eb.properties}) does not comply with: $requiredProperties")
