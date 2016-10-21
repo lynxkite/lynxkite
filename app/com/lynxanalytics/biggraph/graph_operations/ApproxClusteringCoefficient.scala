@@ -72,7 +72,7 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
 
     val clusteringCoeff =
       vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
-        .mapValues { case (_, cc) => cc.getOrElse(1.0) }
+        .mapValues { case (_, cc) => cc.getOrElse(1.0) min 1.0 }
     output(o.clustering, clusteringCoeff)
   }
 }

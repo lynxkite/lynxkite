@@ -1,5 +1,5 @@
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/add_rank_attribute.groovy:19
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_clustering_coefficient.groovy:1286
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_clustering_coefficient.groovy:1336
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/approximate_embeddedness.groovy:968
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/attribute_import.groovy:52
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy:837
@@ -9,7 +9,7 @@
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_edges_from_co-occurrence.groovy:14
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_segmentation_from_sql.groovy:64
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/define_segmentation_links_from_matching_attributes.groovy:521
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy:1081
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy:984
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/embeddedness.groovy:206
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/enumerate_triangles.groovy:453
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices_1000.groovy:982
@@ -18,7 +18,7 @@
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/import_segmentation_links.groovy:0
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy:171
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_attributes_from_test_set.groovy:40
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy:517
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy:535
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy:42
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy:118
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_parallel_edges_by_attribute.groovy:792
