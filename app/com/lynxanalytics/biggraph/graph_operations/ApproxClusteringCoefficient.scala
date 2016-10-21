@@ -1,4 +1,4 @@
-// Calculates for each vertex how close its neighborhood is to a clique approximetaly.
+// Calculates for each vertex how close its neighborhood is to a clique approximately.
 
 package com.lynxanalytics.biggraph.graph_operations
 
@@ -43,8 +43,7 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
 
     // Make the graph bi-directed and remove parallel edges.
     val simpleGraphEdges = (
-      nonLoopEdges.map { case (_, e) => e.src -> e.dst } ++
-      nonLoopEdges.map { case (_, e) => e.dst -> e.src }).distinct
+      flatMap { case (_, e) => Iterator(e.src -> e.dst, e.dst -> e.src) }).distinct
 
     val bySrcHLLs = HybridRDD(simpleGraphEdges, partitioner, even = true)
       .lookupAndRepartition(n.allNeighborHLLs)
