@@ -282,6 +282,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       });
 
       scope.showMoreRowsIncrement = function() {
+        // Offer increases of 10, 100, 1000, etc. depending on the magnitude of the current limit.
         return Math.max(10, Math.pow(10, Math.floor(Math.log10(scope.maxRows))));
       };
 
