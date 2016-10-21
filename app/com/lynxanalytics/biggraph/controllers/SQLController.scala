@@ -398,8 +398,7 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption = {
-    val importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject])
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
     SQLController.saveTable(
       request.createDataFrame(user, request.defaultContext()),
       request.notes,
@@ -407,8 +406,7 @@ class SQLController(val env: BigGraphEnvironment) {
       request.table,
       request.privacy,
       request.overwrite,
-      importConfig)
-  }
+      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
     user: serving.User, recipe: T): FEOption = {
