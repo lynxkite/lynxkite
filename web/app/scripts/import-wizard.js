@@ -84,6 +84,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.oldTableName = tableName;
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
         scope.asView = type === 'view';
+        scope.limit = newConfig.data.limit;
 
         // E.g.: "com.lynxanalytics.biggraph.controllers.CSVImportRequest"
         // becomes "CSVImportRequest".

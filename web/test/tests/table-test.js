@@ -38,6 +38,22 @@ module.exports = function(fw) {
     }
   );
   fw.transitionTest(
+    'CSV file imported as table with limit',
+    'table edited to remove limit',
+    function() {
+      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
+      lib.splash.startTableImport();
+      lib.splash.importLocalCSVFile(tableName, importPath, 'name,age', 'name', false, '2');
+      lib.splash.computeTable(tableName);
+    },
+    function() {
+      lib.splash.expectNumProjects(0);
+      lib.splash.expectNumDirectories(0);
+      lib.splash.expectNumTables(1);
+      lib.splash.expectTableWithNumRows(tableName, 3);
+    }
+  );
+  fw.transitionTest(
     'CSV file imported as table',
     'Project vertices imported from a table',
     function() {
