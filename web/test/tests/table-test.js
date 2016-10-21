@@ -42,6 +42,7 @@ module.exports = function(fw) {
     'Table edited to remove limit',
     function() {
       lib.splash.editTable(tableName);
+      expect(lib.splash.root.$('import-wizard #limit input').getAttribute('value')).toBe('2');
       lib.splash.root.$('import-wizard #limit input').clear();
       lib.splash.clickAndWaitForCsvImport();
       lib.splash.computeTable(tableName);
