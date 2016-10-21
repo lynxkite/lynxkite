@@ -14,6 +14,7 @@ LynxKite:
  - SQL boxes now persist their query history into the browser's local storage.
  - Assorted UI fixes.
  - Views can now be edited. Views and tables exported from the global sql box can also be edited.
+ - Scalable approximate embeddedness operation added.
 
 Ecosystem:
 

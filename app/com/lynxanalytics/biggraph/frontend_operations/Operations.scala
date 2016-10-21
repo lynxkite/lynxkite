@@ -1120,6 +1120,17 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Approximate embeddedness", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "embeddedness"),
+      NonNegInt("bits", "Precision", default = 8))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.ApproxEmbeddedness(params("bits").toInt)
+      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+    }
+  })
+
   register("Dispersion", new MetricsOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "dispersion"))
