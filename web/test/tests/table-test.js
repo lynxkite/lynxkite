@@ -39,11 +39,11 @@ module.exports = function(fw) {
   );
   fw.transitionTest(
     'CSV file imported as table with limit',
-    'table edited to remove limit',
+    'Table edited to remove limit',
     function() {
-      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
-      lib.splash.startTableImport();
-      lib.splash.importLocalCSVFile(tableName, importPath, 'name,age', 'name', false, '2');
+      lib.splash.editTable(tableName);
+      lib.splash.root.$('import-wizard #limit input').clear();
+      lib.splash.clickAndWaitForCsvImport();
       lib.splash.computeTable(tableName);
     },
     function() {
