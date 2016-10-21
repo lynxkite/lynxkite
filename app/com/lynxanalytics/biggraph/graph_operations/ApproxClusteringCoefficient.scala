@@ -52,7 +52,8 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
     val byDstHLLs = HybridRDD(byDst, partitioner, even = true)
       .lookup(n.outNeighborHLLs)
 
-    // For every edge sum up the common neighbors of src and dst and the size of the neighborhood.
+    // For every edge sum up the common neighbors of src and out-neighbors dst
+    // and the size of the neighborhood.
     val commonNeighbors = byDstHLLs.map {
       case (dst, ((src, srcHLL), dstHLL)) => {
         src -> (hll.intersectSize(srcHLL, dstHLL).toDouble, 1L)
@@ -65,13 +66,14 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
           if (n > 1) {
             numEdges / (n * (n - 1))
           } else {
-            1.0
+            1.0 // Vertices with only one neighbor have a cc of 1.0 by definition.
           }
       }
       .sortUnique(vertices.partitioner.get)
 
     val clusteringCoeff =
       vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
+        // Because of approximation > 1.0 values are possible and have to be bounded.
         .mapValues { case (_, cc) => cc.getOrElse(1.0) min 1.0 }
     output(o.clustering, clusteringCoeff)
   }
