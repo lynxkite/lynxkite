@@ -207,6 +207,13 @@ module.exports = function(fw) {
       maxRows.clear().sendKeys('17');
       left.side.element(by.id('run-sql-button')).click();
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
+
+      // Test "Show more" button.
+      var showMore = left.side.element(by.css('#show-more'));
+      showMore.click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(27);
+      showMore.click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(37);
     },
     function() {
     });
