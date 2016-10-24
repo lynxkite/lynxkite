@@ -386,7 +386,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     else {
       if (attributes.exists(isUncomputed)) false
       else {
-        if (segmentations.map(_.editor).exists(isComputed)) false
+        if (segmentations.map(_.editor).exists(!isComputed(_))) false
         else true
       }
     }
