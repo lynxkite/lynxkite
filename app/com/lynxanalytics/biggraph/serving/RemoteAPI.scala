@@ -32,7 +32,7 @@ object RemoteAPIProtocol {
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
   case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
-  case class HistogramRequest(checkpoint: String, path: List[String], attr: String, vertex: Boolean)
+  case class HistogramRequest(checkpoint: String, path: List[String], attr: String, attr_type: String)
   case class HistogramResponse(histogram: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -294,12 +294,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def getHistogram(user: User, request: HistogramRequest): HistogramResponse = {
     val viewer = getViewer(request.checkpoint, request.path)
     val attributes: Map[String, Attribute[_]] =
-      if (request.vertex)
+      if (request.attr_type == "vertex")
         viewer.vertexAttributes
       else
         viewer.edgeAttributes
-    val attrType = if (request.vertex) "Vertex" else "Edge"
-    assert(attributes.contains(request.attr), s"${attrType} attribute '${request.attr}' does not exist.")
+    assert(attributes.contains(request.attr), s"The ${request.attr_type} attribute '${request.attr}' does not exist.")
     HistogramResponse(histogram(user, viewer, attributes, request.attr))
   }
 
@@ -321,14 +320,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     attr: Attribute[_],
     options: java.util.HashMap[String, Any]) = {
     val logarithmic = options.containsKey("logarithmic") && options.get("logarithmic").asInstanceOf[Boolean]
-    val drawing = graphDrawingController
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = 10,
       axisOptions = AxisOptions(logarithmic = logarithmic),
       sampleSize = -1)
-    val res = drawing.getHistogram(user, req)
+    val res = graphDrawingController.getHistogram(user, req)
     import com.lynxanalytics.biggraph.serving.FrontendJson._
     json.Json.toJson(Await.result(res, duration.Duration.Inf)).toString
   }
