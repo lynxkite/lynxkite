@@ -32,6 +32,8 @@ object RemoteAPIProtocol {
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
   case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
+  case class HistogramRequest(checkpoint: String, path: List[String], attr: String, vertexAttr: Boolean)
+  case class HistogramResponse(histogram: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -100,6 +102,8 @@ object RemoteAPIProtocol {
   implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
   implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
+  implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
+  implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -123,6 +127,7 @@ object RemoteAPIServer extends JsonServer {
   val userController = ProductionJsonServer.userController
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
   def getScalar = jsonPost(c.getScalar)
+  def getHistogram = jsonPost(c.getHistogram)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def newProject = jsonPost(c.newProject)
@@ -163,6 +168,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   val ops = new frontend_operations.Operations(env)
   val sqlController = new SQLController(env)
   val bigGraphController = new BigGraphController(env)
+  val graphDrawingController = new GraphDrawingController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
 
@@ -283,6 +289,20 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   private def dynamicValue[T](scalar: ScalarData[T]) = {
     implicit val tt = scalar.typeTag
     DynamicValue.convert(scalar.value)
+  }
+
+  def getHistogram(user: User, request: HistogramRequest): HistogramResponse = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    val attributes: Map[String, Attribute[_]]=
+      if(request.vertexAttr)
+        viewer.vertexAttributes
+      else
+        viewer.edgeAttributes
+
+    if (attributes.contains(request.attr))
+      HistogramResponse(s"Fake histogram for ${request.attr} [testing].")
+    else
+      HistogramResponse(s"There is no attr ${request.attr}.")
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
