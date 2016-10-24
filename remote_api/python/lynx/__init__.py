@@ -434,6 +434,19 @@ class _ProjectCheckpoint:
       return r.double
     return r.string
 
+  def histogram(self, path, attr, type):
+    '''Returns a histogram of the given attribute as a string.'''
+    r = self.lk._send(
+      'getHistogram',
+      dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        attr=attr,
+        type=type
+      )
+    )
+    return r.histogram
+
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -468,6 +481,14 @@ class SubProject:
   def segmentation(self, name):
     '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
     return SubProject(self.project_checkpoint, self.path + [name])
+
+  def get_vertex_attribute(self, attr):
+    '''Creates a :class:`Attribute` representing a vertex attribute with the given name.'''
+    return Attribute(attr, "vertex", self.project_checkpoint, self.path)
+
+  def get_edge_attribute(self, attr):
+    '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
+    return Attribute(attr, "edge", self.project_checkpoint, self.path)
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -505,6 +526,23 @@ class RootProject(SubProject):
   @property
   def checkpoint(self):
     return self.project_checkpoint.checkpoint
+
+
+class Attribute():
+  '''Represents a vertex or an edge attribute.'''
+
+  def __init__(self, name, type, project_checkpoint, path):
+    self.project_checkpoint = project_checkpoint
+    self.name = name
+    self.type = type
+    self.path = path
+
+  def histogram(self):
+    '''Returns a histogram of the attribute as a string.'''
+    if self.type == "vertex":
+      return self.project_checkpoint.histogram(self.path, self.name, True)
+    else:
+      return self.project_checkpoint.histogram(self.path, self.name, False)
 
 
 class LynxException(Exception):
