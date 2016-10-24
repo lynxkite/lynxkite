@@ -303,8 +303,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     HistogramResponse(histogram(viewer, attributes, request.attr))
   }
 
-
-  private def histogram(viewer: ProjectViewer, attributes: Map[String, Attribute[_]] ,attrName: String): String = {
+  private def histogram(viewer: ProjectViewer, attributes: Map[String, Attribute[_]], attrName: String): String = {
     val attr = attributes(attrName)
     if (attr.is[String] || attr.is[Double]) {
       val histogramOptions = new java.util.HashMap[String, Any]
@@ -319,9 +318,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   private def histogram(viewer: ProjectViewer, attr: Attribute[_], histogramOptions: java.util.HashMap[String, Any]) =
-  {
-    
-  }
+    {
+
+    }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
