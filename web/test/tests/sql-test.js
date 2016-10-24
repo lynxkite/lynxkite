@@ -233,19 +233,8 @@ module.exports = function(fw) {
           left.side.element(by.css('#exportFormat > option[value=table]')).click();
           left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
           left.side.element(by.id('save-results')).click();
-          // Create new view
-          left.side.element(by.id('save-results-opener')).click();
-          left.side.element(by.css('#exportFormat > option[value=view]')).click();
-          left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirview');
-          left.side.element(by.id('save-results')).click();
 
           left.openSegmentation('bucketing');
-
-          // Create table for segmentation
-          right.side.element(by.id('save-results-opener')).click();
-          right.side.element(by.css('#exportFormat > option[value=table]')).click();
-          right.side.element(by.id('exportKiteTable')).sendKeys('segmtable');
-          right.side.element(by.id('save-results')).click();
 
           // Create view for segmentation
           right.side.element(by.id('save-results-opener')).click();
@@ -258,8 +247,6 @@ module.exports = function(fw) {
           right.side.element(by.id('show-selector-button')).click();
           right.side.element(by.id('directory-somesubdir')).click();
           lib.splash.expectTableListed('somesubdirtable');
-          lib.splash.expectViewListed('somesubdirview');
-          lib.splash.expectTableListed('segmtable');
           lib.splash.expectViewListed('segmview');
           left.close();
           lib.splash.popDirectory();
