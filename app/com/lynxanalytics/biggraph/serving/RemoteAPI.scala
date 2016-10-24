@@ -305,9 +305,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   private def histogram(user: User, viewer: ProjectViewer, attributes: Map[String, Attribute[_]], attrName: String): String = {
     val attr = attributes(attrName)
     if (attr.is[String] || attr.is[Double]) {
-      val histogramOptions = new java.util.HashMap[String, Any]
-      if (attr.is[Double]) histogramOptions.put("logarithmic", true)
-      val histogramStr = histogram(user, viewer, attr, histogramOptions)
+      val logarithmic = if (attr.is[Double]) true else false
+      val histogramStr = histogram(user, viewer, attr, logarithmic)
       s"${attrName}: ${histogramStr}"
     } else {
       s"${attrName}: is not String or Double"
@@ -318,8 +317,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     user: User,
     viewer: ProjectViewer,
     attr: Attribute[_],
-    options: java.util.HashMap[String, Any]) = {
-    val logarithmic = options.containsKey("logarithmic") && options.get("logarithmic").asInstanceOf[Boolean]
+    logarithmic: Boolean) = {
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
