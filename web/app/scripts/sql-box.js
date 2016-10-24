@@ -163,9 +163,9 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
             exportFormat === 'view') {
-          scope.exportKiteTable = scope.offerWithPath();
+          scope.exportKiteTable = scope.exportKiteTable || scope.offerWithPath();
         } else if (exportFormat === 'segmentation') {
-          scope.exportKiteTable = '';
+          scope.exportKiteTable = scope.exportKiteTable || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
