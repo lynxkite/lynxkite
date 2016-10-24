@@ -299,6 +299,16 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         scope.exportKiteTable = name;
         scope.overwrite = true;
       });
+
+      scope.showMoreRowsIncrement = function() {
+        // Offer increases of 10, 100, 1000, etc. depending on the magnitude of the current limit.
+        return Math.max(10, Math.pow(10, Math.floor(Math.log10(scope.maxRows))));
+      };
+
+      scope.showMoreRows = function() {
+        scope.maxRows += scope.showMoreRowsIncrement();
+        scope.runSQLQuery();
+      };
     }
   };
 });
