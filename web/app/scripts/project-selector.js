@@ -17,7 +17,8 @@ angular.module('biggraph').directive('projectSelector',
       }
       scope.newProject = defaultSettings();
       scope.newDirectory = defaultSettings();
-      scope.path = scope.path || window.localStorage.getItem('last_selector_path') || '';
+      scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
+        window.localStorage.getItem('last_selector_path') || '';
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
@@ -59,6 +60,7 @@ angular.module('biggraph').directive('projectSelector',
               query: scope.searchQuery,
             });
         }
+        window.sessionStorage.setItem('last_selector_path', scope.path);
         window.localStorage.setItem('last_selector_path', scope.path);
       };
 
