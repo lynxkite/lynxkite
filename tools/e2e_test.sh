@@ -7,9 +7,6 @@ if [ ! -f "stage.sh" ]; then
   exit 1
 fi
 
-# Compile.
-./stage.sh
-
 # Create config.
 TMP=$(mktemp -d)
 PORT=$[ 9100 + RANDOM % 100 ]
