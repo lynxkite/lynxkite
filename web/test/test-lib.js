@@ -626,7 +626,7 @@ Selector.prototype = {
     importCsvButton.click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view) {
+  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view, limit) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
     if (columnsToImport) {
       this.root.$('import-wizard #columns-to-import input').sendKeys(columnsToImport);
@@ -639,6 +639,9 @@ Selector.prototype = {
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     if (view) {
       this.root.$('import-wizard #as-view input').click();
+    }
+    if (limit) {
+      this.root.$('import-wizard #limit input').sendKeys(limit.toString());
     }
     this.clickAndWaitForCsvImport();
   },

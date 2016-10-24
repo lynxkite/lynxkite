@@ -18,6 +18,24 @@ object ApproxEmbeddedness extends OpFromJson {
   }
   def fromJson(j: JsValue) = ApproxEmbeddedness((j \ "bits").as[Int])
 }
+
+private[graph_operations] case class NeighborHLLs(
+    nonLoopEdges: EdgeBundleRDD,
+    partitioner: spark.Partitioner,
+    hll: HLLUtils) {
+  val outNeighborHLLs = nonLoopEdges
+    .map { case (_, e) => e.src -> hll.hllFromObject(e.dst) }
+    .reduceByKey(hll.union)
+    .sortUnique(partitioner)
+  val inNeighborHLLs = nonLoopEdges
+    .map { case (_, e) => e.dst -> hll.hllFromObject(e.src) }
+    .reduceByKey(hll.union)
+    .sortUnique(partitioner)
+  // For every non isolated vertex a HLL of all its incoming and outgoing neighbors.
+  val allNeighborHLLs = outNeighborHLLs.fullOuterJoin(inNeighborHLLs)
+    .mapValues { case (out, in) => hll.union(out, in) }
+}
+
 import ApproxEmbeddedness._
 case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Output] {
   override val isHeavy = true
@@ -36,18 +54,7 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
     val partitioner = edges.partitioner.get
     val hll = HLLUtils(bits)
 
-    val outNeighborHLLs = nonLoopEdges
-      .map { case (_, e) => e.src -> hll.hllFromObject(e.dst) }
-      .reduceByKey(hll.union)
-      .sortUnique(partitioner)
-    val inNeighborHLLs = nonLoopEdges
-      .map { case (_, e) => e.dst -> hll.hllFromObject(e.src) }
-      .reduceByKey(hll.union)
-      .sortUnique(partitioner)
-    // For every non isolated vertex a HLL of all its incoming and outgoing neighbors.
-    val allNeighborHLLs = outNeighborHLLs.fullOuterJoin(inNeighborHLLs)
-      .mapValues { case (out, in) => hll.union(out, in) }
-
+    val allNeighborHLLs = NeighborHLLs(nonLoopEdges, partitioner, hll).allNeighborHLLs
     allNeighborHLLs.persist(spark.storage.StorageLevel.DISK_ONLY)
 
     // Join the HLL of neighbors on both the dsts and srcs of the non loop edges.

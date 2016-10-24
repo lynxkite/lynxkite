@@ -184,12 +184,13 @@ trait GenericImportRequest extends ViewRecipe with FrameSettings {
   override val name: String = table
   // Empty list means all columns.
   val columnsToImport: List[String]
+  val limit: Option[Int]
   protected val needHiveContext = false
   protected def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
 
-  def restrictedDataFrame(
+  private def restrictedDataFrame(
     user: serving.User,
     context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
     restrictToColumns(dataFrame(user, context), columnsToImport)
@@ -207,8 +208,10 @@ trait GenericImportRequest extends ViewRecipe with FrameSettings {
 
   override def createDataFrame(
     user: serving.User, context: SQLContext)(
-      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
-    restrictedDataFrame(user, context)
+      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+    val df = restrictedDataFrame(user, context)
+    limit.map(df.limit(_)).getOrElse(df)
+  }
 }
 
 case class CSVImportRequest(
@@ -222,7 +225,8 @@ case class CSVImportRequest(
     mode: String,
     infer: Boolean,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends GenericImportRequest {
+    columnsToImport: List[String],
+    limit: Option[Int]) extends GenericImportRequest {
   assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
   assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
 
@@ -275,6 +279,7 @@ case class JdbcImportRequest(
     predicates: Option[List[String]] = None,
     overwrite: Boolean,
     columnsToImport: List[String],
+    limit: Option[Int],
     properties: Option[Map[String, String]] = None) extends GenericImportRequest {
 
   def dataFrame(user: serving.User, context: SQLContext)(
@@ -321,7 +326,8 @@ case class ParquetImportRequest(
     privacy: String,
     files: String,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
+    columnsToImport: List[String],
+    limit: Option[Int]) extends FilesWithSchemaImportRequest {
   val format = "parquet"
 }
 
@@ -335,7 +341,8 @@ case class ORCImportRequest(
     privacy: String,
     files: String,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
+    columnsToImport: List[String],
+    limit: Option[Int]) extends FilesWithSchemaImportRequest {
   val format = "orc"
 }
 
@@ -349,7 +356,8 @@ case class JsonImportRequest(
     privacy: String,
     files: String,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends FilesWithSchemaImportRequest {
+    columnsToImport: List[String],
+    limit: Option[Int]) extends FilesWithSchemaImportRequest {
   val format = "json"
 }
 
@@ -363,7 +371,8 @@ case class HiveImportRequest(
     privacy: String,
     hiveTable: String,
     overwrite: Boolean,
-    columnsToImport: List[String]) extends GenericImportRequest {
+    columnsToImport: List[String],
+    limit: Option[Int]) extends GenericImportRequest {
 
   override val needHiveContext = true
   def dataFrame(user: serving.User, context: SQLContext)(
@@ -391,7 +400,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
     SQLController.saveTable(
-      request.restrictedDataFrame(user, request.defaultContext()),
+      request.createDataFrame(user, request.defaultContext()),
       request.notes,
       user,
       request.table,

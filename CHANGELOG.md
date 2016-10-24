@@ -12,9 +12,11 @@ LynxKite:
  - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
    Apologies for the pun.)
  - SQL boxes now persist their query history into the browser's local storage.
+ - SQL box has _"Show more"_ button to easily look at more results.
  - Assorted UI fixes.
  - Views can now be edited. Views and tables exported from the global sql box can also be edited.
  - Scalable approximate embeddedness operation added.
+ - Scalable approximate clustering coefficient operation added.
 
 Ecosystem:
 
