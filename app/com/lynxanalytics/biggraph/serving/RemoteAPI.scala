@@ -1,7 +1,7 @@
 // An API that allows controlling a running LynxKite instance via JSON commands.
 package com.lynxanalytics.biggraph.serving
 
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future, duration }
 import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
@@ -300,27 +300,38 @@ class RemoteAPIController(env: BigGraphEnvironment) {
         viewer.edgeAttributes
     val attrType = if (request.vertex) "Vertex" else "Edge"
     assert(attributes.contains(request.attr), s"${attrType} attribute '${request.attr}' does not exist.")
-    HistogramResponse(histogram(viewer, attributes, request.attr))
+    HistogramResponse(histogram(user, viewer, attributes, request.attr))
   }
 
-  private def histogram(viewer: ProjectViewer, attributes: Map[String, Attribute[_]], attrName: String): String = {
+  private def histogram(user: User, viewer: ProjectViewer, attributes: Map[String, Attribute[_]], attrName: String): String = {
     val attr = attributes(attrName)
     if (attr.is[String] || attr.is[Double]) {
       val histogramOptions = new java.util.HashMap[String, Any]
-      histogramOptions.put("numBuckets", 10)
-      histogramOptions.put("precise", true)
       if (attr.is[Double]) histogramOptions.put("logarithmic", true)
-      val histogram = histogram(viewer, attr, histogramOptions)
-      s"${attrName}: ${histogram}"
+      val histogramStr = histogram(user, viewer, attr, histogramOptions)
+      s"${attrName}: ${histogramStr}"
     } else {
       s"${attrName}: is not String or Double"
     }
   }
 
-  private def histogram(viewer: ProjectViewer, attr: Attribute[_], histogramOptions: java.util.HashMap[String, Any]) =
-    {
-
-    }
+  private def histogram(
+    user: User,
+    viewer: ProjectViewer,
+    attr: Attribute[_],
+    options: java.util.HashMap[String, Any]) = {
+    val logarithmic = options.containsKey("logarithmic") && options.get("logarithmic").asInstanceOf[Boolean]
+    val drawing = graphDrawingController
+    val req = HistogramSpec(
+      attributeId = attr.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = 10,
+      axisOptions = AxisOptions(logarithmic = logarithmic),
+      sampleSize = -1)
+    val res = drawing.getHistogram(user, req)
+    import com.lynxanalytics.biggraph.serving.FrontendJson._
+    json.Json.toJson(Await.result(res, duration.Duration.Inf)).toString
+  }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
