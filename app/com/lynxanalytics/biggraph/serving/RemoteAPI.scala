@@ -32,7 +32,7 @@ object RemoteAPIProtocol {
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
   case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
-  case class HistogramRequest(checkpoint: String, path: List[String], attr: String, vertexAttr: Boolean)
+  case class HistogramRequest(checkpoint: String, path: List[String], attr: String, vertex: Boolean)
   case class HistogramResponse(histogram: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -293,16 +293,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def getHistogram(user: User, request: HistogramRequest): HistogramResponse = {
     val viewer = getViewer(request.checkpoint, request.path)
-    val attributes: Map[String, Attribute[_]]=
-      if(request.vertexAttr)
+    val attributes: Map[String, Attribute[_]] =
+      if (request.vertex)
         viewer.vertexAttributes
       else
         viewer.edgeAttributes
-
-    if (attributes.contains(request.attr))
-      HistogramResponse(s"Fake histogram for ${request.attr} [testing].")
-    else
-      HistogramResponse(s"There is no attr ${request.attr}.")
+    val attrType = if (request.vertex) "Vertex" else "Edge"
+    assert(attributes.contains(request.attr), s"${attrType} attribute '${request.attr}' does not exist.")
+    HistogramResponse(s"Fake histogram for ${request.attr} [testing].")
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
