@@ -300,7 +300,27 @@ class RemoteAPIController(env: BigGraphEnvironment) {
         viewer.edgeAttributes
     val attrType = if (request.vertex) "Vertex" else "Edge"
     assert(attributes.contains(request.attr), s"${attrType} attribute '${request.attr}' does not exist.")
-    HistogramResponse(s"Fake histogram for ${request.attr} [testing].")
+    HistogramResponse(histogram(viewer, attributes, request.attr))
+  }
+
+
+  private def histogram(viewer: ProjectViewer, attributes: Map[String, Attribute[_]] ,attrName: String): String = {
+    val attr = attributes(attrName)
+    if (attr.is[String] || attr.is[Double]) {
+      val histogramOptions = new java.util.HashMap[String, Any]
+      histogramOptions.put("numBuckets", 10)
+      histogramOptions.put("precise", true)
+      if (attr.is[Double]) histogramOptions.put("logarithmic", true)
+      val histogram = histogram(viewer, attr, histogramOptions)
+      s"${attrName}: ${histogram}"
+    } else {
+      s"${attrName}: is not String or Double"
+    }
+  }
+
+  private def histogram(viewer: ProjectViewer, attr: Attribute[_], histogramOptions: java.util.HashMap[String, Any]) =
+  {
+    
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
