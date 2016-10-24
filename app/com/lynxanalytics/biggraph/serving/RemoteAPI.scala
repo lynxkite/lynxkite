@@ -14,7 +14,6 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 import com.lynxanalytics.biggraph.table.TableImport
-import org.apache.calcite.avatica.ColumnMetaData.StructType
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
