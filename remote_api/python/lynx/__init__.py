@@ -434,7 +434,7 @@ class _ProjectCheckpoint:
       return r.double
     return r.string
 
-  def histogram(self, path, attr, vertex):
+  def histogram(self, path, attr, attr_type):
     '''Returns a histogram of the given attribute as a string.'''
     r = self.lk._send(
         'getHistogram',
@@ -442,7 +442,7 @@ class _ProjectCheckpoint:
             checkpoint=self.checkpoint,
             path=path,
             attr=attr,
-            vertex=vertex
+            attr_type=attr_type
         )
     )
     return r.histogram
@@ -539,10 +539,7 @@ class Attribute():
 
   def histogram(self):
     '''Returns a histogram of the attribute as a string.'''
-    if self.attr_type == "vertex":
-      return self.project_checkpoint.histogram(self.path, self.name, True)
-    else:
-      return self.project_checkpoint.histogram(self.path, self.name, False)
+    return self.project_checkpoint.histogram(self.path, self.name, self.attr_type)
 
 
 class LynxException(Exception):
