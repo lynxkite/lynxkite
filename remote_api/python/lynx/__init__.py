@@ -434,16 +434,16 @@ class _ProjectCheckpoint:
       return r.double
     return r.string
 
-  def histogram(self, path, attr, type):
+  def histogram(self, path, attr, vertex):
     '''Returns a histogram of the given attribute as a string.'''
     r = self.lk._send(
-      'getHistogram',
-      dict(
-        checkpoint=self.checkpoint,
-        path=path,
-        attr=attr,
-        type=type
-      )
+        'getHistogram',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            attr=attr,
+            vertex=vertex
+        )
     )
     return r.histogram
 
@@ -531,15 +531,15 @@ class RootProject(SubProject):
 class Attribute():
   '''Represents a vertex or an edge attribute.'''
 
-  def __init__(self, name, type, project_checkpoint, path):
+  def __init__(self, name, attr_type, project_checkpoint, path):
     self.project_checkpoint = project_checkpoint
     self.name = name
-    self.type = type
+    self.attr_type = attr_type
     self.path = path
 
   def histogram(self):
     '''Returns a histogram of the attribute as a string.'''
-    if self.type == "vertex":
+    if self.attr_type == "vertex":
       return self.project_checkpoint.histogram(self.path, self.name, True)
     else:
       return self.project_checkpoint.histogram(self.path, self.name, False)
