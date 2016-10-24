@@ -511,6 +511,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
 
   test("export global sql to view with limit + query it again") {
     val colNames = List("vertexId", "name", "age")
+    // vertex-data has 3 rows, but we limit the import to 2.
     createViewCSV("testgraph/vertex-data", colNames, limit = Some(2))
     sqlController.createViewDFSpec(user,
       SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
