@@ -224,8 +224,7 @@ module.exports = function(fw) {
         function() {
           right.close();
           left.close();
-          lib.splash.duplicateProject('test-example', 'dirproj');
-          lib.splash.openProject('dirproj');
+          lib.splash.openProject('test-example');
           left.saveProjectAs('somesubdir/someproject');
 
           // Create new table
