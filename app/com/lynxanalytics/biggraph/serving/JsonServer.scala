@@ -216,14 +216,19 @@ object FrontendJson {
   }
   implicit val wStructType = new json.Writes[StructType] {
     def writes(structType: StructType): json.JsValue = json.Json.obj("schema" -> structType.map {
+      case StructField(name, dataType: StructType, nullable, metaData) =>
+        json.Json.obj(
+          "name" -> name, "dataType" -> this.writes(dataType), "nullable" -> nullable.toString()
+        )
       case StructField(name, dataType, nullable, metaData) =>
-      Map("name" -> name, "dataType" -> dataType.toString(), "nullable" -> nullable.toString())
+        json.Json.obj(
+          "name" -> name, "dataType" -> dataType.toString(), "nullable" -> nullable.toString()
+        )
     })
   }
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
   implicit val wFEStatus = json.Json.writes[FEStatus]
-  implicit val wStructField = json.Json.writes[StructField ]
   implicit val wFEOption = json.Json.writes[FEOption]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
