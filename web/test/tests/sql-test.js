@@ -218,6 +218,39 @@ module.exports = function(fw) {
     function() {
     });
 
+     fw.transitionTest(
+        'segmentation opens',
+        'tables and views are saved in the project directory',
+        function() {
+          right.close();
+          left.close();
+          lib.splash.openProject('test-example');
+          left.saveProjectAs('somesubdir/someproject');
+
+          // Create new table
+          left.side.element(by.id('save-results-opener')).click();
+          left.side.element(by.css('#exportFormat > option[value=table]')).click();
+          left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
+          left.side.element(by.id('save-results')).click();
+
+          left.openSegmentation('bucketing');
+
+          // Create view for segmentation
+          right.side.element(by.id('save-results-opener')).click();
+          right.side.element(by.css('#exportFormat > option[value=view]')).click();
+          right.side.element(by.id('exportKiteTable')).sendKeys('segmview');
+          right.side.element(by.id('save-results')).click();
+        },
+        function() {
+          right.close();
+          right.side.element(by.id('show-selector-button')).click();
+          right.side.element(by.id('directory-somesubdir')).click();
+          lib.splash.expectTableListed('somesubdirtable');
+          lib.splash.expectViewListed('segmview');
+          left.close();
+          lib.splash.popDirectory();
+        });
+
   fw.transitionTest(
     'test-example project with 100 vertices',
     'table and view export of 100 vertices',
