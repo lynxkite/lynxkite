@@ -61,7 +61,7 @@ case class NeuralNetwork(
     seed: Int,
     gradientCheckOn: Boolean,
     networkLayout: String,
-    depthForMLP: Int) extends TypedMetaGraphOp[Input, Output] {
+    depthForMLP: Int = 10) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
