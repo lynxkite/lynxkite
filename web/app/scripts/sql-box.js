@@ -142,11 +142,30 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         }
       };
 
+      scope.offerWithPath = function() {
+         if (typeof scope.directory !== 'undefined') {
+           if (scope.directory === '') {
+             return '';
+           } else {
+             return scope.directory + '/';
+           }
+         } else {
+           if (typeof scope.project !== 'undefined') {
+             var proj = scope.project;
+             var lastSepIndex = proj.lastIndexOf('/');
+             return proj.substring(0, lastSepIndex + 1);
+           } else {
+             return '';
+           }
+         }
+      };
+
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
-            exportFormat === 'segmentation' ||
             exportFormat === 'view') {
-            scope.exportKiteTable = scope.exportKiteTable || '';
+          scope.exportKiteTable = scope.exportKiteTable || scope.offerWithPath();
+        } else if (exportFormat === 'segmentation') {
+          scope.exportKiteTable = scope.exportKiteTable || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
