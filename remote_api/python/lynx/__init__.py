@@ -434,18 +434,29 @@ class _ProjectCheckpoint:
       return r.double
     return r.string
 
-  def histogram(self, path, attr, attr_type):
+  def histogram(self, path, attr, attr_type, numbuckets, precise, logarithmic):
     '''Returns a histogram of the given attribute as a string.'''
-    r = self.lk._send(
-        'getHistogram',
-        dict(
-            checkpoint=self.checkpoint,
-            path=path,
-            attr=attr,
-            attr_type=attr_type
-        )
+    request = dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        attr=attr,
+        numBuckets=numbuckets,
+        precise=precise,
+        logarithmic=logarithmic
     )
-    return r.histogram
+    if attr_type == 'vertex':
+      r = self.lk._send(
+          'getVertexHistogram',
+          request
+      )
+    elif attr_type == 'edge':
+      r = self.lk._send(
+          'getEdgeHistogram',
+          request
+      )
+    else:
+      raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
+    return r
 
 
 class SubProject:
@@ -482,13 +493,13 @@ class SubProject:
     '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
     return SubProject(self.project_checkpoint, self.path + [name])
 
-  def get_vertex_attribute(self, attr):
+  def vertex_attribute(self, attr):
     '''Creates a :class:`Attribute` representing a vertex attribute with the given name.'''
-    return Attribute(attr, "vertex", self.project_checkpoint, self.path)
+    return Attribute(attr, 'vertex', self.project_checkpoint, self.path)
 
-  def get_edge_attribute(self, attr):
+  def edge_attribute(self, attr):
     '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
-    return Attribute(attr, "edge", self.project_checkpoint, self.path)
+    return Attribute(attr, 'edge', self.project_checkpoint, self.path)
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -541,9 +552,22 @@ class Attribute():
     self.attr_type = attr_type
     self.path = path
 
-  def histogram(self):
-    '''Returns a histogram of the attribute as a string.'''
-    return self.project_checkpoint.histogram(self.path, self.name, self.attr_type)
+  def histogram(self, numbuckets, precise, logarithmic):
+    '''Returns a histogram of the attribute as a string.
+
+    Example:
+
+      a = p.vertex_attribute('attr_name')
+      a.histogram(10, True, True)
+    '''
+
+    return self.project_checkpoint.histogram(
+        self.path,
+        self.name,
+        self.attr_type,
+        numbuckets,
+        precise,
+        logarithmic)
 
 
 class LynxException(Exception):

@@ -32,8 +32,13 @@ object RemoteAPIProtocol {
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
   case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
-  case class HistogramRequest(checkpoint: String, path: List[String], attr: String, attr_type: String)
-  case class HistogramResponse(histogram: String)
+  case class HistogramRequest(
+    checkpoint: String,
+    path: List[String],
+    attr: String,
+    numBuckets: Int,
+    precise: Boolean,
+    logarithmic: Boolean)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -126,8 +131,9 @@ object RemoteAPIServer extends JsonServer {
   import RemoteAPIProtocol._
   val userController = ProductionJsonServer.userController
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
-  def getScalar = jsonPost(c.getScalar)
-  def getHistogram = jsonPost(c.getHistogram)
+  def getScalar = jsonFuturePost(c.getScalar)
+  def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
+  def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def newProject = jsonPost(c.newProject)
@@ -280,10 +286,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(newState.checkpoint.get)
   }
 
-  def getScalar(user: User, request: ScalarRequest): DynamicValue = {
+  def getScalar(user: User, request: ScalarRequest): Future[DynamicValue] = {
     val viewer = getViewer(request.checkpoint, request.path)
     val scalar = viewer.scalars(request.scalar)
-    dynamicValue(dataManager.get(scalar))
+    import dataManager.executionContext
+    dataManager.getFuture(scalar).map(dynamicValue(_)).future
   }
 
   private def dynamicValue[T](scalar: ScalarData[T]) = {
@@ -291,42 +298,38 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     DynamicValue.convert(scalar.value)
   }
 
-  def getHistogram(user: User, request: HistogramRequest): HistogramResponse = {
+  def getVertexHistogram(
+    user: User,
+    request: HistogramRequest): Future[HistogramResponse] = {
     val viewer = getViewer(request.checkpoint, request.path)
-    val attributes: Map[String, Attribute[_]] =
-      if (request.attr_type == "vertex")
-        viewer.vertexAttributes
-      else
-        viewer.edgeAttributes
-    assert(attributes.contains(request.attr), s"The ${request.attr_type} attribute '${request.attr}' does not exist.")
-    HistogramResponse(histogram(user, viewer, attributes, request.attr))
+    val attributes = viewer.vertexAttributes
+    assert(attributes.contains(request.attr), s"Vertex attribute '${request.attr}' does not exist.")
+    histogram(user, viewer, attributes(request.attr), request)
   }
 
-  private def histogram(user: User, viewer: ProjectViewer, attributes: Map[String, Attribute[_]], attrName: String): String = {
-    val attr = attributes(attrName)
-    if (attr.is[String] || attr.is[Double]) {
-      val logarithmic = if (attr.is[Double]) true else false
-      val histogramStr = histogram(user, viewer, attr, logarithmic)
-      s"${attrName}: ${histogramStr}"
-    } else {
-      s"${attrName}: is not String or Double"
-    }
+  def getEdgeHistogram(
+    user: User,
+    request: HistogramRequest): Future[HistogramResponse] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    val attributes = viewer.edgeAttributes
+    assert(attributes.contains(request.attr), s"Edge attribute '${request.attr}' does not exist.")
+    histogram(user, viewer, attributes(request.attr), request)
   }
 
   private def histogram(
     user: User,
     viewer: ProjectViewer,
     attr: Attribute[_],
-    logarithmic: Boolean) = {
+    request: HistogramRequest): Future[HistogramResponse] = {
+    assert(attr.is[String] || attr.is[Double], s"${request.attr}: is not String or Double")
+    val requestSampleSize = if (request.precise) -1 else 50000
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
-      numBuckets = 10,
-      axisOptions = AxisOptions(logarithmic = logarithmic),
-      sampleSize = -1)
-    val res = graphDrawingController.getHistogram(user, req)
-    import com.lynxanalytics.biggraph.serving.FrontendJson._
-    json.Json.toJson(Await.result(res, duration.Duration.Inf)).toString
+      numBuckets = request.numBuckets,
+      axisOptions = AxisOptions(logarithmic = request.logarithmic),
+      sampleSize = requestSampleSize)
+    graphDrawingController.getHistogram(user, req)
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
