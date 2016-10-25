@@ -14,6 +14,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 import com.lynxanalytics.biggraph.table.TableImport
+import org.apache.spark.sql.types.StructField
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
@@ -313,7 +314,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def getViewSchema(user: User, request: CheckpointRequest): String = {
     val df = viewToDF(user, request.checkpoint)
-    return df.schema.toString()
+    df.schema.map({ case StructField(x, y, t, v) => StructField(x, y, t, v) }).toString()
+    //"sdfdsfsdfds"
   }
 
   private def viewToDF(user: User, checkpoint: String): DataFrame = {
