@@ -506,6 +506,10 @@ class RootProject(SubProject):
   def checkpoint(self):
     return self.project_checkpoint.checkpoint
 
+  def global_name(self):
+    '''Global reference of the project.'''
+    return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
