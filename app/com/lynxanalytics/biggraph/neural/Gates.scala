@@ -152,7 +152,7 @@ object Gates {
       val ngrad: GraphData = gradients.toSeq.flatMap {
         case (id, gs) => ctx.edges(id).zip(gs)
       }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-      if (ngrad != Map()) ctx.add(v, ngrad)
+      if (ngrad.nonEmpty) ctx.add(v, ngrad)
     }
   }
   case class Input(name: String) extends Vector {
