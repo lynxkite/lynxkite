@@ -83,7 +83,6 @@ object Gates {
   }
 
   case class MatrixVector(v: Vector, w: M) extends Vector {
-    //http://stackoverflow.com/questions/14882642/scala-why-mapvalues-produces-a-view-and-is-there-any-stable-alternatives
     def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
     def backward(ctx: BackwardContext, gradient: GraphData) = {
       val wt = ctx(w).t
@@ -150,9 +149,10 @@ object Gates {
   case class NeighborsVector(v: Vector) extends Vectors {
     def forward(ctx: ForwardContext) = ctx.neighborsVector(ctx(v))
     def backward(ctx: BackwardContext, gradients: GraphVectors) = {
-      ctx.add(v, gradients.toSeq.flatMap {
+      val ngrad: GraphData = gradients.toSeq.flatMap {
         case (id, gs) => ctx.edges(id).zip(gs)
-      }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _)))
+      }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
+      if (ngrad != Map()) ctx.add(v, ngrad)
     }
   }
   case class Input(name: String) extends Vector {
@@ -379,6 +379,7 @@ trait Layout {
   def toItself: Map[String, String] //It describes the inputs from the same node: (s1 -> s2)
   //means that s1 gets its initial value from s2.
   def outputGate: String
+  def hasRadius: Boolean
 }
 class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layout {
   def getNetwork = {
@@ -398,6 +399,7 @@ class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) e
   def toNeighbors = "new state"
   def toItself = Map("state" -> "new state")
   def outputGate = "new state"
+  def hasRadius = true
 }
 class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layout {
   def getNetwork = {
@@ -423,6 +425,7 @@ class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) 
   def toNeighbors = "new cell"
   def toItself = Map("cell" -> "new cell", "hidden" -> "new hidden")
   def outputGate = "new hidden"
+  def hasRadius = true
 }
 class MLP(networkSize: Int, gradientCheckOn: Boolean, depth: Int)(implicit rnd: RandBasis) extends Layout {
   def getNetwork = {
@@ -430,15 +433,15 @@ class MLP(networkSize: Int, gradientCheckOn: Boolean, depth: Int)(implicit rnd: 
       (1 until depth).foldLeft {
         val vs = Neighbors()
         val input = Sum(vs) * M("edge matrix 0") + V("edge bias 0")
-        val state = Sigmoid(Input("state") * M(s"state matrix 0") +
-          input * M(s"neighbors matrix 0" + V(s"bias 0")))
-        state
+        val state = Input("state") * M(s"state matrix 0") + V(s"state bias 0")
+        val newState = Sigmoid(input + state)
+        newState
       } { (previous, current) =>
         val vs = NeighborsVector(previous)
         val input = Sum(vs) * M(s"edge matrix ${current}") + V(s"edge bias ${current}")
-        val state = Sigmoid(previous * M(s"state matrix ${current}") +
-          input * M(s"neighbors matrix ${current}" + V(s"bias ${current}")))
-        state
+        val state = previous * M(s"state matrix ${current}") + V(s"state bias ${current}")
+        val newState = Sigmoid(input + state)
+        newState
       }
     }
     Network(
@@ -451,4 +454,5 @@ class MLP(networkSize: Int, gradientCheckOn: Boolean, depth: Int)(implicit rnd: 
   def toNeighbors = ""
   def toItself = Map()
   def outputGate = "final state"
+  def hasRadius = false
 }

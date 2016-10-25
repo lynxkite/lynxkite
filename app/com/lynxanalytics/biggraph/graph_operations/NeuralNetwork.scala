@@ -205,7 +205,11 @@ case class NeuralNetwork(
     ownState: neural.GraphData,
     network: neural.Network,
     layout: neural.Layout): Seq[neural.GateValues] = {
-    (1 until radius).scanLeft {
+    val rad = {
+      if (layout.hasRadius) radius
+      else 0
+    }
+    (1 until rad).scanLeft {
       network.forward(vertices, edges, neighborsState,
         layout.inputGates.map(i => i -> ownState): _*)
     } { (previous, r) =>
