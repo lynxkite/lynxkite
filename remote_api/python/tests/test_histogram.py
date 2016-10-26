@@ -12,7 +12,7 @@ class TestHistograms(unittest.TestCase):
         'dist': 'Standard Uniform',
         'seed': '12344321'})
     a = p.vertex_attribute('attribute_name')
-    h = a.histogram(numbuckets=10,  logarithmic=True)
+    h = a.histogram(numbuckets=10, logarithmic=True)
     self.assertEqual(h.labelType, 'between')
     self.assertEqual(h.labels,
                      ['0.013', '0.020', '0.031', '0.048', '0.074', '0.114', '0.175', '0.269', '0.413', '0.635', '0.976'])
@@ -51,9 +51,9 @@ class TestHistograms(unittest.TestCase):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=20)
     p.addConstantVertexAttribute(**{
-      'name': 's_attr',
-      'type': 'String',
-      'value': 'kite'})
+        'name': 's_attr',
+        'type': 'String',
+        'value': 'kite'})
     with self.assertRaises(lynx.LynxException):
       a = p.vertex_attribute('wrong_attribute_name')
       a.histogram(numbuckets=5, logarithmic=False)
