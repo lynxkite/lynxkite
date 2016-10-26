@@ -8,10 +8,10 @@ class TestViewSchema(unittest.TestCase):
   lk = lynx.LynxKite()
 
   def get_column_names(self, schema_response):
-    return list(map(lambda x: x.name, schema_response.schema))
+    return [x.name for x in schema_response.schema]
 
   def get_data_types(self, schema_response):
-    return list(map(lambda x: x.dataType, schema_response.schema))
+    return [x.dataType for x in schema_response.schema]
 
   def test_schema(self):
     '''Used to generate a view and check its schema.'''
