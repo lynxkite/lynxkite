@@ -18,6 +18,10 @@ all: backend
 .build/frontend-test-passed: $(shell $(find) web/test) build.sbt .build/backend-done \
                           .build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
+.build/chronomaster-test-passed: $(shell $(find) chronomaster)
+	chronomaster/test.sh && touch $@
+.build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done
+	tools/with_lk.sh remote_api/python/test.sh && touch $@
 
 # Short alias:
 .PHONY: all backend frontend backend-test frontend-test test documentation-verified
@@ -25,5 +29,8 @@ backend: .build/backend-done
 frontend: .build/gulp-done
 backend-test: .build/backend-test-passed
 frontend-test: .build/frontend-test-passed
-test: backend-test frontend-test
+chronomaster-test: .build/chronomaster-test-passed
+remote_api-test: .build/remote_api-python-test-passed
+ecosystem-test: chronomaster-test remote_api-test
+test: backend-test frontend-test ecosystem-test
 documentation-verified: .build/documentation-verified

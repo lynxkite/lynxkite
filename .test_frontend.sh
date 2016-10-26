@@ -3,4 +3,4 @@
 cd `dirname $0`
 
 tools/install_spark.sh
-tools/e2e_test.sh
+tools/with_lk.sh tools/e2e_test.sh
