@@ -27,6 +27,7 @@ KITE_PID=`cat ${PID_FILE}`
 function kill_backend {
   echo "Shutting down server on port $PORT"
   kill $KITE_PID
+  while kill -0 $KITE_PID 2> /dev/null; do sleep 1; done
   rm -rf "$TMP"
 }
 trap kill_backend EXIT ERR
