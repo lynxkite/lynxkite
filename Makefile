@@ -26,7 +26,9 @@ $(pip): python_requirements.txt
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
 
 # Short alias:
-.PHONY: all backend frontend backend-test frontend-test test documentation-verified
+.PHONY: \
+	all backend frontend backend-test frontend-test chronomaster-test remote_api-test ecosystem-test \
+	test documentation-verified
 backend: .build/backend-done
 frontend: .build/gulp-done
 backend-test: .build/backend-test-passed
