@@ -322,10 +322,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     attr: Attribute[_],
     request: HistogramRequest): Future[HistogramResponse] = {
     assert(attr.is[String] || attr.is[Double], s"${request.attr}: is not String or Double")
-    val requestSampleSize = request.sampleSize match {
-      case Some(size) => size
-      case None => -1
-    }
+    val requestSampleSize = request.sampleSize.getOrElse(-1)
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
