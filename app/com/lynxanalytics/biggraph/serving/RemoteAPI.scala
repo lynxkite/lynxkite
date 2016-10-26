@@ -37,7 +37,7 @@ object RemoteAPIProtocol {
     path: List[String],
     attr: String,
     numBuckets: Int,
-    precise: Boolean,
+    sampleSize: Option[Int],
     logarithmic: Boolean)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -322,7 +322,10 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     attr: Attribute[_],
     request: HistogramRequest): Future[HistogramResponse] = {
     assert(attr.is[String] || attr.is[Double], s"${request.attr}: is not String or Double")
-    val requestSampleSize = if (request.precise) -1 else 50000
+    val requestSampleSize = request.sampleSize match {
+      case Some(size) => size
+      case None => -1
+    }
     val req = HistogramSpec(
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
