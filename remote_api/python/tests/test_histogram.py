@@ -47,6 +47,17 @@ class TestHistograms(unittest.TestCase):
     self.assertEqual(h.labels, ['0.00', '0.25', '0.50', '0.75', '1.00'])
     self.assertEqual(h.sizes, [167, 182, 175, 166])
 
+  def test_attribute_name(self):
+    with self.assertRaises(lynx.LynxException):
+      p = lynx.LynxKite().new_project()
+      p.newVertexSet(size=20)
+      p.addConstantVertexAttribute(**{
+          'name': 's_attr',
+          'type': 'String',
+          'value': 'kite'})
+      a = p.vertex_attribute('wrong_attribute_name')
+      a.histogram(5, True, False)
+
 
 if __name__ == '__main__':
   unittest.main()
