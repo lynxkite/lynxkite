@@ -1,7 +1,7 @@
 // An API that allows controlling a running LynxKite instance via JSON commands.
 package com.lynxanalytics.biggraph.serving
 
-import scala.concurrent.{ Await, Future, duration }
+import scala.concurrent.Future
 import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
 import play.api.libs.json
 import com.lynxanalytics.biggraph._

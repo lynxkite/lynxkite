@@ -435,7 +435,7 @@ class _ProjectCheckpoint:
     return r.string
 
   def histogram(self, path, attr, attr_type, numbuckets, precise, logarithmic):
-    '''Returns a histogram of the given attribute as a string.'''
+    '''Returns a histogram of the given attribute.'''
     request = dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -553,12 +553,15 @@ class Attribute():
     self.path = path
 
   def histogram(self, numbuckets, precise, logarithmic):
-    '''Returns a histogram of the attribute as a string.
+    '''Returns a histogram of the attribute.
 
-    Example:
+    Example of precise logarithmic histogram:
 
       a = p.vertex_attribute('attr_name')
-      a.histogram(10, True, True)
+      h = a.histogram(10, True, True)
+      print(h.labelType)
+      print(h.labels)
+      print(h.sizes)
     '''
 
     return self.project_checkpoint.histogram(
