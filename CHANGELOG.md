@@ -53,7 +53,6 @@ Ecosystem:
  - `count` feature in `helper.sh` to help with verification testing.
  - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
    more detailed performance data.
->>>>>>> origin/master
 
 ### 1.9.5
 
