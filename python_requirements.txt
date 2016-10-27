@@ -4,6 +4,7 @@ boto3
 croniter
 luigi==2.3.2
 mysqlclient
+pandas
 python-dateutil
 PyYAML
 prometheus_client
