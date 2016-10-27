@@ -17,6 +17,7 @@ LynxKite:
  - Views can now be edited. Views and tables exported from the global sql box can also be edited.
  - Scalable approximate embeddedness operation added.
  - Scalable approximate clustering coefficient operation added.
+ - History view can now generate Python code. (Useful for ecosystem task authors.)
 
 Ecosystem:
 
