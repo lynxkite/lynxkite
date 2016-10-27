@@ -138,7 +138,8 @@ object FEFilters {
     } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
       spec match {
         case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
-        case filter => throw new AssertionError(s"Not a valid filter: $filter")
+        case filter =>
+          throw new AssertionError(s"Not a valid filter: $filter (The only valid filter is '='.)")
       }
     } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
       val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
