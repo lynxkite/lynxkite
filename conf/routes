@@ -83,6 +83,7 @@ POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
 POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath
+POST /remote/getViewSchema com.lynxanalytics.biggraph.serving.RemoteAPIServer.getViewSchema
 POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
 POST /remote/getVertexHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getVertexHistogram
 POST /remote/getEdgeHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getEdgeHistogram

@@ -324,6 +324,13 @@ class View:
     ), raw=True)
     return r['rows']
 
+  def schema(self):
+    '''Computes the view and returns the schema.'''
+    r = self.lk._send('getViewSchema', dict(
+        checkpoint=self.checkpoint,
+    ))
+    return r
+
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
     '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
