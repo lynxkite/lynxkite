@@ -41,7 +41,7 @@ class TestTable(unittest.TestCase):
     tt.run()
     # directory exists
     tt.run()
-    # directory exists, but contains a different scheme
+    # directory exists, but contains a different schema
     shutil.copy(r"tests/TestTaskDoCheck.schema", directory + "/TestTaskDoCheck.schema")
     self.assertRaises(AssertionError, tt.run)
 
