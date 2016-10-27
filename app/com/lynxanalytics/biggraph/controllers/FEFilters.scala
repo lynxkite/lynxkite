@@ -101,57 +101,55 @@ object FEFilters {
   }
 
   def filterFromSpec[T: TypeTag](spec: String): Filter[T] = {
-    val negated = spec.startsWith("!")
-    val innerSpec = if (negated) spec.drop(1) else spec
-    val innerFilter: Filter[T] =
-      if (innerSpec == "*") {
-        MatchAllFilter()
-      } else if (typeOf[T] =:= typeOf[String]) {
-        val stringFilter = innerSpec match {
-          case regexRE(re) => RegexFilter(re)
-          case csv => OneOf(csv.split(",", -1).map(_.trim).toSet)
-        }
-        stringFilter.asInstanceOf[Filter[T]]
-      } else if (typeOf[T] =:= typeOf[Long]) {
-        OneOf(innerSpec.split(",", -1).map(_.trim.toLong).toSet)
-          .asInstanceOf[Filter[T]]
-      } else if (typeOf[T] =:= typeOf[Double]) {
-        val doubleFilter = innerSpec match {
-          case numberRE(num) => DoubleEQ(num.toDouble)
-          case intervalOpenOpenRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLT(b.toDouble))
-          case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
-          case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
-          case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
-          case boundRE(comparator, valueString) =>
-            val value = valueString.toDouble
-            comparator match {
-              case "=" => DoubleEQ(value)
-              case "==" => DoubleEQ(value)
-              case "<" => DoubleLT(value)
-              case ">" => DoubleGT(value)
-              case "<=" => DoubleLE(value)
-              case ">=" => DoubleGE(value)
-              case comparator => throw new AssertionError(s"Not a valid comparator: $comparator")
-            }
-          case filter => throw new AssertionError(s"Not a valid filter: $filter")
-        }
-        doubleFilter.asInstanceOf[Filter[T]]
-      } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
-        innerSpec match {
-          case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
-          case filter => throw new AssertionError(s"Not a valid filter: $filter")
-        }
-      } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
-        val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
-        innerSpec match {
-          case existsRE(elementSpec) =>
-            Exists(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
-          case forallRE(elementSpec) =>
-            ForAll(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
-          case filter => throw new AssertionError(s"Not a valid filter: $filter")
-        }
-      } else ???
-    if (negated) NotFilter(innerFilter) else innerFilter
+    if (spec.startsWith("!")) {
+      NotFilter(filterFromSpec(spec.drop(1)))
+    } else if (spec == "*") {
+      MatchAllFilter()
+    } else if (typeOf[T] =:= typeOf[String]) {
+      val stringFilter = spec match {
+        case regexRE(re) => RegexFilter(re)
+        case csv => OneOf(csv.split(",", -1).map(_.trim).toSet)
+      }
+      stringFilter.asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[Long]) {
+      OneOf(spec.split(",", -1).map(_.trim.toLong).toSet)
+        .asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[Double]) {
+      val doubleFilter = spec match {
+        case numberRE(num) => DoubleEQ(num.toDouble)
+        case intervalOpenOpenRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLT(b.toDouble))
+        case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
+        case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
+        case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
+        case boundRE(comparator, valueString) =>
+          val value = valueString.toDouble
+          comparator match {
+            case "=" => DoubleEQ(value)
+            case "==" => DoubleEQ(value)
+            case "<" => DoubleLT(value)
+            case ">" => DoubleGT(value)
+            case "<=" => DoubleLE(value)
+            case ">=" => DoubleGE(value)
+            case comparator => throw new AssertionError(s"Not a valid comparator: $comparator")
+          }
+        case filter => throw new AssertionError(s"Not a valid filter: $filter")
+      }
+      doubleFilter.asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
+      spec match {
+        case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
+        case filter => throw new AssertionError(s"Not a valid filter: $filter")
+      }
+    } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
+      val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
+      spec match {
+        case existsRE(elementSpec) =>
+          Exists(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
+        case forallRE(elementSpec) =>
+          ForAll(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
+        case filter => throw new AssertionError(s"Not a valid filter: $filter")
+      }
+    } else ???
   }
 
   private val numberPattern = "\\s*(-?\\d*(?:\\.\\d*)?)\\s*"
