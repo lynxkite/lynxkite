@@ -69,6 +69,7 @@ addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 addJPropIfNonEmpty pidfile.path "/dev/null"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
+addJPropIfNonEmpty file.encoding 'UTF-8'
 
 mode=${residual_args[0]}
 
