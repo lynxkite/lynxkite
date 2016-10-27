@@ -37,5 +37,7 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
   }
   test("negation") {
     assert(FEFilters.filterFromSpec[Double]("!123") == NotFilter(DoubleEQ(123.0)))
+    assert(FEFilters.filterFromSpec[Double]("!!123") == NotFilter(NotFilter(DoubleEQ(123.0))))
+    assert(FEFilters.filterFromSpec[Double]("!!!123") == NotFilter(NotFilter(NotFilter(DoubleEQ(123.0)))))
   }
 }
