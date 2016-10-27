@@ -9,6 +9,7 @@ lk = lynx.LynxKite()
 
 query = '''SELECT false AS zero, 1 AS one, 2.0 AS two, 'three' AS three'''
 
+
 class TestTask:
 
   def inputview(self):
