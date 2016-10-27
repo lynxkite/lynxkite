@@ -14,6 +14,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 import com.lynxanalytics.biggraph.table.TableImport
+import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
@@ -136,6 +137,7 @@ object RemoteAPIServer extends JsonServer {
   def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
+  def getViewSchema = jsonPost(c.getViewSchema)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def removeName = jsonPost(c.removeName)
@@ -167,6 +169,7 @@ object RemoteAPIServer extends JsonServer {
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
+
   import RemoteAPIProtocol._
 
   implicit val metaManager = env.metaGraphManager
@@ -355,6 +358,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): CheckpointResponse = {
     CheckpointResponse(ViewRecipe.saveAsCheckpoint(recipe))
+  }
+
+  def getViewSchema(user: User, request: CheckpointRequest): StructType = {
+    val df = viewToDF(user, request.checkpoint)
+    df.schema
   }
 
   private def viewToDF(user: User, checkpoint: String): DataFrame = {
