@@ -1,6 +1,7 @@
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
 
+.SUFFIXES: # Disable built-in rules.
 .PHONY: all
 all: backend
 
