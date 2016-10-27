@@ -131,12 +131,15 @@ object FEFilters {
               case ">" => DoubleGT(value)
               case "<=" => DoubleLE(value)
               case ">=" => DoubleGE(value)
+              case comparator => throw new AssertionError(s"Not a valid comparator: $comparator")
             }
+          case filter => throw new AssertionError(s"Not a valid filter: $filter")
         }
         doubleFilter.asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
         innerSpec match {
           case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
+          case filter => throw new AssertionError(s"Not a valid filter: $filter")
         }
       } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
         val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
@@ -145,6 +148,7 @@ object FEFilters {
             Exists(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
           case forallRE(elementSpec) =>
             ForAll(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
+          case filter => throw new AssertionError(s"Not a valid filter: $filter")
         }
       } else ???
     if (negated) NotFilter(innerFilter) else innerFilter
