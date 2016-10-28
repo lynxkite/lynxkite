@@ -23,6 +23,7 @@ Ecosystem:
  - Flexible date template strings.
  - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
    intervals.
+ - Segmentations and attribute histograms in python Remote API.
 
 ### 1.9.5.4
 
