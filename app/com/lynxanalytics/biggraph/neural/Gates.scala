@@ -434,13 +434,13 @@ class MLP(networkSize: Int, gradientCheckOn: Boolean, depth: Int)(implicit rnd: 
         val vs = Neighbors()
         val input = Sum(vs) * M("edge matrix 0") + V("edge bias 0")
         val state = Input("state") * M(s"state matrix 0") + V(s"state bias 0")
-        val newState = Sigmoid(input + state)
+        val newState = Tanh(input + state)
         newState
       } { (previous, current) =>
         val vs = NeighborsVector(previous)
-        val input = Sum(vs) * M(s"edge matrix ${current}") + V(s"edge bias ${current}")
-        val state = previous * M(s"state matrix ${current}") + V(s"state bias ${current}")
-        val newState = Sigmoid(input + state)
+        val input = (Sum(vs) * M(s"edge matrix ${current}") + V(s"edge bias ${current}"))
+        val state = (previous * M(s"state matrix ${current}") + V(s"state bias ${current}"))
+        val newState = Tanh(input + state)
         newState
       }
     }
