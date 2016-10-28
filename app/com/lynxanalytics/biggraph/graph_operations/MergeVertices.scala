@@ -69,16 +69,18 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
                            inputDatas: DataSet): Unit = {
     implicit val ct = inputs.attr.data.classTag
     val partitioner = attr.partitioner.get
+
     val byAttr = attr.map(_.swap)
-    val idToAttr = byAttr.map { case (key, _) => key }.distinct.randomNumbered(partitioner)
-    idToAttr.persist(spark.storage.StorageLevel.DISK_ONLY)
-    val attrToId = idToAttr.map(_.swap).sortUnique(partitioner)
-    val matching = HybridRDD(byAttr, partitioner, even = true).lookup(attrToId).map {
+    val segmentIdToAttr = byAttr.map { case (key, _) => key }.distinct.randomNumbered(partitioner)
+    segmentIdToAttr.persist(spark.storage.StorageLevel.DISK_ONLY)
+    val attrToSegmentId = segmentIdToAttr.map(_.swap).sortUnique(partitioner)
+    // Join the segment ids with the original vertex ids using the attribute.
+    val matching = HybridRDD(byAttr, partitioner, even = true).lookup(attrToSegmentId).map {
       case (_, (vid, groupId)) => vid -> Edge(vid, groupId)
     }.sortUnique(partitioner)
 
-    output(o.segments, idToAttr.mapValues(_ => ()))
-    output(o.representative, idToAttr.mapValuesWithKeys { case (key, _) => Edge(key, key) })
+    output(o.segments, segmentIdToAttr.mapValues(_ => ()))
+    output(o.representative, segmentIdToAttr.mapValuesWithKeys { case (key, _) => Edge(key, key) })
     output(o.belongsTo, matching)
   }
 
