@@ -13,6 +13,7 @@ directory = r'tests/ThisDirectoryDoesNotExistYet'
 with open(r"tests/TestTaskDoCheck.schema.correct", 'r') as f:
   correct_schema = yaml.load(f)
 
+
 class TestTask:
 
   def inputview(self):
