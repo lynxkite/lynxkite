@@ -18,4 +18,8 @@ project.mergeVerticesByAttribute(
   'aggregate-rnd_std_normal': 'average'
 )
 
+project.discardVertexAttribute(
+  'name' : 'label'
+)
+
 project.computeUncomputed()
