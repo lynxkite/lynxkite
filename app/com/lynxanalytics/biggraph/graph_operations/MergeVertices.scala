@@ -90,17 +90,18 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
+    implicit val tt = inputs.attr.data.typeTag
     implicit val runtimeContext = rc
     val attr = inputs.attr.rdd
 
-    inputs.attr.data.typeTag match {
-      case tt if tt == typeTag[Double] =>
-        efficientMerge(attr.asInstanceOf[spark.rdd.RDD[(ID, Double)]], o, output)
-      case tt if tt == typeTag[Long] =>
-        efficientMerge(attr.asInstanceOf[spark.rdd.RDD[(ID, Long)]], o, output)
-      case tt if tt == typeTag[String] =>
-        efficientMerge(attr.asInstanceOf[spark.rdd.RDD[(ID, String)]], o, output)
-      case _ => groupByMerge(attr, o, output)
+    if (typeOf[T] =:= typeOf[Double]) {
+      efficientMerge(attr.asInstanceOf[spark.rdd.RDD[(ID, Double)]], o, output)
+    } else if (typeOf[T] =:= typeOf[Long]) {
+      efficientMerge(attr.asInstanceOf[spark.rdd.RDD[(ID, Long)]], o, output)
+    } else if (typeOf[T] =:= typeOf[String]) {
+      efficientMerge(attr.asInstanceOf[spark.rdd.RDD[(ID, String)]], o, output)
+    } else {
+      groupByMerge(attr, o, output)
     }
   }
 }
