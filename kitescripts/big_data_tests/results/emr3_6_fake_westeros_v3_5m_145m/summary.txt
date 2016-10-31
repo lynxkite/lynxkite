@@ -22,6 +22,7 @@
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy:42
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/maximal_cliques.groovy:118
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_parallel_edges_by_attribute.groovy:792
+/home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_vertices_by_attribute_even.groovy:2472
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_vertices_by_attribute_longtail.groovy:1293
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_vertices_by_attribute.groovy:1017
 /home/hadoop/biggraphstage/kitescripts/big_data_tests/modular_clustering.groovy:2675
