@@ -22,6 +22,12 @@ if branch in protected_branches:
   warn('You cannot commit directly to {0!r}.'.format(branch))
   warn('Please create a new branch, commit there, and send a pull request on GitHub.')
 
+# ''.split('\n') -> [''] by default.....
+name_status = filter(bool, subprocess.check_output(
+    'git diff --name-status --staged'.split()).strip().split('\n'))
+
+files = [line.split()[1] for line in name_status if line.split()[0] != "D"]
+
 diff = subprocess.check_output('git diff --staged'.split())
 new_lines = [l for l in diff.split('\n') if l.startswith('+')]
 
@@ -31,14 +37,15 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
-bad_lines = [l for l in new_lines if '\t' in l]
-if bad_lines:
-  warn('TAB found in your diff:')
-  for l in bad_lines:
-    warn('  ' + l)
+non_makefiles = [fn for fn in files if not fn.endswith('Makefile')]
+if len(non_makefiles) > 0:
+  non_makefile_diff = subprocess.check_output('git diff --staged'.split() + non_makefiles)
+  bad_lines = [l for l in non_makefile_diff.split('\n') if l.startswith('+') and '\t' in l]
+  if bad_lines:
+    warn('TAB found in your diff:')
+    for l in bad_lines:
+      warn('  ' + l)
 
-files = subprocess.check_output(
-    'git diff --name-only --staged'.split()).split('\n')
 if any(fn.endswith('.js') for fn in files):
   if subprocess.call('cd web; gulp jshint', shell=True):
     warn('JSHint fails.')
