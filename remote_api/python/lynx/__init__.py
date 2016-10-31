@@ -324,6 +324,13 @@ class View:
     ), raw=True)
     return r['rows']
 
+  def schema(self):
+    '''Computes the view and returns the schema.'''
+    r = self.lk._send('getViewSchema', dict(
+        checkpoint=self.checkpoint,
+    ))
+    return r
+
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
     '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
@@ -434,6 +441,30 @@ class _ProjectCheckpoint:
       return r.double
     return r.string
 
+  def histogram(self, path, attr, attr_type, numbuckets, sample_size, logarithmic):
+    '''Returns a histogram of the given attribute.'''
+    request = dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        attr=attr,
+        numBuckets=numbuckets,
+        sampleSize=sample_size,
+        logarithmic=logarithmic
+    )
+    if attr_type == 'vertex':
+      r = self.lk._send(
+          'getVertexHistogram',
+          request
+      )
+    elif attr_type == 'edge':
+      r = self.lk._send(
+          'getEdgeHistogram',
+          request
+      )
+    else:
+      raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
+    return r
+
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -468,6 +499,14 @@ class SubProject:
   def segmentation(self, name):
     '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
     return SubProject(self.project_checkpoint, self.path + [name])
+
+  def vertex_attribute(self, attr):
+    '''Creates a :class:`Attribute` representing a vertex attribute with the given name.'''
+    return Attribute(attr, 'vertex', self.project_checkpoint, self.path)
+
+  def edge_attribute(self, attr):
+    '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
+    return Attribute(attr, 'edge', self.project_checkpoint, self.path)
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -506,6 +545,40 @@ class RootProject(SubProject):
   def checkpoint(self):
     return self.project_checkpoint.checkpoint
 
+  def global_name(self):
+    '''Global reference of the project.'''
+    return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
+
+
+class Attribute():
+  '''Represents a vertex or an edge attribute.'''
+
+  def __init__(self, name, attr_type, project_checkpoint, path):
+    self.project_checkpoint = project_checkpoint
+    self.name = name
+    self.attr_type = attr_type
+    self.path = path
+
+  def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
+    '''Returns a histogram of the attribute.
+
+    Example of precise logarithmic histogram with 20 buckets.:
+
+      a = p.vertex_attribute('attr_name')
+      h = a.histogram(numbuckets=20, logarithmic=True)
+      print(h.labelType)
+      print(h.labels)
+      print(h.sizes)
+    '''
+
+    return self.project_checkpoint.histogram(
+        self.path,
+        self.name,
+        self.attr_type,
+        numbuckets,
+        sample_size,
+        logarithmic)
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
@@ -515,6 +588,23 @@ class LynxException(Exception):
     self.error = error
 
 
+class ResponseObject(types.SimpleNamespace):
+
+  @staticmethod
+  def obj_to_dict(obj):
+    if isinstance(obj, ResponseObject):
+      return obj.to_dict()
+    elif isinstance(obj, list):
+      return [ResponseObject.obj_to_dict(o) for o in obj]
+    elif isinstance(obj, dict):
+      return {k: ResponseObject.obj_to_dict(v) for (k, v) in obj.items()}
+    else:
+      return obj
+
+  def to_dict(self):
+    return {k: ResponseObject.obj_to_dict(v) for (k, v) in self.__dict__.items()}
+
+
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
-  return types.SimpleNamespace(**dic)
+  return ResponseObject(**dic)

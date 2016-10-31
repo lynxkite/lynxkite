@@ -120,7 +120,7 @@ class HadoopFile private (
   // The caller is responsible for calling close().
   def create() = fs.create(path)
   def exists() = fs.exists(path)
-  private def reader() = new BufferedReader(new InputStreamReader(open))
+  private def reader() = new BufferedReader(new InputStreamReader(open, "utf-8"))
   def readAsString() = {
     val r = reader()
     try org.apache.commons.io.IOUtils.toString(r) finally r.close()

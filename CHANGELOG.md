@@ -12,14 +12,20 @@ LynxKite:
  - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
    Apologies for the pun.)
  - SQL boxes now persist their query history into the browser's local storage.
+ - SQL box has _"Show more"_ button to easily look at more results.
  - Assorted UI fixes.
  - Views can now be edited. Views and tables exported from the global sql box can also be edited.
+ - Scalable approximate embeddedness operation added.
+ - Scalable approximate clustering coefficient operation added.
+ - Various visualization limits (such as the maximum 10,000 edges) can be adjusted with the
+     `KITE_DRAWING_OVERALL` setting (default 10,000) and its more fine-grained companions.
 
 Ecosystem:
 
  - Flexible date template strings.
  - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
    intervals.
+ - Segmentations and attribute histograms in Python Remote API.
 
 ### 1.9.5.4
 
@@ -50,7 +56,6 @@ Ecosystem:
  - `count` feature in `helper.sh` to help with verification testing.
  - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
    more detailed performance data.
->>>>>>> origin/master
 
 ### 1.9.5
 

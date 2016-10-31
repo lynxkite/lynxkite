@@ -14,6 +14,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
 import com.lynxanalytics.biggraph.table.TableImport
+import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
   case class CheckpointResponse(checkpoint: String)
@@ -32,6 +33,13 @@ object RemoteAPIProtocol {
     // Defaults to write access only for the creating user.
     writeACL: Option[String])
   case class ScalarRequest(checkpoint: String, path: List[String], scalar: String)
+  case class HistogramRequest(
+    checkpoint: String,
+    path: List[String],
+    attr: String,
+    numBuckets: Int,
+    sampleSize: Option[Int],
+    logarithmic: Boolean)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -100,6 +108,8 @@ object RemoteAPIProtocol {
   implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
   implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
+  implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
+  implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -122,9 +132,12 @@ object RemoteAPIServer extends JsonServer {
   import RemoteAPIProtocol._
   val userController = ProductionJsonServer.userController
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
-  def getScalar = jsonPost(c.getScalar)
+  def getScalar = jsonFuturePost(c.getScalar)
+  def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
+  def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
+  def getViewSchema = jsonPost(c.getViewSchema)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def removeName = jsonPost(c.removeName)
@@ -156,6 +169,7 @@ object RemoteAPIServer extends JsonServer {
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
+
   import RemoteAPIProtocol._
 
   implicit val metaManager = env.metaGraphManager
@@ -163,6 +177,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   val ops = new frontend_operations.Operations(env)
   val sqlController = new SQLController(env)
   val bigGraphController = new BigGraphController(env)
+  val graphDrawingController = new GraphDrawingController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
 
@@ -274,15 +289,50 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(newState.checkpoint.get)
   }
 
-  def getScalar(user: User, request: ScalarRequest): DynamicValue = {
+  def getScalar(user: User, request: ScalarRequest): Future[DynamicValue] = {
     val viewer = getViewer(request.checkpoint, request.path)
     val scalar = viewer.scalars(request.scalar)
-    dynamicValue(dataManager.get(scalar))
+    import dataManager.executionContext
+    dataManager.getFuture(scalar).map(dynamicValue(_)).future
   }
 
   private def dynamicValue[T](scalar: ScalarData[T]) = {
     implicit val tt = scalar.typeTag
     DynamicValue.convert(scalar.value)
+  }
+
+  def getVertexHistogram(
+    user: User,
+    request: HistogramRequest): Future[HistogramResponse] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    val attributes = viewer.vertexAttributes
+    assert(attributes.contains(request.attr), s"Vertex attribute '${request.attr}' does not exist.")
+    histogram(user, viewer, attributes(request.attr), request)
+  }
+
+  def getEdgeHistogram(
+    user: User,
+    request: HistogramRequest): Future[HistogramResponse] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    val attributes = viewer.edgeAttributes
+    assert(attributes.contains(request.attr), s"Edge attribute '${request.attr}' does not exist.")
+    histogram(user, viewer, attributes(request.attr), request)
+  }
+
+  private def histogram(
+    user: User,
+    viewer: ProjectViewer,
+    attr: Attribute[_],
+    request: HistogramRequest): Future[HistogramResponse] = {
+    assert(attr.is[String] || attr.is[Double], s"${request.attr}: is not String or Double")
+    val requestSampleSize = request.sampleSize.getOrElse(-1)
+    val req = HistogramSpec(
+      attributeId = attr.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = request.numBuckets,
+      axisOptions = AxisOptions(logarithmic = request.logarithmic),
+      sampleSize = requestSampleSize)
+    graphDrawingController.getHistogram(user, req)
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
@@ -308,6 +358,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def createView[T <: ViewRecipe: json.Writes](user: User, recipe: T): CheckpointResponse = {
     CheckpointResponse(ViewRecipe.saveAsCheckpoint(recipe))
+  }
+
+  def getViewSchema(user: User, request: CheckpointRequest): StructType = {
+    val df = viewToDF(user, request.checkpoint)
+    df.schema
   }
 
   private def viewToDF(user: User, checkpoint: String): DataFrame = {
@@ -366,9 +421,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(cp)
   }
 
-  private def isUncomputed(entity: TypedEntity[_]): Boolean = {
+  private def isComputed(entity: TypedEntity[_]): Boolean = {
     val progress = dataManager.computeProgress(entity)
-    progress < 1.0
+    progress >= 1.0
   }
 
   // Checks Whether all the scalars, attributes and segmentations of the project are already computed.
@@ -382,14 +437,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val attributes = (editor.vertexAttributes ++ editor.edgeAttributes).values
     val segmentations = editor.viewer.sortedSegmentations
 
-    if (scalars.exists(isUncomputed)) false
-    else {
-      if (attributes.exists(isUncomputed)) false
-      else {
-        if (segmentations.map(_.editor).exists(isComputed)) false
-        else true
-      }
-    }
+    scalars.forall(isComputed) &&
+      attributes.forall(isComputed) &&
+      segmentations.map(_.editor).forall(isComputed)
   }
 
   def computeProject(user: User, request: CheckpointRequest): Unit = {
