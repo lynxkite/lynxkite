@@ -39,7 +39,7 @@ instead of ng-model="sql" -->
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
         <option value="table">LynxKite table</option>
         <option value="view">LynxKite view</option>
-        <option value="segmentation">Segmentation</option>
+        <option ng-if="!isGlobal" value="segmentation">Segmentation</option>
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
         <option value="parquet">Parquet</option>
