@@ -63,7 +63,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
     val prediction = {
       val op = simpleNeuralNetwork(
-        featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 0,
+        featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 1,
         hideState = true, forgetFraction = 0.0, iterations = 13,
         gradientCheckOn = false, networkLayout = "GRU")
       op(op.edges, vs.emptyEdgeBundle)(op.label, a)(op.features, Seq(a, b)).result.prediction
@@ -172,7 +172,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
 
     val prediction = {
       val op = NeuralNetwork(
-        featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 3,
+        featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 4,
         hideState = false, forgetFraction = 0.3, trainingRadius = 1, maxTrainingVertices = 8,
         minTrainingVertices = 7, iterationsInTraining = 3, subgraphsInTraining = 2,
         numberOfTrainings = 1, knownLabelWeight = 0.5, seed = 15, gradientCheckOn = false,
