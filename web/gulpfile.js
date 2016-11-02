@@ -74,7 +74,6 @@ gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], functio
   var staticFiles = gulp.src([
     'app/*.{png,svg}',
     'app/images/*',
-    'app/bower_components/zeroclipboard/dist/ZeroClipboard.swf',
     'app/**/*.html', '!app/index.html',
     ], { base: 'app' });
   // Move Bootstrap fonts to where the relative URLs will find them.

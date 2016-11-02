@@ -19,7 +19,7 @@
     "threejs": "jiyinyiyong/three.js#0.71.0",
     "threestrap": "0.0.10",
     "tinycolor": "1.2.1",
-    "zeroclipboard": "2.2.0"
+    "clipboard": "1.5.15"
   },
   "devDependencies": {
     "angular-mocks": "1.4.4",
