@@ -51,7 +51,10 @@ instead of ng-model="sql" -->
 
   <div class="form-group" ng-show=
     "exportFormat === 'table' || exportFormat === 'segmentation' || exportFormat === 'view'">
-    <label for="exportKiteTable" class="col-sm-4 control-label">
+    <label ng-if="exportFormat === 'segmentation'" for="exportKiteTable" class="col-sm-4 control-label">
+      Segmentation name <help-popup href="create-segmentation-from-sql-name"></help-popup>
+    </label>
+    <label ng-if="exportFormat !== 'segmentation'" for="exportKiteTable" class="col-sm-4 control-label">
       Table name <help-popup href="export-lynxkite-table-table"></help-popup>
     </label>
     <div class="col-sm-8">
