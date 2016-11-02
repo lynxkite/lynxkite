@@ -52,7 +52,6 @@ input.save-as {
 .project .sublist .clicky {
   color: rgba(0, 0, 0, 0.3);
 }
-.project .sublist .clicky.zeroclipboard-is-hover,
 .project .sublist .clicky:hover {
   color: black;
 }

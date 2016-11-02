@@ -21,6 +21,6 @@
   "maxlen": 100,
   "globals": {
     "angular": false,
-    "ZeroClipboard": false
+    "Clipboard": false
   }
 }
