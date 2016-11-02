@@ -142,10 +142,7 @@ object Gates {
       ctx.add(vs, gradient.map { case (id, g) => id -> vsd(id).map(_ => g) })
     }
   }
-  case class Neighbors() extends Vectors {
-    def forward(ctx: ForwardContext) = ctx.neighbors
-    def backward(ctx: BackwardContext, gradients: GraphVectors) = ctx.addNeighbors(gradients)
-  }
+
   case class NeighborsVector(v: Vector) extends Vectors {
     def forward(ctx: ForwardContext) = ctx.neighborsVector(ctx(v))
     def backward(ctx: BackwardContext, gradients: GraphVectors) = {
@@ -221,9 +218,8 @@ case class Network private (
   def forward(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    neighbors: GraphData,
     inputs: (String, GraphData)*): GateValues = {
-    val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
+    val ctx = ForwardContext(this, vertices, edges, inputs.toMap)
     for (o <- outputs.values) {
       ctx(o).view.force
     }
@@ -242,11 +238,11 @@ case class Network private (
     ctx.gradients
   }
 
-  def update(gradients: Iterable[NetworkGradients], learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
+  def update(gradients: NetworkGradients, learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
     import breeze.linalg._
     import breeze.numerics._
     val sums = allWeights.keys.map {
-      name => name -> gradients.map(_.trained(name)).reduce(_ + _)
+      name => name -> gradients.trained(name)
     }.toMap
     if (clipGradients) {
       for ((k, v) <- sums) {
@@ -275,7 +271,6 @@ private case class ForwardContext(
     network: Network,
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    neighborState: GraphData,
     inputs: Map[String, GraphData]) {
   val vectorCache = collection.mutable.Map[String, GraphData]()
   val vectorsCache = collection.mutable.Map[String, GraphVectors]()
@@ -300,7 +295,6 @@ private case class ForwardContext(
       else id -> edges(id).map(d(_))
     }.toMap
   }
-  def neighbors: GraphVectors = neighborsVector(neighborState)
   def values(names: Map[String, Vector]) = new GateValues(vectorCache, vectorsCache, names)
 }
 
@@ -349,14 +343,6 @@ private case class BackwardContext(
       trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
   }
 
-  def addNeighbors(gradients: GraphVectors): Unit = {
-    val ngrad: GraphData = gradients.toSeq.flatMap {
-      case (id, gs) => edges(id).zip(gs)
-    }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-    if (neighborGradients == null) neighborGradients = ngrad
-    else neighborGradients = neighborGradients + ngrad
-  }
-
   def gradients = new NetworkGradients(
     vectorGradients, vectorsGradients, trainedGradients, neighborGradients)
 }
@@ -372,87 +358,69 @@ class NetworkGradients(
   def apply(name: String): GraphData = vector(Gates.Input(name).id)
 }
 
-trait Layout {
-  def getNetwork: Network
-  def inputGates: Seq[String]
-  def toNeighbors: String
-  def toItself: Map[String, String] //It describes the inputs from the same node: (s1 -> s2)
-  //means that s1 gets its initial value from s2.
+abstract class Layout(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) {
+  def ownStateInputs: Seq[String]
+  def neighborsStateInputs: Seq[String]
+  def connection = ownStateInputs ++ neighborsStateInputs
   def outputGate: String
-  def hasRadius: Boolean
-}
-class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layout {
+  def block(input: Map[String, Vector], round: Int): Map[String, Vector]
   def getNetwork = {
-    val vs: Vectors = Neighbors()
-    val eb = V("edge bias")
-    val input = Sum(vs) * M("edge matrix") + eb
-    val state = Input("state")
+    val finalState = {
+      (0 until radius).foldLeft {
+        connection.map(name => {
+          val input: Vector = Input(name)
+          (name, input)
+        }).toMap
+      } { case (a, b) => block(a, b) }(outputGate)
+    }
+    Network(clipGradients = !gradientCheckOn,
+      size = networkSize,
+      "final state" -> finalState
+    )
+  }
+}
+class GRU(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) extends Layout(networkSize, gradientCheckOn, radius) {
+  def ownStateInputs = Seq("own state")
+  def neighborsStateInputs = Seq("neighbors state")
+  def outputGate = "own state"
+  def block(fromPrevious: Map[String, Vector], round: Int) = {
+    val vs = NeighborsVector(fromPrevious("neighbors state"))
+    val state = fromPrevious("own state")
+    val input = Sum(vs) * M("edge matrix") + V("edge bias")
     val update = Sigmoid(input * M("update i") + state * M("update h"))
     val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
     val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
-    Network(
-      clipGradients = !gradientCheckOn,
-      size = networkSize,
-      "new state" -> (state - update * state + update * tilde))
+    val newState = state - update * state + update * tilde
+    Map("own state" -> newState, "neighbors state" -> newState)
   }
-  def inputGates = Seq("state")
-  def toNeighbors = "new state"
-  def toItself = Map("state" -> "new state")
-  def outputGate = "new state"
-  def hasRadius = true
 }
-class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layout {
-  def getNetwork = {
-    val vs: Vectors = Neighbors()
-    val eb = V("edge bias")
-    val input = Sum(vs) * M("edge matrix") + eb
-    val cell = Input("cell")
-    val hidden = Input("hidden")
+class LSTM(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) extends Layout(networkSize, gradientCheckOn, radius) {
+  def ownStateInputs = Seq("own cell", "own hidden")
+  def neighborsStateInputs = Seq("neighbors cell")
+  def outputGate = "own hidden"
+  def block(fromPrevious: Map[String, Vector], round: Int) = {
+    val vs = NeighborsVector(fromPrevious("neighbors cell"))
+    val cell = fromPrevious("own cell")
+    val hidden = fromPrevious("own hidden")
+    val input = Sum(vs) * M("edge matrix") + V("edge bias")
     val forget = Sigmoid(hidden * M("forget h") + input * M("forget i") + V("forget b"))
     val chooseUpdate = Sigmoid(hidden * M("choose update h") + input * M("choose update i") + V("choose update b"))
     val tilde = Tanh(hidden * M("tilde h") + input * M("tilde i") + V("tilde b"))
     val newCell = cell * forget + chooseUpdate * tilde
     val chooseOutput = Sigmoid(hidden * M("choose output h") + input * M("choose output i") + V("choose output b"))
     val newHidden = chooseOutput * Tanh(newCell)
-    Network(
-      clipGradients = !gradientCheckOn,
-      size = networkSize,
-      "new cell" -> newCell,
-      "new hidden" -> newHidden
-    )
+    Map("own cell" -> newCell, "own hidden" -> newHidden, "neighbors cell" -> newCell)
   }
-  def inputGates = Seq("cell", "hidden")
-  def toNeighbors = "new cell"
-  def toItself = Map("cell" -> "new cell", "hidden" -> "new hidden")
-  def outputGate = "new hidden"
-  def hasRadius = true
 }
-class MLP(networkSize: Int, gradientCheckOn: Boolean, depth: Int)(implicit rnd: RandBasis) extends Layout {
-  def getNetwork = {
-    val finalState = {
-      (1 until depth).foldLeft {
-        val vs = Neighbors()
-        val input = Sum(vs) * M("edge matrix 0") + V("edge bias 0")
-        val state = Input("state") * M(s"state matrix 0") + V(s"state bias 0")
-        val newState = Tanh(input + state)
-        newState
-      } { (previous, current) =>
-        val vs = NeighborsVector(previous)
-        val input = (Sum(vs) * M(s"edge matrix ${current}") + V(s"edge bias ${current}"))
-        val state = (previous * M(s"state matrix ${current}") + V(s"state bias ${current}"))
-        val newState = Tanh(input + state)
-        newState
-      }
-    }
-    Network(
-      clipGradients = !gradientCheckOn,
-      size = networkSize,
-      "final state" -> finalState
-    )
+class MLP(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) extends Layout(networkSize, gradientCheckOn, radius) {
+  def ownStateInputs = Seq("own state")
+  def neighborsStateInputs = Seq("neighbors state")
+  def outputGate = "own state"
+  def block(fromPrevious: Map[String, Vector], round: Int) = {
+    val vs = NeighborsVector(fromPrevious("neighbors state"))
+    val input = Sum(vs) * M(s"edge matrix ${round}") + V(s"edge bias ${round}")
+    val state = fromPrevious("own state") * M(s"state matrix ${round}") + V(s"state bias ${round}")
+    val newState = Tanh(input + state)
+    Map("own state" -> newState, "neighbors state" -> newState)
   }
-  def inputGates = Seq("state")
-  def toNeighbors = ""
-  def toItself = Map()
-  def outputGate = "final state"
-  def hasRadius = false
 }

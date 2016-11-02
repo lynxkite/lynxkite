@@ -30,8 +30,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
                           seed: Int = 15,
                           knownLabelWeight: Double = 0.5,
                           gradientCheckOn: Boolean = false,
-                          networkLayout: String = "GRU",
-                          depthForMLP: Int = 5) = NeuralNetwork(
+                          networkLayout: String = "GRU") = NeuralNetwork(
     featureCount, networkSize, learningRate, radius, hideState, forgetFraction,
     knownLabelWeight = knownLabelWeight,
     seed = seed,
@@ -39,8 +38,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     trainingRadius = -1, // No sampling.
     maxTrainingVertices = 1, minTrainingVertices = 1,
     subgraphsInTraining = 1, numberOfTrainings = 1,
-    gradientCheckOn = gradientCheckOn, networkLayout = networkLayout,
-    depthForMLP = depthForMLP)
+    gradientCheckOn = gradientCheckOn, networkLayout = networkLayout)
 
   // Just output the label.
   test("label, trivial") {
@@ -51,7 +49,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = simpleNeuralNetwork(
         featureCount = 0, networkSize = 2, learningRate = 0.5, radius = 0,
         hideState = false, forgetFraction = 0.0, iterations = 60,
-        gradientCheckOn = false, networkLayout = "MLP")
+        gradientCheckOn = false, networkLayout = "LSTM")
       op(op.edges, vs.emptyEdgeBundle)(op.label, a).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -65,9 +63,9 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
     val prediction = {
       val op = simpleNeuralNetwork(
-        featureCount = 2, networkSize = 4, learningRate = 0.1, radius = 0,
-        hideState = true, forgetFraction = 0.0, iterations = 30,
-        gradientCheckOn = false, networkLayout = "MLP")
+        featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 0,
+        hideState = true, forgetFraction = 0.0, iterations = 13,
+        gradientCheckOn = false, networkLayout = "GRU")
       op(op.edges, vs.emptyEdgeBundle)(op.label, a)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -84,7 +82,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = simpleNeuralNetwork(
         featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 3,
         hideState = true, forgetFraction = 0.0, iterations = 8,
-        gradientCheckOn = false, networkLayout = "GRU")
+        gradientCheckOn = false, networkLayout = "MLP")
       op(op.edges, vs.emptyEdgeBundle)(op.label, a)(op.features, Seq(a, b)).result.prediction
     }
     assert(differenceSquareSum(prediction, a) < 1)
@@ -138,8 +136,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val op = NeuralNetwork(
         featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 3,
         hideState = false, forgetFraction = 0.5, trainingRadius = 4, maxTrainingVertices = 20,
-        minTrainingVertices = 10, iterationsInTraining = 10, subgraphsInTraining = 10,
-        numberOfTrainings = 10, knownLabelWeight = 0.5, seed = 15, gradientCheckOn = false,
+        minTrainingVertices = 10, iterationsInTraining = 5, subgraphsInTraining = 5,
+        numberOfTrainings = 5, knownLabelWeight = 0.5, seed = 15, gradientCheckOn = false,
         networkLayout = "LSTM")
       op(op.edges, es)(op.label, sideNum).result.prediction
     }
