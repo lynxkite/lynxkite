@@ -40,8 +40,7 @@ object NeuralNetwork extends OpFromJson {
     (j \ "knownLabelWeight").as[Double],
     (j \ "seed").as[Int],
     (j \ "gradientCheckOn").as[Boolean],
-    (j \ "networkLayout").as[String],
-    (j \ "depthForMLP").as[Int])
+    (j \ "networkLayout").as[String])
 }
 import NeuralNetwork._
 case class NeuralNetwork(
@@ -60,8 +59,7 @@ case class NeuralNetwork(
     knownLabelWeight: Double,
     seed: Int,
     gradientCheckOn: Boolean,
-    networkLayout: String,
-    depthForMLP: Int = 10) extends TypedMetaGraphOp[Input, Output] {
+    networkLayout: String) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -80,8 +78,7 @@ case class NeuralNetwork(
     "knownLabelWeight" -> knownLabelWeight,
     "seed" -> seed,
     "gradientCheckOn" -> gradientCheckOn,
-    "networkLayout" -> networkLayout,
-    "depthForMLP" -> depthForMLP)
+    "networkLayout" -> networkLayout)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -109,9 +106,9 @@ case class NeuralNetwork(
       new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
 
     val layout = networkLayout match {
-      case "LSTM" => new neural.LSTM(networkSize, gradientCheckOn)
-      case "GRU" => new neural.GRU(networkSize, gradientCheckOn)
-      case "MLP" => new neural.MLP(networkSize, gradientCheckOn, depthForMLP)
+      case "LSTM" => new neural.LSTM(networkSize, gradientCheckOn, radius)
+      case "GRU" => new neural.GRU(networkSize, gradientCheckOn, radius)
+      case "MLP" => new neural.MLP(networkSize, gradientCheckOn, radius)
       case _ => throw new AssertionError("Unknown network layout.")
     }
     val initialNetwork = layout.getNetwork
@@ -198,26 +195,6 @@ case class NeuralNetwork(
     s
   }
 
-  def forwardPass(
-    vertices: Seq[ID],
-    edges: Map[ID, Seq[ID]],
-    neighborsState: neural.GraphData,
-    ownState: neural.GraphData,
-    network: neural.Network,
-    layout: neural.Layout): Seq[neural.GateValues] = {
-    val rad = {
-      if (layout.hasRadius) radius
-      else 0
-    }
-    (1 until rad).scanLeft {
-      network.forward(vertices, edges, neighborsState,
-        layout.inputGates.map(i => i -> ownState): _*)
-    } { (previous, r) =>
-      network.forward(vertices, edges, previous(layout.toNeighbors),
-        layout.toItself.mapValues(previous(_)).toSeq: _*)
-    }
-  }
-
   def train(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
@@ -243,8 +220,10 @@ case class NeuralNetwork(
         case (id, state) => id -> blanked(state)
       }
       initialStates += initialState
-      val outputs = forwardPass(vertices, edges, keptState, initialState, network, layout)
-      val finalOutputs = outputs.last(layout.outputGate)
+      val outputs = network.forward(vertices, edges,
+        (layout.ownStateInputs.map(i => i -> initialState) ++
+          (layout.neighborsStateInputs.map(i => i -> keptState))): _*)
+      val finalOutputs = outputs("final state")
 
       // Backward pass.
       var numberOfForgotten = 0.0
@@ -273,17 +252,7 @@ case class NeuralNetwork(
           vec(0) = 2 * error * correctionRatio
           id -> vec
       }
-      val gradients = outputs.init.scanRight {
-        network.backward(vertices, edges, outputs.last, layout.outputGate -> finalGradient)
-      } { (outputs, next) =>
-        import neural.Implicits._
-        network.backward(vertices, edges, outputs,
-          layout.toItself.map {
-            case (s1, s2) =>
-              if (s2 == layout.toNeighbors) s2 -> (next(s1) + next.neighbors)
-              else s2 -> next(s1)
-          }.toSeq: _*)
-      }
+      val gradients = network.backward(vertices, edges, outputs, "final state" -> finalGradient)
       weightsForGradientCheck += network.allWeights.toMap
       val updated = network.update(gradients, learningRate)
       network = updated._1
@@ -305,9 +274,10 @@ case class NeuralNetwork(
       // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
       case (id, state) => id -> blanked(state)
     }
-
-    val outputs = forwardPass(vertices, edges, trueState, initialState, network, layout)
-    outputs.last(layout.outputGate).map {
+    val outputs = network.forward(vertices, edges,
+      (layout.ownStateInputs.map(i => i -> initialState) ++
+        (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
+    outputs("final state").map {
       case (id, state) => id -> state(0)
     }.iterator
   }
@@ -338,10 +308,10 @@ case class NeuralNetwork(
               epsilonMatrix(row, col) = epsilon
               //Increase weigth and predict with it.
               val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
-              val outputsWithIncreased = forwardPass(
-                vertices, edges, trueState, initialState,
-                initialNetwork.copy(weights = partialIncreasedWeights), layout)
-              val finalOutputWithIncreased = outputsWithIncreased.last(layout.outputGate)
+              val outputsWithIncreased = initialNetwork.copy(weights = partialIncreasedWeights
+              ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
+                (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
+              val finalOutputWithIncreased = outputsWithIncreased("final state")
               val errorsWithIncreased = trueState.map {
                 case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithIncreased(id)(0))
                 case (id, state) => id -> 0.0
@@ -349,10 +319,11 @@ case class NeuralNetwork(
               val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
               //Decrease weight and predict with it.
               val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
-              val outputsWithDecreased = forwardPass(
-                vertices, edges, trueState, initialState,
-                initialNetwork.copy(weights = partialDecreasedWeights), layout)
-              val finalOutputWithDecreased = outputsWithDecreased.last(layout.outputGate)
+
+              val outputsWithDecreased = initialNetwork.copy(weights = partialDecreasedWeights
+              ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
+                (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
+              val finalOutputWithDecreased = outputsWithDecreased("final state")
               val errorsWithDecreased = trueState.map {
                 case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithDecreased(id)(0))
                 case (id, state) => id -> 0.0

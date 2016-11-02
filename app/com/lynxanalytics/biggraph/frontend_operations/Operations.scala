@@ -3229,8 +3229,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         NonNegDouble("knownLabelWeight", "Weight for known labels"),
         NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
         RandomSeed("seed", "Seed"),
-        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")),
-        NonNegInt("depthForMLP", "Depth of the network in case of MLP", default = 10))
+        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")))
       def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes[Double].nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         val labelName = params("label")
@@ -3258,8 +3257,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             knownLabelWeight = params("knownLabelWeight").toDouble,
             seed = params("seed").toInt,
             gradientCheckOn = false,
-            networkLayout = params("networkLayout"),
-            depthForMLP = params("depthForMLP").toInt)
+            networkLayout = params("networkLayout"))
           op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
         }
         project.vertexAttributes(params("output")) = prediction
