@@ -34,6 +34,14 @@ button. In this case the table is created in the root folder by default. To put 
 somewhere else you have to specify its full path, e.g. `Users/MyUser/MyTable`.
 
 
+[[limit]]
+### Limit
+
+It is possible to import a limited number of rows only.
+This is useful when working with large data sets.
+Limit the import to do some quick experiments on small data, then edit your table/view and reload
+it in the <<project-history, history editor>> to rerun all calculations on the full data set.
+
 [[import-formats]]
 ### Supported data formats
 
@@ -128,6 +136,14 @@ syntax entirely depends on the database type. Please consult the documentation o
 
 [[table]] Table::
 The name of the database table to import.
++
+All identifiers have to be properly quoted according to the SQL syntax of the source database.
++
+The following formats may work depending on the type of the source database:
++
+* `TABLE_NAME`
+* `SCHEMA_NAME.TABLE_NAME`
+* `(SELECT * FROM TABLE_NAME) TABLE_ALIAS`
 
 [[key-column]] Column used for data partitioning::
 This column is used to partition the SQL query. The range from `min(key)` to `max(key)`
@@ -139,6 +155,8 @@ String (`VARCHAR`) columns are also supported but only work well if they mostly 
 the English alphabet and numbers.
 +
 If the partitioning column is left empty, only a fraction of the cluster resources will be used.
++
+The column name has to be properly quoted according to the SQL syntax of the source database.
 ====
 
 [[import-hive]]

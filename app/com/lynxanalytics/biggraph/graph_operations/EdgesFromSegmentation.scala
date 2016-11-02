@@ -6,6 +6,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+import org.apache.spark
+
 object EdgesFromSegmentation extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
@@ -43,6 +45,7 @@ case class EdgesFromSegmentation()
       case (seg, members) =>
         for (v <- members; w <- members) yield seg -> Edge(v, w)
     }.randomNumbered(partitioner)
+    segAndEdge.persist(spark.storage.StorageLevel.DISK_ONLY)
     output(o.es, segAndEdge.mapValues(_._2))
     output(o.origin, segAndEdge.mapValuesWithKeys { case (eid, (seg, edge)) => Edge(eid, seg) })
   }

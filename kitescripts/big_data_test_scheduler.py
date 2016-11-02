@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 Generates a list of shell commands to be used for running
@@ -52,6 +52,7 @@ def parse_args(argv):
 
 
 def run_lynx_kite(test_name, options):
+  print('hadoop fs -df')
   print(
       '{remote_lynxkite_path} batch {remote_test_dir}/{test_name} {test_args}'
       ' 2>&1 | tee {remote_output_dir}/{test_basename}.out.txt').format(

@@ -191,6 +191,20 @@
     </div>
   </div>
 
+  <div class="form-group">
+    <label for="limit" class="col-sm-4 control-label">
+      Limit
+      <help-popup href="limit"></help-popup>
+    </label>
+    <div class="col-sm-8" id="limit">
+      <input
+           class="form-control"
+           placeholder="Leave empty to import all rows"
+           ng-model="limit"
+           ng-disabled="requestInProgress">
+    </div>
+  </div>
+
   <div class="form-group" ng-show="requestInProgress">
     <div class="col-sm-offset-4 col-sm-8">
       <span id="import-spinner" class="glyphicon glyphicon-cog"></span>
@@ -234,7 +248,7 @@
       <button
         id="import-jdbc-button"
         ng-show="datatype === 'jdbc'"
-        ng-disabled="!jdbc.url || !jdbc.table || !jdbc.keyColumn || requestInProgress || !tableName"
+        ng-disabled="!jdbc.url || !jdbc.table || requestInProgress || !tableName"
         ng-click="importJdbc()"
         class="btn btn-default">
         Import JDBC table

@@ -4,13 +4,20 @@
   <div class="alert alert-danger" ng-show="fileStatus.$error">
     {{ fileStatus.$error }}
   </div>
-  <form ng-show="!fileStatus.$error">
+  <form ng-show="!fileStatus.$error" ng-disabled="inProgress">
+    Free space: <value ref="asScalar(fileStatus.freeSpace)"></value>
     <table class="table table-striped">
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>
-        <td>All entities</td>
+        <td>Entities (not in trash)</td>
         <td><value ref="asScalar(fileStatus.total.fileCount)"></value></td>
         <td><value ref="asScalar(fileStatus.total.totalSize)"></value></td>
+        <td/>
+      </tr>
+      <tr>
+        <td>Entities in trash</td>
+        <td><value ref="asScalar(fileStatus.trash.fileCount)"></value></td>
+        <td><value ref="asScalar(fileStatus.trash.totalSize)"></value></td>
         <td/>
       </tr>
       <tr ng-repeat="method in fileStatus.methods">
@@ -18,24 +25,23 @@
         <td><value ref="asScalar(method.fileCount)"></value></td>
         <td><value ref="asScalar(method.totalSize)"></value></td>
         <td>
-          <input name="selectedMethod" type="radio"
-                 ng-model="$parent.selectedMethod" value="{{ method.id }}"/>
+          <div class="form-group">
+            <button type="submit" class="btn btn-success" ng-click="moveToTrash(method.id)">
+              Move to trash
+            </button>
+          </div>
         </td>
       </tr>
     </table>
     <div class="form-horizontal">
       <div class="form-group">
-        <button type="submit" class="btn btn-success" ng-click="markFilesDeleted()">
-          Mark files deleted
-        </button>
-      </div>
-      <div class="form-group">
-        <button type="submit" class="btn btn-success" ng-click="deleteMarkedFiles()">
-          Delete marked files
+        <button type="submit" class="btn btn-success" ng-click="emptyTrash()">
+          Empty trash
         </button>
       </div>
     </div>
   </form>
+  <span id="cleaner-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 
   <bottom-links info="list"></bottom-links>
 </div>

@@ -55,6 +55,22 @@ module.exports = function(fw) {
         ]);
     });
 
+  fw.statePreservingTest(
+    'test-example project with example graph',
+    '"order by" works right',
+    function() {
+      left.runSql('select id, name from vertices order by name');
+
+      left.expectSqlResult(
+        ['id', 'name'],
+        [
+          [ '0', 'Adam' ],
+          [ '2', 'Bob' ],
+          [ '1', 'Eve' ],
+          [ '3', 'Isolated Joe' ],
+        ]);
+    });
+
   fw.transitionTest(
     'empty test-example project',
     'SQL runs nice on belongs to reached from project and segmentation',
@@ -135,6 +151,19 @@ module.exports = function(fw) {
     });
 
   fw.transitionTest(
+    'table export and reimport',
+    'exported table can be edited',
+    function() {
+      lib.left.close();
+      lib.splash.editTable('Random Edges');
+      element(by.id('save-results-opener')).click();
+      element(by.id('save-results')).click();
+    },
+    function() {
+      expect(lib.errors()).toEqual([]);
+    });
+
+  fw.transitionTest(
     'test-example project with example graph',
     'parquet export and reimport right from the operation',
     function() {
@@ -161,4 +190,127 @@ module.exports = function(fw) {
       // id, name, age, gender, income
       expect(lib.left.attributeCount()).toEqual(5);
     });
+
+  fw.transitionTest(
+    'empty test-example project',
+    'test-example project with 100 vertices',
+    function() {
+      left.runOperation('New vertex set', { size: '100'});
+      var maxRows = left.side.element(by.css('#max-rows'));
+
+      maxRows.clear().sendKeys('1000');
+      left.side.element(by.id('run-sql-button')).click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      maxRows.clear().sendKeys('100');
+      left.side.element(by.id('run-sql-button')).click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+      maxRows.clear().sendKeys('17');
+      left.side.element(by.id('run-sql-button')).click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
+
+      // Test "Show more" button.
+      var showMore = left.side.element(by.css('#show-more'));
+      showMore.click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(27);
+      showMore.click();
+      expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(37);
+    },
+    function() {
+    });
+
+     fw.transitionTest(
+        'segmentation opens',
+        'tables and views are saved in the project directory',
+        function() {
+          right.close();
+          left.close();
+          lib.splash.openProject('test-example');
+          left.saveProjectAs('somesubdir/someproject');
+
+          // Create new table
+          left.side.element(by.id('save-results-opener')).click();
+          left.side.element(by.css('#exportFormat > option[value=table]')).click();
+          left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
+          left.side.element(by.id('save-results')).click();
+
+          left.openSegmentation('bucketing');
+
+          // Create view for segmentation
+          right.side.element(by.id('save-results-opener')).click();
+          right.side.element(by.css('#exportFormat > option[value=view]')).click();
+          right.side.element(by.id('exportKiteTable')).sendKeys('segmview');
+          right.side.element(by.id('save-results')).click();
+        },
+        function() {
+          right.close();
+          right.side.element(by.id('show-selector-button')).click();
+          right.side.element(by.id('directory-somesubdir')).click();
+          lib.splash.expectTableListed('somesubdirtable');
+          lib.splash.expectViewListed('segmview');
+          left.close();
+          lib.splash.popDirectory();
+        });
+
+  fw.transitionTest(
+    'test-example project with 100 vertices',
+    'table and view export of 100 vertices',
+    function() {
+      // Create new table
+      left.side.element(by.id('save-results-opener')).click();
+      left.side.element(by.css('#exportFormat > option[value=table]')).click();
+      left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedtable');
+      left.side.element(by.id('save-results')).click();
+
+      // Create new view
+      left.side.element(by.id('save-results-opener')).click();
+      left.side.element(by.css('#exportFormat > option[value=view]')).click();
+      left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedview');
+      left.side.element(by.id('save-results')).click();
+    },
+    function() {
+      right.side.element(by.id('show-selector-button')).click();
+      lib.splash.expectTableListed('exportedtable');
+      lib.splash.expectViewListed('exportedview');
+    });
+
+  fw.transitionTest(
+    'empty test-example project',
+    'test-example project with sql history',
+    function() {
+      right.side.element(by.id('show-selector-button')).click();
+      right.side.element(by.id('global-sql-box')).click();
+
+      left.runSql('0');
+      right.runSql('1');
+      left.runSql('2');
+      right.runSql('3');
+
+      // Close then reopen global sql box to synchronize its query history
+      right.side.element(by.css('#global-sql-box > .glyphicon-minus')).click();
+      right.side.element(by.id('global-sql-box')).click();
+    },
+    function() {
+      var K = protractor.Key;
+
+      // Test synchronized sql box
+      var aceContent = right.sqlEditor().$('.ace_content');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('3');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('2');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('1');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('0');
+      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.DOWN)]);
+      expect(aceContent.getText()).toBe('1');
+
+      // Test non-synchronized sql box
+      aceContent = left.sqlEditor().$('.ace_content');
+      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('2');
+      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(aceContent.getText()).toBe('0');
+    });
+
 };

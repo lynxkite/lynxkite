@@ -17,7 +17,8 @@ angular.module('biggraph').directive('projectSelector',
       }
       scope.newProject = defaultSettings();
       scope.newDirectory = defaultSettings();
-      scope.path = scope.path || window.localStorage.getItem('last_selector_path') || '';
+      scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
+        window.localStorage.getItem('last_selector_path') || '';
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
@@ -59,6 +60,7 @@ angular.module('biggraph').directive('projectSelector',
               query: scope.searchQuery,
             });
         }
+        window.sessionStorage.setItem('last_selector_path', scope.path);
         window.localStorage.setItem('last_selector_path', scope.path);
       };
 
@@ -90,6 +92,8 @@ angular.module('biggraph').directive('projectSelector',
         }
       }
       scope.$on('$destroy', abandonScalars);
+
+      scope.$on('new table or view', scope.reload);
 
       scope.createProject = function() {
         scope.newProject.sending = true;
@@ -207,11 +211,20 @@ angular.module('biggraph').directive('projectSelector',
           }
         },
         editConfig: function(name, config, type) {
-          scope.startTableImport();
-          $timeout(function () {
-            $anchorScroll('import-table');
-            scope.$broadcast('fill import from config', config, name, type);
-          });
+          if (config.class.includes('SQL')) {
+            scope.showSQL=true;
+            $anchorScroll('global-sql-box');
+            $timeout(function () {
+              scope.$broadcast('fill sql-box from config', name, config, type);
+            });
+            return;
+          } else {
+            scope.startTableImport();
+            $timeout(function () {
+              $anchorScroll('import-table');
+              scope.$broadcast('fill import from config', config, name, type);
+            });
+          }
         },
         renameMenuItemLabel: 'Rename or move...'
       };

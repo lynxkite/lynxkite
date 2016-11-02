@@ -48,11 +48,11 @@ def call_cmd(cmd_list, input=None, print_output=True):
 
 class EMRLib:
 
-  def __init__(self, ec2_key_file, ec2_key_name):
+  def __init__(self, ec2_key_file, ec2_key_name, region='us-east-1'):
     self.ec2_key_file = ec2_key_file
     self.ec2_key_name = ec2_key_name
-    self.emr_client = boto3.client('emr')
-    self.rds_client = boto3.client('rds')
+    self.emr_client = boto3.client('emr', region_name=region)
+    self.rds_client = boto3.client('rds', region_name=region)
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
 
   def wait_for_services(self, services):
@@ -76,7 +76,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, instance_count=2):
+          self, name, log_uri, instance_count=2):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -85,8 +85,15 @@ class EMRLib:
         print('Reusing existing cluster: ' + cluster_id)
         return EMRCluster(cluster_id, self)
     print('Creating new cluster.')
+    # We're passing these options to the namenode and to the hdfs datanodes so
+    # that they will make their monitoring data accessible via the jmx interface.
+    jmx_options = '"-Dcom.sun.management.jmxremote ' \
+        '-Dcom.sun.management.jmxremote.authenticate=false ' \
+        '-Dcom.sun.management.jmxremote.ssl=false ' \
+        '-Dcom.sun.management.jmxremote.port={port} ${{{name}}}"'
     res = self.emr_client.run_job_flow(
         Name=name,
+        LogUri=log_uri,
         ReleaseLabel="emr-4.7.2",
         Instances={
             'MasterInstanceType': 'm3.2xlarge',
@@ -95,6 +102,39 @@ class EMRLib:
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True
         },
+        Configurations=[
+            {
+                'Classification': 'mapred-site',
+                'Properties': {
+                    'mapred.output.committer.class': 'org.apache.hadoop.mapred.FileOutputCommitter'
+                }
+            },
+            {
+                'Classification': 'yarn-site',
+                'Properties': {
+                    'yarn.nodemanager.container-monitor.procfs-tree.smaps-based-rss.enabled': 'true'
+                }
+            },
+            {
+                'Classification': 'hadoop-env',
+                'Properties': {},
+                'Configurations': [
+                    {
+                        'Classification': 'export',
+                        'Properties': {
+                            'HADOOP_NAMENODE_OPTS': jmx_options.format(port=8004, name='HADOOP_NAMENODE_OPTS'),
+                            'HADOOP_DATANODE_OPTS': jmx_options.format(port=8005, name='HADOOP_DATANODE_OPTS')
+                        }
+                    }
+                ]
+            },
+            {
+                'Classification': 'hdfs-site',
+                'Properties': {
+                    'dfs.replication': '1'
+                }
+            }
+        ],
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole")
@@ -209,6 +249,64 @@ class EMRCluster:
         input=cmds,
         print_output=print_output)
 
+  def ssh_nohup(
+          self,
+          cmds,
+          script_file='/home/hadoop/run_cmd.sh',
+          output_file='/home/hadoop/cmd_output.txt',
+          status_file='/home/hadoop/cmd_status.txt',
+          print_output=True,
+          verbose=True):
+    '''Send shell commands to the cluster via ssh, and run them with nohup in
+    the background.'''
+    self.ssh('''
+      cat >{script_file!s} <<'EOF'
+        {cmds!s}
+        echo "done" >{status_file!s}
+EOF
+      rm -f {status_file!s}
+      nohup bash {script_file!s} >{output_file!s} 2>&1 &
+    '''.format(
+        cmds=cmds,
+        script_file=script_file,
+        output_file=output_file,
+        status_file=status_file))
+
+  def fetch_output(
+          self,
+          output_file='/home/hadoop/cmd_output.txt',
+          status_file='/home/hadoop/cmd_status.txt'):
+    '''Periodically connects to the master and downloads and prints
+    the output log of the running script. Also monitors a status
+    file at the master, and quits the loop in case of done status.
+    It would be simpler to have a continuous ssh connection to the
+    master, but that breaks if the Internet connection flakes.'''
+    all_output = ''
+    output_lines_seen = 0
+    status_is_done = False
+    while not status_is_done:
+      # Check status.
+      status, ssh_retcode = self.ssh(
+          'cat ' + status_file + ' 2>/dev/null',
+          print_output=False,
+          verbose=False)
+      status_is_done = ssh_retcode == 0 and 'done' == status.strip()
+      # Print unseen log lines.
+      output_results, return_code = self.ssh(
+          'tail -n +{offset!s} {output_file!s}'.format(
+              output_file=output_file,
+              offset=output_lines_seen + 1),
+          verbose=False,
+          print_output=False)
+      if return_code == 0:
+        # We only use the output of ssh if it was successful. Otherwise we'll
+        # try again with the same offset in the next round.
+        print(output_results, end='')
+        all_output += output_results
+        output_lines_seen += output_results.count('\n')
+      time.sleep(5)
+    return all_output
+
   def rsync_up(self, src, dst):
     '''Copy files to the cluster via invoking rsync.'''
     print('[EMR UPLOAD] {src!s} TO {dst!s}'.format(src=src, dst=dst))
@@ -221,6 +319,20 @@ class EMRCluster:
             '--copy-dirlinks',
             src,
             'hadoop@' + self.master() + ':' + dst
+        ])
+
+  def rsync_down(self, src, dst):
+    '''Copy files from the cluster via invoking rsync.'''
+    print('[EMR DOWNLOAD] {src!s} TO {dst!s}'.format(src=src, dst=dst))
+    call_cmd(
+        [
+            'rsync',
+            '-ave',
+            ' '.join(self.ssh_cmd),
+            '-r',
+            '--copy-dirlinks',
+            'hadoop@' + self.master() + ':' + src,
+            dst
         ])
 
   def terminate(self):

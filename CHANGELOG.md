@@ -6,6 +6,92 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+LynxKite:
+
+ - Performance and scalability improvements for aggregating operations.
+ - Cleaner cleaner UI. (The UI for cleaning up old data files to recover storage space.
+   Apologies for the pun.)
+ - SQL boxes now persist their query history into the browser's local storage.
+ - SQL box has _"Show more"_ button to easily look at more results.
+ - Assorted UI fixes.
+ - Views can now be edited. Views and tables exported from the global sql box can also be edited.
+ - Scalable approximate embeddedness operation added.
+ - Scalable approximate clustering coefficient operation added.
+ - Various visualization limits (such as the maximum 10,000 edges) can be adjusted with the
+     `KITE_DRAWING_OVERALL` setting (default 10,000) and its more fine-grained companions.
+
+Ecosystem:
+
+ - Flexible date template strings.
+ - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
+   intervals.
+ - Segmentations and attribute histograms in Python Remote API.
+
+### 1.9.5.4
+
+Ecosystem:
+
+ - Extra date template strings `{to,yester}day_{yyyy,mm,dd}`.
+ - Fix Chronomaster metrics reporting when `num_workers` is greater than one.
+ - Work around Scala 2.10 reflection thread safety issue. (SI-6240)
+
+### 1.9.5.3
+
+Ecosystem:
+
+ - Add extra date template strings, like `yesterday_minus_1month_mm_str`.
+
+### 1.9.5.2
+
+Fixes a bug in the HDFS transfer performance improvement in 1.9.5.1.
+
+### 1.9.5.1
+
+Cherry-pick release with just the changes below.
+
+Ecosystem:
+
+ - Much improved `TransferTask` performance for HDFS to HDFS copy. (Up to 20 times faster in some
+   cases.)
+ - `count` feature in `helper.sh` to help with verification testing.
+ - Correct Graphite configuration for Spark executors to avoid massive error logging and collect
+   more detailed performance data.
+
+### 1.9.5
+
+ - Relax the Luigi API Python version requirement from 3.5+ to 3.4+.
+
+### 1.9.4
+
+LynxKite:
+
+ - SQL boxes can now show as many rows as you like.
+ - History page performance significantly improved.
+ - SQL box on the project browser can be opened more intuitively.
+ - User passwords and admin status can be changed from the UI by administrators.
+ - LDAP authentication.
+
+Ecosystem:
+
+ - Node-level monitoring.
+ - Flexible transfers, including to secured HDFS clusters.
+ - Support for unusual DB2 features.
+ - `no_repeat` option added to Chronomaster configuration.
+ - Tasks can be constrained to time windows.
+ - New Luigi task types for creating tables and projects.
+
+### 1.9.3
+
+ - Assorted ecosystem bugfixes and improvements
+ - Dockerless installation option :(
+ - New operation _"Enumerate triangles"_ has been created.
+
+### 1.9.2
+
+ - New operation _"Triadic closure"_ has been created.
+ - New operation _"Create snowball sample"_ has been created.
+ - Internal watchdog in ecosystem mode.
+
 ### 1.9.1
 
  - Fix startup script to support RHEL 6.

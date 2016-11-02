@@ -41,7 +41,7 @@ Found 3 items
 -rw-r--r--   1 hadoop hadoop         16 2016-07-27 15:33 hdfs://ip-10-165-135-220:8020/user/hadoop/x/hello world
     '''.encode('utf-8').strip()
     ls = util.HDFS.list('mydir')
-    check_output.assert_called_once_with(['hadoop', 'fs', '-ls', 'mydir'])
+    check_output.assert_called_once_with(['hadoop', 'fs', '-ls', 'mydir'], env=None)
     expected = [
         types.SimpleNamespace(
             permission='-rw-r--r--', acl=' ', replication='1',
@@ -67,11 +67,12 @@ Found 3 items
   @mock.patch('subprocess.check_call')
   def test_rm(self, check_call):
     ls = util.HDFS.rm('my dir')
-    check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', 'my dir'])
+    check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', 'my dir'], env=None)
     # Check that special characters are escaped.
     check_call.reset_mock()
     ls = util.HDFS.rm('my \\ dir [ttl=7d]')
-    check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', 'my \\\\ dir \\[ttl=7d\\]'])
+    check_call.assert_called_once_with(
+        ['hadoop', 'fs', '-rm', '-r', 'my \\\\ dir \\[ttl=7d\\]'], env=None)
 
 
 if __name__ == '__main__':

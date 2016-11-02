@@ -9,6 +9,7 @@ POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.Production
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
 GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getHistory
+GET  /ajax/getOpCategories    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOPCategories
 POST /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
 POST /ajax/saveHistory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveHistory
 POST /ajax/saveWorkflow   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveWorkflow
@@ -55,12 +56,13 @@ GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonSe
 
 GET  /ajax/getUsers            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
 POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
+POST /ajax/changeUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUser
 POST /ajax/createUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
 GET  /ajax/getUserData         com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUserData
 
 GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
-POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJsonServer.markFilesDeleted
-POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
+POST /ajax/moveToCleanerTrash    com.lynxanalytics.biggraph.serving.ProductionJsonServer.moveToCleanerTrash
+POST /ajax/emptyCleanerTrash     com.lynxanalytics.biggraph.serving.ProductionJsonServer.emptyCleanerTrash
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload
@@ -81,9 +83,13 @@ POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
 POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath
+POST /remote/getViewSchema com.lynxanalytics.biggraph.serving.RemoteAPIServer.getViewSchema
 POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getScalar
+POST /remote/getVertexHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getVertexHistogram
+POST /remote/getEdgeHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getEdgeHistogram
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
+POST /remote/removeName com.lynxanalytics.biggraph.serving.RemoteAPIServer.removeName
 POST /remote/loadTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadTable
 POST /remote/loadView com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadView
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation

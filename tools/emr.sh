@@ -3,6 +3,18 @@
 # Last successful tested with: aws-cli/1.10.20 Python/2.7.6 botocore/1.4.11
 # TODO: rewrite this in Python using boto directly
 
+# The awscli script only works with python2.7 and aws1.10.20, otherwise json output is not deterministic, 
+# which causes parse error in script.
+#
+# Installing proper version of aws: 
+# sudo pip2 instal awscli==1.10.20 .
+# 
+# Installing awscli with pip2, if the pip3 version is already installed:
+# sudo apt-get install python2.7
+# sudo pip3 uninstall awscli
+# sudo pip install awscli=1.10.20 or sudo pip2 install awscli=1.10.20
+# (it depends on which version pip points to).
+
 source "$(dirname $0)/biggraph_common.sh"
 
 DIR=$(dirname $0)
@@ -67,9 +79,13 @@ source ${SPEC}
 export AWS_DEFAULT_REGION=$REGION # Some AWS commands, like list-clusters always use the default
 
 if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
-  echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
-  echoerr "to work."
-  exit 1
+  if [ -z "${AWS_NO_KEY:-}" ]; then
+    echoerr "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script"
+    echoerr "to work."
+    echoerr "You can set AWS_NO_KEY to 1 in the cluster specification file and try again "
+    echoerr "if you really wish to continue without access keys"
+    exit 1
+   fi
 fi
 
 GetMasterHostName() {
@@ -81,10 +97,7 @@ GetMasterHostName() {
 
 GetClusterId() {
   aws emr list-clusters --cluster-states STARTING BOOTSTRAPPING RUNNING WAITING --output=json | \
-    grep -B 1 "\"Name\": \"${CLUSTER_NAME}\"" | \
-    head -1 | \
-    grep '"Id":' | \
-    cut -d'"' -f 4
+    ${DIR}/clusterid_extract.py ${CLUSTER_NAME}
 }
 
 GetMasterAccessParams() {
@@ -173,13 +186,13 @@ start)
   aws emr create-default-roles  # Creates EMR_EC2_DefaultRole if it does not exist yet.
   set -x
   CREATE_CLUSTER_RESULT=$(aws emr create-cluster \
-    --applications Name=Hadoop \
+    --applications ${EMR_APPLICATIONS} \
     --configurations "file://$KITE_BASE/tools/emr-configurations.json" \
     --ec2-attributes '{"KeyName":"'${SSH_ID}'","InstanceProfile":"EMR_EC2_DefaultRole" '"${CREATE_CLUSTER_EXTRA_EC2_ATTRS}"'}' \
-    --service-role EMR_DefaultRole \
-    --release-label emr-4.2.0 \
+    --service-role ${EMR_SERVICE_ROLE} \
+    --release-label ${EMR_RELEASE_LABEL} \
     --name "${CLUSTER_NAME}" \
-    --tags "Name=${CLUSTER_NAME}" \
+    --tags "${EMR_TAGS[@]}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
     ${CREATE_CLUSTER_EXTRA_PARAMS} \
   )
@@ -217,7 +230,7 @@ reconfigure)
 # Override settings created by start_emr_cluster.sh.
 # These will reset some values above. Feel free to edit as necessary.
 export SPARK_MASTER=yarn-client
-export NUM_EXECUTORS=${NUM_INSTANCES}
+export NUM_EXECUTORS=${NUM_EXECUTORS}
 export YARN_CONF_DIR=/etc/hadoop/conf
 export KITE_DATA_DIR=$KITE_DATA_DIR
 export KITE_EPHEMERAL_DATA_DIR=$KITE_EPHEMERAL_DATA_DIR
@@ -230,7 +243,7 @@ export KITE_PREFIX_DEFINITIONS=/home/hadoop/prefix_definitions.txt
 export KITE_AMMONITE_PORT=2203
 export KITE_AMMONITE_USER=lynx
 export KITE_AMMONITE_PASSWD=kite
-export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_INSTANCES}-${TYPE}-${CORES}cores-${USE_RAM_GB}g
+export KITE_INSTANCE=${KITE_INSTANCE_BASE_NAME}-${NUM_EXECUTORS}e-${NUM_INSTANCES}i-${TYPE}-${CORES}cores-${USE_RAM_GB}g
 export GRAPHITE_MONITORING_HOST=\$(hostname)
 export GRAPHITE_MONITORING_PORT=9109
 EOF

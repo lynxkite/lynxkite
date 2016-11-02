@@ -452,7 +452,7 @@ module.exports = function(fw) {
       });
 
       // Check TSV of this complex visualization.
-      var expectedTSV = fs.readFileSync(__dirname + '/visualization-tsv-data.txt', 'utf8');
+      var expectedTSV = fs.readFileSync(__dirname + '/data/visualization-tsv-data.txt', 'utf8');
       expect(lib.visualization.asTSV()).toEqual(expectedTSV);
 
       lib.navigateToProject('test-example'); // Restore state.

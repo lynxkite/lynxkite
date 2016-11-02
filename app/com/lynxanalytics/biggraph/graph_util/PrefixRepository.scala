@@ -70,7 +70,7 @@ object PrefixRepositoryImpl {
     }
   }
   private def extractKeyAndValue(line: String): (String, String) = {
-    val pattern = "([_A-Z][_A-Z0-9]+)=\"([^\"]*)\"".r
+    val pattern = "([_A-Z][_A-Z0-9]*)=\"([^\"]*)\"".r
     line match {
       case pattern(key, value) =>
         key -> value

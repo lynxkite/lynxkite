@@ -381,7 +381,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
     } while (changed)
     i = 0
     val contains = mutable.Map(containedIn.groupBy(_._2).mapValues(_.keySet).toSeq: _*)
-    assert(clusters.size == contains.size)
+    assert(clusters.size == contains.size, s"Size mismatch: ${clusters.size} != ${contains.size}")
     do {
       log.info(s"Doing merging clusters subiteration $i")
       changed = false
@@ -445,8 +445,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
           // newly has this id might very well be broken now. But we have to update members.
           members = otherMembers
           // Both of these guys should be already changed.
-          assert(changedClusters.contains(newId))
-          assert(changedClusters.contains(clusterId))
+          assert(changedClusters.contains(newId), s"$newId is not in $changedClusters")
+          assert(changedClusters.contains(clusterId), s"$clusterId is not in $changedClusters")
         } else {
           clusters(newId) = data
           changedClusters.add(newId)
@@ -481,7 +481,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
         val (clust1, clust2) =
           if (clust1Prelim.contains(clusterId)) (clust1Prelim, clust2Prelim)
           else (clust2Prelim, clust1Prelim)
-        assert(clust1.contains(clusterId))
+        assert(clust1.contains(clusterId), s"$clusterId is not in $clust1")
         if (modularityDelta > 0) {
           val clust1Data = ClusterData.fromMembers(clust1, edgeLists)
           val clust2Data = ClusterData.fromMembers(clust2, edgeLists)

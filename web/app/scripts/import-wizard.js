@@ -19,6 +19,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         event.stopPropagation();
         scope.onCancel();
       };
+      scope.limit = '';
 
       scope.requestInProgress = 0;
       function importStuff(format, parameters) {
@@ -27,6 +28,13 @@ angular.module('biggraph').directive('importWizard', function(util) {
         parameters.privacy = 'public-read';
         parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
         parameters.asView = scope.asView;
+        if (scope.limit) {
+          parameters.limit = parseInt(scope.limit);
+        }
+        else {
+          parameters.limit = null;
+        }
+
         // Allow overwriting the same name when editing an existing config.
         parameters.overwrite = scope.oldTableName === scope.tableName;
         scope.requestInProgress += 1;
@@ -76,33 +84,47 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.oldTableName = tableName;
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
         scope.asView = type === 'view';
+        scope.limit = newConfig.data.limit;
 
-        //com.lynxanalytics.biggraph.controllers.CSVImportRequest
-        var requestName = newConfig.class.split('.').pop(); //CSVImportRequest
+        // E.g.: "com.lynxanalytics.biggraph.controllers.CSVImportRequest"
+        // becomes "CSVImportRequest".
+        var requestName = newConfig.class.split('.').pop();
         var suffixLength = 'ImportRequest'.length;
         var datatype = requestName.slice(0, -suffixLength).toLowerCase();
         scope.datatype = datatype;
-        var datatypeScope = scope.$eval(datatype) || scope.files;
 
-        if (newConfig.data.files) {
-          datatypeScope.filename = newConfig.data.files;
-        }
-
-        if (datatypeScope === 'jdbc') {
-          fillJdbcFromData(datatypeScope, newConfig.data);
-        } else if (datatypeScope === 'hive') {
-          fillHiveFromData(datatypeScope, newConfig.data);
+        if (datatype === 'jdbc') {
+          scope.jdbc = {};
+          fillJdbcFromData(scope.jdbc, newConfig.data);
+        } else if (datatype === 'hive') {
+          scope.hive = {};
+          fillHiveFromData(scope.hive, newConfig.data);
+        } else if (datatype === 'csv') {
+          scope.csv = {};
+          fillCSVFromData(scope.csv, newConfig.data);
         } else {
-          fillScopeFromData(datatypeScope, newConfig.data);
+          scope.files = {};
+          fillScopeFromData(scope.files, newConfig.data);
         }
       });
 
       function fillScopeFromData(datatypeScope, data) {
+        if (data.files) {
+          datatypeScope.filename = data.files;
+        }
         for (var newConfigItem in data) {
-          if (newConfigItem in datatypeScope) {
+          if (newConfigItem in data) {
             datatypeScope[newConfigItem] = data[newConfigItem];
           }
         }
+      }
+
+      function fillCSVFromData(csv, data) {
+        csv.filename  = data.files;
+        csv.columnNames  = joinCSVLine(data.columnNames);
+        csv.delimiter = data.delimiter;
+        csv.mode = data.mode;
+        csv.infer = data.infer;
       }
 
       function fillJdbcFromData(jdbc, data) {

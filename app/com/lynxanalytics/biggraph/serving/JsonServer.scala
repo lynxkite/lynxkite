@@ -1,21 +1,22 @@
 // The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
-import java.io.{ FileOutputStream, File }
+import java.io.{ File, FileOutputStream }
 
 import play.api.libs.json
 import play.api.mvc
 import play.Play
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, HadoopFile, Timestamp, KiteInstanceInfo }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
+import org.apache.spark.sql.types.{ StructField, StructType }
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -143,8 +144,11 @@ abstract class JsonServer extends mvc.Controller {
 
 case class Empty()
 
+case class AuthMethod(id: String, name: String)
+
 case class GlobalSettings(
   hasAuth: Boolean,
+  authMethods: List[AuthMethod],
   title: String,
   tagline: String,
   version: String)
@@ -209,6 +213,14 @@ object FrontendJson {
   }
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
+  }
+  implicit val wStructType = new json.Writes[StructType] {
+    def writes(structType: StructType): json.JsValue = json.Json.obj("schema" -> structType.map {
+      case StructField(name, dataType: StructType, nullable, metaData) =>
+        json.Json.obj("name" -> name, "dataType" -> this.writes(dataType), "nullable" -> nullable)
+      case StructField(name, dataType, nullable, metaData) =>
+        json.Json.obj("name" -> name, "dataType" -> dataType.toString(), "nullable" -> nullable)
+    })
   }
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
@@ -281,11 +293,12 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
+  implicit val wOPCategories = json.Json.writes[OpCategories]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
-  implicit val rSQLExportToTableRequest = json.Json.reads[SQLExportToTableRequest]
+  implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
   implicit val rSQLExportToJsonRequest = json.Json.reads[SQLExportToJsonRequest]
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
@@ -303,17 +316,19 @@ object FrontendJson {
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
+  implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
   implicit val wFEUser = json.Json.writes[FEUser]
   implicit val wFEUserList = json.Json.writes[FEUserList]
 
+  implicit val wAuthMethod = json.Json.writes[AuthMethod]
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
   implicit val wLogFiles = json.Json.writes[LogFiles]
   implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
 
-  implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
+  implicit val rMoveToTrashRequest = json.Json.reads[MoveToTrashRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
 }
@@ -389,6 +404,7 @@ object ProductionJsonServer extends JsonServer {
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
+  def getOPCategories = jsonGet(bigGraphController.getOpCategories)
   def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
@@ -423,10 +439,10 @@ object ProductionJsonServer extends JsonServer {
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def complexView = jsonGet(drawingController.getComplexView)
-  def center = jsonGet(drawingController.getCenter)
-  def histo = jsonGet(drawingController.getHistogram)
-  def scalarValue = jsonGet(drawingController.getScalarValue)
-  def model = jsonGet(drawingController.getModel)
+  def center = jsonFuture(drawingController.getCenter)
+  def histo = jsonFuture(drawingController.getHistogram)
+  def scalarValue = jsonFuture(drawingController.getScalarValue)
+  def model = jsonFuture(drawingController.getModel)
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
@@ -439,13 +455,14 @@ object ProductionJsonServer extends JsonServer {
   val logout = userController.logout
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def changeUser = jsonPost(userController.changeUser, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
   def getUserData = jsonGet(userController.getUserData)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
-  def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
-  def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
+  def moveToCleanerTrash = jsonPost(cleanerController.moveToCleanerTrash)
+  def emptyCleanerTrash = jsonPost(cleanerController.emptyCleanerTrash)
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)
@@ -456,9 +473,19 @@ object ProductionJsonServer extends JsonServer {
 
   val version = KiteInstanceInfo.kiteVersion
 
+  def getAuthMethods = {
+    val authMethods = scala.collection.mutable.ListBuffer[AuthMethod]()
+    if (productionMode) {
+      authMethods += AuthMethod("lynxkite", "LynxKite")
+      if (LDAPProps.hasLDAP) { authMethods += AuthMethod("ldap", "LDAP") }
+    }
+    authMethods.toList
+  }
+
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
+      authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       version = version)
