@@ -1,4 +1,4 @@
-// Tests the "Merge vertices by attribute" operation for long tail distribution.
+// Tests the "Merge vertices by attribute" operation for even distribution.
 
 project = lynx.newProject()
 project.newVertexSet(size: 500000000)
