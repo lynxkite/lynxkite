@@ -8,24 +8,27 @@ import java.sql
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 
-object JDBCQuoting {
-  private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
-  def quoteIdentifier(s: String) = {
-    s match {
-      case SimpleIdentifier() => s
-      case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
-    }
-  }
-}
-
 object JDBCUtil {
   // Reads a table from JDBC, partitioned by a keyColumn. This is a wrapper around Spark's
   // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
   // the partitioning strategy depending on keyColumn and predicates.
-  def read(context: SQLContext, url: String, table: String, keyColumn: String, predicates: List[String]): DataFrame = {
+  def read(
+    context: SQLContext,
+    url: String,
+    table: String,
+    keyColumn: String,
+    numPartitions: Int,
+    predicates: List[String],
+    properties: Map[String, String]): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     assert(keyColumn.isEmpty || predicates.isEmpty, "Cannot define both keyColumn and predicates.")
+    assert(numPartitions <= 0 || !keyColumn.isEmpty, "Cannot define numPartitions without keyColumn.")
     val props = new java.util.Properties
+
+    for ((k, v) <- properties) {
+      props.setProperty(k, v)
+    }
+
     if (keyColumn.isEmpty) {
       if (predicates.isEmpty) {
         // Inefficiently read into a single partition.
@@ -35,7 +38,11 @@ object JDBCUtil {
       }
     } else {
       val stats = try TableStats(url, table, keyColumn)
-      val numPartitions = RuntimeContext.partitionerForNRows(stats.count).numPartitions
+      val p = if (numPartitions <= 0) {
+        RuntimeContext.partitionerForNRows(stats.count).numPartitions
+      } else {
+        numPartitions
+      }
       stats.keyType match {
         case KeyTypes.String =>
           context.read.jdbc(
@@ -45,7 +52,7 @@ object JDBCUtil {
               keyColumn,
               stats.minStringKey.get,
               stats.maxStringKey.get,
-              numPartitions).toArray,
+              p).toArray,
             props)
         case KeyTypes.Number =>
           context.read.jdbc(
@@ -54,7 +61,7 @@ object JDBCUtil {
             keyColumn,
             stats.minLongKey.get,
             stats.maxLongKey.get,
-            numPartitions,
+            p,
             props)
       }
     }
@@ -131,10 +138,8 @@ case class TableStats(
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
-    val quotedTable = JDBCQuoting.quoteIdentifier(table)
-    val quotedKey = JDBCQuoting.quoteIdentifier(keyColumn)
     val query =
-      s"SELECT COUNT(*) as count, MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable"
+      s"SELECT COUNT(*) AS cnt, MIN($keyColumn) AS minKey, MAX($keyColumn) AS maxKey FROM $table"
     log.info(s"Executing query: $query")
     val connection = sql.DriverManager.getConnection(url)
     try {
@@ -144,18 +149,18 @@ object TableStats {
         rs.next()
         try {
           val md = rs.getMetaData
-          val count = rs.getLong("count")
+          val count = rs.getLong("cnt")
           val keyType = md.getColumnType(2)
           keyType match {
             case sql.Types.VARCHAR =>
               new TableStats(
-                count, KeyTypes.String, minStringKey = Some(rs.getString("min")),
-                maxStringKey = Some(rs.getString("max")))
+                count, KeyTypes.String, minStringKey = Some(rs.getString("minKey")),
+                maxStringKey = Some(rs.getString("maxKey")))
             case _ =>
               // Everything else we will try to treat as numbers and see what happens.
               new TableStats(
-                count, KeyTypes.Number, minLongKey = Some(rs.getLong("min")),
-                maxLongKey = Some(rs.getLong("max")))
+                count, KeyTypes.Number, minLongKey = Some(rs.getLong("minKey")),
+                maxLongKey = Some(rs.getLong("maxKey")))
           }
         } finally rs.close()
       } finally statement.close()

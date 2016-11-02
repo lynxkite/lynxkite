@@ -80,6 +80,11 @@ export KITE_HTTP_PORT=2200
 # as well which will automatically restart the LynxKite server if it detects any problem.
 # export KITE_WATCHDOG_PORT=2202
 
+# Uncomment this to start an internal watchdog thread inside LynxKite's
+# driver JVM. This watchdog will kill LynxKite if health checks are
+# failing continuously for the given amount of time.
+# export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=1200
+
 # The LynxKite local temp directory is a local path that exists on all workers and the master and will
 # be used for storing temporary Spark/Hadoop files. This directory can potentially use a lot of
 # space, so if you have a small root filesystem and an extra large drive mounted somewhere then you
@@ -119,9 +124,10 @@ export KITE_EXTRA_JARS=
 
 # ===========================================================
 # Application secret used by Play! framework for various tasks, such as signing cookies and
-# encryption. More details can be found
+# encryption. Setting this to <random> will regenerate a secret key at each restart.
+# More details can be found
 # here (https://playframework.com/documentation/latest/ApplicationSecret).
-# export KITE_APPLICATION_SECRET=${KITE_RANDOM_SECRET}
+# export KITE_APPLICATION_SECRET='<random>'
 
 # Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 # export KITE_HTTPS_PORT=2201
@@ -131,12 +137,30 @@ export KITE_EXTRA_JARS=
 # certificate for LynxKite that the browsers can validate. Follow the instructions at
 # Apache Tomcat (http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html) for creating a keystore file.
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
-# export KITE_HTTPS_KEYSTORE_PWD=asdasd
+# export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 # ===========================================================
 
 # The LynxKite Google client secret is only needed for Google Authenticator. Ask the Lynx R&D
 # team for further instructions if you think you need this feature.
 # export KITE_GOOGLE_CLIENT_SECRET='???'
+
+# Use the following configurations to set up LDAP authentication.
+
+# ===========================================================
+# The URL of the LDAP server, e.g. ldap://localhost:389.
+# export LDAP_URL=
+
+# The authentication method, e.g. simple or DIGEST-MD5 as explained in
+# the Java LDAP documentation (http://docs.oracle.com/javase/jndi/tutorial/ldap/security/index.html)
+# and SASL documentation (http://docs.oracle.com/javase/jndi/tutorial/ldap/security/sasl.html).
+# export LDAP_AUTHENTICATION=simple
+
+# The template for the principal. It must contain the word <USERNAME> to be substituted with the
+# username given at login, for example uid=<USERNAME>,ou=People,dc=example,dc=com or
+# cn=<USERNAME>,ou=People,dc=example,dc=com. This is required so the user does not have to specify
+# the full distinguished name on the web UI.
+# export LDAP_PRINCIPAL_TEMPLATE=
+# ===========================================================
 
 # On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
 # variables. The principal acts like a user name and the keytab file acts like a password.

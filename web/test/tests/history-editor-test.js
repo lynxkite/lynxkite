@@ -157,7 +157,7 @@ module.exports = function(fw) {
 
   fw.statePreservingTest(
     'test-example project with history',
-    'new operation can be inserted into history, under a segmentation',
+    'new operation can be inserted into history, under a segmentation for segmentation',
     function() {
       lib.left.history.open();
       // Add segmentation operation below and check:
@@ -172,6 +172,24 @@ module.exports = function(fw) {
 
       lib.left.history.close(true);
     });
+
+    fw.statePreservingTest(
+      'test-example project with history',
+      'new operation can be inserted into history, under a segmentation for whole project',
+      function() {
+        lib.left.history.open();
+        lib.left.history.insertOperationForSegmentation(
+            5,
+            'Add gaussian vertex attribute',
+            {}
+            );
+
+        expect(lib.left.history.numOperations()).toBe(numOperations + 1);
+        expect(lib.left.history.getOperationName(5)).toBe('Add gaussian vertex attribute');
+        expect(lib.left.history.getOperationSegmentation(5)).toBe('');
+
+        lib.left.history.close(true);
+      });
 
   fw.statePreservingTest(
     'test-example project with history',
@@ -228,5 +246,34 @@ module.exports = function(fw) {
       lib.left.history.close(false);
     });
 
+  fw.transitionTest(
+      'empty test-example project',
+      'test-example project with history with different categories',
+      function() {
+        lib.left.runOperation('new vertex set', { size: '10' });
+        lib.left.runOperation('add random vertex attribute', { seed: 1 });
+      },
+      function() {
+        lib.left.history.open();
 
+        var first = lib.left.history.getOperation(0);
+        lib.left.history.enterEditMode(first);
+        lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
+          first, 'Structure operations', 'New vertex set'
+          ), 'disabled');
+        lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
+          first, 'Vertex attribute operations', 'Add random vertex attribute'
+          ), 'disabled');
+        lib.left.history.discardEdits(first);
+
+        var second = lib.left.history.getOperation(1);
+        lib.left.history.enterEditMode(second);
+        lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
+          second, 'Structure operations', 'New vertex set'
+          ), 'disabled');
+        lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
+          second, 'Vertex attribute operations', 'Add random vertex attribute'
+          ), 'disabled');
+        lib.left.history.discardEdits(second);
+      });
 };

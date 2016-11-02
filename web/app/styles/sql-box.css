@@ -19,7 +19,7 @@ sql-box > * {
 }
 
 #sql-editor {
-  height: 100px;
+  min-height: 100px;
   margin-bottom: 10px;
   border: 1px solid #ccc;
 }
@@ -30,6 +30,12 @@ sql-box > * {
 
 #sql-success {
   color: green;
+}
+
+input.form-control#max-rows {
+  width: 65px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 #sql-result {

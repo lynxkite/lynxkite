@@ -11,7 +11,6 @@
     "gulp-angular-filesort": "1.1.1",
     "gulp-asciidoctor": "1.0.7",
     "gulp-autoprefixer": "3.1.0",
-    "gulp-exec": "2.1.2",
     "gulp-if": "2.0.0",
     "gulp-inject": "3.0.0",
     "gulp-jshint": "2.0.0",
@@ -29,12 +28,12 @@
     "lazypipe": "1.0.1",
     "jshint": "2.9.1",
     "merge-stream": "1.0.0",
-    "protractor": "3.1.1",
+    "protractor": "4.0.8",
     "request": "2.72.0",
+    "webdriver-manager": "10.2.3",
     "wiredep": "3.0.0"
   },
   "scripts": {
-    "pretest": "node node_modules/protractor/bin/webdriver-manager update",
     "test": "gulp test --no-color"
   }
 }

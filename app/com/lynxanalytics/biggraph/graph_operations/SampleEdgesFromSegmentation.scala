@@ -173,9 +173,8 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       .cogroup(edgeToDstSeg)
       .map {
         case (keyEdge, (srcSegs, dstSegs)) =>
-          // Consistency-check: both endpoint of each edge should be in at least
-          // one segment of vsToSegRestricted.
-          assert(srcSegs.size > 0 && dstSegs.size > 0)
+          assert(srcSegs.nonEmpty, s"The source of $keyEdge is in no segment")
+          assert(dstSegs.nonEmpty, s"The destination of $keyEdge is in no segment")
           val intersectionSize = (srcSegs.toSet & dstSegs.toSet).size
           (keyEdge, intersectionSize)
       }

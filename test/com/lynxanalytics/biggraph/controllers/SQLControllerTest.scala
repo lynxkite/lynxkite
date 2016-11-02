@@ -104,7 +104,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
 
-  def importCSV(file: String, columns: List[String], infer: Boolean): Unit = {
+  def importCSV(file: String, columns: List[String], infer: Boolean, limit: Option[Int] = None): Unit = {
     val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
     val response = sqlController.importCSV(
       user,
@@ -116,8 +116,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         delimiter = ",",
         mode = "FAILFAST",
         infer = infer,
-        overwrite = false,
-        columnsToImport = List()))
+        overwrite = true,
+        columnsToImport = List(),
+        limit = limit))
     val tablePath = response.id
     run(
       "Import vertices",
@@ -126,7 +127,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         "id-attr" -> "new_id"))
   }
 
-  def createViewCSV(file: String, columns: List[String]): Unit = {
+  def createViewCSV(file: String, columns: List[String], limit: Option[Int] = None): Unit = {
     val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
     sqlController.createViewCSV(
       user,
@@ -138,8 +139,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         delimiter = ",",
         mode = "FAILFAST",
         infer = false,
-        overwrite = false,
-        columnsToImport = List()))
+        overwrite = true,
+        columnsToImport = List(),
+        limit = limit))
   }
 
   test("import from CSV without header") {
@@ -147,6 +149,28 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(vattr[String]("vertexId") == Seq("0", "1", "2"))
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve"))
     assert(vattr[String]("age") == Seq("18.2", "20.3", "50.3"))
+  }
+
+  test("import from CSV without header with limit") {
+    importCSV("testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(0))
+    assert(vattr[String]("vertexId").isEmpty)
+    assert(vattr[String]("name").isEmpty)
+    assert(vattr[String]("age").isEmpty)
+
+    importCSV("testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(1))
+    assert(vattr[String]("vertexId").length == 1)
+    assert(vattr[String]("name").length == 1)
+    assert(vattr[String]("age").length == 1)
+
+    importCSV("testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(2))
+    assert(vattr[String]("vertexId").length == 2)
+    assert(vattr[String]("name").length == 2)
+    assert(vattr[String]("age").length == 2)
+
+    importCSV("testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(3))
+    assert(vattr[String]("vertexId").length == 3)
+    assert(vattr[String]("name").length == 3)
+    assert(vattr[String]("age").length == 3)
   }
 
   test("import from CSV with header") {
@@ -207,7 +231,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcUrl = sqliteURL,
         jdbcTable = "subscribers",
         overwrite = false,
-        columnsToImport = List("n", "id", "name", "race condition", "level")))
+        columnsToImport = List("n", "id", "name", "race condition", "level"),
+        limit = None))
     checkSqliteSubscribers(response.id)
   }
 
@@ -222,7 +247,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcTable = "subscribers",
         keyColumn = Some("id"),
         overwrite = false,
-        columnsToImport = List("n", "id", "name", "race condition", "level")))
+        columnsToImport = List("n", "id", "name", "race condition", "level"),
+        limit = None))
     checkSqliteSubscribers(response.id)
   }
 
@@ -237,7 +263,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcTable = "subscribers",
         keyColumn = Some("level"),
         overwrite = false,
-        columnsToImport = List("n", "id", "name", "race condition", "level")))
+        columnsToImport = List("n", "id", "name", "race condition", "level"),
+        limit = None))
     checkSqliteSubscribers(response.id)
   }
 
@@ -252,7 +279,25 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcTable = "subscribers",
         keyColumn = Some("name"),
         overwrite = false,
-        columnsToImport = List("n", "id", "name", "race condition", "level")))
+        columnsToImport = List("n", "id", "name", "race condition", "level"),
+        limit = None))
+    checkSqliteSubscribers(response.id)
+  }
+
+  test("import from SQLite (INTEGER partitioning - custom number of partitions)") {
+    createSqliteSubscribers()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "subscribers",
+        keyColumn = Some("id"),
+        numPartitions = Some(2),
+        overwrite = false,
+        columnsToImport = List("n", "id", "name", "race condition", "level"),
+        limit = None))
     checkSqliteSubscribers(response.id)
   }
 
@@ -267,8 +312,140 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         jdbcTable = "subscribers",
         predicates = Some(List("id <= 2", "id >= 3")),
         overwrite = false,
-        columnsToImport = List("n", "id", "name", "race condition", "level")))
+        columnsToImport = List("n", "id", "name", "race condition", "level"),
+        limit = None))
     checkSqliteSubscribers(response.id)
+  }
+
+  def createSqliteNonConventionalTable() = {
+    val connection = java.sql.DriverManager.getConnection(sqliteURL)
+    val statement = connection.createStatement()
+    statement.executeUpdate(s"""
+      DROP TABLE IF EXISTS 'name with space';
+      CREATE TABLE 'name with space' (id INTEGER, 'colname with space' INTEGER, a TEXT);
+      INSERT INTO 'name with space' VALUES(1, 1, 'x');""")
+    connection.close()
+  }
+
+  def checkSqliteNonConventionalTable(table: String) = {
+    run(
+      "Import vertices",
+      Map(
+        "table" -> table,
+        "id-attr" -> "new_id"))
+    assert(vattr[Long]("id") == Seq(1L))
+    assert(vattr[Long]("colname with space") == Seq(1L))
+    assert(vattr[String]("a") == Seq("x"))
+  }
+
+  test("import from SQLite (non conventional table name - double quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "\"name with space\"",
+        keyColumn = Some("id"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non conventional key column name - double quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "\"name with space\"",
+        keyColumn = Some("\"colname with space\""),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non conventional table name - single quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "'name with space'",
+        keyColumn = Some("id"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non conventional key column name - single quote)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "'name with space' t",
+        keyColumn = Some("t.'colname with space'"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (aliased native sql - no keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space') t",
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (aliased native sql - with keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space') t",
+        keyColumn = Some("t.'colname with space'"),
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
+  }
+
+  test("import from SQLite (non aliased native sql - no keyColumn)") {
+    createSqliteNonConventionalTable()
+    val response = sqlController.importJdbc(
+      user,
+      JdbcImportRequest(
+        table = "jdbc-import-test",
+        privacy = "public-read",
+        jdbcUrl = sqliteURL,
+        jdbcTable = "(SELECT * FROM 'name with space')",
+        overwrite = false,
+        columnsToImport = List("id", "colname with space", "a"),
+        limit = None))
+    checkSqliteNonConventionalTable(response.id)
   }
 
   test("sql export to parquet + import back (including tuple columns)") {
@@ -291,7 +468,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         privacy = "public-read",
         files = exportPath + "/part*",
         overwrite = false,
-        columnsToImport = List("name", "location")))
+        columnsToImport = List("name", "location"),
+        limit = None))
     val tablePath = response.id
     run(
       "Import vertices",
@@ -314,15 +492,13 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     sqlController.createViewDFSpec(user,
       SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
         DataFrameSpec(
-          isGlobal = true,
           directory = Some(""),
           project = None,
           sql = "select * from `csv-view-test`"
-        )))
+        ), overwrite = false))
     val res = Await.result(sqlController.runSQLQuery(user,
       SQLQueryRequest(
         DataFrameSpec(
-          isGlobal = true,
           directory = Some(""),
           project = None,
           sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
@@ -331,5 +507,27 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(res.header == colNames)
     assert(res.data == List(
       List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
+  }
+
+  test("export global sql to view with limit + query it again") {
+    val colNames = List("vertexId", "name", "age")
+    // vertex-data has 3 rows, but we limit the import to 2.
+    createViewCSV("testgraph/vertex-data", colNames, limit = Some(2))
+    sqlController.createViewDFSpec(user,
+      SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
+        DataFrameSpec(
+          directory = Some(""),
+          project = None,
+          sql = "select * from `csv-view-test`"
+        ), overwrite = false))
+    val res = Await.result(sqlController.runSQLQuery(user,
+      SQLQueryRequest(
+        DataFrameSpec(
+          directory = Some(""),
+          project = None,
+          sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
+        ), maxRows = 120)),
+      Duration.Inf)
+    assert(res.data.length == 2)
   }
 }

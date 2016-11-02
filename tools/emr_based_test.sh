@@ -23,9 +23,16 @@ shift
 CLUSTER_NAME=${CLUSTER_NAME:-${USER}-test-cluster}
 EMR_TEST_SPEC="/tmp/${CLUSTER_NAME}.emr_test_spec"
 NUM_INSTANCES=${NUM_INSTANCES:-3}
+NUM_EXECUTORS=${NUM_EXECUTORS:-3}
+
 
 if [[ ! $NUM_INSTANCES =~ ^[1-9][0-9]*$ ]]; then
-  echo "Variable NUM_INSTANCES=$NUM_INSTANCES. This is not a valid instance quantity."
+  echo "Variable NUM_INSTANCES=$NUM_INSTANCES. This is not a number."
+  exit 1
+fi
+
+if [[ ! $NUM_EXECUTORS =~ ^[1-9][0-9]*$ ]]; then
+  echo "Variable NUM_EXECUTORS=$NUM_EXECUTORS. This is not a number."
   exit 1
 fi
 
@@ -49,6 +56,7 @@ cat >>${EMR_TEST_SPEC} <<EOF
 # Override values for the test setup:
 CLUSTER_NAME=${CLUSTER_NAME}
 NUM_INSTANCES=${NUM_INSTANCES}
+NUM_EXECUTORS=${NUM_EXECUTORS}
 S3_DATAREPO=""
 KITE_INSTANCE_BASE_NAME=testemr
 EOF

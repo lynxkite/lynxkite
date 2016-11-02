@@ -48,6 +48,11 @@ you have to enable HTTPS (see next section). To securely set up user authenticat
 - Restart LynxKite with authentication. Confirm that user credentials are now required for login.
 - You can now make LynxKite externally accessible.
 
+In addition to this, LynxKite can be authenticated using a remote LDAP service. LDAP authenticated
+users will always be non-administrators. Regular LynxKite and LDAP user authentication can coexist.
+The details of setting up LDAP authentication are specified in the
+<<ldap-authentication,LDAP authentication section>> of the `.kiterc` chapter.
+
 ### Access control setup
 
 After the users are created, HDFS/Linux directory level access control can be enabled
@@ -57,7 +62,7 @@ directly on the LynxKite Web UI.
 ### HTTPS setup
 
 To enable HTTPS, a certificate is required. For testing purposes a self-signed certificate is
-included (`conf/localhost.self-signed.cert`). Its password is “asdasd”. This certificate does
+included (`conf/localhost.self-signed.cert`). Its password is “keystore-password”. This certificate does
 not provide proper protection. (Lacking a trusted CA, the self-signed certificate can easily
 be spoofed.) Using it will trigger a certificate warning in the user’s browser. It is recommended
 to install a real certificate in its place.

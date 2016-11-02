@@ -34,7 +34,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       mode = "FAILFAST",
       infer = false,
       overwrite = false,
-      columnsToImport = List()))
+      columnsToImport = List(),
+      limit = None))
     f.id
   }
 

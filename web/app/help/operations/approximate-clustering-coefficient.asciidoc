@@ -1,0 +1,18 @@
+### Approximate clustering coefficient
+
+Scalable algorithm to calculate the approximate local
+http://en.wikipedia.org/wiki/Clustering_coefficient[clustering
+coefficient] attribute for every vertex. It quantifies how close the
+vertex's neighbors are to being a clique. In practice a high (close to
+1.0) clustering coefficient means that the neighbors of a vertex are
+highly interconnected, 0.0 means there are no edges between the
+neighbors of the vertex.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[bits]] The precision of the algorithm::
+This algorithm is an approximation. This parameter sets the trade-off between
+the quality of the approximation and the memory and time consumption of the algorithm.
+====

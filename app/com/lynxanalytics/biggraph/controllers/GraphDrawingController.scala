@@ -12,11 +12,26 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.spark_util
 
 import scala.collection.mutable
+import scala.concurrent.Future
+
+object DrawingThresholds {
+  private def get(suffix: String, default: Int): Int = {
+    LoggedEnvironment.envOrNone("KITE_DRAWING_" + suffix).map(_.toInt).getOrElse(default)
+  }
+  val Overall = LoggedEnvironment.envOrElse("KITE_DRAWING_OVERALL", "10000").toInt
+  val BucketSampling = get("BUCKET_SAMPLING", Overall * 5)
+  val MaxSampledViewVertices = get("MAX_SAMPLED_VIEW_VERTICES", Overall)
+  val MaxSampledViewEdges = get("MAX_SAMPLED_VIEW_EDGES", Overall)
+  val TripletSampling = get("TRIPLET_SAMPLING", Overall * 50)
+  val SmallEdges = get("SMALL_EDGES", Overall * 5)
+  val FilterMinRemaining = get("FILTER_MIN_REMAINING", Overall * 5)
+}
 
 case class VertexDiagramSpec(
   vertexSetId: String,
@@ -31,7 +46,7 @@ case class VertexDiagramSpec(
   yBucketingAttributeId: String = "",
   yNumBuckets: Int = 1,
   yAxisOptions: AxisOptions = AxisOptions(),
-  sampleSize: Int = 50000,
+  sampleSize: Int = DrawingThresholds.BucketSampling,
 
   // ** Parameters for sampled view **
   centralVertexIds: Seq[String] = Seq(),
@@ -39,7 +54,7 @@ case class VertexDiagramSpec(
   sampleSmearEdgeBundleId: String = "",
   attrs: Seq[String] = Seq(),
   radius: Int = 1,
-  maxSize: Int = 10000)
+  maxSize: Int = DrawingThresholds.MaxSampledViewVertices)
 
 case class FEVertex(
   // For bucketed view:
@@ -95,7 +110,7 @@ case class EdgeDiagramSpec(
   // many actual edges, clients always have to specify an aggregator as well. For now, this only
   // works for small edge set visualizations (i.e. sampled mode).
   attrs: Seq[AggregatedAttribute] = Seq(),
-  maxSize: Int = 10000)
+  maxSize: Int = DrawingThresholds.MaxSampledViewEdges)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -171,6 +186,7 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
+  import dataManager.executionContext
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
@@ -317,7 +333,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   private def tripletMapping(
     eb: EdgeBundle, sampled: Boolean): graph_operations.TripletMapping.Output = {
     val op =
-      if (sampled) graph_operations.TripletMapping(sampleSize = 500000)
+      if (sampled) graph_operations.TripletMapping(sampleSize = DrawingThresholds.TripletSampling)
       else graph_operations.TripletMapping()
     val res = op(op.edges, eb).result
     dataManager.cache(res.srcEdges)
@@ -391,14 +407,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val tm = tripletMapping(eb, sampled = false)
     if (srcView.vertexIndices.isDefined) {
       val vertexIds = srcView.vertexIndices.get.keySet
-      val op = graph_operations.EdgesForVertices(vertexIds, 50000, bySource = true)
+      val op = graph_operations.EdgesForVertices(
+        vertexIds, DrawingThresholds.SmallEdges, bySource = true)
       val edges =
         op(op.edges, eb)(op.tripletMapping, tm.srcEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     if (dstView.vertexIndices.isDefined) {
       val vertexIds = dstView.vertexIndices.get.keySet
-      val op = graph_operations.EdgesForVertices(vertexIds, 50000, bySource = false)
+      val op = graph_operations.EdgesForVertices(
+        vertexIds, DrawingThresholds.SmallEdges, bySource = false)
       val edges =
         op(op.edges, eb)(op.tripletMapping, tm.dstEdges).result.edges.value
       if (edges.isDefined) return edges
@@ -602,7 +620,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters, edgeFilters)
     // TODO: See if we can eliminate the extra stage from this "count".
     val count = graph_operations.Count.run(sampledEdges.ids).value
-    if (count >= 50000) {
+    if (count >= DrawingThresholds.FilterMinRemaining) {
       sampledEdges
     } else {
       // Too little remains of the sample after filtering. Let's filter the full data.
@@ -623,19 +641,22 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     FilteredEdges(ids, trips.srcEdges, trips.dstEdges)
   }
 
-  def getCenter(user: User, request: CenterRequest): CenterResponse = {
+  def getCenter(user: User, request: CenterRequest): Future[CenterResponse] = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
     val sampled = {
       val op = graph_operations.SampleVertices(request.count)
-      op(op.vs, filtered).result.sample.value
+      op(op.vs, filtered).result.sample
     }
-    CenterResponse(sampled.map(_.toString))
+    dataManager
+      .getFuture(sampled)
+      .map(s => CenterResponse(s.value.map(_.toString)))
+      .future
   }
 
-  def getHistogram(user: User, request: HistogramSpec): HistogramResponse = {
+  def getHistogram(user: User, request: HistogramSpec): Future[HistogramResponse] = {
     val attribute = metaManager.attribute(request.attributeId.asUUID)
     dataManager.cache(attribute.vertexSet)
     dataManager.cache(attribute)
@@ -651,25 +672,34 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
     }
     val histogram = bucketedAttr.toHistogram(filteredVS, request.sampleSize)
-    val counts = histogram.counts.value
+    val counts = histogram.counts
     spark_util.Counters.printAll
-    HistogramResponse(
-      bucketedAttr.bucketer.labelType,
-      bucketedAttr.bucketer.bucketLabels,
-      (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0L)))
+    dataManager
+      .getFuture(counts)
+      .map(c =>
+        HistogramResponse(
+          bucketedAttr.bucketer.labelType,
+          bucketedAttr.bucketer.bucketLabels,
+          (0 until bucketedAttr.bucketer.numBuckets).map(c.value.getOrElse(_, 0L))))
+      .future
   }
 
-  def getScalarValue(user: User, request: ScalarValueRequest): DynamicValue = {
+  def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    dynamicValue(scalar)
+    dataManager
+      .getFuture(scalar)
+      .map(dynamicValue(_)).future
   }
 
-  def getModel(user: User, request: ScalarValueRequest): model.FEModel = {
-    val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model].value
-    model.Model.toFE(m, dataManager.runtimeContext.sparkContext)
+  def getModel(user: User, request: ScalarValueRequest): Future[model.FEModel] = {
+    val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model]
+    dataManager
+      .getFuture(m)
+      .map(scalar => model.Model.toFE(scalar.value, dataManager.runtimeContext.sparkContext))
+      .future
   }
 
-  private def dynamicValue[T](scalar: Scalar[T]) = {
+  private def dynamicValue[T](scalar: ScalarData[T]) = {
     implicit val tt = scalar.typeTag
     graph_operations.DynamicValue.convert(scalar.value)
   }

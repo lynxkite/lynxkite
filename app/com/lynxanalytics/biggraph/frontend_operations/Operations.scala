@@ -6,9 +6,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.graph_operations.EdgeBundleAsAttribute
-import com.lynxanalytics.biggraph.graph_operations.RandomDistribution
-import com.lynxanalytics.biggraph.graph_operations.PartitionAttribute
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -21,8 +18,8 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import com.lynxanalytics.biggraph.table.TableImport
-
 import play.api.libs.json
+
 import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
@@ -797,6 +794,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Enumerate triangles", new CreateSegmentationOperation(_, _) {
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = "triangles"),
+      Choice("bothdir", "Edges required in both directions", options = FEOption.bools))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val bothDir = params("bothdir").toBoolean
+      val op = graph_operations.EnumerateTriangles(bothDir)
+      val result = op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(result.segments, idAttr = "id")
+      segmentation.notes =
+        s"Finds all triangles in a graph"
+      segmentation.belongsTo = result.belongsTo
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+    }
+  })
+
   register("Combine segmentations", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "New segmentation name"),
@@ -883,7 +898,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Add random vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Choice("dist", "Distribution", options = FEOption.list(RandomDistribution.getNames)),
+      Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -897,7 +912,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Add random edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Choice("dist", "Distribution", options = FEOption.list(RandomDistribution.getNames)),
+      Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -1095,12 +1110,36 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Approximate clustering coefficient", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "clustering_coefficient"),
+      NonNegInt("bits", "Precision", default = 8))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.ApproxClusteringCoefficient(params("bits").toInt)
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.clustering, help)
+    }
+  })
+
   register("Embeddedness", new MetricsOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "embeddedness"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.Embeddedness()
+      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+    }
+  })
+
+  register("Approximate embeddedness", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "embeddedness"),
+      NonNegInt("bits", "Precision", default = 8))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.ApproxEmbeddedness(params("bits").toInt)
       project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
     }
   })
@@ -1383,15 +1422,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  def collectIdentifiers[T <: MetaGraphEntity](
-    holder: StateMapHolder[T],
-    expr: String,
-    prefix: String = ""): IndexedSeq[(String, T)] = {
-    holder.filter {
-      case (name, _) => containsIdentifierJS(expr, prefix + name)
-    }.toIndexedSeq
-  }
-
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
@@ -1406,8 +1436,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
-      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
 
       val result = params("type") match {
         case "string" =>
@@ -1433,16 +1463,16 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
-      val namedEdgeAttributes = collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
+      val namedEdgeAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
       val namedSrcVertexAttributes =
-        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
+        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
           .map {
             case (name, attr) =>
               "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
           }
-      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val namedDstVertexAttributes =
-        collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
+        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
           .map {
             case (name, attr) =>
               "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
@@ -1473,7 +1503,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
-      val namedScalars = collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val result = params("type") match {
         case "string" =>
           graph_operations.DeriveJSScalar.deriveFromScalars[String](expr, namedScalars)
@@ -2043,6 +2073,69 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.edgeBundle.idSet,
         Seq(FEVertexAttributeFilter(guid, "!=")))
       project.pullBackEdges(embedding)
+    }
+  })
+
+  register("Triadic closure", new StructureOperation(_, _) {
+    def parameters = List()
+    def enabled = hasVertexSet && hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.ConcatenateBundlesMulti()
+      val result = op(op.edgesAB, project.edgeBundle)(
+        op.edgesBC, project.edgeBundle).result
+
+      // saving attributes and original edges
+      var origEdgeAttrs = project.edgeAttributes.toIndexedSeq
+
+      // new edges after closure
+      project.edgeBundle = result.edgesAC
+
+      // pulling old edge attributes
+      for ((name, attr) <- origEdgeAttrs) {
+        project.newEdgeAttribute("ab_" + name, attr.pullVia(result.projectionFirst))
+        project.newEdgeAttribute("bc_" + name, attr.pullVia(result.projectionSecond))
+      }
+    }
+  })
+
+  register("Create snowball sample", new StructureOperation(_, _) {
+    def parameters = List(
+      Ratio("ratio", "Fraction of vertices to use as starting points", defaultValue = "0.0001"),
+      NonNegInt("radius", "Radius", default = 3),
+      Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
+      RandomSeed("seed", "Seed")
+    )
+    def enabled = hasVertexSet && hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val ratio = params("ratio")
+      // Creating random attr for filtering the original center vertices of the "snowballs".
+      val rnd = {
+        val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Uniform")
+        op(op.vs, project.vertexSet).result.attr
+      }
+
+      // Creating derived attribute based on rnd and ratio parameter.
+      val startingDistance = rnd.deriveX[Double](s"x < ${ratio} ? 0.0 : undefined")
+
+      // Constant unit length for all edges.
+      val edgeLength = project.edgeBundle.const(1.0)
+
+      // Running shortest path from vertices with attribute startingDistance.
+      val distance = {
+        val op = graph_operations.ShortestPath(params("radius").toInt)
+        op(op.vs, project.vertexSet)(
+          op.es, project.edgeBundle)(
+            op.edgeDistance, edgeLength)(
+              op.startingDistance, startingDistance).result.distance
+      }
+      project.newVertexAttribute(params("attrName"), distance)
+
+      // Filtering on distance attribute.
+      val guid = distance.entity.gUID.toString
+      val vertexEmbedding = FEFilters.embedFilteredVertices(
+        project.vertexSet, Seq(FEVertexAttributeFilter(guid, ">-1")), heavy = true)
+      project.pullBack(vertexEmbedding)
+
     }
   })
 
@@ -3204,7 +3297,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       project.newVertexAttribute(s"${sourceName}_train", parted.train)
     }
     def partitionVariable[T](
-      source: Attribute[T], roles: Attribute[String]): PartitionAttribute.Output[T] = {
+      source: Attribute[T], roles: Attribute[String]): graph_operations.PartitionAttribute.Output[T] = {
       val op = graph_operations.PartitionAttribute[T]()
       op(op.attr, source)(op.role, roles).result
     }
@@ -3432,16 +3525,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     op.result.created
   }
 
-  // Whether a JavaScript expression contains a given identifier.
-  // It's a best-effort implementation with no guarantees of correctness.
-  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    val re = "(?s).*\\b" + java.util.regex.Pattern.quote(identifier) + "\\b.*"
-    expr.matches(re)
-  }
 }
 
 object Operations {
   def addNotesOperation(notes: String): FEOperationSpec = {
     FEOperationSpec("Change-project-notes", Map("notes" -> notes))
+  }
+}
+
+object JSUtilities {
+  def collectIdentifiers[T <: MetaGraphEntity](
+    holder: StateMapHolder[T],
+    expr: String,
+    prefix: String = ""): IndexedSeq[(String, T)] = {
+    holder.filter {
+      case (name, _) => containsIdentifierJS(expr, prefix + name)
+    }.toIndexedSeq
+  }
+
+  // Whether a JavaScript expression contains a given identifier.
+  // It's a best-effort implementation with no guarantees of correctness.
+  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
+    // Listing the valid characters for JS variable names. The \\p{*} syntax if for specifying
+    // Unicode categories for scala regex.
+    // For more information about the valid variable names in JS please consult:
+    // http://es5.github.io/x7.html#x7.6
+    val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
+      "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
+    val quoted_identifer = java.util.regex.Pattern.quote(identifier)
+    val re = s"(?s)(^|.*[^$validJSCharacters])${quoted_identifer}($$|[^$validJSCharacters].*)"
+    expr.matches(re)
   }
 }

@@ -1,10 +1,12 @@
 '''Python interface for the LynxKite Remote API.
 
-The access to the LynxKite instance can be configured through the following environment variables::
+The default LynxKite connection parameters can be configured through the following environment
+variables::
 
     LYNXKITE_ADDRESS=https://lynxkite.example.com/
     LYNXKITE_USERNAME=user@company
     LYNXKITE_PASSWORD=my_password
+    LYNXKITE_PUBLIC_SSL_CERT=/tmp/lynxkite.crt
 
 Example usage::
 
@@ -20,6 +22,7 @@ history.
 import http.cookiejar
 import json
 import os
+import ssl
 import sys
 import types
 import urllib
@@ -37,19 +40,31 @@ class LynxKite:
   Some LynxKite API methods take a connection argument which can be used to communicate with
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
-  ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, and ``LYNXKITE_PASSWORD``.
+  ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
+  ``LYNXKITE_PUBLIC_SSL_CERT``.
   '''
 
-  def __init__(self, username=None, password=None, address=None):
+  def __init__(self, username=None, password=None, address=None, certfile=None):
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
     self._address = address
     self._username = username
     self._password = password
+    self._certfile = certfile
+    self.opener = self.build_opener()
+
+  def build_opener(self):
     cj = http.cookiejar.CookieJar()
-    self.opener = urllib.request.build_opener(
-        urllib.request.HTTPCookieProcessor(cj))
+    cp = urllib.request.HTTPCookieProcessor(cj)
+    if self.certfile():
+      sslctx = ssl.create_default_context(
+          ssl.Purpose.SERVER_AUTH,
+          cafile=self.certfile())
+      https = urllib.request.HTTPSHandler(context=sslctx)
+      return urllib.request.build_opener(https, cp)
+    else:
+      return urllib.request.build_opener(cp)
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -60,12 +75,16 @@ class LynxKite:
   def password(self):
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
 
+  def certfile(self):
+    return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
+
   def _login(self):
     self._request(
         '/passwordLogin',
         dict(
             username=self.username(),
-            password=self.password()))
+            password=self.password(),
+            method='lynxkite'))
 
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
@@ -165,8 +184,10 @@ class LynxKite:
           jdbcUrl,
           jdbcTable,
           keyColumn='',
+          numPartitions=0,
           predicates=[],
-          columnsToImport=[]):
+          columnsToImport=[],
+          properties={}):
     '''Imports a database table as a :class:`View` via JDBC.
 
     Args:
@@ -175,19 +196,24 @@ class LynxKite:
       keyColumn (str, optional): The key column in the source table for Spark partitioning.
         The table should be partitioned or indexed for this column in the source database table
         for efficiency. Cannot be specified together with ``predicates``.
+      numPartitions (int, optional): The number of Spark partitions to create.
       predicates (list of str, optional): List of SparkSQL where clauses to be executed on the
         source table for Spark partitioning. The table should be partitioned or indexed for this
         column in the source database table for efficiency. Cannot be specified together with
         ``keyColumn``.
       columnsToImport (list of str, optional): List of columns to import from the source table.
+      properties (dict, optional): Extra settings for the JDBC connection. See the Spark
+        documentation.
     '''
     return self._create_view(
         "Jdbc",
         dict(jdbcUrl=jdbcUrl,
              jdbcTable=jdbcTable,
              keyColumn=keyColumn,
+             numPartitions=numPartitions,
              predicates=predicates,
-             columnsToImport=columnsToImport))
+             columnsToImport=columnsToImport,
+             properties=properties))
 
   def import_parquet(
           self,
@@ -227,9 +253,10 @@ class LynxKite:
     return View(self, res.checkpoint)
 
   def load_project(self, name):
-    '''Loads an existing LynxKite project. Returns a :class:`Project`.'''
+    '''Loads an existing LynxKite project. Returns a :class:`RootProject`.'''
     r = self._send('loadProject', dict(name=name))
-    return Project(self, r.checkpoint)
+    project_checkpoint = _ProjectCheckpoint(self, r.checkpoint)
+    return RootProject(project_checkpoint)
 
   def load_table(self, name):
     '''Loads an existing LynxKite table. Returns a :class:`Table`.'''
@@ -242,9 +269,14 @@ class LynxKite:
     return View(self, r.checkpoint)
 
   def new_project(self):
-    '''Creates a new unnamed empty LynxKite :class:`Project`.'''
+    '''Creates a new unnamed empty LynxKite :class:`RootProject`.'''
     r = self._send('newProject')
-    return Project(self, r.checkpoint)
+    project_checkpoint = _ProjectCheckpoint(self, r.checkpoint)
+    return RootProject(project_checkpoint)
+
+  def remove_name(self, name):
+    '''Removes an object named ``name``.'''
+    self._send('removeName', dict(name=name))
 
   def change_acl(self, file, readACL, writeACL):
     '''Sets the read and write access control list for a path (directory, project, etc) in LynxKite.
@@ -291,6 +323,13 @@ class View:
         limit=limit,
     ), raw=True)
     return r['rows']
+
+  def schema(self):
+    '''Computes the view and returns the schema.'''
+    r = self.lk._send('getViewSchema', dict(
+        checkpoint=self.checkpoint,
+    ))
+    return r
 
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
     '''Exports the view to CSV file.'''
@@ -342,19 +381,19 @@ class View:
     return Table(self.lk, res.checkpoint)
 
 
-class Project:
-  '''Represents an unanchored LynxKite project.
+class _ProjectCheckpoint:
+  '''Class for storing the mutable state of a project.
 
-  This project is not automatically saved to the LynxKite project directories.
+  The `checkpoint` field is a checkpoint of a root project. The :class:`RootProject` and :class:`SubProject`
+  classes can access and modify the checkpoint of a root project through this class.
   '''
 
   def __init__(self, lynxkite, checkpoint):
-    '''Creates a new blank project.'''
-    self.lk = lynxkite
     self.checkpoint = checkpoint
+    self.lk = lynxkite
 
-  def save(self, name, writeACL=None, readACL=None):
-    '''Saves the project under given name, with given writeACL and readACL.'''
+  def save(self, name, writeACL, readACL):
+    '''Saves the project having this project checkpoint under given name, with given writeACL and readACL.'''
     self.lk._send(
         'saveProject',
         dict(
@@ -363,47 +402,111 @@ class Project:
             writeACL=writeACL,
             readACL=readACL))
 
-  def scalar(self, scalar):
-    '''Fetches the value of a scalar. Returns either a double or a string.'''
-    r = self.lk._send(
-        'getScalar',
-        dict(
-            checkpoint=self.checkpoint,
-            scalar=scalar))
-    if hasattr(r, 'double'):
-      return r.double
-    return r.string
-
-  def sql(self, query):
-    '''Runs SQL queries.'''
-    r = self.lk._send('globalSQL', dict(
-        query=query,
-        checkpoints={'': self.checkpoint},
-    ))
-    return View(self.lk, r.checkpoint)
-
-  def run_operation(self, operation, parameters):
-    '''Runs an operation on the project with the given parameters.'''
-    r = self.lk._send(
-        'runOperation',
-        dict(
-            checkpoint=self.checkpoint,
-            operation=operation,
-            parameters=parameters))
-    self.checkpoint = r.checkpoint
-    return self
-
   def compute(self):
     '''Computes all scalars and attributes of the project.'''
     return self.lk._send(
         'computeProject', dict(checkpoint=self.checkpoint))
 
   def is_computed(self):
-    '''Checks Whether all the scalars, attributes and segmentations of the project are already computed.'''
+    '''Checks whether all the scalars, attributes and segmentations of the project are already computed.'''
     r = self.lk._send('isComputed', dict(
         checkpoint=self.checkpoint
     ))
     return r
+
+  def sql(self, query):
+    '''Runs SQL queries.'''
+    return self.lk.sql(query, **{'': self})
+
+  def run_operation(self, operation, parameters, path):
+    '''Runs an operation on the project with the given parameters.'''
+    r = self.lk._send(
+        'runOperation',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            operation=operation,
+            parameters=parameters))
+    self.checkpoint = r.checkpoint
+
+  def scalar(self, scalar, path):
+    '''Fetches the value of a scalar. Returns either a double or a string.'''
+    r = self.lk._send(
+        'getScalar',
+        dict(
+            checkpoint=self.checkpoint,
+            path=path,
+            scalar=scalar))
+    if hasattr(r, 'double'):
+      return r.double
+    return r.string
+
+  def histogram(self, path, attr, attr_type, numbuckets, sample_size, logarithmic):
+    '''Returns a histogram of the given attribute.'''
+    request = dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        attr=attr,
+        numBuckets=numbuckets,
+        sampleSize=sample_size,
+        logarithmic=logarithmic
+    )
+    if attr_type == 'vertex':
+      r = self.lk._send(
+          'getVertexHistogram',
+          request
+      )
+    elif attr_type == 'edge':
+      r = self.lk._send(
+          'getEdgeHistogram',
+          request
+      )
+    else:
+      raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
+    return r
+
+
+class SubProject:
+  '''Represents a root project or a segmentation.
+
+  Example usage::
+
+      import lynx
+      p = lynx.LynxKite().new_project()
+      p.exampleGraph()
+      p.connectedComponents(**{
+        'directions': 'ignore directions',
+        'name': 'connected_components'})
+      s = p.segmentation('connected_components')
+      print(s.scalar('vertex_count'))
+
+  '''
+
+  def __init__(self, project_checkpoint, path):
+    self.project_checkpoint = project_checkpoint
+    self.path = path
+    self.lk = project_checkpoint.lk
+
+  def scalar(self, scalar):
+    '''Fetches the value of a scalar. Returns either a double or a string.'''
+    return self.project_checkpoint.scalar(scalar, self.path)
+
+  def run_operation(self, operation, parameters):
+    '''Runs an operation on the project with the given parameters.'''
+    self.project_checkpoint.run_operation(operation, parameters, self.path)
+    return self
+
+  def segmentation(self, name):
+    '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
+    return SubProject(self.project_checkpoint, self.path + [name])
+
+  def vertex_attribute(self, attr):
+    '''Creates a :class:`Attribute` representing a vertex attribute with the given name.'''
+    return Attribute(attr, 'vertex', self.project_checkpoint, self.path)
+
+  def edge_attribute(self, attr):
+    '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
+    return Attribute(attr, 'edge', self.project_checkpoint, self.path)
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -415,6 +518,68 @@ class Project:
     return f
 
 
+class RootProject(SubProject):
+  '''Represents a project.'''
+
+  def __init__(self, project_checkpoint):
+    super().__init__(project_checkpoint, [])
+    self.lk = project_checkpoint.lk
+
+  def sql(self, query):
+    '''Runs SQL queries.'''
+    return self.project_checkpoint.sql(query)
+
+  def save(self, name, writeACL=None, readACL=None):
+    '''Saves the project under given name, with given writeACL and readACL.'''
+    self.project_checkpoint.save(name, writeACL, readACL)
+
+  def compute(self):
+    '''Computes all scalars and attributes of the project.'''
+    return self.project_checkpoint.compute()
+
+  def is_computed(self):
+    '''Checks whether all the scalars, attributes and segmentations of the project are already computed.'''
+    return self.project_checkpoint.is_computed()
+
+  @property
+  def checkpoint(self):
+    return self.project_checkpoint.checkpoint
+
+  def global_name(self):
+    '''Global reference of the project.'''
+    return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
+
+
+class Attribute():
+  '''Represents a vertex or an edge attribute.'''
+
+  def __init__(self, name, attr_type, project_checkpoint, path):
+    self.project_checkpoint = project_checkpoint
+    self.name = name
+    self.attr_type = attr_type
+    self.path = path
+
+  def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
+    '''Returns a histogram of the attribute.
+
+    Example of precise logarithmic histogram with 20 buckets.:
+
+      a = p.vertex_attribute('attr_name')
+      h = a.histogram(numbuckets=20, logarithmic=True)
+      print(h.labelType)
+      print(h.labels)
+      print(h.sizes)
+    '''
+
+    return self.project_checkpoint.histogram(
+        self.path,
+        self.name,
+        self.attr_type,
+        numbuckets,
+        sample_size,
+        logarithmic)
+
+
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
 
@@ -423,6 +588,23 @@ class LynxException(Exception):
     self.error = error
 
 
+class ResponseObject(types.SimpleNamespace):
+
+  @staticmethod
+  def obj_to_dict(obj):
+    if isinstance(obj, ResponseObject):
+      return obj.to_dict()
+    elif isinstance(obj, list):
+      return [ResponseObject.obj_to_dict(o) for o in obj]
+    elif isinstance(obj, dict):
+      return {k: ResponseObject.obj_to_dict(v) for (k, v) in obj.items()}
+    else:
+      return obj
+
+  def to_dict(self):
+    return {k: ResponseObject.obj_to_dict(v) for (k, v) in self.__dict__.items()}
+
+
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
-  return types.SimpleNamespace(**dic)
+  return ResponseObject(**dic)

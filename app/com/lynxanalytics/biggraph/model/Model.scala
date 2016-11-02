@@ -20,7 +20,7 @@ object Implicits {
 
 // A unified interface for different types of MLlib models.
 trait ModelImplementation {
-  // A transformation of dataframe with the model. 
+  // A transformation of dataframe with the model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame
   def details: String
 }
@@ -46,7 +46,7 @@ private[biggraph] class LogisticRegressionModelImpl(
 private[biggraph] class ClusterModelImpl(
     m: ml.clustering.KMeansModel, statistics: String,
     featureScaler: mllib.feature.StandardScalerModel) extends ModelImplementation {
-  // Transform the data with clustering model. 
+  // Transform the data with clustering model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = {
     val scaledCenters = "(" + {
@@ -65,7 +65,7 @@ case class Model(
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
   featureScaler: Option[mllib.feature.StandardScalerModel], // The scaler used to scale the features.
-  statistics: Option[String]) // For the details that require training data 
+  statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
 
   private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
@@ -257,9 +257,11 @@ object Tabulator {
     headers: Array[String],
     rowNames: Array[String],
     columnData: Array[Array[Double]]): String = {
-    assert(rowNames.size == columnData(0).size)
+    assert(rowNames.size == columnData(0).size,
+      s"Size mismatch: rowNames (${rowNames.size}) != columnData[0] (${columnData(0).size})")
     val tails = rowNames +: columnData.map(_.map(x => f"$x%1.6f"))
-    assert(headers.size == tails.size)
+    assert(headers.size == tails.size,
+      s"Size mismatch: headers (${headers.size}) != 1 + columnData (${columnData.size})")
     format(headers +: tails.transpose)
   }
 

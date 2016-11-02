@@ -30,7 +30,8 @@ object HadoopFile {
     val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str, legacyMode)
     val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
-    assert(normalizedFullPath.startsWith(prefixResolution))
+    assert(normalizedFullPath.startsWith(prefixResolution),
+      s"$str is not inside $prefixSymbol")
     val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
     assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
       s"The path following $prefixSymbol has to start with a slash (/)")
@@ -119,7 +120,7 @@ class HadoopFile private (
   // The caller is responsible for calling close().
   def create() = fs.create(path)
   def exists() = fs.exists(path)
-  private def reader() = new BufferedReader(new InputStreamReader(open))
+  private def reader() = new BufferedReader(new InputStreamReader(open, "utf-8"))
   def readAsString() = {
     val r = reader()
     try org.apache.commons.io.IOUtils.toString(r) finally r.close()

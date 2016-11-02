@@ -125,6 +125,10 @@ include::aggregate-to-segmentation.asciidoc[]
 
 include::aggregate-vertex-attribute-globally.asciidoc[]
 
+include::approximate-clustering-coefficient.asciidoc[]
+
+include::approximate-embeddedness.asciidoc[]
+
 include::centrality.asciidoc[]
 
 include::change-project-notes.asciidoc[]
@@ -233,6 +237,8 @@ include::filter-by-attributes.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
 
+include::enumerate-triangles.asciidoc[]
+
 include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
@@ -313,6 +319,8 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::shortest-path.asciidoc[]
 
+include::snowball-sample.asciidoc[]
+
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
@@ -322,6 +330,8 @@ include::train-a-kmeans-clustering-model.asciidoc[]
 include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
+
+include::triadic-closure.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 

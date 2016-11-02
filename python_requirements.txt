@@ -1,6 +1,13 @@
 autopep8
 awscli
 boto3
-luigi
+croniter
+luigi==2.3.2
+mysqlclient
+pandas
+python-dateutil
+PyYAML
+prometheus_client
 Sphinx
 sphinx-rtd-theme
+sqlalchemy

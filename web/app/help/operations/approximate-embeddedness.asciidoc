@@ -1,0 +1,14 @@
+### Approximate Embeddedness
+
+Scalable algorithm to calculate the approximate overlap size of vertex neighborhoods
+along the edges. If an A{to}B edge has an embeddedness of `N`, it means A and B have
+`N` common neighbors. The approximate embeddedness is undefined for loop edges.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[bits]] The precision of the algorithm::
+This algorithm is an approximation. This parameter sets the trade-off between
+the quality of the approximation and the memory and time consumption of the algorithm.
+====

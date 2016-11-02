@@ -41,8 +41,13 @@ Examples (work on the base side):
 The backticks are used for escaping the table name with special characters.
 
 Click the +++<label class="btn btn-primary">Show results</label>+++ button to run the query.
-The result will be limited to the first 10 lines, so you do not have to worry about limiting the
-result size explicitly.
+The result will be limited to the first 10 lines by default, but you can also set this size limit
+explicitly.
+
+Every query you run is saved locally, and the 100 most recent queries are also saved in your
+browser's local storage thus preserving them between different tabs, windows, and even sessions.
+You can navigate in the query history by pressing Ctrl+Up and Ctrl+Down
+(Command+Up and Command+Down on Mac) in the text area of the SQL interface.
 
 ## Exporting data
 

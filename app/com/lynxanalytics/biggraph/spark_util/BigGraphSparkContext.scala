@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
-import com.google.cloud.hadoop.fs.gcs
 import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
@@ -199,6 +198,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.sql.catalyst.trees.Origin])
     kryo.register(org.apache.spark.sql.catalyst.expressions.Ascending.getClass)
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.Literal])
+    // More classes for SPARK-6497.
+    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$1])
+    kryo.register(classOf[Object])
+    kryo.register(classOf[java.math.BigDecimal])
+    kryo.register(classOf[java.sql.Date])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -265,7 +269,7 @@ object BigGraphSparkContext {
       // sparkling-water's implementation of setting up workers on
       // each Spark executor. They go to great lengths of making sure
       // they exactly know the number of hosts and fail if they can't
-      // realiably count them. Here we are just going to do a
+      // reliably count them. Here we are just going to do a
       // best-effort hack.
       val numExecutors = LoggedEnvironment
         .envOrElse("NUM_EXECUTORS", "1")
@@ -283,7 +287,7 @@ object BigGraphSparkContext {
     val currentTimeMillis = System.currentTimeMillis
     val deletionThresholdMillis = currentTimeMillis - 60 * 24 * 3600 * 1000
     for (file <- LogController.getLogDir.listFiles) {
-      if (file.isFile() && file.getName().endsWith("lz4")) {
+      if (file.isFile() && (file.getName.endsWith("lz4") || file.getName.endsWith("lz4.inprogress"))) {
         if (file.lastModified() < deletionThresholdMillis) {
           file.delete()
         }

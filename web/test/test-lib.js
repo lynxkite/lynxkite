@@ -209,7 +209,7 @@ Side.prototype = {
   submitOperation: function(parentElement) {
     var button = parentElement.$('.ok-button');
     // Wait for uploads or whatever.
-    testLib.wait(protractor.until.elementTextMatches(button, /OK/));
+    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
     button.click();
   },
 
@@ -228,7 +228,7 @@ Side.prototype = {
   setAttributeFilter: function(attributeName, filterValue) {
     var filterBox = this.side.$('.attribute input[name="' + attributeName + '"]');
     filterBox.clear();
-    filterBox.sendKeys(filterValue, K.ENTER);
+    filterBox.sendKeys(filterValue).submit();
   },
 
   toggleSampledVisualization: function() {
@@ -317,8 +317,9 @@ Side.prototype = {
   },
 
   expectSqlResult: function(header, rows) {
-    expect(this.sqlEditor().evaluate('result.header')).toEqual(header);
-    expect(this.sqlEditor().evaluate('result.data')).toEqual(rows);
+    var res = this.side.$('#sql-result');
+    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   startSqlSaving: function() {
@@ -367,6 +368,16 @@ History.prototype = {
     var list = this.side.side.
       $$('project-history div.list-group > li.history-operation-item');
     return list.get(position);
+  },
+
+  // Beware, the category is left open, so calling this the second time for the same category
+  // does not work.
+  getOperationInCategoryByName: function(operation, tooltip, name) {
+    operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
+    var ops = operation.$('operation-toolbox').$$('div[class="list-group"] > div');
+    return ops.filter(function(element) {
+        return element.getText().then(function(text) { return text === name; });
+      }).get(0);
   },
 
   getInsertMenu: function(position) {
@@ -582,12 +593,25 @@ Selector.prototype = {
   },
 
   expectNumViews: function(n) {
-      return expect($$('.view-entry').count()).toEqual(n);
+    return expect($$('.view-entry').count()).toEqual(n);
+  },
+
+  computeTable: function(name) {
+    this.table(name).element(by.css('.value-retry')).click();
+  },
+
+  // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
+  expectTableWithNumRows: function(name, n) {
+    var table = this.table(name);
+    // Look up the number of rows shown inside a <value>
+    // element.
+    return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
   openNewProject: function(name) {
     element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+    element(by.id('new-project-name')).sendKeys(name);
+    $('#new-project button[type=submit]').click();
     this.hideSparkStatus();
   },
 
@@ -595,30 +619,49 @@ Selector.prototype = {
     element(by.id('import-table')).click();
   },
 
-  clickAndWaitForImport: function() {
+  clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
     testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
     importCsvButton.click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile, columns, view) {
+  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view, limit) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
-    if (columns) {
-      this.root.$('import-wizard #columns-to-import input').sendKeys(columns);
+    if (columnsToImport) {
+      this.root.$('import-wizard #columns-to-import input').sendKeys(columnsToImport);
     }
     this.root.$('#datatype select option[value="csv"]').click();
+    if (csvColumns) {
+      this.root.$('import-wizard #csv-column-names input').sendKeys(csvColumns);
+    }
     var csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     if (view) {
       this.root.$('import-wizard #as-view input').click();
     }
-    this.clickAndWaitForImport();
+    if (limit) {
+      this.root.$('import-wizard #limit input').sendKeys(limit.toString());
+    }
+    this.clickAndWaitForCsvImport();
+  },
+
+  importJDBC: function(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn, view) {
+    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    this.root.$('#datatype select option[value="jdbc"]').click();
+    this.root.$('#jdbc-url input').sendKeys(jdbcUrl);
+    this.root.$('#jdbc-table input').sendKeys(jdbcTable);
+    this.root.$('#jdbc-key-column input').sendKeys(jdbcKeyColumn);
+    if (view) {
+      this.root.$('import-wizard #as-view input').click();
+    }
+    this.root.$('#import-jdbc-button').click();
   },
 
   newDirectory: function(name) {
     element(by.id('new-directory')).click();
-    element(by.id('new-directory-name')).sendKeys(name, K.ENTER);
+    element(by.id('new-directory-name')).sendKeys(name);
+    $('#new-directory button[type=submit]').click();
   },
 
   openProject: function(name) {
@@ -643,7 +686,7 @@ Selector.prototype = {
   renameProject: function(name, newName) {
     var project = this.project(name);
     testLib.menuClick(project, 'rename');
-    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName, K.ENTER);
+    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
   },
 
   deleteProject: function(name) {
@@ -654,8 +697,12 @@ Selector.prototype = {
     testLib.menuClick(this.directory(name), 'discard');
   },
 
-  editImport: function(name) {
+  editTable: function(name) {
     testLib.menuClick(this.table(name), 'edit-import');
+  },
+
+  editView: function(name) {
+    testLib.menuClick(this.view(name), 'edit-import');
   },
 
   expectProjectListed: function(name) {
@@ -702,13 +749,35 @@ Selector.prototype = {
   },
 
   runGlobalSql: function(sql) {
-    this.root.$('#global-sql-box span[class="lead"]').click();
+    element(by.id('global-sql-box')).click();
     this.setGlobalSql(sql);
+    element(by.id('run-sql-button')).click();
+  },
+
+
+  expectGlobalSqlResult: function(header, rows) {
+    var res = element(by.id('sql-result'));
+    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   saveGlobalSqlToCSV: function() {
     element(by.id('save-results-opener')).click();
     this.root.$('#exportFormat option[value="csv"]').click();
+    element(by.id('save-results')).click();
+  },
+
+  saveGlobalSqlToTable: function(name) {
+    element(by.id('save-results-opener')).click();
+    this.root.$('#exportFormat option[value="table"]').click();
+    this.root.$('#exportKiteTable').sendKeys(name);
+    element(by.id('save-results')).click();
+  },
+
+  saveGlobalSqlToView: function(name) {
+    element(by.id('save-results-opener')).click();
+    this.root.$('#exportFormat option[value="view"]').click();
+    this.root.$('#exportKiteTable').sendKeys(name);
     element(by.id('save-results')).click();
   },
 };
@@ -774,11 +843,6 @@ testLib = {
 
   helpPopup: function(helpId) {
     return $('div[help-id="' + helpId + '"]');
-  },
-
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
   },
 
   sendKeysToACE: function(e, keys) {
@@ -949,6 +1013,20 @@ testLib = {
   expectFileContents: function(filename, expectedContents) {
     filename.then(function(fn) {
       expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
+    });
+  },
+
+  expectHasClass(element, cls) {
+    expect(element.getAttribute('class')).toBeDefined();
+    element.getAttribute('class').then(function(classes) {
+      expect(classes.split(' ').indexOf(cls)).not.toBe(-1);
+    });
+  },
+
+  expectNoClass(element, cls) {
+    expect(element.getAttribute('class')).toBeDefined();
+    element.getAttribute('class').then(function(classes) {
+          expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
