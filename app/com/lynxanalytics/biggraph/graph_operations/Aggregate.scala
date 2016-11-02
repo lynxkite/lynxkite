@@ -208,8 +208,7 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
     values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To] = {
     implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
     implicit val fct = RuntimeSafeCastable.classTagFromTypeTag(ftt)
-    val r = values.aggregateBySortedKey[Intermediate](zero, partitioner)(merge, combine)
-    r.mapValues { i => finalize(i) }
+    values.aggregateBySortedKey[Intermediate](zero, partitioner)(merge, combine).mapValues { i => finalize(i) }
   }
 }
 // A distributed aggregator where Intermediate is not different from To.
