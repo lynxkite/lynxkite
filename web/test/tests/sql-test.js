@@ -30,9 +30,9 @@ module.exports = function(fw) {
 
       // Choose in-project table format, and save.
       left.side.element(by.css('#exportFormat option[value="segmentation"]')).click();
-      left.side.element(by.css('#exportKiteTable')).sendKeys('exported_table');
+      left.side.element(by.css('#exportSegmentation')).sendKeys('exported_segmentation');
       left.executeSqlSaving();
-      lib.left.openSegmentation('exported_table');
+      lib.left.openSegmentation('exported_segmentation');
       expect(lib.right.segmentCount()).toEqual(4);
       expect(lib.right.vertexAttribute('age').isPresent()).toBe(true);
       expect(lib.right.vertexAttribute('gender').isPresent()).toBe(true);

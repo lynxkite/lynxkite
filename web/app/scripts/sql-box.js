@@ -165,7 +165,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             exportFormat === 'view') {
           scope.exportKiteTable = scope.exportKiteTable || scope.offerWithPath();
         } else if (exportFormat === 'segmentation') {
-          scope.exportKiteTable = scope.exportKiteTable || '';
+          scope.exportSegmentation = scope.exportSegmentation || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
@@ -208,7 +208,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           result = scope.side.applyOp(
               'Create-segmentation-from-SQL',
               {
-                name: scope.exportKiteTable,
+                name: scope.exportSegmentation,
                 sql: scope.sql
               });
         } else if (scope.exportFormat === 'view') {
@@ -297,6 +297,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         scope.project = config.data.dfSpec.project;
         scope.exportFormat = type;
         scope.exportKiteTable = name;
+        scope.exportSegmentation = name;
         scope.overwrite = true;
       });
 
