@@ -486,6 +486,18 @@ class _ProjectCheckpoint:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r.guid
 
+  def meta_data(self, path):
+    '''Returns project metadata.'''
+    request = dict(
+      checkpoint=self.checkpoint,
+      path=path
+    )
+    r= self.lk._send(
+      'getMetaData',
+      request
+    )
+    return r
+
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -531,6 +543,10 @@ class SubProject:
   def edge_attribute(self, attr):
     '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
     return Attribute(attr, 'edge', self.project_checkpoint, self.path)
+
+  def meta_data(self):
+    '''Returns project metadata.'''
+    return self.project_checkpoint.meta_data(self.path)
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
