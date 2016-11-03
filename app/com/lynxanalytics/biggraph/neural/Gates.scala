@@ -232,8 +232,8 @@ case class Network private (
     val bm = BackwardMemory(this, vertices, edges, values)
     for ((id, g) <- gradients) {
       outputs(id).backward(bm, g)
-      bm.gradients
     }
+    bm.gradients
   }
 
   def update(gradients: NetworkGradients, learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
