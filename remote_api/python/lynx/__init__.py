@@ -324,6 +324,13 @@ class View:
     ), raw=True)
     return r['rows']
 
+  def schema(self):
+    '''Computes the view and returns the schema.'''
+    r = self.lk._send('getViewSchema', dict(
+        checkpoint=self.checkpoint,
+    ))
+    return r
+
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
     '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
@@ -613,6 +620,23 @@ class LynxException(Exception):
     self.error = error
 
 
+class ResponseObject(types.SimpleNamespace):
+
+  @staticmethod
+  def obj_to_dict(obj):
+    if isinstance(obj, ResponseObject):
+      return obj.to_dict()
+    elif isinstance(obj, list):
+      return [ResponseObject.obj_to_dict(o) for o in obj]
+    elif isinstance(obj, dict):
+      return {k: ResponseObject.obj_to_dict(v) for (k, v) in obj.items()}
+    else:
+      return obj
+
+  def to_dict(self):
+    return {k: ResponseObject.obj_to_dict(v) for (k, v) in self.__dict__.items()}
+
+
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
-  return types.SimpleNamespace(**dic)
+  return ResponseObject(**dic)

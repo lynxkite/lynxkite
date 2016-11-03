@@ -246,6 +246,22 @@ module.exports = function(fw) {
       lib.left.history.close(false);
     });
 
+  fw.statePreservingTest(
+    'test-example project with history',
+    'generate Python code',
+    function() {
+      lib.left.history.open();
+      lib.left.side.$('#toggle-python-button').click();
+      expect(lib.getACEText(lib.left.side.$('.python-code'))).toBe(`
+project.exampleGraph()
+project.degree(direction='incoming edges', name='deg')
+project.addConstantVertexAttribute(name='c', type='Double', value=300000)
+project.derivedEdgeAttribute(expr='src$deg + dst$deg', output='foo', type='double')
+project.connectedComponents(directions='ignore directions', name='connected_components_segmentation')
+          `.trim());
+      lib.left.history.close(false);
+    });
+
   fw.transitionTest(
       'empty test-example project',
       'test-example project with history with different categories',

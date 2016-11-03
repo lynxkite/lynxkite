@@ -17,12 +17,10 @@ module.exports = function(fw) {
     function() {
       lib.left.history.open();
       lib.left.openWorkflowSavingDialog();
-      expect(lib.left.getWorkflowCodeEditor().evaluate('state.workflow.code')).toBe(
-        'project.exampleGraph()' +
-          '\nproject.filterByAttributes(' +
-          '\'filterea-weight\': \'!1\', ' +
-          '\'filterva-age\': \'<40\', ' +
-          '\'filterva-name\': \'Adam,Eve,Bob\')');
+      expect(lib.getACEText(lib.left.getWorkflowCodeEditor())).toBe(`
+project.exampleGraph()
+project.filterByAttributes('filterea-weight': '!1', 'filterva-age': '<40', 'filterva-name': 'Adam,Eve,Bob')
+      `.trim());
       lib.left.closeWorkflowSavingDialog();
       lib.left.history.close();
     });
@@ -62,11 +60,10 @@ module.exports = function(fw) {
       saveWorkflow(
         'TestDeriveWorkflow',
         'A simple workflow that does a\nsimple derive on\na simple project.',
-        'project.exampleGraph()\n' +
-        'project.derivedVertexAttribute' +
-          '(expr: \'gender == \\\'Male\\\' ? \\\'Mr \\\' + name : \\\'Ms \\\' + name\',' +
-          ' output: \'polite\',' +
-          ' type: \'string\')');
+        `
+project.exampleGraph()
+project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : \\'Ms \\' + name', output: 'polite', type: 'string')
+        `.trim());
       lib.left.runOperation('TestDeriveWorkflow');
       expect(lib.left.vertexCount()).toEqual(4);
       expect(lib.left.edgeCount()).toEqual(4);
