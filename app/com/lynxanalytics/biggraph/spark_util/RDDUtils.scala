@@ -452,7 +452,7 @@ object Implicits {
         rawRDD.asUniqueSortedRDD
       }
     }
-    def aggregateBySortedKey[U](zeroValue: U, partitioner: spark.Partitioner)(seqOp: (U, V) ⇒ U, combOp: (U, U) ⇒ U)(
+    def aggregateBySortedKey[U](zeroValue: U, partitioner: spark.Partitioner)(seqOp: (U, V) => U, combOp: (U, U) => U)(
       implicit ck: ClassTag[K], cv: ClassTag[V], cu: ClassTag[U]): UniqueSortedRDD[K, U] = {
 
       // TODO: efficient implementation for SortedRDDs.
