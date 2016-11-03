@@ -39,6 +39,8 @@ object RemoteAPIProtocol {
     numBuckets: Int,
     sampleSize: Option[Int],
     logarithmic: Boolean)
+  case class AttributeIdRequest(checkpoint: String, path: List[String], attr: String)
+  case class AttributeIdResponse(guid: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -109,6 +111,8 @@ object RemoteAPIProtocol {
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
+  implicit val rAttributeIdRequest = json.Json.reads[AttributeIdRequest]
+  implicit val wAttributeIdRequest = json.Json.writes[AttributeIdResponse]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -134,6 +138,8 @@ object RemoteAPIServer extends JsonServer {
   def getScalar = jsonFuturePost(c.getScalar)
   def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
   def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
+  def getVertexAttributeId = jsonFuturePost(c.getVertexAttributeId)
+  def getEdgeAttributeId = jsonFuturePost(c.getEdgeAttributeId)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def newProject = jsonPost(c.newProject)
@@ -330,6 +336,25 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       axisOptions = AxisOptions(logarithmic = request.logarithmic),
       sampleSize = requestSampleSize)
     graphDrawingController.getHistogram(user, req)
+  }
+
+  def getVertexAttributeId(user: User, request: AttributeIdRequest): Future[AttributeIdResponse] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    val attributes = viewer.vertexAttributes
+    assert(attributes.contains(request.attr), s"Vertex attribute '${request.attr}' does not exist.")
+    getAttributeId(attributes(request.attr))
+  }
+
+  def getEdgeAttributeId(user: User, request: AttributeIdRequest): Future[AttributeIdResponse] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    val attributes = viewer.edgeAttributes
+    assert(attributes.contains(request.attr), s"Vertex attribute '${request.attr}' does not exist.")
+    getAttributeId(attributes(request.attr))
+  }
+
+  private def getAttributeId(attr: Attribute[_]): Future[AttributeIdResponse] = {
+    import dataManager.executionContext
+    Future(AttributeIdResponse(attr.gUID.toString))
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
