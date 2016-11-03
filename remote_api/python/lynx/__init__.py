@@ -458,6 +458,27 @@ class _ProjectCheckpoint:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
 
+  def attr_id(self, path, attr, attr_type):
+    '''Returns the guid of the attribute as string.'''
+    request = dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        attr=attr
+    )
+    if attr_type == 'vertex':
+      r = self.lk._send(
+          'getVertexAttributeId',
+          request
+      )
+    elif attr_type == 'edge':
+      r = self.lk._send(
+          'getEdgeAttributeId',
+          request
+      )
+    else:
+      raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
+    return r.guid
+
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -479,6 +500,9 @@ class SubProject:
     self.project_checkpoint = project_checkpoint
     self.path = path
     self.lk = project_checkpoint.lk
+    self.vertex_guid = None
+    self.edge_guid = None
+    self.belongs_to_guid = None
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
@@ -551,6 +575,14 @@ class Attribute():
     self.name = name
     self.attr_type = attr_type
     self.path = path
+    self.guid = None
+
+  def id(self):
+    if self.guid is not None:
+      return self.guid
+    else:
+      self.guid = self.project_checkpoint.attr_id(self.path, self.name, self.attr_type)
+      return self.guid
 
   def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
     '''Returns a histogram of the attribute.
