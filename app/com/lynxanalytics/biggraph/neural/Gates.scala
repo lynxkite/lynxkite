@@ -188,12 +188,12 @@ import Gates._
 
 object Network {
   // The public constructor does not set weights and biases, so they get randomly initialized.
-  def apply(clipGradients: Boolean, size: Int, output: VectorGate)(implicit r: RandBasis) =
-    new Network(clipGradients, size, output)
+  def apply(clipGradients: Boolean, size: Int, outputs: Map[String, VectorGate])(implicit r: RandBasis) =
+    new Network(clipGradients, size, outputs)
 }
 case class Network private (
     clipGradients: Boolean,
-    size: Int, output: VectorGate,
+    size: Int, outputs: Map[String, VectorGate],
     trainables: Iterable[(String, DoubleMatrix)] = Iterable(),
     adagradMemory: Map[String, DoubleMatrix] = Map())(
         implicit r: RandBasis) {
@@ -216,23 +216,24 @@ case class Network private (
   def forward(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    inputs: (String, GraphData)*): GateValues = {
-    val ctx = ForwardContext(this, vertices, edges, inputs.toMap)
+    inputs: (String, VectorGraph)*): GateValues = {
+    val fm = ForwardMemory(this, vertices, edges, inputs.toMap)
     for (o <- outputs.values) {
-      ctx(o).view.force
+      fm.activation(o).view.force
     }
-    ctx.values(outputs)
+    fm.values(outputs)
   }
 
   def backward(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     values: GateValues,
-    gradients: (String, VectorGraph)*: NetworkGradients = {
+    gradients: (String, VectorGraph)*): NetworkGradients = {
     val bm = BackwardMemory(this, vertices, edges, values)
-    for((id,g) <- gradients) {
-    	outputs(id).backward(bm, g)
-    bm.gradients
+    for ((id, g) <- gradients) {
+      outputs(id).backward(bm, g)
+      bm.gradients
+    }
   }
 
   def update(gradients: NetworkGradients, learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
@@ -285,18 +286,18 @@ private case class ForwardMemory(
   }
   def apply(m: WeightMatrix): DoubleMatrix = network(m)
   def apply(v: BiasVector): DoubleVector = network(v)(::, 0)
-  def values(name: VectorGate) = new GateValues(vectorCache, vectorsCache, name)
+  def values(names: Map[String, VectorGate]) = new GateValues(vectorCache, vectorsCache, names)
 }
 
 class GateValues(
     vectorData: Iterable[(String, VectorGraph)],
     vectorsData: Iterable[(String, VectorsGraph)],
-    names: Map[String,VectorGate]) {
+    names: Map[String, VectorGate]) {
   val vectorMap = vectorData.toMap
   val vectorsMap = vectorsData.toMap
   def apply(v: VectorGate): VectorGraph = vectorMap(v.id)
   def apply(vs: VectorsGate): VectorsGraph = vectorsMap(vs.id)
-  def apply(name: VectorGate): VectorGraph = this(names(name))
+  def apply(name: String): VectorGraph = this(names(name))
 }
 
 private case class BackwardMemory(
@@ -365,7 +366,7 @@ abstract class Layout(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(i
     }
     Network(clipGradients = !gradientCheckOn,
       size = networkSize,
-      "final state" -> finalState
+      Map("final state" -> finalState)
     )
   }
 }
