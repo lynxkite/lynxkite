@@ -442,7 +442,7 @@ object Implicits {
       }
     }
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]) = {
+      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
 
       if (self.isInstanceOf[SortedRDD[K, V]]) {
         self.asInstanceOf[SortedRDD[K, V]].reduceByKey(f)
@@ -451,6 +451,14 @@ object Implicits {
         makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
         rawRDD.asUniqueSortedRDD
       }
+    }
+    def aggregateBySortedKey[U](zeroValue: U, partitioner: spark.Partitioner)(seqOp: (U, V) ⇒ U, combOp: (U, U) ⇒ U)(
+      implicit ck: ClassTag[K], cv: ClassTag[V], cu: ClassTag[U]): UniqueSortedRDD[K, U] = {
+
+      // TODO: efficient implementation for SortedRDDs.
+      val rawRDD = self.aggregateByKey(zeroValue, partitioner)(seqOp, combOp)
+      makeShuffledRDDSorted(rawRDD.asInstanceOf[ShuffledRDD[K, _, _]])
+      rawRDD.asUniqueSortedRDD
     }
 
     private def makeShuffledRDDSorted[T: Ordering](rawRDD: ShuffledRDD[T, _, _]): Unit = {
