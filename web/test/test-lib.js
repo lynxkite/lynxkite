@@ -469,7 +469,7 @@ var visualization = {
 
   asTSV: function() {
     var copyButton = $('.graph-sidebar [data-clipboard-text');
-    // It would be too complicated to test actual copy & paste. We just trust ZeroClipboard instead.
+    // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
     return copyButton.getAttribute('data-clipboard-text');
   },
 
