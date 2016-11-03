@@ -89,6 +89,7 @@ POST /remote/getVertexHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServ
 POST /remote/getEdgeHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getEdgeHistogram
 POST /remote/getVertexAttributeId com.lynxanalytics.biggraph.serving.RemoteAPIServer.getVertexAttributeId
 POST /remote/getEdgeAttributeId com.lynxanalytics.biggraph.serving.RemoteAPIServer.getEdgeAttributeId
+POST /remote/getMetaData com.lynxanalytics.biggraph.serving.RemoteAPIServer.getMetaData
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject
 POST /remote/removeName com.lynxanalytics.biggraph.serving.RemoteAPIServer.removeName
