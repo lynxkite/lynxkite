@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.HLLUtils
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
@@ -117,16 +118,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     es: UniqueSortedRDD[ID, Edge],
     measureFunction: MeasureFunction): UniqueSortedRDD[ID, (Int, Double)] = {
     implicit val rcImplicit = rc
-
-    // Get a partitioner of suitable size:
-    val edgePartitions = es.partitioner.size // edge data size is ~ 3 x Long = 24 bytes
-    val vertexPartitions = vs.partitioner.size // vertex data size is ~ 2^bits bytes
-    val effectiveVertexPartitions = vertexPartitions * (1 << bits) / 24
-    val partitioner = if (edgePartitions > effectiveVertexPartitions) {
-      es.partitioner.get
-    } else {
-      new HashPartitioner(effectiveVertexPartitions)
-    }
+    val partitioner = RDDUtils.maxPartitioner(es.partitioner.get, vs.partitioner.get)
 
     val vertices = vs.sortedRepartition(partitioner)
     val originalEdges = es.map { case (id, edge) => (edge.src, edge.dst) }

@@ -1,21 +1,22 @@
 // The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
-import java.io.{ FileOutputStream, File }
+import java.io.{ File, FileOutputStream }
 
 import play.api.libs.json
 import play.api.mvc
 import play.Play
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, HadoopFile, Timestamp, KiteInstanceInfo }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
+import org.apache.spark.sql.types.{ StructField, StructType }
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -212,6 +213,14 @@ object FrontendJson {
   }
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = json.Json.obj()
+  }
+  implicit val wStructType = new json.Writes[StructType] {
+    def writes(structType: StructType): json.JsValue = json.Json.obj("schema" -> structType.map {
+      case StructField(name, dataType: StructType, nullable, metaData) =>
+        json.Json.obj("name" -> name, "dataType" -> this.writes(dataType), "nullable" -> nullable)
+      case StructField(name, dataType, nullable, metaData) =>
+        json.Json.obj("name" -> name, "dataType" -> dataType.toString(), "nullable" -> nullable)
+    })
   }
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 

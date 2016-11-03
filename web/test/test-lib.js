@@ -845,6 +845,12 @@ testLib = {
     return $('div[help-id="' + helpId + '"]');
   },
 
+  getACEText: function(e) {
+    // getText() drops text in hidden elements. "innerText" to the rescue!
+    // https://github.com/angular/protractor/issues/1794
+    return e.$('.ace_content').getAttribute('innerText').then(text => text.trim());
+  },
+
   sendKeysToACE: function(e, keys) {
     var aceContent = e.$('div.ace_content');
     var aceInput = e.$('textarea.ace_text-input');

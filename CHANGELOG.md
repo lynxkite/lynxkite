@@ -17,12 +17,16 @@ LynxKite:
  - Views can now be edited. Views and tables exported from the global sql box can also be edited.
  - Scalable approximate embeddedness operation added.
  - Scalable approximate clustering coefficient operation added.
+ - History view can now generate Python code. (Useful for ecosystem task authors.)
+ - Various visualization limits (such as the maximum 10,000 edges) can be adjusted with the
+     `KITE_DRAWING_OVERALL` setting (default 10,000) and its more fine-grained companions.
 
 Ecosystem:
 
  - Flexible date template strings.
  - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
    intervals.
+ - Segmentations and attribute histograms in Python Remote API.
 
 ### 1.9.5.4
 
