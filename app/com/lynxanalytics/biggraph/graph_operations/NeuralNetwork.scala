@@ -168,7 +168,7 @@ case class NeuralNetwork(
   }
 
   def getTrueState(
-    data: Seq[(ID, (Option[Double], Array[Double]))]): neural.GraphData = {
+    data: Seq[(ID, (Option[Double], Array[Double]))]): neural.VectorGraph = {
     val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
     val vertices = data.map(_._1)
@@ -207,7 +207,7 @@ case class NeuralNetwork(
     val weightsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val gradientsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val trueState = getTrueState(data)
-    val initialStates = scala.collection.mutable.ListBuffer[neural.GraphData]()
+    val initialStates = scala.collection.mutable.ListBuffer[neural.VectorGraph]()
     for (i <- 1 to iterations) {
       val random = new util.Random(1)
       val keptState = trueState.map {
@@ -246,14 +246,14 @@ case class NeuralNetwork(
       }
       val errorTotal = errors.values.map(e => e * e).sum
       log.info(s"Total error in iteration $i: $errorTotal")
-      val finalGradient: neural.GraphData = errors.map {
+      val finalGradient: neural.VectorGraph = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
           vec(0) = 2 * error * correctionRatio
           id -> vec
       }
       val gradients = network.backward(vertices, edges, outputs, "final state" -> finalGradient)
-      weightsForGradientCheck += network.allWeights.toMap
+      weightsForGradientCheck += network.expandableTrainables.toMap
       val updated = network.update(gradients, learningRate)
       network = updated._1
       gradientsForGradientCheck += updated._2
@@ -308,7 +308,7 @@ case class NeuralNetwork(
               epsilonMatrix(row, col) = epsilon
               //Increase weigth and predict with it.
               val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
-              val outputsWithIncreased = initialNetwork.copy(weights = partialIncreasedWeights
+              val outputsWithIncreased = initialNetwork.copy(trainables = partialIncreasedWeights
               ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
                 (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
               val finalOutputWithIncreased = outputsWithIncreased("final state")
@@ -320,7 +320,7 @@ case class NeuralNetwork(
               //Decrease weight and predict with it.
               val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
 
-              val outputsWithDecreased = initialNetwork.copy(weights = partialDecreasedWeights
+              val outputsWithDecreased = initialNetwork.copy(trainables = partialDecreasedWeights
               ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
                 (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
               val finalOutputWithDecreased = outputsWithDecreased("final state")
@@ -368,7 +368,7 @@ case class NeuralNetwork(
     case class DataForGradientCheck(
       weights: List[Map[String, neural.DoubleMatrix]],
       gradients: List[Map[String, neural.DoubleMatrix]],
-      trueState: neural.GraphData,
-      initialStates: List[neural.GraphData])
+      trueState: neural.VectorGraph,
+      initialStates: List[neural.VectorGraph])
   }
 }
