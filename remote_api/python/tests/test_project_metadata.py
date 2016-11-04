@@ -38,11 +38,11 @@ class TestProjectMetadata(unittest.TestCase):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=123)
     c = p.centers(4, p.meta_data().vertexSet)
-    self.assertEqual(c,[
-      '-8730854457551617996',
-      '-8599056917853110189',
-      '-8372471039069781959',
-      '-8361175665923325924'])
+    self.assertEqual(c, [
+        '-8730854457551617996',
+        '-8599056917853110189',
+        '-8372471039069781959',
+        '-8361175665923325924'])
 
 if __name__ == '__main__':
   unittest.main()
