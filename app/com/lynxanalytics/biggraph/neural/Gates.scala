@@ -16,7 +16,7 @@ object Implicits {
       adder.add(self, other)
     }
   }
-  implicit object VectorAdder extends Adder[DoubleVector] {
+  implicit object VectorsGateAdder extends Adder[DoubleVector] {
     def add(a: DoubleVector, b: DoubleVector) = a + b
   }
   implicit object VectorsAdder extends Adder[Iterable[DoubleVector]] {
@@ -48,197 +48,198 @@ object Gates {
   import breeze.linalg._
   import breeze.numerics._
 
+  /* You can define neural network layouts by using small building blocks called
+  gates. The input nodes of the network are gates. The other gates apply a
+  function to the outputs of some previous gates.
+  Gates perform the corresponding operation in every vertex of the graph parallel.
+  */
   trait Gate[Output] extends Product {
     // Plain toString on case classes is enough to uniquely identify vectors.
     private[neural] def id = this.toString
-    private[neural] def forward(ctx: ForwardContext): Output
-    private[neural] def backward(ctx: BackwardContext, gradient: Output): Unit
+    private[neural] def forward(fm: ForwardMemory): Output
+    private[neural] def backward(bm: BackwardMemory, gradient: Output): Unit
   }
-
-  trait Vector extends Gate[GraphData] {
+  trait VectorGate extends Gate[VectorGraph] {
     // Translate operations to gates.
-    def *(m: M) = MatrixVector(this, m)
-    def *(v: Vector) = MultiplyElements(this, v)
-    def *(s: Double) = MultiplyScalar(this, s)
+    def *(v: VectorGate) = VectorVectorMultiplication(this, v)
+    def *(s: Double) = VectorScalarMultiplication(this, s)
     def unary_- = this * (-1)
-    def +(v: Vector) = AddElements(this, v)
-    def -(v: Vector) = AddElements(this, -v)
-    def +(v: V) = AddWeights(this, v)
-
-    // Utilities for applying simple functions to GraphData.
-    def perVertex(fn: DoubleVector => DoubleVector): GraphData => GraphData =
-      _.mapValues(fn)
-    def withData[T](data: GraphData)(
-      fn: (DoubleVector, DoubleVector) => T): GraphData => Graph[T] = {
-      _.map { case (id, v) => id -> fn(v, data(id)) }
-    }
+    def +(v: VectorGate) = VectorVectorAddition(this, v)
+    def -(v: VectorGate) = VectorVectorAddition(this, -v)
+    def +(v: TrainableVector) = VectorTrainableAddition(this, v)
+  }
+  trait VectorsGate extends Gate[VectorsGraph] {
+    def *(m: TrainableMatrix) = MatrixVectorsMultiplication(this, m)
   }
 
-  trait Vectors extends Gate[GraphVectors] {
-    def *(m: M) = MatrixVectors(this, m)
-
-    // Utility for applying simple functions to GraphVectors.
-    def perVertex(fn: DoubleVector => DoubleVector): GraphVectors => GraphVectors =
-      _.mapValues(_.map(fn))
-  }
-
-  case class MatrixVector(v: Vector, w: M) extends Vector {
-    //http://stackoverflow.com/questions/14882642/scala-why-mapvalues-produces-a-view-and-is-there-any-stable-alternatives
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) * _)
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      val wt = ctx(w).t
-      ctx.add(v, gradient.mapValues(g => wt * g))
-      val vd = ctx(v)
-      ctx.add(w, gradient.map { case (id, g) => g * vd(id).t }.reduce(_ + _))
-    }
-  }
-  case class MultiplyScalar(v: Vector, s: Double) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(s * _)
-    def backward(ctx: BackwardContext, gradient: GraphData) =
-      ctx.add(v, gradient.mapValues(s * _))
-  }
-  case class MultiplyElements(v1: Vector, v2: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      val v1d = ctx(v1)
-      val v2d = ctx(v2)
-      ctx.add(v1, gradient.map { case (id, g) => id -> (v2d(id) :* g) })
-      ctx.add(v2, gradient.map { case (id, g) => id -> (v1d(id) :* g) })
-    }
-  }
-  case class AddElements(v1: Vector, v2: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v1, v2).mapValues { case (v1, v2) => v1 + v2 }
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      ctx.add(v1, gradient)
-      ctx.add(v2, gradient)
-    }
-  }
-  case class AddWeights(v: Vector, w: V) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(ctx(w) + _)
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      ctx.add(v, gradient)
-      ctx.add(w, gradient.values.reduce(_ + _))
-    }
-  }
-  case class MatrixVectors(vs: Vectors, w: M) extends Vectors {
-    def forward(ctx: ForwardContext) = ctx(vs).mapValues(_.map(ctx(w) * _))
-    def backward(ctx: BackwardContext, gradients: GraphVectors) = {
-      val wt = ctx(w).t
-      ctx.add(vs, gradients.mapValues(_.map(g => wt * g)))
-      val vsd = ctx(vs)
-      val netgrads = gradients.flatMap {
-        case (id, gs) => gs.zip(vsd(id)).map { case (g, d) => g * d.t }
-      }
-      if (netgrads.nonEmpty) ctx.add(w, netgrads.reduce(_ + _))
-    }
-  }
-  case class Sum(vs: Vectors) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(vs).mapValues { vectors =>
-      val sum = DenseVector.zeros[Double](ctx.network.size)
-      for (v <- vectors) sum += v
-      sum
-    }
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      val vsd = ctx(vs) // We need this to know the cardinality of vs.
-      ctx.add(vs, gradient.map { case (id, g) => id -> vsd(id).map(_ => g) })
-    }
-  }
-  case class Neighbors() extends Vectors {
-    def forward(ctx: ForwardContext) = ctx.neighbors
-    def backward(ctx: BackwardContext, gradients: GraphVectors) = ctx.addNeighbors(gradients)
-  }
-  case class Input(name: String) extends Vector {
-    def forward(ctx: ForwardContext) = ctx.inputs(name)
-    def backward(ctx: BackwardContext, gradient: GraphData) = {}
-  }
-  case class Sigmoid(v: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(sigmoid(_))
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      val d = ctx(this)
-      ctx.add(v, gradient.map { case (id, g) => id -> (d(id) :* (1.0 - d(id)) :* g) })
-    }
-  }
-  case class Tanh(v: Vector) extends Vector {
-    def forward(ctx: ForwardContext) = ctx(v).mapValues(tanh(_))
-    def backward(ctx: BackwardContext, gradient: GraphData) = {
-      val d = ctx(this)
-      ctx.add(v, gradient.map { case (id, g) => id -> ((1.0 - (d(id) :* d(id))) :* g) })
-    }
-  }
-
-  // Trained matrix of weights.
-  trait Trained {
+  //Trainable objects are modified during the training.
+  trait Trainable {
     def name: String
     def random(size: Int)(implicit r: RandBasis): DoubleMatrix
   }
   val initialRandomAmplitude = 0.01
-  case class V(name: String) extends Trained {
+  case class TrainableVector(name: String) extends Trainable {
     def random(size: Int)(implicit r: RandBasis) =
       randn((size, 1)) * initialRandomAmplitude
   }
-  case class M(name: String) extends Trained {
+  case class TrainableMatrix(name: String) extends Trainable {
+    def *(v: VectorGate) = MatrixVectorMultiplication(this, v)
     def random(size: Int)(implicit r: RandBasis) =
       randn((size, size)) * initialRandomAmplitude
+  }
+
+  case class MatrixVectorMultiplication(w: TrainableMatrix, v: VectorGate) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v).mapValues(fm(w) * _)
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      val wt = bm(w).t
+      bm.add(v, gradient.mapValues(g => wt * g))
+      val vd = bm(v)
+      bm.add(w, gradient.map { case (id, g) => g * vd(id).t }.reduce(_ + _))
+    }
+  }
+  case class VectorScalarMultiplication(v: VectorGate, s: Double) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v).mapValues(s * _)
+    def backward(bm: BackwardMemory, gradient: VectorGraph) =
+      bm.add(v, gradient.mapValues(s * _))
+  }
+  case class VectorVectorMultiplication(v1: VectorGate, v2: VectorGate) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      val v1d = bm(v1)
+      val v2d = bm(v2)
+      bm.add(v1, gradient.map { case (id, g) => id -> (v2d(id) :* g) })
+      bm.add(v2, gradient.map { case (id, g) => id -> (v1d(id) :* g) })
+    }
+  }
+  case class VectorVectorAddition(v1: VectorGate, v2: VectorGate) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v1, v2).mapValues { case (v1, v2) => v1 + v2 }
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      bm.add(v1, gradient)
+      bm.add(v2, gradient)
+    }
+  }
+  case class VectorTrainableAddition(v: VectorGate, w: TrainableVector) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v).mapValues(fm(w) + _)
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      bm.add(v, gradient)
+      bm.add(w, gradient.values.reduce(_ + _))
+    }
+  }
+  case class MatrixVectorsMultiplication(vs: VectorsGate, w: TrainableMatrix) extends VectorsGate {
+    def forward(fm: ForwardMemory) = fm.activation(vs).mapValues(_.map(fm(w) * _))
+    def backward(bm: BackwardMemory, gradients: VectorsGraph) = {
+      val wt = bm(w).t
+      bm.add(vs, gradients.mapValues(_.map(g => wt * g)))
+      val vsd = bm(vs)
+      val netgrads = gradients.flatMap {
+        case (id, gs) => gs.zip(vsd(id)).map { case (g, d) => g * d.t }
+      }
+      if (netgrads.nonEmpty) bm.add(w, netgrads.reduce(_ + _))
+    }
+  }
+  case class Sum(vs: VectorsGate) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(vs).mapValues { vectors =>
+      val sum = DenseVector.zeros[Double](fm.network.size)
+      for (v <- vectors) sum += v
+      sum
+    }
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      val vsd = bm(vs)
+      bm.add(vs, gradient.map { case (id, g) => id -> bm(vs)(id).map(_ => g) })
+    }
+  }
+
+  case class NeighborsVectorCollection(v: VectorGate) extends VectorsGate {
+    def forward(fm: ForwardMemory) = {
+      import breeze.linalg._
+      fm.vertices.map { id =>
+        if (fm.edges(id) == List()) id -> List(0).
+          map(_ => DenseVector.zeros[Double](fm.network.size))
+        else id -> fm.edges(id).map(fm.activation(v)(_))
+      }.toMap
+    }
+    def backward(bm: BackwardMemory, gradients: VectorsGraph) = {
+      val ngrad: VectorGraph = gradients.toSeq.flatMap {
+        case (id, gs) => bm.edges(id).zip(gs)
+      }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
+      if (ngrad.nonEmpty) bm.add(v, ngrad)
+    }
+  }
+  case class Input(name: String) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.inputs(name)
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {}
+  }
+  case class Sigmoid(v: VectorGate) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v).mapValues(sigmoid(_))
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      val d = bm(this)
+      bm.add(v, gradient.map { case (id, g) => id -> (d(id) :* (1.0 - d(id)) :* g) })
+    }
+  }
+  case class Tanh(v: VectorGate) extends VectorGate {
+    def forward(fm: ForwardMemory) = fm.activation(v).mapValues(tanh(_))
+    def backward(bm: BackwardMemory, gradient: VectorGraph) = {
+      val d = bm(this)
+      bm.add(v, gradient.map { case (id, g) => id -> ((1.0 - (d(id) :* d(id))) :* g) })
+    }
   }
 }
 import Gates._
 
 object Network {
-  // The public constructor does not set weights, so they get randomly initialized.
-  def apply(clipGradients: Boolean, size: Int, outputs: (String, Vector)*)(implicit r: RandBasis) =
-    new Network(clipGradients, size, outputs.toMap)
+  // The public constructor does not set weights and biases, so they get randomly initialized.
+  def apply(clipGradients: Boolean, size: Int, outputs: Map[String, VectorGate])(implicit r: RandBasis) =
+    new Network(clipGradients, size, outputs)
 }
 case class Network private (
     clipGradients: Boolean,
-    size: Int, outputs: Map[String, Vector],
-    weights: Iterable[(String, DoubleMatrix)] = Iterable(),
+    size: Int, outputs: Map[String, VectorGate],
+    initialTrainables: Iterable[(String, DoubleMatrix)] = Iterable(),
     adagradMemory: Map[String, DoubleMatrix] = Map())(
         implicit r: RandBasis) {
-  val allWeights = collection.mutable.Map(weights.toSeq: _*)
+  val trainables = collection.mutable.Map(initialTrainables.toSeq: _*)
   def +(other: Network): Network = this.copy(
-    weights = allWeights.map {
-      case (name, value) => name -> (value + other.allWeights(name))
-    },
-    adagradMemory = adagradMemory.map {
+    initialTrainables = trainables.map {
+      case (name, value) => name -> (value + other.trainables(name))
+    }, adagradMemory = adagradMemory.map {
       case (name, value) => name -> (value + other.adagradMemory(name))
     })
   def /(s: Double): Network = this.copy(
-    weights = allWeights.mapValues(_ / s),
+    initialTrainables = trainables.mapValues(_ / s),
     adagradMemory = adagradMemory.mapValues(_ / s))
 
-  def apply(t: Trained): DoubleMatrix = {
-    allWeights.getOrElseUpdate(t.name, t.random(size))
+  def apply(t: Trainable): DoubleMatrix = {
+    trainables.getOrElseUpdate(t.name, t.random(size))
   }
 
   def forward(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    neighbors: GraphData,
-    inputs: (String, GraphData)*): GateValues = {
-    val ctx = ForwardContext(this, vertices, edges, neighbors, inputs.toMap)
+    inputs: (String, VectorGraph)*): GateValues = {
+    val fm = ForwardMemory(this, vertices, edges, inputs.toMap)
     for (o <- outputs.values) {
-      ctx(o).view.force
+      fm.activation(o).view.force
     }
-    ctx.values(outputs)
+    fm.values(outputs)
   }
 
   def backward(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     values: GateValues,
-    gradients: (String, GraphData)*): NetworkGradients = {
-    val ctx = BackwardContext(this, vertices, edges, values)
+    gradients: (String, VectorGraph)*): NetworkGradients = {
+    val bm = BackwardMemory(this, vertices, edges, values)
     for ((id, g) <- gradients) {
-      outputs(id).backward(ctx, g)
+      outputs(id).backward(bm, g)
     }
-    ctx.gradients
+    bm.gradients
   }
 
-  def update(gradients: Iterable[NetworkGradients], learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
+  def update(gradients: NetworkGradients, learningRate: Double): (Network, Map[String, DoubleMatrix]) = {
     import breeze.linalg._
     import breeze.numerics._
-    val sums = allWeights.keys.map {
-      name => name -> gradients.map(_.trained(name)).reduce(_ + _)
+    val sums = trainables.keys.map {
+      name => name -> gradients.trained(name)
     }.toMap
     if (clipGradients) {
       for ((k, v) <- sums) {
@@ -251,102 +252,85 @@ case class Network private (
         case None => name -> (s :* s)
       }
     }
-    val newWeights = allWeights.toMap.map {
+    val newTrainables = trainables.toMap.map {
       case (name, w) =>
         name -> (w - learningRate * sums(name) / sqrt(newAdagradMemory(name) + 1e-6))
     }
-    (this.copy(weights = newWeights, adagradMemory = newAdagradMemory), sums)
+    (this.copy(initialTrainables = newTrainables, adagradMemory = newAdagradMemory), sums)
   }
 
   def toDebugString = {
-    allWeights.map { case (k, v) => s"$k: $v" }.mkString("\n")
+    trainables.map { case (k, v) => s"$k: $v" }.mkString("\n")
   }
 }
 
-private case class ForwardContext(
+private case class ForwardMemory(
     network: Network,
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
-    neighborState: GraphData,
-    inputs: Map[String, GraphData]) {
-  val vectorCache = collection.mutable.Map[String, GraphData]()
-  val vectorsCache = collection.mutable.Map[String, GraphVectors]()
+    inputs: Map[String, VectorGraph]) {
+  val vectorCache = collection.mutable.Map[String, VectorGraph]()
+  val vectorsCache = collection.mutable.Map[String, VectorsGraph]()
 
-  def apply(v1: Vector, v2: Vector): Map[ID, (DoubleVector, DoubleVector)] = {
-    val g1 = this(v1)
-    val g2 = this(v2)
+  def activation(v1: VectorGate, v2: VectorGate): Map[ID, (DoubleVector, DoubleVector)] = {
+    val g1 = this.activation(v1)
+    val g2 = this.activation(v2)
     vertices.map { id => id -> (g1(id), g2(id)) }.toMap
   }
-  def apply(v: Vector): GraphData = {
+  def activation(v: VectorGate): VectorGraph = {
     vectorCache.getOrElseUpdate(v.id, v.forward(this))
   }
-  def apply(vs: Vectors): GraphVectors = {
+  def activation(vs: VectorsGate): VectorsGraph = {
     vectorsCache.getOrElseUpdate(vs.id, vs.forward(this))
   }
-  def apply(m: M): DoubleMatrix = network(m)
-  def apply(v: V): DoubleVector = network(v)(::, 0)
-  def neighbors: GraphVectors = {
-    import breeze.linalg._
-    vertices.map { id =>
-      if (edges(id) == List()) id -> List(0).map(_ => DenseVector.zeros[Double](network.size))
-      else id -> edges(id).map(neighborState(_))
-    }.toMap
-  }
-
-  def values(names: Map[String, Vector]) = new GateValues(vectorCache, vectorsCache, names)
+  def apply(m: TrainableMatrix): DoubleMatrix = network(m)
+  def apply(v: TrainableVector): DoubleVector = network(v)(::, 0)
+  def values(names: Map[String, VectorGate]) = new GateValues(vectorCache, vectorsCache, names)
 }
 
 class GateValues(
-    vectorData: Iterable[(String, GraphData)],
-    vectorsData: Iterable[(String, GraphVectors)],
-    names: Map[String, Vector]) {
+    vectorData: Iterable[(String, VectorGraph)],
+    vectorsData: Iterable[(String, VectorsGraph)],
+    names: Map[String, VectorGate]) {
   val vectorMap = vectorData.toMap
   val vectorsMap = vectorsData.toMap
-  def apply(v: Vector): GraphData = vectorMap(v.id)
-  def apply(vs: Vectors): GraphVectors = vectorsMap(vs.id)
-  def apply(name: String): GraphData = this(names(name))
+  def apply(v: VectorGate): VectorGraph = vectorMap(v.id)
+  def apply(vs: VectorsGate): VectorsGraph = vectorsMap(vs.id)
+  def apply(name: String): VectorGraph = this(names(name))
 }
 
-private case class BackwardContext(
+private case class BackwardMemory(
     network: Network,
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     values: GateValues) {
-  val vectorGradients = collection.mutable.Map[String, GraphData]()
-  val vectorsGradients = collection.mutable.Map[String, GraphVectors]()
+  val vectorGradients = collection.mutable.Map[String, VectorGraph]()
+  val vectorsGradients = collection.mutable.Map[String, VectorsGraph]()
   val trainedGradients = collection.mutable.Map[String, DoubleMatrix]()
-  var neighborGradients: GraphData = null
-  def apply(v: Vector): GraphData = values(v)
-  def apply(vs: Vectors): GraphVectors = values(vs)
-  def apply(m: M): DoubleMatrix = network(m)
-  def apply(v: V): DoubleVector = network(v)(::, 0)
+  var neighborGradients: VectorGraph = null
+  def apply(v: VectorGate): VectorGraph = values(v)
+  def apply(vs: VectorsGate): VectorsGraph = values(vs)
+  def apply(m: TrainableMatrix): DoubleMatrix = network(m)
+  def apply(v: TrainableVector): DoubleVector = network(v)(::, 0)
 
-  def add(v: Vector, gradient: GraphData): Unit = {
+  def add(v: VectorGate, gradient: VectorGraph): Unit = {
     vectorGradients(v.id) =
       vectorGradients.get(v.id).map(_ + gradient).getOrElse(gradient)
     v.backward(this, gradient)
   }
-  def add(vs: Vectors, gradients: GraphVectors): Unit = {
+  def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
     vectorsGradients(vs.id) =
       vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
     vs.backward(this, gradients)
   }
-  def add(m: M, gradient: DoubleMatrix): Unit = {
+  def add(m: TrainableMatrix, gradient: DoubleMatrix): Unit = {
     trainedGradients(m.name) =
       trainedGradients.get(m.name).map(_ + gradient).getOrElse(gradient)
   }
-  def add(v: V, gradient: DoubleVector): Unit = {
+  def add(v: TrainableVector, gradient: DoubleVector): Unit = {
     val mgrad = gradient.asDenseMatrix.t
     trainedGradients(v.name) =
       trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
-  }
-
-  def addNeighbors(gradients: GraphVectors): Unit = {
-    val ngrad: GraphData = gradients.toSeq.flatMap {
-      case (id, gs) => edges(id).zip(gs)
-    }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-    if (neighborGradients == null) neighborGradients = ngrad
-    else neighborGradients = neighborGradients + ngrad
   }
 
   def gradients = new NetworkGradients(
@@ -354,65 +338,84 @@ private case class BackwardContext(
 }
 
 class NetworkGradients(
-    vectorGradients: Iterable[(String, GraphData)],
-    vectorsGradients: Iterable[(String, GraphVectors)],
+    vectorGradients: Iterable[(String, VectorGraph)],
+    vectorsGradients: Iterable[(String, VectorsGraph)],
     trainedGradients: Iterable[(String, DoubleMatrix)],
-    val neighbors: GraphData) {
+    val neighbors: VectorGraph) {
   val vector = vectorGradients.toMap
   val vectors = vectorsGradients.toMap
   val trained = trainedGradients.toMap
-  def apply(name: String): GraphData = vector(Gates.Input(name).id)
+  def apply(name: String): VectorGraph = vector(Gates.Input(name).id)
 }
 
-trait Layouts {
-  def getNetwork: Network
-  def inputGates: Seq[String]
-  def toNeighbors: String
-  def toItself: Map[String, String] //It describes the inputs from the same node: (s1 -> s2)
-  //means that s1 gets its initial value from s2.
+abstract class Layout(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) {
+  def ownStateInputs: Seq[String]
+  def neighborsStateInputs: Seq[String]
+  def connection = ownStateInputs ++ neighborsStateInputs
   def outputGate: String
-}
-class GRU(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layouts {
+  def block(input: Map[String, VectorGate], round: Int): Map[String, VectorGate]
   def getNetwork = {
-    val vs = Neighbors()
-    val eb = V("edge bias")
-    val input = Sum(vs) * M("edge matrix") + eb
-    val state = Input("state")
-    val update = Sigmoid(input * M("update i") + state * M("update h"))
-    val reset = Sigmoid(input * M("reset i") + state * M("reset h"))
-    val tilde = Tanh(input * M("activation i") + state * reset * M("activation h"))
-    Network(
-      clipGradients = !gradientCheckOn,
+    val finalState = {
+      (0 until radius).foldLeft {
+        connection.map(name => {
+          val input: VectorGate = Input(name)
+          (name, input)
+        }).toMap
+      } { case (a, b) => block(a, b) }(outputGate)
+    }
+    Network(clipGradients = !gradientCheckOn,
       size = networkSize,
-      "new state" -> (state - update * state + update * tilde))
-  }
-  def inputGates = Seq("state")
-  def toNeighbors = "new state"
-  def toItself = Map("state" -> "new state")
-  def outputGate = "new state"
-}
-class LSTM(networkSize: Int, gradientCheckOn: Boolean)(implicit rnd: RandBasis) extends Layouts {
-  def getNetwork = {
-    val vs = Neighbors()
-    val eb = V("edge bias")
-    val input = Sum(vs) * M("edge matrix") + eb
-    val cell = Input("cell")
-    val hidden = Input("hidden")
-    val forget = Sigmoid(hidden * M("forget h") + input * M("forget i") + V("forget b"))
-    val chooseUpdate = Sigmoid(hidden * M("choose update h") + input * M("choose update i") + V("choose update b"))
-    val tilde = Tanh(hidden * M("tilde h") + input * M("tilde i") + V("tilde b"))
-    val newCell = cell * forget + chooseUpdate * tilde
-    val chooseOutput = Sigmoid(hidden * M("choose output h") + input * M("choose output i") + V("choose output b"))
-    val newHidden = chooseOutput * Tanh(newCell)
-    Network(
-      clipGradients = !gradientCheckOn,
-      size = networkSize,
-      "new cell" -> newCell,
-      "new hidden" -> newHidden
+      Map("final state" -> finalState)
     )
   }
-  def inputGates = Seq("cell", "hidden")
-  def toNeighbors = "new cell"
-  def toItself = Map("cell" -> "new cell", "hidden" -> "new hidden")
-  def outputGate = "new hidden"
+}
+object Shorthands {
+  def m(name: String) = TrainableMatrix(name)
+  def v(name: String) = TrainableVector(name)
+}
+import Shorthands._
+class GRU(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) extends Layout(networkSize, gradientCheckOn, radius) {
+  def ownStateInputs = Seq("own state")
+  def neighborsStateInputs = Seq("neighbors state")
+  def outputGate = "own state"
+  def block(fromPrevious: Map[String, VectorGate], round: Int) = {
+    val vs = NeighborsVectorCollection(fromPrevious("neighbors state"))
+    val state = fromPrevious("own state")
+    val input = m("edge matrix") * Sum(vs) + v("edge bias")
+    val update = Sigmoid(m("update i") * input + m("update h") * state)
+    val reset = Sigmoid(m("reset i") * input + m("reset h") * state)
+    val tilde = Tanh(m("activation i") * input + m("activation h") * (reset * state))
+    val newState = state - update * state + update * tilde
+    Map("own state" -> newState, "neighbors state" -> newState)
+  }
+}
+class LSTM(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) extends Layout(networkSize, gradientCheckOn, radius) {
+  def ownStateInputs = Seq("own cell", "own hidden")
+  def neighborsStateInputs = Seq("neighbors cell")
+  def outputGate = "own hidden"
+  def block(fromPrevious: Map[String, VectorGate], round: Int) = {
+    val vs = NeighborsVectorCollection(fromPrevious("neighbors cell"))
+    val cell = fromPrevious("own cell")
+    val hidden = fromPrevious("own hidden")
+    val input = m("edge matrix") * Sum(vs) + v("edge bias")
+    val forget = Sigmoid(m("forget h") * hidden + m("forget i") * input + v("forget b"))
+    val chooseUpdate = Sigmoid(m("choose update h") * hidden + m("choose update i") * input + v("choose update b"))
+    val tilde = Tanh(m("tilde h") * hidden + m("tilde i") * input + v("tilde b"))
+    val newCell = cell * forget + chooseUpdate * tilde
+    val chooseOutput = Sigmoid(m("choose output h") * hidden + m("choose output i") * input + v("choose output b"))
+    val newHidden = chooseOutput * Tanh(newCell)
+    Map("own cell" -> newCell, "own hidden" -> newHidden, "neighbors cell" -> newCell)
+  }
+}
+class MLP(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(implicit rnd: RandBasis) extends Layout(networkSize, gradientCheckOn, radius) {
+  def ownStateInputs = Seq("own state")
+  def neighborsStateInputs = Seq("neighbors state")
+  def outputGate = "own state"
+  def block(fromPrevious: Map[String, VectorGate], round: Int) = {
+    val vs = NeighborsVectorCollection(fromPrevious("neighbors state"))
+    val input = m(s"edge matrix ${round}") * Sum(vs) + v(s"edge bias ${round}")
+    val state = m(s"state matrix ${round}") * fromPrevious("own state") + v(s"state bias ${round}")
+    val newState = Tanh(input + state)
+    Map("own state" -> newState, "neighbors state" -> newState)
+  }
 }

@@ -106,8 +106,9 @@ case class NeuralNetwork(
       new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(seed)))
 
     val layout = networkLayout match {
-      case "LSTM" => new neural.LSTM(networkSize, gradientCheckOn)
-      case "GRU" => new neural.GRU(networkSize, gradientCheckOn)
+      case "LSTM" => new neural.LSTM(networkSize, gradientCheckOn, radius)
+      case "GRU" => new neural.GRU(networkSize, gradientCheckOn, radius)
+      case "MLP" => new neural.MLP(networkSize, gradientCheckOn, radius)
       case _ => throw new AssertionError("Unknown network layout.")
     }
     val initialNetwork = layout.getNetwork
@@ -167,7 +168,7 @@ case class NeuralNetwork(
   }
 
   def getTrueState(
-    data: Seq[(ID, (Option[Double], Array[Double]))]): neural.GraphData = {
+    data: Seq[(ID, (Option[Double], Array[Double]))]): neural.VectorGraph = {
     val labels = data.flatMap { case (id, (labelOpt, features)) => labelOpt.map(id -> _) }.toMap
     val features = data.map { case (id, (labelOpt, features)) => id -> features }.toMap
     val vertices = data.map(_._1)
@@ -194,35 +195,19 @@ case class NeuralNetwork(
     s
   }
 
-  def forwardPass(
-    vertices: Seq[ID],
-    edges: Map[ID, Seq[ID]],
-    neighborsState: neural.GraphData,
-    ownState: neural.GraphData,
-    network: neural.Network,
-    layout: neural.Layouts): Seq[neural.GateValues] = {
-    (1 until radius).scanLeft {
-      network.forward(vertices, edges, neighborsState,
-        layout.inputGates.map(i => i -> ownState): _*)
-    } { (previous, r) =>
-      network.forward(vertices, edges, previous(layout.toNeighbors),
-        layout.toItself.mapValues(previous(_)).toSeq: _*)
-    }
-  }
-
   def train(
     vertices: Seq[ID],
     edges: Map[ID, Seq[ID]],
     data: Seq[(ID, (Option[Double], Array[Double]))],
     startingNetwork: neural.Network,
     iterations: Int,
-    layout: neural.Layouts): (neural.Network, NeuralNetworkDebugging.DataForGradientCheck) = {
+    layout: neural.Layout): (neural.Network, NeuralNetworkDebugging.DataForGradientCheck) = {
     assert(networkSize >= featureCount + 2, s"Network size must be at least ${featureCount + 2}.")
     var network = startingNetwork
-    val weightsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
+    val trainablesForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val gradientsForGradientCheck = new scala.collection.mutable.ListBuffer[Map[String, neural.DoubleMatrix]]
     val trueState = getTrueState(data)
-    val initialStates = scala.collection.mutable.ListBuffer[neural.GraphData]()
+    val initialStates = scala.collection.mutable.ListBuffer[neural.VectorGraph]()
     for (i <- 1 to iterations) {
       val random = new util.Random(1)
       val keptState = trueState.map {
@@ -235,8 +220,10 @@ case class NeuralNetwork(
         case (id, state) => id -> blanked(state)
       }
       initialStates += initialState
-      val outputs = forwardPass(vertices, edges, keptState, initialState, network, layout)
-      val finalOutputs = outputs.last(layout.outputGate)
+      val outputs = network.forward(vertices, edges,
+        (layout.ownStateInputs.map(i => i -> initialState) ++
+          (layout.neighborsStateInputs.map(i => i -> keptState))): _*)
+      val finalOutputs = outputs("final state")
 
       // Backward pass.
       var numberOfForgotten = 0.0
@@ -259,36 +246,26 @@ case class NeuralNetwork(
       }
       val errorTotal = errors.values.map(e => e * e).sum
       log.info(s"Total error in iteration $i: $errorTotal")
-      val finalGradient: neural.GraphData = errors.map {
+      val finalGradient: neural.VectorGraph = errors.map {
         case (id, error) =>
           val vec = DenseVector.zeros[Double](networkSize)
           vec(0) = 2 * error * correctionRatio
           id -> vec
       }
-      val gradients = outputs.init.scanRight {
-        network.backward(vertices, edges, outputs.last, layout.outputGate -> finalGradient)
-      } { (outputs, next) =>
-        import neural.Implicits._
-        network.backward(vertices, edges, outputs,
-          layout.toItself.map {
-            case (s1, s2) =>
-              if (s2 == layout.toNeighbors) s2 -> (next(s1) + next.neighbors)
-              else s2 -> next(s1)
-          }.toSeq: _*)
-      }
-      weightsForGradientCheck += network.allWeights.toMap
+      val gradients = network.backward(vertices, edges, outputs, "final state" -> finalGradient)
+      trainablesForGradientCheck += network.trainables.toMap
       val updated = network.update(gradients, learningRate)
       network = updated._1
       gradientsForGradientCheck += updated._2
     }
-    (network, NeuralNetworkDebugging.DataForGradientCheck(weightsForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialStates.toList))
+    (network, NeuralNetworkDebugging.DataForGradientCheck(trainablesForGradientCheck.toList, gradientsForGradientCheck.toList, trueState, initialStates.toList))
   }
 
   def predict(
     dataIterator: Iterator[(ID, (Option[Double], Array[Double]))],
     edges: Map[ID, Seq[ID]],
     network: neural.Network,
-    layout: neural.Layouts): Iterator[(ID, Double)] = {
+    layout: neural.Layout): Iterator[(ID, Double)] = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
 
@@ -297,9 +274,10 @@ case class NeuralNetwork(
       // In "hideState" mode neighbors can see the labels but it is hidden from the node itself.
       case (id, state) => id -> blanked(state)
     }
-
-    val outputs = forwardPass(vertices, edges, trueState, initialState, network, layout)
-    outputs.last(layout.outputGate).map {
+    val outputs = network.forward(vertices, edges,
+      (layout.ownStateInputs.map(i => i -> initialState) ++
+        (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
+    outputs("final state").map {
       case (id, state) => id -> state(0)
     }.iterator
   }
@@ -310,41 +288,42 @@ case class NeuralNetwork(
       edges: Map[ID, Seq[ID]],
       initialNetwork: neural.Network,
       data: DataForGradientCheck,
-      layout: neural.Layouts): Boolean = {
+      layout: neural.Layout): Boolean = {
       val epsilon = 1e-5
       val relativeThreshold = 1e-7
       val absoluteThreshold = 1e-5
       implicit val randBasis = new RandBasis(new ThreadLocalRandomGenerator(new MersenneTwister(0)))
       val trueState = data.trueState
       val initialState = data.initialStates(0) //Now the gradient check is only implemented for hiding mode, so initialState is the same in all iterations.
-      val weights = data.weights
+      val trainables = data.trainables
       val gradients = data.gradients
       //Approximate the derivatives.
-      val approximatedGradients = weights.map { w =>
-        w.flatMap {
+      val approximatedGradients = trainables.map { t =>
+        t.flatMap {
           case (name, values) =>
             val rows = values.rows
             val cols = values.cols
             for (row <- 0 until rows; col <- 0 until cols) yield {
               val epsilonMatrix = DenseMatrix.zeros[Double](rows, cols)
               epsilonMatrix(row, col) = epsilon
-              //Increase weigth and predict with it.
-              val partialIncreasedWeights = w + (name -> (w(name) + epsilonMatrix))
-              val outputsWithIncreased = forwardPass(
-                vertices, edges, trueState, initialState,
-                initialNetwork.copy(weights = partialIncreasedWeights), layout)
-              val finalOutputWithIncreased = outputsWithIncreased.last(layout.outputGate)
+              //Increase trainable and predict with it.
+              val partialIncreasedTrainables = t + (name -> (t(name) + epsilonMatrix))
+              val outputsWithIncreased = initialNetwork.copy(initialTrainables = partialIncreasedTrainables
+              ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
+                (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
+              val finalOutputWithIncreased = outputsWithIncreased("final state")
               val errorsWithIncreased = trueState.map {
                 case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithIncreased(id)(0))
                 case (id, state) => id -> 0.0
               }
               val errorTotalWithIncreased = errorsWithIncreased.values.map(e => e * e).sum
-              //Decrease weight and predict with it.
-              val partialDecreasedWeights = w + (name -> (w(name) - epsilonMatrix))
-              val outputsWithDecreased = forwardPass(
-                vertices, edges, trueState, initialState,
-                initialNetwork.copy(weights = partialDecreasedWeights), layout)
-              val finalOutputWithDecreased = outputsWithDecreased.last(layout.outputGate)
+              //Decrease trainable and predict with it.
+              val partialDecreasedTrainables = t + (name -> (t(name) - epsilonMatrix))
+
+              val outputsWithDecreased = initialNetwork.copy(initialTrainables = partialDecreasedTrainables
+              ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
+                (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
+              val finalOutputWithDecreased = outputsWithDecreased("final state")
               val errorsWithDecreased = trueState.map {
                 case (id, state) if state(1) == 1.0 => id -> (state(0) - finalOutputWithDecreased(id)(0))
                 case (id, state) => id -> 0.0
@@ -387,9 +366,9 @@ case class NeuralNetwork(
     }
 
     case class DataForGradientCheck(
-      weights: List[Map[String, neural.DoubleMatrix]],
+      trainables: List[Map[String, neural.DoubleMatrix]],
       gradients: List[Map[String, neural.DoubleMatrix]],
-      trueState: neural.GraphData,
-      initialStates: List[neural.GraphData])
+      trueState: neural.VectorGraph,
+      initialStates: List[neural.VectorGraph])
   }
 }
