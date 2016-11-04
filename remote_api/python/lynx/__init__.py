@@ -550,19 +550,16 @@ class SubProject:
     The `vertex_set_guid` is part of the project meta data.
     '''
     request = dict(
-      count=count,
-      guid=vertex_set_guid
+        count=count,
+        guid=vertex_set_guid
     )
     r = self.lk._send(
-      'getCenters',
-      request
+        'getCenters',
+        request
     )
     return r.centers
 
-  def _as_fe_graph_request(self,request):
-
-
-  def get_complex_view(self,request):
+  def get_complex_view(self, request):
     '''Returns a `FEGraphResponse` object for testing purposes.
     The request is converted to a `FEGraphRequest`. For example
     request =
@@ -583,8 +580,8 @@ class SubProject:
     )
     '''
     r = self.lk._send(
-      'getComplexView',
-      _as_fe_graph_request(request)
+        'getComplexView',
+        request
     )
     return r
 
