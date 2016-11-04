@@ -8,6 +8,6 @@ package object neural {
   type DoubleVector = DenseVector[Double]
   type DoubleMatrix = DenseMatrix[Double]
   type Graph[T] = Map[ID, T]
-  type GraphData = Graph[DoubleVector]
-  type GraphVectors = Graph[Iterable[DoubleVector]]
+  type VectorGraph = Graph[DoubleVector]
+  type VectorsGraph = Graph[Iterable[DoubleVector]]
 }

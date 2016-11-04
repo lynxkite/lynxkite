@@ -3322,8 +3322,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         NonNegDouble("knownLabelWeight", "Weight for known labels"),
         NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
         RandomSeed("seed", "Seed"),
-        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM"))
-      )
+        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")))
       def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes[Double].nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         val labelName = params("label")
