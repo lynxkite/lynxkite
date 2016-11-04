@@ -498,18 +498,6 @@ class _ProjectCheckpoint:
     )
     return r
 
-  def centers(self, count, vertex_set_guid):
-    '''Returns list of vertices as center.'''
-    request = dict(
-        count=count,
-        guid=vertex_set_guid
-    )
-    r = self.lk._send(
-        'getCenters',
-        request
-    )
-    return r
-
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -531,9 +519,6 @@ class SubProject:
     self.project_checkpoint = project_checkpoint
     self.path = path
     self.lk = project_checkpoint.lk
-    self.vertex_guid = None
-    self.edge_guid = None
-    self.belongs_to_guid = None
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
@@ -561,10 +546,47 @@ class SubProject:
     return self.project_checkpoint.meta_data(self.path)
 
   def centers(self, count, vertex_set_guid):
-    '''Returns list of centers which can be used in a `FEGraphRequest`.
+    '''Returns a list of centers which can be used in a `FEGraphRequest`.
     The `vertex_set_guid` is part of the project meta data.
     '''
-    return self.project_checkpoint.centers(count, vertex_set_guid)
+    request = dict(
+      count=count,
+      guid=vertex_set_guid
+    )
+    r = self.lk._send(
+      'getCenters',
+      request
+    )
+    return r.centers
+
+  def _as_fe_graph_request(self,request):
+
+
+  def get_complex_view(self,request):
+    '''Returns a `FEGraphResponse` object for testing purposes.
+    The request is converted to a `FEGraphRequest`. For example
+    request =
+    dict(
+      vertexSets = [
+        dict(
+          vertexSetId=project_vertex_set_id,
+          sampleSmearEdgeBundleId=project_edge_bundle_id,
+          mode='sampled',
+          centralVertexIds=project.centers(3,project_vertex_set_id),
+        )],
+      edgeBundles = [
+        dict(
+          srcIdx=0,
+          dstIdx=0,
+          edgeBundleId=project_edge_bundle_id
+        )]
+    )
+    '''
+    r = self.lk._send(
+      'getComplexView',
+      _as_fe_graph_request(request)
+    )
+    return r
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
