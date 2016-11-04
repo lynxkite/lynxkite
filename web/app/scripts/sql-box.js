@@ -297,7 +297,6 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         scope.project = config.data.dfSpec.project;
         scope.exportFormat = type;
         scope.exportKiteTable = name;
-        scope.exportSegmentation = name;
         scope.overwrite = true;
       });
 
