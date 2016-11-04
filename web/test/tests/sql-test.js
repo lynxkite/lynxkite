@@ -293,24 +293,24 @@ module.exports = function(fw) {
       var K = protractor.Key;
 
       // Test synchronized sql box
-      var aceContent = right.sqlEditor().$('.ace_content');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('3');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('2');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('1');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('0');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.DOWN)]);
-      expect(aceContent.getText()).toBe('1');
+      var editor = right.sqlEditor();
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('3');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('2');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('1');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('0');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.DOWN)]);
+      expect(lib.getACEText(editor)).toBe('1');
 
       // Test non-synchronized sql box
-      aceContent = left.sqlEditor().$('.ace_content');
-      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('2');
-      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('0');
+      editor = left.sqlEditor();
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('2');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('0');
     });
 
 };

@@ -62,7 +62,8 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
       val nameMap = segNames.toMap
       belongsTo.map { case (vid, sid) => vid -> nameMap(sid) }
     }
-    assert(segMap == Seq(0 -> "Good", 1 -> "Naughty", 2 -> "Good", 3 -> "Retired", 3 -> "Naughty"))
+    val v = project.vertexAttributes("id").rdd.keys.collect.toSeq
+    assert(segMap == Seq(v(0) -> "Good", v(1) -> "Naughty", v(2) -> "Good", v(3) -> "Naughty", v(3) -> "Retired"))
   }
 
   test("Import segmentation for example graph by Long ID") {
