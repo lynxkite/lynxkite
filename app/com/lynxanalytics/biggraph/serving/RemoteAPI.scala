@@ -116,8 +116,6 @@ object RemoteAPIProtocol {
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
   implicit val rAttributeIdRequest = json.Json.reads[AttributeIdRequest]
   implicit val wAttributeIdResponse = json.Json.writes[AttributeIdResponse]
-  //implicit val rFEGraphrequest = json.Json.reads[FEGraphRequest]
-  //implicit val wFEGraphResponse = json.Json.writes[FEGraphResponse]
   implicit val rMetaDataRequest = json.Json.reads[MetaDataRequest]
   implicit val rCentersRequest = json.Json.reads[CentersRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
