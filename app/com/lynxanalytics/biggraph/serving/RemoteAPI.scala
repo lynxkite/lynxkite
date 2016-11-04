@@ -43,6 +43,7 @@ object RemoteAPIProtocol {
   case class AttributeIdRequest(checkpoint: String, path: List[String], attr: String)
   case class AttributeIdResponse(guid: String)
   case class MetaDataRequest(checkpoint: String, path: List[String])
+  case class CentersRequest(count: Int, guid: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -116,6 +117,7 @@ object RemoteAPIProtocol {
   implicit val rAttributeIdRequest = json.Json.reads[AttributeIdRequest]
   implicit val wAttributeIdResponse = json.Json.writes[AttributeIdResponse]
   implicit val rMetaDataRequest = json.Json.reads[MetaDataRequest]
+  implicit val rCentersRequest = json.Json.reads[CentersRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -144,6 +146,7 @@ object RemoteAPIServer extends JsonServer {
   def getVertexAttributeId = jsonFuturePost(c.getVertexAttributeId)
   def getEdgeAttributeId = jsonFuturePost(c.getEdgeAttributeId)
   def getMetaData = jsonFuturePost(c.getMetaData)
+  def getCenters = jsonFuturePost(c.getCenters)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
@@ -368,6 +371,16 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val metaData = viewer.toFE("")
     import dataManager.executionContext
     Future(metaData)
+  }
+
+  def getCenters(user: User, request: CentersRequest): Future[CenterResponse] = {
+    val drawing = graphDrawingController
+    val req = CenterRequest(
+      vertexSetId = request.guid,
+      count = request.count,
+      filters = Seq()
+    )
+    drawing.getCenter(user, req)
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {

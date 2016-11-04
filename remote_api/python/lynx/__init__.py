@@ -489,12 +489,24 @@ class _ProjectCheckpoint:
   def meta_data(self, path):
     '''Returns project metadata.'''
     request = dict(
-      checkpoint=self.checkpoint,
-      path=path
+        checkpoint=self.checkpoint,
+        path=path
     )
-    r= self.lk._send(
-      'getMetaData',
-      request
+    r = self.lk._send(
+        'getMetaData',
+        request
+    )
+    return r
+
+  def centers(self, count, vertex_set_guid):
+    '''Returns list of vertices as center.'''
+    request = dict(
+        count=count,
+        guid=vertex_set_guid
+    )
+    r = self.lk._send(
+        'getCenters',
+        request
     )
     return r
 
@@ -547,6 +559,12 @@ class SubProject:
   def meta_data(self):
     '''Returns project metadata.'''
     return self.project_checkpoint.meta_data(self.path)
+
+  def centers(self, count, vertex_set_guid):
+    '''Returns list of centers which can be used in a `FEGraphRequest`.
+    The `vertex_set_guid` is part of the project meta data.
+    '''
+    return self.project_checkpoint.centers(count, vertex_set_guid)
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
