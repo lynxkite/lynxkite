@@ -8,9 +8,9 @@ class TestProjectMetadata(unittest.TestCase):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=123)
     p.addRandomVertexAttribute(**{
-      'name': 'attribute_name',
-      'dist': 'Standard Uniform',
-      'seed': '12344321'})
+        'name': 'attribute_name',
+        'dist': 'Standard Uniform',
+        'seed': '12344321'})
     a = p.vertex_attribute('attribute_name')
     h = a.histogram(numbuckets=10, logarithmic=True)
     self.assertEqual(h.labelType, 'between')
@@ -20,16 +20,25 @@ class TestProjectMetadata(unittest.TestCase):
 
   def test_attributes(self):
     p = lynx.LynxKite().new_project()
-    p.newVertexSet(size=123)
-    p.addConstantVertexAttribute(**{
-      'name': 's_attr',
-      'type': 'String',
-      'value': 'kite'})
-    a = p.vertex_attribute('s_attr')
-    h = a.histogram(numbuckets=5, logarithmic=False)
-    self.assertEqual(h.labelType, 'bucket')
-    self.assertEqual(h.labels, ['kite'])
-    self.assertEqual(h.sizes, [123])
+    p.exampleGraph()
+    md = p.meta_data()
+    self.assertEqual(len(md.edgeAttributes), 2)
+    self.assertEqual(len(md.vertexAttributes), 6)
+    titles=[]
+    for a in md.vertexAttributes:
+      titles.append(a.title)
+    self.assertEqual(titles, [
+      'age',
+      'gender',
+      'id',
+      'income',
+      'location',
+      'name'])
+    titles=[]
+    for a in md.edgeAttributes:
+      titles.append(a.title)
+    self.assertEqual(titles,['comment', 'weight'])
+
 
 if __name__ == '__main__':
   unittest.main()
