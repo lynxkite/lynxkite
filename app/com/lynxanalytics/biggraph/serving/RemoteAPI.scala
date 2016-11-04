@@ -116,6 +116,8 @@ object RemoteAPIProtocol {
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
   implicit val rAttributeIdRequest = json.Json.reads[AttributeIdRequest]
   implicit val wAttributeIdResponse = json.Json.writes[AttributeIdResponse]
+  //implicit val rFEGraphrequest = json.Json.reads[FEGraphRequest]
+  //implicit val wFEGraphResponse = json.Json.writes[FEGraphResponse]
   implicit val rMetaDataRequest = json.Json.reads[MetaDataRequest]
   implicit val rCentersRequest = json.Json.reads[CentersRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
@@ -147,6 +149,7 @@ object RemoteAPIServer extends JsonServer {
   def getEdgeAttributeId = jsonFuturePost(c.getEdgeAttributeId)
   def getMetaData = jsonFuturePost(c.getMetaData)
   def getCenters = jsonFuturePost(c.getCenters)
+  def getComplexView = jsonFuturePost(c.getComplexView)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
@@ -381,6 +384,12 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       filters = Seq()
     )
     drawing.getCenter(user, req)
+  }
+
+  def getComplexView(user: User, request: FEGraphRequest): Future[FEGraphResponse] = {
+    val drawing = graphDrawingController
+    import dataManager.executionContext
+    Future(drawing.getComplexView(user, request))
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
