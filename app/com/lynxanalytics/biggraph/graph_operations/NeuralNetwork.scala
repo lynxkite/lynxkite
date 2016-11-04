@@ -253,7 +253,7 @@ case class NeuralNetwork(
           id -> vec
       }
       val gradients = network.backward(vertices, edges, outputs, "final state" -> finalGradient)
-      trainablesForGradientCheck += network.expandableTrainables.toMap
+      trainablesForGradientCheck += network.trainables.toMap
       val updated = network.update(gradients, learningRate)
       network = updated._1
       gradientsForGradientCheck += updated._2
@@ -308,7 +308,7 @@ case class NeuralNetwork(
               epsilonMatrix(row, col) = epsilon
               //Increase trainable and predict with it.
               val partialIncreasedTrainables = t + (name -> (t(name) + epsilonMatrix))
-              val outputsWithIncreased = initialNetwork.copy(trainables = partialIncreasedTrainables
+              val outputsWithIncreased = initialNetwork.copy(initialTrainables = partialIncreasedTrainables
               ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
                 (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
               val finalOutputWithIncreased = outputsWithIncreased("final state")
@@ -320,7 +320,7 @@ case class NeuralNetwork(
               //Decrease trainable and predict with it.
               val partialDecreasedTrainables = t + (name -> (t(name) - epsilonMatrix))
 
-              val outputsWithDecreased = initialNetwork.copy(trainables = partialDecreasedTrainables
+              val outputsWithDecreased = initialNetwork.copy(initialTrainables = partialDecreasedTrainables
               ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
                 (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
               val finalOutputWithDecreased = outputsWithDecreased("final state")
