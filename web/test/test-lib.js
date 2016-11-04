@@ -469,7 +469,7 @@ var visualization = {
 
   asTSV: function() {
     var copyButton = $('.graph-sidebar [data-clipboard-text');
-    // It would be too complicated to test actual copy & paste. We just trust ZeroClipboard instead.
+    // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
     return copyButton.getAttribute('data-clipboard-text');
   },
 
@@ -843,6 +843,12 @@ testLib = {
 
   helpPopup: function(helpId) {
     return $('div[help-id="' + helpId + '"]');
+  },
+
+  getACEText: function(e) {
+    // getText() drops text in hidden elements. "innerText" to the rescue!
+    // https://github.com/angular/protractor/issues/1794
+    return e.$('.ace_content').getAttribute('innerText').then(text => text.trim());
   },
 
   sendKeysToACE: function(e, keys) {
