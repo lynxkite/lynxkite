@@ -342,6 +342,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     graphDrawingController.getHistogram(user, req)
   }
 
+  // Only for testing.
   def getMetadata(user: User, request: MetadataRequest): Future[FEProject] = {
     val viewer = getViewer(request.checkpoint, request.path)
     import dataManager.executionContext
