@@ -451,28 +451,17 @@ class _ProjectCheckpoint:
         sampleSize=sample_size,
         logarithmic=logarithmic)
     if attr_type == 'vertex':
-      r = self.lk._send(
-          'getVertexHistogram',
-          request
-      )
+      r = self.lk._send('getVertexHistogram', request)
     elif attr_type == 'edge':
-      r = self.lk._send(
-          'getEdgeHistogram',
-          request
-      )
+      r = self.lk._send('getEdgeHistogram', request)
     else:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
 
   def metadata(self, path):
     '''Returns project metadata.'''
-    request = dict(
-        checkpoint=self.checkpoint,
-        path=path)
-    r = self.lk._send(
-        'getMetadata',
-        request
-    )
+    request = dict(checkpoint=self.checkpoint, path=path)
+    r = self.lk._send('getMetadata', request)
     return _Metadata(r)
 
 
@@ -526,40 +515,48 @@ class SubProject:
     '''Returns a list of centers which can be used in a `FEGraphRequest`.
     The `vertex_set_guid` is part of the project meta data.
     '''
-    request = dict(
-        count=count,
-        guid=vertex_set_guid
-    )
-    r = self.lk._send(
-        'getCenters',
-        request
-    )
+    request = dict(count=count, guid=vertex_set_guid)
+    r = self.lk._send('getCenters', request)
     return r.centers
 
   def get_complex_view(self, request):
     '''Returns a `FEGraphResponse` object for testing purposes.
     The request is converted to a `FEGraphRequest`. For example
-    request =
-    dict(
-      vertexSets = [
-        dict(
-          vertexSetId=project_vertex_set_id,
-          sampleSmearEdgeBundleId=project_edge_bundle_id,
-          mode='sampled',
-          centralVertexIds=project.centers(3,project_vertex_set_id),
-        )],
-      edgeBundles = [
-        dict(
-          srcIdx=0,
-          dstIdx=0,
-          edgeBundleId=project_edge_bundle_id
-        )]
-    )
+    req = dict(
+        vertexSets=[
+            dict(
+                vertexSetId=vs,
+                sampleSmearEdgeBundleId=eb,
+                mode='sampled',
+                filters=[],
+                centralVertexIds=centers,
+                attrs=[],
+                xBucketingAttributeId='',
+                yBucketingAttributeId='',
+                xNumBuckets=1,
+                yNumBuckets=1,
+                radius=1,
+                xAxisOptions=dict(logarithmic=False),
+                yAxisOptions=dict(logarithmic=False),
+                sampleSize=50000,
+                maxSize=10000
+            )],
+        edgeBundles=[
+            dict(
+                srcDiagramId='idx[0]',
+                dstDiagramId='idx[0]',
+                srcIdx=0,
+                dstIdx=0,
+                edgeBundleId=eb,
+                filters=[],
+                layout3D=False,
+                relativeEdgeDensity=False,
+                maxSize=10000,
+                edgeWeightId='',
+                attrs=[]
+            )])
     '''
-    r = self.lk._send(
-        'getComplexView',
-        request
-    )
+    r = self.lk._send('getComplexView', request)
     return r
 
   def __getattr__(self, attr):
