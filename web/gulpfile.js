@@ -23,7 +23,6 @@ var gulp = require('gulp');
 var httpProxy = require('http-proxy');
 var lazypipe = require('lazypipe');
 var merge = require('merge-stream');
-var wiredep = require('wiredep').stream;
 var $ = require('gulp-load-plugins')();
 
 // Builds HTML files from AsciiDoctor documentation.
@@ -52,7 +51,6 @@ gulp.task('html', ['css', 'js'], function () {
   var css = gulp.src('.tmp/**/*.css', { read: false });
   var js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
   return gulp.src('app/index.html')
-    .pipe(wiredep())
     .pipe($.inject(css, { ignorePath: '.tmp' }))
     .pipe($.inject(js, { ignorePath: '.tmp' }))
     .pipe(gulp.dest('.tmp'))
@@ -78,8 +76,8 @@ gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], functio
     ], { base: 'app' });
   // Move Bootstrap fonts to where the relative URLs will find them.
   var fonts = gulp.src([
-    'app/bower_components/bootstrap/dist/fonts/*',
-    ], { base: 'app/bower_components/bootstrap/dist' });
+    'node_modules/bootstrap/dist/fonts/*',
+    ], { base: 'node_modules/bootstrap/dist' });
   return merge(dynamicFiles, staticFiles, fonts)
     .pipe(gulp.dest('dist'));
 });
@@ -141,7 +139,7 @@ gulp.task('serve', ['quick'], function() {
   });
   browserSync.init({
     port: ProxyPort,
-    server: ['.tmp', 'app'],
+    server: ['.tmp', 'app', 'node_modules'],
     ghostMode: false,
     online: false,
     notify: false,
