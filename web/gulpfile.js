@@ -139,7 +139,7 @@ gulp.task('serve', ['quick'], function() {
   });
   browserSync.init({
     port: ProxyPort,
-    server: ['.tmp', 'app'],
+    server: ['.tmp', 'app', 'node_modules'],
     ghostMode: false,
     online: false,
     notify: false,
