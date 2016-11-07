@@ -1,0 +1,14 @@
+# This is a YAML file, describing an unexpected schema for test_schema_enforcement.py
+schema:
+- dataType: BooleanType
+  name: unexpected_name
+  nullable: false
+- dataType: IntegerType
+  name: one
+  nullable: false
+- dataType: DoubleType
+  name: two
+  nullable: false
+- dataType: StringType
+  name: three
+  nullable: false
