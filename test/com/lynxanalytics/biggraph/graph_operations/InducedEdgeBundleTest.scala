@@ -52,7 +52,8 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
             op.dstMapping, merge.belongsTo)
         .result.induced
     }
-    assert(induced.toPairSeq == Seq(0 -> 0, 0 -> 1, 0 -> 1, 1 -> 0))
+    val v = merge.segments.rdd.keys.collect.toSeq
+    assert(induced.toPairSeq == Seq(v(0) -> v(0), v(0) -> v(1), v(0) -> v(1), v(1) -> v(0)))
   }
 
   test("induce with non-function mapping") {
