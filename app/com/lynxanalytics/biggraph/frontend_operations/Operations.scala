@@ -2615,7 +2615,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // Move segment ID to the segments.
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
-        AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
+        // Use scalable aggregator.
+        AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
       implicit val ta = baseColumn.typeTag
       implicit val tb = segColumn.typeTag
       // Import belongs-to relationship as edges between the base and the segmentation.
