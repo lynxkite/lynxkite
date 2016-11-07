@@ -41,7 +41,6 @@ object RemoteAPIProtocol {
     sampleSize: Option[Int],
     logarithmic: Boolean)
   case class MetadataRequest(checkpoint: String, path: List[String])
-  case class CentersRequest(count: Int, guid: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -112,8 +111,7 @@ object RemoteAPIProtocol {
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
-  implicit val rMetaDataRequest = json.Json.reads[MetadataRequest]
-  implicit val rCentersRequest = json.Json.reads[CentersRequest]
+  implicit val rMetadataRequest = json.Json.reads[MetadataRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -140,7 +138,6 @@ object RemoteAPIServer extends JsonServer {
   def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
   def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
   def getMetadata = jsonFuturePost(c.getMetadata)
-  def getCenters = jsonFuturePost(c.getCenters)
   def getComplexView = jsonFuturePost(c.getComplexView)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
@@ -347,16 +344,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val viewer = getViewer(request.checkpoint, request.path)
     import dataManager.executionContext
     Future(viewer.toFE(""))
-  }
-
-  def getCenters(user: User, request: CentersRequest): Future[CenterResponse] = {
-    val drawing = graphDrawingController
-    val req = CenterRequest(
-      vertexSetId = request.guid,
-      count = request.count,
-      filters = Seq()
-    )
-    drawing.getCenter(user, req)
   }
 
   def getComplexView(user: User, request: FEGraphRequest): Future[FEGraphResponse] = {

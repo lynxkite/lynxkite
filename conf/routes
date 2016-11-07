@@ -88,7 +88,6 @@ POST /remote/getScalar com.lynxanalytics.biggraph.serving.RemoteAPIServer.getSca
 POST /remote/getVertexHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getVertexHistogram
 POST /remote/getEdgeHistogram com.lynxanalytics.biggraph.serving.RemoteAPIServer.getEdgeHistogram
 POST /remote/getMetadata com.lynxanalytics.biggraph.serving.RemoteAPIServer.getMetadata
-POST /remote/getCenters com.lynxanalytics.biggraph.serving.RemoteAPIServer.getCenters
 POST /remote/getComplexView com.lynxanalytics.biggraph.serving.RemoteAPIServer.getComplexView
 POST /remote/newProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.newProject
 POST /remote/loadProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadProject

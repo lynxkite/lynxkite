@@ -7,10 +7,11 @@ class TestGetComplexView(unittest.TestCase):
   def test_guids_segmentations_and_scalars(self):
     p = lynx.LynxKite().new_project()
     p.exampleGraph()
-    md = p.metadata()
+    md = p._metadata()
     vs = md.vertex_set_id()
     eb = md.edge_bundle_id()
-    centers = p.centers(2, vs)
+    centers = p.sql('select id from vertices').take(2)
+    centers = [str(c['id']) for c in centers]
     req = dict(
         vertexSets=[
             dict(
@@ -45,7 +46,7 @@ class TestGetComplexView(unittest.TestCase):
                 attrs=[]
             )]
     )
-    complex_view = p.get_complex_view(req)
+    complex_view = p._get_complex_view(req)
     self.assertEqual(len(complex_view.vertexSets[0].vertices), 3)
     self.assertEqual(complex_view.vertexSets[0].mode, 'sampled')
     self.assertEqual(len(complex_view.edgeBundles[0].edges), 4)
