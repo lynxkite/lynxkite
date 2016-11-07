@@ -1974,7 +1974,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // Automatically keep the key attribute.
       project.vertexAttributes(key) = aggregateViaConnection(
         m.belongsTo,
-        AttributeWithLocalAggregator(oldVAttrs(key), "most_common"))
+        AttributeWithAggregator(oldVAttrs(key), "first"))
       if (oldEdges != null) {
         val edgeInduction = {
           val op = graph_operations.InducedEdgeBundle()
