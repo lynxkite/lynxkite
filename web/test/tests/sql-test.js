@@ -30,9 +30,9 @@ module.exports = function(fw) {
 
       // Choose in-project table format, and save.
       left.side.element(by.css('#exportFormat option[value="segmentation"]')).click();
-      left.side.element(by.css('#exportKiteTable')).sendKeys('exported_table');
+      left.side.element(by.css('#exportSegmentation')).sendKeys('exported_segmentation');
       left.executeSqlSaving();
-      lib.left.openSegmentation('exported_table');
+      lib.left.openSegmentation('exported_segmentation');
       expect(lib.right.segmentCount()).toEqual(4);
       expect(lib.right.vertexAttribute('age').isPresent()).toBe(true);
       expect(lib.right.vertexAttribute('gender').isPresent()).toBe(true);
@@ -293,24 +293,24 @@ module.exports = function(fw) {
       var K = protractor.Key;
 
       // Test synchronized sql box
-      var aceContent = right.sqlEditor().$('.ace_content');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('3');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('2');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('1');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('0');
-      lib.sendKeysToACE(right.sqlEditor(), [K.chord(K.CONTROL, K.DOWN)]);
-      expect(aceContent.getText()).toBe('1');
+      var editor = right.sqlEditor();
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('3');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('2');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('1');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('0');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.DOWN)]);
+      expect(lib.getACEText(editor)).toBe('1');
 
       // Test non-synchronized sql box
-      aceContent = left.sqlEditor().$('.ace_content');
-      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('2');
-      lib.sendKeysToACE(left.sqlEditor(), [K.chord(K.CONTROL, K.ARROW_UP)]);
-      expect(aceContent.getText()).toBe('0');
+      editor = left.sqlEditor();
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('2');
+      lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+      expect(lib.getACEText(editor)).toBe('0');
     });
 
 };
