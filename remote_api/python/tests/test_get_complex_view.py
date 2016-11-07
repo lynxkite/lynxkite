@@ -7,9 +7,9 @@ class TestGetComplexView(unittest.TestCase):
   def test_guids_segmentations_and_scalars(self):
     p = lynx.LynxKite().new_project()
     p.exampleGraph()
-    md = p.meta_data()
-    vs = md.vertexSet
-    eb = md.edgeBundle
+    md = p.metadata()
+    vs = md.vertex_set_id()
+    eb = md.edge_bundle_id()
     centers = p.centers(2, vs)
     req = dict(
         vertexSets=[
