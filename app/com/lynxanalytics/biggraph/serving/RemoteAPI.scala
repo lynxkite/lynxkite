@@ -40,9 +40,7 @@ object RemoteAPIProtocol {
     numBuckets: Int,
     sampleSize: Option[Int],
     logarithmic: Boolean)
-  case class AttributeIdRequest(checkpoint: String, path: List[String], attr: String)
-  case class AttributeIdResponse(guid: String)
-  case class MetaDataRequest(checkpoint: String, path: List[String])
+  case class MetadataRequest(checkpoint: String, path: List[String])
   case class CentersRequest(count: Int, guid: String)
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
@@ -114,9 +112,7 @@ object RemoteAPIProtocol {
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
-  implicit val rAttributeIdRequest = json.Json.reads[AttributeIdRequest]
-  implicit val wAttributeIdResponse = json.Json.writes[AttributeIdResponse]
-  implicit val rMetaDataRequest = json.Json.reads[MetaDataRequest]
+  implicit val rMetaDataRequest = json.Json.reads[MetadataRequest]
   implicit val rCentersRequest = json.Json.reads[CentersRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
@@ -143,9 +139,7 @@ object RemoteAPIServer extends JsonServer {
   def getScalar = jsonFuturePost(c.getScalar)
   def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
   def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
-  def getVertexAttributeId = jsonFuturePost(c.getVertexAttributeId)
-  def getEdgeAttributeId = jsonFuturePost(c.getEdgeAttributeId)
-  def getMetaData = jsonFuturePost(c.getMetaData)
+  def getMetadata = jsonFuturePost(c.getMetadata)
   def getCenters = jsonFuturePost(c.getCenters)
   def getComplexView = jsonFuturePost(c.getComplexView)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
@@ -348,30 +342,10 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     graphDrawingController.getHistogram(user, req)
   }
 
-  def getVertexAttributeId(user: User, request: AttributeIdRequest): Future[AttributeIdResponse] = {
+  def getMetadata(user: User, request: MetadataRequest): Future[FEProject] = {
     val viewer = getViewer(request.checkpoint, request.path)
-    val attributes = viewer.vertexAttributes
-    assert(attributes.contains(request.attr), s"Vertex attribute '${request.attr}' does not exist.")
-    getAttributeId(attributes(request.attr))
-  }
-
-  def getEdgeAttributeId(user: User, request: AttributeIdRequest): Future[AttributeIdResponse] = {
-    val viewer = getViewer(request.checkpoint, request.path)
-    val attributes = viewer.edgeAttributes
-    assert(attributes.contains(request.attr), s"Vertex attribute '${request.attr}' does not exist.")
-    getAttributeId(attributes(request.attr))
-  }
-
-  private def getAttributeId(attr: Attribute[_]): Future[AttributeIdResponse] = {
     import dataManager.executionContext
-    Future(AttributeIdResponse(attr.gUID.toString))
-  }
-
-  def getMetaData(user: User, request: MetaDataRequest): Future[FEProject] = {
-    val viewer = getViewer(request.checkpoint, request.path)
-    val metaData = viewer.toFE("")
-    import dataManager.executionContext
-    Future(metaData)
+    Future(viewer.toFE(""))
   }
 
   def getCenters(user: User, request: CentersRequest): Future[CenterResponse] = {

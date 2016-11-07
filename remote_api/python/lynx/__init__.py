@@ -449,8 +449,7 @@ class _ProjectCheckpoint:
         attr=attr,
         numBuckets=numbuckets,
         sampleSize=sample_size,
-        logarithmic=logarithmic
-    )
+        logarithmic=logarithmic)
     if attr_type == 'vertex':
       r = self.lk._send(
           'getVertexHistogram',
@@ -465,38 +464,16 @@ class _ProjectCheckpoint:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
 
-  def attr_id(self, path, attr, attr_type):
-    '''Returns the guid of the attribute as string.'''
-    request = dict(
-        checkpoint=self.checkpoint,
-        path=path,
-        attr=attr
-    )
-    if attr_type == 'vertex':
-      r = self.lk._send(
-          'getVertexAttributeId',
-          request
-      )
-    elif attr_type == 'edge':
-      r = self.lk._send(
-          'getEdgeAttributeId',
-          request
-      )
-    else:
-      raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
-    return r.guid
-
-  def meta_data(self, path):
+  def metadata(self, path):
     '''Returns project metadata.'''
     request = dict(
         checkpoint=self.checkpoint,
-        path=path
-    )
+        path=path)
     r = self.lk._send(
-        'getMetaData',
+        'getMetadata',
         request
     )
-    return r
+    return _Metadata(r)
 
 
 class SubProject:
@@ -541,9 +518,9 @@ class SubProject:
     '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
     return Attribute(attr, 'edge', self.project_checkpoint, self.path)
 
-  def meta_data(self):
+  def metadata(self):
     '''Returns project metadata.'''
-    return self.project_checkpoint.meta_data(self.path)
+    return self.project_checkpoint.metadata(self.path)
 
   def centers(self, count, vertex_set_guid):
     '''Returns a list of centers which can be used in a `FEGraphRequest`.
@@ -627,6 +604,28 @@ class RootProject(SubProject):
     return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
 
 
+class _Metadata():
+  '''Wrapper class for storing and accessing project metadata.'''
+
+  def __init__(self, data):
+    self.data = data
+
+  def vertex_set_id(self):
+    return self.data.vertexSet
+
+  def edge_bundle_id(self):
+    return self.data.edgeBundle
+
+  def belongs_to_id(self, segmentation_name):
+    return [s.belongsTo for s in self.data.segmentations if s.name == segmentation_name][0]
+
+  def vertex_attribute_id(self, attr_name):
+    return [a.id for a in self.data.vertexAttributes if a.title == attr_name][0]
+
+  def edge_attribute_id(self, attr_name):
+    return [a.id for a in self.data.edgeAttributes if a.title == attr_name][0]
+
+
 class Attribute():
   '''Represents a vertex or an edge attribute.'''
 
@@ -635,14 +634,6 @@ class Attribute():
     self.name = name
     self.attr_type = attr_type
     self.path = path
-    self.guid = None
-
-  def id(self):
-    if self.guid is not None:
-      return self.guid
-    else:
-      self.guid = self.project_checkpoint.attr_id(self.path, self.name, self.attr_type)
-      return self.guid
 
   def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
     '''Returns a histogram of the attribute.
