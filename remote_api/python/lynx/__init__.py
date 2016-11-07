@@ -458,7 +458,7 @@ class _ProjectCheckpoint:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
 
-  def metadata(self, path):
+  def _metadata(self, path):
     '''Returns project metadata.'''
     request = dict(checkpoint=self.checkpoint, path=path)
     r = self.lk._send('getMetadata', request)
@@ -507,19 +507,11 @@ class SubProject:
     '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
     return Attribute(attr, 'edge', self.project_checkpoint, self.path)
 
-  def metadata(self):
+  def _metadata(self):
     '''Returns project metadata.'''
-    return self.project_checkpoint.metadata(self.path)
+    return self.project_checkpoint._metadata(self.path)
 
-  def centers(self, count, vertex_set_guid):
-    '''Returns a list of centers which can be used in a `FEGraphRequest`.
-    The `vertex_set_guid` is part of the project meta data.
-    '''
-    request = dict(count=count, guid=vertex_set_guid)
-    r = self.lk._send('getCenters', request)
-    return r.centers
-
-  def get_complex_view(self, request):
+  def _get_complex_view(self, request):
     '''Returns a `FEGraphResponse` object for testing purposes.
     The request is converted to a `FEGraphRequest`. For example
     req = dict(
