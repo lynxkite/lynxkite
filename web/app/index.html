@@ -5,10 +5,12 @@
     <meta charset="utf-8">
     <title>LynxKite</title>
     <meta name="viewport" content="width=device-width">
+    <!-- build:css(node_modules) styles/vendor.css -->
+    <link rel="stylesheet" href="angular-hotkeys/build/hotkeys.min.css" />
+    <link rel="stylesheet" href="angular-ui-layout/src/ui-layout.css" />
+    <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.css" />
+    <!-- endbuild -->
     <!-- build:css(.tmp) styles/biggraph.css -->
-    <link rel="stylesheet" href="../node_modules/angular-hotkeys/build/hotkeys.min.css" />
-    <link rel="stylesheet" href="../node_modules/angular-ui-layout/src/ui-layout.css" />
-    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.css" />
     <!-- inject:css -->
     <!-- endinject -->
     <!-- endbuild -->
@@ -18,30 +20,32 @@
     <div ng-view></div>
     <top-alerts></top-alerts>
 
+    <!-- build:js(node_modules) scripts/vendor.js -->
+    <script src="jquery/dist/jquery.js"></script>
+    <script src="angular/angular.js"></script>
+    <script src="angular-cookies/angular-cookies.js"></script>
+    <script src="angular-hotkeys/build/hotkeys.min.js"></script>
+    <script src="angular-route/angular-route.js"></script>
+    <script src="angular-sanitize/angular-sanitize.js"></script>
+    <script src="angular-ui-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="ace-builds/src-min-noconflict/ace.js"></script>
+    <script src="ace-builds/src-min-noconflict/mode-groovy.js"></script>
+    <script src="ace-builds/src-min-noconflict/mode-javascript.js"></script>
+    <script src="ace-builds/src-min-noconflict/mode-sql.js"></script>
+    <script src="angular-ui-ace/src/ui-ace.js"></script>
+    <script src="angular-ui-layout/src/ui-layout.js"></script>
+    <script src="bootstrap/dist/js/bootstrap.js"></script>
+    <script src="clipboard/dist/clipboard.js"></script>
+    <script src="tether/dist/js/tether.js"></script>
+    <script src="tether-drop/dist/js/drop.js"></script>
+    <script src="es5-shim/es5-shim.js"></script>
+    <script src="es6-shim/es6-shim.js"></script>
+    <script src="json3/lib/json3.js"></script>
+    <script src="three/build/three.min.js"></script>
+    <script src="threestrap/build/threestrap.js"></script>
+    <script src="tinycolor2/tinycolor.js"></script>
+    <!-- endbuild -->
     <!-- build:js(.tmp) scripts/biggraph.js -->
-    <script src="../node_modules/jquery/dist/jquery.js"></script>
-    <script src="../node_modules/angular/angular.js"></script>
-    <script src="../node_modules/angular-bootstrap/ui-bootstrap-tpls.js"></script>
-    <script src="../node_modules/angular-cookies/angular-cookies.js"></script>
-    <script src="../node_modules/angular-hotkeys/build/hotkeys.min.js"></script>
-    <script src="../node_modules/angular-route/angular-route.js"></script>
-    <script src="../node_modules/angular-sanitize/angular-sanitize.js"></script>
-    <script src="../node_modules/ace-builds/src-min-noconflict/ace.js"></script>
-    <script src="../node_modules/ace-builds/src-min-noconflict/mode-groovy.js"></script>
-    <script src="../node_modules/ace-builds/src-min-noconflict/mode-javascript.js"></script>
-    <script src="../node_modules/ace-builds/src-min-noconflict/mode-sql.js"></script>
-    <script src="../node_modules/angular-ui-ace/ui-ace.js"></script>
-    <script src="../node_modules/angular-ui-layout/src/ui-layout.js"></script>
-    <script src="../node_modules/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="../node_modules/tether/dist/js/tether.js"></script>
-    <script src="../node_modules/drop/dist/js/drop.js"></script>
-    <script src="../node_modules/es5-shim/es5-shim.js"></script>
-    <script src="../node_modules/es6-shim/es6-shim.js"></script>
-    <script src="../node_modules/json3/lib/json3.js"></script>
-    <script src="../node_modules/threejs/three.min.js"></script>
-    <script src="../node_modules/threestrap/build/threestrap.js"></script>
-    <script src="../node_modules/tinycolor/tinycolor.js"></script>
-    <script src="../node_modules/zeroclipboard/dist/ZeroClipboard.js"></script>
     <!-- inject:js -->
     <!-- endinject -->
     <!-- endbuild -->
