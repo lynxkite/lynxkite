@@ -500,11 +500,11 @@ class SubProject:
     return SubProject(self.project_checkpoint, self.path + [name])
 
   def vertex_attribute(self, attr):
-    '''Creates a :class:`Attribute` representing a vertex attribute with the given name.'''
+    '''Creates an :class:`Attribute` representing a vertex attribute with the given name.'''
     return Attribute(attr, 'vertex', self.project_checkpoint, self.path)
 
   def edge_attribute(self, attr):
-    '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
+    '''Creates an :class:`Attribute` representing an edge attribute with the given name.'''
     return Attribute(attr, 'edge', self.project_checkpoint, self.path)
 
   def _metadata(self):
@@ -627,13 +627,14 @@ class Attribute():
   def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
     '''Returns a histogram of the attribute.
 
-    Example of precise logarithmic histogram with 20 buckets.:
+    Example of precise logarithmic histogram with 20 buckets::
 
-      a = p.vertex_attribute('attr_name')
-      h = a.histogram(numbuckets=20, logarithmic=True)
-      print(h.labelType)
-      print(h.labels)
-      print(h.sizes)
+        a = p.vertex_attribute('attr_name')
+        h = a.histogram(numbuckets=20, logarithmic=True)
+        print(h.labelType)
+        print(h.labels)
+        print(h.sizes)
+
     '''
 
     return self.project_checkpoint.histogram(
