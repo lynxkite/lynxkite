@@ -33,6 +33,7 @@
   padding: 8px;
   border-radius: 30px;
   cursor: pointer;
+  user-select: none;
 }
 
 .clicky.zeroclipboard-is-hover,

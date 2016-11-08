@@ -39,6 +39,7 @@ side-operation-toolbox .operation-toolbox {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   font-weight: bold;
   cursor: pointer;
+  user-select: none;
   width: 35px;
   padding: 0;
   padding-top: 40px;
@@ -84,6 +85,7 @@ side-operation-toolbox .operation-toolbox {
 
 .operation {
   cursor: pointer;
+  user-select: none;
   padding: 5px;
   color: rgba(255, 255, 255, 0.8);
 }
@@ -110,6 +112,7 @@ side-operation-toolbox .operation-toolbox {
   padding: 15px;
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
+  user-select: none;
 }
 .operation-toolbox .ok-button:focus,
 .operation-toolbox .ok-button:hover {
