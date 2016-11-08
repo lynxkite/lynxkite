@@ -1,0 +1,137 @@
+<div class="entity">
+  {{entity.title}}
+  <span class="subtoken" ng-if="getFilter()">{{ getFilter() }}</span>
+</div>
+
+<div class="menu">
+  <compute-progress model="entity.computeProgress"></compute-progress>
+  <div>
+    {{entity.typeName}}
+  </div>
+
+  <div class="menu-item" ng-click="toggleRenaming()">
+    <i class="glyphicon glyphicon-pencil"></i> Rename...
+  </div>
+  <div class="menu-item" ng-click="discard()">
+    <i class="glyphicon glyphicon-trash"></i> Discard
+  </div>
+  <div class="menu-item" ng-click="duplicate()">
+      <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
+  </div>
+
+  <histogram-button ng-show="entity.canBucket"
+                    attr="attr"
+                    side="side"
+                    precise="precise"
+                    model="histogram"
+                    type="vertex"
+                    tsv="histogramTSV">
+  </histogram-button>
+  <histogram ng-show="histogram" model="histogram" attr-name="{{entity.title}}"></histogram>
+  <div ng-if="side.state.graphMode === 'bucketed' && entity.canBucket" class="de-emph">
+    <div class="menu-item"
+         id="axis-x-{{entity.title}}"
+         ng-class="{ active: side.state.attributeTitles.x === entity.title }"
+         ng-click="side.toggleAttributeTitle('x', entity.title)">
+      Graph on X
+      </button>
+    </div>
+    <div class="menu-item"
+         id="axis-y-{{entity.title}}"
+         ng-class="{ active: side.state.attributeTitles.y === entity.title }"
+         ng-click="side.toggleAttributeTitle('y', entity.title)">
+      Graph on Y
+      </button>
+    </div>
+  </div>
+
+  <input ng-if="side.state.attributeTitles.slider === entity.title"
+         id="slider"
+         type="range"
+         ng-model="side.state.sliderPos"
+         min="-1"
+         max="101"
+         tooltip="Threshold">
+
+  <form ng-if="entity.canFilter" style="display: inline;">
+    <input class="form-control filter"
+           placeholder="filter"
+           ng-model="side.state.filters.vertex[entity.title]"
+           ng-model-options="{ updateOn: 'change blur' }"
+           name="{{entity.title}}">
+  </form>
+  <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="de-emph sampled-visualizations">
+    <span class="visualizations"><selected-visualization
+          ng-repeat="visualization in side.filterApplied(sampledVisualizations, entity.title)"
+          side="side"
+          attr="entity.title"
+          visualization="visualization"></selected-visualization></span>
+
+    <span class="dropdown-toggle" dropdown-toggle data-toggle="dropdown">
+      <span class="clicky glyphicon glyphicon-eye-open"
+            id="visualize-as-button"
+            tooltip="Visualize attribute"></span>
+    </span>
+    <ul class="dropdown-menu" role="menu">
+      <li class="text-center">
+        Visualize as...
+      </li>
+      <li>
+        <a ng-click="side.toggleAttributeTitle('label', entity.title)" href
+           id="visualize-as-label">Label</a>
+      </li>
+      <li ng-if="entity.typeName === 'Double'">
+        <a ng-click="side.toggleAttributeTitle('size', entity.title)" href
+           id="visualize-as-size">Size</a>
+      </li>
+      <li ng-if="entity.typeName === 'Double' || entity.typeName === 'String'">
+        <a ng-click="side.toggleAttributeTitle('color', entity.title)" href
+           id="visualize-as-color">Color</a>
+      </li>
+      <li ng-if="entity.typeName === 'Double'">
+        <a ng-click="side.toggleAttributeTitle('opacity', entity.title)" href
+           id="visualize-as-opacity">Opacity</a>
+      </li>
+      <li ng-if="entity.typeName === 'Double' && side.state.attributeTitles['label'] !== undefined">
+        <a ng-click="side.toggleAttributeTitle('label size', entity.title)" href
+           id="visualize-as-label-size">Label Size</a>
+      </li>
+      <li ng-if="(entity.typeName === 'Double' || entity.typeName === 'String') && side.state.attributeTitles['label'] !== undefined">
+        <a ng-click="side.toggleAttributeTitle('label color', entity.title)" href
+           id="visualize-as-label-color">Label Color</a>
+      </li>
+      <li ng-if="entity.typeName === 'String'">
+        <a ng-click="side.toggleAttributeTitle('icon', entity.title)" href
+           id="visualize-as-icon">Icon</a>
+      </li>
+      <li ng-if="entity.typeName === 'String'">
+        <a ng-click="side.toggleAttributeTitle('image', entity.title)" href
+           id="visualize-as-image">Image</a>
+      </li>
+      <li ng-if="entity.isNumeric">
+        <a ng-click="side.toggleAttributeTitle('slider', entity.title)" href
+           id="visualize-as-slider">Slider</a>
+      </li>
+      <li ng-if="entity.typeName === '(Double, Double)'">
+        <a ng-click="side.toggleAttributeTitle('position', entity.title)" href
+           id="visualize-as-position">Position</a>
+      </li>
+      <li ng-if="entity.typeName === '(Double, Double)'">
+        <a ng-click="side.toggleAttributeTitle('geo', entity.title)" href
+           id="visualize-as-geo">Geo coordinates</a>
+      </li>
+    </ul>
+  </span>
+
+  <copy-box ng-show="histogram"
+            description="Copy&nbsp;histogram to&nbsp;clipboard"
+            data="{{histogramTSV}}">
+  </copy-box>
+  <label ng-show="showLogCheckbox()">
+    <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
+  </label>
+  <label ng-show="histogram" id="precise-histogram-calculation" attr-name={{entity.title}}>
+    <input type="checkbox" ng-model="precise"></input> precise
+  </label>
+
+</div>
