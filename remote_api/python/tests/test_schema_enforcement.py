@@ -43,11 +43,11 @@ class TestTable(unittest.TestCase):
     # directory does not exist and should be created
     tt.run()
     with open(directory + "/TestTaskDoCheck.schema", 'r') as f:
-      self.assertEquals(correct_schema, yaml.load(f))
+      self.assertEqual(correct_schema, yaml.load(f))
     # directory exists
     tt.run()
     with open(directory + "/TestTaskDoCheck.schema", 'r') as f:
-      self.assertEquals(correct_schema, yaml.load(f))
+      self.assertEqual(correct_schema, yaml.load(f))
     # directory exists, but contains a different schema
     shutil.copy(r"tests/TestTaskDoCheck.schema.incorrect", directory + "/TestTaskDoCheck.schema")
     self.assertRaises(AssertionError, tt.run)

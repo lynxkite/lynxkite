@@ -15,9 +15,10 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     assert(count.rdd.collect.toMap.values.toSet == Set(3.0, 1.0))
     val gender = project.vertexAttributes("gender").runtimeSafeCast[String]
     assert(gender.rdd.collect.toMap.values.toSet == Set("Male", "Female"))
+    val v = project.vertexSet.rdd.keys.collect.toSeq.sorted
     val edges = project.edgeBundle
     assert(edges.rdd.values.collect.toSeq.sorted ==
-      Seq(Edge(0, 0), Edge(0, 1), Edge(0, 1), Edge(1, 0)))
+      Seq(Edge(v(0), v(0)), Edge(v(0), v(1)), Edge(v(0), v(1)), Edge(v(1), v(0))))
   }
 
   test("Merge vertices by attribute, no edge bundle") {

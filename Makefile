@@ -5,12 +5,8 @@ pip = .build/pip3-packages-installed
 .PHONY: all
 all: backend
 
-.build/bower-done: web/bower.json web/.bowerrc
-	cd web && bower install --silent --config.interactive=false && touch ../$@
-.build/node-done: web/package.json
-	cd web && npm install --silent && touch ../$@
-.build/gulp-done: $(shell $(find) web/app) web/gulpfile.js .build/node-done .build/bower-done
-	gulp --cwd web && touch $@
+.build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
+	cd web && yarn && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
