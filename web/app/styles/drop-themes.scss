@@ -1,5 +1,5 @@
-@import '../bower_components/tether/src/css/helpers/tether';
-@import '../bower_components/tether/src/css/helpers/tether-theme-arrows';
+@import '../../node_modules/tether/src/css/helpers/tether';
+@import '../../node_modules/tether/src/css/helpers/tether-theme-arrows';
 
 @include tether($themePrefix: 'drop');
 @include tether-theme-arrows(
