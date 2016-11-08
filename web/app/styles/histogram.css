@@ -37,6 +37,7 @@ table.histogram .bar-container {
 
 table.histogram .bar-container.zoomable {
   cursor: pointer;
+  user-select: none;
 }
 
 table.histogram .bar-container .histogram-eye {
