@@ -3309,20 +3309,20 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
         Param("output", "Save as"),
         Choice("features", "Predictors", options = FEOption.unset +: vertexAttributes[Double], multipleChoice = true),
+        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")),
         NonNegInt("networkSize", "Size of the network", default = 3),
-        NonNegDouble("learningRate", "Learning rate"),
         NonNegInt("radius", "Iterations in prediction", default = 3),
         Choice("hideState", "Hide own state", options = FEOption.bools),
-        NonNegDouble("forgetFraction", "Forget fraction"),
-        NonNegInt("trainingRadius", "Radius for training subgraphs", default = 3),
-        NonNegInt("maxTrainingVertices", "Maximum training subgraph size", default = 20),
-        NonNegInt("minTrainingVertices", "Minimum training subgraph size", default = 10),
+        NonNegDouble("forgetFraction", "Forget fraction", defaultValue = "0.0"),
+        NonNegDouble("knownLabelWeight", "Weight for known labels", defaultValue = "1.0"),
+        NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
         NonNegInt("iterationsInTraining", "Iterations in training", default = 2),
         NonNegInt("subgraphsInTraining", "Subgraphs in training", default = 10),
-        NonNegDouble("knownLabelWeight", "Weight for known labels"),
-        NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
+        NonNegInt("minTrainingVertices", "Minimum training subgraph size", default = 10),
+        NonNegInt("maxTrainingVertices", "Maximum training subgraph size", default = 20),
+        NonNegInt("trainingRadius", "Radius for training subgraphs", default = 3),
         RandomSeed("seed", "Seed"),
-        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")))
+        NonNegDouble("learningRate", "Learning rate", defaultValue = "0.1"))
       def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes[Double].nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         val labelName = params("label")
