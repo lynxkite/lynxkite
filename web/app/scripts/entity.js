@@ -6,7 +6,7 @@ angular.module('biggraph').directive('entity', function(axisOptions) {
     restrict: 'E',
     scope: {
       entity: '=',
-      kind: '=',
+      kind: '@',
       side: '=',
     },
     templateUrl: 'entity.html',
@@ -33,6 +33,9 @@ angular.module('biggraph').directive('entity', function(axisOptions) {
       scope.isEdgeAttribute = function() { return scope.kind === 'edge-attribute'; };
       scope.isScalar = function() { return scope.kind === 'scalar'; };
       scope.isSegmentation = function() { return scope.kind === 'segmentation'; };
+      scope.isAttribute = function() {
+        return scope.isVertexAttribute() || scope.isEdgeAttribute();
+      };
 
       scope.getFilter = function() {
         var filters = scope.side.state.filters;
