@@ -1,12 +1,19 @@
 <div class="entity">
-  {{entity.title}}
-  <span class="subtoken" ng-if="getFilter()">{{ getFilter() }}</span>
+  {{ entity.title }}
+  <value class="subtoken"
+    ng-if="isScalar()"
+    id="scalar-{{scalar.title}}"
+    ref="side.scalars[entity.title]"></value>
+  <span class="subtoken"
+    ng-if="getFilter()">
+    filter: {{ getFilter() }}
+  </span>
 </div>
 
 <div class="menu">
-  <compute-progress model="entity.computeProgress"></compute-progress>
+  <compute-progress ng-if="isAttribute()" model="entity.computeProgress"></compute-progress>
   <div>
-    {{entity.typeName}}
+    {{ entity.typeName }}
   </div>
 
   <div class="menu-item" ng-click="toggleRenaming()">

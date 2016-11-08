@@ -81,6 +81,7 @@ input.save-as {
   padding: 5px;
   cursor: pointer;
   user-select: none;
+  transition: background 0.2s, color 0.2s;
 }
 
 .entity:hover {
@@ -91,6 +92,17 @@ input.save-as {
   box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
   background: #286090;
   color: white;
+}
+
+.entity .subtoken {
+  background: lightblue;
+  border-radius: 20px;
+  padding: 4px;
+  transition: background 0.2s;
+}
+
+.entity.drop-enabled .subtoken {
+  background: darkgray;
 }
 
 .entity-section-label {
@@ -105,6 +117,10 @@ textarea.project-notes {
   background: transparent;
   border: 0;
   width: 100%;
+}
+
+.project > .btn-group {
+  margin-right: 10px;
 }
 
 .type-name {
