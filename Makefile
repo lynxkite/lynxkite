@@ -10,7 +10,7 @@ all: backend
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
-	pip3 install -r python_requirements.txt && touch $@
+	pip3 install --user -r python_requirements.txt && touch $@
 .build/backend-done: $(shell $(find) app project tools lib conf) build.sbt .build/gulp-done
 	sbt stage && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
