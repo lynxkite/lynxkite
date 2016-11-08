@@ -45,12 +45,6 @@
 
   <div class="project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory && !side.workflowEditor.enabled">
 
-    <div class="project-name lead">
-      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
-        {{parent}} &raquo;
-      </span>
-      {{side.shortName()}}
-    </div>
     <div class="btn-group pull-right">
       <label class="btn btn-default"
              ng-disabled="!side.project.undoOp"
@@ -163,6 +157,13 @@
     </div>
 
     <help-popup href="project-header-buttons" class="pull-right"></help-popup>
+
+    <div class="project-name">
+      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
+        {{parent}} &raquo;
+      </span>
+      {{side.shortName()}}
+    </div>
 
     <div class="clearfix"></div>
 
@@ -383,48 +384,62 @@
 
     </div>
 
-    <div class="attribute-sections">
-      <div class="attribute-section-label">
-        Attributes of the graph
+    <div class="entity-sections">
+      <div ng-if="side.project.scalars.length !== 0">
         <help-popup href="graph-attributes" class="pull-right"></help-popup>
+        <div class="entity-section-label"> Attributes of the graph </div>
       </div>
-      <div class="attribute scalar-attribute"
-          ng-repeat="scalar in side.project.scalars | filter: commonScalar"
-          scalar="scalar" value="side.scalars[scalar.title]"
-                          side="side"></div>
+      <div class="entity-list">
+        <entity
+           ng-repeat="scalar in side.project.scalars | filter: commonScalar"
+           kind="scalar"
+           entity="scalar"
+           side="side"></entity>
+      </div>
 
-      <div class="attribute-section-label">
-        Attributes of vertices
+      <div ng-if="side.project.vertexAttributes.length !== 0">
         <help-popup href="attributes" class="pull-right"></help-popup>
+        <div class="entity-section-label"> Attributes of vertices </div>
       </div>
-      <div class="attribute vertex-attribute"
-          ng-repeat="attr in side.project.vertexAttributes"
-          id="attribute-{{ attr.title | id }}"
-          vertex-attribute="attr" side="side"></div>
+      <div class="entity-list">
+        <entity
+           ng-repeat="attr in side.project.vertexAttributes"
+           kind="vertex-attribute"
+           entity="attr"
+           id="attribute-{{ attr.title | id }}"
+           side="side"></entity>
+      </div>
 
-      <div class="attribute-section-label">
-        Attributes of edges
+      <div ng-if="side.project.edgeAttributes.length !== 0">
         <help-popup href="attributes" class="pull-right"></help-popup>
+        <div class="entity-section-label"> Attributes of edges </div>
       </div>
-      <div class="attribute edge-attribute"
-          ng-repeat="attr in side.project.edgeAttributes"
-          id="attribute-{{ attr.title | id }}"
-          edge-attribute="attr" side="side"></div>
+      <div class="entity-list">
+        <entity
+           ng-repeat="attr in side.project.edgeAttributes"
+           kind="edge-attribute"
+           entity="attr"
+           id="attribute-{{ attr.title | id }}"
+           side="side"></entity>
+      </div>
 
-      <div ng-if="side.project.segmentations.length !== 0" class="attribute-section-label">
-        Segmentations
+      <div ng-if="side.project.segmentations.length !== 0">
         <help-popup href="segmentations" class="pull-right"></help-popup>
+        <div class="entity-section-label"> Segmentations </div>
       </div>
-      <div class="attribute segmentation"
-          ng-repeat="segmentation in side.project.segmentations"
-          segmentation="segmentation"
-          side="side"></div>
+      <div class="entity-list">
+        <entity
+           ng-repeat="segmentation in side.project.segmentations"
+           kind="segmentation"
+           entity="segmentation"
+           side="side"></entity>
+      </div>
     </div>
 
     <div class="sql-box-section">
+      <help-popup href="sql-box" class="pull-right" ></help-popup>
       <div class="clearfix">
         <span class="lead de-emph">SQL</span>
-        <help-popup href="sql-box" class="pull-right" ></help-popup>
       </div>
       <sql-box side="side"></sql-box>
     </div>

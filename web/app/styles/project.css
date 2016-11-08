@@ -66,23 +66,39 @@ input.save-as {
   border: none;
 }
 
-.attribute-sections {
-  max-height: 80vh;
+.entity-sections {
 }
 
-.attribute {
+.entity-list {
+  display: flex;
+}
+
+.entity {
   position: relative;
+  border-radius: 8px;
+  box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
+  margin: 5px;
+  padding: 5px;
+  cursor: pointer;
+  user-select: none;
 }
 
-.attribute-section-label {
+.entity:hover {
+  box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 5px 0;
+}
+
+.entity.drop-enabled {
+  box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
+  background: #286090;
+  color: white;
+}
+
+.entity-section-label {
   color: rgba(0, 0, 0, 0.3);
   font-size: 70%;
   padding-top: 0;
   padding-bottom: 0;
-}
-.project-notes {
-  left: 50%;
-  width: 50%;
+  text-align: center;
 }
 textarea.project-notes {
   resize: vertical;
@@ -154,7 +170,7 @@ textarea.project-notes {
 
 .split-screen {
   /* An out-of-screen tooltip may cause overflow in split screen mode. Without this
-    setting, those would create an extra scroll-bar. */
+   * setting, those would create an extra scroll-bar. */
   overflow: hidden;
 }
 .split-screen .project-sides {
@@ -162,9 +178,9 @@ textarea.project-notes {
   overflow: auto;
 }
 
-/* In single screen overflow is managed by the scrollbar of the <body> element so
-   we just allow everything to overflow here. */
 .single-screen {
+  /* In single screen overflow is managed by the scrollbar of the <body> element so
+   * we just allow everything to overflow here. */
   overflow: visible;
 }
 .single-screen .project-sides {
