@@ -53,7 +53,7 @@ class TestParquetPartitioning(unittest.TestCase):
     while True:
       self.do_test_parquet_partitioning()
       # Saving Jenkins from this loop
-      if getpass.getuser() != 'gaborr':
+      if getpass.getuser() != 'gabor':
         break
 
 
