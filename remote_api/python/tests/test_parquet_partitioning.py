@@ -8,10 +8,9 @@ from os.path import expanduser
 import shutil
 import getpass
 
-# DON'T MERGE THIS IN THIS FORM!
-# I tested with this with 3 parallel test processes, and the tests seem to
-# run forever without failure.
-
+# I tested this with 4 parallel test processes, and the tests seem to
+# run forever without failure. But implementing this parallelism into
+# this automated test requires more effort than a have capacity for.
 
 class TestParquetPartitioning(unittest.TestCase):
 
