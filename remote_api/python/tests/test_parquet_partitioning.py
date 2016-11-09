@@ -28,7 +28,7 @@ class TestParquetPartitioning(unittest.TestCase):
     if partitions == 200:
       view = lk.sql(sql, p=p)
     else:
-      view = lk.sql(sql, p=p, shufflePartitions=partitions)
+      view = lk.sqlPartitioned(sql, partitions, p=p)
     data_path = "DATA$" + path
     view.export_parquet(data_path)
 
@@ -53,7 +53,7 @@ class TestParquetPartitioning(unittest.TestCase):
     while True:
       self.do_test_parquet_partitioning()
       # Saving Jenkins from this loop
-      if getpass.getuser() != 'gabor':
+      if getpass.getuser() != 'gaborr':
         break
 
 
