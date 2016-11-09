@@ -116,21 +116,21 @@ class LynxKite:
       r = json.loads(data, object_hook=_asobject)
     return r
 
-  def sqlPartitioned(self, query, shufflePartitions, **mapping):
+  def sql_partitioned(self, query, shuffle_partitions, **mapping):
     '''Runs global level SQL query and returns a :class:`View` for the results.
 
-       ``shufflePartitions``, if not ``None``, specifies the SQLContext
+       ``shuffle_partitions``, if not ``None``, specifies the SQLContext
        setting ``spark.sql.shuffle.partitions``; this can be useful if the number of
        partitions (defaults to 200) after a shuffle seems to be out of proportion. For example::
 
-         result = lynx.sqlPartitioned('SELECT id from `p` GROUP BY id', 2, t=my_table)
+         result = lynx.sql_partitioned('SELECT id from `p` GROUP BY id', 2, t=my_table)
          result.export_parquet('DATA$parquet')
 
       ``mapping`` maps :class:`Project`, :class:`Table`, or :class:`View` objects to names in your
       query. For example::
 
-        my_view = lynx.sqlPartitioned('select * from `t`', None, t=my_table)
-        result = lynx.sqlPartitioned('select * from `v`', None, v=my_view)
+        my_view = lynx.sql_partitioned('select * from `t`', None, t=my_table)
+        result = lynx.sql_partitioned('select * from `v`', None, v=my_view)
         result.export_csv('out.csv')
 
     '''
@@ -139,8 +139,8 @@ class LynxKite:
       checkpoints[name] = p.checkpoint
 
     msg = dict(query=query, checkpoints=checkpoints)
-    if shufflePartitions:
-      msg.update(shufflePartitions=shufflePartitions)
+    if shuffle_partitions:
+      msg.update(shufflePartitions=shuffle_partitions)
 
     r = self._send('globalSQL', msg)
     return View(self, r.checkpoint)
@@ -156,7 +156,7 @@ class LynxKite:
          result.export_csv('out.csv')
 
     '''
-    return self.sqlPartitioned(query, None, **mapping)
+    return self.sql_partitioned(query, None, **mapping)
 
   def get_directory_entry(self, path):
     '''Returns details about a LynxKite path. The returned object has the following fields:
