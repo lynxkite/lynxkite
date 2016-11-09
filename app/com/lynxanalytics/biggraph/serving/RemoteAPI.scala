@@ -46,7 +46,7 @@ object RemoteAPIProtocol {
   }
   case class GlobalSQLRequest(query: String,
                               checkpoints: Map[String, String],
-                              shufflePartitions: Option[Int]) extends ViewRecipe {
+                              shufflePartitions: Option[Int] = None) extends ViewRecipe {
     override def createDataFrame(
       user: User, context: SQLContext)(
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
