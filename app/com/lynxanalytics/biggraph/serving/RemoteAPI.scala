@@ -44,10 +44,15 @@ object RemoteAPIProtocol {
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
   }
-  case class GlobalSQLRequest(query: String, checkpoints: Map[String, String]) extends ViewRecipe {
+  case class GlobalSQLRequest(query: String,
+                              checkpoints: Map[String, String],
+                              shufflePartitions: Option[Int]) extends ViewRecipe {
     override def createDataFrame(
       user: User, context: SQLContext)(
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+      shufflePartitions.foreach {
+        sp => context.setConf("spark.sql.shuffle.partitions", sp.toString)
+      }
       val dfs = checkpoints.flatMap {
         case (name, cp) =>
           val viewer =

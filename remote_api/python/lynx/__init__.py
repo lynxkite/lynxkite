@@ -125,14 +125,28 @@ class LynxKite:
         my_view = lynx.sql('select * from `t`', t=my_table)
         result = lynx.sql('select * from `v`', v=my_view)
         result.export_csv('out.csv')
+
+    The special key ``shufflePartitions``, if given, specifies the SQLContext setting
+    ``spark.sql.shuffle.partitions``; this can be useful if the number of partitions (defaults to 200)
+    after a shuffle seems to be out of proportion. For example:
+
+        result = lynx.sql('SELECT id from `p` GROUP BY id', p=my_project, shufflePartitions=2)
+        result.export_parquet('DATA$parquet')
+
     '''
     checkpoints = {}
+    shufflePartitions = None
     for name, p in mapping.items():
-      checkpoints[name] = p.checkpoint
-    r = self._send('globalSQL', dict(
-        query=query,
-        checkpoints=checkpoints
-    ))
+      if name == 'shufflePartitions':
+        shufflePartitions=p
+      else:
+        checkpoints[name] = p.checkpoint
+
+    msg = dict(query=query, checkpoints=checkpoints)
+    if shufflePartitions:
+        msg.update(shufflePartitions=shufflePartitions)
+
+    r = self._send('globalSQL', msg)
     return View(self, r.checkpoint)
 
   def get_directory_entry(self, path):
