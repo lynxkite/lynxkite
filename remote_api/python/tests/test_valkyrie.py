@@ -26,6 +26,8 @@ class TestValkyrie(unittest.TestCase):
     with mock.patch.multiple(v, output=mock.DEFAULT, lk=mock.DEFAULT) as mocks:
       mocks['output'].return_value = output
       v.run()
+    # Assert all directories cleaned.
+    self.assertEqual(2, hdfs_list.call_count)
     # Assert the right files are deleted.
     hdfs_rm.assert_any_call('old, long ttl (ttl=7d)')
     hdfs_rm.assert_any_call('new, short ttl (ttl=1h)')
