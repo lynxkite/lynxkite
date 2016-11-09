@@ -30,7 +30,7 @@ class TestValkyrie(unittest.TestCase):
     hdfs_rm.assert_any_call('old, long ttl (ttl=7d)')
     hdfs_rm.assert_any_call('new, short ttl (ttl=1h)')
     # Assert no other files are deleted.
-    self.assertEqual(2, hdfs_rm.call_count)
+    self.assertEqual(4, hdfs_rm.call_count)
     # Assert the marker file is created.
     output.open.assert_called_once_with('w')
 
