@@ -28,7 +28,7 @@ class TestParquetPartitioning(unittest.TestCase):
     if partitions == 200:
       view = lk.sql(sql, p=p)
     else:
-      view = lk.sqlPartitioned(sql, partitions, p=p)
+      view = lk.sql_partitioned(sql, partitions, p=p)
     data_path = "DATA$/" + path
     view.export_parquet(data_path)
 
