@@ -12,6 +12,7 @@ import getpass
 # run forever without failure. But implementing this parallelism into
 # this automated test requires more effort than a have capacity for.
 
+
 class TestParquetPartitioning(unittest.TestCase):
 
   def do_test_parquet_partitioning(self):
