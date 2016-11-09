@@ -1,10 +1,17 @@
-### Train neural network and use it to predict an Attribute
+### Train neural network and use it to predict an attribute
+
+*Warning! Experimental operation.*
 
 Trains a neural network using the graph's vertex attributes and edges. Then uses
 this trained neural network to make a prediction on the same graph.
 
 Currently the computation is not distributed, so please do not use it on really
-big graphs.
+big graphs. It will be changed in the future.
+
+Other significant changes are also possible in future versions. (The operation
+might be renamed or split into a separate training and prediction operation,
+some parameters might be added or removed, etc.)
+
 ====
 [[label]] Attribute to predict::
 The partially defined attribute that you want to predict. The current
