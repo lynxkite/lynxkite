@@ -34,7 +34,7 @@ object HadoopFile {
       s"$str is not inside $prefixSymbol")
     val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
     assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
-      s"The path following $prefixSymbol has to start with a slash (/)")
+      s"The path following $prefixSymbol has to start with a slash (/), but we have resolution: $normalizedFullPath relative: $normalizedRelativePath")
     new HadoopFile(prefixSymbol, normalizedRelativePath, parentLazyFS)
   }
 
