@@ -116,7 +116,6 @@ class LynxKite:
       r = json.loads(data, object_hook=_asobject)
     return r
 
-
   def sqlPartitioned(self, query, shufflePartitions, **mapping):
     '''Runs global level SQL query and returns a :class:`View` for the results.
 
