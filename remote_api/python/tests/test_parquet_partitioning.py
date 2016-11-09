@@ -29,7 +29,7 @@ class TestParquetPartitioning(unittest.TestCase):
       view = lk.sql(sql, p=p)
     else:
       view = lk.sqlPartitioned(sql, partitions, p=p)
-    data_path = "DATA$" + path
+    data_path = "DATA$/" + path
     view.export_parquet(data_path)
 
     # Check number of parquet files:
