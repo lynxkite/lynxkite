@@ -33,8 +33,9 @@ class TestParquetPartitioning(unittest.TestCase):
     view.export_parquet(data_path)
 
     # Check number of parquet files:
-    # This is horrible, but I found no interface to resolve DATA$
-    raw_path = expanduser('~/kite_data/' + path)
+    resolved_path = lk.get_prefixed_path(data_path).resolved
+    # Cut file: from the beginning
+    raw_path = resolved_path[5:]
     files = os.listdir(raw_path)
     num_files = len(list(filter(lambda file: file.endswith('.gz.parquet'), files)))
     self.assertEqual(num_files, partitions)
@@ -49,10 +50,11 @@ class TestParquetPartitioning(unittest.TestCase):
     shutil.rmtree(raw_path)
 
   def test_parquest_partitioning(self):
-     # Saving Jenkins from this loop
-    if getpass.getuser() == 'gabor':
-      while True:
-        self.do_test_parquet_partitioning()
+    while True:
+      self.do_test_parquet_partitioning()
+      # Saving Jenkins from this loop
+      if getpass.getuser() != 'gabor':
+        break
 
 
 if __name__ == '__main__':
