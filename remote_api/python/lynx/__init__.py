@@ -138,13 +138,13 @@ class LynxKite:
     shufflePartitions = None
     for name, p in mapping.items():
       if name == 'shufflePartitions':
-        shufflePartitions=p
+        shufflePartitions = p
       else:
         checkpoints[name] = p.checkpoint
 
     msg = dict(query=query, checkpoints=checkpoints)
     if shufflePartitions:
-        msg.update(shufflePartitions=shufflePartitions)
+      msg.update(shufflePartitions=shufflePartitions)
 
     r = self._send('globalSQL', msg)
     return View(self, r.checkpoint)
