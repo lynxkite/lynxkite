@@ -12,16 +12,17 @@ import getpass
 # I tested with this with 3 parallel test processes, and the tests seem to
 # run forever without failure.
 
+
 class TestParquetPartitioning(unittest.TestCase):
 
   def do_test_parquet_partitioning(self):
     path = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(15))
-    partitions = random.randint(190,210)
+    partitions = random.randint(190, 210)
     print ("test_parquest_partitioning: " + path + "  partitions: " + str(partitions))
     lk = lynx.LynxKite()
     p = lk.new_project()
 
-    size=1000
+    size = 1000
     p.newVertexSet(size=size)
     sql = 'SELECT ordinal from `p` GROUP BY ordinal'
     if partitions == 200:
@@ -40,9 +41,9 @@ class TestParquetPartitioning(unittest.TestCase):
 
     # Check data integrity
     view2 = lk.import_parquet(data_path)
-    result =lk.sql('select SUM(ordinal) from `v`', v=view2)
+    result = lk.sql('select SUM(ordinal) from `v`', v=view2)
     ordinal_sum = result.take(1)[0].get('_c0')
-    self.assertEqual(ordinal_sum, size*(size-1)/2)
+    self.assertEqual(ordinal_sum, size * (size - 1) / 2)
 
     # Clean up, if everything was okay
     shutil.rmtree(raw_path)
