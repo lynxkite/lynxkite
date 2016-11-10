@@ -69,19 +69,15 @@ input.save-as {
 .entity-sections {
 }
 
-.entity-list {
-  display: flex;
-}
-
 .entity {
-  position: relative;
+  display: inline-block;
   border-radius: 20px;
   box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
   margin: 5px;
-  padding: 5px;
+  padding: 5px 10px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .entity:hover {
@@ -107,8 +103,16 @@ input.save-as {
   background: lightgreen;
 }
 
+.subtoken.visualization {
+  background: salmon;
+}
+
 .entity.drop-enabled .subtoken {
   background: darkgray;
+}
+
+.drop-theme-menu .menu > * {
+  display: block;
 }
 
 .entity-section-label {
@@ -123,6 +127,18 @@ textarea.project-notes {
   background: transparent;
   border: 0;
   width: 100%;
+}
+
+label {
+  font-weight: normal;
+}
+
+.entity-menu {
+  min-width: 216px;
+}
+
+.entity-menu .histogram {
+  width: 200px;
 }
 
 .project > .btn-group {

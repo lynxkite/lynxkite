@@ -51,14 +51,19 @@
 }
 
 .drop-element.drop-theme-menu .drop-content {
-  padding: 4px;
+  padding: 4px 8px;
 }
 
-.drop-element.drop-theme-menu .drop-content .menu-item:hover {
-  background: #286090;
-  color: white;
-  padding: 0 4px;
-  margin: 0 -4px;
-  cursor: pointer;
-  user-select: none;
+.drop-element.drop-theme-menu .drop-content .menu-item {
+  &:hover {
+    background: #286090;
+    color: white;
+    padding: 0 8px;
+    margin: 0 -8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  &.active::before {
+    content: '•';
+  }
 }

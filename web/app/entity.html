@@ -1,55 +1,77 @@
 <div class="entity">
   {{ entity.title }}
   <value class="subtoken"
-    ng-if="isScalar()"
-    id="scalar-{{scalar.title}}"
-    ref="side.scalars[entity.title]"></value>
+         ng-if="isScalar()"
+         id="scalar-{{scalar.title}}"
+         ref="side.scalars[entity.title]"></value>
   <span class="subtoken filter"
-    ng-if="getFilter()">
+        ng-show="getFilter()">
     filter: {{ getFilter() }}
+  </span>
+  <span class="subtoken"
+        ng-show="axisOptions.logarithmic"> log </span>
+  <span ng-show="side.state.graphMode"><!-- Visualization tokens. -->
+    <span class="subtoken visualization"
+          ng-show="side.state.attributeTitles.x === entity.title"> X </span>
+    <span class="subtoken visualization"
+          ng-show="side.state.attributeTitles.y === entity.title"> Y </span>
   </span>
 </div>
 
-<div class="menu">
-  <compute-progress ng-if="isAttribute()" model="entity.computeProgress"></compute-progress>
-  <div>
+<div class="menu entity-menu">
+  <i ng-if="entity.computeProgress === 1.0"
+     class="de-emph compute-progress glyphicon glyphicon-ok"
+     drop-tooltip="Already computed"
+     drop-tooltip-position="right middle"></i>
+  <i ng-if="entity.computeProgress === 0.5"
+     class="de-emph compute-progress glyphicon glyphicon-flash"
+     drop-tooltip="Computation started"
+     drop-tooltip-position="right middle"></i>
+
+  <div ng-if="isAttribute() || isScalar()"
+       class="de-emph"
+       drop-tooltip="Type of {{ humanKind() }}"
+       drop-tooltip-position="left middle">
     {{ entity.typeName }}
   </div>
 
-  <div class="menu-item" ng-click="toggleRenaming()">
-    <i class="glyphicon glyphicon-pencil"></i> Rename...
-  </div>
-  <div class="menu-item" ng-click="discard()">
-    <i class="glyphicon glyphicon-trash"></i> Discard
-  </div>
-  <div class="menu-item" ng-click="duplicate()">
-      <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
-  </div>
-
-  <histogram-button ng-show="entity.canBucket"
-                    attr="attr"
-                    side="side"
-                    precise="precise"
-                    model="histogram"
-                    type="vertex"
-                    tsv="histogramTSV">
-  </histogram-button>
-  <histogram ng-show="histogram" model="histogram" attr-name="{{entity.title}}"></histogram>
-  <div ng-if="side.state.graphMode === 'bucketed' && entity.canBucket" class="de-emph">
+  <div ng-if="side.state.graphMode === 'bucketed' && entity.canBucket">
     <div class="menu-item"
          id="axis-x-{{entity.title}}"
          ng-class="{ active: side.state.attributeTitles.x === entity.title }"
          ng-click="side.toggleAttributeTitle('x', entity.title)">
-      Graph on X
+      Graph on <b>X</b>
       </button>
     </div>
     <div class="menu-item"
          id="axis-y-{{entity.title}}"
          ng-class="{ active: side.state.attributeTitles.y === entity.title }"
          ng-click="side.toggleAttributeTitle('y', entity.title)">
-      Graph on Y
+      Graph on <b>Y</b>
       </button>
     </div>
+  </div>
+
+  <div ng-show="entity.canBucket && !histogram"
+       class="menu-item"
+       ng-click="showHistogram()">
+    <i class="glyphicon glyphicon-stats"></i> Show histogram
+  </div>
+  <histogram ng-show="histogram" model="histogram" attr-name="{{ entity.title }}"></histogram>
+  <label ng-show="histogram" id="precise-histogram-calculation" attr-name={{entity.title}}>
+    <input type="checkbox" ng-model="precise"></input> precise
+  </label>
+
+  <div class="menu-item" ng-click="toggleRenaming()">
+    <i class="glyphicon glyphicon-pencil"></i> Rename...
+  </div>
+
+  <div class="menu-item" ng-click="discard()">
+    <i class="glyphicon glyphicon-trash"></i> Discard
+  </div>
+
+  <div class="menu-item" ng-click="duplicate()">
+    <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
   </div>
 
   <input ng-if="side.state.attributeTitles.slider === entity.title"
@@ -60,14 +82,14 @@
          max="101"
          tooltip="Threshold">
 
-  <form ng-if="entity.canFilter" style="display: inline;">
+  <form ng-if="entity.canFilter">
     <input class="form-control filter"
            placeholder="filter"
            ng-model="side.state.filters.vertex[entity.title]"
            ng-model-options="{ updateOn: 'change blur' }"
            name="{{entity.title}}">
   </form>
-  <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="de-emph sampled-visualizations">
+  <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="sampled-visualizations">
     <span class="visualizations"><selected-visualization
           ng-repeat="visualization in side.filterApplied(sampledVisualizations, entity.title)"
           side="side"
@@ -136,9 +158,6 @@
   </copy-box>
   <label ng-show="showLogCheckbox()">
     <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
-  </label>
-  <label ng-show="histogram" id="precise-histogram-calculation" attr-name={{entity.title}}>
-    <input type="checkbox" ng-model="precise"></input> precise
   </label>
 
 </div>
