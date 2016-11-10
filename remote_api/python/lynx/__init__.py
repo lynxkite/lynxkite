@@ -332,7 +332,13 @@ class View:
     return r
 
   def export_csv(self, path, header=True, delimiter=',', quote='"', shuffle_partitions=None):
-    '''Exports the view to CSV file.'''
+    '''Exports the view to CSV file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -343,7 +349,13 @@ class View:
     ))
 
   def export_json(self, path, shuffle_partitions=None):
-    '''Exports the view to JSON file. '''
+    '''Exports the view to JSON file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -351,7 +363,13 @@ class View:
     ))
 
   def export_orc(self, path, shuffle_partitions=None):
-    '''Exports the view to ORC file.'''
+    '''Exports the view to ORC file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
@@ -359,7 +377,13 @@ class View:
     ))
 
   def export_parquet(self, path, shuffle_partitions=None):
-    '''Exports the view to Parquet file.'''
+    '''Exports the view to Parquet file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
