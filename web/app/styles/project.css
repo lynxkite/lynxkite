@@ -75,7 +75,7 @@ input.save-as {
 
 .entity {
   position: relative;
-  border-radius: 8px;
+  border-radius: 20px;
   box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
   margin: 5px;
   padding: 5px;
@@ -97,8 +97,14 @@ input.save-as {
 .entity .subtoken {
   background: lightblue;
   border-radius: 20px;
-  padding: 4px;
+  padding: 2px 10px;
+  margin: -2px 0;
   transition: background 0.2s;
+  display: inline-block;
+}
+
+.subtoken.filter {
+  background: lightgreen;
 }
 
 .entity.drop-enabled .subtoken {
@@ -121,6 +127,10 @@ textarea.project-notes {
 
 .project > .btn-group {
   margin-right: 10px;
+}
+
+#apply-filters-button {
+  background: lightgreen;
 }
 
 .type-name {
