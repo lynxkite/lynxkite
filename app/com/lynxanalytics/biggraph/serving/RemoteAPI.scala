@@ -48,7 +48,6 @@ object RemoteAPIProtocol {
     override def createDataFrame(
       user: User, context: SQLContext)(
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
-
       val dfs = checkpoints.flatMap {
         case (name, cp) =>
           val viewer =
