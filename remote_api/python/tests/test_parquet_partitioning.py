@@ -30,7 +30,7 @@ class TestParquetPartitioning(unittest.TestCase):
     data_path = "DATA$/" + path
     if partitions != 200:
       view.export_parquet(data_path, partitions)
-    else
+    else:
       view.export_parquet(data_path)
     # Check number of parquet files:
     resolved_path = lk.get_prefixed_path(data_path).resolved
