@@ -40,6 +40,7 @@ object RemoteAPIProtocol {
     numBuckets: Int,
     sampleSize: Option[Int],
     logarithmic: Boolean)
+  case class MetadataRequest(checkpoint: String, path: List[String])
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -115,6 +116,7 @@ object RemoteAPIProtocol {
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
+  implicit val rMetadataRequest = json.Json.reads[MetadataRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -140,6 +142,8 @@ object RemoteAPIServer extends JsonServer {
   def getScalar = jsonFuturePost(c.getScalar)
   def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
   def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
+  def getMetadata = jsonFuturePost(c.getMetadata)
+  def getComplexView = jsonFuturePost(c.getComplexView)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
@@ -338,6 +342,19 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       axisOptions = AxisOptions(logarithmic = request.logarithmic),
       sampleSize = requestSampleSize)
     graphDrawingController.getHistogram(user, req)
+  }
+
+  // Only for testing.
+  def getMetadata(user: User, request: MetadataRequest): Future[FEProject] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    import dataManager.executionContext
+    Future(viewer.toFE(""))
+  }
+
+  def getComplexView(user: User, request: FEGraphRequest): Future[FEGraphResponse] = {
+    val drawing = graphDrawingController
+    import dataManager.executionContext
+    Future(drawing.getComplexView(user, request))
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
