@@ -5,10 +5,6 @@ import string
 import os
 import shutil
 
-# I tested this with 4 parallel test processes, and the tests seem to
-# run forever without failure. But implementing this parallelism into
-# this automated test requires more effort than a have capacity for.
-
 
 class TestParquetPartitioning(unittest.TestCase):
 
