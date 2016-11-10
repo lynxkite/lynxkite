@@ -1,7 +1,7 @@
 // The entry for an attribute/scalar/segmentation in the project view.
 'use strict';
 
-angular.module('biggraph').directive('entity', function(axisOptions) {
+angular.module('biggraph').directive('entity', function(axisOptions, util) {
   return {
     restrict: 'E',
     scope: {
@@ -48,6 +48,15 @@ angular.module('biggraph').directive('entity', function(axisOptions) {
         return undefined;
       };
 
+      // Returns a human-presentable string of the entity kind.
+      scope.humanKind = function() {
+        return scope.kind.replace('-', ' ');
+      };
+
+      scope.attributeKind = function() {
+        return scope.kind.replace('-attribute', '');
+      };
+
       axisOptions.bind(scope, scope.side, 'vertex', scope.entity.title, 'axisOptions');
       scope.sampledVisualizations = [
         'size', 'label', 'label size',
@@ -58,11 +67,59 @@ angular.module('biggraph').directive('entity', function(axisOptions) {
         if (!scope.entity.isNumeric) { return false; }
         if (scope.histogram) { return true; }
         if (scope.side.state.graphMode === 'bucketed') {
-          if (scope.side.state.attributeTitles.x === scope.attr.title) { return true; }
-          if (scope.side.state.attributeTitles.y === scope.attr.title) { return true; }
+          if (scope.side.state.attributeTitles.x === scope.entity.title) { return true; }
+          if (scope.side.state.attributeTitles.y === scope.entity.title) { return true; }
         }
         return false;
       };
+
+      var forceHistogram = false;
+      scope.showHistogram = function() {
+        forceHistogram = true;
+        updateHistogram();
+      };
+      function updateHistogram() {
+        if (!scope.histogram && !scope.entity.computeProgress && !forceHistogram) { return; }
+        if (!scope.entity.canBucket) { return; }
+        var q = {
+          attributeId: scope.entity.id,
+          vertexFilters: scope.side.nonEmptyVertexFilters(),
+          edgeFilters: scope.side.nonEmptyEdgeFilters(),
+          numBuckets: 20,
+          axisOptions: scope.side.axisOptions(scope.attributeKind(), scope.entity.title),
+          edgeBundleId: scope.kind === 'edge-attribute' ? scope.side.project.edgeBundle : '',
+          sampleSize: scope.precise ? -1 : 50000,
+        };
+        scope.histogram = util.get('/ajax/histo', q);
+      }
+
+      function updateHistogramTSV() {
+        var histogram = scope.histogram;
+        if (!histogram || !histogram.$resolved) {
+          scope.tsv = '';
+          return;
+        }
+        var tsv = '';
+        // Header.
+        if (histogram.labelType === 'between') {
+          tsv += 'From\tTo\tCount\n';
+        } else {
+          tsv += 'Value\tCount\n';
+        }
+        // Data.
+        for (var i = 0; i < histogram.sizes.length; ++i) {
+          if (histogram.labelType === 'between') {
+            tsv += histogram.labels[i] + '\t' + histogram.labels[i + 1];
+          } else {
+            tsv += histogram.labels[i];
+          }
+          tsv += '\t' + histogram.sizes[i] + '\n';
+        }
+        scope.tsv = tsv;
+      }
+      util.deepWatch(scope, 'side.state', updateHistogram);
+      scope.$watch('precise', updateHistogram);
+      scope.$watch('histogram.$resolved', updateHistogramTSV);
     },
   };
 });
