@@ -34,7 +34,7 @@
 
   <div ng-if="isAttribute() || isScalar()"
        class="de-emph"
-       drop-tooltip="Type of {{ humanKind() }}"
+       drop-tooltip="{{ entity.title }} is of type {{ entity.typeName }}"
        drop-tooltip-position="left middle">
     {{ entity.typeName }}
   </div>
