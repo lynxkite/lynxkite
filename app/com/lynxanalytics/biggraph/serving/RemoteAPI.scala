@@ -44,8 +44,7 @@ object RemoteAPIProtocol {
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
   }
-  case class GlobalSQLRequest(query: String,
-                              checkpoints: Map[String, String]) extends ViewRecipe {
+  case class GlobalSQLRequest(query: String, checkpoints: Map[String, String]) extends ViewRecipe {
     override def createDataFrame(
       user: User, context: SQLContext)(
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
