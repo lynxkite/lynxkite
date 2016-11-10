@@ -55,11 +55,6 @@ h6 {
   font-weight: bold;
 }
 
-input.form-control.filter {
-  width: 120px;
-  display: inline-block;
-}
-
 /*
 Makes disabled buttons still receive pointer (e.g. mouse) events.
 This is useful for example if we still want to have tooltips if the

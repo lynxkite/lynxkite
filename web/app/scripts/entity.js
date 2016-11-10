@@ -120,6 +120,35 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       util.deepWatch(scope, 'side.state', updateHistogram);
       scope.$watch('precise', updateHistogram);
       scope.$watch('histogram.$resolved', updateHistogramTSV);
+
+      scope.availableVisualizations = function() {
+        var vs = ['Label'];
+        var e = scope.entity;
+        var hasLabel = scope.side.state.attributeTitles.label !== undefined;
+        if (e.typeName === 'Double') {
+          vs.push('Size');
+          vs.push('Color');
+          vs.push('Opacity');
+          if (hasLabel) {
+            vs.push('Label size');
+            vs.push('Label color');
+          }
+        } else if (e.typeName === 'String') {
+          vs.push('Color');
+          if (hasLabel) {
+            vs.push('Label color');
+          }
+          vs.push('Icon');
+          vs.push('Image');
+        } else if (e.typeName === '(Double, Double)') {
+          vs.push('Geo coordinates');
+          vs.push('Position');
+        }
+        if (e.isNumeric) {
+          vs.push('Slider');
+        }
+        return vs;
+      };
     },
   };
 });

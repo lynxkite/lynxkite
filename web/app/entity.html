@@ -1,5 +1,5 @@
 <div class="entity">
-  {{ entity.title }}
+  <span class="title"> {{ entity.title }} </span>
   <value class="subtoken"
          ng-if="isScalar()"
          id="scalar-{{scalar.title}}"
@@ -15,6 +15,10 @@
           ng-show="side.state.attributeTitles.x === entity.title"> X </span>
     <span class="subtoken visualization"
           ng-show="side.state.attributeTitles.y === entity.title"> Y </span>
+
+    <span class="subtoken visualization"
+          ng-repeat="visualization in side.filterApplied(sampledVisualizations, entity.title)">
+      {{ visualization }} </span>
   </span>
 </div>
 
@@ -58,9 +62,44 @@
     <i class="glyphicon glyphicon-stats"></i> Show histogram
   </div>
   <histogram ng-show="histogram" model="histogram" attr-name="{{ entity.title }}"></histogram>
+  <copy-box class="pull-right"
+            ng-show="histogram"
+            description="Copy&nbsp;histogram to&nbsp;clipboard"
+            data="{{histogramTSV}}">
+  </copy-box>
   <label ng-show="histogram" id="precise-histogram-calculation" attr-name={{entity.title}}>
     <input type="checkbox" ng-model="precise"></input> precise
   </label>
+
+  <label ng-show="showLogCheckbox()">
+    <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
+  </label>
+
+  <input ng-show="side.state.attributeTitles.slider === entity.title"
+         id="slider"
+         type="range"
+         ng-model="side.state.sliderPos"
+         min="-1"
+         max="101"
+         tooltip="Threshold">
+
+  <form ng-show="entity.canFilter">
+    <input class="form-control filter"
+           placeholder="filter"
+           ng-model="side.state.filters.vertex[entity.title]"
+           ng-model-options="{ updateOn: 'change blur' }"
+           name="{{entity.title}}">
+  </form>
+
+  <div ng-show="side.state.graphMode === 'sampled' && side.state.display === 'svg'"
+       class="visualization-menu">
+    <div class="de-emph"> Visualize as... </div>
+    <div class="menu-item"
+         ng-repeat="vis in availableVisualizations()"
+         ng-class="{ active: side.filterApplied([vis.toLowerCase()], entity.title).length }"
+         ng-click="side.toggleAttributeTitle(vis.toLowerCase(), entity.title)"
+         id="visualize-as-{{ vis | id }}"> {{ vis }} </div>
+  </div>
 
   <div class="menu-item" ng-click="toggleRenaming()">
     <i class="glyphicon glyphicon-pencil"></i> Rename...
@@ -73,91 +112,5 @@
   <div class="menu-item" ng-click="duplicate()">
     <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
   </div>
-
-  <input ng-if="side.state.attributeTitles.slider === entity.title"
-         id="slider"
-         type="range"
-         ng-model="side.state.sliderPos"
-         min="-1"
-         max="101"
-         tooltip="Threshold">
-
-  <form ng-if="entity.canFilter">
-    <input class="form-control filter"
-           placeholder="filter"
-           ng-model="side.state.filters.vertex[entity.title]"
-           ng-model-options="{ updateOn: 'change blur' }"
-           name="{{entity.title}}">
-  </form>
-  <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="sampled-visualizations">
-    <span class="visualizations"><selected-visualization
-          ng-repeat="visualization in side.filterApplied(sampledVisualizations, entity.title)"
-          side="side"
-          attr="entity.title"
-          visualization="visualization"></selected-visualization></span>
-
-    <span class="dropdown-toggle" dropdown-toggle data-toggle="dropdown">
-      <span class="clicky glyphicon glyphicon-eye-open"
-            id="visualize-as-button"
-            tooltip="Visualize attribute"></span>
-    </span>
-    <ul class="dropdown-menu" role="menu">
-      <li class="text-center">
-        Visualize as...
-      </li>
-      <li>
-        <a ng-click="side.toggleAttributeTitle('label', entity.title)" href
-           id="visualize-as-label">Label</a>
-      </li>
-      <li ng-if="entity.typeName === 'Double'">
-        <a ng-click="side.toggleAttributeTitle('size', entity.title)" href
-           id="visualize-as-size">Size</a>
-      </li>
-      <li ng-if="entity.typeName === 'Double' || entity.typeName === 'String'">
-        <a ng-click="side.toggleAttributeTitle('color', entity.title)" href
-           id="visualize-as-color">Color</a>
-      </li>
-      <li ng-if="entity.typeName === 'Double'">
-        <a ng-click="side.toggleAttributeTitle('opacity', entity.title)" href
-           id="visualize-as-opacity">Opacity</a>
-      </li>
-      <li ng-if="entity.typeName === 'Double' && side.state.attributeTitles['label'] !== undefined">
-        <a ng-click="side.toggleAttributeTitle('label size', entity.title)" href
-           id="visualize-as-label-size">Label Size</a>
-      </li>
-      <li ng-if="(entity.typeName === 'Double' || entity.typeName === 'String') && side.state.attributeTitles['label'] !== undefined">
-        <a ng-click="side.toggleAttributeTitle('label color', entity.title)" href
-           id="visualize-as-label-color">Label Color</a>
-      </li>
-      <li ng-if="entity.typeName === 'String'">
-        <a ng-click="side.toggleAttributeTitle('icon', entity.title)" href
-           id="visualize-as-icon">Icon</a>
-      </li>
-      <li ng-if="entity.typeName === 'String'">
-        <a ng-click="side.toggleAttributeTitle('image', entity.title)" href
-           id="visualize-as-image">Image</a>
-      </li>
-      <li ng-if="entity.isNumeric">
-        <a ng-click="side.toggleAttributeTitle('slider', entity.title)" href
-           id="visualize-as-slider">Slider</a>
-      </li>
-      <li ng-if="entity.typeName === '(Double, Double)'">
-        <a ng-click="side.toggleAttributeTitle('position', entity.title)" href
-           id="visualize-as-position">Position</a>
-      </li>
-      <li ng-if="entity.typeName === '(Double, Double)'">
-        <a ng-click="side.toggleAttributeTitle('geo', entity.title)" href
-           id="visualize-as-geo">Geo coordinates</a>
-      </li>
-    </ul>
-  </span>
-
-  <copy-box ng-show="histogram"
-            description="Copy&nbsp;histogram to&nbsp;clipboard"
-            data="{{histogramTSV}}">
-  </copy-box>
-  <label ng-show="showLogCheckbox()">
-    <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
-  </label>
 
 </div>
