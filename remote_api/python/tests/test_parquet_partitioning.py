@@ -2,11 +2,8 @@ import unittest
 import lynx
 import random
 import string
-import glob
 import os
-from os.path import expanduser
 import shutil
-import getpass
 
 # I tested this with 4 parallel test processes, and the tests seem to
 # run forever without failure. But implementing this parallelism into
@@ -15,10 +12,8 @@ import getpass
 
 class TestParquetPartitioning(unittest.TestCase):
 
-  def do_test_parquet_partitioning(self):
+  def do_test_parquet_partitioning(self, partitions):
     path = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(15))
-    partitions = random.randint(190, 210)
-    print ("test_parquest_partitioning: " + path + "  partitions: " + str(partitions))
     lk = lynx.LynxKite()
     p = lk.new_project()
 
@@ -49,13 +44,9 @@ class TestParquetPartitioning(unittest.TestCase):
     # Clean up, if everything was okay
     shutil.rmtree(raw_path)
 
-  def test_parquest_partitioning(self):
-    while True:
-      self.do_test_parquet_partitioning()
-      # Saving Jenkins from this loop
-      if getpass.getuser() != 'gabor':
-        break
-
+  def test_parquet_partitioning(self):
+    self.do_test_parquet_partitioning(200)
+    self.do_test_parquet_partitioning(150)
 
 if __name__ == '__main__':
   unittest.main()
