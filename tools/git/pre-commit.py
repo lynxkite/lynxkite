@@ -62,10 +62,14 @@ if any(fn.endswith('.js') for fn in files):
 
 pythons = [fn for fn in files if fn.endswith('.py')]
 if pythons:
-  before = get_hashes(files)
+  before = get_hashes(pythons)
   subprocess.call(['autopep8', '-ia'] + pythons)
-  if get_hashes(files) != before:
-    warn('Files altered by autopep8, please restage')
+  after = get_hashes(pythons)
+  different = [f[0] for f in zip(pythons, before, after) if f[1] != f[2]]
+  if len(different) > 0:
+    warn('Files altered by autopep8, please restage.')
+    warn('Altered files:')
+    warn(', '.join(different))
 
 if warned:
   sys.exit(1)
