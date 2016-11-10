@@ -8,9 +8,10 @@ Install `nvm` (https://github.com/creationix/nvm). Then:
     nvm install 5.7
     nvm alias default 5.7
     npm install -g gulp
+    # Install Yarn.
     sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
     echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-    sudo apt-get install yarn
+    sudo apt-get update && sudo apt-get install yarn
 
 
 Install `Java SDK` and `sbt` (Scala Build Tool):
