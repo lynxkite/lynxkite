@@ -25,13 +25,13 @@ class TestParquetPartitioning(unittest.TestCase):
     size = 1000
     p.newVertexSet(size=size)
     sql = 'SELECT ordinal from `p` GROUP BY ordinal'
-    if partitions == 200:
-      view = lk.sql(sql, p=p)
-    else:
-      view = lk.sql_partitioned(sql, partitions, p=p)
-    data_path = "DATA$/" + path
-    view.export_parquet(data_path)
+    view = lk.sql(sql, p=p)
 
+    data_path = "DATA$/" + path
+    if partitions != 200:
+      view.export_parquet(data_path, partitions)
+    else
+      view.export_parquet(data_path)
     # Check number of parquet files:
     resolved_path = lk.get_prefixed_path(data_path).resolved
     # Cut file: from the beginning

@@ -331,7 +331,7 @@ class View:
     ))
     return r
 
-  def export_csv(self, path, header=True, delimiter=',', quote='"'):
+  def export_csv(self, path, header=True, delimiter=',', quote='"', shuffle_partitions=None):
     '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
@@ -339,28 +339,28 @@ class View:
         header=header,
         delimiter=delimiter,
         quote=quote,
-    ))
+    ), shufflePartitions=shuffle_partitions)
 
-  def export_json(self, path):
+  def export_json(self, path, shuffle_partitions=None):
     '''Exports the view to JSON file. '''
     self.lk._send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
-    ))
+    ), shufflePartitions=shuffle_partitions)
 
-  def export_orc(self, path):
+  def export_orc(self, path, shuffle_partitions=None):
     '''Exports the view to ORC file.'''
     self.lk._send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
-    ))
+    ), shufflePartitions=shuffle_partitions)
 
-  def export_parquet(self, path):
+  def export_parquet(self, path, shuffle_partitions=None):
     '''Exports the view to Parquet file.'''
     self.lk._send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
-    ))
+    ), shufflePartitions=shuffle_partitions)
 
   def export_jdbc(self, url, table, mode='error'):
     '''Exports the view into a database table via JDBC.
