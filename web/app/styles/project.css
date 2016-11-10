@@ -125,7 +125,13 @@ input.save-as {
   padding-top: 0;
   padding-bottom: 0;
   text-align: center;
+  cursor: pointer;
 }
+
+.entity-section-label:hover {
+  text-decoration: underline;
+}
+
 textarea.project-notes {
   resize: vertical;
   background: transparent;

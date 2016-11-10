@@ -385,61 +385,31 @@
     </div>
 
     <div class="entity-sections">
-      <div ng-if="side.project.scalars.length !== 0">
-        <help-popup href="graph-attributes" class="pull-right"></help-popup>
-        <div class="entity-section-label"> Attributes of the graph </div>
-      </div>
-      <div class="entity-list">
-        <entity
-           ng-repeat="scalar in side.project.scalars | filter: commonScalar"
-           kind="scalar"
-           entity="scalar"
-           side="side"></entity>
-      </div>
-
-      <div ng-if="side.project.vertexAttributes.length !== 0">
-        <help-popup href="attributes" class="pull-right"></help-popup>
-        <div class="entity-section-label"> Attributes of vertices </div>
-      </div>
-      <div class="entity-list">
-        <entity
-           ng-repeat="attr in side.project.vertexAttributes"
-           kind="vertex-attribute"
-           entity="attr"
-           id="attribute-{{ attr.title | id }}"
-           side="side"></entity>
-      </div>
-
-      <div ng-if="side.project.edgeAttributes.length !== 0">
-        <help-popup href="attributes" class="pull-right"></help-popup>
-        <div class="entity-section-label"> Attributes of edges </div>
-      </div>
-      <div class="entity-list">
-        <entity
-           ng-repeat="attr in side.project.edgeAttributes"
-           kind="edge-attribute"
-           entity="attr"
-           id="attribute-{{ attr.title | id }}"
-           side="side"></entity>
-      </div>
-
-      <div ng-if="side.project.segmentations.length !== 0">
-        <help-popup href="segmentations" class="pull-right"></help-popup>
-        <div class="entity-section-label"> Segmentations </div>
-      </div>
-      <div class="entity-list">
-        <entity
-           ng-repeat="segmentation in side.project.segmentations"
-           kind="segmentation"
-           entity="segmentation"
-           side="side"></entity>
+      <div ng-repeat="section in side.sections">
+        <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
+          <help-popup href="{{ side.sectionHelp[section] }}" class="pull-right"></help-popup>
+          <div class="entity-section-label" ng-click="side.showSection(section, false)">
+            {{ side.sectionHumanName[section] }} </div>
+        </div>
+        <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
+             class="entity-section-label" ng-click="side.showSection(section, true)">
+          {{ side.sectionElements(section).length }}
+          {{ side.sectionHumanName[section] | lowercase }}
+          are hidden. </div>
+        <div class="entity-list" ng-show="side.showSection(section)">
+          <entity ng-repeat="e in side.sectionElements(section)"
+                  kind="{{ section }}"
+                  entity="e"
+                  side="side"></entity>
+        </div>
       </div>
     </div>
 
     <div class="sql-box-section">
       <help-popup href="sql-box" class="pull-right" ></help-popup>
-      <div class="entity-section-label"> SQL </div>
-      <sql-box side="side"></sql-box>
+      <div class="entity-section-label"
+        ng-click="side.showSection('sql', !side.showSection('sql'))"> SQL </div>
+      <sql-box ng-show="side.showSection('sql')" side="side"></sql-box>
     </div>
   </div>
 </div>

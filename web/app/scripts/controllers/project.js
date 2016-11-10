@@ -31,14 +31,6 @@ angular.module('biggraph')
     $scope.util = util;
     util.scopeTitle($scope, 'left.shortName()');
 
-    // Some special scalars receive special treatment and are not listed among
-    // the "common" scalars.
-    $scope.commonScalar = function(s) {
-      // "vertex_count" and "edge_count" are legacy special-cases.
-      // New special scalars are marked by an "!" prefix.
-      return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
-    };
-
     $scope.unconnectedSides = function() {
       return (
         $scope.left.loaded() && $scope.right.loaded() &&

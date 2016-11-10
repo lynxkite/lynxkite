@@ -46,7 +46,48 @@ angular.module('biggraph')
       // The /ajax/project Ajax response.
       this.project = undefined;
       this.workflowEditor = { enabled: false };
+      this.sectionVisibility = {};
+      for (var i = 0; i < this.sections.length; ++i) {
+        this.sectionVisibility[this.sections[i]] = true;
+      }
     }
+
+    Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
+    Side.prototype.sectionHumanName = {
+      'scalar': 'Graph attributes',
+      'vertex-attribute': 'Vertex attributes',
+      'edge-attribute': 'Edge attributes',
+      'segmentation': 'Segmentations',
+    };
+    Side.prototype.sectionHelp = {
+      'scalar': 'graph-attributes',
+      'vertex-attribute': 'attributes',
+      'edge-attribute': 'attributes',
+      'segmentation': 'segmentations',
+    };
+    Side.prototype.sectionElements = function(section) {
+      if (section === 'scalar') {
+        return this.project.scalars.filter(function(s) {
+          return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
+        });
+      } else if (section === 'vertex-attribute') {
+        return this.project.vertexAttributes;
+      } else if (section === 'edge-attribute') {
+        return this.project.edgeAttributes;
+      } else if (section === 'segmentation') {
+        return this.project.segmentations;
+      }
+      console.error('Unexpected section:', section);
+    };
+    Side.prototype.showSection = function(section, show) {
+      var key = 'section-visibility: ' + section;
+      if (show === undefined) {
+        var saved = localStorage.getItem(key);
+        return saved === null ? true : saved === 'true';
+      } else {
+        localStorage.setItem(key, show);
+      }
+    };
 
     // Returns the number of Bootstrap columns to use for this side.
     Side.prototype.columnWidth = function() {
