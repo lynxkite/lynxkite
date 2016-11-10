@@ -438,8 +438,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
-    shufflePartitions.foreach {
-      sp => df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
+    for (sp <- shufflePartitions) {
+      df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
     }
     df.write.mode(SaveMode.Overwrite).format(format).options(options).save(file.resolvedName)
   }
