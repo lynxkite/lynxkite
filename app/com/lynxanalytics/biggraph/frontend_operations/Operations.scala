@@ -1874,6 +1874,29 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Grow segmentation", new StructureOperation(_, _) with SegOp {
+    def enabled = isSegmentation && hasVertexSet &&
+      FEStatus.assert(parent.edgeBundle != null, "Parent has no edges.")
+
+    def segmentationParameters = List(
+      Param("name", "Segmentation name", defaultValue = project.asSegmentation.segmentationName),
+      Choice("direction", "Direction", options = Direction.neighborOptions))
+
+    def apply(params: Map[String, String]) = {
+      val thisSegmentation = project.asSegmentation
+      val newSegmentation = parent.segmentation(params("name"))
+      val direction = Direction(params("direction"), parent.edgeBundle, reversed = true)
+
+      newSegmentation.state = thisSegmentation.state
+      val op = graph_operations.GrowSegmentation()
+      newSegmentation.belongsTo = op(
+        op.vsG, parent.vertexSet)(
+          op.vsS, thisSegmentation.vertexSet)(
+            op.esG, direction.edgeBundle)(
+              op.esGS, thisSegmentation.belongsTo).result.esGS
+    }
+  })
+
   register("Aggregate on neighbors", new PropagationOperation(_, _) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
@@ -3398,10 +3421,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    // Options suitable when only neighbors are involved.
+    val neighborOptions = FEOption.list(
+      "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
     // Options suitable when edge attributes are not involved.
-    val options = attrOptions ++
-      FEOption.list(
-        "symmetric edges", "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
+    val options = attrOptions ++ neighborOptions ++ FEOption.list("symmetric edges")
     // Neighborhood directions correspond to these
     // edge directions, but they also retain only one A->B edge in
     // the output edgeBundle
