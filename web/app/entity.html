@@ -23,6 +23,8 @@
 </div>
 
 <div class="menu entity-menu">
+  <div class="de-emph" ng-show="entity.note">{{ entity.title }} = <span trusted-html="entity.note"></span></div>
+
   <i ng-if="entity.computeProgress === 1.0"
      class="de-emph compute-progress glyphicon glyphicon-ok"
      drop-tooltip="Already computed"
@@ -65,7 +67,7 @@
   <copy-box class="pull-right"
             ng-show="histogram"
             description="Copy&nbsp;histogram to&nbsp;clipboard"
-            data="{{histogramTSV}}">
+            data="{{ histogramTSV }}">
   </copy-box>
   <label ng-show="histogram" id="precise-histogram-calculation" attr-name={{entity.title}}>
     <input type="checkbox" ng-model="precise"></input> precise

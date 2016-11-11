@@ -115,7 +115,7 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
           }
           tsv += '\t' + histogram.sizes[i] + '\n';
         }
-        scope.tsv = tsv;
+        scope.histogramTSV = tsv;
       }
       util.deepWatch(scope, 'side.state', updateHistogram);
       scope.$watch('precise', updateHistogram);
