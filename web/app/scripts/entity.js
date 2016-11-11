@@ -12,7 +12,7 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
     templateUrl: 'entity.html',
     link: function(scope, element) {
       /* global Drop */
-      new Drop({
+      var drop = new Drop({
         target: element.children('.entity')[0],
         content: element.children('.menu')[0],
         openOn: 'click',
@@ -28,6 +28,10 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
           }],
         },
       });
+      // Reset menu state when opening.
+      drop.on('open', function() { scope.$apply(function() {
+        scope.menu = {};
+      }); });
 
       scope.isVertexAttribute = function() { return scope.kind === 'vertex-attribute'; };
       scope.isEdgeAttribute = function() { return scope.kind === 'edge-attribute'; };
@@ -58,11 +62,6 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       };
 
       axisOptions.bind(scope, scope.side, 'vertex', scope.entity.title, 'axisOptions');
-      scope.sampledVisualizations = [
-        'size', 'label', 'label size',
-        'color', 'opacity', 'label color',
-        'icon', 'image', 'slider', 'position',
-        'geo'];
       scope.showLogCheckbox = function() {
         if (!scope.entity.isNumeric) { return false; }
         if (scope.histogram) { return true; }
@@ -148,6 +147,31 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
           vs.push('Slider');
         }
         return vs;
+      };
+      scope.availableVisualizationsLowerCase = function() {
+        return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
+      };
+
+      scope.discard = function() {
+        scope.side.discard(scope.kind, scope.entity.title);
+        drop.close();
+      };
+
+      scope.duplicate = function() {
+        scope.side.duplicate(scope.kind, scope.entity.title);
+        drop.close();
+      };
+
+      scope.startRenaming = function() {
+        scope.menu.renaming = true;
+        scope.menu.renameTo = scope.entity.title;
+      };
+      scope.applyRenaming = function() {
+        if (scope.menu.renameTo !== scope.entity.title) {
+          scope.side.rename(scope.kind, scope.entity.title, scope.menu.renameTo);
+          scope.menu.renaming = false;
+          drop.close();
+        }
       };
     },
   };

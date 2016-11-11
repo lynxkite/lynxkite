@@ -414,10 +414,11 @@ angular.module('biggraph')
 
     Side.prototype.filterApplied = function(settings, value) {
       var that = this;
-      return settings.filter(
+      var applied = settings.filter(
         function(setting) {
           return that.state.attributeTitles[setting] === value;
         });
+      return applied;
     };
 
     Side.prototype.closeInternal = function() {
