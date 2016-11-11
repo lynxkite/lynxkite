@@ -6,7 +6,7 @@ result and the attributes are the columns.
 
 ====
 [[name]] Segmentation name::
-Name of the segmentation to create.
+The name of the segmentation to create.
 
 [[sql]] SQL query::
 The query. You can use the same syntax as in the <<sql-box>>.

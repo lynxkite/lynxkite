@@ -142,11 +142,30 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         }
       };
 
+      scope.offerWithPath = function() {
+         if (typeof scope.directory !== 'undefined') {
+           if (scope.directory === '') {
+             return '';
+           } else {
+             return scope.directory + '/';
+           }
+         } else {
+           if (typeof scope.project !== 'undefined') {
+             var proj = scope.project;
+             var lastSepIndex = proj.lastIndexOf('/');
+             return proj.substring(0, lastSepIndex + 1);
+           } else {
+             return '';
+           }
+         }
+      };
+
       scope.$watch('exportFormat', function(exportFormat) {
         if (exportFormat === 'table' ||
-            exportFormat === 'segmentation' ||
             exportFormat === 'view') {
-            scope.exportKiteTable = scope.exportKiteTable || '';
+          scope.exportKiteTable = scope.exportKiteTable || scope.offerWithPath();
+        } else if (exportFormat === 'segmentation') {
+          scope.exportSegmentation = scope.exportSegmentation || '';
         } else if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
@@ -189,7 +208,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           result = scope.side.applyOp(
               'Create-segmentation-from-SQL',
               {
-                name: scope.exportKiteTable,
+                name: scope.exportSegmentation,
                 sql: scope.sql
               });
         } else if (scope.exportFormat === 'view') {
@@ -280,6 +299,16 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         scope.exportKiteTable = name;
         scope.overwrite = true;
       });
+
+      scope.showMoreRowsIncrement = function() {
+        // Offer increases of 10, 100, 1000, etc. depending on the magnitude of the current limit.
+        return Math.max(10, Math.pow(10, Math.floor(Math.log10(scope.maxRows))));
+      };
+
+      scope.showMoreRows = function() {
+        scope.maxRows += scope.showMoreRowsIncrement();
+        scope.runSQLQuery();
+      };
     }
   };
 });
