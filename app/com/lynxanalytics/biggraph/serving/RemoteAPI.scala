@@ -91,10 +91,15 @@ object RemoteAPIProtocol {
     isReadAllowed: Boolean,
     isWriteAllowed: Boolean)
   case class ExportViewToCSVRequest(
-    checkpoint: String, path: String, header: Boolean, delimiter: String, quote: String)
-  case class ExportViewToJsonRequest(checkpoint: String, path: String)
-  case class ExportViewToORCRequest(checkpoint: String, path: String)
-  case class ExportViewToParquetRequest(checkpoint: String, path: String)
+    checkpoint: String,
+    path: String,
+    header: Boolean,
+    delimiter: String,
+    quote: String,
+    shufflePartitions: Option[Int])
+  case class ExportViewToJsonRequest(checkpoint: String, path: String, shufflePartitions: Option[Int])
+  case class ExportViewToORCRequest(checkpoint: String, path: String, shufflePartitions: Option[Int])
+  case class ExportViewToParquetRequest(checkpoint: String, path: String, shufflePartitions: Option[Int])
   case class ExportViewToJdbcRequest(
     checkpoint: String, jdbcUrl: String, table: String, mode: String)
   case class ExportViewToTableRequest(checkpoint: String)
@@ -396,7 +401,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def exportViewToCSV(user: User, request: ExportViewToCSVRequest) = {
     exportViewToFile(
-      user, request.checkpoint, request.path, "csv", Map(
+      user, request.checkpoint, request.path, "csv",
+      request.shufflePartitions,
+      Map(
         "delimiter" -> request.delimiter,
         "quote" -> request.quote,
         "nullValue" -> "",
@@ -404,15 +411,15 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def exportViewToJson(user: User, request: ExportViewToJsonRequest) = {
-    exportViewToFile(user, request.checkpoint, request.path, "json")
+    exportViewToFile(user, request.checkpoint, request.path, "json", request.shufflePartitions)
   }
 
   def exportViewToORC(user: User, request: ExportViewToORCRequest) = {
-    exportViewToFile(user, request.checkpoint, request.path, "orc")
+    exportViewToFile(user, request.checkpoint, request.path, "orc", request.shufflePartitions)
   }
 
   def exportViewToParquet(user: User, request: ExportViewToParquetRequest) = {
-    exportViewToFile(user, request.checkpoint, request.path, "parquet")
+    exportViewToFile(user, request.checkpoint, request.path, "parquet", request.shufflePartitions)
   }
 
   def exportViewToJdbc(
@@ -422,11 +429,18 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   private def exportViewToFile(
-    user: serving.User, checkpoint: String, path: String,
-    format: String, options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
+    user: serving.User,
+    checkpoint: String,
+    path: String,
+    format: String,
+    shufflePartitions: Option[Int] = None,
+    options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
+    for (sp <- shufflePartitions) {
+      df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
+    }
     df.write.mode(SaveMode.Overwrite).format(format).options(options).save(file.resolvedName)
   }
 
