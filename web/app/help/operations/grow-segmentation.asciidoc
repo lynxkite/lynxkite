@@ -1,0 +1,16 @@
+### Grow segmentation
+
+Grows the segmentation along edges of the parent graph.
+
+This operation creates a new segmentation on the parent graph using the segments of this
+segmentation by adding the neighbors of the elements of each segment. For
+example if vertex A is a member of segment X and edge A{to}B exists in the original graph
+then B also becomes the member of X (depending on the value of the direction parameter).
+
+====
+[[name]] Name::
+The name of the new segmentation.
+
+[[direction]] Direction::
+Adds the neighbors using this direction.
+====
