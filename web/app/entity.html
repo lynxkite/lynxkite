@@ -10,21 +10,22 @@
   </span>
   <span class="subtoken"
         ng-show="axisOptions.logarithmic"> log </span>
-  <span ng-show="side.state.graphMode"><!-- Visualization tokens. -->
-    <span class="subtoken visualization"
-          ng-show="side.state.attributeTitles.x === entity.title"> X </span>
-    <span class="subtoken visualization"
-          ng-show="side.state.attributeTitles.y === entity.title"> Y </span>
+  <span ng-repeat="opt in ['X', 'Y', 'width']"
+        class="subtoken visualization"
+        ng-show="side.state.graphMode === 'bucketed' &&
+        side.state.attributeTitles[opt.toLowerCase()] === entity.title">
+    {{ opt }} </span>
 
-    <span class="subtoken visualization"
-          ng-repeat="
-          visualization in side.filterApplied(availableVisualizationsLowerCase(), entity.title)">
-      {{ visualization }} </span>
-  </span>
+  <span class="subtoken visualization"
+        ng-repeat="
+        visualization in side.filterApplied(availableVisualizationsLowerCase(), entity.title)">
+    {{ visualization }} </span>
 </div>
 
 <div class="menu entity-menu">
-  <div class="de-emph" ng-show="entity.note">{{ entity.title }} = <span trusted-html="entity.note"></span></div>
+  <div class="de-emph" ng-show="entity.note">
+    {{ entity.title }} = <span trusted-html="entity.note"></span>
+  </div>
 
   <i ng-if="entity.computeProgress === 1.0"
      class="de-emph compute-progress glyphicon glyphicon-ok"
@@ -42,20 +43,29 @@
     {{ entity.typeName }}
   </div>
 
-  <div ng-if="side.state.graphMode === 'bucketed' && entity.canBucket">
+  <div ng-show="
+  kind === 'vertex-attribute' && side.state.graphMode === 'bucketed' && entity.canBucket">
     <div class="menu-item"
          id="axis-x-{{entity.title}}"
          ng-class="{ active: side.state.attributeTitles.x === entity.title }"
          ng-click="side.toggleAttributeTitle('x', entity.title)">
       Graph on <b>X</b>
-      </button>
     </div>
     <div class="menu-item"
          id="axis-y-{{entity.title}}"
          ng-class="{ active: side.state.attributeTitles.y === entity.title }"
          ng-click="side.toggleAttributeTitle('y', entity.title)">
       Graph on <b>Y</b>
-      </button>
+    </div>
+  </div>
+
+  <div ng-show="
+  kind === 'edge-attribute' &&
+  side.state.graphMode === 'bucketed' && entity.typeName === 'Double'">
+    <div class="menu-item"
+         ng-class="{ active: side.state.attributeTitles.width === entity.title }"
+         ng-click="side.toggleAttributeTitle('width', entity.title)">
+      Graph as <b>width</b>
     </div>
   </div>
 
@@ -86,8 +96,7 @@
            id="filter">
   </form>
 
-  <div ng-show="side.state.graphMode === 'sampled' && side.state.display === 'svg'"
-       class="visualization-menu">
+  <div ng-show="availableVisualizations().length !== 0" class="visualization-menu">
     <div class="de-emph"> Visualize as... </div>
     <div class="menu-item"
          ng-repeat="vis in availableVisualizations()"
