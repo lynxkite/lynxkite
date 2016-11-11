@@ -9,7 +9,7 @@
     filter: {{ getFilter() }}
   </span>
   <span class="subtoken"
-        ng-show="axisOptions.logarithmic"> log </span>
+        ng-show="side.state.graphMode === 'bucketed' && axisOptions.logarithmic"> log </span>
   <span ng-repeat="opt in ['X', 'Y', 'width']"
         class="subtoken visualization"
         ng-show="side.state.graphMode === 'bucketed' &&
