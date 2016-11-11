@@ -1,5 +1,5 @@
 .project-name {
-  font-size: 2em;
+  font: bold 3em serif;
 }
 input[type=range] {
   vertical-align: middle;
@@ -15,6 +15,7 @@ input[type=range] {
 }
 
 .project {
+  min-height: 447px; /* The height of the operations toolbox. */
   margin-right: 35px;
   background: #f5f5f5;
   padding: 10px 15px;
@@ -59,10 +60,6 @@ input.save-as {
   color: rgba(0, 0, 0, 0.2);
   padding-left: 15px;
   padding-right: 12px;
-}
-
-.project-name {
-  border: none;
 }
 
 .entity-sections {
@@ -135,6 +132,7 @@ textarea.project-notes {
   resize: vertical;
   background: transparent;
   border: 0;
+  padding: 0;
   width: 100%;
 }
 

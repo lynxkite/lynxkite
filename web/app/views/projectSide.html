@@ -10,6 +10,7 @@
          tooltip="Open&nbsp;project" tooltip-placement="bottom"></i>
     </button>
     <project-selector name="side.state.projectName" ng-if="showProjectSelector"></project-selector>
+    <brand-box></brand-box>
   </div>
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
@@ -406,10 +407,12 @@
     </div>
 
     <div class="sql-box-section">
-      <help-popup href="sql-box" class="pull-right" ></help-popup>
-      <div class="entity-section-label"
-        ng-click="side.showSection('sql', !side.showSection('sql'))"> SQL </div>
-      <sql-box ng-show="side.showSection('sql')" side="side"></sql-box>
+      <help-popup ng-show="side.showSection('sql')"
+                  href="sql-box"
+                  class="pull-right" ></help-popup>
+        <div class="entity-section-label"
+             ng-click="side.showSection('sql', !side.showSection('sql'))"> SQL </div>
+        <sql-box ng-show="side.showSection('sql')" side="side"></sql-box>
     </div>
   </div>
 </div>
