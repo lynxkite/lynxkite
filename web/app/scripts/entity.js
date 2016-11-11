@@ -29,8 +29,13 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
         },
       });
       // Reset menu state when opening.
+      scope.menu = {};
       drop.on('open', function() { scope.$apply(function() {
-        scope.menu = {};
+        scope.menu = { open: true };
+        updateHistogram();
+      }); });
+      drop.on('close', function() { scope.$apply(function() {
+        scope.menu.open = false;
       }); });
 
       scope.isVertexAttribute = function() { return scope.kind === 'vertex-attribute'; };
@@ -52,16 +57,14 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
         return undefined;
       };
 
-      // Returns a human-presentable string of the entity kind.
-      scope.humanKind = function() {
-        return scope.kind.replace('-', ' ');
-      };
-
       scope.attributeKind = function() {
         return scope.kind.replace('-attribute', '');
       };
 
-      axisOptions.bind(scope, scope.side, 'vertex', scope.entity.title, 'axisOptions');
+      if (scope.isAttribute()) {
+        axisOptions.bind(
+            scope, scope.side, scope.attributeKind(), scope.entity.title, 'axisOptions');
+      }
       scope.showLogCheckbox = function() {
         if (!scope.entity.isNumeric) { return false; }
         if (scope.histogram) { return true; }
@@ -78,6 +81,7 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
         updateHistogram();
       };
       function updateHistogram() {
+        if (!scope.menu.open) { return; }
         if (!scope.histogram && !scope.entity.computeProgress && !forceHistogram) { return; }
         if (!scope.entity.canBucket) { return; }
         var q = {
@@ -89,6 +93,7 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
           edgeBundleId: scope.kind === 'edge-attribute' ? scope.side.project.edgeBundle : '',
           sampleSize: scope.precise ? -1 : 50000,
         };
+        console.log(scope.side.axisOptions(scope.attributeKind(), scope.entity.title));
         scope.histogram = util.get('/ajax/histo', q);
       }
 
@@ -121,9 +126,21 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       scope.$watch('histogram.$resolved', updateHistogramTSV);
 
       scope.availableVisualizations = function() {
+        var state = scope.side.state;
+        if (state.graphMode !== 'sampled' || state.display !== 'svg') { return []; }
+        if (scope.kind === 'vertex-attribute') { return vertexAttributeVisualizations(); }
+        if (scope.kind === 'edge-attribute') { return edgeAttributeVisualizations(); }
+        return [];
+      };
+      scope.availableVisualizationsLowerCase = function() {
+        return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
+      };
+
+      function vertexAttributeVisualizations() {
         var vs = ['Label'];
         var e = scope.entity;
-        var hasLabel = scope.side.state.attributeTitles.label !== undefined;
+        var state = scope.side.state;
+        var hasLabel = state.attributeTitles.label !== undefined;
         if (e.typeName === 'Double') {
           vs.push('Size');
           vs.push('Color');
@@ -147,10 +164,19 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
           vs.push('Slider');
         }
         return vs;
-      };
-      scope.availableVisualizationsLowerCase = function() {
-        return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
-      };
+      }
+
+      function edgeAttributeVisualizations() {
+        var vs = ['Edge label'];
+        var e = scope.entity;
+        if (e.typeName === 'Double') {
+          vs.push('Edge color');
+          vs.push('Width');
+        } else if (e.typeName === 'String') {
+          vs.push('Edge color');
+        }
+        return vs;
+      }
 
       scope.discard = function() {
         scope.side.discard(scope.kind, scope.entity.title);
