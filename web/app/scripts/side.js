@@ -95,14 +95,15 @@ angular.module('biggraph')
       if (this.state.projectName === undefined) {
         return selectorWidth;
       }
+      var sides = this.sides.length;
       var remaining = 12; // Bootstrap columns.
-      var selectors = 0;
       for (var i = 0; i < this.sides.length; ++i) {
         if (this.sides[i].state.projectName === undefined) {
-          selectors += 1;
+          sides -= 1;
+          remaining -= selectorWidth;
         }
       }
-      return (remaining - selectors * selectorWidth) / (this.sides.length - selectors);
+      return remaining / sides;
     };
 
     // Creates a JSON formatted version of the current UI state of this side. The output is
