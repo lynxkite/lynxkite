@@ -332,7 +332,7 @@ case class NeuralNetwork(
               val gradient = (errorTotalWithIncreased - errorTotalWithDecreased) / (2 * epsilon)
               (s"$name $row $col", gradient)
             }
-        }.toMap
+        }
       }
       // Gradients calculated with backpropagation.
       val backPropGradients = gradients.map { g =>
