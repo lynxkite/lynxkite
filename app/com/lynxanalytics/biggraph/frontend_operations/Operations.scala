@@ -3425,7 +3425,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     val neighborOptions = FEOption.list(
       "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
     // Options suitable when edge attributes are not involved.
-    val options = attrOptions ++ neighborOptions ++ FEOption.list("symmetric edges")
+    val options = attrOptions ++ FEOption.list("symmetric edges") ++ neighborOptions
     // Neighborhood directions correspond to these
     // edge directions, but they also retain only one A->B edge in
     // the output edgeBundle
