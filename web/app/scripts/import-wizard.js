@@ -19,6 +19,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         event.stopPropagation();
         scope.onCancel();
       };
+      scope.limit = '';
 
       scope.requestInProgress = 0;
       function importStuff(format, parameters) {
@@ -27,6 +28,13 @@ angular.module('biggraph').directive('importWizard', function(util) {
         parameters.privacy = 'public-read';
         parameters.columnsToImport = splitCSVLine(scope.columnsToImport);
         parameters.asView = scope.asView;
+        if (scope.limit) {
+          parameters.limit = parseInt(scope.limit);
+        }
+        else {
+          parameters.limit = null;
+        }
+
         // Allow overwriting the same name when editing an existing config.
         parameters.overwrite = scope.oldTableName === scope.tableName;
         scope.requestInProgress += 1;
@@ -76,6 +84,7 @@ angular.module('biggraph').directive('importWizard', function(util) {
         scope.oldTableName = tableName;
         scope.columnsToImport = joinCSVLine(newConfig.data.columnsToImport);
         scope.asView = type === 'view';
+        scope.limit = newConfig.data.limit;
 
         // E.g.: "com.lynxanalytics.biggraph.controllers.CSVImportRequest"
         // becomes "CSVImportRequest".

@@ -34,6 +34,14 @@ button. In this case the table is created in the root folder by default. To put 
 somewhere else you have to specify its full path, e.g. `Users/MyUser/MyTable`.
 
 
+[[limit]]
+### Limit
+
+It is possible to import a limited number of rows only.
+This is useful when working with large data sets.
+Limit the import to do some quick experiments on small data, then edit your table/view and reload
+it in the <<project-history, history editor>> to rerun all calculations on the full data set.
+
 [[import-formats]]
 ### Supported data formats
 

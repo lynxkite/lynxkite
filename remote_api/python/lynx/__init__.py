@@ -324,6 +324,13 @@ class View:
     ), raw=True)
     return r['rows']
 
+  def schema(self):
+    '''Computes the view and returns the schema.'''
+    r = self.lk._send('getViewSchema', dict(
+        checkpoint=self.checkpoint,
+    ))
+    return r
+
   def export_csv(self, path, header=True, delimiter=',', quote='"'):
     '''Exports the view to CSV file.'''
     self.lk._send('exportViewToCSV', dict(
@@ -434,6 +441,29 @@ class _ProjectCheckpoint:
       return r.double
     return r.string
 
+  def histogram(self, path, attr, attr_type, numbuckets, sample_size, logarithmic):
+    '''Returns a histogram of the given attribute.'''
+    request = dict(
+        checkpoint=self.checkpoint,
+        path=path,
+        attr=attr,
+        numBuckets=numbuckets,
+        sampleSize=sample_size,
+        logarithmic=logarithmic)
+    if attr_type == 'vertex':
+      r = self.lk._send('getVertexHistogram', request)
+    elif attr_type == 'edge':
+      r = self.lk._send('getEdgeHistogram', request)
+    else:
+      raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
+    return r
+
+  def _metadata(self, path):
+    '''Returns project metadata.'''
+    request = dict(checkpoint=self.checkpoint, path=path)
+    r = self.lk._send('getMetadata', request)
+    return _Metadata(r)
+
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -468,6 +498,58 @@ class SubProject:
   def segmentation(self, name):
     '''Creates a :class:`SubProject` representing a segmentation of this subproject with the given name.'''
     return SubProject(self.project_checkpoint, self.path + [name])
+
+  def vertex_attribute(self, attr):
+    '''Creates an :class:`Attribute` representing a vertex attribute with the given name.'''
+    return Attribute(attr, 'vertex', self.project_checkpoint, self.path)
+
+  def edge_attribute(self, attr):
+    '''Creates an :class:`Attribute` representing an edge attribute with the given name.'''
+    return Attribute(attr, 'edge', self.project_checkpoint, self.path)
+
+  def _metadata(self):
+    '''Returns project metadata.'''
+    return self.project_checkpoint._metadata(self.path)
+
+  def _get_complex_view(self, request):
+    '''Returns a `FEGraphResponse` object for testing purposes.
+    The request is converted to a `FEGraphRequest`. For example
+    req = dict(
+        vertexSets=[
+            dict(
+                vertexSetId=vs,
+                sampleSmearEdgeBundleId=eb,
+                mode='sampled',
+                filters=[],
+                centralVertexIds=centers,
+                attrs=[],
+                xBucketingAttributeId='',
+                yBucketingAttributeId='',
+                xNumBuckets=1,
+                yNumBuckets=1,
+                radius=1,
+                xAxisOptions=dict(logarithmic=False),
+                yAxisOptions=dict(logarithmic=False),
+                sampleSize=50000,
+                maxSize=10000
+            )],
+        edgeBundles=[
+            dict(
+                srcDiagramId='idx[0]',
+                dstDiagramId='idx[0]',
+                srcIdx=0,
+                dstIdx=0,
+                edgeBundleId=eb,
+                filters=[],
+                layout3D=False,
+                relativeEdgeDensity=False,
+                maxSize=10000,
+                edgeWeightId='',
+                attrs=[]
+            )])
+    '''
+    r = self.lk._send('getComplexView', request)
+    return r
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -506,6 +588,63 @@ class RootProject(SubProject):
   def checkpoint(self):
     return self.project_checkpoint.checkpoint
 
+  def global_name(self):
+    '''Global reference of the project.'''
+    return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
+
+
+class _Metadata():
+  '''Wrapper class for storing and accessing project metadata.'''
+
+  def __init__(self, data):
+    self.data = data
+
+  def vertex_set_id(self):
+    return self.data.vertexSet
+
+  def edge_bundle_id(self):
+    return self.data.edgeBundle
+
+  def belongs_to_id(self, segmentation_name):
+    return [s.belongsTo for s in self.data.segmentations if s.name == segmentation_name][0]
+
+  def vertex_attribute_id(self, attr_name):
+    return [a.id for a in self.data.vertexAttributes if a.title == attr_name][0]
+
+  def edge_attribute_id(self, attr_name):
+    return [a.id for a in self.data.edgeAttributes if a.title == attr_name][0]
+
+
+class Attribute():
+  '''Represents a vertex or an edge attribute.'''
+
+  def __init__(self, name, attr_type, project_checkpoint, path):
+    self.project_checkpoint = project_checkpoint
+    self.name = name
+    self.attr_type = attr_type
+    self.path = path
+
+  def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
+    '''Returns a histogram of the attribute.
+
+    Example of precise logarithmic histogram with 20 buckets::
+
+        a = p.vertex_attribute('attr_name')
+        h = a.histogram(numbuckets=20, logarithmic=True)
+        print(h.labelType)
+        print(h.labels)
+        print(h.sizes)
+
+    '''
+
+    return self.project_checkpoint.histogram(
+        self.path,
+        self.name,
+        self.attr_type,
+        numbuckets,
+        sample_size,
+        logarithmic)
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
@@ -515,6 +654,23 @@ class LynxException(Exception):
     self.error = error
 
 
+class ResponseObject(types.SimpleNamespace):
+
+  @staticmethod
+  def obj_to_dict(obj):
+    if isinstance(obj, ResponseObject):
+      return obj.to_dict()
+    elif isinstance(obj, list):
+      return [ResponseObject.obj_to_dict(o) for o in obj]
+    elif isinstance(obj, dict):
+      return {k: ResponseObject.obj_to_dict(v) for (k, v) in obj.items()}
+    else:
+      return obj
+
+  def to_dict(self):
+    return {k: ResponseObject.obj_to_dict(v) for (k, v) in self.__dict__.items()}
+
+
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
-  return types.SimpleNamespace(**dic)
+  return ResponseObject(**dic)

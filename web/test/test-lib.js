@@ -469,7 +469,7 @@ var visualization = {
 
   asTSV: function() {
     var copyButton = $('.graph-sidebar [data-clipboard-text');
-    // It would be too complicated to test actual copy & paste. We just trust ZeroClipboard instead.
+    // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
     return copyButton.getAttribute('data-clipboard-text');
   },
 
@@ -626,7 +626,7 @@ Selector.prototype = {
     importCsvButton.click();
   },
 
-  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view) {
+  importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view, limit) {
     this.root.$('import-wizard #table-name input').sendKeys(tableName);
     if (columnsToImport) {
       this.root.$('import-wizard #columns-to-import input').sendKeys(columnsToImport);
@@ -639,6 +639,9 @@ Selector.prototype = {
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     if (view) {
       this.root.$('import-wizard #as-view input').click();
+    }
+    if (limit) {
+      this.root.$('import-wizard #limit input').sendKeys(limit.toString());
     }
     this.clickAndWaitForCsvImport();
   },
@@ -840,6 +843,12 @@ testLib = {
 
   helpPopup: function(helpId) {
     return $('div[help-id="' + helpId + '"]');
+  },
+
+  getACEText: function(e) {
+    // getText() drops text in hidden elements. "innerText" to the rescue!
+    // https://github.com/angular/protractor/issues/1794
+    return e.$('.ace_content').getAttribute('innerText').then(text => text.trim());
   },
 
   sendKeysToACE: function(e, keys) {
