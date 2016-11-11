@@ -1,9 +1,9 @@
-<div class="entity">
-  <span class="title"> {{ entity.title }} </span>
+<div class="entity" ng-class="{ active: active() }">
+  <span class="title"> {{ title() }} </span>
   <value class="subtoken"
          ng-if="isScalar()"
-         id="scalar-{{scalar.title}}"
-         ref="side.scalars[entity.title]"></value>
+         id="scalar-{{ title() }}"
+         ref="side.scalars[title()]"></value>
   <span class="subtoken filter"
         ng-show="getFilter()">
     filter: {{ getFilter() }}
@@ -13,48 +13,59 @@
   <span ng-repeat="opt in ['X', 'Y', 'width']"
         class="subtoken visualization"
         ng-show="side.state.graphMode === 'bucketed' &&
-        side.state.attributeTitles[opt.toLowerCase()] === entity.title">
+        side.state.attributeTitles[opt.toLowerCase()] === title()">
     {{ opt }} </span>
 
   <span class="subtoken visualization"
         ng-repeat="
-        visualization in side.filterApplied(availableVisualizationsLowerCase(), entity.title)">
+        visualization in side.filterApplied(availableVisualizationsLowerCase(), title())">
     {{ visualization }} </span>
 </div>
 
 <div class="menu entity-menu">
   <div class="de-emph" ng-show="entity.note">
-    {{ entity.title }} = <span trusted-html="entity.note"></span>
+    {{ title() }} = <span trusted-html="entity.note"></span>
   </div>
 
-  <i ng-if="entity.computeProgress === 1.0"
+  <i ng-show="entity.computeProgress === 1.0"
      class="de-emph compute-progress glyphicon glyphicon-ok"
      drop-tooltip="Already computed"
      drop-tooltip-position="right middle"></i>
-  <i ng-if="entity.computeProgress === 0.5"
+  <i ng-show="entity.computeProgress === 0.5"
      class="de-emph compute-progress glyphicon glyphicon-flash"
      drop-tooltip="Computation started"
      drop-tooltip-position="right middle"></i>
 
-  <div ng-if="isAttribute() || isScalar()"
+  <div ng-show="isAttribute() || isScalar()"
        class="de-emph"
-       drop-tooltip="{{ entity.title }} is of type {{ entity.typeName }}"
+       drop-tooltip="{{ title() }} is of type {{ entity.typeName }}"
        drop-tooltip-position="left middle">
     {{ entity.typeName }}
+  </div>
+
+  <div ng-show="isSegmentation() && !active()"
+       class="menu-item"
+       ng-click="side.openSegmentation(entity)">
+    <i class="glyphicon glyphicon-play"></i> Open
+  </div>
+  <div ng-show="isSegmentation() && active()"
+       class="menu-item"
+       ng-click="side.sides[1].close()">
+    <i class="glyphicon glyphicon-stop"></i> Close
   </div>
 
   <div ng-show="
   kind === 'vertex-attribute' && side.state.graphMode === 'bucketed' && entity.canBucket">
     <div class="menu-item"
-         id="axis-x-{{entity.title}}"
-         ng-class="{ active: side.state.attributeTitles.x === entity.title }"
-         ng-click="side.toggleAttributeTitle('x', entity.title)">
+         id="axis-x-{{ title() }}"
+         ng-class="{ active: side.state.attributeTitles.x === title() }"
+         ng-click="side.toggleAttributeTitle('x', title())">
       Graph on <b>X</b>
     </div>
     <div class="menu-item"
-         id="axis-y-{{entity.title}}"
-         ng-class="{ active: side.state.attributeTitles.y === entity.title }"
-         ng-click="side.toggleAttributeTitle('y', entity.title)">
+         id="axis-y-{{ title() }}"
+         ng-class="{ active: side.state.attributeTitles.y === title() }"
+         ng-click="side.toggleAttributeTitle('y', title())">
       Graph on <b>Y</b>
     </div>
   </div>
@@ -63,8 +74,8 @@
   kind === 'edge-attribute' &&
   side.state.graphMode === 'bucketed' && entity.typeName === 'Double'">
     <div class="menu-item"
-         ng-class="{ active: side.state.attributeTitles.width === entity.title }"
-         ng-click="side.toggleAttributeTitle('width', entity.title)">
+         ng-class="{ active: side.state.attributeTitles.width === title() }"
+         ng-click="side.toggleAttributeTitle('width', title())">
       Graph as <b>width</b>
     </div>
   </div>
@@ -74,13 +85,13 @@
        ng-click="showHistogram()">
     <i class="glyphicon glyphicon-stats"></i> Show histogram
   </div>
-  <histogram ng-show="histogram" model="histogram" attr-name="{{ entity.title }}"></histogram>
+  <histogram ng-show="histogram" model="histogram" attr-name="{{ title() }}"></histogram>
   <copy-box class="pull-right"
             ng-show="histogram"
             description="Copy&nbsp;histogram to&nbsp;clipboard"
             data="{{ histogramTSV }}">
   </copy-box>
-  <label ng-show="histogram" id="precise-histogram-calculation" attr-name={{entity.title}}>
+  <label ng-show="histogram" id="precise-histogram-calculation">
     <input type="checkbox" ng-model="precise"></input> precise
   </label>
 
@@ -89,9 +100,17 @@
   </label>
 
   <form ng-show="entity.canFilter">
-    <input class="form-control filter"
+    <input class="form-control"
            placeholder="Filter..."
-           ng-model="side.state.filters.vertex[entity.title]"
+           ng-model="side.state.filters[attributeKind()][title()]"
+           ng-model-options="{ updateOn: 'change blur' }"
+           id="filter">
+  </form>
+
+  <form ng-show="isSegmentation()">
+    <input class="form-control"
+           placeholder="Filter..."
+           ng-model="side.state.filters.vertex[entity.equivalentAttribute.title]"
            ng-model-options="{ updateOn: 'change blur' }"
            id="filter">
   </form>
@@ -100,12 +119,12 @@
     <div class="de-emph"> Visualize as... </div>
     <div class="menu-item"
          ng-repeat="vis in availableVisualizations()"
-         ng-class="{ active: side.filterApplied([vis.toLowerCase()], entity.title).length }"
-         ng-click="side.toggleAttributeTitle(vis.toLowerCase(), entity.title)"
+         ng-class="{ active: side.filterApplied([vis.toLowerCase()], title()).length }"
+         ng-click="side.toggleAttributeTitle(vis.toLowerCase(), title())"
          id="visualize-as-{{ vis | id }}"> {{ vis }} </div>
   </div>
 
-  <input ng-show="side.state.attributeTitles.slider === entity.title"
+  <input ng-show="side.state.attributeTitles.slider === title()"
          id="slider"
          type="range"
          ng-model="side.state.sliderPos"
@@ -121,7 +140,7 @@
     <i class="glyphicon glyphicon-pencil"></i> Rename...
   </div>
   <form ng-show="menu.renaming" ng-submit="applyRenaming()">
-    <input class="form-control filter"
+    <input class="form-control"
            placeholder="Rename..."
            ng-model="menu.renameTo"
            id="rename-to">

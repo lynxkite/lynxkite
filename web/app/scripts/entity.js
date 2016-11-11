@@ -38,12 +38,22 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
         scope.menu.open = false;
       }); });
 
+      // Attributes and scalars have a "title", segmentations have a "name".
+      scope.title = function() { return scope.entity.title || scope.entity.name; };
       scope.isVertexAttribute = function() { return scope.kind === 'vertex-attribute'; };
       scope.isEdgeAttribute = function() { return scope.kind === 'edge-attribute'; };
       scope.isScalar = function() { return scope.kind === 'scalar'; };
       scope.isSegmentation = function() { return scope.kind === 'segmentation'; };
       scope.isAttribute = function() {
         return scope.isVertexAttribute() || scope.isEdgeAttribute();
+      };
+
+      scope.active = function() {
+        if (scope.isSegmentation() &&
+            scope.side.sides[1].state.projectName === scope.entity.fullName) {
+          return true;
+        }
+        return false;
       };
 
       scope.getFilter = function() {
@@ -179,22 +189,22 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       }
 
       scope.discard = function() {
-        scope.side.discard(scope.kind, scope.entity.title);
+        scope.side.discard(scope.kind, scope.title());
         drop.close();
       };
 
       scope.duplicate = function() {
-        scope.side.duplicate(scope.kind, scope.entity.title);
+        scope.side.duplicate(scope.kind, scope.title());
         drop.close();
       };
 
       scope.startRenaming = function() {
         scope.menu.renaming = true;
-        scope.menu.renameTo = scope.entity.title;
+        scope.menu.renameTo = scope.title();
       };
       scope.applyRenaming = function() {
-        if (scope.menu.renameTo !== scope.entity.title) {
-          scope.side.rename(scope.kind, scope.entity.title, scope.menu.renameTo);
+        if (scope.menu.renameTo !== scope.title()) {
+          scope.side.rename(scope.kind, scope.title(), scope.menu.renameTo);
           scope.menu.renaming = false;
           drop.close();
         }
