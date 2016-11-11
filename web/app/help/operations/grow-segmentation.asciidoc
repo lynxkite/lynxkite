@@ -7,6 +7,9 @@ segmentation by adding the neighbors of the elements of each segment. For
 example if vertex A is a member of segment X and edge A{to}B exists in the original graph
 then B also becomes the member of X (depending on the value of the direction parameter).
 
+This operation can be used together with "Copy graph into a segmentation" to create a segmentation
+of neighborhoods.
+
 ====
 [[name]] Name::
 The name of the new segmentation.
