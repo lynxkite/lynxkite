@@ -1882,16 +1882,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("direction", "Direction", options = Direction.neighborOptions))
 
     def apply(params: Map[String, String]) = {
-      val thisSegmentation = project.asSegmentation
-      val newSegmentation = parent.segmentation(project.asSegmentation.segmentationName)
+      val segmentation = project.asSegmentation
       val direction = Direction(params("direction"), parent.edgeBundle, reversed = true)
 
-      newSegmentation.state = thisSegmentation.state
       val op = graph_operations.GrowSegmentation()
-      newSegmentation.belongsTo = op(
+      segmentation.belongsTo = op(
         op.vsG, parent.vertexSet)(
           op.esG, direction.edgeBundle)(
-            op.esGS, thisSegmentation.belongsTo).result.esGS
+            op.esGS, segmentation.belongsTo).result.esGS
     }
   })
 
