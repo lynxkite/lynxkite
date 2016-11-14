@@ -112,6 +112,12 @@ The Protractor tests pop up an actual browser. If you want to avoid this, use `x
 This will run the frontend tests in a virtual framebuffer. (In Ubuntu `xfvb-run` is available in
 package `xvfb`.)
 
+## Ecosystem development
+
+You can run `make ecosystem-test` to run all tests, or run
+`{chronomaster,remote_api/python}/test.sh *something*` to run tests from just one file.
+
+
 ## Big Data tests
 
 If you want to measure the effect of a code change on big data, create a PR and add
