@@ -242,6 +242,13 @@ class LynxKite:
         "Json",
         dict(columnsToImport=columnsToImport, files=files))
 
+  def parquet_row_count(self):
+    '''Computes the view and returns the schema.'''
+    r = self._send('getRowCount', dict(
+        name=name,
+    ))
+    return r
+
   def _create_view(self, format, dict):
     # TODO: remove this once #3859 is resolved.
     # These are required (as present in the case class), but are actually not read by the API
