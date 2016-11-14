@@ -9,9 +9,9 @@ class GrowSegmentationTest extends OperationsTestBase {
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     val seg = project.segmentation("seg")
     run("Grow segmentation",
-      Map("name" -> "new_seg", "direction" -> "in-neighbors"),
+      Map("direction" -> "in-neighbors"),
       on = seg)
-    val newSeg = project.segmentation("new_seg")
+    val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
       (0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (2, 1), (3, 3), (2, 2)))
   }
@@ -21,9 +21,9 @@ class GrowSegmentationTest extends OperationsTestBase {
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     val seg = project.segmentation("seg")
     run("Grow segmentation",
-      Map("name" -> "new_seg", "direction" -> "out-neighbors"),
+      Map("direction" -> "out-neighbors"),
       on = seg)
-    val newSeg = project.segmentation("new_seg")
+    val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
       (0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2), (3, 3), (2, 2)))
   }
@@ -33,9 +33,9 @@ class GrowSegmentationTest extends OperationsTestBase {
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     val seg = project.segmentation("seg")
     run("Grow segmentation",
-      Map("name" -> "new_seg", "direction" -> "all neighbors"),
+      Map("direction" -> "all neighbors"),
       on = seg)
-    val newSeg = project.segmentation("new_seg")
+    val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
       (2, 1), (0, 0), (1, 0), (0, 1), (2, 0), (1, 1), (0, 2), (1, 2), (3, 3), (2, 2)))
   }
@@ -45,9 +45,9 @@ class GrowSegmentationTest extends OperationsTestBase {
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     val seg = project.segmentation("seg")
     run("Grow segmentation",
-      Map("name" -> "new_seg", "direction" -> "symmetric neighbors"),
+      Map("direction" -> "symmetric neighbors"),
       on = seg)
-    val newSeg = project.segmentation("new_seg")
+    val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
       (0, 0), (1, 0), (0, 1), (1, 1), (3, 3), (2, 2)))
   }

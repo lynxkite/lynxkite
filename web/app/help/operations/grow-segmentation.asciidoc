@@ -2,18 +2,14 @@
 
 Grows the segmentation along edges of the parent graph.
 
-This operation creates a new segmentation on the parent graph using the segments of this
-segmentation by adding the neighbors of the elements of each segment. For
-example if vertex A is a member of segment X and edge A{to}B exists in the original graph
+This operation modifies this segmentation by growing each segment with the neighbors of its elements.
+For example if vertex A is a member of segment X and edge A{to}B exists in the original graph
 then B also becomes the member of X (depending on the value of the direction parameter).
 
-This operation can be used together with "Copy graph into a segmentation" to create a segmentation
+This operation can be used together with <<Copy graph into a segmentation>> to create a segmentation
 of neighborhoods.
 
 ====
-[[name]] Name::
-The name of the new segmentation.
-
 [[direction]] Direction::
-Adds the neighbors using this direction.
+Adds the neighbors to the segments using this direction.
 ====

@@ -1879,21 +1879,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       FEStatus.assert(parent.edgeBundle != null, "Parent has no edges.")
 
     def segmentationParameters = List(
-      Param("name", "Segmentation name", defaultValue = project.asSegmentation.segmentationName),
       Choice("direction", "Direction", options = Direction.neighborOptions))
 
     def apply(params: Map[String, String]) = {
       val thisSegmentation = project.asSegmentation
-      val newSegmentation = parent.segmentation(params("name"))
+      val newSegmentation = parent.segmentation(project.asSegmentation.segmentationName)
       val direction = Direction(params("direction"), parent.edgeBundle, reversed = true)
 
       newSegmentation.state = thisSegmentation.state
       val op = graph_operations.GrowSegmentation()
       newSegmentation.belongsTo = op(
         op.vsG, parent.vertexSet)(
-          op.vsS, thisSegmentation.vertexSet)(
-            op.esG, direction.edgeBundle)(
-              op.esGS, thisSegmentation.belongsTo).result.esGS
+          op.esG, direction.edgeBundle)(
+            op.esGS, thisSegmentation.belongsTo).result.esGS
     }
   })
 
