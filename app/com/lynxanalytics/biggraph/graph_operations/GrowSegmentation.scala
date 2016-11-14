@@ -36,7 +36,7 @@ case class GrowSegmentation() extends TypedMetaGraphOp[Input, Output] {
     val esGS = inputs.esGS.rdd.map { case (_, s) => s.src -> s.dst }.sort(partitioner)
     val esG = inputs.esG.rdd.map { case (_, e) => e.src -> e.dst }.sort(partitioner)
     val neighborToSeg = (esG.sortedJoinWithDuplicates(esGS).map {
-      case (_, (src, dst)) => src -> dst
+      case (src, (dst, segment)) => dst -> segment
     } ++ esGS).distinct.randomNumbered(partitioner)
     output(o.esGS, neighborToSeg.mapValues { case (vid, sid) => Edge(vid, sid) })
   }
