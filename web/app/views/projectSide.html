@@ -1,16 +1,7 @@
 <div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
 
-  <div ng-if="side.state.projectName === undefined">
-    <button
-       id="show-selector-button"
-       ng-hide="showProjectSelector"
-       style="width: 100%;"
-       ng-click="showProjectSelector = true" class="btn btn-link btn-lg">
-      <i class="glyphicon glyphicon-plus"
-         tooltip="Open&nbsp;project" tooltip-placement="bottom"></i>
-    </button>
-    <project-selector name="side.state.projectName" ng-if="showProjectSelector"></project-selector>
-    <brand-box></brand-box>
+  <div ng-if="side.state.projectName === undefined && side.showSelector">
+    <project-selector name="side.state.projectName"></project-selector>
   </div>
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">

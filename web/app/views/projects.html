@@ -15,8 +15,18 @@
 <bottom-links info="sides"></bottom-links>
 
 <div class="text-center hidden-print">
-  <a target="_blank" href="{{linkedURL()}}" tooltip="Open linked window">
+
+  <a target="_blank" href="{{linkedURL()}}" drop-tooltip="Open linked window">
     <span class="glyphicon glyphicon-link"></span>
   </a>
+
+  <a id="show-selector-button"
+     href
+     drop-tooltip="Open another project"
+     ng-hide="sides[1].showSelector"
+     ng-click="sides[1].showSelector = true">
+    <i class="glyphicon glyphicon-plus"></i>
+  </a>
 </div>
+<brand-box></brand-box>
 <div class="clearfix"></div>
