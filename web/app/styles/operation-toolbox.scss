@@ -27,6 +27,7 @@ side-operation-toolbox .operation-toolbox {
   background: rgba(0, 0, 0, 0.75);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   padding: 0;
+  max-width: 1000px; /* Avoid very long lines and very sparse forms. */
 }
 .operation-toolbox .box h1 {
   padding: 15px;
