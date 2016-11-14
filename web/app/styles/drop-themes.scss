@@ -52,6 +52,10 @@
 
 .drop-element.drop-theme-menu .drop-content {
   padding: 4px 8px;
+  /* Display gap even when the arrow is missing.
+   * https://github.com/HubSpot/drop/issues/118 */
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .drop-element.drop-theme-menu .drop-content .menu-item {
