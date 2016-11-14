@@ -147,6 +147,7 @@ object RemoteAPIServer extends JsonServer {
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
+  def getRowCount = jsonPost(c.getRowCount)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def removeName = jsonPost(c.removeName)
@@ -391,6 +392,10 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val viewer = getViewer(checkpoint)
     val sqlContext = dataManager.newHiveContext()
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
+  }
+
+  def getRowCount(user: User, request: CheckpointRequest): Int = {
+    0
   }
 
   def takeFromView(
