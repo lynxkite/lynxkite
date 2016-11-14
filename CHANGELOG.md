@@ -21,7 +21,7 @@ LynxKite:
  - Various visualization limits (such as the maximum 10,000 edges) can be adjusted with the
      `KITE_DRAWING_OVERALL` setting (default 10,000) and its more fine-grained companions.
  - Scalability improvement for Merge vertices and Import segmentation operations.
- - New Grow Segmentation operation added.
+ - New _"Grow segmentation"_ operation added.
 
 Ecosystem:
 
