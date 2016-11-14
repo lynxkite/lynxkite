@@ -3,6 +3,11 @@ package com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Future
 import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
+import org.apache.parquet.tools
+import org.apache.parquet.hadoop.{ ParquetFileReader, Footer }
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{ FileStatus, Path }
+import scala.collection.JavaConverters._
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
