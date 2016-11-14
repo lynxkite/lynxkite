@@ -215,6 +215,8 @@ include::edge-graph.asciidoc[]
 
 include::embeddedness.asciidoc[]
 
+include::enumerate-triangles.asciidoc[]
+
 include::example-graph.asciidoc[]
 
 include::export-edge-attributes-to-database.asciidoc[]
@@ -237,11 +239,11 @@ include::filter-by-attributes.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
 
-include::enumerate-triangles.asciidoc[]
-
 include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
+
+include::grow-segmentation.asciidoc[]
 
 include::hash-vertex-attribute.asciidoc[]
 
