@@ -159,26 +159,26 @@ angular.module('biggraph')
       vd.preciseBucketSizes = this.state.preciseBucketSizes;
       vd.relativeEdgeDensity = this.state.relativeEdgeDensity;
 
+      var at = this.state.attributeTitles;
+
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
-      vd.xAttribute = this.resolveVertexAttribute(this.state.attributeTitles.x);
-      vd.yAttribute = this.resolveVertexAttribute(this.state.attributeTitles.y);
-      vd.xAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.x);
-      vd.yAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.y);
+      vd.xAttribute = this.resolveVertexAttribute(at.x);
+      vd.yAttribute = this.resolveVertexAttribute(at.y);
+      vd.xAxisOptions = this.axisOptions('vertex', at.x);
+      vd.yAxisOptions = this.axisOptions('vertex', at.y);
 
       vd.vertexAttrs = {};
-      vd.vertexAttrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
-      vd.vertexAttrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
-      vd.vertexAttrs.opacity = this.resolveVertexAttribute(this.state.attributeTitles.opacity);
-      vd.vertexAttrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
-      vd.vertexAttrs.labelSize =
-        this.resolveVertexAttribute(this.state.attributeTitles['label size']);
-      vd.vertexAttrs.labelColor =
-        this.resolveVertexAttribute(this.state.attributeTitles['label color']);
-      vd.vertexAttrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
-      vd.vertexAttrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
-      vd.vertexAttrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
-      vd.vertexAttrs.position = this.resolveVertexAttribute(this.state.attributeTitles.position);
-      vd.vertexAttrs.geo = this.resolveVertexAttribute(this.state.attributeTitles.geo);
+      vd.vertexAttrs.size = this.resolveVertexAttribute(at.size);
+      vd.vertexAttrs.color = this.resolveVertexAttribute(at.color);
+      vd.vertexAttrs.opacity = this.resolveVertexAttribute(at.opacity);
+      vd.vertexAttrs.label = this.resolveVertexAttribute(at.label);
+      vd.vertexAttrs.labelSize = this.resolveVertexAttribute(at['label size']);
+      vd.vertexAttrs.labelColor = this.resolveVertexAttribute(at['label color']);
+      vd.vertexAttrs.slider = this.resolveVertexAttribute(at.slider);
+      vd.vertexAttrs.icon = this.resolveVertexAttribute(at.icon);
+      vd.vertexAttrs.image = this.resolveVertexAttribute(at.image);
+      vd.vertexAttrs.position = this.resolveVertexAttribute(at.position);
+      vd.vertexAttrs.geo = this.resolveVertexAttribute(at['geo coordinates']);
 
       vd.edgeAttrs = {};
       var aggregated = function(attr, aggregator) {
@@ -400,8 +400,8 @@ angular.module('biggraph')
           this.state.attributeTitles.color = undefined;
           this.state.attributeTitles.icon = undefined;
         } else if (setting === 'position') {
-          this.state.attributeTitles.geo = undefined;
-        } else if (setting === 'geo') {
+          this.state.attributeTitles['geo coordinates'] = undefined;
+        } else if (setting === 'geo coordinates') {
           this.state.attributeTitles.position = undefined;
         }
       }
