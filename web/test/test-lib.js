@@ -219,7 +219,7 @@ Side.prototype = {
   },
 
   openSegmentation: function(segmentationName) {
-    this.side.element(by.id('segmentation-' + segmentationName)).click();
+    this.segmentation(segmentationName).clickMenu('open-segmentation');
   },
 
   redoButton: function() {
