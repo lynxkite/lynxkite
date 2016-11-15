@@ -8,6 +8,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 1.9.6
 
+### 1.9.6
+
 LynxKite:
 
  - Performance and scalability improvements for aggregating operations.
