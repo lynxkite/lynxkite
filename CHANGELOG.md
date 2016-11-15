@@ -25,6 +25,7 @@ LynxKite:
 
 Ecosystem:
 
+ - Chronomaster user interface can tell you about past and future tasks.
  - Flexible date template strings.
  - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
    intervals.
