@@ -399,19 +399,20 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
-  def getRowCount(user: User, request: CheckpointRequest): Int = {
-    val input = "/user/root/lynxkite/table_files/D_442002_EXAMPLE_FILTER_2016_10_10T2004_a533c9601f (ttl=5m)/part-r-00000-a911687a-a33a-4c9f-a00b-21bcb644a06e.gz.parquet"
+  def getRowCount(user: User, request: ParquetImportRequest): Long = {
+    val input = request.files
     val conf = new Configuration()
     val inputPath = new Path(input)
     val inputFileStatus = inputPath.getFileSystem(conf).getFileStatus(inputPath)
     val footers = ParquetFileReader.readFooters(conf, inputFileStatus, false)
 
+    var r: Long = 0
     for (f <- footers.asScala) {
       for (b <- f.getParquetMetadata().getBlocks().asScala) {
-        println(b.getRowCount())
+        r += b.getRowCount()
       }
     }
-    0
+    r
   }
 
   def takeFromView(
