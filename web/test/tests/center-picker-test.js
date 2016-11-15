@@ -28,14 +28,15 @@ module.exports = function(fw) {
       expect(pickButton.getText()).toBe('Next');
 
       // Selection with filter.
-      lib.left.setAttributeFilter('name', 'Eve');
+      var name = lib.left.vertexAttribute('name');
+      name.setFilter('Eve');
       expect(centers.getAttribute('value')).toBe('0');
       expect(lib.visualization.vertexCounts(0)).toBe(1);
       expect(pickButton.getText()).toBe('Pick');
       pickButton.click();
       expect(lib.visualization.vertexCounts(0)).toBe(1);
       expect(pickButton.getText()).toBe('Next');
-      lib.left.setAttributeFilter('name', '');
+      name.setFilter('');
 
       // Manual center selection.
       centers.clear();
@@ -142,21 +143,13 @@ module.exports = function(fw) {
       saveVisualizationEntry.clear();
       saveVisualizationEntry.sendKeys('my visualization');
       saveVisualizationOk.click();
-      // Check if the new eye icon has shown up.
-      var savedVisualization = lib.left.side
-        .$('item-name-and-menu[name="my visualization"]')
-        .element(by.xpath('..'));  // parent element
-      var savedVisualizationIcon = savedVisualization
-        .$('.glyphicon-eye-open');
-      lib.expectElement(savedVisualizationIcon);
       // Close and reopen the project and check if the eye icon is still there. issues/#3164
       lib.left.close();
       lib.splash.openProject('test-example');
-      lib.left.toggleSampledVisualization();
-      lib.expectElement(savedVisualizationIcon);
       // Try loading the visualization and check if centers count is correctly updated.
+      lib.left.toggleSampledVisualization();
       expect(centerCount.getAttribute('value')).toBe('1');
-      savedVisualizationIcon.click();
+      lib.left.scalar('my-visualization').clickMenu('load-visualization');
       expect(centerCount.getAttribute('value')).toBe('2');
     },
     function() {});

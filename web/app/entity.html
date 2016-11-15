@@ -1,10 +1,10 @@
 <div class="entity"
      ng-class="{ active: active() }"
-     id="{{ kind }}-{{ title() }}">
+     id="{{ kind }}-{{ title() | id }}">
   <span class="title"> {{ title() }} </span>
   <value class="subtoken"
-         ng-if="isScalar()"
-         id="scalar-value-{{ title() }}"
+         ng-if="isScalar() && !isSavedStatus()"
+         id="scalar-value-{{ title() | id }}"
          ref="side.scalars[title()]"></value>
   <span class="subtoken filter"
         ng-show="getFilter()">
@@ -20,12 +20,12 @@
     {{ visualization }} </span>
 </div>
 
-<div class="menu entity-menu" id="menu-{{ kind }}-{{ title() }}">
+<div class="menu entity-menu" id="menu-{{ kind }}-{{ title() | id }}">
   <div class="de-emph" ng-show="entity.note">
     {{ title() }} = <span trusted-html="entity.note"></span>
   </div>
 
-  <i ng-show="entity.computeProgress === 1.0"
+  <i ng-show="entity.computeProgress === 1.0 && !isSavedStatus()"
      class="de-emph compute-progress glyphicon glyphicon-ok"
      drop-tooltip="Already computed"
      drop-tooltip-position="right middle"></i>
@@ -34,7 +34,7 @@
      drop-tooltip="Computation started"
      drop-tooltip-position="right middle"></i>
 
-  <div ng-show="isAttribute() || isScalar()"
+  <div ng-show="isAttribute() || isScalar() && !isSavedStatus()"
        class="de-emph"
        drop-tooltip="{{ title() }} is of type {{ entity.typeName }}"
        drop-tooltip-position="left middle">
@@ -85,7 +85,7 @@
            placeholder="Filter..."
            ng-model="side.state.filters.vertex[entity.equivalentAttribute.title]"
            ng-model-options="{ updateOn: 'change blur' }"
-           id="filter">
+           id="filter-segmentation">
   </form>
 
   <div ng-show="availableVisualizations().length !== 0" class="visualization-menu">
@@ -104,6 +104,10 @@
          min="-1"
          max="101"
          tooltip="Threshold">
+
+  <div class="menu-item" ng-click="loadStatus()" id="load-visualization">
+    <i class="glyphicon glyphicon-eye-open"></i> Load visualization
+  </div>
 
   <div class="menu-item" ng-click="discard()">
     <i class="glyphicon glyphicon-trash"></i> Discard
