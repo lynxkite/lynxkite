@@ -28,7 +28,7 @@ module.exports = function(fw) {
         features: 'yob',
         method: 'Linear regression',
       });
-      expect(lib.left.scalar('age_from_yob').getText())
+      expect(lib.left.scalarValue('age_from_yob').getText())
        .toBe('Linear regression model predicting age');
     },
     function() {}

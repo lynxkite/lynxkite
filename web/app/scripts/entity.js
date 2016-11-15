@@ -31,12 +31,17 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       // Reset menu state when opening.
       scope.menu = {};
       drop.on('open', function() { scope.$apply(function() {
+        drop.update(); // Fix misalignment on first open. (Drop bug?)
         scope.menu = { open: true };
         updateHistogram();
       }); });
       drop.on('close', function() { scope.$apply(function() {
         scope.menu.open = false;
       }); });
+
+      scope.closeMenu = function() { // For testing.
+        drop.close();
+      };
 
       // Attributes and scalars have a "title", segmentations have a "name".
       scope.title = function() { return scope.entity.title || scope.entity.name; };
@@ -136,8 +141,6 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       scope.$watch('histogram.$resolved', updateHistogramTSV);
 
       scope.availableVisualizations = function() {
-        var state = scope.side.state;
-        if (state.graphMode !== 'sampled' || state.display !== 'svg') { return []; }
         if (scope.kind === 'vertex-attribute') { return vertexAttributeVisualizations(); }
         if (scope.kind === 'edge-attribute') { return edgeAttributeVisualizations(); }
         return [];
@@ -147,43 +150,59 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       };
 
       function vertexAttributeVisualizations() {
-        var vs = ['Label'];
         var e = scope.entity;
         var state = scope.side.state;
-        var hasLabel = state.attributeTitles.label !== undefined;
-        if (e.typeName === 'Double') {
-          vs.push('Size');
-          vs.push('Color');
-          vs.push('Opacity');
-          if (hasLabel) {
-            vs.push('Label size');
-            vs.push('Label color');
+        var vs = [];
+        if (state.graphMode === 'bucketed') {
+          if (e.canBucket) {
+            vs.push('X');
+            vs.push('Y');
           }
-        } else if (e.typeName === 'String') {
-          vs.push('Color');
-          if (hasLabel) {
-            vs.push('Label color');
+        } else if (state.graphMode === 'sampled' && state.display === 'svg') {
+          vs.push('Label');
+          var hasLabel = state.attributeTitles.label !== undefined;
+          if (e.typeName === 'Double') {
+            vs.push('Size');
+            vs.push('Color');
+            vs.push('Opacity');
+            if (hasLabel) {
+              vs.push('Label size');
+              vs.push('Label color');
+            }
+          } else if (e.typeName === 'String') {
+            vs.push('Color');
+            if (hasLabel) {
+              vs.push('Label color');
+            }
+            vs.push('Icon');
+            vs.push('Image');
+          } else if (e.typeName === '(Double, Double)') {
+            vs.push('Geo coordinates');
+            vs.push('Position');
           }
-          vs.push('Icon');
-          vs.push('Image');
-        } else if (e.typeName === '(Double, Double)') {
-          vs.push('Geo coordinates');
-          vs.push('Position');
-        }
-        if (e.isNumeric) {
-          vs.push('Slider');
+          if (e.isNumeric) {
+            vs.push('Slider');
+          }
         }
         return vs;
       }
 
       function edgeAttributeVisualizations() {
-        var vs = ['Edge label'];
         var e = scope.entity;
-        if (e.typeName === 'Double') {
-          vs.push('Edge color');
-          vs.push('Width');
-        } else if (e.typeName === 'String') {
-          vs.push('Edge color');
+        var state = scope.side.state;
+        var vs = [];
+        if (state.graphMode === 'bucketed') {
+          if (e.typeName === 'Double') {
+            vs.push('Width');
+          }
+        } else if (state.graphMode === 'sampled' && state.display === 'svg') {
+          vs.push('Edge label');
+          if (e.typeName === 'Double') {
+            vs.push('Edge color');
+            vs.push('Width');
+          } else if (e.typeName === 'String') {
+            vs.push('Edge color');
+          }
         }
         return vs;
       }

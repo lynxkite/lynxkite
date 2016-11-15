@@ -69,6 +69,14 @@ module.exports = function(fw) {
     }
   }
 
+  var name = lib.left.vertexAttribute('name');
+  var gender = lib.left.vertexAttribute('gender');
+  var income = lib.left.vertexAttribute('income');
+  var age = lib.left.vertexAttribute('age');
+  var location = lib.left.vertexAttribute('location');
+  var weight = lib.left.edgeAttribute('weight');
+  var comment = lib.left.edgeAttribute('comment');
+
   fw.statePreservingTest(
     'test-example project with example graph',
     'sampled mode attribute visualizations',
@@ -104,7 +112,7 @@ module.exports = function(fw) {
         savedPositions = positions(graph);
       });
 
-      lib.left.visualizeAttribute('name', 'label');
+      name.visualizeAs('label');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -115,7 +123,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('gender', 'icon');
+      gender.visualizeAs('icon');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -126,7 +134,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('income', 'color');
+      income.visualizeAs('color');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -137,7 +145,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('age', 'size');
+      age.visualizeAs('size');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -148,7 +156,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('age', 'opacity');
+      age.visualizeAs('opacity');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -159,7 +167,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('age', 'label-size');
+      age.visualizeAs('label-size');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -170,7 +178,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('age', 'label-color');
+      age.visualizeAs('label-color');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -183,7 +191,7 @@ module.exports = function(fw) {
 
       // There is no URL attribute in the example graph. Since we only check the "href"
       // attribute anyway, any string is good enough for the test.
-      lib.left.visualizeAttribute('name', 'image');
+      name.visualizeAs('image');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -195,10 +203,10 @@ module.exports = function(fw) {
       });
 
       // Try removing some visualizations.
-      lib.left.doNotVisualizeAttribute('age', 'opacity');
-      lib.left.doNotVisualizeAttribute('age', 'label-size');
-      lib.left.doNotVisualizeAttribute('age', 'label-color');
-      lib.left.doNotVisualizeAttribute('name', 'image');
+      age.doNotVisualizeAs('opacity');
+      age.doNotVisualizeAs('label-size');
+      age.doNotVisualizeAs('label-color');
+      name.doNotVisualizeAs('image');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -210,7 +218,7 @@ module.exports = function(fw) {
       });
 
       // Edge attributes.
-      lib.left.visualizeAttribute('weight', 'width');
+      weight.visualizeAs('width');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
@@ -222,7 +230,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('weight', 'edge-color');
+      weight.visualizeAs('edge-color');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
@@ -234,7 +242,7 @@ module.exports = function(fw) {
         expect(positions(graph)).toEqual(savedPositions);
       });
 
-      lib.left.visualizeAttribute('comment', 'edge-label');
+      comment.visualizeAs('edge-label');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
@@ -247,7 +255,7 @@ module.exports = function(fw) {
       });
 
       // Location attributes.
-      lib.left.visualizeAttribute('location', 'position');
+      location.visualizeAs('position');
       // Toggle off and on to shake off the unpredictable offset from the non-positioned layout.
       lib.left.toggleSampledVisualization();
       lib.left.toggleSampledVisualization();
@@ -260,7 +268,7 @@ module.exports = function(fw) {
           ]);
       });
 
-      lib.left.visualizeAttribute('location', 'geo');
+      location.visualizeAs('geo-coordinates');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
@@ -279,8 +287,8 @@ module.exports = function(fw) {
     function() {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
-      lib.left.visualizeAttribute('name', 'label');
-      lib.left.visualizeAttribute('age', 'slider');
+      name.visualizeAs('label');
+      age.visualizeAs('slider');
       var RED = 'rgb(161, 53, 53)',
           YELLOW = 'rgb(184, 184, 46)',
           GREEN = 'rgb(53, 161, 53)';
@@ -291,7 +299,7 @@ module.exports = function(fw) {
           { label: 'Bob', color: RED },
           ]);
       });
-      var slider = lib.left.attributeSlider('age');
+      var slider = age.slider();
       var K = protractor.Key;
 
       slider.sendKeys(K.HOME);
@@ -360,7 +368,7 @@ module.exports = function(fw) {
         expect(graph.vertices).toConcur([{ label: '4' }]);
       });
 
-      lib.left.visualizeAttribute('gender', 'x');
+      gender.visualizeAs('x');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
           { src: 0, dst: 1, width: '<6' },
@@ -373,7 +381,7 @@ module.exports = function(fw) {
           ]);
       });
 
-      lib.left.visualizeAttribute('age', 'y');
+      age.visualizeAs('y');
       lib.visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
           { src: 0, dst: 2, width: '>2' },
@@ -398,7 +406,7 @@ module.exports = function(fw) {
     function() {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
-      lib.left.visualizeAttribute('name', 'label');
+      name.visualizeAs('label');
       var leftPositions;
       lib.visualization.graphData().then(function(graph) {
         leftPositions = positions(graph);
@@ -408,7 +416,7 @@ module.exports = function(fw) {
 
       lib.right.openSecondProject('test-example');
       lib.right.toggleBucketedVisualization();
-      lib.right.visualizeAttribute('gender', 'y');
+      lib.right.vertexAttribute('gender').visualizeAs('y');
       lib.visualization.graphData().then(function(graph) {
         // Make sure the original vertices did not move.
         function matchPos(a, b) {
@@ -464,7 +472,7 @@ module.exports = function(fw) {
     function() {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
-      lib.left.visualizeAttribute('name', 'label');
+      name.visualizeAs('label');
       lib.visualization.elementByLabel('Eve').click();
       lib.visualization.clickMenu('add-to-centers');
       lib.left.setSampleRadius(0);
