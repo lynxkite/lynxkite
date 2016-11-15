@@ -2513,7 +2513,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
+  register("Import project as segmentation", new ImportOperation(_, _) {
     def parameters = List(
       Choice(
         "them",
