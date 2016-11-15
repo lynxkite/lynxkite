@@ -1,7 +1,7 @@
 // The entry for an attribute/scalar/segmentation in the project view.
 'use strict';
 
-angular.module('biggraph').directive('entity', function(axisOptions, util) {
+angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
   return {
     restrict: 'E',
     scope: {
@@ -31,7 +31,6 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       // Reset menu state when opening.
       scope.menu = {};
       drop.on('open', function() { scope.$apply(function() {
-        drop.update(); // Fix misalignment on first open. (Drop bug?)
         scope.menu = { open: true };
         updateHistogram();
       }); });
@@ -51,6 +50,14 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
       scope.isSegmentation = function() { return scope.kind === 'segmentation'; };
       scope.isAttribute = function() {
         return scope.isVertexAttribute() || scope.isEdgeAttribute();
+      };
+
+      scope.isSavedStatus = function() {
+        return (scope.isScalar() &&
+            scope.entity.typeName === 'com.lynxanalytics.biggraph.controllers.UIStatus');
+      };
+      scope.loadStatus = function() {
+        scope.side.updateFromBackendJson(scope.side.scalars[scope.title()].value.string);
       };
 
       scope.active = function() {
@@ -110,6 +117,10 @@ angular.module('biggraph').directive('entity', function(axisOptions, util) {
         };
         console.log(scope.side.axisOptions(scope.attributeKind(), scope.entity.title));
         scope.histogram = util.get('/ajax/histo', q);
+        $timeout(function() {
+          // The popup may need to move.
+          drop.position();
+        }, 0, false);
       }
 
       function updateHistogramTSV() {

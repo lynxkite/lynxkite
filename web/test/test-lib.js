@@ -32,13 +32,14 @@ Entity.prototype = {
   },
 
   popoff: function() {
-    this.menu.evaluate('closeMenu()');
+    this.element.evaluate('closeMenu()');
   },
 
-  setFilter: function(attributeName, filterValue) {
-    var filterBox = this.side.$('.attribute input[name="' + attributeName + '"]');
+  setFilter: function(filterValue) {
+    var filterBox = this.popup().$('#filter');
     filterBox.clear();
     filterBox.sendKeys(filterValue).submit();
+    this.popoff();
   },
 
   getHistogramValues: function(precise) {
@@ -50,11 +51,11 @@ Entity.prototype = {
     histogram.isDisplayed().then(displayed => {
       if (!displayed) { popup.$('#show-histogram').click(); }
     });
+    expect(histogram.isDisplayed()).toBe(true);
     if (precise) {
       popup.$('#precise-histogram-calculation').click();
     }
     var total = histogram.$('.histogram-total');
-    expect(histogram.isDisplayed()).toBe(true);
     function allFrom(td) {
       var toolTip = td.getAttribute('drop-tooltip');
       var style = td.$('div.bar').getAttribute('style');
@@ -89,6 +90,7 @@ Entity.prototype = {
       }
       expect(total).toEqual(sum);
     });
+    this.popoff();
     return res;
   },
 
@@ -110,6 +112,11 @@ Entity.prototype = {
 
   slider: function() {
     return this.popup().$('#slider');
+  },
+
+  clickMenu: function(id) {
+    this.popup().$('#' + id).click();
+    this.popoff();
   },
 };
 
