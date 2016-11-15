@@ -434,7 +434,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
         assert(!projectAttrNames.contains(prefix + name),
-          s"Cannot import column ${prefix + name}. Attribute already exists.")
+          s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
       }
     }
@@ -468,7 +468,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
         assert(!projectAttrNames.contains(prefix + name),
-          s"Cannot import column ${prefix + name}. Attribute already exists.")
+          s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
       }
     }
