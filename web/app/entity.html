@@ -1,8 +1,10 @@
-<div class="entity" ng-class="{ active: active() }">
+<div class="entity"
+     ng-class="{ active: active() }"
+     id="{{ kind }}-{{ title() }}">
   <span class="title"> {{ title() }} </span>
   <value class="subtoken"
          ng-if="isScalar()"
-         id="scalar-{{ title() }}"
+         id="scalar-value-{{ title() }}"
          ref="side.scalars[title()]"></value>
   <span class="subtoken filter"
         ng-show="getFilter()">
@@ -10,19 +12,15 @@
   </span>
   <span class="subtoken"
         ng-show="side.state.graphMode === 'bucketed' && axisOptions.logarithmic"> log </span>
-  <span ng-repeat="opt in ['X', 'Y', 'width']"
-        class="subtoken visualization"
-        ng-show="side.state.graphMode === 'bucketed' &&
-        side.state.attributeTitles[opt.toLowerCase()] === title()">
-    {{ opt }} </span>
 
-  <span class="subtoken visualization"
-        ng-repeat="
-        visualization in side.filterApplied(availableVisualizationsLowerCase(), title())">
+  <span ng-repeat="
+        visualization in side.filterApplied(availableVisualizationsLowerCase(), title())"
+        class="subtoken visualization"
+        id="visualized-as-{{ visualization | id }}">
     {{ visualization }} </span>
 </div>
 
-<div class="menu entity-menu">
+<div class="menu entity-menu" id="menu-{{ kind }}-{{ title() }}">
   <div class="de-emph" ng-show="entity.note">
     {{ title() }} = <span trusted-html="entity.note"></span>
   </div>
@@ -54,38 +52,13 @@
     <i class="glyphicon glyphicon-stop"></i> Close
   </div>
 
-  <div ng-show="
-  kind === 'vertex-attribute' && side.state.graphMode === 'bucketed' && entity.canBucket">
-    <div class="menu-item"
-         id="axis-x-{{ title() }}"
-         ng-class="{ active: side.state.attributeTitles.x === title() }"
-         ng-click="side.toggleAttributeTitle('x', title())">
-      Graph on <b>X</b>
-    </div>
-    <div class="menu-item"
-         id="axis-y-{{ title() }}"
-         ng-class="{ active: side.state.attributeTitles.y === title() }"
-         ng-click="side.toggleAttributeTitle('y', title())">
-      Graph on <b>Y</b>
-    </div>
-  </div>
-
-  <div ng-show="
-  kind === 'edge-attribute' &&
-  side.state.graphMode === 'bucketed' && entity.typeName === 'Double'">
-    <div class="menu-item"
-         ng-class="{ active: side.state.attributeTitles.width === title() }"
-         ng-click="side.toggleAttributeTitle('width', title())">
-      Graph as <b>width</b>
-    </div>
-  </div>
-
   <div ng-show="entity.canBucket && !histogram"
        class="menu-item"
+       id="show-histogram"
        ng-click="showHistogram()">
     <i class="glyphicon glyphicon-stats"></i> Show histogram
   </div>
-  <histogram ng-show="histogram" model="histogram" attr-name="{{ title() }}"></histogram>
+  <histogram ng-show="histogram" model="histogram"></histogram>
   <copy-box class="pull-right"
             ng-show="histogram"
             description="Copy&nbsp;histogram to&nbsp;clipboard"
@@ -95,7 +68,7 @@
     <input type="checkbox" ng-model="precise"></input> precise
   </label>
 
-  <label ng-show="showLogCheckbox()">
+  <label ng-show="showLogCheckbox()" id="logarithmic">
     <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
   </label>
 
