@@ -82,6 +82,7 @@ object RemoteAPIProtocol {
     }
   }
 
+  case class ParquetMetadataRequest(path: String)
   case class CheckpointRequest(checkpoint: String)
   case class TakeFromViewRequest(checkpoint: String, limit: Int)
   // Each row is a map, repeating the schema. Values may be missing for some rows.
@@ -125,6 +126,7 @@ object RemoteAPIProtocol {
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
+  implicit val rParquetMetadataRequest = json.Json.reads[ParquetMetadataRequest]
   implicit val rCheckpointRequest = json.Json.reads[CheckpointRequest]
   implicit val rTakeFromViewRequest = json.Json.reads[TakeFromViewRequest]
   implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
@@ -399,8 +401,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
-  def getRowCount(user: User, request: ParquetImportRequest): Long = {
-    val input = request.files
+  def getRowCount(user: User, request: ParquetMetadataRequest): Long = {
+    val input = request.path
     val conf = new Configuration()
     val inputPath = new Path(input)
     val inputFileStatus = inputPath.getFileSystem(conf).getFileStatus(inputPath)
