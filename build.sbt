@@ -59,7 +59,8 @@ libraryDependencies ++= Seq(
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
-  // Parquet-tools for reading parquet metadata.
+  // Parquet-tools 1.7.0 for reading parquet metadata.
+  // 1.8.0 and 1.9.0 cause fatal error deep inside the Scala code.
   "org.apache.parquet" % "parquet-tools" % "1.7.0")
 
 resolvers += "Twitter Repository" at "http://maven.twttr.com"
