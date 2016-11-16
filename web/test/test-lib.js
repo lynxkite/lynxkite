@@ -24,6 +24,14 @@ function Entity(side, kind, name) {
 
 Entity.prototype = {
 
+  isPresent: function() {
+    return this.element.isPresent();
+  },
+
+  isDisplayed: function() {
+    return this.element.isDisplayed();
+  },
+
   popup: function() {
     this.menu.isPresent().then(present => {
       if (!present) { this.element.click(); }
@@ -32,7 +40,9 @@ Entity.prototype = {
   },
 
   popoff: function() {
-    this.element.evaluate('closeMenu()');
+    this.element.isPresent().then(present => {
+      if (present) { this.element.evaluate('closeMenu()'); }
+    });
   },
 
   setFilter: function(filterValue) {
@@ -140,7 +150,7 @@ Side.prototype = {
 
   // Only for opening the second project next to an already open project.
   openSecondProject: function(project) {
-    $('#show-selector-button').click();
+    testLib.showSelector();
     this.side.$('#project-' + toID(project)).click();
   },
 
@@ -381,7 +391,7 @@ History.prototype = {
   // does not work.
   getOperationInCategoryByName: function(operation, tooltip, name) {
     operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
-    var ops = operation.$('operation-toolbox').$$('div[class="list-group"] > div');
+    var ops = operation.$('operation-toolbox').$$('div.operation');
     return ops.filter(function(element) {
         return element.getText().then(function(text) { return text === name; });
       }).get(0);
@@ -1054,6 +1064,10 @@ testLib = {
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
     });
+  },
+
+  showSelector: function() {
+    $('#show-selector-button').click();
   },
 };
 
