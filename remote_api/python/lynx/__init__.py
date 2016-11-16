@@ -242,10 +242,10 @@ class LynxKite:
         "Json",
         dict(columnsToImport=columnsToImport, files=files))
 
-  def parquet_row_count(self, files):
+  def parquet_row_count(self, path):
     '''Computes the view and returns the schema.'''
     r = self._send('getRowCount', dict(
-        files=files, columnsToImport=[], overwrite=False, table='', privacy=''
+        path=path
     ))
     return r
 
