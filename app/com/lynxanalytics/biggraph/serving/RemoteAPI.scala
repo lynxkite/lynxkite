@@ -410,13 +410,12 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val inputFileStatus = inputPath.getFileSystem(conf).getFileStatus(inputPath)
     val footers = ParquetFileReader.readFooters(conf, inputFileStatus, false)
 
-    var r: Long = 0
-    for (f <- footers.asScala) {
-      for (b <- f.getParquetMetadata().getBlocks().asScala) {
-        r += b.getRowCount()
-      }
-    }
-    ParquetMetadataResponse(r)
+    ParquetMetadataResponse(
+      footers.asScala.flatMap { f =>
+        val blocks = f.getParquetMetadata().getBlocks().asScala
+        blocks.map(_.getRowCount())
+      }.sum
+    )
   }
 
   def takeFromView(
