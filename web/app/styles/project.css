@@ -214,13 +214,14 @@ label {
 
 .extra-controls table {
   width: 100%;
+  max-width: 700px;
 }
 .extra-controls td {
   padding: 6px;
 }
 .extra-controls td:first-child {
   text-align: right;
-  width: 40%;
+  width: 200px;
 }
 #sample-center .input-group-btn {
   vertical-align: bottom;
