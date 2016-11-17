@@ -9,7 +9,6 @@ pandas
 python-dateutil
 PyYAML
 prometheus_client
-requests
 Sphinx
 sphinx-rtd-theme
 sqlalchemy
