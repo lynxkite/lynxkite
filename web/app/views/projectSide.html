@@ -229,15 +229,19 @@
     <div class="entity-sections">
       <div ng-repeat="section in side.sections">
         <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
-          <help-popup href="{{ side.sectionHelp[section] }}" class="pull-right"></help-popup>
-          <div class="entity-section-label" ng-click="side.showSection(section, false)">
-            {{ side.sectionHumanName[section] }} </div>
+          <div class="entity-section-label">
+            <span class="label-text" ng-click="side.showSection(section, false)">
+              {{ side.sectionHumanName[section] }} </span>
+            <help-popup href="{{ side.sectionHelp[section] }}"></help-popup>
+          </div>
         </div>
         <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
-             class="entity-section-label" ng-click="side.showSection(section, true)">
-          {{ side.sectionElements(section).length }}
-          {{ side.sectionHumanName[section] | lowercase }}
-          are hidden. </div>
+             class="entity-section-label">
+          <span class="label-text" ng-click="side.showSection(section, true)">
+            {{ side.sectionElements(section).length }}
+            {{ side.sectionHumanName[section] | lowercase }}
+            are hidden. </span>
+        </div>
         <div class="entity-list" ng-show="side.showSection(section)">
           <entity ng-repeat="e in side.sectionElements(section)"
                   kind="{{ section }}"
@@ -249,14 +253,18 @@
 
     <!-- Extra controls for visualizations. -->
     <div class="entity-section-label"
-         ng-show="side.state.graphMode && !side.showSection('view-settings')"
-         ng-click="side.showSection('view-settings', true)"> View settings are hidden. </div>
+         ng-show="side.state.graphMode && !side.showSection('view-settings')">
+      <span class="label-text" ng-click="side.showSection('view-settings', true)">
+        View settings are hidden. </span>
+    </div>
     <div class="extra-controls" ng-if="side.state.graphMode && side.showSection('view-settings')">
       <!-- Sampled view extra controls. -->
       <div ng-if="side.state.graphMode === 'sampled'">
-        <help-popup class="pull-right" href="concrete-view-settings"></help-popup>
-        <div class="entity-section-label"
-             ng-click="side.showSection('view-settings', false)"> Sampled view settings </div>
+        <div class="entity-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Sampled view settings </span>
+          <help-popup href="concrete-view-settings"></help-popup>
+        </div>
         <table>
           <tr>
             <td>Display:</td>
@@ -362,8 +370,10 @@
 
       <!-- Extra controls for the bucketed view. -->
       <div ng-if="side.state.graphMode === 'bucketed'">
-        <div class="entity-section-label"
-             ng-click="side.showSection('view-settings', false)"> Bucketed view settings </div>
+        <div class="entity-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Bucketed view settings </span>
+        </div>
         <table>
           <tr>
             <td>Buckets:</td>
@@ -403,11 +413,11 @@
     </div>
 
     <div class="sql-box-section">
-      <help-popup ng-show="side.showSection('sql')"
-                  href="sql-box"
-                  class="pull-right" ></help-popup>
-        <div class="entity-section-label"
-             ng-click="side.showSection('sql', !side.showSection('sql'))"> SQL </div>
+        <div class="entity-section-label">
+          <span class="label-text" ng-click="side.showSection('sql', !side.showSection('sql'))">
+            SQL </span>
+          <help-popup href="sql-box" ng-show="side.showSection('sql')"></help-popup>
+        </div>
         <sql-box ng-show="side.showSection('sql')" side="side"></sql-box>
     </div>
   </div>

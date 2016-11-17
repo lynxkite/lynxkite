@@ -120,14 +120,21 @@ input.save-as {
 
 .entity-section-label {
   color: rgba(0, 0, 0, 0.3);
-  font-size: 70%;
+  font-size: 80%;
   padding-top: 0;
   padding-bottom: 0;
-  text-align: center;
+  padding-left: 10vw;
+}
+
+.entity-section-label help-popup {
+  font-size: 10px;
+  padding: 0 10px;
+}
+.entity-section-label .label-text {
   cursor: pointer;
 }
 
-.entity-section-label:hover {
+.entity-section-label .label-text:hover {
   text-decoration: underline;
 }
 
