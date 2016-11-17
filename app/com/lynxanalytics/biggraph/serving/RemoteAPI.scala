@@ -22,6 +22,7 @@ import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
+  case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
@@ -114,6 +115,7 @@ object RemoteAPIProtocol {
   case class PrefixedPathResult(
     exists: Boolean, resolved: String)
 
+  implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
@@ -401,7 +403,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
-  def getParquetMetadata(user: User, request: ParquetMetadataRequest): Long = {
+  def getParquetMetadata(user: User, request: ParquetMetadataRequest): ParquetMetadataResponse = {
     val input = request.path
     val conf = new Configuration()
     val inputPath = new Path(input)
@@ -414,7 +416,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
         r += b.getRowCount()
       }
     }
-    r
+    ParquetMetadataResponse(r)
   }
 
   def takeFromView(
