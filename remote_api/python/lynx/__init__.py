@@ -244,9 +244,7 @@ class LynxKite:
 
   def get_parquet_metadata(self, path):
     '''Computes the view and returns the schema.'''
-    r = self._send('getParquetMetadata', dict(
-        path=path
-    ))
+    r = self._send('getParquetMetadata', dict(path=path))
     return r
 
   def _create_view(self, format, dict):
