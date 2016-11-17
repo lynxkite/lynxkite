@@ -65,10 +65,9 @@ Entity.prototype = {
     if (precise) {
       popup.$('#precise-histogram-calculation').click();
     }
-    var total = histogram.$('.histogram-total');
     function allFrom(td) {
       var toolTip = td.getAttribute('drop-tooltip');
-      var style = td.$('div.bar').getAttribute('style');
+      var style = td.$('.bar').getAttribute('style');
       return protractor.promise.all([toolTip, style]).then(function(results) {
         var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
         var styleMatch = results[1].match(/^height: (\d+)%;$/);
@@ -79,7 +78,7 @@ Entity.prototype = {
         };
       });
     }
-    var tds = histogram.$$('td');
+    var tds = histogram.$$('.bar-container');
     var res = tds.then(function(tds) {
       var res = [];
       for (var i = 0; i < tds.length; i++) {
@@ -88,10 +87,9 @@ Entity.prototype = {
       return protractor.promise.all(res);
     });
 
-    browser.actions().mouseMove(tds.first()).perform();
-    expect(total.isDisplayed()).toBe(true);
+    var total = histogram.$('#histogram-total');
     protractor.promise.all([total.getText(), res]).then(function(results) {
-      var totalValue = results[0].match(/total: ([0-9,]+)/)[1];
+      var totalValue = results[0].match(/histogram total: ([0-9,]+)/)[1];
       var values = results[1];
       var total = parseInt(totalValue.replace(/,/g, ''));
       var sum = 0;
