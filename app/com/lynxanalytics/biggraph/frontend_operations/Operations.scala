@@ -3367,7 +3367,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
           } else {
             FEOption.list(
-              "average", "count", "count_distinct", "max", "median", "min", "most_common",
+              "average", "count", "count_distinct", "max", "median", "min", "most_common", "count_most_common",
               "set", "std_deviation", "sum", "vector")
           }
         } else if (attr.is[String]) {
@@ -3377,7 +3377,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             FEOption.list("count", "first")
           } else {
             FEOption.list(
-              "most_common", "count_distinct", "majority_50", "majority_100",
+              "most_common", "count_most_common", "count_distinct", "majority_50", "majority_100",
               "count", "vector", "set")
           }
         } else {
@@ -3386,7 +3386,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             FEOption.list("count", "first")
           } else {
-            FEOption.list("count", "count_distinct", "median", "most_common", "set", "vector")
+            FEOption.list("count", "count_distinct", "median", "most_common", "count_most_common", "set", "vector")
           }
         }
         TagList(s"aggregate-$name", name, options = options)
