@@ -154,7 +154,7 @@ object RemoteAPIServer extends JsonServer {
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
-  def getRowCount = jsonPost(c.getRowCount)
+  def getParquetMetadata = jsonPost(c.getParquetMetadata)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def removeName = jsonPost(c.removeName)
@@ -401,7 +401,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
-  def getRowCount(user: User, request: ParquetMetadataRequest): Long = {
+  def getParquetMetadata(user: User, request: ParquetMetadataRequest): Long = {
     val input = request.path
     val conf = new Configuration()
     val inputPath = new Path(input)
