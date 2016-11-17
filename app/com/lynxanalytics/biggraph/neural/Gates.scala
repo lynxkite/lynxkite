@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.neural
 
 import breeze.stats.distributions.RandBasis
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.commons.math3.random.MersenneTwister
 
 trait Adder[T] {
   def add(a: T, b: T): T
