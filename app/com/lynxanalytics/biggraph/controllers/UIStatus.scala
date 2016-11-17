@@ -31,6 +31,8 @@ case class UIStatus(
   display: String,
   filters: UIFilterStatus,
   bucketCount: String,
+  preciseBucketSizes: Option[Boolean],
+  relativeEdgeDensity: Option[Boolean],
   axisOptions: UIAxisOptions,
   sampleRadius: String,
   attributeTitles: Map[String, String],
