@@ -243,7 +243,7 @@ class LynxKite:
         dict(columnsToImport=columnsToImport, files=files))
 
   def get_parquet_metadata(self, path):
-    '''Computes the view and returns the schema.'''
+    '''Reads the metadata of a parquet file and returns the number of rows.'''
     r = self._send('getParquetMetadata', dict(path=path))
     return r
 
