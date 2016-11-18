@@ -18,7 +18,7 @@ class TestGetParquetMetadata(unittest.TestCase):
       view = self.generate_view(row_count)
       path = 'DATA$/tmp/test_get_parquet_metadata_{}.parquet'.format(row_count)
       view.export_parquet(path)
-      self.assertEqual(row_count, row_count)
+      self.assertEqual(self.lk.get_parquet_metadata(path).rowCount, row_count)
 
 if __name__ == '__main__':
   unittest.main()
