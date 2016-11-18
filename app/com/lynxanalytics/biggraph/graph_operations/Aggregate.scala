@@ -369,8 +369,8 @@ object Aggregator {
     }
   }
 
-  object MostCommonCount extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommonCount() }
-  case class MostCommonCount[T]() extends LocalAggregator[T, Double] {
+  object CountMostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountMostCommon() }
+  case class CountMostCommon[T]() extends LocalAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def aggregate(values: Iterable[T]) = {
       val mostCommon = values.groupBy(identity).maxBy(_._2.size)._1
