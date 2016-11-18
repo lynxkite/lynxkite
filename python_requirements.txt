@@ -2,6 +2,7 @@ autopep8
 awscli
 boto3
 croniter
+flask
 luigi==2.3.2
 mysqlclient
 pandas

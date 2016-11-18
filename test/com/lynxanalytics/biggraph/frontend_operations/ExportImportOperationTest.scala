@@ -167,4 +167,48 @@ class ExportImportOperationTest extends OperationsTestBase {
     val valueAttr = project.edgeAttributes("imported_value").runtimeSafeCast[String].rdd
     assert(Seq((0, "value1"), (2, "value2")) == valueAttr.collect.toSeq.sorted)
   }
+
+  test("Attributes are not overwritten during import") {
+    val rows = Seq(
+      ("1", "Bob", "12"),
+      ("2", "Eve", "23"),
+      ("3", "Chris", "34"))
+    val sql = cleanDataManager.newSQLContext
+    val dataFrame = sql.createDataFrame(rows).toDF("id", "name", "age")
+    val table = TableImport.importDataFrameAsync(dataFrame)
+    val tableFrame = DirectoryEntry.fromName("test_attr_overwrite_table").asNewTableFrame(table, "")
+    val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
+
+    val edgeRows = Seq(("Adam loves Eve", "1.0"))
+    val edgeDataFrame = sql.createDataFrame(edgeRows).toDF("new_comment", "weight")
+    val edgeTable = TableImport.importDataFrameAsync(edgeDataFrame)
+    val edgeTableFrame = DirectoryEntry.fromName("test_attr_overwrite_table2").asNewTableFrame(edgeTable, "")
+    val edgeTablePath = s"!checkpoint(${edgeTableFrame.checkpoint}, ${edgeTableFrame.name})|vertices"
+
+    run("Example Graph")
+    run("Vertex attribute to string", Map(
+      "attr" -> "id"
+    ))
+    val ex = intercept[java.lang.AssertionError] {
+      run("Import vertex attributes", Map(
+        "table" -> tablePath,
+        "id-attr" -> "id",
+        "id-column" -> "id",
+        "prefix" -> ""
+      ))
+    }
+    assert(ex.getMessage.contains(
+      "Cannot import column `id`. Attribute already exists."))
+    val ex2 = intercept[java.lang.AssertionError] {
+      run("Import edge attributes", Map(
+        "table" -> edgeTablePath,
+        "id-attr" -> "comment",
+        "id-column" -> "new_comment",
+        "prefix" -> ""
+      ))
+    }
+    assert(ex2.getMessage.contains(
+      "Cannot import column `weight`. Attribute already exists."))
+
+  }
 }
