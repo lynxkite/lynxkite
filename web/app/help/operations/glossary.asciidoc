@@ -152,6 +152,7 @@ The available aggregators are:
  ** 'median'
  ** `min`
  ** `most_common`
+ ** `count_most_common` (the number of occurrences of the most common value)
  ** `set` (all the unique values, as a `Set` attribute)
  ** `std_deviation` (standard deviation)
  ** `sum`
@@ -159,6 +160,7 @@ The available aggregators are:
 
  * For `String` attributes:
  ** `most_common`
+ ** `count_most_common` (the number of occurrences of the most common value)
  ** `count_distinct` (the number of distinct values)
  ** `majority_50` (the value that 50% agree on, or empty string)
  ** `majority_100` (the value that 100% agree on, or empty string)
@@ -168,6 +170,7 @@ The available aggregators are:
 
  * For other attributes:
  ** `most_common`
+ ** `count_most_common` (the number of occurrences of the most common value)
  ** `count_distinct` (the number of distinct values)
  ** `count` (number of cases where the attribute is defined)
  ** `set` (all the unique values, as a `Set` attribute)
