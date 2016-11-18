@@ -6,7 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-### 1.9.6
+LynxKite:
+
+ - More compact UI for scalars and attributes.
+ - Fill full width if only one project is open.
 
 ### 1.9.6
 
