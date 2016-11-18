@@ -15,7 +15,7 @@ end::database-access[]
 tag::database-import[]
 [[db]] Database::
 include::glossary.asciidoc[tag=database-access]
-al
+
 [[table]] Table or view::
 Table to import from. This can be anything that can be put into the `SELECT * FROM table`
 statement.
