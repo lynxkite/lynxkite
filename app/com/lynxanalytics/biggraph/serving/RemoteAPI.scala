@@ -3,6 +3,10 @@ package com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Future
 import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
+import org.apache.parquet.hadoop.ParquetFileReader
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import scala.collection.JavaConverters._
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -17,6 +21,7 @@ import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
+  case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
@@ -108,6 +113,7 @@ object RemoteAPIProtocol {
   case class PrefixedPathResult(
     exists: Boolean, resolved: String)
 
+  implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
@@ -147,6 +153,7 @@ object RemoteAPIServer extends JsonServer {
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
+  def getParquetMetadata = jsonPost(c.getParquetMetadata)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def removeName = jsonPost(c.removeName)
@@ -391,6 +398,21 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val viewer = getViewer(checkpoint)
     val sqlContext = dataManager.newHiveContext()
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
+  }
+
+  def getParquetMetadata(user: User, request: PrefixedPathRequest): ParquetMetadataResponse = {
+    val input = HadoopFile(request.path).resolvedName
+    val conf = new Configuration()
+    val inputPath = new Path(input)
+    val inputFileStatus = inputPath.getFileSystem(conf).getFileStatus(inputPath)
+    val footers = ParquetFileReader.readFooters(conf, inputFileStatus, false)
+
+    ParquetMetadataResponse(
+      footers.asScala.flatMap { f =>
+        val blocks = f.getParquetMetadata().getBlocks().asScala
+        blocks.map(_.getRowCount())
+      }.sum
+    )
   }
 
   def takeFromView(
