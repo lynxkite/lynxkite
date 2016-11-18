@@ -26,6 +26,7 @@ LynxKite:
      `KITE_DRAWING_OVERALL` setting (default 10,000) and its more fine-grained companions.
  - Scalability improvement for Merge vertices and Import segmentation operations.
  - New _"Grow segmentation"_ operation added.
+ - New _"Count most common"_ local aggregator added.
 
 Ecosystem:
 
