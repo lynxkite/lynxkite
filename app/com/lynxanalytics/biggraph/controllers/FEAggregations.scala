@@ -21,12 +21,6 @@ object AttributeWithLocalAggregator {
     attr: Attribute[T], choice: String)(
       implicit manager: MetaGraphManager): AttributeWithLocalAggregator[_, _] = {
     choice match {
-      case "most_common" =>
-        AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
-      case "count_most_common" =>
-        AttributeWithLocalAggregator(attr, graph_operations.Aggregator.CountMostCommon[T]())
-      case "count_distinct" =>
-        AttributeWithLocalAggregator(attr, graph_operations.Aggregator.CountDistinct[T]())
       case "majority_50" =>
         AttributeWithLocalAggregator(
           attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
@@ -64,6 +58,12 @@ object AttributeWithAggregator {
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
       case "std_deviation" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.StdDev())
+      case "most_common" =>
+        AttributeWithAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "count_most_common" =>
+        AttributeWithAggregator(attr, graph_operations.Aggregator.CountMostCommon[T]())
+      case "count_distinct" =>
+        AttributeWithAggregator(attr, graph_operations.Aggregator.CountDistinct[T]())
     }
   }
 }
