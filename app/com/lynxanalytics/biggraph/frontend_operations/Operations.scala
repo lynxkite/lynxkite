@@ -3363,30 +3363,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
           } else if (needsGlobal) {
-            FEOption.list("average", "count", "first", "max", "min", "std_deviation", "sum")
+            FEOption.list(
+              "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
+              "std_deviation", "sum")
 
           } else {
             FEOption.list(
-              "average", "count", "count_distinct", "max", "median", "min", "most_common", "count_most_common",
+              "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
               "set", "std_deviation", "sum", "vector")
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            FEOption.list("count", "first")
+            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
           } else {
             FEOption.list(
-              "most_common", "count_most_common", "count_distinct", "majority_50", "majority_100",
-              "count", "vector", "set")
+              "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
+              "vector", "set")
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            FEOption.list("count", "first")
+            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
           } else {
-            FEOption.list("count", "count_distinct", "median", "most_common", "count_most_common", "set", "vector")
+            FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
           }
         }
         TagList(s"aggregate-$name", name, options = options)
