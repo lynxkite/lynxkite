@@ -191,8 +191,7 @@ trait LocalAggregator[From, To] extends ToJson {
 }
 // Aggregates from From to Intermediate and at the end calls finalize() to turn
 // Intermediate into To. So Intermediate can contain extra data over what is
-// required in the result. The merge() and combine() methods make it possible to
-// use Aggregator in a distributed setting. Provides a scalable aggregateRDD() method.
+// required in the result. Provides a scalable aggregateRDD() method.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
@@ -206,6 +205,7 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
     values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To]
 }
 
+// The trivial extension of Aggregator.
 trait OnePhaseAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
   def merge(a: Intermediate, b: From): Intermediate
   def aggregatePartition(values: Iterator[From]): Intermediate =
@@ -219,6 +219,11 @@ trait OnePhaseAggregator[From, Intermediate, To] extends Aggregator[From, Interm
   }
 }
 
+// A two phase aggregator which creates an RDD of the counts of occurrences for each value
+// per key (key -> (count, value)). The merge method acts on this RDD. Similarly the
+// aggregatePartition method creates a list of (value, count)-s to merge. The occurrences of
+// distinct (key, value) pairs and the occurrence of each value within a key should lead to the
+// same result.
 trait TwoPhaseAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
   def merge(a: Intermediate, b: (Double, From)): Intermediate
   def aggregatePartition(values: Iterator[From]): Intermediate = values
