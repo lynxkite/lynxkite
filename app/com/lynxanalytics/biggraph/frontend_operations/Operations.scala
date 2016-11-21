@@ -3357,7 +3357,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     attrs: Iterable[(String, Attribute[_])],
     needsGlobal: Boolean = false,
     weighted: Boolean = false): List[OperationParameterMeta] = {
-    attrs.toList.map {
+    val sortedAttrs = attrs.toList.sortWith { case (a, b) => a._1 < b._1 }
+    sortedAttrs.toList.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (weighted) { // At the moment all weighted aggregators are global.
