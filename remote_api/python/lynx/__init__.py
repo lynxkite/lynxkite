@@ -242,6 +242,11 @@ class LynxKite:
         "Json",
         dict(columnsToImport=columnsToImport, files=files))
 
+  def get_parquet_metadata(self, path):
+    '''Reads the metadata of a parquet file and returns the number of rows.'''
+    r = self._send('getParquetMetadata', dict(path=path))
+    return r
+
   def _create_view(self, format, dict):
     # TODO: remove this once #3859 is resolved.
     # These are required (as present in the case class), but are actually not read by the API

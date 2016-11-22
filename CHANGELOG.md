@@ -10,6 +10,7 @@ LynxKite:
 
  - More compact UI for scalars and attributes.
  - Fill full width if only one project is open.
+ - New _"Count most common"_ local aggregator added.
 
 ### 1.9.6
 

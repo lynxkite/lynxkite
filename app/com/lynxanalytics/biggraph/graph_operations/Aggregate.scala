@@ -369,6 +369,15 @@ object Aggregator {
     }
   }
 
+  object CountMostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountMostCommon() }
+  case class CountMostCommon[T]() extends LocalAggregator[T, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
+    def aggregate(values: Iterable[T]) = {
+      val mostCommon = values.groupBy(identity).maxBy(_._2.size)._1
+      values.filter(_ == mostCommon).size.toDouble
+    }
+  }
+
   object CountDistinct extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
   case class CountDistinct[T]() extends LocalAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
