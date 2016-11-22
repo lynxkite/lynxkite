@@ -15,7 +15,7 @@ project.derivedVertexAttribute(
 
 project.mergeVerticesByAttribute(
   'key': 'label',
-  'aggregate-rnd_std_normal': 'average'
+  'aggregate-rnd_std_normal': 'average,most_common'
 )
 
 project.computeUncomputed()
