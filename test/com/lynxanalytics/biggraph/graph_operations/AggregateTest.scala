@@ -27,6 +27,10 @@ class AggregateTest extends FunSuite with TestGraphOp {
       Map(0 -> 19.25, 2 -> 50.3, 3 -> 2.0))
     assert(run(Aggregator.Median(), example.age) ==
       Map(0 -> 19.25, 2 -> 50.3, 3 -> 2.0))
+    assert(run(Aggregator.MostCommon[String](), example.gender) ==
+      Map(0 -> "Male", 2 -> "Male", 3 -> "Male"))
+    assert(run(Aggregator.CountMostCommon[String](), example.gender) ==
+      Map(0 -> 1.0, 2 -> 1.0, 3 -> 1.0))
     // Cannot predict output except for isolated points.
     val firsts = run(Aggregator.First[String](), example.name)
     assert(firsts.contains(0))

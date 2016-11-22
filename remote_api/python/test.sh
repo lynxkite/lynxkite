@@ -4,4 +4,4 @@
 export LYNXKITE_ADDRESS="http://localhost:${PORT:-2200}/"
 
 cd $(dirname $0)
-python3 -m unittest discover -s tests
+python3 -m unittest discover tests $@
