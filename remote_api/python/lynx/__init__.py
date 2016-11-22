@@ -338,6 +338,9 @@ class View:
     return r
 
   def enforce_schema(self, schema_file):
+    '''Raises an error if the schema of the view is different from the schema described in the specified file.
+    If the file does not exist, the current schema is dumped into a new file,
+    which later can be used as a reference schema'''
     schema = self.schema().to_dict()
     if os.path.isfile(schema_file):
       with open(schema_file, 'r') as f:
