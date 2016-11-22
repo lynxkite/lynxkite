@@ -3331,7 +3331,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict with a neural network, 1st version",
+  register("Predict with a neural network 1st version",
     new MachineLearningOperation(_, _) {
       def parameters = List(
         Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
