@@ -20,17 +20,17 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   }
 
   // Non-distributed training.
-  def simpleNeuralNetwork(featureCount: Int,
-                          networkSize: Int,
-                          learningRate: Double,
-                          radius: Int,
-                          hideState: Boolean,
-                          forgetFraction: Double,
-                          iterations: Int,
-                          seed: Int = 15,
-                          knownLabelWeight: Double = 0.5,
-                          gradientCheckOn: Boolean = false,
-                          networkLayout: String = "GRU") = NeuralNetwork(
+  def PredictViaNNOnGraphV1Simple(featureCount: Int,
+                                  networkSize: Int,
+                                  learningRate: Double,
+                                  radius: Int,
+                                  hideState: Boolean,
+                                  forgetFraction: Double,
+                                  iterations: Int,
+                                  seed: Int = 15,
+                                  knownLabelWeight: Double = 0.5,
+                                  gradientCheckOn: Boolean = false,
+                                  networkLayout: String = "GRU") = PredictViaNNOnGraphV1(
     featureCount, networkSize, learningRate, radius, hideState, forgetFraction,
     knownLabelWeight = knownLabelWeight,
     seed = seed,
@@ -46,7 +46,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val vs = CreateVertexSet(1000).result.vs
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
     val prediction = {
-      val op = simpleNeuralNetwork(
+      val op = PredictViaNNOnGraphV1Simple(
         featureCount = 0, networkSize = 2, learningRate = 0.5, radius = 0,
         hideState = false, forgetFraction = 0.0, iterations = 60,
         gradientCheckOn = false, networkLayout = "LSTM")
@@ -62,7 +62,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
     val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
     val prediction = {
-      val op = simpleNeuralNetwork(
+      val op = PredictViaNNOnGraphV1Simple(
         featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 1,
         hideState = true, forgetFraction = 0.0, iterations = 13,
         gradientCheckOn = false, networkLayout = "GRU")
@@ -79,7 +79,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
     val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
     val prediction = {
-      val op = simpleNeuralNetwork(
+      val op = PredictViaNNOnGraphV1Simple(
         featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 3,
         hideState = true, forgetFraction = 0.0, iterations = 8,
         gradientCheckOn = false, networkLayout = "MLP")
@@ -95,7 +95,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val b = vs.randomAttribute(200)
     val c = DeriveJS.deriveFromAttributes[Double]("a - b", Seq("a" -> a, "b" -> b), vs)
     val prediction = {
-      val op = simpleNeuralNetwork(
+      val op = PredictViaNNOnGraphV1Simple(
         featureCount = 2, networkSize = 10, learningRate = 0.2, radius = 0,
         hideState = true, forgetFraction = 0.0, iterations = 50,
         gradientCheckOn = false, networkLayout = "LSTM")
@@ -112,7 +112,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
-      val op = simpleNeuralNetwork(
+      val op = PredictViaNNOnGraphV1Simple(
         featureCount = 0, networkSize = 4, learningRate = 0.1, radius = 3,
         hideState = true, forgetFraction = 0.0, iterations = 35,
         gradientCheckOn = false, networkLayout = "MLP")
@@ -133,7 +133,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val sideNum = g.attr[String]("side").deriveX[Double](
       "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
     val prediction = {
-      val op = NeuralNetwork(
+      val op = PredictViaNNOnGraphV1(
         featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 3,
         hideState = false, forgetFraction = 0.5, trainingRadius = 4, maxTrainingVertices = 20,
         minTrainingVertices = 10, iterationsInTraining = 5, subgraphsInTraining = 5,
@@ -171,7 +171,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       vertices)
 
     val prediction = {
-      val op = NeuralNetwork(
+      val op = PredictViaNNOnGraphV1(
         featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 4,
         hideState = false, forgetFraction = 0.3, trainingRadius = 1, maxTrainingVertices = 8,
         minTrainingVertices = 7, iterationsInTraining = 3, subgraphsInTraining = 2,
@@ -241,7 +241,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       vertices)
 
     val prediction = {
-      val op = NeuralNetwork(
+      val op = PredictViaNNOnGraphV1(
         featureCount = 0, networkSize = 10, learningRate = 0.1, radius = 4,
         hideState = false, forgetFraction = 0.6, trainingRadius = 4, maxTrainingVertices = 20,
         minTrainingVertices = 10, iterationsInTraining = 10, subgraphsInTraining = 10,
@@ -284,7 +284,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       "a < -1 ? undefined : truePr", Seq("a" -> a, "truePr" -> truePr), vs)
 
     val prediction = {
-      val op = NeuralNetwork(
+      val op = PredictViaNNOnGraphV1(
         featureCount = 0, networkSize = 4, learningRate = 0.01, radius = 3,
         hideState = false, forgetFraction = 0.25, trainingRadius = 3, maxTrainingVertices = 10,
         minTrainingVertices = 5, iterationsInTraining = 2, subgraphsInTraining = 30,

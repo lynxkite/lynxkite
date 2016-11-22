@@ -3303,7 +3303,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Predict with a neural network",
+  register("Predict with a neural network, 1st version",
     new MachineLearningOperation(_, _) {
       def parameters = List(
         Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
@@ -3334,7 +3334,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
           }
         val prediction = {
-          val op = graph_operations.NeuralNetwork(
+          val op = graph_operations.PredictViaNNOnGraphV1(
             featureCount = features.length,
             networkSize = params("networkSize").toInt,
             learningRate = params("learningRate").toDouble,

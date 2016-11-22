@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.commons.math3.random.MersenneTwister
 
-object NeuralNetwork extends OpFromJson {
+object PredictViaNNOnGraphV1 extends OpFromJson {
   class Input(featureCount: Int) extends MagicInputSignature {
     val vertices = vertexSet
     val edges = edgeBundle(vertices, vertices)
@@ -24,7 +24,7 @@ object NeuralNetwork extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = NeuralNetwork(
+  def fromJson(j: JsValue) = PredictViaNNOnGraphV1(
     (j \ "featureCount").as[Int],
     (j \ "networkSize").as[Int],
     (j \ "learningRate").as[Double],
@@ -42,8 +42,8 @@ object NeuralNetwork extends OpFromJson {
     (j \ "gradientCheckOn").as[Boolean],
     (j \ "networkLayout").as[String])
 }
-import NeuralNetwork._
-case class NeuralNetwork(
+import PredictViaNNOnGraphV1._
+case class PredictViaNNOnGraphV1(
     featureCount: Int,
     networkSize: Int,
     learningRate: Double,

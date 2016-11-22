@@ -291,6 +291,8 @@ include::predict-from-model.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
 
+include::predict-with-a-neural-network,-1st-version.asciidoc[]
+
 include::pull-segmentation-one-level-up.asciidoc[]
 
 include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
@@ -330,8 +332,6 @@ include::train-a-kmeans-clustering-model.asciidoc[]
 include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
-
-include::train-neural-network-and-use-it-to-predict-an-attribute.asciidoc[]
 
 include::triadic-closure.asciidoc[]
 

@@ -1,4 +1,4 @@
-### Train neural network and use it to predict an attribute
+### Predict with a neural network, 1st version
 
 *Warning! Experimental operation.*
 
