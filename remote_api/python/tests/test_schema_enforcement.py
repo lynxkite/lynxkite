@@ -18,6 +18,9 @@ with open(r"tests/TestTaskDoCheck.schema.correct", 'r') as f:
 class TestTarget(luigi.Target):
   _lk_for_exists = lk
 
+  def exists(self):
+    return True
+
   def view(self, lk):
     return lk.sql(query)
 
@@ -26,9 +29,6 @@ class TestTarget(luigi.Target):
 
   def read_file(self, filename):
     pass
-
-  def exists(self):
-    return True
 
   def create_directory(self):
     pass
