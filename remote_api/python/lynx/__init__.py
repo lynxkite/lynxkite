@@ -26,6 +26,7 @@ import ssl
 import sys
 import types
 import urllib
+import yaml
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -335,6 +336,21 @@ class View:
         checkpoint=self.checkpoint,
     ))
     return r
+
+  def enforce_schema(self, schema_file):
+    '''Raises an error if the schema of the view is different from the schema described in the specified file.
+    If the file does not exist, the current schema is dumped into a new file,
+    which later can be used as a reference schema'''
+    schema = self.schema().to_dict()
+    if os.path.isfile(schema_file):
+      with open(schema_file, 'r') as f:
+        required_schema = yaml.load(f)
+        assert schema == required_schema, \
+            'Incorrect schema: expected\n{}\nbut found\n{}'.format(required_schema, schema)
+    else:
+      os.makedirs(os.path.dirname(schema_file), exist_ok=True)
+      with open(schema_file, 'w') as f:
+        yaml.dump(schema, f, default_flow_style=False)
 
   def export_csv(self, path, header=True, delimiter=',', quote='"', shuffle_partitions=None):
     '''Exports the view to CSV file.
