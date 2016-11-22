@@ -2,6 +2,7 @@
 from __future__ import print_function
 import subprocess
 import sys
+import hashlib
 
 color = sys.stderr.isatty()
 warned = False
@@ -14,6 +15,15 @@ def warn(msg):
     print('\x1b[31m{}\x1b[0m'.format(msg), file=sys.stderr)
   else:
     print(msg, file=sys.stderr)
+
+
+def get_hashes(files):
+  hashes = []
+  for f in files:
+    with open(f) as file:
+      hashes.append(hashlib.md5(file.read()).hexdigest())
+  return hashes
+
 
 protected_branches = ['master']
 branch = subprocess.check_output(
@@ -52,7 +62,14 @@ if any(fn.endswith('.js') for fn in files):
 
 pythons = [fn for fn in files if fn.endswith('.py')]
 if pythons:
+  before = get_hashes(pythons)
   subprocess.call(['autopep8', '-ia'] + pythons)
+  after = get_hashes(pythons)
+  different = [f[0] for f in zip(pythons, before, after) if f[1] != f[2]]
+  if len(different) > 0:
+    warn('Files altered by autopep8, please restage.')
+    warn('Altered files:')
+    warn(', '.join(different))
 
 if warned:
   sys.exit(1)

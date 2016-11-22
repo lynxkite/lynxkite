@@ -427,10 +427,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
+      val projectAttrNames = project.vertexAttributeNames
+      val tableAttrNames = table.columns
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
+        assert(!projectAttrNames.contains(prefix + name),
+          s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
       }
     }
@@ -457,10 +461,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
+      val projectAttrNames = project.edgeAttributeNames
+      val tableAttrNames = table.columns
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
+        assert(!projectAttrNames.contains(prefix + name),
+          s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
       }
     }
@@ -1874,6 +1882,25 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Grow segmentation", new StructureOperation(_, _) with SegOp {
+    def enabled = isSegmentation && hasVertexSet &&
+      FEStatus.assert(parent.edgeBundle != null, "Parent has no edges.")
+
+    def segmentationParameters = List(
+      Choice("direction", "Direction", options = Direction.neighborOptions))
+
+    def apply(params: Map[String, String]) = {
+      val segmentation = project.asSegmentation
+      val direction = Direction(params("direction"), parent.edgeBundle, reversed = true)
+
+      val op = graph_operations.GrowSegmentation()
+      segmentation.belongsTo = op(
+        op.vsG, parent.vertexSet)(
+          op.esG, direction.edgeBundle)(
+            op.esGS, segmentation.belongsTo).result.esGS
+    }
+  })
+
   register("Aggregate on neighbors", new PropagationOperation(_, _) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
@@ -1974,7 +2001,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // Automatically keep the key attribute.
       project.vertexAttributes(key) = aggregateViaConnection(
         m.belongsTo,
-        AttributeWithLocalAggregator(oldVAttrs(key), "most_common"))
+        AttributeWithAggregator(oldVAttrs(key), "first"))
       if (oldEdges != null) {
         val edgeInduction = {
           val op = graph_operations.InducedEdgeBundle()
@@ -2494,7 +2521,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
+  register("Import project as segmentation", new ImportOperation(_, _) {
     def parameters = List(
       Choice(
         "them",
@@ -2615,7 +2642,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // Move segment ID to the segments.
       val segAttr = aggregateViaConnection(
         merge.belongsTo,
-        AttributeWithLocalAggregator(segColumn, graph_operations.Aggregator.MostCommon[B]()))
+        // Use scalable aggregator.
+        AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
       implicit val ta = baseColumn.typeTag
       implicit val tb = segColumn.typeTag
       // Import belongs-to relationship as edges between the base and the segmentation.
@@ -3393,7 +3421,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
           } else {
             FEOption.list(
-              "average", "count", "count_distinct", "max", "median", "min", "most_common",
+              "average", "count", "count_distinct", "max", "median", "min", "most_common", "count_most_common",
               "set", "std_deviation", "sum", "vector")
           }
         } else if (attr.is[String]) {
@@ -3403,7 +3431,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             FEOption.list("count", "first")
           } else {
             FEOption.list(
-              "most_common", "count_distinct", "majority_50", "majority_100",
+              "most_common", "count_most_common", "count_distinct", "majority_50", "majority_100",
               "count", "vector", "set")
           }
         } else {
@@ -3412,7 +3440,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             FEOption.list("count", "first")
           } else {
-            FEOption.list("count", "count_distinct", "median", "most_common", "set", "vector")
+            FEOption.list("count", "count_distinct", "median", "most_common", "count_most_common", "set", "vector")
           }
         }
         TagList(s"aggregate-$name", name, options = options)
@@ -3451,10 +3479,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    // Options suitable when only neighbors are involved.
+    val neighborOptions = FEOption.list(
+      "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
     // Options suitable when edge attributes are not involved.
-    val options = attrOptions ++
-      FEOption.list(
-        "symmetric edges", "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
+    val options = attrOptions ++ FEOption.list("symmetric edges") ++ neighborOptions
     // Neighborhood directions correspond to these
     // edge directions, but they also retain only one A->B edge in
     // the output edgeBundle

@@ -12,6 +12,11 @@
         ng-disabled="localChanges || remoteChanges">
         <i class="glyphicon glyphicon-film"></i>
       </label>
+      <label class="btn btn-default" ng-click="togglePython()" ng-class="{ active: python }"
+        id="toggle-python-button"
+        tooltip="Show Python code" tooltip-append-to-body="true" tooltip-placement="bottom">
+        Python
+      </label>
       <label class="btn btn-default" ng-click="closeHistory()"
         id="close-history-button"
         tooltip="Back to project" tooltip-append-to-body="true" tooltip-placement="bottom">
@@ -63,6 +68,17 @@
   </div>
 
   <div class="list-group">
+    <li class="list-group-item python-code" ng-if="python">
+      <div
+        ui-ace="{
+          mode: 'python',
+          rendererOptions: {fontSize: '14px'},
+          advanced: {behavioursEnabled: false},
+        }"
+        class="form-control" style="height: 400px;"
+        ng-model="python"></div>
+    </li>
+
     <li class="list-group-item" ng-if="!history.$resolved">
       <progressbar value="100" class="progress-striped active">
         Loading...
