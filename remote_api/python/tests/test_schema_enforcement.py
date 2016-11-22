@@ -1,4 +1,5 @@
 import unittest
+import luigi
 import lynx.luigi
 from unittest import mock
 import types
@@ -14,21 +15,52 @@ with open(r"tests/TestTaskDoCheck.schema.correct", 'r') as f:
   correct_schema = yaml.load(f)
 
 
-class TestTask:
+class TestTarget(luigi.Target):
+  _lk_for_exists = lk
 
-  def inputview(self):
-    return self.lk.sql(query)
+  def view(self, lk):
+    return lk.sql(query)
 
-  def compute_view(self):
-    return self.inputview()
+  def list_files(self):
+    return []
+
+  def read_file(self, filename):
+    pass
+
+  def exists(self):
+    return True
+
+  def create_directory(self):
+    pass
+
+  def write_file(self, filename, stream):
+    pass
 
 
-class TestTaskNoCheck(TestTask, lynx.luigi.SchemaEnforcedTask):
+class TestTask(luigi.Task):
+
+  def output(self):
+    return TestTarget()
+
+
+class TestTaskNoCheck(lynx.luigi.SchemaEnforcedTransferTask):
   schema_directory = None
 
+  def requires(self):
+    return TestTask()
 
-class TestTaskDoCheck(TestTask, lynx.luigi.SchemaEnforcedTask):
+  def output(self):
+    return TestTarget()
+
+
+class TestTaskDoCheck(lynx.luigi.SchemaEnforcedTransferTask):
   schema_directory = directory
+
+  def requires(self):
+    return TestTask()
+
+  def output(self):
+    return TestTarget()
 
 
 class TestTable(unittest.TestCase):
