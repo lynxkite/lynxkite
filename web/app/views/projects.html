@@ -4,7 +4,9 @@
 <!-- Toolboxes are in a separate <div> after the sides, so they appear on top. -->
 <div class="operation-toolboxes">
   <div ng-repeat="side in sides" class="col-sm-{{ side.columnWidth() }}">
-    <div ng-class="{ rightmost: $last || side.columnWidth() > 6 }" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory" ng-show="!side.workflowEditor.enabled">
+    <div ng-class="{ rightmost: $last || side.columnWidth() > 6 }"
+         ng-if="side.project.$resolved && !side.project.$error && !side.showHistory"
+         ng-show="!side.unsaved.workflowEditor.enabled">
       <side-operation-toolbox side="side"></side-operation-toolbox>
     </div>
   </div>
@@ -23,8 +25,8 @@
   <a id="show-selector-button"
      href
      drop-tooltip="Open another project"
-     ng-hide="sides[1].showSelector"
-     ng-click="sides[1].showSelector = true">
+     ng-hide="sides[1].unsaved.showSelector || sides[1].state.projectName"
+     ng-click="sides[1].unsaved.showSelector = true">
     <i class="glyphicon glyphicon-plus"></i>
   </a>
 </div>

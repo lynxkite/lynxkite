@@ -45,11 +45,11 @@ angular.module('biggraph')
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
-      this.workflowEditor = { enabled: false };
-      this.sectionVisibility = {};
-      for (var i = 0; i < this.sections.length; ++i) {
-        this.sectionVisibility[this.sections[i]] = true;
-      }
+      // Data that is not persisted at all.
+      this.unsaved = {
+        showSelector: false,
+        workflowEditor: { enabled: false },
+      };
     }
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
@@ -93,7 +93,7 @@ angular.module('biggraph')
     Side.prototype.columnWidth = function() {
       var count = 0;
       for (var i = 0 ; i < this.sides.length; ++i) {
-        if (this.sides[i].state.projectName || this.sides[i].showSelector) {
+        if (this.sides[i].state.projectName || this.sides[i].unsaved.showSelector) {
           count += 1;
         }
       }
@@ -418,6 +418,7 @@ angular.module('biggraph')
 
     Side.prototype.closeInternal = function() {
       this.state.projectName = undefined;
+      this.unsaved.showSelector = false;
     };
 
     Side.prototype.close = function() {
@@ -432,6 +433,11 @@ angular.module('biggraph')
         // grandparent on the left hand side.
         this.state.projectName = this.sides[0].parentProject();
         this.swapWithSide(this.sides[0]);
+      } else if (this.direction === 'left' && this.sides[1].state.projectName) {
+        // If this project was on the left and there is something on the right,
+        // then let the project on the right shift to the left.
+        this.closeInternal();
+        this.swapWithSide(this.sides[1]);
       } else {
         this.closeInternal();
       }
@@ -656,6 +662,7 @@ angular.module('biggraph')
       tmp = this.project; this.project = otherSide.project; otherSide.project = tmp;
       tmp = this.state; this.state = otherSide.state; otherSide.state = tmp;
       tmp = this.viewData; this.viewData = otherSide.viewData; otherSide.viewData = tmp;
+      tmp = this.unsaved; this.unsaved = otherSide.unsaved; otherSide.unsaved = tmp;
     };
 
     Side.prototype.openSegmentation = function(seg) {
