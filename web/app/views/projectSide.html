@@ -1,6 +1,6 @@
 <div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
 
-  <div ng-if="side.state.projectName === undefined && side.showSelector">
+  <div ng-if="side.state.projectName === undefined && side.unsaved.showSelector">
     <project-selector name="side.state.projectName"></project-selector>
   </div>
 
@@ -32,10 +32,14 @@
 
   <project-history side="side" show="side.project.$resolved && !side.project.$error && side.showHistory">
   </project-history>
-  <workflow-editor side="side" state="side.workflowEditor" ng-if="side.project.$resolved && !side.project.$error && side.workflowEditor.enabled">
+  <workflow-editor
+    side="side"
+    state="side.unsaved.workflowEditor"
+    ng-if="side.project.$resolved && !side.project.$error && side.unsaved.workflowEditor.enabled">
   </workflow-editor>
 
-  <div class="project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory && !side.workflowEditor.enabled">
+  <div class="project" ng-if="
+    side.project.$resolved && !side.project.$error && !side.showHistory && !side.unsaved.workflowEditor.enabled">
 
     <div class="btn-group pull-right">
       <label class="btn btn-default"
