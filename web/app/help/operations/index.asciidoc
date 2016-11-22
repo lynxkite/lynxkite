@@ -243,6 +243,8 @@ include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
 
+include::grow-segmentation.asciidoc[]
+
 include::hash-vertex-attribute.asciidoc[]
 
 include::import-edge-attributes.asciidoc[]

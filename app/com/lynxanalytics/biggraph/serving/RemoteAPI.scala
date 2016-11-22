@@ -3,6 +3,10 @@ package com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Future
 import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
+import org.apache.parquet.hadoop.ParquetFileReader
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import scala.collection.JavaConverters._
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -17,6 +21,7 @@ import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
+  case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
     checkpoint: String,
@@ -40,6 +45,7 @@ object RemoteAPIProtocol {
     numBuckets: Int,
     sampleSize: Option[Int],
     logarithmic: Boolean)
+  case class MetadataRequest(checkpoint: String, path: List[String])
 
   object GlobalSQLRequest extends FromJson[GlobalSQLRequest] {
     override def fromJson(j: json.JsValue) = j.as[GlobalSQLRequest]
@@ -90,10 +96,15 @@ object RemoteAPIProtocol {
     isReadAllowed: Boolean,
     isWriteAllowed: Boolean)
   case class ExportViewToCSVRequest(
-    checkpoint: String, path: String, header: Boolean, delimiter: String, quote: String)
-  case class ExportViewToJsonRequest(checkpoint: String, path: String)
-  case class ExportViewToORCRequest(checkpoint: String, path: String)
-  case class ExportViewToParquetRequest(checkpoint: String, path: String)
+    checkpoint: String,
+    path: String,
+    header: Boolean,
+    delimiter: String,
+    quote: String,
+    shufflePartitions: Option[Int])
+  case class ExportViewToJsonRequest(checkpoint: String, path: String, shufflePartitions: Option[Int])
+  case class ExportViewToORCRequest(checkpoint: String, path: String, shufflePartitions: Option[Int])
+  case class ExportViewToParquetRequest(checkpoint: String, path: String, shufflePartitions: Option[Int])
   case class ExportViewToJdbcRequest(
     checkpoint: String, jdbcUrl: String, table: String, mode: String)
   case class ExportViewToTableRequest(checkpoint: String)
@@ -102,6 +113,7 @@ object RemoteAPIProtocol {
   case class PrefixedPathResult(
     exists: Boolean, resolved: String)
 
+  implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
@@ -110,6 +122,7 @@ object RemoteAPIProtocol {
   implicit val rScalarRequest = json.Json.reads[ScalarRequest]
   implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
+  implicit val rMetadataRequest = json.Json.reads[MetadataRequest]
   implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wTableResult = json.Json.writes[TableResult]
@@ -135,9 +148,12 @@ object RemoteAPIServer extends JsonServer {
   def getScalar = jsonFuturePost(c.getScalar)
   def getVertexHistogram = jsonFuturePost(c.getVertexHistogram)
   def getEdgeHistogram = jsonFuturePost(c.getEdgeHistogram)
+  def getMetadata = jsonFuturePost(c.getMetadata)
+  def getComplexView = jsonFuturePost(c.getComplexView)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
+  def getParquetMetadata = jsonPost(c.getParquetMetadata)
   def newProject = jsonPost(c.newProject)
   def loadProject = jsonPost(c.loadProject)
   def removeName = jsonPost(c.removeName)
@@ -335,6 +351,19 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     graphDrawingController.getHistogram(user, req)
   }
 
+  // Only for testing.
+  def getMetadata(user: User, request: MetadataRequest): Future[FEProject] = {
+    val viewer = getViewer(request.checkpoint, request.path)
+    import dataManager.executionContext
+    Future(viewer.toFE(""))
+  }
+
+  def getComplexView(user: User, request: FEGraphRequest): Future[FEGraphResponse] = {
+    val drawing = graphDrawingController
+    import dataManager.executionContext
+    Future(drawing.getComplexView(user, request))
+  }
+
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
     val data = df.take(limit)
@@ -371,6 +400,21 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
+  def getParquetMetadata(user: User, request: PrefixedPathRequest): ParquetMetadataResponse = {
+    val input = HadoopFile(request.path).resolvedName
+    val conf = new Configuration()
+    val inputPath = new Path(input)
+    val inputFileStatus = inputPath.getFileSystem(conf).getFileStatus(inputPath)
+    val footers = ParquetFileReader.readFooters(conf, inputFileStatus, false)
+
+    ParquetMetadataResponse(
+      footers.asScala.flatMap { f =>
+        val blocks = f.getParquetMetadata().getBlocks().asScala
+        blocks.map(_.getRowCount())
+      }.sum
+    )
+  }
+
   def takeFromView(
     user: User, request: TakeFromViewRequest): Future[TableResult] = dataManager.async {
     val df = viewToDF(user, request.checkpoint)
@@ -379,7 +423,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def exportViewToCSV(user: User, request: ExportViewToCSVRequest) = {
     exportViewToFile(
-      user, request.checkpoint, request.path, "csv", Map(
+      user, request.checkpoint, request.path, "csv",
+      request.shufflePartitions,
+      Map(
         "delimiter" -> request.delimiter,
         "quote" -> request.quote,
         "nullValue" -> "",
@@ -387,15 +433,15 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def exportViewToJson(user: User, request: ExportViewToJsonRequest) = {
-    exportViewToFile(user, request.checkpoint, request.path, "json")
+    exportViewToFile(user, request.checkpoint, request.path, "json", request.shufflePartitions)
   }
 
   def exportViewToORC(user: User, request: ExportViewToORCRequest) = {
-    exportViewToFile(user, request.checkpoint, request.path, "orc")
+    exportViewToFile(user, request.checkpoint, request.path, "orc", request.shufflePartitions)
   }
 
   def exportViewToParquet(user: User, request: ExportViewToParquetRequest) = {
-    exportViewToFile(user, request.checkpoint, request.path, "parquet")
+    exportViewToFile(user, request.checkpoint, request.path, "parquet", request.shufflePartitions)
   }
 
   def exportViewToJdbc(
@@ -405,11 +451,18 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   private def exportViewToFile(
-    user: serving.User, checkpoint: String, path: String,
-    format: String, options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
+    user: serving.User,
+    checkpoint: String,
+    path: String,
+    format: String,
+    shufflePartitions: Option[Int] = None,
+    options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
     val df = viewToDF(user, checkpoint)
+    for (sp <- shufflePartitions) {
+      df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
+    }
     df.write.mode(SaveMode.Overwrite).format(format).options(options).save(file.resolvedName)
   }
 

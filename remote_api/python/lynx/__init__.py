@@ -242,6 +242,11 @@ class LynxKite:
         "Json",
         dict(columnsToImport=columnsToImport, files=files))
 
+  def get_parquet_metadata(self, path):
+    '''Reads the metadata of a parquet file and returns the number of rows.'''
+    r = self._send('getParquetMetadata', dict(path=path))
+    return r
+
   def _create_view(self, format, dict):
     # TODO: remove this once #3859 is resolved.
     # These are required (as present in the case class), but are actually not read by the API
@@ -331,35 +336,63 @@ class View:
     ))
     return r
 
-  def export_csv(self, path, header=True, delimiter=',', quote='"'):
-    '''Exports the view to CSV file.'''
+  def export_csv(self, path, header=True, delimiter=',', quote='"', shuffle_partitions=None):
+    '''Exports the view to CSV file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToCSV', dict(
         checkpoint=self.checkpoint,
         path=path,
         header=header,
         delimiter=delimiter,
         quote=quote,
+        shufflePartitions=shuffle_partitions,
     ))
 
-  def export_json(self, path):
-    '''Exports the view to JSON file. '''
+  def export_json(self, path, shuffle_partitions=None):
+    '''Exports the view to JSON file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToJson', dict(
         checkpoint=self.checkpoint,
         path=path,
+        shufflePartitions=shuffle_partitions,
     ))
 
-  def export_orc(self, path):
-    '''Exports the view to ORC file.'''
+  def export_orc(self, path, shuffle_partitions=None):
+    '''Exports the view to ORC file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToORC', dict(
         checkpoint=self.checkpoint,
         path=path,
+        shufflePartitions=shuffle_partitions,
     ))
 
-  def export_parquet(self, path):
-    '''Exports the view to Parquet file.'''
+  def export_parquet(self, path, shuffle_partitions=None):
+    '''Exports the view to Parquet file.
+
+    ``shuffle_partitions``, if given, will determine the number of partitions in the output if Spark
+    has to make a shuffle in the computation. Essentially,
+    this sets the sql context parameter ``spark.sql.shuffle.partitions``
+
+    '''
     self.lk._send('exportViewToParquet', dict(
         checkpoint=self.checkpoint,
         path=path,
+        shufflePartitions=shuffle_partitions
     ))
 
   def export_jdbc(self, url, table, mode='error'):
@@ -449,21 +482,20 @@ class _ProjectCheckpoint:
         attr=attr,
         numBuckets=numbuckets,
         sampleSize=sample_size,
-        logarithmic=logarithmic
-    )
+        logarithmic=logarithmic)
     if attr_type == 'vertex':
-      r = self.lk._send(
-          'getVertexHistogram',
-          request
-      )
+      r = self.lk._send('getVertexHistogram', request)
     elif attr_type == 'edge':
-      r = self.lk._send(
-          'getEdgeHistogram',
-          request
-      )
+      r = self.lk._send('getEdgeHistogram', request)
     else:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
+
+  def _metadata(self, path):
+    '''Returns project metadata.'''
+    request = dict(checkpoint=self.checkpoint, path=path)
+    r = self.lk._send('getMetadata', request)
+    return _Metadata(r)
 
 
 class SubProject:
@@ -501,12 +533,56 @@ class SubProject:
     return SubProject(self.project_checkpoint, self.path + [name])
 
   def vertex_attribute(self, attr):
-    '''Creates a :class:`Attribute` representing a vertex attribute with the given name.'''
+    '''Creates an :class:`Attribute` representing a vertex attribute with the given name.'''
     return Attribute(attr, 'vertex', self.project_checkpoint, self.path)
 
   def edge_attribute(self, attr):
-    '''Creates a :class:`Attribute` representing an edge attribute with the given name.'''
+    '''Creates an :class:`Attribute` representing an edge attribute with the given name.'''
     return Attribute(attr, 'edge', self.project_checkpoint, self.path)
+
+  def _metadata(self):
+    '''Returns project metadata.'''
+    return self.project_checkpoint._metadata(self.path)
+
+  def _get_complex_view(self, request):
+    '''Returns a `FEGraphResponse` object for testing purposes.
+    The request is converted to a `FEGraphRequest`. For example
+    req = dict(
+        vertexSets=[
+            dict(
+                vertexSetId=vs,
+                sampleSmearEdgeBundleId=eb,
+                mode='sampled',
+                filters=[],
+                centralVertexIds=centers,
+                attrs=[],
+                xBucketingAttributeId='',
+                yBucketingAttributeId='',
+                xNumBuckets=1,
+                yNumBuckets=1,
+                radius=1,
+                xAxisOptions=dict(logarithmic=False),
+                yAxisOptions=dict(logarithmic=False),
+                sampleSize=50000,
+                maxSize=10000
+            )],
+        edgeBundles=[
+            dict(
+                srcDiagramId='idx[0]',
+                dstDiagramId='idx[0]',
+                srcIdx=0,
+                dstIdx=0,
+                edgeBundleId=eb,
+                filters=[],
+                layout3D=False,
+                relativeEdgeDensity=False,
+                maxSize=10000,
+                edgeWeightId='',
+                attrs=[]
+            )])
+    '''
+    r = self.lk._send('getComplexView', request)
+    return r
 
   def __getattr__(self, attr):
     '''For any unknown names we return a function that tries to run an operation by that name.'''
@@ -550,6 +626,28 @@ class RootProject(SubProject):
     return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
 
 
+class _Metadata():
+  '''Wrapper class for storing and accessing project metadata.'''
+
+  def __init__(self, data):
+    self.data = data
+
+  def vertex_set_id(self):
+    return self.data.vertexSet
+
+  def edge_bundle_id(self):
+    return self.data.edgeBundle
+
+  def belongs_to_id(self, segmentation_name):
+    return [s.belongsTo for s in self.data.segmentations if s.name == segmentation_name][0]
+
+  def vertex_attribute_id(self, attr_name):
+    return [a.id for a in self.data.vertexAttributes if a.title == attr_name][0]
+
+  def edge_attribute_id(self, attr_name):
+    return [a.id for a in self.data.edgeAttributes if a.title == attr_name][0]
+
+
 class Attribute():
   '''Represents a vertex or an edge attribute.'''
 
@@ -562,13 +660,14 @@ class Attribute():
   def histogram(self, numbuckets=10, sample_size=None, logarithmic=False):
     '''Returns a histogram of the attribute.
 
-    Example of precise logarithmic histogram with 20 buckets.:
+    Example of precise logarithmic histogram with 20 buckets::
 
-      a = p.vertex_attribute('attr_name')
-      h = a.histogram(numbuckets=20, logarithmic=True)
-      print(h.labelType)
-      print(h.labels)
-      print(h.sizes)
+        a = p.vertex_attribute('attr_name')
+        h = a.histogram(numbuckets=20, logarithmic=True)
+        print(h.labelType)
+        print(h.labels)
+        print(h.sizes)
+
     '''
 
     return self.project_checkpoint.histogram(

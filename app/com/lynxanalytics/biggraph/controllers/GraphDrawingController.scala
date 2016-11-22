@@ -552,7 +552,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val newEdges = originalEdges.map { feEdge =>
       val srcSize = src.vertices(feEdge.a).size
       val dstSize = dst.vertices(feEdge.b).size
-      feEdge.copy(size = feEdge.size / (srcSize * dstSize))
+      if (srcSize > 0 && dstSize > 0)
+        feEdge.copy(size = feEdge.size / (srcSize * dstSize))
+      else
+        feEdge.copy(size = 0)
     }
     ed.copy(edges = newEdges)
   }

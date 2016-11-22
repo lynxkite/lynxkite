@@ -14,9 +14,7 @@ module.exports = function(fw) {
     lib.left.side.element(by.id('custom-filters-toggle-off-button'));
   var centerCount = lib.left.side.element(by.id('pick-center-count'));
   var addRestrictionButton = lib.left.side.element(by.id('add-restriction-button'));
-  var saveVisualizationOpen = lib.left.side.$('#save-visualization-dialog #text-dialog-open');
-  var saveVisualizationEntry = lib.left.side.$('#save-visualization-dialog #dialogInput');
-  var saveVisualizationOk = lib.left.side.$('#save-visualization-dialog #text-dialog-ok');
+
 
   fw.statePreservingTest(
     'test-example project in sampled view',
@@ -127,37 +125,4 @@ module.exports = function(fw) {
       centerCount.clear();
       centerCount.sendKeys('1');
     });
-
-  fw.transitionTest(
-    'test-example project with example graph',
-    'visualization save/restore',
-    function() {
-      lib.left.toggleSampledVisualization();
-      // Set centers count to a non-default value.
-      centerCount.clear();
-      centerCount.sendKeys('2');
-      pickButton.click();
-      // Save the visualization with the name 'my visualization'
-      saveVisualizationOpen.click();
-      saveVisualizationEntry.clear();
-      saveVisualizationEntry.sendKeys('my visualization');
-      saveVisualizationOk.click();
-      // Check if the new eye icon has shown up.
-      var savedVisualization = lib.left.side
-        .$('item-name-and-menu[name="my visualization"]')
-        .element(by.xpath('..'));  // parent element
-      var savedVisualizationIcon = savedVisualization
-        .$('.glyphicon-eye-open');
-      lib.expectElement(savedVisualizationIcon);
-      // Close and reopen the project and check if the eye icon is still there. issues/#3164
-      lib.left.close();
-      lib.splash.openProject('test-example');
-      lib.left.toggleSampledVisualization();
-      lib.expectElement(savedVisualizationIcon);
-      // Try loading the visualization and check if centers count is correctly updated.
-      expect(centerCount.getAttribute('value')).toBe('1');
-      savedVisualizationIcon.click();
-      expect(centerCount.getAttribute('value')).toBe('2');
-    },
-    function() {});
 };

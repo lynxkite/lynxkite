@@ -262,6 +262,17 @@ function(util, $timeout, removeOptionalDefaults) {
         };
       };
 
+      scope.togglePython = function() {
+        if (scope.python) {
+          scope.python = undefined;
+          return;
+        }
+        var history = scope.history;
+        if (history && history.$resolved && !history.$error) {
+          scope.python = toPython(history.steps);
+        }
+      };
+
       function createNewStep(seg) {
         var path = [];
         if (seg !== undefined) {
@@ -300,13 +311,13 @@ function(util, $timeout, removeOptionalDefaults) {
         }
       };
 
-      function toGroovyId(name) {
+      function toCodeId(name) {
         return name
           .replace(/^./, function(first) { return first.toLowerCase(); })
           .replace(/-./g, function(dashed) { return dashed[1].toUpperCase(); });
       }
 
-      function groovyQuote(str) {
+      function codeQuote(str) {
         str = str.replace(/\\/g, '\\\\');
         str = str.replace(/\n/g, '\\n');
         str = str.replace(/'/g, '\\\'');
@@ -333,19 +344,68 @@ function(util, $timeout, removeOptionalDefaults) {
             line.push('.runWorkflow(\'' + workflowName + '\'');
             if (params.length > 0) { line.push(', '); }
           } else {
-            line.push('.' + toGroovyId(request.op.id) + '(');
+            line.push('.' + toCodeId(request.op.id) + '(');
           }
           for (j = 0; j < paramKeys.length; ++j) {
             var k = paramKeys[j];
             var v = params[k];
             if (!k.match(/^[a-zA-Z]+$/)) {
-              k = groovyQuote(k);
+              k = codeQuote(k);
             }
-            v = groovyQuote(v);
+            v = codeQuote(v);
             line.push(k + ': ' + v);
             if (j !== paramKeys.length - 1) {
               line.push(', ');
             }
+          }
+          line.push(')');
+          lines.push(line.join(''));
+        }
+        return lines.join('\n');
+      }
+
+      function toPython(steps) {
+        var lines = [];
+        for (var i = 0; i < steps.length; ++i) {
+          var step = steps[i];
+          var request = step.request;
+          var op = step.opMeta;
+          var line = [];
+          line.push('project');
+          for (var j = 0; j < request.path.length; ++j) {
+            var seg = request.path[j];
+            line.push('.segmentation(' + codeQuote(seg) + ')');
+          }
+          var params = removeOptionalDefaults(request.op.parameters, op);
+          var paramKeys = Object.keys(params);
+          paramKeys.sort();
+          line.push('.' + toCodeId(request.op.id) + '(');
+          var problemParams = false;
+          for (j = 0; j < paramKeys.length; ++j) {
+            if (!paramKeys[j].match(/^[a-zA-Z]+$/)) {
+              problemParams = true;
+              line.push('**{');
+              break;
+            }
+          }
+          for (j = 0; j < paramKeys.length; ++j) {
+            var k = paramKeys[j];
+            var v = params[k];
+            if (!v.match(/^\d+(\.\d+)?$/)) {
+              // Quote non-numbers.
+              v = codeQuote(v);
+            }
+            if (problemParams) {
+              line.push(codeQuote(k) + ': ' + v);
+            } else {
+              line.push(k + '=' + v);
+            }
+            if (j !== paramKeys.length - 1) {
+              line.push(', ');
+            }
+          }
+          if (problemParams) {
+            line.push('}');
           }
           line.push(')');
           lines.push(line.join(''));

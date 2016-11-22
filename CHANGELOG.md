@@ -6,6 +6,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - New _"Count most common"_ local aggregator added.
+
+### 1.9.6
+
+### 1.9.6
+
 LynxKite:
 
  - Performance and scalability improvements for aggregating operations.
@@ -17,11 +23,15 @@ LynxKite:
  - Views can now be edited. Views and tables exported from the global sql box can also be edited.
  - Scalable approximate embeddedness operation added.
  - Scalable approximate clustering coefficient operation added.
+ - History view can now generate Python code. (Useful for ecosystem task authors.)
  - Various visualization limits (such as the maximum 10,000 edges) can be adjusted with the
      `KITE_DRAWING_OVERALL` setting (default 10,000) and its more fine-grained companions.
+ - Scalability improvement for Merge vertices and Import segmentation operations.
+ - New _"Grow segmentation"_ operation added.
 
 Ecosystem:
 
+ - Chronomaster user interface can tell you about past and future tasks.
  - Flexible date template strings.
  - Task repetition is now specified in calendar-supporting Cron format instead of fixed-length time
    intervals.
