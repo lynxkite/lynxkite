@@ -3331,6 +3331,60 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Predict with a neural network 1st version",
+    new MachineLearningOperation(_, _) {
+      def parameters = List(
+        Choice("label", "Attribute to predict", options = vertexAttributes[Double]),
+        Param("output", "Save as"),
+        Choice("features", "Predictors", options = FEOption.unset +: vertexAttributes[Double], multipleChoice = true),
+        Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")),
+        NonNegInt("networkSize", "Size of the network", default = 3),
+        NonNegInt("radius", "Iterations in prediction", default = 3),
+        Choice("hideState", "Hide own state", options = FEOption.bools),
+        NonNegDouble("forgetFraction", "Forget fraction", defaultValue = "0.0"),
+        NonNegDouble("knownLabelWeight", "Weight for known labels", defaultValue = "1.0"),
+        NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
+        NonNegInt("iterationsInTraining", "Iterations in training", default = 2),
+        NonNegInt("subgraphsInTraining", "Subgraphs in training", default = 10),
+        NonNegInt("minTrainingVertices", "Minimum training subgraph size", default = 10),
+        NonNegInt("maxTrainingVertices", "Maximum training subgraph size", default = 20),
+        NonNegInt("trainingRadius", "Radius for training subgraphs", default = 3),
+        RandomSeed("seed", "Seed"),
+        NonNegDouble("learningRate", "Learning rate", defaultValue = "0.1"))
+      def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes[Double].nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]) = {
+        val labelName = params("label")
+        val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+        val features: Seq[Attribute[Double]] =
+          if (params("features") == FEOption.unset.id) Seq()
+          else {
+            val featureNames = params("features").split(",", -1)
+            featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
+          }
+        val prediction = {
+          val op = graph_operations.PredictViaNNOnGraphV1(
+            featureCount = features.length,
+            networkSize = params("networkSize").toInt,
+            learningRate = params("learningRate").toDouble,
+            radius = params("radius").toInt,
+            hideState = params("hideState").toBoolean,
+            forgetFraction = params("forgetFraction").toDouble,
+            trainingRadius = params("trainingRadius").toInt,
+            maxTrainingVertices = params("maxTrainingVertices").toInt,
+            minTrainingVertices = params("minTrainingVertices").toInt,
+            iterationsInTraining = params("iterationsInTraining").toInt,
+            subgraphsInTraining = params("subgraphsInTraining").toInt,
+            numberOfTrainings = params("numberOfTrainings").toInt,
+            knownLabelWeight = params("knownLabelWeight").toDouble,
+            seed = params("seed").toInt,
+            gradientCheckOn = false,
+            networkLayout = params("networkLayout"))
+          op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
+        }
+        project.vertexAttributes(params("output")) = prediction
+      }
+    })
+
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, segmentation.belongsTo.reverse).result.outDegree
