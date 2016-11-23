@@ -52,10 +52,14 @@ libraryDependencies ++= Seq(
   // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
   "com.databricks" % "spark-csv_2.10" % "1.3.0",
   // Hive import seems to need this.
-  "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.19",
+  "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.10.3",
+  // Fast linear algebra.
+  "org.scalanlp" %% "breeze" % "0.12",
+  "org.scalanlp" %% "breeze-natives" % "0.12",
+  "com.google.guava" % "guava" % "15.0",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209")
