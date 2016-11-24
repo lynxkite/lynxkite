@@ -1,9 +1,41 @@
 #!/usr/bin/env python3
-'''
+"""
 Command-line utility to spin up an EMR cluster
 (optionally with an RDS database), and run
 Luigi task based performance tests on it.
-'''
+
+Examples:
+
+Running the default big data tests on the small data set using
+the 1.9.6 native release.
+
+    ./test_ecosystem.py --bigdata
+
+Running all big data tests on the normal data set using the current branch.
+
+    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+                        --task AllTests --lynx_release_dir ecosystem/native/dist
+
+Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
+
+    ./test_ecosystem.py --cluster_name JDBC-test-cluster \
+                        --with_rds --lynx_version native-1.9.5 \
+                        --task_module test_tasks.jdbc --task JDBCTestAll
+
+Running ModularClustering test on the large data set using the current branch
+and downloading application logs from the cluster to `/home/user/cluster-logs`.
+
+    ./test_ecosystem.py --bigdata --bigdata_test_set large \
+                        --task ModularClustering \
+                        --lynx_release_dir ecosystem/native/dist \
+                        --log_dir /home/user/cluster-logs
+
+Running the default big data tests on the normal data set using a cluster
+with 6 nodes (1 master, 5 worker) and the 1.9.6 native release.
+
+    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+                        --emr_instance_count 6
+"""
 import argparse
 import boto3
 import os
@@ -42,7 +74,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='native-1.9.5',
+    default='native-1.9.6',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
