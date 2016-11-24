@@ -157,19 +157,20 @@ def main(args):
       instance_count=args.emr_instance_count,
       hdfs_replication='1'
   )
+  instances = [cluster]
   # Spin up a mysql RDS instance only if requested.
-  mysql_instance = None
   jdbc_url = ''
   if args.with_rds:
     mysql_instance = lib.create_or_connect_to_rds_instance(
         name=args.cluster_name + '-mysql')
     # Wait for startup of both.
-    lib.wait_for_services([cluster, mysql_instance])
+    instances = instances + [mysql_instance]
+    lib.wait_for_services(instances)
     mysql_address = mysql_instance.get_address()
     jdbc_url = 'jdbc:mysql://{mysql_address}/db?user=root&password=rootroot'.format(
         mysql_address=mysql_address)
   else:
-    lib.wait_for_services([cluster])
+    lib.wait_for_services(instances)
 
   upload_installer_script(cluster, args)
   upload_tasks(cluster, args)
@@ -199,7 +200,7 @@ def main(args):
   else:
     if args.log_dir:
       download_logs_native(cluster, args)
-  shut_down_instances(cluster, mysql_instance)
+  shut_down_instances(instances)
 
 
 def results_local_dir(args):
@@ -552,12 +553,11 @@ def prompt_delete():
     return False
 
 
-def shut_down_instances(cluster, db):
+def shut_down_instances(instances):
   if prompt_delete():
     print('Shutting down instances.')
-    cluster.terminate()
-    if db:
-      db.terminate()
+    for instance in instances:
+      instance.terminate()
 
 
 if __name__ == '__main__':
