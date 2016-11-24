@@ -76,7 +76,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, log_uri, instance_count=2):
+          self, name, log_uri, instance_count=2, hdfs_replication='2'):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -131,7 +131,7 @@ class EMRLib:
             {
                 'Classification': 'hdfs-site',
                 'Properties': {
-                    'dfs.replication': '1'
+                    'dfs.replication': hdfs_replication
                 }
             }
         ],
