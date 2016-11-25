@@ -1,8 +1,41 @@
 #!/usr/bin/env python3
-'''
-Command-line utility to spin up an EMR cluster with an RDS
-database, and run Luigi task based performance tests on it.
-'''
+"""
+Command-line utility to spin up an EMR cluster
+(optionally with an RDS database), and run
+Luigi task based performance tests on it.
+
+Examples:
+
+Running the default big data tests on the small data set using
+the 1.9.6 native release.
+
+    ./test_ecosystem.py --bigdata
+
+Running all big data tests on the normal data set using the current branch.
+
+    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+                        --task AllTests --lynx_release_dir ecosystem/native/dist
+
+Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
+
+    ./test_ecosystem.py --cluster_name JDBC-test-cluster \
+                        --with_rds --lynx_version native-1.9.5 \
+                        --task_module test_tasks.jdbc --task JDBCTestAll
+
+Running ModularClustering test on the large data set using the current branch
+and downloading application logs from the cluster to `/home/user/cluster-logs`.
+
+    ./test_ecosystem.py --bigdata --bigdata_test_set large \
+                        --task ModularClustering \
+                        --lynx_release_dir ecosystem/native/dist \
+                        --log_dir /home/user/cluster-logs
+
+Running the default big data tests on the normal data set using a cluster
+with 6 nodes (1 master, 5 worker) and the 1.9.6 native release.
+
+    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+                        --emr_instance_count 6
+"""
 import argparse
 import boto3
 import os
@@ -41,7 +74,7 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='native-1.9.5',
+    default='native-1.9.6',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
@@ -72,7 +105,13 @@ parser.add_argument(
     help='Number of instances on EMR cluster, including master.')
 parser.add_argument(
     '--results_dir',
-    default='./ecosystem/tests/results/')
+    default='./ecosystem/tests/results/',
+    help='Test results are downloaded to this directory.')
+parser.add_argument(
+    '--log_dir',
+    default='',
+    help='''Cluster log files are downloaded to this directory.
+    If it is an empty string, no log file is downloaded.''')
 parser.add_argument(
     '--rm',
     action='store_true',
@@ -98,28 +137,40 @@ parser.add_argument(
     default='s3://test-ecosystem-log',
     help='URI of the S3 bucket where the EMR logs will be written.'
 )
+parser.add_argument(
+    '--with_rds',
+    action='store_true',
+    help='Spin up a mysql RDS instance to test database operations.'
+)
 
 
 def main(args):
   # Checking argument dependencies.
   check_arguments(args)
-  # Create an EMR cluster and a MySQL database in RDS.
+  # Create an EMR cluster.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
       ec2_key_name=args.ec2_key_name)
   cluster = lib.create_or_connect_to_emr_cluster(
       name=args.cluster_name,
       log_uri=args.emr_log_uri,
-      instance_count=args.emr_instance_count
+      instance_count=args.emr_instance_count,
+      hdfs_replication='1'
   )
-  mysql_instance = lib.create_or_connect_to_rds_instance(
-      name=args.cluster_name + '-mysql')
-  # Wait for startup of both.
-  lib.wait_for_services([cluster, mysql_instance])
-
-  mysql_address = mysql_instance.get_address()
-  jdbc_url = 'jdbc:mysql://{mysql_address}/db?user=root&password=rootroot'.format(
-      mysql_address=mysql_address)
+  instances = [cluster]
+  # Spin up a mysql RDS instance only if requested.
+  jdbc_url = ''
+  if args.with_rds:
+    mysql_instance = lib.create_or_connect_to_rds_instance(
+        name=args.cluster_name + '-mysql')
+    # Wait for startup of both.
+    instances = instances + [mysql_instance]
+    lib.wait_for_services(instances)
+    mysql_address = mysql_instance.get_address()
+    jdbc_url = 'jdbc:mysql://{mysql_address}/db?user=root&password=rootroot'.format(
+        mysql_address=mysql_address)
+  else:
+    lib.wait_for_services(instances)
 
   upload_installer_script(cluster, args)
   upload_tasks(cluster, args)
@@ -147,8 +198,9 @@ def main(args):
     pass
     # TODO download_logs_docker()
   else:
-    download_logs_native(cluster, args)
-  shut_down_instances(cluster, mysql_instance)
+    if args.log_dir:
+      download_logs_native(cluster, args)
+  shut_down_instances(instances)
 
 
 def results_local_dir(args):
@@ -398,8 +450,10 @@ def start_tests_native(cluster, jdbc_url, args):
 
 
 def download_logs_native(cluster, args):
-  cluster.rsync_down('/mnt/lynx/logs/', results_local_dir(args) + '/logs/')
-  cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', results_local_dir(args) + '/lynxkite-logs/')
+  if not os.path.exists(args.log_dir):
+    os.makedirs(args.log_dir)
+  cluster.rsync_down('/mnt/lynx/logs/', args.log_dir)
+  cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', args.log_dir + '/lynxkite-logs/')
 
 
 def download_and_unpack_release(cluster, args):
@@ -499,11 +553,11 @@ def prompt_delete():
     return False
 
 
-def shut_down_instances(cluster, db):
+def shut_down_instances(instances):
   if prompt_delete():
     print('Shutting down instances.')
-    cluster.terminate()
-    db.terminate()
+    for instance in instances:
+      instance.terminate()
 
 
 if __name__ == '__main__':

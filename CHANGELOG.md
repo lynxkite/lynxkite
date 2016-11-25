@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - New _"Count most common"_ local aggregator added.
+
 ### 1.9.6
 
 ### 1.9.6
