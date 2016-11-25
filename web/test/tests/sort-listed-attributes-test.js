@@ -3,6 +3,14 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
+  /* We use the Derived vertex attribute operation to generate attributes for the graph. The attributes object below
+   * contains the attributes we are using:
+   *         - the keys are the names of the attributes,
+   *         - the corresponding values are the expression for the Derived vertex attribute operation.
+   *
+   * We have several attribute pairs which starts with the same letter but one of them is capitalized while the other
+   * is all lower case letters to test how the sorting handles the lower and the upper case.
+   */
   var attributes = {
         'goals': 73,
         'points': 90,
@@ -16,37 +24,48 @@ module.exports = function(fw) {
         'Robert Pires': 7
         };
 
-  var expected = Object.keys(attributes).sort();
+  var sortedAttributes = Object.keys(attributes).sort();
 
   fw.transitionTest(
   'empty test-example project',
-  'the invincibles',
+  'attributes listed in order',
   function() {
-    lib.left.runOperation('new vertex set',{size: 11});
-    lib.left.runOperation('discard vertex attribute',{name:'id'});
-    lib.left.runOperation('discard vertex attribute',{name:'ordinal'});
+    lib.left.runOperation('new vertex set', {size: 11});
+    // We delete the default id and ordinal vertex attributes to only have the vertex attributes listed under the
+    // attributes object. This is done to eliminate the possibility of future surprises caused by not listed attributes
+    // if another test would ever use the 'attributes listed in order' state its the starting state.
+    lib.left.runOperation('discard vertex attribute', {name:'id'});
+    lib.left.runOperation('discard vertex attribute', {name:'ordinal'});
     for (var attr in attributes) {
-      lib.left.runOperation('derived vertex attribute',{expr: attributes[attr], output: attr, type: 'double'});}
+      lib.left.runOperation('derived vertex attribute', {expr: attributes[attr], output: attr, type: 'double'});
+    }
 
-    // Checking for aggregation.
+    // When opening an operation, the operation's panel can have different ways to ask the user which attributes to
+    // use the operation on. E.g: for aggregation the attributes are listed one attribute per line but in the vertex
+    // attribute for string operation the attributes are chosen from a listbox. So we test the operations which
+    // have different looking panels.
+
+    // Checking if the attributes listed for Aggregate vertex attribute globally operation are in correct order.
     lib.left.openOperation('Aggregate vertex attribute globally');
+    // The list of the attributes in the order they are displayed in the aggregate operation's panel.
     var aggrList = lib.left.toolbox.$$('operation-parameters .form-group label[for^=aggregate]');
-    expect(aggrList.getText()).toEqual(expected);
+    expect(aggrList.getText()).toEqual(sortedAttributes);
     lib.left.closeOperation();
 
-    // Checking for parameter input mode like in casting operations.
+    // Checking if the attributes listed for the Vertex attribute for string operation are in correct order.
     lib.left.openOperation('Vertex attribute to string');
+    // The list of the attributes in the order they are displayed in the listbox of the vertex attribute to string
+    // operation's panel.
     var castList = lib.left.operationParameter(lib.left.toolbox, 'attr');
-    expect(castList.getText()).toEqual(expected.join('\n'));
+    expect(castList.getText()).toEqual(sortedAttributes.join('\n'));
     lib.left.closeOperation();
 
-    // Checking for parameter input mode like in filter operations..
+    // Checking if the attributes listed for the Filter by attribute operation are in correct order.
     lib.left.openOperation('Filter by attribute');
+    // The list of the attributes in the order they are displayed in the filter operation's panel.
     var filterList = lib.left.toolbox.$$('operation-parameters .form-group label[for^=filterva]');
-    expect(filterList.getText()).toEqual(expected);
+    expect(filterList.getText()).toEqual(sortedAttributes);
     lib.left.closeOperation();
-
-},
+  },
   function() {});
-
 };
