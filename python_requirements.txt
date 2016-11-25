@@ -6,9 +6,10 @@ flask
 luigi==2.3.2
 mysqlclient
 pandas
-python-dateutil
-PyYAML
 prometheus_client
+python-dateutil
+python-prctl
+PyYAML
 Sphinx
 sphinx-rtd-theme
 sqlalchemy
