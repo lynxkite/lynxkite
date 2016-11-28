@@ -1076,14 +1076,14 @@ class DirectoryEntry(val path: SymbolPath)(
     user.isAdmin || (localWriteAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
   }
 
-  private def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
+  protected def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
     p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
   }
-  private def localReadAllowedFrom(user: User): Boolean = {
+  protected def localReadAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
     localWriteAllowedFrom(user) || aclContains(readACL, user)
   }
-  private def localWriteAllowedFrom(user: User): Boolean = {
+  protected def localWriteAllowedFrom(user: User): Boolean = {
     aclContains(writeACL, user)
   }
 
