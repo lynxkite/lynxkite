@@ -115,6 +115,10 @@ package `xvfb`.)
 
 ## Ecosystem development
 
+Install libcap-dev:
+
+    sudo apt-get install libcap-dev
+
 You can run `make ecosystem-test` to run all tests, or run
 `{chronomaster,remote_api/python}/test.sh *something*` to run tests from just one file.
 
