@@ -21,6 +21,32 @@ import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
+  implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
+  implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
+  implicit val rOperationRequest = json.Json.reads[OperationRequest]
+  implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
+  implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
+  implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
+  implicit val rScalarRequest = json.Json.reads[ScalarRequest]
+  implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
+  implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
+  implicit val rMetadataRequest = json.Json.reads[MetadataRequest]
+  implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
+  implicit val wDynamicValue = json.Json.writes[DynamicValue]
+  implicit val wTableResult = json.Json.writes[TableResult]
+  implicit val rCheckpointRequest = json.Json.reads[CheckpointRequest]
+  implicit val rTakeFromViewRequest = json.Json.reads[TakeFromViewRequest]
+  implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
+  implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
+  implicit val rExportViewToCSVRequest = json.Json.reads[ExportViewToCSVRequest]
+  implicit val rExportViewToJsonRequest = json.Json.reads[ExportViewToJsonRequest]
+  implicit val rExportViewToORCRequest = json.Json.reads[ExportViewToORCRequest]
+  implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
+  implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
+  implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
+  implicit val rPrefixedPathRequest = json.Json.reads[PrefixedPathRequest]
+  implicit val wPrefixedPathResponse = json.Json.writes[PrefixedPathResult]
+
   case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
   case class OperationRequest(
@@ -112,32 +138,6 @@ object RemoteAPIProtocol {
     path: String)
   case class PrefixedPathResult(
     exists: Boolean, resolved: String)
-
-  implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
-  implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
-  implicit val rOperationRequest = json.Json.reads[OperationRequest]
-  implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
-  implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
-  implicit val rSaveCheckpointRequest = json.Json.reads[SaveCheckpointRequest]
-  implicit val rScalarRequest = json.Json.reads[ScalarRequest]
-  implicit val rHistogramRequest = json.Json.reads[HistogramRequest]
-  implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
-  implicit val rMetadataRequest = json.Json.reads[MetadataRequest]
-  implicit val fGlobalSQLRequest = json.Json.format[GlobalSQLRequest]
-  implicit val wDynamicValue = json.Json.writes[DynamicValue]
-  implicit val wTableResult = json.Json.writes[TableResult]
-  implicit val rCheckpointRequest = json.Json.reads[CheckpointRequest]
-  implicit val rTakeFromViewRequest = json.Json.reads[TakeFromViewRequest]
-  implicit val rDirectoryEntryRequest = json.Json.reads[DirectoryEntryRequest]
-  implicit val wDirectoryEntryResult = json.Json.writes[DirectoryEntryResult]
-  implicit val rExportViewToCSVRequest = json.Json.reads[ExportViewToCSVRequest]
-  implicit val rExportViewToJsonRequest = json.Json.reads[ExportViewToJsonRequest]
-  implicit val rExportViewToORCRequest = json.Json.reads[ExportViewToORCRequest]
-  implicit val rExportViewToParquetRequest = json.Json.reads[ExportViewToParquetRequest]
-  implicit val rExportViewToJdbcRequest = json.Json.reads[ExportViewToJdbcRequest]
-  implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
-  implicit val rPrefixedPathRequest = json.Json.reads[PrefixedPathRequest]
-  implicit val wPrefixedPathResponse = json.Json.writes[PrefixedPathResult]
 
 }
 

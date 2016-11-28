@@ -53,7 +53,7 @@ private[biggraph] class ClusterModelImpl(
       val unscaledCenters = m.clusterCenters
       val transformingVector = featureScaler.std
       val transformer = new mllib.feature.ElementwiseProduct(transformingVector)
-      unscaledCenters.map(transformer.transform(_))
+      unscaledCenters.map(v => transformer.transform(mllib.linalg.Vectors.fromML(v)))
     }.mkString(", ") + ")"
     s"cluster centers: ${scaledCenters}\n" + statistics
   }
@@ -233,7 +233,7 @@ object Model extends FromJson[Model] {
   }
 
   def getMAPE(predictionAndLabels: spark.sql.DataFrame): Double = {
-    predictionAndLabels.map {
+    predictionAndLabels.rdd.map {
       row =>
         {
           val prediction = row.getDouble(0)
