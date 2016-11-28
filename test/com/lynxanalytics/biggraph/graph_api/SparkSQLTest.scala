@@ -36,7 +36,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     val sqlContext = cleanDataManager.newSQLContext()
     val resDir = getClass.getResource("/graph_api/SparkSQLTest").toString
     val df = sqlContext.read.json(resDir + "/people.json")
-    df.registerTempTable("people")
+    df.createOrReplaceTempView("people")
 
     // SQL statements can be run by using the sql methods provided by sqlContext.
     val teenagers = sqlContext.sql("SELECT name, age FROM people WHERE age >= 13 AND age <= 19")
@@ -73,7 +73,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     val peopleDataFrame = sqlContext.createDataFrame(rowRDD, schema)
 
     // Register the DataFrames as a table.
-    peopleDataFrame.registerTempTable("people")
+    peopleDataFrame.createOrReplaceTempView("people")
 
     // SQL statements can be run by using the sql methods provided by sqlContext.
     val results = sqlContext.sql("SELECT name FROM people")
