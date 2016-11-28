@@ -11,8 +11,6 @@ import com.google.common.collect.MapMaker
 import com.lynxanalytics.biggraph.controllers.ProjectEditor
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.hive.HiveContext
-
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -44,19 +42,6 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-// Creating a second HiveContext fails. This only happens in tests, and this will be removed when
-// upgrading to Spark 2.0.0 since there will be no HiveContext anymore.
-object HiveContextHolder {
-  var hiveContext: HiveContext = null
-  def apply(sc: spark.SparkContext): HiveContext = {
-    if (hiveContext == null)
-      hiveContext = new HiveContext(sc)
-    assert(sc == hiveContext.sparkContext,
-      "HiveContext already exists for a different SparkContext.")
-    hiveContext
-  }
-}
-
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
@@ -68,7 +53,6 @@ class DataManager(sc: spark.SparkContext,
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = new SQLContext(sc)
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
-  lazy val masterHiveContext = HiveContextHolder(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -447,12 +431,6 @@ class DataManager(sc: spark.SparkContext,
     val sqlContext = masterSQLContext.newSession()
     registerUDFs(sqlContext)
     sqlContext
-  }
-
-  def newHiveContext(): HiveContext = {
-    val hiveContext = masterHiveContext.newSession()
-    registerUDFs(hiveContext)
-    hiveContext
   }
 
   private def registerUDFs(sqlContext: SQLContext) = {

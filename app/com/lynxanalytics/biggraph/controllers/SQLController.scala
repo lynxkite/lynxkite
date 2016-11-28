@@ -185,7 +185,6 @@ trait GenericImportRequest extends ViewRecipe with FrameSettings {
   // Empty list means all columns.
   val columnsToImport: List[String]
   val limit: Option[Int]
-  protected val needHiveContext = false
   protected def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame
   def notes: String
@@ -196,7 +195,7 @@ trait GenericImportRequest extends ViewRecipe with FrameSettings {
     restrictToColumns(dataFrame(user, context), columnsToImport)
 
   def defaultContext()(implicit dataManager: DataManager): SQLContext =
-    if (needHiveContext) dataManager.masterHiveContext else dataManager.masterSQLContext
+    dataManager.masterSQLContext
 
   private def restrictToColumns(
     full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
@@ -309,7 +308,6 @@ object JdbcImportRequest extends FromJson[JdbcImportRequest] {
 trait FilesWithSchemaImportRequest extends GenericImportRequest {
   val files: String
   val format: String
-  override val needHiveContext = true
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
     val hadoopFile = HadoopFile(files)
@@ -374,7 +372,6 @@ case class HiveImportRequest(
     columnsToImport: List[String],
     limit: Option[Int]) extends GenericImportRequest {
 
-  override val needHiveContext = true
   def dataFrame(user: serving.User, context: SQLContext)(
     implicit dataManager: DataManager): spark.sql.DataFrame = {
     assert(
@@ -574,16 +571,7 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  // Some import requests need a hivecontext to do their imports
-  // (e.g. HiveImportRequest), but we don't want regular users to
-  // do that.
-  // With this implementation, if a non-admin calls hive related
-  // stuff, the execution will simply fail
   def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
-    if (user.isAdmin) {
-      dataManager.newHiveContext()
-    } else {
-      dataManager.newSQLContext()
-    }
+    dataManager.newSQLContext()
   }
 }
