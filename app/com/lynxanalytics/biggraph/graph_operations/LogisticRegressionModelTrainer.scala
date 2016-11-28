@@ -5,7 +5,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql
 import org.apache.spark.ml
-import org.apache.spark.mllib
 
 object LogisticRegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -102,17 +101,17 @@ case class LogisticRegressionModelTrainer(
   private def getMcfaddenR2(
     predictions: sql.DataFrame): Double = {
     val numData = predictions.count.toInt
-    val labelSum = predictions.map(_.getAs[Double]("label")).sum
+    val labelSum = predictions.rdd.map(_.getAs[Double]("label")).sum
     if (labelSum == 0.0 || labelSum == numData) {
       0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
     } else {
       // The log likelihood of logistic regression is calculated according to the equation:
       // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
       // For details, see http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch12.pdf (eq 12.10).
-      val logLikCurrent = predictions.map {
+      val logLikCurrent = predictions.rdd.map {
         row =>
           {
-            val rawClassification = row.getAs[mllib.linalg.DenseVector]("rawClassification")(1)
+            val rawClassification = row.getAs[ml.linalg.Vector]("rawClassification")(1)
             val label = row.getAs[Double]("label")
             rawClassification * label - Math.log(1 + Math.exp(rawClassification))
           }
@@ -133,7 +132,7 @@ case class LogisticRegressionModelTrainer(
     val numFeatures = model.coefficients.size
     val numData = predictions.count.toInt
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
-    val labelSum = predictions.map(_.getAs[Double]("label")).sum
+    val labelSum = predictions.rdd.map(_.getAs[Double]("label")).sum
     // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient
     // values to coefficient standard errors. See more information at http://www.real-statistics.com/
     // logistic-regression/significance-testing-logistic-regression-coefficients.
@@ -145,8 +144,8 @@ case class LogisticRegressionModelTrainer(
         // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
         Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
       } else {
-        val vectors = predictions.map(_.getAs[mllib.linalg.DenseVector]("vector"))
-        val probability = predictions.map(_.getAs[mllib.linalg.DenseVector]("probability"))
+        val vectors = predictions.rdd.map(_.getAs[ml.linalg.Vector]("vector"))
+        val probability = predictions.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
         // The constant field is added in order to get the statistics of the intercept.
         val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
         val matrix = new breeze.linalg.DenseMatrix(

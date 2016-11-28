@@ -44,7 +44,7 @@ case class PredictFromModel(numFeatures: Int)
     val transformation = modelValue.load(rc.sparkContext).transformDF(featuresDF)
     val prediction = transformation.select("ID", "prediction").map { row =>
       (row.getAs[ID]("ID"), row.getAs[Double]("prediction"))
-    }.sortUnique(partitioner)
+    }.rdd.sortUnique(partitioner)
     output(o.prediction, prediction)
   }
 }

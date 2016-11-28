@@ -56,7 +56,7 @@ case class ClassifyWithModel(numFeatures: Int)
     val transformation = classificationModel.transformDF(scaledDF)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
-    }.sortUnique(partitioner)
+    }.rdd.sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
       val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
@@ -67,7 +67,7 @@ case class ClassifyWithModel(numFeatures: Int)
           probabilityValue = 1 - probabilityValue
         }
         (row.getAs[ID]("ID"), probabilityValue)
-      }.sortUnique(partitioner)
+      }.rdd.sortUnique(partitioner)
       output(o.probability, probability)
     }
     output(o.classification, classification)
