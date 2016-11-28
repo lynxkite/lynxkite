@@ -140,7 +140,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     partitioner: Partitioner): SortedRDD[ID, ID] = {
     val idSet = preSelectedEdges
       .flatMap {
-        case (src, dst) => Seq(src -> (), dst -> ())
+        case (src, dst) => Seq(src -> (()), dst -> (()))
       }
       .sort(partitioner)
       .distinctByKey
@@ -213,7 +213,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   def getVsToSegDistinct(belongsTo: UniqueSortedRDD[ID, Edge]): RDD[(ID, ID)] = {
     belongsTo
       .values
-      .map(e => (e.src -> e.dst) -> ())
+      .map(e => (e.src -> e.dst) -> (()))
       .sort(belongsTo.partitioner.get)
       .distinctByKey
       .map { case ((src, dst), _) => src -> dst }

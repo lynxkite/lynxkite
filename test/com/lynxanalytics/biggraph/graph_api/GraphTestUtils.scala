@@ -224,10 +224,10 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     val sc = rc.sparkContext
     val (srcs, dsts) = edgeLists.unzip
     val vs = sc.parallelize(
-      srcs.flatten.map(_.toLong -> ()))
+      srcs.flatten.map(_.toLong -> (())))
       .sortUnique(rc.onePartitionPartitioner)
     val segments = sc.parallelize(
-      dsts.map(_.toLong -> ()))
+      dsts.map(_.toLong -> (())))
       .sortUnique(rc.onePartitionPartitioner)
     val es = sc.parallelize(
       edgeLists.flatMap {

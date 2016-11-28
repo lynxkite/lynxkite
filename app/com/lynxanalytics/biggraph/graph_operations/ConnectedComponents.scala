@@ -51,7 +51,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
         case (vId, (_, None)) => Edge(vId, vId)
       }
     output(o.belongsTo, ccEdges.randomNumbered(partitioner))
-    val ccVertices = ccEdges.map(_.dst -> ())
+    val ccVertices = ccEdges.map(_.dst -> (()))
       .sort(partitioner)
       .distinctByKey
     output(o.segments, ccVertices)
