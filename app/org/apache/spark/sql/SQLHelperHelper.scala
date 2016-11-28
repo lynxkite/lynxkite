@@ -1,9 +1,7 @@
 // Hack to access some private methods.
 package org.apache.spark.sql
 
-import org.apache.spark.sql.execution.ExplainCommand
-// Spark 2.0 seems to be moving this to the following location:
-// import org.apache.spark.sql.execution.command.ExplainCommand
+import org.apache.spark.sql.execution.command.ExplainCommand
 
 object SQLHelperHelper {
   // Invokes an explain command on a data frame, but does not return any results.

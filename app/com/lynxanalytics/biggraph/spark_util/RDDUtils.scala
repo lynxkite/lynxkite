@@ -173,7 +173,7 @@ object RDDUtils {
     // TODO: Move this closer to the UI.
     val rounder = math.pow(10, math.ceil(math.log10(multiplier))).toInt
     valueBuckets.counts.transform {
-      (value, count) => math.round(count / rounder).toInt * rounder
+      (value, count) => (count / rounder) * rounder
     }
     valueBuckets
   }

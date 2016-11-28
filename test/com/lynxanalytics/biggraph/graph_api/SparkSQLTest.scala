@@ -8,17 +8,6 @@ import org.scalatest.FunSuite
 
 // Things tested here are unfortunately not trivial due to things not being registered in kryo...
 class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
-  var oldOut: java.io.PrintStream = null
-  before {
-    assert(oldOut == null)
-    oldOut = Console.out
-    Console.setOut(com.google.common.io.ByteStreams.nullOutputStream())
-  }
-  after {
-    assert(oldOut != null)
-    Console.setOut(oldOut)
-    oldOut = null
-  }
 
   test("We can run a simple SparkSQL workflow using our internal spark context") {
     val sqlContext = cleanDataManager.newSQLContext()
