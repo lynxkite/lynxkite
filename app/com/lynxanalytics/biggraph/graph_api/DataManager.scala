@@ -448,7 +448,7 @@ object DataManager {
     dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {
     for ((name, df) <- dfs) {
       assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
-      df.registerTempTable(name)
+      df.createOrReplaceTempView(name)
     }
     log.info(s"Executing query: $query")
     ctx.sql(query)
