@@ -37,7 +37,7 @@ object JDBCUtil {
         context.read.jdbc(url, table, predicates.toArray, props)
       }
     } else {
-      val stats = try TableStats(url, table, keyColumn)
+      val stats = TableStats(url, table, keyColumn)
       val p = if (numPartitions <= 0) {
         RuntimeContext.partitionerForNRows(stats.count).numPartitions
       } else {
