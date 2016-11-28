@@ -55,7 +55,9 @@ case class ReduceDimensions(numFeatures: Int)
     val pcaModel = pca.fit(scaledDF)
     val pcaDf = pcaModel.transform(scaledDF).select("id", "pcaVector")
     val partitioner = rddArray(0).partitioner.get
-    val pcaRdd = pcaDf.map(row => (row.getAs[ID](0), row.getAs[DenseVector](1))).sortUnique(partitioner)
+    val pcaRdd = pcaDf.map {
+      row => (row.getAs[ID](0), row.getAs[DenseVector](1))
+    }.rdd.sortUnique(partitioner)
     val dim1Rdd = pcaRdd.mapValues(v => v.values(0))
     val dim2Rdd = pcaRdd.mapValues(v => v.values(1))
     output(o.attr1, dim1Rdd)
