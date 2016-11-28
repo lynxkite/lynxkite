@@ -13,16 +13,16 @@ module.exports = function(fw) {
    * the lower and the upper case.
    */
   var attributes = {
-        'goals': 73,
-        'points': 90,
-        'draws': 12,
-        'red cards': 3,
-        'Dennis Bergkamp': 10,
-        'Thiery Henry' : 14,
-        'Fredrik Ljunberg': 11,
-        'Ashley Cole': 3,
-        'Patrick Viera': 4,
-        'Robert Pires': 7
+        'goals': '73',
+        'points': '90',
+        'draws': '12',
+        'red cards': '3',
+        'Dennis Bergkamp': '10',
+        'Thiery Henry' : '14',
+        'Fredrik Ljunberg': '11',
+        'Ashley Cole': '3',
+        'Patrick Viera': '4',
+        'Robert Pires': '7'
         };
 
   var sortedAttributes = Object.keys(attributes).sort();
@@ -36,12 +36,14 @@ module.exports = function(fw) {
     // attributes listed under the attributes object. This is done to eliminate the possibility of
     // future surprises caused by not listed attributes if another test would ever use the
     // 'attributes listed in order' state its the starting state.
-    lib.left.runOperation('discard vertex attribute', {name:'id'});
-    lib.left.runOperation('discard vertex attribute', {name:'ordinal'});
+    lib.left.runOperation('discard vertex attribute', {name: 'id'});
+    lib.left.runOperation('discard vertex attribute', {name: 'ordinal'});
     for (var attr in attributes) {
-      lib.left.runOperation('derived vertex attribute',
-                            {expr: attributes[attr], output: attr, type: 'double'}
-                            );
+      if (attributes.hasOwnProperty(attr)) {
+        lib.left.runOperation('derived vertex attribute',
+                              {expr: attributes[attr], output: attr, type: 'double'}
+                             );
+      }
     }
 
     // When opening an operation, the operation's panel can have different ways to ask the user
@@ -56,7 +58,7 @@ module.exports = function(fw) {
     expect(aggrList.getText()).toEqual(sortedAttributes);
     lib.left.closeOperation();
 
-    // Checking if the attributes listed for the Vertex attribute for string operation are in
+    // Checking if the attributes listed for the Vertex attribute to string operation are in
     // correct order.
     lib.left.openOperation('Vertex attribute to string');
     // The list of the attributes in the order they are displayed in the listbox.
