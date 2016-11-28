@@ -23,6 +23,9 @@ class DeadClass4
 class DeadClass5
 class DeadClass6
 class DeadClass7
+class DeadClass8
+class DeadClass9
+class DeadClass10
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
@@ -144,9 +147,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.mllib.linalg.DenseMatrix])
     kryo.register(classOf[org.apache.spark.mllib.regression.LabeledPoint])
     kryo.register(classOf[Array[org.apache.spark.mllib.regression.LabeledPoint]])
-    kryo.register(Class.forName("org.apache.spark.mllib.tree.impl.DTStatsAggregator"))
+    kryo.register(classOf[DeadClass8])
     kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.VarianceAggregator"))
-    kryo.register(Class.forName("org.apache.spark.mllib.tree.impl.DecisionTreeMetadata"))
+    kryo.register(classOf[DeadClass9])
     kryo.register(org.apache.spark.mllib.tree.impurity.Variance.getClass)
     kryo.register(classOf[Enumeration$Val])
     kryo.register(org.apache.spark.mllib.tree.configuration.QuantileStrategy.getClass)
@@ -163,8 +166,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_operations.SegmentByEventSequence.EventListSegmentId])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.UnsafeRow])
     kryo.register(classOf[Array[org.apache.spark.mllib.tree.model.Split]])
-    kryo.register(Class.forName("org.apache.spark.mllib.tree.model.Bin"))
-    kryo.register(Class.forName("[Lorg.apache.spark.mllib.tree.model.Bin;"))
+    kryo.register(classOf[DeadClass10])
+    kryo.register(classOf[Array[DeadClass10]])
     kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyLowSplit"))
     kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyHighSplit"))
 
