@@ -30,6 +30,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     // SQL statements can be run by using the sql methods provided by sqlContext.
     val teenagers = sqlContext.sql("SELECT name, age FROM people WHERE age >= 13 AND age <= 19")
     teenagers.show()
+    import sqlContext.implicits._
 
     // The results of SQL queries are DataFrames and support all the normal RDD operations.
     // The columns of a row in the result can be accessed by field index:
@@ -37,9 +38,6 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
 
     // or by field name:
     teenagers.map(t => "Name: " + t.getAs[String]("name")).collect().foreach(println)
-
-    // row.getValuesMap[T] retrieves multiple columns at once into a Map[String, T]
-    teenagers.map(_.getValuesMap[Any](List("name", "age"))).collect().foreach(println)
   }
 
   test("We can create a DataFrame from a normal RDD and a programmatically created schema") {
@@ -67,6 +65,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     // SQL statements can be run by using the sql methods provided by sqlContext.
     val results = sqlContext.sql("SELECT name FROM people")
 
+    import sqlContext.implicits._
     // The results of SQL queries are DataFrames and support all the normal RDD operations.
     // The columns of a row in the result can be accessed by field index or by field name.
     results.map(t => "Name: " + t(0)).collect().foreach(println)
