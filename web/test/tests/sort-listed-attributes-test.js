@@ -38,10 +38,11 @@ module.exports = function(fw) {
     // 'attributes listed in order' state its the starting state.
     lib.left.runOperation('discard vertex attribute', {name: 'id'});
     lib.left.runOperation('discard vertex attribute', {name: 'ordinal'});
+    // Add the attributes to the graph.
     for (var attr in attributes) {
       if (attributes.hasOwnProperty(attr)) {
-        lib.left.runOperation('derived vertex attribute',
-                              {expr: attributes[attr], output: attr, type: 'double'}
+        lib.left.runOperation('add constant vertex attribute',
+                              {name: attr, value: attributes[attr], type: 'Double'}
                              );
       }
     }
