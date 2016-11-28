@@ -94,9 +94,9 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
 
     val trackerID = Timestamp.toString
     val rddID = data.id
-    val vsCount = sparkContext.accumulator[Long](0L, s"Vertex count for ${vs.gUID}")
+    val vsCount = sparkContext.longAccumulator(s"Vertex count for ${vs.gUID}")
     val attrCounts = attributes.map {
-      attr => sparkContext.accumulator[Long](0L, s"Attribute count for ${attr.gUID}")
+      attr => sparkContext.longAccumulator(s"Attribute count for ${attr.gUID}")
     }
     val unitSerializer = EntitySerializer.forType[Unit]
     val serializers = attributes.map(EntitySerializer.forAttribute(_))
@@ -113,11 +113,11 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
           file.writer // Make sure a writer is created even if the partition is empty.
         }
         for ((id, cols) <- iterator) {
-          vsCount += 1
+          vsCount.add(1)
           val key = new hadoop.io.LongWritable(id)
           val zipped = files.zip(serializers).zip(cols).zip(attrCounts)
           for ((((file, serializer), col), attrCount) <- zipped if col != null) {
-            attrCount += 1
+            attrCount.add(1)
             val value = serializer.unsafeSerialize(col)
             file.writer.write(key, value)
           }
