@@ -17,15 +17,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 
 object IOContext {
-  object TaskType {
-    val MAP = TaskType(isMap = true)
-    val REDUCE = TaskType(isMap = false)
-  }
-  case class TaskType(isMap: Boolean)
-
   // Encompasses the Hadoop OutputFormat, Writer, and Committer in one object.
   private class TaskFile(
-      tracker: String, stage: Int, taskType: TaskType,
+      tracker: String, stage: Int, taskType: hadoop.mapreduce.TaskType,
       task: Int, attempt: Int, file: HadoopFile,
       collection: TaskFileCollection) {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
@@ -38,8 +32,10 @@ object IOContext {
         file.resolvedNameWithNoCredentials)
       config.setOutputKeyClass(classOf[hadoop.io.LongWritable])
       config.setOutputValueClass(classOf[hadoop.io.BytesWritable])
-      spark.EntityIOHelper.createTaskAttemptContext(
-        config, tracker, stage, taskType.isMap, task, attempt)
+      val jobID = new hadoop.mapred.JobID(tracker, stage)
+      val taskID = new hadoop.mapred.TaskID(jobID, taskType, task)
+      val attemptID = new hadoop.mapred.TaskAttemptID(taskID, attempt)
+      new hadoop.mapreduce.task.TaskAttemptContextImpl(config, attemptID)
     }
     val committer = fmt.getOutputCommitter(context)
     lazy val writer = {
@@ -50,7 +46,7 @@ object IOContext {
   }
 
   private class TaskFileCollection(
-      tracker: String, stage: Int, taskType: TaskType, task: Int, attempt: Int) {
+      tracker: String, stage: Int, taskType: hadoop.mapreduce.TaskType, task: Int, attempt: Int) {
     val toClose = new collection.mutable.ListBuffer[TaskFile]()
     def createTaskFile(path: HadoopFile) = {
       new TaskFile(tracker, stage, taskType, task, attempt, path, this)
@@ -108,7 +104,7 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
     // RDD into one part-xxxx file per column, plus one for the vertex set.
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
       val collection = new IOContext.TaskFileCollection(
-        trackerID, rddID, IOContext.TaskType.REDUCE, task.partitionId, task.attemptNumber)
+        trackerID, rddID, hadoop.mapreduce.TaskType.REDUCE, task.partitionId, task.attemptNumber)
       val files = paths.map(collection.createTaskFile(_))
       try {
         val verticesWriter = files.last.writer
@@ -130,10 +126,8 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
       } finally collection.closeWriters()
       for (file <- files) file.committer.commitTask(file.context)
     }
-    // The jobs are committed under the guise of MAP tasks, so they don't collide with the
-    // REDUCE tasks used to commit tasks. (#2804)
-    val collection =
-      new IOContext.TaskFileCollection(trackerID, rddID, IOContext.TaskType.MAP, 0, 0)
+    val collection = new IOContext.TaskFileCollection(
+      trackerID, rddID, hadoop.mapreduce.TaskType.JOB_CLEANUP, 0, 0)
     val files = paths.map(collection.createTaskFile(_))
     for (file <- files) file.committer.setupJob(file.context)
     sparkContext.runJob(data, writeShard)
