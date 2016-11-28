@@ -35,6 +35,9 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
+    /*
+     TODO: Switch to spark.ml.regression.
+
     val (predictions, vectors) = method match {
       case "Linear regression" =>
         val p = getParams(forSGD = true)
@@ -95,6 +98,7 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     output(
       o.prediction,
       ids.zip(predictions).filter(!_._2.isNaN).asUniqueSortedRDD(vectors.partitioner.get))
+    */
   }
 
   // Creates the input for training and evaluation.
