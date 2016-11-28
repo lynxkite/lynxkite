@@ -15,7 +15,7 @@ sources in doc in Compile := List()  // Disable doc generation.
 
 publishArtifact in packageSrc := false  // Don't package source.
 
-scalaVersion := "2.10.6"
+scalaVersion := "2.11.8"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
 
@@ -48,14 +48,14 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
-  "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,
+  "com.lihaoyi" % "ammonite-sshd" % "0.5.7" cross CrossVersion.full,
   // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
   "com.databricks" % "spark-csv_2.10" % "1.3.0",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
-  "org.scala-lang" % "scala-library" % "2.10.3",
+  "org.scala-lang" % "scala-library" % "2.11.8",
   // Fast linear algebra.
   "org.scalanlp" %% "breeze" % "0.12",
   "org.scalanlp" %% "breeze-natives" % "0.12",
