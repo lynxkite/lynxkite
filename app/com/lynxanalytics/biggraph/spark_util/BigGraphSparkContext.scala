@@ -310,14 +310,6 @@ object BigGraphSparkContext {
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
 
-    // Don't forget to review spark.memory.useLegacyMode before upgrading Spark to 2.x
-    // Without that setting, Spark 1.6.0 slows down when the cache is full. Other flags can
-    // also fix that issue:
-    //   spark.memory.fraction 0.66
-    // Or:
-    //   spark.executor.extraJavaOptions -XX:NewRatio=3
-    assert(versionFound.startsWith("1."), "Spark 2.0 is not yet supported.")
-
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
       .set("spark.memory.useLegacyMode", "true")
