@@ -1389,7 +1389,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   })
 
   register("Edge attribute to double", new EdgeAttributesOperation(_, _) {
-    val eligible = edgeAttributes[String] ++ edgeAttributes[Long]
+    val eligible = edgeAttributes[String] ++ edgeAttributes[Long] ++ edgeAttributes[Int]
     def parameters = List(
       Choice("attr", "Edge attribute", options = eligible, multipleChoice = true))
     def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
