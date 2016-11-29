@@ -28,7 +28,8 @@ class DeadClass9
 class DeadClass10
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
-  override def registerClasses(kryo: Kryo) {
+
+  override def registerClasses(kryo: Kryo): Unit = {
     // Uncomment this if you are debugging some Kryo issue.
     // import com.esotericsoftware.minlog.Log
     // Log.set(Log.LEVEL_TRACE);
@@ -36,7 +37,12 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // Adding one more line? Do it at the bottom!
     // Deleting a line? Do not.
     // Types will change IDs otherwise.
-    kryo.register(classOf[scala.Tuple2[_, _]])
+
+    // Kryo 2.22 has registered a new primitive type (void) with ID 9. Previously our first class,
+    // Tuple2 had ID 9. To make sure we can read back data written with earlier Kryo versions we
+    // forcibly set ID 9 to Tuple2.
+    // http://stackoverflow.com/questions/40867540/kryo-registration-issue-when-upgrading-to-spark-2-0
+    kryo.register(classOf[Tuple2[_, _]], 9)
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
     kryo.register(classOf[mutable.ArrayBuffer[_]])
