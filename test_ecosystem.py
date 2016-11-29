@@ -339,6 +339,7 @@ def config_and_prepare_native(cluster, args):
       export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
       export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
       export HADOOP_CONF_DIR=/etc/hadoop/conf
+      export YARN_CONF_DIR=$HADOOP_CONF_DIR
       export LYNX=/mnt/lynx
       #for tests with mysql server on master
       export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
@@ -364,7 +365,9 @@ def config_aws_s3_native(cluster):
 S3="s3://"
 EOF
     echo 'Setting AWS CLASSPATH.'
-    sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  spark/conf/spark-env.sh
+    if [ -f spark/conf/spark-env.sh ]; then
+      sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  spark/conf/spark-env.sh
+    fi
     cat >>spark/conf/spark-env.sh <<'EOF'
 # ---- the below lines were added by test_ecosystem.py ----
 AWS_CLASSPATH1=$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\\n' ':')
