@@ -49,8 +49,6 @@ libraryDependencies ++= Seq(
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.7" cross CrossVersion.full,
-  // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
-  "com.databricks" % "spark-csv_2.10" % "1.3.0",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   "com.google.guava" % "guava" % "16.0.1",
