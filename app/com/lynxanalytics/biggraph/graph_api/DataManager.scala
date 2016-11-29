@@ -42,7 +42,7 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-class DataManager(sc: spark.SparkContext,
+class DataManager(sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
@@ -51,14 +51,14 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  lazy val masterSQLContext = new SQLContext(sc)
+  lazy val masterSQLContext = sparkSession.sqlContext
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val context = io.IOContext(dataRoot, sc)
+    val context = io.IOContext(dataRoot, sparkSession.sparkContext)
     entity match {
       case vs: VertexSet => new io.VertexSetIO(vs, context)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
@@ -420,9 +420,9 @@ class DataManager(sc: spark.SparkContext,
   def runtimeContext = {
     val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
-      sparkContext = sc,
+      sparkContext = sparkSession.sparkContext,
       sqlContext = masterSQLContext,
-      ioContext = io.IOContext(dataRoot, sc),
+      ioContext = io.IOContext(dataRoot, sparkSession.sparkContext),
       broadcastDirectory = broadcastDirectory,
       dataManager = this)
   }
