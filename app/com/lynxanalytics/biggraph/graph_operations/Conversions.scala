@@ -224,6 +224,36 @@ case class IntAttributeToLong()
   }
 }
 
+object IntAttributeToDouble extends OpFromJson {
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: VertexAttributeInput[Int])
+      extends MagicOutput(instance) {
+    val attr = vertexAttribute[Double](inputs.vs.entity)
+  }
+  def run(attr: Attribute[Int])(
+    implicit manager: MetaGraphManager): Attribute[Double] = {
+
+    import Scripting._
+    val op = IntAttributeToDouble()
+    op(op.attr, attr).result.attr
+  }
+  def fromJson(j: JsValue) = IntAttributeToDouble()
+}
+case class IntAttributeToDouble()
+    extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToDouble.Output] {
+  import IntAttributeToDouble._
+  @transient override lazy val inputs = new VertexAttributeInput[Int]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    output(o.attr, inputs.attr.rdd.mapValues(_.toDouble))
+  }
+}
+
 object VertexAttributeToDynamicValue extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: VertexAttributeInput[T])
