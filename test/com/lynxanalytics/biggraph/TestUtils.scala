@@ -69,15 +69,16 @@ trait TestTempDir {
   org.apache.commons.io.FileUtils.forceDeleteOnExit(myTempDir)
 }
 
-private object SparkContextContainer {
-  lazy val sparkContext = BigGraphSparkContext(
+private object SparkSessionContainer {
+  lazy val sparkSession = BigGraphSparkContext.getSession(
     "BigGraphTests",
     forceRegistration = true,
     master = "local")
 }
 
 trait TestSparkContext {
-  val sparkContext = SparkContextContainer.sparkContext
+  val sparkSession = SparkSessionContainer.sparkSession
+  val sparkContext = sparkSession.sparkContext
 }
 
 case class Timed[X](nanos: Long, value: X)

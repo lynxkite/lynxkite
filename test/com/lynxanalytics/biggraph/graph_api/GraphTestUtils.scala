@@ -53,7 +53,7 @@ trait TestMetaGraphManager extends TestTempDir {
 trait TestDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager: DataManager = {
     val dataDir = cleanDataManagerDir()
-    new DataManager(sparkContext, dataDir)
+    new DataManager(sparkSession, dataDir)
   }
 }
 
@@ -67,7 +67,7 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
     val permanentDir = cleanDataManagerDir()
     val ephemeralDir = cleanDataManagerDir()
     prepareDataRepos(permanentDir, ephemeralDir)
-    new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
+    new DataManager(sparkSession, permanentDir, Some(ephemeralDir))
   }
 }
 

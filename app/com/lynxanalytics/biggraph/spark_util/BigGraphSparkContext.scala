@@ -206,6 +206,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Object])
     kryo.register(classOf[java.math.BigDecimal])
     kryo.register(classOf[java.sql.Date])
+    kryo.register(classOf[Array[Array[Byte]]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -249,16 +250,6 @@ object BigGraphSparkContext {
       .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
   }
 
-  def infiniteLocalityConf(conf: spark.SparkConf, sparkVersion: String): spark.SparkConf = {
-    // Make sure spark will wait for the data to be available locally
-    assert(sparkVersion.startsWith("1."),
-      s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
-    conf
-      .setIfMissing("spark.locality.wait", "3s")
-      .setIfMissing("spark.locality.wait.process", "99m")
-    conf
-  }
-
   def setupCustomMonitoring(sc: spark.SparkContext) = {
     if (isMonitoringEnabled) {
       // Hacky solution to register BiggraphMonitoringSource as a
@@ -298,11 +289,11 @@ object BigGraphSparkContext {
     }
   }
 
-  def apply(
+  def getSession(
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
-    master: String = ""): spark.SparkContext = {
+    master: String = ""): spark.sql.SparkSession = {
     rotateSparkEventLogs()
 
     val versionFound = KiteInstanceInfo.sparkVersion
@@ -350,7 +341,6 @@ object BigGraphSparkContext {
       .set("spark.eventLog.enabled", "true")
       .set("spark.eventLog.compress", "true")
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
-    sparkConf = infiniteLocalityConf(sparkConf, versionFound)
     if (useKryo) {
       sparkConf = sparkConf
         .set(
@@ -366,12 +356,13 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
-    val sc = new spark.SparkContext(sparkConf)
+    val sparkSession = spark.sql.SparkSession.builder().config(sparkConf).getOrCreate
+    val sc = sparkSession.sparkContext
     sc.addSparkListener(new BigGraphSparkListener(sc))
     if (isMonitoringEnabled) {
       setupCustomMonitoring(sc)
     }
-    sc
+    sparkSession
   }
 }
 
