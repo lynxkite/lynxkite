@@ -1376,7 +1376,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     number) type.
     """
   register("Vertex attribute to double", new VertexAttributesOperation(_, _) {
-    val eligible = vertexAttributes[String] ++ vertexAttributes[Long]
+    val eligible = vertexAttributes[String] ++ vertexAttributes[Long] ++ vertexAttributes[Int]
     def parameters = List(
       Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true))
     def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
@@ -1389,7 +1389,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   })
 
   register("Edge attribute to double", new EdgeAttributesOperation(_, _) {
-    val eligible = edgeAttributes[String] ++ edgeAttributes[Long]
+    val eligible = edgeAttributes[String] ++ edgeAttributes[Long] ++ edgeAttributes[Int]
     def parameters = List(
       Choice("attr", "Edge attribute", options = eligible, multipleChoice = true))
     def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
@@ -3395,6 +3395,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       attr.runtimeSafeCast[String].asDouble
     else if (attr.is[Long])
       attr.runtimeSafeCast[Long].asDouble
+    else if (attr.is[Int])
+      attr.runtimeSafeCast[Int].asDouble
     else
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
