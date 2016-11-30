@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.model.Model
 import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.ml.linalg.DenseVector
-import org.apache.spark.ml
 
 object ClassifyWithModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {

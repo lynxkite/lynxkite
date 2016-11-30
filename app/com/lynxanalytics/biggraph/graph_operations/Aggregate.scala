@@ -49,7 +49,6 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     implicit val id = inputDatas
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
-    implicit val oct = o.attr.classTag
     implicit val runtimeContext = rc
 
     aggregator match {
@@ -113,9 +112,7 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     implicit val id = inputDatas
     implicit val ftt = inputs.eattr.data.typeTag
     implicit val fct = inputs.eattr.data.classTag
-    implicit val oct = o.dstAttr.classTag
 
-    val src = inputs.src.rdd
     val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
     val eattr = inputs.eattr.rdd
@@ -436,10 +433,7 @@ object Aggregator {
   object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev() }
   case class StdDev() extends Aggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
-    def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = {
-      implicit val tt = inputTypeTag
-      typeTag[Stats]
-    }
+    def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = typeTag[Stats]
     def zero = Stats(0, 0, 0)
     // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Incremental_algorithm
     def merge(a: Stats, b: Double) = {

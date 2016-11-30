@@ -4,12 +4,9 @@ package com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.spark.mllib
 import org.apache.spark.ml
-import org.apache.spark.rdd.RDD
 import org.apache.spark
 import play.api.libs.json
-import play.api.libs.json.JsNull
 
 object Implicits {
   // Easy access to the ModelMeta class from Scalar[Model].
@@ -57,26 +54,6 @@ case class Model(
   featureNames: List[String], // The name of the feature attributes used to train this model.
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
-
-  private def standardScalerModelToJson(model: Option[mllib.feature.StandardScalerModel]): json.JsValue = {
-    if (model.isDefined) {
-      json.Json.obj(
-        "std" -> json.Json.parse(model.get.std.toJson),
-        "mean" -> json.Json.parse(model.get.mean.toJson),
-        "withStd" -> model.get.withStd,
-        "withMean" -> model.get.withMean)
-    } else {
-      JsNull
-    }
-  }
-
-  private def standardScalerModelEquals(left: mllib.feature.StandardScalerModel,
-                                        right: mllib.feature.StandardScalerModel): Boolean = {
-    left.mean == right.mean &&
-      left.std == right.std &&
-      left.withMean == right.withMean &&
-      left.withStd == right.withStd
-  }
 
   override def equals(other: Any) = {
     if (canEqual(other)) {

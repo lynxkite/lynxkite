@@ -12,12 +12,9 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.table.TableImport
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
-import play.api.libs.json.JsResult
-import play.api.libs.json.JsValue
 
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {

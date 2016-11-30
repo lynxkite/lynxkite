@@ -40,7 +40,6 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val instance = output.instance
     val attrMeta = inputs.attr.meta
     implicit val ct = attrMeta.classTag
     val filteredAttr = inputs.attr.rdd.sortedJoin(inputs.filtered.rdd)

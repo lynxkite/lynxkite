@@ -7,7 +7,15 @@ javaOptions in Test := Seq(
   "-Dbiggraph.default.partitions.per.core=1",
   "-XX:PermSize=256M")
 
-scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked", "-Xfatal-warnings")
+scalacOptions ++= Seq(
+  "-feature",
+  "-deprecation",
+  "-unchecked",
+  // TODO: Suppress warnings as necessary and enable checks.
+  // "-Ywarn-unused",
+  // "-Ywarn-unused-import",
+  // "-Xlint:_,-adapted-args,-type-parameter-shadow,-inaccessible",
+  "-Xfatal-warnings")
 
 version := "0.1-SNAPSHOT"
 

@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import scala.reflect._

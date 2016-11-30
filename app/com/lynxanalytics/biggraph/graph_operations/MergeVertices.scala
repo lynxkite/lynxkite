@@ -67,7 +67,6 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
     o: Output,
     output: OutputBuilder)(implicit rc: RuntimeContext,
                            inputDatas: DataSet): Unit = {
-    implicit val ct = inputs.attr.data.classTag
     val partitioner = attr.partitioner.get
 
     val byAttr = attr.map(_.swap)
@@ -89,7 +88,6 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val ct = inputs.attr.data.classTag
     implicit val tt = inputs.attr.data.typeTag
     implicit val runtimeContext = rc
     val attr = inputs.attr.rdd
