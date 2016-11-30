@@ -36,3 +36,38 @@
   max-height: 80vh;
   overflow-y: auto; /* Clip and display scrollbars when necessary. */
 }
+
+@include tether($themePrefix: 'drop');
+@include tether-theme-arrows(
+  $themePrefix: 'drop',
+  $themeName: 'menu',
+  $arrowSize: 10px,
+  $backgroundColor: white,
+  $color: black,
+  $useDropShadow: true);
+
+.drop-element.drop-theme-menu {
+  z-index: 1000;
+}
+
+.drop-element.drop-theme-menu .drop-content {
+  padding: 4px 8px;
+  /* Display gap even when the arrow is missing.
+   * https://github.com/HubSpot/drop/issues/118 */
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.drop-element.drop-theme-menu .drop-content .menu-item {
+  &:hover {
+    background: #286090;
+    color: white;
+    padding: 0 8px;
+    margin: 0 -8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  &.active::before {
+    content: '•';
+  }
+}

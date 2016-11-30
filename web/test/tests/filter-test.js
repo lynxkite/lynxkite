@@ -7,9 +7,9 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'example graph with filters set',
     function() {
-      lib.left.setAttributeFilter('name', 'Adam,Eve,Bob');
-      lib.left.setAttributeFilter('age', '<40');
-      lib.left.setAttributeFilter('weight', '!1');
+      lib.left.vertexAttribute('name').setFilter('Adam,Eve,Bob');
+      lib.left.vertexAttribute('age').setFilter('<40');
+      lib.left.edgeAttribute('weight').setFilter('!1');
     },
     function() {
     });

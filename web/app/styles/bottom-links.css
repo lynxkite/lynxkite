@@ -18,5 +18,6 @@
 
 .bottom-links-dropup {
   cursor: pointer;
+  user-select: none;
 }
 

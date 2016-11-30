@@ -252,7 +252,7 @@ function(util, $timeout, removeOptionalDefaults) {
         if (history && history.$resolved && !history.$error) {
           code = toGroovy(history.steps);
         }
-        scope.side.workflowEditor = {
+        scope.side.unsaved.workflowEditor = {
           enabled: true,
           workflow: {
             code: code,
