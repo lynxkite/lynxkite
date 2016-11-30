@@ -121,7 +121,6 @@ object SerializableType {
   }
 
   object Implicits {
-    import scala.language.implicitConversions
     implicit def classTag[T](implicit st: SerializableType[T]) = st.classTag
     implicit def format[T](implicit st: SerializableType[T]) = st.format
     implicit def ordering[T](implicit st: SerializableType[T]) = st.ordering

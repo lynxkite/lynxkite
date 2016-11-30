@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types
-import scala.reflect.runtime.universe.TypeTag
 
 object ImportDataFrame extends OpFromJson {
 
@@ -38,7 +37,6 @@ class ImportDataFrame private (
 
   override lazy val hashCode = gUID.hashCode
 
-  import ImportDataFrame._
   override val isHeavy = true
   override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new NoInput()

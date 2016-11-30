@@ -8,7 +8,6 @@ import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ OperationParams, Operations }
 import com.lynxanalytics.biggraph.graph_operations
-import java.util.regex.Pattern
 
 import com.lynxanalytics.biggraph.serving.User
 import play.api.libs.json
@@ -16,7 +15,6 @@ import play.api.libs.json
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
-import scala.util.matching.Regex
 
 case class FEStatus(enabled: Boolean, disabledReason: String = "") {
   def ||(other: => FEStatus) = if (enabled) this else other
@@ -55,7 +53,7 @@ object FEOption {
   def titledCheckpoint(cp: String, title: String, suffix: String = ""): FEOption =
     special(s"!checkpoint($cp,$title)$suffix")
   def unpackTitledCheckpoint(id: String): (String, String, String) =
-    unpackTitledCheckpoint(id, "$id does not look like a project checkpoint identifier")
+    unpackTitledCheckpoint(id, s"$id does not look like a project checkpoint identifier")
   def unpackTitledCheckpoint(id: String, customError: String): (String, String, String) =
     maybeUnpackTitledCheckpoint(id).getOrElse(throw new AssertionError(customError))
   def maybeUnpackTitledCheckpoint(id: String): Option[(String, String, String)] =
@@ -488,31 +486,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       val (nextState, step) = historyStep(user, start, operations.head, None)
       (nextState, step) #:: extendedHistory(user, nextState, operations.tail)
     }
-  }
-
-  private def extendOpWithSelectedOption(
-    params: Map[String, String],
-    meta: FEOperationMeta): FEOperationMeta = {
-    meta.copy(parameters = meta.parameters.map { parameter =>
-      if (!FEOperationParameterMeta.choiceKinds.contains(parameter.kind)) {
-        parameter
-      } else if (!parameter.multipleChoice &&
-        params.contains(parameter.id) &&
-        !parameter.options.map(_.id).contains(params(parameter.id))) {
-        parameter.copy(options = FEOption.fromID(params(parameter.id)) +: parameter.options)
-      } else if (parameter.multipleChoice && params.contains(parameter.id)) {
-        val selectedIds = params(parameter.id).split(",", -1).toList
-        val knownAllowedIds = parameter.options.map(_.id).toSet
-        val missingSelectedIds = selectedIds.filter(!knownAllowedIds.contains(_))
-        if (missingSelectedIds.nonEmpty) {
-          parameter.copy(options = missingSelectedIds.map(FEOption.fromID(_)) ++ parameter.options)
-        } else {
-          parameter
-        }
-      } else {
-        parameter
-      }
-    })
   }
 
   def getOpCategories(user: serving.User,

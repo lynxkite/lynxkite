@@ -57,7 +57,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       val n = vertices.size.toLong * vertices.size.toLong
       assert(numToGet <= n, s"sampleVertexPairs was requested to sample $numToGet from $n")
       val uniform = new UniformIntegerDistribution(rng, 0, vertices.size - 1);
-      var set = mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
+      val set = mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
       set.sizeHint(numToGet)
       while (set.size < numToGet) {
         val id1 = uniform.sample()

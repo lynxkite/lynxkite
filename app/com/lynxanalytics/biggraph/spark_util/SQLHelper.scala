@@ -2,9 +2,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.lynxanalytics.biggraph.graph_api._
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.table.TableRelation
-import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -19,7 +17,6 @@ import org.apache.spark.sql.types
 
 import scala.collection.mutable;
 import scala.reflect.runtime.universe._
-import scala.reflect.{ classTag, ClassTag }
 
 import java.util.UUID
 
@@ -207,9 +204,6 @@ object SQLHelper {
       rc: RuntimeContext,
       schema: types.StructType,
       dataFrame: DataFrame) {
-
-      val sc = rc.sparkContext
-
       val entities = this.columns.values.map(_.entity)
       val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
       val inOrder = schema.map(f => entitiesByName(SQLHelper.toSymbol(f)))

@@ -6,7 +6,6 @@ import com.lynxanalytics.biggraph.graph_api.TypeTagToFormat
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.HashPartitioner
-import org.apache.spark.rdd.RDD
 import play.api.libs.json
 import scala.reflect.runtime.universe._
 

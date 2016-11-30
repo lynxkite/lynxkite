@@ -360,7 +360,7 @@ class InternalWatchdogThread(
   override def run(): Unit = {
     var lastOkStatusTimeNanos = System.nanoTime
     while (true) {
-      var status = listener.getCurrentResponse
+      val status = listener.getCurrentResponse
       if (controller.getForceReportHealthy() ||
         (status.sparkWorking && status.kiteCoreWorking)) {
         lastOkStatusTimeNanos = System.nanoTime

@@ -146,7 +146,6 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
       { it =>
         val graph = it.toMap
         val components = mutable.Map[ID, ComponentID]()
-        var idx = 0
         // Breadth-first search.
         for (node <- graph.keys) {
           if (!components.contains(node)) {

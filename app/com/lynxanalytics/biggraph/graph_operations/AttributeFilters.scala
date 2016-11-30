@@ -36,7 +36,6 @@ case class VertexAttributeFilter[T](filter: Filter[T])
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
-    implicit val tt = inputs.attr.data.typeTag
     implicit val ct = inputs.attr.data.classTag
 
     val attr = inputs.attr.rdd
