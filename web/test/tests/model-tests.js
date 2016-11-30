@@ -28,7 +28,7 @@ module.exports = function(fw) {
         features: 'yob',
         method: 'Linear regression',
       });
-      expect(lib.left.scalar('age_from_yob').getText())
+      expect(lib.left.scalarValue('age_from_yob').getText())
        .toBe('Linear regression model predicting age');
     },
     function() {}
@@ -49,7 +49,7 @@ module.exports = function(fw) {
         type: 'double',
         expr: 'age_prediction | 0'});
       lib.left.runOperation('Vertex attribute to string', {attr: 'age_prediction'});
-      expect(lib.left.getHistogramValues('age_prediction')).toEqual([
+      expect(lib.left.vertexAttribute('age_prediction').getHistogramValues()).toEqual([
         { title: '25.0', size: 100, value: 1 },
         { title: '35.0', size: 100, value: 1 },
         { title: '40.0', size: 100, value: 1 },

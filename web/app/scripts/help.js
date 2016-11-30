@@ -87,7 +87,8 @@ angular.module('biggraph')
         content: popup[0],
         position: 'bottom center',
         classes: 'drop-theme-help-popup',
-        openOn: dropTooltipConfig.enabled ? 'hover' : undefined,
+        openOn: dropTooltipConfig.enabled ? 'click hover' : undefined,
+        hoverOpenDelay: 700,
         remove: true,
         tetherOptions: {
           // Keep within the page.

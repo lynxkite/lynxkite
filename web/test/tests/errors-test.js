@@ -25,19 +25,19 @@ module.exports = function(fw) {
         'Aggregate vertex attribute globally',
         { 'aggregate-empty': 'average,sum', 'aggregate-income': 'average' });
       // Check non-error behavior while we're here.
-      expect(lib.left.scalar('income_average').getText()).toBe('2k');
-      lib.left.scalar('income_average').click();
-      expect(lib.left.scalar('income_average').getText()).toBe('1500');
-      expect(lib.left.scalar('empty_sum').getText()).toBe('0');
+      expect(lib.left.scalarValue('income_average').getText()).toBe('2k');
+      lib.left.scalarValue('income_average').click();
+      expect(lib.left.scalarValue('income_average').getText()).toBe('1500');
+      expect(lib.left.scalarValue('empty_sum').getText()).toBe('0');
       // Check error.
-      expect(lib.left.scalar('empty_average').getText()).toBe('× \u21bb');
-      lib.left.scalar('empty_average').$('.value-error').click();
+      expect(lib.left.scalarValue('empty_average').getText()).toBe('× \u21bb');
+      lib.left.scalarValue('empty_average').$('.value-error').click();
       lib.expectModal('Error details');
       lib.closeModal();
       // It stays the same after a retry.
-      lib.left.scalar('empty_average').$('.value-retry').click();
-      expect(lib.left.scalar('empty_average').getText()).toBe('× \u21bb');
-      lib.left.scalar('empty_average').$('.value-error').click();
+      lib.left.scalarValue('empty_average').$('.value-retry').click();
+      expect(lib.left.scalarValue('empty_average').getText()).toBe('× \u21bb');
+      lib.left.scalarValue('empty_average').$('.value-error').click();
       lib.expectModal('Error details');
       lib.closeModal();
     }, function() {});

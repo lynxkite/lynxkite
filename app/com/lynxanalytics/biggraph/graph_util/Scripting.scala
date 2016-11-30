@@ -133,6 +133,8 @@ object Scripting {
   implicit class RichIntAttribute(self: Attribute[Int])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.IntAttributeToLong.run(self)
+    def asDouble: Attribute[Double] =
+      graph_operations.IntAttributeToDouble.run(self)
   }
 
   // Take the union of edge bundles that are parallel, that is that are going between the same

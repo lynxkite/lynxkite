@@ -1025,7 +1025,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var sliderAttr = vertices.side.vertexAttrs.slider;
       if (!sliderAttr) { return; }
       var sb = common.minmax(
-          vertices.vs.map(function(v) { return v.data.attrs[sliderAttr.id].double; }));
+          vertices.vs.map(function(v) { return (v.data.attrs[sliderAttr.id] || {}).double; }));
       var pos = Number(sliderPos());
       for (var i = 0; i < vertices.vs.length; ++i) {
         var v = vertices.vs[i];

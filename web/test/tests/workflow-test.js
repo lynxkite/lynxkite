@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var lib = require('../test-lib.js');
+var K = protractor.Key;
 
 module.exports = function(fw) {
   fw.statePreservingTest(
@@ -68,7 +69,8 @@ project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : 
       expect(lib.left.vertexCount()).toEqual(4);
       expect(lib.left.edgeCount()).toEqual(4);
       expect(lib.left.attributeCount()).toEqual(9);
-      expect(lib.left.getHistogramValues('polite').then(lib.sortHistogramValues)).toEqual([
+      var polite = lib.left.vertexAttribute('polite');
+      expect(polite.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
         { title: 'Mr Adam', size: 100, value: 1 },
         { title: 'Mr Bob', size: 100, value: 1 },
         { title: 'Mr Isolated Joe', size: 100, value: 1 },
@@ -88,7 +90,8 @@ project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : 
       expect(lib.left.vertexCount()).toEqual(25);
       expect(lib.left.edgeCount()).toEqual(191);
       expect(lib.left.attributeCount()).toEqual(4);
-      expect(lib.left.getHistogramValues('neighborhood_count of all edges_max')).toEqual([
+      var count = lib.left.vertexAttribute('neighborhood_count-of-all-edges_max');
+      expect(count.getHistogramValues()).toEqual([
          { title : '57.00-57.15', size : 44, value : 4 },
          { title : '57.15-57.30', size : 0, value : 0 },
          { title : '57.30-57.45', size : 0, value : 0 },
@@ -122,6 +125,7 @@ project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : 
       expect(lib.error()).toMatch(
         'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
+      lib.left.closeOperation();
     });
 
   fw.statePreservingTest(
@@ -133,6 +137,7 @@ project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : 
       expect(lib.error()).toMatch(
         'java.lang.SecurityException: Script tried to execute a disallowed operation');
       lib.closeErrors();
+      lib.left.closeOperation();
     });
 
   fw.statePreservingTest(
@@ -158,13 +163,13 @@ project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : 
       lib.left.clickWorkflowEditButton();
       lib.sendKeysToACE(
         lib.left.getWorkflowCodeEditor(),
-        'project.addConstantVertexAttribute' +
-          '(name: \'testConstAttr\',' +
-          ' value: \'1.0\',' +
-          ' type: \'Double\')');
+        K.chord(K.CONTROL, K.END) + K.ENTER +
+        `project.addConstantVertexAttribute(
+          name: 'test-const-attr', value: '1.0', type: 'Double')`);
       lib.left.getWorkflowSaveButton().click();
-      lib.expectNotElement(lib.left.vertexAttribute('testConstAttr'));
+      var testConstAttr = lib.left.vertexAttribute('test-const-attr');
+      lib.expectNotElement(testConstAttr);
       lib.left.runOperation('TestConstWorkflow');
-      lib.expectElement(lib.left.vertexAttribute('testConstAttr'));
+      lib.expectElement(testConstAttr);
     });
 };

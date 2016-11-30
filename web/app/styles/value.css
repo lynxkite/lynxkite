@@ -1,5 +1,6 @@
 .value.human {
   cursor: pointer;
+  user-select: none;
   display: inline-block;
 }
 .value.human:hover {
@@ -24,12 +25,14 @@
   font-weight: bold;
   color: darkred;
   cursor: pointer;
+  user-select: none;
 }
 
 .value-retry {
   font-weight: bold;
   color: #005b99;
   cursor: pointer;
+  user-select: none;
 }
 
 .value-error + .tooltip > .tooltip-inner {

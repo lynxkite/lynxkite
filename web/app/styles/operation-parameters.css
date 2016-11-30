@@ -15,6 +15,7 @@ tag-list div[dropdown] {
   padding: 3px 8px;
   border-radius: 3px;
   cursor: pointer;
+  user-select: none;
 }
 .tag-list-tag.disabled {
   cursor: default;
