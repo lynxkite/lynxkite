@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Upgraded to _Apache Spark 2.0.2_.
  - New _"Count most common"_ local aggregator added.
 
 ### 1.9.6
