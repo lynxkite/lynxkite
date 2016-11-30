@@ -206,7 +206,7 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
 }
 
 // The trivial extension of Aggregator.
-trait OnePhaseAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
+trait ItemAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
   def merge(a: Intermediate, b: From): Intermediate
   def aggregatePartition(values: Iterator[From]): Intermediate =
     values.foldLeft(zero)(merge _)
@@ -224,7 +224,7 @@ trait OnePhaseAggregator[From, Intermediate, To] extends Aggregator[From, Interm
 // aggregatePartition method creates a list of (value, count)-s to merge. The occurrences of
 // distinct (key, value) pairs and the occurrence of each value within a key should lead to the
 // same result.
-trait TwoPhaseAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
+trait CountAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
   def merge(a: Intermediate, b: (Double, From)): Intermediate
   def aggregatePartition(values: Iterator[From]): Intermediate = values
     .toIterable
@@ -246,7 +246,7 @@ trait TwoPhaseAggregator[From, Intermediate, To] extends Aggregator[From, Interm
 }
 
 // A distributed aggregator where Intermediate is not different from To.
-trait SimpleAggregator[From, To] extends OnePhaseAggregator[From, To, To] {
+trait SimpleAggregator[From, To] extends ItemAggregator[From, To, To] {
   def finalize(i: To): To = i
   def intermediateTypeTag(inputTypeTag: TypeTag[From]) = outputTypeTag(inputTypeTag)
 }
@@ -255,9 +255,9 @@ trait SimpleAggregator[From, To] extends OnePhaseAggregator[From, To, To] {
 // This is a trait instead of an abstract class because otherwise the case
 // class will not be serializable ("no valid constructor").
 trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
-    extends OnePhaseAggregator[From, (Intermediate1, Intermediate2), To] {
-  val agg1: OnePhaseAggregator[From, Intermediate1, To1]
-  val agg2: OnePhaseAggregator[From, Intermediate2, To2]
+    extends ItemAggregator[From, (Intermediate1, Intermediate2), To] {
+  val agg1: ItemAggregator[From, Intermediate1, To1]
+  val agg2: ItemAggregator[From, Intermediate2, To2]
   def zero = (agg1.zero, agg2.zero)
   def merge(a: (Intermediate1, Intermediate2), b: From) =
     (agg1.merge(a._1, b), agg2.merge(a._2, b))
@@ -326,7 +326,7 @@ object Aggregator {
   }
 
   abstract class MaxBy[Weight: Ordering, Value]
-      extends OnePhaseAggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
+      extends ItemAggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
@@ -396,7 +396,7 @@ object Aggregator {
   }
 
   object MostCommon extends AggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
-  case class MostCommon[T]() extends TwoPhaseAggregator[T, Option[(Double, T)], T] {
+  case class MostCommon[T]() extends CountAggregator[T, Option[(Double, T)], T] {
     val agg = MaxByDouble[T]
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]) = {
@@ -412,7 +412,7 @@ object Aggregator {
   }
 
   object CountMostCommon extends AggregatorFromJson { def fromJson(j: JsValue) = CountMostCommon() }
-  case class CountMostCommon[T]() extends TwoPhaseAggregator[T, Option[(Double, T)], Double] {
+  case class CountMostCommon[T]() extends CountAggregator[T, Option[(Double, T)], Double] {
     val agg = MaxByDouble[T]
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def intermediateTypeTag(inputTypeTag: TypeTag[T]) = {
@@ -428,7 +428,7 @@ object Aggregator {
   }
 
   object CountDistinct extends AggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
-  case class CountDistinct[T]() extends TwoPhaseAggregator[T, Double, Double] {
+  case class CountDistinct[T]() extends CountAggregator[T, Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def intermediateTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def zero = 0
@@ -451,7 +451,7 @@ object Aggregator {
   }
 
   object First extends AggregatorFromJson { def fromJson(j: JsValue) = First() }
-  case class First[T]() extends OnePhaseAggregator[T, Option[T], T] {
+  case class First[T]() extends ItemAggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
       implicit val tt = inputTypeTag
@@ -485,7 +485,7 @@ object Aggregator {
   }
 
   object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev() }
-  case class StdDev() extends OnePhaseAggregator[Double, Stats, Double] {
+  case class StdDev() extends ItemAggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = {
       implicit val tt = inputTypeTag
