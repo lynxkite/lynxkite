@@ -45,8 +45,60 @@ angular.module('biggraph')
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
-      this.workflowEditor = { enabled: false };
+      // Data that is not persisted at all.
+      this.unsaved = {
+        showSelector: false,
+        workflowEditor: { enabled: false },
+      };
     }
+
+    Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
+    Side.prototype.sectionHumanName = {
+      'scalar': 'Graph attributes',
+      'vertex-attribute': 'Vertex attributes',
+      'edge-attribute': 'Edge attributes',
+      'segmentation': 'Segmentations',
+    };
+    Side.prototype.sectionHelp = {
+      'scalar': 'graph-attributes',
+      'vertex-attribute': 'attributes',
+      'edge-attribute': 'attributes',
+      'segmentation': 'segmentations',
+    };
+    Side.prototype.sectionElements = function(section) {
+      if (section === 'scalar') {
+        return this.project.scalars.filter(function(s) {
+          return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
+        });
+      } else if (section === 'vertex-attribute') {
+        return this.project.vertexAttributes;
+      } else if (section === 'edge-attribute') {
+        return this.project.edgeAttributes;
+      } else if (section === 'segmentation') {
+        return this.project.segmentations;
+      }
+      console.error('Unexpected section:', section);
+    };
+    Side.prototype.showSection = function(section, show) {
+      var key = 'section-visibility: ' + section;
+      if (show === undefined) {
+        var saved = localStorage.getItem(key);
+        return saved === null ? true : saved === 'true';
+      } else {
+        localStorage.setItem(key, show);
+      }
+    };
+
+    // Returns the number of Bootstrap columns to use for this side.
+    Side.prototype.columnWidth = function() {
+      var count = 0;
+      for (var i = 0 ; i < this.sides.length; ++i) {
+        if (this.sides[i].state.projectName || this.sides[i].unsaved.showSelector) {
+          count += 1;
+        }
+      }
+      return 12 / count;
+    };
 
     // Creates a JSON formatted version of the current UI state of this side. The output is
     // abstracted a bit away from the exact status so that it can be reapplied in slighly different
@@ -107,26 +159,26 @@ angular.module('biggraph')
       vd.preciseBucketSizes = this.state.preciseBucketSizes;
       vd.relativeEdgeDensity = this.state.relativeEdgeDensity;
 
+      var at = this.state.attributeTitles;
+
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
-      vd.xAttribute = this.resolveVertexAttribute(this.state.attributeTitles.x);
-      vd.yAttribute = this.resolveVertexAttribute(this.state.attributeTitles.y);
-      vd.xAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.x);
-      vd.yAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.y);
+      vd.xAttribute = this.resolveVertexAttribute(at.x);
+      vd.yAttribute = this.resolveVertexAttribute(at.y);
+      vd.xAxisOptions = this.axisOptions('vertex', at.x);
+      vd.yAxisOptions = this.axisOptions('vertex', at.y);
 
       vd.vertexAttrs = {};
-      vd.vertexAttrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
-      vd.vertexAttrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
-      vd.vertexAttrs.opacity = this.resolveVertexAttribute(this.state.attributeTitles.opacity);
-      vd.vertexAttrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
-      vd.vertexAttrs.labelSize =
-        this.resolveVertexAttribute(this.state.attributeTitles['label size']);
-      vd.vertexAttrs.labelColor =
-        this.resolveVertexAttribute(this.state.attributeTitles['label color']);
-      vd.vertexAttrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
-      vd.vertexAttrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
-      vd.vertexAttrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
-      vd.vertexAttrs.position = this.resolveVertexAttribute(this.state.attributeTitles.position);
-      vd.vertexAttrs.geo = this.resolveVertexAttribute(this.state.attributeTitles.geo);
+      vd.vertexAttrs.size = this.resolveVertexAttribute(at.size);
+      vd.vertexAttrs.color = this.resolveVertexAttribute(at.color);
+      vd.vertexAttrs.opacity = this.resolveVertexAttribute(at.opacity);
+      vd.vertexAttrs.label = this.resolveVertexAttribute(at.label);
+      vd.vertexAttrs.labelSize = this.resolveVertexAttribute(at['label size']);
+      vd.vertexAttrs.labelColor = this.resolveVertexAttribute(at['label color']);
+      vd.vertexAttrs.slider = this.resolveVertexAttribute(at.slider);
+      vd.vertexAttrs.icon = this.resolveVertexAttribute(at.icon);
+      vd.vertexAttrs.image = this.resolveVertexAttribute(at.image);
+      vd.vertexAttrs.position = this.resolveVertexAttribute(at.position);
+      vd.vertexAttrs.geo = this.resolveVertexAttribute(at['geo coordinates']);
 
       vd.edgeAttrs = {};
       var aggregated = function(attr, aggregator) {
@@ -348,8 +400,8 @@ angular.module('biggraph')
           this.state.attributeTitles.color = undefined;
           this.state.attributeTitles.icon = undefined;
         } else if (setting === 'position') {
-          this.state.attributeTitles.geo = undefined;
-        } else if (setting === 'geo') {
+          this.state.attributeTitles['geo coordinates'] = undefined;
+        } else if (setting === 'geo coordinates') {
           this.state.attributeTitles.position = undefined;
         }
       }
@@ -357,14 +409,16 @@ angular.module('biggraph')
 
     Side.prototype.filterApplied = function(settings, value) {
       var that = this;
-      return settings.filter(
+      var applied = settings.filter(
         function(setting) {
           return that.state.attributeTitles[setting] === value;
         });
+      return applied;
     };
 
     Side.prototype.closeInternal = function() {
       this.state.projectName = undefined;
+      this.unsaved.showSelector = false;
     };
 
     Side.prototype.close = function() {
@@ -379,6 +433,11 @@ angular.module('biggraph')
         // grandparent on the left hand side.
         this.state.projectName = this.sides[0].parentProject();
         this.swapWithSide(this.sides[0]);
+      } else if (this.direction === 'left' && this.sides[1].state.projectName) {
+        // If this project was on the left and there is something on the right,
+        // then let the project on the right shift to the left.
+        this.closeInternal();
+        this.swapWithSide(this.sides[1]);
       } else {
         this.closeInternal();
       }
@@ -603,6 +662,7 @@ angular.module('biggraph')
       tmp = this.project; this.project = otherSide.project; otherSide.project = tmp;
       tmp = this.state; this.state = otherSide.state; otherSide.state = tmp;
       tmp = this.viewData; this.viewData = otherSide.viewData; otherSide.viewData = tmp;
+      tmp = this.unsaved; this.unsaved = otherSide.unsaved; otherSide.unsaved = tmp;
     };
 
     Side.prototype.openSegmentation = function(seg) {

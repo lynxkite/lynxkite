@@ -1,5 +1,5 @@
 .project-name {
-  font-size: 2em;
+  font: bold 3em serif;
 }
 input[type=range] {
   vertical-align: middle;
@@ -14,17 +14,11 @@ input[type=range] {
   color: rgb(255, 0, 0);
 }
 
-.sublist.list-group-item {
-  background: #f5f5f5;
-}
-.notes {
-  resize: vertical;
-  background: #f5f5f5;
-  border: 0;
-  width: 100%;
-}
 .project {
-  margin-right: 50px;
+  min-height: 407px; /* The height of the operations toolbox. */
+  margin-right: 35px;
+  background: #f5f5f5;
+  padding: 10px 15px;
 }
 .version {
   color: rgba(0, 0, 0, 0.3);
@@ -68,6 +62,113 @@ input.save-as {
   padding-right: 12px;
 }
 
+.entity-list {
+  margin-bottom: 5px;
+}
+
+.entity {
+  display: inline-block;
+  border-radius: 20px;
+  box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
+  margin: 3px;
+  margin-top: 0;
+  padding: 5px 0;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.entity .title {
+  padding: 0 10px;
+}
+
+.entity:hover {
+  box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 5px 0;
+}
+
+.entity.active {
+  background: lightgrey;
+}
+.entity.drop-enabled {
+  box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
+  background: #286090;
+  color: white;
+}
+
+.entity .subtoken {
+  background: hsl(194,50%,80%);
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin: -2px 6px -2px 0;
+  transition: background 0.2s;
+  display: inline-block;
+}
+
+.subtoken.filter {
+  background: hsl(104,50%,80%);
+}
+
+.subtoken.visualization {
+  background: hsl(14,50%,80%);
+}
+
+.entity.drop-enabled .subtoken {
+  background: darkgray;
+}
+
+.drop-theme-menu .menu > * {
+  display: block;
+}
+
+.entity-section-label {
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 80%;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 10vw;
+  border-top: 1px solid #e0e0e0;
+}
+
+.entity-section-label help-popup {
+  font-size: 10px;
+  padding: 0 10px;
+}
+.entity-section-label .label-text {
+  cursor: pointer;
+}
+
+.entity-section-label .label-text:hover {
+  text-decoration: underline;
+}
+
+textarea.project-notes {
+  resize: vertical;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 100%;
+}
+
+label {
+  font-weight: normal;
+}
+
+.entity-menu {
+  min-width: 216px;
+}
+
+.entity-menu .histogram {
+  width: 200px;
+}
+
+.project > .btn-group {
+  margin-right: 10px;
+}
+
+#apply-filters-button {
+  background: hsl(104,50%,80%);
+}
+
 .type-name {
   position: absolute;
   bottom: 0;
@@ -103,15 +204,27 @@ input.save-as {
   box-shadow: inset 1px 1px 1px #B0B0B0;
 }
 
+/* Indentation and bullet for visualization selection. */
+.visualization-menu .menu-item::before {
+  content: '\a0\a0\a0\a0';
+  font-family: monospace;
+}
+
+.visualization-menu .menu-item.active::before {
+  content: '\a0\a0•\a0' !important;
+  font-family: monospace;
+}
+
 .extra-controls table {
   width: 100%;
+  max-width: 700px;
 }
 .extra-controls td {
   padding: 6px;
 }
 .extra-controls td:first-child {
   text-align: right;
-  width: 40%;
+  width: 200px;
 }
 #sample-center .input-group-btn {
   vertical-align: bottom;
@@ -131,7 +244,7 @@ input.save-as {
 
 .split-screen {
   /* An out-of-screen tooltip may cause overflow in split screen mode. Without this
-    setting, those would create an extra scroll-bar. */
+   * setting, those would create an extra scroll-bar. */
   overflow: hidden;
 }
 .split-screen .project-sides {
@@ -139,9 +252,9 @@ input.save-as {
   overflow: auto;
 }
 
-/* In single screen overflow is managed by the scrollbar of the <body> element so
-   we just allow everything to overflow here. */
 .single-screen {
+  /* In single screen overflow is managed by the scrollbar of the <body> element so
+   * we just allow everything to overflow here. */
   overflow: visible;
 }
 .single-screen .project-sides {
@@ -151,41 +264,22 @@ input.save-as {
 .split-screen > .ui-splitbar {
   background: black;
 }
-.project-sides {
-  padding-top: 10px;
+
+.side {
+  padding: 0;
+}
+.side .panel {
+  border-top: none;
+  border-radius: 0;
+}
+#side-left .panel {
+  border-left: none;
 }
 
 .acl-settings {
   background-color: whitesmoke;
 }
 
-.sampled-visualizations {
-  position: relative;
-}
-.visualizations::before {
-  content: "Visualized as";
-}
-.visualizations:empty::before {
-  content: "";
-}
-.visualizations:not(:empty) ~ .dropdown-toggle .glyphicon::before {
-  color: red;
-}
-selected-visualization {
-  min-width: 60px;
-  display: inline-block;
-  text-align: center;
-  background: lightgrey;
-  border-radius: 3px;
-  border: 1px solid darkgrey;
-  margin-left: 10px;
-  padding: 2px 10px;
-  box-shadow: inset 1px 1px 1px #B0B0B0;
-  vertical-align: middle;
-}
-selected-visualization .visualization-name {
-  color: #333;
-}
 .pick-buttons {
   float: right;
 }

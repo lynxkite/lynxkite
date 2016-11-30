@@ -33,6 +33,7 @@
   padding: 8px;
   border-radius: 30px;
   cursor: pointer;
+  user-select: none;
 }
 
 .clicky:hover {
@@ -51,11 +52,6 @@
 
 h6 {
   font-weight: bold;
-}
-
-input.form-control.filter {
-  width: 120px;
-  display: inline-block;
 }
 
 /*

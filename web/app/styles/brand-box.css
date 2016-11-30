@@ -1,17 +1,16 @@
 .brand-box {
   width: 100%;
   padding: 20px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.brand-box table {
-  margin: auto;
-  border-collapse: separate;
-  border-spacing: 30px;
-}
-
-.brand-box .tip {
+.brand-box #tip {
   text-align: center;
   color: #48aee2;  /* Color from the Lynx logo. */
+  margin: 20px;
 }
 
 .brand-box .tip tt {

@@ -57,33 +57,29 @@
       </div>
     </div>
   </div>
-  <div ng-if="category && !op" class="panel box col-sm-11 {{category.color}}">
+  <div ng-if="category && !op" class="box col-sm-11 {{category.color}}">
     <h1>{{category.title}}</h1>
-    <div class="list-group">
-      <div ng-repeat="op in category.ops" ng-click="clickedOp(op)"
-          class="list-group-item operation" ng-class="{ disabled: !op.status.enabled }"
-          drop-tooltip="{{op.status.disabledReason || op.description}}"
-          drop-tooltip-position="left middle">
-        {{op.title}}
-      </div>
+    <div ng-repeat="op in category.ops" ng-click="clickedOp(op)"
+        class="operation" ng-class="{ disabled: !op.status.enabled }"
+        drop-tooltip="{{op.status.disabledReason || op.description}}"
+        drop-tooltip-position="left middle">
+      {{op.title}}
     </div>
   </div>
 
   <div ng-if="searching && !op" class="panel box col-sm-11 yellow">
     <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
-    <div class="list-group">
-      <div ng-repeat="op in allOps | filter: { title: opFilter } | orderBy: 'title'" ng-click="clickedOp(op)"
-          class="list-group-item operation"
-          ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
-          drop-tooltip="{{op.status.disabledReason || op.description}}"
-          drop-tooltip-position="left middle">
-        {{op.title}}
-      </div>
+    <div ng-repeat="op in allOps | filter: { title: opFilter } | orderBy: 'title'" ng-click="clickedOp(op)"
+        class="operation"
+        ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
+        drop-tooltip="{{op.status.disabledReason || op.description}}"
+        drop-tooltip-position="left middle">
+      {{op.title}}
     </div>
   </div>
 
   <div ng-if="op && opMeta">
-    <operation class="list-group"
+    <operation
       op="opMeta"
       color="opColor"
       params="params"
