@@ -330,6 +330,11 @@ class View:
     ), raw=True)
     return r['rows']
 
+  def row_count(self):
+    '''Returns the number of rows of the view.'''
+    v = self.lk.sql('select count(*) as cnt from `v`', v=self).take(1)
+    return v[0]['cnt']
+
   def schema(self):
     '''Computes the view and returns the schema.'''
     r = self.lk._send('getViewSchema', dict(

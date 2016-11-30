@@ -1,5 +1,6 @@
-project-history .list-group {
-  margin: 0;
+project-history .project {
+  max-width: 1000px; /* Avoid stretching unreasonably widely. */
+  margin: auto; /* Center when limited by max-width. */
 }
 
 project-history .list-group-item {

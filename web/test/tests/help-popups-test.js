@@ -12,7 +12,10 @@ module.exports = function(fw) {
       var helpIcon = $('help-popup[href="project-header-buttons"]');
       lib.expectNotElement(lib.helpPopup('project-header-buttons'));
       browser.actions().mouseMove(helpIcon).perform();  // hover mouse over icon
-      lib.expectElement(lib.helpPopup('project-header-buttons'));
+      // Popup should open after hover delay.
+      lib.wait(function() {
+        return lib.helpPopup('project-header-buttons').isPresent();
+      });
       browser.actions().mouseMove(lib.left.side, { x: 1, y: 1 }).perform();  // move mouse away
       // Drop is not part of Angular and hiding happens on a short timeout. We need to wait.
       lib.wait(function() {

@@ -1,5 +1,6 @@
 .section-button {
   cursor: pointer;
+  user-select: none;
   padding: 6px;
   font-size: 14px;
 }
@@ -44,6 +45,7 @@ input.form-control#max-rows {
 
 #sql-result th {
   cursor: pointer; /* Click to sort. */
+  user-select: none;
 }
 
 #sql-result .ordering {

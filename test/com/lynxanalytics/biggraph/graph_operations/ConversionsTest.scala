@@ -18,16 +18,28 @@ class ConversionsTest extends FunSuite with TestGraphOp {
 
   test("vertex attribute to double") {
     val graph = ExampleGraph()().result
+    val vs = graph.vertices
     val string = {
       val op = VertexAttributeToString[Double]()
       op(op.attr, graph.age).result.attr
     }
-    val double = {
+    val doubleFromString = {
       val op = VertexAttributeToDouble()
       op(op.attr, string).result.attr
     }
-    assert(double.rdd.collect.toMap
+    val int = {
+      val op = AddConstantIntAttribute(1)
+      op(op.vs, vs).result.attr
+    }
+    val doubleFromInt = {
+      val op = IntAttributeToDouble()
+      op(op.attr, int).result.attr
+    }
+    assert(doubleFromString.rdd.collect.toMap
       == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
+    assert(doubleFromInt.rdd.collect.toMap
+      == Map(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
+
   }
 
   test("Double formatting") {
