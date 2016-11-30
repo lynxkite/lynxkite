@@ -15,12 +15,7 @@ project.derivedVertexAttribute(
 
 project.mergeVerticesByAttribute(
   'key': 'label',
-  'aggregate-rnd_std_normal': 'average'
-)
-
-// Histogram on label triggers a non scalable aggregation which fails on this data size.
-project.discardVertexAttribute(
-  'name' : 'label'
+  'aggregate-rnd_std_normal': 'average,most_common'
 )
 
 project.computeUncomputed()
