@@ -14,5 +14,12 @@
         style="height: {{height(s)}};"></div>
     </td>
   </tr>
+  <tr>
+    <td class="histogram-bottom-bar" colspan="{{ model.sizes.length }}">
+      <span ng-show="loading">
+        loading... </span>
+      <span ng-hide="loading || model.$error" id="histogram-total">
+        histogram total: {{ total | decimal }} </span>
+    </td>
+  </tr>
 </table>
-<div ng-hide="loading || model.$error" class="histogram-total">total: {{total | decimal}}</div>

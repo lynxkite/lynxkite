@@ -32,6 +32,7 @@ project-graph #help-button {
 
 .graph-sidebar .handle {
   cursor: pointer;
+  user-select: none;
   background: white;
   height: 30px;
   width: 10px;

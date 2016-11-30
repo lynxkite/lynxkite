@@ -18,6 +18,7 @@
   display: block;
   text-align: right;
   cursor: pointer;
+  user-select: none;
 }
 
 .help dl {
@@ -33,6 +34,7 @@
 
 #help-button {
   cursor: pointer;
+  user-select: none;
 }
 help-popup {
   padding: 6px; /* Button-like padding. */

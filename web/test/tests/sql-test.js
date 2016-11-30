@@ -243,8 +243,8 @@ module.exports = function(fw) {
         },
         function() {
           right.close();
-          right.side.element(by.id('show-selector-button')).click();
-          right.side.element(by.id('directory-somesubdir')).click();
+          lib.showSelector();
+          right.side.$('#directory-somesubdir').click();
           lib.splash.expectTableListed('somesubdirtable');
           lib.splash.expectViewListed('segmview');
           left.close();
@@ -268,7 +268,7 @@ module.exports = function(fw) {
       left.side.element(by.id('save-results')).click();
     },
     function() {
-      right.side.element(by.id('show-selector-button')).click();
+      lib.showSelector();
       lib.splash.expectTableListed('exportedtable');
       lib.splash.expectViewListed('exportedview');
     });
@@ -277,8 +277,8 @@ module.exports = function(fw) {
     'empty test-example project',
     'test-example project with sql history',
     function() {
-      right.side.element(by.id('show-selector-button')).click();
-      right.side.element(by.id('global-sql-box')).click();
+      lib.showSelector();
+      right.side.$('#global-sql-box').click();
 
       left.runSql('0');
       right.runSql('1');

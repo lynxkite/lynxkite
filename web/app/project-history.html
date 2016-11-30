@@ -1,6 +1,6 @@
-<div class="panel panel-default project history" ng-if="show && !side.workflowEditor.enabled">
+<div class="project history" ng-if="show && !side.unsaved.workflowEditor.enabled">
 
-  <div class="panel-heading project-name">
+  <div class="project-name">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
       {{parent}} &raquo;
     </span>
