@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model.Model
 import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.ml
 
 object ClassifyWithModel extends OpFromJson {
@@ -42,18 +42,16 @@ case class ClassifyWithModel(numFeatures: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    implicit val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val modelValue = inputs.model.value
     val rddArray = inputs.features.toArray.map(_.rdd)
-    val unscaledRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val scaledRDD = modelValue.scaleFeatures(unscaledRDD)
-    val scaledDF = scaledRDD.toDF("ID", "vector")
-    val partitioner = scaledRDD.partitioner.get
+    val inputDF = Model.toDF(inputs.vertices.rdd, rddArray)
+    val partitioner = inputs.vertices.rdd.partitioner.get
     val classificationModel = modelValue.load(rc.sparkContext)
     // Transform data to an attributeRDD with the attribute (probability, classification)
-    val transformation = classificationModel.transformDF(scaledDF)
+    val transformation = classificationModel.transformDF(inputDF)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
     }.rdd.sortUnique(partitioner)

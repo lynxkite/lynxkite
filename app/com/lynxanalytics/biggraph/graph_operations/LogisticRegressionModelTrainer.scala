@@ -43,12 +43,13 @@ case class LogisticRegressionModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    implicit val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map(_.rdd)
-    val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val labeledFeaturesDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
+    val labelDF = inputs.label.rdd.toDF("id", "label")
+    val featuresDF = Model.toDF(inputs.vertices.rdd, rddArray)
+    val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     // Train a logistic regression model. The model sets the threshold to be 0.5 and
@@ -56,8 +57,6 @@ case class LogisticRegressionModelTrainer(
     val logisticRegression = new ml.classification.LogisticRegression()
       .setMaxIter(maxIter)
       .setTol(0)
-      .setFeaturesCol("vector")
-      .setLabelCol("label")
       .setRawPredictionCol("rawClassification")
       .setPredictionCol("classification")
       .setProbabilityCol("probability")
@@ -83,8 +82,6 @@ case class LogisticRegressionModelTrainer(
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      // The features and labels are standardized by the model.
-      featureScaler = None,
       statistics = Some(statistics)))
   }
   // Helper method to find the best threshold.
@@ -144,7 +141,7 @@ case class LogisticRegressionModelTrainer(
         // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
         Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
       } else {
-        val vectors = predictions.rdd.map(_.getAs[ml.linalg.Vector]("vector"))
+        val vectors = predictions.rdd.map(_.getAs[ml.linalg.Vector]("features"))
         val probability = predictions.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
         // The constant field is added in order to get the statistics of the intercept.
         val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
