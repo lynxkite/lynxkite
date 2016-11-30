@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
-import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml
 
 object KMeansClusteringModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -43,24 +43,23 @@ case class KMeansClusteringModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    implicit val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val featuresArray = inputs.features.map(_.rdd).toArray
-    val params = new Scaler(forSGD = false).scaleFeatures(featuresArray, inputs.vertices.rdd)
-    val scaledDF = params.features.toDF("ID", "vector")
-    assert(!scaledDF.rdd.isEmpty, "Training is not possible with empty data set.")
+    val inputDF = Model.toDF(inputs.vertices.rdd, featuresArray)
+    assert(!inputDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     // Train a k-means model from the scaled vectors.
-    val kmeans = new KMeans()
+    val kmeans = new ml.clustering.KMeans()
       .setK(k)
       .setMaxIter(maxIter)
       .setTol(0) // The convergence of the algorithm is controlled by maximum number of iterations.
       .setSeed(seed)
-      .setFeaturesCol("vector")
+      .setFeaturesCol("features")
       .setPredictionCol("classification")
-    val model = kmeans.fit(scaledDF)
-    val cost = model.computeCost(scaledDF)
+    val model = kmeans.fit(inputDF)
+    val cost = model.computeCost(inputDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
@@ -68,7 +67,6 @@ case class KMeansClusteringModelTrainer(
       labelName = None,
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
-      featureScaler = Some(params.featureScaler),
       statistics = Some(s"cost: ${cost}"))
     )
   }

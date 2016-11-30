@@ -42,16 +42,17 @@ case class RegressionModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    implicit val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map(_.rdd)
-    val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val scaledDF = featuresRDD.sortedJoin(inputs.label.rdd).values.toDF("vector", "label")
-    assert(!scaledDF.rdd.isEmpty, "Training is not possible with empty data set.")
+    val labelDF = inputs.label.rdd.toDF("id", "label")
+    val featuresDF = Model.toDF(inputs.vertices.rdd, rddArray)
+    val inputDF = featuresDF.join(labelDF, "id")
+    assert(!inputDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     val linearRegression = new ml.regression.LinearRegression()
-      .setFeaturesCol("vector")
+      .setFeaturesCol("features")
       .setLabelCol("label")
       .setPredictionCol("prediction")
     // The following settings are according to the Spark MLLib deprecation codes. For example, see
@@ -65,8 +66,8 @@ case class RegressionModelTrainer(
       case "Lasso" =>
         linearRegression.setElasticNetParam(1.0).setRegParam(0.01)
     }
-    val model = linearRegression.fit(scaledDF)
-    val predictions = model.transform(scaledDF)
+    val model = linearRegression.fit(inputDF)
+    val predictions = model.transform(inputDF)
     val statistics: String = getStatistics(model, predictions, featureNames)
     val file = Model.newModelFile
     model.save(file.resolvedName)
@@ -75,8 +76,6 @@ case class RegressionModelTrainer(
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      // The features and label are standardized by the model.
-      featureScaler = None,
       statistics = Some(statistics))
     )
   }
