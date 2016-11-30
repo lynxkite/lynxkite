@@ -18,6 +18,7 @@
   opacity: 0;
   font-size: 30px;
   cursor: pointer;
+  user-select: none;
 }
 .spark-status:hover .kill {
   opacity: 0.5;

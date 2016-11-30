@@ -12,6 +12,123 @@ function toID(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
+
+function Entity(side, kind, name) {
+  this.side = side;
+  this.kind = kind;
+  this.name = name;
+  this.kindName = kind + '-' + name;
+  this.element = this.side.$('#' + this.kindName);
+  this.menu = $('#menu-' + this.kindName);
+}
+
+Entity.prototype = {
+
+  isPresent: function() {
+    return this.element.isPresent();
+  },
+
+  isDisplayed: function() {
+    return this.element.isDisplayed();
+  },
+
+  popup: function() {
+    this.menu.isPresent().then(present => {
+      if (!present) { this.element.click(); }
+    });
+    return this.menu;
+  },
+
+  popoff: function() {
+    this.element.isPresent().then(present => {
+      if (present) { this.element.evaluate('closeMenu()'); }
+    });
+  },
+
+  setFilter: function(filterValue) {
+    var filterBox = this.popup().$('#filter');
+    filterBox.clear();
+    filterBox.sendKeys(filterValue).submit();
+    this.popoff();
+  },
+
+  getHistogramValues: function(precise) {
+    precise = precise || false;
+    var popup = this.popup();
+    var histogram = popup.$('histogram');
+    // The histogram will be automatically displayed if the attribute is already computed.
+    // Click the menu item otherwise.
+    histogram.isDisplayed().then(displayed => {
+      if (!displayed) { popup.$('#show-histogram').click(); }
+    });
+    expect(histogram.isDisplayed()).toBe(true);
+    if (precise) {
+      popup.$('#precise-histogram-calculation').click();
+    }
+    function allFrom(td) {
+      var toolTip = td.getAttribute('drop-tooltip');
+      var style = td.$('.bar').getAttribute('style');
+      return protractor.promise.all([toolTip, style]).then(function(results) {
+        var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
+        var styleMatch = results[1].match(/^height: (\d+)%;$/);
+        return {
+          title: toolTipMatch[1],
+          size: parseInt(styleMatch[1]),
+          value: parseInt(toolTipMatch[2]),
+        };
+      });
+    }
+    var tds = histogram.$$('.bar-container');
+    var res = tds.then(function(tds) {
+      var res = [];
+      for (var i = 0; i < tds.length; i++) {
+        res.push(allFrom(tds[i]));
+      }
+      return protractor.promise.all(res);
+    });
+
+    var total = histogram.$('#histogram-total');
+    protractor.promise.all([total.getText(), res]).then(function(results) {
+      var totalValue = results[0].match(/histogram total: ([0-9,]+)/)[1];
+      var values = results[1];
+      var total = parseInt(totalValue.replace(/,/g, ''));
+      var sum = 0;
+      for (var j = 0; j < values.length; j++) {
+        sum += values[j].value;
+      }
+      expect(total).toEqual(sum);
+    });
+    this.popoff();
+    return res;
+  },
+
+  visualizeAs: function(visualization) {
+    this.popup().$('#visualize-as-' + visualization).click();
+    testLib.expectElement(this.visualizedAs(visualization));
+    this.popoff();
+  },
+
+  visualizedAs: function(visualization) {
+    return this.element.$('#visualized-as-' + visualization);
+  },
+
+  doNotVisualizeAs: function(visualization) {
+    this.popup().$('#visualize-as-' + visualization).click();
+    testLib.expectNotElement(this.visualizedAs(visualization));
+    this.popoff();
+  },
+
+  slider: function() {
+    return this.popup().$('#slider');
+  },
+
+  clickMenu: function(id) {
+    this.popup().$('#' + id).click();
+    this.popoff();
+  },
+};
+
+
 function Side(direction) {
   this.direction = direction;
   this.side = element(by.id('side-' + direction));
@@ -31,8 +148,8 @@ Side.prototype = {
 
   // Only for opening the second project next to an already open project.
   openSecondProject: function(project) {
-    this.side.element(by.id('show-selector-button')).click();
-    this.side.element(by.id('project-' + toID(project))).click();
+    testLib.showSelector();
+    this.side.$('#project-' + toID(project)).click();
   },
 
   close: function() {
@@ -49,80 +166,6 @@ Side.prototype = {
 
   getCategorySelector: function(categoryTitle) {
     return this.toolbox.$('div.category[tooltip="' + categoryTitle + '"]');
-  },
-
-  getHistogram: function(attributeName) {
-    return this.side.$('histogram[attr-name="' + attributeName + '"]');
-  },
-
-  getHistogramButton: function(attributeName) {
-    return this.side.$('#histogram-button[attr-name="' + attributeName + '"]');
-  },
-
-  getHistogramPreciseCheckbox: function(attributeName) {
-    return this.side.$('#precise-histogram-calculation[attr-name="' + attributeName + '"]');
-  },
-
-  getHistogramTotalElement: function(attributeName) {
-    return this.getHistogram(attributeName).$('.histogram-total');
-  },
-
-  getHistogramValues: function(attributeName, precise) {
-    precise = precise || false;
-    var histogramButton = this.getHistogramButton(attributeName);
-    var preciseButton = this.getHistogramPreciseCheckbox(attributeName);
-    var total = this.getHistogramTotalElement(attributeName);
-    var histo = this.getHistogram(attributeName);
-    expect(histo.isDisplayed()).toBe(false);
-    expect(total.isDisplayed()).toBe(false);
-    histogramButton.click();
-    if (precise) {
-      preciseButton.click();
-    }
-    expect(histo.isDisplayed()).toBe(true);
-    expect(total.isDisplayed()).toBe(false);
-    function allFrom(td) {
-      var toolTip = td.getAttribute('drop-tooltip');
-      var style = td.$('div.bar').getAttribute('style');
-      return protractor.promise.all([toolTip, style]).then(function(results) {
-        var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
-        var styleMatch = results[1].match(/^height: (\d+)%;$/);
-        return {
-          title: toolTipMatch[1],
-          size: parseInt(styleMatch[1]),
-          value: parseInt(toolTipMatch[2]),
-        };
-      });
-    }
-    var tds = histo.$$('td');
-    var res = tds.then(function(tds) {
-      var res = [];
-      for (var i = 0; i < tds.length; i++) {
-        res.push(allFrom(tds[i]));
-      }
-      return protractor.promise.all(res);
-    });
-
-    browser.actions().mouseMove(tds.first()).perform();
-    expect(total.isDisplayed()).toBe(true);
-    protractor.promise.all([total.getText(), res]).then(function(results) {
-      var totalValue = results[0].match(/total: ([0-9,]+)/)[1];
-      var values = results[1];
-      var total = parseInt(totalValue.replace(/,/g, ''));
-      var sum = 0;
-      for (var j = 0; j < values.length; j++) {
-        sum += values[j].value;
-      }
-      expect(total).toEqual(sum);
-    });
-
-    if (precise) {
-      preciseButton.click();
-    }
-    histogramButton.click();
-    expect(histo.isDisplayed()).toBe(false);
-    expect(total.isDisplayed()).toBe(false);
-    return res;
   },
 
   getProjectHistory: function() {
@@ -184,7 +227,7 @@ Side.prototype = {
   },
 
   openSegmentation: function(segmentationName) {
-    this.side.element(by.id('segmentation-' + segmentationName)).click();
+    this.segmentation(segmentationName).clickMenu('open-segmentation');
   },
 
   redoButton: function() {
@@ -225,12 +268,6 @@ Side.prototype = {
     expect(valueElement.getText()).toBe(text);
   },
 
-  setAttributeFilter: function(attributeName, filterValue) {
-    var filterBox = this.side.$('.attribute input[name="' + attributeName + '"]');
-    filterBox.clear();
-    filterBox.sendKeys(filterValue).submit();
-  },
-
   toggleSampledVisualization: function() {
     this.side.element(by.id('sampled-mode-button')).click();
   },
@@ -244,27 +281,7 @@ Side.prototype = {
   },
 
   attributeCount: function() {
-    return this.side.$$('li.attribute').count();
-  },
-
-  visualizeAttribute: function(attr, visualization) {
-    var e = this.attribute(attr);
-    if (visualization === 'x' || visualization === 'y') {
-      e.element(by.id('axis-' + visualization + '-' + attr)).click();
-    } else {
-      e.element(by.id('visualize-as-button')).click();
-      e.element(by.id('visualize-as-' + visualization)).click();
-    }
-  },
-
-  doNotVisualizeAttribute: function(attr, visualization) {
-    var e = this.attribute(attr);
-    e.element(by.id('do-not-visualize-as-' + visualization)).click();
-  },
-
-  attributeSlider: function(attr) {
-    var e = this.attribute(attr);
-    return e.element(by.id('slider'));
+    return this.side.$$('entity[kind="vertex-attribute"], entity[kind="edge-attribute"]').count();
   },
 
   setSampleRadius: function(radius) {
@@ -282,16 +299,8 @@ Side.prototype = {
     });
   },
 
-  attribute: function(name) {
-    return this.side.element(by.id('attribute-' + toID(name)));
-  },
-
-  vertexAttribute: function(name) {
-    return this.side.$('.vertex-attribute#attribute-' + toID(name));
-  },
-
-  scalar: function(name) {
-    return this.side.element(by.id('scalar-' + toID(name)));
+  scalarValue: function(name) {
+    return this.side.element(by.id('scalar-value-' + toID(name)));
   },
 
   saveProjectAs: function(newName) {
@@ -329,7 +338,13 @@ Side.prototype = {
   executeSqlSaving: function() {
     this.side.element(by.id('save-results')).click();
   },
+
+  vertexAttribute: function(name) { return new Entity(this.side, 'vertex-attribute', name); },
+  edgeAttribute: function(name) { return new Entity(this.side, 'edge-attribute', name); },
+  scalar: function(name) { return new Entity(this.side, 'scalar', name); },
+  segmentation: function(name) { return new Entity(this.side, 'segmentation', name); },
 };
+
 
 function History(side) {
   this.side = side;
@@ -374,7 +389,7 @@ History.prototype = {
   // does not work.
   getOperationInCategoryByName: function(operation, tooltip, name) {
     operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
-    var ops = operation.$('operation-toolbox').$$('div[class="list-group"] > div');
+    var ops = operation.$('operation-toolbox').$$('div.operation');
     return ops.filter(function(element) {
         return element.getText().then(function(text) { return text === name; });
       }).get(0);
@@ -1047,6 +1062,10 @@ testLib = {
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
     });
+  },
+
+  showSelector: function() {
+    $('#show-selector-button').click();
   },
 };
 

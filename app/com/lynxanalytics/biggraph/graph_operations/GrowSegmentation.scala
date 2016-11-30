@@ -25,6 +25,8 @@ case class GrowSegmentation() extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
+  override val isHeavy = true
+
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,

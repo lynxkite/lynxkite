@@ -396,7 +396,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   private def viewToDF(user: User, checkpoint: String): DataFrame = {
     val viewer = getViewer(checkpoint)
-    val sqlContext = dataManager.newHiveContext()
+    val sqlContext = SQLController.defaultContext(user)
     viewer.viewRecipe.get.createDataFrame(user, sqlContext)
   }
 
