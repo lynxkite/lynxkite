@@ -42,57 +42,46 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
     val featuresDF = Model.toDF(inputs.vertices.rdd, rddArray)
     val trainingDF = featuresDF.join(labelDF, "id")
 
-    val predictionDF = method match {
+    val estimator = method match {
       case "Linear regression" =>
-        val model = new ml.regression.LinearRegression().setFitIntercept(true)
-        val trained = model.fit(trainingDF)
-        checkLinearModel(trained)
-        trained.transform(featuresDF)
+        new ml.regression.LinearRegression()
+          .setFitIntercept(true)
       case "Ridge regression" =>
-        val model = new ml.regression.LinearRegression()
+        new ml.regression.LinearRegression()
           .setFitIntercept(true)
           .setRegParam(0.01)
           .setElasticNetParam(0.0)
-        val trained = model.fit(trainingDF)
-        checkLinearModel(trained)
-        trained.transform(featuresDF)
       case "Lasso" =>
-        val model = new ml.regression.LinearRegression()
+        new ml.regression.LinearRegression()
           .setFitIntercept(true)
           .setRegParam(0.01)
           .setElasticNetParam(1.0)
-        val trained = model.fit(trainingDF)
-        checkLinearModel(trained)
-        trained.transform(featuresDF)
       case "Logistic regression" =>
-        val model = new ml.classification.LogisticRegression
-        val trained = model.fit(trainingDF)
-        trained.transform(featuresDF)
+        new ml.classification.LogisticRegression
       case "Naive Bayes" =>
-        val model = new ml.classification.NaiveBayes
-        val trained = model.fit(trainingDF)
-        trained.transform(featuresDF)
+        new ml.classification.NaiveBayes
       case "Decision tree" =>
-        val model = new ml.regression.DecisionTreeRegressor
-        val trained = model.fit(trainingDF)
-        trained.transform(featuresDF)
+        new ml.regression.DecisionTreeRegressor
       case "Random forest" =>
-        val model = new ml.regression.RandomForestRegressor
-        val trained = model.fit(trainingDF)
-        trained.transform(featuresDF)
+        new ml.regression.RandomForestRegressor
       case "Gradient-boosted trees" =>
-        val model = new ml.regression.GBTRegressor
-        val trained = model.fit(trainingDF)
-        trained.transform(featuresDF)
+        new ml.regression.GBTRegressor
     }
+    val model = estimator.fit(trainingDF)
+    checkModel(model)
+    val predictionDF = model.transform(featuresDF)
     val prediction = predictionDF.select("id", "prediction").as[(ID, Double)].rdd
     output(o.prediction, prediction.sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
-  def checkLinearModel(model: ml.regression.LinearRegressionModel): Unit = {
-    // A linear model with at least one NaN parameter will always predict NaN.
-    for (w <- model.coefficients.toArray :+ model.intercept) {
-      assert(!w.isNaN, "Failed to train a valid regression model.")
+  def checkModel(model: ml.Model[_]): Unit = {
+    model match {
+      case model: ml.regression.LinearRegressionModel =>
+        // A linear model with at least one NaN parameter will always predict NaN.
+        for (w <- model.coefficients.toArray :+ model.intercept) {
+          assert(!w.isNaN, "Failed to train a valid regression model.")
+        }
+      case _ =>
     }
   }
 }
