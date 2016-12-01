@@ -240,7 +240,7 @@ class EMRCluster:
     state = desc['Cluster']['Status']['State']
     return state == 'RUNNING' or state == 'WAITING'
 
-  def ssh(self, cmds, print_output=True, verbose=True):
+  def ssh(self, cmds, print_output=True, verbose=True, assert_successful=True):
     '''Send shell commands to the cluster via invoking ssh.'''
     if verbose:
       def trunc(s):
@@ -255,7 +255,8 @@ class EMRCluster:
     return call_cmd(
         self.ssh_cmd + ['hadoop@' + self.master()],
         input=cmds,
-        print_output=print_output)
+        print_output=print_output,
+        assert_successful=assert_successful)
 
   def ssh_nohup(
           self,
