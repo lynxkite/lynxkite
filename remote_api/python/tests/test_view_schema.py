@@ -20,7 +20,7 @@ class TestViewSchema(unittest.TestCase):
     self.assertEqual(self.get_column_names(schema_response), ['zero', 'one', 'two', 'three'])
     self.assertEqual(
         self.get_data_types(schema_response), [
-            'BooleanType', 'IntegerType', 'DoubleType', 'StringType'])
+            'BooleanType', 'IntegerType', 'DecimalType(2,1)', 'StringType'])
 
 
 if __name__ == '__main__':
