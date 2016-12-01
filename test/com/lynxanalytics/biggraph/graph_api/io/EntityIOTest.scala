@@ -257,7 +257,8 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     copyDirContents(HadoopFile(resourcePrefix) / "example_graph_kite_data", repo)
     val dataManager = new DataManager(sparkContext, repo)
 
-    val result = ExampleGraph().result
+    val exampleGraph = ExampleGraph()
+    val result = exampleGraph.result
     dataManager.get(result.weight)
     dataManager.get(result.location)
     dataManager.get(result.age)
@@ -267,7 +268,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     dataManager.get(result.gender)
     dataManager.waitAllFutures()
 
-    assert(ExampleGraph().executionCounter == 0)
+    assert(exampleGraph.executionCounter == 0)
   }
 
 }
