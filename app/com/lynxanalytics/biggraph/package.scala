@@ -28,6 +28,12 @@ package object biggraph {
   }
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
+    // Make sure play and spark logs contain the proper context.
+    val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
+    val frameworkPackages = ctx.getFrameworkPackages
+    frameworkPackages.add("play.api.Logger")
+    frameworkPackages.add("org.apache.spark.Logging")
+
     bigGraphLogger.info("Starting to initialize production Kite environment")
     val repoDirs =
       LoggedEnvironment.envOrNone("REPOSITORY_MODE", confidential = true) match {
