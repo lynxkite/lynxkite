@@ -8,7 +8,6 @@ mysqlclient
 pandas
 prometheus_client
 python-dateutil
-python-prctl
 PyYAML
 Sphinx
 sphinx-rtd-theme
