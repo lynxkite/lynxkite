@@ -58,6 +58,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
       scope.loadStatus = function() {
         scope.side.updateFromBackendJson(scope.side.scalars[scope.title()].value.string);
+        drop.close();
       };
 
       scope.active = function() {
