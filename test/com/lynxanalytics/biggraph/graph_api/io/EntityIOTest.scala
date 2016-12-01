@@ -1,17 +1,17 @@
 package com.lynxanalytics.biggraph.graph_api.io
 
 import com.lynxanalytics.biggraph.TestUtils
-import org.scalatest.FunSuite
-
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
-import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
+import com.lynxanalytics.biggraph.graph_operations.{EnhancedExampleGraph, ExampleGraph}
+import com.lynxanalytics.biggraph.graph_util.{HadoopFile, PrefixRepository}
+import org.scalatest.FunSuite
 
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
 
   val resDir = "/graph_api/io/EntityIOTest/"
   val res = getClass.getResource(resDir).toString
-  PrefixRepository.registerPrefix("ENTITYIOTEST$", res)
+  val resourcePrefix = "ENTITYIOTEST$"
+  PrefixRepository.registerPrefix(resourcePrefix, res)
 
   test("Test ratio sorter") {
     val emptySeq = Seq[Int]()
@@ -107,7 +107,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val legacyPath = repo / io.EntitiesDir / gUID
 
     if (legacyConfig != EntityDirStatus.NONEXISTENT) {
-      val legacyData = HadoopFile("ENTITYIOTEST$") / gUID
+      val legacyData = HadoopFile(resourcePrefix) / gUID
       copyDirContents(legacyData, legacyPath)
       modifyEntityDir(legacyPath, legacyConfig)
     }
@@ -248,6 +248,26 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     assert(es.executionCounter == 0)
     val pfiles = (es.partitionedPath / "*").list.map(_.path.getName).toSet
     assert(pfiles == Set(io.Metadata, "1", "8"))
+  }
+
+  test("We can read a previously serialized example graph") {
+    import Scripting._
+    implicit val metaManager = cleanMetaManager
+    val repo = cleanDataManager.repositoryPath
+    copyDirContents(HadoopFile(resourcePrefix) / "example_graph_kite_data", repo)
+    val dataManager = new DataManager(sparkContext, repo)
+
+    val result = ExampleGraph().result
+    dataManager.get(result.weight)
+    dataManager.get(result.location)
+    dataManager.get(result.age)
+    dataManager.get(result.name)
+    dataManager.get(result.income)
+    dataManager.get(result.comment)
+    dataManager.get(result.gender)
+    dataManager.waitAllFutures()
+
+    assert(ExampleGraph().executionCounter == 0)
   }
 
 }
