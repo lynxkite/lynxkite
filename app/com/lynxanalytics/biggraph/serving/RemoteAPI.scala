@@ -261,13 +261,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
     val entry = controllers.DirectoryEntry.fromName(request.name)
     entry.assertWriteAllowedFrom(user)
+    val p = saver(entry, request.checkpoint)
     bigGraphController.changeACLSettings(
       user,
       ACLSettingsRequest(
         request.name,
         request.readACL.getOrElse(user.email),
         request.writeACL.getOrElse(user.email)))
-    CheckpointResponse(request.checkpoint)
+    CheckpointResponse(p.checkpoint)
   }
 
   def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {

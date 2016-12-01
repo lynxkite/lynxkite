@@ -74,7 +74,8 @@ class TestViewsAndGlobalSql(unittest.TestCase):
 
   def test_export_view_to_orc_and_load_back(self):
     view = self.generate_view()
-    date = datetime.now().strftime('%Y-%m-%d %Hh %Mm %Ss')
+    # From Spark 2.0 the ORC read path cannot handle spaces in file names on local disk.
+    date = datetime.now().strftime('%Y-%m-%d_%Hh_%Mm_%Ss')
     path = 'DATA$/tmp/test_export_view_to_orc(' + date + ').orc'
     view.export_orc(path)
     view2 = self.lk.import_orc(path)
