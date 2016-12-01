@@ -12,6 +12,7 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-unchecked",
   // TODO: Suppress warnings as necessary and enable checks.
+  // "-Ywarn-dead-code",
   // "-Ywarn-unused",
   // "-Ywarn-unused-import",
   // "-Xlint:_,-adapted-args,-type-parameter-shadow,-inaccessible",
@@ -32,10 +33,10 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 libraryDependencies ++= Seq(
   ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
-  // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.4.4
-  "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4",
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
+  // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.6.5
+  "com.fasterxml.jackson.core" % "jackson-core" % "2.6.5",
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.5",
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5",
   // The below dep is needed to avoid jar version conflict when running in Amazon EMR.
   // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
   // This way we get s3 consistent view support.)
