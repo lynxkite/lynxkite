@@ -26,4 +26,9 @@ diameter of the graph, or to the median shortest path.
 [[damping]] Damping factor::
 The probability of continuing the random walk at each step. Higher damping
 factors lead to longer random walks.
+
+[[direction]] Direction::
+ - `incoming edges`: Simulate random walk in the reverse edge direction.
+ - `outgoing edges`: Simulate random walk in the original edge direction.
+ - `all edges`: Simulate random walk on the undirected version of the graph.
 ====

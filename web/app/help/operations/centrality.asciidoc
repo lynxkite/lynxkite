@@ -29,4 +29,9 @@ The centrality algorithm is an approximation. This parameter sets the trade-off 
 the quality of the approximation and the memory and time consumption of the algorithm.
 In most cases the default value is good enough. On very large graphs it may help to use
 a lower number in order to speed up the algorithm or meet memory constraints.
+
+[[direction]] Direction::
+ - `incoming edges`: Calculating paths _from_ vertices.
+ - `outgoing edges`: Calculating paths _to_ vertices.
+ - `all edges`: Calculating paths on the undirected version of the graph.
 ====
