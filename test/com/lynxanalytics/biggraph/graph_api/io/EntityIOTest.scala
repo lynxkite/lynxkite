@@ -256,19 +256,26 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val repo = cleanDataManager.repositoryPath
     copyDirContents(HadoopFile(resourcePrefix) / "example_graph_kite_data", repo)
     val dataManager = new DataManager(sparkContext, repo)
-
     val exampleGraph = ExampleGraph()
     val result = exampleGraph.result
-    dataManager.get(result.weight)
-    dataManager.get(result.location)
-    dataManager.get(result.age)
-    dataManager.get(result.name)
-    dataManager.get(result.income)
-    dataManager.get(result.comment)
-    dataManager.get(result.gender)
-    dataManager.waitAllFutures()
+
+    val age = dataManager.get(result.age).rdd.collect().toMap
+    assert(age(3L) == 2.0)
+    val location = dataManager.get(result.location).rdd.collect().toMap
+    assert(location(3L) == (-33.8674869, 151.2069902))
+    val gender = dataManager.get(result.gender).rdd.collect().toMap
+    assert(gender(3L) == "Male")
+    val income = dataManager.get(result.income).rdd.collect().toMap
+    assert(income(0L) == 1000.0)
+    val name = dataManager.get(result.name).rdd.collect().toMap
+    assert(name(3L) == "Isolated Joe")
+    val weight = dataManager.get(result.weight).rdd.collect().toMap
+    assert(weight(3L) == 4.0)
+    val comment = dataManager.get(result.comment).rdd.collect().toMap
+    assert(comment(3L) == "Bob loves Eve")
 
     assert(exampleGraph.executionCounter == 0)
+    dataManager.waitAllFutures()
   }
 
 }
