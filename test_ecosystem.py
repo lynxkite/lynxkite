@@ -37,9 +37,7 @@ with 6 nodes (1 master, 5 worker) and the 1.9.6 native release.
                         --emr_instance_count 6
 """
 import argparse
-import boto3
 import os
-import time
 import sys
 # Set up import path for our modules.
 os.chdir(os.path.dirname(__file__))
@@ -180,8 +178,8 @@ def main(args):
     lib.wait_for_services(instances)
   # Install and configure ecosystem on cluster.
   upload_installer_script(cluster, args)
-  upload_tasks(cluster, args)
-  upload_tools(cluster, args)
+  upload_tasks(cluster)
+  upload_tools(cluster)
   download_and_unpack_release(cluster, args)
   install_native(cluster)
   config_and_prepare_native(cluster, args)
@@ -250,7 +248,7 @@ def upload_installer_script(cluster, args):
         dst='/mnt/')
 
 
-def upload_tasks(cluster, args):
+def upload_tasks(cluster):
   ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
   cluster.ssh('mkdir -p ' + ecosystem_task_dir)
   cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
@@ -261,7 +259,7 @@ def upload_tasks(cluster, args):
       ''')
 
 
-def upload_tools(cluster, args):
+def upload_tools(cluster):
   target_dir = '/mnt/lynx/tools'
   cluster.ssh('mkdir -p ' + target_dir)
   cluster.rsync_up('ecosystem/native/tools/', target_dir)
@@ -460,23 +458,6 @@ def download_logs_native(cluster, args):
     os.makedirs(args.log_dir)
   cluster.rsync_down('/mnt/lynx/logs/', args.log_dir)
   cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', args.log_dir + '/lynxkite-logs/')
-
-
-def download_and_unpack_release(cluster, args):
-  path = args.lynx_release_dir
-  if path:
-    cluster.rsync_up(path + '/', '/mnt/lynx')
-  else:
-    version = args.lynx_version
-    cluster.ssh('''
-      set -x
-      cd /mnt
-      if [ ! -f "./lynx-{version}.tgz" ]; then
-        ./download-lynx-{version}.sh
-        mkdir -p lynx
-        tar xfz lynx-{version}.tgz -C lynx --strip-components 1
-      fi
-      '''.format(version=version))
 
 
 def prompt_delete():
