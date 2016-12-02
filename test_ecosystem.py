@@ -437,7 +437,11 @@ def run_tests_native(cluster, jdbc_url, args):
 
 
 def upload_perf_logs_to_gcloud(cluster, args):
-  pass
+  instance_name = 'emr-' + args.cluster_name
+  cluster.ssh('''
+    cd /mnt/lynx
+    tools/multi_upload.sh 0 apps/lynxkite/logs {i}
+  '''.format(i=instance_name))
 
 
 def download_logs_native(cluster, args):
