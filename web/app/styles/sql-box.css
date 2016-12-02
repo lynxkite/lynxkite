@@ -7,6 +7,7 @@
 
 sql-box > * {
   margin-bottom: 10px; /* Separate subsections. */
+  margin-left: 10px;
 }
 
 #sql-box-spinner {
