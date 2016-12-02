@@ -54,10 +54,10 @@ from utils.emr_lib import EMRLib
 #  fake_westeros_v3_25m_799m    25m vertices 799m edges (xlarge)
 
 test_sets = {
-    'small': 'fake_westeros_v3_100k_2m',
-    'normal': 'fake_westeros_v3_5m_145m',
-    'large': 'fake_westeros_v3_10m_303m',
-    'xlarge': 'fake_westeros_v3_25m_799m'
+    'small': dict(data='fake_westeros_v3_100k_2m', instances=3),
+    'normal': dict(data='fake_westeros_v3_5m_145m', instances=4),
+    'large': dict(data='fake_westeros_v3_10m_303m', instances=8),
+    'xlarge': dict(data='fake_westeros_v3_25m_799m', instances=20),
 }
 
 
@@ -101,8 +101,9 @@ parser.add_argument(
 parser.add_argument(
     '--emr_instance_count',
     type=int,
-    default=3,
-    help='Number of instances on EMR cluster, including master.')
+    default=0,
+    help='Number of instances on EMR cluster, including master.' +
+    ' Set according to bigdata_test_set by default.')
 parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/',
@@ -151,11 +152,17 @@ def main(args):
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
       ec2_key_name=args.ec2_key_name)
+  if args.emr_instance_count == 0:
+    if args.bigdata:
+      args.emr_instance_count = bigdata_test_set(args)['instances']
+    else:
+      args.emr_instance_count = 3
+
   cluster = lib.create_or_connect_to_emr_cluster(
       name=args.cluster_name,
       log_uri=args.emr_log_uri,
       instance_count=args.emr_instance_count,
-      hdfs_replication='1'
+      hdfs_replication='1',
   )
   instances = [cluster]
   # Spin up a mysql RDS instance only if requested.
@@ -210,7 +217,7 @@ def results_local_dir(args):
   '''
   if args.bigdata:
     basedir = args.results_dir
-    dataset = bigdata_test_set(args.bigdata_test_set)
+    dataset = bigdata_test_set(args)['data']
     instance_count = args.emr_instance_count
     executors = instance_count - 1
     return "{bd}emr_{e}_{i}_{ds}".format(
@@ -255,7 +262,7 @@ def check_bigdata(args):
   '''Possible values of `--bigdata_test_set`.'''
   if args.bigdata:
     if args.bigdata_test_set not in test_sets.keys():
-      raise ValueError('Parameter = '
+      raise ValueError('bigdata_test_set = '
                        + args.bigdata_test_set
                        + ', possible values are: '
                        + ", ".join(test_sets.keys()))
@@ -266,8 +273,8 @@ def check_arguments(args):
   check_bigdata(args)
 
 
-def bigdata_test_set(test_set):
-  return test_sets[test_set]
+def bigdata_test_set(args):
+  return test_sets[args.bigdata_test_set]
 
 
 def upload_installer_script(cluster, args):
@@ -450,7 +457,7 @@ def start_tests_native(cluster, jdbc_url, args):
       luigi_module=args.task_module,
       luigi_task=args.task,
       jdbc_url=jdbc_url,
-      dataset=bigdata_test_set(args.bigdata_test_set)
+      dataset=bigdata_test_set(args)['data'],
   ))
 
 
@@ -542,7 +549,7 @@ def start_tests_docker(cluster, jdbc_url, args):
       luigi_module=args.task_module,
       luigi_task=args.task,
       jdbc_url=jdbc_url,
-      dataset=bigdata_test_set(args.bigdata_test_set)
+      dataset=bigdata_test_set(args)['data'],
   ))
 
 
