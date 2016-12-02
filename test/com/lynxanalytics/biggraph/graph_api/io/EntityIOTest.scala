@@ -1,17 +1,17 @@
 package com.lynxanalytics.biggraph.graph_api.io
 
 import com.lynxanalytics.biggraph.TestUtils
-import org.scalatest.FunSuite
-
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
-import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
+import com.lynxanalytics.biggraph.graph_operations.{EnhancedExampleGraph, ExampleGraph}
+import com.lynxanalytics.biggraph.graph_util.{HadoopFile, PrefixRepository}
+import org.scalatest.FunSuite
 
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
 
   val resDir = "/graph_api/io/EntityIOTest/"
   val res = getClass.getResource(resDir).toString
-  PrefixRepository.registerPrefix("ENTITYIOTEST$", res)
+  val resourcePrefix = "ENTITYIOTEST$"
+  PrefixRepository.registerPrefix(resourcePrefix, res)
 
   test("Test ratio sorter") {
     val emptySeq = Seq[Int]()
@@ -107,7 +107,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val legacyPath = repo / io.EntitiesDir / gUID
 
     if (legacyConfig != EntityDirStatus.NONEXISTENT) {
-      val legacyData = HadoopFile("ENTITYIOTEST$") / gUID
+      val legacyData = HadoopFile(resourcePrefix) / gUID
       copyDirContents(legacyData, legacyPath)
       modifyEntityDir(legacyPath, legacyConfig)
     }
@@ -248,6 +248,34 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     assert(es.executionCounter == 0)
     val pfiles = (es.partitionedPath / "*").list.map(_.path.getName).toSet
     assert(pfiles == Set(io.Metadata, "1", "8"))
+  }
+
+  test("We can read a previously serialized example graph") {
+    import Scripting._
+    implicit val metaManager = cleanMetaManager
+    val repo = cleanDataManager.repositoryPath
+    copyDirContents(HadoopFile(resourcePrefix) / "example_graph_kite_data", repo)
+    val dataManager = new DataManager(sparkContext, repo)
+    val exampleGraph = ExampleGraph()
+    val result = exampleGraph.result
+
+    val age = dataManager.get(result.age).rdd.collect().toMap
+    assert(age(3L) == 2.0)
+    val location = dataManager.get(result.location).rdd.collect().toMap
+    assert(location(3L) == (-33.8674869, 151.2069902))
+    val gender = dataManager.get(result.gender).rdd.collect().toMap
+    assert(gender(3L) == "Male")
+    val income = dataManager.get(result.income).rdd.collect().toMap
+    assert(income(0L) == 1000.0)
+    val name = dataManager.get(result.name).rdd.collect().toMap
+    assert(name(3L) == "Isolated Joe")
+    val weight = dataManager.get(result.weight).rdd.collect().toMap
+    assert(weight(3L) == 4.0)
+    val comment = dataManager.get(result.comment).rdd.collect().toMap
+    assert(comment(3L) == "Bob loves Eve")
+
+    assert(exampleGraph.executionCounter == 0)
+    dataManager.waitAllFutures()
   }
 
 }
