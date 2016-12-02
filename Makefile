@@ -59,5 +59,6 @@ test: backend-test frontend-test ecosystem-test
 big-data-test: .build/ecosystem-done
 	./test_ecosystem.py \
 		--lynx_release_dir ecosystem/native/dist \
+		--test \
 		--bigdata \
 		--bigdata_test_set ${BDT}
