@@ -9,23 +9,23 @@ Examples:
 Running the default big data tests on the small data set using
 the 1.9.6 native release.
 
-    ./test_ecosystem.py --bigdata
+    ./test_ecosystem.py --test --bigdata
 
 Running all big data tests on the normal data set using the current branch.
 
-    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+    ./test_ecosystem.py --test --bigdata --bigdata_test_set normal \
                         --task AllTests --lynx_release_dir ecosystem/native/dist
 
 Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
 
-    ./test_ecosystem.py --cluster_name JDBC-test-cluster \
+    ./test_ecosystem.py --cluster_name JDBC-test-cluster --test \
                         --with_rds --lynx_version native-1.9.5 \
                         --task_module test_tasks.jdbc --task JDBCTestAll
 
 Running ModularClustering test on the large data set using the current branch
 and downloading application logs from the cluster to `/home/user/cluster-logs`.
 
-    ./test_ecosystem.py --bigdata --bigdata_test_set large \
+    ./test_ecosystem.py --test --bigdata --bigdata_test_set large \
                         --task ModularClustering \
                         --lynx_release_dir ecosystem/native/dist \
                         --log_dir /home/user/cluster-logs
@@ -33,7 +33,7 @@ and downloading application logs from the cluster to `/home/user/cluster-logs`.
 Running the default big data tests on the normal data set using a cluster
 with 6 nodes (1 master, 5 worker) and the 1.9.6 native release.
 
-    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+    ./test_ecosystem.py --test --bigdata --bigdata_test_set normal \
                         --emr_instance_count 6
 """
 import argparse
@@ -289,6 +289,8 @@ def install_native(cluster):
     set -x
     cd /mnt/lynx
     sudo yum install -y python34-pip mysql-server gcc libffi-devel
+    # Removes the given and following lines so only the necessary modules will be installed.
+    sed -i -n '/# Dependencies for developing and testing/q;p'  python_requirements.txt
     sudo pip-3.4 install --upgrade -r python_requirements.txt
     sudo pip-2.6 install --upgrade requests[security] supervisor
     # mysql setup
@@ -304,7 +306,7 @@ def config_and_prepare_native(cluster, args):
   cluster.ssh('''
     cd /mnt/lynx
     echo 'Setting up environment variables.'
-    # Removes the given and following lines.
+    # Removes the given and following lines so config/central does not grow constantly.
     sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
     cat >>config/central <<'EOF'
 # ---- the below lines were added by test_ecosystem.py ----
@@ -446,6 +448,7 @@ def run_tests_native(cluster, jdbc_url, args):
 
 
 def upload_perf_logs_to_gcloud(cluster, args):
+  print('Uploading performance logs to gcloud.')
   instance_name = 'emr-' + args.cluster_name
   cluster.ssh('''
     cd /mnt/lynx
