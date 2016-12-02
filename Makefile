@@ -32,7 +32,7 @@ $(pip): python_requirements.txt
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python)
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
-		$(shell $(find) ecosystem/native) \
+		$(shell $(find) ecosystem/native remote_api chronomaster ecosystem/release/lynx/luigi_tasks) \
 		.build/backend-done .build/documentation-done-${VERSION}
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
 
