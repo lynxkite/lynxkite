@@ -11,7 +11,7 @@ import tempfile
 import time
 
 
-def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
+def call_cmd(cmd_list, input=None, print_output=True):
   '''
   Invoked an OS command with arguments.
   cmd_list: the command and its arguments in a list
@@ -19,9 +19,8 @@ def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
     process.
   print_ouput: Whether to print the output (stdout+stderr) of the
     process to stdout of Python.
-  assert_successful: If True, a non-zero exit code is turned into an exception.
-  returns: The combined stdout+stderr on success if assert_successful is True. Otherwise a tuple of
-    the output and the exit code.
+  returns: A tuple of the combined stdout+stderr and the return code
+    of the process.
   '''
   proc = subprocess.Popen(
       cmd_list,
@@ -44,12 +43,7 @@ def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
       break
   while proc.poll() is None:
     time.sleep(0.1)
-  if assert_successful:
-    assert proc.returncode == 0, (
-        '{} has returned non-zero exit code: {}'.format(cmd_list, proc.returncode))
-    return result
-  else:
-    return result, proc.returncode
+  return result, proc.returncode
 
 
 class EMRLib:
@@ -240,7 +234,7 @@ class EMRCluster:
     state = desc['Cluster']['Status']['State']
     return state == 'RUNNING' or state == 'WAITING'
 
-  def ssh(self, cmds, print_output=True, verbose=True, assert_successful=True):
+  def ssh(self, cmds, print_output=True, verbose=True):
     '''Send shell commands to the cluster via invoking ssh.'''
     if verbose:
       def trunc(s):
@@ -250,13 +244,10 @@ class EMRCluster:
         else:
           return s
       print('[EMR EXECUTE] {cmd!s}'.format(cmd=trunc(cmds)))
-    # Stop on errors by default.
-    cmds = 'set -e\n' + cmds
     return call_cmd(
         self.ssh_cmd + ['hadoop@' + self.master()],
         input=cmds,
-        print_output=print_output,
-        assert_successful=assert_successful)
+        print_output=print_output)
 
   def ssh_nohup(
           self,
@@ -297,7 +288,6 @@ EOF
       # Check status.
       status, ssh_retcode = self.ssh(
           'cat ' + status_file + ' 2>/dev/null',
-          assert_successful=False,
           print_output=False,
           verbose=False)
       status_is_done = ssh_retcode == 0 and 'done' == status.strip()
@@ -306,7 +296,6 @@ EOF
           'tail -n +{offset!s} {output_file!s}'.format(
               output_file=output_file,
               offset=output_lines_seen + 1),
-          assert_successful=False,
           verbose=False,
           print_output=False)
       if return_code == 0:
