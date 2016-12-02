@@ -315,7 +315,7 @@ def install_native(cluster):
     sudo pip-2.6 install --upgrade requests[security] supervisor
     # mysql setup
     sudo service mysqld start
-    mysqladmin  -u root password 'root'
+    mysqladmin  -u root password 'root' || true  # (May be set already.)
     # This mysql database is used for many things, including the testing of JDBC tasks.
     # For that purpose access needs to be granted for all executors.
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
@@ -352,7 +352,7 @@ EOF
     hdfs dfs -mkdir -p $KITE_DATA_DIR/table_files
     echo 'Creating tasks_data directory.'
     # TODO: Find a more sane directory.
-    sudo mkdir /tasks_data
+    sudo mkdir -p /tasks_data
     sudo chmod a+rwx /tasks_data
   '''.format(num_executors=args.emr_instance_count - 1))
 
