@@ -183,15 +183,7 @@ def main(args):
   start_supervisor_native(cluster)
   # Run tests and download results.
   if args.test:
-    start_tests_native(cluster, jdbc_url, args)
-    print('Tests are now running in the background. Waiting for results.')
-    cluster.fetch_output()
-    if not os.path.exists(results_local_dir(args)):
-      os.makedirs(results_local_dir(args))
-    cluster.rsync_down(
-        '/home/hadoop/test_results.txt',
-        results_local_dir(args) +
-        results_name(args))
+    run_tests_native(cluster, jdbc_url, args)
   if args.log_dir:
     download_logs_native(cluster, args)
   shut_down_instances(instances)
@@ -264,13 +256,30 @@ def upload_tools(cluster, args):
   cluster.rsync_up('tools/performance_collection/', target_dir)
 
 
+def download_and_unpack_release(cluster, args):
+  path = args.lynx_release_dir
+  if path:
+    cluster.rsync_up(path + '/', '/mnt/lynx')
+  else:
+    version = args.lynx_version
+    cluster.ssh('''
+      set -x
+      cd /mnt
+      if [ ! -f "./lynx-{version}.tgz" ]; then
+        ./download-lynx-{version}.sh
+        mkdir -p lynx
+        tar xfz lynx-{version}.tgz -C lynx --strip-components 1
+      fi
+      '''.format(version=version))
+
+
 def install_native(cluster):
+  cluster.rsync_up('python_requirements.txt', '/mnt/lynx')
   cluster.ssh('''
     set -x
     cd /mnt/lynx
     sudo yum install -y python34-pip mysql-server gcc libffi-devel
-    sudo pip-3.4 install --upgrade luigi==2.3.2 sqlalchemy mysqlclient PyYAML
-    sudo pip-3.4 install --upgrade prometheus_client python-dateutil croniter flask
+    sudo pip-3.4 install --upgrade -r python_requirements.txt
     sudo pip-2.6 install --upgrade requests[security] supervisor
     # mysql setup
     sudo service mysqld start
@@ -413,28 +422,28 @@ def start_tests_native(cluster, jdbc_url, args):
   ))
 
 
+def run_tests_native(cluster, jdbc_url, args):
+  start_tests_native(cluster, jdbc_url, args)
+  print('Tests are now running in the background. Waiting for results.')
+  cluster.fetch_output()
+  if not os.path.exists(results_local_dir(args)):
+    os.makedirs(results_local_dir(args))
+  cluster.rsync_down(
+      '/home/hadoop/test_results.txt',
+      results_local_dir(args) +
+      results_name(args))
+  upload_perf_logs_to_gcloud(cluster, args)
+
+
+def upload_perf_logs_to_gcloud(cluster, args):
+  pass
+
+
 def download_logs_native(cluster, args):
   if not os.path.exists(args.log_dir):
     os.makedirs(args.log_dir)
   cluster.rsync_down('/mnt/lynx/logs/', args.log_dir)
   cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', args.log_dir + '/lynxkite-logs/')
-
-
-def download_and_unpack_release(cluster, args):
-  path = args.lynx_release_dir
-  if path:
-    cluster.rsync_up(path + '/', '/mnt/lynx')
-  else:
-    version = args.lynx_version
-    cluster.ssh('''
-      set -x
-      cd /mnt
-      if [ ! -f "./lynx-{version}.tgz" ]; then
-        ./download-lynx-{version}.sh
-        mkdir -p lynx
-        tar xfz lynx-{version}.tgz -C lynx --strip-components 1
-      fi
-      '''.format(version=version))
 
 
 def prompt_delete():
