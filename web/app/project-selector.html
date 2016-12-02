@@ -64,8 +64,9 @@
     </span>
     <br/>
   </div>
-  <sql-box ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
-
+  <div style="margin-left: 20px">
+    <sql-box  ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
+  </div>
 
   <div id="current-directory" class="path">
     <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
