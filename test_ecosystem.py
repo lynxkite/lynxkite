@@ -119,8 +119,9 @@ parser.add_argument(
 parser.add_argument(
     '--test',
     action='store_true',
-    help='''The EMR cluster is started to run tests. '
-         The results have to be downloaded.''')
+    help='''If this switch is used, it means the EMR cluster was started to
+    run tests. In that case `task` will be started by `test_runner` and after
+    completion, the results will be downloaded to the local machine.''')
 parser.add_argument(
     '--monitor_nodes',
     action='store_true',
