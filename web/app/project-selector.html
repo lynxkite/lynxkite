@@ -63,8 +63,9 @@
       <help-popup href="global-sql-box" class="pull-right"></help-popup>
     </span>
     <br/>
-    <sql-box ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
   </div>
+  <sql-box ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
+
 
   <div id="current-directory" class="path">
     <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
