@@ -1200,7 +1200,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
-      Choice("direction", "Direction", options = Direction.attrOptions))
+      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1209,7 +1209,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val weights =
         if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
+      val es = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true).edgeBundle
       project.newVertexAttribute(
         params("name"), op(op.es, es)(op.weights, weights).result.pagerank, help)
     }
@@ -1250,13 +1251,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type",
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
-      Choice("direction", "Direction", options = Direction.attrOptions))
+      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
       val algorithm = params("algorithm")
       assert(name.nonEmpty, "Please set an attribute name.")
-      val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
+      val es = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.HyperBallCentrality(
         params("maxDiameter").toInt, algorithm, params("bits").toInt)
       project.newVertexAttribute(

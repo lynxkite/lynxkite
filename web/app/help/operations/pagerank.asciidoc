@@ -29,6 +29,8 @@ factors lead to longer random walks.
 
 [[direction]] Direction::
  - `incoming edges`: Simulate random walk in the reverse edge direction.
+   Finds the most influential sources.
  - `outgoing edges`: Simulate random walk in the original edge direction.
+   Finds the most popular destinations.
  - `all edges`: Simulate random walk in both directions.
 ====
