@@ -331,15 +331,16 @@ def install_native(cluster):
 
 
 def config_and_prepare_native(cluster, args):
+  hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
   if args.s3_data_dir:
     data_dir_config = '''
       export KITE_DATA_DIR={}
-      export KITE_EPHEMERAL_DATA_DIR=hdfs://$HOSTNAME:8020/user/$USER/lynxkite/
-    '''.format(args.s3_data_dir)
+      export KITE_EPHEMERAL_DATA_DIR={}
+    '''.format(args.s3_data_dir, hdfs_path)
   else:
     data_dir_config = '''
-      export KITE_DATA_DIR=hdfs://$HOSTNAME:8020/user/$USER/lynxkite/
-    '''
+      export KITE_DATA_DIR={}
+    '''.format(hdfs_path)
   cluster.ssh('''
     cd /mnt/lynx
     echo 'Setting up environment variables.'
