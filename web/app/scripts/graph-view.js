@@ -738,6 +738,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             var actions = [];
             var side = vertices.side;
             var id = vertex.id.toString();
+            var attributes = {};
+            // Iterate through the visualization modes (e.g. label, size) to get the list of
+            // attributes which are visualized.
+            for (var visMode in side.vertexAttrs) {
+              var attribute = side.vertexAttrs[visMode];
+              if (attribute !== undefined) {
+                attributes[attribute.title] = (vertex.data.attrs[attribute.id].string);
+              }
+            }
+
             if (!side.hasCenter(id)) {
               actions.push({
                 title: 'Add to centers',
@@ -818,6 +828,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               type: 'vertex',
               id: id,
               actions: actions,
+              attributes: attributes,
             });
           });
         }
