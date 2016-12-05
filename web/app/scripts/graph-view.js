@@ -744,7 +744,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             for (var visMode in side.vertexAttrs) {
               var attribute = side.vertexAttrs[visMode];
               if (attribute !== undefined) {
-                attributes[attribute.title] = (vertex.data.attrs[attribute.id].string);
+                attributes[attribute.title] = vertex.data.attrs[attribute.id].string;
               }
             }
 
