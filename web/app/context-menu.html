@@ -10,6 +10,8 @@
        ng-click="executeAction(action)">
     {{action.title}}
   </div>
+  <div class="menu-attributes-title"
+       ng-if="model.data.attributes"> Visualized attributes</div>
   <div class="menu-attributes-item"
        ng-if="model.data.attributes"
        ng-repeat="(name, value) in model.data.attributes">
