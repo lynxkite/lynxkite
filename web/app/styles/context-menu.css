@@ -26,3 +26,17 @@
   background: black !important;
   color: rgba(255, 255, 255, 0.8);
 }
+.context-menu .menu-attributes-title {
+  background: darkgrey;
+  padding-top: 4px;
+  padding-left: 6px;
+  padding-right: 6px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  font-size: 16px;
+}
+.context-menu .menu-attributes-item {
+  background: lightgrey;
+  padding-left: 20px;
+  padding-right: 6px;
+}
