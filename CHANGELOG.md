@@ -16,6 +16,8 @@ LynxKite:
     - _"Train a k-means clustering model"_ no longer automatically scales the selected attributes.
       This is actually helpful if the attributes are on the same scale already, but otherwise you
       need to manually scale them now.
+    - Previously trained k-means models will give wrong results because scaling has been removed.
+      You will have to train new models.
  - More compact UI for scalars and attributes.
  - Fill full width if only one project is open.
  - New _"Count most common"_ local aggregator added.
