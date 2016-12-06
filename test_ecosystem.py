@@ -141,6 +141,9 @@ parser.add_argument(
     '--with_rds',
     action='store_true',
     help='Spin up a mysql RDS instance to test database operations.')
+parser.add_argument(
+    '--s3_data_dir',
+    help='S3 path to be used as non-ephemeral data directory.')
 
 
 def main(args):
@@ -303,6 +306,16 @@ def install_native(cluster):
 
 
 def config_and_prepare_native(cluster, args):
+  hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
+  if args.s3_data_dir:
+    data_dir_config = '''
+      export KITE_DATA_DIR={}
+      export KITE_EPHEMERAL_DATA_DIR={}
+    '''.format(args.s3_data_dir, hdfs_path)
+  else:
+    data_dir_config = '''
+      export KITE_DATA_DIR={}
+    '''.format(hdfs_path)
   cluster.ssh('''
     cd /mnt/lynx
     echo 'Setting up environment variables.'
@@ -317,7 +330,7 @@ def config_and_prepare_native(cluster, args):
       export NUM_CORES_PER_EXECUTOR=8
       # port differs from the one used in central/config
       export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
-      export KITE_DATA_DIR=hdfs://$HOSTNAME:8020/user/$USER/lynxkite/
+      {data_dir_config}
       export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
       export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
       export HADOOP_CONF_DIR=/etc/hadoop/conf
@@ -334,7 +347,7 @@ EOF
     # TODO: Find a more sane directory.
     sudo mkdir -p /tasks_data
     sudo chmod a+rwx /tasks_data
-  '''.format(num_executors=args.emr_instance_count - 1))
+  '''.format(num_executors=args.emr_instance_count - 1, data_dir_config=data_dir_config))
 
 
 def config_aws_s3_native(cluster):

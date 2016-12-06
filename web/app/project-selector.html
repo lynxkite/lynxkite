@@ -63,7 +63,9 @@
       <help-popup href="global-sql-box" class="pull-right"></help-popup>
     </span>
     <br/>
-    <sql-box ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
+  </div>
+  <div style="margin-left: 20px">
+    <sql-box  ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
   </div>
 
   <div id="current-directory" class="path">
