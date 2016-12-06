@@ -164,17 +164,11 @@ def main(args):
       args.emr_instance_count = bigdata_test_set(args)['instances']
     else:
       args.emr_instance_count = 3
-  if args.test:
-    termination_protected = False
-  else:
-    termination_protected = True
   cluster = lib.create_or_connect_to_emr_cluster(
       name=args.cluster_name,
       log_uri=args.emr_log_uri,
       instance_count=args.emr_instance_count,
-      hdfs_replication='1',
-      termination_protected=termination_protected
-  )
+      hdfs_replication='1')
   instances = [cluster]
   # Spin up a mysql RDS instance only if requested.
   jdbc_url = ''
@@ -206,6 +200,7 @@ def main(args):
   if args.log_dir:
     download_logs_native(cluster, args)
   if args.test:
+    cluster.set_termination_protection_off()
     shut_down_instances(instances)
 
 
