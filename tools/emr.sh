@@ -194,6 +194,7 @@ start)
     --name "${CLUSTER_NAME}" \
     --tags "${EMR_TAGS[@]}" \
     --instance-groups '[{"InstanceCount":'${NUM_INSTANCES}',"InstanceGroupType":"CORE","InstanceType":"'${TYPE}'","Name":"Core Instance Group"},{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"'${TYPE}'","Name":"Master Instance Group"}]' \
+    --termination-protected \
     ${CREATE_CLUSTER_EXTRA_PARAMS} \
   )
   set +x
@@ -399,6 +400,7 @@ terminate)
 
 # ===== fall-through
 terminate-yes)
+  aws emr modify-cluster-attributes --cluster-id $(GetClusterId) --no-termination-protected
   aws emr terminate-clusters --cluster-ids $(GetClusterId)
   ;;
 

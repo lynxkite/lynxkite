@@ -188,18 +188,25 @@ trait LocalAggregator[From, To] extends ToJson {
 }
 // Aggregates from From to Intermediate and at the end calls finalize() to turn
 // Intermediate into To. So Intermediate can contain extra data over what is
-// required in the result. The merge() and combine() methods make it possible to
-// use Aggregator in a distributed setting. Provides a scalable aggregateRDD() method.
+// required in the result. Provides a scalable aggregateRDD() method.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
-  def merge(a: Intermediate, b: From): Intermediate
   def combine(a: Intermediate, b: Intermediate): Intermediate
   def finalize(i: Intermediate): To
-  def aggregatePartition(values: Iterator[From]): Intermediate =
-    values.foldLeft(zero)(merge _)
+  def aggregatePartition(values: Iterator[From]): Intermediate
   def aggregate(values: Iterable[From]): To =
     finalize(aggregatePartition(values.iterator))
+  // Aggregates the RDD by key in a scalable (hotspot resistant) way.
+  def aggregateRDD[K: Ordering: ClassTag](
+    values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To]
+}
+
+// The trivial extension of Aggregator.
+trait ItemAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
+  def merge(a: Intermediate, b: From): Intermediate
+  def aggregatePartition(values: Iterator[From]): Intermediate =
+    values.foldLeft(zero)(merge _)
   // Aggregates the RDD by key in a scalable (hotspot resistant) way.
   def aggregateRDD[K: Ordering: ClassTag](
     values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To] = {
@@ -208,8 +215,35 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
     values.aggregateBySortedKey[Intermediate](zero, partitioner)(merge, combine).mapValues { i => finalize(i) }
   }
 }
+
+// A two phase aggregator which creates an RDD of the counts of occurrences for each value
+// per key (key -> (count, value)). The merge method acts on this RDD. Similarly the
+// aggregatePartition method creates a list of (value, count)-s to merge. The occurrences of
+// distinct (key, value) pairs and the occurrence of each value within a key should lead to the
+// same result.
+trait CountAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
+  def merge(a: Intermediate, b: (Double, From)): Intermediate
+  def aggregatePartition(values: Iterator[From]): Intermediate = values
+    .toIterable
+    .groupBy(identity)
+    .map { case (v, i) => (i.size.toDouble, v) }
+    .foldLeft(zero)(merge _)
+  // Aggregates the RDD by key in a scalable (hotspot resistant) way.
+  def aggregateRDD[K: Ordering: ClassTag](
+    values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To] = {
+    implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(intermediateTypeTag(ftt))
+    implicit val fct = RuntimeSafeCastable.classTagFromTypeTag(ftt)
+    values
+      .map { case (k, v) => (k, v) -> 1.0 }
+      .reduceByKey(_ + _)
+      .map { case ((k, v), c) => k -> (c, v) }
+      .aggregateBySortedKey[Intermediate](zero, partitioner)(merge, combine)
+      .mapValues { i => finalize(i) }
+  }
+}
+
 // A distributed aggregator where Intermediate is not different from To.
-trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
+trait SimpleAggregator[From, To] extends ItemAggregator[From, To, To] {
   def finalize(i: To): To = i
   def intermediateTypeTag(inputTypeTag: TypeTag[From]) = outputTypeTag(inputTypeTag)
 }
@@ -218,9 +252,9 @@ trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
 // This is a trait instead of an abstract class because otherwise the case
 // class will not be serializable ("no valid constructor").
 trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
-    extends Aggregator[From, (Intermediate1, Intermediate2), To] {
-  val agg1: Aggregator[From, Intermediate1, To1]
-  val agg2: Aggregator[From, Intermediate2, To2]
+    extends ItemAggregator[From, (Intermediate1, Intermediate2), To] {
+  val agg1: ItemAggregator[From, Intermediate1, To1]
+  val agg2: ItemAggregator[From, Intermediate2, To2]
   def zero = (agg1.zero, agg2.zero)
   def merge(a: (Intermediate1, Intermediate2), b: From) =
     (agg1.merge(a._1, b), agg2.merge(a._2, b))
@@ -289,7 +323,7 @@ object Aggregator {
   }
 
   abstract class MaxBy[Weight: Ordering, Value]
-      extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
+      extends ItemAggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
@@ -358,29 +392,46 @@ object Aggregator {
     }
   }
 
-  object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
-  case class MostCommon[T]() extends LocalAggregator[T, T] {
+  object MostCommon extends AggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
+  case class MostCommon[T]() extends CountAggregator[T, Option[(Double, T)], T] {
+    val agg = MaxByDouble[T]
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
-    def aggregate(values: Iterable[T]) = {
-      values.groupBy(identity).maxBy(_._2.size)._1
+    def intermediateTypeTag(inputTypeTag: TypeTag[T]) = {
+      implicit val tt = inputTypeTag
+      // The intermediate type is Option[(Weight, Value)], which is None for empty input and
+      // Some(maximal element) otherwise.
+      TypeTagUtil.optionTypeTag[(Double, T)]
     }
+    def zero = None
+    def merge(a: Option[(Double, T)], b: (Double, T)) = { agg.merge(a, b) }
+    def combine(a: Option[(Double, T)], b: Option[(Double, T)]) = { agg.combine(a, b) }
+    def finalize(i: Option[(Double, T)]): T = { agg.finalize(i) }
   }
 
-  object CountMostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountMostCommon() }
-  case class CountMostCommon[T]() extends LocalAggregator[T, Double] {
+  object CountMostCommon extends AggregatorFromJson { def fromJson(j: JsValue) = CountMostCommon() }
+  case class CountMostCommon[T]() extends CountAggregator[T, Option[(Double, T)], Double] {
+    val agg = MaxByDouble[T]
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
-    def aggregate(values: Iterable[T]) = {
-      val mostCommon = values.groupBy(identity).maxBy(_._2.size)._1
-      values.filter(_ == mostCommon).size.toDouble
+    def intermediateTypeTag(inputTypeTag: TypeTag[T]) = {
+      implicit val tt = inputTypeTag
+      // The intermediate type is Option[(Weight, Value)], which is None for empty input and
+      // Some(maximal element) otherwise.
+      TypeTagUtil.optionTypeTag[(Double, T)]
     }
+    def zero = None
+    def merge(a: Option[(Double, T)], b: (Double, T)) = { agg.merge(a, b) }
+    def combine(a: Option[(Double, T)], b: Option[(Double, T)]) = { agg.combine(a, b) }
+    def finalize(i: Option[(Double, T)]): Double = i.get._1
   }
 
-  object CountDistinct extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
-  case class CountDistinct[T]() extends LocalAggregator[T, Double] {
+  object CountDistinct extends AggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
+  case class CountDistinct[T]() extends CountAggregator[T, Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
-    def aggregate(values: Iterable[T]) = {
-      values.toSet.size
-    }
+    def intermediateTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
+    def zero = 0
+    def merge(a: Double, b: (Double, T)) = a + 1
+    def combine(a: Double, b: Double) = a + b
+    def finalize(i: Double): Double = i
   }
 
   // Majority is like MostCommon, but returns "" if the mode is < fraction of the values.
@@ -397,7 +448,7 @@ object Aggregator {
   }
 
   object First extends AggregatorFromJson { def fromJson(j: JsValue) = First() }
-  case class First[T]() extends Aggregator[T, Option[T], T] {
+  case class First[T]() extends ItemAggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
       implicit val tt = inputTypeTag
@@ -431,7 +482,7 @@ object Aggregator {
   }
 
   object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev() }
-  case class StdDev() extends Aggregator[Double, Stats, Double] {
+  case class StdDev() extends ItemAggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = typeTag[Stats]
     def zero = Stats(0, 0, 0)

@@ -1,15 +1,16 @@
-autopep8
-awscli
-boto3
+# Dependecies for running LynxKite and ecosystem
 croniter
 flask
 luigi==2.3.2
 mysqlclient
-pandas
 prometheus_client
 python-dateutil
-python-prctl
 PyYAML
+sqlalchemy
+# Dependencies for developing and testing
+autopep8
+awscli
+boto3
+pandas
 Sphinx
 sphinx-rtd-theme
-sqlalchemy
