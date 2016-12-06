@@ -2869,9 +2869,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled =
       isSegmentation &&
         hasVertexSet &&
-        FEStatus.assert(parent.vertexAttributes.size > 0, s"No vertex attributes on $parent") &&
-        FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
-          "Segments are not guaranteed to contain only one vertex")
+        FEStatus.assert(parent.vertexAttributes.size > 0,
+          s"Parent $parent has no vertex attributes") &&
+          FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
+            "Segments are not guaranteed to contain only one vertex")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {
