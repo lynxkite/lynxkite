@@ -82,7 +82,10 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, log_uri, instance_count=2, hdfs_replication='2'):
+          self, name, log_uri,
+          instance_count=2,
+          hdfs_replication='2',
+          termination_protected=True):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -106,7 +109,8 @@ class EMRLib:
             'SlaveInstanceType': 'm3.2xlarge',
             'InstanceCount': instance_count,
             'Ec2KeyName': self.ec2_key_name,
-            'KeepJobFlowAliveWhenNoSteps': True
+            'KeepJobFlowAliveWhenNoSteps': True,
+            'TerminationProtected': termination_protected
         },
         Configurations=[
             {
