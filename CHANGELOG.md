@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-### 1.9.7
+### 1.10.0
 
 LynxKite:
 
