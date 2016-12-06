@@ -84,8 +84,7 @@ class EMRLib:
   def create_or_connect_to_emr_cluster(
           self, name, log_uri,
           instance_count=2,
-          hdfs_replication='2',
-          termination_protected=True):
+          hdfs_replication='2'):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -110,7 +109,7 @@ class EMRLib:
             'InstanceCount': instance_count,
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True,
-            'TerminationProtected': termination_protected
+            'TerminationProtected': True
         },
         Configurations=[
             {
@@ -349,6 +348,11 @@ EOF
             'hadoop@' + self.master() + ':' + src,
             dst
         ])
+
+  def set_termination_protection_off(self):
+    self.emr_client.set_termination_protection(
+        JobFlowIds=[self.id],
+        TerminationProtected=False)
 
   def terminate(self):
     self.emr_client.terminate_job_flows(
