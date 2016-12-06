@@ -69,7 +69,9 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "15.0",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
-  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209")
+  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
+  //The Google Cloud Storage connector for Spark and Hive
+  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2")
 
 resolvers += "Twitter Repository" at "http://maven.twttr.com"
 

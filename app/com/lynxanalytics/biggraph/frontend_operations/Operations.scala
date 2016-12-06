@@ -1192,7 +1192,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("weights", "Weight attribute",
         options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
-      Ratio("damping", "Damping factor", defaultValue = "0.85"))
+      Ratio("damping", "Damping factor", defaultValue = "0.85"),
+      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1201,8 +1202,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val weights =
         if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      val es = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true).edgeBundle
       project.newVertexAttribute(
-        params("name"), op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank, help)
+        params("name"), op(op.es, es)(op.weights, weights).result.pagerank, help)
     }
   })
 
@@ -1240,16 +1243,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
       Choice("algorithm", "Centrality type",
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
-      NonNegInt("bits", "Precision", default = 8))
+      NonNegInt("bits", "Precision", default = 8),
+      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
       val algorithm = params("algorithm")
       assert(name.nonEmpty, "Please set an attribute name.")
+      val es = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.HyperBallCentrality(
         params("maxDiameter").toInt, algorithm, params("bits").toInt)
       project.newVertexAttribute(
-        name, op(op.es, project.edgeBundle).result.centrality, algorithm + help)
+        name, op(op.es, es).result.centrality, algorithm + help)
     }
   })
 
@@ -3408,30 +3414,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
           } else if (needsGlobal) {
-            FEOption.list("average", "count", "first", "max", "min", "std_deviation", "sum")
+            FEOption.list(
+              "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
+              "std_deviation", "sum")
 
           } else {
             FEOption.list(
-              "average", "count", "count_distinct", "max", "median", "min", "most_common", "count_most_common",
+              "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
               "set", "std_deviation", "sum", "vector")
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            FEOption.list("count", "first")
+            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
           } else {
             FEOption.list(
-              "most_common", "count_most_common", "count_distinct", "majority_50", "majority_100",
-              "count", "vector", "set")
+              "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
+              "vector", "set")
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("by_max_weight", "by_min_weight")
           } else if (needsGlobal) {
-            FEOption.list("count", "first")
+            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
           } else {
-            FEOption.list("count", "count_distinct", "median", "most_common", "count_most_common", "set", "vector")
+            FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
           }
         }
         TagList(s"aggregate-$name", name, options = options)

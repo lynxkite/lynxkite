@@ -9,23 +9,23 @@ Examples:
 Running the default big data tests on the small data set using
 the 1.9.6 native release.
 
-    ./test_ecosystem.py --bigdata
+    ./test_ecosystem.py --test --bigdata
 
 Running all big data tests on the normal data set using the current branch.
 
-    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+    ./test_ecosystem.py --test --bigdata --bigdata_test_set normal \
                         --task AllTests --lynx_release_dir ecosystem/native/dist
 
 Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
 
-    ./test_ecosystem.py --cluster_name JDBC-test-cluster \
+    ./test_ecosystem.py --cluster_name JDBC-test-cluster --test \
                         --with_rds --lynx_version native-1.9.5 \
                         --task_module test_tasks.jdbc --task JDBCTestAll
 
 Running ModularClustering test on the large data set using the current branch
 and downloading application logs from the cluster to `/home/user/cluster-logs`.
 
-    ./test_ecosystem.py --bigdata --bigdata_test_set large \
+    ./test_ecosystem.py --test --bigdata --bigdata_test_set large \
                         --task ModularClustering \
                         --lynx_release_dir ecosystem/native/dist \
                         --log_dir /home/user/cluster-logs
@@ -33,13 +33,11 @@ and downloading application logs from the cluster to `/home/user/cluster-logs`.
 Running the default big data tests on the normal data set using a cluster
 with 6 nodes (1 master, 5 worker) and the 1.9.6 native release.
 
-    ./test_ecosystem.py --bigdata --bigdata_test_set normal \
+    ./test_ecosystem.py --test --bigdata --bigdata_test_set normal \
                         --emr_instance_count 6
 """
 import argparse
-import boto3
 import os
-import time
 import sys
 # Set up import path for our modules.
 os.chdir(os.path.dirname(__file__))
@@ -54,10 +52,10 @@ from utils.emr_lib import EMRLib
 #  fake_westeros_v3_25m_799m    25m vertices 799m edges (xlarge)
 
 test_sets = {
-    'small': 'fake_westeros_v3_100k_2m',
-    'normal': 'fake_westeros_v3_5m_145m',
-    'large': 'fake_westeros_v3_10m_303m',
-    'xlarge': 'fake_westeros_v3_25m_799m'
+    'small': dict(data='fake_westeros_v3_100k_2m', instances=3),
+    'normal': dict(data='fake_westeros_v3_5m_145m', instances=4),
+    'large': dict(data='fake_westeros_v3_10m_303m', instances=8),
+    'xlarge': dict(data='fake_westeros_v3_25m_799m', instances=20),
 }
 
 
@@ -101,8 +99,14 @@ parser.add_argument(
 parser.add_argument(
     '--emr_instance_count',
     type=int,
-    default=3,
-    help='Number of instances on EMR cluster, including master.')
+    default=0,
+    help='Number of instances on EMR cluster, including master.' +
+    ' Set according to bigdata_test_set by default.')
+parser.add_argument(
+    '--emr_region',
+    default='us-east-1',
+    help='Region of the EMR cluster.' +
+    ' Possible values: us-east-1, ap-southeast-1, eu-central-1, ...')
 parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/',
@@ -117,9 +121,11 @@ parser.add_argument(
     action='store_true',
     help='''Delete the cluster after completion.''')
 parser.add_argument(
-    '--dockerized',
+    '--test',
     action='store_true',
-    help='Start the docker version. Without this switch the default is native.')
+    help='''If this switch is used, it means the EMR cluster was started to
+    run tests. In that case `task` will be started by `test_runner` and after
+    completion, the results will be downloaded to the local machine.''')
 parser.add_argument(
     '--monitor_nodes',
     action='store_true',
@@ -135,13 +141,14 @@ parser.add_argument(
 parser.add_argument(
     '--emr_log_uri',
     default='s3://test-ecosystem-log',
-    help='URI of the S3 bucket where the EMR logs will be written.'
-)
+    help='URI of the S3 bucket where the EMR logs will be written.')
 parser.add_argument(
     '--with_rds',
     action='store_true',
-    help='Spin up a mysql RDS instance to test database operations.'
-)
+    help='Spin up a mysql RDS instance to test database operations.')
+parser.add_argument(
+    '--s3_data_dir',
+    help='S3 path to be used as non-ephemeral data directory.')
 
 
 def main(args):
@@ -150,13 +157,18 @@ def main(args):
   # Create an EMR cluster.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
-      ec2_key_name=args.ec2_key_name)
+      ec2_key_name=args.ec2_key_name,
+      region=args.emr_region)
+  if args.emr_instance_count == 0:
+    if args.bigdata:
+      args.emr_instance_count = bigdata_test_set(args)['instances']
+    else:
+      args.emr_instance_count = 3
   cluster = lib.create_or_connect_to_emr_cluster(
       name=args.cluster_name,
       log_uri=args.emr_log_uri,
       instance_count=args.emr_instance_count,
-      hdfs_replication='1'
-  )
+      hdfs_replication='1')
   instances = [cluster]
   # Spin up a mysql RDS instance only if requested.
   jdbc_url = ''
@@ -171,36 +183,25 @@ def main(args):
         mysql_address=mysql_address)
   else:
     lib.wait_for_services(instances)
-
+  # Install and configure ecosystem on cluster.
   upload_installer_script(cluster, args)
-  upload_tasks(cluster, args)
-  upload_tools(cluster, args)
+  upload_tasks(cluster)
+  upload_tools(cluster)
   download_and_unpack_release(cluster, args)
-  if args.dockerized:
-    install_docker_and_lynx(cluster, args.lynx_version)
-    # TODO: config_aws_s3_docker(cluster)
-    start_or_reset_ecosystem_docker(cluster, args.lynx_version)
-    start_tests_docker(cluster, jdbc_url, args)
-  else:
-    install_native(cluster)
-    config_and_prepare_native(cluster, args)
-    config_aws_s3_native(cluster)
-    if args.monitor_nodes:
-      start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
-    start_supervisor_native(cluster)
-    start_tests_native(cluster, jdbc_url, args)
-  print('Tests are now running in the background. Waiting for results.')
-  cluster.fetch_output()
-  if not os.path.exists(results_local_dir(args)):
-    os.makedirs(results_local_dir(args))
-  cluster.rsync_down('/home/hadoop/test_results.txt', results_local_dir(args) + results_name(args))
-  if args.dockerized:
-    pass
-    # TODO download_logs_docker()
-  else:
-    if args.log_dir:
-      download_logs_native(cluster, args)
-  shut_down_instances(instances)
+  install_native(cluster)
+  config_and_prepare_native(cluster, args)
+  config_aws_s3_native(cluster)
+  if args.monitor_nodes:
+    start_monitoring_on_extra_nodes_native(args.ec2_key_file, cluster)
+  start_supervisor_native(cluster)
+  # Run tests and download results.
+  if args.test:
+    run_tests_native(cluster, jdbc_url, args)
+  if args.log_dir:
+    download_logs_native(cluster, args)
+  if args.test:
+    cluster.turn_termination_protection_off()
+    shut_down_instances(instances)
 
 
 def results_local_dir(args):
@@ -210,7 +211,7 @@ def results_local_dir(args):
   '''
   if args.bigdata:
     basedir = args.results_dir
-    dataset = bigdata_test_set(args.bigdata_test_set)
+    dataset = bigdata_test_set(args)['data']
     instance_count = args.emr_instance_count
     executors = instance_count - 1
     return "{bd}emr_{e}_{i}_{ds}".format(
@@ -229,45 +230,22 @@ def results_name(args):
   )
 
 
-def check_docker_vs_native(args):
-  '''
-  Try to check if the given release is a docker release if and only if the `--dockerized` switch is used.
-  '''
-  if args.dockerized:
-    if args.monitor_nodes:
-      raise ValueError('Dockerized version does not support monitor_nodes')
-    if args.lynx_release_dir:
-      if 'native' in args.lynx_release_dir:
-        raise ValueError('You cannot use a native release dir to test a dockerized version.')
-    else:
-      if 'native' in args.lynx_version:
-        raise ValueError('You cannot use a native release to test a dockerized version.')
-  else:
-    if args.lynx_release_dir:
-      if 'native' not in args.lynx_release_dir:
-        raise ValueError('You need a native release dir to test the native ecosystem.')
-    else:
-      if 'native' not in args.lynx_version:
-        raise ValueError('You need a native release to test the native ecosystem.')
-
-
 def check_bigdata(args):
   '''Possible values of `--bigdata_test_set`.'''
   if args.bigdata:
     if args.bigdata_test_set not in test_sets.keys():
-      raise ValueError('Parameter = '
+      raise ValueError('bigdata_test_set = '
                        + args.bigdata_test_set
                        + ', possible values are: '
                        + ", ".join(test_sets.keys()))
 
 
 def check_arguments(args):
-  check_docker_vs_native(args)
   check_bigdata(args)
 
 
-def bigdata_test_set(test_set):
-  return test_sets[test_set]
+def bigdata_test_set(args):
+  return test_sets[args.bigdata_test_set]
 
 
 def upload_installer_script(cluster, args):
@@ -279,43 +257,54 @@ def upload_installer_script(cluster, args):
         dst='/mnt/')
 
 
-def upload_tasks(cluster, args):
-  if args.dockerized:
-    ecosystem_task_dir = '/mnt/lynx/lynx/luigi_tasks/test_tasks'
-  else:
-    ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
+def upload_tasks(cluster):
+  ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
   cluster.ssh('mkdir -p ' + ecosystem_task_dir)
   cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
-  if not args.dockerized:
+  cluster.ssh('''
+      set -x
+      cd /mnt/lynx/luigi_tasks/test_tasks
+      mv test_runner.py /mnt/lynx/luigi_tasks
+      ''')
+
+
+def upload_tools(cluster):
+  target_dir = '/mnt/lynx/tools'
+  cluster.ssh('mkdir -p ' + target_dir)
+  cluster.rsync_up('ecosystem/native/tools/', target_dir)
+  cluster.rsync_up('tools/performance_collection/', target_dir)
+
+
+def download_and_unpack_release(cluster, args):
+  path = args.lynx_release_dir
+  if path:
+    cluster.rsync_up(path + '/', '/mnt/lynx')
+  else:
+    version = args.lynx_version
     cluster.ssh('''
-        set -x
-        cd /mnt/lynx/luigi_tasks/test_tasks
-        mv test_runner.py /mnt/lynx/luigi_tasks
-        ''')
-
-
-def upload_tools(cluster, args):
-  if not args.dockerized:
-    target_dir = '/mnt/lynx/tools'
-    cluster.ssh('mkdir -p ' + target_dir)
-    cluster.rsync_up('ecosystem/native/tools/', target_dir)
+      set -x
+      cd /mnt
+      if [ ! -f "./lynx-{version}.tgz" ]; then
+        ./download-lynx-{version}.sh
+        mkdir -p lynx
+        tar xfz lynx-{version}.tgz -C lynx --strip-components 1
+      fi
+      '''.format(version=version))
 
 
 def install_native(cluster):
+  cluster.rsync_up('python_requirements.txt', '/mnt/lynx')
   cluster.ssh('''
     set -x
     cd /mnt/lynx
     sudo yum install -y python34-pip mysql-server gcc libffi-devel
-    sudo yum install -y glibc-devel libcap-devel
-    sudo pip-3.4 install --upgrade luigi==2.3.2 sqlalchemy mysqlclient PyYAML
-    sudo pip-3.4 install --upgrade prometheus_client python-dateutil python-prctl croniter
-    # Temporary workaround needed because of the pycparser 2.14 bug.
-    sudo pip-2.6 install pycparser==2.13
-    sudo pip-2.6 install cryptography
+    # Removes the given and following lines so only the necessary modules will be installed.
+    sed -i -n '/# Dependencies for developing and testing/q;p'  python_requirements.txt
+    sudo pip-3.4 install --upgrade -r python_requirements.txt
     sudo pip-2.6 install --upgrade requests[security] supervisor
     # mysql setup
     sudo service mysqld start
-    mysqladmin  -u root password 'root'
+    mysqladmin  -u root password 'root' || true  # (May be set already.)
     # This mysql database is used for many things, including the testing of JDBC tasks.
     # For that purpose access needs to be granted for all executors.
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
@@ -323,10 +312,20 @@ def install_native(cluster):
 
 
 def config_and_prepare_native(cluster, args):
+  hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
+  if args.s3_data_dir:
+    data_dir_config = '''
+      export KITE_DATA_DIR={}
+      export KITE_EPHEMERAL_DATA_DIR={}
+    '''.format(args.s3_data_dir, hdfs_path)
+  else:
+    data_dir_config = '''
+      export KITE_DATA_DIR={}
+    '''.format(hdfs_path)
   cluster.ssh('''
     cd /mnt/lynx
     echo 'Setting up environment variables.'
-    # Removes the given and following lines.
+    # Removes the given and following lines so config/central does not grow constantly.
     sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
     cat >>config/central <<'EOF'
 # ---- the below lines were added by test_ecosystem.py ----
@@ -337,7 +336,7 @@ def config_and_prepare_native(cluster, args):
       export NUM_CORES_PER_EXECUTOR=8
       # port differs from the one used in central/config
       export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
-      export KITE_DATA_DIR=hdfs://$HOSTNAME:8020/user/$USER/lynxkite/
+      {data_dir_config}
       export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
       export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
       export HADOOP_CONF_DIR=/etc/hadoop/conf
@@ -352,9 +351,9 @@ EOF
     hdfs dfs -mkdir -p $KITE_DATA_DIR/table_files
     echo 'Creating tasks_data directory.'
     # TODO: Find a more sane directory.
-    sudo mkdir /tasks_data
+    sudo mkdir -p /tasks_data
     sudo chmod a+rwx /tasks_data
-  '''.format(num_executors=args.emr_instance_count - 1))
+  '''.format(num_executors=args.emr_instance_count - 1, data_dir_config=data_dir_config))
 
 
 def config_aws_s3_native(cluster):
@@ -450,8 +449,30 @@ def start_tests_native(cluster, jdbc_url, args):
       luigi_module=args.task_module,
       luigi_task=args.task,
       jdbc_url=jdbc_url,
-      dataset=bigdata_test_set(args.bigdata_test_set)
+      dataset=bigdata_test_set(args)['data'],
   ))
+
+
+def run_tests_native(cluster, jdbc_url, args):
+  start_tests_native(cluster, jdbc_url, args)
+  print('Tests are now running in the background. Waiting for results.')
+  cluster.fetch_output()
+  if not os.path.exists(results_local_dir(args)):
+    os.makedirs(results_local_dir(args))
+  cluster.rsync_down(
+      '/home/hadoop/test_results.txt',
+      results_local_dir(args) +
+      results_name(args))
+  upload_perf_logs_to_gcloud(cluster, args)
+
+
+def upload_perf_logs_to_gcloud(cluster, args):
+  print('Uploading performance logs to gcloud.')
+  instance_name = 'emr-' + args.cluster_name
+  cluster.ssh('''
+    cd /mnt/lynx
+    tools/multi_upload.sh 0 apps/lynxkite/logs {i}
+  '''.format(i=instance_name))
 
 
 def download_logs_native(cluster, args):
@@ -459,91 +480,6 @@ def download_logs_native(cluster, args):
     os.makedirs(args.log_dir)
   cluster.rsync_down('/mnt/lynx/logs/', args.log_dir)
   cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', args.log_dir + '/lynxkite-logs/')
-
-
-def download_and_unpack_release(cluster, args):
-  path = args.lynx_release_dir
-  if path:
-    cluster.rsync_up(path + '/', '/mnt/lynx')
-  else:
-    version = args.lynx_version
-    cluster.ssh('''
-      set -x
-      cd /mnt
-      if [ ! -f "./lynx-{version}.tgz" ]; then
-        ./download-lynx-{version}.sh
-        mkdir -p lynx
-        tar xfz lynx-{version}.tgz -C lynx --strip-components 1
-      fi
-      '''.format(version=version))
-
-
-def install_docker_and_lynx(cluster, version):
-  cluster.ssh('''
-    set -x
-    cd /mnt/lynx
-    if ! hash docker 2>/dev/null; then
-      echo "docker not found, installing"
-      sudo LYNXKITE_USER=hadoop ./install-docker.sh
-    fi
-    # no need for scheduled tasks today
-    echo "sleep_period_seconds: 1000000000\nscheduling: []" >lynx/luigi_tasks/chronomaster.yml
-    # Log out here to refresh docker user group.
-  '''.format(version=version))
-
-
-def start_or_reset_ecosystem_docker(cluster, version):
-  kite_config = '''
-    KITE_INSTANCE: ecosystem-test
-    KITE_DATA_DIR: hdfs://\$HOSTNAME:8020/user/\$USER/lynxkite_data/
-    KITE_MASTER_MEMORY_MB: 8000
-    NUM_EXECUTORS: {num_executors}
-    EXECUTOR_MEMORY: 18g
-    NUM_CORES_PER_EXECUTOR: 8
-'''.format(num_executors=args.emr_instance_count - 1)
-
-  res = cluster.ssh('''
-    cd /mnt/lynx/lynx
-    # Start ecosystem.
-    if [[ $(docker ps -qf name=lynx_luigi_worker_1) ]]; then
-      echo "Ecosystem is running. Cleanup and Luigi restart is needed."
-      hadoop fs -rm -r /user/hadoop/lynxkite_data
-      sudo rm -Rf ./lynxkite_metadata/*
-      ./reload_luigi_tasks.sh
-    else
-      # Update configuration:
-      sed -i.bak '/Please configure/q' docker-compose-lynxkite.yml
-      cat >>docker-compose-lynxkite.yml <<EOF{kite_config}EOF
-      ./start.sh
-    fi
-    # Wait for ecosystem startup completion.
-    # (We keep retrying a dummy task until it succeeds.)
-    docker exec lynx_luigi_worker_1 rm -f /tasks_data/smoke_test_marker.txt
-    docker exec lynx_luigi_worker_1 rm -Rf /tmp/luigi/
-    while [[ $(docker exec lynx_luigi_worker_1 cat /tasks_data/smoke_test_marker.txt 2>/dev/null) != "done" ]]; do
-      docker exec lynx_luigi_worker_1 luigi --module test_tasks.smoke_test SmokeTest
-      sleep 1
-    done'''.format(
-      version=args.lynx_version,
-      kite_config=kite_config))
-
-
-def start_tests_docker(cluster, jdbc_url, args):
-  '''Start running the tests in the background.'''
-  cluster.ssh_nohup('''
-      docker exec lynx_luigi_worker_1 \
-      JDBC_URL='{jdbc_url}' DATASET={dataset} \
-      python3 tasks/test_tasks/test_runner.py \
-          --module {luigi_module} \
-          --task {luigi_task} \
-          --result_file /tmp/test_results.txt
-      docker exec lynx_luigi_worker_1 cat /tmp/test_results.txt >/home/hadoop/test_results.txt
-  '''.format(
-      luigi_module=args.task_module,
-      luigi_task=args.task,
-      jdbc_url=jdbc_url,
-      dataset=bigdata_test_set(args.bigdata_test_set)
-  ))
 
 
 def prompt_delete():
