@@ -349,7 +349,7 @@ EOF
             dst
         ])
 
-  def set_termination_protection_off(self):
+  def turn_termination_protection_off(self):
     self.emr_client.set_termination_protection(
         JobFlowIds=[self.id],
         TerminationProtected=False)

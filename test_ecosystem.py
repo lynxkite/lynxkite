@@ -200,7 +200,7 @@ def main(args):
   if args.log_dir:
     download_logs_native(cluster, args)
   if args.test:
-    cluster.set_termination_protection_off()
+    cluster.turn_termination_protection_off()
     shut_down_instances(instances)
 
 
