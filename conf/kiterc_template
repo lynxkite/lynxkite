@@ -10,7 +10,7 @@ export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 # To specify which cluster to use choose one of the following options:
 
 # - local - for single machine installs
-# - yarn-client - for using YARN (Hadoop v2). Please also set YARN_* settings below.
+# - yarn - for using YARN (Hadoop v2). Please also set YARN_* settings below.
 
 export SPARK_MASTER=local
 
@@ -62,7 +62,7 @@ export KITE_USERS_FILE=$HOME/kite_users
 export EXECUTOR_MEMORY=1g
 
 # Specify the number of executors. For standalone cluster it defaults to as many as possible.
-# For a yarn-client setup, this options is mandatory.
+# For a YARN setup, this options is mandatory.
 # export NUM_EXECUTORS=5
 
 # Specify the number of cores per executor LynxKite should use.
