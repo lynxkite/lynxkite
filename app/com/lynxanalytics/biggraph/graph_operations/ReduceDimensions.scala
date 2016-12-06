@@ -38,11 +38,11 @@ case class ReduceDimensions(numFeatures: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map { v => v.rdd }
-    val unscaledDF = Model.toDF(inputs.vs.rdd, rddArray)
+    val unscaledDF = Model.toDF(sqlContext, inputs.vs.rdd, rddArray)
 
     // Scale the data and transform it to two dimensions by PCA algorithm
     val scaler = new StandardScaler().setInputCol("features").setOutputCol("scaled")

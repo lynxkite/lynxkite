@@ -32,12 +32,12 @@ case class PredictFromModel(numFeatures: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val modelValue = inputs.model.value
     val rddArray = inputs.features.toArray.map(_.rdd)
-    val inputDF = Model.toDF(inputs.vertices.rdd, rddArray)
+    val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
     val partitioner = inputs.vertices.rdd.partitioner.get
     // Transform data to an attributeRDD with the attribute prediction
     val transformation = modelValue.load(rc.sparkContext).transformDF(inputDF)
