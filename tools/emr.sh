@@ -3,12 +3,12 @@
 # Last successful tested with: aws-cli/1.10.20 Python/2.7.6 botocore/1.4.11
 # TODO: rewrite this in Python using boto directly
 
-# The awscli script only works with python2.7 and aws1.10.20, otherwise json output is not deterministic, 
+# The awscli script only works with python2.7 and aws1.10.20, otherwise json output is not deterministic,
 # which causes parse error in script.
 #
-# Installing proper version of aws: 
+# Installing proper version of aws:
 # sudo pip2 instal awscli==1.10.20 .
-# 
+#
 # Installing awscli with pip2, if the pip3 version is already installed:
 # sudo apt-get install python2.7
 # sudo pip3 uninstall awscli
@@ -229,7 +229,7 @@ reconfigure)
 
 # Override settings created by start_emr_cluster.sh.
 # These will reset some values above. Feel free to edit as necessary.
-export SPARK_MASTER=yarn-client
+export SPARK_MASTER=yarn
 export NUM_EXECUTORS=${NUM_EXECUTORS}
 export YARN_CONF_DIR=/etc/hadoop/conf
 export KITE_DATA_DIR=$KITE_DATA_DIR
