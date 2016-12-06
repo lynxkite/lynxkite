@@ -73,7 +73,8 @@ private object SparkSessionContainer {
   lazy val sparkSession = BigGraphSparkContext.getSession(
     "BigGraphTests",
     forceRegistration = true,
-    master = "local")
+    master = "local",
+    settings = Map("spark.sql.shuffle.partitions" -> "1"))
 }
 
 trait TestSparkContext {

@@ -340,7 +340,8 @@ object BigGraphSparkContext {
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
-    master: String = ""): spark.sql.SparkSession = {
+    master: String = "",
+    settings: Traversable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
 
     val versionFound = KiteInstanceInfo.sparkVersion
@@ -402,6 +403,7 @@ object BigGraphSparkContext {
     if (master != "") {
       sparkConf = sparkConf.setMaster(master)
     }
+    sparkConf = sparkConf.setAll(settings)
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
     val sparkSession = spark.sql.SparkSession.builder().config(sparkConf).getOrCreate
     val sc = sparkSession.sparkContext
