@@ -12,6 +12,7 @@ LynxKite:
  - Fill full width if only one project is open.
  - New _"Count most common"_ local aggregator added.
  - Scalable _"Count distinct"_ and _"Most common"_ aggregators.
+ - PageRank and Centrality algorithms have an edge direction parameter.
 
 ### 1.9.6
 

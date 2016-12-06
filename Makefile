@@ -28,7 +28,6 @@ $(pip): python_requirements.txt
 	chronomaster/test.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
-	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python)
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
