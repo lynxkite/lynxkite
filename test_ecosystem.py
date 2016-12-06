@@ -103,6 +103,11 @@ parser.add_argument(
     help='Number of instances on EMR cluster, including master.' +
     ' Set according to bigdata_test_set by default.')
 parser.add_argument(
+    '--emr_region',
+    default='us-east-1',
+    help='Region of the EMR cluster.' +
+    ' Possible values: us-east-1, ap-southeast-1, eu-central-1, ...')
+parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/',
     help='Test results are downloaded to this directory.')
@@ -152,7 +157,8 @@ def main(args):
   # Create an EMR cluster.
   lib = EMRLib(
       ec2_key_file=args.ec2_key_file,
-      ec2_key_name=args.ec2_key_name)
+      ec2_key_name=args.ec2_key_name,
+      region=args.emr_region)
   if args.emr_instance_count == 0:
     if args.bigdata:
       args.emr_instance_count = bigdata_test_set(args)['instances']
