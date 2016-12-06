@@ -57,15 +57,18 @@ case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp
           .setRegParam(0.01)
           .setElasticNetParam(1.0)
       case "Logistic regression" =>
-        new ml.classification.LogisticRegression
+        new ml.classification.LogisticRegression()
       case "Naive Bayes" =>
-        new ml.classification.NaiveBayes
+        new ml.classification.NaiveBayes()
       case "Decision tree" =>
-        new ml.regression.DecisionTreeRegressor
+        new ml.regression.DecisionTreeRegressor()
+          .setSeed(1L)
       case "Random forest" =>
-        new ml.regression.RandomForestRegressor
+        new ml.regression.RandomForestRegressor()
+          .setSeed(1L)
       case "Gradient-boosted trees" =>
-        new ml.regression.GBTRegressor
+        new ml.regression.GBTRegressor()
+          .setSeed(1L)
     }
     val model = estimator.fit(trainingDF)
     checkModel(model)
