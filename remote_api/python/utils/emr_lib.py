@@ -102,7 +102,7 @@ class EMRLib:
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
-        ReleaseLabel="emr-4.7.2",
+        ReleaseLabel='emr-5.2.0',
         Instances={
             'MasterInstanceType': 'm3.2xlarge',
             'SlaveInstanceType': 'm3.2xlarge',
