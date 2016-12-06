@@ -43,10 +43,10 @@ case class KMeansClusteringModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.dataManager.newSQLContext()
 
     val featuresArray = inputs.features.map(_.rdd).toArray
-    val inputDF = Model.toDF(inputs.vertices.rdd, featuresArray)
+    val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, featuresArray)
     assert(!inputDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
     // Train a k-means model from the scaled vectors.

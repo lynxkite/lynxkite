@@ -43,12 +43,12 @@ case class LogisticRegressionModelTrainer(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map(_.rdd)
     val labelDF = inputs.label.rdd.toDF("id", "label")
-    val featuresDF = Model.toDF(inputs.vertices.rdd, rddArray)
+    val featuresDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 

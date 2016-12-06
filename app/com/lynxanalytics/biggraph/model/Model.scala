@@ -118,9 +118,9 @@ object Model extends FromJson[Model] {
 
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
   def toDF(
+    sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
-    featuresArray: Array[AttributeRDD[Double]])(
-      implicit sqlContext: spark.sql.SQLContext): spark.sql.DataFrame = {
+    featuresArray: Array[AttributeRDD[Double]]): spark.sql.DataFrame = {
     val emptyArrays = vertices.mapValues(l => new Array[Double](featuresArray.size))
     val numberedFeatures = featuresArray.zipWithIndex
     val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
