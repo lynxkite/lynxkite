@@ -1,8 +1,7 @@
 #!/bin/sh -xue
 
-set -x
-set -e
+cd $(dirname $0)
 
 make backend
-
+tools/install_spark.sh
 stage/bin/biggraph "$@" interactive
