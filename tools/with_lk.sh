@@ -9,6 +9,9 @@ if [ ! -f "$(dirname $0)/../stage.sh" ]; then
   exit 1
 fi
 
+# Make sure Spark is installed.
+$(dirname $0)/install_spark.sh
+
 # Create config.
 TMP=$(mktemp -d)
 export PORT=$[ 9100 + RANDOM % 100 ]
