@@ -51,6 +51,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       scope.isAttribute = function() {
         return scope.isVertexAttribute() || scope.isEdgeAttribute();
       };
+      scope.isModel = function() { return scope.entity.typeName === 'Model'; };
 
       scope.isSavedStatus = function() {
         return (scope.isScalar() &&
