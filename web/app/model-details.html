@@ -9,10 +9,6 @@
       Label:
       <label class="form-control model-details-text" disabled>{{ model.labelName }}</label>
     </div>
-    <div ng-show="model.scalerDetails">
-      Scaling:
-      <textarea class="form-control model-details-text" rows="2" disabled>{{ model.scalerDetails }}</textarea>
-    </div>
     Features:
     <textarea class="form-control model-details-text" rows="1" disabled>{{ model.featureNames.join(', ') }}
     </textarea>
