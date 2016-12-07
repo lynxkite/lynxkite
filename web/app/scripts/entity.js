@@ -52,11 +52,11 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         return scope.isVertexAttribute() || scope.isEdgeAttribute();
       };
 
-      scope.isSavedStatus = function() {
+      scope.isUIStatus = function() {
         return (scope.isScalar() &&
             scope.entity.typeName === 'com.lynxanalytics.biggraph.controllers.UIStatus');
       };
-      scope.loadStatus = function() {
+      scope.loadUIStatus = function() {
         scope.side.updateFromBackendJson(scope.side.scalars[scope.title()].value.string);
         drop.close();
       };
