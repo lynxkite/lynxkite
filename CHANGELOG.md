@@ -18,6 +18,7 @@ LynxKite:
       need to manually scale them now.
     - Previously trained k-means models will give wrong results because scaling has been removed.
       You will have to train new models.
+ - Fixed all reported bugs in the new project UI.
 
 ### 1.10.0
 
