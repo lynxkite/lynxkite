@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+LynxKite:
+ - Fixed all reported bugs in the new project UI.
+
 ### 1.10.0
 
 LynxKite:
