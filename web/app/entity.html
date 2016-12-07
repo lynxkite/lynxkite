@@ -41,7 +41,7 @@
     {{ entity.typeName }}
   </div>
 
-  <div ng-show="isModel()">
+  <div ng-if="isModel()">
     <model-details scalar-id="entity.id"></model-details>
   </div>
 
