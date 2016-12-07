@@ -34,11 +34,15 @@
      drop-tooltip="Computation started"
      drop-tooltip-position="right middle"></i>
 
-  <div ng-show="isAttribute() || isScalar() && !isUIStatus()"
+  <div ng-show="isAttribute() || isScalar() && !isUIStatus() && !isModel()"
        class="de-emph"
        drop-tooltip="{{ title() }} is of type {{ entity.typeName }}"
        drop-tooltip-position="left middle">
     {{ entity.typeName }}
+  </div>
+
+  <div ng-if="isModel()">
+    <model-details scalar-id="entity.id"></model-details>
   </div>
 
   <div ng-show="isSegmentation() && !active()"
