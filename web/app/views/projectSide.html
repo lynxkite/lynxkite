@@ -261,7 +261,9 @@
       <span class="label-text" ng-click="side.showSection('view-settings', true)">
         View settings are hidden. </span>
     </div>
-    <div class="extra-controls" ng-if="side.state.graphMode && side.showSection('view-settings')">
+    <div class="extra-controls"
+         ng-if="side.state.graphMode"
+         ng-show="side.showSection('view-settings')">
       <!-- Sampled view extra controls. -->
       <div ng-if="side.state.graphMode === 'sampled'">
         <div class="entity-section-label">
