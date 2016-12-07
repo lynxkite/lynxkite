@@ -11,10 +11,15 @@
   height: 30px;
 }
 
-#model-details-parameters {
-  padding-top: 10px;
+.model-details-text {
+  font: 13px monospace;
+  background: whitesmoke;
+  border-radius: 4px;
+  padding: 5px;
+  border: none;
+  display: block;
 }
 
-.model-details-text {
-  font-family: "Andale Mono", AndaleMono, monospace;
+#model-details.model-details-text {
+  min-width: 500px;
 }
