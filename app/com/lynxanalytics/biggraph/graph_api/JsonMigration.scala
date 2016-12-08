@@ -121,7 +121,6 @@ object MetaRepositoryManager {
   private def findCurrentRepository(repo: File, current: JsonMigration): File = {
     log.info("Exploring meta graph directory versions...")
     val dirs = Option(repo.listFiles).getOrElse(Array())
-    import JsonMigration.versionOrdering
     import JsonMigration.versionOrdering.mkOrderingOps
     case class DV(dir: File, version: JsonMigration.VersionMap)
     val versions =
@@ -249,7 +248,7 @@ object MetaRepositoryManager {
         v1TagRoot.setTags(guidsFixedTags)
         ObsoleteProject.migrateV1ToV2(v1TagRoot, mm)
       case _ =>
-        assert(false, "Unknown project version $projectVersion")
+        assert(false, s"Unknown project version $projectVersion")
     }
   }
 

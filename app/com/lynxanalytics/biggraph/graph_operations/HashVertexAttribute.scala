@@ -5,7 +5,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import javax.crypto.spec.PBEKeySpec
 
 object HashVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -57,7 +56,6 @@ case class HashVertexAttribute(salt: String)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val runtimeContext = rc
 
     val hashed = inputs.attr.rdd.mapValues(v => HashVertexAttribute.hash(v, salt))
     output(o.hashed, hashed)

@@ -5,7 +5,6 @@ import java.io.{ File, FileOutputStream }
 
 import play.api.libs.json
 import play.api.mvc
-import play.Play
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

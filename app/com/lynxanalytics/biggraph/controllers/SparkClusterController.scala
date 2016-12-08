@@ -141,7 +141,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
 
   // Returns a future response to a client who is up to date until the given timestamp.
   def future(syncedUntil: Long): concurrent.Future[SparkStatusResponse] = synchronized {
-    val p = concurrent.promise[SparkStatusResponse]
+    val p = concurrent.Promise[SparkStatusResponse]
     if (syncedUntil < currentResp.timestamp) {
       p.success(currentResp) // We immediately have news for you.
     } else {
@@ -278,7 +278,7 @@ class KiteMonitorThread(
       if (now > nextCoreCheck) {
         // do core checks
         import scala.concurrent.ExecutionContext.Implicits.global
-        val testsDone = concurrent.future { kiteCoreWorks() }
+        val testsDone = concurrent.Future { kiteCoreWorks() }
         listener.updateKiteCoreStatus(
           try {
             concurrent.Await.result(
@@ -360,7 +360,7 @@ class InternalWatchdogThread(
   override def run(): Unit = {
     var lastOkStatusTimeNanos = System.nanoTime
     while (true) {
-      var status = listener.getCurrentResponse
+      val status = listener.getCurrentResponse
       if (controller.getForceReportHealthy() ||
         (status.sparkWorking && status.kiteCoreWorking)) {
         lastOkStatusTimeNanos = System.nanoTime

@@ -7,6 +7,17 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
 LynxKite:
+
+ - Upgraded to _Apache Spark 2.0.2_.
+ - The Spark 2.x upgrade involved migration to the new Spark machine learning API. This will have
+   a positive impact in the long run, but for now the effects are:
+    - _Logistic regression_ in the _"Predict from vertex attributes"_ operation becomes a binary
+      classifier.
+    - _"Train a k-means clustering model"_ no longer automatically scales the selected attributes.
+      This is actually helpful if the attributes are on the same scale already, but otherwise you
+      need to manually scale them now.
+    - Previously trained k-means models will give wrong results because scaling has been removed.
+      You will have to train new models.
  - Fixed all reported bugs in the new project UI.
 
 ### 1.10.0

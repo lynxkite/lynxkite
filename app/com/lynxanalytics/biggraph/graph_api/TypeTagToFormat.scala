@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import play.api.libs.json
-import play.api.libs.json.{ JsNull, JsArray, JsValue }
+import play.api.libs.json.{ JsArray, JsValue }
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._

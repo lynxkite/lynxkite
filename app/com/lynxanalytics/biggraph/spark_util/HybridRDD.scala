@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import scala.reflect._
@@ -107,8 +106,8 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     val result = lookup(lookupRDD)
     if (isSkewed) {
-      // "ord = null" is a workaround for a Scala 2.10 compiler bug.
-      // TODO: Remove when upgrading to 2.11.
+      // "ord = null" is a workaround for a Scala 2.11 compiler crash bug.
+      // TODO: Remove when upgrading to 2.12.
       result.repartition(sourceRDD.partitions.size)(ord = null)
     } else {
       result

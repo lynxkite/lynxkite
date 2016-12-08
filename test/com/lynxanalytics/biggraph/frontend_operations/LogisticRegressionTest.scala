@@ -13,9 +13,9 @@ class LogisticRegressionTest extends OperationsTestBase {
       Map(
         "name" -> "classification",
         "model" -> """{
-            "modelName" : "model", 
-            "isClassification" : true, 
-            "generatesProbability" : true, 
+            "modelName" : "model",
+            "isClassification" : true,
+            "generatesProbability" : true,
             "features" : ["age"]}"""
       )
     )

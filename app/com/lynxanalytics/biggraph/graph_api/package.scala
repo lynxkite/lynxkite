@@ -10,10 +10,12 @@ package object graph_api {
 
   type AttributeRDD[T] = UniqueSortedRDD[ID, T]
 
+  type EdgeBundleRDD = UniqueSortedRDD[ID, Edge]
+}
+
+package graph_api {
   case class Edge(src: ID, dst: ID) extends Ordered[Edge] {
     def compare(other: Edge) =
       if (src != other.src) src.compare(other.src) else dst.compare(other.dst)
   }
-
-  type EdgeBundleRDD = UniqueSortedRDD[ID, Edge]
 }

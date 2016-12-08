@@ -455,7 +455,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     assert(
       weights.vertexSet == edgeBundle.idSet,
       "The requested edge weight attribute does not belong to the requested edge bundle.\n" +
-        "Edge bundle: $edgeBundle\nWeight attribute: $weights")
+        s"Edge bundle: $edgeBundle\nWeight attribute: $weights")
     assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
       "Source vertex set does not match edge bundle source." +
         s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")

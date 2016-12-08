@@ -26,9 +26,7 @@ case class ComputeVertexNeighborhood(
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
-    val vs = inputs.vertices.rdd
     val es = inputs.edges.rdd
-    val vsPart = vs.partitioner.get
     var neighborhood = centers.toSet
     for (i <- 0 until radius) {
       neighborhood ++= es

@@ -144,7 +144,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
     }
     val numMergedEdges = allEdges
       .rdd
-      .map { case (_, Edge(src, dst)) => (src, dst) -> () }
+      .map { case (_, Edge(src, dst)) => (src, dst) -> (()) }
       .groupByKey
       .count
 

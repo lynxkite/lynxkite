@@ -162,10 +162,8 @@ trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
 
-object ReflectionMutex
-
 trait FieldNaming {
-  private lazy val naming: IdentityHashMap[Any, Symbol] = ReflectionMutex.synchronized {
+  private lazy val naming: IdentityHashMap[Any, Symbol] = {
     val res = new IdentityHashMap[Any, Symbol]()
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
@@ -427,7 +425,7 @@ trait MetaGraphOp extends Serializable with ToJson {
     UUID.nameUUIDFromBytes((contents + version).getBytes(MetaGraphOp.UTF8))
   }
 
-  def toStringStruct = ReflectionMutex.synchronized {
+  def toStringStruct = {
     val mirror = reflect.runtime.currentMirror.reflect(this)
     val className = mirror.symbol.name.toString
     val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }

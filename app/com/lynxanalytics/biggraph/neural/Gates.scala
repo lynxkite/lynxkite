@@ -144,7 +144,7 @@ object Gates {
     }
     def backward(bm: BackwardMemory, gradient: VectorGraph) = {
       val vsd = bm(vs)
-      bm.add(vs, gradient.map { case (id, g) => id -> bm(vs)(id).map(_ => g) })
+      bm.add(vs, gradient.map { case (id, g) => id -> vsd(id).map(_ => g) })
     }
   }
 

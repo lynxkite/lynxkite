@@ -6,11 +6,11 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object Counters {
-  def registerCounter(name: String, counter: spark.Accumulator[Int]): Unit =
+  def registerCounter(name: String, counter: spark.util.LongAccumulator): Unit =
     counters += ((name, counter))
 
-  def newCounter(name: String, sc: spark.SparkContext): spark.Accumulator[Int] = {
-    val counter = sc.accumulator(0)
+  def newCounter(name: String, sc: spark.SparkContext): spark.util.LongAccumulator = {
+    val counter = sc.longAccumulator
     registerCounter(name, counter)
     counter
   }
@@ -21,5 +21,5 @@ object Counters {
     }
   }
 
-  private val counters = mutable.Buffer[(String, spark.Accumulator[Int])]()
+  private val counters = mutable.Buffer[(String, spark.util.LongAccumulator)]()
 }

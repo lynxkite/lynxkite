@@ -11,10 +11,6 @@
       <span id="model-label" class="model-details-text">
         {{ model.labelName }}</span>
     </div>
-    <div ng-show="model.scalerDetails">
-      Scaling:
-      <pre class="model-details-text">{{ model.scalerDetails }}</pre>
-    </div>
     Features:
     <span id="model-features" class="model-details-text">
       {{ model.featureNames.join(', ') }}
