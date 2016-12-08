@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import org.apache.spark.Partitioner
 
 object EdgesFromAttributeMatches extends OpFromJson {
@@ -49,9 +50,6 @@ object EdgesFromBipartiteAttributeMatches extends OpFromJson {
     val edges = edgeBundle(inputs.from.entity, inputs.to.entity)
   }
   def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
-  def getLargerPartitioner(p1: Partitioner, p2: Partitioner): Partitioner =
-    if (p1.numPartitions > p2.numPartitions) p1
-    else p2
 }
 case class EdgesFromBipartiteAttributeMatches[T]()
     extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
@@ -75,7 +73,7 @@ case class EdgesFromBipartiteAttributeMatches[T]()
     val edges = fromByAttr.join(toByAttr).flatMap {
       case (attr, (fromIds, toIds)) => for { a <- fromIds; b <- toIds } yield Edge(a, b)
     }
-    val partitioner = getLargerPartitioner(
+    val partitioner = RDDUtils.maxPartitioner(
       inputs.from.rdd.partitioner.get,
       inputs.to.rdd.partitioner.get)
     output(o.edges, edges.randomNumbered(partitioner))
@@ -118,7 +116,7 @@ case class EdgesFromUniqueBipartiteAttributeMatches()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = EdgesFromBipartiteAttributeMatches.getLargerPartitioner(
+    val partitioner = RDDUtils.maxPartitioner(
       inputs.from.rdd.partitioner.get,
       inputs.to.rdd.partitioner.get)
     val fromStringToId = inputs.fromAttr.rdd
@@ -173,7 +171,7 @@ case class EdgesFromLookupAttributeMatches()
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
-    val partitioner = EdgesFromBipartiteAttributeMatches.getLargerPartitioner(
+    val partitioner = RDDUtils.maxPartitioner(
       inputs.from.rdd.partitioner.get,
       inputs.to.rdd.partitioner.get)
     val fromStringToId = inputs.fromAttr.rdd

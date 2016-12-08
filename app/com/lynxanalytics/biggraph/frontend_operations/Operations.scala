@@ -451,7 +451,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.unset +: edgeAttributes[String]),
       Param("id-column", "ID column"),
       Param("prefix", "Name prefix for the imported edge attributes"),
-      Choice("unique-keys", "Unique vertex ID attribute", options = FEOption.bools))
+      Choice("unique-keys", "Unique edge ID attribute", options = FEOption.bools))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
