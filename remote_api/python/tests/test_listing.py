@@ -13,11 +13,12 @@ class TestListing(unittest.TestCase):
     root_list = lk.list_dir()
     self.assertEqual(len(root_list), 3)
 
-    view = next(filter(lambda e: e.type == 'view', root_list))
-    self.assertEqual(view.name, 'root_view')
+    views = [e.name for e in root_list if e.type == 'view']
+    self.assertEqual(views, ['root_view'])
 
-    dir = next(filter(lambda e: e.type == 'directory', root_list))
+    dir = [e for e in root_list if e.type == 'directory'][0]
     inner_list = dir.object.list()
+
     self.assertEqual(inner_list[0].name, 'dir/entry')
     self.assertEqual(inner_list[0].type, 'project')
 

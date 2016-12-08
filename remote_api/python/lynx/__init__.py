@@ -35,7 +35,8 @@ if sys.version_info.major < 3:
 default_sql_limit = 1000
 default_privacy = 'public-read'
 
-ListElement = collections.namedtuple('ListElement', ['name', 'type', 'object', 'checkpoint'])
+DirectoryEntry = collections.namedtuple('DirectoryEntry', ['name', 'type', 'object', 'checkpoint'])
+DirectoryEntry = collections.namedtuple('DirectoryEntry', ['name', 'type', 'object', 'checkpoint'])
 
 
 class LynxKite:
@@ -294,7 +295,9 @@ class LynxKite:
                dict(project=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir=''):
-    '''List the objects in a directory'''
+    '''List the objects in a directory
+    Returns a list of ``DirectoryEntries`` that have a name, type, checkpoint, and object
+     attributes. The object is the Python API object representing each entry.'''
 
     object_lookup = {
         'project': lambda entry: RootProject(_ProjectCheckpoint(self, entry.checkpoint)),
@@ -304,7 +307,7 @@ class LynxKite:
     }
 
     result = self._send('list', dict(path=dir)).entries
-    return [ListElement(
+    return [DirectoryEntry(
         name=entry.name,
         type=entry.objectType,
         checkpoint=entry.checkpoint,
@@ -722,6 +725,7 @@ class Attribute():
 
 
 class Directory:
+  '''Represents a LynxKite directory'''
 
   def __init__(self, lynxkite, path):
     self.path = path
