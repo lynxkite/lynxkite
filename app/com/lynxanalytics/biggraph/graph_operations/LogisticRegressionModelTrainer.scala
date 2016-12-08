@@ -150,7 +150,7 @@ case class LogisticRegressionModelTrainer(
           cols = numData,
           data = flattenMatrix)
         val cost = probability.map(prob => prob(0) * prob(1)).collect
-        val matrixCost = breeze.linalg.diag(breeze.linalg.DenseVector(cost))
+        val matrixCost = breeze.linalg.diag(breeze.linalg.SparseVector(cost))
         // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is
         // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
         // whose diagnol elements are probability_i * (1 - probability_i).
