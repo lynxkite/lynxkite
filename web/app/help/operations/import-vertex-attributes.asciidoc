@@ -17,7 +17,7 @@ the chosen vertex ID attribute.
 Prepend this prefix string to the new vertex attribute names. This can be used to avoid
 accidentally overwriting existing attributes.
 
-[[unique-keys]] Unique keys::
+[[unique-keys]] Assert unique vertex ID attribute values::
 Assert that the vertex ID attribute values have to be unique if set true. The values of the
 matching ID column in the table have to be unique in both cases.
 ====

@@ -17,7 +17,7 @@ the chosen edge ID attribute.
 Prepend this prefix string to the new edge attribute names. This can be used to avoid
 accidentally overwriting existing attributes.
 
-[[unique-keys]] Unique keys::
+[[unique-keys]] Assert unique edge ID attribute values::
 Assert that the edge ID attribute values have to be unique if set true. The values of the
 matching ID column in the table have to be unique in both cases.
 ====
