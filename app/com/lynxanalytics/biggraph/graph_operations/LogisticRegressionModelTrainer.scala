@@ -141,13 +141,16 @@ case class LogisticRegressionModelTrainer(
         // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
         Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
       } else {
-        val vectors = predictions.rdd.map(_.getAs[ml.linalg.Vector]("features"))
-        val probability = predictions.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
+        val sampleSizeApprox = 100000
+        val fraction = (sampleSizeApprox.toDouble / predictions.count()) min 1.0
+        val sample = predictions.sample(withReplacement = false, fraction)
+        val vectors = sample.rdd.map(_.getAs[ml.linalg.Vector]("features"))
+        val probability = sample.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
         // The constant field is added in order to get the statistics of the intercept.
         val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
         val matrix = new breeze.linalg.DenseMatrix(
           rows = numFeatures + 1,
-          cols = numData,
+          cols = sample.count().toInt,
           data = flattenMatrix)
         val cost = probability.map(prob => prob(0) * prob(1)).collect
         val matrixCost = breeze.linalg.diag(breeze.linalg.SparseVector(cost))
