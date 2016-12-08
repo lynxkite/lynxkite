@@ -27,12 +27,15 @@ import sys
 import types
 import urllib
 import yaml
+import collections
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
 default_sql_limit = 1000
 default_privacy = 'public-read'
+
+ListElement = collections.namedtuple('ListElement', ['name', 'type', 'object', 'checkpoint'])
 
 
 class LynxKite:
@@ -289,6 +292,24 @@ class LynxKite:
     '''
     self._send("changeACL",
                dict(project=file, readACL=readACL, writeACL=writeACL))
+
+  def list_dir(self, dir=''):
+    '''List the objects in a directory'''
+
+    object_lookup = {
+        'project': lambda entry: RootProject(_ProjectCheckpoint(self, entry.checkpoint)),
+        'view': lambda entry: View(self, entry.checkpoint),
+        'table': lambda entry: Table(self, entry.checkpoint),
+        'directory': lambda entry: Directory(self, entry.name),
+    }
+
+    result = self._send('list', dict(path=dir)).entries
+    return [ListElement(
+        name=entry.name,
+        type=entry.objectType,
+        checkpoint=entry.checkpoint,
+        object=object_lookup[entry.objectType](entry)
+    ) for entry in result]
 
 
 class Table:
@@ -698,6 +719,16 @@ class Attribute():
         numbuckets,
         sample_size,
         logarithmic)
+
+
+class Directory:
+
+  def __init__(self, lynxkite, path):
+    self.path = path
+    self.lk = lynxkite
+
+  def list(self):
+    return self.lk.list_dir(self.path)
 
 
 class LynxException(Exception):

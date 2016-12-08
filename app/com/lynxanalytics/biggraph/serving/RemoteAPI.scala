@@ -112,6 +112,8 @@ object RemoteAPIProtocol {
     path: String)
   case class PrefixedPathResult(
     exists: Boolean, resolved: String)
+  case class ListElement(name: String, checkpoint: String, objectType: String)
+  case class ListResult(entries: List[ListElement])
 
   implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
@@ -138,6 +140,8 @@ object RemoteAPIProtocol {
   implicit val rExportViewToTableRequest = json.Json.reads[ExportViewToTableRequest]
   implicit val rPrefixedPathRequest = json.Json.reads[PrefixedPathRequest]
   implicit val wPrefixedPathResponse = json.Json.writes[PrefixedPathResult]
+  implicit val wListElement = json.Json.writes[ListElement]
+  implicit val wListResult = json.Json.writes[ListResult]
 
 }
 
@@ -182,6 +186,7 @@ object RemoteAPIServer extends JsonServer {
   def globalSQL = createView[GlobalSQLRequest]
   def isComputed = jsonPost(c.isComputed)
   def computeProject = jsonPost(c.computeProject)
+  def list = jsonPost(c.list)
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
@@ -516,5 +521,17 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def changeACL(user: User, request: ACLSettingsRequest) = {
     bigGraphController.changeACLSettings(user, request)
+  }
+
+  def list(user: User, request: ProjectListRequest) = {
+    val list = bigGraphController.projectList(user, request)
+    ListResult(
+      list.directories.map(d => ListElement(d, "", "directory")) ++
+        list.objects.map(e =>
+          ListElement(
+            e.name,
+            controllers.DirectoryEntry.fromName(e.name).asObjectFrame.checkpoint,
+            e.objectType))
+    )
   }
 }
