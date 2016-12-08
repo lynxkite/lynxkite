@@ -116,6 +116,7 @@ POST /remote/exportViewToParquet com.lynxanalytics.biggraph.serving.RemoteAPISer
 POST /remote/exportViewToJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJdbc
 POST /remote/exportViewToTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToTable
 POST /remote/changeACL com.lynxanalytics.biggraph.serving.RemoteAPIServer.changeACL
+POST /remote/list com.lynxanalytics.biggraph.serving.RemoteAPIServer.list
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
