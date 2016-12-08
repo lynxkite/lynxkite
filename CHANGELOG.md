@@ -19,6 +19,8 @@ LynxKite:
     - Previously trained k-means models will give wrong results because scaling has been removed.
       You will have to train new models.
  - Fixed all reported bugs in the new project UI.
+ - Vertex and edge ID attribute values are only optionally unique in "_Import vertex attributes_"
+   and "_Import edge attributes_" operations.
 
 ### 1.10.0
 
