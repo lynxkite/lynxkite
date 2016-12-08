@@ -249,10 +249,10 @@ class HadoopFile private (
   def saveEntityRawRDD(data: RDD[(Long, hadoop.io.BytesWritable)]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
-    val lines = data.context.accumulator[Long](0L, "Line count")
+    val lines = data.context.longAccumulator("Line count")
     val hadoopData = data.map {
       case (k, v) =>
-        lines += 1
+        lines.add(1)
         new hadoop.io.LongWritable(k) -> v
     }
     if (fs.exists(path)) {

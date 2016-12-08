@@ -32,7 +32,7 @@ There are two ways for scheduling/hosting the Spark executors.
 - In `local` mode, there is only one worker which runs as part of the main LynxKite process, this is
   ideal for single machine installations.
 
-- In `yarn-client` mode we use the built-in support of Apache Spark for running as a Hadoop YARN
+- In `yarn` mode we use the built-in support of Apache Spark for running as a Hadoop YARN
   application. In this case the Spark driver runs outside of YARN, starts a simple application
   master on YARN and asks it to start the executors.
 

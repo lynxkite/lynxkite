@@ -9,7 +9,6 @@ import org.apache.hadoop.fs.Path
 import scala.collection.JavaConverters._
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations
@@ -68,7 +67,7 @@ object RemoteAPIProtocol {
       user: User,
       sqlContext: SQLContext,
       viewer: controllers.RootProjectViewer,
-      prefix: String = "")(
+      prefix: String)(
         implicit mm: MetaGraphManager,
         dm: DataManager): Iterable[(String, DataFrame)] = {
       val fullPrefix = if (prefix.nonEmpty) prefix + "|" else ""
@@ -269,7 +268,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
         request.name,
         request.readACL.getOrElse(user.email),
         request.writeACL.getOrElse(user.email)))
-    CheckpointResponse(request.checkpoint)
+    CheckpointResponse(p.checkpoint)
   }
 
   def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
@@ -455,7 +454,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     checkpoint: String,
     path: String,
     format: String,
-    shufflePartitions: Option[Int] = None,
+    shufflePartitions: Option[Int],
     options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)

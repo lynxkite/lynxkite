@@ -7,7 +7,16 @@ javaOptions in Test := Seq(
   "-Dbiggraph.default.partitions.per.core=1",
   "-XX:PermSize=256M")
 
-scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked", "-Xfatal-warnings")
+scalacOptions ++= Seq(
+  "-feature",
+  "-deprecation",
+  "-unchecked",
+  // TODO: Suppress warnings as necessary and enable checks.
+  // "-Ywarn-dead-code",
+  // "-Ywarn-unused",
+  // "-Ywarn-unused-import",
+  // "-Xlint:_,-adapted-args,-type-parameter-shadow,-inaccessible",
+  "-Xfatal-warnings")
 
 version := "0.1-SNAPSHOT"
 
@@ -15,7 +24,7 @@ sources in doc in Compile := List()  // Disable doc generation.
 
 publishArtifact in packageSrc := false  // Don't package source.
 
-scalaVersion := "2.10.6"
+scalaVersion := "2.11.8"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
 
@@ -24,10 +33,10 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 libraryDependencies ++= Seq(
   ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
-  // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.4.4
-  "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4",
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
+  // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.6.5
+  "com.fasterxml.jackson.core" % "jackson-core" % "2.6.5",
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.5",
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5",
   // The below dep is needed to avoid jar version conflict when running in Amazon EMR.
   // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
   // This way we get s3 consistent view support.)
@@ -48,17 +57,15 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
-  "com.lihaoyi" % "ammonite-sshd" % "0.5.2" cross CrossVersion.full,
-  // CSV DataFrame API. Added just for use with the SSH shell, but may get used more widely later.
-  "com.databricks" % "spark-csv_2.10" % "1.3.0",
+  "com.lihaoyi" % "ammonite-sshd" % "0.5.7" cross CrossVersion.full,
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
-  "org.scala-lang" % "scala-library" % "2.10.3",
+  "org.scala-lang" % "scala-library" % "2.11.8",
   // Fast linear algebra.
-  "org.scalanlp" %% "breeze" % "0.12",
-  "org.scalanlp" %% "breeze-natives" % "0.12",
+  "org.scalanlp" %% "breeze" % "0.11.2",
+  "org.scalanlp" %% "breeze-natives" % "0.11.2",
   "com.google.guava" % "guava" % "15.0",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.

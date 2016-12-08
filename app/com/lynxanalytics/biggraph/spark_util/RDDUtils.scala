@@ -5,7 +5,6 @@ import com.esotericsoftware.kryo
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.ShuffledRDD
@@ -173,7 +172,7 @@ object RDDUtils {
     // TODO: Move this closer to the UI.
     val rounder = math.pow(10, math.ceil(math.log10(multiplier))).toInt
     valueBuckets.counts.transform {
-      (value, count) => math.round(count / rounder).toInt * rounder
+      (value, count) => (count / rounder) * rounder
     }
     valueBuckets
   }
@@ -226,7 +225,7 @@ object RDDUtils {
     val withWeightsAndCounts = unfilteredCounts(fullRDD, withWeights)
     val sampleWithWeightsAndCounts =
       withWeightsAndCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
-    val (valueWeights, unfilteredCount, filteredCount) = withWeightsAndCounts
+    val (valueWeights, unfilteredCount, filteredCount) = sampleWithWeightsAndCounts
       .values
       .aggregate((
         mutable.Map[T, Double]() /* observed value weights */ ,

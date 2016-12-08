@@ -6,9 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -17,10 +15,7 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
-import com.lynxanalytics.biggraph.table.TableImport
 import play.api.libs.json
-
-import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
   case class Param(
@@ -428,7 +423,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.vertexAttributeNames
-      val tableAttrNames = table.columns
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -462,7 +456,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.edgeAttributeNames
-      val tableAttrNames = table.columns
       val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
       val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -1354,7 +1347,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  private val toStringHelpText = "Converts the selected %s attributes to string type."
   register("Vertex attribute to string", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
@@ -1377,10 +1369,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  private val toDoubleHelpText =
-    """Converts the selected string typed %s attributes to double (double precision floating point
-    number) type.
-    """
   register("Vertex attribute to double", new VertexAttributesOperation(_, _) {
     val eligible = vertexAttributes[String] ++ vertexAttributes[Long] ++ vertexAttributes[Int]
     def parameters = List(
@@ -2118,7 +2106,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         op.edgesBC, project.edgeBundle).result
 
       // saving attributes and original edges
-      var origEdgeAttrs = project.edgeAttributes.toIndexedSeq
+      val origEdgeAttrs = project.edgeAttributes.toIndexedSeq
 
       // new edges after closure
       project.edgeBundle = result.edgesAC
@@ -2887,9 +2875,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled =
       isSegmentation &&
         hasVertexSet &&
-        FEStatus.assert(parent.vertexAttributes.size > 0, "No vertex attributes on $parent") &&
-        FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
-          "Segments are not guaranteed to contain only one vertex")
+        FEStatus.assert(parent.vertexAttributes.size > 0,
+          s"Parent $parent has no vertex attributes") &&
+          FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
+            "Segments are not guaranteed to contain only one vertex")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {
@@ -3300,7 +3289,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(true, "")
 
     def apply(params: Map[String, String]) = {
-      val sql = params("sql")
       val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
       val tableSegmentation = project.segmentation(params("name"))
       tableSegmentation.vertexSet = table.idSet

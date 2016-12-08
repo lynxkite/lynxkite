@@ -8,20 +8,20 @@ import scala.concurrent.duration.Duration
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
-trait SparkContextProvider {
-  def createSparkContext: spark.SparkContext
+trait SparkSessionProvider {
+  def createSparkSession: spark.sql.SparkSession
 }
 
-class StaticSparkContextProvider() extends SparkContextProvider {
-  def createSparkContext = {
+class StaticSparkSessionProvider() extends SparkSessionProvider {
+  def createSparkSession = {
     bigGraphLogger.info("Initializing Spark...")
-    val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
-    if (!sparkContext.isLocal) {
+    val sparkSession = spark_util.BigGraphSparkContext.getSession("LynxKite")
+    if (!sparkSession.sparkContext.isLocal) {
       bigGraphLogger.info("Wait 10 seconds for the workers to log in to the master...")
       Thread.sleep(10000)
     }
     bigGraphLogger.info("Spark initialized.")
-    sparkContext
+    sparkSession
   }
 }
 
@@ -34,7 +34,8 @@ trait SparkFreeEnvironment {
 }
 
 trait BigGraphEnvironment extends SparkFreeEnvironment {
-  def sparkContext: spark.SparkContext
+  val sparkSession: spark.sql.SparkSession
+  val sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
   def entityProgressManager = dataManager
@@ -50,25 +51,25 @@ trait BigGraphEnvironment extends SparkFreeEnvironment {
 object BigGraphEnvironmentImpl {
   def createStaticDirEnvironment(
     repositoryDirs: RepositoryDirs,
-    sparkContextProvider: SparkContextProvider): BigGraphEnvironment = {
+    sparkSessionProvider: SparkSessionProvider): BigGraphEnvironment = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
     // Initialize parts of the environment. Some of them can be initialized
     // in parallel, hence the juggling with futures.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
-    val sparkContextFuture = Future(sparkContextProvider.createSparkContext)
-    val dataManagerFuture = sparkContextFuture.map(
-      sparkContext => createDataManager(sparkContext, repositoryDirs))
+    val sparkSessionFuture = Future(sparkSessionProvider.createSparkSession)
+    val dataManagerFuture = sparkSessionFuture.map(
+      sparkSession => createDataManager(sparkSession, repositoryDirs))
     val envFuture = for {
-      sparkContext <- sparkContextFuture
+      sparkSession <- sparkSessionFuture
       metaGraphManager <- metaGraphManagerFuture
       dataManager <- dataManagerFuture
     } yield new BigGraphEnvironmentImpl(
-      sparkContext,
+      sparkSession,
       metaGraphManager,
       dataManager,
       new spark_util.SQLHelper(
-        sparkContext,
+        sparkSession.sparkContext,
         metaGraphManager,
         dataManager))
     Await.result(envFuture, Duration.Inf)
@@ -81,10 +82,10 @@ object BigGraphEnvironmentImpl {
     res
   }
 
-  def createDataManager(sparkContext: spark.SparkContext, repositoryDirs: RepositoryDirs) = {
+  def createDataManager(sparkSession: spark.sql.SparkSession, repositoryDirs: RepositoryDirs) = {
     bigGraphLogger.info("Initializing data manager...")
     val res = new graph_api.DataManager(
-      sparkContext, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
+      sparkSession, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
     bigGraphLogger.info("Data manager initialized.")
     res
   }
@@ -92,10 +93,12 @@ object BigGraphEnvironmentImpl {
 }
 
 case class BigGraphEnvironmentImpl(
-  sparkContext: spark.SparkContext,
-  metaGraphManager: graph_api.MetaGraphManager,
-  dataManager: graph_api.DataManager,
-  sqlHelper: spark_util.SQLHelper) extends BigGraphEnvironment
+    sparkSession: spark.sql.SparkSession,
+    metaGraphManager: graph_api.MetaGraphManager,
+    dataManager: graph_api.DataManager,
+    sqlHelper: spark_util.SQLHelper) extends BigGraphEnvironment {
+  val sparkContext = sparkSession.sparkContext
+}
 
 class RepositoryDirs(
     val metaDir: String,

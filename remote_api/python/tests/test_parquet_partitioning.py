@@ -28,13 +28,13 @@ class TestParquetPartitioning(unittest.TestCase):
     # Cut file: from the beginning
     raw_path = resolved_path[5:]
     files = os.listdir(raw_path)
-    num_files = len(list(filter(lambda file: file.endswith('.gz.parquet'), files)))
+    num_files = len(list(filter(lambda file: file.endswith('.snappy.parquet'), files)))
     self.assertEqual(num_files, partitions)
 
     # Check data integrity
     view2 = lk.import_parquet(data_path)
-    result = lk.sql('select SUM(ordinal) from `v`', v=view2)
-    ordinal_sum = result.take(1)[0].get('_c0')
+    result = lk.sql('select SUM(ordinal) as s from v', v=view2)
+    ordinal_sum = result.take(1)[0]['s']
     self.assertEqual(ordinal_sum, size * (size - 1) / 2)
 
     # Clean up, if everything was okay

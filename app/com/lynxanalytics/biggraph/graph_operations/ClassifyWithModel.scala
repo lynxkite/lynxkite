@@ -6,8 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model.Model
 import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import org.apache.spark.mllib.linalg.DenseVector
-import org.apache.spark.ml
+import org.apache.spark.ml.linalg.DenseVector
 
 object ClassifyWithModel extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -47,16 +46,14 @@ case class ClassifyWithModel(numFeatures: Int)
 
     val modelValue = inputs.model.value
     val rddArray = inputs.features.toArray.map(_.rdd)
-    val unscaledRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val scaledRDD = modelValue.scaleFeatures(unscaledRDD)
-    val scaledDF = scaledRDD.toDF("ID", "vector")
-    val partitioner = scaledRDD.partitioner.get
+    val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
+    val partitioner = inputs.vertices.rdd.partitioner.get
     val classificationModel = modelValue.load(rc.sparkContext)
     // Transform data to an attributeRDD with the attribute (probability, classification)
-    val transformation = classificationModel.transformDF(scaledDF)
+    val transformation = classificationModel.transformDF(inputDF)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
-    }.sortUnique(partitioner)
+    }.rdd.sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
       val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
@@ -67,7 +64,7 @@ case class ClassifyWithModel(numFeatures: Int)
           probabilityValue = 1 - probabilityValue
         }
         (row.getAs[ID]("ID"), probabilityValue)
-      }.sortUnique(partitioner)
+      }.rdd.sortUnique(partitioner)
       output(o.probability, probability)
     }
     output(o.classification, classification)

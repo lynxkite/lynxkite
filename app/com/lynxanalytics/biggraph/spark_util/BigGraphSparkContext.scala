@@ -23,9 +23,13 @@ class DeadClass4
 class DeadClass5
 class DeadClass6
 class DeadClass7
+class DeadClass8
+class DeadClass9
+class DeadClass10
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
-  override def registerClasses(kryo: Kryo) {
+
+  override def registerClasses(kryo: Kryo): Unit = {
     // Uncomment this if you are debugging some Kryo issue.
     // import com.esotericsoftware.minlog.Log
     // Log.set(Log.LEVEL_TRACE);
@@ -33,7 +37,12 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // Adding one more line? Do it at the bottom!
     // Deleting a line? Do not.
     // Types will change IDs otherwise.
-    kryo.register(classOf[scala.Tuple2[_, _]])
+
+    // Kryo 2.22 has registered a new primitive type (void) with ID 9. Previously our first class,
+    // Tuple2 had ID 9. To make sure we can read back data written with earlier Kryo versions we
+    // forcibly set ID 9 to Tuple2.
+    // http://stackoverflow.com/questions/40867540/kryo-registration-issue-when-upgrading-to-spark-2-0
+    kryo.register(classOf[Tuple2[_, _]], 9)
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
     kryo.register(classOf[mutable.ArrayBuffer[_]])
@@ -144,9 +153,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.mllib.linalg.DenseMatrix])
     kryo.register(classOf[org.apache.spark.mllib.regression.LabeledPoint])
     kryo.register(classOf[Array[org.apache.spark.mllib.regression.LabeledPoint]])
-    kryo.register(Class.forName("org.apache.spark.mllib.tree.impl.DTStatsAggregator"))
+    kryo.register(classOf[DeadClass8])
     kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.VarianceAggregator"))
-    kryo.register(Class.forName("org.apache.spark.mllib.tree.impl.DecisionTreeMetadata"))
+    kryo.register(classOf[DeadClass9])
     kryo.register(org.apache.spark.mllib.tree.impurity.Variance.getClass)
     kryo.register(classOf[Enumeration$Val])
     kryo.register(org.apache.spark.mllib.tree.configuration.QuantileStrategy.getClass)
@@ -163,8 +172,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_operations.SegmentByEventSequence.EventListSegmentId])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.UnsafeRow])
     kryo.register(classOf[Array[org.apache.spark.mllib.tree.model.Split]])
-    kryo.register(Class.forName("org.apache.spark.mllib.tree.model.Bin"))
-    kryo.register(Class.forName("[Lorg.apache.spark.mllib.tree.model.Bin;"))
+    kryo.register(classOf[DeadClass10])
+    kryo.register(classOf[Array[DeadClass10]])
     kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyLowSplit"))
     kryo.register(Class.forName("org.apache.spark.mllib.tree.model.DummyHighSplit"))
 
@@ -203,6 +212,48 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Object])
     kryo.register(classOf[java.math.BigDecimal])
     kryo.register(classOf[java.sql.Date])
+    // Spark 2.0.2 upgrade.
+    kryo.register(classOf[Array[Array[Byte]]])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.codegen.LazilyGeneratedOrdering])
+    kryo.register(classOf[Array[org.apache.spark.sql.catalyst.expressions.SortOrder]])
+    // mllib.linalg is migrating to ml.linalg.
+    kryo.register(classOf[Array[org.apache.spark.ml.linalg.Vector]])
+    kryo.register(classOf[org.apache.spark.ml.linalg.DenseVector])
+    kryo.register(classOf[org.apache.spark.ml.linalg.DenseMatrix])
+    kryo.register(Class.forName("org.apache.spark.ml.linalg.VectorUDT"))
+    kryo.register(classOf[Array[org.apache.spark.ml.tree.Split]])
+    kryo.register(classOf[org.apache.spark.ml.tree.ContinuousSplit])
+    kryo.register(Class.forName("org.apache.spark.ml.tree.impl.DTStatsAggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.tree.impl.DecisionTreeMetadata"))
+    kryo.register(collection.immutable.HashMap().getClass)
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.model.ImpurityStats"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.VarianceCalculator"))
+    kryo.register(classOf[org.apache.spark.ml.feature.LabeledPoint])
+    kryo.register(classOf[Array[org.apache.spark.ml.feature.LabeledPoint]])
+    kryo.register(classOf[org.apache.spark.ml.regression.RandomForestRegressionModel])
+    kryo.register(classOf[org.apache.spark.ml.regression.DecisionTreeRegressionModel])
+    kryo.register(classOf[Array[org.apache.spark.ml.regression.DecisionTreeRegressionModel]])
+    kryo.register(classOf[org.apache.spark.ml.param.Param[_]])
+    kryo.register(classOf[Array[org.apache.spark.ml.param.Param[_]]])
+    kryo.register(classOf[org.apache.spark.ml.param.ParamMap])
+    kryo.register(classOf[org.apache.spark.ml.param.BooleanParam])
+    kryo.register(classOf[org.apache.spark.ml.param.DoubleArrayParam])
+    kryo.register(classOf[org.apache.spark.ml.param.DoubleParam])
+    kryo.register(classOf[org.apache.spark.ml.param.FloatParam])
+    kryo.register(classOf[org.apache.spark.ml.param.IntArrayParam])
+    kryo.register(classOf[org.apache.spark.ml.param.IntParam])
+    kryo.register(classOf[org.apache.spark.ml.param.LongParam])
+    kryo.register(classOf[org.apache.spark.ml.param.StringArrayParam])
+    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$alwaysTrue$1"))
+    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$gtEq$1"))
+    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$inRange$1"))
+    kryo.register(Class.forName("org.apache.spark.ml.param.shared.HasCheckpointInterval$$anonfun$1"))
+    kryo.register(Class.forName("org.apache.spark.ml.tree.TreeRegressorParams$$anonfun$3"))
+    kryo.register(classOf[org.apache.spark.ml.tree.LeafNode])
+    kryo.register(classOf[org.apache.spark.ml.tree.InternalNode])
+    kryo.register(Class.forName("org.apache.spark.ml.tree.HasFeatureSubsetStrategy$$anonfun$5"))
+    kryo.register(classOf[org.apache.spark.ml.regression.GBTRegressionModel])
+    kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams$$anonfun$10"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -246,16 +297,6 @@ object BigGraphSparkContext {
       .set("spark.metrics.conf.executor.source.jvm.class", jvmSource)
   }
 
-  def infiniteLocalityConf(conf: spark.SparkConf, sparkVersion: String): spark.SparkConf = {
-    // Make sure spark will wait for the data to be available locally
-    assert(sparkVersion.startsWith("1."),
-      s"You don't need to set spark.locality.wait for Spark version $sparkVersion, please remove this!")
-    conf
-      .setIfMissing("spark.locality.wait", "3s")
-      .setIfMissing("spark.locality.wait.process", "99m")
-    conf
-  }
-
   def setupCustomMonitoring(sc: spark.SparkContext) = {
     if (isMonitoringEnabled) {
       // Hacky solution to register BiggraphMonitoringSource as a
@@ -295,25 +336,18 @@ object BigGraphSparkContext {
     }
   }
 
-  def apply(
+  def getSession(
     appName: String,
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
-    master: String = ""): spark.SparkContext = {
+    master: String = "",
+    settings: Traversable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
 
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
-
-    // Don't forget to review spark.memory.useLegacyMode before upgrading Spark to 2.x
-    // Without that setting, Spark 1.6.0 slows down when the cache is full. Other flags can
-    // also fix that issue:
-    //   spark.memory.fraction 0.66
-    // Or:
-    //   spark.executor.extraJavaOptions -XX:NewRatio=3
-    assert(versionFound.startsWith("1."), "Spark 2.0 is not yet supported.")
 
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
@@ -355,7 +389,6 @@ object BigGraphSparkContext {
       .set("spark.eventLog.enabled", "true")
       .set("spark.eventLog.compress", "true")
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
-    sparkConf = infiniteLocalityConf(sparkConf, versionFound)
     if (useKryo) {
       sparkConf = sparkConf
         .set(
@@ -370,13 +403,15 @@ object BigGraphSparkContext {
     if (master != "") {
       sparkConf = sparkConf.setMaster(master)
     }
+    sparkConf = sparkConf.setAll(settings)
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
-    val sc = new spark.SparkContext(sparkConf)
+    val sparkSession = spark.sql.SparkSession.builder().config(sparkConf).getOrCreate
+    val sc = sparkSession.sparkContext
     sc.addSparkListener(new BigGraphSparkListener(sc))
     if (isMonitoringEnabled) {
       setupCustomMonitoring(sc)
     }
-    sc
+    sparkSession
   }
 }
 

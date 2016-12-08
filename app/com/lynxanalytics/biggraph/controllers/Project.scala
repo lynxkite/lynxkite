@@ -39,7 +39,6 @@ import play.api.libs.json
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 
-import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
 sealed abstract class ElementKind(kindName: String) {
@@ -226,7 +225,6 @@ sealed trait ProjectViewer {
 }
 object ProjectViewer {
   private def feTypeName[T](e: TypedEntity[T]): String = {
-    implicit val tt = e.typeTag
     e.typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")
@@ -661,7 +659,6 @@ sealed trait ProjectEditor {
       s"Not a partial function: $pullBundle")
     assert(pullBundle.dstVertexSet.gUID == vertexSet.gUID,
       s"Wrong destination: $pullBundle")
-    val origVS = vertexSet
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
@@ -824,7 +821,6 @@ class ProjectFrame(path: SymbolPath)(
 
   def undo(): Unit = manager.synchronized {
     nextCheckpoint = Some(checkpoint)
-    val state = currentState
     checkpoint = currentState.previousCheckpoint.get
   }
   def redo(): Unit = manager.synchronized {
@@ -1076,14 +1072,14 @@ class DirectoryEntry(val path: SymbolPath)(
     user.isAdmin || (localWriteAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
   }
 
-  private def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
+  protected def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
     p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
   }
-  private def localReadAllowedFrom(user: User): Boolean = {
+  protected def localReadAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
     localWriteAllowedFrom(user) || aclContains(readACL, user)
   }
-  private def localWriteAllowedFrom(user: User): Boolean = {
+  protected def localWriteAllowedFrom(user: User): Boolean = {
     aclContains(writeACL, user)
   }
 

@@ -10,15 +10,6 @@ import scala.reflect.runtime.universe._
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("LynxKite")
 
-  // Initialize reflection to avoid thread-safety issues
-  // TODO: ditch this when we get to Scala 2.11
-  def printType[T: TypeTag]: Unit = bigGraphLogger.debug("initialize reflection for type: " + typeOf[T])
-
-  printType[Long]
-  printType[String]
-  printType[Double]
-  printType[Array[Long]]
-
   // static<meta_dir,data_dir,ephemeral_data_dir>
   private val staticRepoPattern = "static<(.+),(.+),(.*)>".r
 
@@ -52,7 +43,7 @@ package object biggraph {
 
     val res = BigGraphEnvironmentImpl.createStaticDirEnvironment(
       repoDirs,
-      new StaticSparkContextProvider())
+      new StaticSparkSessionProvider())
     val executorStatusMonitor = new ExecutorStatusMonitor(res.sparkContext)
     executorStatusMonitor.start()
     bigGraphLogger.info("Production Kite environment initialized")

@@ -26,15 +26,13 @@ generated for vertices where all of the predictors are defined.
 
 [[method]] Method::
 +
- - **Linear regression** with no regularization using stochastic gradient descent.
- - **Ridge regression** (also known as Tikhonov regularization) with L2-regularization using
-   stochastic gradient descent.
- - **Lasso** with L2-regularization using stochastic gradient descent.
- - **Logistic regression** for classifying into at most 10 classes. (The predicted attribute must
-   be an integer from 0 to 9.)
+ - **Linear regression** with no regularization.
+ - **Ridge regression** (also known as Tikhonov regularization) with L2-regularization.
+ - **Lasso** with L2-regularization.
+ - **Logistic regression** for binary classification. (The predicted attribute must be 0 or 1.)
  - **Naive Bayes** classifier with multinomial event model.
  - **Decision tree** with maximum depth 5 and 32 bins for all features.
- - **Random forest** of 10 trees of depth 4 with 100 bins. One third of features are considered
+ - **Random forest** of 20 trees of depth 5 with 32 bins. One third of features are considered
    for splits at each node.
- - **Gradient-boosted trees** produce ensembles of 10 decision trees with depth 5.
+ - **Gradient-boosted trees** produce ensembles of decision trees with depth 5 and 32 bins.
 ====

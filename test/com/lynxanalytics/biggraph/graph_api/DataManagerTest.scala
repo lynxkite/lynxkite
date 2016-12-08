@@ -57,7 +57,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
-    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
+    val dataManager2 = new DataManager(sparkSession, dataManager1.repositoryPath)
     val data2 = dataManager2.get(names)
     val scalarData2 = dataManager2.get(greeting)
     assert(data1 ne data2)
@@ -126,7 +126,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager2 = {
       val tmpDM = cleanDataManager
       new DataManager(
-        sparkContext, dataManager1.repositoryPath,
+        sparkSession, dataManager1.repositoryPath,
         ephemeralPath = Some(tmpDM.repositoryPath))
     }
     assert(dataManager2.computeProgress(names) == 1.0)
@@ -139,7 +139,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       val dm1 = cleanDataManager
       val dm2 = cleanDataManager
       new DataManager(
-        sparkContext, dm1.repositoryPath,
+        sparkSession, dm1.repositoryPath,
         ephemeralPath = Some(dm2.repositoryPath))
     }
     val operation = ExampleGraph()
@@ -148,10 +148,10 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
-    val dataManagerMain = new DataManager(sparkContext, dataManager1.repositoryPath)
+    val dataManagerMain = new DataManager(sparkSession, dataManager1.repositoryPath)
     assert(dataManagerMain.computeProgress(names) == 0.0)
     assert(dataManagerMain.computeProgress(greeting) == 0.0)
-    val dataManagerEphemeral = new DataManager(sparkContext, dataManager1.ephemeralPath.get)
+    val dataManagerEphemeral = new DataManager(sparkSession, dataManager1.ephemeralPath.get)
     assert(dataManagerEphemeral.computeProgress(names) == 1.0)
     assert(dataManagerEphemeral.computeProgress(greeting) == 1.0)
   }

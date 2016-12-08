@@ -7,8 +7,6 @@ import com.lynxanalytics.biggraph.spark_util.HLLUtils
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
-
 import org.apache.spark
 
 object ApproxClusteringCoefficient extends OpFromJson {
