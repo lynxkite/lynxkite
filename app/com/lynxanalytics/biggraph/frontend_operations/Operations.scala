@@ -412,7 +412,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("id-attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("id-column", "ID column"),
-      Param("prefix", "Name prefix for the imported vertex attributes"))
+      Param("prefix", "Name prefix for the imported vertex attributes"),
+      Choice("unique-keys", "Unique vertex ID attribute", options = FEOption.bools))
     def enabled =
       hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
@@ -423,13 +424,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.vertexAttributeNames
-      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val uniqueKeys = params.getOrElse("unique-keys", "true").toBoolean
+      val edges = if (uniqueKeys) {
+        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      } else {
+        val op = graph_operations.EdgesFromLookupAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      }
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
         assert(!projectAttrNames.contains(prefix + name),
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
-        project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+        project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
     }
   })
@@ -443,7 +450,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("id-attr", "Edge ID attribute",
         options = FEOption.unset +: edgeAttributes[String]),
       Param("id-column", "ID column"),
-      Param("prefix", "Name prefix for the imported edge attributes"))
+      Param("prefix", "Name prefix for the imported edge attributes"),
+      Choice("unique-keys", "Unique vertex ID attribute", options = FEOption.bools))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
@@ -456,13 +464,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.edgeAttributeNames
-      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val uniqueKeys = params.getOrElse("unique-keys", "true").toBoolean
+      val edges = if (uniqueKeys) {
+        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      } else {
+        val op = graph_operations.EdgesFromLookupAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      }
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
         assert(!projectAttrNames.contains(prefix + name),
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
-        project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+        project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
     }
   })
