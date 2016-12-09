@@ -6,10 +6,10 @@ useful when you already have vertices and just want to import one or more attrib
 There are two different use cases for this operation:
 - Import using unique vertex attribute values. For example if the vertices represent people
 this attribute can be a personal ID. In this case the operation fails in case of duplicate
-attribute values.
-- Import using a normal vertex attribute. For example in the above case this can be a city
-of residence and we can import census data for those cities for each people. Here the operation
-allows duplications (but not in the lookup table).
+attribute values (either among vertices or in the table).
+- Import using a normal vertex attribute. For example this can be a city of residence (vertices
+are people) and we can import census data for those cities for each person. Here the operation
+allows duplications of cities among vertices (but not in the lookup table).
 
 ====
 include::{g}[tag=table-import]
