@@ -341,11 +341,11 @@ case class PredictViaNNOnGraphV1(
             val rows = values.rows
             val cols = values.cols
             for (row <- 0 until rows; col <- 0 until cols) yield (s"$name $row $col", values(row, col))
-        }.toMap
+        }
       }
 
       var gradientsOK = true
-      val relativeErrors = (0 until approximatedGradients.length).map { i =>
+      for (i <- 0 until approximatedGradients.length) {
         approximatedGradients(i).map {
           case (name, value) =>
             val otherValue = backPropGradients(i)(name)
@@ -360,7 +360,7 @@ case class PredictViaNNOnGraphV1(
             }
 
             (name, relativeError)
-        }.toMap
+        }
       }
       gradientsOK
     }
