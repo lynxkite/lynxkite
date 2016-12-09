@@ -61,6 +61,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     entity match {
       case vs: VertexSet => new io.VertexSetIO(vs, context)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
+      case eb: HybridEdgeBundle => new io.HybridEdgeBundleIO(eb, context)
       case va: Attribute[_] => new io.AttributeIO(va, context)
       case sc: Scalar[_] => new io.ScalarIO(sc, context)
     }
@@ -316,6 +317,11 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
+  def getFuture(hybridEdgeBundle: HybridEdgeBundle): SafeFuture[HybridEdgeBundleData] = {
+    loadOrExecuteIfNecessary(hybridEdgeBundle)
+    entityCache(hybridEdgeBundle.gUID).map(_.asInstanceOf[HybridEdgeBundleData])
+  }
+
   def getFuture[T](attribute: Attribute[T]): SafeFuture[AttributeData[T]] = {
     loadOrExecuteIfNecessary(attribute)
     implicit val tagForT = attribute.typeTag
@@ -332,6 +338,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
+      case heb: HybridEdgeBundle => getFuture(heb)
       case va: Attribute[_] => getFuture(va)
       case sc: Scalar[_] => getFuture(sc)
     }
@@ -348,6 +355,9 @@ class DataManager(sparkSession: spark.sql.SparkSession,
   }
   def get(edgeBundle: EdgeBundle): EdgeBundleData = {
     getFuture(edgeBundle).awaitResult(Duration.Inf)
+  }
+  def get(hybridEdgeBundle: HybridEdgeBundle): HybridEdgeBundleData = {
+    getFuture(hybridEdgeBundle).awaitResult(Duration.Inf)
   }
   def get[T](attribute: Attribute[T]): AttributeData[T] = {
     getFuture(attribute).awaitResult(Duration.Inf)
@@ -395,6 +405,9 @@ class DataManager(sparkSession: spark.sql.SparkSession,
             case eb: EdgeBundle =>
               coLocatedFuture(getFuture(eb), eb.idSet)
                 .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
+            case heb: HybridEdgeBundle =>
+              coLocatedFuture(getFuture(heb), heb.idSet)
+                .map { case (rdd, count) => new HybridEdgeBundleData(eb, rdd, count) }
             case va: Attribute[_] =>
               coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
                 .map { case (rdd, count) => new AttributeData(va, rdd, count) }

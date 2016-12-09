@@ -463,6 +463,34 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
   def valueTypeTag = typeTag[Edge]
 }
 
+class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
+    extends PartitionedDataIO[ID, HybridEdgeBundleData](entity, context) {
+
+  override def correspondingVertexSet = Some(entity.idSet)
+
+  def finalRead(path: HadoopFile,
+                count: Long,
+                serialization: String,
+                partitioner: spark.Partitioner,
+                parent: Option[VertexSetData]): HybridEdgeBundleData = {
+    assert(partitioner eq parent.get.rdd.partitioner.get,
+      s"Partitioner mismatch for $entity.")
+    val largeKeysRDD = (path / "large_keys_rdd").loadEntityRDD[ID](sc, serialization)
+    val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](sc, serialization)
+    val largeKeysSet = (path / "large_keys_Set").loadEntityRDD[Unit](sc, serialization)
+    new HybridEdgeBundleData(
+      entity,
+      HybridRDD.of(largeKeysRDD.asUniqueSortedRDD(partitioner),
+        smallKeysRDD.asSortedRDD(partitioner),
+        largeKeysSet.asUniqueSortedRDD(partitioner)),
+      Some(count))
+  }
+
+  def castData(data: EntityData) = data.asInstanceOf[HybridEdgeBundleData]
+
+  def valueTypeTag = typeTag[ID]
+}
+
 class AttributeIO[T](entity: Attribute[T], context: IOContext)
     extends PartitionedDataIO[T, AttributeData[T]](entity, context) {
   override def correspondingVertexSet = Some(entity.vertexSet)
