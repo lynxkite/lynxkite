@@ -179,7 +179,7 @@ case class EdgesFromLookupAttributeMatches()
     val toStringToId = inputs.toAttr.rdd
       .map(_.swap)
       .assertUniqueKeys(partitioner)
-    val mapping = HybridRDD(fromStringToId, partitioner, even = true)
+    val mapping = HybridRDD.of(fromStringToId, partitioner, even = true)
       .lookup(toStringToId)
       .values
       .map { case (fromId, toId) => fromId -> Edge(fromId, toId) }

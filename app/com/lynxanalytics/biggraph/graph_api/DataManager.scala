@@ -406,8 +406,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
               coLocatedFuture(getFuture(eb), eb.idSet)
                 .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
             case heb: HybridEdgeBundle =>
-              coLocatedFuture(getFuture(heb), heb.idSet)
-                .map { case (rdd, count) => new HybridEdgeBundleData(eb, rdd, count) }
+              throw new Exception("Not supported")
             case va: Attribute[_] =>
               coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
                 .map { case (rdd, count) => new AttributeData(va, rdd, count) }

@@ -56,9 +56,9 @@ case class PageRank(dampingFactor: Double,
 
     // Join the sum of weights per src to the src vertices in the edge RDD.
     val edgesWithSumWeights =
-      HybridRDD(edgesWithWeights, maxPartitioner, even = true).lookupAndRepartition(sumWeights)
+      HybridRDD.of(edgesWithWeights, maxPartitioner, even = true).lookupAndRepartition(sumWeights)
     // Normalize the weights for every src vertex.
-    val targetsWithWeights = HybridRDD(
+    val targetsWithWeights = HybridRDD.of(
       edgesWithSumWeights.mapValues {
         case ((dst, weight), sumWeight) => (dst, weight / sumWeight)
       },

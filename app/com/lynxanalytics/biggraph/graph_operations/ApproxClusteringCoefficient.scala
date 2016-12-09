@@ -43,10 +43,10 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
     val simpleGraphEdges =
       nonLoopEdges.flatMap { case (_, e) => Iterator(e.src -> e.dst, e.dst -> e.src) }.distinct
 
-    val bySrcHLLs = HybridRDD(simpleGraphEdges, partitioner, even = true)
+    val bySrcHLLs = HybridRDD.of(simpleGraphEdges, partitioner, even = true)
       .lookupAndRepartition(n.allNeighborHLLs)
     val byDst = bySrcHLLs.map { case (src, (dst, srcHLL)) => dst -> (src, srcHLL) }
-    val byDstHLLs = HybridRDD(byDst, partitioner, even = true)
+    val byDstHLLs = HybridRDD.of(byDst, partitioner, even = true)
       .lookup(n.outNeighborHLLs)
 
     // For every edge sum up the common neighbors of src and out-neighbors dst

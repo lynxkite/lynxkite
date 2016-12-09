@@ -296,7 +296,13 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
     val partitions = rdd.partitions.size
-    val (lines, serialization) = targetDir(partitions).saveEntityRDD(rdd, valueTypeTag)
+    val (lines, serialization) = rdd match {
+      case sortedRDD: SortedRDD[ID, _] => targetDir(partitions).saveEntityRDD(sortedRDD, valueTypeTag)
+      case hybridRDD: HybridRDD[ID, _] =>
+        (targetDir(partitions) / "large_keys_rdd").saveEntityRDD(hybridRDD.largeKeysRDD, valueTypeTag)
+        (targetDir(partitions) / "small_keys_rdd").saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)
+        (targetDir(partitions) / "larges").saveEntityRDD(sc.parallelize(hybridRDD.larges, 1), typeTag[Long])
+    }
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
     log.info(s"PERF Instantiated entity $entity on disk")
@@ -468,6 +474,10 @@ class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
 
   override def correspondingVertexSet = Some(entity.idSet)
 
+  def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, ID] = {
+    throw new Exception("Unsupported")
+  }
+
   def finalRead(path: HadoopFile,
                 count: Long,
                 serialization: String,
@@ -475,14 +485,17 @@ class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
                 parent: Option[VertexSetData]): HybridEdgeBundleData = {
     assert(partitioner eq parent.get.rdd.partitioner.get,
       s"Partitioner mismatch for $entity.")
+    import scala.reflect._
+    implicit val cv = classTag[ID]
     val largeKeysRDD = (path / "large_keys_rdd").loadEntityRDD[ID](sc, serialization)
     val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](sc, serialization)
-    val largeKeysSet = (path / "large_keys_Set").loadEntityRDD[Unit](sc, serialization)
+    val largeKeysSet = (path / "larges").loadEntityRDD[Long](sc, serialization)
     new HybridEdgeBundleData(
       entity,
-      HybridRDD.of(largeKeysRDD.asUniqueSortedRDD(partitioner),
-        smallKeysRDD.asSortedRDD(partitioner),
-        largeKeysSet.asUniqueSortedRDD(partitioner)),
+      HybridRDD(largeKeysRDD,
+        smallKeysRDD.sort(partitioner),
+        largeKeysSet.collect.toSeq,
+        Some(partitioner)),
       Some(count))
   }
 
