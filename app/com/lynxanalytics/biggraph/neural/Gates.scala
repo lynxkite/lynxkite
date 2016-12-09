@@ -55,7 +55,15 @@ object Gates {
   trait Gate[Output] extends Product {
     // Plain toString on case classes is enough to uniquely identify vectors.
     private[neural] def id = this.toString
+    private[neural] var activationCount: Int = 0
+    private[neural] def newActivationHappened = {
+      activationCount += 1
+    }
     private[neural] def forward(fm: ForwardMemory): Output
+    private[neural] var receivedGradientCount: Int = 0
+    private[neural] def newGradientReceived = {
+      receivedGradientCount += 1
+    }
     private[neural] def backward(bm: BackwardMemory, gradient: Output): Unit
   }
   trait VectorGate extends Gate[VectorGraph] {
@@ -277,9 +285,12 @@ private case class ForwardMemory(
     vertices.map { id => id -> (g1(id), g2(id)) }.toMap
   }
   def activation(v: VectorGate): VectorGraph = {
+    v.newActivationHappened
     vectorCache.getOrElseUpdate(v.id, v.forward(this))
+
   }
   def activation(vs: VectorsGate): VectorsGraph = {
+    vs.newActivationHappened
     vectorsCache.getOrElseUpdate(vs.id, vs.forward(this))
   }
   def apply(m: TrainableMatrix): DoubleMatrix = network(m)
@@ -315,21 +326,24 @@ private case class BackwardMemory(
   def add(v: VectorGate, gradient: VectorGraph): Unit = {
     vectorGradients(v.id) =
       vectorGradients.get(v.id).map(_ + gradient).getOrElse(gradient)
-    v.backward(this, gradient)
+    v.newGradientReceived
+    if (v.receivedGradientCount == v.activationCount) {
+      v.backward(this, vectorGradients(v.id))
+    }
   }
   def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
     vectorsGradients(vs.id) =
       vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
-    vs.backward(this, gradients)
+    if (vs.receivedGradientCount == vs.activationCount) {
+      vs.backward(this, vectorsGradients(vs.id))
+    }
   }
   def add(m: TrainableMatrix, gradient: DoubleMatrix): Unit = {
-    trainedGradients(m.name) =
-      trainedGradients.get(m.name).map(_ + gradient).getOrElse(gradient)
+    trainedGradients(m.name) = gradient
   }
   def add(v: TrainableVector, gradient: DoubleVector): Unit = {
     val mgrad = gradient.asDenseMatrix.t
-    trainedGradients(v.name) =
-      trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
+    trainedGradients(v.name) = mgrad
   }
 
   def gradients = new NetworkGradients(
