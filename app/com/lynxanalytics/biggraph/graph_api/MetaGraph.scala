@@ -132,6 +132,18 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   val isLocal = srcVertexSet == dstVertexSet
 }
 
+case class HybridEdgeBundle(source: MetaGraphOperationInstance,
+                            name: Symbol,
+                            srcVertexSet: VertexSet,
+                            dstVertexSet: VertexSet,
+                            properties: EdgeBundleProperties = EdgeBundleProperties.default,
+                            idSet: VertexSet, // The edge IDs as a VertexSet.
+                            autogenerateIdSet: Boolean) // The RDD for idSet will be auto-generated.
+    extends MetaGraphEntity {
+  assert(name != null, s"name is null for $this")
+  val isLocal = srcVertexSet == dstVertexSet
+}
+
 sealed trait TypedEntity[T] extends MetaGraphEntity {
   val typeTag: TypeTag[T]
   def runtimeSafeCast[S: TypeTag]: TypedEntity[S]
@@ -552,6 +564,12 @@ class EdgeBundleData(val entity: EdgeBundle,
                      val count: Option[Long] = None) extends EntityRDDData[Edge] {
   val edgeBundle = entity
   def cached = new EdgeBundleData(entity, rdd.copyWithAncestorsCached, count)
+}
+
+class HybridEdgeBundleData(val entity: HybridEdgeBundle,
+                           val rdd: HybridEdgeBundleRDD,
+                           val count: Option[Long] = None) extends EntityData {
+  val hybridEdgeBundle = entity
 }
 
 class AttributeData[T](val entity: Attribute[T],
