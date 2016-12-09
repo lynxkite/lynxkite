@@ -55,7 +55,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
       case aggregator: Aggregator[From, _, To] =>
         // Scalable aggregation for non-local Aggregators.
         val partitioner = inputs.connection.rdd.partitioner.get
-        val withAttr = HybridRDD(inputs.connection.rdd.map {
+        val withAttr = HybridRDD.of(inputs.connection.rdd.map {
           case (id, edge) => edge.src -> edge.dst
         }, partitioner, even = true).lookup(inputs.attr.rdd.sortedRepartition(partitioner))
         val byDst = withAttr.map {
