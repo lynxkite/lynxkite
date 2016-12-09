@@ -409,19 +409,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("id-attr", "Vertex ID attribute",
+      Choice("id-attr", "Vertex attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("id-column", "ID column"),
       Param("prefix", "Name prefix for the imported vertex attributes"),
-      Choice("unique-keys", "Assert unique vertex ID attribute values",
+      Choice("unique-keys", "Assert unique vertex attribute values",
         options = FEOption.bools, mandatory = false))
     def enabled =
       hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as key.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val attrName = params("id-attr")
-      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Vertex attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.vertexAttributeNames
@@ -448,21 +448,21 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("id-attr", "Edge ID attribute",
+      Choice("id-attr", "Edge attribute",
         options = FEOption.unset +: edgeAttributes[String]),
       Param("id-column", "ID column"),
       Param("prefix", "Name prefix for the imported edge attributes"),
-      Choice("unique-keys", "Assert unique edge ID attribute values",
+      Choice("unique-keys", "Assert unique edge attribute values",
         options = FEOption.bools, mandatory = false))
     def enabled =
       hasEdgeBundle &&
-        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
+        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as key.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val columnName = params("id-column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
       val attrName = params("id-attr")
-      assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Edge attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.edgeAttributeNames
