@@ -3,6 +3,15 @@
 Imports edge attributes for existing edges from a table. This is
 useful when you already have edges and just want to import one or more attributes.
 
+There are two different use cases for this operation:
+- Import using unique edge attribute values. For example if the edges represent relationships
+between people (identified by src and dst IDs) we can import the number of total calls between each
+two people. In this case the operation fails in case of duplicate attribute values (parallel edges
+in the above case).
+- Import using a normal edge attribute. For example if each edge represents a call and the location
+of the person making the call is an edge attribute (cell tower ID) we can import latitudes and
+longitudes for those towers. Here the tower IDs still have to be unique in the lookup table.
+
 ====
 include::{g}[tag=table-import]
 

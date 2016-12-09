@@ -3,6 +3,14 @@
 Imports vertex attributes for existing vertices from a table. This is
 useful when you already have vertices and just want to import one or more attributes.
 
+There are two different use cases for this operation:
+- Import using unique vertex attribute values. For example if the vertices represent people
+this attribute can be a personal ID. In this case the operation fails in case of duplicate
+attribute values.
+- Import using a normal vertex attribute. For example in the above case this can be a city
+of residence and we can import census data for those cities for each people. Here the operation
+allows duplications (but not in the lookup table).
+
 ====
 include::{g}[tag=table-import]
 
