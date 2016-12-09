@@ -182,8 +182,8 @@ case class EdgesFromLookupAttributeMatches()
     val mapping = HybridRDD(fromStringToId, partitioner, even = true)
       .lookup(toStringToId)
       .values
-      .map { case (fromId, toId) => Edge(fromId, toId) }
-      .randomNumbered(partitioner)
+      .map { case (fromId, toId) => fromId -> Edge(fromId, toId) }
+      .sortUnique(partitioner)
 
     output(o.edges, mapping)
   }
