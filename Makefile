@@ -16,7 +16,8 @@ all: backend
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
 	pip3 install --user -r python_requirements.txt && touch $@
-.build/backend-done: $(shell $(find) app project tools lib conf) build.sbt .build/gulp-done
+.build/backend-done: \
+	$(shell $(find) app project lib conf) tools/call_spark_submit.sh build.sbt .build/gulp-done
 	sbt stage && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./.test_backend.sh && touch $@
@@ -32,8 +33,11 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api chronomaster ecosystem/release/lynx/luigi_tasks) \
-		.build/backend-done .build/documentation-done-${VERSION}
+		.build/backend-done .build/documentation-done-${VERSION} .build/statter-done
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
+.build/statter-done: \
+		$(shell $(find) tools/statter/src) tools/statter/build.sbt tools/statter/project/plugins.sbt
+	cd tools/statter && sbt stage && cd - && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -61,3 +65,5 @@ big-data-test: .build/ecosystem-done
 		--test \
 		--bigdata \
 		--bigdata_test_set ${BDT}
+.PHONY: statter
+statter: .build/statter-done
