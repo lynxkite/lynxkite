@@ -445,7 +445,6 @@ class SQLController(val env: BigGraphEnvironment) {
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[SQLCreateTableResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    println("Ajm here")
     SQLController.saveTable(
       df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
       user, request.table, request.privacy, request.overwrite,
@@ -554,9 +553,7 @@ object SQLController {
     else {
       val checkpoint = table.saveAsCheckpoint(notes)
       if (overwrite) entry.remove()
-      println("AAAAAAAAAAAA")
       val frame = entry.asNewTableFrame(checkpoint)
-      println("BBBBBBBBBBBB")
       importConfig.foreach(frame.setImportConfig)
       frame.setupACL(privacy, user)
       SQLCreateTableResult(
