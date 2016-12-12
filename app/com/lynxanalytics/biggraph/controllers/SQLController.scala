@@ -404,7 +404,7 @@ class SQLController(val env: BigGraphEnvironment) {
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
-    user: serving.User, recipe: T): FEOption = {
+    user: serving.User, recipe: T): SQLCreateEntryResult = {
     SQLController.saveView(
       recipe.notes,
       user,
@@ -565,11 +565,16 @@ object SQLController {
   def saveView[T <: ViewRecipe: json.Writes](
     notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
       implicit metaManager: MetaGraphManager,
-      dataManager: DataManager) = {
+      dataManager: DataManager): SQLCreateEntryResult = {
     val entry = assertAccessAndGetTableEntry(user, name, privacy)
-    if (overwrite) entry.remove()
-    val view = entry.asNewViewFrame(recipe, notes)
-    FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
+    if (entry.exists && !overwrite) SQLCreateEntryResult(None, true)
+    else {
+      if (overwrite) entry.remove()
+      val view = entry.asNewViewFrame(recipe, notes)
+      SQLCreateEntryResult(
+        Some(FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")),
+        false)
+    }
   }
 
   // Every query runs in its own SQLContext for isolation.
