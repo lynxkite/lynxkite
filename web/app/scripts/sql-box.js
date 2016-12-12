@@ -238,32 +238,32 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           scope.inProgress -= 1;
         });
         result.then(function(result) {
-          scope.showExportOptions = false;
-          scope.success = 'Results exported.';
-          if (result && result.download) {
-            // Fire off the download.
-            $window.location =
-              '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
-          }
-          if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
-            if (result.nameClash) {
-              window.sweetAlert({
-                title: 'Entry already exists',
-                text: 'Do you want to overwrite it?',
-                type: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#DD6B55',
-                cancelButtonText: 'No',
-                confirmButtonText: 'Yes',
-              },
-              function(){
-                var overwrite = scope.overwrite;
-                scope.overwrite = true;
-                scope.export();
-                scope.overwrite = overwrite;
-              });
-            } else {
-              $rootScope.$broadcast('new table or view', scope);
+          if (result.nameClash) {
+            window.sweetAlert({
+              title: 'Entry already exists',
+              text: 'Do you want to overwrite it?',
+              type: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#DD6B55',
+              cancelButtonText: 'No',
+              confirmButtonText: 'Yes',
+            },
+            function(){
+              var overwrite = scope.overwrite;
+              scope.overwrite = true;
+              scope.export();
+              scope.overwrite = overwrite;
+            });
+          } else {
+              scope.showExportOptions = false;
+              scope.success = 'Results exported.';
+              if (result && result.download) {
+                // Fire off the download.
+                $window.location =
+                  '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
+              }
+              if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
+                $rootScope.$broadcast('new table or view', scope);
             }
           }
         });
