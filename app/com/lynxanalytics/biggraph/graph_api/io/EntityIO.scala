@@ -299,9 +299,13 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val (lines, serialization) = rdd match {
       case sortedRDD: SortedRDD[ID, _] => targetDir(partitions).saveEntityRDD(sortedRDD, valueTypeTag)
       case hybridRDD: HybridRDD[ID, _] =>
-        (targetDir(partitions) / "large_keys_rdd").saveEntityRDD(hybridRDD.largeKeysRDD, valueTypeTag)
-        (targetDir(partitions) / "small_keys_rdd").saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)
+        val l1 = (targetDir(partitions) / "small_keys_rdd").saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)._1
         (targetDir(partitions) / "larges").saveEntityRDD(sc.parallelize(hybridRDD.larges, 1), typeTag[Long])
+        val l2 = if (hybridRDD.isSkewed) {
+          (targetDir(partitions) / "large_keys_rdd").saveEntityRDD(hybridRDD.largeKeysRDD.get, valueTypeTag)._1
+        } else { 0L }
+        (targetDir(partitions) / Success).create()
+        (l1 + l2, "hybrid")
     }
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
@@ -472,7 +476,7 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
 class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
     extends PartitionedDataIO[ID, HybridEdgeBundleData](entity, context) {
 
-  override def correspondingVertexSet = Some(entity.idSet)
+  override def correspondingVertexSet = None
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, ID] = {
     throw new Exception("Unsupported")
@@ -483,18 +487,22 @@ class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
                 serialization: String,
                 partitioner: spark.Partitioner,
                 parent: Option[VertexSetData]): HybridEdgeBundleData = {
-    assert(partitioner eq parent.get.rdd.partitioner.get,
-      s"Partitioner mismatch for $entity.")
     import scala.reflect._
     implicit val cv = classTag[ID]
-    val largeKeysRDD = (path / "large_keys_rdd").loadEntityRDD[ID](sc, serialization)
-    val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](sc, serialization)
-    val largeKeysSet = (path / "larges").loadEntityRDD[Long](sc, serialization)
+    val idSerializer = EntitySerializer.forType(typeTag[ID]).name
+    val longSerializer = EntitySerializer.forType(typeTag[Long]).name
+    val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](sc, idSerializer)
+    val largeKeysSet = (path / "larges").loadEntityRDD[Long](sc, longSerializer).collect.toSeq
+    val largeKeysRDD = if (largeKeysSet.isEmpty) {
+      None
+    } else {
+      Some((path / "large_keys_rdd").loadEntityRDD[ID](sc, idSerializer))
+    }
     new HybridEdgeBundleData(
       entity,
       HybridRDD(largeKeysRDD,
         smallKeysRDD.sort(partitioner),
-        largeKeysSet.collect.toSeq,
+        largeKeysSet,
         Some(partitioner)),
       Some(count))
   }

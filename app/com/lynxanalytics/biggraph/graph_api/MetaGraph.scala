@@ -134,14 +134,9 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
 
 case class HybridEdgeBundle(source: MetaGraphOperationInstance,
                             name: Symbol,
-                            srcVertexSet: VertexSet,
-                            dstVertexSet: VertexSet,
-                            properties: EdgeBundleProperties = EdgeBundleProperties.default,
-                            idSet: VertexSet, // The edge IDs as a VertexSet.
-                            autogenerateIdSet: Boolean) // The RDD for idSet will be auto-generated.
+                            edgeBundle: EdgeBundle) // The RDD for idSet will be auto-generated.
     extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
-  val isLocal = srcVertexSet == dstVertexSet
 }
 
 sealed trait TypedEntity[T] extends MetaGraphEntity {
@@ -259,30 +254,14 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   }
 
   class HybridEdgeBundleTemplate(
-    srcF: => Symbol,
-    dstF: => Symbol,
-    idSetF: => Option[Symbol],
-    requiredProperties: EdgeBundleProperties,
+    esF: => Symbol,
     nameOpt: Option[Symbol])
       extends ET[HybridEdgeBundle](nameOpt) {
-    private lazy val src = srcF
-    private lazy val dst = dstF
-    private lazy val idSet = idSetF
-    override def set(target: MetaDataSet, eb: HybridEdgeBundle): MetaDataSet = {
-      assert(Option(eb).nonEmpty, "The project has no edge bundle")
-      assert(
-        eb.properties.compliesWith(requiredProperties),
-        s"Edge bundle $eb (${eb.properties}) does not comply with: $requiredProperties")
-      val withSrc =
-        templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
-      val withSrcDst =
-        templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
-      val withSrcDstIdSet = idSet match {
-        case Some(vsName) => templatesByName(vsName).asInstanceOf[VertexSetTemplate]
-          .set(withSrcDst, eb.idSet)
-        case None => withSrcDst
-      }
-      super.set(withSrcDstIdSet, eb)
+    private lazy val es = esF
+    override def set(target: MetaDataSet, heb: HybridEdgeBundle): MetaDataSet = {
+      val withEs =
+        templatesByName(es).asInstanceOf[EdgeBundleTemplate].set(target, heb.edgeBundle)
+      super.set(withEs, heb)
     }
     def data(implicit dataSet: DataSet) = dataSet.hybridEdgeBundles(name)
     def rdd(implicit dataSet: DataSet) = data.rdd
@@ -343,13 +322,10 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     new EdgeBundleTemplate(
       src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
   def hybridEdgeBundle(
-    src: VertexSetTemplate,
-    dst: VertexSetTemplate,
-    requiredProperties: EdgeBundleProperties = EdgeBundleProperties.default,
-    idSet: VertexSetTemplate = null,
+    es: EdgeBundleTemplate,
     name: Symbol = null) =
     new HybridEdgeBundleTemplate(
-      src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
+      es.name, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
   def anyVertexAttribute(vs: VertexSetTemplate, name: Symbol = null) =
@@ -438,6 +414,9 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
       idSetSafe, autogenerateIdSet = idSet == null), Option(name))
     eb
   }
+  def hybridEdgeBundle(
+    es: => EntityContainer[EdgeBundle],
+    name: Symbol = null) = new P(HybridEdgeBundle(instance, _, es), Option(name))
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
@@ -734,6 +713,10 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
     if (edgeBundle.autogenerateIdSet) {
       addData(new VertexSetData(edgeBundle.idSet, rdd.mapValues(_ => ())))
     }
+  }
+
+  def apply(hybridEdgeBundle: HybridEdgeBundle, rdd: HybridEdgeBundleRDD): Unit = {
+    addData(new HybridEdgeBundleData(hybridEdgeBundle, rdd))
   }
 
   def apply[T](attribute: Attribute[T], rdd: AttributeRDD[T]): Unit = {
