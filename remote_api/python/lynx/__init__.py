@@ -19,15 +19,14 @@ Example usage::
 The list of operations is not documented, but you can copy the invocation from a LynxKite project
 history.
 '''
-import http.cookiejar
+import collections
 import json
 import os
+import requests
 import ssl
 import sys
 import types
-import urllib
 import yaml
-import collections
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -71,19 +70,7 @@ class LynxKite:
     self._username = username
     self._password = password
     self._certfile = certfile
-    self.opener = self.build_opener()
-
-  def build_opener(self):
-    cj = http.cookiejar.CookieJar()
-    cp = urllib.request.HTTPCookieProcessor(cj)
-    if self.certfile():
-      sslctx = ssl.create_default_context(
-          ssl.Purpose.SERVER_AUTH,
-          cafile=self.certfile())
-      https = urllib.request.HTTPSHandler(context=sslctx)
-      return urllib.request.build_opener(https, cp)
-    else:
-      return urllib.request.build_opener(cp)
+    self._cookies = dict()
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -98,37 +85,41 @@ class LynxKite:
     return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
   def _login(self):
-    self._request(
+    r = self._request(
         '/passwordLogin',
         dict(
             username=self.username(),
             password=self.password(),
             method='lynxkite'))
+    self._cookies = r.cookies
 
-  def _request(self, endpoint, payload={}):
+  def _post(self, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
-        self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
-        data=data,
-        headers={'Content-Type': 'application/json'})
     max_tries = 3
     for i in range(max_tries):
-      try:
-        with self.opener.open(req) as r:
-          return r.read().decode('utf-8')
-      except urllib.error.HTTPError as err:
-        if err.code == 401 and i + 1 < max_tries:  # Unauthorized.
-          self._login()
-          # And then retry via the "for" loop.
-        elif err.code == 500:  # Internal server error.
-          raise LynxException(err.read())
-        else:
-          raise err
+      r = requests.post(
+          self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
+          verify=self.certfile(),
+          cookies=self._cookies,
+          **kwargs)
+      if r.status_code == 200:
+        return r
+      if r.status_code == 401 and i + 1 < max_tries:  # Unauthorized.
+        self._login()
+        # And then retry via the "for" loop.
+      elif r.status_code == 500:  # Internal server error.
+        raise LynxException(r.text)
+      else:
+        r.raise_for_status()
+
+  def _request(self, endpoint, payload={}):
+    '''Sends an HTTP JSON request to LynxKite and returns the response when it arrives.'''
+    data = json.dumps(payload)
+    return self._post(endpoint, data=data, headers={'Content-Type': 'application/json'})
 
   def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self._request('/remote/' + command, payload)
+    data = self._request('/remote/' + command, payload).text
     if raw:
       r = json.loads(data)
     else:
