@@ -82,10 +82,10 @@ object HybridRDD {
       }
     }.sort(partitioner)
     // The RDD to use with map lookup. It may contain keys with large cardinalities.
-    val largeKeysRDD: RDD[(K, T)] = if (isSkewed) {
-      sourceRDD
+    val largeKeysRDD: Option[RDD[(K, T)]] = if (isSkewed) {
+      Some(sourceRDD)
     } else {
-      null
+      None
     }
 
     HybridRDD(largeKeysRDD, smallKeysRDD, larges, Some(partitioner))
@@ -96,20 +96,24 @@ object HybridRDD {
 // is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // The large potentially skewed RDD to do joins on.
-  largeKeysRDD: RDD[(K, T)],
+  largeKeysRDD: Option[RDD[(K, T)]],
   smallKeysRDD: SortedRDD[K, T],
   larges: Seq[(K, Long)],
   // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
   // must have the same partitioner.
   override val partitioner: Option[spark.Partitioner]) extends RDD[(K, T)](
-  largeKeysRDD.sparkContext, Seq(new spark.OneToOneDependency(largeKeysRDD), new spark.OneToOneDependency(smallKeysRDD))) {
+  smallKeysRDD.sparkContext,
+  Seq(new spark.OneToOneDependency(smallKeysRDD)) ++
+    largeKeysRDD.map(rdd => Seq[spark.Dependency[(K, T)]](new spark.OneToOneDependency(rdd))).getOrElse(Seq())) {
 
-  override def getPartitions: Array[Partition] = largeKeysRDD.partitions ++ smallKeysRDD.partitions
+  override def getPartitions: Array[Partition] =
+    smallKeysRDD.partitions ++ largeKeysRDD.map(_.partitions).getOrElse(Array[Partition]())
   override def compute(split: Partition, context: TaskContext) =
-    largeKeysRDD.iterator(split, context) ++ smallKeysRDD.iterator(split, context)
+    smallKeysRDD.iterator(split, context) ++
+      largeKeysRDD.map(_.iterator(split, context)).getOrElse(Iterator())
 
   // True iff this HybridRDD has keys with large cardinalities.
-  val isSkewed = !larges.isEmpty
+  val isSkewed = !largeKeysRDD.isEmpty
 
   val (largeKeysSet, largeKeysCoverage) = if (!isSkewed) {
     (Set.empty[K], 0L)
@@ -120,7 +124,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // Caches the smallKeysRDD and the largeKeysRDD for skewed HybridRDDs.
   override def persist(storageLevel: spark.storage.StorageLevel): HybridRDD.this.type = {
     if (isSkewed) {
-      largeKeysRDD.persist(storageLevel)
+      largeKeysRDD.get.persist(storageLevel)
     }
     smallKeysRDD.persist(storageLevel)
     this
@@ -151,7 +155,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
       val largeKeysMap = lookupRDD.filter(largeKeysSet contains _._1).collect.toMap
       log.info(s"Hybrid lookup found ${largeKeysSet.size} large keys covering "
         + s"${largeKeysCoverage} source records.")
-      val larges = HybridRDD.smallTableLookup(largeKeysRDD, largeKeysMap)
+      val larges = HybridRDD.smallTableLookup(largeKeysRDD.get, largeKeysMap)
       smalls ++ larges
     } else {
       smalls // For non-skewed RDDs every row is in smallKeysRDD.
