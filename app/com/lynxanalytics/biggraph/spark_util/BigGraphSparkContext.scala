@@ -388,6 +388,8 @@ object BigGraphSparkContext {
         "file://" + LogController.getLogDir.getAbsolutePath)
       .set("spark.eventLog.enabled", "true")
       .set("spark.eventLog.compress", "true")
+      // Progress bars are not great in logs.
+      .set("spark.ui.showConsoleProgress", "false")
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
     if (useKryo) {
       sparkConf = sparkConf
