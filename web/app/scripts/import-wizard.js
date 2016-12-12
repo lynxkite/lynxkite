@@ -44,7 +44,13 @@ angular.module('biggraph').directive('importWizard', function(util) {
         var request = util.post(endpoint, parameters);
 
         request.then(function(result) {
-          scope.tableImported = result;
+          if (result.nameClash) {
+            util.showOverwriteDialog(
+              function() {}
+            );
+          } else {
+            scope.tableImported = result;
+          }
         });
         request.finally(function() {
           scope.requestInProgress -= 1;

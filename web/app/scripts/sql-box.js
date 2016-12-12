@@ -239,21 +239,13 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         });
         result.then(function(result) {
           if (result.nameClash) {
-            window.sweetAlert({
-              title: 'Entry already exists',
-              text: 'Do you want to overwrite it?',
-              type: 'warning',
-              showCancelButton: true,
-              confirmButtonColor: '#DD6B55',
-              cancelButtonText: 'No',
-              confirmButtonText: 'Yes',
-            },
-            function(){
-              var overwrite = scope.overwrite;
-              scope.overwrite = true;
-              scope.export();
-              scope.overwrite = overwrite;
-            });
+            util.showOverwriteDialog(
+              function(){
+                var overwrite = scope.overwrite;
+                scope.overwrite = true;
+                scope.export();
+                scope.overwrite = overwrite;
+              });
           } else {
               scope.showExportOptions = false;
               scope.success = 'Results exported.';
