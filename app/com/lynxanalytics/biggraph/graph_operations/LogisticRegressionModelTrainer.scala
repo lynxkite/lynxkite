@@ -2,9 +2,11 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql
 import org.apache.spark.ml
+import org.apache.spark.storage.StorageLevel
 
 object LogisticRegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -141,9 +143,10 @@ case class LogisticRegressionModelTrainer(
         // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
         Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
       } else {
-        val sampleSizeApprox = 100000
+        val sampleSizeApprox = LoggedEnvironment.envOrElse("KITE_ZVALUE_SAMPLE", "100000").toInt
         val fraction = (sampleSizeApprox.toDouble / predictions.count()) min 1.0
         val sample = predictions.sample(withReplacement = false, fraction)
+        sample.persist(StorageLevel.DISK_ONLY)
         val vectors = sample.rdd.map(_.getAs[ml.linalg.Vector]("features"))
         val probability = sample.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
         // The constant field is added in order to get the statistics of the intercept.
