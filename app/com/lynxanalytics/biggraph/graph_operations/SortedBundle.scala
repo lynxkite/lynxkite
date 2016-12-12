@@ -1,4 +1,4 @@
-// Builds a graph from a set of edges provided as a vertex set and two string attributes (src/dst).
+// Creates an src -> dst HybridEdgeBundle from an EdgeBundle.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
