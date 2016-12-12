@@ -345,7 +345,7 @@ case class PredictViaNNOnGraphV1(
       }
 
       var gradientsOK = true
-      for (i <- 0 until approximatedGradients.length) {
+      val relativeErrors = (0 until approximatedGradients.length).map { i =>
         approximatedGradients(i).map {
           case (name, value) =>
             val otherValue = backPropGradients(i)(name)
@@ -358,10 +358,9 @@ case class PredictViaNNOnGraphV1(
               println(s"Gradient check fails on $name, backprop grad = $otherValue, approximated grad = $value")
               gradientsOK = false
             }
-
-            (name, relativeError)
         }
       }
+      log.debug(s"relativeErrors: $relativeErrors")
       gradientsOK
     }
 
