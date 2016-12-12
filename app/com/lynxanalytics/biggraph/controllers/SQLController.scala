@@ -159,7 +159,7 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
-case class SQLCreateTableResult(fEOption: Option[FEOption], nameClash: Boolean)
+case class SQLCreateEntryResult(fEOption: Option[FEOption], nameClash: Boolean)
 case class SQLCreateViewRequest(
     name: String, privacy: String, dfSpec: DataFrameSpec, overwrite: Boolean) extends ViewRecipe with FrameSettings {
   override def createDataFrame(
@@ -393,7 +393,7 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): SQLCreateTableResult =
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): SQLCreateEntryResult =
     SQLController.saveTable(
       request.createDataFrame(user, request.defaultContext()),
       request.notes,
@@ -443,7 +443,7 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   def exportSQLQueryToTable(
-    user: serving.User, request: SQLExportToTableRequest) = async[SQLCreateTableResult] {
+    user: serving.User, request: SQLExportToTableRequest) = async[SQLCreateEntryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLController.saveTable(
       df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
@@ -545,18 +545,18 @@ object SQLController {
     overwrite: Boolean = false,
     importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager,
-      dataManager: DataManager): SQLCreateTableResult = metaManager.synchronized {
+      dataManager: DataManager): SQLCreateEntryResult = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
-    if (entry.exists && !overwrite) SQLCreateTableResult(None, true)
+    if (entry.exists && !overwrite) SQLCreateEntryResult(None, true)
     else {
       val checkpoint = table.saveAsCheckpoint(notes)
       if (overwrite) entry.remove()
       val frame = entry.asNewTableFrame(checkpoint)
       importConfig.foreach(frame.setImportConfig)
       frame.setupACL(privacy, user)
-      SQLCreateTableResult(
+      SQLCreateEntryResult(
         Some(FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")),
         false)
     }
