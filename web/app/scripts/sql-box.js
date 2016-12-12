@@ -238,7 +238,6 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           scope.inProgress -= 1;
         });
         result.then(function(result) {
-          console.log(result);
           scope.showExportOptions = false;
           scope.success = 'Results exported.';
           if (result && result.download) {
