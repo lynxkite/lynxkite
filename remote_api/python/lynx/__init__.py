@@ -318,6 +318,22 @@ class LynxKite:
         object=object_lookup[entry.objectType](entry)
     ) for entry in result]
 
+  def upload(self, data, name=None):
+    '''Uploads a file that can then be used in import methods.
+
+    Use it to upload small test datasets from local files::
+
+      with open('myfile.csv') as f:
+        view = lk.import_csv(lk.upload(f))
+
+    Or to upload even smaller datasets right from Python::
+
+      view = lk.import_csv(lk.upload('id,name\\n1,Bob'))
+    '''
+    if name is None:
+      name = 'remote-api-upload'  # A hash will be added anyway.
+    return self._post('/ajax/upload', files=dict(file=(name, data))).text
+
 
 class Table:
 
