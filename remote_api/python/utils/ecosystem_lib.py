@@ -44,12 +44,12 @@ class Ecosystem:
     lk_conf = self.lynxkite_config
     if not lk_conf['lynx_release_dir']:
       self.upload_installer_script(
-          lk_conf['lynx_version'],
-          lk_conf['biggraph_releases_dir'])
+          lk_conf['biggraph_releases_dir'],
+          lk_conf['lynx_version'])
     self.upload_tasks()
     self.upload_tools()
     self.download_and_unpack_release(
-        lk_conf['lynx_release_dir'],
+        lk_conf['lynx_releases_dir'],
         lk_conf['lynx_version'])
     self.install_native()
     self.config_and_prepare_native(
