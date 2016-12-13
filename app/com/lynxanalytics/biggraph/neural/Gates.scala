@@ -159,10 +159,11 @@ object Gates {
   case class NeighborsVectorCollection(v: VectorGate) extends VectorsGate {
     def forward(fm: ForwardMemory) = {
       import breeze.linalg._
+      val vd = fm.activation(v)
       fm.vertices.map { id =>
         if (fm.edges(id) == List()) id -> List(0).
           map(_ => DenseVector.zeros[Double](fm.network.size))
-        else id -> fm.edges(id).map(fm.activation(v)(_))
+        else id -> fm.edges(id).map(vd(_))
       }.toMap
     }
     def backward(bm: BackwardMemory, gradients: VectorsGraph) = {
@@ -287,7 +288,6 @@ private case class ForwardMemory(
   def activation(v: VectorGate): VectorGraph = {
     v.newActivationHappened
     vectorCache.getOrElseUpdate(v.id, v.forward(this))
-
   }
   def activation(vs: VectorsGate): VectorsGraph = {
     vs.newActivationHappened
@@ -334,8 +334,9 @@ private case class BackwardMemory(
   def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
     vectorsGradients(vs.id) =
       vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
+    vs.newGradientReceived
     if (vs.receivedGradientCount == vs.activationCount) {
-      vs.backward(this, vectorsGradients(vs.id))
+    vs.backward(this, vectorsGradients(vs.id))
     }
   }
   def add(m: TrainableMatrix, gradient: DoubleMatrix): Unit = {
