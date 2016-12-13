@@ -25,11 +25,9 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
           } else if (p.multipleChoice) {
             scope.params[p.id] = '';
           } else {
-            console.log(p.defaultValue);
             scope.params[p.id] = p.defaultValue;
           }
         }
-        console.log(scope.op.params);
       });
 
       scope.$watch('op.visibleScalars', function() {

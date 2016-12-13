@@ -1214,7 +1214,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false, default = "outgoing edges"))
+      Choice("direction", "Direction",
+        options = Direction.attrOptions, mandatory = false, default = "outgoing edges"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1266,7 +1267,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type",
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false, default = "outgoing edges"))
+      Choice("direction", "Direction",
+        options = Direction.attrOptions, mandatory = false, default = "outgoing edges"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
