@@ -7,14 +7,13 @@ Luigi task based performance tests on it.
 Examples:
 
 Running the default big data tests on the small data set using
-the 1.9.10 native release.
+the current branch of the native release.
 
     ./test_big_data.py
 
-Running all big data tests on the normal data set using the current branch.
+Running all big data tests on the medium data set using the current branch.
 
-    ./test_big_data.py  --dataset normal \
-                        --task AllTests --lynx_release_dir ecosystem/native/dist
+    ./test_big_data.py  --dataset medium --task AllTests
 
 Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
 
@@ -25,16 +24,13 @@ Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
 Running ModularClustering test on the large data set using the current branch
 and downloading application logs from the cluster to `/home/user/cluster-logs`.
 
-    ./test_big_data.py  --dataset large \
-                        --task ModularClustering \
-                        --lynx_release_dir ecosystem/native/dist \
+    ./test_big_data.py  --dataset large --task ModularClustering \
                         --log_dir /home/user/cluster-logs
 
-Running the default big data tests on the normal data set using a cluster
-with 6 nodes (1 master, 5 worker) and the 1.9.6 native release.
+Running the default big data tests on the medium data set using a cluster
+with 6 nodes (1 master, 5 worker) and current branch of the native release.
 
-    ./test_big_data.py  --dataset normal \
-                        --emr_instance_count 6
+    ./test_big_data.py  --dataset medium --emr_instance_count 6
 """
 import argparse
 import os
@@ -46,13 +42,13 @@ from utils.ecosystem_lib import Ecosystem
 
 #  Big data test sets in the  `s3://lynxkite-test-data/` bucket.
 #  fake_westeros_v3_100k_2m     100k vertices, 2m edges (small)
-#  fake_westeros_v3_5m_145m     5m vertices, 145m edges (normal)
+#  fake_westeros_v3_5m_145m     5m vertices, 145m edges (medium)
 #  fake_westeros_v3_10m_303m    10m vertices, 303m edges (large)
 #  fake_westeros_v3_25m_799m    25m vertices 799m edges (xlarge)
 
 test_sets = {
     'small': dict(data='fake_westeros_v3_100k_2m', instances=3),
-    'normal': dict(data='fake_westeros_v3_5m_145m', instances=4),
+    'medium': dict(data='fake_westeros_v3_5m_145m', instances=4),
     'large': dict(data='fake_westeros_v3_10m_303m', instances=8),
     'xlarge': dict(data='fake_westeros_v3_25m_799m', instances=20),
 }
@@ -99,13 +95,13 @@ parser.add_argument(
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_version',
-    default='native-1.9.10.0',
+    default='',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
 parser.add_argument(
     '--lynx_release_dir',
-    default='',
+    default='ecosystem/native/dist',
     help='''If non-empty, then this local directory is directly uploaded instead of
          using LYNX_VERSION and BIGGRAPH_RELEASES_DIR. The directory of the current
          native code is ecosystem/native/dist.''')
@@ -129,7 +125,7 @@ parser.add_argument(
 parser.add_argument(
     '--dataset',
     default='small',
-    help='Test set for big data tests. Possible values: small, normal, large, xlarge.')
+    help='Test set for big data tests. Possible values: small, medium, large, xlarge.')
 parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
