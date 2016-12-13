@@ -22,14 +22,14 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
           var p = scope.op.parameters[i];
           if (scope.params[p.id] !== undefined) {
             // Parameter is set externally.
-          } else if (p.options.length === 0) {
-            scope.params[p.id] = p.defaultValue;
           } else if (p.multipleChoice) {
             scope.params[p.id] = '';
           } else {
-            scope.params[p.id] = p.options[0].id;
+            console.log(p.defaultValue);
+            scope.params[p.id] = p.defaultValue;
           }
         }
+        console.log(scope.op.params);
       });
 
       scope.$watch('op.visibleScalars', function() {
