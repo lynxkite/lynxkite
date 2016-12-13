@@ -312,7 +312,7 @@ EOF
         instance.terminate()
 
   def prompt_delete(self):
-    if self.lynxkite_config['rm']:
+    if self.cluster_config['rm']:
       return True
     print('Terminate instances? [y/N] ', end='')
     choice = input().lower()
