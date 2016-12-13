@@ -59,7 +59,7 @@ class Ecosystem:
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
     self.start_supervisor_native()
 
-  def run_tests(self, results_local_dir, results_name):
+  def run_tests(self, test_config):
     conf = self.cluster_config
     lk_conf = self.lynxkite_config
     print('Running tests on EMR cluster.')
@@ -67,14 +67,16 @@ class Ecosystem:
         self.jdbc_url,
         lk_conf['task_module'],
         lk_conf['task'],
-        lk_conf['dataset'])
+        test_config['dataset'])
     print('Tests are now running in the background. Waiting for results.')
     self.cluster.fetch_output()
-    if not os.path.exists(results_local_dir):
-      os.makedirs(results_local_dir)
+    res_dir = test_config['results_local_dir']
+    res_name = test_config['results_name']
+    if not os.path.exists(res_dir):
+      os.makedirs(res_dir)
     self.cluster.rsync_down(
         '/home/hadoop/test_results.txt',
-        results_local_dir + results_name)
+        res_dir + res_name)
     self.upload_perf_logs_to_gcloud(conf['cluster_name'])
 
   def cleanup(self):
