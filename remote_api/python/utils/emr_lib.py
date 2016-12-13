@@ -91,8 +91,10 @@ class EMRLib:
     for cluster in list['Clusters']:
       if cluster['Name'] == name:
         cluster_id = cluster['Id']
-        print('Reusing existing cluster: ' + cluster_id)
-        return EMRCluster(cluster_id, self)
+        instances = self.emr_client.list_instances(ClusterId=cluster_id)['Instances']
+        if len(instances) == instance_count:
+          print('Reusing existing cluster: ' + cluster_id)
+          return EMRCluster(cluster_id, self)
     print('Creating new cluster.')
     # We're passing these options to the namenode and to the hdfs datanodes so
     # that they will make their monitoring data accessible via the jmx interface.
