@@ -1,7 +1,7 @@
 # Can be set from the command line. E.g.:
 #   make ecosystem-release VERSION=2.0.0
 export VERSION=snapshot
-export BDT=normal  # Big data test test set size.
+export BDT=medium  # Big data test test set size.
 
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
@@ -56,8 +56,4 @@ ecosystem-test: chronomaster-test remote_api-test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
-	./test_ecosystem.py \
-		--lynx_release_dir ecosystem/native/dist \
-		--test \
-		--bigdata \
-		--bigdata_test_set ${BDT}
+	./test_big_data.py --dataset ${BDT}
