@@ -42,14 +42,14 @@ class Ecosystem:
     print('Starting LynxKite on EMR cluster.')
     conf = self.cluster_config
     lk_conf = self.lynxkite_config
-    if not lk_conf['lynx_release_dir']:
+    if lk_conf['lynx_version']:
       self.upload_installer_script(
           lk_conf['biggraph_releases_dir'],
           lk_conf['lynx_version'])
     self.upload_tasks()
     self.upload_tools()
     self.download_and_unpack_release(
-        lk_conf['lynx_releases_dir'],
+        lk_conf['lynx_release_dir'],
         lk_conf['lynx_version'])
     self.install_native()
     self.config_and_prepare_native(
@@ -114,9 +114,7 @@ class Ecosystem:
     self.cluster.rsync_up('tools/performance_collection/', target_dir)
 
   def download_and_unpack_release(self, lynx_release_dir, lynx_version):
-    if lynx_release_dir:
-      self.cluster.rsync_up(lynx_release_dir + '/', '/mnt/lynx')
-    else:
+    if lynx_version:
       self.cluster.ssh('''
         set -x
         cd /mnt
@@ -126,6 +124,8 @@ class Ecosystem:
           tar xfz lynx-{version}.tgz -C lynx --strip-components 1
         fi
         '''.format(version=lynx_version))
+    else:
+      self.cluster.rsync_up(lynx_release_dir + '/', '/mnt/lynx')
 
   def install_native(self):
     self.cluster.rsync_up('python_requirements.txt', '/mnt/lynx')
