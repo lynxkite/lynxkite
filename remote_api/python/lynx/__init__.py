@@ -70,7 +70,7 @@ class LynxKite:
     self._username = username
     self._password = password
     self._certfile = certfile
-    self._cookies = dict()
+    self._session = requests.Session()
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -91,16 +91,15 @@ class LynxKite:
             username=self.username(),
             password=self.password(),
             method='lynxkite'))
-    self._cookies = r.cookies
+    r.raise_for_status()
 
   def _post(self, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     max_tries = 3
     for i in range(max_tries):
-      r = requests.post(
+      r = self._session.post(
           self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
           verify=self.certfile(),
-          cookies=self._cookies,
           allow_redirects=False,
           **kwargs)
       if r.status_code < 400:
