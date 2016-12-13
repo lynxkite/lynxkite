@@ -178,8 +178,8 @@ def results_local_dir(args):
   the number of executors and the name of the test data set.
   '''
   basedir = args.results_dir
-  dataset = test_sets['dataset']['data']
-  instance_count = args.emr_instance_count
+  dataset = test_sets[args.dataset]['data']
+  instance_count = emr_instance_count(args)
   executors = instance_count - 1
   return "{bd}emr_{e}_{i}_{ds}".format(
       bd=basedir,
