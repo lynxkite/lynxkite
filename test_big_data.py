@@ -155,18 +155,20 @@ def main(args):
       'lynx_release_dir': args.lynx_release_dir,
       'task_module': args.task_module,
       'task': args.task,
-      'results_dir': args.results_dir,
       'log_dir': args.log_dir,
-      'dataset': args.dataset,
       's3_data_dir': args.s3_data_dir}
+
+  # Test configuration
+  test_config = {
+      'dataset': test_sets[args.dataset]['data'],
+      'results_local_dir': results_local_dir(args),
+      'results_name': results_name(args)}
 
   # Launch cluster, start ecosystem and run tests.
   ecosystem = Ecosystem(cluster_config, lynxkite_config)
   ecosystem.launch_cluster()
   ecosystem.start()
-  ecosystem.run_tests(
-      results_local_dir(args),
-      results_name(args))
+  ecosystem.run_tests(test_config)
   ecosystem.cleanup()
 
 
