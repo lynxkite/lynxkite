@@ -22,7 +22,7 @@ parser.add_argument(
 parser.add_argument(
     '--emr_instance_count',
     type=int,
-    default=3,
+    default=0,
     help='Number of instances on EMR cluster, including master.' +
     ' Set according to bigdata_test_set by default.')
 parser.add_argument(
@@ -63,9 +63,25 @@ parser.add_argument(
 
 class Ecosystem:
 
-  def __init__(self, cluster_config, lynxkite_config):
-    self.cluster_config = cluster_config
-    self.lynxkite_config = lynxkite_config
+  def __init__(self, args):
+    self.cluster_config = {
+        'cluster_name': args.cluster_name,
+        'ec2_key_file': args.ec2_key_file,
+        'ec2_key_name': args.ec2_key_name,
+        'emr_region': args.emr_region,
+        'emr_instance_count': args.emr_instance_count,
+        'emr_log_uri': args.emr_log_uri,
+        'hdfs_replication': '1',
+        'with_rds': args.with_rds,
+        'rm': args.rm,
+    }
+    self.lynxkite_config = {
+        'biggraph_releases_dir': args.biggraph_releases_dir,
+        'lynx_version': args.lynx_version,
+        'lynx_release_dir': args.lynx_release_dir,
+        'log_dir': args.log_dir,
+        's3_data_dir': args.s3_data_dir,
+    }
     self.cluster = None
     self.instances = []
     self.jdbc_url = ''
@@ -125,8 +141,8 @@ class Ecosystem:
     print('Running tests on EMR cluster.')
     self.start_tests_native(
         self.jdbc_url,
-        lk_conf['task_module'],
-        lk_conf['task'],
+        test_config['task_module'],
+        test_config['task'],
         test_config['dataset'])
     print('Tests are now running in the background. Waiting for results.')
     self.cluster.fetch_output()
