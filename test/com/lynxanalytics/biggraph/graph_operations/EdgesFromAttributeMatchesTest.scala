@@ -19,10 +19,10 @@ class EdgesFromBipartiteAttributeMatchesTest extends FunSuite with TestGraphOp {
   test("example graph") {
     val g1 = ExampleGraph()().result
     val g2 = SmallTestGraph(Map(0 -> Seq(1)))().result
-    val g2g = AddVertexAttribute.run(g2.vs, Map(0 -> "Male", 1 -> "Female"))
+    val g2g = AddVertexAttribute.run(g2.vs, Map(0 -> "Male", 1 -> "Female", 2 -> "Female"))
     val op = EdgesFromBipartiteAttributeMatches[String]()
     val res = op(op.fromAttr, g1.gender)(op.toAttr, g2g).result
-    assert(res.edges.toPairSeq == Seq(0 -> 0, 1 -> 1, 2 -> 0, 3 -> 0))
+    assert(res.edges.toPairSeq == Seq(0 -> 0, 1 -> 1, 1 -> 2, 2 -> 0, 3 -> 0))
   }
 }
 
@@ -47,5 +47,16 @@ class EdgesFromUniqueBipartiteAttributeMatchesTest extends FunSuite with TestGra
       op.fromAttr, graph.name).result
     assert(Seq(Edge(0, 2), Edge(1, 1), Edge(3, 5)) ==
       result.edges.rdd.values.collect.toSeq)
+  }
+}
+
+class EdgesFromLookupAttributeMatchesTest extends FunSuite with TestGraphOp {
+  test("example graph") {
+    val g1 = ExampleGraph()().result
+    val g2 = SmallTestGraph(Map(0 -> Seq(1)))().result
+    val g2g = AddVertexAttribute.run(g2.vs, Map(0 -> "Male", 1 -> "Female"))
+    val op = EdgesFromLookupAttributeMatches()
+    val res = op(op.fromAttr, g1.gender)(op.toAttr, g2g).result
+    assert(res.edges.toPairSeq == Seq(0 -> 0, 1 -> 1, 2 -> 0, 3 -> 0))
   }
 }
