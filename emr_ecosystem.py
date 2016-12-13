@@ -30,27 +30,13 @@ from utils.ecosystem_lib import parser
 
 
 def main(args):
-  # cluster configuration
-  cluster_config = {
-      'cluster_name': args.cluster_name,
-      'ec2_key_file': args.ec2_key_file,
-      'ec2_key_name': args.ec2_key_name,
-      'emr_region': args.emr_region,
-      'emr_instance_count': args.emr_instance_count,
-      'emr_log_uri': args.emr_log_uri,
-      'hdfs_replication': '1',
-      'with_rds': args.with_rds}
-
-  # LynxKite configuration
-  lynxkite_config = {
-      'biggraph_releases_dir': args.biggraph_releases_dir,
-      'lynx_version': args.lynx_version,
-      'lynx_release_dir': args.lynx_release_dir,
-      'log_dir': args.log_dir,
-      's3_data_dir': args.s3_data_dir}
-
+  # For cluster configuration
+  if args.emr_instance_count == 0:
+    args.emr_instance_count = 3
+  # We don't want to stop cluster which was just started.
+  args.rm = False
   # Launch cluster, start ecosystem and run tests.
-  ecosystem = Ecosystem(cluster_config, lynxkite_config)
+  ecosystem = Ecosystem(args)
   ecosystem.launch_cluster()
   ecosystem.start()
   print('''Please don't forget to terminate the instances!''')

@@ -78,36 +78,18 @@ parser.add_argument(
 
 
 def main(args):
-  # cluster configuration
-  cluster_config = {
-      'cluster_name': args.cluster_name,
-      'ec2_key_file': args.ec2_key_file,
-      'ec2_key_name': args.ec2_key_name,
-      'emr_region': args.emr_region,
-      'emr_instance_count': test_sets[args.dataset]['instances'],
-      'emr_log_uri': args.emr_log_uri,
-      'hdfs_replication': '1',
-      'with_rds': args.with_rds,
-      'rm': args.rm}
-
-  # LynxKite configuration
-  lynxkite_config = {
-      'biggraph_releases_dir': args.biggraph_releases_dir,
-      'lynx_version': args.lynx_version,
-      'lynx_release_dir': args.lynx_release_dir,
-      'task_module': args.task_module,
-      'task': args.task,
-      'log_dir': args.log_dir,
-      's3_data_dir': args.s3_data_dir}
-
+  # Cluster config fot tests
+  if args.emr_instance_count == 0:
+    args.emr_instance_count = test_sets[args.dataset]['instances']
   # Test configuration
   test_config = {
+      'task_module': args.task_module,
+      'task': args.task,
       'dataset': test_sets[args.dataset]['data'],
       'results_local_dir': results_local_dir(args),
-      'results_name': results_name(args)}
-
+      'results_name': "/{task}-result.txt".format(task=args.task)}
   # Launch cluster, start ecosystem and run tests.
-  ecosystem = Ecosystem(cluster_config, lynxkite_config)
+  ecosystem = Ecosystem(args)
   ecosystem.launch_cluster()
   ecosystem.start()
   ecosystem.run_tests(test_config)
@@ -129,10 +111,6 @@ def results_local_dir(args):
       i=instance_count,
       ds=dataset,
   )
-
-
-def results_name(args):
-  return "/{task}-result.txt".format(task=args.task)
 
 
 if __name__ == '__main__':
