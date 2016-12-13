@@ -32,13 +32,14 @@ with 6 nodes (1 master, 5 worker) and current branch of the native release.
 
     ./test_big_data.py  --dataset medium --emr_instance_count 6
 """
-import argparse
+
 import os
 import sys
 # Set up import path for our modules.
 os.chdir(os.path.dirname(__file__))
 sys.path.append('remote_api/python')
 from utils.ecosystem_lib import Ecosystem
+from utils.ecosystem_lib import parser
 
 #  Big data test sets in the  `s3://lynxkite-test-data/` bucket.
 #  fake_westeros_v3_100k_2m     100k vertices, 2m edges (small)
@@ -53,58 +54,11 @@ test_sets = {
     'xlarge': dict(data='fake_westeros_v3_25m_799m', instances=20),
 }
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--cluster_name',
-    default=os.environ['USER'] + '-ecosystem-test',
-    help='Name of the cluster to start')
-parser.add_argument(
-    '--ec2_key_file',
-    default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
-parser.add_argument(
-    '--ec2_key_name',
-    default='lynx-cli')
-parser.add_argument(
-    '--emr_region',
-    default='us-east-1',
-    help='Region of the EMR cluster.' +
-    ' Possible values: us-east-1, ap-southeast-1, eu-central-1, ...')
-parser.add_argument(
-    '--emr_instance_count',
-    type=int,
-    default=0,
-    help='Number of instances on EMR cluster, including master.' +
-    ' Set according to bigdata_test_set by default.')
-parser.add_argument(
-    '--emr_log_uri',
-    default='s3://test-ecosystem-log',
-    help='URI of the S3 bucket where the EMR logs will be written.')
-parser.add_argument(
-    '--with_rds',
-    action='store_true',
-    help='Spin up a mysql RDS instance to test database operations.')
+
 parser.add_argument(
     '--rm',
     action='store_true',
     help='''Delete the cluster after completion.''')
-parser.add_argument(
-    '--biggraph_releases_dir',
-    default=os.environ['HOME'] + '/biggraph_releases',
-    help='''Directory containing the downloader script, typically the root of
-         the biggraph_releases repo. The downloader script will have the form of
-         BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
-parser.add_argument(
-    '--lynx_version',
-    default='',
-    help='''Version of the ecosystem release to test. A downloader script of the
-          following form will be used for obtaining the release:
-         BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
-parser.add_argument(
-    '--lynx_release_dir',
-    default='ecosystem/native/dist',
-    help='''If non-empty, then this local directory is directly uploaded instead of
-         using LYNX_VERSION and BIGGRAPH_RELEASES_DIR. The directory of the current
-         native code is ecosystem/native/dist.''')
 parser.add_argument(
     '--task_module',
     default='test_tasks.bigdata_tests',
@@ -118,17 +72,9 @@ parser.add_argument(
     default='./ecosystem/tests/results/',
     help='Test results are downloaded to this directory.')
 parser.add_argument(
-    '--log_dir',
-    default='',
-    help='''Cluster log files are downloaded to this directory.
-    If it is an empty string, no log file is downloaded.''')
-parser.add_argument(
     '--dataset',
     default='small',
     help='Test set for big data tests. Possible values: small, medium, large, xlarge.')
-parser.add_argument(
-    '--s3_data_dir',
-    help='S3 path to be used as non-ephemeral data directory.')
 
 
 def main(args):
@@ -138,7 +84,7 @@ def main(args):
       'ec2_key_file': args.ec2_key_file,
       'ec2_key_name': args.ec2_key_name,
       'emr_region': args.emr_region,
-      'emr_instance_count': emr_instance_count(args),
+      'emr_instance_count': test_sets[args.dataset]['instances'],
       'emr_log_uri': args.emr_log_uri,
       'hdfs_replication': '1',
       'with_rds': args.with_rds,
@@ -175,24 +121,18 @@ def results_local_dir(args):
   '''
   basedir = args.results_dir
   dataset = test_sets[args.dataset]['data']
-  instance_count = emr_instance_count(args)
+  instance_count = test_sets[args.dataset]['instances']
   executors = instance_count - 1
   return "{bd}emr_{e}_{i}_{ds}".format(
       bd=basedir,
       e=executors,
       i=instance_count,
-      ds=dataset
+      ds=dataset,
   )
 
 
 def results_name(args):
-  return "/{task}-result.txt".format(
-      task=args.task
-  )
-
-
-def emr_instance_count(args):
-  return test_sets[args.dataset]['instances']
+  return "/{task}-result.txt".format(task=args.task)
 
 
 if __name__ == '__main__':
