@@ -1215,11 +1215,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
+      val direction = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true)
+      val es = direction.edgeBundle
       val weights =
-        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
-        else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      val es = Direction(params.getOrElse("direction", "outgoing edges"),
-        project.edgeBundle, reversed = true).edgeBundle
+        if (weightsName == FEOption.noWeight.id) es.const(1.0)
+        else direction.pull(project.edgeAttributes(params("weights"))).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, es)(op.weights, weights).result.pagerank, help)
     }
