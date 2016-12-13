@@ -37,8 +37,7 @@ case class ShortestPath(maxIterations: Double)
     val edgeDistance = inputs.edgeDistance.rdd
     // distance: vertex -> (distance, iteration id when this was last updated)
     var distance = inputs.startingDistance.rdd
-    // edges: source vertex -> (dest vertex, edge weight,
-    //                          hop: 0 = artificial loop edge/1 = real edge)
+    // edges: source vertex -> (dest vertex, edge weight)
     val loopEdges = inputs.vs.rdd.map { case (id, _) => (id -> (id, 0.0)) }
     val edgesWithDistance =
       edges.sortedJoin(edgeDistance)

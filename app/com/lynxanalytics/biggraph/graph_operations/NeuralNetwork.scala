@@ -341,7 +341,7 @@ case class PredictViaNNOnGraphV1(
             val rows = values.rows
             val cols = values.cols
             for (row <- 0 until rows; col <- 0 until cols) yield (s"$name $row $col", values(row, col))
-        }.toMap
+        }
       }
 
       var gradientsOK = true
@@ -358,10 +358,9 @@ case class PredictViaNNOnGraphV1(
               println(s"Gradient check fails on $name, backprop grad = $otherValue, approximated grad = $value")
               gradientsOK = false
             }
-
-            (name, relativeError)
-        }.toMap
+        }
       }
+      log.debug(s"relativeErrors: $relativeErrors")
       gradientsOK
     }
 
