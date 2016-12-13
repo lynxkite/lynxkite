@@ -35,7 +35,7 @@ def main(args):
     args.emr_instance_count = 3
   # We don't want to stop cluster which was just started.
   args.rm = False
-  # Launch cluster, start ecosystem and run tests.
+  # Launch cluster and start ecosystem on it.
   ecosystem = Ecosystem(args)
   ecosystem.launch_cluster()
   ecosystem.start()
