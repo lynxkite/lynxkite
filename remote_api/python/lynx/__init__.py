@@ -101,8 +101,9 @@ class LynxKite:
           self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
           verify=self.certfile(),
           cookies=self._cookies,
+          allow_redirects=False,
           **kwargs)
-      if r.status_code == 200:
+      if r.status_code < 400:
         return r
       if r.status_code == 401 and i + 1 < max_tries:  # Unauthorized.
         self._login()
