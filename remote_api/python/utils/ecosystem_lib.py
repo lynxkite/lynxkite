@@ -235,6 +235,8 @@ class Ecosystem:
     self.cluster.ssh('''
       cd /mnt/lynx
       echo 'Setting up environment variables.'
+      # Set HADOOP_CONF_DIR before anything else.
+      sed -i '1s;^;export HADOOP_CONF_DIR=/etc/hadoop/conf\\n;' config/central
       # Removes the given and following lines so config/central does not grow constantly.
       sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
       cat >>config/central <<'EOF'
@@ -249,8 +251,6 @@ class Ecosystem:
         {data_dir_config}
         export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
         export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
-        export HADOOP_CONF_DIR=/etc/hadoop/conf
-        export YARN_CONF_DIR=$HADOOP_CONF_DIR
         export LYNX=/mnt/lynx
         #for tests with mysql server on master
         export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
