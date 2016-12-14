@@ -1984,7 +1984,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
-      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No double vertex attributes")
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No double edge attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
       val op = graph_operations.SplitEdges()
       op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
@@ -1993,7 +1993,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val rep = params("rep")
       val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
 
-      project.pullBackEdges(project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
+      project.pullBackEdges(
+        project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
       project.edgeAttributes(params("idx")) = split.indexAttr
     }
   })
