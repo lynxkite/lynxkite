@@ -39,7 +39,7 @@ import sys
 os.chdir(os.path.dirname(__file__))
 sys.path.append('remote_api/python')
 from utils.ecosystem_lib import Ecosystem
-from utils.ecosystem_lib import parser
+from utils.ecosystem_lib import arg_parser
 
 #  Big data test sets in the  `s3://lynxkite-test-data/` bucket.
 #  fake_westeros_v3_100k_2m     100k vertices, 2m edges (small)
@@ -55,23 +55,29 @@ test_sets = {
 }
 
 
-parser.add_argument(
+arg_parser.add_argument(
+    '--emr_instance_count',
+    type=int,
+    default=0,
+    help='Number of instances on EMR cluster, including master.' +
+    ' Set according to dataset and test_sets by default.')
+arg_parser.add_argument(
     '--rm',
     action='store_true',
     help='''Delete the cluster after completion.''')
-parser.add_argument(
+arg_parser.add_argument(
     '--task_module',
     default='test_tasks.bigdata_tests',
     help='Module of the luigi task which will run on the cluster.')
-parser.add_argument(
+arg_parser.add_argument(
     '--task',
     default='DefaultTests',
     help='Luigi task to run when the cluster is started.')
-parser.add_argument(
+arg_parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/',
     help='Test results are downloaded to this directory.')
-parser.add_argument(
+arg_parser.add_argument(
     '--dataset',
     default='small',
     help='Test set for big data tests. Possible values: small, medium, large, xlarge.')
@@ -114,5 +120,5 @@ def results_local_dir(args):
 
 
 if __name__ == '__main__':
-  args = parser.parse_args()
+  args = arg_parser.parse_args()
   main(args)
