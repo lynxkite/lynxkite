@@ -170,7 +170,9 @@ object Gates {
       val ngrad: VectorGraph = gradients.toSeq.flatMap {
         case (id, gs) => bm.edges(id).zip(gs)
       }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-      if (ngrad.nonEmpty) bm.add(v, ngrad)
+      if (ngrad.nonEmpty) {
+        bm.add(v, ngrad)
+      } else v.newGradientReceived
     }
   }
   case class Input(name: String) extends VectorGate {
@@ -332,19 +334,21 @@ private case class BackwardMemory(
     }
   }
   def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
+    vs.newGradientReceived
     vectorsGradients(vs.id) =
       vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
-    vs.newGradientReceived
     if (vs.receivedGradientCount == vs.activationCount) {
-    vs.backward(this, vectorsGradients(vs.id))
+      vs.backward(this, vectorsGradients(vs.id))
     }
   }
   def add(m: TrainableMatrix, gradient: DoubleMatrix): Unit = {
-    trainedGradients(m.name) = gradient
+    trainedGradients(m.name) =
+      trainedGradients.get(m.name).map(_ + gradient).getOrElse(gradient)
   }
   def add(v: TrainableVector, gradient: DoubleVector): Unit = {
     val mgrad = gradient.asDenseMatrix.t
-    trainedGradients(v.name) = mgrad
+    trainedGradients(v.name) =
+      trainedGradients.get(v.name).map(_ + mgrad).getOrElse(mgrad)
   }
 
   def gradients = new NetworkGradients(
