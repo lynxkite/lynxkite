@@ -2,61 +2,55 @@ from utils.emr_lib import EMRLib
 import os
 import argparse
 
-parser = argparse.ArgumentParser()
+arg_parser = argparse.ArgumentParser()
 
-parser.add_argument(
+arg_parser.add_argument(
     '--cluster_name',
     default=os.environ['USER'] + '-ecosystem-test',
     help='Name of the cluster to start')
-parser.add_argument(
+arg_parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
-parser.add_argument(
+arg_parser.add_argument(
     '--ec2_key_name',
     default='lynx-cli')
-parser.add_argument(
+arg_parser.add_argument(
     '--emr_region',
     default='us-east-1',
     help='Region of the EMR cluster.' +
     ' Possible values: us-east-1, ap-southeast-1, eu-central-1, ...')
-parser.add_argument(
-    '--emr_instance_count',
-    type=int,
-    default=0,
-    help='Number of instances on EMR cluster, including master.' +
-    ' Set according to bigdata_test_set by default.')
-parser.add_argument(
+arg_parser.add_argument(
     '--emr_log_uri',
     default='s3://test-ecosystem-log',
     help='URI of the S3 bucket where the EMR logs will be written.')
-parser.add_argument(
+arg_parser.add_argument(
     '--with_rds',
     action='store_true',
     help='Spin up a mysql RDS instance to test database operations.')
-parser.add_argument(
+arg_parser.add_argument(
     '--biggraph_releases_dir',
     default=os.environ['HOME'] + '/biggraph_releases',
     help='''Directory containing the downloader script, typically the root of
          the biggraph_releases repo. The downloader script will have the form of
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
-parser.add_argument(
+arg_parser.add_argument(
     '--lynx_version',
     default='',
     help='''Version of the ecosystem release to test. A downloader script of the
           following form will be used for obtaining the release:
          BIGGRAPH_RELEASES_DIR/download-lynx-LYNX_VERSION.sh''')
-parser.add_argument(
+arg_parser.add_argument(
     '--lynx_release_dir',
     default='ecosystem/native/dist',
     help='''If non-empty, then this local directory is directly uploaded instead of
          using LYNX_VERSION and BIGGRAPH_RELEASES_DIR. The directory of the current
          native code is ecosystem/native/dist.''')
-parser.add_argument(
+arg_parser.add_argument(
     '--log_dir',
     default='',
     help='''Cluster log files are downloaded to this directory.
     If it is an empty string, no log file is downloaded.''')
-parser.add_argument(
+arg_parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
 
@@ -236,7 +230,10 @@ class Ecosystem:
       cd /mnt/lynx
       echo 'Setting up environment variables.'
       # Set HADOOP_CONF_DIR before anything else.
-      sed -i '1s;^;export HADOOP_CONF_DIR=/etc/hadoop/conf\\n;' config/central
+      if ! head -n1 config/central | grep -q "export HADOOP_CONF_DIR=/etc/hadoop/conf"
+      then
+        sed -i '1s;^;export HADOOP_CONF_DIR=/etc/hadoop/conf\\n;' config/central
+      fi
       # Removes the given and following lines so config/central does not grow constantly.
       sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
       cat >>config/central <<'EOF'
