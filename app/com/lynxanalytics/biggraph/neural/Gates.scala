@@ -334,9 +334,9 @@ private case class BackwardMemory(
     }
   }
   def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
-    vs.newGradientReceived
     vectorsGradients(vs.id) =
       vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
+    vs.newGradientReceived
     if (vs.receivedGradientCount == vs.activationCount) {
       vs.backward(this, vectorsGradients(vs.id))
     }
