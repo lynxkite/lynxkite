@@ -76,11 +76,16 @@ case class RandomWalkSample(restartProbability: Double,
     // samples at max requestedSampleSize nodes, less if it can't find enough
     def sample(requestedSampleSize: Int, startNodeID: ID, seed: Int)
               (implicit inputDatas: DataSet, rc: RuntimeContext) = {
-      implicit val id = inputDatas
-      implicit val runtimeContext = rc
+      val (initialState, stepsNeeded) = init(requestedSampleSize, startNodeID)
       val rnd = new Random(seed)
+      val finalState = Iterator.tabulate(stepsNeeded) {
+        _ => rnd.nextInt()
+      }.foldLeft(initialState) { step }
+      // we are cheating here: with 0.01 probability some walks haven't died yet but we consider them dead at this point
+      turnToSample(finalState)
+    }
 
-      val startNodeId = nodes.takeSample(withReplacement = false, 1, rnd.nextLong()).head._1
+    private def init(requestedSampleSize: Int, startNodeID: ID)(implicit rc: RuntimeContext) = {
       // 3 is an arbitrary number
       val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt
       val epsilon = 0.01
@@ -89,38 +94,31 @@ case class RandomWalkSample(restartProbability: Double,
       // the steps needed for the previous probability to be smaller than epsilon is
       // log_{1 - restartProbability}(1 - (1 - epsilon)^{1/n})
       // by applying the logarithmic identities it can be turned to the following form
-      val numSteps =
-        Math.ceil(Math.log(1 - Math.pow(1 - epsilon, 1/numWalkers)) / Math.log(1 - restartProbability)).toInt
+      val stepsNeeded =
+        Math.ceil(Math.log(1 - Math.pow(1 - epsilon, 1 / numWalkers)) / Math.log(1 - restartProbability)).toInt
       val initialState = {
         val partitioner = rc.partitionerForNRows(numWalkers)
-        rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions).map(_ => WalkState(startNodeId))
+        rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions).map(_ => WalkState(startNodeID))
       }
-      val finalState = Iterator.tabulate(numSteps) {
-        _ => rnd.nextInt()
-      }.foldLeft(initialState) { step }
-
-      // we are cheating here: with 0.01 probability some walks haven't died yet but we consider them dead at this point
-      turnToSample(finalState)
+      (initialState, stepsNeeded)
     }
 
-    private def step(state: RDD[WalkState], seed: Int) = {
-      state.map {
-        case s @ WalkState(nodeIds, _, _) => (nodeIds.head, s)
-      }.join(outEdges).mapPartitionsWithIndex {
-        case (pid, it) =>
-          val rnd = new Random((pid << 16) + seed)
-          it.map {
-            case (_, (s @ WalkState(_, _, true), _)) => s
-            case (_, (s, edgesFromHere)) =>
-              if (rnd.nextDouble() < restartProbability) {
-                s.die
-              }
-              else {
-                val rndIndx = rnd.nextInt(edgesFromHere.length)
-                (s.walk _).tupled(edgesFromHere(rndIndx))
-              }
-          }
-      }
+    private def step(state: RDD[WalkState], seed: Int) = state.map {
+      case s @ WalkState(nodeIds, _, _) => (nodeIds.head, s)
+    }.join(outEdges).mapPartitionsWithIndex {
+      case (pid, it) =>
+        val rnd = new Random((pid << 16) + seed)
+        it.map {
+          case (_, (s @ WalkState(_, _, true), _)) => s
+          case (_, (s, edgesFromHere)) =>
+            if (rnd.nextDouble() < restartProbability) {
+              s.die
+            }
+            else {
+              val rndIdx = rnd.nextInt(edgesFromHere.length)
+              (s.walk _).tupled(edgesFromHere(rndIdx))
+            }
+        }
     }
 
     // FIXME: add real implementation
