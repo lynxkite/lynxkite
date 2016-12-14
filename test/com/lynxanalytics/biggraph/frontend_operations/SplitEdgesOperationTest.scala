@@ -6,8 +6,10 @@ class SplitEdgesOperationTest extends OperationsTestBase {
   test("Split edges") {
     run("Example Graph")
     run("Split edges", Map("rep" -> "weight", "idx" -> "index"))
-    val merged = project.edgeAttributes("weight").runtimeSafeCast[Double]
-    assert(merged.rdd.values.collect.toSeq.sorted == Seq(1L, 2L, 2L, 3L, 3L, 3L, 4L, 4L, 4L, 4L))
+    val weight = project.edgeAttributes("weight").runtimeSafeCast[Double]
+    assert(weight.rdd.values.collect.toSeq.sorted == Seq(1, 2, 2, 3, 3, 3, 4, 4, 4, 4))
+    val index = project.edgeAttributes("index").runtimeSafeCast[Long]
+    assert(index.rdd.values.collect.toSeq.sorted == Seq(0, 0, 0, 0, 1, 1, 1, 2, 2, 3))
   }
 }
 
