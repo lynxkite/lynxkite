@@ -1970,12 +1970,31 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val rep = params("rep")
-
       val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
       project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
+    }
+  })
+
+  register("Split edges", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice("rep", "Repetition attribute", options = edgeAttributes[Double]),
+      Param("idx", "Index attribute name", defaultValue = "index"))
+
+    def enabled =
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No double vertex attributes")
+    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
+      val op = graph_operations.SplitEdges()
+      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
+    }
+    def apply(params: Map[String, String]) = {
+      val rep = params("rep")
+      val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
+
+      project.pullBackEdges(project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
+      project.edgeAttributes(params("idx")) = split.indexAttr
     }
   })
 
