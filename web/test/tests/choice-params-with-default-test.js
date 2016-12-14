@@ -8,19 +8,20 @@ module.exports = function(fw) {
     'test pagerank default choice values',
     function() {
       lib.left.runOperation('example graph');
-      lib.left.runOperation(
-          'pagerank',
-           {
+      lib.left.runOperation('pagerank',
+          {
             name: 'page_rank_default',
           });
-      lib.left.runOperation(
-          'pagerank',
-           {
+      lib.left.runOperation('pagerank',
+          {
             name: 'page_rank_incoming',
             direction: 'incoming edges',
           });
     },
     function() {
+      expect(
+        lib.left.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
+        lib.left.vertexAttribute('page_rank_default').getHistogramValues());
       lib.left.history.open();
       lib.left.history.expectOperationSelectParameter(1, 'direction', 'string:outgoing edges');
       lib.left.history.expectOperationSelectParameter(2, 'direction', 'string:incoming edges');
