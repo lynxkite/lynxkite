@@ -33,16 +33,11 @@ object OperationParams {
       id: String,
       title: String,
       options: List[FEOption],
-      default: String = "",
       multipleChoice: Boolean = false,
       allowUnknownOption: Boolean = false,
       mandatory: Boolean = true) extends OperationParameterMeta {
     val kind = "choice"
-    val defaultValue = if (default.nonEmpty) {
-      default
-    } else {
-      options.headOption.map(_.id).getOrElse("")
-    }
+    val defaultValue = options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
@@ -1215,7 +1210,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
       Choice("direction", "Direction",
-        options = Direction.attrOptions, mandatory = false, default = "outgoing edges"))
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1268,7 +1263,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
       Choice("direction", "Direction",
-        options = Direction.attrOptions, mandatory = false, default = "outgoing edges"))
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
@@ -3502,6 +3497,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    def attrOptionsWithDefault(default: String): List[FEOption] = {
+      assert(attrOptions.map(_.id).contains(default), s"$default not in $attrOptions")
+      FEOption.list(default) ++ attrOptions.filter(_.id != default)
+    }
     // Options suitable when only neighbors are involved.
     val neighborOptions = FEOption.list(
       "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
