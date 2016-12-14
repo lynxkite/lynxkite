@@ -54,6 +54,7 @@ object Gates {
   */
   trait Gate[Output] extends Product {
     // Plain toString on case classes is enough to uniquely identify vectors.
+    private[neural] lazy val id = this.toString
     private[neural] def id = this.toString
     private[neural] var activationCount: Int = 0
     private[neural] def newActivationHappened = {
