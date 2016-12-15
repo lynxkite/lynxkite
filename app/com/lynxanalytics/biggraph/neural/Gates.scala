@@ -170,9 +170,12 @@ object Gates {
       val ngrad: VectorGraph = gradients.toSeq.flatMap {
         case (id, gs) => bm.edges(id).zip(gs)
       }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-      if (ngrad.nonEmpty) {
-        bm.add(v, ngrad)
-      } else v.newGradientReceived
+      val paddedNgrad = bm.vertices.map { id =>
+        if (bm.edges(id) == List()) id -> List(0).
+          map(_ => DenseVector.zeros[Double](bm.network.size))
+        else id -> ngrad(id)
+      }.toMap
+      bm.add(v, ngrad)
     }
   }
   case class Input(name: String) extends VectorGate {
@@ -289,11 +292,17 @@ private case class ForwardMemory(
   }
   def activation(v: VectorGate): VectorGraph = {
     v.newActivationHappened
-    vectorCache.getOrElseUpdate(v.id, v.forward(this))
+    vectorCache.getOrElseUpdate(v.id, {
+      v.activationCount = 1
+      v.forward(this)
+    })
   }
   def activation(vs: VectorsGate): VectorsGraph = {
     vs.newActivationHappened
-    vectorsCache.getOrElseUpdate(vs.id, vs.forward(this))
+    vectorsCache.getOrElseUpdate(vs.id, {
+      vs.activationCount = 1
+      vs.forward(this)
+    })
   }
   def apply(m: TrainableMatrix): DoubleMatrix = network(m)
   def apply(v: TrainableVector): DoubleVector = network(v)(::, 0)
@@ -327,7 +336,10 @@ private case class BackwardMemory(
 
   def add(v: VectorGate, gradient: VectorGraph): Unit = {
     vectorGradients(v.id) =
-      vectorGradients.get(v.id).map(_ + gradient).getOrElse(gradient)
+      vectorGradients.get(v.id).map(_ + gradient).getOrElse {
+        v.receivedGradientCount = 0
+        gradient
+      }
     v.newGradientReceived
     if (v.receivedGradientCount == v.activationCount) {
       v.backward(this, vectorGradients(v.id))
@@ -335,7 +347,10 @@ private case class BackwardMemory(
   }
   def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
     vectorsGradients(vs.id) =
-      vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
+      vectorsGradients.get(vs.id).map(_ + gradients).getOrElse {
+        vs.receivedGradientCount = 0
+        gradients
+      }
     vs.newGradientReceived
     if (vs.receivedGradientCount == vs.activationCount) {
       vs.backward(this, vectorsGradients(vs.id))
