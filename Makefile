@@ -1,7 +1,7 @@
 # Can be set from the command line. E.g.:
 #   make ecosystem-release VERSION=2.0.0
 export VERSION=snapshot
-export BDT=medium  # Big data test test set size.
+export TEST_SET_SIZE=medium
 
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
@@ -60,6 +60,6 @@ ecosystem-test: chronomaster-test remote_api-test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
-	./test_big_data.py --dataset ${BDT}
+	./test_big_data.py --test_set_size ${TEST_SET_SIZE}
 .PHONY: statter
 statter: .build/statter-done
