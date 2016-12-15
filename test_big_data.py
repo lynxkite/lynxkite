@@ -7,28 +7,32 @@ Luigi task based performance tests on it.
 Examples:
 
 Running the default big data tests on the small data set using
-the current branch of the native release.
+the current branch of the native release:
 
     ./test_big_data.py
 
-Running all big data tests on the medium data set using the current branch.
+
+Running all big data tests on the medium data set using the current branch:
 
     ./test_big_data.py  --dataset medium --task AllTests
 
-Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5.
+
+Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5:
 
     ./test_big_data.py  --cluster_name JDBC-test-cluster \
                         --with_rds --lynx_version native-1.9.5 \
                         --task_module test_tasks.jdbc --task JDBCTestAll
 
+
 Running ModularClustering test on the large data set using the current branch
-and downloading application logs from the cluster to `/home/user/cluster-logs`.
+and downloading application logs from the cluster to `/home/user/cluster-logs`:
 
     ./test_big_data.py  --dataset large --task ModularClustering \
                         --log_dir /home/user/cluster-logs
 
+
 Running the default big data tests on the medium data set using a cluster
-with 6 nodes (1 master, 5 worker) and current branch of the native release.
+with 6 nodes (1 master, 5 worker) and current branch of the native release:
 
     ./test_big_data.py  --dataset medium --emr_instance_count 6
 """
