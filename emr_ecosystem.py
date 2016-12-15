@@ -7,12 +7,13 @@ LynxKite ecosystem on it.
 Examples:
 
 Launching cluster with 3 instances and using the currently checked out code
-of LynxKite ecosystem.
+of LynxKite ecosystem:
 
     ./emr_ecosystem.py
 
+
 Launching cluster named `emr-lynx-cluster` with 5 instances
-and using the native 1.10.0 version of LynxKite ecosystem.
+and using the native 1.10.0 version of LynxKite ecosystem:
 
     ./emr_ecosystem.py --cluster_name emr-lynx-cluster \
                        --emr_instance_count 5 \
