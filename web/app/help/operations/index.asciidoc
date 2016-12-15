@@ -325,6 +325,8 @@ include::shortest-path.asciidoc[]
 
 include::snowball-sample.asciidoc[]
 
+include::split-edges.asciidoc[]
+
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
