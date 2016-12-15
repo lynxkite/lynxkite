@@ -2,6 +2,8 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -38,13 +40,13 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
     val requestedNumberOfVerticesWithIndex =
       repetitionAttr.flatMapValues { numRepetitions => (1.toLong to numRepetitions) }
 
-    val partitioner =
-      rc.partitionerForNRows(requestedNumberOfVerticesWithIndex.count)
+    val partitioner = rc.partitionerForNRows(repetitionAttr.values.reduce(_ + _)) // Attr is Long.
 
     val newIdAndOldIdAndZeroBasedIndex =
       requestedNumberOfVerticesWithIndex
         .map { case (oldId, index) => (oldId, index - 1) }
         .randomNumbered(partitioner)
+        .persist(spark.storage.StorageLevel.DISK_ONLY)
 
     output(o.newVertices,
       newIdAndOldIdAndZeroBasedIndex
@@ -55,6 +57,5 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
     output(o.indexAttr,
       newIdAndOldIdAndZeroBasedIndex
         .mapValues { case (_, idx) => idx })
-
   }
 }
