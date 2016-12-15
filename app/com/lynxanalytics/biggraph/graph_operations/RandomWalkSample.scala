@@ -153,9 +153,9 @@ case class RandomWalkSample(restartProbability: Double,
       case WalkState(nodeIds, edgeIds, _) => nodeIds.zip(edgeIds).reverse
     }
 
-    private def tillNthUniqueNode(walk: RDD[(ID, ID)], n: Long) = {
+    private def tillNthUniqueNode(walk: RDD[(ID, Option[ID])], n: Long) = {
       val indexedSteps = walk.zipWithIndex().map {
-        case ((nodeId, edgeId), idx) => (nodeId, edgeId, idx)
+        case ((nodeId, optionalEdgeId), idx) => (nodeId, optionalEdgeId, idx)
       }
 
       // lastStepIdx = the index of the step when the requestedSampleSize-th unique node is visited
@@ -170,15 +170,15 @@ case class RandomWalkSample(restartProbability: Double,
       }.keys.keys.max()
 
       indexedSteps.filter {
-        case (_, _, idx) => idx < lastStepIdx
+        case (_, _, idx) => idx <= lastStepIdx
       }.map {
         case (nodeId, edgeId, _) => (nodeId, edgeId)
       }
     }
 
-    private def turnToSample(walk: RDD[(ID, ID)]) = {
+    private def turnToSample(walk: RDD[(ID, Option[ID])]) = {
       val nodesInSample = walk.map(_._1).distinct().map((_, true)).sortUnique(nodes.partitioner.get)
-      val edgesInSample = walk.map(_._2).distinct().map((_, true)).sortUnique(edges.partitioner.get)
+      val edgesInSample = walk.map(_._2).filter(_.isDefined).map(_.get).distinct().map((_, true)).sortUnique(edges.partitioner.get)
       val allNodesMarked = nodes.sortedLeftOuterJoin(nodesInSample).mapValues {
         case (_, optional) => optional.getOrElse(false)
       }
@@ -191,12 +191,12 @@ case class RandomWalkSample(restartProbability: Double,
 }
 
 object WalkState {
-  def apply(startNode: ID): WalkState = new WalkState(List(startNode), Nil, died = false)
+  def apply(startNode: ID): WalkState = new WalkState(List(startNode), List(None), died = false)
 }
-case class WalkState(nodeIds: List[ID], edgeIds: List[ID], died: Boolean) {
+case class WalkState(nodeIds: List[ID], edgeIds: List[Option[ID]], died: Boolean) {
   def walk(toNode: ID, onEdge: ID) = {
     require(!died)
-    WalkState(toNode :: nodeIds, onEdge :: edgeIds, died = false)
+    WalkState(toNode :: nodeIds, Some(onEdge) :: edgeIds, died = false)
   }
   def die = WalkState(nodeIds, edgeIds, died = true)
 }
