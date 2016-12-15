@@ -1447,7 +1447,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
-      Choice("defined-attrs", "Only run on defined attributes",
+      Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
@@ -1461,7 +1461,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val vertexSet = project.vertexSet
       val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
-      val onlyOnDefinedAttrs = params.getOrElse("defined-attrs", "true").toBoolean
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
@@ -1479,7 +1479,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
-      Choice("defined-attrs", "Only run on defined attributes",
+      Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
@@ -1508,7 +1508,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
-      val onlyOnDefinedAttrs = params.getOrElse("defined-attrs", "true").toBoolean
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
