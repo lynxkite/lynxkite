@@ -20,18 +20,14 @@ object RandomWalkSample extends OpFromJson {
     (j \ "restartProbability").as[Double],
     (j \ "requestedSampleSize").as[Long],
     (j \ "seed").as[Int])
-  def apply(restartProbability: Double, requestedSampleSize: Long, seed: Int) =
-    new RandomWalkSample(restartProbability, requestedSampleSize, seed)
 }
 import com.lynxanalytics.biggraph.graph_operations.RandomWalkSample._
 case class RandomWalkSample(restartProbability: Double,
                             requestedSampleSize: Long,
                             seed: Int)
-  extends TypedMetaGraphOp[Input, Output] {
+    extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
-  @transient lazy val nodes = inputs.vs.rdd
-  @transient lazy val edges = inputs.es.rdd
   val maxIteration = 10
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -42,14 +38,17 @@ case class RandomWalkSample(restartProbability: Double,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    if (nodes.count() <= requestedSampleSize ) {
+    implicit val id = inputDatas
+    implicit val runtimeContext = rc
+    val nodes = inputs.vs.rdd
+    val edges = inputs.es.rdd
+
+    if (nodes.count() <= requestedSampleSize) {
       output(o.verticesInSample, nodes.mapValues(_ => 1.0))
       output(o.edgesInSample, edges.mapValues(_ => 1.0))
       return
     }
 
-    implicit val id = inputDatas
-    implicit val runtimeContext = rc
     val rnd = new Random(seed)
     var nodesInSample = nodes.mapValues(_ => false)
     var edgesInSample = edges.mapValues(_ => false)
@@ -60,14 +59,14 @@ case class RandomWalkSample(restartProbability: Double,
       }.groupByKey().map {
         case (id, it) => (id, it.toArray)
       }.sortUnique(edges.partitioner.get)
-      new Sampler(outEdgesPerNode)
+      new Sampler(outEdgesPerNode, nodes, edges)
     }
 
     var actualSampleSize = 0L
     var iterationCnt = 0
     while (actualSampleSize < requestedSampleSize && iterationCnt < maxIteration) {
       val (newSampleNodes, newSampleEdges) =
-        sampler.sample(requestedSampleSize - actualSampleSize, randomNode(rnd.nextLong()), rnd.nextInt())
+        sampler.sample(requestedSampleSize - actualSampleSize, randomNode(nodes, rnd.nextLong()), rnd.nextInt())
       nodesInSample = nodesInSample.sortedJoin(newSampleNodes).mapValues {
         case (isInPreviousSample, isInNewSample) => isInPreviousSample || isInNewSample
       }
@@ -81,13 +80,12 @@ case class RandomWalkSample(restartProbability: Double,
     output(o.edgesInSample, edgesInSample.mapValues(if (_) 1.0 else 0.0))
   }
 
-  private def randomNode(seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
+  private def randomNode(nodes: VertexSetRDD, seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  class Sampler(outEdgesPerNode: UniqueSortedRDD[ID, Array[(ID, ID)]]) {
+  class Sampler(outEdgesPerNode: UniqueSortedRDD[ID, Array[(ID, ID)]], nodes: VertexSetRDD, edges: EdgeBundleRDD) {
 
     // samples at max requestedSampleSize unique nodes, less if it can't find enough
-    def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int)
-              (implicit inputDatas: DataSet, rc: RuntimeContext) = {
+    def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
       // 3 is an arbitrary number
       val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt
 
@@ -133,8 +131,7 @@ case class RandomWalkSample(restartProbability: Double,
           case (_, ((s, walkIdx), edgesFromHere)) =>
             if (rnd.nextDouble() < restartProbability) {
               (s.die, walkIdx)
-            }
-            else {
+            } else {
               val rndIdx = rnd.nextInt(edgesFromHere.length)
               val (toNode, onEdge) = edgesFromHere(rndIdx)
               (s.walk(toNode, onEdge), walkIdx)
@@ -184,7 +181,7 @@ case class RandomWalkSample(restartProbability: Double,
     private object WalkState {
       def apply(startNode: ID): WalkState = new WalkState(List(startNode), Nil, died = false)
     }
-    private case class WalkState(nodeIds: List[ID], edgeIds:List[ID], died: Boolean) {
+    private case class WalkState(nodeIds: List[ID], edgeIds: List[ID], died: Boolean) {
       def walk(toNode: ID, onEdge: ID) = {
         require(!died)
         WalkState(toNode :: nodeIds, onEdge :: edgeIds, died = false)
