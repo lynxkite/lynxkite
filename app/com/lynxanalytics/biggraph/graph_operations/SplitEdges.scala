@@ -42,25 +42,24 @@ case class SplitEdges() extends TypedMetaGraphOp[Input, Output] {
 
     val newEdgesWithIndex =
       edges.sortedJoin(repetitionAttr).flatMapValues {
-        case (edge, numRepetitions) => (1.toLong to numRepetitions).map(index => (edge, index))
+        case (edge, numRepetitions) => (0L until numRepetitions).map(index => (edge, index))
       }
 
     val partitioner = rc.partitionerForNRows(repetitionAttr.values.reduce(_ + _)) // Attr is Long.
 
     val newIdAndOldIdAndEdgeAndZeroBasedIndex =
       newEdgesWithIndex
-        .map { case (oldId, (edge, index)) => (oldId, edge, index - 1) }
         .randomNumbered(partitioner)
         .persist(spark.storage.StorageLevel.DISK_ONLY)
 
     output(o.newEdges,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
-        .mapValues { case (_, edge, _) => edge })
+        .mapValues { case (_, (edge, _)) => edge })
     output(o.belongsTo,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
-        .mapValuesWithKeys { case (newId, (oldId, _, idx)) => Edge(newId, oldId) })
+        .mapValuesWithKeys { case (newId, (oldId, (_, idx))) => Edge(newId, oldId) })
     output(o.indexAttr,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
-        .mapValues { case (_, _, idx) => idx })
+        .mapValues { case (_, (_, idx)) => idx })
   }
 }
