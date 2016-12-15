@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.rdd.RDD
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 import scala.util.Random
 
@@ -80,9 +81,9 @@ case class RandomWalkSample(restartProbability: Double,
       val rnd = new Random(seed)
       val finalState = Iterator.tabulate(stepsNeeded) {
         _ => rnd.nextInt()
-      }.foldLeft(initialState) { step }
+      }.foldLeft(initialState) { walkAStep }
       // we are cheating here: with 0.01 probability some walks haven't died yet but we consider them dead at this point
-      turnToSample(finalState)
+      turnToSample(finalState, requestedSampleSize)
     }
 
     private def init(requestedSampleSize: Int, startNodeID: ID)(implicit rc: RuntimeContext) = {
@@ -103,7 +104,7 @@ case class RandomWalkSample(restartProbability: Double,
       (initialState, stepsNeeded)
     }
 
-    private def step(state: RDD[WalkState], seed: Int) = state.map {
+    private def walkAStep(state: RDD[WalkState], seed: Int) = state.map {
       case s @ WalkState(nodeIds, _, _) => (nodeIds.head, s)
     }.join(outEdges).mapPartitionsWithIndex {
       case (pid, it) =>
@@ -121,8 +122,38 @@ case class RandomWalkSample(restartProbability: Double,
         }
     }
 
-    // FIXME: add real implementation
-    private def turnToSample(state: RDD[WalkState]) = (nodes.mapValues(_ => true), edges.mapValues(_ => true))
+    private def turnToSample(state: RDD[WalkState], requestedSampleSize: Int) = {
+      val stepsWithIdx = state.flatMap {
+        case WalkState(nodeIds, edgeIds, _) => nodeIds.zip(edgeIds).reverse
+      }.zipWithIndex().map {
+        case ((nodeId, edgeId), idx) => (nodeId, edgeId, idx)
+      }
+
+      // lastStepIdx = the index of the step when the requestedSampleSize-th unique node is visited
+      val lastStepIdx = stepsWithIdx.map {
+        case (nodeId, _, idx) => (nodeId, idx)
+      }.reduceByKey {
+        case (idx1, idx2) => idx1 min idx2
+      }.map {
+        case (nodeId, firstIdxOfNode) => (firstIdxOfNode, nodeId)
+      }.sortByKey().zipWithIndex().filter {
+        case (_, idx) => idx < requestedSampleSize
+      }.keys.keys.max()
+
+      val nodesAndEdgesInSample = stepsWithIdx.filter {
+        case (_, _, idx) => idx < lastStepIdx
+      }
+
+      val nodesInSample = nodesAndEdgesInSample.map(_._1).distinct().map((_, true)).sortUnique(nodes.partitioner.get)
+      val edgesInSample = nodesAndEdgesInSample.map(_._2).distinct().map((_, true)).sortUnique(edges.partitioner.get)
+      val allNodesMarked = nodes.sortedLeftOuterJoin(nodesInSample).map {
+        case (id, (_, optional)) => (id, optional.getOrElse(false))
+      }
+      val allEdgesMarked = edges.sortedLeftOuterJoin(edgesInSample).map {
+        case (id, (_, optional)) => (id, optional.getOrElse(false))
+      }
+      (allNodesMarked.asUniqueSortedRDD, allEdgesMarked.asUniqueSortedRDD)
+    }
 
     private object WalkState {
       def apply(startNode: ID): WalkState = new WalkState(List(startNode), Nil, died = false)
