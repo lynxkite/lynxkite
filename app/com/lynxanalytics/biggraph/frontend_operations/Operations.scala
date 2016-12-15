@@ -1447,7 +1447,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
-      Choice("defined-attrs", "Only run on defined attributes", options = FEOption.bools, mandatory = false),
+      Choice("defined-attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
@@ -1478,7 +1479,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
-      Choice("defined-attrs", "Only run on defined attributes", options = FEOption.bools, mandatory = false),
+      Choice("defined-attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
