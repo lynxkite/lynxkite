@@ -674,6 +674,12 @@ class RootProject(SubProject):
     '''Runs SQL queries.'''
     return self.project_checkpoint.sql(query)
 
+  def df(self, query):
+    '''Runs SQL queries.'''
+    import pandas
+    d = self.sql(query).take(-1)
+    return pandas.DataFrame(d)
+
   def save(self, name, writeACL=None, readACL=None):
     '''Saves the project under given name, with given writeACL and readACL.'''
     self.project_checkpoint.save(name, writeACL, readACL)
