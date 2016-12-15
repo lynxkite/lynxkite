@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{RDD, ShuffledRDD}
 
 import scala.util.Random
 
@@ -59,7 +59,7 @@ case class RandomWalkSample(restartProbability: Double,
       }.groupByKey().map {
         case (id, it) => (id, it.toArray)
       }.sortUnique(edges.partitioner.get)
-      new Sampler(outEdgesPerNode, nodes, edges)
+      new Sampler(nodes, edges, outEdgesPerNode)
     }
 
     var actualSampleSize = 0L
@@ -82,12 +82,11 @@ case class RandomWalkSample(restartProbability: Double,
 
   private def randomNode(nodes: VertexSetRDD, seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  class Sampler(outEdgesPerNode: UniqueSortedRDD[ID, Array[(ID, ID)]], nodes: VertexSetRDD, edges: EdgeBundleRDD) {
-
+  class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, outEdgesPerNode: UniqueSortedRDD[ID, Array[(ID, ID)]]) {
     // samples at max requestedSampleSize unique nodes, less if it can't find enough
     def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
       // 3 is an arbitrary number
-      val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt
+      val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt max 1
 
       val stepsNeeded = {
         val epsilon = 0.01
@@ -99,16 +98,18 @@ case class RandomWalkSample(restartProbability: Double,
         Math.ceil(Math.log(1 - Math.pow(1 - epsilon, 1 / numWalkers)) / Math.log(1 - restartProbability)).toInt
       }
 
-      val initialState = {
-        val partitioner = rc.partitionerForNRows(numWalkers)
-        rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions).map(_ => WalkState(startNodeID))
-      }.zipWithIndex()
+      val initialState: RDD[(WalkState, Long)] = {
+        val partitioner = outEdgesPerNode.partitioner.get
+        val range = rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions)
+        val statesWithIndex = range.map(_ => WalkState(startNodeID)).zipWithIndex()
+        new ShuffledRDD(statesWithIndex, partitioner)
+      }
 
       val finalState = {
         val rnd = new Random(seed)
         Iterator.tabulate(stepsNeeded) {
           _ => rnd.nextInt()
-        }.foldLeft(initialState)(walkAStep).map {
+        }.foldLeft(initialState)(walkAStep(_, _, outEdgesPerNode, restartProbability)).map {
           case (state, walkIdx) => (walkIdx, state)
         }.sort(initialState.partitioner.get).values
       }
@@ -121,22 +122,31 @@ case class RandomWalkSample(restartProbability: Double,
       turnToSample(walk)
     }
 
-    private def walkAStep(state: RDD[(WalkState, Long)], seed: Int) = state.map {
-      case (s @ WalkState(currentNodeId :: _, _, _), walkIdx) => (currentNodeId, (s, walkIdx))
-    }.sort(state.partitioner.get).sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
-      case (pid, it) =>
-        val rnd = new Random((pid << 16) + seed)
-        it.map {
-          case (_, ((s @ WalkState(_, _, true), walkIdx), _)) => (s, walkIdx)
-          case (_, ((s, walkIdx), edgesFromHere)) =>
-            if (rnd.nextDouble() < restartProbability) {
-              (s.die, walkIdx)
-            } else {
-              val rndIdx = rnd.nextInt(edgesFromHere.length)
-              val (toNode, onEdge) = edgesFromHere(rndIdx)
-              (s.walk(toNode, onEdge), walkIdx)
+    private def walkAStep(state: RDD[(WalkState, Long)],
+                          seed: Int,
+                          outEdgesPerNode: UniqueSortedRDD[ID, Array[(ID, ID)]],
+                          restartProbability: Double) = {
+      val out = state.map {
+        case (s @ WalkState(currentNodeId :: _, _, _), walkIdx) => (currentNodeId, (s, walkIdx))
+      }.sort(state.partitioner.get)
+        .sortedJoin(outEdgesPerNode)
+        .mapPartitionsWithIndex({
+          case (pid, it) =>
+            val rnd = new Random((pid << 16) + seed)
+            it.map {
+              case (_, ((s @ WalkState(_, _, true), walkIdx), _)) => (s, walkIdx)
+              case (_, ((s, walkIdx), edgesFromHere)) =>
+                if (rnd.nextDouble() < restartProbability) {
+                  (s.die, walkIdx)
+                } else {
+                  val rndIdx = rnd.nextInt(edgesFromHere.length)
+                  val (toNode, onEdge) = edgesFromHere(rndIdx)
+                  (s.walk(toNode, onEdge), walkIdx)
+                }
             }
-        }
+        }, preservesPartitioning = true)
+//      out.persist(StorageLevels.DISK_ONLY)
+      out
     }
 
     private def foldToSingleWalk(state: RDD[WalkState]) = state.flatMap {
@@ -169,24 +179,24 @@ case class RandomWalkSample(restartProbability: Double,
     private def turnToSample(walk: RDD[(ID, ID)]) = {
       val nodesInSample = walk.map(_._1).distinct().map((_, true)).sortUnique(nodes.partitioner.get)
       val edgesInSample = walk.map(_._2).distinct().map((_, true)).sortUnique(edges.partitioner.get)
-      val allNodesMarked = nodes.sortedLeftOuterJoin(nodesInSample).map {
-        case (id, (_, optional)) => (id, optional.getOrElse(false))
+      val allNodesMarked = nodes.sortedLeftOuterJoin(nodesInSample).mapValues {
+        case (_, optional) => optional.getOrElse(false)
       }
-      val allEdgesMarked = edges.sortedLeftOuterJoin(edgesInSample).map {
-        case (id, (_, optional)) => (id, optional.getOrElse(false))
+      val allEdgesMarked = edges.sortedLeftOuterJoin(edgesInSample).mapValues {
+        case (_, optional) => optional.getOrElse(false)
       }
-      (allNodesMarked.asUniqueSortedRDD, allEdgesMarked.asUniqueSortedRDD)
-    }
-
-    private object WalkState {
-      def apply(startNode: ID): WalkState = new WalkState(List(startNode), Nil, died = false)
-    }
-    private case class WalkState(nodeIds: List[ID], edgeIds: List[ID], died: Boolean) {
-      def walk(toNode: ID, onEdge: ID) = {
-        require(!died)
-        WalkState(toNode :: nodeIds, onEdge :: edgeIds, died = false)
-      }
-      def die = WalkState(nodeIds, edgeIds, died = true)
+      (allNodesMarked, allEdgesMarked)
     }
   }
+}
+
+object WalkState {
+  def apply(startNode: ID): WalkState = new WalkState(List(startNode), Nil, died = false)
+}
+case class WalkState(nodeIds: List[ID], edgeIds: List[ID], died: Boolean) {
+  def walk(toNode: ID, onEdge: ID) = {
+    require(!died)
+    WalkState(toNode :: nodeIds, onEdge :: edgeIds, died = false)
+  }
+  def die = WalkState(nodeIds, edgeIds, died = true)
 }
