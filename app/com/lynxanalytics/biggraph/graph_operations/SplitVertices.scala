@@ -38,13 +38,12 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
     val repetitionAttr = inputs.attr.rdd
 
     val requestedNumberOfVerticesWithIndex =
-      repetitionAttr.flatMapValues { numRepetitions => (1.toLong to numRepetitions) }
+      repetitionAttr.flatMapValues { numRepetitions => (0L until numRepetitions) }
 
     val partitioner = rc.partitionerForNRows(repetitionAttr.values.reduce(_ + _)) // Attr is Long.
 
     val newIdAndOldIdAndZeroBasedIndex =
       requestedNumberOfVerticesWithIndex
-        .map { case (oldId, index) => (oldId, index - 1) }
         .randomNumbered(partitioner)
         .persist(spark.storage.StorageLevel.DISK_ONLY)
 
