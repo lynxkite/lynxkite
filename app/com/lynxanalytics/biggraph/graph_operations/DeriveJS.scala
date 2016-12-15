@@ -96,8 +96,7 @@ abstract class DeriveJS[T](
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-    val joined: UniqueSortedRDD[ID, Array[JSValue]] = {
+    val joined = {
       val noAttrs = inputs.vs.rdd.mapValues(_ => new Array[JSValue](attrNames.size))
       if (onlyOnDefinedAttrs) {
         inputs.attrs.zipWithIndex.foldLeft(noAttrs) {
