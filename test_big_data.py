@@ -95,7 +95,7 @@ def main(args):
   test_config = {
       'task_module': args.task_module,
       'task': args.task,
-      'test_set_size': test_sets[args.test_set_size]['data'],
+      'dataset': test_sets[args.test_set_size]['data'],
       'results_local_dir': results_local_dir(args),
       'results_name': "/{task}-result.txt".format(task=args.task)}
   # Launch cluster, start ecosystem and run tests.
