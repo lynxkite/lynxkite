@@ -14,7 +14,7 @@ the current branch of the native release:
 
 Running all big data tests on the medium data set using the current branch:
 
-    ./test_big_data.py  --dataset medium --task AllTests
+    ./test_big_data.py  --test_set_size medium --task AllTests
 
 
 Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5:
@@ -27,14 +27,14 @@ Running JDBC tests on a cluster named `JDBC-test-cluster` using version 1.9.5:
 Running ModularClustering test on the large data set using the current branch
 and downloading application logs from the cluster to `/home/user/cluster-logs`:
 
-    ./test_big_data.py  --dataset large --task ModularClustering \
+    ./test_big_data.py  --test_set_size large --task ModularClustering \
                         --log_dir /home/user/cluster-logs
 
 
 Running the default big data tests on the medium data set using a cluster
 with 6 nodes (1 master, 5 worker) and current branch of the native release:
 
-    ./test_big_data.py  --dataset medium --emr_instance_count 6
+    ./test_big_data.py  --test_set_size medium --emr_instance_count 6
 """
 
 import os
