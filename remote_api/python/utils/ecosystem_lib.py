@@ -111,16 +111,13 @@ class Ecosystem:
     print('Starting LynxKite on EMR cluster.')
     conf = self.cluster_config
     lk_conf = self.lynxkite_config
-    if lk_conf['lynx_version']:
-      self.upload_installer_script(
-          lk_conf['biggraph_releases_dir'],
-          lk_conf['lynx_version'])
     self.upload_tasks()
     self.upload_tools()
-    self.download_and_unpack_release(
+    self.install_lynx_stuff(
         lk_conf['lynx_release_dir'],
-        lk_conf['lynx_version'])
-    self.install_native()
+        lk_conf['lynx_version'],
+        lk_conf['biggraph_releases_dir'])
+    self.install_native_dependencies()
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
         conf['emr_instance_count'])
@@ -131,7 +128,6 @@ class Ecosystem:
 
   def run_tests(self, test_config):
     conf = self.cluster_config
-    lk_conf = self.lynxkite_config
     print('Running tests on EMR cluster.')
     self.start_tests_native(
         self.jdbc_url,
@@ -183,8 +179,13 @@ class Ecosystem:
     self.cluster.rsync_up('ecosystem/native/tools/', target_dir)
     self.cluster.rsync_up('tools/performance_collection/', target_dir)
 
-  def download_and_unpack_release(self, lynx_release_dir, lynx_version):
+  def install_lynx_stuff(self, lynx_release_dir, lynx_version, releases_dir):
     if lynx_version:
+      self.cluster.rsync_up(
+          src='{dir}/download-lynx-{version}.sh'.format(
+              dir=releases_dir,
+              version=lynx_version),
+          dst='/mnt/')
       self.cluster.ssh('''
         set -x
         cd /mnt
@@ -197,7 +198,7 @@ class Ecosystem:
     else:
       self.cluster.rsync_up(lynx_release_dir + '/', '/mnt/lynx')
 
-  def install_native(self):
+  def install_native_dependencies(self):
     self.cluster.rsync_up('python_requirements.txt', '/mnt/lynx')
     self.cluster.ssh('''
     set -x
@@ -249,7 +250,7 @@ class Ecosystem:
         export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
         export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
         export LYNX=/mnt/lynx
-        #for tests with mysql server on master
+        # for tests with mysql server on master
         export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
         export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=7200
 EOF
@@ -266,22 +267,17 @@ EOF
     self.cluster.ssh('''
       cd /mnt/lynx
       echo 'Setting s3 prefix.'
-      sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/prefix_definitions.txt
-      cat >>config/prefix_definitions.txt <<'EOF'
-# ---- the below lines were added by test_ecosystem.py ----
-  S3="s3://"
+      mv config/prefix_definitions.txt config/prefix_definitions.bak
+      cat >config/prefix_definitions.txt <<'EOF'
+S3="s3://"
 EOF
       echo 'Setting AWS CLASSPATH.'
-      if [ -f spark/conf/spark-env.sh ]; then
-        sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  spark/conf/spark-env.sh
-      fi
-      cat >>spark/conf/spark-env.sh <<'EOF'
-# ---- the below lines were added by test_ecosystem.py ----
-  AWS_CLASSPATH1=$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\\n' ':')
-  AWS_CLASSPATH2=$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\\n' ':')
-  AWS_CLASSPATH3=$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\\n' ':')
-  AWS_CLASSPATH_ALL=$AWS_CLASSPATH1$AWS_CLASSPATH2$AWS_CLASSPATH3
-  export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:${AWS_CLASSPATH_ALL::-1}
+      cat >spark/conf/spark-env.sh <<'EOF'
+AWS_CLASSPATH1=$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\\n' ':')
+AWS_CLASSPATH2=$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\\n' ':')
+AWS_CLASSPATH3=$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\\n' ':')
+AWS_CLASSPATH_ALL=$AWS_CLASSPATH1$AWS_CLASSPATH2$AWS_CLASSPATH3
+export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:${AWS_CLASSPATH_ALL::-1}
 EOF
       chmod a+x spark/conf/spark-env.sh
     ''')

@@ -54,8 +54,8 @@ from utils.ecosystem_lib import arg_parser
 test_sets = {
     'small': dict(data='fake_westeros_v3_100k_2m', instances=3),
     'medium': dict(data='fake_westeros_v3_5m_145m', instances=4),
-    'large': dict(data='fake_westeros_v3_10m_303m', instances=8),
-    'xlarge': dict(data='fake_westeros_v3_25m_799m', instances=20),
+    'large': dict(data='fake_westeros_v3_10m_303m', instances=4),
+    'xlarge': dict(data='fake_westeros_v3_25m_799m', instances=8),
 }
 
 
@@ -82,7 +82,7 @@ arg_parser.add_argument(
     default='./ecosystem/tests/results/',
     help='Test results are downloaded to this directory.')
 arg_parser.add_argument(
-    '--dataset',
+    '--test_set_size',
     default='small',
     help='Test set for big data tests. Possible values: small, medium, large, xlarge.')
 
@@ -90,12 +90,12 @@ arg_parser.add_argument(
 def main(args):
   # Cluster config fot tests
   if args.emr_instance_count == 0:
-    args.emr_instance_count = test_sets[args.dataset]['instances']
+    args.emr_instance_count = test_sets[args.test_set_size]['instances']
   # Test configuration
   test_config = {
       'task_module': args.task_module,
       'task': args.task,
-      'dataset': test_sets[args.dataset]['data'],
+      'test_set_size': test_sets[args.test_set_size]['data'],
       'results_local_dir': results_local_dir(args),
       'results_name': "/{task}-result.txt".format(task=args.task)}
   # Launch cluster, start ecosystem and run tests.
@@ -112,8 +112,8 @@ def results_local_dir(args):
   the number of executors and the name of the test data set.
   '''
   basedir = args.results_dir
-  dataset = test_sets[args.dataset]['data']
-  instance_count = test_sets[args.dataset]['instances']
+  dataset = test_sets[args.test_set_size]['data']
+  instance_count = test_sets[args.test_set_size]['instances']
   executors = instance_count - 1
   return "{bd}emr_{e}_{i}_{ds}".format(
       bd=basedir,
