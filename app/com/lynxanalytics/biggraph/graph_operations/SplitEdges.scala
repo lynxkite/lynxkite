@@ -2,6 +2,8 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util._
@@ -43,13 +45,13 @@ case class SplitEdges() extends TypedMetaGraphOp[Input, Output] {
         case (edge, numRepetitions) => (1.toLong to numRepetitions).map(index => (edge, index))
       }
 
-    val partitioner =
-      rc.partitionerForNRows(newEdgesWithIndex.count)
+    val partitioner = rc.partitionerForNRows(repetitionAttr.values.reduce(_ + _)) // Attr is Long.
 
     val newIdAndOldIdAndEdgeAndZeroBasedIndex =
       newEdgesWithIndex
         .map { case (oldId, (edge, index)) => (oldId, edge, index - 1) }
         .randomNumbered(partitioner)
+        .persist(spark.storage.StorageLevel.DISK_ONLY)
 
     output(o.newEdges,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
