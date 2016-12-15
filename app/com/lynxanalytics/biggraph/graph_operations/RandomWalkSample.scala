@@ -1,8 +1,9 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+import org.apache.spark.rdd.RDD
 
 import scala.util.Random
 
@@ -51,7 +52,7 @@ case class RandomWalkSample(restartProbability: Double,
       case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
     }.groupByKey().map {
       case (id, it) => (id, it.toArray)
-    }
+    }.sortUnique(edges.partitioner.get)
 
     val sampler = new Sampler(outEdges)
 
@@ -73,7 +74,7 @@ case class RandomWalkSample(restartProbability: Double,
 
   private def randomNode(seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  class Sampler(outEdges: RDD[(ID, Array[(ID, ID)])]) {
+  class Sampler(outEdges: UniqueSortedRDD[ID, Array[(ID, ID)]]) {
     // samples at max requestedSampleSize nodes, less if it can't find enough
     def sample(requestedSampleSize: Int, startNodeID: ID, seed: Int)
               (implicit inputDatas: DataSet, rc: RuntimeContext) = {
@@ -104,23 +105,25 @@ case class RandomWalkSample(restartProbability: Double,
       (initialState, stepsNeeded)
     }
 
-    private def walkAStep(state: RDD[WalkState], seed: Int) = state.map {
-      case s @ WalkState(nodeIds, _, _) => (nodeIds.head, s)
-    }.join(outEdges).mapPartitionsWithIndex {
+    private def walkAStep(state: RDD[WalkState], seed: Int) = state.zipWithIndex().map {
+      case (s @ WalkState(nodeIds, _, _), walkIdx) => (nodeIds.head, (s, walkIdx))
+    }.sort(state.partitioner.get).sortedJoin(outEdges).mapPartitionsWithIndex {
       case (pid, it) =>
         val rnd = new Random((pid << 16) + seed)
         it.map {
-          case (_, (s @ WalkState(_, _, true), _)) => s
-          case (_, (s, edgesFromHere)) =>
+          case (_, ((s @ WalkState(_, _, true), walkIdx), _)) => (s, walkIdx)
+          case (_, ((s, walkIdx), edgesFromHere)) =>
             if (rnd.nextDouble() < restartProbability) {
-              s.die
+              (s.die, walkIdx)
             }
             else {
               val rndIdx = rnd.nextInt(edgesFromHere.length)
-              (s.walk _).tupled(edgesFromHere(rndIdx))
+              ((s.walk _).tupled(edgesFromHere(rndIdx)), walkIdx)
             }
         }
-    }
+    }.map {
+      case (s, walkIdx) => (walkIdx, s)
+    }.sort(state.partitioner.get).map(_._2)
 
     private def turnToSample(state: RDD[WalkState], requestedSampleSize: Int) = {
       val stepsWithIdx = state.flatMap {
