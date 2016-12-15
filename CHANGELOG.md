@@ -21,6 +21,8 @@ LynxKite:
  - Fixed all reported bugs in the new project UI.
  - Vertex and edge ID attribute values are only optionally unique in "_Import vertex attributes_"
    and "_Import edge attributes_" operations.
+ - New "_Split Edges_" operation added. It can be used to create multiple copies of the same edge,
+   based on a repetition attribute.
 
 ### 1.10.0
 
