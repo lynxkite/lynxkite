@@ -24,7 +24,7 @@ LynxKite:
  - New "_Split Edges_" operation added. It can be used to create multiple copies of the same edge,
    based on a repetition attribute.
  - "_Derive vertex attribute_" and "_Derive edge attribute_" operations can be evaluated on all
-   vertices / edges using undefined input attributes.
+   vertices / edges using undefined input attribute values.
 
 ### 1.10.0
 
