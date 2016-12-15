@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.neural
 
 import breeze.stats.distributions.RandBasis
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 trait Adder[T] {
   def add(a: T, b: T): T
@@ -54,7 +55,7 @@ object Gates {
   */
   trait Gate[Output] extends Product {
     // Plain toString on case classes is enough to uniquely identify vectors.
-    private[neural] lazy val id = this.toString
+    private[neural] lazy val id = Timestamp.toString
     private[neural] var activationCount: Int = 0
     private[neural] def newActivationHappened = {
       activationCount += 1
