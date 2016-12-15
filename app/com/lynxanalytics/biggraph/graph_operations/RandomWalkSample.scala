@@ -84,7 +84,8 @@ case class RandomWalkSample(restartProbability: Double,
 
   class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, outEdgesPerNode: UniqueSortedRDD[ID, Array[(ID, ID)]]) {
     // samples at max requestedSampleSize unique nodes, less if it can't find enough
-    def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
+    def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int)
+              (implicit inputDatas: DataSet, rc: RuntimeContext) = {
       // 3 is an arbitrary number
       val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt max 1
 
@@ -178,7 +179,8 @@ case class RandomWalkSample(restartProbability: Double,
 
     private def turnToSample(walk: RDD[(ID, Option[ID])]) = {
       val nodesInSample = walk.map(_._1).distinct().map((_, true)).sortUnique(nodes.partitioner.get)
-      val edgesInSample = walk.map(_._2).filter(_.isDefined).map(_.get).distinct().map((_, true)).sortUnique(edges.partitioner.get)
+      val edgesInSample =
+        walk.map(_._2).filter(_.isDefined).map(_.get).distinct().map((_, true)).sortUnique(edges.partitioner.get)
       val allNodesMarked = nodes.sortedLeftOuterJoin(nodesInSample).mapValues {
         case (_, optional) => optional.getOrElse(false)
       }
