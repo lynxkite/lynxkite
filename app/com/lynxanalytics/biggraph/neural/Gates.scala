@@ -57,14 +57,8 @@ object Gates {
     // Plain toString on case classes is enough to uniquely identify vectors.
     private[neural] lazy val id = Timestamp.toString
     private[neural] var activationCount: Int = 0
-    private[neural] def newActivationHappened = {
-      activationCount += 1
-    }
     private[neural] def forward(fm: ForwardMemory): Output
     private[neural] var receivedGradientCount: Int = 0
-    private[neural] def newGradientReceived = {
-      receivedGradientCount += 1
-    }
     private[neural] def backward(bm: BackwardMemory, gradient: Output): Unit
   }
   trait VectorGate extends Gate[VectorGraph] {
@@ -171,12 +165,9 @@ object Gates {
       val ngrad: VectorGraph = gradients.toSeq.flatMap {
         case (id, gs) => bm.edges(id).zip(gs)
       }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-      val paddedNgrad = bm.vertices.map { id =>
-        if (bm.edges(id) == List()) id -> List(0).
-          map(_ => DenseVector.zeros[Double](bm.network.size))
-        else id -> ngrad(id)
-      }.toMap
-      bm.add(v, ngrad)
+      val paddedNgrad = bm.vertices.map(id =>
+        id -> ngrad.getOrElse(id, DenseVector.zeros[Double](bm.network.size))).toMap
+      bm.add(v, paddedNgrad)
     }
   }
   case class Input(name: String) extends VectorGate {
@@ -292,14 +283,14 @@ private case class ForwardMemory(
     vertices.map { id => id -> (g1(id), g2(id)) }.toMap
   }
   def activation(v: VectorGate): VectorGraph = {
-    v.newActivationHappened
+    v.activationCount += 1
     vectorCache.getOrElseUpdate(v.id, {
       v.activationCount = 1
       v.forward(this)
     })
   }
   def activation(vs: VectorsGate): VectorsGraph = {
-    vs.newActivationHappened
+    vs.activationCount += 1
     vectorsCache.getOrElseUpdate(vs.id, {
       vs.activationCount = 1
       vs.forward(this)
@@ -341,7 +332,7 @@ private case class BackwardMemory(
         v.receivedGradientCount = 0
         gradient
       }
-    v.newGradientReceived
+    v.receivedGradientCount += 1
     if (v.receivedGradientCount == v.activationCount) {
       v.backward(this, vectorGradients(v.id))
     }
@@ -352,7 +343,7 @@ private case class BackwardMemory(
         vs.receivedGradientCount = 0
         gradients
       }
-    vs.newGradientReceived
+    vs.receivedGradientCount += 1
     if (vs.receivedGradientCount == vs.activationCount) {
       vs.backward(this, vectorsGradients(vs.id))
     }
