@@ -156,8 +156,7 @@ object Gates {
       import breeze.linalg._
       val vd = fm.activation(v)
       fm.vertices.map { id =>
-        if (fm.edges(id) == List()) id -> List(0).
-          map(_ => DenseVector.zeros[Double](fm.network.size))
+        if (fm.edges(id) == List()) id -> List(DenseVector.zeros[Double](fm.network.size))
         else id -> fm.edges(id).map(vd(_))
       }.toMap
     }
