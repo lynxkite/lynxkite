@@ -1447,6 +1447,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("defined-attrs", "Only run on defined attributes", options = FEOption.bools, mandatory = false),
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
@@ -1459,12 +1460,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val vertexSet = project.vertexSet
       val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val onlyOnDefinedAttrs = params.getOrElse("defined-attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.newVertexAttribute(params("output"), result, expr + help)
     }
@@ -1474,6 +1478,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("defined-attrs", "Only run on defined attributes", options = FEOption.bools, mandatory = false),
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
@@ -1501,12 +1506,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
+      val onlyOnDefinedAttrs = params.getOrElse("defined-attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.edgeAttributes(params("output")) = result
     }

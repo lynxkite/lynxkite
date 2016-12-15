@@ -133,4 +133,90 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(rndSum.rdd.collect.toSeq.sorted ==
       Seq(0 -> rndSumScala(1000.0), 2 -> rndSumScala(2000.0)))
   }
+
+  test("example graph - all vertices: income === undefined") {
+    val expr = "income === undefined ? 666 : income * 10"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
+  }
+
+  test("example graph - all vertices: income == undefined") {
+    val expr = "income == undefined ? 666 : income * 10"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
+  }
+
+  test("example graph - all vertices: undefined returns undefined") {
+    val expr = "income"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 1000.0), (2, 2000.0)))
+  }
+
+  // Tests that using undefined attribute values results in an invalid return rather than
+  // magic conversions.
+  test("example graph - all vertices: returns NaN") {
+    val expr = "income * 10"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    intercept[org.apache.spark.SparkException] { // Script returns NaN.
+      derived.rdd.collect
+    }
+  }
+
+  test("example graph - all vertices: two attributes") {
+    val expr = "income === undefined ? undefined: income + age"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income", "age"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity, g.age.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 1020.3), (2, 2050.3)))
+  }
+
+  // Tests that using undefined attribute values results in an invalid return rather than
+  // magic conversions.
+  test("example graph - all vertices: two attributes return NaN") {
+    val expr = "income + age"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income", "age"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity, g.age.entity)).result.attr
+    intercept[org.apache.spark.SparkException] { // Script returns NaN.
+      derived.rdd.collect
+    }
+  }
 }
