@@ -89,6 +89,7 @@ object RemoteAPIProtocol {
     path: String)
   case class DirectoryEntryResult(
     exists: Boolean,
+    isView: Boolean,
     isTable: Boolean,
     isProject: Boolean,
     isDirectory: Boolean,
@@ -208,6 +209,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       SymbolPath.parse(request.path))
     DirectoryEntryResult(
       exists = entry.exists,
+      isView = entry.isView,
       isTable = entry.isTable,
       isProject = entry.isProject,
       isDirectory = entry.isDirectory,
