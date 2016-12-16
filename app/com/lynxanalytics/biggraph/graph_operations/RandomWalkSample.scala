@@ -109,7 +109,8 @@ case class RandomWalkSample(restartProbability: Double,
       while (stepsMade < maxSteps && !hasEnoughUniqueNodes) {
         multiWalk = batchWalk(multiWalk, batchSize, rnd.nextInt())
         val (deadPrefix, rest) = splitDeadPrefix(multiWalk)
-        walk = walk ++ flatToSingleWalk(deadPrefix)
+        val firstLiveWalk = firstWalk(rest)
+        walk = walk ++ flatToSingleWalk(deadPrefix) ++ flatToSingleWalk(firstLiveWalk)
         walk.persist(StorageLevels.DISK_ONLY)
         multiWalk = rest
         hasEnoughUniqueNodes = requestedSampleSize <= walk.map(_._1).distinct().count()
@@ -162,6 +163,15 @@ case class RandomWalkSample(restartProbability: Double,
       val deadPrefix = multiWalk.filter(_._2._2 < firstLiveIdx)
       val rest = multiWalk.filter(_._2._2 >= firstLiveIdx)
       (deadPrefix, rest)
+    }
+
+    private def firstWalk(multiWalk: RDD[(ID, (Walker, Long))]) = {
+      if (!multiWalk.isEmpty()) {
+        val smallestIdx = multiWalk.map(_._2).map(_._2).min()
+        multiWalk.filter(_._2._2 == smallestIdx)
+      } else {
+        multiWalk
+      }
     }
 
     private def flatToSingleWalk(multiWalk: RDD[(ID, (Walker, Long))])(implicit rc: RuntimeContext) = {
