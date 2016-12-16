@@ -448,20 +448,25 @@ class SQLController(val env: BigGraphEnvironment) {
       val cutFramePath = SymbolPath.fromIterable(
         frame.path.path.drop(stripPathSteps)
       )
-      val tablePath = (if (cutFramePath.path.isEmpty) "" else "|") +
+      val cutTablePath =
         path.path.drop(stripSegPathSteps - 1).mkString("|").toString
-      TableDesc(
+      val pathCombiner = if (cutFramePath.path.isEmpty || cutTablePath.isEmpty) "" else "|"
+      val s = TableDesc(
         framePath = frame.path.toString,
         subTablePath = path.toString,
-        name = cutFramePath + tablePath
+        name = cutFramePath + pathCombiner + cutTablePath
       )
     }
 
   }
 
   def getAllTablesForObjectFrame(frame: ObjectFrame, subPath: Seq[String] = Seq()): Seq[TableRef] = {
-    frame.viewer.offspringViewer(subPath).allRelativeTablePaths.map {
-      path => TableRef(frame, path.toAbsolute(subPath))
+    if (frame.isView) {
+      Seq(TableRef(frame, AbsoluteTablePath(Seq())))
+    } else {
+      frame.viewer.offspringViewer(subPath).allRelativeTablePaths.map {
+        path => TableRef(frame, path.toAbsolute(subPath))
+      }
     }
   }
 
@@ -503,15 +508,25 @@ class SQLController(val env: BigGraphEnvironment) {
     val tablePath = request.subTablePath
 
     val entry = DirectoryEntry.fromName(objectPath)
-    entry.assertReadAllowedFrom(user)
-    val viewer = entry.asObjectFrame.viewer
-    val table = Table(AbsoluteTablePath(tablePath.split("\\|").toSeq.tail), viewer)
 
-    GetColumnsResponse(
-      columns = table.columns.keys.map {
-        name => ColumnDesc(name = name)
-      }.toSeq
-    )
+    entry.assertReadAllowedFrom(user)
+    if (entry.isView) {
+      val viewRecipe = entry.asViewFrame.getRecipe
+      val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
+      GetColumnsResponse(
+        columns = df.schema.fields.map { field => SimpleColumnDesc(name = field.name) }
+      )
+    } else {
+      val viewer = entry.asObjectFrame.viewer
+      val table = Table(AbsoluteTablePath(tablePath.split("\\|").toSeq.tail), viewer)
+
+      GetColumnsResponse(
+        columns = table.columns.keys.map {
+          name => SimpleColumnDesc(name = name)
+        }.toSeq
+      )
+    }
+
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
