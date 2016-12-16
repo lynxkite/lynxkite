@@ -121,13 +121,30 @@ You can run `make ecosystem-test` to run all tests, or run
 
 ## Big Data tests
 
-If you want to measure the effect of a code change on big data, create a PR and add
-a comment to it containing the phrase `Big Data Test please`. This will trigger Jenkins
-to spin up an EMR cluster, run the tests and push the results as a commit into your PR.
+If you want to measure the effect of a code change on big data, run `make big-data-test`
+and create a new PR containing the new test results. These results are in `ecosystem\tests\results`.
+There are four different data sets used by the performance tests labeled `small`, `medium`, `large` and 
+`xlarge`. By default big data tests use the `medium` sized data set.
 
-You can manually run these tests using `test_big_data.sh`, and you can also specify more parameters
-that way, e.g. `test_big_data.sh pagerank 'fake_westeros_xt_25m'`. For further use cases, see the
-comments in `test_big_data.sh`.
+The tests run on an EMR cluster, launched by `test_big_data.py`. The command 
+
+        make big-data-test
+         
+builds LynxKite and Ecosystem, and by default uses this new build to run the tests. After building
+LynxKite it calls `test_big_data.py`. You can also call `test_big_data.py` manually, but before doing this, 
+don't forget to build your currently checked out branch, or use a release. In the later case you need to 
+update your `biggraph_releases` repo.
+     
+The performance tests are implemented as Luigi tasks and they are using the Python Remote API to
+run LynxKite operations on the test data. There are two wrapper tasks `AllTests` and `DefaultTests` which 
+ can be used to run predefined test sets. You can also pick a single test task to run.
+ 
+You can find detailed examples in `test_big_data.py` about how to specify parameters of this script for
+ fine tuning the performance tests. Here are some examples:
+ 
+        ./test_big_data.py --task AllTests
+        ./test_big_data.py --lynx_version native-1.10.0 --test_set_size large --task ModularClustering
+        ./test_big_data.py --emr_instance_count 8 --test_size xlarge --task DefaultTests
 
 ## Test results on Jenkins
 
