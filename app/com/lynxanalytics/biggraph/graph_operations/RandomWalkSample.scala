@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import org.apache.spark.api.java.StorageLevels
-import org.apache.spark.rdd.{RDD, ShuffledRDD}
+import org.apache.spark.rdd.RDD
 
 import scala.util.Random
 
