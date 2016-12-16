@@ -221,40 +221,28 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   }
 
   def checkJSArray(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
-    val op = DeriveJSString(
-      JavaScript(expr),
-      Seq(name))
-    val derived = op(
-      op.attrs,
-      VertexAttributeToJSValue.seq(attr)).result.attr
+    val op = DeriveJSString(JavaScript(expr), Seq(name))
+    val derived = op(op.attrs, VertexAttributeToJSValue.seq(attr)).result.attr
     assert(derived.rdd.collect.toSet == result)
   }
 
   test("example graph - arrays") {
     val g = ExampleGraph()().result
-    val ageVector = {
+    val ages = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Double]())
       op(op.connection, g.edges)(op.attr, g.age).result.attr
     }
-    val genderVector = {
+    val genders = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
       op(op.connection, g.edges)(op.attr, g.gender).result.attr
     }
-    checkJSArray("ageVector.toString()", "ageVector", ageVector,
-      Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
-    checkJSArray("genderVector.toString()", "genderVector", genderVector,
-      Set(0 -> "Female,Male", 1 -> "Male,Male"))
-    checkJSArray("ageVector.length.toString()", "ageVector", ageVector,
-      Set(0 -> "2", 1 -> "2"))
-    checkJSArray("genderVector.length.toString()", "genderVector", genderVector,
-      Set(0 -> "2", 1 -> "2"))
-    checkJSArray("ageVector[0].toString()", "ageVector", ageVector,
-      Set(0 -> "18.2", 1 -> "20.3"))
-    checkJSArray("genderVector[0]", "genderVector", genderVector,
-      Set(0 -> "Female", 1 -> "Male"))
-    checkJSArray("ageVector.concat([100]).toString()", "ageVector", ageVector,
-      Set(0 -> "18.2,50.3,100", 1 -> "20.3,50.3,100"))
-    checkJSArray("genderVector.concat(['abc']).toString()", "genderVector", genderVector,
-      Set(0 -> "Female,Male,abc", 1 -> "Male,Male,abc"))
+    checkJSArray("ages.toString()", "ages", ages, Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
+    checkJSArray("genders.toString()", "genders", genders, Set(0 -> "Female,Male", 1 -> "Male,Male"))
+    checkJSArray("ages.length.toString()", "ages", ages, Set(0 -> "2", 1 -> "2"))
+    checkJSArray("genders.length.toString()", "genders", genders, Set(0 -> "2", 1 -> "2"))
+    checkJSArray("ages[0].toString()", "ages", ages, Set(0 -> "18.2", 1 -> "20.3"))
+    checkJSArray("genders[0]", "genders", genders, Set(0 -> "Female", 1 -> "Male"))
+    checkJSArray("ages.concat([100]).toString()", "ages", ages, Set(0 -> "18.2,50.3,100", 1 -> "20.3,50.3,100"))
+    checkJSArray("genders.concat(['abc']).toString()", "genders", genders, Set(0 -> "Female,Male,abc", 1 -> "Male,Male,abc"))
   }
 }
