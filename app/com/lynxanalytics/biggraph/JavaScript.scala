@@ -40,7 +40,6 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
       }
       javascript.ScriptableObject.putProperty(scope, name, jsValue)
     }
-
     val jsResult = script.exec(cx, scope)
     jsResult match {
       case _: javascript.Undefined => None
