@@ -81,7 +81,7 @@ class Ecosystem:
     self.jdbc_url = ''
 
   def launch_cluster(self):
-    print('Launching EMR cluster.')
+    print('Launching an EMR cluster.')
     # Create an EMR cluster.
     conf = self.cluster_config
     lib = EMRLib(

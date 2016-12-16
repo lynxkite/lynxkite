@@ -122,7 +122,7 @@ You can run `make ecosystem-test` to run all tests, or run
 ## Big Data tests
 
 If you want to measure the effect of a code change on big data, run `make big-data-test`
-and create a new PR containing the new test results. These results are in `ecosystem\tests\results`.
+and create a new PR containing the new test results. These results are in `ecosystem/tests/results`.
 There are four different data sets used by the performance tests labeled `small`, `medium`, `large` and 
 `xlarge`. By default big data tests use the `medium` sized data set.
 
@@ -132,10 +132,10 @@ The tests run on an EMR cluster, launched by `test_big_data.py`. The command
          
 builds LynxKite and Ecosystem, and by default uses this new build to run the tests. After building
 LynxKite it calls `test_big_data.py`. You can also call `test_big_data.py` manually, but before doing this, 
-don't forget to build your currently checked out branch, or use a release. In the later case you need to 
-update your `biggraph_releases` repo.
+don't forget to build your currently checked out branch (`make ecosystem` or `ecosystem/native/build.sh`),
+or use a release. In the later case you need to update your `biggraph_releases` repo.
      
-The performance tests are implemented as Luigi tasks and they are using the Python Remote API to
+The performance tests are implemented as Luigi tasks and they use the Python Remote API to
 run LynxKite operations on the test data. There are two wrapper tasks `AllTests` and `DefaultTests` which 
  can be used to run predefined test sets. You can also pick a single test task to run.
  

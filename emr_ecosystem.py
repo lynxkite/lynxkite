@@ -6,14 +6,14 @@ LynxKite ecosystem on it.
 
 Examples:
 
-Launching cluster with 3 instances and using the currently checked out code
+Launch a cluster with 3 instances and use the currently checked out code
 of LynxKite ecosystem:
 
     ./emr_ecosystem.py
 
 
-Launching cluster named `emr-lynx-cluster` with 5 instances
-and using the native 1.10.0 version of LynxKite ecosystem:
+Launch a cluster named `emr-lynx-cluster` with 5 instances
+and use the native 1.10.0 version of LynxKite ecosystem:
 
     ./emr_ecosystem.py --cluster_name emr-lynx-cluster \
                        --emr_instance_count 5 \
@@ -37,7 +37,7 @@ arg_parser.add_argument(
 
 
 def main(args):
-  # We don't want to stop cluster which was just started.
+  # We don't want to stop a cluster which was just started.
   args.rm = False
   # Launch cluster and start ecosystem on it.
   ecosystem = Ecosystem(args)
