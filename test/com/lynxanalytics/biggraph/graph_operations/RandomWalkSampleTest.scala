@@ -11,12 +11,12 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     2 -> Seq(3),
     3 -> Seq(4),
     4 -> Seq(5, 6, 7, 8, 9, 10),
-    5 -> Seq(1),
-    6 -> Seq(1),
-    7 -> Seq(1),
-    8 -> Seq(1),
-    9 -> Seq(1),
-    10 -> Seq(1)
+    5 -> Seq(0),
+    6 -> Seq(0),
+    7 -> Seq(0),
+    8 -> Seq(0),
+    9 -> Seq(0),
+    10 -> Seq(0)
   )).result
 
   test("too large sample size") {
@@ -33,5 +33,20 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     val output = op(op.vs, g.vs)(op.es, g.es).result
     assert(output.verticesInSample.rdd.filter(_._2 > 0.0).count() == 1)
     assert(output.edgesInSample.rdd.filter(_._2 > 0.0).count() == 0)
+  }
+
+  test("two nodes sample") {
+    val op = RandomWalkSample(0.1, 2, 0)
+    val output = op(op.vs, g.vs)(op.es, g.es).result
+    assert(output.verticesInSample.rdd.filter(_._2 > 0.0).count() == 2)
+    assert(output.edgesInSample.rdd.filter(_._2 > 0.0).count() == 1)
+  }
+
+  test("seven nodes sample") {
+    // the only walk with seven unique nodes (supposing restartProbability ~= 0.0) is
+    // [0, 1, 2, 3, 4, x] * k + [0, 1, 2, 3, 4, y] for k > 0
+    val op = RandomWalkSample(0.001, 7, 0)
+    val output = op(op.vs, g.vs)(op.es, g.es).result
+    assert(output.verticesInSample.rdd.filter(_._1 > 4).filter(_._2 > 0.0).count() == 2)
   }
 }
