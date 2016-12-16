@@ -1209,7 +1209,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
+      Choice("direction", "Direction",
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1261,7 +1262,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type",
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
+      Choice("direction", "Direction",
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
@@ -1445,6 +1447,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("defined_attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
@@ -1457,12 +1461,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val vertexSet = project.vertexSet
       val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.newVertexAttribute(params("output"), result, expr + help)
     }
@@ -1472,6 +1479,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("defined_attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
@@ -1499,12 +1508,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.edgeAttributes(params("output")) = result
     }
@@ -1968,12 +1978,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val rep = params("rep")
-
       val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
       project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
+    }
+  })
+
+  register("Split edges", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice("rep", "Repetition attribute", options = edgeAttributes[Double]),
+      Param("idx", "Index attribute name", defaultValue = "index"))
+
+    def enabled =
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No double edge attributes")
+    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
+      val op = graph_operations.SplitEdges()
+      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
+    }
+    def apply(params: Map[String, String]) = {
+      val rep = params("rep")
+      val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
+
+      project.pullBackEdges(
+        project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
+      project.edgeAttributes(params("idx")) = split.indexAttr
     }
   })
 
@@ -3495,6 +3525,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    def attrOptionsWithDefault(default: String): List[FEOption] = {
+      assert(attrOptions.map(_.id).contains(default), s"$default not in $attrOptions")
+      FEOption.list(default) ++ attrOptions.filter(_.id != default)
+    }
     // Options suitable when only neighbors are involved.
     val neighborOptions = FEOption.list(
       "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
