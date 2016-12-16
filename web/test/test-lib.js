@@ -467,8 +467,12 @@ History.prototype = {
   expectOperationParameter: function(opPosition, paramName, expectedValue) {
     var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
-  }
+  },
 
+  expectOperationSelectParameter: function(opPosition, paramName, expectedValue) {
+    var param = this.getOperation(opPosition).$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  }
 };
 
 var visualization = {
