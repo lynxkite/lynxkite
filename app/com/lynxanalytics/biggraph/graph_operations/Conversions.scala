@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
 import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.controllers.UIStatus
