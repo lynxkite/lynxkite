@@ -34,9 +34,13 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
     for ((name, value) <- mapping) {
-      val jsValue = javascript.Context.javaToJS(value, scope)
+      val jsValue = value match {
+        case it: Array[_] => cx.newArray(scope, it.map(_.asInstanceOf[AnyRef]))
+        case _ => javascript.Context.javaToJS(value, scope)
+      }
       javascript.ScriptableObject.putProperty(scope, name, jsValue)
     }
+
     val jsResult = script.exec(cx, scope)
     jsResult match {
       case _: javascript.Undefined => None
