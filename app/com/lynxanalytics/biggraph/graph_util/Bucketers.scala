@@ -59,7 +59,7 @@ abstract class NumericBucketer[T: Numeric](
     (1 until actualBuckets).map(idx => min + num.fromInt(idx) * bucketSize)
 
   def bucketLabels: Seq[String] = {
-    var labels = min +: bounds :+ max
+    val labels = min +: bounds :+ max
     labels.map(_.toString)
   }
 }

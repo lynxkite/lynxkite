@@ -37,14 +37,13 @@ case class PredictFromModel(numFeatures: Int)
 
     val modelValue = inputs.model.value
     val rddArray = inputs.features.toArray.map(_.rdd)
-    val featuresRDD = Model.toLinalgVector(rddArray, inputs.vertices.rdd)
-    val featuresDF = featuresRDD.toDF("ID", "vector")
-    val partitioner = featuresRDD.partitioner.get
+    val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
+    val partitioner = inputs.vertices.rdd.partitioner.get
     // Transform data to an attributeRDD with the attribute prediction
-    val transformation = modelValue.load(rc.sparkContext).transformDF(featuresDF)
-    val prediction = transformation.select("ID", "prediction").map { row =>
-      (row.getAs[ID]("ID"), row.getAs[Double]("prediction"))
-    }.sortUnique(partitioner)
+    val transformation = modelValue.load(rc.sparkContext).transformDF(inputDF)
+    val prediction = transformation.select("id", "prediction").map { row =>
+      (row.getAs[ID]("id"), row.getAs[Double]("prediction"))
+    }.rdd.sortUnique(partitioner)
     output(o.prediction, prediction)
   }
 }

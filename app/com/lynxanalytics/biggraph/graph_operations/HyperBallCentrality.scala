@@ -14,12 +14,10 @@ import com.lynxanalytics.biggraph.spark_util.HLLUtils
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
 object HyperBallCentrality extends OpFromJson {

@@ -3,7 +3,7 @@
      id="{{ kind }}-{{ title() | id }}">
   <span class="title"> {{ title() }} </span>
   <value class="subtoken"
-         ng-if="isScalar() && !isSavedStatus()"
+         ng-if="isScalar() && !isUIStatus()"
          id="scalar-value-{{ title() | id }}"
          ref="side.scalars[title()]"></value>
   <span class="subtoken filter"
@@ -25,7 +25,7 @@
     {{ title() }} = <span trusted-html="entity.note"></span>
   </div>
 
-  <i ng-show="entity.computeProgress === 1.0 && !isSavedStatus()"
+  <i ng-show="entity.computeProgress === 1.0 && !isUIStatus()"
      class="de-emph compute-progress glyphicon glyphicon-ok"
      drop-tooltip="Already computed"
      drop-tooltip-position="right middle"></i>
@@ -34,11 +34,15 @@
      drop-tooltip="Computation started"
      drop-tooltip-position="right middle"></i>
 
-  <div ng-show="isAttribute() || isScalar() && !isSavedStatus()"
+  <div ng-show="isAttribute() || isScalar() && !isUIStatus() && !isModel()"
        class="de-emph"
        drop-tooltip="{{ title() }} is of type {{ entity.typeName }}"
        drop-tooltip-position="left middle">
     {{ entity.typeName }}
+  </div>
+
+  <div ng-if="isModel()">
+    <model-details scalar-id="entity.id"></model-details>
   </div>
 
   <div ng-show="isSegmentation() && !active()"
@@ -106,7 +110,7 @@
          max="101"
          tooltip="Threshold">
 
-  <div class="menu-item" ng-click="loadStatus()" ng-show="isSavedStatus()" id="load-visualization">
+  <div class="menu-item" ng-click="loadUIStatus()" ng-show="isUIStatus()" id="load-visualization">
     <i class="glyphicon glyphicon-eye-open"></i> Load visualization
   </div>
 

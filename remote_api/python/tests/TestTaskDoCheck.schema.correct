@@ -6,7 +6,7 @@ schema:
 - dataType: IntegerType
   name: one
   nullable: false
-- dataType: DoubleType
+- dataType: DecimalType(2,1)
   name: two
   nullable: false
 - dataType: StringType

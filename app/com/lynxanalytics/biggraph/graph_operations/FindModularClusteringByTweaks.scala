@@ -275,9 +275,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
     totalDegreeSum: Double,
     edgeLists: Map[ID, Iterable[(ID, Double)]],
     containedIn: mutable.Map[ID, ID],
-    start: spark.Accumulator[Double],
-    end: spark.Accumulator[Double],
-    increase: spark.Accumulator[Double],
+    start: spark.util.DoubleAccumulator,
+    end: spark.util.DoubleAccumulator,
+    increase: spark.util.DoubleAccumulator,
     rnd: Random): Unit = {
 
     var localIncrease = 0.0
@@ -298,7 +298,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
             .map(_._2)
             .sum)
     }
-    start += clusters.values.map(_.modularity(totalDegreeSum)).sum
+    start.add(clusters.values.map(_.modularity(totalDegreeSum)).sum)
 
     var changed = false
     var i = 0
@@ -500,8 +500,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
       }
     }
 
-    increase += localIncrease
-    end += clusters.values.map(_.modularity(totalDegreeSum)).sum
+    increase.add(localIncrease)
+    end.add(clusters.values.map(_.modularity(totalDegreeSum)).sum)
   }
 
   // We do at least smoothingLength iterations and then we exit if the total modularity increase
@@ -558,9 +558,9 @@ case class FindModularClusteringByTweaks(
     var lastIncrements = List[Double]()
     import FindModularClusteringByTweaks.smoothingLength
     do {
-      val start = rc.sparkContext.accumulator(0.0)
-      val end = rc.sparkContext.accumulator(0.0)
-      val increase = rc.sparkContext.accumulator(0.0)
+      val start = rc.sparkContext.doubleAccumulator
+      val end = rc.sparkContext.doubleAccumulator
+      val increase = rc.sparkContext.doubleAccumulator
       val vertexMeta = members
         .mapPartitionsWithIndex(
           {
@@ -604,7 +604,8 @@ case class FindModularClusteringByTweaks(
         s"Modularity in iteration $i increased by ${increase.value} " +
           s"from ${start.value} to ${end.value}")
       assert(Math.abs(start.value + increase.value - end.value) < 0.0000001, "Increase mismatch")
-      lastIncrements = (increase.value +: lastIncrements).take(smoothingLength)
+      val inc: Double = increase.value
+      lastIncrements = (inc +: lastIncrements).take(smoothingLength)
       i += 1
     } while (((lastIncrements.size < smoothingLength) ||
       (lastIncrements.sum > minIncrementPerIteration * smoothingLength)) &&

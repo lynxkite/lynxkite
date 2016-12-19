@@ -14,6 +14,15 @@ case class JavaScript(expression: String) {
   def evaluator = new JavaScriptEvaluator(expression)
 }
 
+object JavaScript {
+  def javaToJS(cx: javascript.Context, scope: javascript.Scriptable, value: Any) = {
+    value match {
+      case value: Array[_] => cx.newArray(scope, value.map(_.asInstanceOf[AnyRef]))
+      case _ => javascript.Context.javaToJS(value, scope)
+    }
+  }
+}
+
 // JavaScriptEvaluator maintains a Rhino context. So it's not thread-safe and not Serializable.
 class JavaScriptEvaluator private[biggraph] (expression: String) {
   // We need a Context object to compile an expression and to run it.
@@ -34,8 +43,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
     for ((name, value) <- mapping) {
-      val jsValue = javascript.Context.javaToJS(value, scope)
-      javascript.ScriptableObject.putProperty(scope, name, jsValue)
+      javascript.ScriptableObject.putProperty(scope, name, JavaScript.javaToJS(cx, scope, value))
     }
     val jsResult = script.exec(cx, scope)
     jsResult match {

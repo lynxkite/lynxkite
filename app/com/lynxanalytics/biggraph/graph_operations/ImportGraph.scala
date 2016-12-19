@@ -295,8 +295,6 @@ class ImportVertexList(val input: RowInput) extends ImportCommon
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val sc = rc.sparkContext
-
     val entities = o.attrs.values.map(_.entity)
     val entitiesByName = entities.map(e => e.name -> e).toMap
     val inOrder = input.fields.map(f => entitiesByName(ImportCommon.toSymbol(f)))

@@ -10,7 +10,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.ClassTag
 
-import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -84,8 +83,6 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     implicit val id = inputDatas
     implicit val instance = output.instance
     implicit val runtimeContext = rc
-    val src = inputs.src.rdd
-    val dst = inputs.dst.rdd
     val edges = inputs.edges.rdd
     // Use the larger partitioner for sorted join and HybridRDD.
     val maxPartitioner = RDDUtils.maxPartitioner(

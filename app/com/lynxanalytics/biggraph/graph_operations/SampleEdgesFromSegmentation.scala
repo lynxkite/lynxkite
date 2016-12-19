@@ -57,7 +57,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       val n = vertices.size.toLong * vertices.size.toLong
       assert(numToGet <= n, s"sampleVertexPairs was requested to sample $numToGet from $n")
       val uniform = new UniformIntegerDistribution(rng, 0, vertices.size - 1);
-      var set = mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
+      val set = mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
       set.sizeHint(numToGet)
       while (set.size < numToGet) {
         val id1 = uniform.sample()
@@ -140,7 +140,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     partitioner: Partitioner): SortedRDD[ID, ID] = {
     val idSet = preSelectedEdges
       .flatMap {
-        case (src, dst) => Seq(src -> (), dst -> ())
+        case (src, dst) => Seq(src -> (()), dst -> (()))
       }
       .sort(partitioner)
       .distinctByKey
@@ -213,7 +213,7 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   def getVsToSegDistinct(belongsTo: UniqueSortedRDD[ID, Edge]): RDD[(ID, ID)] = {
     belongsTo
       .values
-      .map(e => (e.src -> e.dst) -> ())
+      .map(e => (e.src -> e.dst) -> (()))
       .sort(belongsTo.partitioner.get)
       .distinctByKey
       .map { case ((src, dst), _) => src -> dst }

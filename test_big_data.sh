@@ -43,6 +43,14 @@
 set -xueo pipefail
 trap "echo $0 has failed" ERR
 
+echo "This script is deprecated. You can use test_big_data.py instead, or just run 'make big-data-test'."
+read -p "Do you wish to continue? [y/N]" -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+   exit 1
+fi
+
 TEST_SELECTOR="${1:-default.list}"
 DATA_SET="${2:-fake_westeros_v3_5m_145m}"
 NUM_EMR_EXECUTORS=${3:-3}

@@ -102,7 +102,7 @@ EMR_APPLICATIONS="Name=Hadoop"
 
 The release label for the emr cluster to be created:
 ```
-EMR_RELEASE_LABEL=emr-4.2.0
+EMR_RELEASE_LABEL=emr-5.2.0
 ```
 
 The service role. The default service role works fine, unless the cluster is in a private subnet:

@@ -58,6 +58,8 @@ object Downloads extends play.api.http.HeaderNames {
   }
 }
 
+// This is for reading multiple CSV files with headers as a single CSV file with a header.
+// The first line of the first file is considered the header, and is stripped from subsequent files.
 class HeaderSkippingStreamIterator(path: String, streams: Iterator[InputStream])
     extends Iterator[InputStream] {
   var header: Array[Byte] = null
@@ -67,7 +69,9 @@ class HeaderSkippingStreamIterator(path: String, streams: Iterator[InputStream])
   def next = {
     val f = streams.next
     val firstLine = readLine(f)
-    if (header == null) {
+    if (firstLine.length == 0) {
+      new ByteArrayInputStream(Array()) // Skip empty file.
+    } else if (header == null) { // First non-empty file.
       header = firstLine
       // Now we have to "put back" the header into the stream.
       new SequenceInputStream(Iterator(new ByteArrayInputStream(firstLine), f))
@@ -83,6 +87,7 @@ class HeaderSkippingStreamIterator(path: String, streams: Iterator[InputStream])
     }
   }
 
+  // Reads a line into bytes. Includes the newline (0x0a) at the end.
   def readLine(in: InputStream): Array[Byte] = {
     val bytes = new collection.mutable.ArrayBuffer[Byte]
     while (true) {

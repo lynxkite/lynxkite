@@ -16,8 +16,8 @@ elif [[ $# -lt 3 || ( "$1" != "local" && "$1" != "remote" ) ]]; then
   echo "are running inside LynxKite so they are using the same Spark settings."
   echo
   echo "Examples:"
-  echo "  test_spark.sh local 100000 100"
-  echo "  test_spark.sh remote 1000000 100"
+  echo "  ./test_spark.sh local 100000 100"
+  echo "  ./test_spark.sh remote 2000000000 1000"
   echo "  DEV_EXTRA_SPARK_OPTIONS=\"-conf spark.locality.wait=999m --conf spark.rdd.compress=true \""
   echo
   echo "This will run the tests in TestSpark.scala."
@@ -50,8 +50,8 @@ case $MODE in
           --test_selector="${TEST_SELECTOR}" \
           --lynxkite_arg="dataSize:${DATA_SIZE}" \
           --lynxkite_arg="numPartitions:${NUM_PARTITIONS}" \
-          --remote_output_dir=${RESULTS_DIR}
-        )
+          --remote_output_dir=${RESULTS_DIR} \
+        | grep -v '^hadoop')
     while read -r LINE; do
       eval $LINE
     done <<< "$TESTS_TO_RUN"

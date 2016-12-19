@@ -81,8 +81,7 @@ fi
 
 # -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
 final_app_mem=${app_mem:-${KITE_MASTER_MEMORY_MB:-1024}}
-
-final_java_opts="$(get_mem_opts $final_app_mem) ${java_opts} ${java_args[@]}"
+final_java_opts="${java_opts} ${java_args[@]}"
 
 # Cannot do this earlier, as the wrapping script is written in a -e hostile way. :(
 set -eo pipefail
@@ -95,6 +94,12 @@ if [ -z "${NUM_CORES_PER_EXECUTOR}" ]; then
 fi
 
 if [ "${SPARK_MASTER}" == "yarn-client" ]; then
+  >&2 echo \
+    'SPARK_MASTER=yarn-client is deprecated in Spark 2.x. Please change to >SPARK_MASTER=yarn.'
+  SPARK_MASTER=yarn
+fi
+
+if [ "${SPARK_MASTER}" == "yarn" ]; then
   if [ -z "${NUM_EXECUTORS}" ]; then
     >&2 echo "Please define NUM_EXECUTORS in the kite config file ${KITE_SITE_CONFIG}."
     exit 1
@@ -127,7 +132,7 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
 fi
 
 if [ -n "${NUM_EXECUTORS}" ]; then
-  if [ "${SPARK_MASTER}" == "yarn-client" ]; then
+  if [ "${SPARK_MASTER}" == "yarn" ]; then
     # YARN mode
     EXTRA_OPTIONS="${EXTRA_OPTIONS} --num-executors ${NUM_EXECUTORS}"
   elif [[ "${SPARK_MASTER}" == spark* ]]; then

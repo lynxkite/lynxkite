@@ -19,8 +19,7 @@ class ExecutorStatusMonitor(
       val msg =
         s"StorageStatus: executor: $executor" +
           s"  diskUsed: ${storageStatus.diskUsed}" +
-          s"  memUsed: ${storageStatus.memUsed}" +
-          s"  offHeapUsed: ${storageStatus.offHeapUsed}"
+          s"  memUsed: ${storageStatus.memUsed}"
       log.info(msg)
     }
   }

@@ -7,7 +7,7 @@ VERSION=$(cat conf/SPARK_VERSION)
 # Link to the given name or spark-$VERSION by default.
 LINK="${1:-spark-${VERSION}}"
 
-HADOOP='2.6'
+HADOOP='2.7'
 cd $HOME
 if [[ ! -x "$LINK" ]]; then
   wget --quiet "http://d3kbcqa49mib13.cloudfront.net/spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
