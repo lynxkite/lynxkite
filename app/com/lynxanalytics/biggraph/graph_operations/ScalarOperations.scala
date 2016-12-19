@@ -1,10 +1,7 @@
 // Simple scalar operations, like arithmetic.
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.controllers.UIStatus
-import play.api.libs.json
 
 object ScalarLongDifference extends OpFromJson {
   class Input extends MagicInputSignature {

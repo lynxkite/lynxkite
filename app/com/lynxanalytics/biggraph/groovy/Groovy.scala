@@ -151,7 +151,6 @@ class LynxGroovyInterface(ctx: GroovyContext) {
 
   def openTable(tableName: String): String = {
     import ctx.metaManager
-    import ctx.dataManager
     val f = DirectoryEntry.fromName(tableName).asTableFrame
     new GlobalTablePath(f.checkpoint, f.name, Seq(Table.VertexTableName)).toString
   }
@@ -243,8 +242,6 @@ class DrawingGroovyInterface {
   }
 
   def newFEGraphRequest(paramsMap: java.util.Map[String, AnyRef]): FEGraphRequest = {
-    import scala.collection.JavaConverters._
-    val params = paramsMap.asScala.toMap
     FEGraphRequest(
       vertexSets = toList(paramsMap.get("vertexSets")),
       edgeBundles = toList(paramsMap.get("edgeBundles"))
@@ -349,7 +346,6 @@ class GroovyBatchProject(ctx: GroovyContext, editor: ProjectEditor)
   }
 
   def sql(query: String): spark.sql.DataFrame = {
-    import ctx.metaManager
     import ctx.dataManager
     val sqlContext = ctx.dataManager.newSQLContext()
     val dfs = editor.viewer.allRelativeTablePaths.map {

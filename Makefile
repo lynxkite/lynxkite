@@ -1,7 +1,7 @@
 # Can be set from the command line. E.g.:
 #   make ecosystem-release VERSION=2.0.0
 export VERSION=snapshot
-export BDT=normal  # Big data test test set size.
+export TEST_SET_SIZE=medium
 
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
@@ -11,12 +11,13 @@ pip = .build/pip3-packages-installed
 all: backend
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
-	cd web && yarn && gulp && cd - && touch $@
+	cd web && LC_ALL=C yarn && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
 	pip3 install --user -r python_requirements.txt && touch $@
-.build/backend-done: $(shell $(find) app project tools lib conf) build.sbt .build/gulp-done
+.build/backend-done: \
+	$(shell $(find) app project lib conf) tools/call_spark_submit.sh build.sbt .build/gulp-done
 	sbt stage && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./.test_backend.sh && touch $@
@@ -32,8 +33,11 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api chronomaster ecosystem/release/lynx/luigi_tasks) \
-		.build/backend-done .build/documentation-done-${VERSION}
+		.build/backend-done .build/documentation-done-${VERSION} .build/statter-done
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
+.build/statter-done: \
+		$(shell $(find) tools/statter/src) tools/statter/build.sbt tools/statter/project/plugins.sbt
+	cd tools/statter && sbt stage && cd - && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -56,8 +60,6 @@ ecosystem-test: chronomaster-test remote_api-test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
-	./test_ecosystem.py \
-		--lynx_release_dir ecosystem/native/dist \
-		--test \
-		--bigdata \
-		--bigdata_test_set ${BDT}
+	./test_big_data.py --test_set_size ${TEST_SET_SIZE}
+.PHONY: statter
+statter: .build/statter-done

@@ -36,7 +36,6 @@ case class VertexAttributeFilter[T](filter: Filter[T])
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
-    implicit val tt = inputs.attr.data.typeTag
     implicit val ct = inputs.attr.data.classTag
 
     val attr = inputs.attr.rdd
@@ -52,8 +51,8 @@ case class VertexAttributeFilter[T](filter: Filter[T])
     val fattr = attr.filter {
       case (id, v) =>
         val res = filter.matches(v)
-        tried += 1
-        if (res) matched += 1
+        tried.add(1)
+        if (res) matched.add(1)
         res
     }
     output(o.fvs, fattr.mapValues(_ => ()))

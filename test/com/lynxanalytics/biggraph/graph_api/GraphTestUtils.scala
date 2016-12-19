@@ -53,7 +53,7 @@ trait TestMetaGraphManager extends TestTempDir {
 trait TestDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager: DataManager = {
     val dataDir = cleanDataManagerDir()
-    new DataManager(sparkContext, dataDir)
+    new DataManager(sparkSession, dataDir)
   }
 }
 
@@ -67,7 +67,7 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
     val permanentDir = cleanDataManagerDir()
     val ephemeralDir = cleanDataManagerDir()
     prepareDataRepos(permanentDir, ephemeralDir)
-    new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
+    new DataManager(sparkSession, permanentDir, Some(ephemeralDir))
   }
 }
 
@@ -224,10 +224,10 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     val sc = rc.sparkContext
     val (srcs, dsts) = edgeLists.unzip
     val vs = sc.parallelize(
-      srcs.flatten.map(_.toLong -> ()))
+      srcs.flatten.map(_.toLong -> (())))
       .sortUnique(rc.onePartitionPartitioner)
     val segments = sc.parallelize(
-      dsts.map(_.toLong -> ()))
+      dsts.map(_.toLong -> (())))
       .sortUnique(rc.onePartitionPartitioner)
     val es = sc.parallelize(
       edgeLists.flatMap {

@@ -30,6 +30,13 @@ module.exports = function(fw) {
       });
       expect(lib.left.scalarValue('age_from_yob').getText())
        .toBe('Linear regression model predicting age');
+      var model = lib.left.scalar('age_from_yob');
+      var p = model.popup();
+      expect(p.$('#model-method').getText()).toBe('Linear regression');
+      expect(p.$('#model-label').getText()).toBe('age');
+      expect(p.$('#model-features').getText()).toBe('yob');
+      expect(p.$('#model-details').getText()).toMatch('intercept\\s*2015');
+      model.popoff();
     },
     function() {}
   );

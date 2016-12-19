@@ -19,13 +19,13 @@ Example usage::
 The list of operations is not documented, but you can copy the invocation from a LynxKite project
 history.
 '''
-import http.cookiejar
+import collections
 import json
 import os
+import requests
 import ssl
 import sys
 import types
-import urllib
 import yaml
 
 if sys.version_info.major < 3:
@@ -33,6 +33,23 @@ if sys.version_info.major < 3:
 
 default_sql_limit = 1000
 default_privacy = 'public-read'
+
+
+class DirectoryEntry:
+  '''name: str
+
+  type: (``'project'``, ``'view'``, ``'table'``, or ``'directory'``)
+
+  checkpoint: str
+
+  object: the Python API object representing each entry. Directories have a ``list`` convenience
+  method for easier directory traversal.'''
+
+  def __init__(self, name, type, object, checkpoint):
+    self.name = name
+    self.type = type
+    self.object = object
+    self.checkpoint = checkpoint
 
 
 class LynxKite:
@@ -53,19 +70,7 @@ class LynxKite:
     self._username = username
     self._password = password
     self._certfile = certfile
-    self.opener = self.build_opener()
-
-  def build_opener(self):
-    cj = http.cookiejar.CookieJar()
-    cp = urllib.request.HTTPCookieProcessor(cj)
-    if self.certfile():
-      sslctx = ssl.create_default_context(
-          ssl.Purpose.SERVER_AUTH,
-          cafile=self.certfile())
-      https = urllib.request.HTTPSHandler(context=sslctx)
-      return urllib.request.build_opener(https, cp)
-    else:
-      return urllib.request.build_opener(cp)
+    self._session = requests.Session()
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -80,37 +85,41 @@ class LynxKite:
     return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
   def _login(self):
-    self._request(
+    r = self._request(
         '/passwordLogin',
         dict(
             username=self.username(),
             password=self.password(),
             method='lynxkite'))
+    r.raise_for_status()
 
-  def _request(self, endpoint, payload={}):
+  def _post(self, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
-        self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
-        data=data,
-        headers={'Content-Type': 'application/json'})
     max_tries = 3
     for i in range(max_tries):
-      try:
-        with self.opener.open(req) as r:
-          return r.read().decode('utf-8')
-      except urllib.error.HTTPError as err:
-        if err.code == 401 and i + 1 < max_tries:  # Unauthorized.
-          self._login()
-          # And then retry via the "for" loop.
-        elif err.code == 500:  # Internal server error.
-          raise LynxException(err.read())
-        else:
-          raise err
+      r = self._session.post(
+          self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
+          verify=self.certfile(),
+          allow_redirects=False,
+          **kwargs)
+      if r.status_code < 400:
+        return r
+      if r.status_code == 401 and i + 1 < max_tries:  # Unauthorized.
+        self._login()
+        # And then retry via the "for" loop.
+      elif r.status_code == 500:  # Internal server error.
+        raise LynxException(r.text)
+      else:
+        r.raise_for_status()
+
+  def _request(self, endpoint, payload={}):
+    '''Sends an HTTP JSON request to LynxKite and returns the response when it arrives.'''
+    data = json.dumps(payload)
+    return self._post(endpoint, data=data, headers={'Content-Type': 'application/json'})
 
   def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self._request('/remote/' + command, payload)
+    data = self._request('/remote/' + command, payload).text
     if raw:
       r = json.loads(data)
     else:
@@ -289,6 +298,41 @@ class LynxKite:
     '''
     self._send("changeACL",
                dict(project=file, readACL=readACL, writeACL=writeACL))
+
+  def list_dir(self, dir=''):
+    '''List the objects in a directory.
+    Returns a list of :class:`DirectoryEntry` objects.'''
+
+    object_lookup = {
+        'project': lambda entry: RootProject(_ProjectCheckpoint(self, entry.checkpoint)),
+        'view': lambda entry: View(self, entry.checkpoint),
+        'table': lambda entry: Table(self, entry.checkpoint),
+        'directory': lambda entry: Directory(self, entry.name),
+    }
+
+    result = self._send('list', dict(path=dir)).entries
+    return [DirectoryEntry(
+        name=entry.name,
+        type=entry.objectType,
+        checkpoint=entry.checkpoint,
+        object=object_lookup[entry.objectType](entry)
+    ) for entry in result]
+
+  def upload(self, data, name=None):
+    '''Uploads a file that can then be used in import methods.
+
+    Use it to upload small test datasets from local files::
+
+      with open('myfile.csv') as f:
+        view = lk.import_csv(lk.upload(f))
+
+    Or to upload even smaller datasets right from Python::
+
+      view = lk.import_csv(lk.upload('id,name\\n1,Bob'))
+    '''
+    if name is None:
+      name = 'remote-api-upload'  # A hash will be added anyway.
+    return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
 
 class Table:
@@ -698,6 +742,18 @@ class Attribute():
         numbuckets,
         sample_size,
         logarithmic)
+
+
+class Directory:
+  '''Represents a LynxKite directory'''
+
+  def __init__(self, lynxkite, path):
+    self.path = path
+    self.lk = lynxkite
+
+  def list(self):
+    '''Returns the contents of this directory.'''
+    return self.lk.list_dir(self.path)
 
 
 class LynxException(Exception):

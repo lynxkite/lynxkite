@@ -8,11 +8,8 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 
 import com.google.common.collect.MapMaker
-import com.lynxanalytics.biggraph.controllers.ProjectEditor
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.hive.HiveContext
-
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -44,20 +41,7 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-// Creating a second HiveContext fails. This only happens in tests, and this will be removed when
-// upgrading to Spark 2.0.0 since there will be no HiveContext anymore.
-object HiveContextHolder {
-  var hiveContext: HiveContext = null
-  def apply(sc: spark.SparkContext): HiveContext = {
-    if (hiveContext == null)
-      hiveContext = new HiveContext(sc)
-    assert(sc == hiveContext.sparkContext,
-      "HiveContext already exists for a different SparkContext.")
-    hiveContext
-  }
-}
-
-class DataManager(sc: spark.SparkContext,
+class DataManager(sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
@@ -66,15 +50,14 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  lazy val masterSQLContext = new SQLContext(sc)
+  lazy val masterSQLContext = sparkSession.sqlContext
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
-  lazy val masterHiveContext = HiveContextHolder(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val context = io.IOContext(dataRoot, sc)
+    val context = io.IOContext(dataRoot, sparkSession.sparkContext)
     entity match {
       case vs: VertexSet => new io.VertexSetIO(vs, context)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
@@ -436,9 +419,9 @@ class DataManager(sc: spark.SparkContext,
   def runtimeContext = {
     val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
-      sparkContext = sc,
+      sparkContext = sparkSession.sparkContext,
       sqlContext = masterSQLContext,
-      ioContext = io.IOContext(dataRoot, sc),
+      ioContext = io.IOContext(dataRoot, sparkSession.sparkContext),
       broadcastDirectory = broadcastDirectory,
       dataManager = this)
   }
@@ -447,12 +430,6 @@ class DataManager(sc: spark.SparkContext,
     val sqlContext = masterSQLContext.newSession()
     registerUDFs(sqlContext)
     sqlContext
-  }
-
-  def newHiveContext(): HiveContext = {
-    val hiveContext = masterHiveContext.newSession()
-    registerUDFs(hiveContext)
-    hiveContext
   }
 
   private def registerUDFs(sqlContext: SQLContext) = {
@@ -470,7 +447,7 @@ object DataManager {
     dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {
     for ((name, df) <- dfs) {
       assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
-      df.registerTempTable(name)
+      df.createOrReplaceTempView(s"`$name`")
     }
     log.info(s"Executing query: $query")
     ctx.sql(query)

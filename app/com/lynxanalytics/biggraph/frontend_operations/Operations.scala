@@ -6,9 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -17,10 +15,7 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
-import com.lynxanalytics.biggraph.table.TableImport
 import play.api.libs.json
-
-import scala.reflect.runtime.universe.TypeTag
 
 object OperationParams {
   case class Param(
@@ -414,28 +409,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("id-attr", "Vertex ID attribute",
+      Choice("id-attr", "Vertex attribute",
         options = FEOption.unset +: vertexAttributes[String]),
       Param("id-column", "ID column"),
-      Param("prefix", "Name prefix for the imported vertex attributes"))
+      Param("prefix", "Name prefix for the imported vertex attributes"),
+      Choice("unique-keys", "Assert unique vertex attribute values",
+        options = FEOption.bools, mandatory = false))
     def enabled =
       hasVertexSet &&
-        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as key.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val attrName = params("id-attr")
-      assert(attrName != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Vertex attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.vertexAttributeNames
-      val tableAttrNames = table.columns
-      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val uniqueKeys = params.getOrElse("unique-keys", "true").toBoolean
+      val edges = if (uniqueKeys) {
+        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      } else {
+        val op = graph_operations.EdgesFromLookupAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      }
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
         assert(!projectAttrNames.contains(prefix + name),
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
-        project.newVertexAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+        project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
     }
   })
@@ -446,30 +448,37 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("id-attr", "Edge ID attribute",
+      Choice("id-attr", "Edge attribute",
         options = FEOption.unset +: edgeAttributes[String]),
       Param("id-column", "ID column"),
-      Param("prefix", "Name prefix for the imported edge attributes"))
+      Param("prefix", "Name prefix for the imported edge attributes"),
+      Choice("unique-keys", "Assert unique edge attribute values",
+        options = FEOption.bools, mandatory = false))
     def enabled =
       hasEdgeBundle &&
-        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
+        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as key.")
     def apply(params: Map[String, String]) = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val columnName = params("id-column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
       val attrName = params("id-attr")
-      assert(attrName != FEOption.unset.id, "The Edge ID attribute parameter must be set.")
+      assert(attrName != FEOption.unset.id, "The Edge attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
       val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
       val projectAttrNames = project.edgeAttributeNames
-      val tableAttrNames = table.columns
-      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-      val res = op(op.fromAttr, idAttr)(op.toAttr, idColumn).result
+      val uniqueKeys = params.getOrElse("unique-keys", "true").toBoolean
+      val edges = if (uniqueKeys) {
+        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      } else {
+        val op = graph_operations.EdgesFromLookupAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      }
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- table.columns) {
         assert(!projectAttrNames.contains(prefix + name),
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
-        project.newEdgeAttribute(prefix + name, attr.pullVia(res.edges), "imported")
+        project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
     }
   })
@@ -1200,17 +1209,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
+      Choice("direction", "Direction",
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
+      val direction = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true)
+      val es = direction.edgeBundle
       val weights =
-        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
-        else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      val es = Direction(params.getOrElse("direction", "outgoing edges"),
-        project.edgeBundle, reversed = true).edgeBundle
+        if (weightsName == FEOption.noWeight.id) es.const(1.0)
+        else direction.pull(project.edgeAttributes(params("weights"))).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, es)(op.weights, weights).result.pagerank, help)
     }
@@ -1251,7 +1262,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type",
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
+      Choice("direction", "Direction",
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
@@ -1354,7 +1366,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  private val toStringHelpText = "Converts the selected %s attributes to string type."
   register("Vertex attribute to string", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
@@ -1377,10 +1388,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  private val toDoubleHelpText =
-    """Converts the selected string typed %s attributes to double (double precision floating point
-    number) type.
-    """
   register("Vertex attribute to double", new VertexAttributesOperation(_, _) {
     val eligible = vertexAttributes[String] ++ vertexAttributes[Long] ++ vertexAttributes[Int]
     def parameters = List(
@@ -1440,6 +1447,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("defined_attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
@@ -1452,12 +1461,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val vertexSet = project.vertexSet
       val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.newVertexAttribute(params("output"), result, expr + help)
     }
@@ -1467,6 +1479,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("defined_attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
@@ -1494,12 +1508,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.edgeAttributes(params("output")) = result
     }
@@ -1963,12 +1978,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val rep = params("rep")
-
       val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
       project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
+    }
+  })
+
+  register("Split edges", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice("rep", "Repetition attribute", options = edgeAttributes[Double]),
+      Param("idx", "Index attribute name", defaultValue = "index"))
+
+    def enabled =
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No double edge attributes")
+    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
+      val op = graph_operations.SplitEdges()
+      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
+    }
+    def apply(params: Map[String, String]) = {
+      val rep = params("rep")
+      val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
+
+      project.pullBackEdges(
+        project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
+      project.edgeAttributes(params("idx")) = split.indexAttr
     }
   })
 
@@ -2118,7 +2153,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         op.edgesBC, project.edgeBundle).result
 
       // saving attributes and original edges
-      var origEdgeAttrs = project.edgeAttributes.toIndexedSeq
+      val origEdgeAttrs = project.edgeAttributes.toIndexedSeq
 
       // new edges after closure
       project.edgeBundle = result.edgesAC
@@ -2887,9 +2922,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled =
       isSegmentation &&
         hasVertexSet &&
-        FEStatus.assert(parent.vertexAttributes.size > 0, "No vertex attributes on $parent") &&
-        FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
-          "Segments are not guaranteed to contain only one vertex")
+        FEStatus.assert(parent.vertexAttributes.size > 0,
+          s"Parent $parent has no vertex attributes") &&
+          FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
+            "Segments are not guaranteed to contain only one vertex")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {
@@ -3300,7 +3336,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(true, "")
 
     def apply(params: Map[String, String]) = {
-      val sql = params("sql")
       val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
       val tableSegmentation = project.segmentation(params("name"))
       tableSegmentation.vertexSet = table.idSet
@@ -3490,6 +3525,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    def attrOptionsWithDefault(default: String): List[FEOption] = {
+      assert(attrOptions.map(_.id).contains(default), s"$default not in $attrOptions")
+      FEOption.list(default) ++ attrOptions.filter(_.id != default)
+    }
     // Options suitable when only neighbors are involved.
     val neighborOptions = FEOption.list(
       "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")

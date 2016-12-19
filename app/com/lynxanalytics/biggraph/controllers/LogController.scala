@@ -7,7 +7,6 @@ import java.io.File
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy
 import play.api.mvc
-import play.api.libs.concurrent.Execution.Implicits._
 
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }

@@ -6,7 +6,27 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-### 1.9.7
+LynxKite:
+
+ - Upgraded to _Apache Spark 2.0.2_.
+ - The Spark 2.x upgrade involved migration to the new Spark machine learning API. This will have
+   a positive impact in the long run, but for now the effects are:
+    - _Logistic regression_ in the _"Predict from vertex attributes"_ operation becomes a binary
+      classifier.
+    - _"Train a k-means clustering model"_ no longer automatically scales the selected attributes.
+      This is actually helpful if the attributes are on the same scale already, but otherwise you
+      need to manually scale them now.
+    - Previously trained k-means models will give wrong results because scaling has been removed.
+      You will have to train new models.
+ - Fixed all reported bugs in the new project UI.
+ - Vertex and edge ID attribute values are only optionally unique in "_Import vertex attributes_"
+   and "_Import edge attributes_" operations.
+ - New "_Split Edges_" operation added. It can be used to create multiple copies of the same edge,
+   based on a repetition attribute.
+ - "_Derive vertex attribute_" and "_Derive edge attribute_" operations can be evaluated on all
+   vertices / edges using undefined input attribute values.
+
+### 1.10.0
 
 LynxKite:
 

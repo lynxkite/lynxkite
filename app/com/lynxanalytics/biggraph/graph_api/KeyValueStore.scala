@@ -101,7 +101,7 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     try {
       fn
     } finally {
-      flushing = true
+      flushing = f
       out.flush()
     }
   }

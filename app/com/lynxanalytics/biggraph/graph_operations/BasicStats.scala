@@ -147,7 +147,6 @@ abstract class ComputeMinMaxMinPositive[T: Numeric]
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val tt = inputs.attribute.data.typeTag
     implicit val ct = inputs.attribute.data.classTag
     import num.mkOrderingOps
     val (min, max, minpos) = inputs.attribute.rdd.values
@@ -240,7 +239,6 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val tt = inputs.attribute.data.typeTag
     implicit val ct = inputs.attribute.data.classTag
     val ordering = new ComputeTopValues.PairOrdering[T]
     val attribute = inputs.attribute.rdd

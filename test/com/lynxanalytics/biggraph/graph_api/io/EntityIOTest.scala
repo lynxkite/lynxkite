@@ -2,8 +2,8 @@ package com.lynxanalytics.biggraph.graph_api.io
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.{EnhancedExampleGraph, ExampleGraph}
-import com.lynxanalytics.biggraph.graph_util.{HadoopFile, PrefixRepository}
+import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository }
 import org.scalatest.FunSuite
 
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
@@ -59,7 +59,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val weight = operation().result.weight
     val repo = cleanDataManager.repositoryPath
     for (p <- partitions) {
-      val dataManager = new DataManager(sparkContext, repo)
+      val dataManager = new DataManager(sparkSession, repo)
       TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
@@ -150,9 +150,9 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     TestUtils.withRestoreGlobals(
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
-        val dataManager = new DataManager(sparkContext, repo)
+        val dataManager = new DataManager(sparkSession, repo)
         val data = dataManager.get(mpfs.vertices)
-        assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> ()))
+        assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> (())))
         dataManager.waitAllFutures()
       }
     val executionCounter = mpfs.operation.executionCounter
@@ -255,7 +255,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     implicit val metaManager = cleanMetaManager
     val repo = cleanDataManager.repositoryPath
     copyDirContents(HadoopFile(resourcePrefix) / "example_graph_kite_data", repo)
-    val dataManager = new DataManager(sparkContext, repo)
+    val dataManager = new DataManager(sparkSession, repo)
     val exampleGraph = ExampleGraph()
     val result = exampleGraph.result
 
