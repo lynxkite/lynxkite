@@ -2176,6 +2176,40 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Create random walk sample", new StructureOperation(_, _) {
+    def parameters = List(
+      NonNegInt("sampleSize", "The expected size of the sample", default = 10000),
+      Ratio("restartProbability",
+        "The probability of jumping back to the original node instead of walking",
+        defaultValue = "0.15"),
+      RandomSeed("seed", "Seed")
+    )
+    def enabled = hasVertexSet && hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val sample = {
+        val sampleSize = params("sampleSize").toInt
+        val restartProbability = params("restartProbability").toDouble
+        val seed = params("seed").toInt
+        val op = graph_operations.RandomWalkSample(restartProbability, sampleSize, seed)
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
+      }
+      project.newVertexAttribute("sample_vertices", sample.verticesInSample)
+      project.newEdgeAttribute("sample_edges", sample.edgesInSample)
+      val vertexEmbedding = {
+        val verticesGuid = sample.verticesInSample.gUID.toString
+        FEFilters.embedFilteredVertices(
+          project.vertexSet, Seq(FEVertexAttributeFilter(verticesGuid, ">0")), heavy = true)
+      }
+      val edgeEmbedding = {
+        val edgesGuid = sample.edgesInSample.gUID.toString
+        FEFilters.embedFilteredVertices(
+          project.edgeBundle.idSet, Seq(FEVertexAttributeFilter(edgesGuid, ">0")), heavy = true)
+      }
+      project.pullBack(vertexEmbedding)
+      project.pullBackEdges(edgeEmbedding)
+    }
+  })
+
   register("Aggregate vertex attribute globally", new GlobalOperation(_, _) {
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
