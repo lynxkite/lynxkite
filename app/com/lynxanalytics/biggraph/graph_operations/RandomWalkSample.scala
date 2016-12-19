@@ -95,13 +95,13 @@ case class RandomWalkSample(restartProbability: Double,
     val partitioner = outEdgesPerNode.partitioner.get
     type NodeId = ID
     type EdgeId = ID
-    type WalkId = Long
+    type WalkIdx = Long
 
     // samples at max requestedSampleSize unique nodes, less if it can't find enough
     def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Int, batchSize: Int = 100)
               (implicit inputDatas: DataSet, rc: RuntimeContext) = {
       val rnd = new Random(seed)
-      var multiWalk: RDD[(NodeId, (Walker, WalkId))] = {
+      var multiWalk: RDD[(NodeId, (Walker, WalkIdx))] = {
         // 3 is an arbitrary number
         val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt max 1
         val range = rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions)
@@ -131,14 +131,14 @@ case class RandomWalkSample(restartProbability: Double,
       turnToSample(walk)
     }
 
-    private def batchWalk(multiWalk: RDD[(NodeId, (Walker, WalkId))], batchSize: Int, seed: Int) = {
+    private def batchWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))], batchSize: Int, seed: Int) = {
       val rnd = new Random(seed)
       Iterator.tabulate(batchSize) {
         _ => rnd.nextInt()
       }.foldLeft(multiWalk)(walkAStep(_, _, outEdgesPerNode, restartProbability))
     }
 
-    private def walkAStep(multiWalk: RDD[(NodeId, (Walker, WalkId))],
+    private def walkAStep(multiWalk: RDD[(NodeId, (Walker, WalkIdx))],
                           seed: Int,
                           outEdgesPerNode: UniqueSortedRDD[NodeId, Array[(NodeId, EdgeId)]],
                           restartProbability: Double) = {
@@ -161,31 +161,32 @@ case class RandomWalkSample(restartProbability: Double,
         }
     }
 
-    private def splitDeadPrefix(multiWalk: RDD[(NodeId, (Walker, WalkId))]) = {
+    private def splitDeadPrefix(multiWalk: RDD[(NodeId, (Walker, WalkIdx))]) = {
       val indicesOfLivingWalks = multiWalk.filter {
         case (_, (walker, _)) => !walker.dead
-      }.map(_._2._2)
-      val firstLiveIdx = if (!indicesOfLivingWalks.isEmpty()){
+      }.map(walkIdx)
+      val firstLiveIdx = if (!indicesOfLivingWalks.isEmpty()) {
         indicesOfLivingWalks.reduce(_ min _)
       } else {
-        multiWalk.map(_._2._2).max() + 1
+        multiWalk.map(walkIdx).max() + 1
       }
-
-      val deadPrefix = multiWalk.filter(_._2._2 < firstLiveIdx)
-      val rest = multiWalk.filter(_._2._2 >= firstLiveIdx)
+      val deadPrefix = multiWalk.filter(walkIdx(_) < firstLiveIdx)
+      val rest = multiWalk.filter(walkIdx(_) >= firstLiveIdx)
       (deadPrefix, rest)
     }
 
-    private def firstWalk(multiWalk: RDD[(NodeId, (Walker, WalkId))]) = {
+    private def firstWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))]) = {
       if (!multiWalk.isEmpty()) {
-        val smallestIdx = multiWalk.map(_._2._2).min()
-        multiWalk.filter(_._2._2 == smallestIdx)
+        val minWalkIdx = multiWalk.map(walkIdx).min()
+        multiWalk.filter(walkIdx(_) == minWalkIdx)
       } else {
         multiWalk
       }
     }
 
-    private def flatToSingleWalk(multiWalk: RDD[(NodeId, (Walker, WalkId))])(implicit rc: RuntimeContext) = {
+    private def walkIdx(walk: (NodeId, (Walker, WalkIdx))) = walk._2._2
+
+    private def flatToSingleWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))])(implicit rc: RuntimeContext) = {
       val walkersInOrder = {
         val partitioner = rc.partitionerForNRows(multiWalk.count())
         multiWalk.map(_._2).map(_.swap).sort(partitioner).map(_._2)
