@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Remote API works on PizzaKite now.
+
 ### 1.11.0
 
 LynxKite:
