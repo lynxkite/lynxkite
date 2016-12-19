@@ -796,3 +796,10 @@ class ResponseObject(types.SimpleNamespace):
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
   return ResponseObject(**dic)
+
+
+class PizzaKite(LynxKite):
+
+  def __init__(self):
+    super().__init__(address='https://pizzakite.lynxanalytics.com/')
+    assert self.oauth_token(), 'Please set LYNXKITE_OAUTH_TOKEN.'
