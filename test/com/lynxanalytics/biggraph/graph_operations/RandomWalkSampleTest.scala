@@ -45,12 +45,12 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
   test("seven nodes sample") {
     // the only walk with seven unique nodes (supposing restartProbability ~= 0.0) is
     // [0, 1, 2, 3, 4, x] * k + [0, 1, 2, 3, 4, y] for k > 0
-    val op = RandomWalkSample(0.001, 7, 0)
+    val op = RandomWalkSample(0.000000000001, 7, 0)
     val output = op(op.vs, g.vs)(op.es, g.es).result
     assert(output.verticesInSample.rdd.filter(_._1 > 4).filter(_._2 > 0.0).count() == 2)
   }
 
-  test("not connected graph test") {
+  test("unconnected graph") {
     val unconnectedG = SmallTestGraph(Map(
       0 -> Seq(1),
       1 -> Seq(0),
