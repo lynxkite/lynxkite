@@ -2200,12 +2200,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         FEFilters.embedFilteredVertices(
           project.vertexSet, Seq(FEVertexAttributeFilter(verticesGuid, ">0")), heavy = true)
       }
+      project.pullBack(vertexEmbedding)
       val edgeEmbedding = {
-        val edgesGuid = sample.edgesInSample.gUID.toString
+        val edgesGuid = project.edgeAttributes("sample_edges").gUID.toString
         FEFilters.embedFilteredVertices(
           project.edgeBundle.idSet, Seq(FEVertexAttributeFilter(edgesGuid, ">0")), heavy = true)
       }
-      project.pullBack(vertexEmbedding)
       project.pullBackEdges(edgeEmbedding)
     }
   })
