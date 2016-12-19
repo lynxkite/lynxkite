@@ -97,8 +97,7 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
   val partitioner = outEdgesPerNode.partitioner.get
 
   // samples at max requestedSampleSize unique nodes, less if it can't find enough
-  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Int, batchSize: Int = 100)
-            (implicit inputDatas: DataSet, rc: RuntimeContext) = {
+  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Int, batchSize: Int = 100)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
     val rnd = new Random(seed)
     var multiWalk: RDD[(NodeId, (Walker, WalkIdx))] = {
       // 3 is an arbitrary number
@@ -164,22 +163,22 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
   private def splitDeadPrefix(multiWalk: RDD[(NodeId, (Walker, WalkIdx))]) = {
     val indicesOfLivingWalks = multiWalk.filter {
       case (_, (walker, _)) => !walker.dead
-    }.map(_._2._2)
+    }.map(walkIdx)
     val firstLiveIdx = if (!indicesOfLivingWalks.isEmpty()) {
       indicesOfLivingWalks.reduce(_ min _)
     } else {
-      multiWalk.map(_._2._2).max() + 1
+      multiWalk.map(walkIdx).max() + 1
     }
 
-    val deadPrefix = multiWalk.filter(_._2._2 < firstLiveIdx)
-    val rest = multiWalk.filter(_._2._2 >= firstLiveIdx)
+    val deadPrefix = multiWalk.filter(walkIdx(_) < firstLiveIdx)
+    val rest = multiWalk.filter(walkIdx(_) >= firstLiveIdx)
     (deadPrefix, rest)
   }
 
   private def firstWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))]) = {
     if (!multiWalk.isEmpty()) {
-      val smallestIdx = multiWalk.map(_._2._2).min()
-      multiWalk.filter(_._2._2 == smallestIdx)
+      val smallestIdx = multiWalk.map(walkIdx).min()
+      multiWalk.filter(walkIdx(_) == smallestIdx)
     } else {
       multiWalk
     }
