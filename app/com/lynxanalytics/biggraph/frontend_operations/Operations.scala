@@ -2176,12 +2176,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Create random walk sample", new StructureOperation(_, _) {
+  register("Random walk sample", new StructureOperation(_, _) {
     def parameters = List(
-      NonNegInt("sampleSize", "The expected size of the sample", default = 10000),
+      NonNegInt("sampleSize", "Sample size", default = 10000),
       Ratio("restartProbability",
-        "The probability of jumping back to the original node instead of walking",
+        "Restart probability",
         defaultValue = "0.15"),
+      Param("vertexAttrName", "Vertex attribute name", defaultValue = "sample"),
+      Param("edgeAttrName", "Edge attribute name", defaultValue = "sample"),
       RandomSeed("seed", "Seed")
     )
     def enabled = hasVertexSet && hasEdgeBundle
@@ -2193,8 +2195,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.RandomWalkSample(restartProbability, sampleSize, seed)
         op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
       }
-      project.newVertexAttribute("sample_vertices", sample.verticesInSample)
-      project.newEdgeAttribute("sample_edges", sample.edgesInSample)
+      project.newVertexAttribute(params("vertexAttrName"), sample.verticesInSample)
+      project.newEdgeAttribute(params("edgeAttrName"), sample.edgesInSample)
       val vertexEmbedding = {
         val verticesGuid = sample.verticesInSample.gUID.toString
         FEFilters.embedFilteredVertices(
@@ -2202,7 +2204,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
       project.pullBack(vertexEmbedding)
       val edgeEmbedding = {
-        val edgesGuid = project.edgeAttributes("sample_edges").gUID.toString
+        val edgesGuid = project.edgeAttributes(params("edgeAttrName")).gUID.toString
         FEFilters.embedFilteredVertices(
           project.edgeBundle.idSet, Seq(FEVertexAttributeFilter(edgesGuid, ">0")), heavy = true)
       }

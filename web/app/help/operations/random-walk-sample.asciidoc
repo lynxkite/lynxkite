@@ -1,0 +1,32 @@
+### Random walk sample
+
+This operation creates a small smart sample of a graph. First, a random vertex is chosen
+for start point. From this point a random walk is performed until the requested number of unique vertices are
+visited. At every step the walker jumps back to the start point and starts a new walk with some probability.
+If the walker can not visit enough unique vertices a new start point is selected. In case the sample size
+is still not big enough after several tries, the walk is aborted and the nodes visited so far are considered
+as the final sample.
+The result of the operation is a subgraph of the original graph consisting of the vertices the walker visited
+and edges the walker used for transition.
+This operation also creates two new attributes that serve as filters.
+
+For example, you can create a random sample of the project's graph to test your model on smaller data set.
+
+====
+[[sampleSize]] Sample size::
+The (maximum) number of vertices in the final sample.
+
+[[restartProbability]] Restart probability::
+The probability of starting a new walk instead of walking.
+
+[[vertexAttrName]] Vertex attribute name::
+The name of the attribute which shows which vertices belong to the sample.
+
+[[edgeAttrName]] Edge attribute name::
+The name of the attribute which shows which edges belong to the sample.
+
+[[seed]] Seed::
+The random seed.
++
+include::{g}[tag=random-seed]
+====
