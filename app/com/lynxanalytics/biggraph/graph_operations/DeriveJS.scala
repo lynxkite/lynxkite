@@ -201,6 +201,8 @@ case class DeriveJSDouble(
     DeriveJSDouble.scalarNamesParameter.toJson(scalarNames) ++
     DeriveJSDouble.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
   def convertJSResult(result: AnyRef, context: => String): Double = {
+    // Converts everything to a Double. For results which cannot be interpreted as Doubles
+    // like 'abc' this will return Double.NaN.
     val v = javascript.Context.toNumber(result)
     assert(!v.isNaN(), s"$context did not return a number: $v")
     assert(!v.isInfinite(), s"$context returned an infinite number: $v")
@@ -269,6 +271,9 @@ case class DeriveJSVectorOfDoubles(
   def convertJSResult(result: AnyRef, context: => String): Vector[Double] = {
     DeriveJSVectorOfStrings.convertJSResultToVector(result, context).map { i =>
       {
+        // Converts everything to a Double. For results which cannot be interpreted as Doubles
+        // like 'abc' this will return Double.NaN. For undefined JavaScript results this
+        // returns 0.0.
         val d = javascript.Context.toNumber(i)
         assert(!d.isNaN(), s"$context did not return a number in vector: $d")
         assert(!d.isInfinite(), s"$context returned an infinite number in vector: $d")
