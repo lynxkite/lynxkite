@@ -142,13 +142,14 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
                         outEdgesPerNode: UniqueSortedRDD[NodeId, Array[(NodeId, EdgeId)]],
                         restartProbability: Double) = {
     multiWalk.sort(outEdgesPerNode.partitioner.get)
-      .sortedJoin(outEdgesPerNode)
+      .sortedLeftOuterJoin(outEdgesPerNode)
       .mapPartitionsWithIndex {
         case (pid, it) =>
           val rnd = new Random((pid << 16) + seed)
           it.map {
             case (currentNode, ((walker, walkerIdx), _)) if walker.dead => (currentNode, (walker, walkerIdx))
-            case (currentNode, ((walker, walkerIdx), edgesFromHere)) =>
+            case (currentNode, ((walker, walkerIdx), None)) => (currentNode, (walker.die, walkerIdx))
+            case (currentNode, ((walker, walkerIdx), Some(edgesFromHere))) =>
               if (rnd.nextDouble() < restartProbability) {
                 (currentNode, (walker.die, walkerIdx))
               } else {
