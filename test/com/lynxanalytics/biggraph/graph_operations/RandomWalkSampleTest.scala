@@ -57,7 +57,7 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
       2 -> Seq(3),
       3 -> Seq(2)
     )).result
-    val op = RandomWalkSample(0.01, 3, 0)
+    val op = RandomWalkSample(0.1, 3, 0)
     val output = op(op.vs, unconnectedG.vs)(op.es, unconnectedG.es).result
     assert(output.verticesInSample.rdd.filter(_._2 > 0.0).count() == 3)
     assert(output.edgesInSample.rdd.filter(_._2 > 0.0).count() == 2)

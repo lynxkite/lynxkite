@@ -33,6 +33,7 @@ case class RandomWalkSample(restartProbability: Double,
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   val maxTries = 10
+  val maxStepsInOneTry = 1000000
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson =
@@ -61,14 +62,14 @@ case class RandomWalkSample(restartProbability: Double,
     var actualSampleSize = 0L
     var tries = 0
     while (actualSampleSize < requestedSampleSize && tries < maxTries) {
-      val (newSampleNodes, newSampleEdges) =
-        sampler.sample(requestedSampleSize - actualSampleSize, randomNode(nodes, rnd.nextLong()), rnd.nextInt(), 1000000)
-      nodesInSample = nodesInSample.sortedJoin(newSampleNodes).mapValues {
-        case (isInPreviousSample, isInNewSample) => isInPreviousSample || isInNewSample
+      val (newSampleNodes, newSampleEdges) = {
+        val startNode = randomNode(nodes, rnd.nextLong())
+        val nodesMissing = requestedSampleSize - actualSampleSize
+        val seed = rnd.nextInt()
+        sampler.sample(nodesMissing, startNode, seed, maxStepsInOneTry)
       }
-      edgesInSample = edgesInSample.sortedJoin(newSampleEdges).mapValues {
-        case (isInPreviousSample, isInNewSample) => isInPreviousSample || isInNewSample
-      }
+      nodesInSample = mergeSamples(nodesInSample, newSampleNodes)
+      edgesInSample = mergeSamples(edgesInSample, newSampleEdges)
       actualSampleSize = nodesInSample.filter(_._2).count()
       tries += 1
     }
@@ -78,12 +79,19 @@ case class RandomWalkSample(restartProbability: Double,
 
   private def randomNode(nodes: VertexSetRDD, seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
 
+  private def mergeSamples(sample1: UniqueSortedRDD[ID, Boolean], sample2: UniqueSortedRDD[ID, Boolean]) = {
+    sample1.sortedJoin(sample2).mapValues {
+      case (isInPreviousSample, isInNewSample) => isInPreviousSample || isInNewSample
+    }
+  }
+
   class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD) {
     val outEdgesPerNode = edges.map {
       case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
     }.groupByKey().map {
       case (id, it) => (id, it.toArray)
     }.sortUnique(nodes.partitioner.get)
+    outEdgesPerNode.persist(StorageLevels.DISK_ONLY)
     val partitioner = outEdgesPerNode.partitioner.get
     type NodeId = ID
     type EdgeId = ID
@@ -178,7 +186,10 @@ case class RandomWalkSample(restartProbability: Double,
     }
 
     private def flatToSingleWalk(multiWalk: RDD[(NodeId, (Walker, WalkId))])(implicit rc: RuntimeContext) = {
-      val walkersInOrder = multiWalk.map(_._2).map(_.swap).sort(rc.partitionerForNRows(multiWalk.count())).map(_._2)
+      val walkersInOrder = {
+        val partitioner = rc.partitionerForNRows(multiWalk.count())
+        multiWalk.map(_._2).map(_.swap).sort(partitioner).map(_._2)
+      }
       walkersInOrder.flatMap {
         case Walker(nodeIds, edgeIds, _) => nodeIds.zip(edgeIds).reverse
       }
