@@ -38,7 +38,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
   sharedScope.sealObject()
 
-  private def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
+  def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
     val scope = cx.newObject(sharedScope)
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
