@@ -190,23 +190,26 @@ case class RandomWalkSample(restartProbability: Double,
       }
       indexedSteps.persist(StorageLevels.DISK_ONLY)
 
-      val nodesWithFirstOccurrence =
-
-
-      // nthUniqueNodeIdx = the index of the step when the n-th unique node is visited
-      val nthUniqueNodeIdx = indexedSteps.map {
+      val nodesByFirstOccurrence = indexedSteps.map {
         case (nodeId, _, idx) => (nodeId, idx)
       }.reduceByKey {
         case (idx1, idx2) => idx1 min idx2
       }.map {
         case (nodeId, firstIdxOfNode) => (firstIdxOfNode, nodeId)
-      }.sortByKey().zipWithIndex().filter {
-        case (_, idx) => idx < n
-      }.keys.keys.max()
-      val lastIdx = if (nthUniqueNodeIdx <= n)
+      }.sortByKey()
+
+      val lastStepToKeep = if (nodesByFirstOccurrence.count() < n) {
+        // keep full walk
+        indexedSteps.map(_._3).max()
+      } else {
+        // keep til the appearance of the n-th unique node
+        nodesByFirstOccurrence.zipWithIndex().filter {
+          case (_, idx) => idx < n
+        }.keys.keys.max()
+      }
 
       indexedSteps.filter {
-        case (_, _, idx) => idx <= nthUniqueNodeIdx
+        case (_, _, idx) => idx <= lastStepToKeep
       }.map {
         case (nodeId, edgeId, _) => (nodeId, edgeId)
       }
