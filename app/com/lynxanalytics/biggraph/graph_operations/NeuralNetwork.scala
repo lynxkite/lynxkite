@@ -147,7 +147,7 @@ case class PredictViaNNOnGraphV1(
     seed: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
-    if (selectionRadius < 0) { // Return the whole graph, for testing.
+    if (selectionRadius <= 0) { // Return the whole graph, for testing.
       (vertices, edgeLists, data)
     } else {
       val random = new util.Random(seed)
