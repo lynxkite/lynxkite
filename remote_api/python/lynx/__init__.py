@@ -59,10 +59,10 @@ class LynxKite:
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
   ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
-  ``LYNXKITE_PUBLIC_SSL_CERT``.
+  ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``.
   '''
 
-  def __init__(self, username=None, password=None, address=None, certfile=None):
+  def __init__(self, username=None, password=None, address=None, certfile=None, oauth_token=None):
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
@@ -70,6 +70,7 @@ class LynxKite:
     self._username = username
     self._password = password
     self._certfile = certfile
+    self._oauth_token = oauth_token
     self._session = requests.Session()
 
   def address(self):
@@ -84,14 +85,25 @@ class LynxKite:
   def certfile(self):
     return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
+  def oauth_token(self):
+    return self._oauth_token or os.environ.get('LYNXKITE_OAUTH_TOKEN')
+
   def _login(self):
-    r = self._request(
-        '/passwordLogin',
-        dict(
-            username=self.username(),
-            password=self.password(),
-            method='lynxkite'))
-    r.raise_for_status()
+    if self.password():
+      r = self._request(
+          '/passwordLogin',
+          dict(
+              username=self.username(),
+              password=self.password(),
+              method='lynxkite'))
+      r.raise_for_status()
+    elif self.oauth_token():
+      r = self._request(
+          '/googleLogin',
+          dict(id_token=self.oauth_token()))
+      r.raise_for_status()
+    else:
+      raise Exception('No login credentials provided.')
 
   def _post(self, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''

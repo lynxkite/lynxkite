@@ -29,6 +29,10 @@ angular.module('biggraph')
       /* jshint camelcase: false */
       if (!googleUser) { return; }
       var id_token = googleUser.getAuthResponse().id_token;
+      console.log(
+          'Google login successful!' +
+          ' If you want to use this login in a notebook environment, please set:');
+      console.log('LYNXKITE_OAUTH_TOKEN=' + id_token);
       tryLogin('/googleLogin', { id_token: id_token });
     };
 
