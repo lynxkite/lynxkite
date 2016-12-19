@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import org.scalautils.TolerantNumerics
+import org.scalactic.TolerantNumerics
 
 class CorrelateTwoAttributesOperationTest extends OperationsTestBase {
   implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(0.0001)
