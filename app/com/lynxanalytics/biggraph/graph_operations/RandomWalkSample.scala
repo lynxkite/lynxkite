@@ -97,8 +97,7 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
   val partitioner = outEdgesPerNode.partitioner.get
 
   // samples at max requestedSampleSize unique nodes, less if it can't find enough
-  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Long, batchSize: Int = 100)
-            (implicit inputDatas: DataSet, rc: RuntimeContext) = {
+  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Long, batchSize: Int = 100)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
     val rnd = new Random(seed)
     var multiWalk: RDD[(NodeId, (Walker, WalkIdx))] = {
       // 3 is an arbitrary number
