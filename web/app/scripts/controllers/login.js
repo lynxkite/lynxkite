@@ -25,9 +25,11 @@ angular.module('biggraph')
       tryLogin('/passwordLogin', $scope.credentials);
     };
 
-    $scope.googleLogin = function(code) {
-      if (!code) { return; }
-      tryLogin('/googleLogin', { code: code });
+    $scope.googleLogin = function(googleUser) {
+      /* jshint camelcase: false */
+      if (!googleUser) { return; }
+      var id_token = googleUser.getAuthResponse().id_token;
+      tryLogin('/googleLogin', { id_token: id_token });
     };
 
     $scope.showAuthMethods = function() {
@@ -36,6 +38,6 @@ angular.module('biggraph')
   });
 
 /* exported googleSignInCallback */
-function googleSignInCallback(authResult) {
-  loginScope.googleLogin(authResult.code);
+function googleSignInCallback(googleUser) {
+  loginScope.googleLogin(googleUser);
 }
