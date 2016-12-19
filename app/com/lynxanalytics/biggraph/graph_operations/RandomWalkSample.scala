@@ -33,7 +33,7 @@ case class RandomWalkSample(restartProbability: Double,
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   val maxTries = 10
-  val maxStepsInOneTry = 1000000
+  val maxStepsMultiplier = 100
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson =
@@ -66,7 +66,7 @@ case class RandomWalkSample(restartProbability: Double,
         val startNode = randomNode(nodes, rnd.nextLong())
         val nodesMissing = requestedSampleSize - actualSampleSize
         val seed = rnd.nextInt()
-        sampler.sample(nodesMissing, startNode, seed, maxStepsInOneTry)
+        sampler.sample(nodesMissing, startNode, seed, nodesMissing * maxStepsMultiplier)
       }
       nodesInSample = mergeSamples(nodesInSample, newSampleNodes)
       edgesInSample = mergeSamples(edgesInSample, newSampleEdges)
@@ -97,7 +97,8 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
   val partitioner = outEdgesPerNode.partitioner.get
 
   // samples at max requestedSampleSize unique nodes, less if it can't find enough
-  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Int, batchSize: Int = 100)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
+  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Long, batchSize: Int = 100)
+            (implicit inputDatas: DataSet, rc: RuntimeContext) = {
     val rnd = new Random(seed)
     var multiWalk: RDD[(NodeId, (Walker, WalkIdx))] = {
       // 3 is an arbitrary number
