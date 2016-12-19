@@ -61,6 +61,7 @@ case class PredictViaNNOnGraphV1(
     gradientCheckOn: Boolean,
     networkLayout: String) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
+  override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "featureCount" -> featureCount,
