@@ -1537,7 +1537,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derive scalar", new GlobalOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("Double", "String")),
+      Choice("type", "Result type", options = FEOption.list("double", "string")),
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = FEStatus.enabled
     override def summary(params: Map[String, String]) = {

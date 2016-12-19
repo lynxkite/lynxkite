@@ -218,9 +218,9 @@ object DeriveJSVectorOfStrings extends OpFromJson {
       scalarNamesParameter.fromJson(j),
       onlyOnDefinedAttrsParameter.fromJson(j))
   def convertJSResultToVector(result: AnyRef, context: String): Vector[_] = {
-    assert(result.isInstanceOf[org.mozilla.javascript.NativeArray],
+    assert(result.isInstanceOf[javascript.NativeArray],
       s"$context did not return a vector: $result")
-    result.asInstanceOf[org.mozilla.javascript.NativeArray].toArray().toVector
+    result.asInstanceOf[javascript.NativeArray].toArray().toVector
   }
 }
 case class DeriveJSVectorOfStrings(
