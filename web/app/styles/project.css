@@ -185,8 +185,8 @@ label {
 }
 
 .entity-note {
-  /* Constrain notes to the right half of the line, so they don't overlap with everything. */
-  max-width: 50%;
+  /* Constrain notes to less than half the screen width to avoid scary large popups. */
+  max-width: 40vw;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
