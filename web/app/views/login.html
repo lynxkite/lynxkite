@@ -11,16 +11,10 @@
   <div class="jumbotron">
     <div ng-hide="passwordSignIn || submitted">
       <!-- Sign in with Google. -->
-      <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
-      <div id="signinButton">
-        <span class="g-signin"
-          data-scope="profile email"
-          data-clientid="249221604126-4jt7btiej000rogh7nualh4tqn445b7c.apps.googleusercontent.com"
-          data-redirecturi="postmessage"
-          data-cookiepolicy="https://pizzakite.lynxanalytics.com"
-          data-callback="googleSignInCallback">
-        </span>
-      </div>
+      <script src="https://apis.google.com/js/platform.js" async defer></script>
+      <meta name="google-signin-client_id"
+            content="249221604126-4jt7btiej000rogh7nualh4tqn445b7c.apps.googleusercontent.com">
+      <div class="g-signin2" data-onsuccess="googleSignInCallback"></div>
       <div id="result"></div>
 
       <!-- Sign in with a password. -->
