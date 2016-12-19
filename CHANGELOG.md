@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.11.0
+
 LynxKite:
 
  - Upgraded to _Apache Spark 2.0.2_.
