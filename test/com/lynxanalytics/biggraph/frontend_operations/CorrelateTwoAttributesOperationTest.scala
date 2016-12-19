@@ -12,6 +12,10 @@ class CorrelateTwoAttributesOperationTest extends OperationsTestBase {
       "attrA" -> "age",
       "attrB" -> "age"))
     assert(project.scalars("correlation of age and age").value.asInstanceOf[Double] === 1.0)
+    run("Correlate two attributes", Map(
+      "attrA" -> "age",
+      "attrB" -> "income"))
+    assert(project.scalars("correlation of age and income").value.asInstanceOf[Double] === 1.0)
   }
 }
 
