@@ -631,7 +631,7 @@ Selector.prototype = {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name);
     $('#new-project button[type=submit]').click();
-    this.hideSparkStatus();
+    this.hideFloatingElements();
   },
 
   startTableImport: function() {
@@ -685,14 +685,16 @@ Selector.prototype = {
 
   openProject: function(name) {
     this.project(name).click();
-    this.hideSparkStatus();
+    this.hideFloatingElements();
   },
 
-  hideSparkStatus: function() {
+  hideFloatingElements: function() {
     // Floating elements can overlap buttons and block clicks.
-    browser.executeScript(
-      'document.styleSheets[0].insertRule(\'.spark-status { position: static !important; }\');');
-  },
+    browser.executeScript(`
+      document.styleSheets[0].insertRule(
+        '.spark-status, .bottom-links { position: static !important; }');
+        `);
+      },
 
   openDirectory: function(name) {
     this.directory(name).click();
@@ -839,18 +841,38 @@ testLib = {
 
   // Deletes all projects and directories.
   discardAll: function() {
-    function sendRequest() {
-      var defer = protractor.promise.defer();
-      request.post(
+    function discard(defer) {
+      var req = request.defaults({ jar: true });
+      req.post(
         browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
         { json: { fake: 1 } },
-        function(error, message) {
+        (error, message) => {
           if (error || message.statusCode >= 400) {
-            defer.reject({ error : error, message : message });
+            defer.reject(new Error(error));
           } else {
             defer.fulfill();
-          }
-        });
+      }});
+    }
+    this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
+  },
+
+  authenticateAndPost: function(username, password, method, func) {
+    function sendRequest() {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+      var defer = protractor.promise.defer();
+      var req = request.defaults({ jar: true });
+      req.post(
+        browser.baseUrl + 'passwordLogin',
+        { json : {
+          'username': username,
+          'password': password,
+          'method': method
+        }}, (error, message) => {
+          if (error || message.statusCode >= 400) {
+            defer.reject(new Error(error));  // TODO: include message?
+          } else {
+            func(defer);
+          }});
       return defer.promise;
     }
     browser.controlFlow().execute(sendRequest);
