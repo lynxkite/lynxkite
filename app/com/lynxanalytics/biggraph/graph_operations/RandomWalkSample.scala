@@ -81,7 +81,7 @@ case class RandomWalkSample(restartProbability: Double,
 
   private def mergeSamples(sample1: UniqueSortedRDD[ID, Boolean], sample2: UniqueSortedRDD[ID, Boolean]) = {
     sample1.sortedJoin(sample2).mapValues {
-      case (isInPreviousSample, isInNewSample) => isInPreviousSample || isInNewSample
+      case (isInSample1, isInSample2) => isInSample1 || isInSample2
     }
   }
 }
@@ -99,14 +99,12 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
   // samples at max requestedSampleSize unique nodes, less if it can't find enough
   def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Long, batchSize: Int = 100)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
     val rnd = new Random(seed)
-    var multiWalk: RDD[(NodeId, (Walker, WalkIdx))] = {
+    var multiWalk = {
       // 3 is an arbitrary number
       val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt max 1
       val range = rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions)
       range.map {
-        _ => (startNodeID, Walker(startNodeID))
-      }.zipWithIndex().map {
-        case ((head, walker), idx) => (head, (walker, idx))
+        idx => (startNodeID, (Walker(startNodeID), idx))
       }.partitionBy(partitioner)
     }
     var stepsMade = 0
@@ -164,6 +162,7 @@ class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Dou
     val indicesOfLivingWalks = multiWalk.filter {
       case (_, (walker, _)) => !walker.dead
     }.map(walkIdx)
+    indicesOfLivingWalks.persist(StorageLevels.DISK_ONLY)
     val firstLiveIdx = if (!indicesOfLivingWalks.isEmpty()) {
       indicesOfLivingWalks.reduce(_ min _)
     } else {
