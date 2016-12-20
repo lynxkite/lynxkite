@@ -1446,7 +1446,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.dataTypes),
+      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
@@ -1484,7 +1484,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derived edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.dataTypes),
+      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
