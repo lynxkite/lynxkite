@@ -15,7 +15,7 @@ assuming that you have a graph attribute _age_average_, you can use the expressi
 to identify connections between relatively young and relatively old people.
 
 JavaScript arrays like `[1, 2, 3]` are automatically converted back to vectors (if the result type
-is set accordingly).
+is set accordingly). Vectors can not contain `undefined` elements.
 
 ====
 [[output]] Save as::
