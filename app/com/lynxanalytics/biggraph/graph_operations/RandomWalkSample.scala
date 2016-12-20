@@ -57,18 +57,27 @@ case class RandomWalkSample(restartProbability: Double,
     val rnd = new Random(seed)
     var nodesInSample = nodes.mapValues(_ => false)
     var edgesInSample = edges.mapValues(_ => false)
-    val sampler = new Sampler(nodes, edges, restartProbability)
+    val walker = new Walker(nodes, edges, restartProbability)
 
     var actualSampleSize = 0L
     var tries = 0
     while (actualSampleSize < requestedSampleSize && tries < maxTries) {
-      val (newSampleNodes, newSampleEdges) = {
+      val nodesMissing = requestedSampleSize - actualSampleSize
+      val (nodeReachedIdx, edgeReachedIdx) = {
         val startNode = randomNode(nodes, rnd.nextLong())
-        val nodesMissing = requestedSampleSize - actualSampleSize
         val seed = rnd.nextInt()
-        sampler.sample(nodesMissing, startNode, seed, nodesMissing * maxStepsMultiplier)
+        // 10 and 3 are arbitrary numbers
+        val maxStepsWithoutRestart = (10 / restartProbability).toLong min 3 * nodesMissing
+        // 3 is an arbitrary number
+        val maxRestarts = (3 * nodesMissing * restartProbability).toLong max 1L
+        walker.walk(startNode, maxStepsWithoutRestart, maxRestarts, seed)
       }
+      nodeReachedIdx.persist(StorageLevels.DISK_ONLY)
+      val lastIdxToKeep = nthUniqueNodeReached(nodeReachedIdx, n = nodesMissing)
+      val newSampleNodes = isReachedEarlier(nodeReachedIdx, lastIdxToKeep)
+      val newSampleEdges = isReachedEarlier(edgeReachedIdx, lastIdxToKeep)
       nodesInSample = mergeSamples(nodesInSample, newSampleNodes)
+      nodesInSample.persist(StorageLevels.DISK_ONLY)
       edgesInSample = mergeSamples(edgesInSample, newSampleEdges)
       actualSampleSize = nodesInSample.filter(_._2).count()
       tries += 1
@@ -77,180 +86,126 @@ case class RandomWalkSample(restartProbability: Double,
     output(o.edgesInSample, edgesInSample.mapValues(if (_) 1.0 else 0.0))
   }
 
+  private class Walker(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Double) {
+    private val outEdgesPerNode = edges.map {
+      case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
+    }.groupByKey().map {
+      case (id, it) => (id, it.toArray)
+    }.sortUnique(nodes.partitioner.get)
+    outEdgesPerNode.persist(StorageLevels.DISK_ONLY)
+
+    // returns an idx associated with nodes and edges which increases monotonically with the index of step when the
+    // node/edge was first reached
+    // indices of unreached nodes/edges are -1
+    def walk(startNodeID: ID,
+             maxStepsWithoutRestart: Long,
+             maxRestarts: Long,
+             seed: Int)(implicit rc: RuntimeContext): (UniqueSortedRDD[ID, Long], UniqueSortedRDD[ID, Long]) = {
+      val rnd = new Random(seed)
+      val numWalkers = maxRestarts
+      val numMultiSteps = maxStepsWithoutRestart
+      // idxMultiplier = the first power of 10 which is bigger than numMultiSteps
+      val idxMultiplier = Math.pow(10, Math.log10(numMultiSteps).toInt + 1).toLong
+      var multiWalkState = {
+        val range = rc.sparkContext.parallelize(0L until numWalkers, nodes.partitioner.get.numPartitions)
+        range.map {
+          idx => (startNodeID, idx * idxMultiplier)
+        }
+      }
+      val neverReachedIdx = idxMultiplier * numWalkers
+      var nodeFirstReachedAt = {
+        val allUnreached = nodes.mapValues(_ => neverReachedIdx)
+        updatedReachNumbers(allUnreached, multiWalkState)
+      }
+      var edgeFirstUsedAt = edges.mapValues(_ => neverReachedIdx)
+      var multiStepCnt = 0L
+      while (multiStepCnt < numMultiSteps && !multiWalkState.isEmpty()) {
+        val (nodesReachedNow, edgesReachedNow) = multiStep(multiWalkState, rnd.nextInt(), restartProbability)
+        nodesReachedNow.persist(StorageLevels.DISK_ONLY)
+        nodeFirstReachedAt = updatedReachNumbers(nodeFirstReachedAt, nodesReachedNow)
+        edgeFirstUsedAt = updatedReachNumbers(edgeFirstUsedAt, edgesReachedNow)
+        multiWalkState = nodesReachedNow
+        multiStepCnt += 1
+      }
+
+      (setUnreached(nodeFirstReachedAt, neverReachedIdx), setUnreached(edgeFirstUsedAt, neverReachedIdx))
+    }
+
+    private def updatedReachNumbers(oldReachNumbers: UniqueSortedRDD[ID, Long], newReachNumbers: RDD[(ID, Long)]) = {
+      val x = newReachNumbers.reduceByKey(_ min _).sort(oldReachNumbers.partitioner.get).asUniqueSortedRDD
+      oldReachNumbers.sortedLeftOuterJoin(x).mapValues {
+        case (idx, None) => idx
+        case (oldIdx, Some(newIdx)) => oldIdx min newIdx
+      }
+    }
+
+    private def multiStep(multiWalk: RDD[(ID, Long)], seed: Int, restartProbability: Double) = {
+      val rnd = new Random(seed)
+      val notRestartingWalks = {
+        val seed = rnd.nextInt()
+        multiWalk.mapPartitionsWithIndex {
+          case (pid, it) =>
+            val rnd = new Random((pid << 16) + seed)
+            it.map(x => x -> rnd.nextDouble())
+        }.filter(_._2 > restartProbability).map(_._1)
+      }
+
+      val nextState = {
+        val seed = rnd.nextInt()
+        notRestartingWalks.sort(outEdgesPerNode.partitioner.get).sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
+          case (pid, it) =>
+            val rnd = new Random((pid << 16) + seed)
+            it.map {
+              case (_, (idx, edgesFromHere)) =>
+                val rndIdx = rnd.nextInt(edgesFromHere.length)
+                val (toNode, onEdge) = edgesFromHere(rndIdx)
+                ((toNode, idx + 1), (onEdge, idx + 1))
+            }
+        }
+      }
+      nextState.persist(StorageLevels.DISK_ONLY)
+
+      (nextState.map(_._1), nextState.map(_._2))
+    }
+
+    private def setUnreached(reach: UniqueSortedRDD[ID, Long], neverReachedIdx: Long) =
+      reach.mapValues(idx => if (idx != neverReachedIdx) idx else -1L)
+  }
+
   private def randomNode(nodes: VertexSetRDD, seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
+
+  private def nthUniqueNodeReached(nodeReachedIdx: RDD[(ID, Long)], n: Long) = {
+    val nodesEverReached = nodeReachedIdx.filter(_._2 != -1)
+    nodesEverReached.persist(StorageLevels.DISK_ONLY)
+    if (nodesEverReached.count() > n) {
+      val idx = nodesEverReached.
+        map(_.swap).
+        sort(nodeReachedIdx.partitioner.get).
+        zipWithIndex().
+        filter(_._2 < n).
+        map(_._1._1).
+        max()
+      Some(idx)
+    } else {
+      None
+    }
+  }
+
+  private def isReachedEarlier(reachedIdx: UniqueSortedRDD[ID, Long], lastIdxToKeep: Option[Long]) = {
+    if (lastIdxToKeep.isDefined) {
+      val limit = lastIdxToKeep.get
+      reachedIdx.mapValues {
+        case -1 => false
+        case idx => idx <= limit
+      }
+    } else {
+      reachedIdx.mapValues(_ > -1)
+    }
+  }
 
   private def mergeSamples(sample1: UniqueSortedRDD[ID, Boolean], sample2: UniqueSortedRDD[ID, Boolean]) = {
     sample1.sortedJoin(sample2).mapValues {
       case (isInSample1, isInSample2) => isInSample1 || isInSample2
     }
   }
-}
-
-class Sampler(nodes: VertexSetRDD, edges: EdgeBundleRDD, restartProbability: Double) {
-  import Sampler._
-  val outEdgesPerNode = edges.map {
-    case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
-  }.groupByKey().map {
-    case (id, it) => (id, it.toArray)
-  }.sortUnique(nodes.partitioner.get)
-  outEdgesPerNode.persist(StorageLevels.DISK_ONLY)
-  val partitioner = outEdgesPerNode.partitioner.get
-
-  // samples at max requestedSampleSize unique nodes, less if it can't find enough
-  def sample(requestedSampleSize: Long, startNodeID: ID, seed: Int, maxSteps: Long, batchSize: Int = 100)(implicit inputDatas: DataSet, rc: RuntimeContext) = {
-    val rnd = new Random(seed)
-    var multiWalk = {
-      // 3 is an arbitrary number
-      val numWalkers = 3 * (requestedSampleSize * restartProbability).toInt max 1
-      val range = rc.sparkContext.parallelize(0L until numWalkers, partitioner.numPartitions)
-      range.map {
-        idx => (startNodeID, (Walker(startNodeID), idx))
-      }.partitionBy(partitioner)
-    }
-    var stepsMade = 0
-    var hasEnoughUniqueNodes = requestedSampleSize == 0L
-    var walk: RDD[(NodeId, Option[EdgeId])] = rc.sparkContext.emptyRDD
-    while (stepsMade < maxSteps && !hasEnoughUniqueNodes && !multiWalk.isEmpty()) {
-      multiWalk = batchWalk(multiWalk, batchSize, rnd.nextInt())
-      multiWalk.persist(StorageLevels.DISK_ONLY)
-      val (deadPrefix, rest) = splitDeadPrefix(multiWalk)
-      rest.persist(StorageLevels.DISK_ONLY)
-      val firstLiveWalk = firstWalk(rest)
-      walk = walk ++ flatToSingleWalk(deadPrefix) ++ flatToSingleWalk(firstLiveWalk)
-      walk.persist(StorageLevels.DISK_ONLY)
-      multiWalk = rest
-      hasEnoughUniqueNodes = requestedSampleSize <= walk.map(_._1).distinct().count()
-      stepsMade += batchSize
-    }
-
-    walk = tillNthUniqueNode(walk, n = requestedSampleSize)
-    turnToSample(walk)
-  }
-
-  private def batchWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))], batchSize: Int, seed: Int) = {
-    val rnd = new Random(seed)
-    Iterator.tabulate(batchSize) {
-      _ => rnd.nextInt()
-    }.foldLeft(multiWalk)(walkAStep(_, _, outEdgesPerNode, restartProbability))
-  }
-
-  private def walkAStep(multiWalk: RDD[(NodeId, (Walker, WalkIdx))],
-                        seed: Int,
-                        outEdgesPerNode: UniqueSortedRDD[NodeId, Array[(NodeId, EdgeId)]],
-                        restartProbability: Double) = {
-    multiWalk.sort(outEdgesPerNode.partitioner.get)
-      .sortedLeftOuterJoin(outEdgesPerNode)
-      .mapPartitionsWithIndex {
-        case (pid, it) =>
-          val rnd = new Random((pid << 16) + seed)
-          it.map {
-            case (currentNode, ((walker, walkerIdx), _)) if walker.dead => (currentNode, (walker, walkerIdx))
-            case (currentNode, ((walker, walkerIdx), None)) => (currentNode, (walker.die, walkerIdx))
-            case (currentNode, ((walker, walkerIdx), Some(edgesFromHere))) =>
-              if (rnd.nextDouble() < restartProbability) {
-                (currentNode, (walker.die, walkerIdx))
-              } else {
-                val rndIdx = rnd.nextInt(edgesFromHere.length)
-                val (toNode, onEdge) = edgesFromHere(rndIdx)
-                (toNode, (walker.walk(toNode, onEdge), walkerIdx))
-              }
-          }
-      }
-  }
-
-  private def splitDeadPrefix(multiWalk: RDD[(NodeId, (Walker, WalkIdx))]) = {
-    val indicesOfLivingWalks = multiWalk.filter {
-      case (_, (walker, _)) => !walker.dead
-    }.map(walkIdx)
-    indicesOfLivingWalks.persist(StorageLevels.DISK_ONLY)
-    val firstLiveIdx = if (!indicesOfLivingWalks.isEmpty()) {
-      indicesOfLivingWalks.reduce(_ min _)
-    } else {
-      multiWalk.map(walkIdx).max() + 1
-    }
-
-    val deadPrefix = multiWalk.filter(walkIdx(_) < firstLiveIdx)
-    val rest = multiWalk.filter(walkIdx(_) >= firstLiveIdx)
-    (deadPrefix, rest)
-  }
-
-  private def firstWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))]) = {
-    if (!multiWalk.isEmpty()) {
-      val smallestIdx = multiWalk.map(walkIdx).min()
-      multiWalk.filter(walkIdx(_) == smallestIdx)
-    } else {
-      multiWalk
-    }
-  }
-
-  private def flatToSingleWalk(multiWalk: RDD[(NodeId, (Walker, WalkIdx))])(implicit rc: RuntimeContext) = {
-    val walkersInOrder = {
-      val partitioner = rc.partitionerForNRows(multiWalk.count())
-      multiWalk.map(_._2).map(_.swap).sort(partitioner).map(_._2)
-    }
-    walkersInOrder.flatMap {
-      case Walker(nodeIds, edgeIds, _) => nodeIds.zip(edgeIds).reverse
-    }
-  }
-
-  private def tillNthUniqueNode(walk: RDD[(NodeId, Option[EdgeId])], n: Long) = {
-    val indexedSteps = walk.zipWithIndex().map {
-      case ((nodeId, optionalEdgeId), idx) => (nodeId, optionalEdgeId, idx)
-    }
-    indexedSteps.persist(StorageLevels.DISK_ONLY)
-
-    val nodesByFirstOccurrence = indexedSteps.map {
-      case (nodeId, _, idx) => (nodeId, idx)
-    }.reduceByKey {
-      case (idx1, idx2) => idx1 min idx2
-    }.map {
-      case (nodeId, firstIdxOfNode) => (firstIdxOfNode, nodeId)
-    }.sortByKey()
-
-    val lastStepToKeep = if (nodesByFirstOccurrence.count() < n) {
-      // keep full walk
-      indexedSteps.map(_._3).max()
-    } else {
-      // keep til the appearance of the n-th unique node
-      nodesByFirstOccurrence.zipWithIndex().filter {
-        case (_, idx) => idx < n
-      }.keys.keys.max()
-    }
-
-    indexedSteps.filter {
-      case (_, _, idx) => idx <= lastStepToKeep
-    }.map {
-      case (nodeId, edgeId, _) => (nodeId, edgeId)
-    }
-  }
-
-  private def turnToSample(walk: RDD[(NodeId, Option[EdgeId])]) = {
-    val nodesInSample = walk.map(_._1).distinct().map((_, true)).sortUnique(nodes.partitioner.get)
-    val edgesInSample =
-      walk.map(_._2).filter(_.isDefined).map(_.get).distinct().map((_, true)).sortUnique(edges.partitioner.get)
-    val allNodesMarked = nodes.sortedLeftOuterJoin(nodesInSample).mapValues {
-      case (_, optional) => optional.getOrElse(false)
-    }
-    val allEdgesMarked = edges.sortedLeftOuterJoin(edgesInSample).mapValues {
-      case (_, optional) => optional.getOrElse(false)
-    }
-    (allNodesMarked, allEdgesMarked)
-  }
-}
-object Sampler {
-  type NodeId = ID
-  type EdgeId = ID
-  type WalkIdx = Long
-  private def walkIdx(walk: (NodeId, (Walker, WalkIdx))) = walk._2._2
-}
-
-object Walker {
-  def apply(startNode: ID): Walker = new Walker(List(startNode), List(None), dead = false)
-}
-case class Walker(nodeIds: List[ID], edgeIds: List[Option[ID]], dead: Boolean) {
-  def walk(toNode: ID, onEdge: ID) = {
-    require(!dead)
-    Walker(toNode :: nodeIds, Some(onEdge) :: edgeIds, dead = false)
-  }
-  def die = Walker(nodeIds, edgeIds, dead = true)
 }
