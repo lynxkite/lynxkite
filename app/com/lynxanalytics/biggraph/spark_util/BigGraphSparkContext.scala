@@ -254,7 +254,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.tree.HasFeatureSubsetStrategy$$anonfun$5"))
     kryo.register(classOf[org.apache.spark.ml.regression.GBTRegressionModel])
     kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams$$anonfun$10"))
-    kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.Walker])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
