@@ -15,7 +15,7 @@ you can use the expression `income > income_average ? 1.0 : 0.0` to
 identify people whose income is above average.
 
 JavaScript arrays like `[1, 2, 3]` are automatically converted back to vectors (if the result type
-is set accordingly).
+is set accordingly). Vectors can not contain `undefined` elements.
 
 ====
 [[output]] Save as::
