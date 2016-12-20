@@ -167,4 +167,55 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       (2, "Bob:Bob envies Adam:20.3#3"),
       (3, "Bob:Bob loves Eve:18.2#4")))
   }
+
+  test("Derived vertex attribute (Vector of Strings)") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "[gender]"))
+    val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[String]]
+    assert(attr.rdd.collect.toMap == Map(
+      0 -> Vector("Male"), 1 -> Vector("Female"), 2 -> Vector("Male"), 3 -> Vector("Male")))
+  }
+
+  test("Derived vertex attribute (Vector of Doubles)") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[age]"))
+    val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]]
+    assert(attr.rdd.collect.toMap == Map(
+      0 -> Vector(20.3), 1 -> Vector(18.2), 2 -> Vector(50.3), 3 -> Vector(2.0)))
+  }
+
+  test("Derived vertex attribute (does not return vector)") {
+    run("Example Graph")
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute",
+        Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "gender"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[String]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript(gender) with values: " +
+      "{gender: Male} did not return a vector: Male")
+  }
+
+  test("Derived vertex attribute (wrong vector generic type)") {
+    run("Example Graph")
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute",
+        Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[gender]"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript([gender]) with values: " +
+      "{gender: Male} did not return a number in vector: NaN")
+  }
+
+  test("Derived vertex attribute (undefined in vector)") {
+    run("Example Graph")
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute", Map("type" -> "vector of doubles",
+        "output" -> "vector", "defined_attrs" -> "false", "expr" -> "[income]"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript([income]) with values: " +
+      "{income: undefined} returned undefined element in vector: null")
+  }
 }

@@ -1446,7 +1446,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
@@ -1470,6 +1470,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](
             expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of strings" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of doubles" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.newVertexAttribute(params("output"), result, expr + help)
     }
@@ -1478,7 +1484,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derived edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
@@ -1512,9 +1518,17 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+          graph_operations.DeriveJS.deriveFromAttributes[String](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of strings" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of doubles" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.edgeAttributes(params("output")) = result
     }
