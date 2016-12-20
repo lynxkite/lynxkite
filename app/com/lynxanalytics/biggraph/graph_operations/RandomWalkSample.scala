@@ -33,7 +33,6 @@ case class RandomWalkSample(restartProbability: Double,
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   val maxTries = 10
-  val maxStepsMultiplier = 100
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson =
@@ -103,9 +102,9 @@ case class RandomWalkSample(restartProbability: Double,
              seed: Int)(implicit rc: RuntimeContext): (UniqueSortedRDD[ID, Long], UniqueSortedRDD[ID, Long]) = {
       val rnd = new Random(seed)
       val numWalkers = maxRestarts
-      val numMultiSteps = maxStepsWithoutRestart
-      // idxMultiplier = the first power of 10 which is bigger than numMultiSteps
-      val idxMultiplier = Math.pow(10, Math.log10(numMultiSteps).toInt + 1).toLong
+      // idxMultiplier = the first power of 10 which is bigger than maxStepsWithoutRestart
+      // => no walker steps more than idxMultiplier without restart
+      val idxMultiplier = Math.pow(10, Math.log10(maxStepsWithoutRestart).toInt + 1).toLong
       var multiWalkState = {
         val range = rc.sparkContext.parallelize(0L until numWalkers, nodes.partitioner.get.numPartitions)
         range.map {
@@ -119,7 +118,7 @@ case class RandomWalkSample(restartProbability: Double,
       }
       var edgeFirstUsedAt = edges.mapValues(_ => neverReachedIdx)
       var multiStepCnt = 0L
-      while (multiStepCnt < numMultiSteps && !multiWalkState.isEmpty()) {
+      while (multiStepCnt < maxStepsWithoutRestart && !multiWalkState.isEmpty()) {
         val (nodesReachedNow, edgesReachedNow) = multiStep(multiWalkState, rnd.nextInt(), restartProbability)
         nodesReachedNow.persist(StorageLevels.DISK_ONLY)
         nodeFirstReachedAt = updatedReachNumbers(nodeFirstReachedAt, nodesReachedNow)
@@ -139,11 +138,11 @@ case class RandomWalkSample(restartProbability: Double,
       }
     }
 
-    private def multiStep(multiWalk: RDD[(ID, Long)], seed: Int, restartProbability: Double) = {
+    private def multiStep(multiWalkState: RDD[(ID, Long)], seed: Int, restartProbability: Double) = {
       val rnd = new Random(seed)
       val notRestartingWalks = {
         val seed = rnd.nextInt()
-        multiWalk.mapPartitionsWithIndex {
+        multiWalkState.mapPartitionsWithIndex {
           case (pid, it) =>
             val rnd = new Random((pid << 16) + seed)
             it.map(x => x -> rnd.nextDouble())
@@ -178,14 +177,14 @@ case class RandomWalkSample(restartProbability: Double,
     val nodesEverReached = nodeReachedIdx.filter(_._2 != -1)
     nodesEverReached.persist(StorageLevels.DISK_ONLY)
     if (nodesEverReached.count() > n) {
-      val idx = nodesEverReached.
+      val nthNodeReached = nodesEverReached.
         map(_.swap).
         sort(nodeReachedIdx.partitioner.get).
         zipWithIndex().
         filter(_._2 < n).
         map(_._1._1).
         max()
-      Some(idx)
+      Some(nthNodeReached)
     } else {
       None
     }
