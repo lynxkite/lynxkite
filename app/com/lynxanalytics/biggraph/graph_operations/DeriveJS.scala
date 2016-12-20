@@ -55,13 +55,17 @@ object DeriveJS {
 
     val op: DeriveJS[T] =
       if (typeOf[T] =:= typeOf[String]) {
-        DeriveJSString(js, namedAttributes.map(_._1), namedScalars.map(_._1), onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
+        DeriveJSString(js, namedAttributes.map(_._1), namedScalars.map(_._1),
+          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
-        DeriveJSDouble(js, namedAttributes.map(_._1), namedScalars.map(_._1), onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
+        DeriveJSDouble(js, namedAttributes.map(_._1), namedScalars.map(_._1),
+          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
       } else if (typeOf[T] =:= typeOf[Vector[String]]) {
-        DeriveJSVectorOfStrings(js, namedAttributes.map(_._1), namedScalars.map(_._1), onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
+        DeriveJSVectorOfStrings(js, namedAttributes.map(_._1), namedScalars.map(_._1),
+          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
       } else if (typeOf[T] =:= typeOf[Vector[Double]]) {
-        DeriveJSVectorOfDoubles(js, namedAttributes.map(_._1), namedScalars.map(_._1), onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
+        DeriveJSVectorOfDoubles(js, namedAttributes.map(_._1), namedScalars.map(_._1),
+          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
       } else ???
 
     val defaultAttributeValues =
@@ -210,6 +214,19 @@ case class DeriveJSDouble(
   }
 }
 
+object DeriveJSVector {
+  def convertJSResultToVector(result: AnyRef, context: => String): Vector[_] = {
+    assert(result.isInstanceOf[javascript.NativeArray],
+      s"$context did not return a vector: $result")
+    result.asInstanceOf[javascript.NativeArray].toArray().toVector.map { i =>
+      assert(Option(i).nonEmpty, s"$context returned undefined element in vector: $i")
+      assert(!i.isInstanceOf[javascript.Undefined],
+        s"$context returned undefined element in vector: $i")
+      i
+    }
+  }
+}
+
 object DeriveJSVectorOfStrings extends OpFromJson {
   private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
   private val onlyOnDefinedAttrsParameter = NewParameter[Boolean]("onlyOnDefinedAttrs", true)
@@ -219,11 +236,6 @@ object DeriveJSVectorOfStrings extends OpFromJson {
       (j \ "attrNames").as[Seq[String]],
       scalarNamesParameter.fromJson(j),
       onlyOnDefinedAttrsParameter.fromJson(j))
-  def convertJSResultToVector(result: AnyRef, context: String): Vector[_] = {
-    assert(result.isInstanceOf[javascript.NativeArray],
-      s"$context did not return a vector: $result")
-    result.asInstanceOf[javascript.NativeArray].toArray().toVector
-  }
 }
 case class DeriveJSVectorOfStrings(
   expr: JavaScript,
@@ -239,7 +251,7 @@ case class DeriveJSVectorOfStrings(
     DeriveJSVectorOfStrings.scalarNamesParameter.toJson(scalarNames) ++
     DeriveJSVectorOfStrings.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
   def convertJSResult(result: AnyRef, context: => String): Vector[String] = {
-    DeriveJSVectorOfStrings.convertJSResultToVector(result, context).map {
+    DeriveJSVector.convertJSResultToVector(result, context).map {
       i => javascript.Context.toString(i)
     }
   }
@@ -269,7 +281,7 @@ case class DeriveJSVectorOfDoubles(
     DeriveJSVectorOfDoubles.scalarNamesParameter.toJson(scalarNames) ++
     DeriveJSVectorOfDoubles.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
   def convertJSResult(result: AnyRef, context: => String): Vector[Double] = {
-    DeriveJSVectorOfStrings.convertJSResultToVector(result, context).map { i =>
+    DeriveJSVector.convertJSResultToVector(result, context).map { i =>
       {
         // Converts everything to a Double. For results which cannot be interpreted as Doubles
         // like 'abc' this will return Double.NaN. For undefined JavaScript results this

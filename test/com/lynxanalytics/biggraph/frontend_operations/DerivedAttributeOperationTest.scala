@@ -193,8 +193,8 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
         Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "gender"))
       project.vertexAttributes("vector").runtimeSafeCast[Vector[String]].rdd.collect
     }
-    assert(e.getCause.getMessage ==
-      "assertion failed: JavaScript(gender) with values: {gender: Male} did not return a vector: Male")
+    assert(e.getCause.getMessage == "assertion failed: JavaScript(gender) with values: " +
+      "{gender: Male} did not return a vector: Male")
   }
 
   test("Derived vertex attribute (wrong vector generic type)") {
@@ -204,18 +204,18 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
         Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[gender]"))
       project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
     }
-    assert(e.getCause.getMessage ==
-      "assertion failed: JavaScript([gender]) with values: {gender: Male} did not return a number in vector: NaN")
+    assert(e.getCause.getMessage == "assertion failed: JavaScript([gender]) with values: " +
+      "{gender: Male} did not return a number in vector: NaN")
   }
 
   test("Derived vertex attribute (undefined in vector)") {
     run("Example Graph")
-    run("Derived vertex attribute",
-      Map("type" -> "vector of doubles", "output" -> "vector", "defined_attrs" -> "false", "expr" -> "[income]"))
-    project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
-    val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]]
-    // Undefined elements in double vector automatically converted to 0.0.
-    assert(attr.rdd.collect.toMap == Map(
-      0 -> Vector(1000.0), 1 -> Vector(0.0), 2 -> Vector(2000.0), 3 -> Vector(0.0)))
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute", Map("type" -> "vector of doubles",
+        "output" -> "vector", "defined_attrs" -> "false", "expr" -> "[income]"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript([income]) with values: " +
+      "{income: undefined} returned undefined element in vector: null")
   }
 }
