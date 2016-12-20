@@ -220,7 +220,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     }
   }
 
-  def checkJSArray(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
+  def checkJS(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
     val op = DeriveJSString(JavaScript(expr), Seq(name))
     val derived = op(op.attrs, VertexAttributeToJSValue.seq(attr)).result.attr
     assert(derived.rdd.collect.toSet == result)
@@ -236,13 +236,32 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
       op(op.connection, g.edges)(op.attr, g.gender).result.attr
     }
-    checkJSArray("ages.toString()", "ages", ages, Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
-    checkJSArray("genders.toString()", "genders", genders, Set(0 -> "Female,Male", 1 -> "Male,Male"))
-    checkJSArray("ages.length.toString()", "ages", ages, Set(0 -> "2", 1 -> "2"))
-    checkJSArray("genders.length.toString()", "genders", genders, Set(0 -> "2", 1 -> "2"))
-    checkJSArray("ages[0].toString()", "ages", ages, Set(0 -> "18.2", 1 -> "20.3"))
-    checkJSArray("genders[0]", "genders", genders, Set(0 -> "Female", 1 -> "Male"))
-    checkJSArray("ages.concat([100]).toString()", "ages", ages, Set(0 -> "18.2,50.3,100", 1 -> "20.3,50.3,100"))
-    checkJSArray("genders.concat(['abc']).toString()", "genders", genders, Set(0 -> "Female,Male,abc", 1 -> "Male,Male,abc"))
+    checkJS("ages.toString()", "ages", ages, Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
+    checkJS("genders.toString()", "genders", genders, Set(0 -> "Female,Male", 1 -> "Male,Male"))
+    checkJS("ages.length.toString()", "ages", ages, Set(0 -> "2", 1 -> "2"))
+    checkJS("genders.length.toString()", "genders", genders, Set(0 -> "2", 1 -> "2"))
+    checkJS("ages[0].toString()", "ages", ages, Set(0 -> "18.2", 1 -> "20.3"))
+    checkJS("genders[0]", "genders", genders, Set(0 -> "Female", 1 -> "Male"))
+    checkJS("ages.concat([100]).toString()", "ages", ages, Set(0 -> "18.2,50.3,100", 1 -> "20.3,50.3,100"))
+    checkJS("genders.concat(['abc']).toString()", "genders", genders, Set(0 -> "Female,Male,abc", 1 -> "Male,Male,abc"))
+  }
+
+  test("example graph - arrays of arrays") {
+    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1)))().result
+    val age = AddVertexAttribute.run(g.vs, Map(0 -> "10", 1 -> "20", 2 -> "30"))
+    val ages = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
+      op(op.connection, g.es)(op.attr, age).result.attr
+    }
+    val agess = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[Vector[String]]())
+      op(op.connection, g.es)(op.attr, ages).result.attr
+    }
+    checkJS("agess.length.toString()", "agess", agess, Set(0 -> "2", 1 -> "2", 2 -> "2"))
+    // toString() prints the flattened structure, but we have already checked length
+    checkJS("agess.toString()", "agess", agess,
+      Set(0 -> "10,30,10,20", 1 -> "20,30,10,20", 2 -> "20,30,10,30"))
+    checkJS("agess[0].toString()", "agess", agess, Set(0 -> "10,30", 1 -> "20,30", 2 -> "20,30"))
+    checkJS("agess[0][0].toString()", "agess", agess, Set(0 -> "10", 1 -> "20", 2 -> "20"))
   }
 }
