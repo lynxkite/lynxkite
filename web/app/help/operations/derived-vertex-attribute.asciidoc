@@ -14,12 +14,15 @@ assuming that you have a graph attribute _income_average_,
 you can use the expression `income > income_average ? 1.0 : 0.0` to
 identify people whose income is above average.
 
+JavaScript arrays like `[1, 2, 3]` are automatically converted back to vectors (if the result type
+is set accordingly).
+
 ====
 [[output]] Save as::
 The new attribute will be created under this name.
 
 [[type]] Result type::
-The type (`Double` or `String`) of the created attribute.
+The type (`double`, `string`, `vector of doubles` or `vector of strings`) of the created attribute.
 
 [[defined_attrs]] Only run on defined attributes::
 - `true`: The new attribute will only be defined on vertices for which all the attributes used in the
