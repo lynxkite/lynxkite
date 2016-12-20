@@ -568,6 +568,10 @@ class _ProjectCheckpoint:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
 
+  def copy(self):
+    '''Returns another independent instance of _ProjectCheckpoint for the same checkpoint.'''
+    return _ProjectCheckpoint(self.lk, self.checkpoint)
+
   def _metadata(self, path):
     '''Returns project metadata.'''
     request = dict(checkpoint=self.checkpoint, path=path)
@@ -682,9 +686,19 @@ class RootProject(SubProject):
     '''Runs SQL queries.'''
     return self.project_checkpoint.sql(query)
 
+  def df(self, query):
+    '''Runs SQL queries.'''
+    import pandas
+    d = self.sql(query).take(-1)
+    return pandas.DataFrame(d)
+
   def save(self, name, writeACL=None, readACL=None):
     '''Saves the project under given name, with given writeACL and readACL.'''
     self.project_checkpoint.save(name, writeACL, readACL)
+
+  def copy(self):
+    '''Returns another reference to the same project state, that can evolve independently.'''
+    return RootProject(self.project_checkpoint.copy())
 
   def compute(self):
     '''Computes all scalars and attributes of the project.'''
