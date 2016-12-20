@@ -2178,15 +2178,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Random walk sample", new StructureOperation(_, _) {
     def parameters = List(
-      NonNegInt("sampleSize", "Sample size", default = 10000),
+      NonNegInt("sampleSize", "Sample size", default = 1000),
       Ratio("restartProbability",
         "Restart probability",
         defaultValue = "0.15"),
-      Param("vertexAttrName", "Vertex attribute name", defaultValue = "sample"),
-      Param("edgeAttrName", "Edge attribute name", defaultValue = "sample"),
+      Param("vertexAttrName", "Vertex attribute name", defaultValue = ""),
+      Param("edgeAttrName", "Edge attribute name", defaultValue = ""),
+      Choice("automaticFilter", "Filter graph automatically", options = FEOption.bools),
       RandomSeed("seed", "Seed")
     )
     def enabled = hasVertexSet && hasEdgeBundle
+
+    override def validateParameters(values: Map[String, String]): Unit = {
+      super.validateParameters(values)
+      val hasAttrNames = !values("vertexAttrName").isEmpty && !values("edgeAttrName").isEmpty
+      assert(hasAttrNames || values("automaticFilter").toBoolean,
+        "Either both attribute names have to be provided or automatic filtering has to be enabled.")
+    }
+
     def apply(params: Map[String, String]) = {
       val sample = {
         val sampleSize = params("sampleSize").toInt
@@ -2195,20 +2204,26 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.RandomWalkSample(restartProbability, sampleSize, seed)
         op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
       }
-      project.newVertexAttribute(params("vertexAttrName"), sample.verticesInSample)
-      project.newEdgeAttribute(params("edgeAttrName"), sample.edgesInSample)
-      val vertexEmbedding = {
-        val verticesGuid = sample.verticesInSample.gUID.toString
-        FEFilters.embedFilteredVertices(
-          project.vertexSet, Seq(FEVertexAttributeFilter(verticesGuid, ">0")), heavy = true)
+      if (!params("vertexAttrName").isEmpty) {
+        project.newVertexAttribute(params("vertexAttrName"), sample.verticesInSample)
       }
-      project.pullBack(vertexEmbedding)
-      val edgeEmbedding = {
-        val edgesGuid = project.edgeAttributes(params("edgeAttrName")).gUID.toString
-        FEFilters.embedFilteredVertices(
-          project.edgeBundle.idSet, Seq(FEVertexAttributeFilter(edgesGuid, ">0")), heavy = true)
+      if (!params("edgeAttrName").isEmpty) {
+        project.newEdgeAttribute(params("edgeAttrName"), sample.edgesInSample)
       }
-      project.pullBackEdges(edgeEmbedding)
+      if (params("automaticFilter").toBoolean) {
+        val edgeEmbedding = {
+          val edgesGuid = sample.edgesInSample.gUID.toString
+          FEFilters.embedFilteredVertices(
+            project.edgeBundle.idSet, Seq(FEVertexAttributeFilter(edgesGuid, ">0")), heavy = true)
+        }
+        project.pullBackEdges(edgeEmbedding)
+        val vertexEmbedding = {
+          val verticesGuid = sample.verticesInSample.gUID.toString
+          FEFilters.embedFilteredVertices(
+            project.vertexSet, Seq(FEVertexAttributeFilter(verticesGuid, ">0")), heavy = true)
+        }
+        project.pullBack(vertexEmbedding)
+      }
     }
   })
 
