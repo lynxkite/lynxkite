@@ -218,12 +218,13 @@ object DeriveJSVector {
   def convertJSResultToVector(result: AnyRef, context: => String): Vector[_] = {
     assert(result.isInstanceOf[javascript.NativeArray],
       s"$context did not return a vector: $result")
-    result.asInstanceOf[javascript.NativeArray].toArray().toVector.map { i =>
+    val vector = result.asInstanceOf[javascript.NativeArray].toArray().toVector
+    for (i <- vector) { // Sanity checks, vector should not contain null or undefined elements.
       assert(Option(i).nonEmpty, s"$context returned undefined element in vector: $i")
       assert(!i.isInstanceOf[javascript.Undefined],
         s"$context returned undefined element in vector: $i")
-      i
     }
+    vector
   }
 }
 
