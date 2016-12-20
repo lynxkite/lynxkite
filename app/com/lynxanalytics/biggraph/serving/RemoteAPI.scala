@@ -370,7 +370,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
-    val data = df.take(limit)
+    val data = if (limit >= 0) df.take(limit) else df.collect
     val rows = data.map { row =>
       schema.fields.zipWithIndex.flatMap {
         case (f, i) =>
