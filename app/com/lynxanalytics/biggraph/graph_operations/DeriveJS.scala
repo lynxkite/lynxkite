@@ -284,8 +284,7 @@ case class DeriveJSVectorOfDoubles(
     DeriveJSVector.convertJSResultToVector(result, context).map { i =>
       {
         // Converts everything to a Double. For results which cannot be interpreted as Doubles
-        // like 'abc' this will return Double.NaN. For undefined JavaScript results this
-        // returns 0.0.
+        // like 'abc' this will return Double.NaN.
         val d = javascript.Context.toNumber(i)
         assert(!d.isNaN(), s"$context did not return a number in vector: $d")
         assert(!d.isInfinite(), s"$context returned an infinite number in vector: $d")
