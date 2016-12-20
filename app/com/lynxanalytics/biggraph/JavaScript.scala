@@ -8,7 +8,10 @@ case class JavaScript(expression: String) {
   def nonEmpty = expression.nonEmpty
 
   def contextString(mapping: Map[String, Any]): String = {
-    s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
+    s"$this with values: {" + mapping.map {
+      case (k, v: javascript.Undefined) => s"$k: undefined"
+      case (k, v) => s"$k: $v"
+    }.mkString(", ") + "}"
   }
 
   def evaluator = new JavaScriptEvaluator(expression)
@@ -38,7 +41,7 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
   sharedScope.sealObject()
 
-  private def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
+  def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
     val scope = cx.newObject(sharedScope)
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)

@@ -29,6 +29,8 @@ LynxKite:
    based on a repetition attribute.
  - "_Derive vertex attribute_" and "_Derive edge attribute_" operations can be evaluated on all
    vertices / edges using undefined input attribute values.
+ - "_Derive vertex attribute_" and "_Derive edge attribute_" operations can return vectors of
+   doubles or vectors of strings.
 
 ### 1.10.0
 
