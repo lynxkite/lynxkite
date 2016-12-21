@@ -20,7 +20,7 @@ The (approximate) fraction of vertices to use as starting points.
 [[radius]] Radius::
 Limits the size of the neighborhoods of the start points.
 
-[[attrName]] Attribute name::
+[[attrname]] Attribute name::
 The name of the attribute which shows how far the the sample vertices are from the closest start point.
 
 [[seed]] Seed::
