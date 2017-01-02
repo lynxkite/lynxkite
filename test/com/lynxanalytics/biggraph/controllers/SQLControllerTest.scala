@@ -552,14 +552,14 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       sqlController.getAllTables(
         user, GetAllTablesRequest(path = "")))
     assert(List(
-      TableDesc("dir/example2", "|vertices", "dir/example2|vertices"),
-      TableDesc("dir/example2", "|edges", "dir/example2|edges"),
-      TableDesc("dir/example2", "|edge_attributes", "dir/example2|edge_attributes"),
-      TableDesc("dir/example2", "|bucketing|vertices", "dir/example2|bucketing|vertices"),
-      TableDesc("dir/example2", "|bucketing|belongs_to", "dir/example2|bucketing|belongs_to"),
-      TableDesc("example1", "|vertices", "example1|vertices"),
-      TableDesc("example1", "|edges", "example1|edges"),
-      TableDesc("example1", "|edge_attributes", "example1|edge_attributes")) == res1.list)
+      TableDesc("dir/example2|vertices", "dir/example2|vertices"),
+      TableDesc("dir/example2|edges", "dir/example2|edges"),
+      TableDesc("dir/example2|edge_attributes", "dir/example2|edge_attributes"),
+      TableDesc("dir/example2|bucketing|vertices", "dir/example2|bucketing|vertices"),
+      TableDesc("dir/example2|bucketing|belongs_to", "dir/example2|bucketing|belongs_to"),
+      TableDesc("example1|vertices", "example1|vertices"),
+      TableDesc("example1|edges", "example1|edges"),
+      TableDesc("example1|edge_attributes", "example1|edge_attributes")) == res1.list)
 
     // List tables from the directory named "dir". Verify that
     // the word "dir" is now omitted from table names.
@@ -567,11 +567,11 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       sqlController.getAllTables(
         user, GetAllTablesRequest(path = "dir")))
     assert(List(
-      TableDesc("dir/example2", "|vertices", "example2|vertices"),
-      TableDesc("dir/example2", "|edges", "example2|edges"),
-      TableDesc("dir/example2", "|edge_attributes", "example2|edge_attributes"),
-      TableDesc("dir/example2", "|bucketing|vertices", "example2|bucketing|vertices"),
-      TableDesc("dir/example2", "|bucketing|belongs_to", "example2|bucketing|belongs_to")) == res2.list)
+      TableDesc("dir/example2|vertices", "example2|vertices"),
+      TableDesc("dir/example2|edges", "example2|edges"),
+      TableDesc("dir/example2|edge_attributes", "example2|edge_attributes"),
+      TableDesc("dir/example2|bucketing|vertices", "example2|bucketing|vertices"),
+      TableDesc("dir/example2|bucketing|belongs_to", "example2|bucketing|belongs_to")) == res2.list)
 
     // List tables from the project "dir/example2". Verify that
     // the word "dir/example2" is now omitted from table names.
@@ -579,11 +579,11 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       sqlController.getAllTables(
         user, GetAllTablesRequest(path = "dir/example2")))
     assert(List(
-      TableDesc("dir/example2", "|vertices", "vertices"),
-      TableDesc("dir/example2", "|edges", "edges"),
-      TableDesc("dir/example2", "|edge_attributes", "edge_attributes"),
-      TableDesc("dir/example2", "|bucketing|vertices", "bucketing|vertices"),
-      TableDesc("dir/example2", "|bucketing|belongs_to", "bucketing|belongs_to")) == res3.list)
+      TableDesc("dir/example2|vertices", "vertices"),
+      TableDesc("dir/example2|edges", "edges"),
+      TableDesc("dir/example2|edge_attributes", "edge_attributes"),
+      TableDesc("dir/example2|bucketing|vertices", "bucketing|vertices"),
+      TableDesc("dir/example2|bucketing|belongs_to", "bucketing|belongs_to")) == res3.list)
   }
 
   def checkExampleGraphColumns(req: GetColumnsRequest) = {
@@ -600,9 +600,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("list table columns") {
     run("Example Graph")
     checkExampleGraphColumns(
-      GetColumnsRequest(
-        framePath = "Test_Project",
-        subTablePath = "|vertices"))
+      GetColumnsRequest(absolutePath = "Test_Project|vertices"))
   }
 
   test("list views") {
@@ -622,16 +620,14 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       sqlController.getAllTables(
         user, GetAllTablesRequest(path = "")))
     assert(List(
-      TableDesc("Test_Project", "|vertices", "Test_Project|vertices"),
-      TableDesc("Test_Project", "|edges", "Test_Project|edges"),
-      TableDesc("Test_Project", "|edge_attributes", "Test_Project|edge_attributes"),
-      TableDesc("view1", "|", "view1")) == tables.list)
+      TableDesc("Test_Project|vertices", "Test_Project|vertices"),
+      TableDesc("Test_Project|edges", "Test_Project|edges"),
+      TableDesc("Test_Project|edge_attributes", "Test_Project|edge_attributes"),
+      TableDesc("view1|", "view1")) == tables.list)
 
     // Check that columns of view are listed:
     checkExampleGraphColumns(
-      GetColumnsRequest(
-        framePath = "view1",
-        subTablePath = "|"))
+      GetColumnsRequest(absolutePath = "view1|"))
   }
 
 }
