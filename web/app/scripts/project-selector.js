@@ -215,9 +215,7 @@ angular.module('biggraph').directive('projectSelector',
             scope.showSQL=true;
             $anchorScroll('global-sql-box');
             $timeout(function () {
-              scope.$broadcast('fill sql-box from config', name, config, type);
-              // Do not show earlier SQL result when the user edits a view.
-              scope.$broadcast('clear sql result');
+              scope.$broadcast('fill sql-box from config and clear sql result', name, config, type);
             });
             return;
           } else {
