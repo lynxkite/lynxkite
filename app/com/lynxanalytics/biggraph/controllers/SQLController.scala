@@ -451,7 +451,7 @@ class SQLController(val env: BigGraphEnvironment) {
       val cutTablePath =
         path.path.drop(stripSegPathSteps - 1).mkString("|").toString
       val pathCombiner = if (cutFramePath.path.isEmpty || cutTablePath.isEmpty) "" else "|"
-      val s = TableDesc(
+      TableDesc(
         framePath = frame.path.toString,
         subTablePath = path.toString,
         name = cutFramePath + pathCombiner + cutTablePath
@@ -514,7 +514,7 @@ class SQLController(val env: BigGraphEnvironment) {
       val viewRecipe = entry.asViewFrame.getRecipe
       val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
       GetColumnsResponse(
-        columns = df.schema.fields.map { field => SimpleColumnDesc(name = field.name) }
+        columns = df.schema.fields.map { field => ColumnDesc(name = field.name) }
       )
     } else {
       val viewer = entry.asObjectFrame.viewer
@@ -522,7 +522,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
       GetColumnsResponse(
         columns = table.columns.keys.map {
-          name => SimpleColumnDesc(name = name)
+          name => ColumnDesc(name = name)
         }.toSeq
       )
     }
