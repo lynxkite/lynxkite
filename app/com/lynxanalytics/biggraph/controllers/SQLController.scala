@@ -380,15 +380,15 @@ case class HiveImportRequest(
 }
 
 case class GetAllTablesRequest(path: String)
-case class SimpleColumnDesc(name: String)
-case class SimpleTableDesc(
+case class ColumnDesc(name: String)
+case class TableDesc(
   framePath: String,
   subTablePath: String,
   name: String)
-case class GetAllTablesResponse(list: Seq[SimpleTableDesc])
+case class GetAllTablesResponse(list: Seq[TableDesc])
 
 case class GetColumnsRequest(framePath: String, subTablePath: String)
-case class GetColumnsResponse(columns: Seq[SimpleColumnDesc])
+case class GetColumnsResponse(columns: Seq[ColumnDesc])
 
 object HiveImportRequest extends FromJson[HiveImportRequest] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
@@ -439,40 +439,25 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   trait TableLikeRef {
-    def toDesc(stripPathSteps: Int, x: Int): SimpleTableDesc
+    def toDesc(stripPathSteps: Int, x: Int): TableDesc
   }
 
   case class TableRef(frame: ObjectFrame, path: AbsoluteTablePath) extends TableLikeRef {
 
-    println(s"TABLEREF ${frame} ${path}")
-
-    override def toDesc(stripPathSteps: Int, stripSegPathSteps: Int): SimpleTableDesc = {
+    override def toDesc(stripPathSteps: Int, stripSegPathSteps: Int): TableDesc = {
       val cutFramePath = SymbolPath.fromIterable(
         frame.path.path.drop(stripPathSteps)
       )
       val tablePath = (if (cutFramePath.path.isEmpty) "" else "|") +
         path.path.drop(stripSegPathSteps - 1).mkString("|").toString
-      val s = SimpleTableDesc(
+      TableDesc(
         framePath = frame.path.toString,
         subTablePath = path.toString,
         name = cutFramePath + tablePath
       )
-      println(s)
-      s
     }
 
   }
-
-  /*
-  case class ViewFrame(frame: ViewFrame) extebds TableLikeRef {
-    override def toDesc(stripPathSteps: Int): SimpleTableDesc = {
-      SimpleTableDesc(
-        name = frame.path.path
-        path = path.toGlobal(frame.checkpoint, frame.name).toString
-      )
-    }
-  }
-*/
 
   def getAllTablesForObjectFrame(frame: ObjectFrame, subPath: Seq[String] = Seq()): Seq[TableRef] = {
     frame.viewer.offspringViewer(subPath).allRelativeTablePaths.map {
@@ -489,18 +474,11 @@ class SQLController(val env: BigGraphEnvironment) {
 
     val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
 
-    println(dirEntry)
-    println(objects.toList)
-    println(visibleObjectFrames.toList)
-    println()
-
     visibleDirs.flatMap(getAllTablesForDir(user, _)) ++
       visibleObjectFrames.flatMap(getAllTablesForObjectFrame(_))
   }
 
   def getAllTables(user: serving.User, request: GetAllTablesRequest) = async[GetAllTablesResponse] {
-    print(s"GET ALL TABLES ${request}")
-
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)
     if (!entry.isProject) {
@@ -514,8 +492,9 @@ class SQLController(val env: BigGraphEnvironment) {
       getAllTablesForObjectFrame(entry.asProjectFrame, pathParts.tail)
     }
 
-    GetAllTablesResponse(
+    val resp = GetAllTablesResponse(
       list = list.map(_.toDesc(entry.path.path.size, pathParts.size)))
+    resp
   }
 
   def getColumns(user: serving.User, request: GetColumnsRequest) = async[GetColumnsResponse] {
@@ -530,12 +509,9 @@ class SQLController(val env: BigGraphEnvironment) {
 
     GetColumnsResponse(
       columns = table.columns.keys.map {
-        name => SimpleColumnDesc(name = name)
+        name => ColumnDesc(name = name)
       }.toSeq
     )
-
-    /* Seq(
-      SimpleColumnDesc(name = "alma"), SimpleColumnDesc(name = "korte")))*/
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
