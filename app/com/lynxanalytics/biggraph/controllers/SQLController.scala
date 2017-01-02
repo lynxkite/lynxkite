@@ -382,12 +382,11 @@ case class HiveImportRequest(
 case class GetAllTablesRequest(path: String)
 case class ColumnDesc(name: String)
 case class TableDesc(
-  framePath: String,
-  subTablePath: String,
-  name: String)
+  absolutePath: String,
+  relativePath: String)
 case class GetAllTablesResponse(list: Seq[TableDesc])
 
-case class GetColumnsRequest(framePath: String, subTablePath: String)
+case class GetColumnsRequest(absolutePath: String)
 case class GetColumnsResponse(columns: Seq[ColumnDesc])
 
 object HiveImportRequest extends FromJson[HiveImportRequest] {
@@ -452,9 +451,8 @@ class SQLController(val env: BigGraphEnvironment) {
         path.path.drop(stripSegPathSteps - 1).mkString("|").toString
       val pathCombiner = if (cutFramePath.path.isEmpty || cutTablePath.isEmpty) "" else "|"
       TableDesc(
-        framePath = frame.path.toString,
-        subTablePath = path.toString,
-        name = cutFramePath + pathCombiner + cutTablePath
+        absolutePath = frame.path.toString + path.toString,
+        relativePath = cutFramePath + pathCombiner + cutTablePath
       )
     }
 
@@ -503,9 +501,7 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   def getColumns(user: serving.User, request: GetColumnsRequest) = async[GetColumnsResponse] {
-
-    val objectPath = request.framePath
-    val tablePath = request.subTablePath
+    var (objectPath, tablePath) = request.absolutePath.splitAt(request.absolutePath.indexOf("|"))
 
     val entry = DirectoryEntry.fromName(objectPath)
 

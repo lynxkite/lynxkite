@@ -14,24 +14,24 @@ instead of ng-model="sql" -->
 
   <ol id="table-list">
     <li ng-repeat="table in list"
-        ng-show="table.nameMatch && (!openTable || openTable === table.name)"
+        ng-show="table.nameMatch && (!openTable || openTable === table.relativePath)"
         ng-if="$index < 50">
 
       <div ng-click="toggleOpen(table)">
         <span ng-class="{
           glyphicon: true,
-          'glyphicon-plus': openTable !== table.name,
-          'glyphicon-minus': openTable === table.name}"></span>
+          'glyphicon-plus': openTable !== table.relativePath,
+          'glyphicon-minus': openTable === table.relativePath}"></span>
 
         <table-browser-entry
             marked-text="table.nameMatch"
-            plain-text-fallback="table.columnMatch ? table.name : ''"
-            draggable-text="'`' + table.name + '`'">
+            plain-text-fallback="table.columnMatch ? table.relativePath : ''"
+            draggable-text="'`' + table.relativePath + '`'">
         </table-browser-entry>
 
       </div>
 
-      <ol ng-if="openTable === table.name">
+      <ol ng-if="openTable === table.relativePath">
         <li>
           <table-browser-entry
               marked-text="['', '*ALL*']"

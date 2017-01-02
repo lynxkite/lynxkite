@@ -68,7 +68,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
         var filteredList = [];
         for (var i = 0; i < list.length; ++i) {
           list[i].nameMatch = computeMatch(
-              list[i].name,
+              list[i].relativePath,
               scope.tableFilter);
           if (list[i].nameMatch) {
             filteredList.push(list[i]);
@@ -85,7 +85,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           return;
         }
         for (var i = 0; i < list.length; ++i) {
-          if (scope.openTable === list[i].name) {
+          if (scope.openTable === list[i].relativePath) {
             scope.computeColumnMatches(list[i]);
           }
         }
@@ -103,7 +103,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       };
       scope.getColumnName = function(table, column) {
         if (scope.fullyQualifyNames) {
-          return '`' + table.name + '`.`' + column.name + '`';
+          return '`' + table.relativePath + '`.`' + column.name + '`';
         } else {
           return '`' + column.name + '`';
         }
@@ -119,16 +119,14 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
         if (scope.openTable) {
           scope.openTable = undefined;
         } else {
-          console.log('GETCOLUMNS', table);
           util.nocache(
             '/ajax/getColumns',
             {
-              framePath: table.framePath,
-              subTablePath: table.subTablePath
+              absolutePath: table.absolutePath
             }
           ).then(function(res) {
             table.columns = res.columns;
-            scope.openTable = table.name;
+            scope.openTable = table.relativePath;
           });
         }
       };
