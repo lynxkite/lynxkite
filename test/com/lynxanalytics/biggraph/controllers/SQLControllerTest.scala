@@ -14,6 +14,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
+  /*
   test("global sql on vertices") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
     run("Example Graph", on = "Test_Dir/Test_Project")
@@ -530,4 +531,99 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       Duration.Inf)
     assert(res.data.length == 2)
   }
+*/
+
+  test("list project tables") {
+    createProject(name = "example1")
+    createDirectory(name = "dir")
+    createProject(name = "dir/example2")
+    run("Example Graph", on = "example1")
+    run("Example Graph", on = "dir/example2")
+    run(
+      "Segment by double attribute",
+      params = Map(
+        "name" -> "bucketing",
+        "attr" -> "age",
+        "interval-size" -> "0.1",
+        "overlap" -> "no"),
+      on = "dir/example2")
+    // List tables from root directory.
+    val res1 = await(
+      sqlController.getAllTables(
+        user, GetAllTablesRequest(path = "")))
+    assert(List(
+      TableDesc("dir/example2", "|vertices", "dir/example2|vertices"),
+      TableDesc("dir/example2", "|edges", "dir/example2|edges"),
+      TableDesc("dir/example2", "|edge_attributes", "dir/example2|edge_attributes"),
+      TableDesc("dir/example2", "|bucketing|vertices", "dir/example2|bucketing|vertices"),
+      TableDesc("dir/example2", "|bucketing|belongs_to", "dir/example2|bucketing|belongs_to"),
+      TableDesc("example1", "|vertices", "example1|vertices"),
+      TableDesc("example1", "|edges", "example1|edges"),
+      TableDesc("example1", "|edge_attributes", "example1|edge_attributes")) == res1.list)
+
+    // List tables from the directory named "dir". Verify that
+    // the word "dir" is now omitted from table names.
+    val res2 = await(
+      sqlController.getAllTables(
+        user, GetAllTablesRequest(path = "dir")))
+    assert(List(
+      TableDesc("dir/example2", "|vertices", "example2|vertices"),
+      TableDesc("dir/example2", "|edges", "example2|edges"),
+      TableDesc("dir/example2", "|edge_attributes", "example2|edge_attributes"),
+      TableDesc("dir/example2", "|bucketing|vertices", "example2|bucketing|vertices"),
+      TableDesc("dir/example2", "|bucketing|belongs_to", "example2|bucketing|belongs_to")) == res2.list)
+
+    // List tables from the project "dir/example2". Verify that
+    // the word "dir/example2" is now omitted from table names.
+    val res3 = await(
+      sqlController.getAllTables(
+        user, GetAllTablesRequest(path = "dir/example2")))
+    assert(List(
+      TableDesc("dir/example2", "|vertices", "vertices"),
+      TableDesc("dir/example2", "|edges", "edges"),
+      TableDesc("dir/example2", "|edge_attributes", "edge_attributes"),
+      TableDesc("dir/example2", "|bucketing|vertices", "bucketing|vertices"),
+      TableDesc("dir/example2", "|bucketing|belongs_to", "bucketing|belongs_to")) == res3.list)
+  }
+
+  test("list table columns") {
+    run("Example Graph")
+    val x = await(sqlController.getColumns(
+      user,
+      GetColumnsRequest(
+        framePath = "Test_Project",
+        subTablePath = "|vertices")))
+    assert(List(
+      ColumnDesc("age"),
+      ColumnDesc("income"),
+      ColumnDesc("id"),
+      ColumnDesc("location"),
+      ColumnDesc("name"),
+      ColumnDesc("gender")) == x.columns)
+  }
+
+  test("list views") {
+    run("Example Graph")
+    val x = sqlController.createViewDFSpec(
+      user,
+      SQLCreateViewRequest(
+        name = "view1",
+        privacy = "public-write",
+        overwrite = false,
+        dfSpec = DataFrameSpec(
+          directory = Some(""),
+          project = None,
+          sql = "SELECT * FROM `Test_Project|vertices`")))
+    println(x)
+    val res = await(
+      sqlController.getAllTables(
+        user, GetAllTablesRequest(path = "")))
+    assert(List(
+      TableDesc("Test_Project", "|vertices", "Test_Project|vertices"),
+      TableDesc("Test_Project", "|edges", "Test_Project|edges"),
+      TableDesc("Test_Project", "|edge_attributes", "Test_Project|edge_attributes")) == res.list)
+    println(res.list.toList)
+
+  }
+
 }
