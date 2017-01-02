@@ -216,6 +216,8 @@ angular.module('biggraph').directive('projectSelector',
             $anchorScroll('global-sql-box');
             $timeout(function () {
               scope.$broadcast('fill sql-box from config', name, config, type);
+              // Do not show earlier SQL result when the user edits a view.
+              scope.$broadcast('clear sql result');
             });
             return;
           } else {
