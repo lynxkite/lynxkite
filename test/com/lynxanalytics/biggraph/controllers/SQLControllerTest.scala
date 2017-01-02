@@ -586,25 +586,28 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       TableDesc("dir/example2", "|bucketing|belongs_to", "bucketing|belongs_to")) == res3.list)
   }
 
-  test("list table columns") {
-    run("Example Graph")
-    val x = await(sqlController.getColumns(
-      user,
-      GetColumnsRequest(
-        framePath = "Test_Project",
-        subTablePath = "|vertices")))
+  def checkExampleGraphColumns(req: GetColumnsRequest) = {
+    val res = await(sqlController.getColumns(user, req))
     assert(List(
       ColumnDesc("age"),
       ColumnDesc("income"),
       ColumnDesc("id"),
       ColumnDesc("location"),
       ColumnDesc("name"),
-      ColumnDesc("gender")) == x.columns)
+      ColumnDesc("gender")).sortBy(_.name) == res.columns.sortBy(_.name))
+  }
+
+  test("list table columns") {
+    run("Example Graph")
+    checkExampleGraphColumns(
+      GetColumnsRequest(
+        framePath = "Test_Project",
+        subTablePath = "|vertices"))
   }
 
   test("list views") {
     run("Example Graph")
-    val x = sqlController.createViewDFSpec(
+    sqlController.createViewDFSpec(
       user,
       SQLCreateViewRequest(
         name = "view1",
@@ -614,16 +617,21 @@ class SQLControllerTest extends BigGraphControllerTestBase {
           directory = Some(""),
           project = None,
           sql = "SELECT * FROM `Test_Project|vertices`")))
-    println(x)
-    val res = await(
+    // Check that view is listed among table list:
+    val tables = await(
       sqlController.getAllTables(
         user, GetAllTablesRequest(path = "")))
     assert(List(
       TableDesc("Test_Project", "|vertices", "Test_Project|vertices"),
       TableDesc("Test_Project", "|edges", "Test_Project|edges"),
-      TableDesc("Test_Project", "|edge_attributes", "Test_Project|edge_attributes")) == res.list)
-    println(res.list.toList)
+      TableDesc("Test_Project", "|edge_attributes", "Test_Project|edge_attributes"),
+      TableDesc("view1", "|", "view1")) == tables.list)
 
+    // Check that columns of view are listed:
+    checkExampleGraphColumns(
+      GetColumnsRequest(
+        framePath = "view1",
+        subTablePath = "|"))
   }
 
 }
