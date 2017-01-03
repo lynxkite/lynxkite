@@ -2182,6 +2182,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Ratio("restartProbability",
         "Restart probability",
         defaultValue = "0.15"),
+      NonNegInt("maxStartPoints", "Maxinum number of starting points", default = 10),
       Param("vertexAttrName", "Vertex attribute name", defaultValue = ""),
       Param("edgeAttrName", "Edge attribute name", defaultValue = ""),
       Choice("automaticFilter", "Filter graph automatically", options = FEOption.bools),
@@ -2200,8 +2201,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val sample = {
         val sampleSize = params("sampleSize").toInt
         val restartProbability = params("restartProbability").toDouble
+        val maxStartPoints = params("maxStartPoints").toInt
         val seed = params("seed").toInt
-        val op = graph_operations.RandomWalkSample(restartProbability, sampleSize, seed)
+        val op = graph_operations.RandomWalkSample(sampleSize, restartProbability, maxStartPoints, seed)
         op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
       }
       if (!params("vertexAttrName").isEmpty) {

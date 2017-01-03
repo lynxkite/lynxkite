@@ -15,17 +15,23 @@ For example, you can create a random sample of the project's graph to test your 
 
 ====
 [[samplesize]] Sample size::
-The (maximum) number of vertices in the final sample.
+The (maximum) number of vertices in the sample.
 
 [[restartprobability]] Restart probability::
 The probability of starting a new walk instead of walking.
 
+[[maxstartpoints]] Maxinum number of starting points::
+The limit of how many times a new start point can be selected. With low values, long run times can be
+avoided at the cost of possibly returning a sample of size smaller than requested.
+
 [[vertexattrname]] Vertex attribute name::
-The name of the attribute which shows which vertices belong to the sample. The attribute is not added to
+The name of the attribute which shows which vertices belong to the sample. A value of 1.0 indicates that
+the vertex is part of the sample, otherwise the value is set to 0.0. The attribute is not added to
 the project if the name is an emtpy string.
 
 [[edgeattrname]] Edge attribute name::
-The name of the attribute which shows which edges belong to the sample. The attribute is not added to
+The name of the attribute which shows which edges belong to the sample. A value of 1.0 indicates that
+the edge is part of the sample, otherwise the value is set to 0.0. The attribute is not added to
 the project if the name is an emtpy string.
 
 [[automaticfilter]] Filter graph automatically::
