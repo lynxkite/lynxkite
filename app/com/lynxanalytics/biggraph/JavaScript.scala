@@ -18,9 +18,9 @@ case class JavaScript(expression: String) {
 }
 
 object JavaScript {
-  def javaToJS(cx: javascript.Context, scope: javascript.Scriptable, value: Any) = {
+  def javaToJS(cx: javascript.Context, scope: javascript.Scriptable, value: Any): AnyRef = {
     value match {
-      case value: Array[_] => cx.newArray(scope, value.map(_.asInstanceOf[AnyRef]))
+      case value: Array[_] => cx.newArray(scope, value.map(i => javaToJS(cx, scope, i)))
       case _ => javascript.Context.javaToJS(value, scope)
     }
   }
