@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.rdd.RDD
 
-import scala.util.Random
+import scala.util.{ Random, Try }
 
 object RandomWalkSample extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -18,25 +18,24 @@ object RandomWalkSample extends OpFromJson {
     val edgesInSample = edgeAttribute[Double](inputs.es.entity)
   }
   def fromJson(j: JsValue) = RandomWalkSample(
-    (j \ "restartProbability").as[Double],
     (j \ "requestedSampleSize").as[Long],
+    (j \ "restartProbability").as[Double],
+    (j \ "maxStartPoints").as[Int],
     (j \ "seed").as[Int])
 }
 import com.lynxanalytics.biggraph.graph_operations.RandomWalkSample._
-case class RandomWalkSample(restartProbability: Double,
-                            requestedSampleSize: Long,
-                            seed: Int)
+case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double, maxStartPoints: Int, seed: Int)
     extends TypedMetaGraphOp[Input, Output] {
   require(restartProbability < 1.0)
-  require(restartProbability > 0.0)
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
-  val maxTries = 10
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson =
-    Json.obj("restartProbability" -> restartProbability, "requestedSampleSize" -> requestedSampleSize, "seed" -> seed)
+  override def toJson = Json.obj("requestedSampleSize" -> requestedSampleSize,
+    "restartProbability" -> restartProbability,
+    "maxStartPoints" -> maxStartPoints,
+    "seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -60,16 +59,22 @@ case class RandomWalkSample(restartProbability: Double,
 
     var actualSampleSize = 0L
     var tries = 0
-    while (actualSampleSize < requestedSampleSize && tries < maxTries) {
+    while (actualSampleSize < requestedSampleSize && tries < maxStartPoints) {
       val nodesMissing = requestedSampleSize - actualSampleSize
       val (nodeReachedIdx, edgeReachedIdx) = {
         val startNode = randomNode(nodes, rnd.nextLong())
-        val seed = rnd.nextInt()
-        // 10 and 3 are arbitrary numbers
-        val maxStepsWithoutRestart = (10 / restartProbability).toLong min 3 * nodesMissing
+        // The run time of the sampling algorithm is proportional to the number of walk steps made without a restart
+        // (we break a long walk with restarts into multiple walks without a restart and handle these non-restarting
+        // walks in a parallel manner)
+        // To avoid long run times we cheat and don't wait very long for a restart to happen but force a restart after
+        // some steps. To set this artificial limit, we use two heuristics
+        // 1) 10 times the expected length of a normally non-restarting walk = 10 / restartProbability
+        // 2) 3 times the number of missing nodes = 3 * nodesMissing
+        // where 10 and 3 are arbitrary numbers
+        val maxStepsWithoutRestart = Try(10 / restartProbability).getOrElse(Double.MaxValue).toLong min 3 * nodesMissing
         // 3 is an arbitrary number
         val maxRestarts = (3 * nodesMissing * restartProbability).toLong max 1L
-        walker.walk(startNode, maxStepsWithoutRestart, maxRestarts, seed)
+        walker.walk(startNode, maxStepsWithoutRestart, maxRestarts, rnd)
       }
       nodeReachedIdx.persist(StorageLevels.DISK_ONLY)
       val lastIdxToKeep = nthUniqueNodeReached(nodeReachedIdx, n = nodesMissing)
@@ -99,8 +104,7 @@ case class RandomWalkSample(restartProbability: Double,
     def walk(startNodeID: ID,
              maxStepsWithoutRestart: Long,
              maxRestarts: Long,
-             seed: Int)(implicit rc: RuntimeContext): (UniqueSortedRDD[ID, Long], UniqueSortedRDD[ID, Long]) = {
-      val rnd = new Random(seed)
+             rnd: Random)(implicit rc: RuntimeContext): (UniqueSortedRDD[ID, Long], UniqueSortedRDD[ID, Long]) = {
       val numWalkers = maxRestarts
       // idxMultiplier = the first power of 10 which is bigger than maxStepsWithoutRestart
       // => no walker steps more than idxMultiplier without restart
@@ -119,7 +123,7 @@ case class RandomWalkSample(restartProbability: Double,
       var edgeFirstUsedAt = edges.mapValues(_ => neverReachedIdx)
       var multiStepCnt = 0L
       while (multiStepCnt < maxStepsWithoutRestart && !multiWalkState.isEmpty()) {
-        val (nodesReachedNow, edgesReachedNow) = multiStep(multiWalkState, rnd.nextInt(), restartProbability)
+        val (nodesReachedNow, edgesReachedNow) = multiStep(multiWalkState, rnd, restartProbability)
         nodesReachedNow.persist(StorageLevels.DISK_ONLY)
         nodeFirstReachedAt = updatedReachNumbers(nodeFirstReachedAt, nodesReachedNow)
         edgeFirstUsedAt = updatedReachNumbers(edgeFirstUsedAt, edgesReachedNow)
@@ -138,8 +142,7 @@ case class RandomWalkSample(restartProbability: Double,
       }
     }
 
-    private def multiStep(multiWalkState: RDD[(ID, Long)], seed: Int, restartProbability: Double) = {
-      val rnd = new Random(seed)
+    private def multiStep(multiWalkState: RDD[(ID, Long)], rnd: Random, restartProbability: Double) = {
       val notRestartingWalks = {
         val seed = rnd.nextInt()
         multiWalkState.mapPartitionsWithIndex {
@@ -191,14 +194,10 @@ case class RandomWalkSample(restartProbability: Double,
   }
 
   private def isReachedEarlier(reachedIdx: UniqueSortedRDD[ID, Long], lastIdxToKeep: Option[Long]) = {
-    if (lastIdxToKeep.isDefined) {
-      val limit = lastIdxToKeep.get
-      reachedIdx.mapValues {
-        case -1 => false
-        case idx => idx <= limit
-      }
-    } else {
-      reachedIdx.mapValues(_ > -1)
+    val limit = lastIdxToKeep.getOrElse(Long.MaxValue)
+    reachedIdx.mapValues {
+      case -1 => false
+      case idx => idx <= limit
     }
   }
 
