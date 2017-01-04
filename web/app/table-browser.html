@@ -1,27 +1,31 @@
-<!-- Because of the 'ng-if="onLoad"' attribute, this DIV is (re)created
-after sql-box.js is executed, and the function scope.onLoad is defined.
-The ng-if creates a new scope, so we need ng-model="$parent.sql"
-instead of ng-model="sql" -->
-
 <div id="table-browser" style="background-color: white;">
+  <i>Hint: drag table and column names into the editor box
+  with your mouse.</i>
 
-  table: <input type="text" ng-model="tableFilter">
-  column: <input type="text" ng-model="columnFilter">
-  fully qualify: <input type="checkbox" ng-model="fullyQualifyNames">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" ng-model="fullyQualifyNames"></input>
+      Use fully qualified column names.
+    </label>
+  </div>
 
 
-<div id="column-browser" ng-show="list">
-
-  <ol id="table-list">
+  <ul id="table-list" ng-show="list">
+    <li>
+      <input type="text"
+          placeholder="Search for tables"
+          class="form-control ngpristine ng-valid ng-touched"
+          ng-model="tableFilter"
+          ng-model-options="{ debounce: 300 }"></input>
+    </li>
     <li ng-repeat="table in list"
-        ng-show="table.nameMatch && (!openTable || openTable === table.relativePath)"
-        ng-if="$index < 50">
+        ng-show="table.nameMatch">
 
-      <div ng-click="toggleOpen(table)">
+      <div ng-click="table.toggleOpen()">
         <span ng-class="{
           glyphicon: true,
-          'glyphicon-plus': openTable !== table.relativePath,
-          'glyphicon-minus': openTable === table.relativePath}"></span>
+          'glyphicon-plus': !table.isOpen,
+          'glyphicon-minus': table.isOpen}"></span>
 
         <table-browser-entry
             marked-text="table.nameMatch"
@@ -31,11 +35,19 @@ instead of ng-model="sql" -->
 
       </div>
 
-      <ol ng-if="openTable === table.relativePath">
+      <ul ng-if="table.isOpen">
+        <li>
+          <input type="text"
+              placeholder="Search for columns"
+              class="form-control ngpristine ng-valid ng-touched"
+              ng-model="table.columnFilter"
+              ng-model-options="{ debounce: 300 }">
+          </input>
+        </li>
         <li>
           <table-browser-entry
               marked-text="['', '*ALL*']"
-              draggable-text="allColumns(table)">
+              draggable-text="table.allColumnsSQL(fullyQualifyNames)">
           </table-browser-entry>
         </li>
 
@@ -45,8 +57,7 @@ instead of ng-model="sql" -->
               draggable-text="getColumnName(table, column)">
           </table-browser-entry>
         </li>
-      </ol>
+      </ul>
     </li>
-  </ol>
+  </ul>
 
-</div>

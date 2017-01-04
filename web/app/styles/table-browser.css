@@ -1,22 +1,25 @@
-/*#column-browser {
-  white-space: nowrap;
-}
-
-#column-browser span.marked {
-  font-weight: bold;
-}*/
-
-#column-browser #table-list {
+#table-list {
+  height: 80vh;
+  overflow-y: auto;
   margin-left: 0px;
-  padding-left: 0px;
+  padding: 0px;
 }
 
-/*
-#colummn-browser ol span {
-  margin-left: 0px;
-  margin-right: 0px;
-  padding-left: 0px;
-  padding-right: 0px;
+#table-browser ul {
+  list-style-type: none;
 }
-*/
 
+#table-browser > ul > li > ul > li {
+  color: rgb(90, 90, 90);
+}
+
+#table-browser {
+  border: 1px solid #ccc;
+  background: white;
+  padding: 3px;
+}
+
+#table-browser div.checkbox {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
