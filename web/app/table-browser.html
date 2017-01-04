@@ -19,7 +19,8 @@
           ng-model-options="{ debounce: 300 }"></input>
     </li>
     <li ng-repeat="table in list"
-        ng-show="table.nameMatch">
+        ng-show="table.nameMatch"
+        class="table-entry">
 
       <div ng-click="table.toggleOpen()">
         <span ng-class="{

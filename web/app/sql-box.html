@@ -36,7 +36,9 @@ instead of ng-model="sql" -->
       ng-click="showExportOptions = true">Export...</button>
     <button
       class="btn btn-primary"
-      ng-click="showTableBrowser = !showTableBrowser">Columns</button>
+      ng-click="showTableBrowser = !showTableBrowser">
+        Tables {{showTableBrowser ? '&#9204;' : '&#9205;'}}
+    </button>
   </div>
 
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>

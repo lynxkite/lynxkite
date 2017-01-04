@@ -1,10 +1,15 @@
-#table-list {
+#table-browser #table-list {
   margin-left: 0px;
   padding: 0px;
 }
 
 #table-browser ul {
   list-style-type: none;
+  overflow-x: scroll;
+}
+
+#table-browser li.table-entry {
+  white-space: nowrap;
 }
 
 #table-browser > ul > li > ul > li {

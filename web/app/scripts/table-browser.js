@@ -164,7 +164,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
         };
       }  // createTable
 
-      scope.maxEntriesToShow = 100;
+      scope.maxEntriesToShow = 60;
       var path = scope.projectState ? scope.projectState.projectName : scope.directory;
       scope.tableResponse = util.nocache(
         '/ajax/getAllTables',
