@@ -162,7 +162,10 @@ function testsFrom(testsDir) {
 }
 var authFw = testsFrom('auth-tests');
 var authlessFw = testsFrom('tests');
-authFw.setSolo(authFw.isSolo() || authlessFw.isSolo());
+// Set 'solo' modes.
+// Authentication tests are unaffected by authless 'solo' labels, because
+// all the authless tests depend on the login performed by the auth tests.
+authFw.setSolo(authFw.isSolo());
 authlessFw.setSolo(authFw.isSolo() || authlessFw.isSolo());
 
 var startDate = (new Date()).toString();
