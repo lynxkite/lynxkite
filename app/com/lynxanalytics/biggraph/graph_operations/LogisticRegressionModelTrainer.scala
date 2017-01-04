@@ -145,6 +145,8 @@ case class LogisticRegressionModelTrainer(
       } else {
         val sampleSizeApprox = LoggedEnvironment.envOrElse("KITE_ZVALUE_SAMPLE", "100000").toInt
         val fraction = (sampleSizeApprox.toDouble / predictions.count()) min 1.0
+        // Compute z-value on a small sample only (since the computation is not distributed). To make the sampling
+        // repeatable, an arbitrary seed is specified.
         val sample = predictions.sample(withReplacement = false, fraction, seed = 23948720934L)
         sample.persist(StorageLevel.DISK_ONLY)
         val vectors = sample.rdd.map(_.getAs[ml.linalg.Vector]("features"))
