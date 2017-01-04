@@ -145,12 +145,12 @@ case class LogisticRegressionModelTrainer(
       } else {
         val sampleSizeApprox = LoggedEnvironment.envOrElse("KITE_ZVALUE_SAMPLE", "100000").toInt
         val fraction = (sampleSizeApprox.toDouble / predictions.count()) min 1.0
-        val sample = predictions.sample(withReplacement = false, fraction)
+        val sample = predictions.sample(withReplacement = false, fraction, seed = 23948720934L)
         sample.persist(StorageLevel.DISK_ONLY)
         val vectors = sample.rdd.map(_.getAs[ml.linalg.Vector]("features"))
         val probability = sample.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
         // The constant field is added in order to get the statistics of the intercept.
-        val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
+        val flattenMatrix = vectors.flatMap(_.toArray :+ 1.0).collect()
         val matrix = new breeze.linalg.DenseMatrix(
           rows = numFeatures + 1,
           cols = sample.count().toInt,
@@ -159,9 +159,9 @@ case class LogisticRegressionModelTrainer(
         val matrixCost = breeze.linalg.diag(breeze.linalg.SparseVector(cost))
         // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is
         // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
-        // whose diagnol elements are probability_i * (1 - probability_i).
-        val covariance = breeze.linalg.inv((matrix * (matrixCost * matrix.t)))
-        val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt(_))
+        // whose diagonal elements are probability_i * (1 - probability_i).
+        val covariance = breeze.linalg.inv(matrix * matrixCost * matrix.t)
+        val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt)
         val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
         zValues.toArray
       }
