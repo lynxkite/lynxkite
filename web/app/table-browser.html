@@ -59,5 +59,14 @@
         </li>
       </ul>
     </li>
+    <li ng-if="originalListSize > list.length">
+      <i>
+        Showing {{list.length}} of total
+        {{originalListSize}} tables. You can use the search
+        box at the top of this panel or
+        <a id="show-all-link" ng-click="showAll()">show all</a> 
+        (can be slow).
+      </i>
+    </li>
   </ul>
 

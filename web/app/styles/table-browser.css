@@ -1,6 +1,4 @@
 #table-list {
-  height: 80vh;
-  overflow-y: auto;
   margin-left: 0px;
   padding: 0px;
 }
@@ -22,4 +20,8 @@
 #table-browser div.checkbox {
   margin-top: 2px;
   margin-bottom: 2px;
+}
+
+#show-all-link {
+  cursor: pointer;
 }
