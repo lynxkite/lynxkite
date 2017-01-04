@@ -10,28 +10,13 @@ sql-box div#sql-box-main.size-half {
 
 sql-box table-browser {
   width: 50%;
-  border: 1px solid black;
-  background: white;
-  padding: 2px;
   float: left;
 }
 
-.table-browser-for-left {
-  left: 105%;
+/* Make sure there are no buttons  */
+div.sql-box-button-group {
+  display: inline-block;
 }
-
-.table-browser-for-right {
-  right: 105%;
-}
-
-/*
-#colummn-browser ol span {
-  margin-left: 0px;
-  margin-right: 0px;
-  padding-left: 0px;
-  padding-right: 0px;
-}
-*/
 
 .section-button {
   cursor: pointer;

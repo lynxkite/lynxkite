@@ -27,14 +27,17 @@ instead of ng-model="sql" -->
     min="0"
     id="max-rows"
     ng-model="maxRows">
-  <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
-  <button class="btn btn-primary"
-    ng-disabled="showExportOptions"
-    id="save-results-opener"
-    ng-click="showExportOptions = true">Export...</button>
-  <button
-    class="btn btn-primary"
-    ng-click="showTableBrowser = !showTableBrowser">Columns</button>
+
+  <div class="sql-box-button-group">
+    <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
+    <button class="btn btn-primary"
+      ng-disabled="showExportOptions"
+      id="save-results-opener"
+      ng-click="showExportOptions = true">Export...</button>
+    <button
+      class="btn btn-primary"
+      ng-click="showTableBrowser = !showTableBrowser">Columns</button>
+  </div>
 
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 </div>
