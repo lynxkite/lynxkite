@@ -107,7 +107,7 @@ class LynxKite:
 
   def _get_session(self):
     '''Create a new session or return the cached one. If the process was forked (if the pid
-    has changed), then the cahce is invalidated. See issue #5436'''
+    has changed), then the cache is invalidated. See issue #5436.'''
     if self._session is None or self._pid != os.getpid():
       self._session = requests.Session()
       self._pid = os.getpid()
