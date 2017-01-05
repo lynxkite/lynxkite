@@ -22,7 +22,13 @@ class TestLynxTasksWithMultiprocessing(unittest.TestCase):
   def test_run(self):
     lk._request('/ajax/discardAllReallyIMeanIt')
     tasks = [TestTask(name='TestProject' + str(i)) for i in range(3)]
+    # Run the above tasks with two workers.
     luigi.build(tasks, workers=2, local_scheduler=True)
+    # If LynxKite objects don't handle multiprocessing correctly,
+    # then the above call can enter an endless loop or fail with
+    # an exception.
+    for task in tasks:
+      assert(task.output().exists())
 
 
 if __name__ == '__main__':
