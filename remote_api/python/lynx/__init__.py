@@ -71,7 +71,7 @@ class LynxKite:
     self._password = password
     self._certfile = certfile
     self._oauth_token = oauth_token
-    self._session = requests.Session()
+    self._session = None
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -105,11 +105,19 @@ class LynxKite:
     else:
       raise Exception('No login credentials provided.')
 
+  def _get_session(self):
+    '''Create a new session or return the cached one. If the process was forked (if the pid
+    has changed), then the cahce is invalidated. See issue #5436'''
+    if self._session is None or self._pid != os.getpid():
+      self._session = requests.Session()
+      self._pid = os.getpid()
+    return self._session
+
   def _post(self, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     max_tries = 3
     for i in range(max_tries):
-      r = self._session.post(
+      r = self._get_session().post(
           self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
           verify=self.certfile(),
           allow_redirects=False,
