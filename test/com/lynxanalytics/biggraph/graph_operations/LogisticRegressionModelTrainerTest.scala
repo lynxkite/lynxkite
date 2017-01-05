@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.ml.classification.LogisticRegressionModel
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import org.apache.spark.ml
 
 class LogisticRegressionModelTrainerTest extends ModelTestBase {
 
@@ -36,4 +37,18 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
     assert(LogisticRegressionModel.load(path).coefficients.size == 1)
   }
 
+  test("z-scores") {
+    import sparkSession.implicits._
+    import org.scalactic.Tolerance._
+    import ml.linalg.Vectors.{ dense => mlVector }
+    val coefficientsAndIntercept = Array(1.0, -1345763.0, -0.01)
+    val predictions = sparkSession.createDataset(Seq((mlVector(3000000.0, 1.0), mlVector(0.88, 0.12), 1.0),
+      (mlVector(1.0, 278.01), mlVector(0.26, 0.74), 0.0)
+    )).toDF("features", "probability", "label")
+    val zValues = LogisticRegressionModelTrainer.computeZValues(coefficientsAndIntercept, predictions)
+    val expected = Array(0.01586212412069695, -1.971080062166662, -5.2683560638617534E-11)
+    for ((e, r) <- expected.zip(zValues)) {
+      assert(e === r +- 0.0001)
+    }
+  }
 }
