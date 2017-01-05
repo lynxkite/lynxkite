@@ -46,7 +46,7 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
       (mlVector(1.0, 278.01), mlVector(0.26, 0.74), 0.0)
     )).toDF("features", "probability", "label")
     val zValues = LogisticRegressionModelTrainer.computeZValues(coefficientsAndIntercept, predictions)
-    val expected = Array(0.01586, -1.9710, 0.0)
+    val expected = Array(0.01586, -1.97108, 0.0)
     for ((e, r) <- expected.zip(zValues)) {
       assert(e === r +- 0.0001)
     }
