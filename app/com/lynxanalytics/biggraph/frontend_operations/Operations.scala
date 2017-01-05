@@ -2734,6 +2734,42 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
     })
 
+  register("Take scalar from other project", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "other-project",
+        "Other project's name",
+        options = readableProjectCheckpoints,
+        allowUnknownOption = true),
+      Param("orig-name", "Name of the scalar in the other project"),
+      Param("new-name", "Name for the scalar in this project"))
+
+    def apply(params: Map[String, String]): Unit = {
+      println(params)
+      println()
+      // checking parameters
+      val origName = params("orig-name")
+      val newName = params("new-name")
+      val scalarName = if (newName.isEmpty) origName else newName
+      val otherProject = params("other-project")
+      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
+        otherProject,
+        customError =
+          s"Obsolete project reference: $otherProject. Please select a new project from the dropdown.")
+      assert(suffix == "", s"Invalid project reference $otherProject with suffix $suffix")
+      val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
+
+      assert(other.scalarNames.contains(origName), s"No '$origName' in '$title'")
+      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$newName'.")
+
+      // copying scalar
+      println(other.scalars(origName))
+      println()
+    }
+
+    def enabled = FEStatus.enabled
+  })
+
   register("Union with another project", new StructureOperation(_, _) {
     def parameters = List(
       Choice(
