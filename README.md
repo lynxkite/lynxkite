@@ -190,12 +190,12 @@ Here's how I managed to set it up.
 Before doing a release, please run the following tests:
 ```
 tools/emr_based_test.sh frontend
-test_big_data.sh
+make big-data-test
 ```
 If you are changing Spark settings or Spark version, then also this one:
 ```
 test_spark.sh
 ```
 After this, please create a PR that updates the generated big data test result file.
-(`test_big_data.sh` is the same as saying `Big Data Test please` in a PR, but this one can reuse
+(`make big-data-test` is the same as saying `Big Data Test please` in a PR, but this one can reuse
 the cluster started in the previous line.)
