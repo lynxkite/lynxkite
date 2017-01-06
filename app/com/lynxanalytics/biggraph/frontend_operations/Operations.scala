@@ -2745,8 +2745,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("new-name", "Name for the scalar in this project"))
 
     def apply(params: Map[String, String]): Unit = {
-      println(params)
-      println()
       // checking parameters
       val origName = params("orig-name")
       val newName = params("new-name")
@@ -2758,13 +2756,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           s"Obsolete project reference: $otherProject. Please select a new project from the dropdown.")
       assert(suffix == "", s"Invalid project reference $otherProject with suffix $suffix")
       val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-
       assert(other.scalarNames.contains(origName), s"No '$origName' in '$title'")
       assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$newName'.")
-
       // copying scalar
-      println(other.scalars(origName))
-      println()
+      project.scalars(scalarName) = other.scalars(origName)
     }
 
     def enabled = FEStatus.enabled
