@@ -5,7 +5,7 @@
 
 #table-browser ul {
   list-style-type: none;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 #table-browser li.table-entry {

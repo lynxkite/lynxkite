@@ -2,6 +2,7 @@
 
 var testLib; // Forward declarations.
 var History; // Forward declarations.
+var TableBrowser; // Forward declarations.
 var request = require('request');
 var fs = require('fs');
 
@@ -134,6 +135,7 @@ function Side(direction) {
   this.side = element(by.id('side-' + direction));
   this.toolbox = element(by.id('operation-toolbox-' + direction));
   this.history = new History(this);
+  this.tableBrowser = new TableBrowser(this);
 }
 
 Side.prototype = {
@@ -345,6 +347,61 @@ Side.prototype = {
   segmentation: function(name) { return new Entity(this.side, 'segmentation', name); },
 };
 
+function TableBrowser(side) {
+  this.side = side.side;
+}
+
+TableBrowser.prototype = {
+  toggle: function() {
+    this.side.element(by.id('toggle-table-browser')).click();
+  },
+
+  getTable: function(pos) {
+    // pos + 1 is used to skip the search box
+    return this.side.$$('ul#table-list > li ').get(pos + 1);
+  },
+
+  expectTable: function(pos, name) {
+    var li = this.getTable(pos);
+    expect(li.getText()).toBe(name);
+  },
+
+  toggleTable: function(pos) {
+    this.getTable(pos).click();
+  },
+
+  getColumn: function(tablePos, columnPos) {
+    var tableLi = this.getTable(tablePos);
+    return tableLi.$$('ul > li').get(columnPos + 1);
+  },
+
+  expectColumn: function(tablePos, columnPos, name) {
+    var columnLi = this.getColumn(tablePos, columnPos);
+    expect(columnLi.getText()).toBe(name);
+  },
+
+  searchTable: function(searchText) {
+    var searchBox = this.side.$('#search-for-tables');
+    searchBox.sendKeys(searchText);
+  },
+
+  expectTableDragText: function(pos, expected) {
+    var span = this.getTable(pos)
+        .$('table-browser-entry.table-entry > span');
+    expect(span.evaluate('draggableText')).toBe(expected);
+  },
+
+  expectColumnDragText: function(tablePos, columnPos, expected) {
+    var span = this.getColumn(tablePos, columnPos)
+        .$('table-browser-entry.column-entry > span');
+    expect(span.evaluate('draggableText')).toBe(expected);
+  },
+
+  toggleFullyQualify: function() {
+    this.side.$('#use-fully-qualified-names').click();
+  },
+
+};
 
 function History(side) {
   this.side = side;
