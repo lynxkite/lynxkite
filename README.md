@@ -32,6 +32,11 @@ For various tools you will require Python and AWS CLI. To install dependencies p
 
     sudo -H pip3 install -r python_requirements.txt
 
+Before running the above command you may also need to install the following packages:
+
+    sudo apt-get install libmysqlclient-dev
+    sudo apt-get install python3-dev
+
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on
 LynxKite startup, add a line to `/etc/avahi/hosts`:
