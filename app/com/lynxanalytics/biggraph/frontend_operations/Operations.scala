@@ -2757,7 +2757,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       assert(suffix == "", s"Invalid project reference $otherProject with suffix $suffix")
       val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(other.scalarNames.contains(origName), s"No '$origName' in project '$title'.")
-      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$newName'.")
+      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
       // copying scalar
       project.scalars(scalarName) = other.scalars(origName)
     }
