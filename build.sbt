@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
   // This way we get s3 consistent view support.)
   "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-  "org.apache.commons" % "commons-lang3" % "3.3",
+  "org.apache.commons" % "commons-lang3" % "3.5",
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.mozilla" % "rhino" % "1.7.7",
