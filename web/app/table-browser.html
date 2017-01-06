@@ -4,7 +4,9 @@
 
   <div class="checkbox">
     <label>
-      <input type="checkbox" ng-model="fullyQualifyNames"></input>
+      <input
+          type="checkbox" ng-model="fullyQualifyNames"
+          id="use-fully-qualified-names"></input>
       Use fully qualified column names.
     </label>
   </div>
@@ -15,6 +17,7 @@
       <input type="text"
           placeholder="Search for tables"
           class="form-control ngpristine ng-valid ng-touched"
+          id="search-for-tables"
           ng-model="tableFilter"
           ng-model-options="{ debounce: 300 }"></input>
     </li>
@@ -29,8 +32,8 @@
           'glyphicon-minus': table.isOpen}"></span>
 
         <table-browser-entry
+            class="table-entry"
             marked-text="table.nameMatch"
-            plain-text-fallback="table.columnMatch ? table.relativePath : ''"
             draggable-text="'`' + table.relativePath + '`'">
         </table-browser-entry>
 
@@ -47,6 +50,7 @@
         </li>
         <li>
           <table-browser-entry
+              class="column-entry"
               marked-text="['', '*ALL*']"
               draggable-text="table.allColumnsSQL(fullyQualifyNames)">
           </table-browser-entry>
@@ -54,8 +58,9 @@
 
         <li ng-repeat="column in table.columns">
           <table-browser-entry
+              class="column-entry"
               marked-text="column.nameMatch"
-              draggable-text="getColumnName(table, column)">
+              draggable-text="table.getSqlColumnName(column, fullyQualifyNames)">
           </table-browser-entry>
         </li>
       </ul>
