@@ -23,7 +23,7 @@ object RandomWalkSample extends OpFromJson {
     (j \ "maxStartPoints").as[Int],
     (j \ "seed").as[Int])
 }
-import com.lynxanalytics.biggraph.graph_operations.RandomWalkSample._
+import RandomWalkSample._
 case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double, maxStartPoints: Int, seed: Int)
     extends TypedMetaGraphOp[Input, Output] {
   assert(restartProbability < 1.0, "Restart probability at RandomWalkSample must be smaller than 1.0")
@@ -134,7 +134,8 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
       (nodeFirstReachedAt, edgeFirstUsedAt)
     }
 
-    private def updatedReachNumbers(oldReachNumbers: UniqueSortedRDD[ID, Long], newReachNumbers: RDD[(ID, Long)]) = {
+    private def updatedReachNumbers(oldReachNumbers: UniqueSortedRDD[ID, Long],
+                                    newReachNumbers: RDD[(ID, Long)]): UniqueSortedRDD[ID, Long] = {
       val x = newReachNumbers.reduceBySortedKey(oldReachNumbers.partitioner.get, _ min _)
       oldReachNumbers.sortedLeftOuterJoin(x).mapValues {
         case (idx, None) => idx
@@ -142,7 +143,9 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
       }
     }
 
-    private def multiStep(multiWalkState: RDD[(ID, Long)], rnd: Random, restartProbability: Double) = {
+    private def multiStep(multiWalkState: RDD[(ID, Long)],
+                          rnd: Random,
+                          restartProbability: Double): (RDD[(ID, Long)], RDD[(ID, Long)]) = {
       val notRestartingWalks = {
         val seed = rnd.nextInt()
         multiWalkState.mapPartitionsWithIndex {
@@ -173,13 +176,13 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
 
   private def randomNode(nodes: VertexSetRDD, seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  private def nthUniqueNodeLeft(nodeReachedIdx: RDD[(ID, Long)], n: Long) = {
+  private def nthUniqueNodeLeft(nodeReachedIdx: RDD[(ID, Long)], n: Long): Long = {
     val nodesEverReached = nodeReachedIdx.filter(_._2 < Long.MaxValue)
     nodesEverReached.persist(StorageLevels.DISK_ONLY)
     if (nodesEverReached.count() > n) {
       val nthNodeReached = nodesEverReached.
         map(_.swap).
-        sort(nodeReachedIdx.partitioner.get).
+        sortByKey().
         zipWithIndex().
         filter(_._2 < n).
         map(_._1._1).
@@ -190,7 +193,8 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
     }
   }
 
-  private def mergeSamples(sample1: UniqueSortedRDD[ID, Boolean], sample2: UniqueSortedRDD[ID, Boolean]) = {
+  private def mergeSamples(sample1: UniqueSortedRDD[ID, Boolean],
+                           sample2: UniqueSortedRDD[ID, Boolean]): UniqueSortedRDD[ID, Boolean] = {
     sample1.sortedJoin(sample2).mapValues {
       case (isInSample1, isInSample2) => isInSample1 || isInSample2
     }
