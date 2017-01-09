@@ -2206,10 +2206,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         val op = graph_operations.RandomWalkSample(sampleSize, restartProbability, maxStartPoints, seed)
         op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
       }
-      if (!params("vertexAttrName").isEmpty) {
+      if (params("vertexAttrName").nonEmpty) {
         project.newVertexAttribute(params("vertexAttrName"), sample.verticesInSample)
       }
-      if (!params("edgeAttrName").isEmpty) {
+      if (params("edgeAttrName").nonEmpty) {
         project.newEdgeAttribute(params("edgeAttrName"), sample.edgesInSample)
       }
       if (params("automaticFilter").toBoolean) {
