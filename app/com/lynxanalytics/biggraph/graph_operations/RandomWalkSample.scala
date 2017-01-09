@@ -26,7 +26,7 @@ object RandomWalkSample extends OpFromJson {
 import com.lynxanalytics.biggraph.graph_operations.RandomWalkSample._
 case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double, maxStartPoints: Int, seed: Int)
     extends TypedMetaGraphOp[Input, Output] {
-  require(restartProbability < 1.0)
+  assert(restartProbability < 1.0, "Restart probability at RandomWalkSample must be smaller than 1.0")
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
@@ -71,7 +71,8 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
         // 1) 10 times the expected length of a normally non-restarting walk = 10 / restartProbability
         // 2) 3 times the number of missing nodes = 3 * nodesMissing
         // where 10 and 3 are arbitrary numbers
-        val maxStepsWithoutRestart = Try(10 / restartProbability).getOrElse(Double.MaxValue).toLong min 3 * nodesMissing
+        val maxStepsWithoutRestart =
+          Try(10 / restartProbability).getOrElse(Double.MaxValue).toLong min (3 * nodesMissing)
         // 3 is an arbitrary number
         val maxRestarts = (3 * nodesMissing * restartProbability).toLong max 1L
         walker.walk(startNode, maxStepsWithoutRestart, maxRestarts, rnd)
@@ -135,7 +136,7 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
     }
 
     private def updatedReachNumbers(oldReachNumbers: UniqueSortedRDD[ID, Long], newReachNumbers: RDD[(ID, Long)]) = {
-      val x = newReachNumbers.reduceByKey(_ min _).sort(oldReachNumbers.partitioner.get).asUniqueSortedRDD
+      val x = newReachNumbers.reduceBySortedKey(oldReachNumbers.partitioner.get, _ min _)
       oldReachNumbers.sortedLeftOuterJoin(x).mapValues {
         case (idx, None) => idx
         case (oldIdx, Some(newIdx)) => oldIdx min newIdx
