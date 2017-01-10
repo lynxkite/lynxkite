@@ -78,7 +78,9 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
         walker.walk(startNode, maxStepsWithoutRestart, maxRestarts, rnd)
       }
       nodeReachedIdx.persist(StorageLevels.DISK_ONLY)
-      val firstIdxToDrop = nthUniqueNodeLeft(nodeReachedIdx, n = nodesMissing)
+
+      val reachIdxForNodesNotAlreadySampled = nodesInSample.filter(!_._2).sortedJoin(nodeReachedIdx).mapValues(_._2)
+      val firstIdxToDrop = nthUniqueNodeLeft(reachIdxForNodesNotAlreadySampled, n = nodesMissing)
       val newSampleNodes = nodeReachedIdx.mapValues(_ < firstIdxToDrop)
       val newSampleEdges = edgeReachedIdx.mapValues(_ < firstIdxToDrop)
       nodesInSample = mergeSamples(nodesInSample, newSampleNodes)
@@ -123,10 +125,10 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
       var edgeFirstUsedAt = edges.mapValues(_ => Long.MaxValue)
       var multiStepCnt = 0L
       while (multiStepCnt < maxStepsWithoutRestart && !multiWalkState.isEmpty()) {
-        val (nodesReachedNow, edgesReachedNow) = multiStep(multiWalkState, rnd, restartProbability)
+        val (nodesReachedNow, edgesUsedNow) = multiStep(multiWalkState, rnd, restartProbability)
         nodesReachedNow.persist(StorageLevels.DISK_ONLY)
         nodeFirstReachedAt = updatedReachNumbers(nodeFirstReachedAt, nodesReachedNow)
-        edgeFirstUsedAt = updatedReachNumbers(edgeFirstUsedAt, edgesReachedNow)
+        edgeFirstUsedAt = updatedReachNumbers(edgeFirstUsedAt, edgesUsedNow)
         multiWalkState = nodesReachedNow
         multiStepCnt += 1
       }
