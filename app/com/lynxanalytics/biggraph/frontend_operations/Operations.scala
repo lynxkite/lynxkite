@@ -2183,8 +2183,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         "Restart probability",
         defaultValue = "0.15"),
       NonNegInt("maxStartPoints", "Maxinum number of starting points", default = 10),
-      Param("vertexAttrName", "Vertex attribute name", defaultValue = ""),
-      Param("edgeAttrName", "Edge attribute name", defaultValue = ""),
+      Param("vertexAttrName", "Save vertex selection as", defaultValue = ""),
+      Param("edgeAttrName", "Save edge selection as", defaultValue = ""),
       Choice("automaticFilter", "Filter graph automatically", options = FEOption.bools),
       RandomSeed("seed", "Seed")
     )
