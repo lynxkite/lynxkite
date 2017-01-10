@@ -2213,16 +2213,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.newEdgeAttribute(params("edgeAttrName"), sample.edgesInSample)
       }
       if (params("automaticFilter").toBoolean) {
+        val filter = new graph_operations.DoubleGT(0.0)
         val edgeEmbedding = {
-          val edgesGuid = sample.edgesInSample.gUID.toString
-          FEFilters.embedFilteredVertices(
-            project.edgeBundle.idSet, Seq(FEVertexAttributeFilter(edgesGuid, ">0")), heavy = true)
+          val op = graph_operations.VertexAttributeFilter(filter)
+          op(op.attr, sample.edgesInSample).result.identity
         }
         project.pullBackEdges(edgeEmbedding)
         val vertexEmbedding = {
-          val verticesGuid = sample.verticesInSample.gUID.toString
-          FEFilters.embedFilteredVertices(
-            project.vertexSet, Seq(FEVertexAttributeFilter(verticesGuid, ">0")), heavy = true)
+          val op = graph_operations.VertexAttributeFilter(filter)
+          op(op.attr, sample.verticesInSample).result.identity
         }
         project.pullBack(vertexEmbedding)
       }
