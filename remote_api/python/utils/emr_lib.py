@@ -82,7 +82,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, log_uri, owner, expire,
+          self, name, log_uri, owner, expiry,
           instance_count=2,
           hdfs_replication='2'):
     list = self.emr_client.list_clusters(
@@ -152,8 +152,8 @@ class EMRLib:
               'Value': owner
               },
               {
-              'Key': 'expire',
-              'Value': expire
+              'Key': 'expiry',
+              'Value': expiry
               }])
     return EMRCluster(res['JobFlowId'], self)
 

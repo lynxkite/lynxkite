@@ -57,9 +57,9 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
-    help='''The (Lynx) user who is responsible for this EMR cluster.''')
+    help='''The responsible person for this EMR cluster.''')
 arg_parser.add_argument(
-    '--expire',
+    '--expiry',
     default=(
         datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
     help='''The "expiration date" of this cluster in "YYYY-mm-dd" format.
@@ -81,7 +81,7 @@ class Ecosystem:
         'with_rds': args.with_rds,
         'rm': args.rm,
         'owner': args.owner,
-        'expire': args.expire,
+        'expiry': args.expiry,
     }
     self.lynxkite_config = {
         'biggraph_releases_dir': args.biggraph_releases_dir,
@@ -106,7 +106,7 @@ class Ecosystem:
         name=conf['cluster_name'],
         log_uri=conf['emr_log_uri'],
         owner=conf['owner'],
-        expire=conf['expire'],
+        expiry=conf['expiry'],
         instance_count=conf['emr_instance_count'],
         hdfs_replication=conf['hdfs_replication'])
     self.instances = [self.cluster]
