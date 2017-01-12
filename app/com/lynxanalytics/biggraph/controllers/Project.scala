@@ -224,7 +224,7 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  private def feTypeName[T](e: TypedEntity[T]): String = {
+  def feTypeName[T](e: TypedEntity[T]): String = {
     e.typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")

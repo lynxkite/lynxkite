@@ -383,7 +383,9 @@ case class GetAllTablesRequest(path: String)
 case class ColumnDesc(name: String)
 case class TableDesc(
   absolutePath: String,
-  relativePath: String)
+  relativePath: String,
+  objectType: String,
+  columnType: String = "")
 case class GetAllTablesResponse(list: Seq[TableDesc])
 
 case class GetColumnsRequest(absolutePath: String)
@@ -437,51 +439,75 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
-  trait TableLikeRef {
-    def toDesc(stripPathSteps: Int, x: Int): TableDesc
-  }
-
-  case class TableRef(frame: ObjectFrame, path: AbsoluteTablePath) extends TableLikeRef {
-
-    override def toDesc(stripPathSteps: Int, stripSegPathSteps: Int): TableDesc = {
-      val cutFramePath = SymbolPath.fromIterable(
-        frame.path.path.drop(stripPathSteps)
-      )
-      val cutTablePath =
-        path.path.drop(stripSegPathSteps - 1).mkString("|").toString
-      val pathCombiner = if (cutFramePath.path.isEmpty || cutTablePath.isEmpty) "" else "|"
-      TableDesc(
-        absolutePath = frame.path.toString + path.toString,
-        relativePath = cutFramePath + pathCombiner + cutTablePath
-      )
-    }
-
-  }
-
-  def getAllTablesForObjectFrame(frame: ObjectFrame, subPath: Seq[String] = Seq()): Seq[TableRef] = {
+  def getAllTablesForObjectFrame(user: serving.User, frame: ObjectFrame, subPath: Seq[String] = Seq()): GetAllTablesResponse = {
     if (frame.isView) {
-      Seq(TableRef(frame, AbsoluteTablePath(Seq())))
+      getViewColumns(user, frame.asViewFrame)
     } else {
-      frame.viewer.offspringViewer(subPath).allRelativeTablePaths.map {
-        path => TableRef(frame, path.toAbsolute(subPath))
+      val (subPathWithoutLast, subPathLast) =
+        subPath.splitAt(subPath.size - 1)
+      val viewer0 = frame.viewer
+        .offspringViewer(subPathWithoutLast)
+      println(s"for object frame $frame $subPath")
+      if (subPathLast.size > 0 && viewer0.implicitTableNames.exists(_ == subPathLast(0))) {
+        getTableColumns(frame, subPath)
+      } else {
+        val viewer = viewer0.offspringViewer(subPathLast)
+
+        val implicitTables = viewer.implicitTableNames.toSeq.map {
+          name =>
+            TableDesc(
+              absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
+              relativePath = name,
+              objectType = "table")
+        }
+        val subProjects = viewer.sortedSegmentations.map {
+          segmentation =>
+            TableDesc(
+              absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+              relativePath = segmentation.segmentationName,
+              objectType = "segmentation"
+            )
+        }
+
+        GetAllTablesResponse(list = implicitTables ++ subProjects)
       }
     }
   }
 
-  def getAllTablesForDir(user: serving.User, dirEntry: DirectoryEntry): Seq[TableRef] = {
+  def getAllTablesForDir(user: serving.User, dirEntry: DirectoryEntry): GetAllTablesResponse = {
     dirEntry.assertReadAllowedFrom(user)
     val dir = dirEntry.asDirectory
     val entries = dir.list
     val (dirs, objects) = entries.partition(_.isDirectory)
-    val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
+    val visibleDirs = dirs
+      .filter(_.readAllowedFrom(user))
+      .map(_.asDirectory)
+      .map {
+        obj =>
+          TableDesc(
+            absolutePath = obj.path.toString,
+            relativePath = obj.path.name.name,
+            objectType = "directory"
+          )
+      }
 
-    val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
+    val visibleObjectFrames = objects
+      .filter(_.readAllowedFrom(user))
+      .map(_.asObjectFrame)
+      .map {
+        obj =>
+          TableDesc(
+            absolutePath = obj.path.toString,
+            relativePath = obj.path.name.name,
+            objectType = obj.objectType
+          )
+      }
 
-    visibleDirs.flatMap(getAllTablesForDir(user, _)) ++
-      visibleObjectFrames.flatMap(getAllTablesForObjectFrame(_))
+    GetAllTablesResponse(list = visibleDirs ++ visibleObjectFrames)
   }
 
   def getAllTables(user: serving.User, request: GetAllTablesRequest) = async[GetAllTablesResponse] {
+    println(s"requested path ${request.path}")
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)
     if (!entry.isProject) {
@@ -489,40 +515,43 @@ class SQLController(val env: BigGraphEnvironment) {
     }
     entry.assertReadAllowedFrom(user)
 
-    val list = if (entry.isDirectory) {
+    if (entry.isDirectory) {
       getAllTablesForDir(user, entry)
     } else {
-      getAllTablesForObjectFrame(entry.asProjectFrame, pathParts.tail)
+      getAllTablesForObjectFrame(user, entry.asObjectFrame /*.asProjectFrame*/ , pathParts.tail)
     }
-
-    val resp = GetAllTablesResponse(
-      list = list.map(_.toDesc(entry.path.path.size, pathParts.size)))
-    resp
   }
 
-  def getColumns(user: serving.User, request: GetColumnsRequest) = async[GetColumnsResponse] {
-    var (objectPath, tablePath) = request.absolutePath.splitAt(request.absolutePath.indexOf("|"))
+  def getViewColumns(user: serving.User, frame: ViewFrame): GetAllTablesResponse = {
+    val viewRecipe = frame.getRecipe
+    val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
+    GetAllTablesResponse(
+      list = df.schema.fields.map { field =>
+        TableDesc(
+          absolutePath = "",
+          relativePath = field.name,
+          objectType = "column",
+          columnType = field.dataType.typeName
+        )
+      }
+    )
+  }
 
-    val entry = DirectoryEntry.fromName(objectPath)
+  def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): GetAllTablesResponse = {
+    val viewer = frame.viewer
+    val table = Table(AbsoluteTablePath(tablePath), viewer)
 
-    entry.assertReadAllowedFrom(user)
-    if (entry.isView) {
-      val viewRecipe = entry.asViewFrame.getRecipe
-      val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
-      GetColumnsResponse(
-        columns = df.schema.fields.map { field => ColumnDesc(name = field.name) }
-      )
-    } else {
-      val viewer = entry.asObjectFrame.viewer
-      val table = Table(AbsoluteTablePath(tablePath.split("\\|").toSeq.tail), viewer)
-
-      GetColumnsResponse(
-        columns = table.columns.keys.map {
-          name => ColumnDesc(name = name)
-        }.toSeq
-      )
-    }
-
+    GetAllTablesResponse(
+      list = table.columns.toIterator.map {
+        case (name, attr) =>
+          TableDesc(
+            absolutePath = "",
+            relativePath = name,
+            objectType = "column",
+            columnType = ProjectViewer.feTypeName(attr)
+          )
+      }.toSeq
+    )
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {

@@ -3,18 +3,36 @@
   padding: 0px;
 }
 
+#table-browser {
+  overflow-x: auto;
+  margin-left: 0px;
+  padding: 0px;
+/*  user-select: none;*/
+}
+
+table-browser-entry {
+/*  user-select: auto;*/
+}
+
 #table-browser ul {
   list-style-type: none;
-  overflow-x: auto;
+  overflow-x: hidden;
+  padding-left: 20px;
+}
+
+#table-browser > ul {
+  padding-left: 0px;
 }
 
 #table-browser li.table-entry {
   white-space: nowrap;
 }
 
-#table-browser > ul > li > ul > li {
+/*
+#table-browser > ul > li > ul li {
   color: rgb(90, 90, 90);
 }
+*/
 
 #table-browser {
   border: 1px solid #ccc;
