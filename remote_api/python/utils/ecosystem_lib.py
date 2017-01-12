@@ -65,10 +65,10 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--expiry',
     default=(
-        datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
-    help='''The "expiration date" of this cluster in "YYYY-mm-dd" format.
-    After this date the 'owner' will be asked if the cluster can
-    be shut down.''')
+        datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d"),
+    help='''The "expiration date" of this cluster in "YYYYmmdd" format.
+  After this date the 'owner' will be asked if the cluster can
+  be shut down.''')
 
 
 class Ecosystem:
