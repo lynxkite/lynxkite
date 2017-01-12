@@ -383,7 +383,7 @@ case class GetAllTablesRequest(path: String)
 case class ColumnDesc(name: String)
 case class TableDesc(
   absolutePath: String,
-  relativePath: String,
+  name: String,
   objectType: String,
   columnType: String = "")
 case class GetAllTablesResponse(list: Seq[TableDesc])
@@ -457,14 +457,14 @@ class SQLController(val env: BigGraphEnvironment) {
           name =>
             TableDesc(
               absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
-              relativePath = name,
+              name = name,
               objectType = "table")
         }
         val subProjects = viewer.sortedSegmentations.map {
           segmentation =>
             TableDesc(
               absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
-              relativePath = segmentation.segmentationName,
+              name = segmentation.segmentationName,
               objectType = "segmentation"
             )
         }
@@ -486,7 +486,7 @@ class SQLController(val env: BigGraphEnvironment) {
         obj =>
           TableDesc(
             absolutePath = obj.path.toString,
-            relativePath = obj.path.name.name,
+            name = obj.path.name.name,
             objectType = "directory"
           )
       }
@@ -498,7 +498,7 @@ class SQLController(val env: BigGraphEnvironment) {
         obj =>
           TableDesc(
             absolutePath = obj.path.toString,
-            relativePath = obj.path.name.name,
+            name = obj.path.name.name,
             objectType = obj.objectType
           )
       }
@@ -529,7 +529,7 @@ class SQLController(val env: BigGraphEnvironment) {
       list = df.schema.fields.map { field =>
         TableDesc(
           absolutePath = "",
-          relativePath = field.name,
+          name = field.name,
           objectType = "column",
           columnType = field.dataType.typeName
         )
@@ -546,7 +546,7 @@ class SQLController(val env: BigGraphEnvironment) {
         case (name, attr) =>
           TableDesc(
             absolutePath = "",
-            relativePath = name,
+            name = name,
             objectType = "column",
             columnType = ProjectViewer.feTypeName(attr)
           )
