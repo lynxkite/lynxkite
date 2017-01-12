@@ -12,9 +12,9 @@ class TakeScalarFromOtherProjectTest extends OperationsTestBase {
       run(
         "Take scalar from other project",
         Map(
-          "other-project" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-          "orig-name" -> "greeting",
-          "new-name" -> "doesntmatter"))
+          "otherProject" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
+          "origName" -> "greeting",
+          "newName" -> "doesntmatter"))
     }
     assert(ex.getMessage.contains(
       "No 'greeting' in project 'ExampleGraph2'."))
@@ -27,9 +27,9 @@ class TakeScalarFromOtherProjectTest extends OperationsTestBase {
       run(
         "Take scalar from other project",
         Map(
-          "other-project" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-          "orig-name" -> "greeting",
-          "new-name" -> ""))
+          "otherProject" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
+          "origName" -> "greeting",
+          "newName" -> ""))
     }
     assert(ex.getMessage.contains(
       "Conflicting scalar name 'greeting'."))
@@ -45,9 +45,9 @@ class TakeScalarFromOtherProjectTest extends OperationsTestBase {
     run(
       "Take scalar from other project",
       Map(
-        "other-project" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-        "orig-name" -> "scalar_val",
-        "new-name" -> "my_scalar"))
+        "otherProject" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
+        "origName" -> "scalar_val",
+        "newName" -> "my_scalar"))
 
     assert(project.scalars("my_scalar").value == 42.0)
   }
