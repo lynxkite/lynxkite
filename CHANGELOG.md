@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Remote API works on PizzaKite now.
+ - Added a table and column browser to SQL box.
 
 ### 1.11.0
 
