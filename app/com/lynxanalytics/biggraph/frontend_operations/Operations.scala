@@ -2745,8 +2745,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("newName", "Name for the scalar in this project"))
 
     def apply(params: Map[String, String]): Unit = {
-      // checking parameters
-      val origName = params("origName")
+      // parsing scalar path "seg1|seg2|...|segn|scalar"
+      val origPath = params("origName")
+      val pathAndName = origPath.split('|')
+      val path = pathAndName.dropRight(1) // list of segmentation names
+      val origName = pathAndName.last // name of the original scalar
       val newName = params("newName")
       val scalarName = if (newName.isEmpty) origName else newName
       val otherProject = params("otherProject")
@@ -2754,9 +2757,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         otherProject,
         customError =
           s"Obsolete project reference: $otherProject. Please select a new project from the dropdown.")
+      // checking parameters
       assert(suffix == "", s"Invalid project reference $otherProject with suffix $suffix")
-      val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      assert(other.scalarNames.contains(origName), s"No '$origName' in project '$title'.")
+      val otherViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
+      val other = otherViewer.offspringViewer(path)
+      assert(other.scalarNames.contains(origName), s"No '$origPath' in project '$title'.")
       assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
       // copying scalar
       project.scalars(scalarName) = other.scalars(origName)
