@@ -3,7 +3,7 @@
 This operation can take a scalar from an other project and copy it
 to the current project.
 
-It can be useful if trained a machine learning model on a project, and would like
+It can be useful if we trained a machine learning model on a project, and would like
 to apply this model in another project for predicting undefined attribute values.
 
 ====
