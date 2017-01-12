@@ -141,7 +141,13 @@ object TableStats {
     val query =
       s"SELECT COUNT(*) AS cnt, MIN($keyColumn) AS minKey, MAX($keyColumn) AS maxKey FROM $table"
     log.info(s"Executing query: $query")
-    val connection = sql.DriverManager.getConnection(url)
+    val connection =
+      try sql.DriverManager.getConnection(url)
+      catch {
+        // This is a retry. We reproducibly get "No suitable driver" on the first ever connection
+        // attempt. The cause is not fully understood yet. TODO: Add JIRA link.
+        case _: sql.SQLException => sql.DriverManager.getConnection(url)
+      }
     try {
       val statement = connection.prepareStatement(query)
       try {
