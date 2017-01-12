@@ -32,6 +32,11 @@ For various tools you will require Python and AWS CLI. To install dependencies p
 
     sudo -H pip3 install -r python_requirements.txt
 
+Before running the above command you may also need to install the following packages:
+
+    sudo apt-get install libmysqlclient-dev
+    sudo apt-get install python3-dev
+
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on
 LynxKite startup, add a line to `/etc/avahi/hosts`:
@@ -148,17 +153,14 @@ You can find detailed examples in `test_big_data.py` about how to specify parame
 
 ## Test results on Jenkins
 
-To see the details of the automatic Jenkins tests, you have to create an ssh tunnel to the
-Jenkins machine. For this to work, you need Google Cloud SDK.
-The required steps to see the test results:
+To see the details of the automatic tests, click on `Details` link on GitHub in the box that is
+showing the tests.
 
- 1. Install [Google Cloud SDK](https://cloud.google.com/sdk/).
+Jenkins runs on the local network in the Budapest office. To access these results from
+outside of the office, you can use the
+[SSH gateway](https://github.com/biggraph/deployments/tree/master/budapest-office) and
+[FoxyProxy](https://github.com/biggraph/biggraph/wiki/Accessing-our-instances-in-public-clouds).
 
- 2. Create ssh tunnel to Jenkins.
-
-        gcloud compute ssh --zone=europe-west1-b jenkins --ssh-flag="-L8888:localhost:80"
-
- 3. Click on `Details` link on GitHub in the box that is showing the tests.
 
 
 ## Run executors on different JVM-s.
@@ -190,12 +192,12 @@ Here's how I managed to set it up.
 Before doing a release, please run the following tests:
 ```
 tools/emr_based_test.sh frontend
-test_big_data.sh
+make big-data-test
 ```
 If you are changing Spark settings or Spark version, then also this one:
 ```
 test_spark.sh
 ```
 After this, please create a PR that updates the generated big data test result file.
-(`test_big_data.sh` is the same as saying `Big Data Test please` in a PR, but this one can reuse
+(`make big-data-test` is the same as saying `Big Data Test please` in a PR, but this one can reuse
 the cluster started in the previous line.)
