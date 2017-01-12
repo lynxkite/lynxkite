@@ -11,68 +11,13 @@
     </label>
   </div>
 
+  <input type="text"
+      placeholder="Search"
+      class="form-control ngpristine ng-valid ng-touched"
+      ng-model="searchFilter"
+      ng-model-options="{ debounce: 300 }">
+  </input>
 
-  <ul id="table-list" ng-show="list">
-    <li>
-      <input type="text"
-          placeholder="Search for tables"
-          class="form-control ngpristine ng-valid ng-touched"
-          id="search-for-tables"
-          ng-model="tableFilter"
-          ng-model-options="{ debounce: 300 }"></input>
-    </li>
-    <li ng-repeat="table in list"
-        ng-show="table.nameMatch"
-        class="table-entry">
+  <ul ng-include="'table-browser-node.html'" />
 
-      <div ng-click="table.toggleOpen()">
-        <span ng-class="{
-          glyphicon: true,
-          'glyphicon-plus': !table.isOpen,
-          'glyphicon-minus': table.isOpen}"></span>
-
-        <table-browser-entry
-            class="table-entry"
-            marked-text="table.nameMatch"
-            draggable-text="'`' + table.relativePath + '`'">
-        </table-browser-entry>
-
-      </div>
-
-      <ul ng-if="table.isOpen">
-        <li>
-          <input type="text"
-              placeholder="Search for columns"
-              class="form-control ngpristine ng-valid ng-touched"
-              ng-model="table.columnFilter"
-              ng-model-options="{ debounce: 300 }">
-          </input>
-        </li>
-        <li>
-          <table-browser-entry
-              class="column-entry"
-              marked-text="['', '*ALL*']"
-              draggable-text="table.allColumnsSQL(fullyQualifyNames)">
-          </table-browser-entry>
-        </li>
-
-        <li ng-repeat="column in table.columns">
-          <table-browser-entry
-              class="column-entry"
-              marked-text="column.nameMatch"
-              draggable-text="table.getSqlColumnName(column, fullyQualifyNames)">
-          </table-browser-entry>
-        </li>
-      </ul>
-    </li>
-    <li ng-if="originalListSize > list.length">
-      <i>
-        Showing {{list.length}} of total
-        {{originalListSize}} tables. You can use the search
-        box at the top of this panel or
-        <a id="show-all-link" ng-click="showAll()">show all</a> 
-        (can be slow).
-      </i>
-    </li>
-  </ul>
-
+</div>

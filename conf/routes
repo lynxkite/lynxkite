@@ -30,7 +30,6 @@ GET  /ajax/model       com.lynxanalytics.biggraph.serving.ProductionJsonServer.m
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
 GET  /ajax/getAllTables     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getAllTables
-GET  /ajax/getColumns     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getColumns
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
 POST /ajax/exportSQLQueryToTable   com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToTable
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
