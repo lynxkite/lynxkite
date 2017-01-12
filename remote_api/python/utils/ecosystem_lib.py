@@ -55,6 +55,10 @@ arg_parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
 arg_parser.add_argument(
+    '--s3_metadata_dir',
+    help='''If it is not empty, it contains the S3 path of saved metadata,
+  which will be restored after the cluster was started.''')
+arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
     help='''The responsible person for this EMR cluster.''')
@@ -63,8 +67,8 @@ arg_parser.add_argument(
     default=(
         datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
     help='''The "expiration date" of this cluster in "YYYY-mm-dd" format.
-  After this date the 'owner' will be asked if the cluster can
-  be shut down.''')
+    After this date the 'owner' will be asked if the cluster can
+    be shut down.''')
 
 
 class Ecosystem:
@@ -89,6 +93,7 @@ class Ecosystem:
         'lynx_release_dir': args.lynx_release_dir,
         'log_dir': args.log_dir,
         's3_data_dir': args.s3_data_dir,
+        's3_metadata_dir': args.s3_metadata_dir,
     }
     self.cluster = None
     self.instances = []
@@ -141,6 +146,20 @@ class Ecosystem:
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
+
+  def restore_metadata(self):
+    # TODO versioning metadata
+    s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
+    print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
+    self.cluster.ssh('''
+    set -x
+    cd /mnt/lynx
+    supervisorctl stop lynxkite
+    sudo rm -rf metadata/lynxkite/*
+    aws s3 sync {dir} metadata/lynxkite/ --quiet
+    supervisorctl start lynxkite
+    '''.format(dir=s3_metadata_dir))
+    print('Metadata restored.')
 
   def run_tests(self, test_config):
     conf = self.cluster_config
