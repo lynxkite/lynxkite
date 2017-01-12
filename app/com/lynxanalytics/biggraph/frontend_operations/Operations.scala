@@ -2737,19 +2737,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Take scalar from other project", new StructureOperation(_, _) {
     def parameters = List(
       Choice(
-        "other-project",
+        "otherProject",
         "Other project's name",
         options = readableProjectCheckpoints,
         allowUnknownOption = true),
-      Param("orig-name", "Name of the scalar in the other project"),
-      Param("new-name", "Name for the scalar in this project"))
+      Param("origName", "Name of the scalar in the other project"),
+      Param("newName", "Name for the scalar in this project"))
 
     def apply(params: Map[String, String]): Unit = {
       // checking parameters
-      val origName = params("orig-name")
-      val newName = params("new-name")
+      val origName = params("origName")
+      val newName = params("newName")
       val scalarName = if (newName.isEmpty) origName else newName
-      val otherProject = params("other-project")
+      val otherProject = params("otherProject")
       val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
         otherProject,
         customError =
