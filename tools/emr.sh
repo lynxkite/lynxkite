@@ -255,7 +255,7 @@ EOF
 # Add S3 support.
 AWS_CLASSPATH1=\$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH2=\$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\n' ':')
-AWS_CLASSPATH3=\$(find /usr/share/aws/emr/emr-metrics/lib -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH3=\$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH_ALL=\$AWS_CLASSPATH1\$AWS_CLASSPATH2\$AWS_CLASSPATH3
 export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
 

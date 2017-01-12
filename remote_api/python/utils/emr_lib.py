@@ -82,7 +82,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, log_uri,
+          self, name, log_uri, owner, expiry,
           instance_count=2,
           hdfs_replication='2'):
     list = self.emr_client.list_clusters(
@@ -146,7 +146,15 @@ class EMRLib:
         ],
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
-        ServiceRole="EMR_DefaultRole")
+        ServiceRole="EMR_DefaultRole",
+        Tags=[{
+              'Key': 'owner',
+              'Value': owner
+              },
+              {
+              'Key': 'expiry',
+              'Value': expiry
+              }])
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):
