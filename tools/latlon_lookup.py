@@ -1,11 +1,14 @@
-#!/bin/env python3
-'''Looks up Shapefile data by lat/long coordinates.'''
+'''Looks up Shapefile data by lat/long coordinates.
+
+    pip3 install fiona pandas shapely
+    python3 latlon_lookup.py
+'''
 
 import fiona
 import pandas as pd
 import shapely.geometry as sg
 
-with fiona.open('hk.shp') as f:
+with fiona.open('my_file.shp') as f:
   shapes = list(f)
 
 sps = [(sg.asShape(s['geometry']), s['properties']) for s in shapes]
