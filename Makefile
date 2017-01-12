@@ -60,6 +60,6 @@ ecosystem-test: chronomaster-test remote_api-test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
-	./test_big_data.py --test_set_size ${TEST_SET_SIZE}
+	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
 .PHONY: statter
 statter: .build/statter-done
