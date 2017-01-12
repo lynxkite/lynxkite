@@ -382,7 +382,7 @@ case class HiveImportRequest(
 case class GetAllTablesRequest(path: String)
 case class ColumnDesc(name: String)
 case class TableDesc(
-  absolutePath: String,
+  absolutePath: String,  // TODO: bring down type to handle things like a segmentation called 'vertices'
   name: String,
   objectType: String,
   columnType: String = "")
@@ -439,86 +439,57 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
-  def getAllTablesForObjectFrame(user: serving.User, frame: ObjectFrame, subPath: Seq[String] = Seq()): GetAllTablesResponse = {
-    if (frame.isView) {
-      getViewColumns(user, frame.asViewFrame)
-    } else {
-      val (subPathWithoutLast, subPathLast) =
-        subPath.splitAt(subPath.size - 1)
-      val viewer0 = frame.viewer
-        .offspringViewer(subPathWithoutLast)
-      println(s"for object frame $frame $subPath")
-      if (subPathLast.size > 0 && viewer0.implicitTableNames.exists(_ == subPathLast(0))) {
-        getTableColumns(frame, subPath)
-      } else {
-        val viewer = viewer0.offspringViewer(subPathLast)
+  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): GetAllTablesResponse = {
+    print(s"getProjectTqables pth= $subPath")
+    val viewer = frame.viewer.offspringViewer(subPath)
 
-        val implicitTables = viewer.implicitTableNames.toSeq.map {
-          name =>
-            TableDesc(
-              absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
-              name = name,
-              objectType = "table")
-        }
-        val subProjects = viewer.sortedSegmentations.map {
-          segmentation =>
-            TableDesc(
-              absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
-              name = segmentation.segmentationName,
-              objectType = "segmentation"
-            )
-        }
-
-        GetAllTablesResponse(list = implicitTables ++ subProjects)
-      }
+    val implicitTables = viewer.implicitTableNames.toSeq.map {
+      name =>
+        TableDesc(
+          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
+          name = name,
+          objectType = "table")
     }
+    val subProjects = viewer.sortedSegmentations.map {
+      segmentation =>
+        TableDesc(
+          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+          name = segmentation.segmentationName,
+          objectType = "segmentation"
+        )
+    }
+
+    GetAllTablesResponse(list = implicitTables ++ subProjects)
   }
 
-  def getAllTablesForDir(user: serving.User, dirEntry: DirectoryEntry): GetAllTablesResponse = {
-    dirEntry.assertReadAllowedFrom(user)
-    val dir = dirEntry.asDirectory
-    val entries = dir.list
-    val (dirs, objects) = entries.partition(_.isDirectory)
-    val visibleDirs = dirs
-      .filter(_.readAllowedFrom(user))
-      .map(_.asDirectory)
-      .map {
-        obj =>
-          TableDesc(
-            absolutePath = obj.path.toString,
-            name = obj.path.name.name,
-            objectType = "directory"
-          )
-      }
-
-    val visibleObjectFrames = objects
-      .filter(_.readAllowedFrom(user))
-      .map(_.asObjectFrame)
-      .map {
-        obj =>
-          TableDesc(
-            absolutePath = obj.path.toString,
-            name = obj.path.name.name,
-            objectType = obj.objectType
-          )
-      }
-
-    GetAllTablesResponse(list = visibleDirs ++ visibleObjectFrames)
+  def isImplicitTable(frame: ObjectFrame, subPath: Seq[String]): Boolean = {
+    val (subPathWithoutLast, subPathLast) =
+      subPath.splitAt(subPath.size - 1)
+    val viewer0 = frame.viewer
+      .offspringViewer(subPathWithoutLast)
+    subPathLast.size > 0 && viewer0.implicitTableNames.exists(_ == subPathLast(0))
   }
 
   def getAllTables(user: serving.User, request: GetAllTablesRequest) = async[GetAllTablesResponse] {
-    println(s"requested path ${request.path}")
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)
-    if (!entry.isProject) {
-      assert(pathParts.length == 1)
-    }
     entry.assertReadAllowedFrom(user)
-
-    if (entry.isDirectory) {
-      getAllTablesForDir(user, entry)
+    val frame = entry.asObjectFrame
+    if (frame.isView) {
+      assert(pathParts.length == 1)
+      getViewColumns(user, frame.asViewFrame)
+    } else if (frame.isTable) {
+      assert(pathParts.length == 1)
+      getTableColumns(frame, Seq("vertices"))
+    } else if (frame.isProject) {
+      assert(pathParts.length >= 1)
+      if (isImplicitTable(frame, pathParts.tail)) {
+        getTableColumns(frame, pathParts.tail)
+      } else {
+        getProjectTables(frame, pathParts.tail)
+      }
     } else {
-      getAllTablesForObjectFrame(user, entry.asObjectFrame /*.asProjectFrame*/ , pathParts.tail)
+      ???
     }
   }
 
