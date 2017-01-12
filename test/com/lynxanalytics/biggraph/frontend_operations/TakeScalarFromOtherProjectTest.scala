@@ -52,4 +52,28 @@ class TakeScalarFromOtherProjectTest extends OperationsTestBase {
     assert(project.scalars("my_scalar").value == 42.0)
   }
 
+  test("Take scalar from segmentation") {
+    run("New vertex set", Map("size" -> "100"))
+    val otherEditor = clone(project)
+    run("Add random vertex attribute", Map(
+      "dist" -> "Standard Normal",
+      "name" -> "rnd", "seed" -> "1474343267"), on = otherEditor)
+    run("Segment by double attribute", Map(
+      "attr" -> "rnd",
+      "interval-size" -> "0.1",
+      "name" -> "seg", "overlap" -> "no"), on = otherEditor)
+    run("Derive scalar", Map(
+      "output" -> "scalar_val",
+      "type" -> "string",
+      "expr" -> "'myvalue'"), on = otherEditor.segmentation("seg"))
+    run(
+      "Take scalar from other project",
+      Map(
+        "otherProject" -> s"!checkpoint(${otherEditor.checkpoint.get},)",
+        "origName" -> "seg|scalar_val",
+        "newName" -> "my_scalar"))
+
+    assert(project.scalars("my_scalar").value == "myvalue")
+  }
+
 }
