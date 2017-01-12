@@ -1,6 +1,7 @@
 from utils.emr_lib import EMRLib
 import os
 import argparse
+import datetime
 
 arg_parser = argparse.ArgumentParser()
 
@@ -53,6 +54,17 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
+arg_parser.add_argument(
+    '--owner',
+    default=os.environ['USER'],
+    help='''The responsible person for this EMR cluster.''')
+arg_parser.add_argument(
+    '--expiry',
+    default=(
+        datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d"),
+    help='''The "expiration date" of this cluster in "YYYYmmdd" format.
+  After this date the 'owner' will be asked if the cluster can
+  be shut down.''')
 
 
 class Ecosystem:
@@ -68,6 +80,8 @@ class Ecosystem:
         'hdfs_replication': '1',
         'with_rds': args.with_rds,
         'rm': args.rm,
+        'owner': args.owner,
+        'expiry': args.expiry,
     }
     self.lynxkite_config = {
         'biggraph_releases_dir': args.biggraph_releases_dir,
@@ -91,6 +105,8 @@ class Ecosystem:
     self.cluster = lib.create_or_connect_to_emr_cluster(
         name=conf['cluster_name'],
         log_uri=conf['emr_log_uri'],
+        owner=conf['owner'],
+        expiry=conf['expiry'],
         instance_count=conf['emr_instance_count'],
         hdfs_replication=conf['hdfs_replication'])
     self.instances = [self.cluster]
