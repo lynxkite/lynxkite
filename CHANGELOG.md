@@ -9,6 +9,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
    LynxKite 1.11.0.)
  - Remote API works on PizzaKite now.
+ - Upgraded to _Apache Spark 2.1.0_.
 
 ### 1.11.0
 
