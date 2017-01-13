@@ -1,22 +1,20 @@
-#table-browser #table-list {
-  margin-left: 0px;
-  padding: 0px;
-}
-
 #table-browser {
+  height: 80vh;
   overflow-x: auto;
+  overflow-y: auto;
   margin-left: 0px;
-  padding: 0px;
-/*  user-select: none;*/
+  border: 1px solid #ccc;
+  background: white;
+  padding: 3px;
 }
 
-table-browser-entry {
-/*  user-select: auto;*/
+#table-browser li {
+  white-space: nowrap;
 }
 
 #table-browser ul {
   list-style-type: none;
-  overflow-x: hidden;
+  overflow-x: visible;
   padding-left: 20px;
 }
 
@@ -24,27 +22,7 @@ table-browser-entry {
   padding-left: 0px;
 }
 
-#table-browser li.table-entry {
-  white-space: nowrap;
-}
-
-/*
-#table-browser > ul > li > ul li {
-  color: rgb(90, 90, 90);
-}
-*/
-
-#table-browser {
-  border: 1px solid #ccc;
-  background: white;
-  padding: 3px;
-}
-
-#table-browser div.checkbox {
+#table-browser .checkbox {
   margin-top: 2px;
   margin-bottom: 2px;
-}
-
-#show-all-link {
-  cursor: pointer;
 }

@@ -3,7 +3,7 @@ sql-box #sql-box-main.size-full {
   width: 100%;
 }
 
-sql-box div#sql-box-main.size-half {
+sql-box #sql-box-main.size-half {
   width: 50%;
   float: left;
 }
@@ -13,7 +13,10 @@ sql-box table-browser {
   float: left;
 }
 
-/* Make sure there are no buttons  */
+/* This only comes into play when the window is resized to
+   a very narrow width. In that case, this tells the
+   browser to avoid breaking line between the buttons as long
+   as possible. */
 div.sql-box-button-group {
   display: inline-block;
 }
@@ -76,6 +79,3 @@ input.form-control#max-rows {
   overflow: visible;
 }
 
-#column-browser ol {
-  list-style: none;
-}
