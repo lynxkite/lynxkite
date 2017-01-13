@@ -2182,7 +2182,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Ratio("restartProbability",
         "Restart probability",
         defaultValue = "0.15"),
-      NonNegInt("maxStartPoints", "Maxinum number of starting points", default = 10),
+      NonNegInt("maxStartPoints", "Maximum number of starting points", default = 10),
       Param("vertexAttrName", "Save vertex selection as", defaultValue = ""),
       Param("edgeAttrName", "Save edge selection as", defaultValue = ""),
       Choice("automaticFilter", "Filter graph automatically", options = FEOption.bools),
@@ -2192,7 +2192,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
     override def validateParameters(values: Map[String, String]): Unit = {
       super.validateParameters(values)
-      val hasAttrNames = !values("vertexAttrName").isEmpty && !values("edgeAttrName").isEmpty
+      val hasAttrNames = values("vertexAttrName").nonEmpty && values("edgeAttrName").nonEmpty
       assert(hasAttrNames || values("automaticFilter").toBoolean,
         "Either both attribute names have to be provided or automatic filtering has to be enabled.")
     }

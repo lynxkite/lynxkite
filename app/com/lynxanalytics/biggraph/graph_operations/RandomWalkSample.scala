@@ -24,7 +24,7 @@ object RandomWalkSample extends OpFromJson {
     (j \ "seed").as[Int])
 }
 import RandomWalkSample._
-case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double, maxStartPoints: Int, seed: Int)
+case class RandomWalkSample(requestedSampleSize: Long, restartProbability: Double, maxStartPoints: Int, seed: Int)
     extends TypedMetaGraphOp[Input, Output] {
   assert(restartProbability < 1.0, "Restart probability at RandomWalkSample must be smaller than 1.0")
 
@@ -58,10 +58,12 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
     val walker = new Walker(nodes, edges, restartProbability)
 
     var actualSampleSize = 0L
-    var tries = 0
-    while (actualSampleSize < requestedSampleSize && tries < maxStartPoints) {
-      val nodesMissing = requestedSampleSize - actualSampleSize
-      val (nodeReachedIdx, edgeReachedIdx) = {
+    var numWalksPerformed = 0
+    while (actualSampleSize < requestedSampleSize && numWalksPerformed < maxStartPoints) {
+      val numNodesMissing = requestedSampleSize - actualSampleSize
+
+      // Simulate a random walk from a randomly selected start node
+      val (stepIdxWhenNodeFirstVisited, stepIdxWhenEdgeFirstTraversed) = {
         val startNode = randomNode(nodes, rnd.nextLong())
         // The run time of the sampling algorithm is proportional to the number of walk steps made without a restart
         // (we break a long walk with restarts into multiple walks without a restart and handle these non-restarting
@@ -69,25 +71,31 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
         // To avoid long run times we cheat and don't wait very long for a restart to happen but force a restart after
         // some steps. To set this artificial limit, we use two heuristics
         // 1) 10 times the expected length of a normally non-restarting walk = 10 / restartProbability
-        // 2) 3 times the number of missing nodes = 3 * nodesMissing
+        // 2) 3 times the number of missing nodes = 3 * numNodesMissing
         // where 10 and 3 are arbitrary numbers
         val maxStepsWithoutRestart =
-          Try(10 / restartProbability).getOrElse(Double.MaxValue).toLong min (3 * nodesMissing)
+          Try(10 / restartProbability).getOrElse(Double.MaxValue).toLong min (3 * numNodesMissing)
         // 3 is an arbitrary number
-        val maxRestarts = (3 * nodesMissing * restartProbability).toLong max 1L
+        val maxRestarts = (3 * numNodesMissing * restartProbability).toLong max 1L
         walker.walk(startNode, maxStepsWithoutRestart, maxRestarts, rnd)
       }
-      nodeReachedIdx.persist(StorageLevels.DISK_ONLY)
+      stepIdxWhenNodeFirstVisited.persist(StorageLevels.DISK_ONLY)
 
-      val reachIdxForNodesNotAlreadySampled = nodesInSample.filter(!_._2).sortedJoin(nodeReachedIdx).mapValues(_._2)
-      val firstIdxToDrop = nthUniqueNodeLeft(reachIdxForNodesNotAlreadySampled, n = nodesMissing)
-      val newSampleNodes = nodeReachedIdx.mapValues(_ < firstIdxToDrop)
-      val newSampleEdges = edgeReachedIdx.mapValues(_ < firstIdxToDrop)
+      // Select the prefix of the walk that contains numNodesMissing unique nodes not already sampled
+      val stepIdxForNodesNotAlreadySampled = nodesInSample.
+        filter(!_._2).
+        sortedJoin(stepIdxWhenNodeFirstVisited).
+        mapValues(_._2)
+      val firstIdxToDrop = nthUniqueNodeLeft(stepIdxForNodesNotAlreadySampled, n = numNodesMissing)
+      val newSampleNodes = stepIdxWhenNodeFirstVisited.mapValues(_ < firstIdxToDrop)
+      val newSampleEdges = stepIdxWhenEdgeFirstTraversed.mapValues(_ < firstIdxToDrop)
+
+      // Add nodes and edges to the sample
       nodesInSample = mergeSamples(nodesInSample, newSampleNodes)
       nodesInSample.persist(StorageLevels.DISK_ONLY)
       edgesInSample = mergeSamples(edgesInSample, newSampleEdges)
       actualSampleSize = nodesInSample.filter(_._2).count()
-      tries += 1
+      numWalksPerformed += 1
     }
     output(o.verticesInSample, nodesInSample.mapValues(if (_) 1.0 else 0.0))
     output(o.edgesInSample, edgesInSample.mapValues(if (_) 1.0 else 0.0))
@@ -101,50 +109,62 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
     }.sortUnique(nodes.partitioner.get)
     outEdgesPerNode.persist(StorageLevels.DISK_ONLY)
 
-    // returns an idx associated with nodes and edges which increases monotonically with the index of step when the
-    // node/edge was first reached
-    // indices of unreached nodes/edges are Long.MaxValue
+    // Assigns an index to every node and edge. The exact index of a node has no meaning, it is only useful relative to
+    // the index of another node. If idx_node1 < idx_node2 then the first visit of node1 happened before the first visit
+    // of node2 during this walk. Later visits of the node are not captured by its index. Same logic applies for edge
+    // indices. Indices of never visited nodes/edges are set to Long.MaxValue
     def walk(startNodeID: ID,
              maxStepsWithoutRestart: Long,
              maxRestarts: Long,
              rnd: Random)(implicit rc: RuntimeContext): (UniqueSortedRDD[ID, Long], UniqueSortedRDD[ID, Long]) = {
       val numWalkers = maxRestarts
-      // idxMultiplier = the first power of 10 which is bigger than maxStepsWithoutRestart
-      // => no walker steps more than idxMultiplier without restart
-      val idxMultiplier = Math.pow(10, Math.log10(maxStepsWithoutRestart).toInt + 1).toLong
+      // We simulate multiple short, non-restarting walks instead of a single, long, restarting walk. Then we
+      // concatenate the short, non-restarting walks to form a long restarting walk. Since the part of a restarting walk
+      // that follows a restart is independent from the part before the restart, our simulation is equivalent of a
+      // simulation of the long, restarting walk.
+      // MultiWalkState keeps track of at which node the ith short, non-restarting walks is and a step index that
+      // increases monotonically as the walk advances. Moreover, if 'a' and 'b' are two short, non-restarting walks and
+      // 'a' is an earlier part of the final long, restarting walk than 'b', then every step index in walk 'a' is
+      // guaranteed to be smaller than any step index in walk 'b'.
       var multiWalkState = {
+        // idxMultiplier = the first power of 10 which is bigger than maxStepsWithoutRestart
+        // => no short, non-restarting walk can be longer than idxMultiplier
+        val idxMultiplier = Math.pow(10, Math.log10(maxStepsWithoutRestart).toInt + 1).toLong
         val range = rc.sparkContext.parallelize(0L until numWalkers, nodes.partitioner.get.numPartitions)
-        range.map {
-          idx => (startNodeID, idx * idxMultiplier)
-        }
+        range.map(idx => {
+          val stepIdx = idx * idxMultiplier
+          (startNodeID, stepIdx)
+        })
       }
-      var nodeFirstReachedAt = {
-        val allUnreached = nodes.mapValues(_ => Long.MaxValue)
-        updatedReachNumbers(allUnreached, multiWalkState)
+      // stepIdxWhenNodeFirstVisited = n -> min { i | step with index i is at node n }
+      var stepIdxWhenNodeFirstVisited = {
+        val allUnvisited = nodes.mapValues(_ => Long.MaxValue)
+        minByKey(allUnvisited, multiWalkState)
       }
-      var edgeFirstUsedAt = edges.mapValues(_ => Long.MaxValue)
+      // stepIdxWhenEdgeFirstTraversed = e -> min { i | step with index i traversed edge e }
+      var stepIdxWhenEdgeFirstTraversed = edges.mapValues(_ => Long.MaxValue)
       var multiStepCnt = 0L
       while (multiStepCnt < maxStepsWithoutRestart && !multiWalkState.isEmpty()) {
-        val (nodesReachedNow, edgesUsedNow) = multiStep(multiWalkState, rnd, restartProbability)
-        nodesReachedNow.persist(StorageLevels.DISK_ONLY)
-        nodeFirstReachedAt = updatedReachNumbers(nodeFirstReachedAt, nodesReachedNow)
-        edgeFirstUsedAt = updatedReachNumbers(edgeFirstUsedAt, edgesUsedNow)
-        multiWalkState = nodesReachedNow
+        val (nodesVisitedNow, edgesTraversedNow) = multiStep(multiWalkState, rnd, restartProbability)
+        nodesVisitedNow.persist(StorageLevels.DISK_ONLY)
+        stepIdxWhenNodeFirstVisited = minByKey(stepIdxWhenNodeFirstVisited, nodesVisitedNow)
+        stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversedNow)
+        multiWalkState = nodesVisitedNow
         multiStepCnt += 1
       }
 
-      (nodeFirstReachedAt, edgeFirstUsedAt)
+      (stepIdxWhenNodeFirstVisited, stepIdxWhenEdgeFirstTraversed)
     }
 
-    private def updatedReachNumbers(oldReachNumbers: UniqueSortedRDD[ID, Long],
-                                    newReachNumbers: RDD[(ID, Long)]): UniqueSortedRDD[ID, Long] = {
-      val x = newReachNumbers.reduceBySortedKey(oldReachNumbers.partitioner.get, _ min _)
-      oldReachNumbers.sortedLeftOuterJoin(x).mapValues {
-        case (idx, None) => idx
-        case (oldIdx, Some(newIdx)) => oldIdx min newIdx
+    private def minByKey(keyValue1: UniqueSortedRDD[ID, Long],
+                         keyValue2: RDD[(ID, Long)]): UniqueSortedRDD[ID, Long] = {
+      val x = keyValue2.reduceBySortedKey(keyValue1.partitioner.get, _ min _)
+      keyValue1.sortedLeftOuterJoin(x).mapValues {
+        case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(Long.MaxValue)
       }
     }
 
+    // computes the next step for every short, non-restarting walk
     private def multiStep(multiWalkState: RDD[(ID, Long)],
                           rnd: Random,
                           restartProbability: Double): (RDD[(ID, Long)], RDD[(ID, Long)]) = {
@@ -178,8 +198,9 @@ case class RandomWalkSample(requestedSampleSize: ID, restartProbability: Double,
 
   private def randomNode(nodes: VertexSetRDD, seed: Long) = nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  private def nthUniqueNodeLeft(nodeReachedIdx: RDD[(ID, Long)], n: Long): Long = {
-    val nodesEverReached = nodeReachedIdx.filter(_._2 < Long.MaxValue)
+  // returns argmax_i( |{ node | stepIdx when node first visited < i }| <= n )
+  private def nthUniqueNodeLeft(stepIdxWhenNodeFirstVisited: RDD[(ID, Long)], n: Long): Long = {
+    val nodesEverReached = stepIdxWhenNodeFirstVisited.filter(_._2 < Long.MaxValue)
     nodesEverReached.persist(StorageLevels.DISK_ONLY)
     if (nodesEverReached.count() > n) {
       val nthNodeReached = nodesEverReached.
