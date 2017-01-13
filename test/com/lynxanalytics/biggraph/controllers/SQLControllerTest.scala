@@ -14,7 +14,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
-  /*
   test("global sql on vertices") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
     run("Example Graph", on = "Test_Dir/Test_Project")
@@ -531,13 +530,11 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       Duration.Inf)
     assert(res.data.length == 2)
   }
-*/
 
   test("list project tables") {
     createProject(name = "example1")
     createDirectory(name = "dir")
     createProject(name = "dir/example2")
-    run("Example Graph", on = "example1")
     run("Example Graph", on = "dir/example2")
     run(
       "Segment by double attribute",
@@ -547,63 +544,49 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         "interval-size" -> "0.1",
         "overlap" -> "no"),
       on = "dir/example2")
-    // List tables from root directory.
+    run(
+      "Segment by double attribute",
+      params = Map(
+        "name" -> "vertices", // This segmentation is named vertices to test extremes.
+        "attr" -> "age",
+        "interval-size" -> "0.1",
+        "overlap" -> "no"),
+      on = "dir/example2")
+
+    // List tables and segmentation of a project.
     val res1 = await(
-      sqlController.getAllTables(
-        user, GetAllTablesRequest(path = "")))
+      sqlController.getTableBrowserNodes(
+        user, TableBrowserNodeRequest(path = "dir/example2")))
     assert(List(
-      TableDesc("dir/example2|vertices", "dir/example2|vertices"),
-      TableDesc("dir/example2|edges", "dir/example2|edges"),
-      TableDesc("dir/example2|edge_attributes", "dir/example2|edge_attributes"),
-      TableDesc("dir/example2|bucketing|vertices", "dir/example2|bucketing|vertices"),
-      TableDesc("dir/example2|bucketing|belongs_to", "dir/example2|bucketing|belongs_to"),
-      TableDesc("example1|vertices", "example1|vertices"),
-      TableDesc("example1|edges", "example1|edges"),
-      TableDesc("example1|edge_attributes", "example1|edge_attributes")) == res1.list)
-
-    // List tables from the directory named "dir". Verify that
-    // the word "dir" is now omitted from table names.
-    val res2 = await(
-      sqlController.getAllTables(
-        user, GetAllTablesRequest(path = "dir")))
-    assert(List(
-      TableDesc("dir/example2|vertices", "example2|vertices"),
-      TableDesc("dir/example2|edges", "example2|edges"),
-      TableDesc("dir/example2|edge_attributes", "example2|edge_attributes"),
-      TableDesc("dir/example2|bucketing|vertices", "example2|bucketing|vertices"),
-      TableDesc("dir/example2|bucketing|belongs_to", "example2|bucketing|belongs_to")) == res2.list)
-
-    // List tables from the project "dir/example2". Verify that
-    // the word "dir/example2" is now omitted from table names.
-    val res3 = await(
-      sqlController.getAllTables(
-        user, GetAllTablesRequest(path = "dir/example2")))
-    assert(List(
-      TableDesc("dir/example2|vertices", "vertices"),
-      TableDesc("dir/example2|edges", "edges"),
-      TableDesc("dir/example2|edge_attributes", "edge_attributes"),
-      TableDesc("dir/example2|bucketing|vertices", "bucketing|vertices"),
-      TableDesc("dir/example2|bucketing|belongs_to", "bucketing|belongs_to")) == res3.list)
+      TableBrowserNode("dir/example2|vertices", "vertices", "table"),
+      TableBrowserNode("dir/example2|edges", "edges", "table"),
+      TableBrowserNode("dir/example2|edge_attributes", "edge_attributes", "table"),
+      TableBrowserNode("dir/example2|bucketing", "bucketing", "segmentation"),
+      TableBrowserNode("dir/example2|vertices", "vertices", "segmentation")) == res1.list)
   }
 
-  def checkExampleGraphColumns(req: GetColumnsRequest) = {
-    val res = await(sqlController.getColumns(user, req))
-    assert(List(
-      ColumnDesc("age"),
-      ColumnDesc("income"),
-      ColumnDesc("id"),
-      ColumnDesc("location"),
-      ColumnDesc("name"),
-      ColumnDesc("gender")).sortBy(_.name) == res.columns.sortBy(_.name))
+  def checkExampleGraphColumns(req: TableBrowserNodeRequest, idTypeOverride: String = "ID") = {
+    val res = await(sqlController.getTableBrowserNodes(user, req))
+    val expected = List(
+      TableBrowserNode("", "age", "column", "Double"),
+      TableBrowserNode("", "income", "column", "Double"),
+      TableBrowserNode("", "id", "column", idTypeOverride),
+      TableBrowserNode("", "location", "column", "(Double, Double)"),
+      TableBrowserNode("", "name", "column", "String"),
+      TableBrowserNode("", "gender", "column", "String"))
+
+    assert(expected.sortBy(_.name) == res.list.sortBy(_.name))
   }
 
-  test("list table columns") {
+  test("list project table columns") {
     run("Example Graph")
     checkExampleGraphColumns(
-      GetColumnsRequest(absolutePath = "Test_Project|vertices"))
+      TableBrowserNodeRequest(
+        path = "Test_Project|vertices",
+        isImplicitTable = true))
   }
 
-  test("list views") {
+  test("list view columns") {
     run("Example Graph")
     sqlController.createViewDFSpec(
       user,
@@ -615,19 +598,29 @@ class SQLControllerTest extends BigGraphControllerTestBase {
           directory = Some(""),
           project = None,
           sql = "SELECT * FROM `Test_Project|vertices`")))
-    // Check that view is listed among table list:
-    val tables = await(
-      sqlController.getAllTables(
-        user, GetAllTablesRequest(path = "")))
-    assert(List(
-      TableDesc("Test_Project|vertices", "Test_Project|vertices"),
-      TableDesc("Test_Project|edges", "Test_Project|edges"),
-      TableDesc("Test_Project|edge_attributes", "Test_Project|edge_attributes"),
-      TableDesc("view1|", "view1")) == tables.list)
 
     // Check that columns of view are listed:
     checkExampleGraphColumns(
-      GetColumnsRequest(absolutePath = "view1|"))
+      TableBrowserNodeRequest(path = "view1"),
+      idTypeOverride = "Long")
   }
 
+  test("list table columns") {
+    run("Example Graph")
+    await(sqlController.exportSQLQueryToTable(
+      user,
+      SQLExportToTableRequest(
+        table = "table1",
+        privacy = "public-read",
+        overwrite = false,
+        dfSpec = DataFrameSpec(
+          directory = Some(""),
+          project = None,
+          sql = "SELECT * FROM `Test_Project|vertices`"))))
+
+    // Check that columns of view are listed:
+    checkExampleGraphColumns(
+      TableBrowserNodeRequest(path = "table1"),
+      idTypeOverride = "Long")
+  }
 }

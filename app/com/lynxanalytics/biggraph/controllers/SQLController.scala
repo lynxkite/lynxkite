@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.table.TableImport
@@ -386,7 +387,7 @@ case class HiveImportRequest(
 // isImplictTable = true.
 case class TableBrowserNodeRequest(
   path: String,
-  isImplicitTable: Boolean)
+  isImplicitTable: Boolean = false)
 
 case class TableBrowserNode(
   absolutePath: String,
@@ -501,7 +502,8 @@ class SQLController(val env: BigGraphEnvironment) {
           absolutePath = "",
           name = field.name,
           objectType = "column",
-          columnType = field.dataType.typeName
+          columnType = ProjectViewer.feTypeName(
+            SQLHelper.typeTagFromDataType(field.dataType))
         )
       }
     )

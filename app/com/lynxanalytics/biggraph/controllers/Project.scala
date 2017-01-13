@@ -224,11 +224,14 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feTypeName[T](e: TypedEntity[T]): String = {
-    e.typeTag.tpe.toString
+  def feTypeName[T](typeTag: TypeTag[T]): String = {
+    typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")
   }
+
+  def feTypeName[T](e: TypedEntity[T]): String =
+    feTypeName(e.typeTag)
 
   private def feIsNumeric[T](e: TypedEntity[T]): Boolean =
     Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
