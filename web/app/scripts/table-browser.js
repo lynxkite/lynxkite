@@ -13,9 +13,29 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
     link: function(scope) {
       // The base path in which this browser is operating.
       // (Same as the path of the SQL box.)
-      var browseRootPath = scope.projectState ?
-          scope.projectState.projectName : scope.directory;
+      // var browseRootPath = scope.projectState ?
+      //    scope.projectState.projectName : scope.directory;
 
+      // Create a root node.
+      if (scope.projectState) {
+        scope.node = createNode(
+            undefined,
+            '',
+            scope.projectState.projectName,
+            'project');
+      } else {
+        scope.node = createNode(
+            undefined,
+            '',
+            scope.directory,
+            'directory');
+      }
+      // Trigger loading it's children and open it.
+      scope.node.toggle();
+
+      scope.$watch('searchQuery', function() {
+        scope.node.fetchList(scope.searchQuery);
+      });
       // Creates and returns a JS object representing a node in
       // the treeview.
       function createNode(
@@ -40,8 +60,10 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // List of children nodes.
           list: undefined,
 
-          // Get path relative to the browseRootPath.
+          // Get path relative to the path of the treenode's
+          // root node.
           getRelativePath: function() {
+            var browseRootPath = scope.node.absolutePath;
             var offset = 0;
             if (browseRootPath.length > 0) {
               offset = browseRootPath.length + 1;
@@ -77,7 +99,10 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             }
             var result = '';
             for (var i = 0; i < this.list.length; ++i) {
-              result += this.list[i].getSQLColumnName(fullyQualifyNames) + ',\n';
+              if (result !== '') {
+                result += '.\n';
+              }
+              result += this.list[i].getSQLColumnName(fullyQualifyNames);
             }
             return result;
           },
@@ -188,18 +213,6 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
 
         };
       }
-
-      // Create a root node and open it.
-      scope.node = createNode(
-          undefined,
-          '',
-          browseRootPath,
-          'directory');
-      scope.node.toggle();
-
-      scope.$watch('searchQuery', function() {
-        scope.node.fetchList(scope.searchQuery);
-      });
       
     }
   };
