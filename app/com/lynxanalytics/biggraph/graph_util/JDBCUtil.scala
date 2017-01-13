@@ -124,6 +124,15 @@ object JDBCUtil {
         s"${bounds.last} <= $k"
     }
   }
+
+  def getConnection(url: String) = {
+    try sql.DriverManager.getConnection(url)
+    catch {
+      // This is a retry. We reproducibly get "No suitable driver" on the first ever connection
+      // attempt. The cause is not fully understood yet. SPARK-19209
+      case _: sql.SQLException => sql.DriverManager.getConnection(url)
+    }
+  }
 }
 
 object KeyTypes extends Enumeration {
@@ -141,13 +150,7 @@ object TableStats {
     val query =
       s"SELECT COUNT(*) AS cnt, MIN($keyColumn) AS minKey, MAX($keyColumn) AS maxKey FROM $table"
     log.info(s"Executing query: $query")
-    val connection =
-      try sql.DriverManager.getConnection(url)
-      catch {
-        // This is a retry. We reproducibly get "No suitable driver" on the first ever connection
-        // attempt. The cause is not fully understood yet. TODO: Add JIRA link.
-        case _: sql.SQLException => sql.DriverManager.getConnection(url)
-      }
+    val connection = JDBCUtil.getConnection(url)
     try {
       val statement = connection.prepareStatement(query)
       try {
