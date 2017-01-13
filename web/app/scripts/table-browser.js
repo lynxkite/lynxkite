@@ -113,7 +113,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             var that = this;
             util
               .nocache(
-                  '/ajax/getAllTables',
+                  '/ajax/getTableBrowserNodes',
                   {
                     'path': this.absolutePath,
                     'isImplicitTable': this.objectType === 'table'
