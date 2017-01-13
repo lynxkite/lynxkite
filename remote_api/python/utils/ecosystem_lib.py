@@ -57,7 +57,8 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--s3_metadata_dir',
     help='''If it is not empty, it contains the S3 path of saved metadata,
-  which will be restored after the cluster was started.''')
+  which will be restored after the cluster was started. The metadata will not be
+  saved when the cluster is shut down.''')
 arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
@@ -152,12 +153,14 @@ class Ecosystem:
     s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
     print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
     self.cluster.ssh('''
-    set -x
-    cd /mnt/lynx
-    supervisorctl stop lynxkite
-    sudo rm -rf metadata/lynxkite/*
-    aws s3 sync {dir} metadata/lynxkite/ --quiet
-    supervisorctl start lynxkite
+      set -x
+      cd /mnt/lynx
+      supervisorctl stop lynxkite
+      if [ -d metadata/lynxkite ]; then
+        mv metadata/lynxkite metadata/lynxkite.$(date "+%Y%m%d_%H%M%S_%3N")
+      fi
+      aws s3 sync {dir} metadata/lynxkite/ --quiet
+      supervisorctl start lynxkite
     '''.format(dir=s3_metadata_dir))
     print('Metadata restored.')
 
