@@ -100,7 +100,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             var result = '';
             for (var i = 0; i < this.list.length; ++i) {
               if (result !== '') {
-                result += '.\n';
+                result += ',\n';
               }
               result += this.list[i].getSQLColumnName(fullyQualifyNames);
             }
@@ -114,7 +114,10 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             util
               .nocache(
                   '/ajax/getAllTables',
-                  { 'path': this.absolutePath })
+                  {
+                    'path': this.absolutePath,
+                    'isImplicitTable': this.objectType === 'table'
+                  })
               .then(function(result) {
                   var srcList = result.list || [];
                   that.list = [];

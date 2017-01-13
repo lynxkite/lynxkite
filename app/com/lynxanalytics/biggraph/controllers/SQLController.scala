@@ -379,11 +379,17 @@ case class HiveImportRequest(
   def notes = s"Imported from Hive table ${hiveTable}."
 }
 
+// path denotes a directory entry (table/view/project/directory), or a
+// a segmentation or an implicit project table. Segmentations and implicit
+// project tables have the same form of path but occupy separate namespaces.
+// Therefore implict tables can only be accessed by specifying
+// isImplictTable = true.
 case class TableBrowserNodeRequest(
-  path: String)
+  path: String,
+  isImplicitTable: Boolean)
 
 case class TableBrowserNode(
-  absolutePath: String, // TODO: bring down type to handle things like a segmentation called 'vertices'
+  absolutePath: String,
   name: String,
   objectType: String,
   columnType: String = "")
@@ -459,28 +465,20 @@ class SQLController(val env: BigGraphEnvironment) {
     TableBrowserNodeResponse(list = implicitTables ++ subProjects)
   }
 
-  def isImplicitTable(frame: ObjectFrame, subPath: Seq[String]): Boolean = {
-    val (subPathWithoutLast, subPathLast) =
-      subPath.splitAt(subPath.size - 1)
-    val viewer0 = frame.viewer
-      .offspringViewer(subPathWithoutLast)
-    subPathLast.size > 0 && viewer0.implicitTableNames.exists(_ == subPathLast(0))
-  }
-
   def getAllTables(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)
     entry.assertReadAllowedFrom(user)
     val frame = entry.asObjectFrame
     if (frame.isView) {
-      assert(pathParts.length == 1)
+      assert(pathParts.length == 1 && request.isImplicitTable == false)
       getViewColumns(user, frame.asViewFrame)
     } else if (frame.isTable) {
-      assert(pathParts.length == 1)
+      assert(pathParts.length == 1 && request.isImplicitTable == false)
       getTableColumns(frame, Seq("vertices"))
     } else if (frame.isProject) {
       assert(pathParts.length >= 1)
-      if (isImplicitTable(frame, pathParts.tail)) {
+      if (request.isImplicitTable) {
         getTableColumns(frame, pathParts.tail)
       } else {
         getProjectTables(frame, pathParts.tail)
