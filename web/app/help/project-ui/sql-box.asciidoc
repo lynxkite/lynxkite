@@ -49,6 +49,10 @@ browser's local storage thus preserving them between different tabs, windows, an
 You can navigate in the query history by pressing Ctrl+Up and Ctrl+Down
 (Command+Up and Command+Down on Mac) in the text area of the SQL interface.
 
+You can browse the list of available tables and columns by clicking on the
++++<label class="btn btn-primary">Tables ⏵</label>+++
+button.
+
 ## Exporting data
 
 The <<sql-box>> is the way to export data from LynxKite to files and databases.
