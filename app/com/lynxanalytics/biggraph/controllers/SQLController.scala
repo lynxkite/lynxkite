@@ -379,17 +379,15 @@ case class HiveImportRequest(
   def notes = s"Imported from Hive table ${hiveTable}."
 }
 
-case class GetAllTablesRequest(path: String)
-case class ColumnDesc(name: String)
-case class TableDesc(
-  absolutePath: String,  // TODO: bring down type to handle things like a segmentation called 'vertices'
+case class TableBrowserNodeRequest(
+  path: String)
+
+case class TableBrowserNode(
+  absolutePath: String, // TODO: bring down type to handle things like a segmentation called 'vertices'
   name: String,
   objectType: String,
   columnType: String = "")
-case class GetAllTablesResponse(list: Seq[TableDesc])
-
-case class GetColumnsRequest(absolutePath: String)
-case class GetColumnsResponse(columns: Seq[ColumnDesc])
+case class TableBrowserNodeResponse(list: Seq[TableBrowserNode])
 
 object HiveImportRequest extends FromJson[HiveImportRequest] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
@@ -439,27 +437,26 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
-  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): GetAllTablesResponse = {
-    print(s"getProjectTqables pth= $subPath")
+  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
     val viewer = frame.viewer.offspringViewer(subPath)
 
     val implicitTables = viewer.implicitTableNames.toSeq.map {
       name =>
-        TableDesc(
+        TableBrowserNode(
           absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
           name = name,
           objectType = "table")
     }
     val subProjects = viewer.sortedSegmentations.map {
       segmentation =>
-        TableDesc(
+        TableBrowserNode(
           absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )
     }
 
-    GetAllTablesResponse(list = implicitTables ++ subProjects)
+    TableBrowserNodeResponse(list = implicitTables ++ subProjects)
   }
 
   def isImplicitTable(frame: ObjectFrame, subPath: Seq[String]): Boolean = {
@@ -470,7 +467,7 @@ class SQLController(val env: BigGraphEnvironment) {
     subPathLast.size > 0 && viewer0.implicitTableNames.exists(_ == subPathLast(0))
   }
 
-  def getAllTables(user: serving.User, request: GetAllTablesRequest) = async[GetAllTablesResponse] {
+  def getAllTables(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)
     entry.assertReadAllowedFrom(user)
@@ -493,12 +490,12 @@ class SQLController(val env: BigGraphEnvironment) {
     }
   }
 
-  def getViewColumns(user: serving.User, frame: ViewFrame): GetAllTablesResponse = {
+  def getViewColumns(user: serving.User, frame: ViewFrame): TableBrowserNodeResponse = {
     val viewRecipe = frame.getRecipe
     val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
-    GetAllTablesResponse(
+    TableBrowserNodeResponse(
       list = df.schema.fields.map { field =>
-        TableDesc(
+        TableBrowserNode(
           absolutePath = "",
           name = field.name,
           objectType = "column",
@@ -508,14 +505,14 @@ class SQLController(val env: BigGraphEnvironment) {
     )
   }
 
-  def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): GetAllTablesResponse = {
+  def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): TableBrowserNodeResponse = {
     val viewer = frame.viewer
     val table = Table(AbsoluteTablePath(tablePath), viewer)
 
-    GetAllTablesResponse(
+    TableBrowserNodeResponse(
       list = table.columns.toIterator.map {
         case (name, attr) =>
-          TableDesc(
+          TableBrowserNode(
             absolutePath = "",
             name = name,
             objectType = "column",
