@@ -110,10 +110,21 @@ The service role. The default service role works fine, unless the cluster is in 
 EMR_SERVICE_ROLE=EMR_DefaultRole
 ```
 
-The cluster name is added as a tag to the emr cluster. Additional tags can also be specified:
+The person responsible for the cluster.
 ```
-# EMR_TAGS=( Name=${CLUSTER_NAME} Department='My Department' Project='My project' Team='My Team' )
-EMR_TAGS=( Name=${CLUSTER_NAME} )
+EMR_OWNER=${EMR_OWNER:-$USER}
+```
+
+The expected expiry date for the cluster. in YYYYMMDD format. It defaults to the next day.
+```
+EXPIRY=`date --date="tomorrow"  +"%Y%m%d"`
+```
+
+The cluster name, it's owner, and the expiry date is added as a tag to
+the emr cluster. Additional tags can also be specified:
+EMR_TAGS=( Name=${CLUSTER_NAME} owner=${EMR_OWNER} expiry=${EXPIRY} Department='My Department' Project='My project')
+```
+EMR_TAGS=( Name=${CLUSTER_NAME} owner=${EMR_OWNER} expiry=${EXPIRY})
 ```
 
 By default, emr.sh installs Spark by downloading an official version from cloudfront.net
