@@ -413,7 +413,7 @@ object ProductionJsonServer extends JsonServer {
   def workflow = jsonGet(bigGraphController.workflow)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
-  def getAllTables = jsonFuture(sqlController.getAllTables)
+  def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)

@@ -443,29 +443,11 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
-  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
-    val viewer = frame.viewer.offspringViewer(subPath)
-
-    val implicitTables = viewer.implicitTableNames.toSeq.map {
-      name =>
-        TableBrowserNode(
-          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
-          name = name,
-          objectType = "table")
-    }
-    val subProjects = viewer.sortedSegmentations.map {
-      segmentation =>
-        TableBrowserNode(
-          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
-          name = segmentation.segmentationName,
-          objectType = "segmentation"
-        )
-    }
-
-    TableBrowserNodeResponse(list = implicitTables ++ subProjects)
-  }
-
-  def getAllTables(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
+  // Return list of nodes for the table browser. The nodes can be:
+  // - segmentations and implicit tables in a project
+  // - columns in a view
+  // - columns in a table
+  def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)
     entry.assertReadAllowedFrom(user)
@@ -486,6 +468,28 @@ class SQLController(val env: BigGraphEnvironment) {
     } else {
       ???
     }
+  }
+
+  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
+    val viewer = frame.viewer.offspringViewer(subPath)
+
+    val implicitTables = viewer.implicitTableNames.toSeq.map {
+      name =>
+        TableBrowserNode(
+          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
+          name = name,
+          objectType = "table")
+    }
+    val subProjects = viewer.sortedSegmentations.map {
+      segmentation =>
+        TableBrowserNode(
+          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+          name = segmentation.segmentationName,
+          objectType = "segmentation"
+        )
+    }
+
+    TableBrowserNodeResponse(list = implicitTables ++ subProjects)
   }
 
   def getViewColumns(user: serving.User, frame: ViewFrame): TableBrowserNodeResponse = {
