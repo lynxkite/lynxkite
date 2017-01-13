@@ -454,10 +454,10 @@ class SQLController(val env: BigGraphEnvironment) {
     entry.assertReadAllowedFrom(user)
     val frame = entry.asObjectFrame
     if (frame.isView) {
-      assert(pathParts.length == 1 && request.isImplicitTable == false)
+      assert(pathParts.length == 1)
       getViewColumns(user, frame.asViewFrame)
     } else if (frame.isTable) {
-      assert(pathParts.length == 1 && request.isImplicitTable == false)
+      assert(pathParts.length == 1)
       getTableColumns(frame, Seq("vertices"))
     } else if (frame.isProject) {
       assert(pathParts.length >= 1)

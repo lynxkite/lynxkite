@@ -7,10 +7,12 @@ loading
 </li>
 
 <li ng-if="(node.list !== undefined) && (node.objectType === 'view' || node.objectType === 'table')">
-  <table-browser-entry
-      text="'*ALL*'"
-      draggable-text="node.allColumnsSQL(fullyQualifyNames)">
-  </table-browser-entry>
+  <span>
+    <table-browser-entry
+        text="'*ALL*'"
+        draggable-text="node.allColumnsSQL(fullyQualifyNames)">
+    </table-browser-entry>
+  </span>
 </li>
 <li ng-repeat="node in node.list">
   <span ng-click="node.toggle()">
