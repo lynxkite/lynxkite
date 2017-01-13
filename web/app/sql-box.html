@@ -8,7 +8,6 @@
 after sql-box.js is executed, and the function scope.onLoad is defined.
 The ng-if creates a new scope, so we need ng-model="$parent.sql"
 instead of ng-model="sql" -->
-
 <div ng-if="onLoad"
   ui-ace="{
     mode: 'sql',
@@ -19,7 +18,6 @@ instead of ng-model="sql" -->
   }"
   id="sql-editor"
   ng-model="$parent.sql"></div>
-
 <div>
   <span class="ng-binding" ng-hide="renaming">number of rows</span>
   <input class="form-control ng-pristine ng-valid ng-touched"

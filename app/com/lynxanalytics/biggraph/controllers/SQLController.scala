@@ -445,9 +445,9 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   // Return list of nodes for the table browser. The nodes can be:
-  // - segmentations and implicit tables in a project
-  // - columns in a view
-  // - columns in a table
+  // - segmentations and implicit tables of a project
+  // - columns of a view
+  // - columns of a table
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
     val pathParts = request.path.split("\\|")
     val entry = DirectoryEntry.fromName(pathParts.head)

@@ -11,12 +11,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
     },
     templateUrl: 'table-browser.html',
     link: function(scope) {
-      // The base path in which this browser is operating.
-      // (Same as the path of the SQL box.)
-      // var browseRootPath = scope.projectState ?
-      //    scope.projectState.projectName : scope.directory;
-
-      // Create a root node.
+      // Create a root node. Its path is the base path in which this
+      // browser is operating. (Same as the path of the SQL box.)
       if (scope.projectState) {
         scope.node = createNode(
             undefined,
