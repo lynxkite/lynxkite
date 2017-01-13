@@ -135,7 +135,7 @@ function Side(direction) {
   this.side = element(by.id('side-' + direction));
   this.toolbox = element(by.id('operation-toolbox-' + direction));
   this.history = new History(this);
-  this.tableBrowser = new TableBrowser(this);
+  this.tableBrowser = new TableBrowser(this.side);
 }
 
 Side.prototype = {
@@ -347,27 +347,36 @@ Side.prototype = {
   segmentation: function(name) { return new Entity(this.side, 'segmentation', name); },
 };
 
-function TableBrowser(side) {
-  this.side = side.side;
+function TableBrowser(root) {
+  this.root = root;
 }
 
 TableBrowser.prototype = {
   toggle: function() {
-    this.side.element(by.id('toggle-table-browser')).click();
+    this.root.element(by.id('toggle-table-browser')).click();
   },
 
-  getTable: function(pos) {
-    // pos + 1 is used to skip the search box
-    return this.side.$$('ul#table-list > li ').get(pos + 1);
+  getNode: function(posList) {
+    var pos = posList[0];
+    var node = this.root.$$('#table-browser > ul > li').get(pos);
+    for (var i = 1; i < posList.length; ++i) {
+      pos = posList[i];
+      node = node.$$(node.locator().value + ' > ul > li').get(pos);
+    }
+    return node;
   },
 
-  expectTable: function(pos, name) {
-    var li = this.getTable(pos);
-    expect(li.getText()).toBe(name);
+  expectNode: function(posList, expectedName, expectedDragText) {
+    var li = this.getNode(posList);
+    expect(li.getText()).toBe(expectedName);
+    if (expectedDragText) {
+      this.expectDragText(li, expectedDragText);
+    }
   },
 
-  toggleTable: function(pos) {
-    this.getTable(pos).click();
+  toggleNode: function(posList) {
+    var li = this.getNode(posList);
+    li.$(li.locator().value + ' > span').click();
   },
 
   getColumn: function(tablePos, columnPos) {
@@ -381,24 +390,27 @@ TableBrowser.prototype = {
   },
 
   searchTable: function(searchText) {
-    var searchBox = this.side.$('#search-for-tables');
+    var searchBox = this.root.$('#search-for-tables');
     searchBox.sendKeys(searchText);
   },
 
-  expectTableDragText: function(pos, expected) {
-    var span = this.getTable(pos)
-        .$('table-browser-entry.table-entry > span');
-    expect(span.evaluate('draggableText')).toBe(expected);
-  },
-
-  expectColumnDragText: function(tablePos, columnPos, expected) {
-    var span = this.getColumn(tablePos, columnPos)
-        .$('table-browser-entry.column-entry > span');
+  expectDragText: function(li, expected) {
+    // We cannot do a real drang-and-drop workflow here
+    // because of:
+    // https://github.com/angular/protractor/issues/583
+    // Just doing a simple check for now.
+    var span = li.$(li.locator().value +
+        ' > span > table-browser-entry > span');
     expect(span.evaluate('draggableText')).toBe(expected);
   },
 
   toggleFullyQualify: function() {
-    this.side.$('#use-fully-qualified-names').click();
+    this.root.$('#use-fully-qualified-names').click();
+  },
+
+  enterSearchQuery: function(query) {
+    element(by.id('table-browser-search-box'))
+        .sendKeys(testLib.selectAllKey + query);
   },
 
 };
@@ -637,6 +649,7 @@ var visualization = {
 
 function Selector(root) {
   this.root = root;
+  this.tableBrowser = new TableBrowser(this.root);
 }
 
 Selector.prototype = {
@@ -826,8 +839,12 @@ Selector.prototype = {
     testLib.sendKeysToACE(this.globalSqlEditor(), sql);
   },
 
-  runGlobalSql: function(sql) {
+  openGlobalSqlBox: function() {
     element(by.id('global-sql-box')).click();
+  },
+
+  runGlobalSql: function(sql) {
+    this.openGlobalSqlBox();
     this.setGlobalSql(sql);
     element(by.id('run-sql-button')).click();
   },
