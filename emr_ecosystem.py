@@ -43,6 +43,8 @@ def main(args):
   ecosystem = Ecosystem(args)
   ecosystem.launch_cluster()
   ecosystem.start()
+  if args.s3_metadata_dir:
+    ecosystem.restore_metadata()
   print('''Please don't forget to terminate the instances!''')
 
 
