@@ -229,6 +229,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   abstract class MachineLearningOperation(t: String, c: Context)
     extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "knight"))
 
+  def getAndCheckProjectCheckpoint(readableProjectCheckpoint: String) = {
+    val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
+      readableProjectCheckpoint,
+      customError =
+        s"Obsolete project reference: $readableProjectCheckpoint. Please select a new project from the dropdown.")
+    assert(suffix == "", s"Invalid project reference $readableProjectCheckpoint with suffix $suffix")
+    (cp, title, suffix)
+  }
+
   import OperationParams._
 
   register("Discard vertices", new StructureOperation(_, _) {
@@ -2590,11 +2599,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val themId = params("them")
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
-        themId,
-        customError =
-          s"Obsolete project reference: $themId. Please select a new project from the dropdown.")
-      assert(suffix == "", s"Invalid project reference $themId with suffix $suffix")
+      val (cp, title, _) = getAndCheckProjectCheckpoint(themId)
       val baseName = SymbolPath.parse(title).last.name
       val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(them.vertexSet != null, s"No vertex set in $them")
@@ -2734,35 +2739,30 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
     })
 
-  register("Take scalar from other project", new StructureOperation(_, _) {
+  register("Copy scalar from other project", new StructureOperation(_, _) {
     def parameters = List(
       Choice(
-        "otherProject",
+        "sourceProject",
         "Other project's name",
         options = readableProjectCheckpoints,
         allowUnknownOption = true),
-      Param("origName", "Name of the scalar in the other project"),
-      Param("newName", "Name for the scalar in this project"))
+      Param("sourceScalarName", "Name of the scalar in the other project"),
+      Param("destScalarName", "Name for the scalar in this project"))
 
     def apply(params: Map[String, String]): Unit = {
       // parsing scalar path "seg1|seg2|...|segn|scalar"
-      val origPath = params("origName")
+      val origPath = params("sourceScalarName")
       val pathAndName = origPath.split('|')
       val path = pathAndName.dropRight(1) // list of segmentation names
       val origName = pathAndName.last // name of the original scalar
-      val newName = params("newName")
+      val newName = params("destScalarName")
       val scalarName = if (newName.isEmpty) origName else newName
-      val otherProject = params("otherProject")
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
-        otherProject,
-        customError =
-          s"Obsolete project reference: $otherProject. Please select a new project from the dropdown.")
-      // checking parameters
-      assert(suffix == "", s"Invalid project reference $otherProject with suffix $suffix")
+      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
+      val sourceProject = params("sourceProject")
+      val (cp, title, _) = getAndCheckProjectCheckpoint(sourceProject)
       val otherViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       val other = otherViewer.offspringViewer(path)
       assert(other.scalarNames.contains(origName), s"No '$origPath' in project '$title'.")
-      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
       // copying scalar
       project.scalars(scalarName) = other.scalars(origName)
     }
@@ -2799,11 +2799,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]): Unit = {
       val otherId = params("other")
-      val (cp, _, suffix) = FEOption.unpackTitledCheckpoint(
-        otherId,
-        customError =
-          s"Obsolete project reference: $otherId. Please select a new project from the dropdown.")
-      assert(suffix == "", s"Invalid project reference $otherId with suffix $suffix")
+      val (cp, _, _) = getAndCheckProjectCheckpoint(otherId)
       val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       if (other.vertexSet == null) {
         // Nothing to do
