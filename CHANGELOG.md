@@ -7,7 +7,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Remote API works on PizzaKite now.
- - Added a table and column explorer to the SQL box.
+ - Added a table and column explorer to the SQL box. Click on the "Tables" button in the SQL
+   box to give it a try!
  - Upgraded to _Apache Spark 2.1.0_.
 
 ### 1.11.0
