@@ -255,7 +255,7 @@ EOF
 # Add S3 support.
 AWS_CLASSPATH1=\$(find /usr/share/aws/emr/emrfs/lib -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH2=\$(find /usr/share/aws/aws-java-sdk -name "*.jar" | tr '\n' ':')
-AWS_CLASSPATH3=\$(find /usr/share/aws/emr/emr-metrics/lib -name "*.jar" | tr '\n' ':')
+AWS_CLASSPATH3=\$(find /usr/share/aws/emr/instance-controller/lib -name "*.jar" | tr '\n' ':')
 AWS_CLASSPATH_ALL=\$AWS_CLASSPATH1\$AWS_CLASSPATH2\$AWS_CLASSPATH3
 export SPARK_DIST_CLASSPATH=\$SPARK_DIST_CLASSPATH:\${AWS_CLASSPATH_ALL::-1}
 
@@ -270,6 +270,7 @@ EOF
 S3="s3://"
 EOF
 
+  DeployKite
   # Spark version to use for this cluster.
   SPARK_VERSION=$(cat ${KITE_BASE}/conf/SPARK_VERSION)
 
@@ -282,10 +283,7 @@ EOF
       hadoop@${MASTER_HOSTNAME}:spark-${SPARK_VERSION}
   else
     # Download and unpack Spark on the master.
-    SPARK_NAME="spark-${SPARK_VERSION}-bin-hadoop2.6"
-    aws emr ssh ${MASTER_ACCESS} --command "rm -Rf spark-* && \
-      curl -O http://d3kbcqa49mib13.cloudfront.net/${SPARK_NAME}.tgz && \
-      tar xf ${SPARK_NAME}.tgz && ln -s ${SPARK_NAME} spark-${SPARK_VERSION}"
+    ExecuteOnMaster ./biggraphstage/tools/install_spark.sh
   fi
 
   # Copy config files to the master.
@@ -301,7 +299,6 @@ EOF
     /home/hadoop/spark-${SPARK_VERSION}/sbin/start-history-server.sh  ${EVENTLOG_DIR}; \
     true"
 
-  DeployKite
   RestartMonitoring
   ;;
 
