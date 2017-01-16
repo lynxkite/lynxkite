@@ -161,6 +161,8 @@ include::copy-graph-into-a-segmentation.asciidoc[]
 
 include::copy-scalar.asciidoc[]
 
+include::copy-scalar-from-other-project.asciidoc[]
+
 include::copy-segmentation.asciidoc[]
 
 include::copy-vertex-attribute.asciidoc[]
@@ -330,8 +332,6 @@ include::split-edges.asciidoc[]
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
-
-include::take-scalar-from-other-project.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 
