@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Remote API works on PizzaKite now.
  - Upgraded to _Apache Spark 2.1.0_.
+ - Added _Find Region_ operation for finding locations inside shapefiles.
 
 ### 1.11.0
 
