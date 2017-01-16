@@ -3440,6 +3440,23 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
     })
 
+  register("Lookup region", new VertexAttributesOperation(_, _) {
+    override def parameters = List(
+      Choice("latitude", "Latitude", options = vertexAttributes[Double]),
+      Choice("longitude", "Longitude", options = vertexAttributes[Double]),
+      Param("shapefile", "Shapefile"),
+      Param("attribute", "Attribute in the shapefile"),
+      Param("output", "Output name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val latitude = project.vertexAttributes(params("latitude")).runtimeSafeCast[Double]
+      val longitude = project.vertexAttributes(params("longitude")).runtimeSafeCast[Double]
+      val op = graph_operations.LookupRegion(params("shapefile"), params("attribute"))
+      val result = op(op.latitude, latitude)(op.longitude, longitude).result
+      project.newVertexAttribute(params("output"), result.region)
+    }
+  })
+
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, segmentation.belongsTo.reverse).result.outDegree
