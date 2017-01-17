@@ -3490,9 +3490,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
 
     import java.io.File
-    def listShapefiles(): List[FEOption] = {
-      val shapeDir = LoggedEnvironment.envOrElse("KITE_SHAPEFILE_DIR",
-        System.getProperty("user.home") + "/kite_meta/resources/shapefiles/")
+    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    private val shapeDir = LoggedEnvironment.envOrElse("KITE_SHAPEFILE_DIR",
+      s"$metaDir/resources/shapefiles/")
+
+    private def listShapefiles(): List[FEOption] = {
       def lsR(f: File): Array[File] = {
         val files = f.listFiles()
         if (files == null)
