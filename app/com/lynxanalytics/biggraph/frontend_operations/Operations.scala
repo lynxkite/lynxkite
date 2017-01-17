@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
@@ -3476,7 +3477,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     override def parameters = List(
       Choice("latitude", "Latitude", options = vertexAttributes[Double]),
       Choice("longitude", "Longitude", options = vertexAttributes[Double]),
-      Param("shapefile", "Shapefile"),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute in the shapefile"),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
@@ -3486,6 +3487,18 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val op = graph_operations.LookupRegion(params("shapefile"), params("attribute"))
       val result = op(op.latitude, latitude)(op.longitude, longitude).result
       project.newVertexAttribute(params("output"), result.region)
+    }
+
+    import java.io.File
+    def listShapefiles(): List[FEOption] = {
+      val shapeDir = LoggedEnvironment.envOrElse("KITE_SHAPEFILE_DIR",
+        System.getProperty("user.home") + "/kite_meta/resources/shapefiles/")
+      def lsR(f: File): Array[File] = {
+        val files = f.listFiles()
+        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+      }
+      lsR(new File(shapeDir)).toList.map(f =>
+        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
     }
   })
 
