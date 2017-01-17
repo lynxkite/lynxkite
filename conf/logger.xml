@@ -1,5 +1,8 @@
 <configuration>
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
 
+  <!-- This stops a debug message that runs very often, for details see 
+       https://github.com/janino-compiler/janino/issues/13 -->
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -35,6 +38,7 @@
      </encoder>
    </appender>
 
+  <logger name="org.codehaus.janino" level="WARN"/>
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
   <logger name="org.apache.spark" level="INFO" />
