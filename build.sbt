@@ -64,8 +64,8 @@ libraryDependencies ++= Seq(
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.11.8",
   // Fast linear algebra.
-  "org.scalanlp" %% "breeze" % "0.11.2",
-  "org.scalanlp" %% "breeze-natives" % "0.11.2",
+  "org.scalanlp" %% "breeze" % "0.12",
+  "org.scalanlp" %% "breeze-natives" % "0.12",
   "com.google.guava" % "guava" % "15.0",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
