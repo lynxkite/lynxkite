@@ -84,6 +84,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   test("sql export to database") {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Example Graph")
+    val connection = graph_util.JDBCUtil.getConnection(url)
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
       DataFrameSpec.local(
         project = projectName,
@@ -91,7 +92,6 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       jdbcUrl = url,
       table = "export_test",
       mode = "error")))
-    val connection = java.sql.DriverManager.getConnection(url)
     val statement = connection.createStatement()
     val results = {
       val rs = statement.executeQuery("select * from export_test;")
