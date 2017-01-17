@@ -23,6 +23,6 @@ class LookupRegionTest extends OperationsTestBase {
       "latitude" -> "lat", "longitude" -> "lon", "output" -> "timezone",
       "attribute" -> "TZID", "shapefile" -> shapefile.getPath), seg)
     assert(seg.vertexAttributes("timezone").rdd.values.collect().toSet ==
-      Set(("America/New_York"), ("Europe/Budapest"), ("Asia/Jakarta"), ("uninhabited")))
+      Set("America/New_York", "Europe/Budapest", "Asia/Jakarta", "uninhabited"))
   }
 }
