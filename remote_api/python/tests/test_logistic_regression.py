@@ -26,7 +26,7 @@ class TestLogisticRegression(unittest.TestCase):
         'name': 'test'})
     # No assert, we only want to see if it runs without error.
     # This test try to catch an error caused by wrong breeze version.
-    self.assertTrue(not p.is_computed())
+    self.assertFalse(p.is_computed())
     p.compute()
 
 
