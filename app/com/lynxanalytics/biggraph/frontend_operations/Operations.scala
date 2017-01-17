@@ -3495,6 +3495,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         System.getProperty("user.home") + "/kite_meta/resources/shapefiles/")
       def lsR(f: File): Array[File] = {
         val files = f.listFiles()
+        if (files == null)
+          return Array.empty
         files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
       }
       lsR(new File(shapeDir)).toList.map(f =>
