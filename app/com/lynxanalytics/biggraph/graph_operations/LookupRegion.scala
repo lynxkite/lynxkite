@@ -44,13 +44,13 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
     implicit val ds = inputDatas
 
     val coordinates = inputs.latitude.rdd.sortedJoin(inputs.longitude.rdd)
-    val finder = FileDataStoreFinder.getDataStore(new File(shapefile))
-    val x = (for (feature <- finder.getFeatureSource.getFeatures().features())
+    val dataStore = FileDataStoreFinder.getDataStore(new File(shapefile))
+    val regions = (for (feature <- dataStore.getFeatureSource.getFeatures().features())
       yield (feature.getDefaultGeometryProperty.getBounds,
       feature.getAttribute(attribute).asInstanceOf[String])).toVector
-
+    dataStore.dispose()
     output(o.region, coordinates.flatMapValues {
-      case (lat, lon) => x.find(f => f._1.contains(lon, lat)).map(f => f._2)
+      case (lat, lon) => regions.find(f => f._1.contains(lon, lat)).map(f => f._2)
     })
   }
 }
