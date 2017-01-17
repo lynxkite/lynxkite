@@ -1,4 +1,5 @@
 <configuration>
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
 
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
@@ -35,6 +36,7 @@
      </encoder>
    </appender>
 
+  <logger name="org.codehaus.janino" level="WARN"/>
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
   <logger name="org.apache.spark" level="INFO" />
