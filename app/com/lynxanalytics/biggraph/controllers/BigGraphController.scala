@@ -183,7 +183,8 @@ case class ProjectRequest(name: String)
 case class ProjectListRequest(path: String)
 case class ProjectSearchRequest(
   basePath: String, // We only search for projects/directories contained (recursively) in this.
-  query: String)
+  query: String,
+  includeNotes: Boolean)
 case class ProjectList(
   path: String,
   readACL: String,
@@ -310,7 +311,11 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       .filter { project =>
         val baseName = project.path.last.name
         val notes = project.viewer.state.notes
-        terms.forall(term => baseName.toLowerCase.contains(term) || notes.toLowerCase.contains(term))
+        terms.forall {
+          term =>
+            baseName.toLowerCase.contains(term) ||
+              (request.includeNotes && notes.toLowerCase.contains(term))
+        }
       }
 
     ProjectList(

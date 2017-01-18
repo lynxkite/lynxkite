@@ -140,7 +140,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                 '/ajax/projectSearch',
                 {
                   'basePath': this.absolutePath,
-                  'query': query
+                  'query': query,
+                  'includeNotes': false,
                 });
             } else {
               promise = util.nocache(

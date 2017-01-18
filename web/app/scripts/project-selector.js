@@ -58,6 +58,7 @@ angular.module('biggraph').directive('projectSelector',
             {
               basePath: scope.path,
               query: scope.searchQuery,
+              includeNotes: true,
             });
         }
         window.sessionStorage.setItem('last_selector_path', scope.path);
