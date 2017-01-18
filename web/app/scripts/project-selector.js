@@ -149,8 +149,29 @@ angular.module('biggraph').directive('projectSelector',
         }
       };
 
+      scope.objectClick = function(event, o) {
+        if (scope.isProject(o)) { scope.projectClick(event, o); }
+        if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
+        return;
+      };
+
+      scope.tableClick = function(event, t) {
+        // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
+        if (event.originalEvent.alreadyHandled) { return; }
+        // Ignore clicks on errored tables.
+        if (t.error) { return; }
+        scope.showSQL = true;
+        $anchorScroll('global-sql-box');
+        $timeout(
+          function() {
+            scope.$broadcast('fill sql-box by clicking on table or view', t.name);
+            element.find('#run-sql-button')[0].click();
+          },
+          0,
+          false); // Do not invoke apply as we don't change the scope.
+      };
+
       scope.projectClick = function(event, p) {
-        if (!scope.isProject(p)) { return; }
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
