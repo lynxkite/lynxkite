@@ -84,15 +84,15 @@ case class RandomWalkSample(requestedSampleSize: Long, restartProbability: Doubl
       }
       stepIdxWhenNodeFirstVisited.persist(StorageLevels.DISK_ONLY)
 
-      // Select the prefix of the walk that contains numNodesMissing unique nodes not already
-      // sampled
+      // Since the generated walk can visit more than numNodesMissing unique, not already sampled
+      // nodes, we compute an index i for which
+      // |{ node | node not already sampled; idx_node < i }| = numNodesMissing
+      // and add these nodes to the sample. Effectively, we add a sufficiently long prefix of the
+      // walk to the sample.
       val stepIdxForNodesNotAlreadySampled = nodesInSample.
         filter(!_._2).
         sortedJoin(stepIdxWhenNodeFirstVisited).
         mapValues(_._2)
-      // firstIdxToDrop = armax_i(
-      // |{ node | node in stepIdxForNodesNotAlreadySampled and node_idx < i}| <= numNodesMissing
-      // )
       val firstIdxToDrop = nthUniqueNodeLeft(stepIdxForNodesNotAlreadySampled, n = numNodesMissing)
       val newSampleNodes = stepIdxWhenNodeFirstVisited.mapValues(_ < firstIdxToDrop)
       val newSampleEdges = stepIdxWhenEdgeFirstTraversed.mapValues(_ < firstIdxToDrop)
