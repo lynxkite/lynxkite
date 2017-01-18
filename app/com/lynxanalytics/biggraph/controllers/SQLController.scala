@@ -384,7 +384,8 @@ case class HiveImportRequest(
 // a segmentation or an implicit project table. Segmentations and implicit
 // project tables have the same form of path but occupy separate namespaces.
 // Therefore implict tables can only be accessed by specifying
-// isImplictTable = true.
+// isImplictTable = true. (Implicit tables are the vertices, edge_attributes,
+// and etc. tables that are automatically parts of projects.)
 case class TableBrowserNodeRequest(
   path: String,
   isImplicitTable: Boolean = false)
@@ -449,7 +450,7 @@ class SQLController(val env: BigGraphEnvironment) {
   // - columns of a view
   // - columns of a table
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
-    val pathParts = request.path.split("\\|")
+    val pathParts = SubProject.splitPipedPath(request.path)
     val entry = DirectoryEntry.fromName(pathParts.head)
     entry.assertReadAllowedFrom(user)
     val frame = entry.asObjectFrame
