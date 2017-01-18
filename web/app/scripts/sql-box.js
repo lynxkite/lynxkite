@@ -302,7 +302,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       });
 
       scope.$on('fill sql-box by clicking on table or view', function(event, tableName) {
-        scope.sql = `describe \`${tableName}\``;
+        scope.sql = 'describe `' + tableName + '`';
         scope.maxRows = 1000000;
       });
 
