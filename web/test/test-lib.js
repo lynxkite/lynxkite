@@ -358,7 +358,7 @@ TableBrowser.prototype = {
 
   getNode: function(posList) {
     var pos = posList[0];
-    var node = this.root.$$('#table-browser > ul > li').get(pos);
+    var node = this.root.$$('#table-browser-tree > ul > li').get(pos);
     for (var i = 1; i < posList.length; ++i) {
       pos = posList[i];
       node = node.$$(node.locator().value + ' > ul > li').get(pos);
