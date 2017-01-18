@@ -121,7 +121,7 @@
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry clearfix"
     href
-    ng-click="projectClick($event, object)"
+    ng-click="objectClick($event, object)"
     ng-class="{ error: object.error }">
     <span
       ng-if="isProject(object)"
