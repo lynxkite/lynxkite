@@ -101,9 +101,9 @@ class TestLogisticRegression(unittest.TestCase):
         destScalarName='model',
         sourceProject=train_p.global_name(),
         sourceScalarName='logreg_model')
-    classify_p.classifyVerticesWithAModel\
-        (model='{"modelName":"model","features":["f1","f2"]}',
-         name='prediction')
+    classify_p.classifyVerticesWithAModel(
+        model='{"modelName":"model","features":["f1","f2"]}',
+        name='prediction')
 
     train_p.compute()
     classify_p.compute()
