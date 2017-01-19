@@ -26,6 +26,27 @@ project.filterByAttributes('filterea-weight': '!1', 'filterva-age': '<40', 'filt
       lib.left.history.close();
     });
 
+    fw.transitionTest(
+      'test-example project with example graph',
+      'example graph with age attribute renamed and python editor opened',
+      function() {
+        lib.left.side.element(by.id('vertex-attribute-age')).click();
+        var e = lib.left.vertexAttribute('age');
+        var popup = e.popup();
+        popup.element(by.id('rename-menu-item')).click();
+        var inputField = popup.element(by.id('rename-to'));
+        inputField.sendKeys(lib.selectAllKey + 'newage');
+        inputField.sendKeys(K.ENTER);
+        lib.left.history.open();
+        lib.left.side.element(by.id('toggle-python-button')).click();
+        expect(lib.getACEText(lib.left.getPythonWorkflowCodeEditor())).toBe(`
+project.exampleGraph()
+project.renameVertexAttribute(**{'from': 'age', 'to': 'newage'})
+        `.trim());
+      },
+      function() {}
+    );
+
   fw.transitionTest(
     'empty test-example project',
     'some project is open',
