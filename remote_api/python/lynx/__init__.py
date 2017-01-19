@@ -586,6 +586,10 @@ class _ProjectCheckpoint:
     r = self.lk._send('getMetadata', request)
     return _Metadata(r)
 
+  def global_name(self):
+    '''Global reference of the project.'''
+    return '!checkpoint({},)'.format(self.checkpoint)
+
 
 class SubProject:
   '''Represents a root project or a segmentation.
@@ -682,6 +686,16 @@ class SubProject:
       return self.run_operation(attr, params)
     return f
 
+  def table_name(self, table):
+    '''Returns a reference to a table within the project. Example usage::
+
+      project2.importVertices(**{
+        'id-attr': 'id',
+        'table': project1.table_name('edges')})
+    '''
+    table_path = [self.project_checkpoint.global_name()] + self.path + [table]
+    return '|'.join(table_path)
+
 
 class RootProject(SubProject):
   '''Represents a project.'''
@@ -722,7 +736,7 @@ class RootProject(SubProject):
 
   def global_name(self):
     '''Global reference of the project.'''
-    return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
+    return self.project_checkpoint.global_name()
 
 
 class _Metadata():
