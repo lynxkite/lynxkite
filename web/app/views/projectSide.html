@@ -271,11 +271,7 @@
             Sampled view settings </span>
           <help-popup href="concrete-view-settings"></help-popup>
         </div>
-        <table>
-          <tr>
-            <td>Display:</td>
-            <td>
-              <div class="btn-group">
+              <div class="control btn-group">
                 <label class="btn btn-default"
                        ng-model="side.state.display"
                        btn-radio="'svg'">
@@ -287,57 +283,47 @@
                   3D
                 </label>
               </div>
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td>Layout animation:</td>
-            <td>
-              <div class="btn-group">
+          <div ng-if="side.state.display === 'svg'"
+              class="control btn-group">
                 <label class="btn btn-default"
                        ng-model="side.state.animate.enabled"
+                       tooltip="Enable animation"
                        btn-radio="true">
                   <i class="glyphicon glyphicon-play"></i>
                 </label>
                 <label class="btn btn-default"
                        ng-model="side.state.animate.enabled"
+                       tooltip="Disable animation"
                        btn-radio="false">
                   <i class="glyphicon glyphicon-pause"></i>
                 </label>
               </div>
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
-                tooltip-append-to-body="true"
-                tooltip-placement="right"
-                tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
+          <div ng-if="side.state.display === 'svg'"
+               class="control">
               Label attraction:
-            </td>
-            <td>
               <input ng-disabled="!side.state.animate.enabled"
                      tooltip="{{side.state.animate.labelAttraction * 100}}%"
                      type="range"
                      max="1"
                      step="0.1"
                      ng-model="side.state.animate.labelAttraction">
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
-                tooltip-append-to-body="true" tooltip-placement="right"
-                                              tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
-              Layout style:
-            </td>
-            <td>
+          </div>
+          <div ng-if="side.state.display === 'svg'"
+               class="control">
               <select ng-disabled="!side.state.animate.enabled"
                       ng-model="side.state.animate.style"
                       class="form-control">
-                <option value="neutral" title="Vertices with large degrees act as centers themselves.">Neutral</option>
-                <option value="centralize" title="Vertices with large degrees tend to be in the middle.">Centralize</option>
-                <option value="decentralize" title="Vertices with large degrees tend to be on the periphery.">Decentralize</option>
+                <option value="neutral"
+                title="Vertices with large degrees act as centers themselves.">
+                Neutral layout</option>
+                <option value="centralize"
+                title="Vertices with large degrees tend to be in the middle.">
+                Centralized layout</option>
+                <option value="decentralize"
+                title="Vertices with large degrees tend to be on the periphery.">
+                Decentralized layout</option>
               </select>
-            </td>
-          </tr>
+          </div>
           <tr>
             <td>Show vertices:</td>
             <td>

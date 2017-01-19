@@ -215,17 +215,11 @@ label {
   font-family: monospace;
 }
 
-.extra-controls table {
-  width: 100%;
-  max-width: 700px;
+.extra-controls .control {
+  max-width: 200px;
+  display: inline-block;
 }
-.extra-controls td {
-  padding: 6px;
-}
-.extra-controls td:first-child {
-  text-align: right;
-  width: 200px;
-}
+
 #sample-center .input-group-btn {
   vertical-align: bottom;
 }
