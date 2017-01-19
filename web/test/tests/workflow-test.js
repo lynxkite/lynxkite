@@ -40,7 +40,6 @@ project.filterByAttributes('filterea-weight': '!1', 'filterva-age': '<40', 'filt
         inputField.sendKeys(K.ENTER);
         lib.left.history.open();
         lib.left.side.element(by.id('toggle-python-button')).click();
-        browser.pause();
         expect(lib.getACEText(lib.left.getPythonWorkflowCodeEditor())).toBe(`
 project.exampleGraph()
 project.renameVertexAttribute(**{'from': 'age', 'to': 'newage'})
