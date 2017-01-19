@@ -3478,7 +3478,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("latitude", "Latitude", options = vertexAttributes[Double]),
       Choice("longitude", "Longitude", options = vertexAttributes[Double]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
-      Param("attribute", "Attribute in the shapefile"),
+      Param("attribute", "Attribute from the Shapefile"),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]) = {

@@ -1,0 +1,24 @@
+### Lookup region
+
+Locates coordinates in a Shapefile and returns a specified attribute.
+
+====
+
+*Parameters*
+
+[[latitude]] Latitude::
+The *X* coordinate of the location
+
+[[longitude]] Longitude::
+The *Y* coordinate of the location
+
+[[shapefile]] Shapefile::
+The Shapefile used for the lookup. The list is based on the contents of the `KITE_SHAPEFILE_DIR`
+directory.
+
+[[attribute]] Attribute::
+The attribute in the Shapefile used for the output.
+
+[[output]] Output::
+The name of the new vertex attribute.
+====
