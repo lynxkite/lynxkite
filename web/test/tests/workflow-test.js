@@ -35,8 +35,7 @@ project.filterByAttributes('filterea-weight': '!1', 'filterva-age': '<40', 'filt
         var popup = e.popup();
         popup.element(by.id('rename-menu-item')).click();
         var inputField = popup.element(by.id('rename-to'));
-        inputField.sendKeys(K.chord(K.CONTROL, 'a'));
-        inputField.sendKeys('newage');
+        inputField.sendKeys(lib.selectAllKey + 'newage');
         inputField.sendKeys(K.ENTER);
         lib.left.history.open();
         lib.left.side.element(by.id('toggle-python-button')).click();
@@ -45,9 +44,7 @@ project.exampleGraph()
 project.renameVertexAttribute(**{'from': 'age', 'to': 'newage'})
         `.trim());
       },
-      function() {
-
-      }
+      function() {}
     );
 
   fw.transitionTest(
