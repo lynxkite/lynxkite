@@ -78,9 +78,6 @@ class TestLogisticRegression(unittest.TestCase):
     return table
 
   def test_classification(self):
-    # This test tries to emulate a supposed HKT workflow.
-
-    # Data import
     table = self.setup_table()
 
     # Model training
@@ -105,12 +102,9 @@ class TestLogisticRegression(unittest.TestCase):
         model='{"modelName":"model","features":["f1","f2"]}',
         name='prediction')
 
-    train_p.compute()
-    classify_p.compute()
-
     result = self.lk.sql('SELECT accept, prediction, f1, f2 FROM `p`', p=classify_p).take(20)
     self.assertListEqual(result, self.expected)
-    # print(result.take(20))
+
 
 if __name__ == '__main__':
   unittest.main()
