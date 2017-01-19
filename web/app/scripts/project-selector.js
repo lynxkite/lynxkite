@@ -161,11 +161,10 @@ angular.module('biggraph').directive('projectSelector',
         // Ignore clicks on errored tables.
         if (t.error) { return; }
         scope.showSQL = true;
-        $anchorScroll('global-sql-box');
         $timeout(
           function() {
+            $anchorScroll('global-sql-box');
             scope.$broadcast('fill sql-box by clicking on table or view', t.name);
-            element.find('#run-sql-button')[0].click();
           },
           0,
           false); // Do not invoke apply as we don't change the scope.
