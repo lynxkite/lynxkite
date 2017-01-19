@@ -211,7 +211,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val sample = op(op.vs, filtered).result.sample.value
       assert(
         sample.size <= request.maxSize,
-        s"The full graph is too large to display (larger than ${request.maxSize})")
+        s"The full graph is too large to display (larger than ${request.maxSize}).")
       sample
     } else {
       request.centralVertexIds.map(_.toLong)
@@ -231,7 +231,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
-        s"Neighborhood is too large to display (larger than ${request.maxSize})")
+        s"Neighborhood is too large to display (larger than ${request.maxSize}).")
       neighborhood
     } else {
       centers.toSet

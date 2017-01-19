@@ -219,6 +219,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       util.reportRequestError(view, 'Graph visualization failed.');
     });
     this.root.append(text);
+    var errorMessage = svg.create('text',
+      {'class': 'error-message', x: x, y: y + 30, 'text-anchor': 'middle'});
+    errorMessage.text(view.$error);
+    this.root.append(errorMessage);
   };
 
   var graphToSVGRatio = 0.8;  // Leave some margin.
