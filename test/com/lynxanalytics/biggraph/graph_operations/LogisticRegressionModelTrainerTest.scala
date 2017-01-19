@@ -37,7 +37,9 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
     assert(LogisticRegressionModel.load(path).coefficients.size == 1)
   }
 
-  test("z-scores") {
+  // This test proved to be unreliable. On some machines it passed on others it failed. We don't know the reason.
+  // https://github.com/biggraph/biggraph/issues/5501
+  ignore("z-scores") {
     import sparkSession.implicits._
     import org.scalactic.Tolerance._
     import ml.linalg.Vectors.{ dense => mlVector }
@@ -49,6 +51,36 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
     val expected = Array(0.01586, -1.97108, 0.0)
     for ((e, r) <- expected.zip(zValues)) {
       assert(e === r +- 0.0001)
+    }
+  }
+
+  // to see, how data was obtained, check https://github.com/biggraph/biggraph/issues/5501
+  test("z-score for real model") {
+    import sparkSession.implicits._
+    import org.scalactic.Tolerance._
+    import ml.linalg.Vectors.{ dense => mlVector }
+    val coefficientsAndIntercept = Array(-0.052874, -0.891587, 8.004224)
+    val X = Seq(
+      mlVector(0.0, 9.0),
+      mlVector(0.0, 8.0),
+      mlVector(1.0, 7.0),
+      mlVector(1.0, 5.0),
+      mlVector(2.0, 1.0),
+      mlVector(3.0, 1.0),
+      mlVector(1.0, 10.0),
+      mlVector(2.0, 10.0),
+      mlVector(3.0, 7.0),
+      mlVector(8.0, 8.0)
+    )
+    val probabilities = Seq(0.49498463, 0.70506297, 0.84686725, 0.97049978, 0.9990952, 0.99904612, 0.27597346,
+      0.2655347, 0.83264514, 0.61029074).map(p => mlVector(p, 1 - p))
+    val labels = Seq(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+    val predictions = sparkSession.createDataset(X zip probabilities zip labels map { case ((x, p), l) => (x, p, l) })
+      .toDF("features", "probability", "label")
+    val zValues = LogisticRegressionModelTrainer.computeZValues(coefficientsAndIntercept, predictions)
+    val expected = Array(-0.170393, -1.271952, 1.294992)
+    for ((e, r) <- expected.zip(zValues)) {
+      assert(e === r +- 0.000001)
     }
   }
 }

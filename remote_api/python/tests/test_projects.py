@@ -6,6 +6,7 @@ class TestProjects(unittest.TestCase):
 
   def test_save_and_load_project(self):
     lk = lynx.LynxKite()
+    lk._request('/ajax/discardAllReallyIMeanIt')
     p = lk.new_project()
     p.exampleGraph()
     p.save('test_project')
@@ -25,6 +26,13 @@ class TestProjects(unittest.TestCase):
     p.newVertexSet(size=10)
     p.compute()
     self.assertTrue(p.is_computed())
+
+  def test_table_name(self):
+    p1 = lynx.LynxKite().new_project()
+    p1.exampleGraph()
+    p2 = lynx.LynxKite().new_project()
+    p2.importVertices(**{'id-attr': 'id', 'table': p1.edges_table()})
+    self.assertEqual(4, p2.scalar('vertex_count'))
 
 
 if __name__ == '__main__':
