@@ -160,11 +160,13 @@ angular.module('biggraph').directive('projectSelector',
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored tables.
         if (t.error) { return; }
+        var tableNameParts = t.name.split('/');
+        var tableName = tableNameParts[tableNameParts.length - 1];
         scope.showSQL = true;
         $timeout(
           function() {
             $anchorScroll('global-sql-box');
-            scope.$broadcast('fill sql-box by clicking on table or view', t.name);
+            scope.$broadcast('fill sql-box by clicking on table or view', tableName);
           },
           0,
           false); // Do not invoke apply as we don't change the scope.
