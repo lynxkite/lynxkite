@@ -182,8 +182,8 @@ Side.prototype = {
   },
 
   getPythonWorkflowCodeEditor: function() {
-      return this.side.element(by.id('python-code-editor'));
-    },
+    return this.side.element(by.id('python-code-editor'));
+  },
 
   getWorkflowDescriptionEditor: function() {
     return this.side.element(by.id('workflow-description'));
