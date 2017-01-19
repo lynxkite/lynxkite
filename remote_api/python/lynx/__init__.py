@@ -698,6 +698,15 @@ class SubProject:
     table_path = [self.project_checkpoint.global_name()] + self.path + [table]
     return '|'.join(table_path)
 
+  def vertices_table(self):
+    '''Global reference to the ``vertices`` table. Equivalent to ``global_table_name('vertices')``.
+    '''
+    return self.global_table_name('vertices')
+
+  def edges_table(self):
+    '''Global reference to the ``edges`` table. Equivalent to ``global_table_name('edges')``.'''
+    return self.global_table_name('edges')
+
 
 class RootProject(SubProject):
   '''Represents a project.'''
