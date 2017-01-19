@@ -30,9 +30,6 @@ val sparkVersion = SettingKey[String]("spark-version", "The version of Spark use
 
 sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 
-resolvers += "Open Source Geospatial Foundation Repository" at
-  "http://download.osgeo.org/webdav/geotools/"
-
 libraryDependencies ++= Seq(
   ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
@@ -77,7 +74,9 @@ libraryDependencies ++= Seq(
   "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
   "org.geotools" % "gt-shapefile" % "16.1")
 
-resolvers += "Twitter Repository" at "http://maven.twttr.com"
+resolvers ++= Seq(
+  "Twitter Repository" at "http://maven.twttr.com",
+  "Geospatial Foundation Repository" at "http://download.osgeo.org/webdav/geotools/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
