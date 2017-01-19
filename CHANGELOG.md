@@ -12,6 +12,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Upgraded to _Apache Spark 2.1.0_.
  - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
    was trained in an other project. 
+ - New Remote API methods: `project.copy()` and `project.table_name()`.
 
 ### 1.11.0
 
