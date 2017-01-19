@@ -686,12 +686,14 @@ class SubProject:
       return self.run_operation(attr, params)
     return f
 
-  def table_name(self, table):
+  def global_table_name(self, table):
     '''Returns a reference to a table within the project. Example usage::
 
       project2.importVertices(**{
         'id-attr': 'id',
-        'table': project1.table_name('edges')})
+        'table': project1.global_table_name('edges')})
+
+    The same set of project tables are accessible as from SQL.
     '''
     table_path = [self.project_checkpoint.global_name()] + self.path + [table]
     return '|'.join(table_path)
