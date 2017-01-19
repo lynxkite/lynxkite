@@ -8,3 +8,5 @@ data format which is beneficial if you never want to build graphs or only build 
 Because the views are computed only on use, the accessed resources need to be present whenever
 the view is used e.g. if you import through JDBC, the database must still be available
  when the view is used.
+
+For a quick overview of the view, click on its name.
