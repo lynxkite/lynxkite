@@ -11,7 +11,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Remote API works on PizzaKite now.
  - Upgraded to _Apache Spark 2.1.0_.
  - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
-   was trained in an other project. 
+   was trained in an other project.
+ - Clicking on a table or view scrolls to the global SQL box and executes the
+   `select * form clickedTable` command.
 
 ### 1.11.0
 
