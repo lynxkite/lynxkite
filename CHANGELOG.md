@@ -9,6 +9,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
    LynxKite 1.11.0.)
  - Remote API works on PizzaKite now.
+ - Added a table and column explorer to the SQL box. Click on the "Tables" button in the SQL
+   box to give it a try!
  - Upgraded to _Apache Spark 2.1.0_.
  - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
    was trained in an other project.
