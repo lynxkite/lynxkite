@@ -1,22 +1,20 @@
 ### Lookup region
 
-Locates coordinates in a Shapefile and returns a specified attribute.
+Locates coordinates in a Shapefile and returns a specified attribute. If a coordinate is not
+found, the output will be `null`.
 
 ====
 
 *Parameters*
 
-[[latitude]] Latitude::
-The *X* coordinate of the location
-
-[[longitude]] Longitude::
-The *Y* coordinate of the location
+[[position]] Position::
+The (latitude, longitude) location tuple.
 
 [[shapefile]] Shapefile::
 The Shapefile used for the lookup. The list is based on the contents of the `KITE_SHAPEFILE_DIR`
 directory.
 
-[[attribute]] Attribute::
+[[attribute]] Attribute from the Shapefile::
 The attribute in the Shapefile used for the output.
 
 [[output]] Output::

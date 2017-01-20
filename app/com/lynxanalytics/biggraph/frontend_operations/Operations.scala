@@ -3475,24 +3475,25 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Lookup region", new VertexAttributesOperation(_, _) {
     override def parameters = List(
-      Choice("latitude", "Latitude", options = vertexAttributes[Double]),
-      Choice("longitude", "Longitude", options = vertexAttributes[Double]),
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    import java.io.File
+
     def apply(params: Map[String, String]) = {
-      val latitude = project.vertexAttributes(params("latitude")).runtimeSafeCast[Double]
-      val longitude = project.vertexAttributes(params("longitude")).runtimeSafeCast[Double]
-      val op = graph_operations.LookupRegion(params("shapefile"), params("attribute"))
-      val result = op(op.latitude, latitude)(op.longitude, longitude).result
-      project.newVertexAttribute(params("output"), result.region)
+      val shapeFilePath = params("shapefile")
+      assert(new File(shapeFilePath).exists(), "Shapefile deleted, please choose another.")
+      assert(listShapefiles().exists(f => f.id == shapeFilePath), "PLS NO HAX")
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val result = op(op.coordinates, position).result
+      project.newVertexAttribute(params("output"), result.attribute)
     }
 
-    import java.io.File
     private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
-    private val shapeDir = LoggedEnvironment.envOrElse("KITE_SHAPEFILE_DIR",
-      s"$metaDir/resources/shapefiles/")
+    private val shapeDir = s"$metaDir/resources/shapefiles/"
 
     private def listShapefiles(): List[FEOption] = {
       def lsR(f: File): Array[File] = {
