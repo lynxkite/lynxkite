@@ -12,7 +12,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
     templateUrl: 'entity.html',
     link: function(scope, element) {
       /* global Drop */
-      // Angular element 
+      // Angular element for easier access of popup elements.
       var dropElement = angular.element(element.children('.menu')[0]);
       var drop = new Drop({
         target: element.children('.entity')[0],
