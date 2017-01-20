@@ -57,7 +57,6 @@ module.exports = function(fw) {
 
       // Close table browser.
       tableBrowser.toggle();
-      //lib.expectElement(lib.left.side.$('#table-browser'));
       lib.expectNotElement(lib.left.side.$('#table-browser'));
     });
 
