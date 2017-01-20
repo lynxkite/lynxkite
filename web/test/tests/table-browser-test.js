@@ -18,42 +18,42 @@ module.exports = function(fw) {
       // Open table browser.
       tableBrowser.toggle();
       // Check top-level node list.
-      tableBrowser.expectNode([0], 'vertices', '`vertices`');
-      tableBrowser.expectNode([1], 'edges', '`edges`');
+      tableBrowser.expectNode([0], 'edges', '`edges`');
       tableBrowser.expectNode(
-          [2], 'edge_attributes', '`edge_attributes`');
+          [1], 'edge_attributes', '`edge_attributes`');
+      tableBrowser.expectNode([2], 'vertices', '`vertices`');
       tableBrowser.expectNode([3], 'bucketing', '`bucketing`');
 
-      // Check first few subitems of the first node..
-      tableBrowser.toggleNode([0]);
-      tableBrowser.expectNode([0, 0], '*ALL*');
-      tableBrowser.expectNode([0, 1], 'name (String)', '`name`');
-      tableBrowser.toggleNode([0]);
+      // Check first few subitems of the vertices node.
+      tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 0], '*ALL*');
+      tableBrowser.expectNode([2, 1], 'name (String)', '`name`');
+      tableBrowser.toggleNode([2]);
       lib.expectNotElement(tableBrowser.getNode([0, 0]));
 
       // Open the first subnode of the fourth node.
       tableBrowser.toggleNode([3]); // 'bucketing'
-      tableBrowser.toggleNode([3, 0]); // 'bucketing|vertices'
-      tableBrowser.expectNode([3, 0, 1], 'id (ID)', '`id`');
+      tableBrowser.toggleNode([3, 1]); // 'bucketing|vertices'
+      tableBrowser.expectNode([3, 1, 1], 'id (ID)', '`id`');
       tableBrowser.expectNode(
-          [3, 0, 0],
-          '*ALL*', 
+          [3, 1, 0],
+          '*ALL*',
           '`id`,\n`size`,\n`bottom`,\n`top`');
       // Test with fully qialified names as well.
       tableBrowser.toggleFullyQualify();
       tableBrowser.expectNode(
-          [3, 0, 1],
+          [3, 1, 1],
           'id (ID)',
           '`bucketing|vertices`.`id`');
       tableBrowser.expectNode(
-          [3, 0, 0],
-          '*ALL*', 
+          [3, 1, 0],
+          '*ALL*',
           '`bucketing|vertices`.`id`,\n' +
               '`bucketing|vertices`.`size`,\n' +
               '`bucketing|vertices`.`bottom`,\n`' +
               'bucketing|vertices`.`top`');
       tableBrowser.toggleFullyQualify();
-      tableBrowser.expectNode([3, 0, 1], 'id (ID)', '`id`');
+      tableBrowser.expectNode([3, 1, 1], 'id (ID)', '`id`');
 
       // Close table browser.
       tableBrowser.toggle();
