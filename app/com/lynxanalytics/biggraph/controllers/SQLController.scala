@@ -478,14 +478,14 @@ class SQLController(val env: BigGraphEnvironment) {
     val implicitTables = viewer.implicitTableNames.toSeq.map {
       name =>
         TableBrowserNode(
-          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(name)).mkString("|"),
+          absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(name)).mkString("|"),
           name = name,
           objectType = "table")
     }
     val subProjects = viewer.sortedSegmentations.map {
       segmentation =>
         TableBrowserNode(
-          absolutePath = frame.path.toString + "|" + (subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+          absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )

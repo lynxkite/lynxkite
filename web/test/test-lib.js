@@ -395,7 +395,7 @@ TableBrowser.prototype = {
   },
 
   expectDragText: function(li, expected) {
-    // We cannot do a real drang-and-drop workflow here
+    // We cannot do a real drag-and-drop workflow here
     // because of:
     // https://github.com/angular/protractor/issues/583
     // Just doing a simple check for now.

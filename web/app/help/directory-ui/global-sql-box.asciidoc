@@ -18,8 +18,4 @@ Premier League. Then you can reference it the same way as the tables in projects
 with `select * from {backtick}Players{backtick} where team = "Arsenal"`. Notice that you still need to enclose the
 table name between two {backtick} symbols.
 
-You can browse the list of available tables and columns by clicking on the
-+++<label class="btn btn-primary">Tables ⏵</label>+++
-button.
-
 See the section on <<sql-box>> for more details on the usage of the SQL interface.
