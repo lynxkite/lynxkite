@@ -558,9 +558,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       sqlController.getTableBrowserNodes(
         user, TableBrowserNodeRequest(path = "dir/example2")))
     assert(List(
-      TableBrowserNode("dir/example2|vertices", "vertices", "table"),
       TableBrowserNode("dir/example2|edges", "edges", "table"),
       TableBrowserNode("dir/example2|edge_attributes", "edge_attributes", "table"),
+      TableBrowserNode("dir/example2|vertices", "vertices", "table"),
       TableBrowserNode("dir/example2|bucketing", "bucketing", "segmentation"),
       TableBrowserNode("dir/example2|vertices", "vertices", "segmentation")) == res1.list)
   }
