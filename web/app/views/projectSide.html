@@ -271,93 +271,7 @@
             Sampled view settings </span>
           <help-popup href="concrete-view-settings"></help-popup>
         </div>
-              <div class="control btn-group">
-                <label class="btn btn-default"
-                       ng-model="side.state.display"
-                       btn-radio="'svg'">
-                  2D
-                </label>
-                <label class="btn btn-default"
-                       ng-model="side.state.display"
-                       btn-radio="'3d'">
-                  3D
-                </label>
-              </div>
-          <div ng-if="side.state.display === 'svg'"
-              class="control btn-group">
-                <label class="btn btn-default"
-                       ng-model="side.state.animate.enabled"
-                       tooltip="Enable animation"
-                       btn-radio="true">
-                  <i class="glyphicon glyphicon-play"></i>
-                </label>
-                <label class="btn btn-default"
-                       ng-model="side.state.animate.enabled"
-                       tooltip="Disable animation"
-                       btn-radio="false">
-                  <i class="glyphicon glyphicon-pause"></i>
-                </label>
-              </div>
-          <div ng-if="side.state.display === 'svg'"
-               class="control">
-              Label attraction:
-              <input ng-disabled="!side.state.animate.enabled"
-                     tooltip="{{side.state.animate.labelAttraction * 100}}%"
-                     type="range"
-                     max="1"
-                     step="0.1"
-                     ng-model="side.state.animate.labelAttraction">
-          </div>
-          <div ng-if="side.state.display === 'svg'"
-               class="control">
-              <select ng-disabled="!side.state.animate.enabled"
-                      ng-model="side.state.animate.style"
-                      class="form-control">
-                <option value="neutral"
-                title="Vertices with large degrees act as centers themselves.">
-                Neutral layout</option>
-                <option value="centralize"
-                title="Vertices with large degrees tend to be in the middle.">
-                Centralized layout</option>
-                <option value="decentralize"
-                title="Vertices with large degrees tend to be on the periphery.">
-                Decentralized layout</option>
-              </select>
-          </div>
-          <tr>
-            <td>Show vertices:</td>
-            <td>
-              <div id="sample-center"
-                   ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-                <input class="form-control"
-                       id="centers"
-                       ng-model="side.state.centers"
-                       ng-model-options="{ updateOn: 'change blur' }"
-                       ng-list>
-              </div>
-            </td>
-          </tr>
-        </table>
-        <pick-options side="side"></pick-options>
-        <table>
-          <tr>
-            <td ng-class="{ 'de-emph': side.project.edgeBundle === '' }"
-                tooltip-append-to-body="true"
-                tooltip-placement="right"
-                tooltip="{{ side.project.edgeBundle === '' ? 'No edges.' : '' }}">
-              Show neighborhood:
-            </td>
-            <td>
-              <input ng-disabled="side.project.edgeBundle === ''"
-                     id="sample-radius-slider"
-                     tooltip="radius {{side.state.sampleRadius}}"
-                     type="range"
-                     max="10"
-                     step="1"
-                     ng-model="side.state.sampleRadius">
-            </td>
-          </tr>
-        </table>
+        <sampled-view-settings side="side"></sampled-view-settings>
       </div>
 
       <!-- Extra controls for the bucketed view. -->
@@ -366,31 +280,7 @@
           <span class="label-text" ng-click="side.showSection('view-settings', false)">
             Bucketed view settings </span>
         </div>
-        <table>
-          <tr>
-            <td>Buckets:</td>
-            <td>
-              <lazy-slider value="side.state.bucketCount"></lazy-slider>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Compute precise bucket sizes:
-            </td>
-            <td>
-              <input type="checkbox" ng-model="side.state.preciseBucketSizes">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <help-popup href="relative-edge-density"></help-popup>
-              Relative edge density:
-            </td>
-            <td>
-              <input type="checkbox" ng-model="side.state.relativeEdgeDensity">
-            </td>
-          </tr>
-        </table>
+        <bucketed-view-settings side="side"></bucketed-view-settings>
       </div>
 
       <div ng-if="side.state.graphMode">
