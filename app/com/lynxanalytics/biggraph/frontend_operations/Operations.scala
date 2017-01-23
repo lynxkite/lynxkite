@@ -3484,8 +3484,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       val shapeFilePath = params("shapefile")
-      assert(new File(shapeFilePath).exists(), "Shapefile deleted, please choose another.")
-      assert(listShapefiles().exists(f => f.id == shapeFilePath), "PLS NO HAX")
+      assert(listShapefiles().exists(f => f.id == shapeFilePath),
+        "Shapefile deleted, please choose another.")
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
       val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
       val result = op(op.coordinates, position).result
