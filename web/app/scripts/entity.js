@@ -241,6 +241,25 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           drop.close();
         }
       };
+
+      scope.toggleShowEmoji = function() {
+        scope.showEmoji = !scope.showEmoji;
+        if (scope.showEmoji) {
+          scope.emojiList = util.get('/images/emoji/list.json');
+        }
+      };
+
+      scope.setIcon = function(icon) {
+        scope.side.setIcon(scope.kind, scope.title(), icon).then(function() {
+          drop.close();
+        });
+      };
+
+      scope.clearIcon = function() {
+        scope.side.setIcon(scope.kind, scope.title(), undefined).then(function() {
+          drop.close();
+        });
+      };
     },
   };
 });

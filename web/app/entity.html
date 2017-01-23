@@ -2,6 +2,9 @@
      ng-class="{ active: active() }"
      id="{{ kind }}-{{ title() | id }}">
   <span class="title"> {{ title() }} </span>
+  <img ng-show="entity.metadata.icon"
+       class="emoji"
+       src="/images/emoji/{{ entity.metadata.icon }}.png">
   <value class="subtoken"
          ng-if="isScalar() && !isUIStatus()"
          id="scalar-value-{{ title() | id }}"
@@ -112,6 +115,24 @@
 
   <div class="menu-item" ng-click="loadUIStatus()" ng-show="isUIStatus()" id="load-visualization">
     <i class="glyphicon glyphicon-eye-open"></i> Load visualization
+  </div>
+
+  <div class="menu-item" ng-click="toggleShowEmoji()">
+    Set icon
+    <i class="glyphicon glyphicon-chevron-right pull-right"></i>
+  </div>
+
+  <div class="emoji-picker" ng-if="showEmoji">
+    <progressbar class="progress-striped active" ng-show="emojiList.$resolved === false">
+    </progressbar>
+    <img ng-repeat="e in emojiList"
+         src="/images/emoji/{{ e }}.png"
+         class="emoji"
+         ng-click="setIcon(e)">
+  </div>
+
+  <div class="menu-item" ng-show="entity.metadata.icon" ng-click="clearIcon()">
+    Clear icon
   </div>
 
   <div class="menu-item" ng-click="discard()">
