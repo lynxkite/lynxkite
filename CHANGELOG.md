@@ -10,7 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    LynxKite 1.11.0.)
  - Remote API works on PizzaKite now.
  - Upgraded to _Apache Spark 2.1.0_.
- - You can assign icons to attributes/segmentations/scalars. :+1:
+ - You can assign icons to attributes/segmentations/scalars. (As suggested by Marton Szel. :+1:)
  - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
    was trained in an other project.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
