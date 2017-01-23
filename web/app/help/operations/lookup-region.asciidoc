@@ -11,8 +11,8 @@ found, the output will be `null`.
 The (latitude, longitude) location tuple.
 
 [[shapefile]] Shapefile::
-The Shapefile used for the lookup. The list is based on the contents of the `KITE_SHAPEFILE_DIR`
-directory.
+The Shapefile used for the lookup. The list is based on the contents of the
+`KITE_META/resources/shapefiles` directory.
 
 [[attribute]] Attribute from the Shapefile::
 The attribute in the Shapefile used for the output.
