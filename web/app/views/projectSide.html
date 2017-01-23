@@ -283,14 +283,13 @@
         <bucketed-view-settings side="side"></bucketed-view-settings>
       </div>
 
-      <div ng-if="side.state.graphMode">
-        <text-dialog id="save-visualization-dialog"
-                     button-text="Save Visualization"
-                     on-ok="side.saveStateToBackend(userText, finishedCallback)"
-                     start-value="visualization 1">
-        </text-dialog>
-        <help-popup href="saving-visualizations"></help-popup>
-      </div>
+      <text-dialog id="save-visualization-dialog"
+                   ng-if="side.state.graphMode"
+                   button-text="Save visualization"
+                   on-ok="side.saveStateToBackend(userText, finishedCallback)"
+                   start-value="visualization 1"
+                   help="saving-visualizations">
+      </text-dialog>
 
     </div>
 

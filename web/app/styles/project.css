@@ -141,6 +141,10 @@ input.save-as {
   text-decoration: underline;
 }
 
+sampled-view-settings .entity {
+  background: hsl(194,50%,80%);
+}
+
 textarea.project-notes {
   resize: vertical;
   background: transparent;
@@ -291,4 +295,9 @@ label {
 .pick-attr-restrict button {
   width: 10%;
   padding: 6px 0px;
+}
+
+text-dialog {
+  margin: 10px 0;
+  display: block;
 }

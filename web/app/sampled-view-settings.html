@@ -1,88 +1,104 @@
-<div class="entity">
+<div class="entity" id="setting-display" ng-show="showDisplay()">
   <span class="title">{{ side.state.display === 'svg' ? '2D' : '3D' }}</span>
 </div>
-<div class="entity">
-  <span class="title">{{ side.state.display === '2d' ? '2D' : '3D' }}</span>
-</div>
-<div ng-if="side.state.display === 'svg'"
-     class="control btn-group">
-  <label class="btn btn-default"
-         ng-model="side.state.animate.enabled"
-         tooltip="Enable animation"
-         btn-radio="true">
-    <i class="glyphicon glyphicon-play"></i>
-  </label>
-  <label class="btn btn-default"
-         ng-model="side.state.animate.enabled"
-         tooltip="Disable animation"
-         btn-radio="false">
-    <i class="glyphicon glyphicon-pause"></i>
-  </label>
-</div>
-<div ng-if="side.state.display === 'svg'"
-     class="control">
-  Label attraction:
-  <input ng-disabled="!side.state.animate.enabled"
-         tooltip="{{side.state.animate.labelAttraction * 100}}%"
-         type="range"
-         max="1"
-         step="0.1"
-         ng-model="side.state.animate.labelAttraction">
-</div>
-<div ng-if="side.state.display === 'svg'"
-     class="control">
-  <select ng-disabled="!side.state.animate.enabled"
-          ng-model="side.state.animate.style"
-          class="form-control">
-    <option value="neutral"
-            title="Vertices with large degrees act as centers themselves.">
-    Neutral layout</option>
-    <option value="centralize"
-            title="Vertices with large degrees tend to be in the middle.">
-    Centralized layout</option>
-    <option value="decentralize"
-            title="Vertices with large degrees tend to be on the periphery.">
-    Decentralized layout</option>
-  </select>
-</div>
-<div>
-  <td>Show vertices:</td>
-  <td>
-    <div id="sample-center"
-         ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-      <input class="form-control"
-             id="centers"
-             ng-model="side.state.centers"
-             ng-model-options="{ updateOn: 'change blur' }"
-             ng-list>
-    </div>
-  </td>
-</div>
-<pick-options side="side"></pick-options>
-<div>
-  <td ng-class="{ 'de-emph': side.project.edgeBundle === '' }"
-      tooltip-append-to-body="true"
-      tooltip-placement="right"
-      tooltip="{{ side.project.edgeBundle === '' ? 'No edges.' : '' }}">
-    Show neighborhood:
-  </td>
-  <td>
-    <input ng-disabled="side.project.edgeBundle === ''"
-           id="sample-radius-slider"
-           tooltip="radius {{side.state.sampleRadius}}"
-           type="range"
-           max="10"
-           step="1"
-           ng-model="side.state.sampleRadius">
-  </td>
-</div>
+<div class="menu entity-menu" id="menu-setting-display">
+  <div class="menu-item" ng-click="side.state.display = 'svg'"> 2D </div>
+  <div class="menu-item" ng-click="side.state.display = '3d'"> 3D </div>
 </div>
 
-<div ng-if="side.state.graphMode">
-  <text-dialog id="save-visualization-dialog"
-               button-text="Save Visualization"
-               on-ok="side.saveStateToBackend(userText, finishedCallback)"
-               start-value="visualization 1">
-  </text-dialog>
-  <help-popup href="saving-visualizations"></help-popup>
+<span ng-show="side.state.display === 'svg'">
+  <div class="entity"
+       tooltip="Animation {{ side.state.animate.enabled ? 'enabled' : 'disabled' }}"
+       ng-click="side.state.animate.enabled = !side.state.animate.enabled">
+    <span class="title">
+      <i class="glyphicon glyphicon-play" ng-show="side.state.animate.enabled"></i>
+      <i class="glyphicon glyphicon-pause" ng-hide="side.state.animate.enabled"></i>
+    </span>
+  </div>
+
+  <div class="entity" id="setting-label-attraction" ng-show="showAttraction()">
+    <span class="title">
+      label attraction: {{ side.state.animate.labelAttraction * 100 | number : 0 }}%
+    </span>
+  </div>
+  <div class="menu entity-menu" id="menu-setting-label-attraction">
+    <div>
+      <input id="label-attraction-slider"
+             type="range"
+             max="1"
+             step="0.01"
+             ng-model="side.state.animate.labelAttraction">
+    </div>
+  </div>
+
+  <div class="entity"
+       id="setting-layout"
+       ng-show="showLayout()"
+       tooltip="
+       {{
+       side.state.animate.style === 'neutral' ?
+       'Vertices with large degrees act as centers themselves.' :
+       side.state.animate.style === 'centralize' ?
+       'Vertices with large degrees tend to be in the middle.' :
+       side.state.animate.style === 'decentralize' ?
+       'Vertices with large degrees tend to be on the periphery.' :
+       ''
+       }}">
+    <span class="title">
+      {{
+      side.state.animate.style === 'neutral' ? 'neutral layout' :
+      side.state.animate.style === 'centralize' ? 'centralized layout' :
+      side.state.animate.style === 'decentralize' ? 'decentralized layout' :
+      side.state.animate.style
+      }}
+    </span>
+  </div>
+  <div class="menu entity-menu" id="menu-setting-layout">
+    <div class="menu-item" ng-click="side.state.animate.style = 'neutral'"> Neutral </div>
+    <div class="menu-item" ng-click="side.state.animate.style = 'centralize'"> Centralized </div>
+    <div class="menu-item" ng-click="side.state.animate.style = 'decentralize'"> Decentralized </div>
+  </div>
+</span>
+
+<div class="entity" id="setting-vertices">
+  <span class="title">
+    showing: {{ side.state.centers.join(', ') || 'nothing' }}
+    <span class="spinner" ng-show="side.centerRequest && !side.centerRequest.$resolved">|</span>
+  </span>
+</div>
+<div class="menu entity-menu" id="menu-setting-vertices">
+  <input class="form-control"
+         id="centers"
+         ng-model="side.state.centers"
+         ng-model-options="{ updateOn: 'change blur' }"
+         ng-list>
+  <div class="menu-item" ng-click="side.state.centers = ['*']"> Show all vertices </div>
+  <pick-options side="side"></pick-options>
+</div>
+
+<div class="entity" id="setting-sample-radius" ng-show="showRadius()">
+  <span class="title">
+    radius {{ side.state.sampleRadius }}
+  </span>
+</div>
+<div class="menu entity-menu" id="menu-setting-sample-radius">
+  <input id="sample-radius-slider"
+         type="range"
+         max="10"
+         step="1"
+         ng-model="side.state.sampleRadius">
+</div>
+
+<div class="entity" id="setting-add" ng-hide="everythingDisplayed()" tooltip="More settings">
+  <span class="title"><i class="glyphicon glyphicon-wrench"></i></span>
+</div>
+<div class="menu entity-menu" id="menu-setting-add">
+  <div class="menu-item" ng-show="!showDisplay()"
+    ng-click="addSetting($event, 'display')"> 2D/3D </div>
+  <div class="menu-item" ng-show="!showLayout() && side.state.display === 'svg'"
+    ng-click="addSetting($event, 'layout')"> Layout method </div>
+  <div class="menu-item" ng-show="!showAttraction() && side.state.display === 'svg'"
+    ng-click="addSetting($event, 'attraction')"> Label attraction </div>
+  <div class="menu-item" ng-show="!showRadius() && side.project.edgeBundle"
+    ng-click="addSetting($event, 'radius')"> Neighborhood radius </div>
 </div>

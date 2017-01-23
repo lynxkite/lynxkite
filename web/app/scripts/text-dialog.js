@@ -4,7 +4,7 @@
 angular.module('biggraph').directive('textDialog', function($timeout) {
   return {
     restrict: 'E',
-    scope: { buttonText: '@', onOk: '&', startValue: '@' },
+    scope: { buttonText: '@', onOk: '&', startValue: '@', help: '@' },
     templateUrl: 'text-dialog.html',
     link: function(scope, element) {
       var inputBox = element.find('#dialogInput');
