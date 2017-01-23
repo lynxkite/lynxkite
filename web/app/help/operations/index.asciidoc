@@ -159,9 +159,9 @@ include::copy-edges-to-segmentation.asciidoc[]
 
 include::copy-graph-into-a-segmentation.asciidoc[]
 
-include::copy-scalar.asciidoc[]
-
 include::copy-scalar-from-other-project.asciidoc[]
+
+include::copy-scalar.asciidoc[]
 
 include::copy-segmentation.asciidoc[]
 
@@ -322,6 +322,14 @@ include::segment-by-event-sequence.asciidoc[]
 include::segment-by-interval.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
+
+include::set-edge-attribute-icon.asciidoc[]
+
+include::set-scalar-icon.asciidoc[]
+
+include::set-segmentation-icon.asciidoc[]
+
+include::set-vertex-attribute-icon.asciidoc[]
 
 include::shortest-path.asciidoc[]
 
