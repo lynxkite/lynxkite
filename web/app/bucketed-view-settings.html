@@ -1,0 +1,34 @@
+<table>
+  <tr>
+    <td>Buckets:</td>
+    <td>
+      <lazy-slider value="side.state.bucketCount"></lazy-slider>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      Compute precise bucket sizes:
+    </td>
+    <td>
+      <input type="checkbox" ng-model="side.state.preciseBucketSizes">
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <help-popup href="relative-edge-density"></help-popup>
+      Relative edge density:
+    </td>
+    <td>
+      <input type="checkbox" ng-model="side.state.relativeEdgeDensity">
+    </td>
+  </tr>
+</table>
+
+<div ng-if="side.state.graphMode">
+  <text-dialog id="save-visualization-dialog"
+               button-text="Save Visualization"
+               on-ok="side.saveStateToBackend(userText, finishedCallback)"
+               start-value="visualization 1">
+  </text-dialog>
+  <help-popup href="saving-visualizations"></help-popup>
+</div>
