@@ -1322,6 +1322,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
       }
+      project.setElementMetadata(VertexAttributeKind, "income", "icon", "money_bag")
+      project.setElementMetadata(VertexAttributeKind, "location", "icon", "paw_prints")
     }
   })
 
@@ -1864,7 +1866,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_created_edges", "", Map()))
       } else {
         List()
       }
@@ -1891,7 +1893,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_total_edges", "", Map()))
       } else {
         List()
       }
@@ -2499,6 +2501,78 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             please discard it or choose another name""")
       project.scalars(params("to")) = project.scalars(params("from"))
       project.scalars(params("from")) = null
+    }
+  })
+
+  register("Set scalar icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = scalars),
+      Param("icon", "Icon name"))
+    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params("icon")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params("icon")
+      project.setElementMetadata(ScalarKind, name, "icon", icon)
+    }
+  })
+
+  register("Set vertex attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = vertexAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(VertexAttributeKind, name, "icon", icon)
+        case None =>
+          project.setElementMetadata(VertexAttributeKind, name, "icon", null)
+      }
+    }
+  })
+
+  register("Set edge attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = edgeAttributes),
+      Param("icon", "Icon name"))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params("icon")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params("icon")
+      project.setElementMetadata(EdgeAttributeKind, name, "icon", icon)
+    }
+  })
+
+  register("Set segmentation icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = segmentations),
+      Param("icon", "Icon name"))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params("icon")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params("icon")
+      project.setElementMetadata(SegmentationKind, name, "icon", icon)
     }
   })
 
