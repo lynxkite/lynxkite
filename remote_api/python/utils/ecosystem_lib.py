@@ -2,6 +2,7 @@ from utils.emr_lib import EMRLib
 import os
 import argparse
 import datetime
+import boto3
 
 arg_parser = argparse.ArgumentParser()
 
@@ -60,6 +61,12 @@ arg_parser.add_argument(
   which will be restored after the cluster was started. The metadata will not be
   saved when the cluster is shut down.''')
 arg_parser.add_argument(
+    '--s3_metadata_version',
+    help='''If it is not empty, it contains a folder name inside the `s3_metadata_dir`
+  folder and the metadata will be restored from this subfolder. The format of the name
+  of this version folder is `YYMMDDHHMMSS` e.g. `20170123164600`.
+  If it's empty, the script will use the latest version in `s3_metadata_dir`.''')
+arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
     help='''The responsible person for this EMR cluster.''')
@@ -95,6 +102,7 @@ class Ecosystem:
         'log_dir': args.log_dir,
         's3_data_dir': args.s3_data_dir,
         's3_metadata_dir': args.s3_metadata_dir,
+        's3_metadata_version': args.s3_metadata_version,
     }
     self.cluster = None
     self.instances = []
@@ -148,9 +156,22 @@ class Ecosystem:
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
+  def get_metadata_version(self, s3_bucket):
+    # Gives back the "latest" version from the `s3_bucket`.
+    # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
+    client = boto3.client('s3')
+    paginator = client.get_paginator('list_objects')
+    result = paginator.paginate(Bucket=s3_bucket, Delimiter='/')
+    return sorted([prefix.get('Prefix') for prefix in result.search('CommonPrefixes')])[-1]
+
   def restore_metadata(self):
-    # TODO versioning metadata
-    s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
+    s3_metadata_dir_prefix = self.lynxkite_config['s3_metadata_dir']
+    version = self.lynxkite_config['s3_metadata_version']
+    if version:
+      s3_metadata_dir = s3_metadata_dir_prefix + version + '/'
+    else:
+      s3_metadata_dir = s3_metadata_dir_prefix + self.get_metadata_version(s3_metadata_dir_prefix)
+
     print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
     self.cluster.ssh('''
       set -x
