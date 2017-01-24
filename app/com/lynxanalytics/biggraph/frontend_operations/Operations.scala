@@ -2507,7 +2507,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Set scalar icon", new UtilityOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = scalars),
-      Param("icon", "Icon name"))
+      Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
     override def summary(params: Map[String, String]) = {
       val name = params("name")
@@ -2545,7 +2545,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Set edge attribute icon", new UtilityOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = edgeAttributes),
-      Param("icon", "Icon name"))
+      Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No vertex attributes")
     override def summary(params: Map[String, String]) = {
       val name = params("name")
@@ -2562,7 +2562,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Set segmentation icon", new UtilityOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = segmentations),
-      Param("icon", "Icon name"))
+      Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No vertex attributes")
     override def summary(params: Map[String, String]) = {
       val name = params("name")
