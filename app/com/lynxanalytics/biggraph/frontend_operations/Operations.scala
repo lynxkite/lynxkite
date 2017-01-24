@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
@@ -3471,6 +3472,40 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.vertexAttributes(params("output")) = prediction
       }
     })
+
+  register("Lookup region", new VertexAttributesOperation(_, _) {
+    override def parameters = List(
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
+      Param("attribute", "Attribute from the Shapefile"),
+      Param("output", "Output name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    import java.io.File
+
+    def apply(params: Map[String, String]) = {
+      val shapeFilePath = params("shapefile")
+      assert(listShapefiles().exists(f => f.id == shapeFilePath),
+        "Shapefile deleted, please choose another.")
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val result = op(op.coordinates, position).result
+      project.newVertexAttribute(params("output"), result.attribute)
+    }
+
+    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    private val shapeDir = s"$metaDir/resources/shapefiles/"
+
+    private def listShapefiles(): List[FEOption] = {
+      def lsR(f: File): Array[File] = {
+        val files = f.listFiles()
+        if (files == null)
+          return Array.empty
+        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+      }
+      lsR(new File(shapeDir)).toList.map(f =>
+        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+    }
+  })
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
