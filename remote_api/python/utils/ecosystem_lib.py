@@ -59,7 +59,8 @@ arg_parser.add_argument(
     '--s3_metadata_bucket',
     help='''If it is not empty, it contains the S3 bucket of saved metadata,
   which will be restored after the cluster was started. The metadata will not be
-  saved when the cluster is shut down.''')
+  saved when the cluster is shut down. The format is `bucket-name` without
+  the `s3://` prefix and without the trailing slash.''')
 arg_parser.add_argument(
     '--s3_metadata_version',
     help='''If it is not empty, it contains a folder name inside the `s3_metadata_bucket`
@@ -154,6 +155,7 @@ class Ecosystem:
         lk_conf['s3_metadata_version'])
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
+        lk_conf['s3_metadata_bucket'],
         conf['emr_instance_count'])
     self.config_aws_s3_native()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
@@ -161,16 +163,21 @@ class Ecosystem:
     print('LynxKite ecosystem was started by supervisor.')
 
   def set_s3_metadata_dir(self, s3_bucket, metadata_version):
-    if metadata_version:
-      self.lynxkite_config['s3_metadata_dir'] = s3_bucket + metadata_version + '/'
-    else:
-      # Gives back the "latest" version from the `s3_bucket`.
-      # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
-      client = boto3.client('s3')
-      paginator = client.get_paginator('list_objects')
-      result = paginator.paginate(Bucket=s3_bucket, Delimiter='/')
-      version = sorted([prefix.get('Prefix') for prefix in result.search('CommonPrefixes')])[-1]
-      self.lynxkite_config['s3_metadata_dir'] = s3_bucket + version + '/'
+    if s3_bucket:
+      if not metadata_version:
+        # Gives back the "latest" version from the `s3_bucket`.
+        # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
+        client = boto3.client('s3')
+        paginator = client.get_paginator('list_objects')
+        result = paginator.paginate(Bucket=s3_bucket, Delimiter='/')
+        # Name of the alphabetically last folder without the trailing slash.
+        version = sorted([prefix.get('Prefix')
+                          for prefix in result.search('CommonPrefixes')])[-1][:-1]
+      else:
+        version = metadata_version
+      self.lynxkite_config['s3_metadata_dir'] = 's3://{buc}/{ver}/'.format(
+          buc=s3_bucket,
+          ver=version)
 
   def restore_metadata(self):
     s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
@@ -277,7 +284,7 @@ class Ecosystem:
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
     ''')
 
-  def config_and_prepare_native(self, s3_data_dir, emr_instance_count):
+  def config_and_prepare_native(self, s3_data_dir, s3_metadata_bucket, emr_instance_count):
     hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
     if s3_data_dir:
       data_dir_config = '''
@@ -314,6 +321,7 @@ class Ecosystem:
         # for tests with mysql server on master
         export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
         export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=7200
+        export KITE_S3_METADATA_BUCKET={s3_metadata_bucket}
 EOF
       echo 'Creating hdfs directory.'
       source config/central
@@ -322,7 +330,10 @@ EOF
       # TODO: Find a more sane directory.
       sudo mkdir -p /tasks_data
       sudo chmod a+rwx /tasks_data
-    '''.format(num_executors=emr_instance_count - 1, data_dir_config=data_dir_config))
+    '''.format(
+        num_executors=emr_instance_count - 1,
+        s3_metadata_bucket=s3_metadata_bucket,
+        data_dir_config=data_dir_config))
 
   def config_aws_s3_native(self):
     self.cluster.ssh('''
