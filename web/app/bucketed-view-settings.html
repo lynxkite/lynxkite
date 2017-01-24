@@ -1,25 +1,36 @@
-<table>
-  <tr>
-    <td>Buckets:</td>
-    <td>
-      <lazy-slider value="side.state.bucketCount"></lazy-slider>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      Compute precise bucket sizes:
-    </td>
-    <td>
-      <input type="checkbox" ng-model="side.state.preciseBucketSizes">
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <help-popup href="relative-edge-density"></help-popup>
-      Relative edge density:
-    </td>
-    <td>
-      <input type="checkbox" ng-model="side.state.relativeEdgeDensity">
-    </td>
-  </tr>
-</table>
+<div class="entity" id="setting-buckets">
+  <span class="title">{{ side.state.bucketCount }}&times;{{ side.state.bucketCount }} buckets</span>
+</div>
+<div class="menu entity-menu" id="menu-setting-buckets">
+  <lazy-slider value="side.state.bucketCount"></lazy-slider>
+</div>
+
+<div class="entity" id="setting-precise" ng-show="side.state.preciseBucketSizes">
+  <span class="title">precise counts</span>
+</div>
+<div class="menu entity-menu" id="menu-setting-precise">
+  <div class="menu-item"
+    ng-click="side.state.preciseBucketSizes = false; closeDrop($event)">
+    Cancel </div>
+</div>
+
+<div class="entity" id="setting-relative" ng-show="side.state.relativeEdgeDensity">
+  <span class="title">relative edge densities</span>
+</div>
+<div class="menu entity-menu" id="menu-setting-relative">
+  <div class="menu-item"
+    ng-click="side.state.relativeEdgeDensity = false; closeDrop($event)">
+    Cancel </div>
+</div>
+
+<div class="entity" id="setting-add" ng-hide="everythingDisplayed()" tooltip="More settings">
+  <span class="title"><i class="glyphicon glyphicon-wrench"></i></span>
+</div>
+<div class="menu entity-menu" id="menu-setting-add">
+  <div class="menu-item" ng-hide="side.state.preciseBucketSizes"
+    ng-click="side.state.preciseBucketSizes = true; closeDrop($event)">
+    Precise counts </div>
+  <div class="menu-item" ng-hide="side.state.relativeEdgeDensity"
+    ng-click="side.state.relativeEdgeDensity = true; closeDrop($event)">
+    Relative edge densities <help-popup href="relative-edge-density"></help-popup> </div>
+</div>

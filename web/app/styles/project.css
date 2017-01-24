@@ -141,7 +141,8 @@ input.save-as {
   text-decoration: underline;
 }
 
-sampled-view-settings .entity {
+sampled-view-settings .entity,
+bucketed-view-settings .entity {
   background: hsl(194,50%,80%);
 }
 
