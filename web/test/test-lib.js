@@ -862,8 +862,11 @@ testLib = {
 
   authenticateAndPost: function(username, password, method, func) {
     function sendRequest() {
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       var defer = protractor.promise.defer();
+      if (!process.env.HTTPS_PORT) {
+        return func(defer);
+      }
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       var req = request.defaults({ jar: true });
       req.post(
         browser.baseUrl + 'passwordLogin',
