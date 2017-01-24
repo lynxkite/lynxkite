@@ -51,6 +51,11 @@ object EdgeAttributeKind extends ElementKind("edge attribute")
 object ScalarKind extends ElementKind("scalar")
 object SegmentationKind extends ElementKind("segmentation")
 
+// Keys for elementMetadata.
+object MetadataNames {
+  val Icon = "icon"
+}
+
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
   vertexSetGUID: Option[UUID],
