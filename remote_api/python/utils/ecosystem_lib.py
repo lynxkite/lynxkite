@@ -56,16 +56,16 @@ arg_parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
 arg_parser.add_argument(
-    '--s3_metadata_dir',
-    help='''If it is not empty, it contains the S3 path of saved metadata,
+    '--s3_metadata_bucket',
+    help='''If it is not empty, it contains the S3 bucket of saved metadata,
   which will be restored after the cluster was started. The metadata will not be
   saved when the cluster is shut down.''')
 arg_parser.add_argument(
     '--s3_metadata_version',
-    help='''If it is not empty, it contains a folder name inside the `s3_metadata_dir`
+    help='''If it is not empty, it contains a folder name inside the `s3_metadata_bucket`
   folder and the metadata will be restored from this subfolder. The format of the name
   of this version folder is `YYMMDDHHMMSS` e.g. `20170123164600`.
-  If it's empty, the script will use the latest version in `s3_metadata_dir`.''')
+  If it's empty, the script will use the latest version in `s3_metadata_bucket`.''')
 arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
@@ -101,8 +101,9 @@ class Ecosystem:
         'lynx_release_dir': args.lynx_release_dir,
         'log_dir': args.log_dir,
         's3_data_dir': args.s3_data_dir,
-        's3_metadata_dir': args.s3_metadata_dir,
+        's3_metadata_bucket': args.s3_metadata_bucket,
         's3_metadata_version': args.s3_metadata_version,
+        's3_metadata_dir': '',
     }
     self.cluster = None
     self.instances = []
@@ -148,6 +149,9 @@ class Ecosystem:
         lk_conf['lynx_version'],
         lk_conf['biggraph_releases_dir'])
     self.install_native_dependencies()
+    self.set_s3_metadata_dir(
+        lk_conf['s3_metadata_bucket'],
+        lk_conf['s3_metadata_version'])
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
         conf['emr_instance_count'])
@@ -156,22 +160,20 @@ class Ecosystem:
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
-  def get_metadata_version(self, s3_bucket):
-    # Gives back the "latest" version from the `s3_bucket`.
-    # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
-    client = boto3.client('s3')
-    paginator = client.get_paginator('list_objects')
-    result = paginator.paginate(Bucket=s3_bucket, Delimiter='/')
-    return sorted([prefix.get('Prefix') for prefix in result.search('CommonPrefixes')])[-1]
+  def set_s3_metadata_dir(self, s3_bucket, metadata_version):
+    if metadata_version:
+      self.lynxkite_config['s3_metadata_dir'] = s3_bucket + metadata_version + '/'
+    else:
+      # Gives back the "latest" version from the `s3_bucket`.
+      # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
+      client = boto3.client('s3')
+      paginator = client.get_paginator('list_objects')
+      result = paginator.paginate(Bucket=s3_bucket, Delimiter='/')
+      version = sorted([prefix.get('Prefix') for prefix in result.search('CommonPrefixes')])[-1]
+      self.lynxkite_config['s3_metadata_dir'] = s3_bucket + version + '/'
 
   def restore_metadata(self):
-    s3_metadata_dir_prefix = self.lynxkite_config['s3_metadata_dir']
-    version = self.lynxkite_config['s3_metadata_version']
-    if version:
-      s3_metadata_dir = s3_metadata_dir_prefix + version + '/'
-    else:
-      s3_metadata_dir = s3_metadata_dir_prefix + self.get_metadata_version(s3_metadata_dir_prefix)
-
+    s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
     print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
     self.cluster.ssh('''
       set -x
