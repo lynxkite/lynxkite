@@ -1322,8 +1322,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
       }
-      project.setElementMetadata(VertexAttributeKind, "income", "icon", "money_bag")
-      project.setElementMetadata(VertexAttributeKind, "location", "icon", "paw_prints")
+      project.setElementMetadata(VertexAttributeKind, "income", MetadataNames.Icon, "money_bag")
+      project.setElementMetadata(VertexAttributeKind, "location", MetadataNames.Icon, "paw_prints")
     }
   })
 
@@ -2518,9 +2518,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val name = params("name")
       params.get("icon") match {
         case Some(icon) =>
-          project.setElementMetadata(ScalarKind, name, "icon", icon)
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, icon)
         case None =>
-          project.setElementMetadata(ScalarKind, name, "icon", null)
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, null)
       }
     }
   })
@@ -2539,9 +2539,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val name = params("name")
       params.get("icon") match {
         case Some(icon) =>
-          project.setElementMetadata(VertexAttributeKind, name, "icon", icon)
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, icon)
         case None =>
-          project.setElementMetadata(VertexAttributeKind, name, "icon", null)
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, null)
       }
     }
   })
@@ -2560,9 +2560,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val name = params("name")
       params.get("icon") match {
         case Some(icon) =>
-          project.setElementMetadata(EdgeAttributeKind, name, "icon", icon)
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, icon)
         case None =>
-          project.setElementMetadata(EdgeAttributeKind, name, "icon", null)
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, null)
       }
     }
   })
@@ -2581,9 +2581,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val name = params("name")
       params.get("icon") match {
         case Some(icon) =>
-          project.setElementMetadata(SegmentationKind, name, "icon", icon)
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, icon)
         case None =>
-          project.setElementMetadata(SegmentationKind, name, "icon", null)
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, null)
       }
     }
   })
