@@ -8,10 +8,10 @@ python-dateutil
 PyYAML
 requests
 sqlalchemy
-boto3
 # Dependencies for developing and testing
 autopep8
 awscli
+boto3
 pandas
 Sphinx
 sphinx-rtd-theme
