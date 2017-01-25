@@ -234,7 +234,7 @@
     <div class="entity-section-label"
          ng-show="side.state.graphMode && !side.showSection('view-settings')">
       <span class="label-text" ng-click="side.showSection('view-settings', true)">
-        View settings are hidden. </span>
+        Visualization settings are hidden. </span>
     </div>
     <div class="extra-controls"
          ng-if="side.state.graphMode"
@@ -243,7 +243,7 @@
       <div ng-if="side.state.graphMode === 'sampled'">
         <div class="entity-section-label">
           <span class="label-text" ng-click="side.showSection('view-settings', false)">
-            Sampled view settings </span>
+            Visualization settings </span>
           <help-popup href="concrete-view-settings"></help-popup>
         </div>
         <sampled-view-settings side="side"></sampled-view-settings>
@@ -253,7 +253,7 @@
       <div ng-if="side.state.graphMode === 'bucketed'">
         <div class="entity-section-label">
           <span class="label-text" ng-click="side.showSection('view-settings', false)">
-            Bucketed view settings </span>
+            Visualization settings </span>
         </div>
         <bucketed-view-settings side="side"></bucketed-view-settings>
       </div>
