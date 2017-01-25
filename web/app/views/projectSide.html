@@ -230,31 +230,6 @@
       <acl-settings reload="side.reload()" path="side.state.projectName" entity="side.project"></acl-settings>
     </div>
 
-    <div class="entity-sections">
-      <div ng-repeat="section in side.sections">
-        <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
-          <div class="entity-section-label">
-            <span class="label-text" ng-click="side.showSection(section, false)">
-              {{ side.sectionHumanName[section] }} </span>
-            <help-popup href="{{ side.sectionHelp[section] }}"></help-popup>
-          </div>
-        </div>
-        <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
-             class="entity-section-label">
-          <span class="label-text" ng-click="side.showSection(section, true)">
-            {{ side.sectionElements(section).length }}
-            {{ side.sectionHumanName[section] | lowercase }}
-            are hidden. </span>
-        </div>
-        <div class="entity-list" ng-show="side.showSection(section)">
-          <entity ng-repeat="e in side.sectionElements(section)"
-                  kind="{{ section }}"
-                  entity="e"
-                  side="side"></entity>
-        </div>
-      </div>
-    </div>
-
     <!-- Extra controls for visualizations. -->
     <div class="entity-section-label"
          ng-show="side.state.graphMode && !side.showSection('view-settings')">
@@ -293,6 +268,33 @@
 
     </div>
 
+    <!-- Attributes/segmentations. -->
+    <div class="entity-sections">
+      <div ng-repeat="section in side.sections">
+        <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
+          <div class="entity-section-label">
+            <span class="label-text" ng-click="side.showSection(section, false)">
+              {{ side.sectionHumanName[section] }} </span>
+            <help-popup href="{{ side.sectionHelp[section] }}"></help-popup>
+          </div>
+        </div>
+        <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
+             class="entity-section-label">
+          <span class="label-text" ng-click="side.showSection(section, true)">
+            {{ side.sectionElements(section).length }}
+            {{ side.sectionHumanName[section] | lowercase }}
+            are hidden. </span>
+        </div>
+        <div class="entity-list" ng-show="side.showSection(section)">
+          <entity ng-repeat="e in side.sectionElements(section)"
+                  kind="{{ section }}"
+                  entity="e"
+                  side="side"></entity>
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL box. -->
     <div class="sql-box-section">
         <div class="entity-section-label">
           <span class="label-text" ng-click="side.showSection('sql', !side.showSection('sql'))">
