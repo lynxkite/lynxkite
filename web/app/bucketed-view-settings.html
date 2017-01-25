@@ -23,7 +23,7 @@
     Cancel </div>
 </div>
 
-<div class="entity" id="setting-add" ng-hide="everythingDisplayed()" tooltip="More settings">
+<div class="entity" id="setting-add" tooltip="More settings">
   <span class="title"><i class="glyphicon glyphicon-wrench"></i></span>
 </div>
 <div class="menu entity-menu" id="menu-setting-add">
@@ -33,4 +33,18 @@
   <div class="menu-item" ng-hide="side.state.relativeEdgeDensity"
     ng-click="side.state.relativeEdgeDensity = true; closeDrop($event)">
     Relative edge densities <help-popup href="relative-edge-density"></help-popup> </div>
+
+  <div class="menu-item"
+       ng-hide="savingVisualization"
+       ng-click="startSavingVisualization($event)"
+       id="menu-save-visualization">
+    <i class="glyphicon glyphicon-floppy-disk"></i> Save visualization...
+    <help-popup href="saving-visualizations"></help-popup>
+  </div>
+  <form ng-show="savingVisualization" ng-submit="saveVisualization($event)">
+    <input class="form-control"
+           placeholder="Visualization name"
+           ng-model="saveVisualizationName"
+           id="save-visualization-name">
+  </form>
 </div>

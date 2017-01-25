@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('bucketedViewSettings', function() {
+angular.module('biggraph').directive('bucketedViewSettings', function($timeout) {
   return {
     scope: { side: '=' },
     restrict: 'E',
@@ -23,6 +23,9 @@ angular.module('biggraph').directive('bucketedViewSettings', function() {
             constraints: [{ to: 'window', attachment: 'together', pin: true, }],
           },
         });
+        drop.on('close', function() { $timeout(function() {
+          scope.savingVisualization = false;
+        }); });
         drops['menu-' + e.id] = drop;
       });
 
@@ -36,12 +39,24 @@ angular.module('biggraph').directive('bucketedViewSettings', function() {
         }
       }
 
-      scope.everythingDisplayed = function() {
-        return scope.side.state.preciseBucketSizes && scope.side.state.relativeEdgeDensity;
-      };
-
       scope.closeDrop = function(e) {
         getDrop(e).close();
+      };
+
+      scope.startSavingVisualization = function(e) {
+        scope.savingVisualization = true;
+        $timeout(function() {
+          angular.element(getDrop(e).content).find('#save-visualization-name').focus();
+        });
+      };
+
+      scope.saveVisualization = function(e) {
+        scope.side.saveStateToBackend(
+            scope.saveVisualizationName,
+            function() {
+              scope.savingVisualization = false;
+              scope.closeDrop(e);
+            });
       };
     },
   };

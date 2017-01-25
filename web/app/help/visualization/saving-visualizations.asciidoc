@@ -1,8 +1,8 @@
 ## Saving visualizations
 
-You can save your current visualization settings using the _"Save visualization"_ button (only
-visible when visualization is enabled). Just type a name, press _"Save visualization"_ again and a
+You can save your current visualization settings using the _"Save visualization"_ option in the
+visualization settings menu. Just type a name, press Enter. A
 new entry with the name you have given will show up in the _Graph attributes_ section.
 
-You can reload the saved visualization options by clicking the saved settings, and _"Load
+You can reload the saved visualization options by clicking the saved settings, and picking _"Load
 visualization"_ in the drop-down menu.
