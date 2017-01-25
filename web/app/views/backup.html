@@ -1,4 +1,4 @@
-<div class="col-sm-offset-3 col-sm-6">
+<div class="col-sm-offset-2 col-sm-8">
 
     <h1>EMR backup</h1>
     <div>
@@ -11,26 +11,28 @@
         <h2>Backup settings</h2>
         <table class="table">
             <tr>
-                <td><b>S3 data backup dir</b> (KITE_DATA_DIR)</td>
-                <td> <tt>{{backupSettings.dataDir}}</tt></td>
+                <td><b>S3 data backup dir</b> <br>(KITE_DATA_DIR)</td>
+                <td> <div class="col-sm-12"><tt>{{backupSettings.dataDir}}</tt></div></td>
             </tr>
             <tr>
-                <td><b>HDFS data dir</b> (KITE_EPHEMERAL_DATA_DIR)</td>
-                <td> <tt>{{backupSettings.emphemeralDataDir}}</tt></td>
+                <td><b>HDFS data dir</b> <br>(KITE_EPHEMERAL_DATA_DIR)</td>
+                <td><div class="col-sm-12"> <tt>{{backupSettings.emphemeralDataDir}}</tt></div></td>
             </tr>
             <tr>
                 <td><b>S3 metadata backup bucket</b></td>
                 <td>
+                    <div class="col-sm-12">
                     <input class="form-control ng-pristine ng-valid ng-touched"
-                           ng-model="backupSettings.s3MetadataBucket" type="text">
+                           ng-model="backupSettings.s3MetadataBucket" type="text" size="30">
+                    </div>
                 </td>
             </tr>
             <tr>
                 <td><b>S3 metadata backup dir</b></td>
                 <td>
-                    <tt>
+                    <div class="col-sm-12"><tt>
                         s3://{{backupSettings.s3MetadataBucket}}/{{backupSettings.metadataVersionTimestamp}}/
-                    </tt>
+                    </tt></div>
                 </td>
             </tr>
             <tr>
