@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('sampledViewSettings', function() {
+angular.module('biggraph').directive('sampledViewSettings', function($timeout) {
   return {
     scope: { side: '=' },
     restrict: 'E',
@@ -24,6 +24,9 @@ angular.module('biggraph').directive('sampledViewSettings', function() {
             constraints: [{ to: 'window', attachment: 'together', pin: true, }],
           },
         });
+        drop.on('close', function() { $timeout(function() {
+          scope.savingVisualization = false;
+        }); });
         drops['menu-' + e.id] = drop;
       });
 
@@ -49,23 +52,25 @@ angular.module('biggraph').directive('sampledViewSettings', function() {
           (show.radius || scope.side.state.sampleRadius.toString() !== '1'));
       };
 
-      scope.everythingDisplayed = function() {
-        if (scope.side.state.display === 'svg') {
-          return (
-            scope.showDisplay() &&
-            scope.showLayout() &&
-            scope.showAttraction() &&
-            (!scope.side.project.edgeBundle || scope.showRadius()));
-        } else {
-          return (
-            scope.showDisplay() &&
-            (!scope.side.project.edgeBundle || scope.showRadius()));
-        }
-      };
-
       scope.addSetting = function(e, setting) {
         show[setting] = true;
         getDrop(e).close();
+      };
+
+      scope.startSavingVisualization = function(e) {
+        scope.savingVisualization = true;
+        $timeout(function() {
+          angular.element(getDrop(e).content).find('#save-visualization-name').focus();
+        });
+      };
+
+      scope.saveVisualization = function(e) {
+        scope.side.saveStateToBackend(
+            scope.saveVisualizationName,
+            function() {
+              scope.savingVisualization = false;
+              getDrop(e).close();
+            });
       };
     },
   };

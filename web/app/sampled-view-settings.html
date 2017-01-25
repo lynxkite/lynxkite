@@ -89,7 +89,7 @@
          ng-model="side.state.sampleRadius">
 </div>
 
-<div class="entity" id="setting-add" ng-hide="everythingDisplayed()" tooltip="More settings">
+<div class="entity" id="setting-add" tooltip="More settings">
   <span class="title"><i class="glyphicon glyphicon-wrench"></i></span>
 </div>
 <div class="menu entity-menu" id="menu-setting-add">
@@ -101,4 +101,18 @@
     ng-click="addSetting($event, 'attraction')"> Label attraction </div>
   <div class="menu-item" ng-show="!showRadius() && side.project.edgeBundle"
     ng-click="addSetting($event, 'radius')"> Neighborhood radius </div>
+
+  <div class="menu-item"
+       ng-hide="savingVisualization"
+       ng-click="startSavingVisualization($event)"
+       id="menu-save-visualization">
+    <i class="glyphicon glyphicon-floppy-disk"></i> Save visualization...
+    <help-popup href="saving-visualizations"></help-popup>
+  </div>
+  <form ng-show="savingVisualization" ng-submit="saveVisualization($event)">
+    <input class="form-control"
+           placeholder="Visualization name"
+           ng-model="saveVisualizationName"
+           id="save-visualization-name">
+  </form>
 </div>
