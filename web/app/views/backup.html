@@ -1,10 +1,57 @@
 <div class="col-sm-offset-3 col-sm-6">
 
-    <h1>Backup</h1>
-    <p>Data dir: {{backupSettings.dataDir}}</p>
-    <p>Emphemeral data dir: {{backupSettings.emphemeralDataDir}}</p>
-    <p>S3 metadata bucket: {{backupSettings.s3MetadataBucket}}</p>
+    <h1>EMR backup</h1>
+    <div>
+        <h2>How to use this function</h2>
+        <p>The 'EMR backup' function is only usable, when LynxKite was started on an Amazon
+        instance with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
+        <tt>KITE_EMPHEMERAL_DATA_DIR</tt> are set according to the admin manual.</p>
+    </div>
+    <div>
+        <h2>Backup settings</h2>
+        <table class="table">
+            <tr>
+                <td><b>S3 data backup dir</b> (KITE_DATA_DIR)</td>
+                <td> <tt>{{backupSettings.dataDir}}</tt></td>
+            </tr>
+            <tr>
+                <td><b>HDFS data dir</b> (KITE_EPHEMERAL_DATA_DIR)</td>
+                <td> <tt>{{backupSettings.emphemeralDataDir}}</tt></td>
+            </tr>
+            <tr>
+                <td><b>S3 metadata backup bucket</b></td>
+                <td>
+                    <input class="form-control ng-pristine ng-valid ng-touched"
+                           ng-model="backupSettings.s3MetadataBucket" type="text">
+                </td>
+            </tr>
+            <tr>
+                <td><b>S3 metadata backup dir</b></td>
+                <td>
+                    <tt>
+                        s3://{{backupSettings.s3MetadataBucket}}/{{backupSettings.metadataVersionTimestamp}}/
+                    </tt>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button type="submit" class="btn btn-success" ng-click="backupToS3()" ng-disabled="isDisabled()">
+                        Backup data to S3
+                    </button>
+                    <span id="cleaner-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
+                </td>
+                <td> </td>
+                <td> </td>
+            </tr>
+        </table>
+    </div>
 
+    <div ng-show="success">
+        <p id="backup-success">&#x2713; {{ status }}<p>
+        <p>Data saved to <b>{{backupSettings.dataDir}}</b></p>
+        <p>Metadata saved to
+        <b>s3://{{backupSettings.s3MetadataBucket}}/{{backupSettings.metadataVersionTimestamp}}/</b></p>
+    </div>
 
 
     <bottom-links info="list"></bottom-links>

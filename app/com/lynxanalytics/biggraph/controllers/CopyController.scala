@@ -10,7 +10,8 @@ import com.lynxanalytics.biggraph.serving
 case class BackupSettings(
   dataDir: String = "",
   emphemeralDataDir: String = "",
-  s3MetadataBucket: String = "")
+  s3MetadataBucket: String = "",
+  metadataVersionTimestamp: String = "")
 
 class CopyController(environment: BigGraphEnvironment, sparkClusterController: SparkClusterController) {
   private def lsRec(root: HadoopFile): Seq[HadoopFile] = {
@@ -29,10 +30,14 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
   }
 
   def getBackupSettings(user: serving.User, req: serving.Empty): BackupSettings = {
+    import java.util.Calendar
+    import java.text.SimpleDateFormat
+    val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
     BackupSettings(
       dataDir = LoggedEnvironment.envOrElse("KITE_DATA_DIR", "UNDEF"),
       emphemeralDataDir = LoggedEnvironment.envOrElse("KITE_EPHEMERAL_DATA_DIR", "UNDEF"),
-      s3MetadataBucket = LoggedEnvironment.envOrElse("KITE_S3_METADATA_BUCKET", "UNDEF"))
+      s3MetadataBucket = LoggedEnvironment.envOrElse("KITE_S3_METADATA_BUCKET", "UNDEF"),
+      metadataVersionTimestamp = ts)
   }
 
   def copyEphemeral(user: serving.User, req: serving.Empty): Unit = {
