@@ -4,8 +4,13 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.hadoop
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, LoggedEnvironment }
 import com.lynxanalytics.biggraph.serving
+
+case class BackupSettings(
+  dataDir: String = "",
+  emphemeralDataDir: String = "",
+  s3MetadataBucket: String = "")
 
 class CopyController(environment: BigGraphEnvironment, sparkClusterController: SparkClusterController) {
   private def lsRec(root: HadoopFile): Seq[HadoopFile] = {
@@ -21,6 +26,13 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     ls(Seq(root.path)).map {
       file => root.hadoopFileForGlobOutput(file.toString)
     }
+  }
+
+  def getBackupSettings(user: serving.User, req: serving.Empty): BackupSettings = {
+    BackupSettings(
+      dataDir = LoggedEnvironment.envOrElse("KITE_DATA_DIR", "UNDEF"),
+      emphemeralDataDir = LoggedEnvironment.envOrElse("KITE_EPHEMERAL_DATA_DIR", "UNDEF"),
+      s3MetadataBucket = LoggedEnvironment.envOrElse("KITE_S3_METADATA_BUCKET", "UNDEF"))
   }
 
   def copyEphemeral(user: serving.User, req: serving.Empty): Unit = {
