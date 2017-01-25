@@ -71,9 +71,12 @@ libraryDependencies ++= Seq(
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   //The Google Cloud Storage connector for Spark and Hive
-  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2")
+  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
+  "org.geotools" % "gt-shapefile" % "16.1")
 
-resolvers += "Twitter Repository" at "http://maven.twttr.com"
+resolvers ++= Seq(
+  "Twitter Repository" at "http://maven.twttr.com",
+  "Geospatial Foundation Repository" at "http://download.osgeo.org/webdav/geotools/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
