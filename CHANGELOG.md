@@ -21,6 +21,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
 
+Ecosystem:
+ - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
+
 ### 1.11.0
 
 LynxKite:
