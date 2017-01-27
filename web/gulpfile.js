@@ -81,7 +81,7 @@ gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], functio
     .pipe($.sourcemaps.write('maps'));
   var staticFiles = gulp.src([
     'app/*.{png,svg}',
-    'app/images/*',
+    'app/images/**',
     'app/**/*.html', '!app/index.html',
     ], { base: 'app' });
   // Move Bootstrap fonts to where the relative URLs will find them.
