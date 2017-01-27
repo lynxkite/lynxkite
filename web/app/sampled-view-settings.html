@@ -64,13 +64,13 @@
     </div>
   </span>
 
-  <div class="entity" id="setting-vertices">
+  <div class="entity" id="setting-centers">
     <span class="title">
       centers: {{ side.state.centers.join(', ') || 'nothing' }}
       <span class="spinner" ng-show="side.centerRequest && !side.centerRequest.$resolved">|</span>
     </span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-vertices">
+  <div class="menu entity-menu" id="menu-setting-centers">
     <div> Centers visualized: </div>
     <input class="form-control"
            id="centers"
