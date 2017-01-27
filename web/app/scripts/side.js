@@ -785,5 +785,9 @@ angular.module('biggraph')
       }
     };
 
+    Side.prototype.setIcon = function(kind, name, icon) {
+      return this.applyOp('Set-' + kind + '-icon', { name: name, icon: icon });
+    };
+
     return { Side: Side, defaultSideState: defaultSideState };
   });

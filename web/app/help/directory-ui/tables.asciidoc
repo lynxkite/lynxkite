@@ -7,9 +7,9 @@ system.
 
 Tables can be imported from external data sources like files or databases, or they can be created
 from SQL queries on graphs. Tables just contain data. They cannot be modified and will not change
-even if the imported file is deleted or the source project is updated. A table has to be imported
-into a project to start working with its data. See the import operations on projects for more
-details.
+even if the imported file is deleted or the source project is updated. For a quick overview of
+its data, click on the name of the table. Otherwise, a table has to be imported into a project to
+start working with its data. See the import operations on projects for more details.
 
 Access the dropdown menu for a table in the project browser
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
