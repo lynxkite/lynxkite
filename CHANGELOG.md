@@ -16,9 +16,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Added _Lookup Region_ operation for finding locations inside shapefiles.
  - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
    was trained in an other project.
+ - Clicking on a table or view scrolls to the global SQL box and executes the
+   `select *` query on it.
  - You can submit SQL queries with Ctrl-Enter.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
+
+Ecosystem:
+ - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
 
 ### 1.11.0
 
