@@ -208,7 +208,9 @@ console.log('Starting tests at: ' + startDate);
 
 // After the authentication tests you are logged in, so you don't need to log
 // out and in every time you reach the empty splash state.
-authFw.runAll();
+if (process.env.HTTPS_PORT) {
+  authFw.runAll();
+}
 authlessFw.runAll();
 authlessFw.cleanup();
 

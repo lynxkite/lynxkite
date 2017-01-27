@@ -48,25 +48,29 @@ module.exports = function(fw) {
       }});
   }
 
-  function positions(graph) {
-    var pos = [];
-    for (var i = 0; i < graph.vertices.length; ++i) {
-      pos.push(graph.vertices[i].pos);
-    }
-    return pos;
-  }
-
   // Moves all positions horizontally so that the x coordinate of the leftmost
   // position becomes zero. (Inputs and outputs string lists.)
-  function normalize(positions) {
+  // Shifts in the x coordinate can happen when a second visualization is added, or due to
+  // scrollbars.
+  function normalized(positions) {
     var i, minx;
     for (i = 1; i < positions.length; ++i) {
       var p = positions[i];
       minx = (minx === undefined || p.x < minx) ? p.x : minx;
     }
+    var result = [];
     for (i = 0; i < positions.length; ++i) {
-      positions[i].x -= minx;
+      result.push({ x: positions[i].x - minx, y: positions[i].y });
     }
+    return result;
+  }
+
+  function positions(graph) {
+    var pos = [];
+    for (var i = 0; i < graph.vertices.length; ++i) {
+      pos.push(graph.vertices[i].pos);
+    }
+    return normalized(pos);
   }
 
   var name = lib.left.vertexAttribute('name');
@@ -410,7 +414,6 @@ module.exports = function(fw) {
       var leftPositions;
       lib.visualization.graphData().then(function(graph) {
         leftPositions = positions(graph);
-        normalize(leftPositions);
         expect(graph.vertices.length).toBe(3);
       });
 
@@ -423,7 +426,6 @@ module.exports = function(fw) {
           return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
         }
         var pos = positions(graph);
-        normalize(pos);
         for (var i = 0; i < leftPositions.length; ++i) {
           var found = false;
           for (var j = 0; j < pos.length; ++j) {
