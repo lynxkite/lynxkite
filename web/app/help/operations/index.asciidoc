@@ -301,6 +301,8 @@ include::predict-with-a-neural-network-1st-version.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
+include::random-walk-sample.asciidoc[]
+
 include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
 
 include::rename-edge-attribute.asciidoc[]
