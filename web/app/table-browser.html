@@ -1,0 +1,29 @@
+<div id="table-browser" style="background-color: white;">
+  <div id="table-browser-head">
+    <i>Hint: drag table and column names into the editor box
+    with your mouse.</i>
+
+    <div class="checkbox">
+      <label>
+        <input
+            type="checkbox" ng-model="fullyQualifyNames"
+            id="use-fully-qualified-names"></input>
+        Use fully qualified column names.
+      </label>
+    </div>
+
+    <!-- Search field (not visible in projects). -->
+    <input type="text"
+        id="table-browser-search-box"
+        placeholder="Search"
+        class="form-control ngpristine ng-valid ng-touched"
+        ng-show="directory !== undefined"
+        ng-model="searchQuery"
+        ng-model-options="{ debounce: 300 }">
+    </input>
+  </div>
+  <div id="table-browser-tree">
+    <ul ng-include="'table-browser-node.html'" />
+  </div>
+
+</div>

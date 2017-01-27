@@ -29,6 +29,7 @@ GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/model       com.lynxanalytics.biggraph.serving.ProductionJsonServer.model
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
+GET  /ajax/getTableBrowserNodes     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
 POST /ajax/exportSQLQueryToTable   com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToTable
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV

@@ -224,11 +224,14 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  private def feTypeName[T](e: TypedEntity[T]): String = {
-    e.typeTag.tpe.toString
+  def feTypeName[T](typeTag: TypeTag[T]): String = {
+    typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")
   }
+
+  def feTypeName[T](e: TypedEntity[T]): String =
+    feTypeName(e.typeTag)
 
   private def feIsNumeric[T](e: TypedEntity[T]): Boolean =
     Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
@@ -288,9 +291,9 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
   def implicitTableNames =
-    Option(vertexSet).map(_ => Table.VertexTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
+    Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
+      Option(vertexSet).map(_ => Table.VertexTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
 
@@ -352,10 +355,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   def implicitTableNames =
-    Option(vertexSet).map(_ => Table.VertexTableName) ++
+    Option(belongsTo).map(_ => Table.BelongsToTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
-      Option(belongsTo).map(_ => Table.BelongsToTableName)
+      Option(vertexSet).map(_ => Table.VertexTableName)
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.
