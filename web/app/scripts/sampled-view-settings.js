@@ -1,12 +1,11 @@
 'use strict';
 
-angular.module('biggraph').directive('sampledViewSettings', function($timeout) {
+angular.module('biggraph').directive('sampledViewSettings', function() {
   return {
     scope: { side: '=' },
     restrict: 'E',
     templateUrl: 'sampled-view-settings.html',
     link: function(scope, element) {
-      var show = {};
       var drops = {};
 
       element.find('.entity').each(function(i, e) {
@@ -24,9 +23,6 @@ angular.module('biggraph').directive('sampledViewSettings', function($timeout) {
             constraints: [{ to: 'window', attachment: 'together', pin: true, }],
           },
         });
-        drop.on('close', function() { $timeout(function() {
-          scope.savingVisualization = false;
-        }); });
         drops['menu-' + e.id] = drop;
       });
 
@@ -40,37 +36,10 @@ angular.module('biggraph').directive('sampledViewSettings', function($timeout) {
         }
       }
 
-      scope.showDisplay = function() {
-        return show.display || scope.side.state.display !== 'svg'; };
-      scope.showLayout = function() {
-        return show.layout || scope.side.state.animate.style !== 'neutral'; };
-      scope.showAttraction = function() {
-        return show.attraction || scope.side.state.animate.labelAttraction.toString() !== '0'; };
-      scope.showRadius = function() {
-        return (
-          scope.side.project.edgeBundle &&
-          (show.radius || scope.side.state.sampleRadius.toString() !== '1'));
-      };
-
-      scope.addSetting = function(e, setting) {
-        show[setting] = true;
-        getDrop(e).close();
-      };
-
-      scope.startSavingVisualization = function(e) {
-        scope.savingVisualization = true;
-        $timeout(function() {
-          angular.element(getDrop(e).content).find('#save-visualization-name').focus();
-        });
-      };
-
       scope.saveVisualization = function(e) {
         scope.side.saveStateToBackend(
             scope.saveVisualizationName,
-            function() {
-              scope.savingVisualization = false;
-              getDrop(e).close();
-            });
+            function() { getDrop(e).close(); });
       };
     },
   };

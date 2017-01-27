@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('bucketedViewSettings', function($timeout) {
+angular.module('biggraph').directive('bucketedViewSettings', function() {
   return {
     scope: { side: '=' },
     restrict: 'E',
@@ -9,8 +9,8 @@ angular.module('biggraph').directive('bucketedViewSettings', function($timeout) 
       var drops = {};
 
       element.find('.entity').each(function(i, e) {
-        if (!e.id) { return; }
         var menu = element.find('#menu-' + e.id);
+        if (!menu.length) { return; }
         /* global Drop */
         var drop = new Drop({
           target: e,
@@ -23,9 +23,6 @@ angular.module('biggraph').directive('bucketedViewSettings', function($timeout) 
             constraints: [{ to: 'window', attachment: 'together', pin: true, }],
           },
         });
-        drop.on('close', function() { $timeout(function() {
-          scope.savingVisualization = false;
-        }); });
         drops['menu-' + e.id] = drop;
       });
 
@@ -39,24 +36,10 @@ angular.module('biggraph').directive('bucketedViewSettings', function($timeout) 
         }
       }
 
-      scope.closeDrop = function(e) {
-        getDrop(e).close();
-      };
-
-      scope.startSavingVisualization = function(e) {
-        scope.savingVisualization = true;
-        $timeout(function() {
-          angular.element(getDrop(e).content).find('#save-visualization-name').focus();
-        });
-      };
-
       scope.saveVisualization = function(e) {
         scope.side.saveStateToBackend(
             scope.saveVisualizationName,
-            function() {
-              scope.savingVisualization = false;
-              scope.closeDrop(e);
-            });
+            function() { getDrop(e).close(); });
       };
     },
   };
