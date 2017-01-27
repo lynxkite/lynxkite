@@ -4,8 +4,9 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.hadoop
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, LoggedEnvironment }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile }
 import com.lynxanalytics.biggraph.serving
+import java.io.File
 
 case class BackupSettings(
   dataDir: String = "",
@@ -48,58 +49,28 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
   }
 
   def s3Backup(user: serving.User, req: BackupRequest): Unit = {
-    println()
-    println(req.timestamp)
-    println()
-    val mr = environment.metaGraphManager.repositoryPath
-    println(mr)
-    //val dm = environment.dataManager
-    //dm.waitAllFutures()
-    //dm.synchronized {
-    //copyEphemeral(user, serving.Empty())
-    //copyMetadata(user,req)
-    //}
-  }
-
-  private def copyMetadata(user: serving.User, req: serving.Empty): Unit = {
     val dm = environment.dataManager
-    dm.waitAllFutures()
+    val dst = dm.repositoryPath + "metadata_backup/" + req.timestamp + "/"
     dm.synchronized {
-      dm.waitAllFutures() // We don't want other operations to be running during copyMetadata.
-      // Health checks would fail anyways because we are locking too long on dataManager here.
-      // So we turn them off temporarily.
+      dm.waitAllFutures()
       sparkClusterController.setForceReportHealthy(true)
       try {
-        for (ephemeralPath <- dm.ephemeralPath) {
-          log.info(s"Listing contents of $ephemeralPath...")
-          val srcFiles = lsRec(ephemeralPath)
-          val copies = srcFiles.map { src =>
-            val relative = {
-              assert(src.symbolicName.startsWith(ephemeralPath.symbolicName),
-                s"$src is not in $ephemeralPath")
-              src.symbolicName.drop(ephemeralPath.symbolicName.size)
-            }
-            val dst = dm.repositoryPath + relative
-            src -> dst
-          }
-          log.info(s"Copying ${copies.size} files from $ephemeralPath to ${dm.repositoryPath}...")
-          val rc = dm.runtimeContext
-          val rdd = rc.sparkContext.parallelize(copies)
-          rdd.foreach {
-            case (src, dst) =>
-              hadoop.fs.FileUtil.copy(
-                src.fs, src.path,
-                dst.fs, dst.path,
-                /* deleteSource = */ false, /* overwrite = */ true,
-                dst.hadoopConfiguration)
-          }
-          log.info(s"Copied ${copies.size} files.")
-        }
+        copyEphemeral(user, serving.Empty())
+        copyMetadata(user, dst)
       } finally {
         sparkClusterController.setForceReportHealthy(false)
       }
     }
+  }
 
+  private def copyMetadata(user: serving.User, dst: HadoopFile): Unit = {
+    val metaRoot = new File(environment.metaGraphManager.repositoryPath).getParent()
+    val src = new File(metaRoot)
+    hadoop.fs.FileUtil.copy(
+      src,
+      dst.fs, dst.path,
+      /* deleteSource = */ false,
+      dst.hadoopConfiguration)
   }
 
   def copyEphemeral(user: serving.User, req: serving.Empty): Unit = {

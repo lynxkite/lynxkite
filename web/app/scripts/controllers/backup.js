@@ -14,14 +14,14 @@ angular.module('biggraph')
         timestamp: $scope.backupSettings.metadataVersionTimestamp,
       }).finally(function() {
         $scope.inProgress = 0;
+        $scope.status = 'Data backup is completed.';
+        $scope.success = true;
       });
-      $scope.status = 'Data backup is completed.';
-      $scope.success = true;
     };
 
     $scope.isDisabled = function() {
       if ($scope.backupSettings.dataDir === '') {return true;}
-      //if ($scope.backupSettings.emphemeralDataDir === '' ) {return true;}
+      if ($scope.backupSettings.emphemeralDataDir === '' ) {return true;}
       return $scope.success;
     };
 
