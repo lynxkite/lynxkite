@@ -48,7 +48,11 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
-  // Provides HyperLogLogPlus counters. Must be the same version that is
+  // For accessing S3 fs from local instance
+  // The javax.servlet package is pulled by an other dependency but with
+  // different version, which caused build conflict.
+  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll ExclusionRule(organization = "javax.servlet"),
+// Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
   // JDBC drivers.
@@ -71,9 +75,12 @@ libraryDependencies ++= Seq(
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   //The Google Cloud Storage connector for Spark and Hive
-  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2")
+  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
+  "org.geotools" % "gt-shapefile" % "16.1")
 
-resolvers += "Twitter Repository" at "http://maven.twttr.com"
+resolvers ++= Seq(
+  "Twitter Repository" at "http://maven.twttr.com",
+  "Geospatial Foundation Repository" at "http://download.osgeo.org/webdav/geotools/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>

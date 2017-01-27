@@ -289,6 +289,15 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           },
           exec: function() { scope.$apply(function() { scope.sqlHistory.navigateDown(); }); }
         });
+        editor.commands.addCommand({
+          name: 'submit',
+          bindKey: {
+            win: 'Ctrl-Enter',
+            mac: 'Command-Enter',
+            sender: 'editor|cli'
+          },
+          exec: function() { scope.$apply(function() { scope.runSQLQuery(); }); },
+        });
       };
 
       scope.$on('fill sql-box from config and clear sql result', function(evt, name, config, type) {
@@ -299,6 +308,11 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         scope.exportKiteTable = name;
         scope.overwrite = true;
         scope.result = '';
+      });
+
+      scope.$on('fill sql-box by clicking on table or view', function(event, tableName) {
+        scope.sql = 'select * from `' + tableName + '`';
+        scope.runSQLQuery();
       });
 
       scope.showMoreRowsIncrement = function() {

@@ -51,6 +51,11 @@ object EdgeAttributeKind extends ElementKind("edge attribute")
 object ScalarKind extends ElementKind("scalar")
 object SegmentationKind extends ElementKind("segmentation")
 
+// Keys for elementMetadata.
+object MetadataNames {
+  val Icon = "icon"
+}
+
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
   vertexSetGUID: Option[UUID],
@@ -60,9 +65,11 @@ case class CommonProjectState(
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
   notes: String,
-  elementNotes: Option[Map[String, String]]) // Option for compatibility.
+  elementNotes: Option[Map[String, String]], // Option for compatibility.
+  elementMetadata: Option[Map[String, Map[String, String]]]) // Option for compatibility.
 object CommonProjectState {
-  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "", Some(Map()))
+  val emptyState = CommonProjectState(
+    None, Map(), None, Map(), Map(), Map(), "", Some(Map()), Some(Map()))
 }
 
 // Complete state of a root project.
@@ -131,6 +138,8 @@ sealed trait ProjectViewer {
   def getScalarNote(name: String) = getElementNote(ScalarKind, name)
   def getElementNote(kind: ElementKind, name: String) =
     state.elementNotes.getOrElse(Map()).getOrElse(kind / name, "")
+  def getElementMetadata(kind: ElementKind, name: String): Map[String, String] =
+    state.elementMetadata.getOrElse(Map()).getOrElse(kind / name, Map())
 
   def offspringPath: Seq[String]
   def offspringViewer(path: Seq[String]): ProjectViewer =
@@ -146,7 +155,8 @@ sealed trait ProjectViewer {
   // Methods for conversion to FE objects.
   private def feScalar(name: String)(implicit epm: EntityProgressManager): Option[FEScalar] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feScalar(scalars(name), name, getScalarNote(name)))
+      Some(ProjectViewer.feScalar(
+        scalars(name), name, getScalarNote(name), getElementMetadata(ScalarKind, name)))
     } else {
       None
     }
@@ -178,13 +188,15 @@ sealed trait ProjectViewer {
       attributes: Iterable[(String, Attribute[_])],
       kind: ElementKind): List[FEAttribute] = {
       attributes.toSeq.sortBy(_._1).map {
-        case (name, attr) => ProjectViewer.feAttribute(attr, name, getElementNote(kind, name))
+        case (name, attr) => ProjectViewer.feAttribute(
+          attr, name, getElementNote(kind, name), getElementMetadata(kind, name))
       }.toList
     }
 
     def feScalarList(scalars: Iterable[(String, Scalar[_])]): List[FEScalar] = {
       scalars.toSeq.sortBy(_._1).map {
-        case (name, scalar) => ProjectViewer.feScalar(scalar, name, getScalarNote(name))
+        case (name, scalar) => ProjectViewer.feScalar(
+          scalar, name, getScalarNote(name), getElementMetadata(ScalarKind, name))
       }.toList
     }
 
@@ -224,11 +236,14 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  private def feTypeName[T](e: TypedEntity[T]): String = {
-    e.typeTag.tpe.toString
+  def feTypeName[T](typeTag: TypeTag[T]): String = {
+    typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")
   }
+
+  def feTypeName[T](e: TypedEntity[T]): String =
+    feTypeName(e.typeTag)
 
   private def feIsNumeric[T](e: TypedEntity[T]): Boolean =
     Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
@@ -237,6 +252,7 @@ object ProjectViewer {
     e: Attribute[T],
     name: String,
     note: String,
+    metadata: Map[String, String],
     isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
@@ -246,6 +262,7 @@ object ProjectViewer {
       name,
       feTypeName(e),
       note,
+      metadata,
       canBucket,
       canFilter,
       feIsNumeric(e),
@@ -257,6 +274,7 @@ object ProjectViewer {
     e: Scalar[T],
     name: String,
     note: String,
+    metadata: Map[String, String],
     isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEScalar = {
     implicit val tt = e.typeTag
     val state = epm.getComputedScalarValue(e)
@@ -265,6 +283,7 @@ object ProjectViewer {
       name,
       feTypeName(e),
       note,
+      metadata,
       feIsNumeric(e),
       isInternal,
       state.computeProgress,
@@ -288,9 +307,9 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
   def implicitTableNames =
-    Option(vertexSet).map(_ => Table.VertexTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName)
+    Option(edgeBundle).map(_ => Table.EdgeTableName) ++
+      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
+      Option(vertexSet).map(_ => Table.VertexTableName)
 
   def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
 
@@ -331,12 +350,14 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
-    Some(ProjectViewer.feAttribute(membersAttribute, "#members", note = "", isInternal = true))
+    Some(ProjectViewer.feAttribute(
+      membersAttribute, "#members", note = "", metadata = Map(), isInternal = true))
 
   val equivalentUIAttributeTitle = s"segmentation[$segmentationName]"
 
   def equivalentUIAttribute()(implicit epm: EntityProgressManager): FEAttribute =
-    ProjectViewer.feAttribute(belongsToAttribute, equivalentUIAttributeTitle, note = "")
+    ProjectViewer.feAttribute(
+      belongsToAttribute, equivalentUIAttributeTitle, note = "", metadata = Map())
 
   def toFESegmentation(
     rootName: String,
@@ -352,10 +373,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   def implicitTableNames =
-    Option(vertexSet).map(_ => Table.VertexTableName) ++
+    Option(belongsTo).map(_ => Table.BelongsToTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeTableName) ++
       Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
-      Option(belongsTo).map(_ => Table.BelongsToTableName)
+      Option(vertexSet).map(_ => Table.VertexTableName)
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.
@@ -561,6 +582,17 @@ sealed trait ProjectEditor {
     } else {
       state = state.copy(elementNotes = Some(notes + (kind / name -> note)))
     }
+  }
+
+  def setElementMetadata(kind: ElementKind, name: String, key: String, value: String) = {
+    val allMeta = state.elementMetadata.getOrElse(Map())
+    val kindName = kind / name
+    val meta = allMeta.getOrElse(kindName, Map())
+    val newMeta =
+      if (value == null) meta - key else meta + (key -> value)
+    val newAllMeta =
+      if (newMeta.isEmpty) allMeta - kindName else allMeta + (kindName -> newMeta)
+    state = state.copy(elementMetadata = Some(newAllMeta))
   }
 
   def vertexAttributes =

@@ -114,7 +114,7 @@ object SQLHelper {
 
   // I really don't understand why this isn't part of the spark API, but I can't find it.
   // So here it goes.
-  private def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
+  def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
     import scala.reflect.runtime.universe._
     dataType match {
       case at: types.ArrayType => TypeTagUtil.arrayTypeTag(typeTagFromDataType(at.elementType))

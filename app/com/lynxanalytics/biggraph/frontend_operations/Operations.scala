@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
@@ -1322,6 +1323,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
       }
+      project.setElementMetadata(VertexAttributeKind, "income", MetadataNames.Icon, "money_bag")
+      project.setElementMetadata(VertexAttributeKind, "location", MetadataNames.Icon, "paw_prints")
     }
   })
 
@@ -1864,7 +1867,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_created_edges", "", Map()))
       } else {
         List()
       }
@@ -1891,7 +1894,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_total_edges", "", Map()))
       } else {
         List()
       }
@@ -2499,6 +2502,90 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             please discard it or choose another name""")
       project.scalars(params("to")) = project.scalars(params("from"))
       project.scalars(params("from")) = null
+    }
+  })
+
+  register("Set scalar icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = scalars),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set vertex attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = vertexAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set edge attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = edgeAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set segmentation icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = segmentations),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, null)
+      }
     }
   })
 
@@ -3471,6 +3558,40 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.vertexAttributes(params("output")) = prediction
       }
     })
+
+  register("Lookup region", new VertexAttributesOperation(_, _) {
+    override def parameters = List(
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
+      Param("attribute", "Attribute from the Shapefile"),
+      Param("output", "Output name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    import java.io.File
+
+    def apply(params: Map[String, String]) = {
+      val shapeFilePath = params("shapefile")
+      assert(listShapefiles().exists(f => f.id == shapeFilePath),
+        "Shapefile deleted, please choose another.")
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val result = op(op.coordinates, position).result
+      project.newVertexAttribute(params("output"), result.attribute)
+    }
+
+    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    private val shapeDir = s"$metaDir/resources/shapefiles/"
+
+    private def listShapefiles(): List[FEOption] = {
+      def lsR(f: File): Array[File] = {
+        val files = f.listFiles()
+        if (files == null)
+          return Array.empty
+        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+      }
+      lsR(new File(shapeDir)).toList.map(f =>
+        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+    }
+  })
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
