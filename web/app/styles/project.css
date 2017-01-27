@@ -143,7 +143,7 @@ input.save-as {
 
 sampled-view-settings .entity:not(.default):not(.drop-enabled),
 bucketed-view-settings .entity:not(.default):not(.drop-enabled) {
-  background: hsl(194,50%,80%);
+  background: hsl(14,50%,80%);
 }
 
 textarea.project-notes {
