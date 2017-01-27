@@ -22,6 +22,16 @@ module.exports = function(fw) {
     }
   );
   fw.transitionTest(
+    'CSV file imported as table',
+    'Table described in global SQL box',
+    function() {
+      lib.splash.table(tableName).click();
+    },
+    function() {
+      lib.splash.expectGlobalSqlResult(['name'], [['Adam'], ['Eve'], ['Bob']]);
+    }
+  );
+  fw.transitionTest(
     'empty splash',
     'CSV file imported as table with limit',
     function() {

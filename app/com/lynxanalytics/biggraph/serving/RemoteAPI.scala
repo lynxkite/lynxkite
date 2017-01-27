@@ -465,7 +465,10 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
-    val df = viewToDF(user, checkpoint)
+    val viewDF = viewToDF(user, checkpoint)
+    val df =
+      if (shufflePartitions.isEmpty) viewDF
+      else viewDF.coalesce(shufflePartitions.get)
     for (sp <- shufflePartitions) {
       df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
     }
