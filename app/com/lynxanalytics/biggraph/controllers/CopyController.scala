@@ -10,10 +10,10 @@ import com.lynxanalytics.biggraph.serving
 case class BackupSettings(
   dataDir: String = "",
   emphemeralDataDir: String = "",
-  s3MetadataBucket: String = "",
+  s3MetadataRootDir: String = "",
   metadataVersionTimestamp: String = "")
 
-case class BackupRequest(s3MetadataDir: String)
+case class BackupRequest(timestamp: String)
 
 class CopyController(environment: BigGraphEnvironment, sparkClusterController: SparkClusterController) {
   private def lsRec(root: HadoopFile): Seq[HadoopFile] = {
@@ -43,13 +43,14 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     BackupSettings(
       dataDir = dataDirPath,
       emphemeralDataDir = ephemeralDataDirPath,
-      s3MetadataBucket = LoggedEnvironment.envOrElse("KITE_S3_METADATA_BUCKET", ""),
+      s3MetadataRootDir = dataDirPath + "metadata_backup/",
       metadataVersionTimestamp = ts)
   }
 
   def s3Backup(user: serving.User, req: BackupRequest): Unit = {
     println()
-    println(req.s3MetadataDir)
+    println(req.timestamp)
+    println()
     //val dm = environment.dataManager
     //dm.waitAllFutures()
     //dm.synchronized {
