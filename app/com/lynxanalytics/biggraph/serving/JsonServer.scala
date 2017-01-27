@@ -332,6 +332,7 @@ object FrontendJson {
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
 
   implicit val wBackupSettings = json.Json.writes[BackupSettings]
+  implicit val rBackupRequest = json.Json.reads[BackupRequest]
 }
 
 object ProductionJsonServer extends JsonServer {
@@ -495,6 +496,7 @@ object ProductionJsonServer extends JsonServer {
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
   def getBackupSettings = jsonGet(copyController.getBackupSettings)
+  def s3Backup = jsonPost(copyController.s3Backup)
 
   Ammonite.maybeStart()
 }
