@@ -2,15 +2,25 @@
 
     <h1>S3 backup</h1>
     <div>
-        <h2>How to use this function</h2>
-        <p>The 'EMR backup' function is only usable, when LynxKite was started on an Amazon
-        instance with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
-        <tt>KITE_EMPHEMERAL_DATA_DIR</tt> are set according to the admin manual.</p>
-        <p>The S3 metadata backup directory is a subdirectory of the S3 metadata
-        backup bucket. The subdirectory named as the current timestamp at the time of the backup.
-        When someone restores saved metadata (with the emr_ecosystem.py script),
-        the version with the latest timestamp will be loaded by default, and earlier versions
-        can be chosen by an optional parameter.</p>
+        <h2>How to use backup</h2>
+        <p>
+            The 'S3 backup' function is only usable, when LynxKite was started on an Amazon
+            instance with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
+            <tt>KITE_EMPHEMERAL_DATA_DIR</tt> are set according to the admin manual.
+        </p>
+        <p>
+            The S3 metadata backup directory is a subdirectory of <tt>KITE_DATA_DIR/metadata_backup/</tt>.
+            The subdirectory named as the current timestamp at the time of the backup.
+            When someone restores saved metadata (with the <tt>emr_ecosystem.py</tt> script),
+            the version with the latest timestamp will be loaded by default, and earlier versions
+            can be chosen by an optional parameter.
+        </p>
+        <p>
+            The easiest way to restore saved data is to use <tt>emr_ecosystem.py</tt>:<br>
+        <tt>
+        ./emr_ecosystem.py --s3_data_dir s://bucket-name/ --restore_metadata
+        </tt>
+        </p>
     </div>
     <div>
         <h2>Backup settings</h2>
@@ -24,20 +34,21 @@
                 <td><div class="col-sm-12"> <tt>{{backupSettings.emphemeralDataDir}}</tt></div></td>
             </tr>
             <tr>
-                <td><b>S3 metadata backup bucket</b></td>
+                <td><b>S3 metadata root dir</b></td>
                 <td>
                     <div class="col-sm-12">
-                    <input class="form-control ng-pristine ng-valid ng-touched"
-                           ng-model="backupSettings.s3MetadataBucket" type="text" size="30">
+                        <tt>{{backupSettings.s3MetadataRootDir}}</tt>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><b>S3 metadata backup dir</b></td>
                 <td>
-                    <div class="col-sm-12" ng-show="!isDisabled()"><tt>
-                        {{s3MetadataDir}}
-                    </tt></div>
+                    <div class="col-sm-12">
+                        <tt>
+                            {{backupSettings.s3MetadataRootDir}}{{backupSettings.metadataVersionTimestamp}}
+                        </tt>
+                    </div>
                 </td>
             </tr>
             <tr>
@@ -48,7 +59,6 @@
                     <span id="cleaner-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
                 </td>
                 <td> </td>
-                <td> </td>
             </tr>
         </table>
     </div>
@@ -56,8 +66,10 @@
     <div ng-show="success">
         <p id="backup-success">&#x2713; {{ status }}<p>
         <p>Data saved to <b>{{backupSettings.dataDir}}</b></p>
-        <p>Metadata saved to
-        <b>{{s3MetadataDir}}</b></p>
+        <p>
+            Metadata saved to
+            <b>{{backupSettings.s3MetadataRootDir}}{{backupSettings.metadataVersionTimestamp}}</b>
+        </p>
     </div>
 
 
