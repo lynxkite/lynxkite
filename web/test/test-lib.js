@@ -291,7 +291,8 @@ Side.prototype = {
   },
 
   setSampleRadius: function(radius) {
-    var slider = this.side.element(by.id('sample-radius-slider'));
+    this.side.$('#setting-sample-radius').click();
+    var slider = $('#sample-radius-slider');
     slider.getAttribute('value').then(function(value) {
       var diff = radius - value;
       while (diff > 0) {
