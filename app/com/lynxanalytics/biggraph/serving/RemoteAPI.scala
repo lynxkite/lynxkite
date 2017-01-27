@@ -467,7 +467,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     file.assertWriteAllowedFrom(user)
     val viewDF = viewToDF(user, checkpoint)
     val df = if (shufflePartitions.isEmpty) viewDF
-             else viewDF.coalesce(shufflePartitions.get)
+    else viewDF.coalesce(shufflePartitions.get)
     for (sp <- shufflePartitions) {
       df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
     }

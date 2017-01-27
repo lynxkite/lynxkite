@@ -52,15 +52,17 @@ module.exports = function(fw) {
   // position becomes zero. (Inputs and outputs string lists.)
   // Shifts in the x coordinate can happen when a second visualization is added, or due to
   // scrollbars.
-  function normalize(positions) {
+  function normalized(positions) {
     var i, minx;
     for (i = 1; i < positions.length; ++i) {
       var p = positions[i];
       minx = (minx === undefined || p.x < minx) ? p.x : minx;
     }
+    var result = [];
     for (i = 0; i < positions.length; ++i) {
-      positions[i].x -= minx;
+      result.push({ x: positions[i].x - minx, y: positions[i].y });
     }
+    return result;
   }
 
   function positions(graph) {
@@ -68,8 +70,7 @@ module.exports = function(fw) {
     for (var i = 0; i < graph.vertices.length; ++i) {
       pos.push(graph.vertices[i].pos);
     }
-    normalize(pos);
-    return pos;
+    return normalized(pos);
   }
 
   var name = lib.left.vertexAttribute('name');
