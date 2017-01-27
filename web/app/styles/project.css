@@ -141,8 +141,8 @@ input.save-as {
   text-decoration: underline;
 }
 
-sampled-view-settings .entity,
-bucketed-view-settings .entity {
+sampled-view-settings .entity:not(.default):not(.drop-enabled),
+bucketed-view-settings .entity:not(.default):not(.drop-enabled) {
   background: hsl(194,50%,80%);
 }
 
@@ -298,7 +298,9 @@ label {
   padding: 6px 0px;
 }
 
-text-dialog {
-  margin: 10px 0;
-  display: block;
+/* Add a bit of internal and vertical margin in the center picker. */
+pick-options table {
+  margin: 0 -10px;
+  border-collapse: separate;
+  border-spacing: 10px;
 }

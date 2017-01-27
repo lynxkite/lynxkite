@@ -6,45 +6,31 @@
     <lazy-slider value="side.state.bucketCount"></lazy-slider>
   </div>
 
-  <div class="entity" id="setting-precise" ng-show="side.state.preciseBucketSizes">
-    <span class="title">precise counts</span>
-  </div>
-  <div class="menu entity-menu" id="menu-setting-precise">
-    <div class="menu-item"
-      ng-click="side.state.preciseBucketSizes = false; closeDrop($event)">
-      Cancel </div>
-  </div>
-
-  <div class="entity" id="setting-relative" ng-show="side.state.relativeEdgeDensity">
-    <span class="title">relative edge densities</span>
-  </div>
-  <div class="menu entity-menu" id="menu-setting-relative">
-    <div class="menu-item"
-      ng-click="side.state.relativeEdgeDensity = false; closeDrop($event)">
-      Cancel </div>
+  <div class="entity"
+       id="setting-precise"
+       ng-class="{ default: !side.state.preciseBucketSizes }"
+       ng-click="side.state.preciseBucketSizes = !side.state.preciseBucketSizes">
+    <span class="title">
+      {{ side.state.preciseBucketSizes ? 'precise' : 'approximate' }} counts</span>
   </div>
 
-  <div class="entity" id="setting-add" tooltip="More settings">
-    <span class="title"><i class="glyphicon glyphicon-wrench"></i></span>
+  <div class="entity"
+       id="setting-relative"
+       ng-class="{ default: !side.state.relativeEdgeDensity}"
+       ng-click="side.state.relativeEdgeDensity = !side.state.relativeEdgeDensity">
+    <span class="title">
+      {{ side.state.relativeEdgeDensity ? 'relative' : 'absolute' }} edge densities</span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-add">
-    <div class="menu-item" ng-hide="side.state.preciseBucketSizes"
-      ng-click="side.state.preciseBucketSizes = true; closeDrop($event)">
-      <i class="glyphicon glyphicon-screenshot"></i>
-      Precise counts </div>
-    <div class="menu-item" ng-hide="side.state.relativeEdgeDensity"
-      ng-click="side.state.relativeEdgeDensity = true; closeDrop($event)">
-      <i class="glyphicon glyphicon-equalizer"></i>
-      Relative edge densities <help-popup href="relative-edge-density"></help-popup> </div>
 
-    <div class="menu-item"
-         ng-hide="savingVisualization"
-         ng-click="startSavingVisualization($event)"
-         id="menu-save-visualization">
-      <i class="glyphicon glyphicon-floppy-disk"></i> Save visualization...
+  <div class="entity default" id="setting-save-visualization">
+    <span class="title"><i class="glyphicon glyphicon-floppy-disk"></i></span>
+  </div>
+  <div class="menu entity-menu" id="menu-setting-save-visualization">
+    <div>
+      Save visualization...
       <help-popup href="saving-visualizations"></help-popup>
     </div>
-    <form ng-show="savingVisualization" ng-submit="saveVisualization($event)">
+    <form ng-submit="saveVisualization($event)">
       <input class="form-control"
              placeholder="Visualization name"
              ng-model="saveVisualizationName"
