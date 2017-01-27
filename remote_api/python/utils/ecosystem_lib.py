@@ -56,17 +56,17 @@ arg_parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
 arg_parser.add_argument(
-    '--s3_metadata_bucket',
-    help='''If it is not empty, it contains the S3 bucket of saved metadata,
-  which will be restored after the cluster was started. The metadata will not be
-  saved when the cluster is shut down. The format is `bucket-name` without
-  the `s3://` prefix and without the trailing slash.''')
+    '--restore_metadata',
+    action='store_true',
+    help='''If it is set, metadata will be reloaded from `s3_data_dir/metadata_backup/`,
+  after the cluster was started. The metadata will not be
+  saved when the cluster is shut down.''')
 arg_parser.add_argument(
     '--s3_metadata_version',
-    help='''If it is not empty, it contains a folder name inside the `s3_metadata_bucket`
+    help='''If it is not empty, it contains a folder name inside the `s3_data_dir/metadata_backup/`
   folder and the metadata will be restored from this subfolder. The format of the name
   of this version folder is `YYMMDDHHMMSS` e.g. `20170123164600`.
-  If it's empty, the script will use the latest version in `s3_metadata_bucket`.''')
+  If it's empty, the script will use the latest version in `s3_data_dir/metadata_backup/`.''')
 arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
@@ -102,7 +102,7 @@ class Ecosystem:
         'lynx_release_dir': args.lynx_release_dir,
         'log_dir': args.log_dir,
         's3_data_dir': args.s3_data_dir,
-        's3_metadata_bucket': args.s3_metadata_bucket,
+        'restore_metadata': args.restore_metadata,
         's3_metadata_version': args.s3_metadata_version,
         's3_metadata_dir': '',
     }
@@ -151,11 +151,10 @@ class Ecosystem:
         lk_conf['biggraph_releases_dir'])
     self.install_native_dependencies()
     self.set_s3_metadata_dir(
-        lk_conf['s3_metadata_bucket'],
+        lk_conf['s3_data_dir'],
         lk_conf['s3_metadata_version'])
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
-        lk_conf['s3_metadata_bucket'],
         conf['emr_instance_count'])
     self.config_aws_s3_native()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
@@ -164,19 +163,21 @@ class Ecosystem:
 
   def set_s3_metadata_dir(self, s3_bucket, metadata_version):
     if s3_bucket:
+      # s3_bucket = 's3://bla/, bucket = 'bla'
+      bucket = s3_bucket.split('/')[2]
       if not metadata_version:
-        # Gives back the "latest" version from the `s3_bucket`.
+        # Gives back the "latest" version from the `s3_bucket/metadata_backup/`.
         # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
         client = boto3.client('s3')
         paginator = client.get_paginator('list_objects')
-        result = paginator.paginate(Bucket=s3_bucket, Delimiter='/')
+        result = paginator.paginate(Bucket=bucket, Prefix='metadata_backup/', Delimiter='/')
         # Name of the alphabetically last folder without the trailing slash.
         version = sorted([prefix.get('Prefix')
                           for prefix in result.search('CommonPrefixes')])[-1][:-1]
       else:
         version = metadata_version
       self.lynxkite_config['s3_metadata_dir'] = 's3://{buc}/{ver}/'.format(
-          buc=s3_bucket,
+          buc=bucket,
           ver=version)
 
   def restore_metadata(self):
@@ -284,7 +285,7 @@ class Ecosystem:
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
     ''')
 
-  def config_and_prepare_native(self, s3_data_dir, s3_metadata_bucket, emr_instance_count):
+  def config_and_prepare_native(self, s3_data_dir, emr_instance_count):
     hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
     if s3_data_dir:
       data_dir_config = '''
@@ -321,7 +322,6 @@ class Ecosystem:
         # for tests with mysql server on master
         export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
         export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=7200
-        export KITE_S3_METADATA_BUCKET={s3_metadata_bucket}
 EOF
       echo 'Creating hdfs directory.'
       source config/central
@@ -332,7 +332,6 @@ EOF
       sudo chmod a+rwx /tasks_data
     '''.format(
         num_executors=emr_instance_count - 1,
-        s3_metadata_bucket=s3_metadata_bucket,
         data_dir_config=data_dir_config))
 
   def config_aws_s3_native(self):

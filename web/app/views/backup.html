@@ -1,11 +1,16 @@
 <div class="col-sm-offset-2 col-sm-8">
 
-    <h1>EMR backup</h1>
+    <h1>S3 backup</h1>
     <div>
         <h2>How to use this function</h2>
         <p>The 'EMR backup' function is only usable, when LynxKite was started on an Amazon
         instance with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
         <tt>KITE_EMPHEMERAL_DATA_DIR</tt> are set according to the admin manual.</p>
+        <p>The S3 metadata backup directory is a subdirectory of the S3 metadata
+        backup bucket. The subdirectory named as the current timestamp at the time of the backup.
+        When someone restores saved metadata (with the emr_ecosystem.py script),
+        the version with the latest timestamp will be loaded by default, and earlier versions
+        can be chosen by an optional parameter.</p>
     </div>
     <div>
         <h2>Backup settings</h2>
@@ -30,8 +35,8 @@
             <tr>
                 <td><b>S3 metadata backup dir</b></td>
                 <td>
-                    <div class="col-sm-12"><tt>
-                        s3://{{backupSettings.s3MetadataBucket}}/{{backupSettings.metadataVersionTimestamp}}/
+                    <div class="col-sm-12" ng-show="!isDisabled()"><tt>
+                        {{s3MetadataDir}}
                     </tt></div>
                 </td>
             </tr>
@@ -52,7 +57,7 @@
         <p id="backup-success">&#x2713; {{ status }}<p>
         <p>Data saved to <b>{{backupSettings.dataDir}}</b></p>
         <p>Metadata saved to
-        <b>s3://{{backupSettings.s3MetadataBucket}}/{{backupSettings.metadataVersionTimestamp}}/</b></p>
+        <b>{{s3MetadataDir}}</b></p>
     </div>
 
 
