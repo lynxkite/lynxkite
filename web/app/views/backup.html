@@ -62,6 +62,9 @@
             </tr>
         </table>
     </div>
+    <div ng-show="inProgress===1">
+        <p>Backup is in progress. This may take a while...<p>
+    </div>
 
     <div ng-show="success">
         <p id="backup-success">&#x2713; {{ status }}<p>
