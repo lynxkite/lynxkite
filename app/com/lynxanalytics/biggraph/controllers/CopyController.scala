@@ -51,6 +51,8 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     println()
     println(req.timestamp)
     println()
+    val mr = environment.metaGraphManager.repositoryPath
+    println(mr)
     //val dm = environment.dataManager
     //dm.waitAllFutures()
     //dm.synchronized {
