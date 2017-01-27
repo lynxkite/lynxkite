@@ -37,10 +37,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     import java.text.SimpleDateFormat
     val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
     val dataDirPath = environment.dataManager.repositoryPath.resolvedName
-    var ephemeralDataDirPath = ""
-    for (ep <- environment.dataManager.ephemeralPath) {
-      ephemeralDataDirPath = ep.resolvedName
-    }
+    val ephemeralDataDirPath = environment.dataManager.ephemeralPath.map(_.resolvedName).getOrElse("")
     BackupSettings(
       dataDir = dataDirPath,
       emphemeralDataDir = ephemeralDataDirPath,
