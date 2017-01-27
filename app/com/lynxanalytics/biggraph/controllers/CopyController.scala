@@ -110,8 +110,6 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       sparkClusterController.setForceReportHealthy(true)
       try {
         for (ephemeralPath <- dm.ephemeralPath) {
-          println("Path of backup destination:")
-          println(ephemeralPath.toString)
           log.info(s"Listing contents of $ephemeralPath...")
           val srcFiles = lsRec(ephemeralPath)
           val copies = srcFiles.map { src =>
