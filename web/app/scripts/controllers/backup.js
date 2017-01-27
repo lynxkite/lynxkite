@@ -22,6 +22,7 @@ angular.module('biggraph')
     $scope.isDisabled = function() {
       if ($scope.backupSettings.dataDir === '') {return true;}
       if ($scope.backupSettings.emphemeralDataDir === '' ) {return true;}
+      if ($scope.inProgress === 1) {return true;}
       return $scope.success;
     };
 
