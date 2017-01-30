@@ -14,9 +14,8 @@ for each clique can be calculated using the <<aggregate-to-segmentation>> operat
 average size of the cliques that a person belongs to can be calculated with
 <<aggregate-from-segmentation>>.
 
-Segmentations can be opened on the right hand side by clicking on the
-+++<label class="btn btn-default"><i class="glyphicon glyphicon-arrow-right"></i></label>+++
-button. They can be visualized the usual way. The links are displayed when both the base project
+Segmentations can be opened on the right hand side by clicking them and choosing _"Open"_ in the
+menu. They can be visualized the usual way. The links are displayed when both the base project
 and its segmentation are visualized. This works when both sides are visualized as bucketed graphs,
 when they are visualized as concrete vertices, or even when one side is bucketed and the other is
 concrete. This can be used to gain unique insights about the structure of relationships in the
