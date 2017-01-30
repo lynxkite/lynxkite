@@ -14,15 +14,6 @@ object SafeFuture {
 
   def successful[T](value: T) = new SafeFuture(Future.successful(value))
 
-  // Executes "func" either in the current thread if it matches the prefix or off-thread.
-  def inPool[T](prefix: String)(func: => T)(implicit ec: ExecutionContext) = {
-    if (java.lang.Thread.currentThread.getName.startsWith(prefix)) {
-      successful(func)
-    } else {
-      apply(func)
-    }
-  }
-
   def sequence[T](s: Seq[SafeFuture[T]])(implicit ec: ExecutionContext) =
     new SafeFuture(Future.sequence(s.map(_.future)))
 
