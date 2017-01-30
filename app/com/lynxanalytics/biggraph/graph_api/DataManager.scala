@@ -119,7 +119,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
 
   private def loggedFuture(func: => Unit): Unit = {
-    val f = futureInDMPool {
+    val f = SafeFuture {
       try {
         func
       } catch {
@@ -132,12 +132,10 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
   def async[T](fn: => T): concurrent.Future[T] = {
-    futureInDMPool {
+    SafeFuture {
       fn
     }.future
   }
-
-  def futureInDMPool[T](fn: => T) = SafeFuture.inPool("DataManager-")(fn)
 
   private def execute(instance: MetaGraphOperationInstance,
                       logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
