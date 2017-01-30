@@ -3810,8 +3810,8 @@ object JSUtilities {
     if (!canBeValidJSIdentifier(identifier)) {
       false
     } else {
-      val quoted_identifer = java.util.regex.Pattern.quote(identifier)
-      val re = s"(?s)(^|.*[^$validJSCharacters])${quoted_identifer}($$|[^$validJSCharacters].*)"
+      val quotedIdentifer = java.util.regex.Pattern.quote(identifier)
+      val re = s"(?s)(^|.*[^$validJSCharacters])${quotedIdentifer}($$|[^$validJSCharacters].*)"
       expr.matches(re)
     }
   }
