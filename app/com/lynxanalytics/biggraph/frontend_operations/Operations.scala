@@ -3779,8 +3779,8 @@ object Operations {
 }
 
 object JSUtilities {
-  // Listing the valid characters for JS variable names. The \\p{*} syntax if for specifying
-  // Unicode categories for scala regex. See: http://www.regular-expressions.info/unicode.html
+  // Listing the valid characters for JS variable names. The \\p{*} syntax is for specifying
+  // Unicode categories for scala regex.
   // For more information about the valid variable names in JS please consult:
   // http://es5.github.io/x7.html#x7.6
   val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
