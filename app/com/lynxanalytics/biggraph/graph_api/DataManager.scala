@@ -41,7 +41,7 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-class DataManager(sparkSession: spark.sql.SparkSession,
+class DataManager(val sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
