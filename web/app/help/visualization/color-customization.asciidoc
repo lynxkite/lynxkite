@@ -2,16 +2,10 @@
 
 A color customization panel is accessible in visualizations. Click on the white tab on the left to access the panel.
 
-// A sidebar over an empty div.
-++++
-<div style="position: relative; overflow: hidden; background: #222; width: 130px; height: 220px;">
-  <graph-view-sidebar graph="{}"></graph-view-sidebar>
-</div>
-++++
-
 The panel allows you to copy the visualized data to the clipboard
 (+++<i class="glyphicon glyphicon-th"></i>+++) and customize the color settings.
-You can increase or decrease brightness
+You can invert the colors, increase or decrease brightness
 (+++<i class="glyphicon glyphicon-certificate"></i>+++), contrast
 (+++<i class="glyphicon glyphicon-adjust"></i>+++), and saturation
-(+++<i class="glyphicon glyphicon-tint"></i>+++).
+(+++<i class="glyphicon glyphicon-tint"></i>+++). For geographic visualizations the same settings
+can be applied separately to the map background.

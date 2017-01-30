@@ -28,30 +28,29 @@ The different options can be useful depending on the structure of the network th
 +
 The available options are:
 +
-Centralize::: High-degree nodes in the center, low-degree nodes on the periphery.
-Decentralize::: Low-degree nodes in the center, high-degree nodes on the periphery.
+Centralized::: High-degree nodes in the center, low-degree nodes on the periphery.
+Decentralized::: Low-degree nodes in the center, high-degree nodes on the periphery.
 Neutral::: Degree is not factored into the layout.
 
-Show vertices::
-Lists "center" vertices, that is the vertices whose neighborhood we are displaying. You can change
-this list manually, using the <<pick-button,Pick button>> or using the
-<<context-menu,context menu>> of already displayed vertices. Setting an asterisk (`+*+`) here will
-result in the visualization of all the vertices (up to a certain limit).
+Centers::
+Lists "center" vertex IDs, that is the vertices whose neighborhood we are displaying. You can change
+this list manually, using the <<pick-button,Pick button>>, or using the
+<<context-menu,context menu>> of already displayed vertices.
 
-Show neighborhood::
+Radius::
 You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
 vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
 
 ### Pick button
-This button is used to populate the contents of the _Show vertices_ box. The vertex
-placed there will be one that satisfies all the currently set restrictions (see
+This button is used to select a new set of centers. The vertices
+placed there will be ones that satisfy all the currently set restrictions (see
 below).
 The available options are:
 
-Center count:: The number of vertices placed in the _Show vertices_ box (default: 1).
+Center count:: The number of centers to be picked. (Default: 1)
 
 Restrictions narrow down the potential set of candidates that will be
-placed in the _Show vertices_ box when you click on the _Pick_ button. They have the same syntax as
+chosen when you click on the _Pick_ button. They have the same syntax as
 filters (see  <<attribute-filter-syntax>>). There are two ways to specify them:
 
 Use project attribute filters::
@@ -65,11 +64,11 @@ Clicking this button will iterate over samples that match the conditions. The sa
 in a deterministic order. You can skip to an arbitrary sample by clicking on the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-menu-right"></i></label>+++
 button. There you can manually enter a position in the sequence and pick it by clicking on
- _Pick by offset:_
+ _Pick by offset_.
 
 ### Context menu
-When clicking a vertex in Concrete Vertex View you can see a context menu with possible operations
-related to the vertex. Here are the possible menu elements:
+When clicking a vertex in a concrete vertex visualization you can see a context menu with possible
+operations related to the vertex. Here are the possible menu elements:
 
 Add to centers::
 This action will add the selected vertex to the centers.
