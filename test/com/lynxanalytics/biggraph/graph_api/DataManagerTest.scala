@@ -4,6 +4,7 @@ import org.apache.spark
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -154,6 +155,21 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManagerEphemeral = new DataManager(sparkSession, dataManager1.ephemeralPath.get)
     assert(dataManagerEphemeral.computeProgress(names) == 1.0)
     assert(dataManagerEphemeral.computeProgress(greeting) == 1.0)
+  }
+
+  case class TestTable(idSet: VertexSet, columns: Map[String, Attribute[_]])
+    extends controllers.Table
+
+  test("operation chaining does not exhaust thread pool (#5580)") {
+    implicit val metaManager = cleanMetaManager
+    implicit val dataManager = cleanDataManager
+    import Scripting._
+    var df = dataManager.sparkSession.range(5).toDF("x")
+    for (i <- 1 to 6) {
+      val g = graph_operations.ImportDataFrame(df).result
+      df = TestTable(g.ids, g.columns.mapValues(_.entity)).toDF(dataManager.masterSQLContext)
+    }
+    assert(df.count == 5)
   }
 
 }
