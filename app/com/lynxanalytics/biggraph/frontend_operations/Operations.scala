@@ -3797,8 +3797,6 @@ object JSUtilities {
   }
 
   // Whether a string can be a JavaScript identifier.
-  // - Its first character is valid (letter or '_' or '$' or '\')
-  // - It contains no whitespace character.
   def canBeValidJSIdentifier(identifier: String): Boolean = {
     val re = s"^[${validJSFirstCharacters}][${validJSCharacters}]*$$"
     identifier.matches(re)
