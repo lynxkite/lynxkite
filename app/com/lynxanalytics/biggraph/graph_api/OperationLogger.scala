@@ -5,12 +5,11 @@ package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import play.api.libs.json
-import scala.concurrent.ExecutionContextExecutorService
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class OperationLogger(instance: MetaGraphOperationInstance,
-                      implicit val ec: ExecutionContextExecutorService) {
+                      implicit val ec: concurrent.ExecutionContext) {
   private val marker = "OPERATION_LOGGER_MARKER"
   case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
   case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])

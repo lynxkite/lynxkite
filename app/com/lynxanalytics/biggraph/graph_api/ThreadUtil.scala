@@ -28,4 +28,19 @@ object ThreadUtil {
         }
       ))
   }
+
+  def poolLocalExecutionContext(name: String, maxParallelism: Int) = {
+    val ec = limitedExecutionContext(name, maxParallelism)
+    new concurrent.ExecutionContext {
+      override def reportFailure(cause: Throwable): Unit = ec.reportFailure(cause)
+      override def execute(runnable: Runnable): Unit = {
+        if (java.lang.Thread.currentThread.getName.startsWith(name + "-")) {
+          // Already in thread pool. Run locally.
+          runnable.run()
+        } else {
+          ec.execute(runnable)
+        }
+      }
+    }
+  }
 }

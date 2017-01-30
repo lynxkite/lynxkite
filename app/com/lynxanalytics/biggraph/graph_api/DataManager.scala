@@ -45,7 +45,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
-    ThreadUtil.limitedExecutionContext("DataManager",
+    ThreadUtil.poolLocalExecutionContext("DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
