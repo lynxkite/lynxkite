@@ -19,6 +19,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Clicking on a table or view scrolls to the global SQL box and executes the
    `select *` query on it.
  - You can submit SQL queries with Ctrl-Enter.
+ - Visualization settings UI now matches the new attribute UI.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
 
