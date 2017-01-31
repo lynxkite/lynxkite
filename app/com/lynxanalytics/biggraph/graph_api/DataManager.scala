@@ -45,7 +45,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
-    ThreadUtil.poolLocalExecutionContext("DataManager",
+    new LockableExecutionContext("DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
@@ -159,7 +159,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
         log.info(s"PERF Computing scalar $scalar")
       }
       val outputDatas = concurrent.blocking {
-        instance.run(inputDatas, runtimeContext)
+        executionContext.withLock {
+          instance.run(inputDatas, runtimeContext)
+        }
       }
       validateOutput(instance, outputDatas)
       concurrent.blocking {
