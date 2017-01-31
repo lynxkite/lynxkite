@@ -374,7 +374,7 @@ class Table:
       '''Forces the computation of the table.'''
       fake_project = self.lk.new_project()
       fake_project.importVertices(**{
-        'id-attr': 'id',
+        'id-attr': '',
         'table': self.name})
       fake_project.compute()
 
