@@ -289,7 +289,15 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
         val logger = new OperationLogger(instance, executionContext)
         val instanceFuture = getInstanceFuture(instance, logger)
 
-        for (output <- instance.outputs.all.values) {
+        val orderedOutputs = {
+          // Attributes depend on vertex sets, so we have to save the futures of vertex sets first.
+          val outs = instance.outputs
+          outs.vertexSets.values.toSeq ++ outs.edgeBundles.values.toSeq ++
+            outs.attributes.values.toSeq ++ outs.scalars.values.toSeq
+        }
+        assert(orderedOutputs.toSet == instance.outputs.all.values.toSet,
+          s"Output types changed? $orderedOutputs != ${instance.outputs.all.values}")
+        for (output <- orderedOutputs) {
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
