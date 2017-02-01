@@ -16,7 +16,8 @@
             can be chosen by an optional parameter.
         </p>
         <p>
-            The easiest way to restore saved data is to use <tt>emr_ecosystem.py</tt>:<br>
+            The easiest way to reuse saved data is to start a new cluster using
+            <tt>emr_ecosystem.py</tt>:<br>
         <tt>
         ./emr_ecosystem.py --s3_data_dir s://bucket-name/ --restore_metadata
         </tt>
@@ -62,12 +63,15 @@
             </tr>
         </table>
     </div>
-    <div ng-show="inProgress===1">
+    <div ng-show="inProgress">
         <p>Backup is in progress. This may take a while...<p>
     </div>
 
-    <div ng-show="success">
-        <p id="backup-success">&#x2713; {{ status }}<p>
+    <div ng-if="statusMessage && success">
+        <p id="backup-success">&#x2713; {{ statusMessage }}<p>
+    </div>
+    <div ng-if="statusMessage && !success">
+        <p id="backup-failure">&#x26a0; {{ statusMessage }}<p>
     </div>
 
 
