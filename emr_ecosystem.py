@@ -50,4 +50,6 @@ def main(args):
 
 if __name__ == '__main__':
   args = arg_parser.parse_args()
+  if args.s3_data_dir:
+    assert args.s3_data_dir[-1] == '/', 'S3 bucket name has to end with "/".'
   main(args)
