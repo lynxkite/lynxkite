@@ -10,6 +10,9 @@ attribute.
 * If the specified attribute does not exist for any matching feature the output is omitted.
 * If there are multiple suitable features the algorithm picks the first one.
 
+A default world country borders dataset is included from
+http://thematicmapping.org/downloads/world_borders.php.
+
 ====
 
 *Parameters*
