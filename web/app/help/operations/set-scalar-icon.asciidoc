@@ -1,0 +1,17 @@
+### Set scalar icon
+
+Associates an icon with a scalar. It has no effect beyond highlighting something on the user
+interface.
+
+The icons are a subset of the Unicode characters in the "emoji" range, as provided by the
+https://www.google.com/get/noto/help/emoji/[Google Noto Font].
+
+This operation is more easily accessed from the scalar's dropdown menu in the project view.
+
+====
+[[name]] Scalar::
+The scalar to highlight.
+
+[[icon]] Icon::
+One of the supported icon names, such as `snowman_without_snow`. Leave empty to _remove_ the icon.
+====
