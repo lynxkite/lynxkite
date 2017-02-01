@@ -2,6 +2,10 @@
   color: green;
 }
 
+#backup-failure {
+  color: red;
+}
+
 td:first-child {
     width: 30%;
 }

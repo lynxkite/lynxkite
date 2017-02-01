@@ -59,14 +59,14 @@ arg_parser.add_argument(
     '--restore_metadata',
     action='store_true',
     help='''If it is set, metadata will be reloaded from `s3_data_dir/metadata_backup/`,
-  after the cluster was started. The metadata will not be
+  after the cluster was started. The metadata will not automatically be
   saved when the cluster is shut down.''')
 arg_parser.add_argument(
     '--s3_metadata_version',
-    help='''If it is not empty, it contains a folder name inside the `s3_data_dir/metadata_backup/`
-  folder and the metadata will be restored from this subfolder. The format of the name
-  of this version folder is `YYMMDDHHMMSS` e.g. `20170123164600`.
-  If it's empty, the script will use the latest version in `s3_data_dir/metadata_backup/`.''')
+    help='''If specified, it defines the VERSION part of the metadata backup directory:
+    s3_data_dir/metadata_backup/VERSION" The format of this flag (and VERSION) is
+    `YYMMDDHHMMSS` e.g. `20170123164600`. If not specified , the script will use the
+    latest version in `s3_data_dir/metadata_backup/`.''')
 arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
@@ -109,6 +109,7 @@ class Ecosystem:
     self.cluster = None
     self.instances = []
     self.jdbc_url = ''
+    self.s3_client = None
 
   def launch_cluster(self):
     print('Launching an EMR cluster.')
@@ -118,6 +119,7 @@ class Ecosystem:
         ec2_key_file=conf['ec2_key_file'],
         ec2_key_name=conf['ec2_key_name'],
         region=conf['emr_region'])
+    self.s3_client = lib.s3_client
     self.cluster = lib.create_or_connect_to_emr_cluster(
         name=conf['cluster_name'],
         log_uri=conf['emr_log_uri'],
@@ -168,8 +170,7 @@ class Ecosystem:
       if not metadata_version:
         # Gives back the "latest" version from the `s3_bucket/metadata_backup/`.
         # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
-        client = boto3.client('s3')
-        paginator = client.get_paginator('list_objects')
+        paginator = self.s3_client.get_paginator('list_objects')
         result = paginator.paginate(Bucket=bucket, Prefix='metadata_backup/', Delimiter='/')
         # Name of the alphabetically last folder without the trailing slash.
         version = sorted([prefix.get('Prefix')

@@ -18,6 +18,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
   val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
+  val repositoryRoot = new File(repositoryPath).getParent()
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
