@@ -214,7 +214,8 @@ object MetaRepositoryManager {
         state.scalarGUIDs.mapValues(newGUID),
         state.segmentations.mapValues(updatedSegmentation),
         state.notes,
-        state.elementNotes)
+        state.elementNotes,
+        state.elementMetadata)
     def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
       SegmentationState(
         updatedProject(segmentation.state),

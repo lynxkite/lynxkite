@@ -325,6 +325,14 @@ include::segment-by-interval.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
 
+include::set-edge-attribute-icon.asciidoc[]
+
+include::set-scalar-icon.asciidoc[]
+
+include::set-segmentation-icon.asciidoc[]
+
+include::set-vertex-attribute-icon.asciidoc[]
+
 include::shortest-path.asciidoc[]
 
 include::snowball-sample.asciidoc[]
