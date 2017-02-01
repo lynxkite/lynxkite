@@ -41,13 +41,13 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     BackupSettings(
       dataDir = dataDirPath,
       emphemeralDataDir = ephemeralDataDirPath,
-      s3MetadataRootDir = dataDirPath + "/metadata_backup/",
+      s3MetadataRootDir = dataDirPath + "metadata_backup/",
       metadataVersionTimestamp = ts)
   }
 
   def s3Backup(user: serving.User, req: BackupRequest): Unit = {
     val dm = environment.dataManager
-    val dst = dm.repositoryPath + "/metadata_backup/" + req.timestamp + "/"
+    val dst = dm.repositoryPath + "metadata_backup/" + req.timestamp + "/"
     dm.synchronized {
       dm.waitAllFutures()
       sparkClusterController.setForceReportHealthy(true)
