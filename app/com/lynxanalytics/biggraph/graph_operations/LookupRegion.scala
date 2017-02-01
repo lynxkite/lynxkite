@@ -49,18 +49,22 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
 
     val dataStore = FileDataStoreFinder.getDataStore(new File(shapefile))
     val iterator = dataStore.getFeatureSource.getFeatures().features()
-    val regionAttributeMapping: Seq[(BoundingBox, String)] =
+    val regionAttributeMapping: Seq[(BoundingBox, Option[String])] =
       iterator.map(feature =>
         (
           feature.getDefaultGeometryProperty.getBounds,
-          feature.getAttribute(attribute).asInstanceOf[String]
+          // A feature may not have the specified attribute.
+          Option(feature.getAttribute(attribute)).map(_.toString())
         )
       ).toVector
     iterator.close()
     dataStore.dispose()
 
     output(o.attribute, inputs.coordinates.rdd.flatMapValues {
-      case (lat, lon) => regionAttributeMapping.find(f => f._1.contains(lon, lat)).map(f => f._2)
+      case (lat, lon) => regionAttributeMapping
+        // Find the first bounding shape which has the specified attribute.
+        .find(f => f._1.contains(lon, lat) && f._2.nonEmpty)
+        .map(f => f._2.get)
     })
   }
 }
