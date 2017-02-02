@@ -325,3 +325,12 @@ pick-options table {
   border-collapse: separate;
   border-spacing: 10px;
 }
+
+/* Fit "OK" button by visualization name. */
+#menu-setting-save-visualization input {
+  width: auto;
+  display: inline;
+}
+#menu-setting-save-visualization button {
+  vertical-align: top;
+}
