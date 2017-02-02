@@ -15,7 +15,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       // Angular element for easier access of popup elements.
       var dropElement = element.children('.menu');
       var drop = new Drop({
-        target: element.children('.entity')[0],
+        target: element.children('.token')[0],
         content: element.children('.menu')[0],
         openOn: 'click',
         classes: 'drop-theme-menu',

@@ -9,7 +9,7 @@ angular.module('biggraph').directive('sampledViewSettings', function() {
     link: function(scope, element) {
       var drops = {};
 
-      element.find('.entity').each(function(i, e) {
+      element.find('.token').each(function(i, e) {
         if (!e.id) { return; }
         var menu = element.find('#menu-' + e.id);
         /* global Drop */
