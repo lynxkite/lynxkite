@@ -172,4 +172,41 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(df.count == 5)
   }
 
+  test("an operation triggering computation results in exception (#5580)") {
+    implicit val metaManager = cleanMetaManager
+    implicit val dataManager = cleanDataManager
+    import Scripting._
+    val g = ExampleGraph().result
+    val vs = {
+      val op = OpTriggeringTestOperation()
+      op.sideChannelVS = g.vertices
+      op.result.vs
+    }
+    val exc = intercept[Exception] {
+      println(vs.rdd.collect)
+    }
+    assert(java.util.regex.Pattern.matches(
+      ".*OpTriggeringTestOperation.* triggered the computation of .*vertices of .*ExampleGraph.*",
+      exc.getCause.getMessage))
+  }
+}
+
+object OpTriggeringTestOperation extends OpFromJson {
+  def fromJson(j: JsValue) = OpTriggeringTestOperation()
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val vs = vertexSet
+  }
+}
+case class OpTriggeringTestOperation()
+    extends TypedMetaGraphOp[graph_operations.NoInput, OpTriggeringTestOperation.Output] {
+  var sideChannelVS: VertexSet = null
+  @transient override lazy val inputs = new graph_operations.NoInput
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new OpTriggeringTestOperation.Output()(instance)
+  def execute(inputDatas: DataSet,
+              o: OpTriggeringTestOperation.Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    println(rc.dataManager.get(sideChannelVS).rdd.collect)
+  }
 }
