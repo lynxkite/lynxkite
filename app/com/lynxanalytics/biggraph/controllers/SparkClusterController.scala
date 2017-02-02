@@ -264,7 +264,11 @@ class KiteMonitorThread(
       val sparkActive = listener.isSparkActive || sparkChecker.isRunning
       val sparkStalled = listener.isSparkStalled
       val lastSparkEvent = listener.getLastSparkTaskFinish max sparkLastLookedAt
-      val nextSparkCheck = if (sparkActive) {
+      val sc = environment.sparkContext
+      val runningTaskCount = if (!sc.isStopped) sc.getAllPools.map(_.runningTasks).sum else 0
+      val nextSparkCheck = if (runningTaskCount > 0) {
+        now + maxNoSparkProgressMillis
+      } else if (sparkActive) {
         if (sparkStalled) {
           // We use our idle check interval if we already know Spark is stalled to avoid
           // logging too much.
