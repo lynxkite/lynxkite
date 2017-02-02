@@ -288,7 +288,6 @@ class KiteMonitorThread(
             concurrent.Await.result(
               testsDone,
               concurrent.duration.Duration(coreTimeoutMillis, "millisecond"))
-
           } catch {
             case e: java.util.concurrent.TimeoutException =>
               log.error("Kite core test timed out. Thread dump:\n" + threadDump())
