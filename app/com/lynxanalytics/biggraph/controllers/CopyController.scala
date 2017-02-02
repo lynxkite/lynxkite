@@ -8,6 +8,8 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 import java.io.File
 
+import org.apache.hadoop.fs.Path
+
 case class BackupSettings(
   dataDir: String = "",
   emphemeralDataDir: String = "",
@@ -62,9 +64,12 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
 
   private def copyMetadata(user: serving.User, dst: HadoopFile): Unit = {
     val metaRoot = environment.metaGraphManager.repositoryRoot
-    val src = new HadoopFile(metaRoot)
+    val conf = new hadoop.conf.Configuration();
+    val srcPath = new Path(metaRoot)
+    val srcFs = srcPath.getFileSystem(conf)
+
     hadoop.fs.FileUtil.copy(
-      src.fs, src.path,
+      srcFs, srcPath,
       dst.fs, dst.path,
       /* deleteSource = */ false,
       /* overwrite = */ true,
