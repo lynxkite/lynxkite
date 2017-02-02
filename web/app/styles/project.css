@@ -237,7 +237,7 @@ label {
 }
 
 .visualization-menu .menu-item.active::before {
-  content: '\a0\a0•\a0' !important;
+  content: '\a0\a0✓\a0' !important;
   font-family: monospace;
 }
 
