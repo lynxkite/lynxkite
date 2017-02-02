@@ -265,7 +265,7 @@ class KiteMonitorThread(
       val sparkStalled = listener.isSparkStalled
       val lastSparkEvent = listener.getLastSparkTaskFinish max sparkLastLookedAt
       val sc = environment.sparkContext
-      val runningTaskCount = sc.getAllPools.map(_.runningTasks).sum
+      val runningTaskCount = if (!sc.isStopped) sc.getAllPools.map(_.runningTasks).sum else 0
       val nextSparkCheck = if (runningTaskCount > 0) {
         now + maxNoSparkProgressMillis
       } else if (sparkActive) {
