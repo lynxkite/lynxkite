@@ -53,6 +53,7 @@ abstract class BaseRelation(
   }
 }
 
+// Turns a Table to a DataFrame, when you already have the RDDs.
 class RDDRelation(
   table: controllers.Table,
   sqlContext: sql.SQLContext,
@@ -62,6 +63,7 @@ class RDDRelation(
   override def columnRDD(name: String) = columnRDDs(name)
 }
 
+// Turns a Table to a DataFrame, when you want to get the RDDs from the DataManager lazily.
 class TableRelation(
   table: controllers.Table, sqlContext: sql.SQLContext, dataManager: DataManager)
     extends BaseRelation(table, sqlContext) {
