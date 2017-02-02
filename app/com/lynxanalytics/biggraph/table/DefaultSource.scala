@@ -33,6 +33,8 @@ abstract class BaseRelation(
   table: controllers.Table, val sqlContext: sql.SQLContext)
     extends sql.sources.BaseRelation with sql.sources.TableScan with sql.sources.PrunedScan {
   def toDF = sqlContext.baseRelationToDataFrame(this)
+  def columnRDD(name: String): AttributeRDD[_] = ???
+  def vertexSetRDD: VertexSetRDD = ???
 
   // BaseRelation
   val schema = table.dataFrameSchema
@@ -41,17 +43,8 @@ abstract class BaseRelation(
   def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
 
   // PrunedScan
-  def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row]
-}
-
-class RDDRelation(
-  table: controllers.Table,
-  sqlContext: sql.SQLContext,
-  val vertexSetRDD: VertexSetRDD,
-  val columnRDDs: Map[String, AttributeRDD[_]])
-    extends BaseRelation(table, sqlContext) {
   def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row] = {
-    val rdds = requiredColumns.toSeq.map(name => columnRDDs(name))
+    val rdds = requiredColumns.toSeq.map(name => columnRDD(name))
     val emptyRows = vertexSetRDD.mapValues(_ => Seq[Any]())
     val seqRows = rdds.foldLeft(emptyRows) { (seqs, rdd) =>
       seqs.sortedLeftOuterJoin(rdd).mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }
@@ -60,12 +53,18 @@ class RDDRelation(
   }
 }
 
+class RDDRelation(
+  table: controllers.Table,
+  sqlContext: sql.SQLContext,
+  override val vertexSetRDD: VertexSetRDD,
+  columnRDDs: Map[String, AttributeRDD[_]])
+    extends BaseRelation(table, sqlContext) {
+  override def columnRDD(name: String) = columnRDDs(name)
+}
+
 class TableRelation(
   table: controllers.Table, sqlContext: sql.SQLContext, dataManager: DataManager)
-    extends RDDRelation(table, sqlContext, null, null) {
-  // Get RDDs up-front. We do not want to access the DataManager later, when we are potentially
-  // inside a running ImportDataFrame operation. (#5580)
-  override val vertexSetRDD: VertexSetRDD = dataManager.get(table.idSet).rdd
-  override val columnRDDs: Map[String, AttributeRDD[_]] =
-    schema.fieldNames.toSeq.map(name => name -> table.columnForDF(name)(dataManager)).toMap
+    extends BaseRelation(table, sqlContext) {
+  override def vertexSetRDD = dataManager.get(table.idSet).rdd
+  override def columnRDD(name: String) = table.columnForDF(name)(dataManager)
 }

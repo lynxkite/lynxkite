@@ -29,19 +29,3 @@ object ThreadUtil {
       ))
   }
 }
-
-class LockableExecutionContext(name: String, maxParallelism: Int)
-    extends concurrent.ExecutionContext {
-  private val ec = ThreadUtil.limitedExecutionContext(name, maxParallelism)
-  private var locked = new ThreadLocal[Boolean] { override def initialValue() = false }
-  override def reportFailure(cause: Throwable): Unit = ec.reportFailure(cause)
-  override def execute(runnable: Runnable): Unit = synchronized {
-    assert(!locked.get, s"The $name thread pool cannot be used in this context.")
-    ec.execute(runnable)
-  }
-  def withLock[T](func: => T): T = {
-    locked.set(true)
-    try func
-    finally locked.set(false)
-  }
-}
