@@ -62,11 +62,12 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
 
   private def copyMetadata(user: serving.User, dst: HadoopFile): Unit = {
     val metaRoot = environment.metaGraphManager.repositoryRoot
-    val src = new File(metaRoot)
+    val src = new HadoopFile(metaRoot)
     hadoop.fs.FileUtil.copy(
-      src,
+      src.fs, src.path,
       dst.fs, dst.path,
       /* deleteSource = */ false,
+      /* overwrite = */ true,
       dst.hadoopConfiguration)
   }
 
