@@ -1,3 +1,4 @@
+// Visualization settings in sampled view.
 'use strict';
 
 angular.module('biggraph').directive('sampledViewSettings', function() {
@@ -28,6 +29,7 @@ angular.module('biggraph').directive('sampledViewSettings', function() {
 
       function getDrop(e) {
         e = e.currentTarget;
+        // Try to find a parent that is a drop-down menu. Give up after 20 steps.
         for (var i = 0; i < 20; ++i) {
           if (drops[e.id] !== undefined) {
             return drops[e.id];
