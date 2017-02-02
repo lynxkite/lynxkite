@@ -68,7 +68,7 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
     output(o.attribute, inputs.coordinates.rdd.flatMapValues {
       case (lat, lon) => regionAttributeMapping
         .find {
-          case (bounds, geometry, _) =>
+          case (bounds, geometry, a) =>
             // Do the faster BoundingBox check first.
             bounds.contains(lon, lat) && (geometry match {
               // The actual classes and ways to check differ for implementations. These 2 cases
