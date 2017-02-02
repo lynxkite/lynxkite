@@ -1,14 +1,14 @@
-<div class="entity-list">
-  <div class="entity" id="setting-display" ng-class="{ default: side.state.display === 'svg' }">
+<div class="token-list">
+  <div class="token" id="setting-display" ng-class="{ default: side.state.display === 'svg' }">
     <span class="title">{{ side.state.display === 'svg' ? '2D' : '3D' }}</span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-display">
+  <div class="menu token-menu" id="menu-setting-display">
     <div class="menu-item default" ng-click="side.state.display = 'svg'"> 2D </div>
     <div class="menu-item" ng-click="side.state.display = '3d'"> 3D </div>
   </div>
 
   <span ng-show="side.state.display === 'svg'">
-    <div class="entity"
+    <div class="token"
          tooltip="Animation {{ side.state.animate.enabled ? 'enabled' : 'disabled' }}"
          ng-click="side.state.animate.enabled = !side.state.animate.enabled"
          ng-class="{ default: !side.state.animate.enabled }">
@@ -18,14 +18,14 @@
       </span>
     </div>
 
-    <div class="entity"
+    <div class="token"
          id="setting-label-attraction"
          ng-class="{ default: side.state.animate.labelAttraction === '0' }">
       <span class="title">
         label attraction: {{ side.state.animate.labelAttraction * 100 | number : 0 }}%
       </span>
     </div>
-    <div class="menu entity-menu" id="menu-setting-label-attraction">
+    <div class="menu token-menu" id="menu-setting-label-attraction">
       <div>
         <input id="label-attraction-slider"
                type="range"
@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <div class="entity"
+    <div class="token"
          id="setting-layout"
          ng-class="{ default: side.state.animate.style === 'neutral' }"
          tooltip="
@@ -57,20 +57,20 @@
         }}
       </span>
     </div>
-    <div class="menu entity-menu" id="menu-setting-layout">
+    <div class="menu token-menu" id="menu-setting-layout">
       <div class="menu-item default" ng-click="side.state.animate.style = 'neutral'"> Neutral </div>
       <div class="menu-item" ng-click="side.state.animate.style = 'centralize'"> Centralized </div>
       <div class="menu-item" ng-click="side.state.animate.style = 'decentralize'"> Decentralized </div>
     </div>
   </span>
 
-  <div class="entity" id="setting-centers">
+  <div class="token" id="setting-centers">
     <span class="title">
       centers: {{ side.state.centers.join(', ') || 'nothing' }}
       <span class="spinner" ng-show="side.centerRequest && !side.centerRequest.$resolved">|</span>
     </span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-centers">
+  <div class="menu token-menu" id="menu-setting-centers">
     <div> Centers visualized: </div>
     <input class="form-control"
            id="centers"
@@ -81,14 +81,14 @@
     <pick-options side="side"></pick-options>
   </div>
 
-  <div class="entity"
+  <div class="token"
        id="setting-sample-radius"
        ng-class="{ default: side.state.sampleRadius === '1' }">
     <span class="title">
       radius {{ side.state.sampleRadius }}
     </span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-sample-radius">
+  <div class="menu token-menu" id="menu-setting-sample-radius">
     <input id="sample-radius-slider"
            type="range"
            max="10"
@@ -96,10 +96,10 @@
            ng-model="side.state.sampleRadius">
   </div>
 
-  <div class="entity default" id="setting-save-visualization">
+  <div class="token default" id="setting-save-visualization">
     <span class="title"><i class="glyphicon glyphicon-floppy-disk"></i></span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-save-visualization">
+  <div class="menu token-menu" id="menu-setting-save-visualization">
     <div>
       Save visualization...
       <help-popup href="saving-visualizations"></help-popup>

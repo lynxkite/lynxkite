@@ -231,7 +231,7 @@
     </div>
 
     <!-- Extra controls for visualizations. -->
-    <div class="entity-section-label"
+    <div class="token-section-label"
          ng-show="side.state.graphMode && !side.showSection('view-settings')">
       <span class="label-text" ng-click="side.showSection('view-settings', true)">
         Visualization settings are hidden. </span>
@@ -241,7 +241,7 @@
          ng-show="side.showSection('view-settings')">
       <!-- Sampled view extra controls. -->
       <div ng-if="side.state.graphMode === 'sampled'">
-        <div class="entity-section-label">
+        <div class="token-section-label">
           <span class="label-text" ng-click="side.showSection('view-settings', false)">
             Visualization settings </span>
           <help-popup href="concrete-view-settings"></help-popup>
@@ -251,7 +251,7 @@
 
       <!-- Extra controls for the bucketed view. -->
       <div ng-if="side.state.graphMode === 'bucketed'">
-        <div class="entity-section-label">
+        <div class="token-section-label">
           <span class="label-text" ng-click="side.showSection('view-settings', false)">
             Visualization settings </span>
         </div>
@@ -263,20 +263,20 @@
     <div class="entity-sections">
       <div ng-repeat="section in side.sections">
         <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
-          <div class="entity-section-label">
+          <div class="token-section-label">
             <span class="label-text" ng-click="side.showSection(section, false)">
               {{ side.sectionHumanName[section] }} </span>
             <help-popup href="{{ side.sectionHelp[section] }}"></help-popup>
           </div>
         </div>
         <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
-             class="entity-section-label">
+             class="token-section-label">
           <span class="label-text" ng-click="side.showSection(section, true)">
             {{ side.sectionElements(section).length }}
             {{ side.sectionHumanName[section] | lowercase }}
             are hidden. </span>
         </div>
-        <div class="entity-list" ng-show="side.showSection(section)">
+        <div class="token-list" ng-show="side.showSection(section)">
           <entity ng-repeat="e in side.sectionElements(section)"
                   kind="{{ section }}"
                   entity="e"
@@ -287,7 +287,7 @@
 
     <!-- SQL box. -->
     <div class="sql-box-section">
-        <div class="entity-section-label">
+        <div class="token-section-label">
           <span class="label-text" ng-click="side.showSection('sql', !side.showSection('sql'))">
             SQL </span>
           <help-popup href="sql-box" ng-show="side.showSection('sql')"></help-popup>

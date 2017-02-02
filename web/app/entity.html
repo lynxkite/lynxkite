@@ -1,4 +1,4 @@
-<div class="entity"
+<div class="token"
      ng-class="{ active: active() }"
      id="{{ kind }}-{{ title() | id }}">
   <span class="title"> {{ title() }} </span>
@@ -23,7 +23,7 @@
     {{ visualization }} </span>
 </div>
 
-<div class="menu entity-menu" id="menu-{{ kind }}-{{ title() | id }}">
+<div class="menu token-menu" id="menu-{{ kind }}-{{ title() | id }}">
   <div class="de-emph entity-note" ng-show="entity.note">
     {{ title() }} = <span trusted-html="entity.note"></span>
   </div>

@@ -1,12 +1,12 @@
-<div class="entity-list">
-  <div class="entity" id="setting-buckets">
+<div class="token-list">
+  <div class="token" id="setting-buckets">
     <span class="title">{{ side.state.bucketCount }}&times;{{ side.state.bucketCount }} buckets</span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-buckets">
+  <div class="menu token-menu" id="menu-setting-buckets">
     <lazy-slider value="side.state.bucketCount"></lazy-slider>
   </div>
 
-  <div class="entity"
+  <div class="token"
        id="setting-precise"
        ng-class="{ default: !side.state.preciseBucketSizes }"
        ng-click="side.state.preciseBucketSizes = !side.state.preciseBucketSizes">
@@ -14,7 +14,7 @@
       {{ side.state.preciseBucketSizes ? 'precise' : 'approximate' }} counts</span>
   </div>
 
-  <div class="entity"
+  <div class="token"
        id="setting-relative"
        ng-class="{ default: !side.state.relativeEdgeDensity}"
        ng-click="side.state.relativeEdgeDensity = !side.state.relativeEdgeDensity">
@@ -22,10 +22,10 @@
       {{ side.state.relativeEdgeDensity ? 'relative' : 'absolute' }} edge densities</span>
   </div>
 
-  <div class="entity default" id="setting-save-visualization">
+  <div class="token default" id="setting-save-visualization">
     <span class="title"><i class="glyphicon glyphicon-floppy-disk"></i></span>
   </div>
-  <div class="menu entity-menu" id="menu-setting-save-visualization">
+  <div class="menu token-menu" id="menu-setting-save-visualization">
     <div>
       Save visualization...
       <help-popup href="saving-visualizations"></help-popup>
