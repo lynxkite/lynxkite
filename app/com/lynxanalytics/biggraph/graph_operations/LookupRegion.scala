@@ -60,7 +60,7 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
           // A feature may not have the specified attribute.
           Option(feature.getAttribute(attribute)).map(_.toString())
         )
-      ).flatMap { case (b, g, a) => a.map(a => (b, g, a)) }.toVector // Discard empty attributes.
+      ).filter(_._3.nonEmpty).map { case (b, g, a) => (b, g, a.get) }.toVector
     iterator.close()
     dataStore.dispose()
 
@@ -79,8 +79,7 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
                 g.contains(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)))
               case _ => false
             })
-        }
-        .map(_._3)
+        }.map(_._3)
     })
   }
 }
