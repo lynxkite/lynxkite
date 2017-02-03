@@ -1,4 +1,6 @@
-// Looks up a location in a Shapefile and returns a specified Shapefile attribute.
+// Creates a segmentation from features and their attributes in a Shapefile. The vertices and
+// the segments are connected based on the distances of the position vertex attributes and the
+// geometry attributes of the segments (Shapefile features).
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api.DataSet
