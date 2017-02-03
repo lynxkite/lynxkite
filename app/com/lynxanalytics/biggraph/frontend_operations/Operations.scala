@@ -3565,8 +3565,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
       Param("output", "Output name"))
-    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
-    import java.io.File
+    def enabled = FEStatus.assert(vertexAttributes[(Double, Double)].nonEmpty,
+      "No position vertex attributes.")
 
     def apply(params: Map[String, String]) = {
       val shapeFilePath = params("shapefile")
@@ -3577,21 +3577,52 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val result = op(op.coordinates, position).result
       project.newVertexAttribute(params("output"), result.attribute)
     }
+  })
 
-    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
-    private val shapeDir = s"$metaDir/resources/shapefiles/"
+  register("Segment by GEO data", new StructureOperation(_, _) {
+    override def parameters = List(
+      Param("name", "Name"),
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
+      NonNegDouble("distance", "Distance", defaultValue = "0.0"))
+    def enabled = FEStatus.assert(vertexAttributes[(Double, Double)].nonEmpty,
+      "No position vertex attributes.")
 
-    private def listShapefiles(): List[FEOption] = {
-      def lsR(f: File): Array[File] = {
-        val files = f.listFiles()
-        if (files == null)
-          return Array.empty
-        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+    def apply(params: Map[String, String]) = {
+      import com.lynxanalytics.biggraph.graph_util.Shapefile
+      val shapeFilePath = params("shapefile")
+      assert(listShapefiles().exists(f => f.id == shapeFilePath),
+        "Shapefile deleted, please choose another.")
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val shapefile = Shapefile(shapeFilePath)
+      val op = graph_operations.SegmentByGEOData(
+        shapeFilePath, params("distance").toDouble, shapefile.attrNames)
+      val result = op(op.coordinates, position).result
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(result.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = result.belongsTo
+
+      for ((attrName, i) <- shapefile.attrNames.zipWithIndex) {
+        segmentation.newVertexAttribute(attrName, result.attributes(i))
       }
-      lsR(new File(shapeDir)).toList.map(f =>
-        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+      shapefile.close()
     }
   })
+
+  private def listShapefiles(): List[FEOption] = {
+    import java.io.File
+    def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    val shapeDir = s"$metaDir/resources/shapefiles/"
+    def lsR(f: File): Array[File] = {
+      val files = f.listFiles()
+      if (files == null)
+        return Array.empty
+      files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+    }
+    lsR(new File(shapeDir)).toList.map(f =>
+      FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+  }
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
