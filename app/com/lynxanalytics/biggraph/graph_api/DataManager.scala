@@ -41,12 +41,14 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-class DataManager(sparkSession: spark.sql.SparkSession,
+class DataManager(val sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext("DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+  private var executingOperation =
+    new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
@@ -137,6 +139,13 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     }.future
   }
 
+  // Asserts that this thread is not in the process of executing an operation.
+  private def assertNotInOperation(msg: String): Unit = {
+    for (op <- executingOperation.get) {
+      throw new AssertionError(s"$op $msg")
+    }
+  }
+
   private def execute(instance: MetaGraphOperationInstance,
                       logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
@@ -159,7 +168,9 @@ class DataManager(sparkSession: spark.sql.SparkSession,
         log.info(s"PERF Computing scalar $scalar")
       }
       val outputDatas = concurrent.blocking {
-        instance.run(inputDatas, runtimeContext)
+        executingOperation.set(Some(instance))
+        try instance.run(inputDatas, runtimeContext)
+        finally executingOperation.set(None)
       }
       validateOutput(instance, outputDatas)
       concurrent.blocking {
@@ -283,6 +294,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
         set(entity, load(entity))
       } else {
         assert(computationAllowed, "DEMO MODE, you cannot start new computations")
+        assertNotInOperation(s"has triggered the computation of $entity. #5580")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
 

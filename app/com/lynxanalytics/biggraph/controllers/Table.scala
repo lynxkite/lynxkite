@@ -20,7 +20,7 @@ trait Table {
   }
 
   def toDF(sqlContext: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
-    new TableRelation(this, sqlContext).toDF
+    new TableRelation(this, sqlContext, dataManager).toDF
 
   def dataFrameSchema: spark.sql.types.StructType = {
     val fields = columns.toSeq.sortBy(_._1).map {
