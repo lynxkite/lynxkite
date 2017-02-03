@@ -6,6 +6,6 @@
   color: red;
 }
 
-td:first-child {
+#backup-settings td:first-child {
     width: 30%;
 }

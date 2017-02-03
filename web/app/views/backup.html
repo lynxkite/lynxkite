@@ -6,7 +6,7 @@
         <p>
             The 'S3 backup' function is only usable, when LynxKite was started on an Amazon
             instance with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
-            <tt>KITE_EMPHEMERAL_DATA_DIR</tt> are set according to the admin manual.
+            <tt>KITE_EPHEMERAL_DATA_DIR</tt> are set according to the admin manual.
         </p>
         <p>
             The S3 metadata backup directory is a subdirectory of <tt>KITE_DATA_DIR/metadata_backup/</tt>.
@@ -25,14 +25,14 @@
     </div>
     <div>
         <h2>Backup settings</h2>
-        <table class="table">
+        <table class="table" id="backup-settings">
             <tr>
                 <td><b>S3 data backup dir</b> <br>(KITE_DATA_DIR)</td>
                 <td> <div class="col-sm-12"><tt>{{backupSettings.dataDir}}</tt></div></td>
             </tr>
             <tr>
                 <td><b>Data dir</b> <br>(KITE_EPHEMERAL_DATA_DIR)</td>
-                <td><div class="col-sm-12"> <tt>{{backupSettings.emphemeralDataDir}}</tt></div></td>
+                <td><div class="col-sm-12"> <tt>{{backupSettings.ephemeralDataDir}}</tt></div></td>
             </tr>
             <tr>
                 <td><b>S3 metadata root dir</b></td>
