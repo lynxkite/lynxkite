@@ -4,13 +4,13 @@ For every `position` vertex attribute looks up features in a Shapefile and retur
 attribute.
 
 * The lookup depends on the coordinate reference system of the feature. The input position must
-  use the same CRS as the one specified in the Shapefile.
+  use the same coordinate reference system as the one specified in the Shapefile.
 * If there are no matching features the output is omitted.
 * If the specified attribute does not exist for any matching feature the output is omitted.
 * If there are multiple suitable features the algorithm picks the first one.
 
-A default world country borders dataset is included from
-http://thematicmapping.org/downloads/world_borders.php.
+Shapefiles can be obtained from various sources, like
+http://wiki.openstreetmap.org/wiki/Shapefiles[OpenStreetMap].
 
 ====
 
