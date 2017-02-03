@@ -191,7 +191,7 @@ class Ecosystem:
       if [ -d metadata/lynxkite ]; then
         mv metadata/lynxkite metadata/lynxkite.$(date "+%Y%m%d_%H%M%S_%3N")
       fi
-      aws s3 sync {dir} metadata/lynxkite/ --quiet
+      aws s3 sync {dir} metadata/lynxkite/ --exclude "*$folder$" --quiet
       supervisorctl start lynxkite
     '''.format(dir=s3_metadata_dir))
     print('Metadata restored.')
