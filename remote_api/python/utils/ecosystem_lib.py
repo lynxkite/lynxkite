@@ -64,8 +64,8 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--s3_metadata_version',
     help='''If specified, it defines the VERSION part of the metadata backup directory:
-    s3_data_dir/metadata_backup/VERSION" The format of this flag (and VERSION) is
-    `YYMMDDHHMMSS` e.g. `20170123164600`. If not specified , the script will use the
+    s3_data_dir/metadata_backup/VERSION The format of this flag (and VERSION) is
+    `YYYYMMddHHmmss` e.g. `20170123164600`. If not specified , the script will use the
     latest version in `s3_data_dir/metadata_backup/`.''')
 arg_parser.add_argument(
     '--owner',

@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.serving
 
 case class BackupSettings(
   dataDir: String = "",
-  emphemeralDataDir: String = "",
+  ephemeralDataDir: String = "",
   s3MetadataRootDir: String = "",
   metadataVersionTimestamp: String = "")
 
@@ -32,6 +32,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
   }
 
   def getBackupSettings(user: serving.User, req: serving.Empty): BackupSettings = {
+    assert(user.isAdmin, "Only admins can do backup.")
     import java.util.Calendar
     import java.text.SimpleDateFormat
     val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
@@ -39,12 +40,13 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     val ephemeralDataDirPath = environment.dataManager.ephemeralPath.map(_.resolvedName).getOrElse("")
     BackupSettings(
       dataDir = dataDirPath,
-      emphemeralDataDir = ephemeralDataDirPath,
+      ephemeralDataDir = ephemeralDataDirPath,
       s3MetadataRootDir = dataDirPath + "metadata_backup/",
       metadataVersionTimestamp = ts)
   }
 
   def s3Backup(user: serving.User, req: BackupRequest): Unit = {
+    assert(user.isAdmin, "Only admins can do backup.")
     val dm = environment.dataManager
     val dst = dm.repositoryPath + "metadata_backup/" + req.timestamp + "/"
     dm.synchronized {

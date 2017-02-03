@@ -19,7 +19,7 @@ angular.module('biggraph')
         $scope.success = true;
       }, function(reason) { // failure
         $scope.inProgress = false;
-        $scope.statusMessage = 'Data backup is failed. Error: ' + reason.statusText;
+        $scope.statusMessage = 'Data backup failed. Error: ' + reason.statusText;
         $scope.success = false;
       });
     };
@@ -28,7 +28,7 @@ angular.module('biggraph')
       if ($scope.backupSettings.dataDir === '') {
         return true;
       }
-      if ($scope.backupSettings.emphemeralDataDir === '' ) {
+      if ($scope.backupSettings.ephemeralDataDir === '' ) {
         return true;
       }
       if ($scope.inProgress) {
