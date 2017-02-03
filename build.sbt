@@ -48,7 +48,11 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
-  // Provides HyperLogLogPlus counters. Must be the same version that is
+  // For accessing S3 fs from local instance
+  // The javax.servlet package is pulled by an other dependency but with
+  // different version, which caused build conflict.
+  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll ExclusionRule(organization = "javax.servlet"),
+// Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
   // JDBC drivers.

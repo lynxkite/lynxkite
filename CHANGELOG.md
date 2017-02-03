@@ -6,13 +6,15 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.12.0
+
  - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
    LynxKite 1.11.0.)
  - Remote API works on PizzaKite now.
  - Added a table and column explorer to the SQL box. Click on the "Tables" button in the SQL
    box to give it a try!
  - Upgraded to _Apache Spark 2.1.0_.
- - Added _Lookup Region_ operation for finding locations inside shapefiles.
+ - You can assign icons to attributes/segmentations/scalars. (As suggested by Marton Szel. :+1:)
  - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
    was trained in an other project.
  - Clicking on a table or view scrolls to the global SQL box and executes the
@@ -20,6 +22,11 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - You can submit SQL queries with Ctrl-Enter.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
+ - Spark Monitor doesn't send alarm in case of long-running tasks.
+
+Ecosystem:
+ - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
+ - Renamed from "Lynx Data Automation Framework" to "Lynx Enterprise".
 
 ### 1.11.0
 

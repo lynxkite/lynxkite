@@ -1323,6 +1323,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
       }
+      project.setElementMetadata(VertexAttributeKind, "income", MetadataNames.Icon, "money_bag")
+      project.setElementMetadata(VertexAttributeKind, "location", MetadataNames.Icon, "paw_prints")
     }
   })
 
@@ -1865,7 +1867,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_created_edges", "", Map()))
       } else {
         List()
       }
@@ -1892,7 +1894,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_total_edges", "", Map()))
       } else {
         List()
       }
@@ -2552,6 +2554,90 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
             please discard it or choose another name""")
       project.scalars(params("to")) = project.scalars(params("from"))
       project.scalars(params("from")) = null
+    }
+  })
+
+  register("Set scalar icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = scalars),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set vertex attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = vertexAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set edge attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = edgeAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set segmentation icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = segmentations),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, null)
+      }
     }
   })
 
@@ -3745,6 +3831,14 @@ object Operations {
 }
 
 object JSUtilities {
+  // Listing the valid characters for JS variable names. The \\p{*} syntax is for specifying
+  // Unicode categories for scala regex.
+  // For more information about the valid variable names in JS please consult:
+  // http://es5.github.io/x7.html#x7.6
+  val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
+    "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D\\\\"
+  val validJSFirstCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\\\"
+
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
@@ -3754,17 +3848,21 @@ object JSUtilities {
     }.toIndexedSeq
   }
 
+  // Whether a string can be a JavaScript identifier.
+  def canBeValidJSIdentifier(identifier: String): Boolean = {
+    val re = s"^[${validJSFirstCharacters}][${validJSCharacters}]*$$"
+    identifier.matches(re)
+  }
+
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    // Listing the valid characters for JS variable names. The \\p{*} syntax if for specifying
-    // Unicode categories for scala regex.
-    // For more information about the valid variable names in JS please consult:
-    // http://es5.github.io/x7.html#x7.6
-    val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
-      "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
-    val quoted_identifer = java.util.regex.Pattern.quote(identifier)
-    val re = s"(?s)(^|.*[^$validJSCharacters])${quoted_identifer}($$|[^$validJSCharacters].*)"
-    expr.matches(re)
+    if (!canBeValidJSIdentifier(identifier)) {
+      false
+    } else {
+      val quotedIdentifer = java.util.regex.Pattern.quote(identifier)
+      val re = s"(?s)(^|.*[^$validJSCharacters])${quotedIdentifer}($$|[^$validJSCharacters].*)"
+      expr.matches(re)
+    }
   }
 }
