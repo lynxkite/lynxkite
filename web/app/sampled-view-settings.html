@@ -9,13 +9,19 @@
 
   <span ng-show="side.state.display === 'svg'">
     <div class="token"
+         id="setting-animate"
          tooltip="Animation {{ side.state.animate.enabled ? 'enabled' : 'disabled' }}"
-         ng-click="side.state.animate.enabled = !side.state.animate.enabled"
          ng-class="{ default: !side.state.animate.enabled }">
       <span class="title">
         <i class="glyphicon glyphicon-play" ng-show="side.state.animate.enabled"></i>
         <i class="glyphicon glyphicon-pause" ng-hide="side.state.animate.enabled"></i>
       </span>
+    </div>
+    <div class="menu token-menu" id="menu-setting-animate">
+      <div class="menu-item" ng-click="side.state.animate.enabled = true">
+        <i class="glyphicon glyphicon-play"></i> Enable animation </div>
+      <div class="menu-item default" ng-click="side.state.animate.enabled = false">
+        <i class="glyphicon glyphicon-pause"></i> Disable animation </div>
     </div>
 
     <div class="token"
