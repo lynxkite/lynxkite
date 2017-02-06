@@ -18,4 +18,6 @@ include::architecture/index.asciidoc[]
 
 include::installation/index.asciidoc[]
 
+include::backup/index.asciidoc[]
+
 include::upgrade/index.asciidoc[]

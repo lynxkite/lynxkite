@@ -6,21 +6,8 @@
         <p>
             The 'S3 backup' function is only usable, when LynxKite was started
             with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
-            <tt>KITE_EPHEMERAL_DATA_DIR</tt> are set according to the admin manual.
-        </p>
-        <p>
-            The S3 metadata backup directory is a subdirectory of <tt>KITE_DATA_DIR/metadata_backup/</tt>.
-            The subdirectory named as the current timestamp at the time of the backup.
-            When someone restores saved metadata (with the <tt>emr_ecosystem.py</tt> script),
-            the version with the latest timestamp will be loaded by default, and earlier versions
-            can be chosen by an optional parameter.
-        </p>
-        <p>
-            The easiest way to reuse saved data is to start a new cluster using
-            <tt>emr_ecosystem.py</tt>:<br>
-        <tt>
-        ./emr_ecosystem.py --s3_data_dir s://bucket-name/ --restore_metadata
-        </tt>
+            <tt>KITE_EPHEMERAL_DATA_DIR</tt> are set properly.<br>
+            See details in the <a href="/#/admin-manual#_lynxkite_backup"> admin manual</a>.
         </p>
     </div>
     <div>
