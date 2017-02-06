@@ -20,7 +20,7 @@ The (maximum) number of vertices in the sample.
 [[restartprobability]] Restart probability::
 The probability of starting a new walk instead of walking.
 
-[[maxstartpoints]] Maximum number of starting points::
+[[startpoints]] Number of starting points::
 The limit of how many times a new start point can be selected. With low values, long run times can be
 avoided at the cost of possibly returning a sample of size smaller than requested.
 
