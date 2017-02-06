@@ -52,7 +52,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       dm.waitAllFutures()
       sparkClusterController.setForceReportHealthy(true)
       try {
-        copyEphemeralNoSync
+        copyEphemeralNoSync()
         copyMetadata(user, dst)
       } finally {
         sparkClusterController.setForceReportHealthy(false)
