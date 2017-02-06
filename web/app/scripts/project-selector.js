@@ -58,6 +58,7 @@ angular.module('biggraph').directive('projectSelector',
             {
               basePath: scope.path,
               query: scope.searchQuery,
+              includeNotes: true,
             });
         }
         window.sessionStorage.setItem('last_selector_path', scope.path);
@@ -149,8 +150,30 @@ angular.module('biggraph').directive('projectSelector',
         }
       };
 
+      scope.objectClick = function(event, o) {
+        if (scope.isProject(o)) { scope.projectClick(event, o); }
+        if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
+        return;
+      };
+
+      scope.tableClick = function(event, t) {
+        // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
+        if (event.originalEvent.alreadyHandled) { return; }
+        // Ignore clicks on errored tables.
+        if (t.error) { return; }
+        var tableNameParts = t.name.split('/');
+        var tableName = tableNameParts[tableNameParts.length - 1];
+        scope.showSQL = true;
+        $timeout(
+          function() {
+            $anchorScroll('global-sql-box');
+            scope.$broadcast('fill sql-box by clicking on table or view', tableName);
+          },
+          0,
+          false); // Do not invoke apply as we don't change the scope.
+      };
+
       scope.projectClick = function(event, p) {
-        if (!scope.isProject(p)) { return; }
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
@@ -215,7 +238,7 @@ angular.module('biggraph').directive('projectSelector',
             scope.showSQL=true;
             $anchorScroll('global-sql-box');
             $timeout(function () {
-              scope.$broadcast('fill sql-box from config', name, config, type);
+              scope.$broadcast('fill sql-box from config and clear sql result', name, config, type);
             });
             return;
           } else {

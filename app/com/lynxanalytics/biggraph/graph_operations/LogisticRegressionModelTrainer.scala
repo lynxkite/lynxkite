@@ -2,9 +2,11 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql
 import org.apache.spark.ml
+import org.apache.spark.storage.StorageLevel
 
 object LogisticRegressionModelTrainer extends OpFromJson {
   class Input(numFeatures: Int) extends MagicInputSignature {
@@ -22,6 +24,46 @@ object LogisticRegressionModelTrainer extends OpFromJson {
     (j \ "maxIter").as[Int],
     (j \ "labelName").as[String],
     (j \ "featureNames").as[List[String]])
+
+  // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient
+  // values to coefficient standard errors. See more information at http://www.real-statistics.com/
+  // logistic-regression/significance-testing-logistic-regression-coefficients.
+  // This is placed here (instead of the class) to enable standalone testing
+  private[graph_operations] def computeZValues(coefficientsAndIntercept: Array[Double], predictions: sql.DataFrame) = {
+    val numFeatures = coefficientsAndIntercept.length - 1
+    val labelSum = predictions.rdd.map(_.getAs[Double]("label")).sum
+    if (labelSum == 0.0) {
+      // In this extreme case, all coefficients equal to 0 and the intercept equals to -inf
+      Array.fill(numFeatures)(0.0) :+ Double.NegativeInfinity
+    } else if (labelSum == predictions.count.toInt) {
+      // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
+      Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
+    } else {
+      val sampleSizeApprox = LoggedEnvironment.envOrElse("KITE_ZVALUE_SAMPLE", "100000").toInt
+      val fraction = (sampleSizeApprox.toDouble / predictions.count()) min 1.0
+      // Compute z-value on a small sample only (since the computation is not distributed). To make the sampling
+      // repeatable, an arbitrary seed is specified.
+      val sample = predictions.sample(withReplacement = false, fraction, seed = 23948720934L)
+      sample.persist(StorageLevel.DISK_ONLY)
+      val vectors = sample.rdd.map(_.getAs[ml.linalg.Vector]("features"))
+      val probability = sample.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
+      // The constant field is added in order to get the statistics of the intercept.
+      val flattenMatrix = vectors.flatMap(_.toArray :+ 1.0).collect()
+      val matrix = new breeze.linalg.DenseMatrix(
+        rows = numFeatures + 1,
+        cols = sample.count().toInt,
+        data = flattenMatrix)
+      val cost = probability.map(prob => prob(0) * prob(1)).collect
+      val matrixCost = breeze.linalg.diag(breeze.linalg.SparseVector(cost))
+      // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is
+      // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
+      // whose diagonal elements are probability_i * (1 - probability_i).
+      val covariance = breeze.linalg.inv(matrix * matrixCost * matrix.t)
+      val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt)
+      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
+      zValues.toArray
+    }
+  }
 }
 import LogisticRegressionModelTrainer._
 case class LogisticRegressionModelTrainer(
@@ -122,44 +164,11 @@ case class LogisticRegressionModelTrainer(
     }
   }
   // Helper method to get the table of coefficients and Z-values.
-  private def getCoefficientsTable(
-    model: ml.classification.LogisticRegressionModel,
-    predictions: sql.DataFrame,
-    featureNames: List[String]): String = {
-    val numFeatures = model.coefficients.size
-    val numData = predictions.count.toInt
+  private def getCoefficientsTable(model: ml.classification.LogisticRegressionModel,
+                                   predictions: sql.DataFrame,
+                                   featureNames: List[String]): String = {
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
-    val labelSum = predictions.rdd.map(_.getAs[Double]("label")).sum
-    // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient
-    // values to coefficient standard errors. See more information at http://www.real-statistics.com/
-    // logistic-regression/significance-testing-logistic-regression-coefficients.
-    val zValues: Array[Double] = {
-      if (labelSum == 0.0) {
-        // In this extreme case, all coefficients equal to 0 and the intercept equals to -inf
-        Array.fill(numFeatures)(0.0) :+ Double.NegativeInfinity
-      } else if (labelSum == numData) {
-        // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
-        Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
-      } else {
-        val vectors = predictions.rdd.map(_.getAs[ml.linalg.Vector]("features"))
-        val probability = predictions.rdd.map(_.getAs[ml.linalg.Vector]("probability"))
-        // The constant field is added in order to get the statistics of the intercept.
-        val flattenMatrix = vectors.map(_.toArray :+ 1.0).reduce(_ ++ _)
-        val matrix = new breeze.linalg.DenseMatrix(
-          rows = numFeatures + 1,
-          cols = numData,
-          data = flattenMatrix)
-        val cost = probability.map(prob => prob(0) * prob(1)).collect
-        val matrixCost = breeze.linalg.diag(breeze.linalg.SparseVector(cost))
-        // The covariance matrix is calculated by the equation: S = inverse((transpose(X)*V*X)). X is
-        // the numData * (numFeature + 1) design matrix and V is the numData * numData diagonal matrix
-        // whose diagnol elements are probability_i * (1 - probability_i).
-        val covariance = breeze.linalg.inv((matrix * (matrixCost * matrix.t)))
-        val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt(_))
-        val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
-        zValues.toArray
-      }
-    }
+    val zValues: Array[Double] = computeZValues(coefficientsAndIntercept, predictions)
     val table = Tabulator.getTable(
       headers = Array("names", "estimates", "Z-values"),
       rowNames = featureNames.toArray :+ "intercept",

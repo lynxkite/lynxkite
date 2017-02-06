@@ -8,9 +8,18 @@
 'use strict';
 
 // Port for LynxKite.
-var LynxKitePort = process.env.PORT || 2200;
+var LynxKitePort = 2200;
 // Port for the development proxy.
 var ProxyPort = 9090;
+var LynxKiteURL;
+var ProxyURL;
+if (process.env.HTTPS_PORT) {
+  LynxKiteURL = 'https://localhost:' + process.env.HTTPS_PORT;
+  ProxyURL = 'https://localhost:' + ProxyPort;
+} else {
+  LynxKiteURL = 'http://localhost:' + LynxKitePort;
+  ProxyURL = 'http://localhost:' + ProxyPort;
+}
 
 // The tools directory.
 var tools = '../tools';
@@ -20,6 +29,7 @@ var spawn = require('child_process').spawn;
 var del = require('del');
 var glob = require('glob');
 var gulp = require('gulp');
+var fs = require('fs');
 var httpProxy = require('http-proxy');
 var lazypipe = require('lazypipe');
 var merge = require('merge-stream');
@@ -71,7 +81,7 @@ gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], functio
     .pipe($.sourcemaps.write('maps'));
   var staticFiles = gulp.src([
     'app/*.{png,svg}',
-    'app/images/*',
+    'app/images/**',
     'app/**/*.html', '!app/index.html',
     ], { base: 'app' });
   // Move Bootstrap fonts to where the relative URLs will find them.
@@ -139,6 +149,7 @@ gulp.task('serve', ['quick'], function() {
   });
   browserSync.init({
     port: ProxyPort,
+    https: LynxKiteURL.indexOf('https') === 0,
     server: ['.tmp', 'app', 'node_modules'],
     ghostMode: false,
     online: false,
@@ -154,7 +165,7 @@ gulp.task('serve', ['quick'], function() {
       }, { override: true });
     bs.addMiddleware('',
       function proxyMiddleware(req, res) {
-        proxy.web(req, res, { target: 'http://localhost:' + LynxKitePort });
+        proxy.web(req, res, { target: LynxKiteURL });
       });
   });
   gulp.watch('app/styles/*.{,s}css', ['css']);
@@ -166,32 +177,39 @@ gulp.task('serve', ['quick'], function() {
 var protractorDir = 'node_modules/protractor/';
 // Checks for webdriver updates.
 gulp.task('webdriver-update', function(done) {
-  spawn(
-    protractorDir + 'bin/webdriver-manager', ['update', '--versions.chrome=2.24'],
-    { stdio: 'inherit' }).once('close', done);
+  var protractorConfig = require('./test/protractor.conf.js').config;
+  fs.access('test/' + protractorConfig.chromeDriver, (err) => {
+    if (err) {
+      spawn(
+        protractorDir + 'bin/webdriver-manager', ['update', '--versions.chrome=2.24'],
+        { stdio: 'inherit' }).once('close', done);
+    } else {
+      done();
+    }
+  });
 });
 
 // Runs Protractor against a given port.
-function runProtractor(port, done) {
+function runProtractor(url, done) {
   glob(protractorDir + 'selenium/selenium-server-standalone-*.jar', function(err, jars) {
     var jar = jars[jars.length - 1]; // Take the latest version.
     spawn(
       protractorDir + 'bin/protractor', [
       'test/protractor.conf.js',
       '--seleniumServerJar', jar,
-      '--baseUrl', 'http://localhost:' + port + '/'],
+      '--baseUrl', url + '/'],
       { stdio: 'inherit' }).once('close', done);
   });
 }
 
 // Runs the Protractor tests against LynxKite.
 gulp.task('test', ['webdriver-update'], function(done) {
-  runProtractor(LynxKitePort, done);
+  runProtractor(LynxKiteURL, done);
 });
 
 // Runs the Protractor tests against a development proxy. (You have to start the proxy first.)
 gulp.task('test:serve', ['webdriver-update'], function(done) {
-  runProtractor(ProxyPort, done);
+  runProtractor(ProxyURL, done);
 });
 
 // The default task builds dist.

@@ -41,13 +41,19 @@ libraryDependencies ++= Seq(
   // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
   // This way we get s3 consistent view support.)
   "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-  "org.apache.commons" % "commons-lang3" % "3.3",
+  "org.apache.commons" % "commons-lang3" % "3.5",
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.mozilla" % "rhino" % "1.7.7",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
+  // For accessing S3 fs from local instance
+  // The javax.servlet package is pulled by an other dependency but with
+  // different version, which caused build conflict.
+  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
+    ExclusionRule(organization = "io.netty", name = "netty"),
+    ExclusionRule(organization = "javax.servlet", name = "servlet-api")),
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
@@ -64,16 +70,19 @@ libraryDependencies ++= Seq(
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.11.8",
   // Fast linear algebra.
-  "org.scalanlp" %% "breeze" % "0.11.2",
-  "org.scalanlp" %% "breeze-natives" % "0.11.2",
+  "org.scalanlp" %% "breeze" % "0.12",
+  "org.scalanlp" %% "breeze-natives" % "0.12",
   "com.google.guava" % "guava" % "15.0",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   //The Google Cloud Storage connector for Spark and Hive
-  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2")
+  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
+  "org.geotools" % "gt-shapefile" % "16.1")
 
-resolvers += "Twitter Repository" at "http://maven.twttr.com"
+resolvers ++= Seq(
+  "Twitter Repository" at "http://maven.twttr.com",
+  "Geospatial Foundation Repository" at "http://download.osgeo.org/webdav/geotools/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>

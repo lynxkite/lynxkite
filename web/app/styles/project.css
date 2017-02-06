@@ -74,7 +74,6 @@ input.save-as {
   margin-top: 0;
   padding: 5px 0;
   cursor: pointer;
-  user-select: none;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
@@ -185,11 +184,33 @@ label {
 }
 
 .entity-note {
-  /* Constrain notes to the right half of the line, so they don't overlap with everything. */
-  max-width: 50%;
+  /* Constrain notes to less than half the screen width to avoid scary large popups. */
+  max-width: 40vw;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.emoji-picker {
+  max-width: 260px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.emoji {
+  width: 16px;
+  height: 16px;
+  margin: 2px;
+}
+
+.entity .emoji {
+  /* "Jump over" margin of title. */
+  margin-left: -10px;
+  margin-right: 10px;
+}
+
+.emoji-picker .emoji {
+  cursor: pointer;
 }
 
 .scalar-value {

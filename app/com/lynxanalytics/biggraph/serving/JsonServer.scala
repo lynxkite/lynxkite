@@ -296,6 +296,7 @@ object FrontendJson {
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
+  implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -303,6 +304,8 @@ object FrontendJson {
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
   implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
   implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
+  implicit val wTableDesc = json.Json.writes[TableBrowserNode]
+  implicit val wSQLTableBrowserNodeResponse = json.Json.writes[TableBrowserNodeResponse]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val wSQLCreateEntryResult = json.Json.writes[SQLCreateEntryResult]
@@ -411,6 +414,7 @@ object ProductionJsonServer extends JsonServer {
   def workflow = jsonGet(bigGraphController.workflow)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
+  def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)

@@ -366,6 +366,12 @@ function(util, $timeout, removeOptionalDefaults) {
 
       function toPython(steps) {
         var lines = [];
+        var reservedwords = [
+          'and', 'as', 'assert', 'break', 'class', 'continue',
+          'def', 'del', 'elif', 'else', 'except', 'exec', 'finally', 'for', 'from',
+          'global', 'if', 'import', 'in', 'is', 'lambda', 'not', 'or', 'pass',
+          'print', 'raise', 'return', 'try', 'while', 'with', 'yield'];
+
         for (var i = 0; i < steps.length; ++i) {
           var step = steps[i];
           var request = step.request;
@@ -382,7 +388,8 @@ function(util, $timeout, removeOptionalDefaults) {
           line.push('.' + toCodeId(request.op.id) + '(');
           var problemParams = false;
           for (j = 0; j < paramKeys.length; ++j) {
-            if (!paramKeys[j].match(/^[a-zA-Z]+$/)) {
+            if (!paramKeys[j].match(/^[a-zA-Z]+$/) ||
+                reservedwords.indexOf(paramKeys[j]) > -1) {
               problemParams = true;
               line.push('**{');
               break;

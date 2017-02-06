@@ -19,6 +19,18 @@ class BigGraphControllerTestBase extends FunSuite with TestGraphOp with BeforeAn
       user,
       ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
 
+  def createProject(name: String, notes: String = "", privacy: String = "public-write") = {
+    controller.createProject(
+      user,
+      CreateProjectRequest(name = name, notes = notes, privacy = privacy))
+  }
+
+  def createDirectory(name: String, privacy: String = "public-write") = {
+    controller.createDirectory(
+      user,
+      CreateDirectoryRequest(name = name, privacy = privacy))
+  }
+
   def vattr[T: TypeTag: ClassTag: Ordering](name: String) = {
     val attr = subProject.viewer.vertexAttributes(name).runtimeSafeCast[T]
     attr.rdd.values.collect.toSeq.sorted
@@ -36,8 +48,9 @@ class BigGraphControllerTestBase extends FunSuite with TestGraphOp with BeforeAn
         metaGraphManager.rmTag(t)
       }
     }
-    controller.createProject(
-      user,
-      CreateProjectRequest(name = projectName, notes = "test project", privacy = "private"))
+    createProject(
+      name = projectName,
+      notes = "test project",
+      privacy = "private")
   }
 }

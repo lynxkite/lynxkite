@@ -1,7 +1,7 @@
 # Can be set from the command line. E.g.:
 #   make ecosystem-release VERSION=2.0.0
 export VERSION=snapshot
-export BDT=normal  # Big data test test set size.
+export TEST_SET_SIZE=medium
 
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
@@ -11,7 +11,7 @@ pip = .build/pip3-packages-installed
 all: backend
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
-	cd web && yarn && gulp && cd - && touch $@
+	cd web && LC_ALL=C yarn && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
@@ -60,10 +60,6 @@ ecosystem-test: chronomaster-test remote_api-test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
-	./test_ecosystem.py \
-		--lynx_release_dir ecosystem/native/dist \
-		--test \
-		--bigdata \
-		--bigdata_test_set ${BDT}
+	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
 .PHONY: statter
 statter: .build/statter-done

@@ -1,16 +1,18 @@
 'use strict';
 
-var fw = (function UIDescription() {
+function UIDescription() {
   var states = {};
   var statePreservingTests = {};
   var soloMode = false;
-  var verboseMode = process.env.VERBOSE || false;
+  var verboseMode = true;
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
   browser.driver.manage().window().setSize(1100, 600);
 
   return {
+    isSolo: () => soloMode,
+    setSolo: (s) => { soloMode = s; },
     transitionTest: function(
       previousStateName,  // Name of the state on which this transition should be applied.
       stateName,  // Name of the target state of this transition.
@@ -85,7 +87,6 @@ var fw = (function UIDescription() {
 
     runAll: function() {
       var stateNames = Object.keys(states);
-
       // We will enumerate all states we want to visit here.
       var statesToReach = [];
       // We put here all states that we visit inevitably, that is parents of states in
@@ -146,16 +147,26 @@ var fw = (function UIDescription() {
       });
     },
   };
-})();
-
-var fs = require('fs');
-var testFiles = fs.readdirSync(__dirname + '/tests');
-for (var i = 0; i < testFiles.length; ++i) {
-  if (testFiles[i].slice(-3) === '.js') {
-    require('./tests/' + testFiles[i])(fw);
-  }
 }
 
+var fs = require('fs');
+function testsFrom(testsDir) {
+  var fw = new UIDescription();
+  var testFiles = fs.readdirSync(__dirname + '/' + testsDir);
+  for (var i = 0; i < testFiles.length; ++i) {
+    if (testFiles[i].slice(-3) === '.js') {
+      require('./' + testsDir + '/' + testFiles[i])(fw);
+    }
+  }
+  return fw;
+}
+var authFw = testsFrom('auth-tests');
+var authlessFw = testsFrom('tests');
+// Set 'solo' modes.
+// Authentication tests are unaffected by authless 'solo' labels, because
+// all the authless tests depend on the login performed by the auth tests.
+authFw.setSolo(authFw.isSolo());
+authlessFw.setSolo(authFw.isSolo() || authlessFw.isSolo());
 
 var startDate = (new Date()).toString();
 var screenshots = [];
@@ -163,7 +174,7 @@ var screenshotDir = '/tmp/';
 var userVisiblePrefix = screenshotDir;
 try {
   var userContentDir = process.env.HOME + '/userContent';
-  // This throws an exception is the fs entry does not exist at all.
+  // This throws an exception if the fs entry does not exist at all.
   var stats = fs.lstatSync(userContentDir);
   if (stats.isDirectory()) {
     screenshotDir = userContentDir + '/';
@@ -195,15 +206,19 @@ jasmine.Spec.prototype.addExpectationResult = function() {
 
 console.log('Starting tests at: ' + startDate);
 
-fw.runAll();
-
-fw.cleanup();
+// After the authentication tests you are logged in, so you don't need to log
+// out and in every time you reach the empty splash state.
+if (process.env.HTTPS_PORT) {
+  authFw.runAll();
+}
+authlessFw.runAll();
+authlessFw.cleanup();
 
 describe('The test framework ', function() {
   it('now prints all screenshots', function() {
     if (screenshots.length > 0) {
       console.log('\nError screenshots:');
-      for (i = 0; i < screenshots.length; ++i) {
+      for (var i = 0; i < screenshots.length; ++i) {
         console.log(screenshots[i]);
       }
     }

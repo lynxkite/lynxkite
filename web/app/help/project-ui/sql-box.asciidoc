@@ -40,7 +40,8 @@ Examples (work on the base side):
 +
 The backticks are used for escaping the table name with special characters.
 
-Click the +++<label class="btn btn-primary">Show results</label>+++ button to run the query.
+Click the +++<label class="btn btn-primary">Show results</label>+++ button or press Ctrl-Enter to
+run the query.
 The result will be limited to the first 10 lines by default, but you can also set this size limit
 explicitly.
 
@@ -48,6 +49,10 @@ Every query you run is saved locally, and the 100 most recent queries are also s
 browser's local storage thus preserving them between different tabs, windows, and even sessions.
 You can navigate in the query history by pressing Ctrl+Up and Ctrl+Down
 (Command+Up and Command+Down on Mac) in the text area of the SQL interface.
+
+You can browse the list of available tables and columns by clicking on the
++++<label class="btn btn-primary">Tables ⏵</label>+++
+button.
 
 ## Exporting data
 
