@@ -17,9 +17,9 @@ A typical configuration may look like this:
         KITE_DATA_DIR=s3://bucket_name/
         KITE_EPHEMERAL_DATA_DIR=hdfs://hostname:port/hdfs/location/
 
-The `S3 backup` copies the data from `KITE_EPHEMERAL_DATA_DIR` to `KITE_DATA_DIR` and
-also copies LynxKite metadata to a subdirectory of `KITE_DATA_DIR/metadata_backup/`.
-The subdirectory named as the current timestamp at the time of the backup.
+The backup process copies the data from `KITE_EPHEMERAL_DATA_DIR` to `KITE_DATA_DIR` and
+also copies LynxKite metadata to `KITE_DATA_DIR/metadata_backup/VERSION/`, where
+VERSION is the current timestamp at the time of the backup.
 
 The location of this metadata backup may look like this:
 
