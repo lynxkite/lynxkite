@@ -4,8 +4,8 @@
     <div>
         <h2>How to use backup</h2>
         <p>
-            The 'S3 backup' function is only usable, when LynxKite was started on an Amazon
-            instance with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
+            The 'S3 backup' function is only usable, when LynxKite was started
+            with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
             <tt>KITE_EPHEMERAL_DATA_DIR</tt> are set according to the admin manual.
         </p>
         <p>
@@ -43,16 +43,6 @@
                 </td>
             </tr>
             <tr>
-                <td><b>S3 metadata backup dir</b></td>
-                <td>
-                    <div class="col-sm-12">
-                        <tt>
-                            {{backupSettings.s3MetadataRootDir}}{{backupSettings.metadataVersionTimestamp}}/
-                        </tt>
-                    </div>
-                </td>
-            </tr>
-            <tr>
                 <td>
                     <button type="submit" class="btn btn-success" ng-click="backupToS3()" ng-disabled="isDisabled()">
                         Backup data to S3
@@ -68,7 +58,10 @@
     </div>
 
     <div ng-if="statusMessage && success">
-        <p id="backup-success">&#x2713; {{ statusMessage }}<p>
+        <p id="backup-success">&#x2713; {{ statusMessage }}
+            Metadata saved to  <tt>[S3 metadata root dir]/{{metadataVersion.timestamp}}/</tt>
+        <p>
+
     </div>
     <div ng-if="statusMessage && !success">
         <p id="backup-failure">&#x26a0; {{ statusMessage }}<p>

@@ -8,12 +8,11 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 
 case class BackupSettings(
-  dataDir: String = "",
-  ephemeralDataDir: String = "",
-  s3MetadataRootDir: String = "",
-  metadataVersionTimestamp: String = "")
+  dataDir: String,
+  ephemeralDataDir: Option[String],
+  s3MetadataRootDir: String)
 
-case class BackupRequest(timestamp: String)
+case class BackupVersion(timestamp: String)
 
 class CopyController(environment: BigGraphEnvironment, sparkClusterController: SparkClusterController) {
   private def lsRec(root: HadoopFile): Seq[HadoopFile] = {
@@ -33,22 +32,22 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
 
   def getBackupSettings(user: serving.User, req: serving.Empty): BackupSettings = {
     assert(user.isAdmin, "Only admins can do backup.")
-    import java.util.Calendar
-    import java.text.SimpleDateFormat
-    val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
     val dataDirPath = environment.dataManager.repositoryPath.resolvedName
-    val ephemeralDataDirPath = environment.dataManager.ephemeralPath.map(_.resolvedName).getOrElse("")
+    val ephemeralDataDirPath = environment.dataManager.ephemeralPath.map(_.resolvedName)
     BackupSettings(
       dataDir = dataDirPath,
       ephemeralDataDir = ephemeralDataDirPath,
-      s3MetadataRootDir = dataDirPath + "metadata_backup/",
-      metadataVersionTimestamp = ts)
+      s3MetadataRootDir = dataDirPath + "metadata_backup/")
   }
 
-  def s3Backup(user: serving.User, req: BackupRequest): Unit = {
+  def s3Backup(user: serving.User, req: serving.Empty): BackupVersion = {
     assert(user.isAdmin, "Only admins can do backup.")
+    import java.util.Calendar
+    import java.text.SimpleDateFormat
+    val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
+
     val dm = environment.dataManager
-    val dst = dm.repositoryPath + "metadata_backup/" + req.timestamp + "/"
+    val dst = dm.repositoryPath + "metadata_backup/" + ts + "/"
     dm.synchronized {
       dm.waitAllFutures()
       sparkClusterController.setForceReportHealthy(true)
@@ -59,6 +58,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
         sparkClusterController.setForceReportHealthy(false)
       }
     }
+    BackupVersion(ts)
   }
 
   private def copyMetadata(user: serving.User, dst: HadoopFile): Unit = {
@@ -75,7 +75,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       dst.hadoopConfiguration)
   }
 
-  private def copyEphemeralNoSync: Unit = {
+  private def copyEphemeralNoSync(): Unit = {
     val dm = environment.dataManager
     for (ephemeralPath <- dm.ephemeralPath) {
       log.info(s"Listing contents of $ephemeralPath...")
@@ -105,6 +105,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
   }
 
   def copyEphemeral(user: serving.User, req: serving.Empty): Unit = {
+    assert(user.isAdmin, "Only admins can do backup.")
     val dm = environment.dataManager
     dm.waitAllFutures()
     dm.synchronized {
@@ -113,7 +114,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       // So we turn them off temporarily.
       sparkClusterController.setForceReportHealthy(true)
       try {
-        copyEphemeralNoSync
+        copyEphemeralNoSync()
       } finally {
         sparkClusterController.setForceReportHealthy(false)
       }
