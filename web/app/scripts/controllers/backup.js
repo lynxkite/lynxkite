@@ -9,10 +9,10 @@ angular.module('biggraph')
     $scope.backupSettings = util.nocache('/ajax/getBackupSettings');
     $scope.metadataVersion = '';
 
-    $scope.backupToS3 = function() {
+    $scope.backup = function() {
       $scope.inProgress = true;
       $scope.statusMessage = '';
-      $scope.metadataVersion = util.nocache('/ajax/s3Backup');
+      $scope.metadataVersion = util.nocache('/ajax/backup');
       $scope.metadataVersion.then(
       function() { // success
         $scope.inProgress = false;

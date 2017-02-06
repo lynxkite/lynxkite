@@ -4,11 +4,11 @@
 
 If LynxKite was started with `KITE_DATA_DIR` pointing to an S3 bucket, then there is
 an easy way to backup all the project information and computed data. For admin users
-there is an `S3 backup` menu entry in the `Settings` menu.
+there is an `backup` menu entry in the `Settings` menu.
 
 ## Backup configuration
 
-This `S3 backup` function is only usable, when LynxKite was started
+This `backup` function is only usable, when LynxKite was started
 with proper AWS credentials, and the environment variables `KITE_DATA_DIR` and
 `KITE_EPHEMERAL_DATA_DIR` are set according to the admin manual.
 

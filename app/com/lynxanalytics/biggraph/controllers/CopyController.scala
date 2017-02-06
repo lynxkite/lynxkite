@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.serving
 case class BackupSettings(
   dataDir: String,
   ephemeralDataDir: Option[String],
-  s3MetadataRootDir: String)
+  metadataRootDir: String)
 
 case class BackupVersion(timestamp: String)
 
@@ -37,10 +37,10 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     BackupSettings(
       dataDir = dataDirPath,
       ephemeralDataDir = ephemeralDataDirPath,
-      s3MetadataRootDir = dataDirPath + "metadata_backup/")
+      metadataRootDir = dataDirPath + "metadata_backup/")
   }
 
-  def s3Backup(user: serving.User, req: serving.Empty): BackupVersion = {
+  def backup(user: serving.User, req: serving.Empty): BackupVersion = {
     assert(user.isAdmin, "Only admins can do backup.")
     import java.util.Calendar
     import java.text.SimpleDateFormat
