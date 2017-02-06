@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
@@ -228,6 +229,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   abstract class MachineLearningOperation(t: String, c: Context)
     extends Operation(t, c, Category("Machine learning operations", "pink ", icon = "knight"))
+
+  def getAndCheckProjectCheckpoint(readableProjectCheckpoint: String) = {
+    val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
+      readableProjectCheckpoint,
+      customError =
+        s"Obsolete project reference: $readableProjectCheckpoint. Please select a new project from the dropdown.")
+    assert(suffix == "", s"Invalid project reference $readableProjectCheckpoint with suffix $suffix")
+    (cp, title, suffix)
+  }
 
   import OperationParams._
 
@@ -1209,17 +1219,19 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         options = FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
+      Choice("direction", "Direction",
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weightsName = params.getOrElse("weights", FEOption.noWeight.id)
+      val direction = Direction(params.getOrElse("direction", "outgoing edges"),
+        project.edgeBundle, reversed = true)
+      val es = direction.edgeBundle
       val weights =
-        if (weightsName == FEOption.noWeight.id) project.edgeBundle.const(1.0)
-        else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      val es = Direction(params.getOrElse("direction", "outgoing edges"),
-        project.edgeBundle, reversed = true).edgeBundle
+        if (weightsName == FEOption.noWeight.id) es.const(1.0)
+        else direction.pull(project.edgeAttributes(params("weights"))).runtimeSafeCast[Double]
       project.newVertexAttribute(
         params("name"), op(op.es, es)(op.weights, weights).result.pagerank, help)
     }
@@ -1260,7 +1272,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type",
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
-      Choice("direction", "Direction", options = Direction.attrOptions, mandatory = false))
+      Choice("direction", "Direction",
+        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val name = params("name")
@@ -1310,6 +1323,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
       }
+      project.setElementMetadata(VertexAttributeKind, "income", MetadataNames.Icon, "money_bag")
+      project.setElementMetadata(VertexAttributeKind, "location", MetadataNames.Icon, "paw_prints")
     }
   })
 
@@ -1443,7 +1458,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derived vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("type", "Result type", options = FEOption.jsDataTypes),
+      Choice("defined_attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
@@ -1456,12 +1473,21 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val vertexSet = project.vertexSet
       val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of strings" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of doubles" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
+            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.newVertexAttribute(params("output"), result, expr + help)
     }
@@ -1470,7 +1496,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Derived edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("type", "Result type", options = FEOption.jsDataTypes),
+      Choice("defined_attrs", "Only run on defined attributes",
+        options = FEOption.bools, mandatory = false), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
@@ -1498,12 +1526,21 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
+      val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[String](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet, namedScalars)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of strings" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+        case "vector of doubles" =>
+          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
+            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
       project.edgeAttributes(params("output")) = result
     }
@@ -1830,7 +1867,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_created_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_created_edges", "", Map()))
       } else {
         List()
       }
@@ -1857,7 +1894,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)
         implicit val entityProgressManager = env.entityProgressManager
-        List(ProjectViewer.feScalar(scalar, "num_total_edges", ""))
+        List(ProjectViewer.feScalar(scalar, "num_total_edges", "", Map()))
       } else {
         List()
       }
@@ -1967,12 +2004,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val rep = params("rep")
-
       val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
       project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
+    }
+  })
+
+  register("Split edges", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice("rep", "Repetition attribute", options = edgeAttributes[Double]),
+      Param("idx", "Index attribute name", defaultValue = "index"))
+
+    def enabled =
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No double edge attributes")
+    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
+      val op = graph_operations.SplitEdges()
+      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
+    }
+    def apply(params: Map[String, String]) = {
+      val rep = params("rep")
+      val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
+
+      project.pullBackEdges(
+        project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
+      project.edgeAttributes(params("idx")) = split.indexAttr
     }
   })
 
@@ -2448,6 +2505,90 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Set scalar icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = scalars),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(ScalarKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set vertex attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = vertexAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(VertexAttributeKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set edge attribute icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = edgeAttributes),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(EdgeAttributeKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
+  register("Set segmentation icon", new UtilityOperation(_, _) {
+    def parameters = List(
+      Choice("name", "Name", options = segmentations),
+      Param("icon", "Icon name", mandatory = false))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      val icon = params.getOrElse("icon", "nothing")
+      s"Set icon for $name to $icon"
+    }
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      params.get("icon") match {
+        case Some(icon) =>
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, icon)
+        case None =>
+          project.setElementMetadata(SegmentationKind, name, MetadataNames.Icon, null)
+      }
+    }
+  })
+
   register("Copy edge attribute", new UtilityOperation(_, _) {
     def parameters = List(
       Choice("from", "Old name", options = edgeAttributes),
@@ -2545,11 +2686,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val themId = params("them")
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
-        themId,
-        customError =
-          s"Obsolete project reference: $themId. Please select a new project from the dropdown.")
-      assert(suffix == "", s"Invalid project reference $themId with suffix $suffix")
+      val (cp, title, _) = getAndCheckProjectCheckpoint(themId)
       val baseName = SymbolPath.parse(title).last.name
       val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       assert(them.vertexSet != null, s"No vertex set in $them")
@@ -2689,6 +2826,37 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
     })
 
+  register("Copy scalar from other project", new StructureOperation(_, _) {
+    def parameters = List(
+      Choice(
+        "sourceProject",
+        "Other project's name",
+        options = readableProjectCheckpoints,
+        allowUnknownOption = true),
+      Param("sourceScalarName", "Name of the scalar in the other project"),
+      Param("destScalarName", "Name for the scalar in this project"))
+
+    def apply(params: Map[String, String]): Unit = {
+      // parsing scalar path "seg1|seg2|...|segn|scalar"
+      val origPath = params("sourceScalarName")
+      val pathAndName = origPath.split('|')
+      val path = pathAndName.dropRight(1) // list of segmentation names
+      val origName = pathAndName.last // name of the original scalar
+      val newName = params("destScalarName")
+      val scalarName = if (newName.isEmpty) origName else newName
+      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
+      val sourceProject = params("sourceProject")
+      val (cp, title, _) = getAndCheckProjectCheckpoint(sourceProject)
+      val otherViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
+      val other = otherViewer.offspringViewer(path)
+      assert(other.scalarNames.contains(origName), s"No '$origPath' in project '$title'.")
+      // copying scalar
+      project.scalars(scalarName) = other.scalars(origName)
+    }
+
+    def enabled = FEStatus.enabled
+  })
+
   register("Union with another project", new StructureOperation(_, _) {
     def parameters = List(
       Choice(
@@ -2718,11 +2886,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]): Unit = {
       val otherId = params("other")
-      val (cp, _, suffix) = FEOption.unpackTitledCheckpoint(
-        otherId,
-        customError =
-          s"Obsolete project reference: $otherId. Please select a new project from the dropdown.")
-      assert(suffix == "", s"Invalid project reference $otherId with suffix $suffix")
+      val (cp, _, _) = getAndCheckProjectCheckpoint(otherId)
       val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
       if (other.vertexSet == null) {
         // Nothing to do
@@ -3395,6 +3559,40 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
     })
 
+  register("Lookup region", new VertexAttributesOperation(_, _) {
+    override def parameters = List(
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
+      Param("attribute", "Attribute from the Shapefile"),
+      Param("output", "Output name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    import java.io.File
+
+    def apply(params: Map[String, String]) = {
+      val shapeFilePath = params("shapefile")
+      assert(listShapefiles().exists(f => f.id == shapeFilePath),
+        "Shapefile deleted, please choose another.")
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val result = op(op.coordinates, position).result
+      project.newVertexAttribute(params("output"), result.attribute)
+    }
+
+    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    private val shapeDir = s"$metaDir/resources/shapefiles/"
+
+    private def listShapefiles(): List[FEOption] = {
+      def lsR(f: File): Array[File] = {
+        val files = f.listFiles()
+        if (files == null)
+          return Array.empty
+        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+      }
+      lsR(new File(shapeDir)).toList.map(f =>
+        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+    }
+  })
+
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, segmentation.belongsTo.reverse).result.outDegree
@@ -3494,6 +3692,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    def attrOptionsWithDefault(default: String): List[FEOption] = {
+      assert(attrOptions.map(_.id).contains(default), s"$default not in $attrOptions")
+      FEOption.list(default) ++ attrOptions.filter(_.id != default)
+    }
     // Options suitable when only neighbors are involved.
     val neighborOptions = FEOption.list(
       "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
@@ -3577,6 +3779,14 @@ object Operations {
 }
 
 object JSUtilities {
+  // Listing the valid characters for JS variable names. The \\p{*} syntax is for specifying
+  // Unicode categories for scala regex.
+  // For more information about the valid variable names in JS please consult:
+  // http://es5.github.io/x7.html#x7.6
+  val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
+    "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D\\\\"
+  val validJSFirstCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\\\"
+
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
@@ -3586,17 +3796,21 @@ object JSUtilities {
     }.toIndexedSeq
   }
 
+  // Whether a string can be a JavaScript identifier.
+  def canBeValidJSIdentifier(identifier: String): Boolean = {
+    val re = s"^[${validJSFirstCharacters}][${validJSCharacters}]*$$"
+    identifier.matches(re)
+  }
+
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    // Listing the valid characters for JS variable names. The \\p{*} syntax if for specifying
-    // Unicode categories for scala regex.
-    // For more information about the valid variable names in JS please consult:
-    // http://es5.github.io/x7.html#x7.6
-    val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
-      "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
-    val quoted_identifer = java.util.regex.Pattern.quote(identifier)
-    val re = s"(?s)(^|.*[^$validJSCharacters])${quoted_identifer}($$|[^$validJSCharacters].*)"
-    expr.matches(re)
+    if (!canBeValidJSIdentifier(identifier)) {
+      false
+    } else {
+      val quotedIdentifer = java.util.regex.Pattern.quote(identifier)
+      val re = s"(?s)(^|.*[^$validJSCharacters])${quotedIdentifer}($$|[^$validJSCharacters].*)"
+      expr.matches(re)
+    }
   }
 }

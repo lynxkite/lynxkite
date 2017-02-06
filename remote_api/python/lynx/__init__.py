@@ -19,15 +19,14 @@ Example usage::
 The list of operations is not documented, but you can copy the invocation from a LynxKite project
 history.
 '''
-import http.cookiejar
+import collections
 import json
 import os
+import requests
 import ssl
 import sys
 import types
-import urllib
 import yaml
-import collections
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -60,10 +59,10 @@ class LynxKite:
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
   ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
-  ``LYNXKITE_PUBLIC_SSL_CERT``.
+  ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``.
   '''
 
-  def __init__(self, username=None, password=None, address=None, certfile=None):
+  def __init__(self, username=None, password=None, address=None, certfile=None, oauth_token=None):
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
@@ -71,19 +70,8 @@ class LynxKite:
     self._username = username
     self._password = password
     self._certfile = certfile
-    self.opener = self.build_opener()
-
-  def build_opener(self):
-    cj = http.cookiejar.CookieJar()
-    cp = urllib.request.HTTPCookieProcessor(cj)
-    if self.certfile():
-      sslctx = ssl.create_default_context(
-          ssl.Purpose.SERVER_AUTH,
-          cafile=self.certfile())
-      https = urllib.request.HTTPSHandler(context=sslctx)
-      return urllib.request.build_opener(https, cp)
-    else:
-      return urllib.request.build_opener(cp)
+    self._oauth_token = oauth_token
+    self._session = None
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -97,38 +85,61 @@ class LynxKite:
   def certfile(self):
     return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
-  def _login(self):
-    self._request(
-        '/passwordLogin',
-        dict(
-            username=self.username(),
-            password=self.password(),
-            method='lynxkite'))
+  def oauth_token(self):
+    return self._oauth_token or os.environ.get('LYNXKITE_OAUTH_TOKEN')
 
-  def _request(self, endpoint, payload={}):
+  def _login(self):
+    if self.password():
+      r = self._request(
+          '/passwordLogin',
+          dict(
+              username=self.username(),
+              password=self.password(),
+              method='lynxkite'))
+      r.raise_for_status()
+    elif self.oauth_token():
+      r = self._request(
+          '/googleLogin',
+          dict(id_token=self.oauth_token()))
+      r.raise_for_status()
+    else:
+      raise Exception('No login credentials provided.')
+
+  def _get_session(self):
+    '''Create a new session or return the cached one. If the process was forked (if the pid
+    has changed), then the cache is invalidated. See issue #5436.'''
+    if self._session is None or self._pid != os.getpid():
+      self._session = requests.Session()
+      self._pid = os.getpid()
+    return self._session
+
+  def _post(self, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
-        self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
-        data=data,
-        headers={'Content-Type': 'application/json'})
     max_tries = 3
     for i in range(max_tries):
-      try:
-        with self.opener.open(req) as r:
-          return r.read().decode('utf-8')
-      except urllib.error.HTTPError as err:
-        if err.code == 401 and i + 1 < max_tries:  # Unauthorized.
-          self._login()
-          # And then retry via the "for" loop.
-        elif err.code == 500:  # Internal server error.
-          raise LynxException(err.read())
-        else:
-          raise err
+      r = self._get_session().post(
+          self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
+          verify=self.certfile(),
+          allow_redirects=False,
+          **kwargs)
+      if r.status_code < 400:
+        return r
+      if r.status_code == 401 and i + 1 < max_tries:  # Unauthorized.
+        self._login()
+        # And then retry via the "for" loop.
+      elif r.status_code == 500:  # Internal server error.
+        raise LynxException(r.text)
+      else:
+        r.raise_for_status()
+
+  def _request(self, endpoint, payload={}):
+    '''Sends an HTTP JSON request to LynxKite and returns the response when it arrives.'''
+    data = json.dumps(payload)
+    return self._post(endpoint, data=data, headers={'Content-Type': 'application/json'})
 
   def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self._request('/remote/' + command, payload)
+    data = self._request('/remote/' + command, payload).text
     if raw:
       r = json.loads(data)
     else:
@@ -326,6 +337,22 @@ class LynxKite:
         checkpoint=entry.checkpoint,
         object=object_lookup[entry.objectType](entry)
     ) for entry in result]
+
+  def upload(self, data, name=None):
+    '''Uploads a file that can then be used in import methods.
+
+    Use it to upload small test datasets from local files::
+
+      with open('myfile.csv') as f:
+        view = lk.import_csv(lk.upload(f))
+
+    Or to upload even smaller datasets right from Python::
+
+      view = lk.import_csv(lk.upload('id,name\\n1,Bob'))
+    '''
+    if name is None:
+      name = 'remote-api-upload'  # A hash will be added anyway.
+    return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
 
 class Table:
@@ -549,11 +576,19 @@ class _ProjectCheckpoint:
       raise ValueError('Unknown attribute type: {type}'.format(type=attr_type))
     return r
 
+  def copy(self):
+    '''Returns another independent instance of _ProjectCheckpoint for the same checkpoint.'''
+    return _ProjectCheckpoint(self.lk, self.checkpoint)
+
   def _metadata(self, path):
     '''Returns project metadata.'''
     request = dict(checkpoint=self.checkpoint, path=path)
     r = self.lk._send('getMetadata', request)
     return _Metadata(r)
+
+  def global_name(self):
+    '''Global reference of the project.'''
+    return '!checkpoint({},)'.format(self.checkpoint)
 
 
 class SubProject:
@@ -651,6 +686,27 @@ class SubProject:
       return self.run_operation(attr, params)
     return f
 
+  def global_table_name(self, table):
+    '''Returns a reference to a table within the project. Example usage::
+
+      project2.importVertices(**{
+        'id-attr': 'id',
+        'table': project1.global_table_name('edges')})
+
+    The same set of project tables are accessible as from SQL.
+    '''
+    table_path = [self.project_checkpoint.global_name()] + self.path + [table]
+    return '|'.join(table_path)
+
+  def vertices_table(self):
+    '''Global reference to the ``vertices`` table. Equivalent to ``global_table_name('vertices')``.
+    '''
+    return self.global_table_name('vertices')
+
+  def edges_table(self):
+    '''Global reference to the ``edges`` table. Equivalent to ``global_table_name('edges')``.'''
+    return self.global_table_name('edges')
+
 
 class RootProject(SubProject):
   '''Represents a project.'''
@@ -663,9 +719,19 @@ class RootProject(SubProject):
     '''Runs SQL queries.'''
     return self.project_checkpoint.sql(query)
 
+  def df(self, query):
+    '''Runs SQL queries.'''
+    import pandas
+    d = self.sql(query).take(-1)
+    return pandas.DataFrame(d)
+
   def save(self, name, writeACL=None, readACL=None):
     '''Saves the project under given name, with given writeACL and readACL.'''
     self.project_checkpoint.save(name, writeACL, readACL)
+
+  def copy(self):
+    '''Returns another reference to the same project state, that can evolve independently.'''
+    return RootProject(self.project_checkpoint.copy())
 
   def compute(self):
     '''Computes all scalars and attributes of the project.'''
@@ -681,7 +747,7 @@ class RootProject(SubProject):
 
   def global_name(self):
     '''Global reference of the project.'''
-    return '!checkpoint(%s,)' % self.project_checkpoint.checkpoint
+    return self.project_checkpoint.global_name()
 
 
 class _Metadata():
@@ -777,3 +843,10 @@ class ResponseObject(types.SimpleNamespace):
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
   return ResponseObject(**dic)
+
+
+class PizzaKite(LynxKite):
+
+  def __init__(self):
+    super().__init__(address='https://pizzakite.lynxanalytics.com/')
+    assert self.oauth_token(), 'Please set LYNXKITE_OAUTH_TOKEN.'

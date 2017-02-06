@@ -40,3 +40,4 @@ target/
 
 # sbt test creates it
 metastore_db/
+**/.ipynb_checkpoints/

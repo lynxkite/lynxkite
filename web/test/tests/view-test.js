@@ -27,6 +27,18 @@ module.exports = function(fw) {
     }
   );
 
+  fw.transitionTest(
+    'CSV file imported as view',
+    'View described in global SQL box',
+    function() {
+      lib.splash.view(viewName).click();
+    },
+    function() {
+      var expectedData = [['Adam', '24'], ['Eve', '32'], ['Bob', '41']];
+      lib.splash.expectGlobalSqlResult(columns.split(','), expectedData);
+    }
+  );
+
   fw.statePreservingTest(
     'CSV file imported as view',
     'CSV file edited',

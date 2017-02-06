@@ -8,11 +8,12 @@ import scala.reflect.runtime.universe.typeTag
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 
 class ImportDataFrameTest extends FunSuite with TestGraphOp {
   test("dataframe import using JDBC works") {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    val connection = sql.DriverManager.getConnection(url)
+    val connection = JDBCUtil.getConnection(url)
     val statement = connection.createStatement()
     statement.executeUpdate("""
     DROP TABLE IF EXISTS manytypes;

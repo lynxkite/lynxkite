@@ -1,3 +1,6 @@
+<div id="sql-box-main"
+     class="size-{{showTableBrowser ? 'half' : 'full'}}">
+
 <div ng-if="project && isGlobal">
   This query will be executed on project <b>{{ project }}</b>
 </div>
@@ -22,11 +25,21 @@ instead of ng-model="sql" -->
     min="0"
     id="max-rows"
     ng-model="maxRows">
-  <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
-  <button class="btn btn-primary"
-    ng-disabled="showExportOptions"
-    id="save-results-opener"
-    ng-click="showExportOptions = true">Export...</button>
+
+  <div class="sql-box-button-group">
+    <button class="btn btn-primary" id="run-sql-button" ng-click="runSQLQuery()">Show results</button>
+    <button class="btn btn-primary"
+      ng-disabled="showExportOptions"
+      id="save-results-opener"
+      ng-click="showExportOptions = true">Export...</button>
+    <button
+      class="btn btn-primary"
+      id="toggle-table-browser"
+      ng-click="showTableBrowser = !showTableBrowser">
+        Tables {{showTableBrowser ? '&#9204;' : '&#9205;'}}
+    </button>
+  </div>
+
   <span id="sql-box-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
 </div>
 
@@ -52,7 +65,8 @@ instead of ng-model="sql" -->
   <div class="form-group" ng-show=
     "exportFormat === 'table' || exportFormat === 'view'">
     <label for="exportKiteTable" class="col-sm-4 control-label">
-      Table name <help-popup href="export-lynxkite-table-table"></help-popup>
+      {{ exportFormat === 'view' ? 'View' : 'Table' }} name
+      <help-popup href="export-lynxkite-table-table"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportKiteTable" ng-model="exportKiteTable">
@@ -190,3 +204,14 @@ instead of ng-model="sql" -->
   {{ result.$error }}
   <i class="pull-right"><a href ng-click="reportSQLError()">report problem</a></i>
 </div>
+
+</div>  <!-- id="sql-box-main" -->
+
+<table-browser
+    project-state="side.state"
+    directory="directory"
+    ng-if="showTableBrowser">
+</table-browser>
+
+<div style="clear:both;"></div>
+
