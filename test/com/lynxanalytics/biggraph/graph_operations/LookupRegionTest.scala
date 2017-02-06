@@ -11,6 +11,6 @@ class LookupRegionTest extends FunSuite with TestGraphOp {
     val op = LookupRegion(shapePath, "TZID")
     val result = op(op.coordinates, ex.location).result
     assert(result.attribute.rdd.collect().toSet ==
-      Set((0, "America/New_York"), (1, "Europe/Budapest"), (2, "Asia/Jakarta"), (3, "uninhabited")))
+      Set((1, "Europe/Budapest"), (2, "Asia/Kuala_Lumpur"), (3, "Australia/Sydney")))
   }
 }

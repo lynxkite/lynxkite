@@ -3779,6 +3779,14 @@ object Operations {
 }
 
 object JSUtilities {
+  // Listing the valid characters for JS variable names. The \\p{*} syntax is for specifying
+  // Unicode categories for scala regex.
+  // For more information about the valid variable names in JS please consult:
+  // http://es5.github.io/x7.html#x7.6
+  val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
+    "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D\\\\"
+  val validJSFirstCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\\\"
+
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
@@ -3788,17 +3796,21 @@ object JSUtilities {
     }.toIndexedSeq
   }
 
+  // Whether a string can be a JavaScript identifier.
+  def canBeValidJSIdentifier(identifier: String): Boolean = {
+    val re = s"^[${validJSFirstCharacters}][${validJSCharacters}]*$$"
+    identifier.matches(re)
+  }
+
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    // Listing the valid characters for JS variable names. The \\p{*} syntax if for specifying
-    // Unicode categories for scala regex.
-    // For more information about the valid variable names in JS please consult:
-    // http://es5.github.io/x7.html#x7.6
-    val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
-      "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D"
-    val quoted_identifer = java.util.regex.Pattern.quote(identifier)
-    val re = s"(?s)(^|.*[^$validJSCharacters])${quoted_identifer}($$|[^$validJSCharacters].*)"
-    expr.matches(re)
+    if (!canBeValidJSIdentifier(identifier)) {
+      false
+    } else {
+      val quotedIdentifer = java.util.regex.Pattern.quote(identifier)
+      val re = s"(?s)(^|.*[^$validJSCharacters])${quotedIdentifer}($$|[^$validJSCharacters].*)"
+      expr.matches(re)
+    }
   }
 }

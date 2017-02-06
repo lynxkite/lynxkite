@@ -131,6 +131,20 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(testResults == resultShouldBe)
   }
 
+  // See #5567
+  test("The containsIdentifierJS function with attr names that are valid JS literals") {
+    assert(false == JSUtilities.containsIdentifierJS("1 + 1", "1"))
+    assert(false == JSUtilities.containsIdentifierJS("'a' + a", "'a'"))
+    assert(false == JSUtilities.containsIdentifierJS("a = 1", "b"))
+    assert(true == JSUtilities.containsIdentifierJS("a = 1", "a"))
+    assert(true == JSUtilities.containsIdentifierJS("$a = 1", "$a"))
+    assert(true == JSUtilities.containsIdentifierJS("_a = 1", "_a"))
+    assert(true == JSUtilities.containsIdentifierJS("\\u0061 = 1", "\\u0061"))
+    // The following should be true according to ES5 spec, but we don't get it.
+    // assert(true == JSUtilities.containsIdentifierJS("\\u0061 = 1", "a"))
+    assert(false == JSUtilities.containsIdentifierJS("a + b + c", "a + b"))
+  }
+
   test("Derived vertex attribute with substring conflict (#1676)") {
     run("Example Graph")
     run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
