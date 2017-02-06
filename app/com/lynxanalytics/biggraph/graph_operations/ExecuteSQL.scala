@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers.RawTable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import com.lynxanalytics.biggraph.table.TableRelation
+import com.lynxanalytics.biggraph.table.RDDRelation
 import org.apache.spark.sql
 
 object ExecuteSQL extends OpFromJson {
@@ -61,17 +61,16 @@ case class ExecuteSQL(
               o: SQLHelper.DataFrameOutput,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     val dfs = inputs.tables.map {
       case (tableName, tableVs) =>
-        val tableColumnList: Iterable[(String, Attribute[_])] = inputs
-          .tableColumns(tableName)
-          .map {
-            case (columnName, columnAttr) =>
-              (columnName, columnAttr.entity(output.instance))
-          }
-        val rawTable = RawTable(tableVs.entity(output.instance), tableColumnList.toMap)
-        val tableRelation = new TableRelation(rawTable, sqlContext)(rc.dataManager)
+        val rawTable = RawTable(
+          tableVs.entity(output.instance),
+          inputs.tableColumns(tableName).mapValues(_.entity(output.instance)))
+        val tableRelation =
+          new RDDRelation(
+            rawTable, sqlContext, tableVs.rdd, inputs.tableColumns(tableName).mapValues(_.rdd))
         tableName -> tableRelation.toDF
     }
     val dataFrame = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
