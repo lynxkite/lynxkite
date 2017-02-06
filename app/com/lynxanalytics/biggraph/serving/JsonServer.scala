@@ -500,7 +500,7 @@ object ProductionJsonServer extends JsonServer {
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
   def getBackupSettings = jsonGet(copyController.getBackupSettings)
-  def s3Backup = jsonGet(copyController.s3Backup)
+  def backup = jsonGet(copyController.backup)
 
   Ammonite.maybeStart()
 }

@@ -1,10 +1,10 @@
 <div class="col-sm-offset-2 col-sm-8">
 
-    <h1>S3 backup</h1>
+    <h1>Backup</h1>
     <div>
         <h2>How to use backup</h2>
         <p>
-            The 'S3 backup' function is only usable, when LynxKite was started
+            The 'Backup' function is only usable, when LynxKite was started
             with proper AWS credentials, and the environment variables <tt>KITE_DATA_DIR</tt> and
             <tt>KITE_EPHEMERAL_DATA_DIR</tt> are set properly.<br>
             See details in the <a href="/#/admin-manual#_lynxkite_backup"> admin manual</a>.
@@ -14,7 +14,7 @@
         <h2>Backup settings</h2>
         <table class="table" id="backup-settings">
             <tr>
-                <td><b>S3 data backup dir</b> <br>(KITE_DATA_DIR)</td>
+                <td><b>Data backup dir</b> <br>(KITE_DATA_DIR)</td>
                 <td> <div class="col-sm-12"><tt>{{backupSettings.dataDir}}</tt></div></td>
             </tr>
             <tr>
@@ -22,17 +22,17 @@
                 <td><div class="col-sm-12"> <tt>{{backupSettings.ephemeralDataDir}}</tt></div></td>
             </tr>
             <tr>
-                <td><b>S3 metadata root dir</b></td>
+                <td><b>Metadata backup root dir</b></td>
                 <td>
                     <div class="col-sm-12">
-                        <tt>{{backupSettings.s3MetadataRootDir}}</tt>
+                        <tt>{{backupSettings.metadataRootDir}}</tt>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <button type="submit" class="btn btn-success" ng-click="backupToS3()" ng-disabled="isDisabled()">
-                        Backup data to S3
+                    <button type="submit" class="btn btn-success" ng-click="backup()" ng-disabled="isDisabled()">
+                        Backup data
                     </button>
                     <span id="cleaner-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
                 </td>
@@ -46,7 +46,7 @@
 
     <div ng-if="statusMessage && success">
         <p id="backup-success">&#x2713; {{ statusMessage }}
-            Metadata saved to  <tt>[S3 metadata root dir]/{{metadataVersion.timestamp}}/</tt>
+            Metadata saved to  <tt>[Metadata backup root dir]/{{metadataVersion.timestamp}}/</tt>
         <p>
 
     </div>
