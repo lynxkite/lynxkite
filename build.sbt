@@ -51,7 +51,9 @@ libraryDependencies ++= Seq(
   // For accessing S3 fs from local instance
   // The javax.servlet package is pulled by an other dependency but with
   // different version, which caused build conflict.
-  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll ExclusionRule(organization = "javax.servlet"),
+  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
+    ExclusionRule(organization = "io.netty", name = "netty"),
+    ExclusionRule(organization = "javax.servlet", name = "servlet-api")),
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
