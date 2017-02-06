@@ -22,6 +22,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - You can submit SQL queries with Ctrl-Enter.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
+ - Added _Lookup Region_ operation for finding locations inside shapefiles.
  - Spark Monitor doesn't send alarm in case of long-running tasks.
 
 Ecosystem:

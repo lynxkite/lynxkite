@@ -28,6 +28,12 @@ class ImportDataFrame private (
   val timestamp: String)
     extends TypedMetaGraphOp[NoInput, SQLHelper.DataFrameOutput] {
 
+  for (df <- inputFrame) {
+    // If the DataFrame is backed by LynxKite operations, we need to trigger these now. Triggering
+    // them inside execute() could lead to DataManager thread exhaustion. #5580
+    df.rdd
+  }
+
   override def equals(other: Any): Boolean =
     other match {
       case otherOp: ImportDataFrame =>
