@@ -69,14 +69,10 @@ case class SegmentByGEOData(shapefile: String, distance: Double, attrNames: Seq[
       case (lat, lon) => geometries
         .filter {
           case (_, geometry, _) =>
-            // TODO(gsvigruha): check distance not contains.
             geometry match {
-              // The actual classes and ways to check differ for implementations. These 2 cases
-              // are probably not the complete list.
-              case g: org.opengis.geometry.Geometry =>
-                g.contains(new org.geotools.geometry.DirectPosition2D(lon, lat))
+              // The actual classes and ways to check differ for implementations.
               case g: com.vividsolutions.jts.geom.Geometry =>
-                g.contains(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)))
+                g.isWithinDistance(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
               case _ => false
             }
         }.map { case (sid, _, _) => sid }
