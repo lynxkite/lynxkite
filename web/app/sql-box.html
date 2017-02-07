@@ -178,7 +178,9 @@ instead of ng-model="sql" -->
       <tr>
         <th ng-repeat="col in result.header"
           ng-click="sort.select($index)">
-          {{ col.name }} <br> <span class="sql-type">{{col.dataType}}</span>
+          <span class="sql-column-name">{{col.name}}</span>
+          <br>
+          <span class="sql-type">{{col.dataType}}</span>
           <span class="ordering">
             <i ng-show="sort.column === $index.toString()"
               class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
