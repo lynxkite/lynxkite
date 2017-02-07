@@ -160,7 +160,6 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
-case class SQLCreateEntryResult(fEOption: Option[FEOption], nameClash: Boolean)
 case class SQLCreateViewRequest(
     name: String, privacy: String, dfSpec: DataFrameSpec, overwrite: Boolean) extends ViewRecipe with FrameSettings {
   override def createDataFrame(
@@ -411,7 +410,7 @@ class SQLController(val env: BigGraphEnvironment) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): SQLCreateEntryResult =
+  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
     SQLController.saveTable(
       request.createDataFrame(user, request.defaultContext()),
       request.notes,
@@ -422,7 +421,7 @@ class SQLController(val env: BigGraphEnvironment) {
       importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
-    user: serving.User, recipe: T): SQLCreateEntryResult = {
+    user: serving.User, recipe: T): FEOption = {
     SQLController.saveView(
       recipe.notes,
       user,
@@ -530,6 +529,7 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+
     SQLQueryResult(
       header = df.columns.toList,
       data = df.head(request.maxRows).map {
@@ -543,7 +543,7 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   def exportSQLQueryToTable(
-    user: serving.User, request: SQLExportToTableRequest) = async[SQLCreateEntryResult] {
+    user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLController.saveTable(
       df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
@@ -645,36 +645,26 @@ object SQLController {
     overwrite: Boolean = false,
     importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager,
-      dataManager: DataManager): SQLCreateEntryResult = metaManager.synchronized {
+      dataManager: DataManager): FEOption = metaManager.synchronized {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
-    if (entry.exists && !overwrite) SQLCreateEntryResult(None, true)
-    else {
-      val checkpoint = table.saveAsCheckpoint(notes)
-      if (overwrite) entry.remove()
-      val frame = entry.asNewTableFrame(checkpoint)
-      importConfig.foreach(frame.setImportConfig)
-      frame.setupACL(privacy, user)
-      SQLCreateEntryResult(
-        Some(FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")),
-        false)
-    }
+    val checkpoint = table.saveAsCheckpoint(notes)
+    if (overwrite) entry.remove()
+    val frame = entry.asNewTableFrame(checkpoint)
+    importConfig.foreach(frame.setImportConfig)
+    frame.setupACL(privacy, user)
+    FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
   }
 
   def saveView[T <: ViewRecipe: json.Writes](
     notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
       implicit metaManager: MetaGraphManager,
-      dataManager: DataManager): SQLCreateEntryResult = {
+      dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, name, privacy)
-    if (entry.exists && !overwrite) SQLCreateEntryResult(None, true)
-    else {
-      if (overwrite) entry.remove()
-      val view = entry.asNewViewFrame(recipe, notes)
-      SQLCreateEntryResult(
-        Some(FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")),
-        false)
-    }
+    if (overwrite) entry.remove()
+    val view = entry.asNewViewFrame(recipe, notes)
+    FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
   }
 
   // Every query runs in its own SQLContext for isolation.
