@@ -21,7 +21,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       DataFrameSpec.global(directory = "Test_Dir",
         sql = "select name from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
-    assert(result.header == List("name"))
+
+    assert(result.header == List(SQLColumn("name", "String")))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
@@ -32,7 +33,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       DataFrameSpec.global(directory = "Test_Dir",
         sql = "select `name` from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
-    assert(result.header == List("name"))
+    assert(result.header == List(SQLColumn("name", "String")))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
@@ -41,7 +42,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
-    assert(result.header == List("name"))
+    assert(result.header == List(SQLColumn("name", "String")))
     assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
@@ -50,7 +51,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.local(project = projectName, sql = "select id from vertices where id = 11"),
       maxRows = 10)))
-    assert(result.header == List("id"))
+    assert(result.header == List(SQLColumn("id", "Long")))
     assert(result.data == List())
   }
 
@@ -487,7 +488,11 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("export global sql to view + query it again") {
-    val colNames = List("vertexId", "name", "age")
+    val cols = List(
+      SQLColumn("vertexId", "String"),
+      SQLColumn("name", "String"),
+      SQLColumn("age", "String"))
+    val colNames = cols.map { case SQLColumn(n, t) => n }
     createViewCSV("testgraph/vertex-data", colNames)
     sqlController.createViewDFSpec(user,
       SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
@@ -504,7 +509,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
           sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
         ), maxRows = 120)),
       Duration.Inf)
-    assert(res.header == colNames)
+    assert(res.header == cols)
     assert(res.data == List(
       List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
   }
