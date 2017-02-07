@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Admins can backup LynxKite project data from UI.
+
 ### 1.12.0
 
  - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
