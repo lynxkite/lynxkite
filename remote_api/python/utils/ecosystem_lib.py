@@ -164,7 +164,7 @@ class Ecosystem:
     print('LynxKite ecosystem was started by supervisor.')
 
   def set_s3_metadata_dir(self, s3_bucket, metadata_version):
-    if s3_bucket:
+    if s3_bucket and self.lynxkite_config['restore_metadata']:
       # s3_bucket = 's3://bla/, bucket = 'bla'
       bucket = s3_bucket.split('/')[2]
       if not metadata_version:
