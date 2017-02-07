@@ -333,7 +333,7 @@ Side.prototype = {
 
   expectSqlResult: function(header, rows) {
     var res = this.side.$('#sql-result');
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(header);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
@@ -856,7 +856,7 @@ Selector.prototype = {
 
   expectGlobalSqlResult: function(header, rows) {
     var res = element(by.id('sql-result'));
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(header);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
