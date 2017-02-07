@@ -126,7 +126,8 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
-case class SQLQueryResult(header: List[String], data: List[List[String]])
+case class SQLColumn(name: String, dataType: String)
+case class SQLQueryResult(header: List[SQLColumn], data: List[List[String]])
 
 case class SQLExportToTableRequest(
   dfSpec: DataFrameSpec,
@@ -530,7 +531,10 @@ class SQLController(val env: BigGraphEnvironment) {
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLQueryResult(
-      header = df.columns.toList,
+      header = df.columns.toList.zip(
+        df.schema.fields.
+          map(x => ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(x.dataType)))
+      ).map { case (n, t) => SQLColumn(n, t) },
       data = df.head(request.maxRows).map {
         row =>
           row.toSeq.map {
