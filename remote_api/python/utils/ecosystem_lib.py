@@ -173,6 +173,7 @@ class Ecosystem:
         paginator = self.s3_client.get_paginator('list_objects')
         result = paginator.paginate(Bucket=bucket, Prefix='metadata_backup/', Delimiter='/')
         # Name of the alphabetically last folder without the trailing slash.
+        # If 'metadata_backup' is missing or empty, the following line throws an exception.
         version = sorted([prefix.get('Prefix')
                           for prefix in result.search('CommonPrefixes')])[-1][:-1]
       else:
