@@ -43,11 +43,15 @@ def main(args):
   ecosystem = Ecosystem(args)
   ecosystem.launch_cluster()
   ecosystem.start()
-  if args.s3_metadata_dir:
+  if args.restore_metadata:
     ecosystem.restore_metadata()
   print('''Please don't forget to terminate the instances!''')
 
 
 if __name__ == '__main__':
   args = arg_parser.parse_args()
+  if args.s3_data_dir:
+    assert args.s3_data_dir[-1] == '/', 'S3 bucket name has to end with "/".'
+  if args.s3_metadata_version:
+    assert args.s3_metadata_version.isdigit(), 'Version string can contain only digits.'
   main(args)

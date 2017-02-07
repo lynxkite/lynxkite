@@ -81,6 +81,8 @@ GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 
 GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
 POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
+GET /ajax/getBackupSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getBackupSettings
+GET /ajax/backup com.lynxanalytics.biggraph.serving.ProductionJsonServer.backup
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
 POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath

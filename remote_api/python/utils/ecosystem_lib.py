@@ -2,6 +2,7 @@ from utils.emr_lib import EMRLib
 import os
 import argparse
 import datetime
+import boto3
 
 arg_parser = argparse.ArgumentParser()
 
@@ -55,10 +56,17 @@ arg_parser.add_argument(
     '--s3_data_dir',
     help='S3 path to be used as non-ephemeral data directory.')
 arg_parser.add_argument(
-    '--s3_metadata_dir',
-    help='''If it is not empty, it contains the S3 path of saved metadata,
-  which will be restored after the cluster was started. The metadata will not be
+    '--restore_metadata',
+    action='store_true',
+    help='''If it is set, metadata will be reloaded from `s3_data_dir/metadata_backup/`,
+  after the cluster was started. The metadata will not automatically be
   saved when the cluster is shut down.''')
+arg_parser.add_argument(
+    '--s3_metadata_version',
+    help='''If specified, it defines the VERSION part of the metadata backup directory:
+    s3_data_dir/metadata_backup/VERSION The format of this flag (and VERSION) is
+    `YYYYMMddHHmmss` e.g. `20170123164600`. If not specified , the script will use the
+    latest version in `s3_data_dir/metadata_backup/`.''')
 arg_parser.add_argument(
     '--owner',
     default=os.environ['USER'],
@@ -94,11 +102,14 @@ class Ecosystem:
         'lynx_release_dir': args.lynx_release_dir,
         'log_dir': args.log_dir,
         's3_data_dir': args.s3_data_dir,
-        's3_metadata_dir': args.s3_metadata_dir,
+        'restore_metadata': args.restore_metadata,
+        's3_metadata_version': args.s3_metadata_version,
+        's3_metadata_dir': '',
     }
     self.cluster = None
     self.instances = []
     self.jdbc_url = ''
+    self.s3_client = None
 
   def launch_cluster(self):
     print('Launching an EMR cluster.')
@@ -108,6 +119,7 @@ class Ecosystem:
         ec2_key_file=conf['ec2_key_file'],
         ec2_key_name=conf['ec2_key_name'],
         region=conf['emr_region'])
+    self.s3_client = lib.s3_client
     self.cluster = lib.create_or_connect_to_emr_cluster(
         name=conf['cluster_name'],
         log_uri=conf['emr_log_uri'],
@@ -140,6 +152,9 @@ class Ecosystem:
         lk_conf['lynx_version'],
         lk_conf['biggraph_releases_dir'])
     self.install_native_dependencies()
+    self.set_s3_metadata_dir(
+        lk_conf['s3_data_dir'],
+        lk_conf['s3_metadata_version'])
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
         conf['emr_instance_count'])
@@ -148,8 +163,26 @@ class Ecosystem:
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
+  def set_s3_metadata_dir(self, s3_bucket, metadata_version):
+    if s3_bucket and self.lynxkite_config['restore_metadata']:
+      # s3_bucket = 's3://bla/, bucket = 'bla'
+      bucket = s3_bucket.split('/')[2]
+      if not metadata_version:
+        # Gives back the "latest" version from the `s3_bucket/metadata_backup/`.
+        # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
+        paginator = self.s3_client.get_paginator('list_objects')
+        result = paginator.paginate(Bucket=bucket, Prefix='metadata_backup/', Delimiter='/')
+        # Name of the alphabetically last folder without the trailing slash.
+        # If 'metadata_backup' is missing or empty, the following line throws an exception.
+        version = sorted([prefix.get('Prefix')
+                          for prefix in result.search('CommonPrefixes')])[-1][:-1]
+      else:
+        version = metadata_version
+      self.lynxkite_config['s3_metadata_dir'] = 's3://{buc}/{ver}/'.format(
+          buc=bucket,
+          ver=version)
+
   def restore_metadata(self):
-    # TODO versioning metadata
     s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
     print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
     self.cluster.ssh('''
@@ -159,7 +192,7 @@ class Ecosystem:
       if [ -d metadata/lynxkite ]; then
         mv metadata/lynxkite metadata/lynxkite.$(date "+%Y%m%d_%H%M%S_%3N")
       fi
-      aws s3 sync {dir} metadata/lynxkite/ --quiet
+      aws s3 sync {dir} metadata/lynxkite/ --exclude "*$folder$" --quiet
       supervisorctl start lynxkite
     '''.format(dir=s3_metadata_dir))
     print('Metadata restored.')
@@ -299,7 +332,9 @@ EOF
       # TODO: Find a more sane directory.
       sudo mkdir -p /tasks_data
       sudo chmod a+rwx /tasks_data
-    '''.format(num_executors=emr_instance_count - 1, data_dir_config=data_dir_config))
+    '''.format(
+        num_executors=emr_instance_count - 1,
+        data_dir_config=data_dir_config))
 
   def config_aws_s3_native(self):
     self.cluster.ssh('''
