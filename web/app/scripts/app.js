@@ -60,6 +60,10 @@ angular
         templateUrl: 'views/cleaner.html',
         controller: 'CleanerCtrl',
       })
+      .when('/backup', {
+        templateUrl: 'views/backup.html',
+        controller: 'BackupCtrl',
+      })
       .when('/logs', {
         templateUrl: 'views/logs.html',
         controller: 'LogsCtrl',
