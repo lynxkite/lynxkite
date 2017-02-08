@@ -32,4 +32,17 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     assert(output.vertexFirstVisited.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 2)
     assert(output.edgeFirstTraversed.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 0)
   }
+
+  test("unconnected graph") {
+    val unconnectedG = SmallTestGraph(Map(
+      0 -> Seq(1),
+      1 -> Seq(0),
+      2 -> Seq(3),
+      3 -> Seq(2)
+    )).result
+    val op = RandomWalkSample(1, 100, 0.5, 0)
+    val output = op(op.vs, unconnectedG.vs)(op.es, unconnectedG.es).result
+    assert(output.vertexFirstVisited.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 2)
+    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 2)
+  }
 }
