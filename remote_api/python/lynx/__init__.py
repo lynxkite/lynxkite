@@ -614,7 +614,8 @@ class SubProject:
     self.lk = project_checkpoint.lk
 
   def __dir__(self):
-    return self.lk._operation_names
+    '''Create list of methods for tab-completion.'''
+    return super().__dir__() + self.lk._operation_names
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
