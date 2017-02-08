@@ -531,10 +531,13 @@ class SQLController(val env: BigGraphEnvironment) {
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLQueryResult(
-      header = df.columns.toList.zip(
-        df.schema.fields.
-          map(x => ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(x.dataType)))
-      ).map { case (n, t) => SQLColumn(n, t) },
+      header = df.schema.toList.map {
+        x =>
+          SQLColumn(
+            x.name,
+            ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(x.dataType))
+          )
+      },
       data = df.head(request.maxRows).map {
         row =>
           row.toSeq.map {
