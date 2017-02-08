@@ -175,7 +175,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
 
   private def minByKey(keyValue1: RDD[(ID, Long)],
                        keyValue2: RDD[(ID, Long)]): RDD[(ID, Long)] = {
-    keyValue1.leftOuterJoin(keyValue2).mapValues {
+    val x = keyValue2.reduceByKey(_ min _)
+    keyValue1.leftOuterJoin(x).mapValues {
       case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(Long.MaxValue)
     }
   }
