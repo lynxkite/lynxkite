@@ -2176,58 +2176,58 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Random walk sample", new StructureOperation(_, _) {
-    def parameters = List(
-      NonNegInt("sampleSize", "Sample size", default = 1000),
-      Ratio("restartProbability",
-        "Restart probability",
-        defaultValue = "0.15"),
-      NonNegInt("startPoints", "Number of starting points", default = 10),
-      Param("vertexAttrName", "Save vertex selection as", defaultValue = ""),
-      Param("edgeAttrName", "Save edge selection as", defaultValue = ""),
-      Choice("automaticFilter", "Filter graph automatically", options = FEOption.bools),
-      RandomSeed("seed", "Seed")
-    )
-    def enabled = hasVertexSet && hasEdgeBundle
-
-    override def validateParameters(values: Map[String, String]): Unit = {
-      super.validateParameters(values)
-      val hasAttrNames = values("vertexAttrName").nonEmpty && values("edgeAttrName").nonEmpty
-      assert(hasAttrNames ^ values("automaticFilter").toBoolean,
-        "Either both attribute names have to be provided or automatic filtering has to be" +
-          " enabled, but not both at the same time.")
-    }
-
-    def apply(params: Map[String, String]) = {
-      val sample = {
-        val sampleSize = params("sampleSize").toInt
-        val restartProbability = params("restartProbability").toDouble
-        val maxStartPoints = params("maxStartPoints").toInt
-        val seed = params("seed").toInt
-        val op = graph_operations.RandomWalkSample(sampleSize, restartProbability, maxStartPoints, seed)
-        op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
-      }
-      if (params("vertexAttrName").nonEmpty) {
-        project.newVertexAttribute(params("vertexAttrName"), sample.verticesInSample)
-      }
-      if (params("edgeAttrName").nonEmpty) {
-        project.newEdgeAttribute(params("edgeAttrName"), sample.edgesInSample)
-      }
-      if (params("automaticFilter").toBoolean) {
-        val filter = new graph_operations.DoubleGT(0.0)
-        val edgeEmbedding = {
-          val op = graph_operations.VertexAttributeFilter(filter)
-          op(op.attr, sample.edgesInSample).result.identity
-        }
-        project.pullBackEdges(edgeEmbedding)
-        val vertexEmbedding = {
-          val op = graph_operations.VertexAttributeFilter(filter)
-          op(op.attr, sample.verticesInSample).result.identity
-        }
-        project.pullBack(vertexEmbedding)
-      }
-    }
-  })
+  //  register("Random walk sample", new StructureOperation(_, _) {
+  //    def parameters = List(
+  //      NonNegInt("sampleSize", "Sample size", default = 1000),
+  //      Ratio("restartProbability",
+  //        "Restart probability",
+  //        defaultValue = "0.15"),
+  //      NonNegInt("startPoints", "Number of starting points", default = 10),
+  //      Param("vertexAttrName", "Save vertex selection as", defaultValue = ""),
+  //      Param("edgeAttrName", "Save edge selection as", defaultValue = ""),
+  //      Choice("automaticFilter", "Filter graph automatically", options = FEOption.bools),
+  //      RandomSeed("seed", "Seed")
+  //    )
+  //    def enabled = hasVertexSet && hasEdgeBundle
+  //
+  //    override def validateParameters(values: Map[String, String]): Unit = {
+  //      super.validateParameters(values)
+  //      val hasAttrNames = values("vertexAttrName").nonEmpty && values("edgeAttrName").nonEmpty
+  //      assert(hasAttrNames ^ values("automaticFilter").toBoolean,
+  //        "Either both attribute names have to be provided or automatic filtering has to be" +
+  //          " enabled, but not both at the same time.")
+  //    }
+  //
+  //    def apply(params: Map[String, String]) = {
+  //      val sample = {
+  //        val sampleSize = params("sampleSize").toInt
+  //        val restartProbability = params("restartProbability").toDouble
+  //        val maxStartPoints = params("maxStartPoints").toInt
+  //        val seed = params("seed").toInt
+  //        val op = graph_operations.RandomWalkSample(sampleSize, restartProbability, maxStartPoints, seed)
+  //        op(op.vs, project.vertexSet)(op.es, project.edgeBundle)().result
+  //      }
+  //      if (params("vertexAttrName").nonEmpty) {
+  //        project.newVertexAttribute(params("vertexAttrName"), sample.vertexFirstVisited)
+  //      }
+  //      if (params("edgeAttrName").nonEmpty) {
+  //        project.newEdgeAttribute(params("edgeAttrName"), sample.edgeFirstTraversed)
+  //      }
+  //      if (params("automaticFilter").toBoolean) {
+  //        val filter = new graph_operations.DoubleGT(0.0)
+  //        val edgeEmbedding = {
+  //          val op = graph_operations.VertexAttributeFilter(filter)
+  //          op(op.attr, sample.edgeFirstTraversed).result.identity
+  //        }
+  //        project.pullBackEdges(edgeEmbedding)
+  //        val vertexEmbedding = {
+  //          val op = graph_operations.VertexAttributeFilter(filter)
+  //          op(op.attr, sample.vertexFirstVisited).result.identity
+  //        }
+  //        project.pullBack(vertexEmbedding)
+  //      }
+  //    }
+  //  })
 
   register("Aggregate vertex attribute globally", new GlobalOperation(_, _) {
     def parameters = List(Param("prefix", "Generated name prefix")) ++
