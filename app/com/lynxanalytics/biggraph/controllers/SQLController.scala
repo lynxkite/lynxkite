@@ -532,10 +532,10 @@ class SQLController(val env: BigGraphEnvironment) {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLQueryResult(
       header = df.schema.toList.map {
-        x =>
+        field =>
           SQLColumn(
-            x.name,
-            ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(x.dataType))
+            field.name,
+            ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(field.dataType))
           )
       },
       data = df.head(request.maxRows).map {
