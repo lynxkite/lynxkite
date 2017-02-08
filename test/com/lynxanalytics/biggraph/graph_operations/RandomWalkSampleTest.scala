@@ -22,8 +22,12 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
   test("one long walk") {
     val op = RandomWalkSample(1, 1, 0.01, 0)
     val output = op(op.vs, g.vs)(op.es, g.es).result
-    assert(output.vertexFirstVisited.rdd.filter(_._2 < 3.0).count() == 3)
-    assert(output.edgeFirstTraversed.rdd.filter(_._2 < 3.0).count() == 2)
+    val vs = output.vertexFirstVisited.rdd.collect()
+    val es = output.edgeFirstTraversed.rdd.collect()
+    assert(vs.count(_._2 < 3.0) == 3)
+    assert(vs.count(_._2 < Long.MaxValue.toDouble) == vs.length)
+    assert(es.count(_._2 < 3.0) == 2)
+    assert(es.count(_._2 < Long.MaxValue.toDouble) == es.length)
   }
 
   test("two short walks") {
