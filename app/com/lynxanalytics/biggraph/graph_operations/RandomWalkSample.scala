@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.rdd.RDD
 
@@ -87,7 +86,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
         _ <- 0 until numOfStartPoints
         fromNode = randomNode(nodes, rnd.nextLong())
         _ <- 0 until numOfWalksFromOnePoint
-        walkLength = geometric(rnd, p = walkAbortionProbability) max 200
+        walkLength = geometric(rnd, p = walkAbortionProbability) min maxStepsWithoutAbortion
       } yield (fromNode, walkLength)
       val cumulativeWalkLength = walksToPerform.scanLeft(0L)(_ + _._2)
       val initialState: Seq[WalkState] = walksToPerform.zip(cumulativeWalkLength).map {
@@ -109,13 +108,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
 
     while (!multiWalkState.isEmpty()) {
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
-
-      // CHECKPOINTING
-      nextState.localCheckpoint()
-      nextState.count()
-      edgesTraversed.localCheckpoint()
-      edgesTraversed.count()
-      // END CHECKPOINTING
+      nextState.persist(StorageLevels.DISK_ONLY)
 
       val x = minByKey(stepIdxWhenNodeFirstVisited,
         nextState.map { case (node, (idx, _)) => (node, idx) })
@@ -132,11 +125,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       stepIdxWhenEdgeFirstTraversed = y
       // END CHECKPOINTING
 
-      // CHECKPOINTING
       multiWalkState.unpersist(blocking = false)
-      edgesTraversed.unpersist(blocking = false)
-      // END CHECKPOINTING
-
       multiWalkState = nextState
     }
 
