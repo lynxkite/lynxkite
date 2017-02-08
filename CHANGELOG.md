@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Admins can backup LynxKite project data from UI.
+ - Column types are displayed in SQL result box.
 
 ### 1.12.0
 
