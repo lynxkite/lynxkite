@@ -649,6 +649,7 @@ object SQLController {
     assertAccessAndGetTableEntry(user, tableName, privacy)
     val table = TableImport.importDataFrameAsync(df)
     val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
+    assert(!entry.exists || overwrite, "file-already-exists-confirm-overwrite")
     val checkpoint = table.saveAsCheckpoint(notes)
     if (overwrite) entry.remove()
     val frame = entry.asNewTableFrame(checkpoint)
@@ -662,6 +663,7 @@ object SQLController {
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager) = {
     val entry = assertAccessAndGetTableEntry(user, name, privacy)
+    assert(!entry.exists || overwrite, "file-already-exists-confirm-overwrite")
     if (overwrite) entry.remove()
     val view = entry.asNewViewFrame(recipe, notes)
     FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
