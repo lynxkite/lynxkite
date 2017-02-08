@@ -104,7 +104,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       val allUnvisited = nodes.mapValues(_ => Long.MaxValue)
       minByKey(allUnvisited, multiWalkState.map { case (node, (idx, _)) => (node, idx) })
     }
-    var stepIdxWhenEdgeFirstTraversed = edges.mapValues(_ => Long.MaxValue)
+    var stepIdxWhenEdgeFirstTraversed: RDD[(ID, Long)] = edges.mapValues(_ => Long.MaxValue)
     val step = multiStepper(nodes, edges)
 
     while (!multiWalkState.isEmpty()) {
@@ -140,8 +140,10 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       multiWalkState = nextState
     }
 
-    output(o.vertexFirstVisited, stepIdxWhenNodeFirstVisited.mapValues(_.toDouble))
-    output(o.edgeFirstTraversed, stepIdxWhenEdgeFirstTraversed.mapValues(_.toDouble))
+    val x = stepIdxWhenNodeFirstVisited.sort(nodes.partitioner.get).asUniqueSortedRDD
+    val y = stepIdxWhenEdgeFirstTraversed.sort(edges.partitioner.get).asUniqueSortedRDD
+    output(o.vertexFirstVisited, x.mapValues(_.toDouble))
+    output(o.edgeFirstTraversed, y.mapValues(_.toDouble))
   }
 
   def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD):
@@ -182,10 +184,9 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   private def randomNode(nodes: VertexSetRDD, seed: Long) =
     nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  private def minByKey(keyValue1: UniqueSortedRDD[ID, Long],
-                       keyValue2: RDD[(ID, Long)]): UniqueSortedRDD[ID, Long] = {
-    val x = keyValue2.reduceBySortedKey(keyValue1.partitioner.get, _ min _)
-    keyValue1.sortedLeftOuterJoin(x).mapValues {
+  private def minByKey(keyValue1: RDD[(ID, Long)],
+                       keyValue2: RDD[(ID, Long)]): RDD[(ID, Long)] = {
+    keyValue1.leftOuterJoin(keyValue2).mapValues {
       case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(Long.MaxValue)
     }
   }
