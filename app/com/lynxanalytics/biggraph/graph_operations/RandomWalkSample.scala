@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.rdd.RDD
 
@@ -63,6 +62,9 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     "seed" -> seed)
 
   private type StepIdx = Double
+  object StepIdx {
+    val MaxValue = scala.Double.MaxValue
+  }
   private type RemainingSteps = Int
   private type WalkState = (ID, (StepIdx, RemainingSteps))
 
@@ -101,11 +103,11 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     multiWalkState.persist(StorageLevels.DISK_ONLY)
 
     var stepIdxWhenNodeFirstVisited = {
-      val allUnvisited = nodes.mapValues(_ => Double.MaxValue)
+      val allUnvisited = nodes.mapValues(_ => StepIdx.MaxValue)
       minByKey(allUnvisited, multiWalkState.map { case (node, (idx, _)) => (node, idx) })
     }
     var tmpN = stepIdxWhenNodeFirstVisited
-    var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => Double.MaxValue)
+    var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => StepIdx.MaxValue)
     var tmpE = stepIdxWhenEdgeFirstTraversed
     val step = multiStepper(nodes, edges)
 
@@ -118,7 +120,10 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
         nextState.map { case (node, (idx, _)) => (node, idx) })
       stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
 
-      // CHECKPOINTING
+      // The length of the lineage of `stepIdxWhenNodeFirstVisited` and
+      // `stepIdxWhenEdgeFirstTraversed` grows as the Fibonacci numbers. Therefore we have to cut
+      // that lineage periodically with `RDD#localCheckpoint`. This reduce resilience but prevents
+      // StackOverflowErrors
       if (stepCnt % 20 == 0) {
         stepIdxWhenNodeFirstVisited.localCheckpoint()
         stepIdxWhenNodeFirstVisited.count()
@@ -142,7 +147,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   }
 
   def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD):
-    (RDD[WalkState], Int) => (RDD[WalkState], RDD[(ID, Double)]) =
+    (RDD[WalkState], Int) => (RDD[WalkState], RDD[(ID, StepIdx)]) =
   {
     val outEdgesPerNode = edges.map {
       case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
@@ -153,7 +158,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
 
     def continueWalk(walkState: WalkState): Boolean = walkState._2._2 > 0
 
-    def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, Double)]) = {
+    def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, StepIdx)]) = {
       val nextState = multiWalkState.filter(continueWalk).
         partitionBy(outEdgesPerNode.partitioner.get).
         sort(outEdgesPerNode.partitioner.get).
@@ -179,11 +184,11 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   private def randomNode(nodes: VertexSetRDD, seed: Long) =
     nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  private def minByKey(keyValue1: RDD[(ID, Double)],
-                       keyValue2: RDD[(ID, Double)]): RDD[(ID, Double)] = {
+  private def minByKey(keyValue1: RDD[(ID, StepIdx)],
+                       keyValue2: RDD[(ID, StepIdx)]): RDD[(ID, StepIdx)] = {
     val x = keyValue2.reduceByKey(_ min _)
     keyValue1.leftOuterJoin(x).mapValues {
-      case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(Double.MaxValue)
+      case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(StepIdx.MaxValue)
     }
   }
 
