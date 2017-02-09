@@ -74,6 +74,11 @@ class LynxKite:
     self._session = None
     self._operation_names = None
 
+  def operation_names(self):
+    if not self._operation_names:
+      self._operation_names = self._send('getOperationNames').names
+    return self._operation_names
+
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
@@ -615,9 +620,8 @@ class SubProject:
 
   def __dir__(self):
     '''Create list of methods for tab-completion.'''
-    if not self.lk._operation_names:
-      self.lk._operation_names = self.lk._send('getOperationNames').names
-    return super().__dir__() + self.lk._operation_names
+    lk_ops = self.lk.operation_names()
+    return super().__dir__() + lk_ops
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
