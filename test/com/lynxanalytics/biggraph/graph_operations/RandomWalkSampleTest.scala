@@ -20,21 +20,17 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
   )).result
 
   test("one long walk") {
-    val op = RandomWalkSample(1, 1, 0.01, 0)
-    val output = op(op.vs, g.vs)(op.es, g.es).result
-    val vs = output.vertexFirstVisited.rdd.collect()
-    val es = output.edgeFirstTraversed.rdd.collect()
+    val (vs, es) = run(RandomWalkSample(1, 1, 0.01, 0), g)
     assert(vs.count(_._2 < 3.0) == 3)
-    assert(vs.count(_._2 < Double.MaxValue) == vs.length)
+    assert(vs.count(visited) == vs.length)
     assert(es.count(_._2 < 3.0) == 2)
-    assert(es.count(_._2 < Double.MaxValue) == es.length)
+    assert(es.count(visited) == es.length)
   }
 
   test("two short walks") {
-    val op = RandomWalkSample(2, 1, 0.999, 0)
-    val output = op(op.vs, g.vs)(op.es, g.es).result
-    assert(output.vertexFirstVisited.rdd.filter(_._2 < Double.MaxValue).count() == 2)
-    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Double.MaxValue).count() == 0)
+    val (vs, es) = run(RandomWalkSample(2, 1, 0.999, 0), g)
+    assert(vs.count(visited) == 2)
+    assert(es.count(visited) == 0)
   }
 
   test("unconnected graph") {
@@ -44,9 +40,17 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
       2 -> Seq(3),
       3 -> Seq(2)
     )).result
-    val op = RandomWalkSample(1, 100, 0.5, 0)
-    val output = op(op.vs, unconnectedG.vs)(op.es, unconnectedG.es).result
-    assert(output.vertexFirstVisited.rdd.filter(_._2 < Double.MaxValue).count() == 2)
-    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Double.MaxValue).count() == 2)
+    val (vs, es) = run(RandomWalkSample(1, 100, 0.5, 0), unconnectedG)
+    assert(vs.count(visited) == 2)
+    assert(es.count(visited) == 2)
   }
+
+  private def run(op: RandomWalkSample, g: SmallTestGraph.Output) = {
+    val output = op(op.vs, g.vs)(op.es, g.es).result
+    val vs = output.vertexFirstVisited.rdd.collect()
+    val es = output.edgeFirstTraversed.rdd.collect()
+    (vs, es)
+  }
+
+  private def visited(x: (ID, Double)) = x._2 < Double.MaxValue
 }
