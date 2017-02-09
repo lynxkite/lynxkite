@@ -70,7 +70,15 @@ class EMRLib:
     while True:
       i = 0
       while i < len(services):
-        if services[i].is_ready():
+        service_ready = False
+        try:
+          service_ready = services[i].is_ready()
+        except botocore.exceptions.ClientError as e:
+          if e.response['Error']['Code'] == 'ThrottlingException':
+            time.sleep(60)
+          else:
+            raise e
+        if service_ready:
           print('{name!s} is ready, waiting for {n!s} more services to start...'.format(
               name=services[i],
               n=(len(services) - 1)
