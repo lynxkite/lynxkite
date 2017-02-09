@@ -25,16 +25,16 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     val vs = output.vertexFirstVisited.rdd.collect()
     val es = output.edgeFirstTraversed.rdd.collect()
     assert(vs.count(_._2 < 3.0) == 3)
-    assert(vs.count(_._2 < Long.MaxValue.toDouble) == vs.length)
+    assert(vs.count(_._2 < Double.MaxValue) == vs.length)
     assert(es.count(_._2 < 3.0) == 2)
-    assert(es.count(_._2 < Long.MaxValue.toDouble) == es.length)
+    assert(es.count(_._2 < Double.MaxValue) == es.length)
   }
 
   test("two short walks") {
     val op = RandomWalkSample(2, 1, 0.999, 0)
     val output = op(op.vs, g.vs)(op.es, g.es).result
-    assert(output.vertexFirstVisited.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 2)
-    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 0)
+    assert(output.vertexFirstVisited.rdd.filter(_._2 < Double.MaxValue).count() == 2)
+    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Double.MaxValue).count() == 0)
   }
 
   test("unconnected graph") {
@@ -46,7 +46,7 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     )).result
     val op = RandomWalkSample(1, 100, 0.5, 0)
     val output = op(op.vs, unconnectedG.vs)(op.es, unconnectedG.es).result
-    assert(output.vertexFirstVisited.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 2)
-    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Long.MaxValue.toDouble).count() == 2)
+    assert(output.vertexFirstVisited.rdd.filter(_._2 < Double.MaxValue).count() == 2)
+    assert(output.edgeFirstTraversed.rdd.filter(_._2 < Double.MaxValue).count() == 2)
   }
 }
