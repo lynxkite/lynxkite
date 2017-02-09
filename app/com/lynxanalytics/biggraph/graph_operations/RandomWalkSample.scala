@@ -62,8 +62,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     "seed" -> seed)
 
   private type StepIdx = Double
-  object StepIdx {
-    val MaxValue = scala.Double.MaxValue
+  private object StepIdx {
+    val MaxValue = Double.MaxValue
   }
   private type RemainingSteps = Int
   private type WalkState = (ID, (StepIdx, RemainingSteps))
@@ -123,8 +123,10 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       // that lineage periodically with `RDD#localCheckpoint`. This reduce resilience but prevents
       // StackOverflowErrors
       if (stepCnt % 20 == 0) {
+        stepIdxWhenNodeFirstVisited.persist(StorageLevels.DISK_ONLY)
         stepIdxWhenNodeFirstVisited.localCheckpoint()
         stepIdxWhenNodeFirstVisited.count()
+        stepIdxWhenEdgeFirstTraversed.persist(StorageLevels.DISK_ONLY)
         stepIdxWhenEdgeFirstTraversed.localCheckpoint()
         stepIdxWhenEdgeFirstTraversed.count()
       }
