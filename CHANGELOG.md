@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Tab-completion for LynxKite operations works in Python command-line 
+   and in Jupyter notebooks.
+   
 ### 1.12.1
 
  - Admins can backup LynxKite project data from UI.
