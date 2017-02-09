@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.StructType
 object RemoteAPIProtocol {
   case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
+  case class OperationNamesResponse(names: List[String])
   case class OperationRequest(
     checkpoint: String,
     path: List[String],
@@ -117,6 +118,7 @@ object RemoteAPIProtocol {
 
   implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
+  implicit val wOperationNamesResponse = json.Json.writes[OperationNamesResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
   implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
@@ -164,6 +166,7 @@ object RemoteAPIServer extends JsonServer {
   def loadTable = jsonPost(c.loadTable)
   def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
+  def getOperationNames = jsonPost(c.getOperationNames)
   def saveProject = jsonPost(c.saveProject)
   def saveTable = jsonPost(c.saveTable)
   def saveView = jsonPost(c.saveView)
@@ -201,8 +204,19 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   val graphDrawingController = new GraphDrawingController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
+  def camelize(operation: String) = {
+    val words = operation.split("-").toList
+    val first = words.head.toLowerCase
+    val rest = words.drop(1).map(_.toLowerCase.capitalize)
+    first + rest.mkString("")
+  }
 
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
+  lazy val camelizedIds = ops.operationIds.map(id => camelize(id)).toList
+
+  def getOperationNames(user: User, request: Empty): OperationNamesResponse = {
+    return OperationNamesResponse(camelizedIds)
+  }
 
   def getDirectoryEntry(user: User, request: DirectoryEntryRequest): DirectoryEntryResult = {
     val entry = new DirectoryEntry(
