@@ -16,16 +16,14 @@ import scala.util.Random
 //      `numOfWalksFromOnePoint` times
 //          perform a random walk on the graph from the selected node where the length of the walk
 //          follows a geometric distribution with parameter `walkAbortionProbability`
+//    NOTE: the order of the walks is important and will be used in the second point
 //
-// 2) Assign an index to every node and edge: the earlier the node was visited / edge was traversed
-//    during the previous point, the smaller the index is. The index of nodes / edges never visited
-//    is higher than the index of visited ones.
+// 2) Concatenate the walks based on their oder to form a single sequence of nodes / edges.
 //
-// 3) A sample can be obtained by filtering out nodes and edges of high indices. This index limit
-//    has to be determined by the user.
+// 3) A sample can be obtained by taking a prefix of this sequence and de-duplicating the entries
 //
-// The actual implementation is different (since it has to be parallel) but the resulting indices
-// are identical to the method described above.
+// The actual implementation is different (since it has to be parallel) but the obtained samples
+// are identical to the ones from the method described above.
 object RandomWalkSample extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
@@ -78,6 +76,10 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     val edges = inputs.es.rdd
     val rnd = new Random(seed)
 
+    // init all `numOfStartPoints` * `numOfWalksFromOnePoint` walks to compute them in parallel
+    // one walk is represented by a `WalkState` that describes 1) in which point the walk is
+    // 2) a stepIdx that represents the position of this step in the final, concatenated sequence
+    // and 3) the number of remaining steps to make before the walk is aborted
     var multiWalkState: RDD[WalkState] = {
       // The run time of the sampling algorithm is proportional to the length of the longest walk.
       // To avoid long run times we cheat and don't wait very long for abortion but force it after
@@ -102,6 +104,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     }
     multiWalkState.persist(StorageLevels.DISK_ONLY)
 
+    // we don't need the full sequence of walks for the sample, only the first occurrence of a node
+    // /edge is interesting
     var stepIdxWhenNodeFirstVisited = {
       val allUnvisited = nodes.mapValues(_ => StepIdx.MaxValue)
       minByKey(allUnvisited, multiWalkState.map { case (node, (idx, _)) => (node, idx) })
@@ -109,7 +113,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => StepIdx.MaxValue)
     val step = multiStepper(nodes, edges)
 
-    var stepCnt = 1
+    var counter = 1
     while (!multiWalkState.isEmpty()) {
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
       nextState.persist(StorageLevels.DISK_ONLY)
@@ -119,20 +123,21 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
 
       // The length of the lineage of `stepIdxWhenNodeFirstVisited` and
-      // `stepIdxWhenEdgeFirstTraversed` grows as the Fibonacci numbers. Therefore we have to cut
-      // that lineage periodically with `RDD#localCheckpoint`. This reduce resilience but prevents
+      // `stepIdxWhenEdgeFirstTraversed` grows in Fibonacci-like way. Therefore we have to cut
+      // the lineage periodically with `RDD#localCheckpoint`. This reduce resilience but prevents
       // StackOverflowErrors
-      if (stepCnt % 20 == 0) {
+      if (counter % 20 == 0) {
         stepIdxWhenNodeFirstVisited.persist(StorageLevels.DISK_ONLY)
         stepIdxWhenNodeFirstVisited.localCheckpoint()
         stepIdxWhenNodeFirstVisited.count()
+
         stepIdxWhenEdgeFirstTraversed.persist(StorageLevels.DISK_ONLY)
         stepIdxWhenEdgeFirstTraversed.localCheckpoint()
         stepIdxWhenEdgeFirstTraversed.count()
       }
 
       multiWalkState = nextState
-      stepCnt += 1
+      counter += 1
     }
 
     val vs = stepIdxWhenNodeFirstVisited.sort(nodes.partitioner.get).asUniqueSortedRDD
@@ -141,7 +146,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     output(o.edgeFirstTraversed, es)
   }
 
-  def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD):
+  private def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD):
     (RDD[WalkState], Int) => (RDD[WalkState], RDD[(ID, StepIdx)]) =
   {
     val outEdgesPerNode = edges.map {
