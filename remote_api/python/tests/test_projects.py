@@ -39,9 +39,10 @@ class TestProjects(unittest.TestCase):
     # Intentionally calls all the operations with a non-existent argument.
     lk = lynx.LynxKite()
     p = lk.new_project()
-    # Getting operation names.
-    dir(p)
-    ops = lk._operation_names
+    # Getting operation names in dir().
+    ops = dir(p)
+    # Checking method name, which is not a LK operation name.
+    self.assertTrue('scalar' in ops)
     for op in ops:
       f = getattr(p, op)
       with self.assertRaises(Exception) as context:
