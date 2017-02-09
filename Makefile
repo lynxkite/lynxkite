@@ -26,7 +26,7 @@ $(pip): python_requirements.txt
 		.build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
 .build/chronomaster-test-passed: $(shell $(find) chronomaster) $(pip)
-	chronomaster/test.sh && touch $@
+	tools/with_lk.sh chronomaster/test.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python)
