@@ -106,9 +106,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       val allUnvisited = nodes.mapValues(_ => StepIdx.MaxValue)
       minByKey(allUnvisited, multiWalkState.map { case (node, (idx, _)) => (node, idx) })
     }
-    var tmpN = stepIdxWhenNodeFirstVisited
     var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => StepIdx.MaxValue)
-    var tmpE = stepIdxWhenEdgeFirstTraversed
     val step = multiStepper(nodes, edges)
 
     var stepCnt = 1
@@ -129,13 +127,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
         stepIdxWhenNodeFirstVisited.count()
         stepIdxWhenEdgeFirstTraversed.localCheckpoint()
         stepIdxWhenEdgeFirstTraversed.count()
-        tmpN.unpersist(blocking = false)
-        tmpE.unpersist(blocking = false)
-        tmpN = stepIdxWhenNodeFirstVisited
-        tmpE = stepIdxWhenEdgeFirstTraversed
       }
 
-      multiWalkState.unpersist(blocking = false)
       multiWalkState = nextState
       stepCnt += 1
     }
