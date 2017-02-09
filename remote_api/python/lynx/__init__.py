@@ -72,7 +72,7 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
-    self._operation_names = self._send('getOperationNames').names
+    self._operation_names = None
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -615,6 +615,8 @@ class SubProject:
 
   def __dir__(self):
     '''Create list of methods for tab-completion.'''
+    if not self.lk._operation_names:
+      self.lk._operation_names = self.lk._send('getOperationNames').names
     return super().__dir__() + self.lk._operation_names
 
   def scalar(self, scalar):
