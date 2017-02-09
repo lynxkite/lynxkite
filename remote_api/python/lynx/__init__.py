@@ -72,6 +72,7 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
+    self._operation_names = self._send('getOperationNames').names
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -611,6 +612,10 @@ class SubProject:
     self.project_checkpoint = project_checkpoint
     self.path = path
     self.lk = project_checkpoint.lk
+
+  def __dir__(self):
+    '''Create list of methods for tab-completion.'''
+    return super().__dir__() + self.lk._operation_names
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''
