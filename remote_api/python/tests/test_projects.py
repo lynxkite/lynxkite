@@ -42,6 +42,7 @@ class TestProjects(unittest.TestCase):
       f = getattr(p, op)
       with self.assertRaises(Exception) as context:
         f(wrong_argument_name=444)
+        self.assertFalse('No such operation' in str(context.exception))
         self.assertTrue('Extra parameters found' in str(context.exception))
 
 
