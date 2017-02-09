@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.rdd.RDD
 
@@ -61,7 +62,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     "walkAbortionProbability" -> walkAbortionProbability,
     "seed" -> seed)
 
-  private type StepIdx = Long
+  private type StepIdx = Double
   private type RemainingSteps = Int
   private type WalkState = (ID, (StepIdx, RemainingSteps))
 
@@ -93,50 +94,55 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
         // index of the first step of a walk = the sum of the length of all previous walks
         // remainingSteps = walkLength - 1, since we count the start node as well
         case ((node, walkLength), sumOfLengthOfPreviousWalks) =>
-          (node, (sumOfLengthOfPreviousWalks, walkLength - 1))
+          (node, (sumOfLengthOfPreviousWalks.toDouble, walkLength - 1))
       }
       rc.sparkContext.parallelize(initialState, nodes.partitioner.get.numPartitions)
     }
     multiWalkState.persist(StorageLevels.DISK_ONLY)
 
     var stepIdxWhenNodeFirstVisited = {
-      val allUnvisited = nodes.mapValues(_ => Long.MaxValue)
+      val allUnvisited = nodes.mapValues(_ => Double.MaxValue)
       minByKey(allUnvisited, multiWalkState.map { case (node, (idx, _)) => (node, idx) })
     }
-    var stepIdxWhenEdgeFirstTraversed: RDD[(ID, Long)] = edges.mapValues(_ => Long.MaxValue)
+    var tmpN = stepIdxWhenNodeFirstVisited
+    var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => Double.MaxValue)
+    var tmpE = stepIdxWhenEdgeFirstTraversed
     val step = multiStepper(nodes, edges)
 
+    var stepCnt = 1
     while (!multiWalkState.isEmpty()) {
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
       nextState.persist(StorageLevels.DISK_ONLY)
 
-      val x = minByKey(stepIdxWhenNodeFirstVisited,
+      stepIdxWhenNodeFirstVisited = minByKey(stepIdxWhenNodeFirstVisited,
         nextState.map { case (node, (idx, _)) => (node, idx) })
-      val y = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
+      stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
 
       // CHECKPOINTING
-      x.localCheckpoint()
-      x.count()
-      y.localCheckpoint()
-      y.count()
-      stepIdxWhenNodeFirstVisited.unpersist(blocking = false)
-      stepIdxWhenEdgeFirstTraversed.unpersist(blocking = false)
-      stepIdxWhenNodeFirstVisited = x
-      stepIdxWhenEdgeFirstTraversed = y
-      // END CHECKPOINTING
+      if (stepCnt % 20 == 0) {
+        stepIdxWhenNodeFirstVisited.localCheckpoint()
+        stepIdxWhenNodeFirstVisited.count()
+        stepIdxWhenEdgeFirstTraversed.localCheckpoint()
+        stepIdxWhenEdgeFirstTraversed.count()
+        tmpN.unpersist(blocking = false)
+        tmpE.unpersist(blocking = false)
+        tmpN = stepIdxWhenNodeFirstVisited
+        tmpE = stepIdxWhenEdgeFirstTraversed
+      }
 
       multiWalkState.unpersist(blocking = false)
       multiWalkState = nextState
+      stepCnt += 1
     }
 
-    val x = stepIdxWhenNodeFirstVisited.sort(nodes.partitioner.get).asUniqueSortedRDD
-    val y = stepIdxWhenEdgeFirstTraversed.sort(edges.partitioner.get).asUniqueSortedRDD
-    output(o.vertexFirstVisited, x.mapValues(_.toDouble))
-    output(o.edgeFirstTraversed, y.mapValues(_.toDouble))
+    val vs = stepIdxWhenNodeFirstVisited.sort(nodes.partitioner.get).asUniqueSortedRDD
+    val es = stepIdxWhenEdgeFirstTraversed.sort(edges.partitioner.get).asUniqueSortedRDD
+    output(o.vertexFirstVisited, vs)
+    output(o.edgeFirstTraversed, es)
   }
 
   def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD):
-    (RDD[WalkState], Int) => (RDD[WalkState], RDD[(ID, Long)]) =
+    (RDD[WalkState], Int) => (RDD[WalkState], RDD[(ID, Double)]) =
   {
     val outEdgesPerNode = edges.map {
       case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
@@ -147,7 +153,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
 
     def continueWalk(walkState: WalkState): Boolean = walkState._2._2 > 0
 
-    def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, Long)]) = {
+    def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, Double)]) = {
       val nextState = multiWalkState.filter(continueWalk).
         partitionBy(outEdgesPerNode.partitioner.get).
         sort(outEdgesPerNode.partitioner.get).
@@ -173,11 +179,11 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   private def randomNode(nodes: VertexSetRDD, seed: Long) =
     nodes.takeSample(withReplacement = false, 1, seed).head._1
 
-  private def minByKey(keyValue1: RDD[(ID, Long)],
-                       keyValue2: RDD[(ID, Long)]): RDD[(ID, Long)] = {
+  private def minByKey(keyValue1: RDD[(ID, Double)],
+                       keyValue2: RDD[(ID, Double)]): RDD[(ID, Double)] = {
     val x = keyValue2.reduceByKey(_ min _)
     keyValue1.leftOuterJoin(x).mapValues {
-      case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(Long.MaxValue)
+      case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(Double.MaxValue)
     }
   }
 
