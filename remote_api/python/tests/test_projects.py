@@ -35,6 +35,8 @@ class TestProjects(unittest.TestCase):
     self.assertEqual(4, p2.scalar('vertex_count'))
 
   def test_project_operations(self):
+    # Tests if the given operation names are valid LynxKite operation names.
+    # Intentionally calls all the operations with a non-existent argument.
     lk = lynx.LynxKite()
     p = lk.new_project()
     ops = lk._operation_names
