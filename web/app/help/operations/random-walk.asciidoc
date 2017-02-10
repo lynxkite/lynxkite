@@ -1,0 +1,52 @@
+### Random walk
+
+This operation realises a random walk on the graph. The walk starts from a randomly selected vertex
+and at every step either aborts the current walk (with probability `Walk abortion probability`) and
+jumps back to the start point or moves to a randomly selected (directed sense) neighbor of the
+current vertex. After `Number of walks from a start points` restarts it selects a new start
+vertex. After `Number of start points` new start points were selected, it stops.
+
+The output of the operation is a vertex and an edge attribute which describes which was the first
+step that ended at the given vertex / traversed the given edge. The value associated with a never
+visited vertex or a never traversed edges is higher than the value associated with any visited
+vertex or traversed edge.
+
+This operation can be used to create a small smart sample of a graph to test your model on. To
+obtain such a sample follow the steps below.
+
+. Run this operation. Let us denote the computed vertex attribute by _first_reached_ and edge
+attribute by _first_traversed_.
+. Rank the vertices by _first_reached_.
+. Filter the vertices by the rank attribute to keep the only vertex of rank n, where n is the
+needed sample size.
+. Aggregate _first_reached_ to a scalar on the filtered graph (use either _max_, _avg_ or _first_ -
+there is only one vertex in the filtered graph)
+. Filter the vertices and edges of the original graph and keep the ones that has smaller or equal
+_first_reached_  or _first_traversed_ values than the value of the derived scalar.
+
+====
+[[startpoints]] Number of start points::
+The number of times a new start point is selected.
+
+[[walksfromonepoint]] Number of walks from a start points::
+The number of times the random walk restarts from the same start point before selecting a new start
+point.
+
+[[walkabortionprobability]] Walk abortion probability::
+The probability of aborting a walk instead of moving along an edge. Therefore the length of the
+parts of the walk between two abortions follows a geometric distribution with parameter `Walk
+abortion probability`.
+
+[[vertexattrname]] Save vertex indices as::
+The name of the attribute which shows which step reached the given vertex first. The value
+associated with never reached vertices is very-very high (higher than any other value).
+
+[[edgeattrname]] Save edge indices as::
+The name of the attribute which shows which step traversed the given edge first. The value
+associated with never traversed edges is very-very high (higher than any other value).
+
+[[seed]] Seed::
+The random seed.
++
+include::{g}[tag=random-seed]
+====
