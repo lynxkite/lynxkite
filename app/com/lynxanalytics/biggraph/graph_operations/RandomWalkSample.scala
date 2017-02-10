@@ -124,7 +124,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
 
       // The length of the lineage of `stepIdxWhenNodeFirstVisited` and
       // `stepIdxWhenEdgeFirstTraversed` grows in Fibonacci-like way. Therefore we have to cut
-      // the lineage periodically with `RDD#localCheckpoint`. This reduce resilience but prevents
+      // the lineage periodically with `RDD#localCheckpoint`. This reduces resilience but prevents
       // StackOverflowErrors
       if (counter % 20 == 0) {
         stepIdxWhenNodeFirstVisited.persist(StorageLevels.DISK_ONLY)
