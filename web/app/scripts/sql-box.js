@@ -120,6 +120,15 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         },
       };
 
+      scope.myCompare = function(a) {
+        // TODO: parse back integer and double
+        if (scope.sort.column) { // if defined, use custom sortKey
+          return a[scope.sort.column];
+        } else { // if not defined, use original ordering
+          return 0;
+        }
+      };
+
       scope.runSQLQuery = function() {
         if (!scope.sql) {
           scope.result = { $error: 'SQL script must be specified.' };
