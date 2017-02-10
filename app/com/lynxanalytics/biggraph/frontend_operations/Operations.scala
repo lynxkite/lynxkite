@@ -3584,8 +3584,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       NonNegDouble("distance", "Distance", defaultValue = "0.0"))
-    def enabled = FEStatus.assert(vertexAttributes[(Double, Double)].nonEmpty,
-      "No position vertex attributes.")
+    def enabled = FEStatus.assert(
+      vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
     def apply(params: Map[String, String]) = {
       import com.lynxanalytics.biggraph.graph_util.Shapefile
