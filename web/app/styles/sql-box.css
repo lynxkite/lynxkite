@@ -79,3 +79,8 @@ input.form-control#max-rows {
   overflow: visible;
 }
 
+.sql-type {
+  font-weight: normal;
+  font-style: italic;
+  color: #666;
+}

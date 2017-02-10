@@ -6,7 +6,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Tab-completion for LynxKite operations works in Python command-line 
+   and in Jupyter notebooks.
+   
+### 1.12.1
+
  - Admins can backup LynxKite project data from UI.
+ - Column types are displayed in SQL result box.
+ - Added _Lookup Region_ operation for finding locations inside shapefiles.
 
 ### 1.12.0
 
@@ -24,7 +31,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - You can submit SQL queries with Ctrl-Enter.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
- - Added _Lookup Region_ operation for finding locations inside shapefiles.
  - Spark Monitor doesn't send alarm in case of long-running tasks.
 
 Ecosystem:
