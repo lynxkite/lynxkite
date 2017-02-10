@@ -88,13 +88,12 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       // where 2 is an arbitrary number
       val maxStepsWithoutAbortion = (2 / walkAbortionProbability).toInt
       val walksToPerform = for {
-        _ <- 0 until numOfStartPoints
-        fromNode = randomNode(nodes, rnd.nextLong())
+        fromNode <- randomNodes(nodes, n = numOfStartPoints, seed = rnd.nextLong())
         _ <- 0 until numOfWalksFromOnePoint
         walkLength = geometric(rnd, p = walkAbortionProbability) min maxStepsWithoutAbortion
       } yield (fromNode, walkLength)
       val cumulativeWalkLength = walksToPerform.scanLeft(0L)(_ + _._2)
-      val initialState: Seq[WalkState] = walksToPerform.zip(cumulativeWalkLength).map {
+      val initialState: Array[WalkState] = walksToPerform.zip(cumulativeWalkLength).map {
         // index of the first step of a walk = the sum of the length of all previous walks
         // remainingSteps = walkLength - 1, since we count the start node as well
         case ((node, walkLength), sumOfLengthOfPreviousWalks) =>
@@ -180,8 +179,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       step
     }
 
-  private def randomNode(nodes: VertexSetRDD, seed: Long) =
-    nodes.takeSample(withReplacement = false, 1, seed).head._1
+  private def randomNodes(nodes: VertexSetRDD, n: Int, seed: Long) =
+    nodes.takeSample(withReplacement = false, n, seed).map(_._1)
 
   private def minByKey(keyValue1: RDD[(ID, StepIdx)],
                        keyValue2: RDD[(ID, StepIdx)]): RDD[(ID, StepIdx)] = {
