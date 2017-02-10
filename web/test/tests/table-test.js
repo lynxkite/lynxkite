@@ -28,7 +28,7 @@ module.exports = function(fw) {
       lib.splash.table(tableName).click();
     },
     function() {
-      lib.splash.expectGlobalSqlResult(['name'], [['Adam'], ['Eve'], ['Bob']]);
+      lib.splash.expectGlobalSqlResult(['name'], ['String'], [['Adam'], ['Eve'], ['Bob']]);
     }
   );
   fw.transitionTest(

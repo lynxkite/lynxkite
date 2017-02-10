@@ -13,6 +13,7 @@ module.exports = function(fw) {
 
       left.expectSqlResult(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
+        ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
         [
           ['20.3', 'Male', '0', '1000.0', '[40.71448,-74.00598]', 'Adam'],
           ['18.2', 'Female', '1', 'null', '[47.5269674,19.0323968]', 'Eve'],
@@ -47,6 +48,7 @@ module.exports = function(fw) {
 
       left.expectSqlResult(
         ['edge_comment', 'src_name'],
+        ['String', 'String'],
         [
           [ 'Adam loves Eve', 'Adam' ],
           [ 'Bob envies Adam', 'Bob' ],
@@ -63,6 +65,7 @@ module.exports = function(fw) {
 
       left.expectSqlResult(
         ['id', 'name'],
+        ['Long', 'String'],
         [
           [ '0', 'Adam' ],
           [ '2', 'Bob' ],
@@ -84,8 +87,8 @@ module.exports = function(fw) {
       right.runSql('select sum(base_random - segment_random) as error from belongs_to');
     },
     function() {
-      left.expectSqlResult(['sum'], [['100.0']]);
-      right.expectSqlResult(['error'], [['0.0']]);
+      left.expectSqlResult(['sum'], ['Double'], [['100.0']]);
+      right.expectSqlResult(['error'], ['Double'], [['0.0']]);
     });
 
   fw.statePreservingTest(
@@ -141,11 +144,11 @@ module.exports = function(fw) {
         });
 
       left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
-      left.expectSqlResult(['r1sum', 'r2sum'], [['4950.0', '4950.0']]);
+      left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950.0', '4950.0']]);
 
       left.runSql(
         'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
-      left.expectSqlResult(['srcgood', 'dstgood'], [['true', 'true']]);
+      left.expectSqlResult(['srcgood', 'dstgood'], ['Boolean', 'Boolean'], [['true', 'true']]);
     },
     function() {
     });
