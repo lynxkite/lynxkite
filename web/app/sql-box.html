@@ -179,7 +179,7 @@ instead of ng-model="sql" -->
           ng-click="sort.select($index)">
           <span class="sql-column-name">{{col.name}}</span>
           <br>
-          <span style="white-space:nowrap">
+          <span class="no-break">
             <span class="sql-type">{{col.dataType}}</span>
             <span class="ordering">
               <i ng-show="sort.column === $index.toString()"
