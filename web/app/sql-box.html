@@ -179,10 +179,12 @@ instead of ng-model="sql" -->
           ng-click="sort.select($index)">
           <span class="sql-column-name">{{col.name}}</span>
           <br>
-          <span class="sql-type">{{col.dataType}}</span>
-          <span class="ordering">
-            <i ng-show="sort.column === $index.toString()"
-              class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+          <span style="white-space:nowrap">
+            <span class="sql-type">{{col.dataType}}</span>
+            <span class="ordering">
+              <i ng-show="sort.column === $index.toString()"
+                class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+            </span>
           </span>
         </th>
       </tr>
