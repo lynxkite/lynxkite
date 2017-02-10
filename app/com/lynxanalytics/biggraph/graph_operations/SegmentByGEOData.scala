@@ -52,6 +52,7 @@ case class SegmentByGEOData(shapefile: String, distance: Double, attrNames: Seq[
     assert(sf.attrNames == attrNames, "Number of output attributes does not match.")
     val geometries: Seq[(Long, AnyRef /* Geometry */ , Vector[Option[String]])] =
       sf.iterator.map(feature => (
+        // This returns a Java Object representing a some kind of geometry.
         feature.getDefaultGeometryProperty.getValue,
         sf.attrNames.zipWithIndex.map {
           case (a, i) => Option(feature.getAttribute(a)).map(_.toString)
@@ -66,16 +67,7 @@ case class SegmentByGEOData(shapefile: String, distance: Double, attrNames: Seq[
 
     val factory = new com.vividsolutions.jts.geom.GeometryFactory()
     val links = inputs.coordinates.rdd.mapValues {
-      case (lat, lon) => geometries
-        .filter {
-          case (_, geometry, _) =>
-            geometry match {
-              // The actual classes and ways to check differ for implementations.
-              case g: com.vividsolutions.jts.geom.Geometry =>
-                g.isWithinDistance(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
-              case _ => false
-            }
-        }.map { case (sid, _, _) => sid }
+      case (lat, lon) => getSegmentIdForPosition(lat, lon, geometries, factory)
     }.flatMapValues(sids => sids)
 
     output(o.segments, segmentAttributes.mapValues(_ => ()))
@@ -85,5 +77,22 @@ case class SegmentByGEOData(shapefile: String, distance: Double, attrNames: Seq[
     output(o.belongsTo, links
       .randomNumbered(inputs.vertices.rdd.partitioner.get.numPartitions)
       .mapValues { case (vid, sid) => Edge(vid, sid) })
+  }
+
+  private def getSegmentIdForPosition(
+    lat: Double,
+    lon: Double,
+    geometries: Seq[(Long, AnyRef /* Geometry */ , Vector[Option[String]])],
+    factory: com.vividsolutions.jts.geom.GeometryFactory): Iterable[ID] = {
+    geometries
+      .filter {
+        case (_, geometry, _) =>
+          geometry match {
+            // The actual classes and ways to check differ for implementations.
+            case g: com.vividsolutions.jts.geom.Geometry => g.isWithinDistance(
+              factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
+            case _ => false
+          }
+      }.map { case (sid, _, _) => sid }
   }
 }

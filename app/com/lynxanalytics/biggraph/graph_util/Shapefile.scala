@@ -22,7 +22,8 @@ case class Shapefile(filename: String) {
 
   private val dataStore = FileDataStoreFinder.getDataStore(new File(filename))
 
-  // TODO(gsvigruha): maybe remove the default geometry attribute from here?
+  // TODO(gsvigruha): Shapefiles come with a default, often complex geometry attribute. Maybe remove
+  // that default geometry attribute from here and only keep simple ones (strings, numbers).
   val attrNames =
     dataStore.getSchema().getAttributeDescriptors().map(attr => attr.getLocalName()).toIndexedSeq
   val iterator = dataStore.getFeatureSource.getFeatures().features()
