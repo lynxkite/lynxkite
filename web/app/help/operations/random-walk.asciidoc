@@ -18,8 +18,8 @@ attribute by _first_traversed_.
 . Rank the vertices by _first_reached_.
 . Filter the vertices by the rank attribute to keep the only vertex of rank n, where n is the
 needed sample size.
-. Aggregate _first_reached_ to a scalar on the filtered graph (use either _max_, _avg_ or _first_ -
-there is only one vertex in the filtered graph)
+. Aggregate _first_reached_ to a scalar on the filtered graph (use either _average_, _first_,
+_max_, _min_, or _most_common_ - there is only one vertex in the filtered graph)
 . Filter the vertices and edges of the original graph and keep the ones that has smaller or equal
 _first_reached_  or _first_traversed_ values than the value of the derived scalar.
 
