@@ -76,7 +76,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     val rnd = new Random(seed)
 
     // init all `numOfStartPoints` * `numOfWalksFromOnePoint` walks to compute them in parallel
-    // one walk is represented by a `WalkState` that describes 1) in which point the walk is
+    // one walk is represented by a `WalkState` that describes 1) in which node the walk is
     // 2) a stepIdx that represents the position of this step in the final, concatenated sequence
     // and 3) the number of remaining steps to make before the walk is aborted
     var multiWalkState: RDD[WalkState] = {
@@ -102,12 +102,13 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     }
     multiWalkState.persist(StorageLevels.DISK_ONLY)
 
-    // we don't need the full sequence of walks for the sample, only the first occurrence of a node
-    // /edge is interesting
+    // we don't need the full sequence of steps for the sample, only the first visit of a node/edge
+    // is interesting
     var stepIdxWhenNodeFirstVisited = {
       val allUnvisited = nodes.mapValues(_ => StepIdx.MaxValue)
       minByKey(allUnvisited, multiWalkState.map { case (node, (idx, _)) => (node, idx) })
     }
+    // we have to use RDD instead of SortedRDD because localCheckpoint doesn't work on the later
     var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => StepIdx.MaxValue)
     val step = multiStepper(nodes, edges)
 
@@ -121,7 +122,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
 
       // The length of the lineage of `stepIdxWhenNodeFirstVisited` and
-      // `stepIdxWhenEdgeFirstTraversed` grows in Fibonacci-like way. Therefore we have to cut
+      // `stepIdxWhenEdgeFirstTraversed` grows in a Fibonacci-like way. Therefore we have to cut
       // the lineage periodically with `RDD#localCheckpoint`. This reduces resilience but prevents
       // StackOverflowErrors
       if (counter % 20 == 0) {
@@ -153,11 +154,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       }.sortUnique(nodes.partitioner.get)
       outEdgesPerNode.persist(StorageLevels.DISK_ONLY)
 
-      def continueWalk(walkState: WalkState): Boolean = walkState._2._2 > 0
-
       def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, StepIdx)]) = {
-        val nextState = multiWalkState.filter(continueWalk).
-          partitionBy(outEdgesPerNode.partitioner.get).
+        val nextStateAndEdges = multiWalkState.filter(walkState => walkState._2._2 > 0).
           sort(outEdgesPerNode.partitioner.get).
           sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
             case (pid, it) =>
@@ -170,9 +168,11 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
                   ((toNode, (stepIdx, remainingSteps - 1)), (onEdge, stepIdx))
               }
           }
-        nextState.persist(StorageLevels.DISK_ONLY)
+        nextStateAndEdges.persist(StorageLevels.DISK_ONLY)
+        val nexState = nextStateAndEdges.map(_._1)
+        val edgesTraversed = nextStateAndEdges.map(_._2)
 
-        (nextState.map(_._1), nextState.map(_._2))
+        (nexState, edgesTraversed)
       }
 
       step
