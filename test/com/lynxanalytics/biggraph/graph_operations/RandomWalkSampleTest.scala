@@ -18,19 +18,21 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     9 -> Seq(0),
     10 -> Seq(0)
   )).result
+  val numOfNodes = 11
+  val numOfEdges = 16
 
   test("one long walk") {
     val (vs, es) = run(RandomWalkSample(1, 1, 0.01, 0), g)
     assert(vs.count(_._2 < 3.0) == 3)
-    assert(vs.count(visited) == vs.length)
+    assert(visited(vs) == numOfNodes)
     assert(es.count(_._2 < 3.0) == 2)
-    assert(es.count(visited) == es.length)
+    assert(visited(es) == numOfEdges)
   }
 
   test("two short walks") {
     val (vs, es) = run(RandomWalkSample(2, 1, 0.999, 0), g)
-    assert(vs.count(visited) == 2)
-    assert(es.count(visited) == 0)
+    assert(visited(vs) == 2)
+    assert(visited(es) == 0)
   }
 
   test("unconnected graph") {
@@ -41,8 +43,8 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
       3 -> Seq(2)
     )).result
     val (vs, es) = run(RandomWalkSample(1, 100, 0.5, 0), unconnectedG)
-    assert(vs.count(visited) == 2)
-    assert(es.count(visited) == 2)
+    assert(visited(vs) == 2)
+    assert(visited(es) == 2)
   }
 
   private def run(op: RandomWalkSample, g: SmallTestGraph.Output) = {
@@ -52,5 +54,5 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     (vs, es)
   }
 
-  private def visited(x: (ID, Double)) = x._2 < Double.MaxValue
+  private def visited(attribute: Array[(ID, Double)]) = attribute.length
 }

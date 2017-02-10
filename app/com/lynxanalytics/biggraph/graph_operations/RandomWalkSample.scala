@@ -142,8 +142,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
 
     val vs = stepIdxWhenNodeFirstVisited.sort(nodes.partitioner.get).asUniqueSortedRDD
     val es = stepIdxWhenEdgeFirstTraversed.sort(edges.partitioner.get).asUniqueSortedRDD
-    output(o.vertexFirstVisited, vs)
-    output(o.edgeFirstTraversed, es)
+    output(o.vertexFirstVisited, vs.filter(_._2 < StepIdx.MaxValue))
+    output(o.edgeFirstTraversed, es.filter(_._2 < StepIdx.MaxValue))
   }
 
   private def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD):

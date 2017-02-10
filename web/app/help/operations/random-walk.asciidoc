@@ -7,9 +7,8 @@ current vertex. After `Number of walks from a start points` restarts it selects 
 vertex. After `Number of start points` new start points were selected, it stops.
 
 The output of the operation is a vertex and an edge attribute which describes which was the first
-step that ended at the given vertex / traversed the given edge. The value associated with a never
-visited vertex or a never traversed edges is higher than the value associated with any visited
-vertex or traversed edge.
+step that ended at the given vertex / traversed the given edge. The attributes are not defined on
+vertices that were never reached or edges that were never traversed
 
 This operation can be used to create a small smart sample of a graph to test your model on. To
 obtain such a sample follow the steps below.
@@ -38,12 +37,12 @@ parts of the walk between two abortions follows a geometric distribution with pa
 abortion probability`.
 
 [[vertexattrname]] Save vertex indices as::
-The name of the attribute which shows which step reached the given vertex first. The value
-associated with never reached vertices is very-very high (higher than any other value).
+The name of the attribute which shows which step reached the given vertex first. It is not defined
+on vertices that were never reached.
 
 [[edgeattrname]] Save edge indices as::
-The name of the attribute which shows which step traversed the given edge first. The value
-associated with never traversed edges is very-very high (higher than any other value).
+The name of the attribute which shows which step traversed the given edge first. It is not defined
+on edges that were never traversed.
 
 [[seed]] Seed::
 The random seed.
