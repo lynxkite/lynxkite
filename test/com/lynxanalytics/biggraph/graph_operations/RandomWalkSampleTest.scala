@@ -43,8 +43,15 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
       3 -> Seq(2)
     )).result
     val (vs, es) = run(RandomWalkSample(1, 100, 0.5, 0), unconnectedG)
-    assert(visited(vs) == 2)
-    assert(visited(es) == 2)
+    val visitedNodes = vs.map(_._1)
+    val traversedEdges = es.map(_._1)
+    if (visitedNodes.contains(0)) {
+      assert(visitedNodes.sameElements(Array(0, 1)))
+      assert(traversedEdges.sameElements(Array(0, 1)))
+    } else {
+      assert(visitedNodes.sameElements(Array(2, 3)))
+      assert(traversedEdges.sameElements(Array(2, 3)))
+    }
   }
 
   private def run(op: RandomWalkSample, g: SmallTestGraph.Output) = {
