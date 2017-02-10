@@ -88,3 +88,7 @@ input.form-control#max-rows {
 .no-break {
   white-space: nowrap;
 }
+
+.result-table {
+  margin-top: 10px;
+}
