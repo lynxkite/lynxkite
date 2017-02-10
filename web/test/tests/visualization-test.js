@@ -75,8 +75,8 @@ module.exports = function(fw) {
 
   // Compare the coordinates with given precision. The compared coordinates
   // have to match on `precision` digits. For default we use 8 digits.
-  function checkGraphPositions(saved, graph) {
-    var precision = 8;
+  function checkGraphPositions(saved, graph, precision) {
+    precision = precision || 8;
     for(var i = 0; i < saved.length; ++i) {
       expect(saved[i].x).toBeCloseTo(graph[i].x, precision);
       expect(saved[i].y).toBeCloseTo(graph[i].y, precision);
