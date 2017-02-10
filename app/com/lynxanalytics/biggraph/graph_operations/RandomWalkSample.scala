@@ -5,7 +5,6 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.rdd.RDD
 
-import scala.collection.immutable.Seq
 import scala.util.Random
 
 // The sampling algorithm works as follows.
