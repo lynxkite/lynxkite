@@ -160,11 +160,15 @@ angular.module('biggraph').factory('util', function utilFactory(
     nocache: function(url, params) { return getResource(url, params, { cache: false }); },
 
     // Json POST with simple error handling.
-    post: function(url, params) {
-      var req = $http.post(url, params).catch(function(failure) {
-        util.ajaxError(failure);
-        return $q.reject(failure);
-      });
+    post: function(url, params, options) {
+      options = options || { reportErrors: true };
+      var req = $http.post(url, params);
+      if (options.reportErrors) {
+        req = req.catch(function(failure) {
+          util.ajaxError(failure);
+          return $q.reject(failure);
+        });
+      }
       return toResource(req);
     },
 
