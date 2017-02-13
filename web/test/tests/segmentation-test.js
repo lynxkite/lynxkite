@@ -58,4 +58,36 @@ module.exports = function(fw) {
       lib.left.expectCurrentProjectIs('test-example');
       lib.right.expectCurrentProjectIsError();
     });
+
+  fw.transitionTest(
+    'test-example project with example graph',
+    'segmentation size reporting - non empty segments',
+    function() {
+      var params = {
+        'name': 'self',
+      };
+      lib.left.runOperation('Copy graph into a segmentation', params);
+      lib.left.openSegmentation('self');
+    },
+    function() {
+      expect(lib.right.side.element(by.id('segment-count')).getText()).toBe('4');
+      expect(lib.right.side.element(by.id('total-segment-size')).getText()).toBe('4');
+      expect(lib.right.side.element(by.id('total-segment-coverage')).getText()).toBe('4');
+    });
+
+  fw.transitionTest(
+    'segmentation size reporting - non empty segments',
+    'segmentation size reporting - has empty segments',
+    function() {
+      var params = {
+        'filterva-income': '*',
+      };
+      lib.left.runOperation('Filter by attributes', params);
+    },
+    function() {
+      expect(lib.right.side.element(by.id('segment-count')).getText()).toBe('4');
+      expect(lib.right.side.element(by.id('total-segment-size')).getText()).toBe('2');
+      expect(lib.right.side.element(by.id('total-segment-coverage')).getText()).toBe('2');
+      expect(lib.right.side.element(by.id('non-empty-segment-count')).getText()).toBe('2');
+    });
 };
