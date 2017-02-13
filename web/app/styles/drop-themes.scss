@@ -75,3 +75,8 @@
     content: '•';
   }
 }
+
+/* Make sure the hidden triangle for pinned dropdowns does not block clicks. */
+.drop-element.drop-theme-menu.drop-pinned .drop-content:before {
+  display: none;
+}
