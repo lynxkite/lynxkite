@@ -70,9 +70,9 @@ module.exports = function(fw) {
       lib.left.openSegmentation('self');
     },
     function() {
-      expect(lib.right.side.element(by.id('segment-count')).getText()).toBe('4');
-      expect(lib.right.side.element(by.id('total-segment-size')).getText()).toBe('4');
-      expect(lib.right.side.element(by.id('total-segment-coverage')).getText()).toBe('4');
+      expect(lib.right.getValue('segment-count')).toBe(4);
+      expect(lib.right.getValue('total-segment-size')).toBe(4);
+      expect(lib.right.getValue('total-segment-coverage')).toBe(4);
     });
 
   fw.transitionTest(
@@ -85,9 +85,9 @@ module.exports = function(fw) {
       lib.left.runOperation('Filter by attributes', params);
     },
     function() {
-      expect(lib.right.side.element(by.id('segment-count')).getText()).toBe('4');
-      expect(lib.right.side.element(by.id('total-segment-size')).getText()).toBe('2');
-      expect(lib.right.side.element(by.id('total-segment-coverage')).getText()).toBe('2');
-      expect(lib.right.side.element(by.id('non-empty-segment-count')).getText()).toBe('2');
+      expect(lib.right.getValue('segment-count')).toBe(4);
+      expect(lib.right.getValue('total-segment-size')).toBe(2);
+      expect(lib.right.getValue('total-segment-coverage')).toBe(2);
+      expect(lib.right.getValue('non-empty-segment-count')).toBe(2);
     });
 };
