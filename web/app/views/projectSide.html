@@ -194,10 +194,10 @@
       </value>
       <delta ref="side.scalars['!vertex_count_delta']"
              last-operation="side.project.undoOp"></delta>
-      <span ng-if="side.scalars['!nonEmpty'].double === side.scalars['vertex_count'].double">
+      <span ng-if="side.scalars['!nonEmpty'].value.double === side.scalars['vertex_count'].value.double">
         non-empty segments
       </span>
-      <span ng-if="side.scalars['!nonEmpty'].double !== side.scalars['vertex_count'].double">
+      <span ng-if="side.scalars['!nonEmpty'].value.double !== side.scalars['vertex_count'].value.double">
         segments (of which <value id="non-empty-segment-count" class="emph" ref="side.scalars['!nonEmpty']"></value> are non-empty)
       </span>
       with total size of <value id="total-segment-size" class="emph" ref="side.scalars['!belongsToEdges']"></value>
