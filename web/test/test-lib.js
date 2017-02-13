@@ -342,6 +342,12 @@ Side.prototype = {
     this.side.element(by.id('save-results-opener')).click();
   },
 
+  clickSqlSort(colId) {
+    var res = this.side.$('#sql-result');
+    var header = res.$$('thead tr th').get(colId);
+    header.click();
+  },
+
   executeSqlSaving: function() {
     this.side.element(by.id('save-results')).click();
   },
