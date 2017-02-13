@@ -121,9 +121,33 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       };
 
       scope.myCompare = function(a) {
-        // TODO: parse back integer and double
         if (scope.sort.column) { // if defined, use custom sortKey
-          return a[scope.sort.column];
+          var col = scope.sort.column;
+          var stringVal = a[col];
+          var typeName = scope.result.header[col].dataType;
+
+          if( typeName === 'Double') {
+            if( stringVal === 'null') {
+              return Number.NEGATIVE_INFINITY;
+            } else {
+              return parseFloat(stringVal);
+            }
+          } else if( typeName === 'Int') {
+            if( stringVal === 'null') {
+              return Number.NEGATIVE_INFINITY;
+            } else {
+              return parseInt(stringVal);
+            }
+          } else if ( typeName === 'Long' ){
+          // TODO: sortable string representation of Longs
+            if( stringVal === 'null') {
+              return Number.NEGATIVE_INFINITY;
+            } else {
+              return parseFloat(stringVal);
+            }
+          } else {
+            return a[scope.sort.column];
+          }
         } else { // if not defined, use original ordering
           return 0;
         }
