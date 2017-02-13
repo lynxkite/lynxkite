@@ -74,6 +74,44 @@ module.exports = function(fw) {
         ]);
     });
 
+  fw.statePreservingTest(
+    'test-example project with example graph',
+    'sql result table ordering works right with numbers',
+    function() {
+      left.runSql('select age, name from vertices');
+      left.clickSqlSort(0); // age column
+      left.expectSqlResult(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '2.0', 'Isolated Joe' ],
+          [ '18.2', 'Eve' ],
+          [ '20.3', 'Adam' ],
+          [ '50.3', 'Bob' ],
+        ]);
+      left.clickSqlSort(1); // name column
+      left.expectSqlResult(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '20.3', 'Adam' ],
+          [ '50.3', 'Bob' ],
+          [ '18.2', 'Eve' ],
+          [ '2.0', 'Isolated Joe' ],
+        ]);
+      left.clickSqlSort(0);
+      left.clickSqlSort(0);
+      left.expectSqlResult(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '50.3', 'Bob' ],
+          [ '20.3', 'Adam' ],
+          [ '18.2', 'Eve' ],
+          [ '2.0', 'Isolated Joe' ],
+        ]);
+  });
+
   fw.transitionTest(
     'empty test-example project',
     'SQL runs nice on belongs to reached from project and segmentation',
