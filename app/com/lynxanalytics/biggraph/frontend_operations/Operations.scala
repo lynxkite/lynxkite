@@ -3572,8 +3572,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       "No position vertex attributes.")
 
     def apply(params: Map[String, String]) = {
-      val shapeFilePath = params("shapefile")
-      assert(new java.io.File(shapeFilePath).exists(), "Shapefile deleted, please choose another.")
+      val shapeFilePath = getShapeFilePath(params)
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
       val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
       val result = op(op.coordinates, position).result
@@ -3592,8 +3591,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       import com.lynxanalytics.biggraph.graph_util.Shapefile
-      val shapeFilePath = params("shapefile")
-      assert(new java.io.File(shapeFilePath).exists(), "Shapefile deleted, please choose another.")
+      val shapeFilePath = getShapeFilePath(params)
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
       val shapefile = Shapefile(shapeFilePath)
       val op = graph_operations.SegmentByGEOData(
@@ -3610,6 +3608,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       shapefile.close()
     }
   })
+
+  private def getShapeFilePath(params: Map[String, String]): String = {
+    val shapeFilePath = params("shapefile")
+    assert(new java.io.File(shapeFilePath).exists(), "Shapefile deleted, please choose another.")
+    shapeFilePath
+  }
 
   private def listShapefiles(): List[FEOption] = {
     import java.io.File

@@ -1,0 +1,33 @@
+### Segment by GEO data
+
+Creates a segmentation from the features in a Shapefile. A vertex is connected to a segment if the
+the `position` vertex attribute is within a specified distance from the segment's geometry
+attribute. Feature attributes from the Shapefile become segmentation attributes.
+
+* The lookup depends on the coordinate reference system and distance metric of the feature. All
+  inputs must use the same coordinate reference system and distance metric.
+* This algorithm creates an overlapping segmentation since one vertex can be sufficiently close to
+  multiple GEO segments.
+
+Shapefiles can be obtained from various sources, like
+http://wiki.openstreetmap.org/wiki/Shapefiles[OpenStreetMap].
+
+====
+
+*Parameters*
+
+[[name]] Name::
+The name of the new GEO segmentation.
+
+[[position]] Position::
+The (latitude, longitude) location tuple.
+
+[[shapefile]] Shapefile::
+The https://en.wikipedia.org/wiki/Shapefile[Shapefile] used for the lookup. The list is created from
+the files in the `KITE_META/resources/shapefiles` directory. A Shapefile consist of a `.shp`, `.shx`
+and `.dbf` file of the same name.
+
+[[distance]] Distance::
+Vertices are connected to GEO segments if within this distance. The distance has to use the same
+metric and coordinate reference system as the features within the Shapefile.
+====
