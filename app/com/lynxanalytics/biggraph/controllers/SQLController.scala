@@ -545,6 +545,9 @@ class SQLController(val env: BigGraphEnvironment) {
             case null => DynamicValue("null", defined = false)
             case item: Double => DynamicValue(item.toString, double = Some(item))
             case item: Int => DynamicValue(item.toString, double = Some(item.toDouble))
+            // The double values is for sorting the SQL result table. In case of Longs
+            // another sortKey might be necessary, because we loose precision when
+            // convert a Long to Double.
             case item: Long => DynamicValue(item.toString, double = Some(item.toDouble))
             case item => DynamicValue(item.toString)
           }.toList

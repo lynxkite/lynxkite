@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
 
 import scala.concurrent.Await
@@ -14,6 +15,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
+  private def SQLresultToStrings(data: List[List[DynamicValue]]) = {
+    data.map { case l: List[DynamicValue] => l.map { dv => dv.string } }
+  }
+
   test("global sql on vertices") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
     run("Example Graph", on = "Test_Dir/Test_Project")
@@ -23,7 +28,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
-    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+    val resultStrings = SQLresultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("global sql on vertices with attribute name quoted with backticks") {
@@ -34,7 +40,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         sql = "select `name` from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
     assert(result.header == List(SQLColumn("name", "String")))
-    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+    val resultStrings = SQLresultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("sql on vertices") {
@@ -43,7 +50,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
     assert(result.header == List(SQLColumn("name", "String")))
-    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+    val resultStrings = SQLresultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("sql with empty results") {
@@ -510,7 +518,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         ), maxRows = 120)),
       Duration.Inf)
     assert(res.header == cols)
-    assert(res.data == List(
+    val resultStrings = SQLresultToStrings(res.data)
+    assert(resultStrings == List(
       List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
   }
 
