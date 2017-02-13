@@ -84,3 +84,11 @@ input.form-control#max-rows {
   font-style: italic;
   color: #666;
 }
+
+.no-break {
+  white-space: nowrap;
+}
+
+.result-table {
+  margin-top: 10px;
+}

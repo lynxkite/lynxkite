@@ -230,23 +230,53 @@
       <acl-settings reload="side.reload()" path="side.state.projectName" entity="side.project"></acl-settings>
     </div>
 
+    <!-- Extra controls for visualizations. -->
+    <div class="token-section-label"
+         ng-show="side.state.graphMode && !side.showSection('view-settings')">
+      <span class="label-text" ng-click="side.showSection('view-settings', true)">
+        Visualization settings are hidden. </span>
+    </div>
+    <div class="extra-controls"
+         ng-if="side.state.graphMode"
+         ng-show="side.showSection('view-settings')">
+      <!-- Sampled view extra controls. -->
+      <div ng-if="side.state.graphMode === 'sampled'">
+        <div class="token-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Visualization settings </span>
+          <help-popup href="concrete-view-settings"></help-popup>
+        </div>
+        <sampled-view-settings side="side"></sampled-view-settings>
+      </div>
+
+      <!-- Extra controls for the bucketed view. -->
+      <div ng-if="side.state.graphMode === 'bucketed'">
+        <div class="token-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Visualization settings </span>
+        </div>
+        <bucketed-view-settings side="side"></bucketed-view-settings>
+      </div>
+    </div>
+
+    <!-- Attributes/segmentations. -->
     <div class="entity-sections">
       <div ng-repeat="section in side.sections">
         <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
-          <div class="entity-section-label">
+          <div class="token-section-label">
             <span class="label-text" ng-click="side.showSection(section, false)">
               {{ side.sectionHumanName[section] }} </span>
             <help-popup href="{{ side.sectionHelp[section] }}"></help-popup>
           </div>
         </div>
         <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
-             class="entity-section-label">
+             class="token-section-label">
           <span class="label-text" ng-click="side.showSection(section, true)">
             {{ side.sectionElements(section).length }}
             {{ side.sectionHumanName[section] | lowercase }}
             are hidden. </span>
         </div>
-        <div class="entity-list" ng-show="side.showSection(section)">
+        <div class="token-list" ng-show="side.showSection(section)">
           <entity ng-repeat="e in side.sectionElements(section)"
                   kind="{{ section }}"
                   entity="e"
@@ -255,171 +285,9 @@
       </div>
     </div>
 
-    <!-- Extra controls for visualizations. -->
-    <div class="entity-section-label"
-         ng-show="side.state.graphMode && !side.showSection('view-settings')">
-      <span class="label-text" ng-click="side.showSection('view-settings', true)">
-        View settings are hidden. </span>
-    </div>
-    <div class="extra-controls"
-         ng-if="side.state.graphMode"
-         ng-show="side.showSection('view-settings')">
-      <!-- Sampled view extra controls. -->
-      <div ng-if="side.state.graphMode === 'sampled'">
-        <div class="entity-section-label">
-          <span class="label-text" ng-click="side.showSection('view-settings', false)">
-            Sampled view settings </span>
-          <help-popup href="concrete-view-settings"></help-popup>
-        </div>
-        <table>
-          <tr>
-            <td>Display:</td>
-            <td>
-              <div class="btn-group">
-                <label class="btn btn-default"
-                       ng-model="side.state.display"
-                       btn-radio="'svg'">
-                  2D
-                </label>
-                <label class="btn btn-default"
-                       ng-model="side.state.display"
-                       btn-radio="'3d'">
-                  3D
-                </label>
-              </div>
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td>Layout animation:</td>
-            <td>
-              <div class="btn-group">
-                <label class="btn btn-default"
-                       ng-model="side.state.animate.enabled"
-                       btn-radio="true">
-                  <i class="glyphicon glyphicon-play"></i>
-                </label>
-                <label class="btn btn-default"
-                       ng-model="side.state.animate.enabled"
-                       btn-radio="false">
-                  <i class="glyphicon glyphicon-pause"></i>
-                </label>
-              </div>
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
-                tooltip-append-to-body="true"
-                tooltip-placement="right"
-                tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
-              Label attraction:
-            </td>
-            <td>
-              <input ng-disabled="!side.state.animate.enabled"
-                     tooltip="{{side.state.animate.labelAttraction * 100}}%"
-                     type="range"
-                     max="1"
-                     step="0.1"
-                     ng-model="side.state.animate.labelAttraction">
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
-                tooltip-append-to-body="true" tooltip-placement="right"
-                                              tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
-              Layout style:
-            </td>
-            <td>
-              <select ng-disabled="!side.state.animate.enabled"
-                      ng-model="side.state.animate.style"
-                      class="form-control">
-                <option value="neutral" title="Vertices with large degrees act as centers themselves.">Neutral</option>
-                <option value="centralize" title="Vertices with large degrees tend to be in the middle.">Centralize</option>
-                <option value="decentralize" title="Vertices with large degrees tend to be on the periphery.">Decentralize</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>Show vertices:</td>
-            <td>
-              <div id="sample-center"
-                   ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-                <input class="form-control"
-                       id="centers"
-                       ng-model="side.state.centers"
-                       ng-model-options="{ updateOn: 'change blur' }"
-                       ng-list>
-              </div>
-            </td>
-          </tr>
-        </table>
-        <pick-options side="side"></pick-options>
-        <table>
-          <tr>
-            <td ng-class="{ 'de-emph': side.project.edgeBundle === '' }"
-                tooltip-append-to-body="true"
-                tooltip-placement="right"
-                tooltip="{{ side.project.edgeBundle === '' ? 'No edges.' : '' }}">
-              Show neighborhood:
-            </td>
-            <td>
-              <input ng-disabled="side.project.edgeBundle === ''"
-                     id="sample-radius-slider"
-                     tooltip="radius {{side.state.sampleRadius}}"
-                     type="range"
-                     max="10"
-                     step="1"
-                     ng-model="side.state.sampleRadius">
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- Extra controls for the bucketed view. -->
-      <div ng-if="side.state.graphMode === 'bucketed'">
-        <div class="entity-section-label">
-          <span class="label-text" ng-click="side.showSection('view-settings', false)">
-            Bucketed view settings </span>
-        </div>
-        <table>
-          <tr>
-            <td>Buckets:</td>
-            <td>
-              <lazy-slider value="side.state.bucketCount"></lazy-slider>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Compute precise bucket sizes:
-            </td>
-            <td>
-              <input type="checkbox" ng-model="side.state.preciseBucketSizes">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <help-popup href="relative-edge-density"></help-popup>
-              Relative edge density:
-            </td>
-            <td>
-              <input type="checkbox" ng-model="side.state.relativeEdgeDensity">
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <div ng-if="side.state.graphMode">
-        <text-dialog id="save-visualization-dialog"
-                     button-text="Save Visualization"
-                     on-ok="side.saveStateToBackend(userText, finishedCallback)"
-                     start-value="visualization 1">
-        </text-dialog>
-        <help-popup href="saving-visualizations"></help-popup>
-      </div>
-
-    </div>
-
+    <!-- SQL box. -->
     <div class="sql-box-section">
-        <div class="entity-section-label">
+        <div class="token-section-label">
           <span class="label-text" ng-click="side.showSection('sql', !side.showSection('sql'))">
             SQL </span>
           <help-popup href="sql-box" ng-show="side.showSection('sql')"></help-popup>
