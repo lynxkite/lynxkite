@@ -123,30 +123,30 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.myCompare = function(a) {
         if (scope.sort.column) { // if defined, use custom sortKey
           var col = scope.sort.column;
-          var stringVal = a[col];
+          var dynamicVal = a[col];
           var typeName = scope.result.header[col].dataType;
 
           if( typeName === 'Double') {
-            if( stringVal === 'null') {
+            if( !dynamicVal.defined ) {
               return Number.NEGATIVE_INFINITY;
             } else {
-              return parseFloat(stringVal);
+              return dynamicVal.double;
             }
           } else if( typeName === 'Int') {
-            if( stringVal === 'null') {
+            if( !dynamicVal.defined ) {
               return Number.NEGATIVE_INFINITY;
             } else {
-              return parseInt(stringVal);
+              return dynamicVal.double;
             }
           } else if ( typeName === 'Long' ){
           // TODO: sortable string representation of Longs
-            if( stringVal === 'null') {
+            if( !dynamicVal.defined ) {
               return Number.NEGATIVE_INFINITY;
             } else {
-              return parseFloat(stringVal);
+              return dynamicVal.double;
             }
           } else {
-            return a[scope.sort.column];
+            return dynamicVal.string;
           }
         } else { // if not defined, use original ordering
           return 0;

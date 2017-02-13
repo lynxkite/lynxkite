@@ -6,6 +6,7 @@ import org.apache.spark
 import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
@@ -127,7 +128,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
 case class SQLColumn(name: String, dataType: String)
-case class SQLQueryResult(header: List[SQLColumn], data: List[List[String]])
+case class SQLQueryResult(header: List[SQLColumn], data: List[List[DynamicValue]])
 
 case class SQLExportToTableRequest(
   dfSpec: DataFrameSpec,
@@ -541,8 +542,11 @@ class SQLController(val env: BigGraphEnvironment) {
       data = df.head(request.maxRows).map {
         row =>
           row.toSeq.map {
-            case null => "null"
-            case item => item.toString
+            case null => DynamicValue("null", defined = false)
+            case item: Double => DynamicValue(item.toString, double = Some(item))
+            case item: Int => DynamicValue(item.toString, double = Some(item.toDouble))
+            case item: Long => DynamicValue(item.toString, double = Some(item.toDouble))
+            case item => DynamicValue(item.toString)
           }.toList
       }.toList
     )
