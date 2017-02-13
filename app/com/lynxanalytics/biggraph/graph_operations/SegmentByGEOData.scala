@@ -64,6 +64,7 @@ case class SegmentByGEOData(shapefile: String, distance: Double, attrNames: Seq[
     val segmentAttributes = rc.sparkContext
       .parallelize(geometries.map { case (i, _, a) => (i, a) }, partitioner.numPartitions)
       .sortUnique(partitioner)
+      .persist(spark.storage.StorageLevel.DISK_ONLY)
 
     val factory = new com.vividsolutions.jts.geom.GeometryFactory()
     val links = inputs.coordinates.rdd.mapValues {
