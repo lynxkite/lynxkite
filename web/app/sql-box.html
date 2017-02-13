@@ -171,7 +171,7 @@ instead of ng-model="sql" -->
   &#x2713; {{ success }}
 </div>
 
-<div ng-show="result.header && !result.$error" id="sql-result" style="margin-top:10px">
+<div ng-show="result.header && !result.$error" id="sql-result" class="result-table">
   <table class="table table-striped table-bordered">
     <thead>
       <tr>
@@ -179,10 +179,12 @@ instead of ng-model="sql" -->
           ng-click="sort.select($index)">
           <span class="sql-column-name">{{col.name}}</span>
           <br>
-          <span class="sql-type">{{col.dataType}}</span>
-          <span class="ordering">
-            <i ng-show="sort.column === $index.toString()"
-              class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+          <span class="no-break">
+            <span class="sql-type">{{col.dataType}}</span>
+            <span class="ordering">
+              <i ng-show="sort.column === $index.toString()"
+                class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+            </span>
           </span>
         </th>
       </tr>

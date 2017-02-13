@@ -72,6 +72,10 @@ arg_parser.add_argument(
     default=os.environ['USER'],
     help='''The responsible person for this EMR cluster.''')
 arg_parser.add_argument(
+    '--kite_instance_name',
+    default='ecosystem_test',
+    help='This sets the KITE_INSTANCE environment variable for LynxKite')
+arg_parser.add_argument(
     '--expiry',
     default=(
         datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d"),
@@ -101,6 +105,7 @@ class Ecosystem:
         'lynx_version': args.lynx_version,
         'lynx_release_dir': args.lynx_release_dir,
         'log_dir': args.log_dir,
+        'kite_instance_name': args.kite_instance_name,
         's3_data_dir': args.s3_data_dir,
         'restore_metadata': args.restore_metadata,
         's3_metadata_version': args.s3_metadata_version,
@@ -157,6 +162,7 @@ class Ecosystem:
         lk_conf['s3_metadata_version'])
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
+        lk_conf['kite_instance_name'],
         conf['emr_instance_count'])
     self.config_aws_s3_native()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
@@ -287,7 +293,7 @@ class Ecosystem:
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
     ''')
 
-  def config_and_prepare_native(self, s3_data_dir, emr_instance_count):
+  def config_and_prepare_native(self, s3_data_dir, kite_instance_name, emr_instance_count):
     hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
     if s3_data_dir:
       data_dir_config = '''
@@ -310,7 +316,7 @@ class Ecosystem:
       sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
       cat >>config/central <<'EOF'
 # ---- the below lines were added by test_ecosystem.py ----
-        export KITE_INSTANCE=ecosystem-test
+        export KITE_INSTANCE={kite_instance_name}
         export KITE_MASTER_MEMORY_MB=8000
         export NUM_EXECUTORS={num_executors}
         export EXECUTOR_MEMORY=18g
@@ -333,6 +339,7 @@ EOF
       sudo mkdir -p /tasks_data
       sudo chmod a+rwx /tasks_data
     '''.format(
+        kite_instance_name=kite_instance_name,
         num_executors=emr_instance_count - 1,
         data_dir_config=data_dir_config))
 
