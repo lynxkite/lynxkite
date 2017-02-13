@@ -195,6 +195,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
           },
           overwrite: options.overwrite || scope.overwrite,
         };
+
         scope.inProgress += 1;
         var result;
         var postOpts = { reportErrors: false };
@@ -236,6 +237,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
         } else {
           throw new Error('Unexpected export format: ' + scope.exportFormat);
         }
+
         result.catch(function exportErrorHandler(error) {
           if (error.data === 'file-already-exists-confirm-overwrite') {
             util.showOverwriteDialog(function() {
