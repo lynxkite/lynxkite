@@ -332,9 +332,10 @@ Side.prototype = {
     this.side.element(by.id('run-sql-button')).click();
   },
 
-  expectSqlResult: function(header, rows) {
+  expectSqlResult: function(names, types, rows) {
     var res = this.side.$('#sql-result');
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
+    expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
@@ -855,9 +856,10 @@ Selector.prototype = {
   },
 
 
-  expectGlobalSqlResult: function(header, rows) {
+  expectGlobalSqlResult: function(names, types, rows) {
     var res = element(by.id('sql-result'));
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
+    expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 

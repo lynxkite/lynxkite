@@ -59,6 +59,7 @@ class EMRLib:
     self.ec2_key_name = ec2_key_name
     self.emr_client = boto3.client('emr', region_name=region)
     self.rds_client = boto3.client('rds', region_name=region)
+    self.s3_client = boto3.client('s3', region_name=region)
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
 
   def wait_for_services(self, services):

@@ -3581,7 +3581,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       project.newVertexAttribute(params("output"), result.attribute)
     }
 
-    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    private def metaDir = new File(env.metaGraphManager.repositoryRoot)
     private val shapeDir = s"$metaDir/resources/shapefiles/"
 
     private def listShapefiles(): List[FEOption] = {

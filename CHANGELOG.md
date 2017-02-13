@@ -5,7 +5,16 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+
  - Visualization settings UI now matches the new attribute UI.
+ - Tab-completion for LynxKite operations works in Python command-line
+   and in Jupyter notebooks.
+
+### 1.12.1
+
+ - Admins can backup LynxKite project data from UI.
+ - Column types are displayed in SQL result box.
+ - Added _Lookup Region_ operation for finding locations inside shapefiles.
 
 ### 1.12.0
 
