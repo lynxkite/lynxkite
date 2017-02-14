@@ -128,6 +128,10 @@ module.exports = function(fw) {
       left.side.$('#exportFormat option[value="table"]').click();
       left.side.$('#exportKiteTable').sendKeys('Random Edges');
       left.executeSqlSaving();
+      // Test overwriting.
+      left.startSqlSaving();
+      left.executeSqlSaving();
+      lib.confirmSweetAlert('Entry already exists');
 
       left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
       left.runOperation('Vertex attribute to string', { attr: 'ordinal' });
