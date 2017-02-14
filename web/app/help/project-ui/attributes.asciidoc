@@ -7,25 +7,25 @@ Edge attributes are values that are defined on some or all individual edges of t
 Each attribute has a type. For each vertex/edge the attribute is either undefined or the value
 of the attribute is a value from the attribute's type.
 
-In the vertex and edge attribute lists, for each attribute you can see the following
-information/controls.
+Clicking on a vertex or edge attribute opens a menu with the for following information/controls.
 
-* The name of the attribute.
 * The type of the attribute (e.g. `String`, `Double`, ...).
+* A short description of how the attribute was created, if available, with link to a relevant help
+page.
 * A filter box where you can specify a filtering criterion on the attribute's value. Once you defined
 a filter for an attribute then all UI visualizations (histograms, graph
 visualization) will only consider vertices/edges that pass your filter.
-See <<attribute-filter-syntax>> for details.
-* A histogram button that allows you to see a histogram of the attribute. By default, for performance
-reasons, histograms are only computed on a sample of all the available data. Click the "precise"
-checkbox to request a computation using all the data.
-* A visualization button that allows you to visualize the attribute on the current graph
-visualization. See details in <<concrete-visualization-options>>.
-(Only available when <<concrete-vertices-view>> is enabled.)
-* The list of currently selected visualizations, if any (see previous point).
-* When <<bucketed-view>> is enabled, two buttons, labeled with X and Y. They select the attribute
-to use for grouping vertices by. X causes the groups by this attribute to be distributed over the
-X axis, and respectively, Y causes the groups to be distributed over the Y axis.
+See <<attribute-filter-syntax>> for details. Active filters are also displayed when the menu is
+closed.
+* A histogram of the attribute, if the attribute is already computed. A menu item to compute the
+histogram otherwise. By default, for performance reasons, histograms are only computed on a
+sample of all the available data. Click the _"precise"_
+checkbox to request a computation using all the data. Click the _"logarithmic"_ checkbox, to use a
+logarithmic X-axis with logarithmic buckets. (Useful when the distribution is strongly skewed.)
+* Controls for adding the attribute to the current visualization, if <<concrete-vertices-view>> or
+<<bucketed-view>> is enabled. See details in <<concrete-visualization-options>>.
+* The _"Set icon"_ menu for visually distinguishing an attribute.
+* Options for discarding, renaming, and duplicating the attribute.
 
 There are lots of ways you can create attributes:
 
@@ -35,7 +35,7 @@ There are lots of ways you can create attributes:
 <<degree>>, <<clustering-coefficient>> for vertices and <<dispersion>> for edges)
 * you can derive more attributes from existing ones using the <<derived-vertex-attribute>>
 and <<derived-edge-attribute>> operation
-* you can smear attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
+* you can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
 * etc.
 
 ### Undefined values

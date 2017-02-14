@@ -59,15 +59,24 @@
 }
 
 .drop-element.drop-theme-menu .drop-content .menu-item {
+  padding: 0 8px;
+  margin: 0 -8px;
+  cursor: pointer;
+  user-select: none;
+  &.default {
+    background: #f5f5f5;
+    color: #444;
+  }
   &:hover {
-    background: #286090;
-    color: white;
-    padding: 0 8px;
-    margin: 0 -8px;
-    cursor: pointer;
-    user-select: none;
+    background: #286090 !important;
+    color: white !important;
   }
   &.active::before {
     content: '•';
   }
+}
+
+/* Make sure the hidden triangle for pinned dropdowns does not block clicks. */
+.drop-element.drop-theme-menu.drop-pinned .drop-content:before {
+  display: none;
 }

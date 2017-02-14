@@ -3392,8 +3392,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
       Param("uiStatusJson", "UI status as JSON"))
-
     def enabled = FEStatus.enabled
+    override def summary(params: Map[String, String]) = {
+      val scalarName = params("scalarName")
+      s"Save visualization as $scalarName"
+    }
 
     def apply(params: Map[String, String]) = {
       import UIStatusSerialization._
@@ -3578,7 +3581,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       project.newVertexAttribute(params("output"), result.attribute)
     }
 
-    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    private def metaDir = new File(env.metaGraphManager.repositoryRoot)
     private val shapeDir = s"$metaDir/resources/shapefiles/"
 
     private def listShapefiles(): List[FEOption] = {
