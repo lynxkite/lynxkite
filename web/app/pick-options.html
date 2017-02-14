@@ -69,8 +69,9 @@
       ng-model="editedOffset">
     </input>
     <label class="btn btn-default" id="pick-expand-button" ng-click="togglePickByOffsetMode()">
-      <i class="glyphicon glyphicon-menu-right" ng-if="!pickByOffsetMode"></i>
-      <i class="glyphicon glyphicon-menu-left" ng-if="pickByOffsetMode"></i>
+      <i class="glyphicon glyphicon-menu-right" ng-hide="pickByOffsetMode"></i>
+      <i class="glyphicon glyphicon-menu-left" ng-show="pickByOffsetMode"></i>
     </label>
   </div>
 </div>
+<div class="clearfix"></div>

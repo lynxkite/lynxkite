@@ -35,7 +35,7 @@ module.exports = function(fw) {
     },
     function() {
       var expectedData = [['Adam', '24'], ['Eve', '32'], ['Bob', '41']];
-      lib.splash.expectGlobalSqlResult(columns.split(','), expectedData);
+      lib.splash.expectGlobalSqlResult(columns.split(','), ['String', 'String'], expectedData);
     }
   );
 
