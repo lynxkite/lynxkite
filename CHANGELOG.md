@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
+
 ### 1.12.0
 
  - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
@@ -26,6 +28,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Spark Monitor doesn't send alarm in case of long-running tasks.
 
 Ecosystem:
+
  - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
  - Renamed from "Lynx Data Automation Framework" to "Lynx Enterprise".
 
