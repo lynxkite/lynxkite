@@ -120,7 +120,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         },
       };
 
-      scope.myCompare = function(a) {
+      scope.sortKey = function(a) {
         if (scope.sort.column) { // if defined, use custom sortKey
           var col = scope.sort.column;
           var dynamicVal = a[col];

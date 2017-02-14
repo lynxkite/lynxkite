@@ -195,7 +195,7 @@ instead of ng-model="sql" -->
         <td ng-repeat="item in row track by $index">{{ item.string }}</td>
       </tr>
       <tr ng-if="sort.column"
-        ng-repeat="row in result.data | orderBy:myCompare:sort.reverse track by $index">
+        ng-repeat="row in result.data | orderBy:sortKey:sort.reverse track by $index">
         <td ng-repeat="item in row track by $index">{{ item.string }}</td>
       </tr>
     </tbody>
