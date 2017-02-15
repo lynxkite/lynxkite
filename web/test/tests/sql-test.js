@@ -137,7 +137,7 @@ module.exports = function(fw) {
            [ 'Isolated Joe', 'null' ],
            [ 'Eve', 'null' ],
          ]);
-    }, 'solo');
+    });
 
   fw.transitionTest(
     'empty test-example project',
