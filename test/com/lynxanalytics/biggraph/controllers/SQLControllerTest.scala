@@ -15,7 +15,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
-  private def SQLresultToStrings(data: List[List[DynamicValue]]) = {
+  private def SQLResultToStrings(data: List[List[DynamicValue]]) = {
     data.map { case l: List[DynamicValue] => l.map { dv => dv.string } }
   }
 
@@ -28,7 +28,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
-    val resultStrings = SQLresultToStrings(result.data)
+    val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
@@ -40,7 +40,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         sql = "select `name` from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
     assert(result.header == List(SQLColumn("name", "String")))
-    val resultStrings = SQLresultToStrings(result.data)
+    val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
@@ -50,7 +50,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
     assert(result.header == List(SQLColumn("name", "String")))
-    val resultStrings = SQLresultToStrings(result.data)
+    val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
@@ -518,7 +518,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         ), maxRows = 120)),
       Duration.Inf)
     assert(res.header == cols)
-    val resultStrings = SQLresultToStrings(res.data)
+    val resultStrings = SQLResultToStrings(res.data)
     assert(resultStrings == List(
       List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
   }
