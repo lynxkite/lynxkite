@@ -146,7 +146,11 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
               return dynamicVal.double;
             }
           } else {
-            return dynamicVal.string;
+            if( !dynamicVal.defined ) {
+              return ''; // empty string for undef strings
+            } else {
+              return dynamicVal.string;
+            }
           }
         } else { // if not defined, use original ordering
           return 0;
