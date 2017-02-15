@@ -137,6 +137,22 @@ module.exports = function(fw) {
            [ 'Isolated Joe', 'null' ],
            [ 'Eve', 'null' ],
          ]);
+         left.runOperation('Derived vertex attribute', {
+           expr: 'income === 1000.0 ? \'apple\' : \'orange\'',
+           output: 'new_attr',
+           type: 'string',
+         });
+         left.runSql('select new_attr from vertices');
+         left.clickSqlSort(0);
+         left.expectSqlResult(
+           ['new_attr'],
+           ['String'],
+           [
+             [ 'null' ],
+             [ 'null' ],
+             [ 'apple' ],
+             [ 'orange' ],
+           ]);
     });
 
   fw.transitionTest(
