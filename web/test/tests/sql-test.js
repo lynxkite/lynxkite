@@ -112,6 +112,33 @@ module.exports = function(fw) {
         ]);
   });
 
+    fw.statePreservingTest(
+      'test-example project with example graph',
+      'sql result table ordering works right with nulls',
+      function() {
+        left.runSql('select name, income from vertices');
+        left.clickSqlSort(1); // income column
+        left.expectSqlResult(
+          ['name', 'income'],
+          ['String', 'Double'],
+          [
+            [ 'Eve', 'null' ],
+            [ 'Isolated Joe', 'null' ],
+            [ 'Adam', '1000.0' ],
+            [ 'Bob', '2000.0' ],
+          ]);
+        left.clickSqlSort(1);
+        left.expectSqlResult(
+         ['name', 'income'],
+         ['String', 'Double'],
+         [
+           [ 'Bob', '2000.0' ],
+           [ 'Adam', '1000.0' ],
+           [ 'Isolated Joe', 'null' ],
+           [ 'Eve', 'null' ],
+         ]);
+    }, 'solo');
+
   fw.transitionTest(
     'empty test-example project',
     'SQL runs nice on belongs to reached from project and segmentation',
