@@ -287,6 +287,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
       } else None)
   }
 
+  var firstMove = true
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
       if (hasEntityOnDisk(entity)) {
@@ -314,6 +315,14 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
             })
         }
         logger.logWhenReady()
+        if (firstMove) {
+          firstMove = false
+          loggedFuture {
+            println("hello1")
+            Thread.sleep(1000L * 15)
+            println("hello2")
+          }
+        }
       }
     }
   }
@@ -350,9 +359,13 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   }
 
   def waitAllFutures(): Unit = {
+    println("waiting for futures")
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     import collection.JavaConversions.asScalaSet
     SafeFuture.sequence(loggedFutures.keySet.toSeq).awaitReady(Duration.Inf)
+    println("have waited for futures")
+    Thread.sleep(1000L * 100)
+    println("waitAllFutures - done")
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
