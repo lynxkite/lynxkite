@@ -121,40 +121,9 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       };
 
       scope.sortKey = function(a) {
-        if (scope.sort.column) { // if defined, use custom sortKey
-          var col = scope.sort.column;
-          var dynamicVal = a[col];
-          var typeName = scope.result.header[col].dataType;
-
-          if( typeName === 'Double') {
-            if( !dynamicVal.defined ) {
-              return Number.NEGATIVE_INFINITY;
-            } else {
-              return dynamicVal.double;
-            }
-          } else if( typeName === 'Int') {
-            if( !dynamicVal.defined ) {
-              return Number.NEGATIVE_INFINITY;
-            } else {
-              return dynamicVal.double;
-            }
-          } else if ( typeName === 'Long' ){
-          // TODO: sortable string representation of Longs
-            if( !dynamicVal.defined ) {
-              return Number.NEGATIVE_INFINITY;
-            } else {
-              return dynamicVal.double;
-            }
-          } else {
-            if( !dynamicVal.defined ) {
-              return ''; // empty string for undef strings
-            } else {
-              return dynamicVal.string;
-            }
-          }
-        } else { // if not defined, use original ordering
-          return 0;
-        }
+        var col = scope.sort.column;
+        var dv = a[col];
+        return dv && dv.defined && (dv.double || dv.string);
       };
 
       scope.runSQLQuery = function() {
