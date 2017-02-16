@@ -15,10 +15,10 @@ module.exports = function(fw) {
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
         [
-          ['20.3', 'Male', '0', '1000.0', '[40.71448,-74.00598]', 'Adam'],
-          ['18.2', 'Female', '1', 'null', '[47.5269674,19.0323968]', 'Eve'],
-          ['50.3', 'Male', '2', '2000.0', '[1.352083,103.819836]', 'Bob'],
-          ['2.0', 'Male', '3', 'null', '[-33.8674869,151.2069902]', 'Isolated Joe'],
+          ['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
+          ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
+          ['50.3', 'Male', '2', '2000', '(1.352083,103.819836)', 'Bob'],
+          ['2', 'Male', '3', 'null', '(-33.8674869,151.2069902)', 'Isolated Joe'],
         ]);
     });
 
@@ -84,7 +84,7 @@ module.exports = function(fw) {
         ['age', 'name'],
         ['Double', 'String'],
         [
-          [ '2.0', 'Isolated Joe' ],
+          [ '2', 'Isolated Joe' ],
           [ '18.2', 'Eve' ],
           [ '20.3', 'Adam' ],
           [ '50.3', 'Bob' ],
@@ -97,7 +97,7 @@ module.exports = function(fw) {
           [ '20.3', 'Adam' ],
           [ '50.3', 'Bob' ],
           [ '18.2', 'Eve' ],
-          [ '2.0', 'Isolated Joe' ],
+          [ '2', 'Isolated Joe' ],
         ]);
       left.clickSqlSort(0);
       left.clickSqlSort(0);
@@ -108,7 +108,7 @@ module.exports = function(fw) {
           [ '50.3', 'Bob' ],
           [ '20.3', 'Adam' ],
           [ '18.2', 'Eve' ],
-          [ '2.0', 'Isolated Joe' ],
+          [ '2', 'Isolated Joe' ],
         ]);
   },
   function() {
@@ -127,21 +127,21 @@ module.exports = function(fw) {
         [
           [ 'Eve', 'null' ],
           [ 'Isolated Joe', 'null' ],
-          [ 'Adam', '1000.0' ],
-          [ 'Bob', '2000.0' ],
+          [ 'Adam', '1000' ],
+          [ 'Bob', '2000' ],
         ]);
       left.clickSqlSort(1);
       left.expectSqlResult(
        ['name', 'income'],
        ['String', 'Double'],
        [
-         [ 'Bob', '2000.0' ],
-         [ 'Adam', '1000.0' ],
+         [ 'Bob', '2000' ],
+         [ 'Adam', '1000' ],
          [ 'Isolated Joe', 'null' ],
          [ 'Eve', 'null' ],
        ]);
        left.runOperation('Derived vertex attribute', {
-         expr: 'income === 1000.0 ? \'apple\' : \'orange\'',
+         expr: 'income === 1000 ? \'apple\' : \'orange\'',
          output: 'new_attr',
          type: 'string',
        });
@@ -175,8 +175,8 @@ module.exports = function(fw) {
       right.runSql('select sum(base_random - segment_random) as error from belongs_to');
     },
     function() {
-      left.expectSqlResult(['sum'], ['Double'], [['100.0']]);
-      right.expectSqlResult(['error'], ['Double'], [['0.0']]);
+      left.expectSqlResult(['sum'], ['Double'], [['100']]);
+      right.expectSqlResult(['error'], ['Double'], [['0']]);
     });
 
   fw.statePreservingTest(
@@ -232,7 +232,7 @@ module.exports = function(fw) {
         });
 
       left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
-      left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950.0', '4950.0']]);
+      left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950', '4950']]);
 
       left.runSql(
         'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
