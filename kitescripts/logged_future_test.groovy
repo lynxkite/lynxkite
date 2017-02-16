@@ -1,5 +1,0 @@
-project = lynx.newProject()
-project.newVertexSet(size: 1000)
-project.createScaleFreeRandomEdgeBundle(iterations: 5, perIterationMultiplier: 1.6, seed: System.currentTimeMillis())
-project.addConstantEdgeAttribute(name: 'weight', value: 1, type: 'Double')
-project.computeUncomputed()
