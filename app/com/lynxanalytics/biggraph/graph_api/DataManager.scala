@@ -118,9 +118,13 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   // This is for asynchronous tasks. We store them as weak references so that waitAllFutures can wait
   // for them, but the data structure does not grow indefinitely.
   // MapMaker returns thread-safe maps.
+
   private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
 
-  private def loggedFuture(func: => Unit): Unit = {
+  // This would pass the test
+  // private val loggedFutures = new MapMaker().makeMap[SafeFuture[Unit], Unit]()
+
+  def loggedFuture(func: => Unit): Unit = {
     val f = SafeFuture {
       try {
         func
@@ -287,7 +291,6 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
       } else None)
   }
 
-  var firstMove = true
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
       if (hasEntityOnDisk(entity)) {
@@ -315,14 +318,6 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
             })
         }
         logger.logWhenReady()
-        if (firstMove) {
-          firstMove = false
-          loggedFuture {
-            println("hello1")
-            Thread.sleep(1000L * 15)
-            println("hello2")
-          }
-        }
       }
     }
   }
@@ -359,13 +354,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   }
 
   def waitAllFutures(): Unit = {
-    println("waiting for futures")
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     import collection.JavaConversions.asScalaSet
     SafeFuture.sequence(loggedFutures.keySet.toSeq).awaitReady(Duration.Inf)
-    println("have waited for futures")
-    Thread.sleep(1000L * 100)
-    println("waitAllFutures - done")
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {

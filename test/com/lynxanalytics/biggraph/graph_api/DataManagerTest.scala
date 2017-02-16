@@ -1,8 +1,9 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import java.util.concurrent.atomic.AtomicReference
+
 import org.apache.spark
 import org.scalatest.FunSuite
-
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
@@ -188,6 +189,26 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(java.util.regex.Pattern.matches(
       ".*OpTriggeringTestOperation.* triggered the computation of .*vertices of .*ExampleGraph.*",
       exc.getCause.getMessage))
+  }
+
+  test("waitAllFutures waits for futures") {
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+
+    var state = new java.util.concurrent.atomic.AtomicReference[Integer](0)
+    dataManager.loggedFuture {
+      state.set(1)
+      Thread.sleep(1000L * 15)
+      state.set(2)
+    }
+    val instance = metaManager.apply(ExampleGraph(), MetaDataSet())
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
+    val data1: AttributeData[String] = dataManager.get(names)
+    val scalarData1: ScalarData[String] = dataManager.get(greeting)
+
+    dataManager.waitAllFutures()
+    assert(state.get() == 2)
   }
 }
 
