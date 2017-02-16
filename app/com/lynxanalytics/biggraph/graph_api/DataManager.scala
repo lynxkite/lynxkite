@@ -6,8 +6,8 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
-import com.google.common.collect.MapMaker
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
@@ -117,12 +117,8 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
 
   // This is for asynchronous tasks. We store them as weak references so that waitAllFutures can wait
   // for them, but the data structure does not grow indefinitely.
-  // MapMaker returns thread-safe maps.
-
-  private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
-
-  // This would pass the test
-  // private val loggedFutures = new MapMaker().makeMap[SafeFuture[Unit], Unit]()
+  private val loggedFutures =
+    new ConcurrentHashMap[SafeFuture[Unit], Unit](new java.util.WeakHashMap[SafeFuture[Unit], Unit])
 
   def loggedFuture(func: => Unit): Unit = {
     val f = SafeFuture {
