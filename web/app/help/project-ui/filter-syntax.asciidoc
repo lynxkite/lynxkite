@@ -43,6 +43,12 @@ and the square bracket (`[ ]`) denotes an inclusive boundary. The lower and uppe
 inclusive or exclusive, or they can be different.
 For example `[0,10)` will match x if 0 &le; x < 10.
 
+* For the `(Double, Double)` type, you can use interval filters to filter the first and second coordinates.
+** List the intervals for the first and second coordinates inside parentheses, separated with a comma.
+Intervals can be specified with brackets, just like for the simple `Doubles` above.
+For example `([0,2), [3,4])` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4.
+
+
 * For the `Vector` type the following options are available.
 ** `all(...)` will match the `Vector` only when the internal filter matches all elements of the `Vector`.
 `forall` and `Ɐ` are synonyms of all. For example `all(<0)` for a `Vector[Double]` will match
