@@ -123,7 +123,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
       scope.sortKey = function(a) {
         var col = scope.sort.column;
         var dv = a[col];
-        return dv && dv.defined && (dv.double || dv.string);
+        return dv && dv.defined && (dv.double !== undefined ? dv.double : dv.string);
       };
 
       scope.runSQLQuery = function() {
