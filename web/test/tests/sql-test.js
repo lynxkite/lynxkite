@@ -74,7 +74,7 @@ module.exports = function(fw) {
         ]);
     });
 
-  fw.statePreservingTest(
+  fw.transitionTest(
     'test-example project with example graph',
     'sql result table ordering works right with numbers',
     function() {
@@ -110,50 +110,57 @@ module.exports = function(fw) {
           [ '18.2', 'Eve' ],
           [ '2.0', 'Isolated Joe' ],
         ]);
+  },
+  function() {
+
   });
 
-    fw.statePreservingTest(
-      'test-example project with example graph',
-      'sql result table ordering works right with nulls',
-      function() {
-        left.runSql('select name, income from vertices');
-        left.clickSqlSort(1); // income column
-        left.expectSqlResult(
-          ['name', 'income'],
-          ['String', 'Double'],
-          [
-            [ 'Eve', 'null' ],
-            [ 'Isolated Joe', 'null' ],
-            [ 'Adam', '1000.0' ],
-            [ 'Bob', '2000.0' ],
-          ]);
-        left.clickSqlSort(1);
-        left.expectSqlResult(
-         ['name', 'income'],
-         ['String', 'Double'],
+  fw.transitionTest(
+    'test-example project with example graph',
+    'sql result table ordering works right with nulls',
+    function() {
+      left.runSql('select name, income from vertices');
+      left.clickSqlSort(1); // income column
+      left.expectSqlResult(
+        ['name', 'income'],
+        ['String', 'Double'],
+        [
+          [ 'Eve', 'null' ],
+          [ 'Isolated Joe', 'null' ],
+          [ 'Adam', '1000.0' ],
+          [ 'Bob', '2000.0' ],
+        ]);
+      left.clickSqlSort(1);
+      left.expectSqlResult(
+       ['name', 'income'],
+       ['String', 'Double'],
+       [
+         [ 'Bob', '2000.0' ],
+         [ 'Adam', '1000.0' ],
+         [ 'Isolated Joe', 'null' ],
+         [ 'Eve', 'null' ],
+       ]);
+       left.runOperation('Derived vertex attribute', {
+         expr: 'income === 1000.0 ? \'apple\' : \'orange\'',
+         output: 'new_attr',
+         type: 'string',
+       });
+       left.runSql('select new_attr from vertices');
+       left.clickSqlSort(0);
+       left.expectSqlResult(
+         ['new_attr'],
+         ['String'],
          [
-           [ 'Bob', '2000.0' ],
-           [ 'Adam', '1000.0' ],
-           [ 'Isolated Joe', 'null' ],
-           [ 'Eve', 'null' ],
-         ]);
-         left.runOperation('Derived vertex attribute', {
-           expr: 'income === 1000.0 ? \'apple\' : \'orange\'',
-           output: 'new_attr',
-           type: 'string',
-         });
-         left.runSql('select new_attr from vertices');
-         left.clickSqlSort(0);
-         left.expectSqlResult(
-           ['new_attr'],
-           ['String'],
-           [
-             [ 'null' ],
-             [ 'null' ],
-             [ 'apple' ],
-             [ 'orange' ],
-           ]);
-    });
+           [ 'null' ],
+           [ 'null' ],
+           [ 'apple' ],
+           [ 'orange' ],
+         ]
+       );
+  },
+  function () {
+
+  });
 
   fw.transitionTest(
     'empty test-example project',
