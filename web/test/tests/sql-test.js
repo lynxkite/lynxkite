@@ -111,9 +111,7 @@ module.exports = function(fw) {
           [ '2', 'Isolated Joe' ],
         ]);
   },
-  function() {
-
-  });
+  function() {});
 
   fw.transitionTest(
     'test-example project with example graph',
@@ -158,9 +156,7 @@ module.exports = function(fw) {
          ]
        );
   },
-  function () {
-
-  });
+  function () {});
 
   fw.transitionTest(
     'empty test-example project',

@@ -1017,7 +1017,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.element(by.cssContainingText('option', value)).click();
+            e.$('option[label="' + value +'"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
