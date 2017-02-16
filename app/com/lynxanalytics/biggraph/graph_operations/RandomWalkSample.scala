@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import org.apache.spark.api.java.StorageLevels
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.rdd.RDD
 
 import scala.util.Random
@@ -100,7 +100,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       }
       rc.sparkContext.parallelize(initialState, nodes.partitioner.get.numPartitions)
     }
-    multiWalkState.persist(StorageLevels.DISK_ONLY)
+    multiWalkState.persist(StorageLevel.DISK_ONLY)
 
     // we don't need the full sequence of steps for the sample, only the first visit of a node/edge
     // is interesting
@@ -115,7 +115,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     var counter = 1
     while (!multiWalkState.isEmpty()) {
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
-      nextState.persist(StorageLevels.DISK_ONLY)
+      nextState.persist(StorageLevel.DISK_ONLY)
 
       stepIdxWhenNodeFirstVisited = minByKey(stepIdxWhenNodeFirstVisited,
         nextState.map { case (node, (idx, _)) => (node, idx) })
@@ -126,11 +126,11 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       // the lineage periodically with `RDD#localCheckpoint`. This reduces resilience but prevents
       // StackOverflowErrors
       if (counter % 20 == 0) {
-        stepIdxWhenNodeFirstVisited.persist(StorageLevels.DISK_ONLY)
+        stepIdxWhenNodeFirstVisited.persist(StorageLevel.DISK_ONLY)
         stepIdxWhenNodeFirstVisited.localCheckpoint()
         stepIdxWhenNodeFirstVisited.count()
 
-        stepIdxWhenEdgeFirstTraversed.persist(StorageLevels.DISK_ONLY)
+        stepIdxWhenEdgeFirstTraversed.persist(StorageLevel.DISK_ONLY)
         stepIdxWhenEdgeFirstTraversed.localCheckpoint()
         stepIdxWhenEdgeFirstTraversed.count()
       }
@@ -152,7 +152,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       }.groupByKey().map {
         case (id, it) => (id, it.toArray)
       }.sortUnique(nodes.partitioner.get)
-      outEdgesPerNode.persist(StorageLevels.DISK_ONLY)
+      outEdgesPerNode.persist(StorageLevel.DISK_ONLY)
 
       def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, StepIdx)]) = {
         val nextStateAndEdges = multiWalkState.filter(walkState => walkState._2._2 > 0).
@@ -168,7 +168,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
                   ((toNode, (stepIdx, remainingSteps - 1)), (onEdge, stepIdx))
               }
           }
-        nextStateAndEdges.persist(StorageLevels.DISK_ONLY)
+        nextStateAndEdges.persist(StorageLevel.DISK_ONLY)
         val nexState = nextStateAndEdges.map(_._1)
         val edgesTraversed = nextStateAndEdges.map(_._2)
 
