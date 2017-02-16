@@ -3443,8 +3443,25 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private def segmentationSizesProductSum(seg: SegmentationEditor)(
+    implicit manager: MetaGraphManager): Scalar[_] = {
+    val table = env.sqlHelper.sqlToTable(
+      seg.viewer,
+      "select sum(src_size * dst_size) as size from edges")
+    val size = table.columns("size")
+    aggregate(AttributeWithAggregator(size, "sum"))
+  }
+
   register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
     def segmentationParameters = List()
+    override def visibleScalars =
+      if (project.isSegmentation && project.edgeBundle != null) {
+        val scalar = segmentationSizesProductSum(seg)
+        implicit val entityProgressManager = env.entityProgressManager
+        List(ProjectViewer.feScalar(scalar, "num_copied_edges", "", Map()))
+      } else {
+        List()
+      }
     def enabled = isSegmentation &&
       hasEdgeBundle &&
       FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
