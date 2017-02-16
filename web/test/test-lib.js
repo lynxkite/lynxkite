@@ -958,7 +958,7 @@ testLib = {
           }});
       return defer.promise;
     }
-    browser.controlFlow().execute(sendRequest);
+    return browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
