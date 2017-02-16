@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 
 import scala.concurrent.Future
+import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
@@ -531,26 +532,18 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+    val columns = df.schema.toList.map { field =>
+      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
+    }
     SQLQueryResult(
-      header = df.schema.toList.map {
-        field =>
-          SQLColumn(
-            field.name,
-            ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(field.dataType))
-          )
-      },
-      data = df.head(request.maxRows).map {
+      header = columns.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = SQLHelper.toSeqRDD(df).take(request.maxRows).map {
         row =>
-          row.toSeq.map {
-            case null => DynamicValue("null", defined = false)
-            case item: Double => DynamicValue(item.toString, double = Some(item))
-            case item: Int => DynamicValue(item.toString, double = Some(item.toDouble))
-            // The double values are for sorting the SQL result table. In case of Longs
-            // another sortKey might be necessary, because we lose precision when
-            // convert a Long to Double.
-            case item: Long => DynamicValue(item.toString, double = Some(item.toDouble))
-            case item => DynamicValue.convert(item)
-          }.toList
+          println(row.toSeq.toList.zip(columns))
+          row.toSeq.toList.zip(columns).map {
+            case (null, field) => DynamicValue("null", defined = false)
+            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+          }
       }.toList
     )
   }
