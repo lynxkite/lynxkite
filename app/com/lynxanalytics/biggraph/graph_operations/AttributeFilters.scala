@@ -132,6 +132,16 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
+object GeoFilter extends FromJson[GeoFilter] {
+  def fromJson(j: JsValue) = GeoFilter(
+    AndFilter.fromJson(j \ "latFilter").asInstanceOf[AndFilter[Double]],
+    AndFilter.fromJson(j \ "lonFilter").asInstanceOf[AndFilter[Double]])
+}
+case class GeoFilter(latFilter: AndFilter[Double], lonFilter: AndFilter[Double]) extends Filter[(Double, Double)] {
+  def matches(value: (Double, Double)) = latFilter.matches(value._1) && lonFilter.matches(value._2)
+  override def toJson = Json.obj("latFilter" -> latFilter.toJson, "lonFilter" -> lonFilter.toJson)
+}
+
 object OneOf extends FromJson[OneOf[_]] {
   def fromJson(j: JsValue) = {
     val set = (j \ "options").as[Set[JsValue]].map(TypedJson.read[Any](_))
