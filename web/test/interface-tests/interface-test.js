@@ -70,6 +70,6 @@ module.exports = function(fw) {
         }
       };
       let error = authenticateAndThen(nonexistentEndpoint);
-      expect(error).toContain("&lt;script&gt;cross_site_scripting.nasl&lt;");
+      expect(error).toContain('&lt;script&gt;cross_site_scripting.nasl&lt;');
     });
 };
