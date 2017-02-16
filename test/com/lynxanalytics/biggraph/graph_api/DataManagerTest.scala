@@ -1,7 +1,5 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import java.util.concurrent.atomic.AtomicReference
-
 import org.apache.spark
 import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.TestUtils
