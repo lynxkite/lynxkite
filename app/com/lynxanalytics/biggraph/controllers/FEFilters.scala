@@ -166,14 +166,15 @@ object FEFilters {
     } else ???
   }
 
-  private val numberPattern = "\\s*(-?\\d*(?:\\.\\d*)?)\\s*"
+  private val number = "-?\\d*(?:\\.\\d*)?"
+  private val numberWithSpaces = s"\\s*$number\\s*"
+  private val numberPattern = s"\\s*($number)\\s*"
   private val numberRE = numberPattern.r
   private val intervalOpenOpenRE = s"\\s*\\($numberPattern,$numberPattern\\)\\s*".r
   private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
   private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
-  private val intervalPattern = "\\s*((?:\\(|\\[)\\s*-?\\d*(?:\\.\\d*)?\\s*,\\s*-?\\d*(?:\\.\\d*)?\\s*(?:\\)|\\]))\\s*"
-  private val intervalRE = intervalPattern.r
+  private val intervalPattern = s"\\s*([\\(\\[]$numberWithSpaces,$numberWithSpaces[\\)\\]])\\s*"
   private val geoRE = s"\\s*\\($intervalPattern,$intervalPattern\\)\\s*".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
   private val boundRE = s"$comparatorPattern$numberPattern".r
