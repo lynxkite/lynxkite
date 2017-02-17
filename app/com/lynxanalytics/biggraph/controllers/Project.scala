@@ -255,7 +255,7 @@ object ProjectViewer {
     metadata: Map[String, String],
     isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
-    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
+    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]], typeOf[(Double, Double)])
       .exists(e.typeTag.tpe <:< _)
     FEAttribute(
       e.gUID.toString,
