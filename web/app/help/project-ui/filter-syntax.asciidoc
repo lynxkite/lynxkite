@@ -28,7 +28,7 @@ can be useful:
 ** `regex((.)\1)` for strings with double letters, like `abbc`.
 ** `regex(\d)` or `regex([0-9])` for strings that contain a digit, like `a2c`.
 ** `regex(^\d+$)` for strings that are valid integer numbers, like `123`.
-** `regex(A|B)` for strings that contain either `A` or `B`. 
+** `regex(A|B)` for strings that contain either `A` or `B`.
 ** Regex is case sensitive.
 ** For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
 
@@ -42,6 +42,11 @@ For example `>=12.5` will match values no less than 12.5.
 and the square bracket (`[ ]`) denotes an inclusive boundary. The lower and upper boundaries can be both
 inclusive or exclusive, or they can be different.
 For example `[0,10)` will match x if 0 &le; x < 10.
+
+* For the `(Double, Double)` type, you can use interval filters to filter the first and second coordinates.
+** List the intervals for the first and second coordinates separated with a comma.
+Intervals can be specified with brackets, just like for the simple ``Double``s above.
+For example `[0,2), [3,4]` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4.
 
 * For the `Vector` type the following options are available.
 ** `all(...)` will match the `Vector` only when the internal filter matches all elements of the `Vector`.

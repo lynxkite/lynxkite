@@ -10,6 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
  - Tab-completion for LynxKite operations works in Python command-line
    and in Jupyter notebooks.
+ - You can now filter for position (Double, Double) attributes.
 
 ### 1.12.1
 
