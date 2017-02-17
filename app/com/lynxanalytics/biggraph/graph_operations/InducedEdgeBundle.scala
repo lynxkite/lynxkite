@@ -133,7 +133,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
         // sortedJoinWithDuplicates.
         val newInduced = inducedRDD.rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
         // Because of duplicates the new RDD may need a bigger partitioner.
-        InducedRDD(induced, RDDUtils.maxPartitioner(
+        InducedRDD(newInduced, RDDUtils.maxPartitioner(
           partitioner, rc.partitionerForNRows(newInduced.count)))
       }
     }
