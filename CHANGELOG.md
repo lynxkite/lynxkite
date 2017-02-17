@@ -9,6 +9,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Visualization settings UI now matches the new attribute UI.
  - Tab-completion for LynxKite operations works in Python command-line
    and in Jupyter notebooks.
+ - You can now filter for position (Double, Double) attributes.
 
 ### 1.12.1
 
