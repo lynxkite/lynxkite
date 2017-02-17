@@ -511,11 +511,11 @@ module.exports = function(fw) {
       lib.navigateToProject('test-example'); // Restore state.
     });
 
-  var saveVisualizationOpen = lib.left.side.$('#save-visualization-dialog #text-dialog-open');
-  var saveVisualizationEntry = lib.left.side.$('#save-visualization-dialog #dialogInput');
-  var saveVisualizationOk = lib.left.side.$('#save-visualization-dialog #text-dialog-ok');
-  var pickButton = lib.left.side.element(by.id('pick-and-next-button'));
-  var centerCount = lib.left.side.element(by.id('pick-center-count'));
+  var saveVisualizationOpen = lib.left.side.$('#setting-save-visualization');
+  var saveVisualizationEntry = $('#save-visualization-name');
+  var centersToken = lib.left.side.$('#setting-centers');
+  var pickButton = $('#pick-and-next-button');
+  var centerCount = $('#pick-center-count');
 
   fw.transitionTest(
     'test-example project with example graph',
@@ -524,6 +524,7 @@ module.exports = function(fw) {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
       // Set centers count to a non-default value.
+      centersToken.click();
       centerCount.clear();
       centerCount.sendKeys('2');
       pickButton.click();
@@ -531,16 +532,17 @@ module.exports = function(fw) {
       name.visualizeAs('label');
       // Save the visualization with the name 'my visualization'
       saveVisualizationOpen.click();
-      saveVisualizationEntry.clear();
       saveVisualizationEntry.sendKeys('my visualization');
-      saveVisualizationOk.click();
+      saveVisualizationEntry.submit();
       // Close and reopen the project.
       lib.left.close();
       lib.splash.openProject('test-example');
       // Try loading the visualization and check if centers count is correctly updated.
       lib.left.toggleSampledVisualization();
+      centersToken.click();
       expect(centerCount.getAttribute('value')).toBe('1');
       lib.left.scalar('my-visualization').clickMenu('load-visualization');
+      centersToken.click();
       expect(centerCount.getAttribute('value')).toBe('2');
       // Check if the visualization is really loaded and not just the parameters.
       lib.visualization.graphData().then(function(graph) {

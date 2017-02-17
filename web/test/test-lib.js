@@ -291,7 +291,8 @@ Side.prototype = {
   },
 
   setSampleRadius: function(radius) {
-    var slider = this.side.element(by.id('sample-radius-slider'));
+    this.side.$('#setting-sample-radius').click();
+    var slider = $('#sample-radius-slider');
     slider.getAttribute('value').then(function(value) {
       var diff = radius - value;
       while (diff > 0) {
@@ -1181,6 +1182,15 @@ testLib = {
 
   showSelector: function() {
     $('#show-selector-button').click();
+  },
+
+  confirmSweetAlert: function(expectedMessage) {
+    // SweetAlert is not an Angular library. We need to wait until it pops in and out.
+    var EC = protractor.ExpectedConditions;
+    testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
+    expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
+    $('.sweet-alert button.confirm').click();
+    testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
 };
 

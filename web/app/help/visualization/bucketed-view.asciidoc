@@ -4,6 +4,9 @@ Shows a consolidated view of all the vertices of the graph. Vertices can be grou
 attributes and the system visualizes the sizes of the groups and the amount of edges going among
 the groups.
 
+To add a vertex attribute to the visualization, click the attribute and pick _"Visualize as"_ _X_ or
+_Y_.
+
 For `String` attributes, the created buckets will correspond to the possible values of the
 attribute.
 If the attribute has more possible values than the number of buckets selected by the user then the
@@ -20,13 +23,28 @@ selected so that they have the same length on the logarithmic scale. E.g. a poss
 bucketing is `[1, 2)`, `[2, 4)`, `[4, 8]`. In logarithmic mode, if the attribute has any
 non-positive values, then an extra bucket will be created which will contain all non-positive values.
 
+Edge attributes can also be added to the visualization to be used for calculating the width of the
+aggregate edges.
+
+By default the visualization has 4&times;4 buckets, but this can be adjusted in the visualization
+settings list.
+
 ### Relative edge density
 
-In normal bucketed view, the thickness of an edge going from bucket A to bucket B corresponds to the number of edges
-going from a vertex in bucket A to a vertex in bucket B (or in the weighted case: to the sum of the weights
-on such edges). This makes the edges going between large buckets typically much thicker than those going between
- smaller buckets.
+Bucketed view by default comes in _absolute edge density_ mode. Absolute edge density means the
+thickness of an edge going from bucket A to bucket B corresponds to the number of edges going from a
+vertex in bucket A to a vertex in bucket B (or in the weighted case: to the sum of the weights on
+such edges). This makes the edges going between large buckets typically much thicker than those
+going between smaller buckets.
 
-Relative edge density, on the other hand, is calculated by dividing the number of edges between bucket A and
-bucket B by [size of bucket A] &times; [size of bucket B]. This way, the
-individual bucket sizes aren't reflected on the thickness of the edges.
+_Relative edge density_, on the other hand, is calculated by dividing the number of edges between
+bucket A and bucket B by [size of bucket A] &times; [size of bucket B]. This way, the individual
+bucket sizes aren't reflected on the thickness of the edges.
+
+### Precise and approximate counts
+
+For very large graphs the bucketed view numbers are extrapolated from a sample. Precise calculation
+would not produce a visible change in the visualization, so most often it is not necessary. It can
+be desirable however if the numbers from the visualization are to be used in a report.
+
+Click the _"approximate counts"_ option to switch it to _"precise counts"_.
