@@ -169,7 +169,7 @@ object FEFilters {
   private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
   private val intervalPattern = s"\\s*([\\(\\[]$numberWithSpaces,$numberWithSpaces[\\)\\]])\\s*"
-  private val geoRE = s"\\s*\\($intervalPattern,$intervalPattern\\)\\s*".r
+  private val geoRE = s"$intervalPattern,$intervalPattern".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
   private val boundRE = s"$comparatorPattern$numberPattern".r
   private val forallRE = "\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
