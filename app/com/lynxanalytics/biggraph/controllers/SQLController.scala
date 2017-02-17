@@ -539,7 +539,6 @@ class SQLController(val env: BigGraphEnvironment) {
       header = columns.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
       data = SQLHelper.toSeqRDD(df).take(request.maxRows).map {
         row =>
-          println(row.toSeq.toList.zip(columns))
           row.toSeq.toList.zip(columns).map {
             case (null, field) => DynamicValue("null", defined = false)
             case (item, (name, tt)) => DynamicValue.convert(item)(tt)
