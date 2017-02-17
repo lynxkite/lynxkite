@@ -116,8 +116,8 @@ object FEFilters {
         .asInstanceOf[Filter[T]]
     } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
       spec match {
-        case geoRE(latInterval, lonInterval) =>
-          PairFilter(filterFromSpec[Double](latInterval), filterFromSpec[Double](lonInterval))
+        case geoRE(xInterval, yInterval) =>
+          PairFilter(filterFromSpec[Double](xInterval), filterFromSpec[Double](yInterval))
             .asInstanceOf[Filter[T]]
         case filter => throw new AssertionError(s"Not a valid filter: $filter.")
       }
