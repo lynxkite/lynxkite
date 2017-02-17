@@ -3568,8 +3568,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
       Param("output", "Output name"))
-    def enabled = FEStatus.assert(vertexAttributes[(Double, Double)].nonEmpty,
-      "No position vertex attributes.")
+    def enabled = FEStatus.assert(
+      vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
     def apply(params: Map[String, String]) = {
       val shapeFilePath = getShapeFilePath(params)
@@ -3580,7 +3580,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Segment by GEO data", new StructureOperation(_, _) {
+  register("Segment by geographical proximity", new StructureOperation(_, _) {
     override def parameters = List(
       Param("name", "Name"),
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
@@ -3594,7 +3594,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val shapeFilePath = getShapeFilePath(params)
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
       val shapefile = Shapefile(shapeFilePath)
-      val op = graph_operations.SegmentByGEOData(
+      val op = graph_operations.SegmentByGeographicalProximity(
         shapeFilePath, params("distance").toDouble, shapefile.attrNames)
       val result = op(op.coordinates, position).result
       val segmentation = project.segmentation(params("name"))
@@ -3611,7 +3611,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   private def getShapeFilePath(params: Map[String, String]): String = {
     val shapeFilePath = params("shapefile")
-    assert(new java.io.File(shapeFilePath).exists(), "Shapefile deleted, please choose another.")
+    assert(listShapefiles().exists(f => f.id == shapeFilePath),
+      "Shapefile deleted, please choose another.")
     shapeFilePath
   }
 
