@@ -10,6 +10,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.ClassTag
 
+import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -66,6 +67,12 @@ object InducedEdgeBundle extends OpFromJson {
   }
   def fromJson(j: JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }
+
+// A wrapper class for an induced RDD and a partitioner which can handle it adequately.
+case class InducedRDD[T: ClassTag](val rdd: RDD[T], val partitioner: Partitioner) {
+  def map[U](f: (T) ⇒ U)(implicit ct: ClassTag[U]): InducedRDD[U] = InducedRDD(rdd.map(f), partitioner)
+}
+
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)
     extends TypedMetaGraphOp[Input, Output] {
@@ -83,72 +90,74 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     implicit val id = inputDatas
     implicit val instance = output.instance
     implicit val runtimeContext = rc
-    val edges = inputs.edges.rdd
     // Use the larger partitioner for sorted join and HybridRDD.
     val maxPartitioner = RDDUtils.maxPartitioner(
       inputs.edges.rdd.partitioner.get,
       inputs.src.rdd.partitioner.get,
       inputs.dst.rdd.partitioner.get)
+    val edges = InducedRDD(inputs.edges.rdd, maxPartitioner)
 
-    def getMapping(mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, ID] = {
+    def getMapping(
+      mappingInput: MagicInputSignature#EdgeBundleTemplate,
+      partitioner: Partitioner): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
         // We might save a shuffle in this case.
-        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(maxPartitioner)
+        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sort(partitioner)
       } else {
         mappingEdges
           .map { case (id, edge) => (edge.src, edge.dst) }
-          .sort(maxPartitioner)
+          .sort(partitioner)
       }
     }
 
     def joinMapping[V: ClassTag](
-      rdd: RDD[(ID, V)],
+      edges: InducedRDD[(ID, V)],
       mappingInput: MagicInputSignature#EdgeBundleTemplate,
-      repartition: Boolean): RDD[(ID, (V, ID))] = {
+      repartition: Boolean): InducedRDD[(ID, (V, ID))] = {
       val props = mappingInput.entity.properties
-      val mapping = getMapping(mappingInput)
+      val mapping = getMapping(mappingInput, edges.partitioner)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
         if (repartition) {
-          HybridRDD(rdd, maxPartitioner, even = true)
-            .lookupAndRepartition(mapping.asUniqueSortedRDD)
+          InducedRDD(HybridRDD(edges.rdd, edges.partitioner, even = true)
+            .lookupAndRepartition(mapping.asUniqueSortedRDD), edges.partitioner)
         } else {
-          HybridRDD(rdd, maxPartitioner, even = true).lookup(mapping.asUniqueSortedRDD)
+          InducedRDD(HybridRDD(edges.rdd, edges.partitioner, even = true)
+            .lookup(mapping.asUniqueSortedRDD), edges.partitioner)
         }
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
-        rdd.sort(maxPartitioner).sortedJoinWithDuplicates(mapping)
+        val induced = edges.rdd.sort(edges.partitioner).sortedJoinWithDuplicates(mapping)
+        // Because of duplicates the new RDD may need a bigger partitioner.
+        InducedRDD(induced, rc.partitionerForNRows(induced.count))
       }
     }
 
     val srcInduced = if (!induceSrc) edges else {
       val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
-      val bySrc = joinMapping(byOldSrc, inputs.srcMapping, repartition = true)
-        .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
-      bySrc.values
+      joinMapping(byOldSrc, inputs.srcMapping, repartition = true)
+        .map { case (_, ((id, edge), newSrc)) => (id, Edge(newSrc, edge.dst)) }
     }
     val dstInduced = if (!induceDst) srcInduced else {
       val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
-      val byDst = joinMapping(byOldDst, inputs.dstMapping, repartition = false)
-        .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
-      byDst.values
+      joinMapping(byOldDst, inputs.dstMapping, repartition = false)
+        .map { case (_, ((id, edge), newDst)) => (id, Edge(edge.src, newDst)) }
     }
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
     if (srcIsFunction && dstIsFunction) {
-      val induced = RDDUtils.maybeRepartitionForOutput(dstInduced.sortUnique(edges.partitioner.get))
+      val induced = RDDUtils.maybeRepartitionForOutput(
+        dstInduced.rdd.sortUnique(inputs.edges.rdd.partitioner.get))
       output(o.induced, induced)
       output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
     } else {
-      // We may end up with way more edges than we had originally. We need a new partitioner.
-      val partitioner = rc.partitionerForNRows(dstInduced.count)
       // A non-function mapping can introduce duplicates. We need to generate new IDs.
-      val renumbered = dstInduced.randomNumbered(partitioner)
+      val renumbered = dstInduced.rdd.randomNumbered(dstInduced.partitioner)
       output(o.induced, renumbered.mapValues { case (oldId, edge) => edge })
       output(o.embedding,
         renumbered.mapValuesWithKeys { case (newId, (oldId, edge)) => Edge(newId, oldId) })
