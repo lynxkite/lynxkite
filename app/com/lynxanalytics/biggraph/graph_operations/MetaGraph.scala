@@ -44,6 +44,7 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
     val ops = env.get.metaGraphManager.getOperationInstances.toSeq
 
     val vs = ops.flatMap {
+      // For each operation we create a vertex for the operation itself and each of the outputs.
       case (guid, inst) =>
         val op = (guid.toString, "Operation", shortClass(inst.operation), Double.NaN)
         val outputs = inst.outputs.all.map {
@@ -61,6 +62,7 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
     val vsByGUID = vsNumbered.map { case (id, (guid, _, _, _)) => guid -> id }.toMap
 
     val es = ops.flatMap {
+      // For each operation we create an edge from each input and to each output.
       case (guid, inst) =>
         val inputs = inst.inputs.all.map {
           case (i, e) => (Edge(vsByGUID(e.gUID.toString), vsByGUID(guid.toString)), "Input", i.name)
