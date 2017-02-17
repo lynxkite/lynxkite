@@ -343,6 +343,12 @@ Side.prototype = {
     this.side.element(by.id('save-results-opener')).click();
   },
 
+  clickSqlSort(colId) {
+    var res = this.side.$('#sql-result');
+    var header = res.$$('thead tr th').get(colId);
+    header.click();
+  },
+
   executeSqlSaving: function() {
     this.side.element(by.id('save-results')).click();
   },
@@ -1012,7 +1018,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.element(by.cssContainingText('option', value)).click();
+            e.$('option[label="' + value +'"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }

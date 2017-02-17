@@ -4,8 +4,10 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 
 import scala.concurrent.Future
+import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
@@ -127,7 +129,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
 case class SQLColumn(name: String, dataType: String)
-case class SQLQueryResult(header: List[SQLColumn], data: List[List[String]])
+case class SQLQueryResult(header: List[SQLColumn], data: List[List[DynamicValue]])
 
 case class SQLExportToTableRequest(
   dfSpec: DataFrameSpec,
@@ -530,21 +532,17 @@ class SQLController(val env: BigGraphEnvironment) {
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-
+    val columns = df.schema.toList.map { field =>
+      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
+    }
     SQLQueryResult(
-      header = df.schema.toList.map {
-        field =>
-          SQLColumn(
-            field.name,
-            ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(field.dataType))
-          )
-      },
-      data = df.head(request.maxRows).map {
+      header = columns.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = SQLHelper.toSeqRDD(df).take(request.maxRows).map {
         row =>
-          row.toSeq.map {
-            case null => "null"
-            case item => item.toString
-          }.toList
+          row.toSeq.toList.zip(columns).map {
+            case (null, field) => DynamicValue("null", defined = false)
+            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+          }
       }.toList
     )
   }
