@@ -2,11 +2,27 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class SegmentByGEODataOperationTest extends OperationsTestBase {
+class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
+
+  def linkShapeFile(): String = {
+    import java.io.File
+    import java.nio.file.Files
+    import java.nio.file.Paths
+    def metaDir = new File(metaGraphManager.repositoryPath).getParent
+    val shapeFilesDirPath = s"$metaDir/resources/shapefiles"
+    Files.createDirectories(Paths.get(shapeFilesDirPath))
+    for (ext <- Seq(".shp", ".shx", ".dbf")) {
+      val oldPath = getClass.getResource("/graph_operations/FindRegionTest/earth" + ext).getPath
+      val newPath = shapeFilesDirPath + "/earth" + ext
+      Files.createSymbolicLink(Paths.get(newPath), Paths.get(oldPath))
+    }
+    shapeFilesDirPath + "/earth.shp"
+  }
+
   test("Segment by GEO data") {
     run("Example Graph")
-    val shapePath = getClass.getResource("/graph_operations/FindRegionTest/earth.shp").getPath
-    run("Segment by GEO data", Map(
+    val shapePath = linkShapeFile()
+    run("Segment by geographical proximity", Map(
       "name" -> "timezones",
       "position" -> "location",
       "shapefile" -> shapePath,
