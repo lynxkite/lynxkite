@@ -18,7 +18,7 @@ import org.apache.spark
 
 import scala.collection.immutable.Seq
 
-object SegmentByGEOData extends OpFromJson {
+object SegmentByGeographicalProximity extends OpFromJson {
   class Input(val attrNames: Seq[String]) extends MagicInputSignature {
     val vertices = vertexSet
     val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
@@ -27,19 +27,22 @@ object SegmentByGEOData extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vertices.entity, segments)
-    val attributes = inputs.attrNames.map(attrName => vertexAttribute[String](segments, Symbol(attrName)))
+    val attributes = inputs.attrNames.map(
+      attrName => vertexAttribute[String](segments, Symbol(attrName)))
   }
-  def fromJson(j: JsValue) = SegmentByGEOData(
+  def fromJson(j: JsValue) = SegmentByGeographicalProximity(
     (j \ "shapefile").as[String], (j \ "distance").as[Double], (j \ "attrNames").as[Seq[String]])
 }
 
-import com.lynxanalytics.biggraph.graph_operations.SegmentByGEOData._
+import com.lynxanalytics.biggraph.graph_operations.SegmentByGeographicalProximity._
 
-case class SegmentByGEOData(shapefile: String, distance: Double, attrNames: Seq[String]) extends TypedMetaGraphOp[Input, Output] {
+case class SegmentByGeographicalProximity(
+    shapefile: String, distance: Double, attrNames: Seq[String]) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input(attrNames)
-  override def toJson = Json.obj("shapefile" -> shapefile, "distance" -> distance, "attrNames" -> attrNames)
+  override def toJson = Json.obj(
+    "shapefile" -> shapefile, "distance" -> distance, "attrNames" -> attrNames)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
