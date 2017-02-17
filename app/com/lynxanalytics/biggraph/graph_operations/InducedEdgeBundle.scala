@@ -10,7 +10,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.ClassTag
 
-import org.apache.spark
 import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
@@ -114,26 +113,28 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     }
 
     def joinMapping[V: ClassTag](
-      edges: InducedRDD[(ID, V)],
+      inducedRDD: InducedRDD[(ID, V)],
       mappingInput: MagicInputSignature#EdgeBundleTemplate,
       repartition: Boolean): InducedRDD[(ID, (V, ID))] = {
+      val partitioner = inducedRDD.partitioner
       val props = mappingInput.entity.properties
-      val mapping = getMapping(mappingInput, edges.partitioner)
+      val mapping = getMapping(mappingInput, partitioner)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
         if (repartition) {
-          InducedRDD(HybridRDD(edges.rdd, edges.partitioner, even = true)
-            .lookupAndRepartition(mapping.asUniqueSortedRDD), edges.partitioner)
+          InducedRDD(HybridRDD(inducedRDD.rdd, partitioner, even = true)
+            .lookupAndRepartition(mapping.asUniqueSortedRDD), partitioner)
         } else {
-          InducedRDD(HybridRDD(edges.rdd, edges.partitioner, even = true)
-            .lookup(mapping.asUniqueSortedRDD), edges.partitioner)
+          InducedRDD(HybridRDD(inducedRDD.rdd, partitioner, even = true)
+            .lookup(mapping.asUniqueSortedRDD), partitioner)
         }
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
-        val induced = edges.rdd.sort(edges.partitioner).sortedJoinWithDuplicates(mapping)
+        val newInduced = inducedRDD.rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
         // Because of duplicates the new RDD may need a bigger partitioner.
-        InducedRDD(induced, RDDUtils.maxPartitioner(maxPartitioner, rc.partitionerForNRows(induced.count)))
+        InducedRDD(induced, RDDUtils.maxPartitioner(
+          partitioner, rc.partitionerForNRows(newInduced.count)))
       }
     }
 
