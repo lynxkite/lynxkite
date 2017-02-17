@@ -124,7 +124,9 @@ object FEFilters {
         }
       }
       spec match {
-        case geoRE(latInterval, lonInterval) => GeoFilter(intervalToFilter(latInterval), intervalToFilter(lonInterval)).asInstanceOf[Filter[T]]
+        case geoRE(latInterval, lonInterval) =>
+          PairFilter(intervalToFilter(latInterval), intervalToFilter(lonInterval))
+            .asInstanceOf[Filter[T]]
         case filter => throw new AssertionError(s"Not a valid filter: $filter.")
       }
     } else if (typeOf[T] =:= typeOf[Double]) {
