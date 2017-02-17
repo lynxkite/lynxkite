@@ -10,6 +10,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.ClassTag
 
+import org.apache.spark
 import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
@@ -90,11 +91,11 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     implicit val id = inputDatas
     implicit val instance = output.instance
     implicit val runtimeContext = rc
-    // Use the larger partitioner for sorted join and HybridRDD.
-    val maxPartitioner = RDDUtils.maxPartitioner(
-      inputs.edges.rdd.partitioner.get,
-      inputs.src.rdd.partitioner.get,
-      inputs.dst.rdd.partitioner.get)
+    // Use the largest partitioner for sorted join and HybridRDD.
+    val maxPartitioner = RDDUtils.maxPartitioner(Seq(
+      inputs.edges.rdd.partitioner,
+      Option(inputs.srcMapping).map(_.rdd.partitioner.get),
+      Option(inputs.dstMapping).map(_.rdd.partitioner.get)).flatten: _*)
     val edges = InducedRDD(inputs.edges.rdd, maxPartitioner)
 
     def getMapping(
@@ -132,7 +133,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
         // sortedJoinWithDuplicates.
         val induced = edges.rdd.sort(edges.partitioner).sortedJoinWithDuplicates(mapping)
         // Because of duplicates the new RDD may need a bigger partitioner.
-        InducedRDD(induced, rc.partitionerForNRows(induced.count))
+        InducedRDD(induced, RDDUtils.maxPartitioner(maxPartitioner, rc.partitionerForNRows(induced.count)))
       }
     }
 
