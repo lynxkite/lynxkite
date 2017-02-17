@@ -115,17 +115,9 @@ object FEFilters {
       OneOf(spec.split(",", -1).map(_.trim.toLong).toSet)
         .asInstanceOf[Filter[T]]
     } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
-      def intervalToFilter(interval: String): AndFilter[Double] = {
-        interval match {
-          case intervalOpenOpenRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLT(b.toDouble))
-          case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
-          case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
-          case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
-        }
-      }
       spec match {
         case geoRE(latInterval, lonInterval) =>
-          PairFilter(intervalToFilter(latInterval), intervalToFilter(lonInterval))
+          PairFilter(filterFromSpec[Double](latInterval), filterFromSpec[Double](lonInterval))
             .asInstanceOf[Filter[T]]
         case filter => throw new AssertionError(s"Not a valid filter: $filter.")
       }
