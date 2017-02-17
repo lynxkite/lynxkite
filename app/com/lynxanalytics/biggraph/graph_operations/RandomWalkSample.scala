@@ -101,6 +101,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       rc.sparkContext.parallelize(initialState, nodes.partitioner.get.numPartitions)
     }
     multiWalkState.persist(StorageLevel.DISK_ONLY)
+    val maxRemainingSteps = multiWalkState.values.values.max()
 
     // we don't need the full sequence of steps for the sample, only the first visit of a node/edge
     // is interesting
@@ -112,8 +113,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => StepIdx.MaxValue)
     val step = multiStepper(nodes, edges)
 
-    var counter = 1
-    while (!multiWalkState.isEmpty()) {
+    for (i <- 1 to maxRemainingSteps) {
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
       nextState.persist(StorageLevel.DISK_ONLY)
 
@@ -121,11 +121,16 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
         nextState.map { case (node, (idx, _)) => (node, idx) })
       stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
 
-      // The length of the lineage of `stepIdxWhenNodeFirstVisited` and
-      // `stepIdxWhenEdgeFirstTraversed` grows in a Fibonacci-like way. Therefore we have to cut
-      // the lineage periodically with `RDD#localCheckpoint`. This reduces resilience but prevents
-      // StackOverflowErrors
-      if (counter % 20 == 0) {
+      // Seems like Spark throws StackOverflowError when the lineage of an RDD grows too long.
+      // `RDD#localCheckpoint` cuts the lineage of the RDD which reduces resilience but prevents
+      // the errors.
+      // On my machine, I got StackOverflowError after around 100 iterations without checkpointing
+      // `stepIdxWhenNodeFirstVisited` and `stepIdxWhenEdgeFirstTraversed` and around 130 without
+      // checkpointing `nexState`. (Note: without checkpointing `nextState` true divisors of 20
+      // work as iteration number ;).
+      if (i % 20 == 0) {
+        nextState.localCheckpoint()
+
         stepIdxWhenNodeFirstVisited.persist(StorageLevel.DISK_ONLY)
         stepIdxWhenNodeFirstVisited.localCheckpoint()
         stepIdxWhenNodeFirstVisited.count()
@@ -136,7 +141,6 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       }
 
       multiWalkState = nextState
-      counter += 1
     }
 
     val vs = stepIdxWhenNodeFirstVisited.sort(nodes.partitioner.get).asUniqueSortedRDD
