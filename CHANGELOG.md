@@ -6,9 +6,11 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Tab-completion for LynxKite operations works in Python command-line 
+ - Visualization settings UI now matches the new attribute UI.
+ - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
+ - Tab-completion for LynxKite operations works in Python command-line
    and in Jupyter notebooks.
-   
+
 ### 1.12.1
 
  - Admins can backup LynxKite project data from UI.
@@ -34,6 +36,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Spark Monitor doesn't send alarm in case of long-running tasks.
 
 Ecosystem:
+
  - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
  - Renamed from "Lynx Data Automation Framework" to "Lynx Enterprise".
 

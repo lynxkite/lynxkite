@@ -1,7 +1,7 @@
 // Presents the parameters for running SQL scripts.
 'use strict';
 
-angular.module('biggraph').directive('sqlBox', function($rootScope, $window, side, util) {
+angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q, side, util) {
   return {
     restrict: 'E',
     scope: {
@@ -190,11 +190,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         }
       });
 
-      scope.export = function() {
-        if (!scope.sql) {
-          util.error('SQL script must be specified.');
-          return;
-        }
+      scope.export = function(options) {
+        options = options || { overwrite: false };
         var req = {
           dfSpec: {
             isGlobal: scope.isGlobal,
@@ -202,14 +199,16 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
             project: scope.project,
             sql: scope.sql,
           },
-          overwrite: scope.overwrite,
+          overwrite: options.overwrite || scope.overwrite,
         };
+
         scope.inProgress += 1;
         var result;
+        var postOpts = { reportErrors: false };
         if (scope.exportFormat === 'table') {
           req.table = scope.exportKiteTable;
           req.privacy = 'public-read';
-          result = util.post('/ajax/exportSQLQueryToTable', req);
+          result = util.post('/ajax/exportSQLQueryToTable', req, postOpts);
         } else if (scope.exportFormat === 'segmentation') {
           result = scope.side.applyOp(
               'Create-segmentation-from-SQL',
@@ -220,34 +219,41 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
         } else if (scope.exportFormat === 'view') {
           req.name = scope.exportKiteTable;
           req.privacy = 'public-read';
-          result = util.post('/ajax/createViewDFSpec', req);
+          result = util.post('/ajax/createViewDFSpec', req, postOpts);
         } else if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;
           req.quote = scope.exportQuote;
           req.header = scope.exportHeader;
-          result = util.post('/ajax/exportSQLQueryToCSV', req);
+          result = util.post('/ajax/exportSQLQueryToCSV', req, postOpts);
         } else if (scope.exportFormat === 'json') {
           req.path = scope.exportPath;
-          result = util.post('/ajax/exportSQLQueryToJson', req);
+          result = util.post('/ajax/exportSQLQueryToJson', req, postOpts);
         } else if (scope.exportFormat === 'parquet') {
           req.path = scope.exportPath;
-          result = util.post('/ajax/exportSQLQueryToParquet', req);
+          result = util.post('/ajax/exportSQLQueryToParquet', req, postOpts);
         } else if (scope.exportFormat === 'orc') {
           req.path = scope.exportPath;
-          result = util.post('/ajax/exportSQLQueryToORC', req);
+          result = util.post('/ajax/exportSQLQueryToORC', req, postOpts);
         } else if (scope.exportFormat === 'jdbc') {
           req.jdbcUrl = scope.exportJdbcUrl;
           req.table = scope.exportJdbcTable;
           req.mode = scope.exportMode;
-          result = util.post('/ajax/exportSQLQueryToJdbc', req);
+          result = util.post('/ajax/exportSQLQueryToJdbc', req, postOpts);
         } else {
           throw new Error('Unexpected export format: ' + scope.exportFormat);
         }
-        result.finally(function() {
-          scope.inProgress -= 1;
-        });
-        result.then(function(result) {
+
+        result.catch(function exportErrorHandler(error) {
+          if (error.data === 'file-already-exists-confirm-overwrite') {
+            util.showOverwriteDialog(function() {
+              scope.export({ overwrite: true });
+            });
+          } else {
+            util.ajaxError(error);
+          }
+          return $q.reject(error);
+        }).then(function exportDoneHandler(result) {
           scope.showExportOptions = false;
           scope.success = 'Results exported.';
           if (result && result.download) {
@@ -258,6 +264,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, sid
           if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
             $rootScope.$broadcast('new table or view', scope);
           }
+        }).finally(function() {
+          scope.inProgress -= 1;
         });
       };
 

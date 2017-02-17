@@ -3392,8 +3392,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
       Param("uiStatusJson", "UI status as JSON"))
-
     def enabled = FEStatus.enabled
+    override def summary(params: Map[String, String]) = {
+      val scalarName = params("scalarName")
+      s"Save visualization as $scalarName"
+    }
 
     def apply(params: Map[String, String]) = {
       import UIStatusSerialization._
@@ -3440,8 +3443,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private def segmentationSizesProductSum(seg: SegmentationEditor, parent: ProjectEditor)(
+    implicit manager: MetaGraphManager): Scalar[_] = {
+    val size = aggregateViaConnection(
+      seg.belongsTo,
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
+    )
+    val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
+    val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
+    val sizeProduct: Attribute[Double] = {
+      val op = graph_operations.DeriveJSDouble(
+        JavaScript("src_size * dst_size"),
+        Seq("src_size", "dst_size"))
+      op(
+        op.attrs,
+        graph_operations.VertexAttributeToJSValue.seq(srcSize, dstSize)).result.attr
+    }
+    aggregate(AttributeWithAggregator(sizeProduct, "sum"))
+  }
+
   register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
     def segmentationParameters = List()
+    override def visibleScalars =
+      if (project.isSegmentation && project.edgeBundle != null) {
+        val scalar = segmentationSizesProductSum(seg, parent)
+        implicit val entityProgressManager = env.entityProgressManager
+        List(ProjectViewer.feScalar(scalar, "num_copied_edges", "", Map()))
+      } else {
+        List()
+      }
     def enabled = isSegmentation &&
       hasEdgeBundle &&
       FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
