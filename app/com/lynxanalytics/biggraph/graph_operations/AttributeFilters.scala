@@ -132,6 +132,19 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
+object PairFilter extends FromJson[PairFilter[_, _]] {
+  def fromJson(j: JsValue) =
+    PairFilter(
+      TypedJson.read[Filter[_]](j \ "filter1"),
+      TypedJson.read[Filter[_]](j \ "filter2"))
+}
+case class PairFilter[T1, T2](filter1: Filter[T1], filter2: Filter[T2]) extends Filter[(T1, T2)] {
+  def matches(value: (T1, T2)) = filter1.matches(value._1) && filter2.matches(value._2)
+  override def toJson = Json.obj(
+    "filter1" -> filter1.toTypedJson,
+    "filter2" -> filter2.toTypedJson)
+}
+
 object OneOf extends FromJson[OneOf[_]] {
   def fromJson(j: JsValue) = {
     val set = (j \ "options").as[Set[JsValue]].map(TypedJson.read[Any](_))

@@ -158,6 +158,11 @@ object SQLHelper {
       }
   }
 
+  def toSeqRDD(dataFrame: DataFrame): rdd.RDD[Seq[Any]] = {
+    val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
+    dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
+  }
+
   private def toNumberedLines(dataFrame: DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
     val numRows = dataFrame.count()
     val maxRows = Limitations.maxImportedLines
@@ -167,11 +172,10 @@ object SQLHelper {
           s"Can't import $numRows lines as your licence only allows $maxRows.")
       }
     }
+    val seqRDD = toSeqRDD(dataFrame)
     val partitioner = rc.partitionerForNRows(numRows)
     import com.lynxanalytics.biggraph.spark_util.Implicits._
-    val rawLines = dataFrame.rdd.randomNumbered(partitioner)
-    val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
-    rawLines.mapValues(processDataFrameRow(tupleColumnIdList))
+    seqRDD.randomNumbered(partitioner)
   }
 
   // Magic output for metagraph operations whose output is created

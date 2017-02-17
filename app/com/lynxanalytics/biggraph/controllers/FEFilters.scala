@@ -114,6 +114,13 @@ object FEFilters {
     } else if (typeOf[T] =:= typeOf[Long]) {
       OneOf(spec.split(",", -1).map(_.trim.toLong).toSet)
         .asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
+      spec match {
+        case geoRE(xInterval, yInterval) =>
+          PairFilter(filterFromSpec[Double](xInterval), filterFromSpec[Double](yInterval))
+            .asInstanceOf[Filter[T]]
+        case filter => throw new AssertionError(s"Not a valid filter: $filter.")
+      }
     } else if (typeOf[T] =:= typeOf[Double]) {
       val doubleFilter = spec match {
         case numberRE(num) => DoubleEQ(num.toDouble)
@@ -153,12 +160,16 @@ object FEFilters {
     } else ???
   }
 
-  private val numberPattern = "\\s*(-?\\d*(?:\\.\\d*)?)\\s*"
+  private val number = "-?\\d*(?:\\.\\d*)?"
+  private val numberWithSpaces = s"\\s*$number\\s*"
+  private val numberPattern = s"\\s*($number)\\s*"
   private val numberRE = numberPattern.r
   private val intervalOpenOpenRE = s"\\s*\\($numberPattern,$numberPattern\\)\\s*".r
   private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
   private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
+  private val intervalPattern = s"\\s*([\\(\\[]$numberWithSpaces,$numberWithSpaces[\\)\\]])\\s*"
+  private val geoRE = s"$intervalPattern,$intervalPattern".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
   private val boundRE = s"$comparatorPattern$numberPattern".r
   private val forallRE = "\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r

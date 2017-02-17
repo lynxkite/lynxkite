@@ -343,6 +343,12 @@ Side.prototype = {
     this.side.element(by.id('save-results-opener')).click();
   },
 
+  clickSqlSort(colId) {
+    var res = this.side.$('#sql-result');
+    var header = res.$$('thead tr th').get(colId);
+    header.click();
+  },
+
   executeSqlSaving: function() {
     this.side.element(by.id('save-results')).click();
   },
@@ -1012,7 +1018,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.element(by.cssContainingText('option', value)).click();
+            e.$('option[label="' + value +'"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -1176,6 +1182,15 @@ testLib = {
 
   showSelector: function() {
     $('#show-selector-button').click();
+  },
+
+  confirmSweetAlert: function(expectedMessage) {
+    // SweetAlert is not an Angular library. We need to wait until it pops in and out.
+    var EC = protractor.ExpectedConditions;
+    testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
+    expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
+    $('.sweet-alert button.confirm').click();
+    testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
 };
 
