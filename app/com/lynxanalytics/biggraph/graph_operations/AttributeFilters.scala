@@ -132,14 +132,17 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
-object GeoFilter extends FromJson[GeoFilter] {
-  def fromJson(j: JsValue) = GeoFilter(
-    AndFilter.fromJson(j \ "latFilter").asInstanceOf[AndFilter[Double]],
-    AndFilter.fromJson(j \ "lonFilter").asInstanceOf[AndFilter[Double]])
+object PairFilter extends FromJson[PairFilter[_, _]] {
+  def fromJson(j: JsValue) =
+    PairFilter(
+      TypedJson.read[Filter[_]](j \ "filter1"),
+      TypedJson.read[Filter[_]](j \ "filter2"))
 }
-case class GeoFilter(latFilter: AndFilter[Double], lonFilter: AndFilter[Double]) extends Filter[(Double, Double)] {
-  def matches(value: (Double, Double)) = latFilter.matches(value._1) && lonFilter.matches(value._2)
-  override def toJson = Json.obj("latFilter" -> latFilter.toJson, "lonFilter" -> lonFilter.toJson)
+case class PairFilter[T1, T2](filter1: Filter[T1], filter2: Filter[T2]) extends Filter[(T1, T2)] {
+  def matches(value: (T1, T2)) = filter1.matches(value._1) && filter2.matches(value._2)
+  override def toJson = Json.obj(
+    "filter1" -> filter1.toTypedJson,
+    "filter2" -> filter2.toTypedJson)
 }
 
 object OneOf extends FromJson[OneOf[_]] {
