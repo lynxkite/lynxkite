@@ -3585,7 +3585,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Param("name", "Name"),
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
-      NonNegDouble("distance", "Distance", defaultValue = "0.0"))
+      NonNegDouble("distance", "Distance", defaultValue = "0.0"),
+      Choice("onlyknownFeatures", "Only allow known features", options = FEOption.bools))
     def enabled = FEStatus.assert(
       vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
@@ -3595,7 +3596,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
       val shapefile = Shapefile(shapeFilePath)
       val op = graph_operations.SegmentByGeographicalProximity(
-        shapeFilePath, params("distance").toDouble, shapefile.attrNames)
+        shapeFilePath,
+        params("distance").toDouble,
+        shapefile.attrNames,
+        params("onlyknownFeatures").toBoolean)
       val result = op(op.coordinates, position).result
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.segments, idAttr = "id")

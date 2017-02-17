@@ -31,18 +31,27 @@ object SegmentByGeographicalProximity extends OpFromJson {
       attrName => vertexAttribute[String](segments, Symbol(attrName)))
   }
   def fromJson(j: JsValue) = SegmentByGeographicalProximity(
-    (j \ "shapefile").as[String], (j \ "distance").as[Double], (j \ "attrNames").as[Seq[String]])
+    (j \ "shapefile").as[String],
+    (j \ "distance").as[Double],
+    (j \ "attrNames").as[Seq[String]],
+    (j \ "onlyknownFeatures").as[Boolean])
 }
 
 import com.lynxanalytics.biggraph.graph_operations.SegmentByGeographicalProximity._
 
 case class SegmentByGeographicalProximity(
-    shapefile: String, distance: Double, attrNames: Seq[String]) extends TypedMetaGraphOp[Input, Output] {
+    shapefile: String,
+    distance: Double,
+    attrNames: Seq[String],
+    onlyknownFeatures: Boolean) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input(attrNames)
   override def toJson = Json.obj(
-    "shapefile" -> shapefile, "distance" -> distance, "attrNames" -> attrNames)
+    "shapefile" -> shapefile,
+    "distance" -> distance,
+    "attrNames" -> attrNames,
+    "onlyknownFeatures" -> onlyknownFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -95,7 +104,9 @@ case class SegmentByGeographicalProximity(
             // The actual classes and ways to check differ for implementations.
             case g: com.vividsolutions.jts.geom.Geometry => g.isWithinDistance(
               factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
-            case _ => false
+            case _ =>
+              assert(!onlyknownFeatures, "Unknown feature found in Shapefile.")
+              false
           }
       }.map { case (sid, _, _) => sid }
   }

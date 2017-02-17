@@ -4,7 +4,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
 
-  def linkShapeFile(): String = {
+  // Creates symbolic links for a Shapefile under the kite meta dir. This is needed because
+  // the frontend expects the Shapefile in a specific directory.
+  def linkShapeFile(name: String): String = {
     import java.io.File
     import java.nio.file.Files
     import java.nio.file.Paths
@@ -12,21 +14,22 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
     val shapeFilesDirPath = s"$metaDir/resources/shapefiles"
     Files.createDirectories(Paths.get(shapeFilesDirPath))
     for (ext <- Seq(".shp", ".shx", ".dbf")) {
-      val oldPath = getClass.getResource("/graph_operations/FindRegionTest/earth" + ext).getPath
-      val newPath = shapeFilesDirPath + "/earth" + ext
+      val oldPath = getClass.getResource("/graph_operations/FindRegionTest/" + name + ext).getPath
+      val newPath = shapeFilesDirPath + "/" + name + ext
       Files.createSymbolicLink(Paths.get(newPath), Paths.get(oldPath))
     }
-    shapeFilesDirPath + "/earth.shp"
+    shapeFilesDirPath + "/" + name + ".shp"
   }
 
-  test("Segment by GEO data") {
+  test("Segment by geographical proximity") {
     run("Example Graph")
-    val shapePath = linkShapeFile()
+    val shapePath = linkShapeFile("earth")
     run("Segment by geographical proximity", Map(
       "name" -> "timezones",
       "position" -> "location",
       "shapefile" -> shapePath,
-      "distance" -> "0.1"))
+      "distance" -> "0.1",
+      "onlyknownFeatures" -> "true"))
     val seg = project.segmentation("timezones")
     // Assert that the TZID segment attribute is created.
     assert(seg.vertexAttributes("TZID").runtimeSafeCast[String].rdd.count == 418)
