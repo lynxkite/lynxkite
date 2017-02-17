@@ -27,6 +27,8 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = Json.obj("timestamp" -> timestamp)
+  // "env" cannot be serialized, so this operation cannot be re-run and "env" is ignored for
+  // equality.
   override def equals(other: Any): Boolean =
     other match {
       case otherOp: MetaGraph => otherOp.timestamp == timestamp
