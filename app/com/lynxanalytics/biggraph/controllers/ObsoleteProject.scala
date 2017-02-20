@@ -214,7 +214,8 @@ object ObsoleteProject {
         project.segmentationNames.map(
           name => name -> getSegmentationState(project.segmentation(name))).toMap,
       notes = project.notes,
-      elementNotes = Some(Map()))
+      elementNotes = Some(Map()),
+      elementMetadata = Some(Map()))
   }
 
   private def getSegmentationState(seg: ObsoleteSegmentation): SegmentationState = {

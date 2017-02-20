@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.StructType
 object RemoteAPIProtocol {
   case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
+  case class OperationNamesResponse(names: List[String])
   case class OperationRequest(
     checkpoint: String,
     path: List[String],
@@ -89,6 +90,7 @@ object RemoteAPIProtocol {
     path: String)
   case class DirectoryEntryResult(
     exists: Boolean,
+    isView: Boolean,
     isTable: Boolean,
     isProject: Boolean,
     isDirectory: Boolean,
@@ -116,6 +118,7 @@ object RemoteAPIProtocol {
 
   implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
+  implicit val wOperationNamesResponse = json.Json.writes[OperationNamesResponse]
   implicit val rOperationRequest = json.Json.reads[OperationRequest]
   implicit val rLoadNameRequest = json.Json.reads[LoadNameRequest]
   implicit val rRemoveNameRequest = json.Json.reads[RemoveNameRequest]
@@ -163,6 +166,7 @@ object RemoteAPIServer extends JsonServer {
   def loadTable = jsonPost(c.loadTable)
   def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
+  def getOperationNames = jsonPost(c.getOperationNames)
   def saveProject = jsonPost(c.saveProject)
   def saveTable = jsonPost(c.saveTable)
   def saveView = jsonPost(c.saveView)
@@ -200,14 +204,26 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   val graphDrawingController = new GraphDrawingController(env)
 
   def normalize(operation: String) = operation.replace("-", "").toLowerCase
+  def camelize(operation: String) = {
+    val words = operation.split("-").toList
+    val first = words.head.toLowerCase
+    val rest = words.drop(1).map(_.toLowerCase.capitalize)
+    first + rest.mkString("")
+  }
 
   lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
+  lazy val camelizedIds = ops.operationIds.map(id => camelize(id)).toList
+
+  def getOperationNames(user: User, request: Empty): OperationNamesResponse = {
+    return OperationNamesResponse(camelizedIds)
+  }
 
   def getDirectoryEntry(user: User, request: DirectoryEntryRequest): DirectoryEntryResult = {
     val entry = new DirectoryEntry(
       SymbolPath.parse(request.path))
     DirectoryEntryResult(
       exists = entry.exists,
+      isView = entry.isView,
       isTable = entry.isTable,
       isProject = entry.isProject,
       isDirectory = entry.isDirectory,
@@ -370,7 +386,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
     val schema = df.schema
-    val data = df.take(limit)
+    val data = if (limit >= 0) df.take(limit) else df.collect
     val rows = data.map { row =>
       schema.fields.zipWithIndex.flatMap {
         case (f, i) =>
@@ -463,7 +479,10 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     options: Map[String, String] = Map()): Future[Unit] = dataManager.async {
     val file = HadoopFile(path)
     file.assertWriteAllowedFrom(user)
-    val df = viewToDF(user, checkpoint)
+    val viewDF = viewToDF(user, checkpoint)
+    val df =
+      if (shufflePartitions.isEmpty) viewDF
+      else viewDF.coalesce(shufflePartitions.get)
     for (sp <- shufflePartitions) {
       df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
     }

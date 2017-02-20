@@ -12,6 +12,8 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
     templateUrl: 'entity.html',
     link: function(scope, element) {
       /* global Drop */
+      // Angular element for easier access of popup elements.
+      var dropElement = element.children('.menu');
       var drop = new Drop({
         target: element.children('.entity')[0],
         content: element.children('.menu')[0],
@@ -233,6 +235,8 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       scope.startRenaming = function() {
         scope.menu.renaming = true;
         scope.menu.renameTo = scope.title();
+        // Focus #rename-to once it has appeared.
+        $timeout(function() { dropElement.find('#rename-to').focus(); });
       };
       scope.applyRenaming = function() {
         if (scope.menu.renameTo !== scope.title()) {
@@ -240,6 +244,25 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           scope.menu.renaming = false;
           drop.close();
         }
+      };
+
+      scope.toggleShowEmoji = function() {
+        scope.showEmoji = !scope.showEmoji;
+        if (scope.showEmoji) {
+          scope.emojiList = util.get('/images/emoji/list.json');
+        }
+      };
+
+      scope.setIcon = function(icon) {
+        scope.side.setIcon(scope.kind, scope.title(), icon).then(function() {
+          drop.close();
+        });
+      };
+
+      scope.clearIcon = function() {
+        scope.side.setIcon(scope.kind, scope.title(), undefined).then(function() {
+          drop.close();
+        });
       };
     },
   };

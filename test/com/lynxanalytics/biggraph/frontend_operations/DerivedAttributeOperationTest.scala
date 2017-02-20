@@ -131,6 +131,20 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(testResults == resultShouldBe)
   }
 
+  // See #5567
+  test("The containsIdentifierJS function with attr names that are valid JS literals") {
+    assert(false == JSUtilities.containsIdentifierJS("1 + 1", "1"))
+    assert(false == JSUtilities.containsIdentifierJS("'a' + a", "'a'"))
+    assert(false == JSUtilities.containsIdentifierJS("a = 1", "b"))
+    assert(true == JSUtilities.containsIdentifierJS("a = 1", "a"))
+    assert(true == JSUtilities.containsIdentifierJS("$a = 1", "$a"))
+    assert(true == JSUtilities.containsIdentifierJS("_a = 1", "_a"))
+    assert(true == JSUtilities.containsIdentifierJS("\\u0061 = 1", "\\u0061"))
+    // The following should be true according to ES5 spec, but we don't get it.
+    // assert(true == JSUtilities.containsIdentifierJS("\\u0061 = 1", "a"))
+    assert(false == JSUtilities.containsIdentifierJS("a + b + c", "a + b"))
+  }
+
   test("Derived vertex attribute with substring conflict (#1676)") {
     run("Example Graph")
     run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
@@ -166,5 +180,56 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       (1, "Eve:Eve loves Adam:20.3#2"),
       (2, "Bob:Bob envies Adam:20.3#3"),
       (3, "Bob:Bob loves Eve:18.2#4")))
+  }
+
+  test("Derived vertex attribute (Vector of Strings)") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "[gender]"))
+    val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[String]]
+    assert(attr.rdd.collect.toMap == Map(
+      0 -> Vector("Male"), 1 -> Vector("Female"), 2 -> Vector("Male"), 3 -> Vector("Male")))
+  }
+
+  test("Derived vertex attribute (Vector of Doubles)") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[age]"))
+    val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]]
+    assert(attr.rdd.collect.toMap == Map(
+      0 -> Vector(20.3), 1 -> Vector(18.2), 2 -> Vector(50.3), 3 -> Vector(2.0)))
+  }
+
+  test("Derived vertex attribute (does not return vector)") {
+    run("Example Graph")
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute",
+        Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "gender"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[String]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript(gender) with values: " +
+      "{gender: Male} did not return a vector: Male")
+  }
+
+  test("Derived vertex attribute (wrong vector generic type)") {
+    run("Example Graph")
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute",
+        Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[gender]"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript([gender]) with values: " +
+      "{gender: Male} did not return a number in vector: NaN")
+  }
+
+  test("Derived vertex attribute (undefined in vector)") {
+    run("Example Graph")
+    val e = intercept[org.apache.spark.SparkException] {
+      run("Derived vertex attribute", Map("type" -> "vector of doubles",
+        "output" -> "vector", "defined_attrs" -> "false", "expr" -> "[income]"))
+      project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
+    }
+    assert(e.getCause.getMessage == "assertion failed: JavaScript([income]) with values: " +
+      "{income: undefined} returned undefined element in vector: null")
   }
 }

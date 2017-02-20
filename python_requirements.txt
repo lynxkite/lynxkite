@@ -6,6 +6,7 @@ mysqlclient
 prometheus_client
 python-dateutil
 PyYAML
+requests
 sqlalchemy
 # Dependencies for developing and testing
 autopep8

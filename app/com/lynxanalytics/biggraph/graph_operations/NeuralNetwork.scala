@@ -61,6 +61,7 @@ case class PredictViaNNOnGraphV1(
     gradientCheckOn: Boolean,
     networkLayout: String) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
+  override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "featureCount" -> featureCount,
@@ -146,7 +147,7 @@ case class PredictViaNNOnGraphV1(
     seed: Int): (Seq[ID], Map[ID, Seq[ID]], Seq[(ID, (Option[Double], Array[Double]))]) = {
     val data = dataIterator.toSeq
     val vertices = data.map(_._1)
-    if (selectionRadius < 0) { // Return the whole graph, for testing.
+    if (selectionRadius <= 0) { // Return the whole graph, for testing.
       (vertices, edgeLists, data)
     } else {
       val random = new util.Random(seed)

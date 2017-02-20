@@ -26,6 +26,8 @@ class DeadClass7
 class DeadClass8
 class DeadClass9
 class DeadClass10
+class DeadClass11
+class DeadClass12
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -187,7 +189,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("com.clearspring.analytics.stream.cardinality.HyperLogLogPlus$Format"))
     kryo.register(classOf[Array[org.apache.spark.sql.types.DataType]])
     kryo.register(classOf[java.sql.Timestamp])
-    kryo.register(Class.forName("org.apache.spark.sql.catalyst.expressions.GenericMutableRow"))
+    kryo.register(classOf[DeadClass11])
     kryo.register(Class.forName("org.apache.spark.sql.types.ArrayType"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.LogisticAggregator"))
@@ -251,9 +253,18 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.tree.TreeRegressorParams$$anonfun$3"))
     kryo.register(classOf[org.apache.spark.ml.tree.LeafNode])
     kryo.register(classOf[org.apache.spark.ml.tree.InternalNode])
-    kryo.register(Class.forName("org.apache.spark.ml.tree.HasFeatureSubsetStrategy$$anonfun$5"))
+    kryo.register(classOf[DeadClass12])
     kryo.register(classOf[org.apache.spark.ml.regression.GBTRegressionModel])
     kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams$$anonfun$10"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.CachedBatch"))
+    kryo.register(Class.forName("org.apache.spark.broadcast.TorrentBroadcast"))
+    kryo.register(classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage])
+    kryo.register(classOf[org.apache.spark.ml.tree.RandomForestParams$$anonfun$5])
+    kryo.register(classOf[org.apache.spark.storage.BroadcastBlockId])
+    kryo.register(Class.forName("org.apache.spark.ml.linalg.MatrixUDT"))
+    kryo.register(classOf[org.apache.spark.ml.linalg.Vector])
+    kryo.register(classOf[org.apache.spark.sql.types.BooleanType$])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.NullsFirst$])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -388,6 +399,8 @@ object BigGraphSparkContext {
         "file://" + LogController.getLogDir.getAbsolutePath)
       .set("spark.eventLog.enabled", "true")
       .set("spark.eventLog.compress", "true")
+      // Progress bars are not great in logs.
+      .set("spark.ui.showConsoleProgress", "false")
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
     if (useKryo) {
       sparkConf = sparkConf
@@ -405,7 +418,11 @@ object BigGraphSparkContext {
     }
     sparkConf = sparkConf.setAll(settings)
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
-    val sparkSession = spark.sql.SparkSession.builder().config(sparkConf).getOrCreate
+    val sparkSession = spark.sql.SparkSession
+      .builder()
+      .config(sparkConf)
+      .enableHiveSupport
+      .getOrCreate
     val sc = sparkSession.sparkContext
     sc.addSparkListener(new BigGraphSparkListener(sc))
     if (isMonitoringEnabled) {

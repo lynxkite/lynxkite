@@ -74,6 +74,6 @@ class HDFS:
         .replace('[', '\\[').replace(']', '\\]')
         .replace('*', '\\*').replace('?', '\\?')
         .replace('{', '\\{').replace('}', '\\}'))
-    cmd = ['hadoop', 'fs', '-rm', '-r', escaped]
+    cmd = ['hadoop', 'fs', '-rm', '-r', '-skipTrash', escaped]
     print(cmd)
     subprocess.check_call(cmd, env=env)

@@ -1,3 +1,26 @@
+
+sql-box #sql-box-main.size-full {
+  width: 100%;
+}
+
+sql-box #sql-box-main.size-half {
+  width: 50%;
+  float: left;
+}
+
+sql-box table-browser {
+  width: 50%;
+  float: left;
+}
+
+/* This only comes into play when the window is resized to
+   a very narrow width. In that case, this tells the
+   browser to avoid breaking line between the buttons as long
+   as possible. */
+div.sql-box-button-group {
+  display: inline-block;
+}
+
 .section-button {
   cursor: pointer;
   user-select: none;
@@ -54,4 +77,18 @@ input.form-control#max-rows {
   width: 5px;
   height: 5px;
   overflow: visible;
+}
+
+.sql-type {
+  font-weight: normal;
+  font-style: italic;
+  color: #666;
+}
+
+.no-break {
+  white-space: nowrap;
+}
+
+.result-table {
+  margin-top: 10px;
 }

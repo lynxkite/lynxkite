@@ -29,6 +29,7 @@ GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/model       com.lynxanalytics.biggraph.serving.ProductionJsonServer.model
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
+GET  /ajax/getTableBrowserNodes     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
 POST /ajax/exportSQLQueryToTable   com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToTable
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
@@ -80,6 +81,8 @@ GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 
 GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
 POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
+GET /ajax/getBackupSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getBackupSettings
+GET /ajax/backup com.lynxanalytics.biggraph.serving.ProductionJsonServer.backup
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
 POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath
@@ -96,6 +99,7 @@ POST /remote/removeName com.lynxanalytics.biggraph.serving.RemoteAPIServer.remov
 POST /remote/loadTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadTable
 POST /remote/loadView com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadView
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
+POST /remote/getOperationNames com.lynxanalytics.biggraph.serving.RemoteAPIServer.getOperationNames
 POST /remote/saveProject com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveProject
 POST /remote/saveTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveTable
 POST /remote/saveView com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveView

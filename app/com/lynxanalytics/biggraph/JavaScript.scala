@@ -8,10 +8,22 @@ case class JavaScript(expression: String) {
   def nonEmpty = expression.nonEmpty
 
   def contextString(mapping: Map[String, Any]): String = {
-    s"$this with values: {" + mapping.map { case (k, v) => s"$k: $v" }.mkString(", ") + "}"
+    s"$this with values: {" + mapping.map {
+      case (k, v: javascript.Undefined) => s"$k: undefined"
+      case (k, v) => s"$k: $v"
+    }.mkString(", ") + "}"
   }
 
   def evaluator = new JavaScriptEvaluator(expression)
+}
+
+object JavaScript {
+  def javaToJS(cx: javascript.Context, scope: javascript.Scriptable, value: Any): AnyRef = {
+    value match {
+      case value: Array[_] => cx.newArray(scope, value.map(i => javaToJS(cx, scope, i)))
+      case _ => javascript.Context.javaToJS(value, scope)
+    }
+  }
 }
 
 // JavaScriptEvaluator maintains a Rhino context. So it's not thread-safe and not Serializable.
@@ -29,13 +41,12 @@ class JavaScriptEvaluator private[biggraph] (expression: String) {
   javascript.ScriptableObject.putProperty(sharedScope, "util", JavaScriptUtilities)
   sharedScope.sealObject()
 
-  private def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
+  def evaluate(mapping: Map[String, Any]): Option[AnyRef] = {
     val scope = cx.newObject(sharedScope)
     scope.setPrototype(sharedScope)
     scope.setParentScope(null)
     for ((name, value) <- mapping) {
-      val jsValue = javascript.Context.javaToJS(value, scope)
-      javascript.ScriptableObject.putProperty(scope, name, jsValue)
+      javascript.ScriptableObject.putProperty(scope, name, JavaScript.javaToJS(cx, scope, value))
     }
     val jsResult = script.exec(cx, scope)
     jsResult match {

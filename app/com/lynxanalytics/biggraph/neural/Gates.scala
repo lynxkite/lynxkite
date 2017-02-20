@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.neural
 
 import breeze.stats.distributions.RandBasis
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 trait Adder[T] {
   def add(a: T, b: T): T
@@ -54,8 +55,10 @@ object Gates {
   */
   trait Gate[Output] extends Product {
     // Plain toString on case classes is enough to uniquely identify vectors.
-    private[neural] lazy val id = this.toString
+    private[neural] lazy val id = Timestamp.toString
+    private[neural] var activationCount: Int = 0
     private[neural] def forward(fm: ForwardMemory): Output
+    private[neural] var receivedGradientCount: Int = 0
     private[neural] def backward(bm: BackwardMemory, gradient: Output): Unit
   }
   trait VectorGate extends Gate[VectorGraph] {
@@ -151,17 +154,19 @@ object Gates {
   case class NeighborsVectorCollection(v: VectorGate) extends VectorsGate {
     def forward(fm: ForwardMemory) = {
       import breeze.linalg._
+      val vd = fm.activation(v)
       fm.vertices.map { id =>
-        if (fm.edges(id) == List()) id -> List(0).
-          map(_ => DenseVector.zeros[Double](fm.network.size))
-        else id -> fm.edges(id).map(fm.activation(v)(_))
+        if (fm.edges(id) == List()) id -> List(DenseVector.zeros[Double](fm.network.size))
+        else id -> fm.edges(id).map(vd(_))
       }.toMap
     }
     def backward(bm: BackwardMemory, gradients: VectorsGraph) = {
       val ngrad: VectorGraph = gradients.toSeq.flatMap {
         case (id, gs) => bm.edges(id).zip(gs)
       }.groupBy(_._1).mapValues(_.map(_._2).reduce(_ + _))
-      if (ngrad.nonEmpty) bm.add(v, ngrad)
+      val paddedNgrad = bm.vertices.map(id =>
+        id -> ngrad.getOrElse(id, DenseVector.zeros[Double](bm.network.size))).toMap
+      bm.add(v, paddedNgrad)
     }
   }
   case class Input(name: String) extends VectorGate {
@@ -277,10 +282,18 @@ private case class ForwardMemory(
     vertices.map { id => id -> (g1(id), g2(id)) }.toMap
   }
   def activation(v: VectorGate): VectorGraph = {
-    vectorCache.getOrElseUpdate(v.id, v.forward(this))
+    v.activationCount += 1
+    vectorCache.getOrElseUpdate(v.id, {
+      v.activationCount = 1
+      v.forward(this)
+    })
   }
   def activation(vs: VectorsGate): VectorsGraph = {
-    vectorsCache.getOrElseUpdate(vs.id, vs.forward(this))
+    vs.activationCount += 1
+    vectorsCache.getOrElseUpdate(vs.id, {
+      vs.activationCount = 1
+      vs.forward(this)
+    })
   }
   def apply(m: TrainableMatrix): DoubleMatrix = network(m)
   def apply(v: TrainableVector): DoubleVector = network(v)(::, 0)
@@ -314,13 +327,25 @@ private case class BackwardMemory(
 
   def add(v: VectorGate, gradient: VectorGraph): Unit = {
     vectorGradients(v.id) =
-      vectorGradients.get(v.id).map(_ + gradient).getOrElse(gradient)
-    v.backward(this, gradient)
+      vectorGradients.get(v.id).map(_ + gradient).getOrElse {
+        v.receivedGradientCount = 0
+        gradient
+      }
+    v.receivedGradientCount += 1
+    if (v.receivedGradientCount == v.activationCount) {
+      v.backward(this, vectorGradients(v.id))
+    }
   }
   def add(vs: VectorsGate, gradients: VectorsGraph): Unit = {
     vectorsGradients(vs.id) =
-      vectorsGradients.get(vs.id).map(_ + gradients).getOrElse(gradients)
-    vs.backward(this, gradients)
+      vectorsGradients.get(vs.id).map(_ + gradients).getOrElse {
+        vs.receivedGradientCount = 0
+        gradients
+      }
+    vs.receivedGradientCount += 1
+    if (vs.receivedGradientCount == vs.activationCount) {
+      vs.backward(this, vectorsGradients(vs.id))
+    }
   }
   def add(m: TrainableMatrix, gradient: DoubleMatrix): Unit = {
     trainedGradients(m.name) =
