@@ -177,7 +177,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
 
     val state = new java.util.concurrent.atomic.AtomicReference[Integer](0)
-    dataManager.loggedFuture {
+    val f = dataManager.loggedFuture {
       Thread.sleep(1000L * 15)
       state.set(1)
     }
