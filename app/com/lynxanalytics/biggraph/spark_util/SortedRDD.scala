@@ -457,6 +457,9 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
   override def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
     mapValuesRecipe(f).trustedUnique
 
+  override def flatMapValues[U](f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
+    flatMapValuesRecipe(f).trustedUnique
+
   override def filter(f: ((K, V)) => Boolean): UniqueSortedRDD[K, V] =
     filterRecipe(f).trustedUnique
 

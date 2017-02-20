@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.lynxanalytics.biggraph.graph_api._
 
-import com.lynxanalytics.biggraph.table.TableRelation
+import com.lynxanalytics.biggraph.table.BaseRelation
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -34,12 +34,7 @@ class SQLHelper(
     sqlContext: sql.SQLContext,
     sparkContext: spark.SparkContext,
     columnListSaver: Seq[(UUID, String)] => Unit)
-      extends TableRelation(table, sqlContext)(null) {
-
-    // TableScan
-    override def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
-
-    // PrunedScan
+      extends BaseRelation(table, sqlContext) {
     override def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row] = {
       val guids = requiredColumns
         .toSeq
@@ -114,7 +109,7 @@ object SQLHelper {
 
   // I really don't understand why this isn't part of the spark API, but I can't find it.
   // So here it goes.
-  private def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
+  def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
     import scala.reflect.runtime.universe._
     dataType match {
       case at: types.ArrayType => TypeTagUtil.arrayTypeTag(typeTagFromDataType(at.elementType))

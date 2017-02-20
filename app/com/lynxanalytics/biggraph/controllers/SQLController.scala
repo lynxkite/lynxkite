@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.table.TableImport
@@ -125,7 +126,8 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
-case class SQLQueryResult(header: List[String], data: List[List[String]])
+case class SQLColumn(name: String, dataType: String)
+case class SQLQueryResult(header: List[SQLColumn], data: List[List[String]])
 
 case class SQLExportToTableRequest(
   dfSpec: DataFrameSpec,
@@ -379,6 +381,23 @@ case class HiveImportRequest(
   def notes = s"Imported from Hive table ${hiveTable}."
 }
 
+// path denotes a directory entry (table/view/project/directory), or a
+// a segmentation or an implicit project table. Segmentations and implicit
+// project tables have the same form of path but occupy separate namespaces.
+// Therefore implict tables can only be accessed by specifying
+// isImplictTable = true. (Implicit tables are the vertices, edge_attributes,
+// and etc. tables that are automatically parts of projects.)
+case class TableBrowserNodeRequest(
+  path: String,
+  isImplicitTable: Boolean = false)
+
+case class TableBrowserNode(
+  absolutePath: String,
+  name: String,
+  objectType: String,
+  columnType: String = "")
+case class TableBrowserNodeResponse(list: Seq[TableBrowserNode])
+
 object HiveImportRequest extends FromJson[HiveImportRequest] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
   override def fromJson(j: JsValue): HiveImportRequest = json.Json.fromJson(j).get
@@ -427,10 +446,98 @@ class SQLController(val env: BigGraphEnvironment) {
   def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
+  // Return list of nodes for the table browser. The nodes can be:
+  // - segmentations and implicit tables of a project
+  // - columns of a view
+  // - columns of a table
+  def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
+    val pathParts = SubProject.splitPipedPath(request.path)
+    val entry = DirectoryEntry.fromName(pathParts.head)
+    entry.assertReadAllowedFrom(user)
+    val frame = entry.asObjectFrame
+    if (frame.isView) {
+      assert(pathParts.length == 1)
+      getViewColumns(user, frame.asViewFrame)
+    } else if (frame.isTable) {
+      assert(pathParts.length == 1)
+      getTableColumns(frame, Seq("vertices"))
+    } else if (frame.isProject) {
+      assert(pathParts.length >= 1)
+      if (request.isImplicitTable) {
+        getTableColumns(frame, pathParts.tail)
+      } else {
+        getProjectTables(frame, pathParts.tail)
+      }
+    } else {
+      ???
+    }
+  }
+
+  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
+    val viewer = frame.viewer.offspringViewer(subPath)
+
+    val implicitTables = viewer.implicitTableNames.toSeq.map {
+      name =>
+        TableBrowserNode(
+          absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(name)).mkString("|"),
+          name = name,
+          objectType = "table")
+    }
+    val subProjects = viewer.sortedSegmentations.map {
+      segmentation =>
+        TableBrowserNode(
+          absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+          name = segmentation.segmentationName,
+          objectType = "segmentation"
+        )
+    }
+
+    TableBrowserNodeResponse(list = implicitTables ++ subProjects)
+  }
+
+  def getViewColumns(user: serving.User, frame: ViewFrame): TableBrowserNodeResponse = {
+    val viewRecipe = frame.getRecipe
+    val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
+    TableBrowserNodeResponse(
+      list = df.schema.fields.map { field =>
+        TableBrowserNode(
+          absolutePath = "",
+          name = field.name,
+          objectType = "column",
+          columnType = ProjectViewer.feTypeName(
+            SQLHelper.typeTagFromDataType(field.dataType))
+        )
+      }
+    )
+  }
+
+  def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): TableBrowserNodeResponse = {
+    val viewer = frame.viewer
+    val table = Table(AbsoluteTablePath(tablePath), viewer)
+
+    TableBrowserNodeResponse(
+      list = table.columns.toIterator.map {
+        case (name, attr) =>
+          TableBrowserNode(
+            absolutePath = "",
+            name = name,
+            objectType = "column",
+            columnType = ProjectViewer.feTypeName(attr)
+          )
+      }.toSeq
+    )
+  }
+
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     SQLQueryResult(
-      header = df.columns.toList,
+      header = df.schema.toList.map {
+        field =>
+          SQLColumn(
+            field.name,
+            ProjectViewer.feTypeName(SQLHelper.typeTagFromDataType(field.dataType))
+          )
+      },
       data = df.head(request.maxRows).map {
         row =>
           row.toSeq.map {

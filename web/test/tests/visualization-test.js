@@ -48,24 +48,38 @@ module.exports = function(fw) {
       }});
   }
 
-  function positions(graph) {
-    var pos = [];
-    for (var i = 0; i < graph.vertices.length; ++i) {
-      pos.push(graph.vertices[i].pos);
-    }
-    return pos;
-  }
-
   // Moves all positions horizontally so that the x coordinate of the leftmost
   // position becomes zero. (Inputs and outputs string lists.)
-  function normalize(positions) {
+  // Shifts in the x coordinate can happen when a second visualization is added, or due to
+  // scrollbars.
+  function normalized(positions) {
     var i, minx;
     for (i = 1; i < positions.length; ++i) {
       var p = positions[i];
       minx = (minx === undefined || p.x < minx) ? p.x : minx;
     }
+    var result = [];
     for (i = 0; i < positions.length; ++i) {
-      positions[i].x -= minx;
+      result.push({ x: positions[i].x - minx, y: positions[i].y });
+    }
+    return result;
+  }
+
+  function positions(graph) {
+    var pos = [];
+    for (var i = 0; i < graph.vertices.length; ++i) {
+      pos.push(graph.vertices[i].pos);
+    }
+    return normalized(pos);
+  }
+
+  // Compare the coordinates with given precision. The compared coordinates
+  // have to match on `precision` digits. For default we use 8 digits.
+  function checkGraphPositions(saved, graph, precision) {
+    precision = precision || 8;
+    for(var i = 0; i < saved.length; ++i) {
+      expect(saved[i].x).toBeCloseTo(graph[i].x, precision);
+      expect(saved[i].y).toBeCloseTo(graph[i].y, precision);
     }
   }
 
@@ -120,7 +134,7 @@ module.exports = function(fw) {
           { label: 'Eve' },
           { label: 'Bob' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       gender.visualizeAs('icon');
@@ -131,7 +145,7 @@ module.exports = function(fw) {
           { icon: 'female' },
           { icon: 'male' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       income.visualizeAs('color');
@@ -142,7 +156,7 @@ module.exports = function(fw) {
           { color: GRAY },
           { color: RED },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('size');
@@ -153,7 +167,7 @@ module.exports = function(fw) {
           { size: '<15' },
           { size: '>15' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('opacity');
@@ -164,7 +178,7 @@ module.exports = function(fw) {
           { opacity: '<0.5' },
           { opacity: '1' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('label-size');
@@ -175,7 +189,7 @@ module.exports = function(fw) {
           { labelSize: '<15' },
           { labelSize: '>15' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('label-color');
@@ -186,7 +200,7 @@ module.exports = function(fw) {
           { labelColor: BLUE },
           { labelColor: RED },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // There is no URL attribute in the example graph. Since we only check the "href"
@@ -199,7 +213,7 @@ module.exports = function(fw) {
           { image: 'Eve' },
           { image: 'Bob' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // Try removing some visualizations.
@@ -214,7 +228,7 @@ module.exports = function(fw) {
           { opacity: '1', labelSize: '15', labelColor: '', image: null },
           { opacity: '1', labelSize: '15', labelColor: '', image: null },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // Edge attributes.
@@ -227,7 +241,7 @@ module.exports = function(fw) {
           { width: '>6' },
           { width: '>6' },
         ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       weight.visualizeAs('edge-color');
@@ -239,7 +253,7 @@ module.exports = function(fw) {
           { color: 'rgb(161, 53, 125)' },
           { color: RED },
         ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       comment.visualizeAs('edge-label');
@@ -251,7 +265,7 @@ module.exports = function(fw) {
           { label: 'Bob envies Adam' },
           { label: 'Bob loves Eve' },
         ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // Location attributes.
@@ -410,7 +424,6 @@ module.exports = function(fw) {
       var leftPositions;
       lib.visualization.graphData().then(function(graph) {
         leftPositions = positions(graph);
-        normalize(leftPositions);
         expect(graph.vertices.length).toBe(3);
       });
 
@@ -423,7 +436,6 @@ module.exports = function(fw) {
           return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
         }
         var pos = positions(graph);
-        normalize(pos);
         for (var i = 0; i < leftPositions.length; ++i) {
           var found = false;
           for (var j = 0; j < pos.length; ++j) {

@@ -105,6 +105,8 @@
   <div ng-repeat="directory in data.directories"
     id="directory-{{ pathInside(directory) | id }}"
     class="entry directory-entry" href ng-click="enterDirectory($event, directory)">
+    <dir-entry-icon objectType="directory" class="icon">
+    </dir-entry-icon>
     <span class="icon glyphicon glyphicon-folder-open"></span>
     <span class="lead">
       <item-name-and-menu
@@ -121,20 +123,13 @@
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry clearfix"
     href
-    ng-click="projectClick($event, object)"
+    ng-click="objectClick($event, object)"
     ng-class="{ error: object.error }">
-    <span
-      ng-if="isProject(object)"
-      class="icon glyphicon glyphicon-file pull-left">
-    </span>
-    <span
-      ng-if="isTable(object)"
-      class="icon glyphicon glyphicon-align-justify pull-left">
-    </span>
-    <span
-      ng-if="isView(object)"
-      class="icon glyphicon glyphicon-eye-close pull-left">
-    </span>
+
+    <dir-entry-icon
+        object-type="object.objectType"
+        class="pull-left icon">
+    </dir-entry-icon>
     <span class="lead">
       <item-name-and-menu
         menu="menu"

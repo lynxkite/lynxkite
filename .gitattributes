@@ -1,2 +1,2 @@
-# Disable end of line normalization. Avoids broken shell scripts when checkout happens on Windows.
-* -text
+# Ignore the notebook files for language statistics.
+notebooks/* linguist-vendored
