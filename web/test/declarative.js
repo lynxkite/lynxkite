@@ -161,14 +161,12 @@ function testsFrom(testsDir) {
   return fw;
 }
 var authFw = testsFrom('auth-tests');
-var interfaceFw = testsFrom('interface-tests');
 var authlessFw = testsFrom('tests');
 // Set 'solo' modes.
 // Authentication tests are unaffected by authless 'solo' labels, because
 // all the authless tests depend on the login performed by the auth tests.
-authFw.setSolo(authFw.isSolo() || interfaceFw.isSolo());
-interfaceFw.setSolo(authFw.isSolo() || interfaceFw.isSolo() || authlessFw.isSolo());
-authlessFw.setSolo(authFw.isSolo() || interfaceFw.isSolo() || authlessFw.isSolo());
+authFw.setSolo(authFw.isSolo());
+authlessFw.setSolo(authFw.isSolo() || authlessFw.isSolo());
 
 var startDate = (new Date()).toString();
 var screenshots = [];
@@ -212,7 +210,6 @@ console.log('Starting tests at: ' + startDate);
 // out and in every time you reach the empty splash state.
 if (process.env.HTTPS_PORT) {
   authFw.runAll();
-  interfaceFw.runAll();
 }
 authlessFw.runAll();
 authlessFw.cleanup();
