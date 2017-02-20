@@ -172,7 +172,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(df.count == 5)
   }
 
-  test("waitAllFutures waits for futures") {
+  ignore("waitAllFutures waits for futures") {
     val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
 
