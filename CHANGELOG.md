@@ -11,6 +11,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Tab-completion for LynxKite operations works in Python command-line
    and in Jupyter notebooks.
  - You can now filter for position (Double, Double) attributes.
+ - Added _Segment by geographical proximity_ operation to segment vertices using Shapefiles and
+   coordinate vertex attributes. Can be used e.g. to segment by geo regions or points of interests.
 
 ### 1.12.1
 
