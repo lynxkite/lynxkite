@@ -40,6 +40,10 @@ angular
         controller: 'ProjectViewCtrl',
         reloadOnSearch: false,
       })
+      .when('/boxproject/:project*', {
+        templateUrl: 'scripts/boxes-gui/box-project.html',
+        controller: 'BoxProjectCtrl',
+      })
       .when('/demoMode', {
         templateUrl: 'views/demoMode.html',
         controller: 'DemoModeCtrl',
