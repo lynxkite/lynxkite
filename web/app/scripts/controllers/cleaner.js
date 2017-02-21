@@ -3,8 +3,11 @@
 
 angular.module('biggraph')
   .controller('CleanerCtrl', function ($scope, util) {
-    $scope.inProgress = 0;
+    $scope.inProgress = 1;
     $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
+    $scope.fileStatus.finally(function() {
+      $scope.inProgress -= 1;
+    });
 
     $scope.moveToTrash = function(method) {
       $scope.inProgress += 1;
