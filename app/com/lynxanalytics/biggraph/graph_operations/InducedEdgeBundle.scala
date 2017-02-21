@@ -68,8 +68,8 @@ object InducedEdgeBundle extends OpFromJson {
   def fromJson(j: JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }
 
-// A wrapper class for an induced RDD and a partitioner which can handle it adequately.
-case class InducedRDD[T: ClassTag](val rdd: RDD[T], val partitioner: Partitioner) {
+// A wrapper class for an RDD and a partitioner which can handle it adequately.
+case class InducedRDD[T: ClassTag](rdd: RDD[T], partitioner: Partitioner) {
   def map[U](f: (T) ⇒ U)(implicit ct: ClassTag[U]): InducedRDD[U] = InducedRDD(rdd.map(f), partitioner)
 }
 
