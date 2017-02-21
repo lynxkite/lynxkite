@@ -119,7 +119,6 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           edgeBundleId: scope.kind === 'edge-attribute' ? scope.side.project.edgeBundle : '',
           sampleSize: scope.precise ? -1 : 50000,
         };
-        console.log(scope.side.axisOptions(scope.attributeKind(), scope.entity.title));
         scope.histogram = util.get('/ajax/histo', q);
         $timeout(function() {
           // The popup may need to move.
