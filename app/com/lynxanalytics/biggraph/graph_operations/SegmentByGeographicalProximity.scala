@@ -105,7 +105,7 @@ case class SegmentByGeographicalProximity(
             case g: com.vividsolutions.jts.geom.Geometry => g.isWithinDistance(
               factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
             case _ =>
-              assert(!onlyknownFeatures, "Unknown feature found in Shapefile.")
+              assert(!onlyknownFeatures, "Unknown shape type found in Shapefile.")
               false
           }
       }.map { case (sid, _, _) => sid }
