@@ -3594,6 +3594,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
+      Choice("onlyKnownFeatures", "Only allow known features", options = FEOption.bools),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(
       vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
@@ -3601,7 +3602,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val shapeFilePath = getShapeFilePath(params)
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
-      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val op = graph_operations.LookupRegion(
+        shapeFilePath,
+        params("attribute"),
+        params.getOrElse("onlyKnownFeatures", "true").toBoolean)
       val result = op(op.coordinates, position).result
       project.newVertexAttribute(params("output"), result.attribute)
     }
@@ -3613,7 +3617,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       NonNegDouble("distance", "Distance", defaultValue = "0.0"),
-      Choice("onlyknownFeatures", "Only allow known features", options = FEOption.bools))
+      Choice("onlyKnownFeatures", "Only allow known features", options = FEOption.bools))
     def enabled = FEStatus.assert(
       vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
@@ -3626,7 +3630,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         shapeFilePath,
         params("distance").toDouble,
         shapefile.attrNames,
-        params("onlyknownFeatures").toBoolean)
+        params("onlyKnownFeatures").toBoolean)
       val result = op(op.coordinates, position).result
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.segments, idAttr = "id")

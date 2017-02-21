@@ -13,6 +13,7 @@ import org.opengis.geometry.BoundingBox
 import scala.collection.immutable.Seq
 
 object LookupRegion extends OpFromJson {
+  private val onlyKnownFeaturesParameter = NewParameter[Boolean]("onlyKnownFeatures", true)
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
@@ -22,16 +23,21 @@ object LookupRegion extends OpFromJson {
     val attribute = vertexAttribute[String](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = LookupRegion(
-    (j \ "shapefile").as[String], (j \ "attribute").as[String])
+    (j \ "shapefile").as[String],
+    (j \ "attribute").as[String],
+    onlyKnownFeaturesParameter.fromJson(j))
 }
 
 import com.lynxanalytics.biggraph.graph_operations.LookupRegion._
 
-case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaGraphOp[Input, Output] {
+case class LookupRegion(shapefile: String, attribute: String, onlyKnownFeatures: Boolean) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input()
-  override def toJson = Json.obj("shapefile" -> shapefile, "attribute" -> attribute)
+  override def toJson = Json.obj(
+    "shapefile" -> shapefile,
+    "attribute" -> attribute) ++
+    LookupRegion.onlyKnownFeaturesParameter.toJson(onlyKnownFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -67,7 +73,9 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
                 g.contains(new org.geotools.geometry.DirectPosition2D(lon, lat))
               case g: com.vividsolutions.jts.geom.Geometry =>
                 g.contains(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)))
-              case _ => false
+              case _ =>
+                assert(!onlyKnownFeatures, "Unknown shape type found in Shapefile.")
+                false
             })
         }.map(_._3)
     })
