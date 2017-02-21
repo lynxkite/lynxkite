@@ -32,6 +32,6 @@ Vertices are connected to geographical segments if within this distance. The dis
 the same metric and coordinate reference system as the features within the Shapefile.
 
 [[onlyknownFeatures]]: Only allow known features::
-If set `true`, throws an error in case the Shapefile contains unknown features (shapes). Otherwise
+If set `true`, throws an error in case the Shapefile contains unknown shape types. Otherwise
 silently ignores them.
 ====

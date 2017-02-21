@@ -15,7 +15,7 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
     Files.createDirectories(Paths.get(shapeFilesDirPath))
     for (ext <- Seq(".shp", ".shx", ".dbf")) {
       val oldPath = getClass.getResource("/graph_operations/FindRegionTest/" + name + ext).getPath
-      val newPath = shapeFilesDirPath + "/" + name + ext
+      val newPath = s"$shapeFilesDirPath/$name$ext"
       Files.createSymbolicLink(Paths.get(newPath), Paths.get(oldPath))
     }
     shapeFilesDirPath + "/" + name + ".shp"
