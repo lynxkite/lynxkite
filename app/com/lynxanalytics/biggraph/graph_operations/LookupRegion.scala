@@ -1,16 +1,13 @@
 // Looks up a location in a Shapefile and returns a specified Shapefile attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
-import java.io.File
-
 import com.lynxanalytics.biggraph.graph_api.DataSet
 import com.lynxanalytics.biggraph.graph_api.OutputBuilder
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Shapefile
+import com.lynxanalytics.biggraph.graph_util.Shapefile._
 
-import org.geotools.data.FileDataStoreFinder
-import org.geotools.data.simple.SimpleFeatureIterator
-import org.opengis.feature.simple.SimpleFeature
 import org.opengis.geometry.BoundingBox
 
 import scala.collection.immutable.Seq
@@ -33,12 +30,6 @@ import com.lynxanalytics.biggraph.graph_operations.LookupRegion._
 case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
 
-  // This class makes it possible to use scalaic tools on SimpleFeatureIterators automatically
-  implicit class ScalaFeatureIterator(it: SimpleFeatureIterator) extends Iterator[SimpleFeature] {
-    override def hasNext: Boolean = it.hasNext
-    override def next(): SimpleFeature = it.next()
-  }
-
   @transient override lazy val inputs = new Input()
   override def toJson = Json.obj("shapefile" -> shapefile, "attribute" -> attribute)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -49,11 +40,11 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
               rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
 
-    val dataStore = FileDataStoreFinder.getDataStore(new File(shapefile))
-    val iterator = dataStore.getFeatureSource.getFeatures().features()
+    val sf = Shapefile(shapefile)
+    sf.assertHasAttributeName(attribute)
     // Only keep necessary values to minimize serialization. BoundingBox is for speed optimization.
     val regionAttributeMapping: Seq[(BoundingBox, AnyRef /* Geometry */ , String)] =
-      iterator.map(feature =>
+      sf.iterator.map(feature =>
         (
           feature.getDefaultGeometryProperty.getBounds,
           feature.getDefaultGeometryProperty.getValue,
@@ -61,8 +52,7 @@ case class LookupRegion(shapefile: String, attribute: String) extends TypedMetaG
           Option(feature.getAttribute(attribute)).map(_.toString())
         )
       ).filter(_._3.nonEmpty).map { case (b, g, a) => (b, g, a.get) }.toVector
-    iterator.close()
-    dataStore.dispose()
+    sf.close()
 
     val factory = new com.vividsolutions.jts.geom.GeometryFactory()
     output(o.attribute, inputs.coordinates.rdd.flatMapValues {
