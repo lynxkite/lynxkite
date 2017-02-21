@@ -29,7 +29,7 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
       "position" -> "location",
       "shapefile" -> shapePath,
       "distance" -> "0.1",
-      "onlyKnownFeatures" -> "true"))
+      "ignoreUnsupportedShapes" -> "false"))
     val seg = project.segmentation("timezones")
     // Assert that the TZID segment attribute is created.
     assert(seg.vertexAttributes("TZID").runtimeSafeCast[String].rdd.count == 418)
