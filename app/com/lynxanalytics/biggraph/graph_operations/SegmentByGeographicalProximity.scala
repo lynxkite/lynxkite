@@ -34,7 +34,7 @@ object SegmentByGeographicalProximity extends OpFromJson {
     (j \ "shapefile").as[String],
     (j \ "distance").as[Double],
     (j \ "attrNames").as[Seq[String]],
-    (j \ "onlyKnownFeatures").as[Boolean])
+    (j \ "ignoreUnsupportedShapes").as[Boolean])
 }
 
 import com.lynxanalytics.biggraph.graph_operations.SegmentByGeographicalProximity._
@@ -43,7 +43,7 @@ case class SegmentByGeographicalProximity(
     shapefile: String,
     distance: Double,
     attrNames: Seq[String],
-    onlyKnownFeatures: Boolean) extends TypedMetaGraphOp[Input, Output] {
+    ignoreUnsupportedShapes: Boolean) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input(attrNames)
@@ -51,7 +51,7 @@ case class SegmentByGeographicalProximity(
     "shapefile" -> shapefile,
     "distance" -> distance,
     "attrNames" -> attrNames,
-    "onlyKnownFeatures" -> onlyKnownFeatures)
+    "ignoreUnsupportedShapes" -> ignoreUnsupportedShapes)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -105,7 +105,7 @@ case class SegmentByGeographicalProximity(
             case g: com.vividsolutions.jts.geom.Geometry => g.isWithinDistance(
               factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
             case _ =>
-              assert(!onlyKnownFeatures, "Unknown shape type found in Shapefile.")
+              assert(ignoreUnsupportedShapes, "Unknown shape type found in Shapefile.")
               false
           }
       }.map { case (sid, _, _) => sid }

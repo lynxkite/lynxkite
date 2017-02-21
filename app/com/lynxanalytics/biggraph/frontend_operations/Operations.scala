@@ -3594,7 +3594,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
-      Choice("onlyKnownFeatures", "Only allow known features", options = FEOption.bools),
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
+        options = FEOption.boolsDefaultFalse, mandatory = false),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(
       vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
@@ -3605,7 +3606,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val op = graph_operations.LookupRegion(
         shapeFilePath,
         params("attribute"),
-        params.getOrElse("onlyKnownFeatures", "true").toBoolean)
+        params.getOrElse("ignoreUnsupportedShapes", "false").toBoolean)
       val result = op(op.coordinates, position).result
       project.newVertexAttribute(params("output"), result.attribute)
     }
@@ -3617,7 +3618,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       NonNegDouble("distance", "Distance", defaultValue = "0.0"),
-      Choice("onlyKnownFeatures", "Only allow known features", options = FEOption.bools))
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
+        options = FEOption.boolsDefaultFalse))
     def enabled = FEStatus.assert(
       vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
@@ -3630,7 +3632,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         shapeFilePath,
         params("distance").toDouble,
         shapefile.attrNames,
-        params("onlyKnownFeatures").toBoolean)
+        params("ignoreUnsupportedShapes").toBoolean)
       val result = op(op.coordinates, position).result
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(result.segments, idAttr = "id")

@@ -10,7 +10,7 @@ class SegmentByGeographicalProximityTest extends FunSuite with TestGraphOp {
     val shapePath = getClass.getResource("/graph_operations/FindRegionTest/earth.shp").getPath
     val shapeFile = Shapefile(shapePath)
     val ex = ExampleGraph()().result
-    val op = SegmentByGeographicalProximity(shapePath, 0.1, shapeFile.attrNames, onlyKnownFeatures = true)
+    val op = SegmentByGeographicalProximity(shapePath, 0.1, shapeFile.attrNames, ignoreUnsupportedShapes = false)
     val result = op(op.coordinates, ex.location).result
     assert(result.segments.rdd.count == 418)
     // Test that an overlapping segment was created. The actual values are checked in the

@@ -13,7 +13,8 @@ import org.opengis.geometry.BoundingBox
 import scala.collection.immutable.Seq
 
 object LookupRegion extends OpFromJson {
-  private val onlyKnownFeaturesParameter = NewParameter[Boolean]("onlyKnownFeatures", true)
+  private val ignoreUnsupportedShapesParameter =
+    NewParameter[Boolean]("ignoreUnsupportedShapes", false)
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
@@ -25,19 +26,22 @@ object LookupRegion extends OpFromJson {
   def fromJson(j: JsValue) = LookupRegion(
     (j \ "shapefile").as[String],
     (j \ "attribute").as[String],
-    onlyKnownFeaturesParameter.fromJson(j))
+    ignoreUnsupportedShapesParameter.fromJson(j))
 }
 
 import com.lynxanalytics.biggraph.graph_operations.LookupRegion._
 
-case class LookupRegion(shapefile: String, attribute: String, onlyKnownFeatures: Boolean) extends TypedMetaGraphOp[Input, Output] {
+case class LookupRegion(
+    shapefile: String,
+    attribute: String,
+    ignoreUnsupportedShapes: Boolean) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input()
   override def toJson = Json.obj(
     "shapefile" -> shapefile,
     "attribute" -> attribute) ++
-    LookupRegion.onlyKnownFeaturesParameter.toJson(onlyKnownFeatures)
+    LookupRegion.ignoreUnsupportedShapesParameter.toJson(ignoreUnsupportedShapes)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -74,7 +78,7 @@ case class LookupRegion(shapefile: String, attribute: String, onlyKnownFeatures:
               case g: com.vividsolutions.jts.geom.Geometry =>
                 g.contains(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)))
               case _ =>
-                assert(!onlyKnownFeatures, "Unknown shape type found in Shapefile.")
+                assert(ignoreUnsupportedShapes, "Unknown shape type found in Shapefile.")
                 false
             })
         }.map(_._3)
