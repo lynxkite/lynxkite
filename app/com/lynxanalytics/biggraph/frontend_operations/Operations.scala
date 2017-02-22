@@ -3418,8 +3418,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
       Param("uiStatusJson", "UI status as JSON"))
-
     def enabled = FEStatus.enabled
+    override def summary(params: Map[String, String]) = {
+      val scalarName = params("scalarName")
+      s"Save visualization as $scalarName"
+    }
 
     def apply(params: Map[String, String]) = {
       import UIStatusSerialization._
@@ -3466,8 +3469,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private def segmentationSizesProductSum(seg: SegmentationEditor, parent: ProjectEditor)(
+    implicit manager: MetaGraphManager): Scalar[_] = {
+    val size = aggregateViaConnection(
+      seg.belongsTo,
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
+    )
+    val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
+    val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
+    val sizeProduct: Attribute[Double] = {
+      val op = graph_operations.DeriveJSDouble(
+        JavaScript("src_size * dst_size"),
+        Seq("src_size", "dst_size"))
+      op(
+        op.attrs,
+        graph_operations.VertexAttributeToJSValue.seq(srcSize, dstSize)).result.attr
+    }
+    aggregate(AttributeWithAggregator(sizeProduct, "sum"))
+  }
+
   register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
     def segmentationParameters = List()
+    override def visibleScalars =
+      if (project.isSegmentation && project.edgeBundle != null) {
+        val scalar = segmentationSizesProductSum(seg, parent)
+        implicit val entityProgressManager = env.entityProgressManager
+        List(ProjectViewer.feScalar(scalar, "num_copied_edges", "", Map()))
+      } else {
+        List()
+      }
     def enabled = isSegmentation &&
       hasEdgeBundle &&
       FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
@@ -3590,34 +3620,78 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
+        options = FEOption.boolsDefaultFalse, mandatory = false),
       Param("output", "Output name"))
-    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
-    import java.io.File
+    def enabled = FEStatus.assert(
+      vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
     def apply(params: Map[String, String]) = {
-      val shapeFilePath = params("shapefile")
-      assert(listShapefiles().exists(f => f.id == shapeFilePath),
-        "Shapefile deleted, please choose another.")
+      val shapeFilePath = getShapeFilePath(params)
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
-      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val op = graph_operations.LookupRegion(
+        shapeFilePath,
+        params("attribute"),
+        params.getOrElse("ignoreUnsupportedShapes", "false").toBoolean)
       val result = op(op.coordinates, position).result
       project.newVertexAttribute(params("output"), result.attribute)
     }
+  })
 
-    private def metaDir = new File(env.metaGraphManager.repositoryRoot)
-    private val shapeDir = s"$metaDir/resources/shapefiles/"
+  register("Segment by geographical proximity", new StructureOperation(_, _) {
+    override def parameters = List(
+      Param("name", "Name"),
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
+      NonNegDouble("distance", "Distance", defaultValue = "0.0"),
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
+        options = FEOption.boolsDefaultFalse))
+    def enabled = FEStatus.assert(
+      vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
-    private def listShapefiles(): List[FEOption] = {
-      def lsR(f: File): Array[File] = {
-        val files = f.listFiles()
-        if (files == null)
-          return Array.empty
-        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+    def apply(params: Map[String, String]) = {
+      import com.lynxanalytics.biggraph.graph_util.Shapefile
+      val shapeFilePath = getShapeFilePath(params)
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val shapefile = Shapefile(shapeFilePath)
+      val op = graph_operations.SegmentByGeographicalProximity(
+        shapeFilePath,
+        params("distance").toDouble,
+        shapefile.attrNames,
+        params("ignoreUnsupportedShapes").toBoolean)
+      val result = op(op.coordinates, position).result
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(result.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = result.belongsTo
+
+      for ((attrName, i) <- shapefile.attrNames.zipWithIndex) {
+        segmentation.newVertexAttribute(attrName, result.attributes(i))
       }
-      lsR(new File(shapeDir)).toList.map(f =>
-        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+      shapefile.close()
     }
   })
+
+  private def getShapeFilePath(params: Map[String, String]): String = {
+    val shapeFilePath = params("shapefile")
+    assert(listShapefiles().exists(f => f.id == shapeFilePath),
+      "Shapefile deleted, please choose another.")
+    shapeFilePath
+  }
+
+  private def listShapefiles(): List[FEOption] = {
+    import java.io.File
+    def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    val shapeDir = s"$metaDir/resources/shapefiles/"
+    def lsR(f: File): Array[File] = {
+      val files = f.listFiles()
+      if (files == null)
+        return Array.empty
+      files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+    }
+    lsR(new File(shapeDir)).toList.map(f =>
+      FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+  }
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()

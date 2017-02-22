@@ -376,6 +376,14 @@ class Table:
         writeACL=writeACL,
         readACL=readACL))
 
+  def compute(self):
+      '''Forces the computation of the table.'''
+      fake_project = self.lk.new_project()
+      fake_project.importVertices(**{
+        'id-attr': '',
+        'table': self.name})
+      fake_project.compute()
+
 
 class View:
   '''A LynxKite View is a definition of a data source.'''

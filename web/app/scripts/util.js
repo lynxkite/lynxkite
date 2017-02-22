@@ -160,11 +160,15 @@ angular.module('biggraph').factory('util', function utilFactory(
     nocache: function(url, params) { return getResource(url, params, { cache: false }); },
 
     // Json POST with simple error handling.
-    post: function(url, params) {
-      var req = $http.post(url, params).catch(function(failure) {
-        util.ajaxError(failure);
-        return $q.reject(failure);
-      });
+    post: function(url, params, options) {
+      options = options || { reportErrors: true };
+      var req = $http.post(url, params);
+      if (options.reportErrors) {
+        req = req.catch(function(failure) {
+          util.ajaxError(failure);
+          return $q.reject(failure);
+        });
+      }
       return toResource(req);
     },
 
@@ -393,6 +397,19 @@ angular.module('biggraph').factory('util', function utilFactory(
     },
 
     slowQueue: new RequestQueue(2),
+
+    showOverwriteDialog: function(confirmCallback) {
+      window.sweetAlert({
+        title: 'Entry already exists',
+        text: 'Do you want to overwrite it?',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DD6B55',
+        cancelButtonText: 'No',
+        confirmButtonText: 'Yes',
+      },
+      confirmCallback);
+    }
   };
   util.globals = util.get('/ajax/getGlobalSettings');
 
