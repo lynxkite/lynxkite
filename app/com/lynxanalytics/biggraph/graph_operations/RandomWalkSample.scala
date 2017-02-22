@@ -111,7 +111,7 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     }
     // we have to use RDD instead of SortedRDD because localCheckpoint doesn't work on the later
     var stepIdxWhenEdgeFirstTraversed: RDD[(ID, StepIdx)] = edges.mapValues(_ => StepIdx.MaxValue)
-    val step = multiStepper(nodes, edges)
+    val step = MultiStepper(nodes, edges).step _
 
     for (i <- 1 to maxRemainingSteps) {
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
@@ -149,38 +149,35 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     output(o.edgeFirstTraversed, es.filter(_._2 < StepIdx.MaxValue))
   }
 
-  private def multiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD): (RDD[WalkState], Int) => (RDD[WalkState], RDD[(ID, StepIdx)]) =
-    {
-      val outEdgesPerNode = edges.map {
-        case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
-      }.groupByKey().map {
-        case (id, it) => (id, it.toArray)
-      }.sortUnique(nodes.partitioner.get)
-      outEdgesPerNode.persist(StorageLevel.DISK_ONLY)
+  private case class MultiStepper(nodes: VertexSetRDD, edges: EdgeBundleRDD) {
+    val outEdgesPerNode = edges.map {
+      case (edgeId, Edge(src, dest)) => src -> (dest, edgeId)
+    }.groupByKey().map {
+      case (id, it) => (id, it.toArray)
+    }.sortUnique(nodes.partitioner.get)
+    outEdgesPerNode.persist(StorageLevel.DISK_ONLY)
 
-      def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, StepIdx)]) = {
-        val nextStateAndEdges = multiWalkState.filter(walkState => walkState._2._2 > 0).
-          sort(outEdgesPerNode.partitioner.get).
-          sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
-            case (pid, it) =>
-              val rnd = new Random((pid << 16) + seed)
-              it.map {
-                case (_, ((idx, remainingSteps), edgesFromHere)) =>
-                  val rndIdx = rnd.nextInt(edgesFromHere.length)
-                  val (toNode, onEdge) = edgesFromHere(rndIdx)
-                  val stepIdx = idx + 1
-                  ((toNode, (stepIdx, remainingSteps - 1)), (onEdge, stepIdx))
-              }
-          }
-        nextStateAndEdges.persist(StorageLevel.DISK_ONLY)
-        val nexState = nextStateAndEdges.map(_._1)
-        val edgesTraversed = nextStateAndEdges.map(_._2)
+    def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, StepIdx)]) = {
+      val nextStateAndEdges = multiWalkState.filter(walkState => walkState._2._2 > 0).
+        sort(outEdgesPerNode.partitioner.get).
+        sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
+          case (pid, it) =>
+            val rnd = new Random((pid << 16) + seed)
+            it.map {
+              case (_, ((idx, remainingSteps), edgesFromHere)) =>
+                val rndIdx = rnd.nextInt(edgesFromHere.length)
+                val (toNode, onEdge) = edgesFromHere(rndIdx)
+                val stepIdx = idx + 1
+                ((toNode, (stepIdx, remainingSteps - 1)), (onEdge, stepIdx))
+            }
+        }
+      nextStateAndEdges.persist(StorageLevel.DISK_ONLY)
+      val nexState = nextStateAndEdges.map(_._1)
+      val edgesTraversed = nextStateAndEdges.map(_._2)
 
-        (nexState, edgesTraversed)
-      }
-
-      step
+      (nexState, edgesTraversed)
     }
+  }
 
   private def randomNodes(nodes: VertexSetRDD, n: Int, seed: Long) =
     nodes.takeSample(withReplacement = false, n, seed).map(_._1)

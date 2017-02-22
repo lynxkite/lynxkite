@@ -8,6 +8,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Tab-completion for LynxKite operations works in Python command-line 
    and in Jupyter notebooks.
+ - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
+   that preserves the structure of the network to speed up model creation.
    
 ### 1.12.1
 
