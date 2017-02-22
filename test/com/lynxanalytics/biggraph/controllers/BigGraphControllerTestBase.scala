@@ -20,9 +20,12 @@ class BigGraphControllerTestBase extends FunSuite with TestGraphOp with BeforeAn
       ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
 
   def createProject(name: String, notes: String = "", privacy: String = "public-write") = {
+    ???
+    /*
     controller.createProject(
       user,
       CreateProjectRequest(name = name, notes = notes, privacy = privacy))
+    */
   }
 
   def createDirectory(name: String, privacy: String = "public-write") = {
@@ -48,9 +51,12 @@ class BigGraphControllerTestBase extends FunSuite with TestGraphOp with BeforeAn
         metaGraphManager.rmTag(t)
       }
     }
+    ???
+    /*
     createProject(
       name = projectName,
       notes = "test project",
       privacy = "private")
+    */
   }
 }

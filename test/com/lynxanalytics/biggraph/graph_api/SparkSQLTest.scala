@@ -71,6 +71,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     results.map(t => "Name: " + t(0)).collect().foreach(println)
   }
 
+  /*
   test("DataFrame from LynxKite project") {
     import com.lynxanalytics.biggraph.controllers._
 
@@ -98,4 +99,5 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     df.printSchema()
     df.show()
   }
+  */
 }
