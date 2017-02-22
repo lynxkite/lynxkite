@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
+import org.apache.spark.sql.jdbc.JdbcDialect
+import org.apache.spark.sql.jdbc.JdbcDialects
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -347,6 +349,28 @@ object BigGraphSparkContext {
     }
   }
 
+  lazy val teradataDialect = {
+    // Teradata sometimes "forgets" the schema of the result of a
+    // JDBC query, see issue #5631.
+    // This dialect makes it possible for the user to override the
+    // schema by specifying a table name in a comment to the query.
+    val magicMarker = "--LYNX-TD-SCHEMA-OVERRIDE:"
+    new JdbcDialect() {
+      def canHandle(url: String) = {
+        url.startsWith("jdbc:teradata:")
+      }
+
+      override def getSchemaQuery(table: String) = {
+        if (table.contains(magicMarker)) {
+          val realTable = table.split(magicMarker)(1)
+          super.getSchemaQuery(realTable)
+        } else {
+          super.getSchemaQuery(table)
+        }
+      }
+    }
+  }
+
   def getSession(
     appName: String,
     useKryo: Boolean = true,
@@ -354,6 +378,7 @@ object BigGraphSparkContext {
     master: String = "",
     settings: Traversable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
+    JdbcDialects.registerDialect(teradataDialect)
 
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
