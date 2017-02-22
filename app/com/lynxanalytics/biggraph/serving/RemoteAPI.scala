@@ -25,7 +25,7 @@ object RemoteAPIProtocol {
   case class OperationNamesResponse(names: List[String])
   case class OperationRequest(
     checkpoint: String,
-    path: List[String],
+    inputs: Map[String, BoxConnection],
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
@@ -116,6 +116,7 @@ object RemoteAPIProtocol {
   case class ListElement(name: String, checkpoint: String, objectType: String)
   case class ListResult(entries: List[ListElement])
 
+  import WorkspaceJsonFormatters._
   implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val wOperationNamesResponse = json.Json.writes[OperationNamesResponse]
@@ -313,16 +314,23 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     rootProjectViewer.offspringViewer(path)
   }
 
+  def getWorkspace(cp: String): controllers.Workspace =
+    metaManager.checkpointRepo.readCheckpoint(cp).workspace.get
+
   // Run an operation on a root project or a segmentation
   def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
     val normalized = normalize(request.operation)
     assert(normalizedIds.contains(normalized), s"No such operation: ${request.operation}")
     val operation = normalizedIds(normalized)
-    val viewer = getViewer(request.checkpoint, request.path)
-    val context = controllers.Operation.Context(user, viewer)
-    val spec = controllers.FEOperationSpec(operation, request.parameters)
-    val newState = ops.applyAndCheckpoint(context, spec)
-    CheckpointResponse(newState.checkpoint.get)
+    val workspace = getWorkspace(request.checkpoint)
+    val inputBoxes = request.inputs.values.map(c => workspace.findBox(c.box).get)
+    val avgX = inputBoxes.map(_.x).sum / inputBoxes.size
+    val avgY = inputBoxes.map(_.y).sum / inputBoxes.size
+    val newBox = ops.getBoxMetadata(operation).toBox(request.parameters, x = avgX, y = avgY + 50)
+    val newArrows = request.inputs.map { case (id, source) => Arrow(source, newBox.input(id)) }
+    val newWorkspace = workspace.addBox(newBox).addArrows(newArrows)
+    val checkpoint = newWorkspace.checkpoint(previous = request.checkpoint)
+    CheckpointResponse(checkpoint)
   }
 
   def getScalar(user: User, request: ScalarRequest): Future[DynamicValue] = {

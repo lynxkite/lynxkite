@@ -10,7 +10,7 @@ class RemoteAPITest extends FunSuite with TestGraphOp {
     import RemoteAPIProtocol._
     val u = User.fake
     val empty = ctrl.newProject(u, Empty()).checkpoint
-    val example = ctrl.runOperation(u, OperationRequest(empty, List(), "examplegraph", Map())).checkpoint
+    val example = ctrl.runOperation(u, OperationRequest(empty, Map(), "examplegraph", Map())).checkpoint
     val view1 = ctrl.createView(
       u, GlobalSQLRequest("select name as n from x", Map("x" -> example))).checkpoint
     val view2 = ctrl.createView(

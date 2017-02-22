@@ -80,10 +80,12 @@ case class RootProjectState(
     lastOperationDesc: String,
     // This will be set exactly when previousCheckpoint is set.
     lastOperationRequest: Option[SubProjectOperation],
-    viewRecipe: Option[JsObject]) {
+    viewRecipe: Option[JsObject],
+    workspace: Option[Workspace]) {
 }
 object RootProjectState {
-  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None, None)
+  val emptyState = RootProjectState(
+    CommonProjectState.emptyState, Some(""), None, "", None, None, None)
 }
 
 // Complete state of segmentation.
@@ -400,6 +402,7 @@ object CheckpointRepository {
         "state" -> commonProjectStateToJSon(o.state),
         "belongsToGUID" -> o.belongsToGUID)
   }
+  import WorkspaceJsonFormatters._
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   implicit val fRootProjectState = Json.format[RootProjectState]
 
@@ -973,6 +976,16 @@ class ViewFrame(path: SymbolPath)(
   def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
+class WorkspaceFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ProjectFrame(path) {
+  override def initialize(): Unit = manager.synchronized {
+    super.initialize()
+    set(rootDir / "objectType", "workspace")
+  }
+  override def subproject = ???
+  def workspace: Workspace = viewer.rootState.workspace.getOrElse(Workspace.empty)
+}
+
 abstract class ObjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
@@ -1139,9 +1152,10 @@ class DirectoryEntry(val path: SymbolPath)(
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
   def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isTable && !isView
+  def isProject = hasCheckpoint && !isTable && !isView && !isWorkspace
   def isDirectory = exists && !hasCheckpoint
   def isView = get(rootDir / "objectType", "") == "view"
+  def isWorkspace = get(rootDir / "objectType", "") == "workspace"
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1156,6 +1170,13 @@ class DirectoryEntry(val path: SymbolPath)(
   def asNewProjectFrame(checkpoint: String): ProjectFrame = {
     val res = asNewProjectFrame()
     res.setCheckpoint(checkpoint)
+    res
+  }
+
+  def asNewWorkspaceFrame(): WorkspaceFrame = {
+    assert(!exists, s"Entry '$path' already exists.")
+    val res = new WorkspaceFrame(path)
+    res.initialize()
     res
   }
 
@@ -1233,6 +1254,8 @@ object DirectoryEntry {
         new TableFrame(entry.path)
       } else if (entry.isView) {
         new ViewFrame(entry.path)
+      } else if (entry.isWorkspace) {
+        new WorkspaceFrame(entry.path)
       } else {
         new Directory(entry.path)
       }

@@ -2,24 +2,13 @@ GET  /ajax/spark-status com.lynxanalytics.biggraph.serving.ProductionJsonServer.
 POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkCancelJobs
 POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
-POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.createProject
 POST /ajax/createDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
 POST /ajax/discardEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardEntry
 POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardAll
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
-GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
-GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getHistory
-GET  /ajax/getOpCategories    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOPCategories
-POST /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
-POST /ajax/saveHistory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveHistory
-POST /ajax/saveWorkflow   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveWorkflow
-GET  /ajax/workflow       com.lynxanalytics.biggraph.serving.ProductionJsonServer.workflow
 GET  /ajax/projectList   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectList
 GET  /ajax/projectSearch   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectSearch
-POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.filterProject
 POST /ajax/forkEntry   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkEntry
-POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject
-POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
 POST /ajax/renameEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameEntry
 POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
 

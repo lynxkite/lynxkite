@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.serving.User
 
+/*
 class ProjectTest extends FunSuite with TestGraphOp {
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
@@ -179,3 +180,4 @@ class ProjectTest extends FunSuite with TestGraphOp {
     assertProjectWriters(p3)("y")("x")
   }
 }
+*/
