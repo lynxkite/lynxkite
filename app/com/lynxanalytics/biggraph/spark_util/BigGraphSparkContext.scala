@@ -354,6 +354,9 @@ object BigGraphSparkContext {
     // JDBC query, see issue #5631.
     // This dialect makes it possible for the user to override the
     // schema by specifying a table name in a comment to the query.
+    // This way the resulting schema will be taken from the table
+    // specified in the comment.
+    // SELECT * FROM table1 WHERE x > 1 --LYNX-TD-SCHEMA-OVERRIDE:table2
     val magicMarker = "--LYNX-TD-SCHEMA-OVERRIDE:"
     new JdbcDialect() {
       def canHandle(url: String) = {
