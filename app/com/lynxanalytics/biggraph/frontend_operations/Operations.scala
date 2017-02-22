@@ -2233,10 +2233,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Random walk", new StructureOperation(_, _) {
+  register("Sample graph by random walks", new StructureOperation(_, _) {
     def parameters = List(
-      NonNegInt("startPoints", "Number of start points", default = 3),
-      NonNegInt("walksFromOnePoint", "Number of walks from a start points", default = 100),
+      NonNegInt("startPoints", "Number of start points", default = 1),
+      NonNegInt("walksFromOnePoint", "Number of walks from each start point", default = 10000),
       Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
       Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
       Param("edgeAttrName", "Save edge indices as", defaultValue = "firts_traversed"),
