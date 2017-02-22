@@ -280,7 +280,32 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
   }
 }
 
+// Teradata sometimes "forgets" the schema of the result of a
+// JDBC query, see issue #5631.
+// This dialect makes it possible for the user to override the
+// schema by specifying a table name in a comment to the query.
+// This way the resulting schema will be taken from the table
+// specified in the comment.
+// SELECT * FROM table1 WHERE x > 1 --LYNX-TD-SCHEMA-OVERRIDE:table2
+class TeradataDialect extends JdbcDialect {
+  val magicMarker = "--LYNX-TD-SCHEMA-OVERRIDE:"
+  def canHandle(url: String) = {
+    url.startsWith("jdbc:teradata:")
+  }
+
+  override def getSchemaQuery(table: String) = {
+    if (table.contains(magicMarker)) {
+      val realTable = table.split(magicMarker)(1)
+      super.getSchemaQuery(realTable)
+    } else {
+      super.getSchemaQuery(table)
+    }
+  }
+}
+
 object BigGraphSparkContext {
+  lazy val teradataDialect = new TeradataDialect()
+
   def createKryoWithForcedRegistration(): Kryo = {
     val myKryo = new Kryo()
     myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
@@ -344,31 +369,6 @@ object BigGraphSparkContext {
       if (file.isFile() && (file.getName.endsWith("lz4") || file.getName.endsWith("lz4.inprogress"))) {
         if (file.lastModified() < deletionThresholdMillis) {
           file.delete()
-        }
-      }
-    }
-  }
-
-  lazy val teradataDialect = {
-    // Teradata sometimes "forgets" the schema of the result of a
-    // JDBC query, see issue #5631.
-    // This dialect makes it possible for the user to override the
-    // schema by specifying a table name in a comment to the query.
-    // This way the resulting schema will be taken from the table
-    // specified in the comment.
-    // SELECT * FROM table1 WHERE x > 1 --LYNX-TD-SCHEMA-OVERRIDE:table2
-    val magicMarker = "--LYNX-TD-SCHEMA-OVERRIDE:"
-    new JdbcDialect() {
-      def canHandle(url: String) = {
-        url.startsWith("jdbc:teradata:")
-      }
-
-      override def getSchemaQuery(table: String) = {
-        if (table.contains(magicMarker)) {
-          val realTable = table.split(magicMarker)(1)
-          super.getSchemaQuery(realTable)
-        } else {
-          super.getSchemaQuery(table)
         }
       }
     }
