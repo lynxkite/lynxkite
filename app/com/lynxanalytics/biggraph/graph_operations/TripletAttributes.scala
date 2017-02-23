@@ -71,6 +71,69 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
+// Creates outgoing and incoming neighbor mappings.
+object NeighborMapping extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val edges = edgeBundle(src, dst)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    // The list of outgoing edges.
+    val srcNeighbors = vertexAttribute[Array[ID]](inputs.src.entity)
+    // The list of incoming edges.
+    val dstNeighbors = vertexAttribute[Array[ID]](inputs.dst.entity)
+  }
+  def fromJson(j: JsValue) = NeighborMapping((j \ "sampleSize").as[Int])
+}
+// A negative sampleSize means no sampling.
+case class NeighborMapping(sampleSize: Int = -1)
+    extends TypedMetaGraphOp[NeighborMapping.Input, NeighborMapping.Output] {
+  import NeighborMapping._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+  override def toJson = Json.obj("sampleSize" -> sampleSize)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val edges =
+      if (sampleSize >= 0) inputs.edges.rdd.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
+      else inputs.edges.rdd
+    val src = inputs.src.rdd
+    val bySrc = edges
+      .map { case (_, edge) => (edge.src, edge.dst) }
+      .distinct
+      .groupBySortedKey(src.partitioner.get)
+    output(
+      o.srcNeighbors,
+      src.sortedLeftOuterJoin(bySrc)
+        .mapValues {
+          case (_, Some(it)) => it.toArray
+          case (_, None) => Array[ID]()
+        })
+
+    val dst = inputs.dst.rdd
+    val byDst = edges
+      .map { case (_, edge) => (edge.dst, edge.src) }
+      .distinct
+      .groupBySortedKey(dst.partitioner.get)
+    output(
+      o.dstNeighbors,
+      dst.sortedLeftOuterJoin(byDst)
+        .mapValues {
+          case (_, Some(it)) => it.toArray
+          case (_, None) => Array[ID]()
+        })
+  }
+}
+
 // Pushes a vertex attribute to the edges going from/to the vertex.
 object VertexToEdgeAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
