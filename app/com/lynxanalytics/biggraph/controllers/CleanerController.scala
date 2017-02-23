@@ -203,6 +203,13 @@ class CleanerController(environment: BigGraphEnvironment) {
     DataFilesStats(id, name, desc, filesToDelete.size, filesToDelete.map(_._2).sum)
   }
 
+  def moveAllToCleanerTrash(user: serving.User): Unit = {
+    for (method <- methods) {
+      val req = MoveToTrashRequest(method.id)
+      moveToCleanerTrash(user, req)
+    }
+  }
+
   def moveToCleanerTrash(user: serving.User, req: MoveToTrashRequest): Unit = synchronized {
     assert(user.isAdmin, "Only administrators can move data files to trash.")
     assert(methods.map { m => m.id } contains req.method,
