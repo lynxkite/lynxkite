@@ -172,6 +172,23 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(df.count == 5)
   }
 
+  ignore("waitAllFutures waits for futures") {
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+
+    val state = new java.util.concurrent.atomic.AtomicReference[Integer](0)
+    dataManager.loggedFuture {
+      Thread.sleep(1000L * 15)
+      state.set(1)
+    }
+    val instance = metaManager.apply(ExampleGraph(), MetaDataSet())
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
+    dataManager.get(greeting)
+
+    dataManager.waitAllFutures()
+    assert(state.get() == 1)
+  }
+
   test("an operation triggering computation results in exception (#5580)") {
     implicit val metaManager = cleanMetaManager
     implicit val dataManager = cleanDataManager
