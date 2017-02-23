@@ -190,6 +190,7 @@ object RemoteAPIServer extends JsonServer {
   def isComputed = jsonPost(c.isComputed)
   def computeProject = jsonPost(c.computeProject)
   def list = jsonPost(c.list)
+  def cleanFileSystem = jsonPost(c.cleanFileSystem)
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
@@ -551,5 +552,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
             controllers.DirectoryEntry.fromName(e.name).asObjectFrame.checkpoint,
             e.objectType))
     )
+  }
+
+  def cleanFileSystem(user: User, request: Empty) = {
+    val cleanerController = new CleanerController(env)
+    cleanerController.moveAllToCleanerTrash(user)
+    cleanerController.emptyCleanerTrash(user, request)
   }
 }
