@@ -62,11 +62,11 @@ input.save-as {
   padding-right: 12px;
 }
 
-.entity-list {
+.token-list {
   margin-bottom: 5px;
 }
 
-.entity {
+.token {
   display: inline-block;
   border-radius: 20px;
   box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
@@ -77,24 +77,24 @@ input.save-as {
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
-.entity .title {
+.token .title {
   padding: 0 10px;
 }
 
-.entity:hover {
+.token:hover {
   box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 5px 0;
 }
 
-.entity.active {
+.token.active {
   background: lightgrey;
 }
-.entity.drop-enabled {
+.token.drop-enabled {
   box-shadow: rgba(0, 0, 0, 0.5) 0 0.5px 1px 0;
   background: #286090;
   color: white;
 }
 
-.entity .subtoken {
+.token .subtoken {
   background: hsl(194,50%,80%);
   border-radius: 20px;
   padding: 2px 10px;
@@ -111,7 +111,7 @@ input.save-as {
   background: hsl(14,50%,80%);
 }
 
-.entity.drop-enabled .subtoken {
+.token.drop-enabled .subtoken {
   background: darkgray;
 }
 
@@ -119,7 +119,7 @@ input.save-as {
   display: block;
 }
 
-.entity-section-label {
+.token-section-label {
   color: rgba(0, 0, 0, 0.3);
   font-size: 80%;
   padding-top: 0;
@@ -128,16 +128,21 @@ input.save-as {
   border-top: 1px solid #e0e0e0;
 }
 
-.entity-section-label help-popup {
+.token-section-label help-popup {
   font-size: 10px;
   padding: 0 10px;
 }
-.entity-section-label .label-text {
+.token-section-label .label-text {
   cursor: pointer;
 }
 
-.entity-section-label .label-text:hover {
+.token-section-label .label-text:hover {
   text-decoration: underline;
+}
+
+sampled-view-settings .token:not(.default):not(.drop-enabled),
+bucketed-view-settings .token:not(.default):not(.drop-enabled) {
+  background: hsl(14,50%,80%);
 }
 
 textarea.project-notes {
@@ -152,11 +157,11 @@ label {
   font-weight: normal;
 }
 
-.entity-menu {
+.token-menu {
   min-width: 216px;
 }
 
-.entity-menu .histogram {
+.token-menu .histogram {
   width: 200px;
 }
 
@@ -203,7 +208,7 @@ label {
   margin: 2px;
 }
 
-.entity .emoji {
+.token .emoji {
   /* "Jump over" margin of title. */
   margin-left: -10px;
   margin-right: 10px;
@@ -232,21 +237,15 @@ label {
 }
 
 .visualization-menu .menu-item.active::before {
-  content: '\a0\a0•\a0' !important;
+  content: '\a0\a0✓\a0' !important;
   font-family: monospace;
 }
 
-.extra-controls table {
-  width: 100%;
-  max-width: 700px;
+.extra-controls .control {
+  max-width: 200px;
+  display: inline-block;
 }
-.extra-controls td {
-  padding: 6px;
-}
-.extra-controls td:first-child {
-  text-align: right;
-  width: 200px;
-}
+
 #sample-center .input-group-btn {
   vertical-align: bottom;
 }
@@ -318,4 +317,20 @@ label {
 .pick-attr-restrict button {
   width: 10%;
   padding: 6px 0px;
+}
+
+/* Add a bit of internal and vertical margin in the center picker. */
+pick-options table {
+  margin: 0 -10px;
+  border-collapse: separate;
+  border-spacing: 10px;
+}
+
+/* Fit "OK" button by visualization name. */
+#menu-setting-save-visualization input {
+  width: auto;
+  display: inline;
+}
+#menu-setting-save-visualization button {
+  vertical-align: top;
 }

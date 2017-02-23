@@ -6,6 +6,22 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Visualization settings UI now matches the new attribute UI.
+ - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
+ - Tab-completion for LynxKite operations works in Python command-line
+   and in Jupyter notebooks.
+ - You can now filter for position (Double, Double) attributes.
+ - Added _Segment by geographical proximity_ operation to segment vertices using Shapefiles and
+   coordinate vertex attributes. Can be used e.g. to segment by geo regions or points of interests.
+ - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
+   that preserves the structure of the network to speed up model creation.
+
+### 1.12.1
+
+ - Admins can backup LynxKite project data from UI.
+ - Column types are displayed in SQL result box.
+ - Added _Lookup Region_ operation for finding locations inside shapefiles.
+
 ### 1.12.0
 
  - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
@@ -22,10 +38,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - You can submit SQL queries with Ctrl-Enter.
  - New Remote API methods: `project.copy()`, `project.global_table_name()`,
    `project.vertices_table()`, `project.edges_table()`.
- - Added _Lookup Region_ operation for finding locations inside shapefiles.
  - Spark Monitor doesn't send alarm in case of long-running tasks.
 
 Ecosystem:
+
  - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
  - Renamed from "Lynx Data Automation Framework" to "Lynx Enterprise".
 

@@ -301,8 +301,6 @@ include::predict-with-a-neural-network-1st-version.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
-include::random-walk-sample.asciidoc[]
-
 include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
 
 include::rename-edge-attribute.asciidoc[]
@@ -317,11 +315,15 @@ include::reverse-edge-direction.asciidoc[]
 
 include::sample-edges-from-co-occurrence.asciidoc[]
 
+include::sample-graph-by-random-walks.asciidoc[]
+
 include::save-ui-status-as-graph-attribute.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 
 include::segment-by-event-sequence.asciidoc[]
+
+include::segment-by-geographical-proximity.asciidoc[]
 
 include::segment-by-interval.asciidoc[]
 

@@ -72,6 +72,12 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
+    self._operation_names = None
+
+  def operation_names(self):
+    if not self._operation_names:
+      self._operation_names = self._send('getOperationNames').names
+    return self._operation_names
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -370,6 +376,14 @@ class Table:
         writeACL=writeACL,
         readACL=readACL))
 
+  def compute(self):
+      '''Forces the computation of the table.'''
+      fake_project = self.lk.new_project()
+      fake_project.importVertices(**{
+        'id-attr': '',
+        'table': self.name})
+      fake_project.compute()
+
 
 class View:
   '''A LynxKite View is a definition of a data source.'''
@@ -611,6 +625,11 @@ class SubProject:
     self.project_checkpoint = project_checkpoint
     self.path = path
     self.lk = project_checkpoint.lk
+
+  def __dir__(self):
+    '''Create list of methods for tab-completion.'''
+    lk_ops = self.lk.operation_names()
+    return super().__dir__() + lk_ops
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''

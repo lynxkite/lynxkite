@@ -30,6 +30,20 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(FEFilters.filterFromSpec[Double]("[12,34)") == AndFilter(DoubleGE(12.0), DoubleLT(34.0)))
     assert(FEFilters.filterFromSpec[Double]("(12,34]") == AndFilter(DoubleGT(12.0), DoubleLE(34.0)))
   }
+  test("position test") {
+    assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34),[1,1.5)").matches((13, 1)))
+    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),[1,1.5)").matches((12, 1)))
+    assert(FEFilters.filterFromSpec[(Double, Double)]("[12,34),[1,1.5)").matches((12, 1)))
+    assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34],[1,1.5)").matches((34, 1)))
+    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),[1,1.5)").matches((34, 1)))
+    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5)").matches((12, 1)))
+    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5)").matches((13, 1)))
+    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5)").matches((13, 1.5)))
+    assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5]").matches((13, 1.5)))
+    // Make sure spaces are okay.
+    assert(
+      FEFilters.filterFromSpec[(Double, Double)](" ( 12 , 34 ) , ( 1 , 1.5 ] ").matches((13, 1.5)))
+  }
   test("syntax error") {
     intercept[AssertionError] {
       FEFilters.filterFromSpec[Double]("asd")

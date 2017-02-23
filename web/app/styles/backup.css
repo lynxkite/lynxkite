@@ -1,0 +1,11 @@
+#backup-success {
+  color: green;
+}
+
+#backup-failure {
+  color: red;
+}
+
+#backup-settings td:first-child {
+    width: 30%;
+}

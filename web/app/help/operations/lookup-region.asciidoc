@@ -27,6 +27,10 @@ and `.dbf` file of the same name.
 [[attribute]] Attribute from the Shapefile::
 The attribute in the Shapefile used for the output.
 
+[[ignoreUnsupportedShapes]]: Ignore unsupported shape types::
+If set `true`, silently ignores unknown shape types potentially contained by the Shapefile.
+Otherwise throws an error.
+
 [[output]] Output::
 The name of the new vertex attribute.
 ====

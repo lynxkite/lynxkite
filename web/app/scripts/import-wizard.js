@@ -1,7 +1,7 @@
 // UI for importing external data.
 'use strict';
 
-angular.module('biggraph').directive('importWizard', function(util) {
+angular.module('biggraph').directive('importWizard', function($q, util) {
   return {
     scope: { tableImported: '=', currentDirectory: '=', onCancel: '&' },
     templateUrl: 'import-wizard.html',
@@ -22,7 +22,8 @@ angular.module('biggraph').directive('importWizard', function(util) {
       scope.limit = '';
 
       scope.requestInProgress = 0;
-      function importStuff(format, parameters) {
+      function importStuff(format, parameters, options) {
+        options = options || { overwrite: false };
         parameters.table =
           (scope.currentDirectory ? scope.currentDirectory + '/' : '') + scope.tableName;
         parameters.privacy = 'public-read';
@@ -36,17 +37,25 @@ angular.module('biggraph').directive('importWizard', function(util) {
         }
 
         // Allow overwriting the same name when editing an existing config.
-        parameters.overwrite = scope.oldTableName === scope.tableName;
+        parameters.overwrite = options.overwrite || scope.oldTableName === scope.tableName;
         scope.requestInProgress += 1;
 
         var importOrView = scope.asView ? 'createView' : 'import';
         var endpoint = '/ajax/' + importOrView + format;
-        var request = util.post(endpoint, parameters);
+        var request = util.post(endpoint, parameters, { reportErrors: false });
 
-        request.then(function(result) {
+        request.catch(function importErrorHandler(error) {
+          if (error.data === 'file-already-exists-confirm-overwrite') {
+            util.showOverwriteDialog(function() {
+              importStuff(format, parameters, { overwrite: true });
+            });
+          } else {
+            util.ajaxError(error);
+          }
+          return $q.reject(error);
+        }).then(function importDoneHandler(result) {
           scope.tableImported = result;
-        });
-        request.finally(function() {
+        }).finally(function() {
           scope.requestInProgress -= 1;
         });
       }

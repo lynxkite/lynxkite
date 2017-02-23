@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
 
 import scala.concurrent.Await
@@ -14,6 +15,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   def await[T](f: concurrent.Future[T]): T =
     concurrent.Await.result(f, concurrent.duration.Duration.Inf)
 
+  private def SQLResultToStrings(data: List[List[DynamicValue]]) = {
+    data.map { case l: List[DynamicValue] => l.map { dv => dv.string } }
+  }
+
   test("global sql on vertices") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
     run("Example Graph", on = "Test_Dir/Test_Project")
@@ -21,8 +26,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       DataFrameSpec.global(directory = "Test_Dir",
         sql = "select name from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
-    assert(result.header == List("name"))
-    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("global sql on vertices with attribute name quoted with backticks") {
@@ -32,8 +39,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       DataFrameSpec.global(directory = "Test_Dir",
         sql = "select `name` from `Test_Project|vertices` where age < 40"),
       maxRows = 10)))
-    assert(result.header == List("name"))
-    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("sql on vertices") {
@@ -41,8 +49,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
-    assert(result.header == List("name"))
-    assert(result.data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("sql with empty results") {
@@ -50,7 +59,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.local(project = projectName, sql = "select id from vertices where id = 11"),
       maxRows = 10)))
-    assert(result.header == List("id"))
+    assert(result.header == List(SQLColumn("id", "Long")))
     assert(result.data == List())
   }
 
@@ -487,7 +496,11 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("export global sql to view + query it again") {
-    val colNames = List("vertexId", "name", "age")
+    val cols = List(
+      SQLColumn("vertexId", "String"),
+      SQLColumn("name", "String"),
+      SQLColumn("age", "String"))
+    val colNames = cols.map { case SQLColumn(n, t) => n }
     createViewCSV("testgraph/vertex-data", colNames)
     sqlController.createViewDFSpec(user,
       SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
@@ -504,8 +517,9 @@ class SQLControllerTest extends BigGraphControllerTestBase {
           sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
         ), maxRows = 120)),
       Duration.Inf)
-    assert(res.header == colNames)
-    assert(res.data == List(
+    assert(res.header == cols)
+    val resultStrings = SQLResultToStrings(res.data)
+    assert(resultStrings == List(
       List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
   }
 

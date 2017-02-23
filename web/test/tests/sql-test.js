@@ -13,11 +13,12 @@ module.exports = function(fw) {
 
       left.expectSqlResult(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
+        ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
         [
-          ['20.3', 'Male', '0', '1000.0', '[40.71448,-74.00598]', 'Adam'],
-          ['18.2', 'Female', '1', 'null', '[47.5269674,19.0323968]', 'Eve'],
-          ['50.3', 'Male', '2', '2000.0', '[1.352083,103.819836]', 'Bob'],
-          ['2.0', 'Male', '3', 'null', '[-33.8674869,151.2069902]', 'Isolated Joe'],
+          ['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
+          ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
+          ['50.3', 'Male', '2', '2000', '(1.352083,103.819836)', 'Bob'],
+          ['2', 'Male', '3', 'null', '(-33.8674869,151.2069902)', 'Isolated Joe'],
         ]);
     });
 
@@ -47,6 +48,7 @@ module.exports = function(fw) {
 
       left.expectSqlResult(
         ['edge_comment', 'src_name'],
+        ['String', 'String'],
         [
           [ 'Adam loves Eve', 'Adam' ],
           [ 'Bob envies Adam', 'Bob' ],
@@ -63,6 +65,7 @@ module.exports = function(fw) {
 
       left.expectSqlResult(
         ['id', 'name'],
+        ['Long', 'String'],
         [
           [ '0', 'Adam' ],
           [ '2', 'Bob' ],
@@ -70,6 +73,90 @@ module.exports = function(fw) {
           [ '3', 'Isolated Joe' ],
         ]);
     });
+
+  fw.transitionTest(
+    'test-example project with example graph',
+    'sql result table ordering works right with numbers',
+    function() {
+      left.runSql('select age, name from vertices');
+      left.clickSqlSort(0); // age column
+      left.expectSqlResult(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '2', 'Isolated Joe' ],
+          [ '18.2', 'Eve' ],
+          [ '20.3', 'Adam' ],
+          [ '50.3', 'Bob' ],
+        ]);
+      left.clickSqlSort(1); // name column
+      left.expectSqlResult(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '20.3', 'Adam' ],
+          [ '50.3', 'Bob' ],
+          [ '18.2', 'Eve' ],
+          [ '2', 'Isolated Joe' ],
+        ]);
+      left.clickSqlSort(0);
+      left.clickSqlSort(0);
+      left.expectSqlResult(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '50.3', 'Bob' ],
+          [ '20.3', 'Adam' ],
+          [ '18.2', 'Eve' ],
+          [ '2', 'Isolated Joe' ],
+        ]);
+  },
+  function() {});
+
+  fw.transitionTest(
+    'test-example project with example graph',
+    'sql result table ordering works right with nulls',
+    function() {
+      left.runSql('select name, income from vertices');
+      left.clickSqlSort(1); // income column
+      left.expectSqlResult(
+        ['name', 'income'],
+        ['String', 'Double'],
+        [
+          [ 'Eve', 'null' ],
+          [ 'Isolated Joe', 'null' ],
+          [ 'Adam', '1000' ],
+          [ 'Bob', '2000' ],
+        ]);
+      left.clickSqlSort(1);
+      left.expectSqlResult(
+       ['name', 'income'],
+       ['String', 'Double'],
+       [
+         [ 'Bob', '2000' ],
+         [ 'Adam', '1000' ],
+         [ 'Isolated Joe', 'null' ],
+         [ 'Eve', 'null' ],
+       ]);
+       left.runOperation('Derived vertex attribute', {
+         expr: 'income === 1000 ? \'apple\' : \'orange\'',
+         output: 'new_attr',
+         type: 'string',
+       });
+       left.runSql('select new_attr from vertices');
+       left.clickSqlSort(0);
+       left.expectSqlResult(
+         ['new_attr'],
+         ['String'],
+         [
+           [ 'null' ],
+           [ 'null' ],
+           [ 'apple' ],
+           [ 'orange' ],
+         ]
+       );
+  },
+  function () {});
 
   fw.transitionTest(
     'empty test-example project',
@@ -84,8 +171,8 @@ module.exports = function(fw) {
       right.runSql('select sum(base_random - segment_random) as error from belongs_to');
     },
     function() {
-      left.expectSqlResult(['sum'], [['100.0']]);
-      right.expectSqlResult(['error'], [['0.0']]);
+      left.expectSqlResult(['sum'], ['Double'], [['100']]);
+      right.expectSqlResult(['error'], ['Double'], [['0']]);
     });
 
   fw.statePreservingTest(
@@ -128,6 +215,10 @@ module.exports = function(fw) {
       left.side.$('#exportFormat option[value="table"]').click();
       left.side.$('#exportKiteTable').sendKeys('Random Edges');
       left.executeSqlSaving();
+      // Test overwriting.
+      left.startSqlSaving();
+      left.executeSqlSaving();
+      lib.confirmSweetAlert('Entry already exists');
 
       left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
       left.runOperation('Vertex attribute to string', { attr: 'ordinal' });
@@ -141,11 +232,11 @@ module.exports = function(fw) {
         });
 
       left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
-      left.expectSqlResult(['r1sum', 'r2sum'], [['4950.0', '4950.0']]);
+      left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950', '4950']]);
 
       left.runSql(
         'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
-      left.expectSqlResult(['srcgood', 'dstgood'], [['true', 'true']]);
+      left.expectSqlResult(['srcgood', 'dstgood'], ['Boolean', 'Boolean'], [['true', 'true']]);
     },
     function() {
     });

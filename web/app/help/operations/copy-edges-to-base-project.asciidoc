@@ -3,3 +3,15 @@
 Copies the edges from a segmentation to the base project. The copy is performed along the links
 between the the segmentation and the base project. If two segments are connected with some
 edges, then each edge will be copied to each pairs of members of the segments.
+[.gui-only]
+--
+The operation will create +++<value ref="scalars['num_copied_edges']"></value>+++ edges.
+--
+[.help-only]
+--
+After opening this operation from the toolbox, you will be shown the number of edges
+that will be created.
+--
+This operation has a potential to create a very large number of edges.
+If the predicted number is too high, try to eliminate very large
+segments or filter the edges of the segmentation before running it!

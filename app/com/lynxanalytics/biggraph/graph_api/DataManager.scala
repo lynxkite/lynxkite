@@ -115,20 +115,22 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entityCache(entity.gUID) = data
   }
 
-  // This is for asynchronous tasks. We store them as weak references so that waitAllFutures can wait
-  // for them, but the data structure does not grow indefinitely.
-  // MapMaker returns thread-safe maps.
-  private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
+  // This is for asynchronous tasks. We store them so that waitAllFutures can wait
+  // for them, but remove them on completion so that the data structure does not grow indefinitely.
+  private val loggedFutures = collection.mutable.Map[Object, SafeFuture[Unit]]()
 
-  private def loggedFuture(func: => Unit): Unit = {
-    val f = SafeFuture {
+  def loggedFuture(func: => Unit): Unit = loggedFutures.synchronized {
+    val key = new Object
+    val future = SafeFuture {
       try {
         func
       } catch {
         case t: Throwable => log.error("future failed:", t)
+      } finally loggedFutures.synchronized {
+        loggedFutures.remove(key)
       }
     }
-    loggedFutures.put(f, ())
+    loggedFutures.put(key, future)
   }
 
   // Runs something on the DataManager threadpool.
@@ -351,8 +353,8 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
 
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
-    import collection.JavaConversions.asScalaSet
-    SafeFuture.sequence(loggedFutures.keySet.toSeq).awaitReady(Duration.Inf)
+    val futures = loggedFutures.synchronized { loggedFutures.values.toList }
+    SafeFuture.sequence(futures).awaitReady(Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
