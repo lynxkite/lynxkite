@@ -13,6 +13,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - You can now filter for position (Double, Double) attributes.
  - Added _Segment by geographical proximity_ operation to segment vertices using Shapefiles and
    coordinate vertex attributes. Can be used e.g. to segment by geo regions or points of interests.
+ - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
+   that preserves the structure of the network to speed up model creation.
 
 ### 1.12.1
 

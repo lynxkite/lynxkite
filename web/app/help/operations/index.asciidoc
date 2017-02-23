@@ -315,6 +315,8 @@ include::reverse-edge-direction.asciidoc[]
 
 include::sample-edges-from-co-occurrence.asciidoc[]
 
+include::sample-graph-by-random-walks.asciidoc[]
+
 include::save-ui-status-as-graph-attribute.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
