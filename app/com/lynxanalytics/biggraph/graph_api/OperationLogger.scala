@@ -22,8 +22,8 @@ class OperationLogger(instance: MetaGraphOperationInstance,
   private var stopTime = -1L
 
   private def elapsedMs(): Long = {
-    assert(startTime != -1, s"elapsedMs() called before startTimer(), name: ${instance.operation.toString}")
-    assert(stopTime != -1, s"elapsedMs() called before stopTimer(), name: ${instance.operation.toString}")
+    assert(startTime != -1, "elapsedMs() called before startTimer()")
+    assert(stopTime != -1, "elapsedMs() called before stopTimer()")
     stopTime - startTime
   }
 
@@ -49,7 +49,6 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     stopTime = System.currentTimeMillis()
   }
   def addInput(name: String, input: EntityData): Unit = inputInfoList.synchronized {
-    //    println(s"Adding $name  input: $input")
     if (instance.operation.isHeavy) input match {
       case rddData: EntityRDDData[_] =>
         inputInfoList +=
@@ -62,12 +61,12 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     }
   }
 
-  def logWhenReady(loggedFutures: ControlledFutures): Unit = {
+  def logWhenReady(controlledFutures: ControlledFutures): Unit = {
     val outputsFuture = SafeFuture.sequence(outputInfoList)
     outputsFuture.map {
       outputs =>
         try {
-          loggedFutures.register {
+          controlledFutures.register {
             dump(outputs)
           }
         } catch {
@@ -88,41 +87,19 @@ class OperationLogger(instance: MetaGraphOperationInstance,
           "instanceName" -> KiteInstanceInfo.instanceName
         )
 
-        val inputs = inputInfoList.synchronized { inputInfoList.sortBy(_.name) }
-
         val out = json.Json.obj(
           "instanceProperties" -> instanceProperties,
           "name" -> instance.operation.toString,
           "timestamp" -> com.lynxanalytics.biggraph.graph_util.Timestamp.toString,
           "guid" -> instance.operation.gUID.toString,
           "elapsedMs" -> elapsedMs(),
-          "inputs" -> inputs,
+          "inputs" -> inputInfoList.synchronized { inputInfoList.sortBy(_.name) },
           "outputs" -> outputs.sortBy(_.name)
         )
         log.info(s"$marker $out")
       } catch {
         case t: Throwable =>
-          println("dump failed: " + t)
-          println("name: " + instance.operation.toString)
-          println(s"start time: $startTime")
-          println(s"stop time: $stopTime")
-          println("Outputs: ")
-          for (o <- outputs) {
-            println(s"  $o")
-          }
-          println("Inputs: ")
-          try {
-            for (i <- inputInfoList) {
-              println(s"  $i")
-            }
-          } catch {
-            case x: Throwable =>
-              println("x trace")
-              x.printStackTrace()
-              println("x trace ends")
-          }
-          t.printStackTrace()
-          println("*****")
+          log.error("dump failed: " + t)
       }
     }
   }
