@@ -291,7 +291,8 @@ Side.prototype = {
   },
 
   setSampleRadius: function(radius) {
-    var slider = this.side.element(by.id('sample-radius-slider'));
+    this.side.$('#setting-sample-radius').click();
+    var slider = $('#sample-radius-slider');
     slider.getAttribute('value').then(function(value) {
       var diff = radius - value;
       while (diff > 0) {
@@ -331,14 +332,21 @@ Side.prototype = {
     this.side.element(by.id('run-sql-button')).click();
   },
 
-  expectSqlResult: function(header, rows) {
+  expectSqlResult: function(names, types, rows) {
     var res = this.side.$('#sql-result');
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
+    expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   startSqlSaving: function() {
     this.side.element(by.id('save-results-opener')).click();
+  },
+
+  clickSqlSort(colId) {
+    var res = this.side.$('#sql-result');
+    var header = res.$$('thead tr th').get(colId);
+    header.click();
   },
 
   executeSqlSaving: function() {
@@ -854,9 +862,10 @@ Selector.prototype = {
   },
 
 
-  expectGlobalSqlResult: function(header, rows) {
+  expectGlobalSqlResult: function(names, types, rows) {
     var res = element(by.id('sql-result'));
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
+    expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
@@ -956,7 +965,7 @@ testLib = {
           }});
       return defer.promise;
     }
-    browser.controlFlow().execute(sendRequest);
+    return browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
@@ -1009,7 +1018,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.element(by.cssContainingText('option', value)).click();
+            e.$('option[label="' + value +'"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -1173,6 +1182,15 @@ testLib = {
 
   showSelector: function() {
     $('#show-selector-button').click();
+  },
+
+  confirmSweetAlert: function(expectedMessage) {
+    // SweetAlert is not an Angular library. We need to wait until it pops in and out.
+    var EC = protractor.ExpectedConditions;
+    testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
+    expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
+    $('.sweet-alert button.confirm').click();
+    testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
 };
 

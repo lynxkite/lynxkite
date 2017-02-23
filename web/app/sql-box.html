@@ -165,21 +165,26 @@ instead of ng-model="sql" -->
     <button class="btn btn-primary" ng-click="showExportOptions = false">Cancel</button>
     </div>
   </div>
-</fieldset></form>
+</fieldset>
+</form>
 <div id="sql-success" ng-show="success">
   &#x2713; {{ success }}
 </div>
 
-<div ng-show="result.header && !result.$error" id="sql-result">
+<div ng-show="result.header && !result.$error" id="sql-result" class="result-table">
   <table class="table table-striped table-bordered">
     <thead>
       <tr>
         <th ng-repeat="col in result.header"
           ng-click="sort.select($index)">
-          {{ col }}
-          <span class="ordering">
-            <i ng-show="sort.column === $index.toString()"
-              class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+          <span class="sql-column-name">{{col.name}}</span>
+          <br>
+          <span class="no-break">
+            <span class="sql-type">{{col.dataType}}</span>
+            <span class="ordering">
+              <i ng-show="sort.column === $index.toString()"
+                class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+            </span>
           </span>
         </th>
       </tr>
@@ -187,11 +192,13 @@ instead of ng-model="sql" -->
     <tbody>
       <tr ng-if="!sort.column"
           ng-repeat="row in result.data">
-        <td ng-repeat="item in row track by $index">{{ item }}</td>
+        <td ng-repeat="item in row track by $index" ng-class="{ 'is-null': !item.defined }">
+          {{ item.string }}</td>
       </tr>
       <tr ng-if="sort.column"
-        ng-repeat="row in result.data | orderBy:sort.column:sort.reverse track by $index">
-        <td ng-repeat="item in row track by $index">{{ item }}</td>
+        ng-repeat="row in result.data | orderBy:sortKey:sort.reverse track by $index">
+        <td ng-repeat="item in row track by $index" ng-class="{ 'is-null': !item.defined }">
+          {{ item.string }}</td>
       </tr>
     </tbody>
   </table>

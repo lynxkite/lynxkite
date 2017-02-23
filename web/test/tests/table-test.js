@@ -21,6 +21,7 @@ module.exports = function(fw) {
       lib.splash.expectTableWithNumRows(tableName, 3);
     }
   );
+
   fw.transitionTest(
     'CSV file imported as table',
     'Table described in global SQL box',
@@ -28,16 +29,18 @@ module.exports = function(fw) {
       lib.splash.table(tableName).click();
     },
     function() {
-      lib.splash.expectGlobalSqlResult(['name'], [['Adam'], ['Eve'], ['Bob']]);
+      lib.splash.expectGlobalSqlResult(['name'], ['String'], [['Adam'], ['Eve'], ['Bob']]);
     }
   );
+
   fw.transitionTest(
-    'empty splash',
+    'Table described in global SQL box',
     'CSV file imported as table with limit',
     function() {
       var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
       lib.splash.startTableImport();
       lib.splash.importLocalCSVFile(tableName, importPath, 'name,age', 'name', false, '2');
+      lib.confirmSweetAlert('Entry already exists');
       lib.splash.computeTable(tableName);
     },
     function() {
@@ -47,6 +50,7 @@ module.exports = function(fw) {
       lib.splash.expectTableWithNumRows(tableName, 2);
     }
   );
+
   fw.transitionTest(
     'CSV file imported as table with limit',
     'Table edited to remove limit',
@@ -64,6 +68,7 @@ module.exports = function(fw) {
       lib.splash.expectTableWithNumRows(tableName, 3);
     }
   );
+
   fw.transitionTest(
     'CSV file imported as table',
     'Project vertices imported from a table',
@@ -76,6 +81,7 @@ module.exports = function(fw) {
       expect(lib.left.attributeCount()).toEqual(2);  // id,name
     }
   );
+
   fw.statePreservingTest(
     'CSV file imported as table',
     'Editing imported CSV configuration is possible',
@@ -139,6 +145,7 @@ module.exports = function(fw) {
       lib.splash.expectNumTables(1);
       lib.splash.expectTableWithNumRows('jdbc imported', 3);
     });
+
   fw.transitionTest(
     'Sqlite file imported via JDBC as table',
     'Editing imported JDBC configuration is possible',
