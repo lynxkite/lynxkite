@@ -422,15 +422,15 @@ abstract class OperationParameterMeta {
     id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
 }
 
-abstract class Operation(metadata: BoxMetadata, context: Operation.Context) {
+abstract class Operation(box: Box, context: Operation.Context) {
   implicit val manager = context.manager
-  lazy val project = metadata.inputs match {
+  lazy val project = box.inputs match {
     case Seq() => new RootProjectEditor(RootProjectState.emptyState)
     case Seq(LocalBoxConnection("project", "project")) => context.inputs("project").project
   }
   val user = context.user
-  def id = Operation.titleToID(metadata.operation)
-  def title = metadata.operation // Override this to change the display title while keeping the original ID.
+  def id = Operation.titleToID(box.operation)
+  def title = box.operation // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
   def visibleScalars: List[FEScalar] = List()
@@ -457,11 +457,18 @@ abstract class Operation(metadata: BoxMetadata, context: Operation.Context) {
     }
   }
 
-  def validateAndApply(params: Map[String, String]): Unit = {
+  def getOutputs(params: Map[String, String]): Map[String, BoxOutputState] = {
+    // This is a project-specific implementation. This should go in a subclass once we have other
+    // (non-project) operations.
     validateParameters(params)
     apply(params)
     project.setLastOperationDesc(summary(params))
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
+    assert(box.outputs == List(LocalBoxConnection("project", "project")))
+    import CheckpointRepository._ // For JSON formatters.
+    Map("project" ->
+      BoxOutputState(
+        box.id, "project", "project", json.Json.toJson(project.state).as[json.JsObject]))
   }
 
   def toFE: FEOperationMeta = FEOperationMeta(
@@ -469,7 +476,7 @@ abstract class Operation(metadata: BoxMetadata, context: Operation.Context) {
     title,
     parameters.map { param => param.toFE },
     visibleScalars,
-    metadata.category,
+    box.category,
     enabled,
     description)
   protected def scalars[T: TypeTag] =
@@ -527,7 +534,7 @@ abstract class Operation(metadata: BoxMetadata, context: Operation.Context) {
   }
 }
 object Operation {
-  def titleToID(title: String) = title.replace(" ", "-")
+  def titleToID(title: String) = title
   case class Category(
       title: String,
       color: String, // A color class from web/app/styles/operation-toolbox.css.
@@ -541,7 +548,7 @@ object Operation {
       OperationCategory(title, icon, color, ops)
   }
 
-  type Factory = (BoxMetadata, Context) => Operation
+  type Factory = (Box, Context) => Operation
   case class Context(
     user: serving.User,
     inputs: Map[String, BoxOutputState],
@@ -588,11 +595,15 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def operationIds = operations.keys.toSeq
 
-  def opById(context: Operation.Context, id: String): Operation = {
-    val (metadata, factory) = operations(id)
-    factory(metadata, context)
+  def opForBox(context: Operation.Context, box: Box): Operation = {
+    val (metadata, factory) = operations(box.operation)
+    factory(box, context)
   }
 
+  def context(user: serving.User, inputs: Map[String, BoxOutputState]) =
+    Operation.Context(user, inputs, manager)
+
+  /*
   // Applies the operation specified by op in the given context and returns the
   // applied operation.
   def appliedOp(context: Operation.Context, opSpec: FEOperationSpec): Operation = {
@@ -601,7 +612,6 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     op
   }
 
-  /*
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
   private def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
     updateDelta(editor, original, "vertex_count")
