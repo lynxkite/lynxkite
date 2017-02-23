@@ -114,7 +114,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entityCache(entity.gUID) = data
   }
 
-  private val loggedFutures = new ControlledFutures()(executionContext)
+  private val asyncJobs = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
@@ -165,7 +165,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
           // We still save all scalars even for non-heavy operations,
           // unless they are explicitly say 'never serialize'.
           // This can happen asynchronously though.
-          loggedFutures.register {
+          asyncJobs.register {
             saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
@@ -299,7 +299,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
             })
         }
 
-        logger.logWhenReady(loggedFutures)
+        logger.logWhenReady(asyncJobs)
 
       }
     }
@@ -338,7 +338,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
 
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
-    loggedFutures.waitAllFutures()
+    asyncJobs.waitAllFutures()
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
