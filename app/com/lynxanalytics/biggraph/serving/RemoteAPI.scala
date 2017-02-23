@@ -326,7 +326,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val inputBoxes = request.inputs.values.map(c => workspace.findBox(c.box).get)
     val avgX = inputBoxes.map(_.x).sum / inputBoxes.size
     val avgY = inputBoxes.map(_.y).sum / inputBoxes.size
-    val newBox = ops.getBoxMetadata(operation).toBox(request.parameters, x = avgX, y = avgY + 50)
+    val newBox = workspace.autoName(
+      ops.getBoxMetadata(operation).toBox(request.parameters, x = avgX, y = avgY + 50))
     val newArrows = request.inputs.map { case (id, source) => Arrow(source, newBox.input(id)) }
     val newWorkspace = workspace.addBox(newBox).addArrows(newArrows)
     val checkpoint = newWorkspace.checkpoint(previous = request.checkpoint)
