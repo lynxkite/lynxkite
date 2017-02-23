@@ -20,7 +20,7 @@ import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.LoggedFutures
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
@@ -114,8 +114,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entityCache(entity.gUID) = data
   }
 
-  private val loggedFutures = new LoggedFutures()(executionContext)
-  private val operationLoggerFutures = new LoggedFutures()(executionContext)
+  private val loggedFutures = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
