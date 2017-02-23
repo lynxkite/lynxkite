@@ -65,12 +65,8 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     val outputsFuture = SafeFuture.sequence(outputInfoList)
     outputsFuture.map {
       outputs =>
-        try {
-          controlledFutures.register {
-            dump(outputs)
-          }
-        } catch {
-          case t: Throwable => ()
+        controlledFutures.register {
+          dump(outputs)
         }
     }
   }
