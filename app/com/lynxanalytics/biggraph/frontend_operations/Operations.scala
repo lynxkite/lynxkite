@@ -2244,6 +2244,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Sample graph by random walks", new StructureOperation(_, _) {
+    def parameters = List(
+      NonNegInt("startPoints", "Number of start points", default = 1),
+      NonNegInt("walksFromOnePoint", "Number of walks from each start point", default = 10000),
+      Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
+      Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
+      Param("edgeAttrName", "Save edge indices as", defaultValue = "firts_traversed"),
+      RandomSeed("seed", "Seed")
+    )
+    def enabled = hasVertexSet && hasEdgeBundle
+
+    def apply(params: Map[String, String]) = {
+      val output = {
+        val startPoints = params("startPoints").toInt
+        val walksFromOnePoint = params("walksFromOnePoint").toInt
+        val walkAbortionProbability = params("walkAbortionProbability").toDouble
+        val seed = params("seed").toInt
+        val op = graph_operations.RandomWalkSample(startPoints, walksFromOnePoint,
+          walkAbortionProbability, seed)
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
+      }
+      project.newVertexAttribute(params("vertexAttrName"), output.vertexFirstVisited)
+      project.newEdgeAttribute(params("edgeAttrName"), output.edgeFirstTraversed)
+    }
+  })
+
   register("Aggregate vertex attribute globally", new GlobalOperation(_, _) {
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
