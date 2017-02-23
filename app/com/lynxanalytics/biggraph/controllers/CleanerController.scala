@@ -46,8 +46,8 @@ case class AllFiles(
   lazy val all = partitioned ++ entities ++ operations ++ scalars
 }
 
-class CleanerController(environment: BigGraphEnvironment) {
-  implicit val manager = environment.metaGraphManager
+class CleanerController(metaGraphManager: MetaGraphManager, dataManager: DataManager) {
+  implicit val manager = metaGraphManager
 
   private val methods = List(
     CleanerMethod(
@@ -99,7 +99,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   // Return all files and dirs and their respective sizes in bytes in a
   // certain directory. Directories in trash are included iff the trash param is true.
   private def getAllFilesInDir(dir: String, trash: Boolean): Map[String, Long] = {
-    val hadoopFileDir = environment.dataManager.writablePath / dir
+    val hadoopFileDir = dataManager.writablePath / dir
     if (!hadoopFileDir.exists) {
       Map[String, Long]()
     } else {
@@ -113,7 +113,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def metaGraphContents(): Set[String] = {
-    allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
+    allFilesFromSourceOperation(metaGraphManager.getOperationInstances())
   }
 
   private def referredFromProject(): Set[String] = {
@@ -224,7 +224,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def moveToTrash(dir: String, files: Set[String]): Unit = {
-    val hadoopFileDir = environment.dataManager.writablePath / dir
+    val hadoopFileDir = dataManager.writablePath / dir
     if (hadoopFileDir.exists()) {
       for (file <- files) {
         (hadoopFileDir / file).renameTo(hadoopFileDir / (file + io.DeletedSfx))
@@ -243,7 +243,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def deleteTrashFilesInDir(dir: String): Unit = {
-    val hadoopFileDir = environment.dataManager.writablePath / dir
+    val hadoopFileDir = dataManager.writablePath / dir
     if (hadoopFileDir.exists()) {
       hadoopFileDir.listStatus.filter {
         subDir => subDir.getPath().toString contains io.DeletedSfx

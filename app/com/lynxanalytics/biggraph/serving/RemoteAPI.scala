@@ -555,7 +555,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def cleanFileSystem(user: User, request: Empty) = {
-    val cleanerController = new CleanerController(env)
+    val cleanerController = env.cleanerController
     cleanerController.moveAllToCleanerTrash(user)
     cleanerController.emptyCleanerTrash(user, request)
   }
