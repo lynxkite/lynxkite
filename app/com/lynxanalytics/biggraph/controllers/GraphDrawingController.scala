@@ -220,14 +220,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val idSet = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
-      val triplets = tripletMapping(smearBundle, sampled = false)
+      val neighbors = neighborMapping(smearBundle, sampled = false)
       val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(
         centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(
           nop.edges, smearBundle)(
-            nop.srcTripletMapping, triplets.srcEdges)(
-              nop.dstTripletMapping, triplets.dstEdges).result
+            nop.srcTripletMapping, neighbors.srcNeighbors)(
+              nop.dstTripletMapping, neighbors.dstNeighbors).result
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
@@ -338,6 +338,17 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val res = op(op.edges, eb).result
     dataManager.cache(res.srcEdges)
     dataManager.cache(res.dstEdges)
+    return res
+  }
+
+  private def neighborMapping(
+    eb: EdgeBundle, sampled: Boolean): graph_operations.NeighborMapping.Output = {
+    val op =
+      if (sampled) graph_operations.NeighborMapping(sampleSize = DrawingThresholds.TripletSampling)
+      else graph_operations.NeighborMapping()
+    val res = op(op.edges, eb).result
+    dataManager.cache(res.srcNeighbors)
+    dataManager.cache(res.dstNeighbors)
     return res
   }
 

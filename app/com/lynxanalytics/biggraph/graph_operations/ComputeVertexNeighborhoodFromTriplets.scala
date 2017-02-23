@@ -8,10 +8,10 @@ import scala.util.Sorting
 object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
-    val edges = edgeBundle(vertices, vertices)
-    // The list of outgoing edges.
+    val edges = edgeBundle(vertices, vertices) // We don't need this anymore, but have to keep here for legacy reasons?
+    // The list of outgoing neighbors.
     val srcTripletMapping = vertexAttribute[Array[ID]](vertices)
-    // The list of incoming edges.
+    // The list of incoming neighbors.
     val dstTripletMapping = vertexAttribute[Array[ID]](vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
@@ -35,20 +35,15 @@ case class ComputeVertexNeighborhoodFromTriplets(
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
-    val edges = inputs.edges.rdd
     val all = inputs.srcTripletMapping.rdd.fullOuterJoin(inputs.dstTripletMapping.rdd)
     var neighborhood = centers.toArray
     var tooMuch = false
     for (i <- 0 until radius) {
       if (!tooMuch) {
         Sorting.quickSort(neighborhood)
-        val neighborEdges = all
+        neighborhood = all
           .restrictToIdSet(neighborhood)
-          .flatMap { case (id, (srcEdge, dstEdge)) => (srcEdge ++ dstEdge).flatten }
-          .distinct.collect
-        Sorting.quickSort(neighborEdges)
-        neighborhood = edges.restrictToIdSet(neighborEdges)
-          .flatMap { case (id, edge) => Iterator(edge.src, edge.dst) }
+          .flatMap { case (id, (srcNeighbor, dstNeighbor)) => (srcNeighbor ++ dstNeighbor).flatten }
           .distinct
           .take(maxCount + 1)
         if (neighborhood.size > maxCount) {
