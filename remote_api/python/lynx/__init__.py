@@ -361,7 +361,7 @@ class LynxKite:
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
   def clean_file_system(self):
-    """Deletes the GUIDs which are not referenced anymore."""
+    """Deletes the data files which are not referenced anymore."""
     self._send('cleanFileSystem')
 
 
