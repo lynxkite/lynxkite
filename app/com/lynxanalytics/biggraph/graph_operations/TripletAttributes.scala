@@ -109,26 +109,24 @@ case class NeighborMapping(sampleSize: Int = -1)
     val src = inputs.src.rdd
     val bySrc = edges
       .map { case (_, edge) => (edge.src, edge.dst) }
-      .distinct
       .groupBySortedKey(src.partitioner.get)
     output(
       o.srcNeighbors,
       src.sortedLeftOuterJoin(bySrc)
         .mapValues {
-          case (_, Some(it)) => it.toArray
+          case (_, Some(it)) => it.toSet.toArray
           case (_, None) => Array[ID]()
         })
 
     val dst = inputs.dst.rdd
     val byDst = edges
       .map { case (_, edge) => (edge.dst, edge.src) }
-      .distinct
       .groupBySortedKey(dst.partitioner.get)
     output(
       o.dstNeighbors,
       dst.sortedLeftOuterJoin(byDst)
         .mapValues {
-          case (_, Some(it)) => it.toArray
+          case (_, Some(it)) => it.toSet.toArray
           case (_, None) => Array[ID]()
         })
   }
