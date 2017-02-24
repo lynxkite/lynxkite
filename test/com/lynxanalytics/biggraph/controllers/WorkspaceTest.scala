@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
 
+import play.api.libs.json
 import com.lynxanalytics.biggraph._
 
 class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
@@ -35,6 +36,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     ws: Workspace, src: BoxConnection, dst: BoxConnection): Workspace = {
     ws.addArrows(Seq(Arrow(src, dst))).fillStates(user, ops)
   }
+  def print(ws: Workspace): Unit = {
+    import WorkspaceJsonFormatters._
+    println(json.Json.prettyPrint(json.Json.toJson(ws)))
+  }
 
   test("pagerank on example graph") {
     using("test-workspace") {
@@ -52,13 +57,33 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       // Added PageRank. It is not yet connected, so its output is not computed.
       assertBoxesArrowsStates(pr.ws, 2, 0, 1)
       val connected = addArrow(pr.ws, eg.box.output("project"), pr.box.input("project"))
-      assert(connected.boxes(1) == pr.box)
       // PageRank is now connected and its output computed.
       assertBoxesArrowsStates(connected, 2, 1, 2)
       val project = connected.stateMap(pr.box.output("project")).project
       import graph_api.Scripting._
       assert(project.vertexAttributes("pagerank").rdd.values.collect.toSet == Set(
         1.4099834026132592, 1.4099834026132592, 0.9892062327983842, 0.19082696197509774))
+    }
+  }
+
+  test("errors") {
+    using("test-workspace") {
+      val blank = get("test-workspace")
+      val eg = AddBox(blank, "Example Graph", y = 20)
+      val derive = AddBox(eg.ws, "Derived vertex attribute", y = 40, params = Map(
+        "expr" -> "xxx", "type" -> "double", "output" -> "x"))
+      val pr = AddBox(
+        derive.ws, "PageRank", y = 60,
+        params = Map(
+          "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+          "iterations" -> "5", "direction" -> "all edges"))
+      val connected1 = addArrow(pr.ws, eg.box.output("project"), derive.box.input("project"))
+      val connected2 = addArrow(connected1, derive.box.output("project"), pr.box.input("project"))
+      assertBoxesArrowsStates(connected2, 3, 2, 3)
+      val ex = intercept[AssertionError] {
+        connected2.stateMap(pr.box.output("project")).project
+      }
+      assert(ex.getMessage.contains("\"xxx\" is not defined"))
     }
   }
 }

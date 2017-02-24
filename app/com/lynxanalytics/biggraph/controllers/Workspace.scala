@@ -55,7 +55,16 @@ case class Workspace(
       else {
         val newStates = states ++ ready.flatMap { box =>
           val inputs = box.inputs.map(lc => lc.id -> states(arrowDstToSrc(lc.ofBox(box)))).toMap
-          box.execute(user, inputs, ops).values.map(s => s.connection -> s)
+          try {
+            box.execute(user, inputs, ops).values.map(s => s.connection -> s)
+          } catch {
+            case ex: Throwable =>
+              val msg = ex match {
+                case ex: AssertionError => ex.getMessage
+                case _ => ex.toString
+              }
+              box.outputs.map(_.ofBox(box)).map(c => c -> BoxOutputState.error(c, msg))
+          }
         }
         computeMissing(rest, newStates)
       }
@@ -79,8 +88,7 @@ case class Box(
     x: Double,
     y: Double,
     inputs: List[LocalBoxConnection],
-    outputs: List[LocalBoxConnection],
-    status: FEStatus) {
+    outputs: List[LocalBoxConnection]) {
 
   def input(id: String) = inputs.find(_.id == id).get.ofBox(this)
 
@@ -126,8 +134,7 @@ case class BoxMetadata(
     inputs: List[LocalBoxConnection],
     outputs: List[LocalBoxConnection]) {
   def toBox(parameters: Map[String, String], x: Double, y: Double) =
-    Box(operation, category, operation, parameters, x, y, inputs, outputs,
-      FEStatus.assert(inputs.isEmpty, "Disconnected."))
+    Box(operation, category, operation, parameters, x, y, inputs, outputs)
 }
 
 case class Arrow(
@@ -139,16 +146,21 @@ object BoxOutputState {
   val validKinds = Set(ProjectKind) // More kinds to come.
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
+  def error(c: BoxConnection, message: String) =
+    BoxOutputState(c.box, c.id, c.kind, null, FEStatus.disabled(message))
 }
 
 case class BoxOutputState(
     box: String,
     output: String,
     kind: String,
-    state: json.JsObject) {
+    state: json.JsValue,
+    success: FEStatus = FEStatus.enabled) {
   BoxOutputState.assertKind(kind)
+  def isProject = kind == BoxOutputState.ProjectKind
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
-    assert(kind == BoxOutputState.ProjectKind, s"$box=>$output is not a project but a $kind.")
+    assert(isProject, s"$box=>$output is not a project but a $kind.")
+    assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
     val p = state.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)

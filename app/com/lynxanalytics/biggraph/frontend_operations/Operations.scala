@@ -3628,7 +3628,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Segment by geographical proximity", new StructureOperation(_, _) {
+  register("Segment by geographical proximity", StructureOperations, new Operation(_, _) {
     override def parameters = List(
       Param("name", "Name"),
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
