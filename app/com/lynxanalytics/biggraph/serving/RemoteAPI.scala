@@ -205,7 +205,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   val bigGraphController = new BigGraphController(env)
   val graphDrawingController = new GraphDrawingController(env)
 
-  def normalize(operation: String) = operation.replace("-", "").toLowerCase
+  def normalize(operation: String) = operation.replace(" ", "").toLowerCase
   def camelize(operation: String) = {
     val words = operation.split("-").toList
     val first = words.head.toLowerCase
