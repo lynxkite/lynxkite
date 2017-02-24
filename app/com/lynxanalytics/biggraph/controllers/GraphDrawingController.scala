@@ -347,8 +347,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       if (sampled) graph_operations.NeighborMapping(sampleSize = DrawingThresholds.TripletSampling)
       else graph_operations.NeighborMapping()
     val res = op(op.edges, eb).result
-    dataManager.cache(res.srcNeighbors)
-    dataManager.cache(res.dstNeighbors)
     return res
   }
 
