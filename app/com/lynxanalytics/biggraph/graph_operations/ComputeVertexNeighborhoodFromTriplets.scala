@@ -45,15 +45,14 @@ case class ComputeVertexNeighborhoodFromTriplets(
           .restrictToIdSet(neighborhood)
           .flatMap { case (id, (srcNeighbor, dstNeighbor)) => (srcNeighbor ++ dstNeighbor).flatten }
           .distinct
-          .take(maxCount + 1)
+          .take(maxCount + 1) ++ neighborhood
         if (neighborhood.size > maxCount) {
           tooMuch = true
           neighborhood = Array()
         }
       }
     }
-    // Isolated points are lost in the above loop. Add back centers to make sure they are present.
-    val res = neighborhood.toSet ++ centers
+    val res = neighborhood.toSet
     if (tooMuch || res.size > maxCount) {
       output(o.neighborhood, Set[ID]())
     } else {
