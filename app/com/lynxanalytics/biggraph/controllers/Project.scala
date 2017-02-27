@@ -1223,9 +1223,10 @@ object DirectoryEntry {
 
   def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     val entry = new DirectoryEntry(path)
+    val nonDirParent = entry.parents.find(_.hasCheckpoint)
     assert(
-      !entry.parents.exists(_.hasCheckpoint),
-      s"Cannot have entries inside projects or tables: $path")
+      nonDirParent.isEmpty,
+      s"Invalid path: $path. Parent ${nonDirParent.get} is not a directory.")
     if (entry.exists) {
       if (entry.isProject) {
         new ProjectFrame(entry.path)
