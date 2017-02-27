@@ -960,9 +960,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val value = params("value")
       val res = {
         if (params("type") == "Double") {
-          project.edgeBundle.const(params("value").toDouble)
+          project.edgeBundle.const(value.toDouble)
         } else {
-          project.edgeBundle.const(params("value"))
+          project.edgeBundle.const(value)
         }
       }
       project.newEdgeAttribute(params("name"), res, s"constant $value")
@@ -995,11 +995,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     override def title = "Fill vertex attribute with constant default value"
     def apply(params: Map[String, String]) = {
       val attr = project.vertexAttributes(params("attr"))
+      val paramDef = params("def")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = attr.is[Double], params("def"))
+          isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.vertexSet).result
-      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      project.newVertexAttribute(params("attr"), unifyAttribute(attr, default.attr.entity), project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1011,11 +1012,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       (edgeAttributes[String] ++ edgeAttributes[Double]).nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]) = {
       val attr = project.edgeAttributes(params("attr"))
+      val paramDef = params("def")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = attr.is[Double], params("def"))
+          isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.edgeBundle.idSet).result
-      project.edgeAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      project.newEdgeAttribute(params("attr"), unifyAttribute(attr, default.attr.entity), project.viewer.getEdgeAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1435,15 +1437,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("output").nonEmpty, "Please set an attribute name.")
-      val x = params("x")
-      val y = params("y")
+      val paramX = params("x")
+      val paramY = params("y")
       val pos = {
         val op = graph_operations.JoinAttributes[Double, Double]()
-        val x = project.vertexAttributes(params("x")).runtimeSafeCast[Double]
-        val y = project.vertexAttributes(params("y")).runtimeSafeCast[Double]
+        val x = project.vertexAttributes(paramX).runtimeSafeCast[Double]
+        val y = project.vertexAttributes(paramY).runtimeSafeCast[Double]
         op(op.a, x)(op.b, y).result.attr
       }
-      project.newVertexAttribute(params("output"), pos, s"($x, $y)" + help)
+      project.newVertexAttribute(params("output"), pos, s"($paramX, $paramY)" + help)
     }
   })
 
@@ -2640,7 +2642,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy edge attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+      project.newEdgeAttribute(params("to"), project.edgeAttributes(params("from")), project.viewer.getEdgeAttributeNote(params("from")))
+      //, getEdgeAttributeNote(project.edgeAttributes(params("from"))))
     }
   })
 
@@ -2690,7 +2693,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy scalar $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.scalars(params("to")) = project.scalars(params("from"))
+      project.newScalar(params("to"), project.scalars(params("from")), project.viewer.getScalarNote(params("from")))
     }
   })
 
