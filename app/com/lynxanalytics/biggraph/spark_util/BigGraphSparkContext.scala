@@ -288,15 +288,19 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
 // specified in the comment.
 // SELECT * FROM table1 WHERE x > 1 --LYNX-TD-SCHEMA-OVERRIDE:table2
 class TeradataDialect extends JdbcDialect {
-  val magicMarker = "--LYNX-TD-SCHEMA-OVERRIDE:"
+  val overrideTableMarker = "--LYNX-TD-SCHEMA-OVERRIDE-TABLE:"
+  val overrideSqlMarker = "--LYNX-TD-SCHEMA-OVERRIDE-SQL:"
   def canHandle(url: String) = {
     url.startsWith("jdbc:teradata:")
   }
 
   override def getSchemaQuery(table: String) = {
-    if (table.contains(magicMarker)) {
-      val realTable = table.split(magicMarker)(1)
+    if (table.contains(overrideTableMarker)) {
+      val realTable = table.split(overrideTableMarker)(1)
       super.getSchemaQuery(realTable)
+    } else if (table.contains(overrideSqlMarker)) {
+      val schemaSql = table.split(overrideSqlMarker)(1)
+      schemaSql
     } else {
       super.getSchemaQuery(table)
     }
