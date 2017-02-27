@@ -178,4 +178,15 @@ class ProjectTest extends FunSuite with TestGraphOp {
     assertProjectReaders(p3)("y")("x")
     assertProjectWriters(p3)("y")("x")
   }
+
+  test("Invalid path error message") {
+    DirectoryEntry.fromName("dir").asNewDirectory()
+    val frame = DirectoryEntry.fromName("dir/project").asNewProjectFrame()
+    frame.initialize
+    val e = intercept[java.lang.AssertionError] {
+      DirectoryEntry.fromName("dir/project/p").asNewProjectFrame()
+    }
+    assert(e.getMessage.contains(
+      "Invalid path: dir/project/p. Parent dir/project is not a directory."))
+  }
 }
