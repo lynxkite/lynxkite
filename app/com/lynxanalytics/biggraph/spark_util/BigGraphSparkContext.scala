@@ -290,6 +290,7 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
 class TeradataDialect extends JdbcDialect {
   val overrideTableMarker = "--LYNX-TD-SCHEMA-OVERRIDE-TABLE:"
   val overrideSqlMarker = "--LYNX-TD-SCHEMA-OVERRIDE-SQL:"
+  val autofixMarker = "--LYNX-TD-SCHEMA-AUTO-FIX"
   def canHandle(url: String) = {
     url.startsWith("jdbc:teradata:")
   }
@@ -301,6 +302,15 @@ class TeradataDialect extends JdbcDialect {
     } else if (table.contains(overrideSqlMarker)) {
       val schemaSql = table.split(overrideSqlMarker)(1)
       schemaSql
+    } else if (table.contains(autofixMarker) && table.toLowerCase.startsWith("select")) {
+      val query = table.split("--")(0)
+      val wherePos = query.toLowerCase.indexOfSlice("where")
+      val cleanQuery = if (wherePos >= 0) {
+        query.substring(0, wherePos)
+      } else {
+        query
+      }
+      cleanQuery + " WHERE 1=0"
     } else {
       super.getSchemaQuery(table)
     }
