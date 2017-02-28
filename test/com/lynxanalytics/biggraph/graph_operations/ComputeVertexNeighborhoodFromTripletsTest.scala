@@ -10,15 +10,15 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
   test("vertex neighborhood of example graph using triplets") {
     val g = ExampleGraph()().result
     val neighbors = {
-      val op = NeighborMapping()
+      val op = EdgeMapping()
       op(op.edges, g.edges).result
     }
     val nop = ComputeVertexNeighborhoodFromTriplets(Seq(2, 3), 1, 10)
     val nopres = nop(
       nop.vertices, g.vertices)(
         nop.edges, g.edges)(
-          nop.srcTripletMapping, neighbors.srcNeighbors)(
-            nop.dstTripletMapping, neighbors.dstNeighbors).result
+          nop.srcTripletMapping, neighbors.srcEdges)(
+            nop.dstTripletMapping, neighbors.dstEdges).result
     assert(nopres.neighborhood.value == Set(0, 1, 2, 3))
   }
 
@@ -29,7 +29,7 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
       3 -> Seq(7, 8), 4 -> Seq(9, 10), 5 -> Seq(11, 12), 6 -> Seq(13, 14))
     val g = SmallTestGraph(edges)().result
     val neighbors = {
-      val op = NeighborMapping()
+      val op = EdgeMapping()
       op(op.edges, g.es).result
     }
     val neighborhood = {
@@ -37,8 +37,8 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
       op(
         op.vertices, g.vs)(
           op.edges, g.es)(
-            op.srcTripletMapping, neighbors.srcNeighbors)(
-              op.dstTripletMapping, neighbors.dstNeighbors).result.neighborhood.value
+            op.srcTripletMapping, neighbors.srcEdges)(
+              op.dstTripletMapping, neighbors.dstEdges).result.neighborhood.value
     }
     assert(neighborhood == Set(0, 1, 2, 3, 4, 5, 6))
   }
