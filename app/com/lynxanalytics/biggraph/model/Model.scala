@@ -47,6 +47,14 @@ private[biggraph] class ClusterModelImpl(
   def details: String = s"cluster centers: ${m.clusterCenters}\n" + statistics
 }
 
+private[biggraph] class DecisionTreeClassificationModelImpl(
+    m: ml.classification.DecisionTreeClassificationModel,
+    statistics: String) extends ModelImplementation {
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def details: String = statistics
+  def getThresholds: Array[Double] = m.getThresholds
+}
+
 case class Model(
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
@@ -89,6 +97,9 @@ case class Model(
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get)
+      case "Decision tree classification" =>
+        new DecisionTreeClassificationModelImpl(
+          ml.classification.DecisionTreeClassificationModel.load(path), statistics.get)
     }
   }
 }

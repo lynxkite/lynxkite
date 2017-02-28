@@ -56,14 +56,18 @@ case class ClassifyWithModel(numFeatures: Int)
     }.rdd.sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
-      val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
-        .getThreshold
-      val probability = transformation.select("ID", "probability").map { row =>
-        var probabilityValue = row.getAs[DenseVector]("probability")(1)
-        if (probabilityValue < threshold) {
-          probabilityValue = 1 - probabilityValue
-        }
-        (row.getAs[ID]("ID"), probabilityValue)
+      val probability = transformation.select("ID", "probability", "classification").map { row =>
+        val classification = row.getAs[Double]("classification").toInt
+        val probability = row.getAs[DenseVector]("probability")(classification)
+        (row.getAs[ID]("ID"), probability)
+        // val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
+        //   .getThreshold
+        // val probability = transformation.select("ID", "probability").map { row =>
+        //   var probabilityValue = row.getAs[DenseVector]("probability")(1)
+        //   if (probabilityValue < threshold) {
+        //     probabilityValue = 1 - probabilityValue
+        //   }
+        //   (row.getAs[ID]("ID"), probabilityValue)
       }.rdd.sortUnique(partitioner)
       output(o.probability, probability)
     }

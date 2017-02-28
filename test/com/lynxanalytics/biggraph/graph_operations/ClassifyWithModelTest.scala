@@ -20,10 +20,10 @@ class ClassifyWithModelTest extends ModelTestBase {
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
-    // Check that the first five and the last five data points shall have same labels.
+    // Check that the first two and the last two data points shall have same labels.
     assert(clustering(0) == clustering(1))
     assert(clustering(2) == clustering(3))
-    // Check that distant data points have different labels. 
+    // Check that distant data points have different labels.
     assert(clustering(0) != clustering(3))
   }
 
@@ -47,9 +47,49 @@ class ClassifyWithModelTest extends ModelTestBase {
     assert(classification(0) == 0.0 && classification(1) == 0.0)
     assert(classification(2) == 1.0 && classification(3) == 1.0)
     val probability = result.probability.rdd.values.collect
-    // Check that each probability is proportional to their attribute values and each  
-    // probability is greater than 0.5.  
+    // Check that each probability is proportional to their attribute values and each
+    // probability is greater than 0.5.
     assert(probability(0) > probability(1) && probability(1) > 0.5)
     assert(probability(3) > probability(2) && probability(2) > 0.5)
+  }
+
+  test("test the decision tree classification model") {
+    val m = model(
+      method = "Decision tree classification",
+      labelName = "length of the walk",
+      label = Map(0 -> 1, 1 -> 0, 2 -> 0, 3 -> 2, 4 -> 1, 5 -> 0, 6 -> 1, 7 -> 2),
+      featureNames = List("temperature", "rain"),
+      attrs = Seq(Map(0 -> -15, 1 -> 20, 2 -> -10, 3 -> 20, 4 -> 35, 5 -> 40, 6 -> -15, 7 -> -15),
+        Map(0 -> 0, 1 -> 1, 2 -> 1, 3 -> 0, 4 -> 0, 5 -> 1, 6 -> 0, 7 -> 0)),
+      // I love making long walks if it's not raining and the temperature is
+      // pleasant. I take only a short work if it's not raining, but the weather
+      // is too hot or too cold. I hate rain, so I just stay at home if it's raining.
+      // To be honest, once during the winter I was in such a good mood that I
+      // went on a long walk in spite of the cold weather.
+      graph(8))
+
+    val g = graph(numVertices = 6)
+    val attrs = Seq(Map(0 -> 20.0, 1 -> 42.0, 2 -> 38.0, 3 -> -16.0, 4 -> -20.0, 5 -> 20.0),
+      Map(0 -> 0.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0, 4 -> 1.0, 5 -> 1.0))
+    val features = attrs.map(attr => {
+      AddVertexAttribute.run[Double](g.vs, attr)
+    })
+    val op = ClassifyWithModel(2)
+    val result = op(op.features, features)(op.model, m).result
+    val classification = result.classification.rdd.values.collect
+    assert(classification.size == 6)
+    assert(classification(0) == 2)
+    assert(classification(1) == 0)
+    assert(classification(2) == 1)
+    assert(classification(3) == 1)
+    assert(classification(4) == 0)
+    assert(classification(5) == 0)
+    val probability = result.probability.rdd.values.collect
+    assert(probability(0) == 1)
+    assert(probability(1) == 1)
+    assert(probability(2) == 1)
+    assert(0.66 < probability(3) && probability(3) < 0.67)
+    assert(probability(4) == 1)
+    assert(probability(5) == 1)
   }
 }
