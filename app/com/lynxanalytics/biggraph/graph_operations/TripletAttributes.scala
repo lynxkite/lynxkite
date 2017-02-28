@@ -71,7 +71,17 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
-case class EdgeAndNeighbor(eid: ID, nid: ID)
+object EdgeAndNeighbor {
+  def empty = EdgeAndNeighbor(Array[ID](), Array[ID]())
+}
+
+case class EdgeAndNeighbor(eid: Array[ID], nid: Array[ID]) {
+  assert(eid.size == nid.size)
+  def map[B](f: ((ID, ID)) => B): Iterable[B] = {
+    (eid zip nid).map(f)
+  }
+  def size: Long = eid.size
+}
 
 // Creates outgoing and incoming edge mappings.
 object EdgeMapping extends OpFromJson {
@@ -83,9 +93,9 @@ object EdgeMapping extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
     // The list of outgoing edges.
-    val srcEdges = vertexAttribute[Array[EdgeAndNeighbor]](inputs.src.entity)
+    val srcEdges = vertexAttribute[EdgeAndNeighbor](inputs.src.entity)
     // The list of incoming edges.
-    val dstEdges = vertexAttribute[Array[EdgeAndNeighbor]](inputs.dst.entity)
+    val dstEdges = vertexAttribute[EdgeAndNeighbor](inputs.dst.entity)
   }
   def fromJson(j: JsValue) = EdgeMapping((j \ "sampleSize").as[Int])
 }
@@ -110,26 +120,26 @@ case class EdgeMapping(sampleSize: Int = -1)
       else inputs.edges.rdd
     val src = inputs.src.rdd
     val bySrc = edges
-      .map { case (id, edge) => (edge.src, EdgeAndNeighbor(id, edge.dst)) }
+      .map { case (id, edge) => (edge.src, (id, edge.dst)) }
       .groupBySortedKey(src.partitioner.get)
     output(
       o.srcEdges,
       src.sortedLeftOuterJoin(bySrc)
         .mapValues {
-          case (_, Some(it)) => it.toArray
-          case (_, None) => Array[EdgeAndNeighbor]()
+          case (_, Some(it)) => EdgeAndNeighbor(it.map(_._1).toArray, it.map(_._2).toArray)
+          case (_, None) => EdgeAndNeighbor.empty
         })
 
     val dst = inputs.dst.rdd
     val byDst = edges
-      .map { case (id, edge) => (edge.dst, EdgeAndNeighbor(id, edge.src)) }
+      .map { case (id, edge) => (edge.dst, (id, edge.src)) }
       .groupBySortedKey(dst.partitioner.get)
     output(
       o.dstEdges,
       dst.sortedLeftOuterJoin(byDst)
         .mapValues {
-          case (_, Some(it)) => it.toArray
-          case (_, None) => Array[EdgeAndNeighbor]()
+          case (_, Some(it)) => EdgeAndNeighbor(it.map(_._1).toArray, it.map(_._2).toArray)
+          case (_, None) => EdgeAndNeighbor.empty
         })
   }
 }
@@ -210,7 +220,7 @@ object EdgesForVertices extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
     val otherVs = vertexSet
-    val tripletMapping = vertexAttribute[Array[EdgeAndNeighbor]](vs)
+    val tripletMapping = vertexAttribute[EdgeAndNeighbor](vs)
     val edges = if (bySource) edgeBundle(vs, otherVs) else edgeBundle(otherVs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
@@ -258,7 +268,7 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
             if ((set == null) || (set.size + array.size > maxNumEdges)) {
               null
             } else {
-              set ++= array.map { case EdgeAndNeighbor(edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+              set ++= array.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
               set
             }
         },
