@@ -3,7 +3,7 @@
 # Run from the active metadata directory.
 
 cd /data/partitioned
-du -s * | sort -n | tail -n 100 > /tmp/bigfiles
+du --max-depth=1 . | sort -n | tail -n 100 > /tmp/bigfiles
 cd - > /dev/null
 cat /tmp/bigfiles | while read size guid; do
   cp=$(grep -l $guid checkpoints/* | tail -n 1 | sed 's/.*-//')
