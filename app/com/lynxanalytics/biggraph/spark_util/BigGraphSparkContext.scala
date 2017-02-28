@@ -269,6 +269,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.NullsFirst$])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.NullsFirst$])
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.EdgesAndNeighbors])
+    kryo.register(classOf[scala.collection.mutable.ListBuffer[_]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
