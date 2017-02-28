@@ -10,9 +10,9 @@ object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
     val vertices = vertexSet
     val edges = edgeBundle(vertices, vertices) // We don't need this anymore, but have to keep here for legacy reasons?
     // The list of outgoing neighbors.
-    val srcTripletMapping = vertexAttribute[Array[ID]](vertices)
+    val srcTripletMapping = vertexAttribute[Array[EdgeAndNeighbor]](vertices)
     // The list of incoming neighbors.
-    val dstTripletMapping = vertexAttribute[Array[ID]](vertices)
+    val dstTripletMapping = vertexAttribute[Array[EdgeAndNeighbor]](vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val neighborhood = scalar[Set[ID]]
@@ -43,7 +43,11 @@ case class ComputeVertexNeighborhoodFromTriplets(
         Sorting.quickSort(neighborhood)
         neighborhood = all
           .restrictToIdSet(neighborhood)
-          .flatMap { case (id, (srcNeighbor, dstNeighbor)) => (srcNeighbor ++ dstNeighbor).flatten }
+          .flatMap {
+            case (_, (srcNeighbor, dstNeighbor)) =>
+              (srcNeighbor ++ dstNeighbor).flatten
+          }
+          .map { case EdgeAndNeighbor(_, vid) => vid }
           .distinct
           .take(maxCount + 1) ++ neighborhood
         if (neighborhood.size > maxCount) {

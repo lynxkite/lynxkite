@@ -226,8 +226,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val nopres = nop(
         nop.vertices, vertexSet)(
           nop.edges, smearBundle)(
-            nop.srcTripletMapping, neighbors.srcNeighbors)(
-              nop.dstTripletMapping, neighbors.dstNeighbors).result
+            nop.srcTripletMapping, neighbors.srcEdges)(
+              nop.dstTripletMapping, neighbors.dstEdges).result
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
@@ -342,10 +342,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def neighborMapping(
-    eb: EdgeBundle, sampled: Boolean): graph_operations.NeighborMapping.Output = {
+    eb: EdgeBundle, sampled: Boolean): graph_operations.EdgeMapping.Output = {
     val op =
-      if (sampled) graph_operations.NeighborMapping(sampleSize = DrawingThresholds.TripletSampling)
-      else graph_operations.NeighborMapping()
+      if (sampled) graph_operations.EdgeMapping(sampleSize = DrawingThresholds.TripletSampling)
+      else graph_operations.EdgeMapping()
     val res = op(op.edges, eb).result
     return res
   }
@@ -413,7 +413,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     srcView: graph_operations.VertexView,
     dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
 
-    val tm = tripletMapping(eb, sampled = false)
+    val tm = neighborMapping(eb, sampled = false)
     if (srcView.vertexIndices.isDefined) {
       val vertexIds = srcView.vertexIndices.get.keySet
       val op = graph_operations.EdgesForVertices(
