@@ -5,26 +5,12 @@ import play.api.libs.json
 import com.lynxanalytics.biggraph._
 
 case class Workspace(
-    boxes: List[Box],
-    arrows: List[Arrow],
-    states: List[BoxOutputState]) {
+    boxes: List[Box]) {
 
-  def findBox(id: String): Option[Box] = boxes.find(_.id == id)
-
-  def addBox(box: Box): Workspace = {
-    assert(findBox(box.id).isEmpty, s"Workspace already contains a box named ${box.id}")
-    this.copy(boxes = boxes :+ box)
-  }
-
-  def autoName(box: Box): Box = {
-    val baseID = box.id
-    val uniqueID = Stream.from(1).map(baseID + _).filter(findBox(_).isEmpty).head
-    box.copy(id = uniqueID)
-  }
-
-  def addArrows(arrows: TraversableOnce[Arrow]) = {
-    // TODO: Asserts.
-    this.copy(arrows = this.arrows ++ arrows)
+  def findBox(id: String): Box = {
+    val b = boxes.find(_.id == id)
+    assert(b.nonEmpty, s"Cannot find box $id")
+    b.get
   }
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
@@ -33,51 +19,42 @@ case class Workspace(
       previous).checkpoint.get
   }
 
-  // Fetches the other ends of the inputs.
-  def inputs(box: Box): List[Option[BoxConnection]] = {
-    box.inputs.map(_.ofBox(box)).map(arrowDstToSrc.get(_))
+  def state(
+    user: serving.User, ops: OperationRepository, connection: BoxConnection): BoxOutputState = {
+    calculate(user, ops, connection, Map())(connection)
   }
 
-  lazy val arrowDstToSrc = arrows.map(a => a.dst -> a.src).toMap
-  lazy val stateMap: Map[BoxConnection, BoxOutputState] =
-    states.map(s => s.connection -> s).toMap
-
-  def outputStates(box: Box): List[Option[BoxOutputState]] = {
-    box.outputs.map(lc => stateMap.get(lc.ofBox(box)))
-  }
-
-  def fillStates(user: serving.User, ops: OperationRepository): Workspace = {
-    @annotation.tailrec
-    def computeMissing(
-      boxes: List[Box], states: Map[BoxConnection, BoxOutputState]): List[BoxOutputState] = {
-      val (ready, rest) = boxes.partition(box => inputs(box).forall(o => states.contains(o.get)))
-      if (ready.isEmpty) states.values.toList
-      else {
-        val newStates = states ++ ready.flatMap { box =>
-          val inputs = box.inputs.map(lc => lc.id -> states(arrowDstToSrc(lc.ofBox(box)))).toMap
-          try {
-            box.execute(user, inputs, ops).values.map(s => s.connection -> s)
-          } catch {
-            case ex: Throwable =>
-              val msg = ex match {
-                case ex: AssertionError => ex.getMessage
-                case _ => ex.toString
-              }
-              box.outputs.map(_.ofBox(box)).map(c => c -> BoxOutputState.error(c, msg))
-          }
-        }
-        computeMissing(rest, newStates)
+  // Calculates an output. Returns every state that had been calculated as a side-effect.
+  def calculate(
+    user: serving.User, ops: OperationRepository, connection: BoxConnection,
+    states: Map[BoxConnection, BoxOutputState]): Map[BoxConnection, BoxOutputState] = {
+    if (states.contains(connection)) states else {
+      val box = findBox(connection.box)
+      for (lc <- box.inputs) {
+        assert(lc.connectedTo.nonEmpty, s"Input ${lc.id} of ${box.id} is not connected.")
+        // TODO: Should just create an error output state.
       }
+      val updatedStates = box.inputs.foldLeft(states) {
+        (states, lc) => calculate(user, ops, lc.connectedTo.get, states)
+      }
+      val inputs = box.inputs.map(lc => lc.id -> updatedStates(lc.connectedTo.get)).toMap
+      val outputStates = try {
+        box.execute(user, inputs, ops).values.map(s => s.connection -> s)
+      } catch {
+        case ex: Throwable =>
+          val msg = ex match {
+            case ex: AssertionError => ex.getMessage
+            case _ => ex.toString
+          }
+          box.outputs.map(_.ofBox(box)).map(c => c -> BoxOutputState.error(c, msg))
+      }
+      updatedStates ++ outputStates
     }
-    val viable = boxes
-      .filterNot(outputStates(_).forall(_.nonEmpty)) // Does not have state yet.
-      .filter(inputs(_).forall(_.nonEmpty)) // All inputs are connected.
-    this.copy(states = computeMissing(viable, stateMap))
   }
 }
 
 object Workspace {
-  val empty = Workspace(List(), List(), List())
+  val empty = Workspace(List())
 }
 
 case class Box(
@@ -110,12 +87,22 @@ case class Box(
       s"Output mismatch: $outputStates does not match $outputs")
     outputStates
   }
+
+  def connect(input: String, output: BoxConnection): Box = {
+    this.copy(inputs = inputs.map {
+      i => if (i.id != input) i else i.copy(connectedTo = Some(output))
+    })
+  }
 }
 
 case class LocalBoxConnection(
     id: String,
-    kind: String) {
+    kind: String,
+    connectedTo: Option[BoxConnection] = None) {
   BoxOutputState.assertKind(kind)
+  for (c <- connectedTo) {
+    assert(kind == c.kind, s"$id is of type $kind, and cannot connect to $connectedTo")
+  }
   def ofBox(box: Box) = BoxConnection(box.id, id, kind)
 }
 
@@ -133,13 +120,9 @@ case class BoxMetadata(
     operation: String,
     inputs: List[LocalBoxConnection],
     outputs: List[LocalBoxConnection]) {
-  def toBox(parameters: Map[String, String], x: Double, y: Double) =
-    Box(operation, category, operation, parameters, x, y, inputs, outputs)
+  def toBox(id: String, parameters: Map[String, String], x: Double, y: Double) =
+    Box(id, category, operation, parameters, x, y, inputs, outputs)
 }
-
-case class Arrow(
-  src: BoxConnection,
-  dst: BoxConnection)
 
 object BoxOutputState {
   val ProjectKind = "project"
@@ -171,10 +154,9 @@ case class BoxOutputState(
 
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  implicit val fLocalBoxConnection = json.Json.format[LocalBoxConnection]
   implicit val fBoxConnection = json.Json.format[BoxConnection]
+  implicit val fLocalBoxConnection = json.Json.format[LocalBoxConnection]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
-  implicit val fArrow = json.Json.format[Arrow]
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
   implicit val fWorkspace = json.Json.format[Workspace]

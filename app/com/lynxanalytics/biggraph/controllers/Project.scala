@@ -1179,6 +1179,11 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initialize()
     res
   }
+  def asNewWorkspaceFrame(checkpoint: String): WorkspaceFrame = {
+    val res = asNewWorkspaceFrame()
+    res.setCheckpoint(checkpoint)
+    res
+  }
 
   def asTableFrame: TableFrame = {
     assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")

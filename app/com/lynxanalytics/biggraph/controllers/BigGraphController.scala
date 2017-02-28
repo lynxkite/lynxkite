@@ -427,7 +427,7 @@ abstract class Operation(box: Box, context: Operation.Context) {
   implicit val manager = context.manager
   lazy val project = box.inputs match {
     case Seq() => new RootProjectEditor(RootProjectState.emptyState)
-    case Seq(LocalBoxConnection("project", "project")) => context.inputs("project").project
+    case Seq(LocalBoxConnection("project", "project", _)) => context.inputs("project").project
   }
   val user = context.user
   def id = Operation.titleToID(box.operation)
