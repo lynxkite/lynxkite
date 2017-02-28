@@ -71,16 +71,21 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
-object EdgeAndNeighbor {
-  def empty = EdgeAndNeighbor(Array[ID](), Array[ID]())
+object EdgesAndNeighbors {
+  def empty = EdgesAndNeighbors(Array[ID](), Array[ID]())
 }
 
-case class EdgeAndNeighbor(eid: Array[ID], nid: Array[ID]) {
-  assert(eid.size == nid.size)
+// A wrapper class to hold the egde and neighbor IDs of a vertex. We use long arrays
+// for performance reasons.
+case class EdgesAndNeighbors(eids: Array[ID], nids: Array[ID]) {
+  assert(eids.size == nids.size,
+    s"The number of edges ${eids.size} does not match the number of neighbors ${nids.size}.")
+
   def map[B](f: ((ID, ID)) => B): Iterable[B] = {
-    (eid zip nid).map(f)
+    (eids zip nids).map(f)
   }
-  def size: Long = eid.size
+
+  def size: Long = eids.size
 }
 
 // Creates outgoing and incoming edge mappings.
@@ -93,9 +98,9 @@ object EdgeMapping extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
     // The list of outgoing edges.
-    val srcEdges = vertexAttribute[EdgeAndNeighbor](inputs.src.entity)
+    val srcEdges = vertexAttribute[EdgesAndNeighbors](inputs.src.entity)
     // The list of incoming edges.
-    val dstEdges = vertexAttribute[EdgeAndNeighbor](inputs.dst.entity)
+    val dstEdges = vertexAttribute[EdgesAndNeighbors](inputs.dst.entity)
   }
   def fromJson(j: JsValue) = EdgeMapping((j \ "sampleSize").as[Int])
 }
@@ -126,8 +131,8 @@ case class EdgeMapping(sampleSize: Int = -1)
       o.srcEdges,
       src.sortedLeftOuterJoin(bySrc)
         .mapValues {
-          case (_, Some(it)) => EdgeAndNeighbor(it.map(_._1).toArray, it.map(_._2).toArray)
-          case (_, None) => EdgeAndNeighbor.empty
+          case (_, Some(it)) => EdgesAndNeighbors(it.map(_._1).toArray, it.map(_._2).toArray)
+          case (_, None) => EdgesAndNeighbors.empty
         })
 
     val dst = inputs.dst.rdd
@@ -138,8 +143,8 @@ case class EdgeMapping(sampleSize: Int = -1)
       o.dstEdges,
       dst.sortedLeftOuterJoin(byDst)
         .mapValues {
-          case (_, Some(it)) => EdgeAndNeighbor(it.map(_._1).toArray, it.map(_._2).toArray)
-          case (_, None) => EdgeAndNeighbor.empty
+          case (_, Some(it)) => EdgesAndNeighbors(it.map(_._1).toArray, it.map(_._2).toArray)
+          case (_, None) => EdgesAndNeighbors.empty
         })
   }
 }
@@ -220,7 +225,7 @@ object EdgesForVertices extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
     val otherVs = vertexSet
-    val tripletMapping = vertexAttribute[EdgeAndNeighbor](vs)
+    val tripletMapping = vertexAttribute[EdgesAndNeighbors](vs)
     val edges = if (bySource) edgeBundle(vs, otherVs) else edgeBundle(otherVs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
@@ -262,22 +267,22 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     implicit val id = inputDatas
     val restricted = inputs.tripletMapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
     val aggregatedEdges =
-      restricted.aggregate(mutable.Set[(ID, Edge)]())(
+      restricted.aggregate(mutable.ListBuffer[(ID, Edge)]())(
         {
-          case (set, (srcId, array)) =>
-            if ((set == null) || (set.size + array.size > maxNumEdges)) {
+          case (array, (srcId, edgesAndNeighbors)) =>
+            if ((array == null) || (array.size + edgesAndNeighbors.size > maxNumEdges)) {
               null
             } else {
-              set ++= array.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
-              set
+              array ++= edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+              array
             }
         },
         {
-          case (set1, set2) =>
-            if ((set1 == null) || (set2 == null)) null
+          case (array1, array2) =>
+            if ((array1 == null) || (array2 == null)) null
             else {
-              set1 ++= set2
-              set1
+              array1 ++= array2
+              array1
             }
         })
     output(
