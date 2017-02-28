@@ -267,6 +267,10 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.ml.linalg.Vector])
     kryo.register(classOf[org.apache.spark.sql.types.BooleanType$])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.NullsFirst$])
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.GiniAggregator"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.Gini$"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.GiniCalculator"))
+
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

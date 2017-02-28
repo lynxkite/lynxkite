@@ -30,6 +30,12 @@ class ModelTestBase extends FunSuite with TestGraphOp {
           labelName,
           featureNames)
         op(op.features, features)(op.label, l).result.model
+      case "Decision tree classification" =>
+        val op = TrainDecisionTreeClassifier(
+          labelName,
+          featureNames
+        )
+        op(op.features, features)(op.label, l).result.model
     }
   }
 
