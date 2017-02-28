@@ -1662,6 +1662,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Train a decision tree model", new MachineLearningOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one feature.")
+      val featureNames = params("features").split(",", -1).sorted
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val name = params("name")
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val model = {
+        val op = graph_operations.TrainDecisionTreeClassifier(
+          labelName, featureNames.toList)
+        op(op.label, label)(op.features, features).result.model
+      }
+      project.scalars(name) = model
+    }
+  })
+
   register("Train a k-means clustering model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
