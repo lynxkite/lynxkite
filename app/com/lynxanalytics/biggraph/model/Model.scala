@@ -204,6 +204,7 @@ case class FEModel(
 
 trait ModelMeta {
   def isClassification: Boolean
+  def isBinary: Boolean = false
   def generatesProbability: Boolean = false
   def featureNames: List[String]
 }

@@ -33,8 +33,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       case "Decision tree classification" =>
         val op = TrainDecisionTreeClassifier(
           labelName,
-          featureNames
-        )
+          featureNames)
         op(op.features, features)(op.label, l).result.model
     }
   }
@@ -54,7 +53,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       maxIter = 50,
       seed = 1000,
       featureNames)
-    // The k-means model built from the above features 
+    // The k-means model built from the above features
     op(op.features, features).result.model
   }
 

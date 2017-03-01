@@ -57,8 +57,10 @@ case class TrainDecisionTreeClassifier(
     val model = decisionTreeClassifier.fit(labeledFeaturesDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)
-    val statistics = model.toDebugString
-    println(statistics)
+    val statistics = (0 until featureNames.length).foldLeft { model.toDebugString } {
+      (description, i) => description.replaceAll("feature " + i.toString, featureNames(i))
+    }.replaceFirst("[(]uid=.*[)] ", "")
+    // println(statistics)
     output(o.model, Model(
       method = "Decision tree classification",
       symbolicPath = file.symbolicName,
