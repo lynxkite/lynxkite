@@ -57,10 +57,20 @@ case class TrainDecisionTreeClassifier(
     val model = decisionTreeClassifier.fit(labeledFeaturesDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)
-    val statistics = (0 until featureNames.length).foldLeft { model.toDebugString } {
+    val treeDescription = (0 until featureNames.length).foldLeft { model.toDebugString } {
       (description, i) => description.replaceAll("feature " + i.toString, featureNames(i))
     }.replaceFirst("[(]uid=.*[)] ", "")
-    // println(statistics)
+    val prediction = model.transform(labeledFeaturesDF)
+    val evaluator = new ml.evaluation.MulticlassClassificationEvaluator()
+      .setLabelCol("label")
+      .setPredictionCol("classification")
+      .setMetricName("accuracy")
+    val accuracy = evaluator.evaluate(prediction).toString
+    val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
+      row => s"\n size of class ${row.getAs[Double]("label").toInt}: ${row.getAs[Double]("count")}."
+    ).reduce(_ + _)
+    val statistics = (treeDescription + "\n accuracy: " + accuracy + "\n" + support)
+    println(statistics)
     output(o.model, Model(
       method = "Decision tree classification",
       symbolicPath = file.symbolicName,
