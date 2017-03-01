@@ -489,11 +489,32 @@ abstract class Operation(box: Box, context: Operation.Context) {
     }
   }
 
+  // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
+  private def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
+    updateDelta(editor, original, "vertex_count")
+    updateDelta(editor, original, "edge_count")
+    for (seg <- editor.segmentationNames) {
+      if (original.state.segmentations.contains(seg)) {
+        updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
+      }
+    }
+  }
+  private def updateDelta(editor: ProjectEditor, original: ProjectViewer, name: String): Unit = {
+    val before = original.scalars.get(name).map(_.runtimeSafeCast[Long])
+    val after = editor.scalars.get(name).map(_.runtimeSafeCast[Long])
+    val delta =
+      if (before.isEmpty || after.isEmpty || before == after) null
+      else graph_operations.ScalarLongDifference.run(after.get, before.get)
+    editor.scalars.set(s"!${name}_delta", delta)
+  }
+
   def getOutputs(params: Map[String, String]): Map[BoxConnection, BoxOutputState] = {
     // This is a project-specific implementation. This should go in a subclass once we have other
     // (non-project) operations.
     validateParameters(params)
+    val before = project.viewer
     apply(params)
+    updateDeltas(project, before)
     project.setLastOperationDesc(summary(params))
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
     assert(box.outputs == List(LocalBoxConnection("project", "project")))
@@ -612,19 +633,6 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def getBoxMetadata(id: String) = operations(id)._1
 
-  /*
-  def categories(context: Operation.Context, includeDeprecated: Boolean): List[OperationCategory] = {
-    val allOps = opsForContext(context)
-    val cats = allOps.groupBy(_.category).toList
-    cats.filter { x => x._1.visible && (includeDeprecated || x._1.deprecated == false) }
-      .sortBy(_._1).map {
-        case (cat, ops) =>
-          val feOps = ops.map(_.toFE).sortBy(_.title).toList
-          cat.toFE(feOps)
-      }
-  }
-  */
-
   def operationIds = operations.keys.toSeq
 
   def opForBox(context: Operation.Context, box: Box): Operation = {
@@ -634,47 +642,4 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def context(user: serving.User, inputs: Map[String, BoxOutputState]) =
     Operation.Context(user, inputs, manager)
-
-  /*
-  // Applies the operation specified by op in the given context and returns the
-  // applied operation.
-  def appliedOp(context: Operation.Context, opSpec: FEOperationSpec): Operation = {
-    val op = opById(context, opSpec.id)
-    op.validateAndApply(opSpec.parameters)
-    op
-  }
-
-  // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
-  private def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
-    updateDelta(editor, original, "vertex_count")
-    updateDelta(editor, original, "edge_count")
-    for (seg <- editor.segmentationNames) {
-      if (original.state.segmentations.contains(seg)) {
-        updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
-      }
-    }
-  }
-  private def updateDelta(editor: ProjectEditor, original: ProjectViewer, name: String): Unit = {
-    val before = original.scalars.get(name).map(_.runtimeSafeCast[Long])
-    val after = editor.scalars.get(name).map(_.runtimeSafeCast[Long])
-    val delta =
-      if (before.isEmpty || after.isEmpty || before == after) null
-      else graph_operations.ScalarLongDifference.run(after.get, before.get)
-    editor.scalars.set(s"!${name}_delta", delta)
-  }
-
-  def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
-    val editor = appliedOp(context, opSpec).project
-    //updateDeltas(editor.rootEditor, original = context.project.rootViewer)
-  }
-
-  def apply(
-    user: serving.User,
-    subProject: SubProject,
-    op: FEOperationSpec): Unit = manager.tagBatch {
-
-    val context = Operation.Context(user, Map())
-    subProject.frame.setCheckpoint(applyAndCheckpoint(context, op).checkpoint.get)
-  }
-  */
 }

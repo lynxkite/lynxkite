@@ -41,6 +41,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       1.4099834026132592, 1.4099834026132592, 0.9892062327983842, 0.19082696197509774))
   }
 
+  test("deltas still work") {
+    val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
+    val merge = ops.getBoxMetadata(
+      "Merge vertices by attribute").toBox("merge", Map("key" -> "gender"), 0, 20)
+    val ws = Workspace(List(eg, merge.connect("project", eg.output("project"))))
+    val project = ws.state(user, ops, merge.output("project")).project
+    import graph_api.Scripting._
+    assert(project.scalars("!vertex_count_delta").value == -2)
+  }
+
   test("validation") {
     val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
     val ex = intercept[AssertionError] {
