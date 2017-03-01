@@ -1666,24 +1666,37 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = vertexAttributes[Double]),
-      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true))
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("impurity", "Impurity", options = FEOption.list("entropy", "gini")),
+      NonNegInt("maxBins", "Maximum number of bins", default = 32),
+      NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
+      NonNegDouble("minInfoGain", "Minimum information gain for splits", defaultValue = "0.0"),
+      NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
+      RandomSeed("seed", "Seed"))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one feature.")
+      val labelName = params("label")
       val featureNames = params("features").split(",", -1).sorted
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
-      val name = params("name")
-      val labelName = params("label")
-      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val model = {
         val op = graph_operations.TrainDecisionTreeClassifier(
-          labelName, featureNames.toList)
+          labelName = labelName,
+          featureNames = featureNames.toList,
+          impurity = params("impurity"),
+          maxBins = params("maxBins").toInt,
+          maxDepth = params("maxDepth").toInt,
+          minInfoGain = params("minInfoGain").toDouble,
+          minInstancesPerNode = params("minInstancesPerNode").toInt,
+          seed = params("seed").toInt)
         op(op.label, label)(op.features, features).result.model
       }
+      val name = params("name")
       project.scalars(name) = model
     }
   })
