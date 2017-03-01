@@ -360,6 +360,10 @@ class LynxKite:
       name = 'remote-api-upload'  # A hash will be added anyway.
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
+  def clean_file_system(self):
+    """Deletes the data files which are not referenced anymore."""
+    self._send('cleanFileSystem')
+
 
 class Table:
 
@@ -377,12 +381,12 @@ class Table:
         readACL=readACL))
 
   def compute(self):
-      '''Forces the computation of the table.'''
-      fake_project = self.lk.new_project()
-      fake_project.importVertices(**{
+    '''Forces the computation of the table.'''
+    fake_project = self.lk.new_project()
+    fake_project.importVertices(**{
         'id-attr': '',
         'table': self.name})
-      fake_project.compute()
+    fake_project.compute()
 
 
 class View:
