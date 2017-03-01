@@ -282,36 +282,43 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
 
 // Teradata sometimes "forgets" the schema of the result of a
 // JDBC query, see issue #5631.
-// This dialect makes it possible for the user to override the
-// schema by specifying a table name in a comment to the query.
-// This way the resulting schema will be taken from the table
-// specified in the comment.
-// SELECT * FROM table1 WHERE x > 1 --LYNX-TD-SCHEMA-OVERRIDE:table2
+// This dialect is able to correct that in case of simple
+// queries. This logic can be enabled via appending
+// --LYNX-TD-SCHEMA-AUTO-FIX to the end of queries.
 class TeradataDialect extends JdbcDialect {
-  val overrideTableMarker = "--LYNX-TD-SCHEMA-OVERRIDE-TABLE:"
-  val overrideSqlMarker = "--LYNX-TD-SCHEMA-OVERRIDE-SQL:"
-  val autofixMarker = "--LYNX-TD-SCHEMA-AUTO-FIX"
+  val magicMarker = "--LYNX-TD-SCHEMA-AUTO-FIX"
   def canHandle(url: String) = {
     url.startsWith("jdbc:teradata:")
   }
 
   override def getSchemaQuery(table: String) = {
-    if (table.contains(overrideTableMarker)) {
-      val realTable = table.split(overrideTableMarker)(1)
-      super.getSchemaQuery(realTable)
-    } else if (table.contains(overrideSqlMarker)) {
-      val schemaSql = table.split(overrideSqlMarker)(1)
-      schemaSql
-    } else if (table.contains(autofixMarker) && table.toLowerCase.startsWith("select")) {
+    if (table.contains(magicMarker)) {
+      // Magic switch active.
       val query = table.split("--")(0)
-      val wherePos = query.toLowerCase.indexOfSlice("where")
-      val cleanQuery = if (wherePos >= 0) {
-        query.substring(0, wherePos)
+      val queryLowerCase = query.toLowerCase
+      if (queryLowerCase.startsWith("select")) {
+        // We guess that table is actually a query, therefore fixing is needed.
+        // First we remove everything after the where condition.
+        val wherePos = {
+          val pos = queryLowerCase.indexOf(" where ")
+          assert(
+            queryLowerCase.indexOf(" where ", pos + 1) < 0,
+            s"Multiple WHERE clauses in Teradata query, autofix failed: $table")
+          pos
+        }
+        val cleanQuery = if (wherePos >= 0) {
+          query.substring(0, wherePos)
+        } else {
+          query
+        }
+        cleanQuery + " WHERE 1=0"
       } else {
-        query
+        // Table is not a query. We remove the magic marker and
+        // fall back to Spark's logic.
+        super.getSchemaQuery(query)
       }
-      cleanQuery + " WHERE 1=0"
     } else {
+      // Magic switch inactive.
       super.getSchemaQuery(table)
     }
   }
