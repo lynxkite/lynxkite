@@ -6,7 +6,6 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.table
 
 object Ammonite {
@@ -72,7 +71,6 @@ println("${help}")
         Bind("metaManager", metaGraphManager),
         Bind("dataManager", dataManager),
         Bind("sql", dataManager.masterSQLContext),
-        Bind("batch", groovy.GroovyContext),
         Bind("saveAsTable", saveAsTable _)))
   }
 

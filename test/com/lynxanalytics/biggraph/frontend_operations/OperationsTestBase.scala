@@ -40,9 +40,12 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   }
 
   def run(opId: String, params: Map[String, String] = Map(), on: ProjectEditor = project) = {
+    /*
     val context = Operation.Context(serving.User.fake, on.viewer)
     val result = ops.applyAndCheckpoint(context, FEOperationSpec(Operation.titleToID(opId), params))
     on.rootEditor.rootState = result
+    */
+    ???
   }
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =

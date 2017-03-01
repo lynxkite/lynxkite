@@ -223,7 +223,7 @@ object FrontendJson {
   }
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
-  implicit val wFEStatus = json.Json.writes[FEStatus]
+  implicit val fFEStatus = json.Json.format[FEStatus]
   implicit val wFEOption = json.Json.writes[FEOption]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
@@ -262,7 +262,6 @@ object FrontendJson {
 
   implicit val rScalarValueRequest = json.Json.reads[ScalarValueRequest]
 
-  implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
   implicit val rDiscardEntryRequest = json.Json.reads[DiscardEntryRequest]
   implicit val rRenameEntryRequest = json.Json.reads[RenameEntryRequest]
@@ -270,16 +269,8 @@ object FrontendJson {
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
-  implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
   implicit val rForkEntryRequest = json.Json.reads[ForkEntryRequest]
-  implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
-  implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
-  implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
-  implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
-  implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
-  implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
-  implicit val rWorkflowRequest = json.Json.reads[WorkflowRequest]
   implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
   implicit val rProjectSearchRequest = json.Json.reads[ProjectSearchRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
@@ -290,9 +281,14 @@ object FrontendJson {
   implicit val wProjectList = json.Json.writes[ProjectList]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
-  implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
-  implicit val wProjectHistory = json.Json.writes[ProjectHistory]
-  implicit val wOPCategories = json.Json.writes[OpCategories]
+  implicit val wOpCategories = json.Json.writes[OpCategories]
+
+  import WorkspaceJsonFormatters._
+  implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
+  implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
+  implicit val rGetProjectRequest = json.Json.reads[GetProjectRequest]
+  implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
+  implicit val wGetBoxesResponse = json.Json.writes[GetBoxesResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -341,6 +337,7 @@ object FrontendJson {
 
 object ProductionJsonServer extends JsonServer {
   import FrontendJson._
+  import WorkspaceJsonFormatters._
 
   AssertLicenseNotExpired()
   AssertNotRunningAndRegisterRunning()
@@ -395,26 +392,20 @@ object ProductionJsonServer extends JsonServer {
   // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
-  def createProject = jsonPost(bigGraphController.createProject)
   def createDirectory = jsonPost(bigGraphController.createDirectory)
   def discardEntry = jsonPost(bigGraphController.discardEntry)
   def renameEntry = jsonPost(bigGraphController.renameEntry)
   def discardAll = jsonPost(bigGraphController.discardAll)
   def projectOp = jsonPost(bigGraphController.projectOp)
-  def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)
   def projectSearch = jsonGet(bigGraphController.projectSearch)
-  def filterProject = jsonPost(bigGraphController.filterProject)
   def forkEntry = jsonPost(bigGraphController.forkEntry)
-  def undoProject = jsonPost(bigGraphController.undoProject)
-  def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
-  def getHistory = jsonGet(bigGraphController.getHistory)
-  def getOPCategories = jsonGet(bigGraphController.getOpCategories)
-  def validateHistory = jsonPost(bigGraphController.validateHistory)
-  def saveHistory = jsonPost(bigGraphController.saveHistory)
-  def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
-  def workflow = jsonGet(bigGraphController.workflow)
+  def createWorkspace = jsonPost(bigGraphController.createWorkspace)
+  def getWorkspace = jsonGet(bigGraphController.getWorkspace)
+  def getProject = jsonGet(bigGraphController.getProject)
+  def setWorkspace = jsonPost(bigGraphController.setWorkspace)
+  def getBoxes = jsonGet(bigGraphController.getBoxes)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
