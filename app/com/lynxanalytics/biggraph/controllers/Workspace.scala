@@ -6,11 +6,15 @@ import com.lynxanalytics.biggraph._
 
 case class Workspace(
     boxes: List[Box]) {
+  val boxMap = boxes.map(b => b.id -> b).toMap
+  assert(boxMap.size == boxes.size, {
+    val dups = boxes.map(_.id).groupBy(identity).collect { case (id, ids) if ids.size > 1 => id }
+    s"Duplicate box name: ${dups.mkString(", ")}"
+  })
 
   def findBox(id: String): Box = {
-    val b = boxes.find(_.id == id)
-    assert(b.nonEmpty, s"Cannot find box $id")
-    b.get
+    assert(boxMap.contains(id), s"Cannot find box $id")
+    boxMap(id)
   }
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
@@ -30,25 +34,33 @@ case class Workspace(
     states: Map[BoxConnection, BoxOutputState]): Map[BoxConnection, BoxOutputState] = {
     if (states.contains(connection)) states else {
       val box = findBox(connection.box)
-      for (lc <- box.inputs) {
-        assert(lc.connectedTo.nonEmpty, s"Input ${lc.id} of ${box.id} is not connected.")
-        // TODO: Should just create an error output state.
-      }
-      val updatedStates = box.inputs.foldLeft(states) {
-        (states, lc) => calculate(user, ops, lc.connectedTo.get, states)
-      }
-      val inputs = box.inputs.map(lc => lc.id -> updatedStates(lc.connectedTo.get)).toMap
-      val outputStates = try {
-        box.execute(user, inputs, ops).values.map(s => s.connection -> s)
-      } catch {
-        case ex: Throwable =>
-          val msg = ex match {
-            case ex: AssertionError => ex.getMessage
-            case _ => ex.toString
+      val unconnecteds = box.inputs.filter(_.connectedTo.isEmpty)
+      if (unconnecteds.nonEmpty) {
+        val list = unconnecteds.map(_.id).mkString(", ")
+        states ++ box.errorOutputs(s"Input $list is not connected.")
+      } else {
+        val updatedStates = box.inputs.foldLeft(states) {
+          (states, lc) => calculate(user, ops, lc.connectedTo.get, states)
+        }
+        val inputs = box.inputs.map(lc => lc.id -> updatedStates(lc.connectedTo.get)).toMap
+        val errors = inputs.filter(_._2.isError)
+        if (errors.nonEmpty) {
+          val list = errors.map(_._1).mkString(", ")
+          updatedStates ++ box.errorOutputs(s"Input $list has an error.")
+        } else {
+          val outputStates = try {
+            box.execute(user, inputs, ops)
+          } catch {
+            case ex: Throwable =>
+              val msg = ex match {
+                case ex: AssertionError => ex.getMessage
+                case _ => ex.toString
+              }
+              box.errorOutputs(msg)
           }
-          box.outputs.map(_.ofBox(box)).map(c => c -> BoxOutputState.error(c, msg))
+          updatedStates ++ outputStates
+        }
       }
-      updatedStates ++ outputStates
     }
   }
 }
@@ -74,7 +86,7 @@ case class Box(
   def execute(
     user: serving.User,
     inputStates: Map[String, BoxOutputState],
-    ops: OperationRepository): Map[String, BoxOutputState] = {
+    ops: OperationRepository): Map[BoxConnection, BoxOutputState] = {
     assert(
       inputs.size == inputStates.size &&
         inputs.forall(i => inputStates.get(i.id).map(_.kind == i.kind).getOrElse(false)),
@@ -83,7 +95,7 @@ case class Box(
     val outputStates = op.getOutputs(parameters)
     assert(
       outputs.size == outputStates.size &&
-        outputs.forall(o => outputStates.get(o.id).map(_.kind == o.kind).getOrElse(false)),
+        outputs.forall(o => outputStates.get(o.ofBox(this)).map(_.kind == o.kind).getOrElse(false)),
       s"Output mismatch: $outputStates does not match $outputs")
     outputStates
   }
@@ -92,6 +104,10 @@ case class Box(
     this.copy(inputs = inputs.map {
       i => if (i.id != input) i else i.copy(connectedTo = Some(output))
     })
+  }
+
+  def errorOutputs(msg: String): Map[BoxConnection, BoxOutputState] = {
+    outputs.map(_.ofBox(this)).map(c => c -> BoxOutputState.error(c, msg)).toMap
   }
 }
 
@@ -140,6 +156,7 @@ case class BoxOutputState(
     state: json.JsValue,
     success: FEStatus = FEStatus.enabled) {
   BoxOutputState.assertKind(kind)
+  def isError = !success.enabled
   def isProject = kind == BoxOutputState.ProjectKind
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"$box=>$output is not a project but a $kind.")

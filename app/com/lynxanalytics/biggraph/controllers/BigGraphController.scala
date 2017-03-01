@@ -458,7 +458,7 @@ abstract class Operation(box: Box, context: Operation.Context) {
     }
   }
 
-  def getOutputs(params: Map[String, String]): Map[String, BoxOutputState] = {
+  def getOutputs(params: Map[String, String]): Map[BoxConnection, BoxOutputState] = {
     // This is a project-specific implementation. This should go in a subclass once we have other
     // (non-project) operations.
     validateParameters(params)
@@ -467,9 +467,9 @@ abstract class Operation(box: Box, context: Operation.Context) {
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
     assert(box.outputs == List(LocalBoxConnection("project", "project")))
     import CheckpointRepository._ // For JSON formatters.
-    Map("project" ->
-      BoxOutputState(
-        box.id, "project", "project", json.Json.toJson(project.state).as[json.JsObject]))
+    val output = BoxOutputState(
+      box.id, "project", "project", json.Json.toJson(project.state).as[json.JsObject])
+    Map(output.connection -> output)
   }
 
   def toFE: FEOperationMeta = FEOperationMeta(

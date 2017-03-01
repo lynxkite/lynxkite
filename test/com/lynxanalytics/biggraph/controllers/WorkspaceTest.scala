@@ -39,26 +39,27 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       1.4099834026132592, 1.4099834026132592, 0.9892062327983842, 0.19082696197509774))
   }
 
-  /*
-  test("errors") {
-    using("test-workspace") {
-      val blank = get("test-workspace")
-      val eg = AddBox(blank, "Example Graph", y = 20)
-      val derive = AddBox(eg.ws, "Derived vertex attribute", y = 40, params = Map(
-        "expr" -> "xxx", "type" -> "double", "output" -> "x"))
-      val pr = AddBox(
-        derive.ws, "PageRank", y = 60,
-        params = Map(
-          "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
-          "iterations" -> "5", "direction" -> "all edges"))
-      val connected1 = addArrow(pr.ws, eg.box.output("project"), derive.box.input("project"))
-      val connected2 = addArrow(connected1, derive.box.output("project"), pr.box.input("project"))
-      assertBoxesArrowsStates(connected2, 3, 2, 3)
-      val ex = intercept[AssertionError] {
-        connected2.stateMap(pr.box.output("project")).project
-      }
-      assert(ex.getMessage.contains("\"xxx\" is not defined"))
+  test("validation") {
+    val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
+    val ex = intercept[AssertionError] {
+      Workspace(List(eg, eg))
     }
+    assert(ex.getMessage.contains("Duplicate box name: eg"))
   }
-    */
+
+  test("errors") {
+    val pr1 = ops.getBoxMetadata("PageRank").toBox("pr1", Map(
+      "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+      "iterations" -> "5", "direction" -> "all edges"), 0, 20)
+    val pr2 = ops.getBoxMetadata("PageRank").toBox("pr2", Map(
+      "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+      "iterations" -> "5", "direction" -> "all edges"), 0, 20)
+    val ws = Workspace(List(pr1, pr2.connect("project", pr1.output("project"))))
+    val p1 = ws.state(user, ops, pr1.output("project"))
+    val p2 = ws.state(user, ops, pr2.output("project"))
+    val ex1 = intercept[AssertionError] { p1.project }
+    val ex2 = intercept[AssertionError] { p2.project }
+    assert(ex1.getMessage.contains("Input project is not connected."))
+    assert(ex2.getMessage.contains("Input project has an error."))
+  }
 }
