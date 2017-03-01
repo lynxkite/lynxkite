@@ -20,13 +20,25 @@ object TrainDecisionTreeClassifier extends OpFromJson {
   }
   def fromJson(j: JsValue) = TrainDecisionTreeClassifier(
     (j \ "labelName").as[String],
-    (j \ "featureNames").as[List[String]])
+    (j \ "featureNames").as[List[String]],
+    (j \ "impurity").as[String],
+    (j \ "maxBins").as[Int],
+    (j \ "maxDepth").as[Int],
+    (j \ "minInfoGain").as[Double],
+    (j \ "minInstancesPerNode").as[Int],
+    (j \ "seed").as[Int])
 }
 
 import TrainDecisionTreeClassifier._
 case class TrainDecisionTreeClassifier(
     labelName: String,
-    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    featureNames: List[String],
+    impurity: String = "gini",
+    maxBins: Int = 32,
+    maxDepth: Int = 5,
+    minInfoGain: Double = 0.0,
+    minInstancesPerNode: Int = 1,
+    seed: Int = 1234567) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = true
   override val generatesProbability = true
   override val isHeavy = true
@@ -34,7 +46,13 @@ case class TrainDecisionTreeClassifier(
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "labelName" -> labelName,
-    "featureNames" -> featureNames)
+    "featureNames" -> featureNames,
+    "impurity" -> impurity,
+    "maxBins" -> maxBins,
+    "maxDepth" -> maxDepth,
+    "minInfoGain" -> minInfoGain,
+    "minInstancesPerNode" -> minInstancesPerNode,
+    "seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -54,6 +72,12 @@ case class TrainDecisionTreeClassifier(
       .setRawPredictionCol("rawClassification")
       .setPredictionCol("classification")
       .setProbabilityCol("probability")
+      .setImpurity(impurity)
+      .setMaxBins(maxBins)
+      .setMaxDepth(maxDepth)
+      .setMinInfoGain(minInfoGain)
+      .setMinInstancesPerNode(minInstancesPerNode)
+      .setSeed(seed)
     val model = decisionTreeClassifier.fit(labeledFeaturesDF)
     val file = Model.newModelFile
     model.save(file.resolvedName)
