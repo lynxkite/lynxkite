@@ -64,8 +64,8 @@ class ClassifyWithModelTest extends ModelTestBase {
       // I love making long walks if it's not raining and the temperature is
       // pleasant. I take only a short work if it's not raining, but the weather
       // is too hot or too cold. I hate rain, so I just stay at home if it's raining.
-      // To be honest, once during the winter I was in such a good mood that I
-      // went on a long walk in spite of the cold weather.
+      // Sometimes I'm in a really good mood and go on a long walk in spite of
+      // the cold weather.
       graph(8))
 
     val g = graph(numVertices = 6)

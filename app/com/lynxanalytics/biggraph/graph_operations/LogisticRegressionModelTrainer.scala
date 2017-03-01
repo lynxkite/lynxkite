@@ -71,6 +71,7 @@ case class LogisticRegressionModelTrainer(
     labelName: String,
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = true
+  override val isBinary = true
   override val generatesProbability = true
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)

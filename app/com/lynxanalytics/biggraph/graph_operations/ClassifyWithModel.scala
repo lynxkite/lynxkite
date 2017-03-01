@@ -60,14 +60,6 @@ case class ClassifyWithModel(numFeatures: Int)
         val classification = row.getAs[Double]("classification").toInt
         val probability = row.getAs[DenseVector]("probability")(classification)
         (row.getAs[ID]("ID"), probability)
-        // val threshold = classificationModel.asInstanceOf[biggraph.model.LogisticRegressionModelImpl]
-        //   .getThreshold
-        // val probability = transformation.select("ID", "probability").map { row =>
-        //   var probabilityValue = row.getAs[DenseVector]("probability")(1)
-        //   if (probabilityValue < threshold) {
-        //     probabilityValue = 1 - probabilityValue
-        //   }
-        //   (row.getAs[ID]("ID"), probabilityValue)
       }.rdd.sortUnique(partitioner)
       output(o.probability, probability)
     }
