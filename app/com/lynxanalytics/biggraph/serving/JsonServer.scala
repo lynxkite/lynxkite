@@ -283,6 +283,13 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wOpCategories = json.Json.writes[OpCategories]
 
+  import WorkspaceJsonFormatters._
+  implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
+  implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
+  implicit val rGetProjectRequest = json.Json.reads[GetProjectRequest]
+  implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
+  implicit val wGetBoxesResponse = json.Json.writes[GetBoxesResponse]
+
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
@@ -330,6 +337,7 @@ object FrontendJson {
 
 object ProductionJsonServer extends JsonServer {
   import FrontendJson._
+  import WorkspaceJsonFormatters._
 
   AssertLicenseNotExpired()
   AssertNotRunningAndRegisterRunning()
@@ -393,6 +401,11 @@ object ProductionJsonServer extends JsonServer {
   def projectSearch = jsonGet(bigGraphController.projectSearch)
   def forkEntry = jsonPost(bigGraphController.forkEntry)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
+  def createWorkspace = jsonPost(bigGraphController.createWorkspace)
+  def getWorkspace = jsonGet(bigGraphController.getWorkspace)
+  def getProject = jsonGet(bigGraphController.getProject)
+  def setWorkspace = jsonPost(bigGraphController.setWorkspace)
+  def getBoxes = jsonGet(bigGraphController.getBoxes)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)

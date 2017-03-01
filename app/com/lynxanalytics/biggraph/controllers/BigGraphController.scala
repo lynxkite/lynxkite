@@ -392,20 +392,51 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     p.writeACL = request.writeACL
   }
 
-  def getWorkspace(
-    user: serving.User, request: GetWorkspaceRequest): Workspace = metaManager.synchronized {
-    val f = DirectoryEntry.fromName(request.name)
-    assert(f.exists, s"Project ${request.name} does not exist.")
+  def getWorkspaceByName(
+    user: serving.User, name: String): Workspace = metaManager.synchronized {
+    val f = DirectoryEntry.fromName(name)
+    assert(f.exists, s"Project ${name} does not exist.")
     f.assertReadAllowedFrom(user)
     f match {
       case f: WorkspaceFrame => f.workspace
+      case _ => throw new AssertionError(s"${name} is not a workspace.")
+    }
+  }
+
+  def getWorkspace(
+    user: serving.User, request: GetWorkspaceRequest): Workspace =
+    getWorkspaceByName(user, request.name)
+
+  def getProject(
+    user: serving.User, request: GetProjectRequest): FEProject = {
+    val ws = getWorkspaceByName(user, request.workspace)
+    val state = ws.state(user, ops, request.output)
+    state.project.viewer.toFE(request.workspace)
+  }
+
+  def setWorkspace(
+    user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
+    val f = DirectoryEntry.fromName(request.name)
+    assert(f.exists, s"Project ${request.name} does not exist.")
+    f.assertWriteAllowedFrom(user)
+    f match {
+      case f: WorkspaceFrame =>
+        val cp = request.workspace.checkpoint(previous = f.checkpoint)
+        f.setCheckpoint(cp)
       case _ => throw new AssertionError(s"${request.name} is not a workspace.")
     }
+  }
+
+  def getBoxes(user: serving.User, request: serving.Empty): GetBoxesResponse = {
+    GetBoxesResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
   }
 }
 
 case class GetWorkspaceRequest(name: String)
+case class SetWorkspaceRequest(name: String, workspace: Workspace)
+case class GetProjectRequest(workspace: String, output: BoxConnection)
 case class CreateWorkspaceRequest(name: String, privacy: String)
+case class GetBoxesResponse(boxes: List[BoxMetadata])
 
 abstract class OperationParameterMeta {
   val id: String
