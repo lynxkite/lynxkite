@@ -296,7 +296,7 @@ class TeradataDialect extends JdbcDialect {
       // Magic switch active.
       val query = table.split("--")(0)
       val queryLowerCase = query.toLowerCase
-      if (queryLowerCase.startsWith("select")) {
+      if (queryLowerCase.startsWith("select ")) {
         // We guess that table is actually a query, therefore fixing is needed.
         // First we remove everything after the where condition.
         val wherePos = {
