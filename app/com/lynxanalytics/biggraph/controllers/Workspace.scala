@@ -19,7 +19,7 @@ case class Workspace(
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
     manager.checkpointRepo.checkpointState(
-      RootProjectState.emptyState.copy(workspace = Some(this)),
+      RootProjectState.emptyState.copy(checkpoint = None, workspace = Some(this)),
       previous).checkpoint.get
   }
 
@@ -170,7 +170,7 @@ case class BoxOutputState(
 }
 
 object WorkspaceJsonFormatters {
-  import com.lynxanalytics.biggraph.serving.FrontendJson._
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   implicit val fBoxConnection = json.Json.format[BoxConnection]
   implicit val fLocalBoxConnection = json.Json.format[LocalBoxConnection]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]

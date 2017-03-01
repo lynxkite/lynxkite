@@ -14,6 +14,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
   def get(name: String): Workspace =
     controller.getWorkspace(user, GetWorkspaceRequest(name))
+  def set(name: String, workspace: Workspace): Unit =
+    controller.setWorkspace(user, SetWorkspaceRequest(name, workspace))
   def discard(name: String) =
     controller.discardEntry(user, DiscardEntryRequest(name))
   def using[T](name: String)(f: => T): T =
@@ -61,5 +63,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ex2 = intercept[AssertionError] { p2.project }
     assert(ex1.getMessage.contains("Input project is not connected."))
     assert(ex2.getMessage.contains("Input project has an error."))
+  }
+
+  test("getProject") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
+      val ws = Workspace(List(eg))
+      set("test-workspace", ws)
+      val p = controller.getProject(user, GetProjectRequest("test-workspace", eg.output("project")))
+      assert(p.vertexAttributes.find(_.title == "income").get.metadata("icon") == "money_bag")
+    }
   }
 }
