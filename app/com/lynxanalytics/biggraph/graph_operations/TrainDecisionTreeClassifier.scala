@@ -90,10 +90,11 @@ case class TrainDecisionTreeClassifier(
       .setPredictionCol("classification")
       .setMetricName("accuracy")
     val accuracy = evaluator.evaluate(prediction).toString
+    val dataSize = labelDF.count().toLong.toDouble
     val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
-      row => s"\n size of class ${row.getAs[Double]("label").toInt}: ${row.getAs[Double]("count")}."
-    ).reduce(_ + _)
-    val statistics = (treeDescription + "\n accuracy: " + accuracy + "\n" + support)
+      row => (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
+    val statistics = (treeDescription + "\naccuracy: " + accuracy + "\n" +
+      "support:" + support)
     println(statistics)
     output(o.model, Model(
       method = "Decision tree classification",
