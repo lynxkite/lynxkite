@@ -39,7 +39,7 @@ case class Workspace(
 
       def errorOutputs(msg: String): Map[BoxOutput, BoxOutputState] = {
         meta.outputs.map {
-          o => o.ofBox(box) -> BoxOutputState(box.id, o.id, o.kind, null, FEStatus.disabled(msg))
+          o => o.ofBox(box) -> BoxOutputState(o.kind, null, FEStatus.disabled(msg))
         }.toMap
       }
 
@@ -127,8 +127,6 @@ object BoxOutputKind {
 }
 
 case class BoxOutputState(
-    boxID: String,
-    outputID: String,
     kind: String,
     state: json.JsValue,
     success: FEStatus = FEStatus.enabled) {
@@ -136,14 +134,13 @@ case class BoxOutputState(
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
-    assert(isProject, s"$boxID=>$outputID is not a project but a $kind.")
+    assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
     val p = state.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }
-  def connection = BoxOutput(boxID, outputID)
 }
 
 object WorkspaceJsonFormatters {

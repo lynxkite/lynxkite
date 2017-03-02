@@ -518,9 +518,8 @@ abstract class Operation(context: Operation.Context) {
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
     assert(context.meta.outputs == List(TypedConnection("project", "project")))
     import CheckpointRepository._ // For JSON formatters.
-    val output = BoxOutputState(
-      context.box.id, "project", "project", json.Json.toJson(project.state).as[json.JsObject])
-    Map(output.connection -> output)
+    val output = BoxOutputState("project", json.Json.toJson(project.state).as[json.JsObject])
+    Map(context.meta.outputs(0).ofBox(context.box) -> output)
   }
 
   def toFE: FEOperationMeta = FEOperationMeta(
