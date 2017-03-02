@@ -11,7 +11,7 @@ import scala.concurrent.duration.Duration
 class ControlledFutures(implicit val executionContext: ExecutionContextExecutorService) {
   private val controlledFutures = collection.mutable.Map[Object, SafeFuture[Unit]]()
 
-  def register(func: => Unit): Unit = controlledFutures.synchronized {
+  def register(func: => Unit): Unit = synchronized {
     val key = new Object
 
     val future = SafeFuture {
@@ -19,7 +19,7 @@ class ControlledFutures(implicit val executionContext: ExecutionContextExecutorS
         func
       } catch {
         case t: Throwable => log.error("Future failed: ", t)
-      } finally controlledFutures.synchronized {
+      } finally synchronized {
         controlledFutures.remove(key)
       }
     }
@@ -27,12 +27,12 @@ class ControlledFutures(implicit val executionContext: ExecutionContextExecutorS
   }
 
   def waitAllFutures() = {
-    val futures = controlledFutures.synchronized { controlledFutures.values.toList }
+    val futures = synchronized { controlledFutures.values.toList }
     SafeFuture.sequence(futures).awaitReady(Duration.Inf)
   }
 
   def isEmpty() = {
-    val futures = controlledFutures.synchronized { controlledFutures.values.toList }
+    val futures = synchronized { controlledFutures.values.toList }
     futures.isEmpty
   }
 }
