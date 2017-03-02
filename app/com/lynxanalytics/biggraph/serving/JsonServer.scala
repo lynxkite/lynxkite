@@ -402,11 +402,13 @@ object ProductionJsonServer extends JsonServer {
   def projectSearch = jsonGet(bigGraphController.projectSearch)
   def forkEntry = jsonPost(bigGraphController.forkEntry)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
-  def createWorkspace = jsonPost(bigGraphController.createWorkspace)
-  def getWorkspace = jsonGet(bigGraphController.getWorkspace)
-  def getOutput = jsonGet(bigGraphController.getOutput)
-  def setWorkspace = jsonPost(bigGraphController.setWorkspace)
-  def boxCatalog = jsonGet(bigGraphController.boxCatalog)
+
+  val workspaceController = new WorkspaceController(BigGraphProductionEnvironment)
+  def createWorkspace = jsonPost(workspaceController.createWorkspace)
+  def getWorkspace = jsonGet(workspaceController.getWorkspace)
+  def getOutput = jsonGet(workspaceController.getOutput)
+  def setWorkspace = jsonPost(workspaceController.setWorkspace)
+  def boxCatalog = jsonGet(workspaceController.boxCatalog)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)

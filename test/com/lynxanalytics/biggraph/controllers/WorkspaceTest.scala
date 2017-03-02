@@ -6,7 +6,8 @@ import play.api.libs.json
 import com.lynxanalytics.biggraph._
 
 class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
-  val controller = new BigGraphController(this)
+  val controller = new WorkspaceController(this)
+  val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)
   val user = serving.User.fake
 
@@ -17,12 +18,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def set(name: String, workspace: Workspace): Unit =
     controller.setWorkspace(user, SetWorkspaceRequest(name, workspace))
   def discard(name: String) =
-    controller.discardEntry(user, DiscardEntryRequest(name))
-  def using[T](name: String)(f: => T): T =
+    bigGraphController.discardEntry(user, DiscardEntryRequest(name))
+  def using[T](name: String)(f: => T): T = {
+    create(name)
     try {
-      create(name)
       f
     } finally discard(name)
+  }
   import WorkspaceJsonFormatters._
   import CheckpointRepository._
   def print[T: json.Writes](t: T): Unit = {
