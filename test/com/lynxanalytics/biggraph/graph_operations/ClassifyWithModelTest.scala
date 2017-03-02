@@ -20,7 +20,7 @@ class ClassifyWithModelTest extends ModelTestBase {
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
-    // Check that the first two and the last two data points shall have same labels.
+    // Check that the first two and the last two data points shall have identical labels.
     assert(clustering(0) == clustering(1))
     assert(clustering(2) == clustering(3))
     // Check that distant data points have different labels.
