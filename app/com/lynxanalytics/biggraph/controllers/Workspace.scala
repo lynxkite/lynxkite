@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class Workspace(
     boxes: List[Box]) {
@@ -60,8 +61,9 @@ case class Workspace(
             box.execute(user, inputs, ops)
           } catch {
             case ex: Throwable =>
+              log.error(s"Failed to execute $box:", ex)
               val msg = ex match {
-                case ex: AssertionError => ex.getMessage
+                case ae: AssertionError => ae.getMessage
                 case _ => ex.toString
               }
               errorOutputs(msg)
