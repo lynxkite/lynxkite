@@ -106,7 +106,7 @@ case class TypedConnection(
     id: String,
     kind: String) {
   BoxOutputState.assertKind(kind)
-  def ofBox(box: Box) = BoxOutput(box.id, id)
+  def ofBox(box: Box) = box.output(id)
 }
 
 case class BoxOutput(
