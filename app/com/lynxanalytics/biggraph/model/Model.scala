@@ -31,12 +31,11 @@ private[biggraph] class LinearRegressionModelImpl(
 }
 
 private[biggraph] class DecisionTreeRegressionModelImpl(
-  m: ml.regression.DecisionTreeRegressionModel,
-  statistics: String) extends ModelImplementation {
-    def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
-    def details: String = statistics
-  }
-)
+    m: ml.regression.DecisionTreeRegressionModel,
+    statistics: String) extends ModelImplementation {
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def details: String = statistics
+}
 
 private[biggraph] class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel,
@@ -101,7 +100,7 @@ case class Model(
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
       case "Decision tree regresison" =>
-        nws DecisionTreeModelImpl(ml.regression.DecisionTreeRegressionModel.load(path), statistics.get)
+        new DecisionTreeRegressionModelImpl(ml.regression.DecisionTreeRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
       case "KMeans clustering" =>
@@ -213,7 +212,7 @@ case class FEModel(
 
 trait ModelMeta {
   def isClassification: Boolean
-  def isBinary: Boolean = false
+  def isBinary: Boolean
   def generatesProbability: Boolean = false
   def featureNames: List[String]
 }
