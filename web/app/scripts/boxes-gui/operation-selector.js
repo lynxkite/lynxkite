@@ -7,23 +7,37 @@ angular.module('biggraph').directive('operationSelector', function(/* $rootScope
     // A lot of internals are exposed, because this directive is used both in
     // side-operation-toolbox and in project-history.
     scope: {
-      categories: '=',  // (Input.) List of operation categories.
+      boxes: '=',  // (Input.) List of operation categories.
     },
     templateUrl: 'scripts/boxes-gui/operation-selector.html',
 
     link: function(scope, elem) {
       scope.editMode = true;
+      scope.categories = [];
 
-      scope.$watch('categories', function(cats) {
-        // The complete list, for searching.
-        scope.allOps = [];
-        if (!cats) {
+      scope.$watch('boxes', function() {
+
+        scope.categories = [];
+        if (!scope.boxes) {
           return;
         }
 
-        for (var i = 0; i < cats.length; ++i) {
-          scope.allOps = scope.allOps.concat(cats[i].ops);
+        var categories = {};
+        for (var i = 0; i < scope.boxes.length; ++i) {
+          var box = scope.boxes[i];
+          if (!(box.category in categories)) {
+            var cat = {
+              title: box.category,
+              ops: [],
+              color: 'blue',
+              icon: 'wrench',
+            };
+            scope.categories.push(cat);
+            categories[box.category] = cat;
+          }
+          categories[box.category].ops.push(box);
         }
+
       });
 
       scope.$watch('searching && !op', function(search) {
@@ -130,17 +144,3 @@ angular.module('biggraph').directive('operationSelector', function(/* $rootScope
   };
 });
 
-/*
-angular.module('biggraph').factory('removeOptionalDefaults', function() {
-  return function(params, op) {
-    params = angular.extend({}, params); // Shallow copy.
-    for (var i = 0; i < op.parameters.length; ++i) {
-      var param = op.parameters[i];
-      if (!param.mandatory && params[param.id] === param.defaultValue) {
-        delete params[param.id];
-      }
-    }
-    return params;
-  };
-});
-*/

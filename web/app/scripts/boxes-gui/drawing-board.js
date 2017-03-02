@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph')
- .directive('drawingBoard', function(createArrow, createBox, createState) {
+ .directive('drawingBoard', function(createBox, createArrow /*, createBox, createState */ ) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/boxes-gui/drawing-board.html',
@@ -10,6 +10,7 @@ angular.module('biggraph')
         diagram: '=',
         selectedBox: '=',
         selectedState: '=',
+        allBoxes: '=',
       },
       link: function(scope, element) {
         scope.boxes = [];
@@ -17,15 +18,57 @@ angular.module('biggraph')
         scope.arrows = [];
         scope.stateMap = {};
 
-        scope.$watch('diagram', function() {
+        scope.$watchGroup(['diagram', 'allBoxes'], function() {
+
+
           // triggers on full diagram change triggered externally
           scope.boxes = [];
           scope.boxMap = {};
-          for (var i = 0; i < scope.diagram.boxes.length; ++i) {
-            var box = createBox(scope.diagram.boxes[i]);
-            scope.boxes[i] = box;
-            scope.boxMap[box.data.id] = box;
+          if (!scope.diagram || !scope.allBoxes) {
+            return;
           }
+          scope.allBoxesMap = {};
+          var i;
+          for (i = 0; i < scope.allBoxes.length; ++i) {
+            var boxMeta = scope.allBoxes[i];
+            scope.allBoxesMap[boxMeta.operation] = boxMeta;
+          }
+
+          scope.arrows = [];
+
+          if (scope.diagram.boxes !== undefined) {
+            var box;
+            for (i = 0; i < scope.diagram.boxes.length; ++i) {
+              var bx0 = scope.diagram.boxes[i];
+              var operationId = bx0.operation;
+              var boxId = bx0.id;
+              box = createBox(
+                  scope.allBoxesMap[operationId],
+                  bx0);
+              scope.boxes[i] = box;
+              scope.boxMap[boxId] = box;
+            }
+
+            for (i = 0; i < scope.boxes.length; ++i) {
+              var dst = scope.boxes[i];
+              var inputs = dst.instance.inputs;
+              for (var inputName in inputs) {
+                if (inputs.hasOwnProperty(inputName)) {
+                  var input = inputs[inputName];
+                  console.log('INPUT: ', inputs, inputName, input);
+                  var src = scope.boxMap[input.box];
+                  console.log(src, dst, input.id, inputName);
+                  scope.arrows.push(createArrow(
+                    src.outputs, input.id,
+                    dst.inputs, inputName
+                  ));
+                }
+              }
+            }
+
+          }
+
+/*
           scope.arrows = [];
           for (i = 0; i < scope.diagram.arrows.length; ++i) {
             scope.arrows[i] = createArrow(
@@ -36,7 +79,7 @@ angular.module('biggraph')
           for (i = 0; i < scope.diagram.states.length; ++i) {
             var state = scope.diagram.states[i];
             scope.stateMap[state.box + '.' + state.output] = createState(state);
-          }
+          }*/
         });
 
         scope.selectBox = function(box) {
@@ -76,11 +119,23 @@ angular.module('biggraph')
           var plugs = {};
           plugs[plug1.direction] = plug1;
           plugs[plug2.direction] = plug2;
+          var src = plugs.outputs;
+          var dst = plugs.inputs;
 
+
+          dst.instance.inputs[dst.data.id] = {
+            box: src.boxId,
+            id: src.data.id
+          };
+
+/*
           scope.diagram.arrows.push({
             'src': plugs.outputs.toArrowEnd(),
             'dst': plugs.inputs.toArrowEnd(),
           });
+*/
+          
+
           // refresh hack:
           scope.diagram = Object.assign({}, scope.diagram);
         };
@@ -93,19 +148,19 @@ angular.module('biggraph')
         };
 
         var cnt = 0;
-        function hackBox(box) {
-          box.inputs = [ { 'id': 'project', 'kind': 'project' } ];
-          box.outputs = [ { 'id': 'project', 'kind': 'project' } ];
-          box.operation = box.title;
+        scope.addBox = function(operationId, x, y) {
           cnt++;
-          box.id = box.id + cnt;
-        }
-        scope.addBox = function(box, x, y) {
-          hackBox(box);
-          box.x = x;
-          box.y = y;
-          scope.diagram.boxes.push(box);
-          // hack: trigger recreate
+          var boxId = operationId + cnt;
+
+          scope.diagram.boxes.push(
+              {
+                id: boxId,
+                operation: operationId,
+                x: x,
+                y: y,
+                inputs: {},
+                parameters: {}
+              });
           scope.diagram = Object.assign({}, scope.diagram);
         };
         element.bind('dragover', function(event) {
@@ -117,7 +172,7 @@ angular.module('biggraph')
           var opText = event.originalEvent.dataTransfer.getData('text');
           var op = JSON.parse(opText);
           scope.$apply(function() {
-            scope.addBox(op, origEvent.offsetX, origEvent.offsetY);
+            scope.addBox(op.operation, origEvent.offsetX, origEvent.offsetY);
           });
         });
       }
