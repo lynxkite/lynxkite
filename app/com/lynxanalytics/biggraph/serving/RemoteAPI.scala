@@ -26,7 +26,7 @@ object RemoteAPIProtocol {
   case class BoxMetadatasResponse(boxes: List[BoxMetadata])
   case class OperationRequest(
     checkpoint: String,
-    inputs: Map[String, BoxConnection],
+    inputs: Map[String, BoxOutput],
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)

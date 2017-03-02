@@ -434,7 +434,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetProjectRequest(workspace: String, output: BoxConnection)
+case class GetProjectRequest(workspace: String, output: BoxOutput)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class GetBoxesResponse(boxes: List[BoxMetadata])
 
@@ -454,15 +454,14 @@ abstract class OperationParameterMeta {
     id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
 }
 
-abstract class Operation(box: Box, context: Operation.Context) {
+abstract class Operation(context: Operation.Context) {
   implicit val manager = context.manager
-  lazy val project = box.inputs match {
-    case Seq() => new RootProjectEditor(RootProjectState.emptyState)
-    case Seq(LocalBoxConnection("project", "project", _)) => context.inputs("project").project
-  }
+  lazy val project =
+    if (context.inputs == Map()) new RootProjectEditor(RootProjectState.emptyState)
+    else context.inputs("project").project
   val user = context.user
-  def id = Operation.titleToID(box.operation)
-  def title = box.operation // Override this to change the display title while keeping the original ID.
+  def id = Operation.titleToID(context.meta.operationID)
+  def title = context.box.operationID // Override this to change the display title while keeping the original ID.
   val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
   def visibleScalars: List[FEScalar] = List()
@@ -508,7 +507,7 @@ abstract class Operation(box: Box, context: Operation.Context) {
     editor.scalars.set(s"!${name}_delta", delta)
   }
 
-  def getOutputs(params: Map[String, String]): Map[BoxConnection, BoxOutputState] = {
+  def getOutputs(params: Map[String, String]): Map[BoxOutput, BoxOutputState] = {
     // This is a project-specific implementation. This should go in a subclass once we have other
     // (non-project) operations.
     validateParameters(params)
@@ -517,10 +516,10 @@ abstract class Operation(box: Box, context: Operation.Context) {
     updateDeltas(project, before)
     project.setLastOperationDesc(summary(params))
     project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
-    assert(box.outputs == List(LocalBoxConnection("project", "project")))
+    assert(context.meta.outputs == List(TypedConnection("project", "project")))
     import CheckpointRepository._ // For JSON formatters.
     val output = BoxOutputState(
-      box.id, "project", "project", json.Json.toJson(project.state).as[json.JsObject])
+      context.box.id, "project", "project", json.Json.toJson(project.state).as[json.JsObject])
     Map(output.connection -> output)
   }
 
@@ -529,7 +528,7 @@ abstract class Operation(box: Box, context: Operation.Context) {
     title,
     parameters.map { param => param.toFE },
     visibleScalars,
-    box.category,
+    context.meta.categoryID,
     enabled,
     description)
   protected def scalars[T: TypeTag] =
@@ -601,9 +600,11 @@ object Operation {
       OperationCategory(title, icon, color, ops)
   }
 
-  type Factory = (Box, Context) => Operation
+  type Factory = Context => Operation
   case class Context(
     user: serving.User,
+    box: Box,
+    meta: BoxMetadata,
     inputs: Map[String, BoxOutputState],
     manager: MetaGraphManager)
 
@@ -624,8 +625,8 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     title: String,
     category: Operation.Category,
     factory: Operation.Factory,
-    inputs: List[LocalBoxConnection] = List(LocalBoxConnection("project", "project")),
-    outputs: List[LocalBoxConnection] = List(LocalBoxConnection("project", "project"))): Unit = {
+    inputs: List[TypedConnection] = List(TypedConnection("project", "project")),
+    outputs: List[TypedConnection] = List(TypedConnection("project", "project"))): Unit = {
     val id = Operation.titleToID(title)
     assert(!operations.contains(id), s"$id is already registered.")
     operations(id) = BoxMetadata(category.title, title, inputs, outputs) -> factory
@@ -635,11 +636,9 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def operationIds = operations.keys.toSeq
 
-  def opForBox(context: Operation.Context, box: Box): Operation = {
-    val (metadata, factory) = operations(box.operation)
-    factory(box, context)
+  def opForBox(user: serving.User, box: Box, inputs: Map[String, BoxOutputState]) = {
+    val (meta, factory) = operations(box.operationID)
+    val context = Operation.Context(user, box, meta, inputs, manager)
+    factory(context)
   }
-
-  def context(user: serving.User, inputs: Map[String, BoxOutputState]) =
-    Operation.Context(user, inputs, manager)
 }
