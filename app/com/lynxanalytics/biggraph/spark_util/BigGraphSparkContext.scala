@@ -286,40 +286,46 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
 // queries. This logic can be enabled via appending
 // --LYNX-TD-SCHEMA-AUTO-FIX to the end of queries.
 class TeradataDialect extends JdbcDialect {
-  val magicMarker = "--LYNX-TD-SCHEMA-AUTO-FIX"
+  val magicMarker = "/*LYNX-TD-SCHEMA-AUTO-FIX*/"
   def canHandle(url: String) = {
     url.startsWith("jdbc:teradata:")
   }
 
-  override def getSchemaQuery(table: String) = {
-    if (table.contains(magicMarker)) {
-      // Magic switch active.
-      val query = table.split("--")(0)
-      val queryLowerCase = query.toLowerCase
-      if (queryLowerCase.startsWith("select ")) {
-        // We guess that table is actually a query, therefore fixing is needed.
-        // First we remove everything after the where condition.
-        val wherePos = {
-          val pos = queryLowerCase.indexOf(" where ")
-          assert(
-            queryLowerCase.indexOf(" where ", pos + 1) < 0,
-            s"Multiple WHERE clauses in Teradata query, autofix failed: $table")
-          pos
-        }
-        val cleanQuery = if (wherePos >= 0) {
-          query.substring(0, wherePos)
-        } else {
-          query
-        }
-        cleanQuery + " WHERE 1=0"
-      } else {
-        // Table is not a query. We remove the magic marker and
-        // fall back to Spark's logic.
-        super.getSchemaQuery(query)
-      }
+  def unpackMarkedQuery(table: String): Option[String] = {
+    if (table.endsWith(magicMarker)) {
+      Some(table.substring(0, table.size - magicMarker.size))
     } else {
-      // Magic switch inactive.
-      super.getSchemaQuery(table)
+      None
+    }
+  }
+
+  def clearWhereClause(query: String): String = {
+    val queryLowerCase = query.toLowerCase
+    val pos = queryLowerCase.indexOf(" where ")
+    assert(
+      queryLowerCase.indexOf(" where ", pos + 1) < 0,
+      s"Multiple WHERE clauses in Teradata query, autofix failed: $query")
+    if (pos >= 0) {
+      query.substring(0, pos)
+    } else {
+      query
+    }
+  }
+
+  override def getSchemaQuery(table: String) = {
+    unpackMarkedQuery(table) match {
+      case Some(query) =>
+        if (query.startsWith("(")) {
+          val lastBracket = query.lastIndexOf(")")
+          val (prefix, suffix) = query.splitAt(lastBracket)
+          val cleanedPrefix = clearWhereClause(prefix.substring(1))
+          cleanedPrefix + " WHERE 1=0"
+        } else {
+          super.getSchemaQuery(query)
+        }
+      case None =>
+        // Magic switch inactive.
+        super.getSchemaQuery(table)
     }
   }
 }
