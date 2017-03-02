@@ -24,6 +24,11 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         val op = RegressionModelTrainer(method, labelName, featureNames)
         op(op.features, features)(op.label, l).result.model
+      case "Decision tree regression" =>
+        val op = TrainDecisionTreeRegressor(
+          labelName,
+          featureNames)
+        op(op.features, features)(op.label, l).result.model
       case "Logistic regression" =>
         val op = LogisticRegressionModelTrainer(
           maxIter = 20,
