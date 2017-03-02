@@ -105,7 +105,7 @@ case class Box(
 case class TypedConnection(
     id: String,
     kind: String) {
-  BoxOutputState.assertKind(kind)
+  BoxOutputKind.assertKind(kind)
   def ofBox(box: Box) = box.output(id)
 }
 
@@ -119,9 +119,9 @@ case class BoxMetadata(
   inputs: List[TypedConnection],
   outputs: List[TypedConnection])
 
-object BoxOutputState {
-  val ProjectKind = "project"
-  val validKinds = Set(ProjectKind) // More kinds to come.
+object BoxOutputKind {
+  val Project = "project"
+  val validKinds = Set(Project) // More kinds to come.
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -132,9 +132,9 @@ case class BoxOutputState(
     kind: String,
     state: json.JsValue,
     success: FEStatus = FEStatus.enabled) {
-  BoxOutputState.assertKind(kind)
+  BoxOutputKind.assertKind(kind)
   def isError = !success.enabled
-  def isProject = kind == BoxOutputState.ProjectKind
+  def isProject = kind == BoxOutputKind.Project
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"$boxID=>$outputID is not a project but a $kind.")
     assert(success.enabled, success.disabledReason)
