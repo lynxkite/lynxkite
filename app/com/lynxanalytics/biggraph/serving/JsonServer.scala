@@ -288,7 +288,7 @@ object FrontendJson {
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
   implicit val rGetProjectRequest = json.Json.reads[GetProjectRequest]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
-  implicit val wListBoxesResponse = json.Json.writes[ListBoxesResponse]
+  implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -405,7 +405,7 @@ object ProductionJsonServer extends JsonServer {
   def getWorkspace = jsonGet(bigGraphController.getWorkspace)
   def getProject = jsonGet(bigGraphController.getProject)
   def setWorkspace = jsonPost(bigGraphController.setWorkspace)
-  def listBoxes = jsonGet(bigGraphController.listBoxes)
+  def boxCatalog = jsonGet(bigGraphController.boxCatalog)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)

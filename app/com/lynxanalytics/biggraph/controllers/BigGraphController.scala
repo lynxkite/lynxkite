@@ -427,8 +427,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     }
   }
 
-  def listBoxes(user: serving.User, request: serving.Empty): ListBoxesResponse = {
-    ListBoxesResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
+  def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
+    BoxCatalogResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
   }
 }
 
@@ -436,7 +436,7 @@ case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetProjectRequest(workspace: String, output: BoxOutput)
 case class CreateWorkspaceRequest(name: String, privacy: String)
-case class ListBoxesResponse(boxes: List[BoxMetadata])
+case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
 abstract class OperationParameterMeta {
   val id: String
