@@ -84,8 +84,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
-      val p = controller.getProject(user, GetProjectRequest("test-workspace", eg.output("project")))
-      assert(p.vertexAttributes.find(_.title == "income").get.metadata("icon") == "money_bag")
+      val o = controller.getOutput(user, GetOutputRequest("test-workspace", eg.output("project")))
+      assert(o.kind == "project")
+      val income = o.project.get.vertexAttributes.find(_.title == "income").get
+      assert(income.metadata("icon") == "money_bag")
     }
   }
 }

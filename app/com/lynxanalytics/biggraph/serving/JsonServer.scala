@@ -286,7 +286,8 @@ object FrontendJson {
   import WorkspaceJsonFormatters._
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
-  implicit val rGetProjectRequest = json.Json.reads[GetProjectRequest]
+  implicit val rGetOutputRequest = json.Json.reads[GetOutputRequest]
+  implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
 
@@ -403,7 +404,7 @@ object ProductionJsonServer extends JsonServer {
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
   def createWorkspace = jsonPost(bigGraphController.createWorkspace)
   def getWorkspace = jsonGet(bigGraphController.getWorkspace)
-  def getProject = jsonGet(bigGraphController.getProject)
+  def getOutput = jsonGet(bigGraphController.getOutput)
   def setWorkspace = jsonPost(bigGraphController.setWorkspace)
   def boxCatalog = jsonGet(bigGraphController.boxCatalog)
 
