@@ -407,11 +407,14 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): Workspace =
     getWorkspaceByName(user, request.name)
 
-  def getProject(
-    user: serving.User, request: GetProjectRequest): FEProject = {
+  def getOutput(
+    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
-    state.project.viewer.toFE(request.workspace)
+    state.kind match {
+      case BoxOutputKind.Project =>
+        GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(request.workspace)))
+    }
   }
 
   def setWorkspace(
@@ -434,7 +437,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetProjectRequest(workspace: String, output: BoxOutput)
+case class GetOutputRequest(workspace: String, output: BoxOutput)
+case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
