@@ -30,11 +30,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("pagerank on example graph") {
-    val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
-    val pr = ops.getBoxMetadata("PageRank").toBox("pr", Map(
-      "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
-      "iterations" -> "5", "direction" -> "all edges"), 0, 20)
-    val ws = Workspace(List(eg, pr.connect("project", eg.output("project"))))
+    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+    val pr = Box(
+      "pr", "PageRank", Map(
+        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+        "iterations" -> "5", "direction" -> "all edges"),
+      0, 20, Map("project" -> eg.output("project")))
+    val ws = Workspace(List(eg, pr))
     val project = ws.state(user, ops, pr.output("project")).project
     import graph_api.Scripting._
     assert(project.vertexAttributes("pagerank").rdd.values.collect.toSet == Set(
@@ -42,17 +44,18 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("deltas still work") {
-    val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
-    val merge = ops.getBoxMetadata(
-      "Merge vertices by attribute").toBox("merge", Map("key" -> "gender"), 0, 20)
-    val ws = Workspace(List(eg, merge.connect("project", eg.output("project"))))
+    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+    val merge = Box(
+      "merge", "Merge vertices by attribute", Map("key" -> "gender"), 0, 20,
+      Map("project" -> eg.output("project")))
+    val ws = Workspace(List(eg, merge))
     val project = ws.state(user, ops, merge.output("project")).project
     import graph_api.Scripting._
     assert(project.scalars("!vertex_count_delta").value == -2)
   }
 
   test("validation") {
-    val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
+    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
     val ex = intercept[AssertionError] {
       Workspace(List(eg, eg))
     }
@@ -60,13 +63,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("errors") {
-    val pr1 = ops.getBoxMetadata("PageRank").toBox("pr1", Map(
-      "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
-      "iterations" -> "5", "direction" -> "all edges"), 0, 20)
-    val pr2 = ops.getBoxMetadata("PageRank").toBox("pr2", Map(
-      "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
-      "iterations" -> "5", "direction" -> "all edges"), 0, 20)
-    val ws = Workspace(List(pr1, pr2.connect("project", pr1.output("project"))))
+    val pr1 = Box(
+      "pr1", "PageRank", Map(
+        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+        "iterations" -> "5", "direction" -> "all edges"),
+      0, 20, Map())
+    val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
+    val ws = Workspace(List(pr1, pr2))
     val p1 = ws.state(user, ops, pr1.output("project"))
     val p2 = ws.state(user, ops, pr2.output("project"))
     val ex1 = intercept[AssertionError] { p1.project }
@@ -78,7 +81,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("getProject") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
-      val eg = ops.getBoxMetadata("Example Graph").toBox("eg", Map(), 0, 0)
+      val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
       val p = controller.getProject(user, GetProjectRequest("test-workspace", eg.output("project")))

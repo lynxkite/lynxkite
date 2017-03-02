@@ -24,29 +24,37 @@ case class Workspace(
   }
 
   def state(
-    user: serving.User, ops: OperationRepository, connection: BoxConnection): BoxOutputState = {
+    user: serving.User, ops: OperationRepository, connection: BoxOutput): BoxOutputState = {
     calculate(user, ops, connection, Map())(connection)
   }
 
   // Calculates an output. Returns every state that had been calculated as a side-effect.
   def calculate(
-    user: serving.User, ops: OperationRepository, connection: BoxConnection,
-    states: Map[BoxConnection, BoxOutputState]): Map[BoxConnection, BoxOutputState] = {
+    user: serving.User, ops: OperationRepository, connection: BoxOutput,
+    states: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     if (states.contains(connection)) states else {
-      val box = findBox(connection.box)
-      val unconnecteds = box.inputs.filter(_.connectedTo.isEmpty)
+      val box = findBox(connection.boxID)
+      val meta = ops.getBoxMetadata(box.operationID)
+
+      def errorOutputs(msg: String): Map[BoxOutput, BoxOutputState] = {
+        meta.outputs.map {
+          o => o.ofBox(box) -> BoxOutputState(box.id, o.id, o.kind, null, FEStatus.disabled(msg))
+        }.toMap
+      }
+
+      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
       if (unconnecteds.nonEmpty) {
         val list = unconnecteds.map(_.id).mkString(", ")
-        states ++ box.errorOutputs(s"Input $list is not connected.")
+        states ++ errorOutputs(s"Input $list is not connected.")
       } else {
-        val updatedStates = box.inputs.foldLeft(states) {
-          (states, lc) => calculate(user, ops, lc.connectedTo.get, states)
+        val updatedStates = box.inputs.values.foldLeft(states) {
+          (states, output) => calculate(user, ops, output, states)
         }
-        val inputs = box.inputs.map(lc => lc.id -> updatedStates(lc.connectedTo.get)).toMap
+        val inputs = box.inputs.map { case (id, output) => id -> updatedStates(output) }
         val errors = inputs.filter(_._2.isError)
         if (errors.nonEmpty) {
           val list = errors.map(_._1).mkString(", ")
-          updatedStates ++ box.errorOutputs(s"Input $list has an error.")
+          updatedStates ++ errorOutputs(s"Input $list has an error.")
         } else {
           val outputStates = try {
             box.execute(user, inputs, ops)
@@ -56,7 +64,7 @@ case class Workspace(
                 case ex: AssertionError => ex.getMessage
                 case _ => ex.toString
               }
-              box.errorOutputs(msg)
+              errorOutputs(msg)
           }
           updatedStates ++ outputStates
         }
@@ -71,87 +79,54 @@ object Workspace {
 
 case class Box(
     id: String,
-    category: String,
-    operation: String,
+    operationID: String,
     parameters: Map[String, String],
     x: Double,
     y: Double,
-    inputs: List[LocalBoxConnection],
-    outputs: List[LocalBoxConnection]) {
+    inputs: Map[String, BoxOutput]) {
 
-  def input(id: String) = inputs.find(_.id == id).get.ofBox(this)
-
-  def output(id: String) = outputs.find(_.id == id).get.ofBox(this)
+  def output(id: String) = BoxOutput(this.id, id)
 
   def execute(
     user: serving.User,
     inputStates: Map[String, BoxOutputState],
-    ops: OperationRepository): Map[BoxConnection, BoxOutputState] = {
+    ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
     assert(
-      inputs.size == inputStates.size &&
-        inputs.forall(i => inputStates.get(i.id).map(_.kind == i.kind).getOrElse(false)),
+      inputs.keys == inputStates.keys,
       s"Input mismatch: $inputStates does not match $inputs")
-    val op = ops.opForBox(ops.context(user, inputStates), this)
+    val op = ops.opForBox(user, this, inputStates)
     val outputStates = op.getOutputs(parameters)
-    assert(
-      outputs.size == outputStates.size &&
-        outputs.forall(o => outputStates.get(o.ofBox(this)).map(_.kind == o.kind).getOrElse(false)),
-      s"Output mismatch: $outputStates does not match $outputs")
     outputStates
   }
-
-  def connect(input: String, output: BoxConnection): Box = {
-    this.copy(inputs = inputs.map {
-      i => if (i.id != input) i else i.copy(connectedTo = Some(output))
-    })
-  }
-
-  def errorOutputs(msg: String): Map[BoxConnection, BoxOutputState] = {
-    outputs.map(_.ofBox(this)).map(c => c -> BoxOutputState.error(c, msg)).toMap
-  }
 }
 
-case class LocalBoxConnection(
-    id: String,
-    kind: String,
-    connectedTo: Option[BoxConnection] = None) {
-  BoxOutputState.assertKind(kind)
-  for (c <- connectedTo) {
-    assert(kind == c.kind, s"$id is of type $kind, and cannot connect to $connectedTo")
-  }
-  def ofBox(box: Box) = BoxConnection(box.id, id, kind)
-}
-
-// BoxConnection is ambiguous in that it does not specify whether the connection is an input or
-// output. But inputs and outputs live such different lives that this is okay.
-case class BoxConnection(
-    box: String,
+case class TypedConnection(
     id: String,
     kind: String) {
   BoxOutputState.assertKind(kind)
+  def ofBox(box: Box) = BoxOutput(box.id, id)
 }
 
+case class BoxOutput(
+  boxID: String,
+  id: String)
+
 case class BoxMetadata(
-    category: String,
-    operation: String,
-    inputs: List[LocalBoxConnection],
-    outputs: List[LocalBoxConnection]) {
-  def toBox(id: String, parameters: Map[String, String], x: Double, y: Double) =
-    Box(id, category, operation, parameters, x, y, inputs, outputs)
-}
+  categoryID: String,
+  operationID: String,
+  inputs: List[TypedConnection],
+  outputs: List[TypedConnection])
 
 object BoxOutputState {
   val ProjectKind = "project"
   val validKinds = Set(ProjectKind) // More kinds to come.
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
-  def error(c: BoxConnection, message: String) =
-    BoxOutputState(c.box, c.id, c.kind, null, FEStatus.disabled(message))
 }
 
 case class BoxOutputState(
-    box: String,
-    output: String,
+    boxID: String,
+    outputID: String,
     kind: String,
     state: json.JsValue,
     success: FEStatus = FEStatus.enabled) {
@@ -159,20 +134,20 @@ case class BoxOutputState(
   def isError = !success.enabled
   def isProject = kind == BoxOutputState.ProjectKind
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
-    assert(isProject, s"$box=>$output is not a project but a $kind.")
+    assert(isProject, s"$boxID=>$outputID is not a project but a $kind.")
     assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
     val p = state.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }
-  def connection = BoxConnection(box, output, kind)
+  def connection = BoxOutput(boxID, outputID)
 }
 
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
-  implicit val fBoxConnection = json.Json.format[BoxConnection]
-  implicit val fLocalBoxConnection = json.Json.format[LocalBoxConnection]
+  implicit val fBoxOutput = json.Json.format[BoxOutput]
+  implicit val fTypedConnection = json.Json.format[TypedConnection]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]

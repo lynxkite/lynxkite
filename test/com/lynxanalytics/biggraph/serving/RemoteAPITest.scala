@@ -10,8 +10,8 @@ class RemoteAPITest extends FunSuite with TestGraphOp {
   test("no temp table name collision") {
     import RemoteAPIProtocol._
     val u = User.fake
-    val metas = ctrl.getBoxMetadatas(u, Empty()).boxes.map(b => b.operation -> b).toMap
-    val ws = Workspace(List(metas("Example Graph").toBox("eg", Map(), 0, 0)))
+    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+    val ws = Workspace(List(eg))
     /*
     val example = ctrl.updateWorkspace(u, OperationRequest(empty, Map(), "examplegraph", Map())).checkpoint
     val view1 = ctrl.createView(
