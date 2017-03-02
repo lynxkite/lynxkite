@@ -40,6 +40,7 @@ case class TrainDecisionTreeRegressor(
     minInstancesPerNode: Int = 1,
     seed: Int = 1234567) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = false
+  val isBinary = false
   override val generatesProbability = true
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)

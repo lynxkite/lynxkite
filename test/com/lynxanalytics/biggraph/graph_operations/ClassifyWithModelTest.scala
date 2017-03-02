@@ -62,7 +62,7 @@ class ClassifyWithModelTest extends ModelTestBase {
       attrs = Seq(Map(0 -> -15, 1 -> 20, 2 -> -10, 3 -> 20, 4 -> 35, 5 -> 40, 6 -> -15, 7 -> -15),
         Map(0 -> 0, 1 -> 1, 2 -> 1, 3 -> 0, 4 -> 0, 5 -> 1, 6 -> 0, 7 -> 0)),
       // I love making long walks if it's not raining and the temperature is
-      // pleasant. I take only a short work if it's not raining, but the weather
+      // pleasant. I take only a short walk if it's not raining, but the weather
       // is too hot or too cold. I hate rain, so I just stay at home if it's raining.
       // Sometimes I'm in a really good mood and go on a long walk in spite of
       // the cold weather.
