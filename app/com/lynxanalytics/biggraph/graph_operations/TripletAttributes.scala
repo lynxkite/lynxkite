@@ -267,22 +267,22 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     implicit val id = inputDatas
     val restricted = inputs.tripletMapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
     val aggregatedEdges =
-      restricted.aggregate(mutable.ListBuffer[(ID, Edge)]())(
+      restricted.aggregate(mutable.Set[(ID, Edge)]())(
         {
-          case (array, (srcId, edgesAndNeighbors)) =>
-            if ((array == null) || (array.size + edgesAndNeighbors.size > maxNumEdges)) {
+          case (set, (srcId, edgesAndNeighbors)) =>
+            if ((set == null) || (set.size + edgesAndNeighbors.size > maxNumEdges)) {
               null
             } else {
-              array ++= edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
-              array
+              set ++= edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+              set
             }
         },
         {
-          case (array1, array2) =>
-            if ((array1 == null) || (array2 == null)) null
+          case (set1, set2) =>
+            if ((set1 == null) || (set2 == null)) null
             else {
-              array1 ++= array2
-              array1
+              set1 ++= set2
+              set1
             }
         })
     output(
