@@ -47,10 +47,10 @@ class ClassifyWithModelTest extends ModelTestBase {
     assert(classification(0) == 0.0 && classification(1) == 0.0)
     assert(classification(2) == 1.0 && classification(3) == 1.0)
     val probability = result.probability.rdd.values.collect
-    // Check that each probability is proportional to their attribute values and each
-    // probability is greater than 0.5.
-    assert(probability(0) > probability(1) && probability(1) > 0.5)
-    assert(probability(3) > probability(2) && probability(2) > 0.5)
+    // Check that the probability is higher if the datapoint is farther from the threshold.
+    assert(probability(0) > probability(1))
+    assert(probability(3) > probability(2))
+
   }
 
   test("test the decision tree classification model") {
