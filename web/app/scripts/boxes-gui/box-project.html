@@ -85,10 +85,11 @@
     <div id="box-view">
       <drawing-board
           diagram="diagram"
+          all-boxes="allBoxes.boxes"
           selected-box="selectedBox"
           selected-state="selectedState">
       </drawing-board>
-      <operation-selector categories="opCategories" editable="true">
+      <operation-selector boxes="allBoxes.boxes" editable="true">
       </operation-selector>
       <div id="right-panel">
         <state-view state="selectedState">

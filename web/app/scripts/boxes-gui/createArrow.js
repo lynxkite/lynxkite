@@ -11,11 +11,9 @@ angular.module('biggraph').factory('createArrow', function() {
     return undefined;
   }
 
-  return function(data, boxMap) {
-    var srcBox = boxMap[data.src.box];
-    var dstBox = boxMap[data.dst.box];
-    var srcPlug = lookupEndPoint(srcBox.outputs, data.src.id);
-    var dstPlug = lookupEndPoint(dstBox.inputs, data.dst.id);
+  return function(srcList, srcId, dstList, dstId) {
+    var srcPlug = lookupEndPoint(srcList, srcId);
+    var dstPlug = lookupEndPoint(dstList, dstId);
 
     return {
       x1: srcPlug.x,

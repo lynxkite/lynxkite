@@ -6,7 +6,7 @@ angular.module('biggraph')
     $scope.util = util;
     $scope.$watch('name', function(name) {
       if (name !== undefined) {
-        $location.url('/project/' + name);
+        $location.url('/workspace/' + name);
       }
     });
   });

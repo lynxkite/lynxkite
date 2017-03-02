@@ -1,6 +1,6 @@
-<div class="operation" ng-class="{ disabled: !op.status.enabled }"
-    drop-tooltip="{{op.status.disabledReason || op.description}}"
+<div class="operation"
+    drop-tooltip="{{op.description}}"
     drop-tooltip-position="left middle"
     draggable="true">
-  {{op.title}}
+  {{op.operation}}
 </div>

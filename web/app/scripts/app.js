@@ -35,12 +35,7 @@ angular
         templateUrl: 'views/splash.html',
         controller: 'SplashCtrl',
       })
-      .when('/project/:project*', {
-        templateUrl: 'views/project.html',
-        controller: 'ProjectViewCtrl',
-        reloadOnSearch: false,
-      })
-      .when('/boxproject/:project*', {
+      .when('/workspace/:workspaceName*', {
         templateUrl: 'scripts/boxes-gui/box-project.html',
         controller: 'BoxProjectCtrl',
       })
