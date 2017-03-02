@@ -45,4 +45,4 @@ For a node to be split further, the split must improve at least this much
 
 [[seed]] Seed::
 Random seed.
-===
+====

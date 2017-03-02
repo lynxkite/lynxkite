@@ -30,6 +30,14 @@ private[biggraph] class LinearRegressionModelImpl(
   def details: String = statistics
 }
 
+private[biggraph] class DecisionTreeRegressionModelImpl(
+  m: ml.regression.DecisionTreeRegressionModel,
+  statistics: String) extends ModelImplementation {
+    def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+    def details: String = statistics
+  }
+)
+
 private[biggraph] class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel,
     statistics: String) extends ModelImplementation {
@@ -52,7 +60,6 @@ private[biggraph] class DecisionTreeClassificationModelImpl(
     statistics: String) extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
-  def getThresholds: Array[Double] = m.getThresholds
 }
 
 case class Model(
@@ -93,6 +100,8 @@ case class Model(
     method match {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
+      case "Decision tree regresison" =>
+        nws DecisionTreeModelImpl(ml.regression.DecisionTreeRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
       case "KMeans clustering" =>
