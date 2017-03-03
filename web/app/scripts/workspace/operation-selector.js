@@ -7,20 +7,21 @@ angular.module('biggraph').directive('operationSelector', function(/* $rootScope
     // A lot of internals are exposed, because this directive is used both in
     // side-operation-toolbox and in project-history.
     scope: {
-      boxes: '=',  // (Input.) List of operation categories.
+      boxCatalog: '=',  // (Input.) List of operation categories.
     },
-    templateUrl: 'scripts/boxes-gui/operation-selector.html',
+    templateUrl: 'scripts/workspace/operation-selector.html',
 
     link: function(scope, elem) {
       scope.editMode = true;
       scope.categories = [];
 
-      scope.$watch('boxes', function() {
+      scope.$watch('boxCatalog.$resolved', function() {
 
         scope.categories = [];
-        if (!scope.boxes) {
+        if (!scope.boxCatalog || !scope.boxCatalog.$resolved) {
           return;
         }
+        scope.boxes = scope.boxCatalog.boxes;
 
         var categories = {};
         for (var i = 0; i < scope.boxes.length; ++i) {

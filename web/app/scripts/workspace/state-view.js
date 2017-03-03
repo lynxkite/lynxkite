@@ -4,7 +4,7 @@ angular.module('biggraph')
  .directive('stateView', function(side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/boxes-gui/state-view.html',
+      templateUrl: 'scripts/workspace/state-view.html',
       scope: {
         state: '='
       },

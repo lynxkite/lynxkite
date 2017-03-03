@@ -7,7 +7,7 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
     scope: {
       op: '=',
     },
-    templateUrl: 'scripts/boxes-gui/operation-selector-entry.html',
+    templateUrl: 'scripts/workspace/operation-selector-entry.html',
     link: function(scope, element) {
       element.bind('dragstart', function(event) {
         var data = JSON.stringify(scope.op);

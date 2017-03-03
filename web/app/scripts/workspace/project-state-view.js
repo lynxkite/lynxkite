@@ -4,7 +4,7 @@ angular.module('biggraph')
  .directive('projectStateView', function() {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/boxes-gui/project-state-view.html',
+      templateUrl: 'scripts/workspace/project-state-view.html',
       scope: {
         side: '='
       },

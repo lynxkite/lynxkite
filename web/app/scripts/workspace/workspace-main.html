@@ -1,0 +1,23 @@
+<div id="box-project">
+
+  <h1>{{workspaceName}}</h1>
+
+  <div id="box-view">
+    <workspace-board
+        box-catalog="boxCatalog"
+        selected-box="selectedBox"
+        selected-state="selectedState"
+        workspace-name="workspaceName">
+    </workspace-board>
+    <operation-selector box-catalog="boxCatalog" editable="true">
+    </operation-selector>
+    <div id="right-panel">
+      <state-view state="selectedState">
+      </state-view>
+      <box-view box="selectedBox">
+      </box-view>
+    </div>
+    <div id="clear"></div>
+  </div>
+
+</div>
