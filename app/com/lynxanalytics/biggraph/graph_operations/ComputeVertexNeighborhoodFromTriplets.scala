@@ -8,8 +8,6 @@ import scala.collection.mutable
 object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
-    // We don't need this anymore, but have to keep here for legacy reasons.
-    val edges = edgeBundle(vertices, vertices)
     // The list of outgoing neighbors.
     val srcTripletMapping = vertexAttribute[EdgesAndNeighbors](vertices)
     // The list of incoming neighbors.
