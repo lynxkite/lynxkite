@@ -31,13 +31,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     println(json.Json.prettyPrint(json.Json.toJson(t)))
   }
 
+  val pagerankParams = Map(
+    "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+    "iterations" -> "5", "direction" -> "all edges")
+
   test("pagerank on example graph") {
     val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
-    val pr = Box(
-      "pr", "PageRank", Map(
-        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
-        "iterations" -> "5", "direction" -> "all edges"),
-      0, 20, Map("project" -> eg.output("project")))
+    val pr = Box("pr", "PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
     val ws = Workspace(List(eg, pr))
     val project = ws.state(user, ops, pr.output("project")).project
     import graph_api.Scripting._
@@ -65,11 +65,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("errors") {
-    val pr1 = Box(
-      "pr1", "PageRank", Map(
-        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
-        "iterations" -> "5", "direction" -> "all edges"),
-      0, 20, Map())
+    val pr1 = Box("pr1", "PageRank", pagerankParams, 0, 20, Map())
     val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
     val ws = Workspace(List(pr1, pr2))
     val p1 = ws.state(user, ops, pr1.output("project"))
@@ -90,6 +86,26 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(o.kind == "project")
       val income = o.project.get.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
+    }
+  }
+
+  test("getOperation") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+      val pr = Box("pr1", "PageRank", pagerankParams, 0, 20, Map())
+      set("test-workspace", Workspace(List(eg, pr)))
+      intercept[AssertionError] {
+        controller.getOperation(user, GetOperationRequest("test-workspace", "pr1"))
+      }
+      set(
+        "test-workspace",
+        Workspace(List(eg, pr.copy(inputs = Map("project" -> eg.output("project"))))))
+      val op = controller.getOperation(user, GetOperationRequest("test-workspace", "pr1"))
+      assert(
+        op.parameters.map(_.id) == Seq("name", "weights", "iterations", "damping", "direction"))
+      assert(
+        op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
     }
   }
 }

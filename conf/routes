@@ -15,6 +15,7 @@ POST /ajax/createWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServ
 POST /ajax/setWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.setWorkspace
 GET /ajax/getWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.getWorkspace
 GET /ajax/getOutput com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOutput
+GET /ajax/getOperation com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperation
 GET /ajax/boxCatalog com.lynxanalytics.biggraph.serving.ProductionJsonServer.boxCatalog
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
