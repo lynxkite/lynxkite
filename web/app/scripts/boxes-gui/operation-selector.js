@@ -25,17 +25,17 @@ angular.module('biggraph').directive('operationSelector', function(/* $rootScope
         var categories = {};
         for (var i = 0; i < scope.boxes.length; ++i) {
           var box = scope.boxes[i];
-          if (!(box.category in categories)) {
+          if (!(box.categoryID in categories)) {
             var cat = {
-              title: box.category,
+              title: box.categoryID,
               ops: [],
               color: 'blue',
               icon: 'wrench',
             };
             scope.categories.push(cat);
-            categories[box.category] = cat;
+            categories[box.categoryID] = cat;
           }
-          categories[box.category].ops.push(box);
+          categories[box.categoryID].ops.push(box);
         }
 
       });
@@ -72,44 +72,6 @@ angular.module('biggraph').directive('operationSelector', function(/* $rootScope
           scope.clickedOp(op);
         }
       };
-
-      scope.$watch('opMeta', function(op) {
-        scope.opColor = 'yellow';
-        if (op === undefined) {
-          return;
-        }
-
-        if (op.color) {
-          scope.opColor = op.color;
-          return;
-        }
-
-        for (var i = 0; i < scope.categories.length; ++i) {
-          var cat = scope.categories[i];
-          if (op.category === cat.title) {
-            scope.opColor = cat.color;
-            return;
-          }
-        }
-        console.error('Could not find category for', op.id);
-      });
-
-      scope.$watch('op', function(opId) {
-        if (!scope.categories){
-          return;
-        }
-
-        for (var i = 0; i < scope.categories.length; ++i) {
-          for (var j = 0; j < scope.categories[i].ops.length; ++j) {
-            var op = scope.categories[i].ops[j];
-            if (opId === op.id) {
-              scope.opMeta = op;
-              return;
-            }
-          }
-        }
-        scope.opMeta = undefined;
-      });
 
       scope.clickedCat = function(cat) {
         if (scope.category === cat && !scope.op) {
