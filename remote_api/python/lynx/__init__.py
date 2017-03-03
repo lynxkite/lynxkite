@@ -26,7 +26,6 @@ import requests
 import ssl
 import sys
 import types
-
 import time
 import yaml
 
