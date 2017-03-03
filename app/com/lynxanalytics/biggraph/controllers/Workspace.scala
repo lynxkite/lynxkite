@@ -73,6 +73,24 @@ case class Workspace(
       }
     }
   }
+
+  def getOperation(
+    user: serving.User, ops: OperationRepository, boxID: String): Operation = {
+    val box = findBox(boxID)
+    val meta = ops.getBoxMetadata(box.operationID)
+    for (i <- meta.inputs) {
+      assert(box.inputs.contains(i.id), s"Input ${i.id} is not connected.")
+    }
+    val states = box.inputs.values.foldLeft(Map[BoxOutput, BoxOutputState]()) {
+      (states, output) => calculate(user, ops, output, states)
+    }
+    val inputs = box.inputs.map { case (id, output) => id -> states(output) }
+    assert(!inputs.exists(_._2.isError), {
+      val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
+      s"Input $errors has an error."
+    })
+    box.getOperation(user, inputs, ops)
+  }
 }
 
 object Workspace {
@@ -89,14 +107,21 @@ case class Box(
 
   def output(id: String) = BoxOutput(this.id, id)
 
+  def getOperation(
+    user: serving.User,
+    inputStates: Map[String, BoxOutputState],
+    ops: OperationRepository): Operation = {
+    assert(
+      inputs.keys == inputStates.keys,
+      s"Input mismatch: $inputStates does not match $inputs")
+    ops.opForBox(user, this, inputStates)
+  }
+
   def execute(
     user: serving.User,
     inputStates: Map[String, BoxOutputState],
     ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
-    assert(
-      inputs.keys == inputStates.keys,
-      s"Input mismatch: $inputStates does not match $inputs")
-    val op = ops.opForBox(user, this, inputStates)
+    val op = getOperation(user, inputStates, ops)
     val outputStates = op.getOutputs(parameters)
     outputStates
   }
