@@ -9,10 +9,12 @@ angular.module('biggraph')
         state: '='
       },
       link: function(scope) {
-        scope.$watch('state', function() {
-          if (scope.state && scope.state.kind === 'project') {
+        scope.$watch('state.$resolved', function() {
+          if (scope.state && scope.state.$resolved &&
+              scope.state.kind === 'project') {
             scope.side = new side.Side([], '');
-            scope.side.project = scope.state.state;
+            scope.side.project = scope.state.project;
+            scope.side.project.$resolved = true;
             scope.side.onProjectLoaded();
           } else {
             scope.side = undefined;

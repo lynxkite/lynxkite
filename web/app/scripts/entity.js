@@ -11,9 +11,6 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
     },
     templateUrl: 'entity.html',
     link: function(scope, element) {
-      console.log('ENTITY JS ', scope.entity);
-      console.log(scope.side.scalars);
-
       /* global Drop */
       // Angular element for easier access of popup elements.
       var dropElement = element.children('.menu');
