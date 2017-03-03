@@ -1,4 +1,4 @@
-// The '/boxproject' page.
+// The '/workspace/WorkSpaceName' page.
 'use strict';
 
 angular.module('biggraph')
