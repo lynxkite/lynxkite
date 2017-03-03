@@ -342,10 +342,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def edgesAndNeighborsMapping(
-    eb: EdgeBundle, sampled: Boolean): graph_operations.EdgeMapping.Output = {
+    eb: EdgeBundle, sampled: Boolean): graph_operations.EdgeAndNeighborMapping.Output = {
     val op =
-      if (sampled) graph_operations.EdgeMapping(sampleSize = DrawingThresholds.TripletSampling)
-      else graph_operations.EdgeMapping()
+      if (sampled) graph_operations.EdgeAndNeighborMapping(sampleSize = DrawingThresholds.TripletSampling)
+      else graph_operations.EdgeAndNeighborMapping()
     val res = op(op.edges, eb).result
     return res
   }
@@ -413,13 +413,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     srcView: graph_operations.VertexView,
     dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
 
-    val eanm = edgesAndNeighborsMapping(eb, sampled = false)
+    val mapping = edgesAndNeighborsMapping(eb, sampled = false)
     if (srcView.vertexIndices.isDefined) {
       val vertexIds = srcView.vertexIndices.get.keySet
       val op = graph_operations.EdgesForVertices(
         vertexIds, DrawingThresholds.SmallEdges, bySource = true)
       val edges =
-        op(op.edges, eb)(op.tripletMapping, eanm.srcEdges).result.edges.value
+        op(op.edges, eb)(op.tripletMapping, mapping.srcEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     if (dstView.vertexIndices.isDefined) {
@@ -427,7 +427,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val op = graph_operations.EdgesForVertices(
         vertexIds, DrawingThresholds.SmallEdges, bySource = false)
       val edges =
-        op(op.edges, eb)(op.tripletMapping, eanm.dstEdges).result.edges.value
+        op(op.edges, eb)(op.tripletMapping, mapping.dstEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     return None

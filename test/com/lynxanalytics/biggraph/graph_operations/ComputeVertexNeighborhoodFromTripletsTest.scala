@@ -10,7 +10,7 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
   test("vertex neighborhood of example graph using triplets") {
     val g = ExampleGraph()().result
     val neighbors = {
-      val op = EdgeMapping()
+      val op = EdgeAndNeighborMapping()
       op(op.edges, g.edges).result
     }
     val nop = ComputeVertexNeighborhoodFromTriplets(Seq(2, 3), 1, 10)
@@ -29,7 +29,7 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
       3 -> Seq(7, 8), 4 -> Seq(9, 10), 5 -> Seq(11, 12), 6 -> Seq(13, 14))
     val g = SmallTestGraph(edges)().result
     val neighbors = {
-      val op = EdgeMapping()
+      val op = EdgeAndNeighborMapping()
       op(op.edges, g.es).result
     }
     val neighborhood = {
