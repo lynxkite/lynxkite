@@ -47,7 +47,7 @@ object JsonMigration {
   private def className(o: Any) = o.getClass.getName.replace("$", "")
   val current = new JsonMigration(
     Map(
-      className(graph_operations.ComputeVertexNeighborhoodFromTriplets) -> 2,
+      className(graph_operations.ComputeVertexNeighborhoodFromTriplets) -> 1,
       className(graph_operations.CreateUIStatusScalar) -> 2,
       className(graph_operations.CreateVertexSet) -> 1,
       className(graph_operations.DoubleBucketing) -> 1,
@@ -88,8 +88,7 @@ object JsonMigration {
       (className(graph_operations.SampledView), 0) -> identity,
       (className(graph_operations.VertexBucketGrid), 0) -> identity,
       (className(graph_operations.RegressionModelTrainer), 0) -> identity,
-      (className(graph_util.HadoopFile), 0) -> identity,
-      (className(graph_operations.ComputeVertexNeighborhoodFromTriplets), 1) -> identity))
+      (className(graph_util.HadoopFile), 0) -> identity))
 }
 import JsonMigration._
 class JsonMigration(

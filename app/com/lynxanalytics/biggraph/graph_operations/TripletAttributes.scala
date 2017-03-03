@@ -71,84 +71,6 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
-object EdgesAndNeighbors {
-  def empty = EdgesAndNeighbors(Array[ID](), Array[ID]())
-}
-
-// A wrapper class to hold the egde and neighbor IDs of a vertex. We use long arrays
-// for performance reasons.
-case class EdgesAndNeighbors(eids: Array[ID], nids: Array[ID]) {
-  assert(eids.size == nids.size,
-    s"The number of edges ${eids.size} does not match the number of neighbors ${nids.size}.")
-
-  def map[B](f: ((ID, ID)) => B): Iterable[B] = {
-    (eids zip nids).map(f)
-  }
-
-  def size: Long = eids.size
-}
-
-// Creates outgoing and incoming edge mappings of edge and corresponding neighbor IDs.
-object EdgeAndNeighborMapping extends OpFromJson {
-  class Input extends MagicInputSignature {
-    val src = vertexSet
-    val dst = vertexSet
-    val edges = edgeBundle(src, dst)
-  }
-  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-      extends MagicOutput(instance) {
-    // The list of outgoing edges and neighbors.
-    val srcEdges = vertexAttribute[EdgesAndNeighbors](inputs.src.entity)
-    // The list of incoming edges and neighbors.
-    val dstEdges = vertexAttribute[EdgesAndNeighbors](inputs.dst.entity)
-  }
-  def fromJson(j: JsValue) = EdgeAndNeighborMapping((j \ "sampleSize").as[Int])
-}
-// A negative sampleSize means no sampling.
-case class EdgeAndNeighborMapping(sampleSize: Int = -1)
-    extends TypedMetaGraphOp[EdgeAndNeighborMapping.Input, EdgeAndNeighborMapping.Output] {
-  import EdgeAndNeighborMapping._
-  override val isHeavy = true
-  @transient override lazy val inputs = new Input
-
-  def outputMeta(instance: MetaGraphOperationInstance) =
-    new Output()(instance, inputs)
-  override def toJson = Json.obj("sampleSize" -> sampleSize)
-
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
-    val edges =
-      if (sampleSize >= 0) inputs.edges.rdd.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
-      else inputs.edges.rdd
-    val src = inputs.src.rdd
-    val bySrc = edges
-      .map { case (id, edge) => (edge.src, (id, edge.dst)) }
-      .groupBySortedKey(src.partitioner.get)
-    output(
-      o.srcEdges,
-      src.sortedLeftOuterJoin(bySrc)
-        .mapValues {
-          case (_, Some(it)) => EdgesAndNeighbors(it.map(_._1).toArray, it.map(_._2).toArray)
-          case (_, None) => EdgesAndNeighbors.empty
-        })
-
-    val dst = inputs.dst.rdd
-    val byDst = edges
-      .map { case (id, edge) => (edge.dst, (id, edge.src)) }
-      .groupBySortedKey(dst.partitioner.get)
-    output(
-      o.dstEdges,
-      dst.sortedLeftOuterJoin(byDst)
-        .mapValues {
-          case (_, Some(it)) => EdgesAndNeighbors(it.map(_._1).toArray, it.map(_._2).toArray)
-          case (_, None) => EdgesAndNeighbors.empty
-        })
-  }
-}
-
 // Pushes a vertex attribute to the edges going from/to the vertex.
 object VertexToEdgeAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
@@ -225,7 +147,7 @@ object EdgesForVertices extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
     val otherVs = vertexSet
-    val tripletMapping = vertexAttribute[EdgesAndNeighbors](vs)
+    val tripletMapping = vertexAttribute[Array[ID]](vs)
     val edges = if (bySource) edgeBundle(vs, otherVs) else edgeBundle(otherVs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
@@ -247,8 +169,8 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     // Do some additional checking on the inputs.
     val tripletMapping = inputs.tripletMapping.entity
     val tripletMappingInstance = tripletMapping.source
-    assert(tripletMappingInstance.operation.isInstanceOf[EdgeAndNeighborMapping],
-      "tripletMapping is not a EdgeAndNeighborMapping")
+    assert(tripletMappingInstance.operation.isInstanceOf[TripletMapping],
+      "tripletMapping is not a TripletMapping")
     assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
       s"tripletMapping is for ${tripletMappingInstance.inputs.edgeBundles('edges)}" +
         s" instead of ${inputs.edges.entity}")
@@ -266,14 +188,14 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val restricted = inputs.tripletMapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
-    val aggregatedEdges =
-      restricted.aggregate(mutable.Set[(ID, Edge)]())(
+    val aggregatedIds =
+      restricted.aggregate(mutable.Set[ID]())(
         {
-          case (set, (srcId, edgesAndNeighbors)) =>
-            if ((set == null) || (set.size + edgesAndNeighbors.size > maxNumEdges)) {
+          case (set, (id, array)) =>
+            if ((set == null) || (set.size + array.size > maxNumEdges)) {
               null
             } else {
-              set ++= edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+              set ++= array
               set
             }
         },
@@ -287,6 +209,7 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
         })
     output(
       o.edges,
-      Option(aggregatedEdges).map(_.toIndexedSeq))
+      Option(aggregatedIds).map(
+        ids => inputs.edges.rdd.restrictToIdSet(ids.toIndexedSeq.sorted).collect.toSeq))
   }
 }
