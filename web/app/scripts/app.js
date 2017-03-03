@@ -36,8 +36,8 @@ angular
         controller: 'SplashCtrl',
       })
       .when('/workspace/:workspaceName*', {
-        templateUrl: 'scripts/boxes-gui/box-project.html',
-        controller: 'BoxProjectCtrl',
+        templateUrl: 'scripts/workspace/workspace-main.html',
+        controller: 'WorkspaceMainCtrl',
       })
       .when('/demoMode', {
         templateUrl: 'views/demoMode.html',

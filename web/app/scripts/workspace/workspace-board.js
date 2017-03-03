@@ -1,16 +1,16 @@
 'use strict';
 
 angular.module('biggraph')
- .directive('drawingBoard', function(createBox, createArrow, util) {
+ .directive('workspaceBoard', function(createBox, createArrow, util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/boxes-gui/drawing-board.html',
+      templateUrl: 'scripts/workspace/workspace-board.html',
       templateNamespace: 'svg',
       scope: {
         workspaceName: '=',
         selectedBox: '=',
         selectedState: '=',
-        allBoxes: '=',
+        boxCatalog: '=',
       },
       link: function(scope, element) {
         scope.boxes = [];
@@ -23,10 +23,10 @@ angular.module('biggraph')
         });
 
         scope.$watchGroup(
-          ['diagram.$resolved', 'allBoxes.$resolved'],
+          ['diagram.$resolved', 'boxCatalog.$resolved'],
           function() {
             if (scope.diagram && scope.diagram.$resolved &&
-                scope.allBoxes && scope.allBoxes.$resolved) {
+                scope.boxCatalog && scope.boxCatalog.$resolved) {
               scope.refresh();
             }
         });
@@ -34,11 +34,11 @@ angular.module('biggraph')
         scope.refresh = function() {
           scope.boxes = [];
           scope.boxMap = {};
-          scope.allBoxesMap = {};
+          scope.boxCatalogMap = {};
           var i;
-          for (i = 0; i < scope.allBoxes.boxes.length; ++i) {
-            var boxMeta = scope.allBoxes.boxes[i];
-            scope.allBoxesMap[boxMeta.operationID] = boxMeta;
+          for (i = 0; i < scope.boxCatalog.boxes.length; ++i) {
+            var boxMeta = scope.boxCatalog.boxes[i];
+            scope.boxCatalogMap[boxMeta.operationID] = boxMeta;
           }
 
           scope.arrows = [];
@@ -50,7 +50,7 @@ angular.module('biggraph')
               var operationId = bx0.operationID;
               var boxId = bx0.id;
               box = createBox(
-                  scope.allBoxesMap[operationId],
+                  scope.boxCatalogMap[operationId],
                   bx0);
               scope.boxes[i] = box;
               scope.boxMap[boxId] = box;
@@ -120,7 +120,6 @@ angular.module('biggraph')
         scope.selectPlug = function(plug) {
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
-            //var key = plug.boxId + '.' + plug.data.id;
             scope.selectState(plug.boxId, plug.data.id);
           }
         };
