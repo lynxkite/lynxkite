@@ -26,13 +26,6 @@ angular.module('biggraph').factory('createBox', function() {
         radius: plugRadius,
         x: function() { return x + instance.x; },
         y: function() { return y + instance.y; },
-/*        toArrowEnd: function() {
-          return {
-            box: this.boxId,
-            id: this.data.id,
-            kind: this.data.kind
-          };
-        },*/
         posTransform: 'translate(' + x + ', ' + y + ')'
       };
     }

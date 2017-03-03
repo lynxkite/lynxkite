@@ -178,7 +178,6 @@ angular.module('biggraph').directive('projectSelector',
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
         if (p.error) { return; }
-        console.log('workspaceClick', p);
         scope.name = p.name;
       };
 

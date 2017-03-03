@@ -12,7 +12,7 @@ angular.module('biggraph')
       name: $scope.workspaceName
     });
 
-  $scope.allBoxes = util.nocache('/ajax/getBoxes');
+  $scope.allBoxes = util.nocache('/ajax/boxCatalog');
 
 });
 
