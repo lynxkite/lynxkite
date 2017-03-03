@@ -3,12 +3,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import scala.util.Sorting
+import scala.collection.mutable
 
 object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
-    val edges = edgeBundle(vertices, vertices) // We don't need this anymore, but have to keep here for legacy reasons?
+    // We don't need this anymore, but have to keep here for legacy reasons.
+    val edges = edgeBundle(vertices, vertices)
     // The list of outgoing neighbors.
     val srcTripletMapping = vertexAttribute[EdgesAndNeighbors](vertices)
     // The list of incoming neighbors.
@@ -36,30 +37,28 @@ case class ComputeVertexNeighborhoodFromTriplets(
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
     val all = inputs.srcTripletMapping.rdd.fullOuterJoin(inputs.dstTripletMapping.rdd)
-    var neighborhood = centers.toArray
+    var neighborhood = mutable.SortedSet[ID]() ++ centers.toArray
     var tooMuch = false
     for (i <- 0 until radius) {
       if (!tooMuch) {
-        Sorting.quickSort(neighborhood)
-        neighborhood = all
-          .restrictToIdSet(neighborhood)
+        neighborhood ++= all
+          .restrictToIdSet(neighborhood.toArray)
           .flatMap {
             case (_, (srcNeighbor, dstNeighbor)) =>
               (srcNeighbor.map(_.nids) ++ dstNeighbor.map(_.nids)).flatten
           }
           .distinct
-          .take(maxCount + 1) ++ neighborhood
+          .take(maxCount + 1)
         if (neighborhood.size > maxCount) {
           tooMuch = true
-          neighborhood = Array()
+          neighborhood = mutable.SortedSet[ID]()
         }
       }
     }
-    val res = neighborhood.toSet
-    if (tooMuch || res.size > maxCount) {
+    if (tooMuch || neighborhood.size > maxCount) {
       output(o.neighborhood, Set[ID]())
     } else {
-      output(o.neighborhood, res)
+      output(o.neighborhood, neighborhood.toSet)
     }
   }
 }

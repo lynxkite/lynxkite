@@ -220,14 +220,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val idSet = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
-      val neighbors = neighborMapping(smearBundle, sampled = false)
+      val edgesAndNeighbors = edgesAndNeighborsMapping(smearBundle, sampled = false)
       val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(
         centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(
           nop.edges, smearBundle)(
-            nop.srcTripletMapping, neighbors.srcEdges)(
-              nop.dstTripletMapping, neighbors.dstEdges).result
+            nop.srcTripletMapping, edgesAndNeighbors.srcEdges)(
+              nop.dstTripletMapping, edgesAndNeighbors.dstEdges).result
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
@@ -341,7 +341,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return res
   }
 
-  private def neighborMapping(
+  private def edgesAndNeighborsMapping(
     eb: EdgeBundle, sampled: Boolean): graph_operations.EdgeMapping.Output = {
     val op =
       if (sampled) graph_operations.EdgeMapping(sampleSize = DrawingThresholds.TripletSampling)
@@ -413,13 +413,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     srcView: graph_operations.VertexView,
     dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
 
-    val tm = neighborMapping(eb, sampled = false)
+    val eanm = edgesAndNeighborsMapping(eb, sampled = false)
     if (srcView.vertexIndices.isDefined) {
       val vertexIds = srcView.vertexIndices.get.keySet
       val op = graph_operations.EdgesForVertices(
         vertexIds, DrawingThresholds.SmallEdges, bySource = true)
       val edges =
-        op(op.edges, eb)(op.tripletMapping, tm.srcEdges).result.edges.value
+        op(op.edges, eb)(op.tripletMapping, eanm.srcEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     if (dstView.vertexIndices.isDefined) {
@@ -427,7 +427,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val op = graph_operations.EdgesForVertices(
         vertexIds, DrawingThresholds.SmallEdges, bySource = false)
       val edges =
-        op(op.edges, eb)(op.tripletMapping, tm.dstEdges).result.edges.value
+        op(op.edges, eb)(op.tripletMapping, eanm.dstEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     return None
