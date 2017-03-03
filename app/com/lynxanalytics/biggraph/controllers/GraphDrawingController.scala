@@ -225,9 +225,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(
-          nop.edges, smearBundle)(
-            nop.srcTripletMapping, edgesAndNeighbors.srcEdges)(
-              nop.dstTripletMapping, edgesAndNeighbors.dstEdges).result
+          nop.srcTripletMapping, edgesAndNeighbors.srcEdges)(
+            nop.dstTripletMapping, edgesAndNeighbors.dstEdges).result
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,

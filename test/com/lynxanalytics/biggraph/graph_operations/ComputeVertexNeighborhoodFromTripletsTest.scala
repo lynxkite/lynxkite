@@ -16,9 +16,8 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
     val nop = ComputeVertexNeighborhoodFromTriplets(Seq(2, 3), 1, 10)
     val nopres = nop(
       nop.vertices, g.vertices)(
-        nop.edges, g.edges)(
-          nop.srcTripletMapping, neighbors.srcEdges)(
-            nop.dstTripletMapping, neighbors.dstEdges).result
+        nop.srcTripletMapping, neighbors.srcEdges)(
+          nop.dstTripletMapping, neighbors.dstEdges).result
     assert(nopres.neighborhood.value == Set(0, 1, 2, 3))
   }
 
@@ -36,9 +35,8 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
       val op = ComputeVertexNeighborhoodFromTriplets(Seq(0), 2, 10)
       op(
         op.vertices, g.vs)(
-          op.edges, g.es)(
-            op.srcTripletMapping, neighbors.srcEdges)(
-              op.dstTripletMapping, neighbors.dstEdges).result.neighborhood.value
+          op.srcTripletMapping, neighbors.srcEdges)(
+            op.dstTripletMapping, neighbors.dstEdges).result.neighborhood.value
     }
     assert(neighborhood == Set(0, 1, 2, 3, 4, 5, 6))
   }
