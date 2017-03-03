@@ -401,6 +401,9 @@ abstract class OperationParameterMeta {
 }
 
 abstract class Operation(context: Operation.Context) {
+  assert(
+    context.meta.outputs == List(TypedConnection("project", "project")),
+    s"A ProjectOperation must output a project. $context")
   implicit val manager = context.manager
   lazy val project =
     if (context.inputs == Map()) new RootProjectEditor(RootProjectState.emptyState)
@@ -460,9 +463,6 @@ abstract class Operation(context: Operation.Context) {
     val before = project.viewer
     apply(params)
     updateDeltas(project, before)
-    project.setLastOperationDesc(summary(params))
-    project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
-    assert(context.meta.outputs == List(TypedConnection("project", "project")))
     import CheckpointRepository._ // For JSON formatters.
     val output = BoxOutputState("project", json.Json.toJson(project.state).as[json.JsObject])
     Map(context.meta.outputs(0).ofBox(context.box) -> output)
