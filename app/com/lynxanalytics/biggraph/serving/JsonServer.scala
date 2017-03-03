@@ -281,7 +281,6 @@ object FrontendJson {
   implicit val wProjectList = json.Json.writes[ProjectList]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
-  implicit val wOpCategories = json.Json.writes[OpCategories]
 
   import WorkspaceJsonFormatters._
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
