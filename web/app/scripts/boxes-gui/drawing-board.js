@@ -19,11 +19,7 @@ angular.module('biggraph')
         scope.stateMap = {};
 
         scope.$watch('workspaceName', function() {
-          scope.diagram = util.nocache(
-            '/ajax/getWorkspace',
-            {
-              name: scope.workspaceName
-            });
+          scope.loadWorkspace();
         });
 
         scope.$watchGroup(
@@ -60,6 +56,8 @@ angular.module('biggraph')
               scope.boxMap[boxId] = box;
             }
 
+            scope.selectBox(scope.selectedBoxId);
+
             for (i = 0; i < scope.boxes.length; ++i) {
               var dst = scope.boxes[i];
               var inputs = dst.instance.inputs;
@@ -79,20 +77,45 @@ angular.module('biggraph')
 
         };
 
+        scope.loadWorkspace = function() {
+          scope.diagram = util.nocache(
+            '/ajax/getWorkspace',
+            {
+              name: scope.workspaceName
+            });
+        };
+
         scope.saveChange = function() {
           util.post(
             '/ajax/setWorkspace',
             {
               name: scope.workspaceName,
               workspace: scope.diagram
-            });
+            }).then(
+              // Reload workspace both in error and success cases.
+              scope.loadWorkspace,
+              scope.loadWorkspace);
         };
 
-        scope.selectBox = function(box) {
-          scope.selectedBox = box;
+        scope.selectBox = function(boxId) {
+          scope.selectedBox = undefined;
+          scope.selectedBoxId = undefined;
+          if (!boxId) {
+            return;
+          }
+          scope.selectedBox = scope.boxMap[boxId];
+          scope.selectedBoxId = boxId;
         };
         scope.selectState = function(boxID, outputID) {
-          console.log('selectstate: ', boxID, outputID);
+          scope.selectedState = util.nocache(
+              '/ajax/getOutput',
+              {
+                  workspace: scope.workspaceName,
+                  output: {
+                    boxID: boxID,
+                    id: outputID
+                  }
+              });
         };
         scope.selectPlug = function(plug) {
           scope.selectedPlug = plug;
@@ -109,13 +132,14 @@ angular.module('biggraph')
           }
         };
         scope.onMouseUp = function() {
-          if (scope.movedBox) {
+          if (scope.movedBox && scope.movedBox.isMoved) {
             scope.saveChange();
           }
           scope.movedBox = undefined;
           scope.pulledPlug = undefined;
         };
         scope.onMouseDownOnBox = function(box, event) {
+          scope.selectBox(box.instance.id);
           scope.movedBox = box;
           scope.movedBox.onMouseDown(event);
         };
@@ -151,9 +175,8 @@ angular.module('biggraph')
           }
         };
 
-        var cnt = 0;
         scope.addBox = function(operationId, x, y) {
-          cnt++;
+          var cnt = scope.boxes.length;
           var boxId = operationId + cnt;
 
           scope.diagram.boxes.push(

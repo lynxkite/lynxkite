@@ -4,9 +4,10 @@ angular.module('biggraph').factory('createBox', function() {
   return function(metadata, instance) {
     var width = 200;
     var height = 40;
-    var plugRadius = 8;
 
     function createPlug(plug, index, direction) {
+      var plugRadius = 8;
+
       var len = metadata[direction].length;
       var x;
       if (len <= 1) {
@@ -45,7 +46,7 @@ angular.module('biggraph').factory('createBox', function() {
 
       width: width,
       height: height,
-      plugRadius: plugRadius,
+      isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
       },
@@ -55,6 +56,7 @@ angular.module('biggraph').factory('createBox', function() {
         return this.data[direction][index].id;
       },
       onMouseMove: function(event) {
+        this.isMoved = true;
         this.instance.x = event.clientX + this.xOffset;
         this.instance.y = event.clientY + this.yOffset;
       },

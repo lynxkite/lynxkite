@@ -4,10 +4,9 @@
 
 
   <!-- start box -->
-  <g ng-repeat="box in boxes track by $index"
+  <g ng-repeat="box in boxes"
       ng-mousedown="onMouseDownOnBox(box, $event)"
-      ng-attr-transform="{{ box.mainPosTransform() }}"
-      ng-click="selectBox(box)">
+      ng-attr-transform="{{ box.mainPosTransform() }}">
 
     <!-- start list of I/O plugs -->
     <g ng-repeat="direction in ['inputs', 'outputs']">
@@ -24,7 +23,7 @@
 
     <rect
         class="box-main"
-        ng-class="{ 'selected-box': box == selectedBox }"
+        ng-class="{ 'selected-box': box.instance.id == selectedBoxId }"
         ng-attr-width="{{box.width}}"
         ng-attr-height="{{box.height}}">
     </rect>
