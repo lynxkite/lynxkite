@@ -88,8 +88,8 @@ case class EdgesAndNeighbors(eids: Array[ID], nids: Array[ID]) {
   def size: Long = eids.size
 }
 
-// Creates outgoing and incoming edge mappings.
-object EdgeMapping extends OpFromJson {
+// Creates outgoing and incoming edge mappings of edge and corresponding neighbor IDs.
+object EdgeAndNeighborMapping extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -97,17 +97,17 @@ object EdgeMapping extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
-    // The list of outgoing edges.
+    // The list of outgoing edges and neighbors.
     val srcEdges = vertexAttribute[EdgesAndNeighbors](inputs.src.entity)
-    // The list of incoming edges.
+    // The list of incoming edges and neighbors.
     val dstEdges = vertexAttribute[EdgesAndNeighbors](inputs.dst.entity)
   }
-  def fromJson(j: JsValue) = EdgeMapping((j \ "sampleSize").as[Int])
+  def fromJson(j: JsValue) = EdgeAndNeighborMapping((j \ "sampleSize").as[Int])
 }
 // A negative sampleSize means no sampling.
-case class EdgeMapping(sampleSize: Int = -1)
-    extends TypedMetaGraphOp[EdgeMapping.Input, EdgeMapping.Output] {
-  import EdgeMapping._
+case class EdgeAndNeighborMapping(sampleSize: Int = -1)
+    extends TypedMetaGraphOp[EdgeAndNeighborMapping.Input, EdgeAndNeighborMapping.Output] {
+  import EdgeAndNeighborMapping._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -247,8 +247,8 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     // Do some additional checking on the inputs.
     val tripletMapping = inputs.tripletMapping.entity
     val tripletMappingInstance = tripletMapping.source
-    assert(tripletMappingInstance.operation.isInstanceOf[EdgeMapping],
-      "tripletMapping is not a EdgeMapping")
+    assert(tripletMappingInstance.operation.isInstanceOf[EdgeAndNeighborMapping],
+      "tripletMapping is not a EdgeAndNeighborMapping")
     assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
       s"tripletMapping is for ${tripletMappingInstance.inputs.edgeBundles('edges)}" +
         s" instead of ${inputs.edges.entity}")
