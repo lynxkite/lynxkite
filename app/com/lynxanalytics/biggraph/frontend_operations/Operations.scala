@@ -957,14 +957,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      val value = params("value")
       val res = {
         if (params("type") == "Double") {
-          project.edgeBundle.const(params("value").toDouble)
+          project.edgeBundle.const(value.toDouble)
         } else {
-          project.edgeBundle.const(params("value"))
+          project.edgeBundle.const(value)
         }
       }
-      project.edgeAttributes(params("name")) = res
+      project.newEdgeAttribute(params("name"), res, s"constant $value")
     }
   })
 
@@ -994,11 +995,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     override def title = "Fill vertex attribute with constant default value"
     def apply(params: Map[String, String]) = {
       val attr = project.vertexAttributes(params("attr"))
+      val paramDef = params("def")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = attr.is[Double], params("def"))
+          isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.vertexSet).result
-      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      project.newVertexAttribute(
+        params("attr"), unifyAttribute(attr, default.attr.entity),
+        project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1010,11 +1014,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       (edgeAttributes[String] ++ edgeAttributes[Double]).nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]) = {
       val attr = project.edgeAttributes(params("attr"))
+      val paramDef = params("def")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = attr.is[Double], params("def"))
+          isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.edgeBundle.idSet).result
-      project.edgeAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      project.newEdgeAttribute(
+        params("attr"), unifyAttribute(attr, default.attr.entity),
+        project.viewer.getEdgeAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1033,7 +1040,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attr2 = project.vertexAttributes(params("attr2"))
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
-      project.newVertexAttribute(name, unifyAttribute(attr1, attr2))
+      project.newVertexAttribute(name, unifyAttribute(attr1, attr2), s"primary: $attr1, secondary: $attr2" + help)
     }
   })
 
@@ -1051,7 +1058,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attr2 = project.edgeAttributes(params("attr2"))
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
-      project.edgeAttributes(name) = unifyAttribute(attr1, attr2)
+      project.newEdgeAttribute(name, unifyAttribute(attr1, attr2), s"primary: $attr1, secondary: $attr2" + help)
     }
   })
 
@@ -1156,7 +1163,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.Embeddedness()
-      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+      project.newEdgeAttribute(params("name"), op(op.es, project.edgeBundle).result.embeddedness, help)
     }
   })
 
@@ -1167,7 +1174,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ApproxEmbeddedness(params("bits").toInt)
-      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+      project.newEdgeAttribute(params("name"), op(op.es, project.edgeBundle).result.embeddedness, help)
     }
   })
 
@@ -1193,8 +1200,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           dispersion, embeddedness)).result.attr.entity
       }
       // TODO: recursive dispersion
-      project.edgeAttributes(params("name")) = dispersion
-      project.edgeAttributes("normalized_" + params("name")) = normalizedDispersion
+      project.newEdgeAttribute(params("name"), dispersion, help)
+      project.newEdgeAttribute("normalized_" + params("name"), normalizedDispersion, help)
     }
   })
 
@@ -1434,13 +1441,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("output").nonEmpty, "Please set an attribute name.")
+      val paramX = params("x")
+      val paramY = params("y")
       val pos = {
         val op = graph_operations.JoinAttributes[Double, Double]()
-        val x = project.vertexAttributes(params("x")).runtimeSafeCast[Double]
-        val y = project.vertexAttributes(params("y")).runtimeSafeCast[Double]
+        val x = project.vertexAttributes(paramX).runtimeSafeCast[Double]
+        val y = project.vertexAttributes(paramY).runtimeSafeCast[Double]
         op(op.a, x)(op.b, y).result.attr
       }
-      project.vertexAttributes(params("output")) = pos
+      project.newVertexAttribute(params("output"), pos, s"($paramX, $paramY)" + help)
     }
   })
 
@@ -1542,7 +1551,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
             expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
-      project.edgeAttributes(params("output")) = result
+      project.newEdgeAttribute(params("output"), result, expr + help)
     }
   })
 
@@ -1565,7 +1574,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJSScalar.deriveFromScalars[Double](expr, namedScalars)
       }
-      project.scalars(params("output")) = result.sc
+      project.newScalar(params("output"), result.sc, expr + help)
     }
   })
 
@@ -2645,7 +2654,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy edge attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+      project.newEdgeAttribute(
+        params("to"), project.edgeAttributes(params("from")),
+        project.viewer.getEdgeAttributeNote(params("from")))
     }
   })
 
@@ -2695,7 +2706,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy scalar $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.scalars(params("to")) = project.scalars(params("from"))
+      project.newScalar(
+        params("to"), project.scalars(params("from")),
+        project.viewer.getScalarNote(params("from")))
     }
   })
 
@@ -3568,10 +3581,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           params("test_set_ratio").toDouble, params("seed").toInt)
         op(op.vertices, source.vertexSet).result.role
       }
+      val testSetRatio = params("test_set_ratio").toDouble
       val parted = partitionVariable(source, roles)
 
-      project.newVertexAttribute(s"${sourceName}_test", parted.test)
-      project.newVertexAttribute(s"${sourceName}_train", parted.train)
+      project.newVertexAttribute(s"${sourceName}_test", parted.test, s"ratio: $testSetRatio" + help)
+      project.newVertexAttribute(s"${sourceName}_train", parted.train, s"ratio: ${1 - testSetRatio}" + help)
     }
     def partitionVariable[T](
       source: Attribute[T], roles: Attribute[String]): graph_operations.PartitionAttribute.Output[T] = {
