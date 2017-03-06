@@ -6,9 +6,8 @@ import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
-import org.apache.spark.serializer.KryoRegistrator
-import org.apache.spark.sql.jdbc.JdbcDialect
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -277,56 +276,6 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     kryo.setRegistrationRequired(true)
     super.registerClasses(kryo)
-  }
-}
-
-// Teradata sometimes "forgets" the schema of the result of a
-// JDBC query, see issue #5631.
-// This dialect is able to correct that in case of simple
-// queries. This logic can be enabled via appending
-// --LYNX-TD-SCHEMA-AUTO-FIX to the end of queries.
-class TeradataDialect extends JdbcDialect {
-  val magicMarker = "/*LYNX-TD-SCHEMA-AUTO-FIX*/"
-  def canHandle(url: String) = {
-    url.startsWith("jdbc:teradata:")
-  }
-
-  def unpackMarkedQuery(table: String): Option[String] = {
-    if (table.endsWith(magicMarker)) {
-      Some(table.substring(0, table.size - magicMarker.size))
-    } else {
-      None
-    }
-  }
-
-  def clearWhereClause(query: String): String = {
-    val queryLowerCase = query.toLowerCase
-    val pos = queryLowerCase.indexOf(" where ")
-    assert(
-      queryLowerCase.indexOf(" where ", pos + 1) < 0,
-      s"Multiple WHERE clauses in Teradata query, autofix failed: $query")
-    if (pos >= 0) {
-      query.substring(0, pos)
-    } else {
-      query
-    }
-  }
-
-  override def getSchemaQuery(table: String) = {
-    unpackMarkedQuery(table) match {
-      case Some(query) =>
-        if (query.startsWith("(")) {
-          val lastBracket = query.lastIndexOf(")")
-          val (prefix, suffix) = query.splitAt(lastBracket)
-          val cleanedPrefix = clearWhereClause(prefix.substring(1))
-          cleanedPrefix + " WHERE 1=0"
-        } else {
-          super.getSchemaQuery(query)
-        }
-      case None =>
-        // Magic switch inactive.
-        super.getSchemaQuery(table)
-    }
   }
 }
 
