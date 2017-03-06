@@ -54,6 +54,16 @@ ON a.Invoc_id = b.Invoc_Id
       assert(expected == dialect.getSchemaQuery(query))
     }
 
+    // Query with WHERE clause at the end of a line
+    {
+      val query = """(SELECT * from xyz WhErE
+x =1
+) source_table
+""" + magicMarker
+      val expected = "SELECT * from xyz  WHERE 1=0"
+      assert(expected == dialect.getSchemaQuery(query))
+    }
+
     intercept[AssertionError] {
       dialect.getSchemaQuery("(select where where) tname3" + magicMarker)
     }
