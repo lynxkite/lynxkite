@@ -15,6 +15,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    coordinate vertex attributes. Can be used e.g. to segment by geo regions or points of interests.
  - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
    that preserves the structure of the network to speed up model creation.
+ - Edge and scalar attribute notes added or augmented.
 
 ### 1.12.1
 

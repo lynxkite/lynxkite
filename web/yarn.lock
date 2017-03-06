@@ -4241,9 +4241,9 @@ ternary-stream@^2.0.0:
     merge-stream "^1.0.0"
     through2 "^2.0.0"
 
-tether-drop@1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/tether-drop/-/tether-drop-1.4.0.tgz#5e9833240a6f0c140f87f2e28136504dae9144d3"
+tether-drop@1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/tether-drop/-/tether-drop-1.4.2.tgz#28e240cce077f4ae1d8e5990a03b71e0cd6fbfec"
   dependencies:
     tether "^1.1.0"
 
