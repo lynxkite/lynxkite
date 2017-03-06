@@ -1,4 +1,12 @@
 #!/usr/bin/python3
+"""
+A Python script for cleaning up the LynxKite metagraph.
+Given the path to kite_meta/{version} the script scans the checkpoints directory for guids of entities,
+and removes those operations whose outputs are unnecessary to calculate them.
+
+Example usage:
+    clean_metagraph.py ~/kite_meta/1
+"""
 
 import json
 import os
@@ -6,9 +14,10 @@ import re
 import sys
 
 
-assert len(sys.argv) == 2, 'Exactly 1 argument is expected. Please specify the kite_meta directory.'
+assert len(
+    sys.argv) == 2, 'Exactly 1 argument is expected. Please specify the kite_meta/{version} directory.'
 
-meta_dir = sys.argv[1]  # The kite_meta directory.
+meta_dir = sys.argv[1]  # The kite_meta/{version} directory.
 
 canonical_guid_representation = re.compile(r'[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}')
 guids_to_keep = set()  # This
