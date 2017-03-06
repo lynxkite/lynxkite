@@ -1000,7 +1000,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         graph_operations.AddConstantAttribute.doubleOrString(
           isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.vertexSet).result
-      project.newVertexAttribute(params("attr"), unifyAttribute(attr, default.attr.entity), project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
+      project.newVertexAttribute(
+        params("attr"), unifyAttribute(attr, default.attr.entity),
+        project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1017,7 +1019,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         graph_operations.AddConstantAttribute.doubleOrString(
           isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.edgeBundle.idSet).result
-      project.newEdgeAttribute(params("attr"), unifyAttribute(attr, default.attr.entity), project.viewer.getEdgeAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
+      project.newEdgeAttribute(
+        params("attr"), unifyAttribute(attr, default.attr.entity),
+        project.viewer.getEdgeAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -2642,8 +2646,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy edge attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.newEdgeAttribute(params("to"), project.edgeAttributes(params("from")), project.viewer.getEdgeAttributeNote(params("from")))
-      //, getEdgeAttributeNote(project.edgeAttributes(params("from"))))
+      project.newEdgeAttribute(
+        params("to"), project.edgeAttributes(params("from")),
+        project.viewer.getEdgeAttributeNote(params("from")))
     }
   })
 
@@ -2693,7 +2698,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy scalar $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.newScalar(params("to"), project.scalars(params("from")), project.viewer.getScalarNote(params("from")))
+      project.newScalar(
+        params("to"), project.scalars(params("from")),
+        project.viewer.getScalarNote(params("from")))
     }
   })
 
