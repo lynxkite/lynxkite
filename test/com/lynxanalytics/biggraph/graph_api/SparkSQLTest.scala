@@ -86,7 +86,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     def run(op: String, params: Map[String, String] = Map(), on: String = projectName) = {
       controller.projectOp(
         user,
-        ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
+        ProjectOperationRequest(on, FEOperationSpec(op, params)))
     }
     val projectFrame = ProjectFrame.fromName(projectName)
     val subProject = projectFrame.subproject

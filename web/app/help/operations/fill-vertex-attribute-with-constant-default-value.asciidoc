@@ -1,4 +1,3 @@
-[[fill-with-constant-default-value]]
 ### Fill vertex attribute with constant default value
 
 An attribute may not be defined on every vertex. This operation sets a default value

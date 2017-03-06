@@ -17,7 +17,7 @@ class BigGraphControllerTestBase extends FunSuite with TestGraphOp with BeforeAn
   def run(op: String, params: Map[String, String] = Map(), on: String = projectName) =
     controller.projectOp(
       user,
-      ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
+      ProjectOperationRequest(on, FEOperationSpec(op, params)))
 
   def createProject(name: String, notes: String = "", privacy: String = "public-write") = {
     ???

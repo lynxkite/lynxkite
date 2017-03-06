@@ -1,4 +1,3 @@
-[[merge-two-attributes]]
 ### Merge two vertex attributes
 
 An attribute may not be defined on every vertex. This operation uses the secondary

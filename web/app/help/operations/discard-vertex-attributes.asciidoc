@@ -1,4 +1,4 @@
-### Discard vertex attribute
+### Discard vertex attributes
 
 Throws away vertex attributes.
 
