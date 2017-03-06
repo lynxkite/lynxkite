@@ -16,6 +16,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
    that preserves the structure of the network to speed up model creation.
  - Edge and scalar attribute notes added or augmented.
+ - Merge vertices by attributes operation keeps links with base project
 
 ### 1.12.1
 
