@@ -20,7 +20,7 @@ assert len(
 meta_dir = sys.argv[1]  # The kite_meta/{version} directory.
 
 canonical_guid_representation = re.compile(r'[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}')
-guids_to_keep = set()  # This
+guids_to_keep = set()  # This...
 operations_to_delete = set()  # and this will be filled later.
 
 
@@ -43,16 +43,17 @@ class Dependency:
 # Dependency graph of entities, similar to LynxKite's metagraph.
 meta_graph = {}
 
-for version in sorted(os.listdir(meta_dir)):  # Sorting in necessary
-  # Parse operations, store operation_file names, construct metagraph.
+for version in sorted(os.listdir(meta_dir)):  # Sorting is necessary
+  # Parse operations, store operation_filenames, construct metagraph.
   operations_dir = os.path.join(meta_dir, version, 'operations')
   for operation_file in sorted(os.listdir(operations_dir)):
     operations_to_delete.add(operation_file)
     with open(operations_dir + '/' + operation_file) as operation:
       op_json = json.load(operation)
       for o in op_json["outputs"].values():
-        # This following line is the reason we need to sort the os.listdir()-s.
-        # We want to have the inputs ready to construct a new Dependency.
+        # This following line is the reason we need to sort the os.listdir()-s. We want to have the inputs ready
+        # to construct a new Dependency. Since the filenames contain a timestamp, the lexicographical order
+        # is equivalent with the chronological order, but using the former one is more convenient.
         meta_graph[o] = Dependency(o, operation_file, [meta_graph[i]
                                                        for i in op_json["inputs"].values()])
   # Parse checkpoints for guids we want to keep.
