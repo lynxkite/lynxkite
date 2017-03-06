@@ -19,7 +19,6 @@ case class FEOperationMeta(
   visibleScalars: List[FEScalar],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
-  description: String = "",
   color: Option[String] = None)
 
 object FEOperationParameterMeta {
@@ -56,9 +55,7 @@ case class FEOperationSpec(
   parameters: Map[String, String])
 
 case class OperationCategory(
-    title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
-  def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
-}
+  title: String, icon: String, color: String, ops: List[FEOperationMeta])
 
 abstract class OperationParameterMeta {
   val id: String
@@ -76,28 +73,101 @@ abstract class OperationParameterMeta {
     id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
 }
 
-abstract class Operation(context: Operation.Context) {
+// An Operation is the computation that a Box represents in a workspace.
+trait Operation {
+  def enabled: FEStatus
+  def summary(params: Map[String, String]): String
+  def getOutputs(params: Map[String, String]): Map[BoxOutput, BoxOutputState]
+  def toFE: FEOperationMeta
+}
+object Operation {
+  case class Category(
+      title: String,
+      color: String, // A color class from web/app/styles/operation-toolbox.css.
+      visible: Boolean = true,
+      icon: String = "", // Glyphicon name, or empty for first letter of title.
+      sortKey: String = null, // Categories are ordered by this. The title is used by default.
+      deprecated: Boolean = false) extends Ordered[Category] {
+    private val safeSortKey = Option(sortKey).getOrElse(title)
+    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
+    def toFE(ops: List[FEOperationMeta]): OperationCategory =
+      OperationCategory(title, icon, color, ops)
+  }
+
+  // Operations are short-lived and created for a specific input (give in the Context).
+  type Factory = Context => Operation
+  case class Context(
+    user: serving.User,
+    box: Box,
+    meta: BoxMetadata,
+    inputs: Map[String, BoxOutputState],
+    manager: MetaGraphManager)
+}
+
+// OperationRegistry is a simple trait for a class that wants to declare a set of operations.
+trait OperationRegistry {
+  // The registry maps operation IDs to their constructors.
+  val operations = mutable.Map[String, (BoxMetadata, Operation.Factory)]()
+  def registerOp(
+    id: String,
+    category: Operation.Category,
+    inputs: List[TypedConnection],
+    outputs: List[TypedConnection],
+    factory: Operation.Factory): Unit = {
+    // TODO: Register category somewhere.
+    assert(!operations.contains(id), s"$id is already registered.")
+    operations(id) = BoxMetadata(category.title, id, inputs, outputs) -> factory
+  }
+}
+
+// OperationRepository holds a registry of all operations.
+abstract class OperationRepository(env: SparkFreeEnvironment) {
+  // The registry maps operation IDs to their constructors.
+  protected val operations: Map[String, (BoxMetadata, Operation.Factory)]
+
+  def getBoxMetadata(id: String) = operations(id)._1
+
+  def operationIds = operations.keys.toSeq
+
+  def opForBox(user: serving.User, box: Box, inputs: Map[String, BoxOutputState]) = {
+    val (meta, factory) = operations(box.operationID)
+    val context = Operation.Context(user, box, meta, inputs, env.metaGraphManager)
+    factory(context)
+  }
+}
+
+// Project-specific operation classes.
+abstract class ProjectTransformation(context: Operation.Context) extends ProjectOperation(context) {
+  assert(
+    context.meta.inputs == List(TypedConnection("project", "project")),
+    s"A ProjectTransformation must input a single project. $context")
+  implicit val m = manager
+  protected lazy val project = context.inputs("project").project
+}
+
+abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
+  assert(context.meta.inputs == List(), s"A ProjectCreation must have no inputs. $context")
+  implicit val m = manager
+  protected lazy val project = new RootProjectEditor(RootProjectState.emptyState)
+}
+
+abstract class ProjectOperation(context: Operation.Context) extends Operation {
   assert(
     context.meta.outputs == List(TypedConnection("project", "project")),
     s"A ProjectOperation must output a project. $context")
   implicit val manager = context.manager
-  lazy val project =
-    if (context.inputs == Map()) new RootProjectEditor(RootProjectState.emptyState)
-    else context.inputs("project").project
-  val user = context.user
-  def id = Operation.titleToID(context.meta.operationID)
-  def title = context.box.operationID // Override this to change the display title while keeping the original ID.
-  val description = "" // Override if description is dynamically generated.
-  def parameters: List[OperationParameterMeta]
-  def visibleScalars: List[FEScalar] = List()
-  def enabled: FEStatus
-  // A summary of the operation, to be displayed on the UI.
+  protected val project: ProjectEditor
+  protected val user = context.user
+  protected val id = context.box.operationID
+  protected val title = id
+  protected def parameters: List[OperationParameterMeta]
+  protected def visibleScalars: List[FEScalar] = List()
   def summary(params: Map[String, String]): String = title
 
   protected def apply(params: Map[String, String]): Unit
   protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
 
-  def validateParameters(values: Map[String, String]): Unit = {
+  protected def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = parameters.map { param => param.id }.toSet
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0,
@@ -150,8 +220,7 @@ abstract class Operation(context: Operation.Context) {
     parameters.map { param => param.toFE },
     visibleScalars,
     context.meta.categoryID,
-    enabled,
-    description)
+    enabled)
   protected def scalars[T: TypeTag] =
     FEOption.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -171,95 +240,8 @@ abstract class Operation(context: Operation.Context) {
     "This operation is not available with segmentations.")
   protected def isSegmentation = FEStatus.assert(project.isSegmentation,
     "This operation is only available for segmentations.")
-  // All projects that the user has read access to.
-  protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
-    Operation.allObjects(user)
-      .filter(_.isProject)
-      .filter(_.checkpoint.nonEmpty)
-      .map(_.asProjectFrame)
-      .map(project => FEOption.titledCheckpoint(project.checkpoint, project.name))
-      .toList
-  }
 
-  // All tables that the user has read access to.
-  private def readableGlobalTableOptions(implicit manager: MetaGraphManager): List[FEOption] = {
-    Operation.allObjects(user)
-      .filter(_.checkpoint.nonEmpty)
-      .flatMap {
-        projectOrTable =>
-          projectOrTable.viewer.allAbsoluteTablePaths
-            .map(_.toGlobal(projectOrTable.checkpoint, projectOrTable.name).toFE)
-            // If it is an imported table which is not in a project then it looks nicer from the user's point
-            // of view if there is no |vertices suffix in the title of the FEOpt (what is shown to the user)
-            .map { FEOpt =>
-              if (projectOrTable.isTable) FEOpt.copy(title = FEOpt.title.replace("|vertices", "")) else FEOpt
-            }
-      }.toList.sortBy(_.title)
-  }
-
-  protected def accessibleTableOptions(implicit manager: MetaGraphManager): List[FEOption] = {
-    val viewer = project.viewer
-    val localPaths = viewer.allRelativeTablePaths
-    val localAbsolutePaths = localPaths.map(_.toAbsolute(viewer.offspringPath)).toSet
-    val absolutePaths =
-      viewer.rootViewer.allAbsoluteTablePaths.filter(!localAbsolutePaths.contains(_))
-    (localPaths ++ absolutePaths).toList.map(_.toFE) ++ readableGlobalTableOptions
-  }
-}
-object Operation {
-  def titleToID(title: String) = title
-  case class Category(
-      title: String,
-      color: String, // A color class from web/app/styles/operation-toolbox.css.
-      visible: Boolean = true,
-      icon: String = "", // Glyphicon name, or empty for first letter of title.
-      sortKey: String = null, // Categories are ordered by this. The title is used by default.
-      deprecated: Boolean = false) extends Ordered[Category] {
-    private val safeSortKey = Option(sortKey).getOrElse(title)
-    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
-    def toFE(ops: List[FEOperationMeta]): OperationCategory =
-      OperationCategory(title, icon, color, ops)
-  }
-
-  type Factory = Context => Operation
-  case class Context(
-    user: serving.User,
-    box: Box,
-    meta: BoxMetadata,
-    inputs: Map[String, BoxOutputState],
-    manager: MetaGraphManager)
-
-  def allObjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
-    val objects = DirectoryEntry.rootDirectory.listObjectsRecursively
-    val readable = objects.filter(_.readAllowedFrom(user))
-    // Do not list internal project names (starting with "!").
-    readable.filterNot(_.name.startsWith("!"))
-  }
-}
-
-abstract class OperationRepository(env: SparkFreeEnvironment) {
-  implicit lazy val manager = env.metaGraphManager
-
-  // The registry maps operation IDs to their constructors.
-  private val operations = mutable.Map[String, (BoxMetadata, Operation.Factory)]()
-  def register(
-    title: String,
-    category: Operation.Category,
-    factory: Operation.Factory,
-    inputs: List[TypedConnection] = List(TypedConnection("project", "project")),
-    outputs: List[TypedConnection] = List(TypedConnection("project", "project"))): Unit = {
-    val id = Operation.titleToID(title)
-    assert(!operations.contains(id), s"$id is already registered.")
-    operations(id) = BoxMetadata(category.title, title, inputs, outputs) -> factory
-  }
-
-  def getBoxMetadata(id: String) = operations(id)._1
-
-  def operationIds = operations.keys.toSeq
-
-  def opForBox(user: serving.User, box: Box, inputs: Map[String, BoxOutputState]) = {
-    val (meta, factory) = operations(box.operationID)
-    val context = Operation.Context(user, box, meta, inputs, manager)
-    factory(context)
-  }
+  // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
+  protected def accessibleTableOptions: List[FEOption] = ???
+  protected def readableProjectCheckpoints: List[FEOption] = ???
 }

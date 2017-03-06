@@ -142,10 +142,16 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def operationsFromAllProjects()(
     implicit manager: MetaGraphManager): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
-    for (project <- Operation.allObjects(serving.User.fake)) {
+    for (project <- allObjects) {
       operations ++= operationsFromProject(project.viewer)
     }
     operations.toMap
+  }
+
+  private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
+    val objects = DirectoryEntry.rootDirectory.listObjectsRecursively
+    // Do not list internal project names (starting with "!").
+    objects.filterNot(_.name.startsWith("!"))
   }
 
   // Returns the operations mapped by their ID strings which created
