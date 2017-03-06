@@ -32,6 +32,7 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
     assert(project.edgeBundle == null)
   }
+
   test("Merge vertices by attribute, segmentation") {
     run("Example Graph")
     run("Segment by string attribute", Map("name" -> "bucketing", "attr" -> "gender"))
@@ -41,6 +42,8 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     run("Merge vertices by attribute",
       Map("key" -> "constant", "aggregate-gender" -> "", "aggregate-id" -> "", "aggregate-size" -> ""),
       on = bucketing)
-    assert(bucketing.belongsTo.rdd.count == 4)
+    assert(bucketing.scalars("!coverage").value == 4)
+    assert(bucketing.scalars("!belongsToEdges").value == 4)
+    assert(bucketing.scalars("!nonEmpty").value == 1)
   }
 }
