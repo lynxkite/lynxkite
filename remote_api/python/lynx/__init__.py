@@ -874,23 +874,3 @@ class PizzaKite(LynxKite):
   def __init__(self):
     super().__init__(address='https://pizzakite.lynxanalytics.com/')
     assert self.oauth_token(), 'Please set LYNXKITE_OAUTH_TOKEN.'
-
-
-def is_lynxkite_up(username=None, password=None, address=None, certfile=None, oauth_token=None,
-                   timeout=10):
-  """Checks if the LynxKite instance is up and running"""
-
-  def _can_read_example_graph():
-    lk = LynxKite(username, password, address, certfile, oauth_token)
-    p = lk.new_project()
-    p.exampleGraph()
-    return p.sql('select * from vertices where id = 0').take(1)[0]['name'] == 'Adam'
-
-  end_time = time.time() + timeout
-  while time.time() < end_time:
-    try:
-      if _can_read_example_graph():
-        return True
-    except (ConnectionRefusedError, LynxException, requests.exceptions.SSLError, requests.exceptions.ConnectionError):
-      time.sleep(1)
-  return False
