@@ -34,13 +34,36 @@ class TeradataJdbcDialectTest extends FunSuite {
     // Handle query with WHERE clause and JOIN:
     {
       val query = "(SeLeCT a.*, b.b FROM a INNER JOIN b ON a.x = b.y WhErE a.a = 1 AND a.b = 2) tname2" + magicMarker
-      val expected = "SeLeCT a.*, b.b FROM a INNER JOIN b ON a.x = b.y WHERE 1=0"
+      val expected = "SeLeCT a.*, b.b FROM a INNER JOIN b ON a.x = b.y  WHERE 1=0"
       assert(expected == dialect.getSchemaQuery(query))
+    }
+
+    // Complex query with WHERE clause at start of a line:
+    {
+      val query = """(SELECT a.*, b.ACCNT_NUM
+FROM INVOC_HIST a
+INNER JOIN INVOC b
+ON a.Invoc_id = b.Invoc_Id
+WHERE CAST ('2016-02-12' AS TMESTAMP(0) FORMAT 'YYYY-MM-DD') between a.Start_Date and a.End_Date) source_table
+""" + magicMarker
+      val expected = """SELECT a.*, b.ACCNT_NUM
+FROM INVOC_HIST a
+INNER JOIN INVOC b
+ON a.Invoc_id = b.Invoc_Id
+ WHERE 1=0"""
+      assert(expected == dialect.getSchemaQuery(query))
+    }
+
+    intercept[AssertionError] {
+      dialect.getSchemaQuery("(select where where) tname3" + magicMarker)
     }
 
     intercept[AssertionError] {
       dialect.getSchemaQuery("(select where where ) tname3" + magicMarker)
     }
 
+    intercept[AssertionError] {
+      dialect.getSchemaQuery("(select where where)) tname3" + magicMarker)
+    }
   }
 }
