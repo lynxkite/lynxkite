@@ -1,0 +1,122 @@
+
+    <span ng-if="side.scalars['!belongsToEdges'] === undefined">
+      <!-- Project summary -->
+      <value id="vertex-count"
+             class="emph"
+             ng-if="side.project.vertexSet !== ''"
+             ref="side.scalars['vertex_count']">
+      </value>
+      <delta ref="side.scalars['!vertex_count_delta']"
+             last-operation="side.project.undoOp"></delta>
+      <span class="emph" ng-if="side.project.vertexSet === ''">no</span>
+      vertices with
+      <value class="emph"
+             ng-if="side.project.edgeBundle !== ''"
+             ref="side.scalars['edge_count']"
+             id="edge-count">
+      </value>
+      <delta ref="side.scalars['!edge_count_delta']"
+             last-operation="side.project.undoOp"></delta>
+      <span class="emph" ng-if="side.project.edgeBundle === ''">no</span>
+      edges
+    </span>
+
+    <span ng-if="side.scalars['!belongsToEdges'] !== undefined">
+      <!-- Segmentation summary -->
+      <value class="emph"
+             ref="side.scalars['vertex_count']"
+             id="segment-count">
+      </value>
+      <delta ref="side.scalars['!vertex_count_delta']"
+             last-operation="side.project.undoOp"></delta>
+      <span ng-if="side.scalars['!nonEmpty'].value.double === side.scalars['vertex_count'].value.double">
+        non-empty segments
+      </span>
+      <span ng-if="side.scalars['!nonEmpty'].value.double !== side.scalars['vertex_count'].value.double">
+        segments (of which <value id="non-empty-segment-count" class="emph" ref="side.scalars['!nonEmpty']"></value> are non-empty)
+      </span>
+      with total size of <value id="total-segment-size" class="emph" ref="side.scalars['!belongsToEdges']"></value>
+      covering <value id="total-segment-coverage" class="emph" ref="side.scalars['!coverage']"></value> base vertices
+      <span ng-if="side.project.edgeBundle !== ''">
+        with <value id="segmentation-edge-count" class="emph" ref="side.scalars['edge_count']"></value>
+        <delta ref="side.scalars['!edge_count_delta']"
+               last-operation="side.project.undoOp"></delta>
+        edges
+      </span>
+    </span>
+
+    <div class="project-notes">
+      <textarea class="project-notes"
+                placeholder="Enter project notes here"
+                rows="{{side.project.notes.split('\n').length}}"
+                ng-model="side.project.notes"
+                ng-change="side.unsavedNotes = true"
+                ng-trim="false"></textarea>
+      <button ng-if="side.unsavedNotes"
+              ng-click="side.saveNotes()"
+              ng-disabled="side.savingNotes"
+              class="btn btn-default">
+        {{ side.savingNotes ? '...' : 'Save' }}
+      </button>
+    </div>
+
+    <!-- Project settings. -->
+    <div class="acl-settings" ng-if="side.showSettings">
+      <acl-settings reload="side.reload()" path="side.state.projectName" entity="side.project"></acl-settings>
+    </div>
+
+    <!-- Extra controls for visualizations. -->
+    <div class="token-section-label"
+         ng-show="side.state.graphMode && !side.showSection('view-settings')">
+      <span class="label-text" ng-click="side.showSection('view-settings', true)">
+        Visualization settings are hidden. </span>
+    </div>
+    <div class="extra-controls"
+         ng-if="side.state.graphMode"
+         ng-show="side.showSection('view-settings')">
+      <!-- Sampled view extra controls. -->
+      <div ng-if="side.state.graphMode === 'sampled'">
+        <div class="token-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Visualization settings </span>
+          <help-popup href="concrete-view-settings"></help-popup>
+        </div>
+        <sampled-view-settings side="side"></sampled-view-settings>
+      </div>
+
+      <!-- Extra controls for the bucketed view. -->
+      <div ng-if="side.state.graphMode === 'bucketed'">
+        <div class="token-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Visualization settings </span>
+        </div>
+        <bucketed-view-settings side="side"></bucketed-view-settings>
+      </div>
+    </div>
+
+    <!-- Attributes/segmentations. -->
+    <div class="entity-sections">
+      <div ng-repeat="section in side.sections">
+        <div ng-show="side.sectionElements(section).length !== 0 && side.showSection(section)">
+          <div class="token-section-label">
+            <span class="label-text" ng-click="side.showSection(section, false)">
+              {{ side.sectionHumanName[section] }} </span>
+            <help-popup href="{{ side.sectionHelp[section] }}"></help-popup>
+          </div>
+        </div>
+        <div ng-show="side.sectionElements(section).length !== 0 && !side.showSection(section)"
+             class="token-section-label">
+          <span class="label-text" ng-click="side.showSection(section, true)">
+            {{ side.sectionElements(section).length }}
+            {{ side.sectionHumanName[section] | lowercase }}
+            are hidden. </span>
+        </div>
+        <div class="token-list" ng-show="side.showSection(section)">
+          <entity ng-repeat="e in side.sectionElements(section)"
+                  kind="{{ section }}"
+                  entity="e"
+                  side="side"></entity>
+        </div>
+      </div>
+    </div>
+

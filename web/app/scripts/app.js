@@ -35,10 +35,9 @@ angular
         templateUrl: 'views/splash.html',
         controller: 'SplashCtrl',
       })
-      .when('/project/:project*', {
-        templateUrl: 'views/project.html',
-        controller: 'ProjectViewCtrl',
-        reloadOnSearch: false,
+      .when('/workspace/:workspaceName*', {
+        templateUrl: 'scripts/workspace/workspace-main.html',
+        controller: 'WorkspaceMainCtrl',
       })
       .when('/demoMode', {
         templateUrl: 'views/demoMode.html',
