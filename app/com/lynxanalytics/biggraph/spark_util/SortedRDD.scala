@@ -571,8 +571,8 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
     extends SortedRDD[K, V](data) {
   // Normal operations run on the iterators. Arrays are only created when necessary.
   lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
-  var isCached = false
-  def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] = if (isCached) {
+  var isArrayRDDCached = false
+  def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] = if (isArrayRDDCached) {
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids) // Use the whole cached arrayRDD.
   } else {
     new RestrictedArrayBackedSortedRDDRecipe( // Filter the partitions for ids.
@@ -581,7 +581,7 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
   protected def meCached = None
   protected def copyWithAncestorsCachedRecipe: SortedRDDRecipe[K, V] = {
     arrayRDD.cache()
-    isCached = true
+    isArrayRDDCached = true
     new ArrayBackedSortedRDDRecipe(arrayRDD)
   }
 }
