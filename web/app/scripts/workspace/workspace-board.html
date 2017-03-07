@@ -4,7 +4,7 @@
 
 
   <!-- start box -->
-  <g ng-repeat="box in boxes"
+  <g ng-repeat="box in workspace.boxes"
       ng-mousedown="onMouseDownOnBox(box, $event)"
       ng-attr-transform="{{ box.mainPosTransform() }}">
 
@@ -35,7 +35,7 @@
   <!-- end box -->
 
   <!-- start arrow -->
-  <g ng-repeat="arrow in arrows">
+  <g ng-repeat="arrow in workspace.arrows">
     <line class="arrow"
         ng-attr-x1="{{arrow.x1()}}"
         ng-attr-y1="{{arrow.y1()}}"
