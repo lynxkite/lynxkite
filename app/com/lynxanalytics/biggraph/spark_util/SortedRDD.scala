@@ -539,14 +539,15 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], need
   }
 }
 
-// Same as SortedArrayRDD except only keeping partitions containing the ids.
+// Same as SortedArrayRDD except only keeping partitions containing the ids. For a small id set
+// and a lot of partitions this saves a lot of expensive IO.
 private[spark_util] class RestrictedSortedArrayRDD[K: Ordering, V](
     data: RDD[(K, V)],
     needsSorting: Boolean,
     ids: IndexedSeq[K]) extends SortedArrayRDD[K, V](data, needsSorting) {
-  val pids = ids.map(id => partitioner.get.getPartition(id)).toSet
+  val partitionsToKeep = ids.map(id => partitioner.get.getPartition(id)).toSet
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
-    if (pids contains split.index) {
+    if (partitionsToKeep contains split.index) {
       super.compute(split, context)
     } else {
       Iterator((split.index, Array()))
@@ -572,9 +573,10 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
   lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
   var isCached = false
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] = if (isCached) {
-    new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids)
+    new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids) // Use the whole cached arrayRDD.
   } else {
-    new RestrictedArrayBackedSortedRDDRecipe(new RestrictedSortedArrayRDD(data, needsSorting = false, ids), ids)
+    new RestrictedArrayBackedSortedRDDRecipe( // Filter the partitions for ids.
+      new RestrictedSortedArrayRDD(data, needsSorting = false, ids), ids)
   }
   protected def meCached = None
   protected def copyWithAncestorsCachedRecipe: SortedRDDRecipe[K, V] = {
