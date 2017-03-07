@@ -539,6 +539,21 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], need
   }
 }
 
+// Same as SortedArrayRDD except only keeping partitions containing the ids.
+private[spark_util] class RestrictedSortedArrayRDD[K: Ordering, V](
+    data: RDD[(K, V)],
+    needsSorting: Boolean,
+    ids: IndexedSeq[K]) extends SortedArrayRDD[K, V](data, needsSorting) {
+  val pids = ids.map(id => partitioner.get.getPartition(id)).toSet
+  override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
+    if (pids contains split.index) {
+      super.compute(split, context)
+    } else {
+      Iterator((split.index, Array()))
+    }
+  }
+}
+
 // "Trust me, this RDD is partitioned with this partitioner."
 private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Partitioner)
     extends RDD[T](data) {
@@ -555,11 +570,16 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
     extends SortedRDD[K, V](data) {
   // Normal operations run on the iterators. Arrays are only created when necessary.
   lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
-  def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] =
+  var isCached = false
+  def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] = if (isCached) {
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids)
+  } else {
+    new RestrictedArrayBackedSortedRDDRecipe(new RestrictedSortedArrayRDD(data, needsSorting = false, ids), ids)
+  }
   protected def meCached = None
   protected def copyWithAncestorsCachedRecipe: SortedRDDRecipe[K, V] = {
     arrayRDD.cache()
+    isCached = true
     new ArrayBackedSortedRDDRecipe(arrayRDD)
   }
 }
@@ -640,11 +660,16 @@ object RestrictedArrayBackedSortedRDD {
     arrayRDD: SortedArrayRDD[K, V],
     ids: IndexedSeq[K]): RDD[(K, V)] = {
     val partitioner = arrayRDD.partitioner.get
-    arrayRDD.mapPartitions(
-      { it =>
-        val (pid, array) = it.next
-        val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
-        BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
+    arrayRDD.mapPartitionsWithIndex(
+      {
+        case (pid, it) =>
+          val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
+          if (idsInThisPartition.size > 0) {
+            val (_, array) = it.next
+            BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
+          } else {
+            Iterator()
+          }
       },
       preservesPartitioning = true)
   }
