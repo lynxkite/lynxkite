@@ -44,8 +44,8 @@ The list of the feature attributes that this model uses for predictions.
 
 For decision tree classification model:
 
-* `support` is the number of occurrences of each class in the training data divided by the
-size of the training data.
+* The i-th element of `support` is the number of occurrences of the i-th class
+in the training data divided by the size of the training data.
 
 For linear regression and logistic regression models:
 

@@ -1,0 +1,48 @@
+### Train a decision tree classification model
+
+Trains a decision tree classifier model using the graph's vertex attributes.
+The algorithm recursively partitions the feature space into two parts. The tree
+predicts the same label for each bottommost (leaf) partition. Each binary
+partitioning is chosen from a set of possible splits in order to maximize the
+information gain at the corresponding tree node. For calculating the information
+gain the impurity of the nodes (described at the impurity parameter) is used:
+the information gain is the difference between the parent node impurity and the
+weighted sum of the two child node impurities.
+https://spark.apache.org/docs/latest/mllib-decision-tree.html#basic-algorithm[More information about the parameters.]
+====
+[[name]] Model name::
+The model will be stored as a scalar attribute using this name.
+
+[[label]] Label attribute::
+The vertex attribute the model is trained to predict.
+
+[[features]] Feature attributes::
+The attributes the model learns to us for making predictions.
+
+[[impurity]] Impurity measure::
+Node impurity is a measure of homogeneity of the labels at the node and is used
+for calculating the information gain. There are two impurity measures provided.
++
+  - **Giny:** Let _S_ denote the set of training examples in this node. Giny
+  impurity is the probability of a randomly chosen element of _S_ to get an incorrect
+  label, if it was randomly labeled according to the distribution of labels in _S_.
+  - **Entropy:** Let _S_ denote the set of training examples in this node, and
+  let _f~i~_ be the ratio of the _i_ th label in _S_. The entropy of the node is
+  the sum of the _-p~i~log(p~i~)_ values.
+
+[[maxbins]] Maximum number of bins::
+Number of bins used when discretizing continuous features.
+
+[[maxdepth]] Maximum depth::
+Maximum depth of the tree.
+
+[[mininfogain]] Minimum information gain::
+Minimum information gain for a split to be considered as a tree node.
+
+[[minInstancesPerNode]] Minimum instances per node::
+For a node to be split further, the split must improve at least this much
+(in terms of information gain).
+
+[[seed]] Seed::
+Random seed.
+====
