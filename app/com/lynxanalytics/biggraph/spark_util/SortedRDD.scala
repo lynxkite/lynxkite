@@ -666,6 +666,7 @@ object RestrictedArrayBackedSortedRDD {
       {
         case (pid, it) =>
           val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
+          // Skip potentially expensive it.next in case arrayRDD is a SortedArrayRDD.
           if (idsInThisPartition.size > 0) {
             val (_, array) = it.next
             BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
