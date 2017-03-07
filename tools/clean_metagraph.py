@@ -69,4 +69,4 @@ while guids_to_keep:
     meta_graph[guid].crawl_upwards()
 
 for op in operations_to_delete:
-  print(op)
+  os.remove(os.path.join(operations_dir, op))
