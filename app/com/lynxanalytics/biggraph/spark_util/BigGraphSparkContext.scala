@@ -6,9 +6,8 @@ import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
-import org.apache.spark.serializer.KryoRegistrator
-import org.apache.spark.sql.jdbc.JdbcDialect
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -277,29 +276,6 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     kryo.setRegistrationRequired(true)
     super.registerClasses(kryo)
-  }
-}
-
-// Teradata sometimes "forgets" the schema of the result of a
-// JDBC query, see issue #5631.
-// This dialect makes it possible for the user to override the
-// schema by specifying a table name in a comment to the query.
-// This way the resulting schema will be taken from the table
-// specified in the comment.
-// SELECT * FROM table1 WHERE x > 1 --LYNX-TD-SCHEMA-OVERRIDE:table2
-class TeradataDialect extends JdbcDialect {
-  val magicMarker = "--LYNX-TD-SCHEMA-OVERRIDE:"
-  def canHandle(url: String) = {
-    url.startsWith("jdbc:teradata:")
-  }
-
-  override def getSchemaQuery(table: String) = {
-    if (table.contains(magicMarker)) {
-      val realTable = table.split(magicMarker)(1)
-      super.getSchemaQuery(realTable)
-    } else {
-      super.getSchemaQuery(table)
-    }
   }
 }
 
