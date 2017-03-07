@@ -1,5 +1,5 @@
 // An entry in the operation selector list. Supports dragging operations from here into
-// the workspace board.
+// the workspace drawing board.
 'use strict';
 
 angular.module('biggraph').directive('operationSelectorEntry', function() {

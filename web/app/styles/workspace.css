@@ -13,7 +13,7 @@ div#box-view {
   bottom: 5px;
 }
 
-workspace-board {
+workspace-drawing-board {
   user-select: none;
   height: 100%;
   width: 60%;
@@ -34,7 +34,7 @@ div#clear {
   z-index: 2;
   float: left;
 }
-workspace-board > svg {
+workspace-drawing-board > svg {
   width: 100%;
   height: 100%;
   background-color: lightgray;

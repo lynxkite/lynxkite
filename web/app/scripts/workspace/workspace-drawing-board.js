@@ -1,10 +1,27 @@
 'use strict';
 
+// The drawing board where the user can create and modify a boxes and
+// arrows diagram.
+//
+// Life cycle:
+// 1. boxCatalog needs to be loaded at all times for things to work
+// 2. loadWorkspace()
+//    - downloads a workspace
+//    - triggers workspace.build()
+//    - sets scope.workspace to the downloaded and built workspace
+//    - visible GUI gets updated
+// 3. user edit happens, e.g. box move, add box, or add arrow
+// 4. in cases of "complex edits" - edits except for move:
+//    - scope.workspace.build() is called by the edit code
+//    - this updates the visible GUI immediately
+// 5. saveWorkspace()
+// 6. GOTO 2
+
 angular.module('biggraph')
- .directive('workspaceBoard', function(createWorkspace, util) {
+ .directive('workspaceDrawingBoard', function(createWorkspace, util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/workspace-board.html',
+      templateUrl: 'scripts/workspace/workspace-drawing-board.html',
       templateNamespace: 'svg',
       scope: {
         workspaceName: '=',
