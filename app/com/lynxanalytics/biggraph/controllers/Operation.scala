@@ -148,6 +148,14 @@ abstract class ProjectTransformation(context: Operation.Context) extends Project
     assert(segPath.head == "", s"'apply_to' path must start with separator: $params")
     context.inputs("project").project.offspringEditor(segPath.tail)
   }
+  protected override def allParameters = {
+    val params = parameters
+    assert(
+      params.find(_.id == "apply_to").isEmpty, s"$id: 'apply_to' is a reserved parameter name.")
+    // "apply_to" is used to pick the base project or segmentation to apply the operation to.
+    // TODO: Use a special parameter kind for this.
+    OperationParams.Param("apply_to", "Apply to", mandatory = false) :: params
+  }
 }
 
 abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
@@ -167,6 +175,7 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   protected val title = id
   protected val params = context.box.parameters
   protected def parameters: List[OperationParameterMeta]
+  protected def allParameters = parameters // Allows adding common parameters in subclasses.
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
 
@@ -174,15 +183,15 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
 
   protected def validateParameters(values: Map[String, String]): Unit = {
-    val paramIds = parameters.map { param => param.id }.toSet
+    val paramIds = allParameters.map { param => param.id }.toSet
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
     val mandatoryParamIds =
-      parameters.filter(_.mandatory).map { param => param.id }.toSet
+      allParameters.filter(_.mandatory).map { param => param.id }.toSet
     val missingIds = mandatoryParamIds &~ values.keySet
     assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
-    for (param <- parameters) {
+    for (param <- allParameters) {
       if (values.contains(param.id)) {
         param.validate(values(param.id))
       }
@@ -209,7 +218,7 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   }
 
   def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params - "apply_to")
+    validateParameters(params)
     val before = project.viewer
     apply()
     updateDeltas(project, before)
@@ -222,7 +231,7 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
     title,
-    parameters.map { param => param.toFE },
+    allParameters.map { param => param.toFE },
     visibleScalars,
     context.meta.categoryID,
     enabled)
