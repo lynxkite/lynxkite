@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Added _Merge parallel links_ operation.
+
 ### 1.13.0
 
  - Visualization settings UI now matches the new attribute UI.
