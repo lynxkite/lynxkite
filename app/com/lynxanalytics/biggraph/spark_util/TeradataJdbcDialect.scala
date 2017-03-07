@@ -24,18 +24,17 @@ class TeradataDialect extends JdbcDialect {
   // Removes the where clause of query if exists, and asserts that there
   // was at most one where clause in the query.
   def clearWhereClause(query: String): String = {
-    val whereMatcher = "(?i)[^a-z]where([^a-z]|$)".r
-    whereMatcher.findFirstMatchIn(query) match {
-      case Some(whereClauseMatch) =>
-        // Query contains WHERE clause
-        val pos = whereClauseMatch.start + 1
-        assert(
-          None == whereMatcher.findFirstMatchIn(query.substring(pos)),
-          s"Multiple WHERE clauses in Teradata query, autofix failed: $query")
-        query.substring(0, pos)
-      case None =>
-        // query contains no where clause
-        query
+    val whereMatcher = "(?i)\\bwhere\\b".r
+    val matches = whereMatcher.findAllMatchIn(query).toList
+    assert(
+      matches.size <= 1,
+      s"Multiple WHERE clauses in Teradata query, autofix failed: $query")
+    if (matches.size == 1) {
+      // Query contains WHERE clause
+      matches(0).before.toString
+    } else {
+      // query contains no where clause
+      query
     }
   }
 
