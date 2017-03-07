@@ -89,19 +89,19 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
-  test("getOperation") {
+  test("getOperationMeta") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
       val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
       val pr = Box("pr1", "PageRank", pagerankParams, 0, 20, Map())
       set("test-workspace", Workspace(List(eg, pr)))
       intercept[AssertionError] {
-        controller.getOperation(user, GetOperationRequest("test-workspace", "pr1"))
+        controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr1"))
       }
       set(
         "test-workspace",
         Workspace(List(eg, pr.copy(inputs = Map("project" -> eg.output("project"))))))
-      val op = controller.getOperation(user, GetOperationRequest("test-workspace", "pr1"))
+      val op = controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr1"))
       assert(
         op.parameters.map(_.id) ==
           Seq("apply_to", "name", "weights", "iterations", "damping", "direction"))
