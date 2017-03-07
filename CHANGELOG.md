@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Added _Merge parallel links_ operation.
+ - Added _Merge parallel segmentation links_ operation.
 
 ### 1.13.0
 
