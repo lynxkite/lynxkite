@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.serving
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputRequest(workspace: String, output: BoxOutput)
-case class GetOperationRequest(workspace: String, box: String)
+case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
@@ -75,7 +75,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     BoxCatalogResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
   }
 
-  def getOperation(user: serving.User, request: GetOperationRequest): FEOperationMeta = {
+  def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {
     val ws = getWorkspaceByName(user, request.workspace)
     val op = ws.getOperation(user, ops, request.box)
     op.toFE
