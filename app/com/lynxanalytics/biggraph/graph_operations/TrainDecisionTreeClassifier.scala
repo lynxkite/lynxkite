@@ -33,12 +33,12 @@ import TrainDecisionTreeClassifier._
 case class TrainDecisionTreeClassifier(
     labelName: String,
     featureNames: List[String],
-    impurity: String = "gini",
-    maxBins: Int = 32,
-    maxDepth: Int = 5,
-    minInfoGain: Double = 0.0,
-    minInstancesPerNode: Int = 1,
-    seed: Int = 1234567) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    impurity: String,
+    maxBins: Int,
+    maxDepth: Int,
+    minInfoGain: Double,
+    minInstancesPerNode: Int,
+    seed: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   override val generatesProbability = true
@@ -94,8 +94,7 @@ case class TrainDecisionTreeClassifier(
     val dataSize = labelDF.count().toLong.toDouble
     val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
       row => (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
-    val statistics = (treeDescription + "\naccuracy: " + accuracy + "\n" +
-      "support:" + support)
+    val statistics = s"$treeDescription\naccuracy: $accuracy\nsupport: $support"
     println(statistics)
     output(o.model, Model(
       method = "Decision tree classification",
