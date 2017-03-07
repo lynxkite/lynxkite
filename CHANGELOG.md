@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.12.2
+
  - Visualization settings UI now matches the new attribute UI.
  - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
  - Tab-completion for LynxKite operations works in Python command-line
