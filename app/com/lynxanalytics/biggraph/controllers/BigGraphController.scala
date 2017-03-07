@@ -735,6 +735,10 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     "This operation is not available with segmentations.")
   protected def isSegmentation = FEStatus.assert(project.isSegmentation,
     "This operation is only available for segmentations.")
+  protected def hasBelongsToLinks = FEStatus.assert(project.asSegmentation.belongsTo != null,
+    "No segmentation links.")
+  protected def hasNoBelongsToLinks = FEStatus.assert(project.asSegmentation.belongsTo == null,
+    "Segmentation links already exist.")
   // All projects that the user has read access to.
   protected def readableProjectCheckpoints(implicit manager: MetaGraphManager): List[FEOption] = {
     Operation.allObjects(user)

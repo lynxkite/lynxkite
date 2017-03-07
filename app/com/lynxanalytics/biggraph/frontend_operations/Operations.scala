@@ -257,6 +257,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Discard segmentation links", new StructureOperation(_, _) {
+    def parameters = List()
+    def enabled = isSegmentation && hasBelongsToLinks
+    def apply(params: Map[String, String]) = {
+      project.asSegmentation.belongsTo = null
+    }
+  })
+
   register("New vertex set", new StructureOperation(_, _) {
     def parameters = List(
       NonNegInt("size", "Vertex set size", default = 10))
@@ -2872,6 +2880,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           options = vertexAttributes[String]))
       def enabled =
         isSegmentation &&
+          hasNoBelongsToLinks &&
           FEStatus.assert(
             vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
             FEStatus.assert(
