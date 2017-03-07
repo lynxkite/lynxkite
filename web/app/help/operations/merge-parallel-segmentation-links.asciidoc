@@ -1,0 +1,9 @@
+### Merge parallel segmentation links
+
+Multiple segmentation links going from A base vertex to B segmentation vertex
+will be merged into a single link.
+
+After performing a <<merge-vertices-by-attribute, Merge vertices by attributes>> operation, there might
+be multiple parallel links going between some of the base project and segmentation vertices.
+This can cause unexpected behavior when aggregating to or from segmentation.
+This operation addresses this behavior by merging parallel segmentation links.
