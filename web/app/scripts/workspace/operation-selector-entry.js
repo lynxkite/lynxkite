@@ -1,4 +1,5 @@
-// The toolbox shows the list of operation categories and the operations.
+// An entry in the operation selector list. Supports dragging operations from here into
+// the workspace board.
 'use strict';
 
 angular.module('biggraph').directive('operationSelectorEntry', function() {
@@ -10,10 +11,11 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
     templateUrl: 'scripts/workspace/operation-selector-entry.html',
     link: function(scope, element) {
       element.bind('dragstart', function(event) {
-        var data = JSON.stringify(scope.op);
+        // We send the ID of the box over drag-and-drop.
+        // This will be received in workspace-board.js
         event.originalEvent.dataTransfer.setData(
             'text',
-            data);
+            scope.op.operationID);
       });
     }
   };

@@ -1,5 +1,7 @@
 'use strict';
 
+// Viewer and editor of a box instance.
+
 angular.module('biggraph')
  .directive('boxView', function() {
     return {

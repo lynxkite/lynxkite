@@ -196,10 +196,10 @@ angular.module('biggraph')
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var opText = event.originalEvent.dataTransfer.getData('text');
-          var op = JSON.parse(opText);
+          var operationID = event.originalEvent.dataTransfer.getData('text');
+          // This is sent from operation-selector-entry.js
           scope.$apply(function() {
-            scope.addBox(op.operationID, origEvent.offsetX, origEvent.offsetY);
+            scope.addBox(operationID, origEvent.offsetX, origEvent.offsetY);
           });
         });
       }
