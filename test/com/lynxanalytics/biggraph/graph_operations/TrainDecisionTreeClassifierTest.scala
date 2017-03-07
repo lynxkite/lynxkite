@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class TrainDecisionTreeClassifierTest extends ModelTestBase {
-  test("") {
+  test("train a decision tree classifier") {
     val m = model(
       method = "Decision tree classification",
       labelName = "length of the walk",
@@ -34,7 +34,7 @@ class TrainDecisionTreeClassifierTest extends ModelTestBase {
   Else (rain > 0.0)
    Predict: 0.0
 
-accuracy: 0.875
-support: [0.375, 0.375, 0.25]""")
+Accuracy: 0.875
+Support: [0.375, 0.375, 0.25]""")
   }
 }
