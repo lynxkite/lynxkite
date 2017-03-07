@@ -1,6 +1,6 @@
 'use strict';
 
-// Viewer of a state at an optput of a box.
+// Viewer of a state at an output of a box.
 
 angular.module('biggraph')
  .directive('stateView', function(side) {

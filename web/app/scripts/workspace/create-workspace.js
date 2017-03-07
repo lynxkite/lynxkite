@@ -1,6 +1,6 @@
 'use strict';
 
-// Creates a workspace object.
+// Creates a workspace object. A workspace is a set of boxes and arrows.
 // This object wraps the actual workspace data representation and
 // provides methods to interact with the GUI, e.g. mouse events
 // and values to bind with Angular to SVG elements.
