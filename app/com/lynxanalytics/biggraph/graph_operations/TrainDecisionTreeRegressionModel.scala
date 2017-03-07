@@ -33,12 +33,12 @@ import TrainDecisionTreeRegressor._
 case class TrainDecisionTreeRegressor(
     labelName: String,
     featureNames: List[String],
-    impurity: String = "variance",
-    maxBins: Int = 32,
-    maxDepth: Int = 5,
-    minInfoGain: Double = 0.0,
-    minInstancesPerNode: Int = 1,
-    seed: Int = 1234567) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    impurity: String,
+    maxBins: Int,
+    maxDepth: Int,
+    minInfoGain: Double,
+    minInstancesPerNode: Int,
+    seed: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
   override val generatesProbability = true
@@ -89,7 +89,6 @@ case class TrainDecisionTreeRegressor(
       .setMetricName("rmse")
     val rmse = evaluator.evaluate(prediction).toString
     val statistics = ("Root mean squared error: " + rmse)
-    println(statistics)
     output(o.model, Model(
       method = "Decision tree regression",
       symbolicPath = file.symbolicName,

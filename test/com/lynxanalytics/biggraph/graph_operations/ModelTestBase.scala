@@ -27,7 +27,13 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       case "Decision tree regression" =>
         val op = TrainDecisionTreeRegressor(
           labelName,
-          featureNames)
+          featureNames,
+          impurity = "variance",
+          maxBins = 32,
+          maxDepth = 5,
+          minInfoGain = 0,
+          minInstancesPerNode = 1,
+          seed = 1234567)
         op(op.features, features)(op.label, l).result.model
       case "Logistic regression" =>
         val op = LogisticRegressionModelTrainer(
@@ -38,7 +44,13 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       case "Decision tree classification" =>
         val op = TrainDecisionTreeClassifier(
           labelName,
-          featureNames)
+          featureNames,
+          impurity = "gini",
+          maxBins = 32,
+          maxDepth = 5,
+          minInfoGain = 0,
+          minInstancesPerNode = 1,
+          seed = 1234567)
         op(op.features, features)(op.label, l).result.model
     }
   }

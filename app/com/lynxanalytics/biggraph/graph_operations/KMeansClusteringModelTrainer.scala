@@ -71,4 +71,3 @@ case class KMeansClusteringModelTrainer(
     )
   }
 }
-

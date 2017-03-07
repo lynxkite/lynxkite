@@ -91,5 +91,24 @@ class ClassifyWithModelTest extends ModelTestBase {
     assert(0.66 < probability(3) && probability(3) < 0.67)
     assert(probability(4) == 1)
     assert(probability(5) == 1)
+
+    val s = m.value.statistics.get
+    assert(s ==
+      """DecisionTreeClassificationModel of depth 3 with 7 nodes
+  If (rain <= 0.0)
+   If (temperature <= 20.0)
+    If (temperature <= -15.0)
+     Predict: 1.0
+    Else (temperature > -15.0)
+     Predict: 2.0
+   Else (temperature > 20.0)
+    Predict: 1.0
+  Else (rain > 0.0)
+   Predict: 0.0
+
+accuracy: 0.875
+support: [0.375, 0.375, 0.25]"""
+    )
+
   }
 }
