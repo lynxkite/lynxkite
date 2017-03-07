@@ -1,13 +1,11 @@
 // The toolbox shows the list of operation categories and the operations.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function(/* $rootScope */) {
+angular.module('biggraph').directive('operationSelector', function() {
   return {
     restrict: 'E',
-    // A lot of internals are exposed, because this directive is used both in
-    // side-operation-toolbox and in project-history.
     scope: {
-      boxCatalog: '=',  // (Input.) List of operation categories.
+      boxCatalog: '=',  // (Input.) List of available boxes.
     },
     templateUrl: 'scripts/workspace/operation-selector.html',
 
