@@ -103,7 +103,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         Workspace(List(eg, pr.copy(inputs = Map("project" -> eg.output("project"))))))
       val op = controller.getOperation(user, GetOperationRequest("test-workspace", "pr1"))
       assert(
-        op.parameters.map(_.id) == Seq("name", "weights", "iterations", "damping", "direction"))
+        op.parameters.map(_.id) ==
+          Seq("apply_to", "name", "weights", "iterations", "damping", "direction"))
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
     }
