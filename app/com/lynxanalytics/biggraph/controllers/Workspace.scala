@@ -122,7 +122,7 @@ case class Box(
     inputStates: Map[String, BoxOutputState],
     ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
     val op = getOperation(user, inputStates, ops)
-    val outputStates = op.getOutputs(parameters)
+    val outputStates = op.getOutputs
     outputStates
   }
 }

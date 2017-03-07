@@ -74,10 +74,12 @@ abstract class OperationParameterMeta {
 }
 
 // An Operation is the computation that a Box represents in a workspace.
+// They are registered in an OperationRegistry with a factory function that takes an
+// Operation.Context parameter. Operations are short-lived and created for a specific input.
 trait Operation {
   def enabled: FEStatus
-  def summary(params: Map[String, String]): String
-  def getOutputs(params: Map[String, String]): Map[BoxOutput, BoxOutputState]
+  def summary: String
+  def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
 }
 object Operation {
@@ -94,7 +96,6 @@ object Operation {
       OperationCategory(title, icon, color, ops)
   }
 
-  // Operations are short-lived and created for a specific input (give in the Context).
   type Factory = Context => Operation
   case class Context(
     user: serving.User,
@@ -160,11 +161,12 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   protected val user = context.user
   protected val id = context.box.operationID
   protected val title = id
+  protected val params = context.box.parameters
   protected def parameters: List[OperationParameterMeta]
   protected def visibleScalars: List[FEScalar] = List()
-  def summary(params: Map[String, String]): String = title
+  def summary = title
 
-  protected def apply(params: Map[String, String]): Unit
+  protected def apply(): Unit
   protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
 
   protected def validateParameters(values: Map[String, String]): Unit = {
@@ -202,12 +204,10 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
     editor.scalars.set(s"!${name}_delta", delta)
   }
 
-  def getOutputs(params: Map[String, String]): Map[BoxOutput, BoxOutputState] = {
-    // This is a project-specific implementation. This should go in a subclass once we have other
-    // (non-project) operations.
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     val before = project.viewer
-    apply(params)
+    apply()
     updateDeltas(project, before)
     import CheckpointRepository._ // For JSON formatters.
     val output = BoxOutputState("project", json.Json.toJson(project.state).as[json.JsObject])
