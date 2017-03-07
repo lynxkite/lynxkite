@@ -5,7 +5,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import scala.collection.mutable
 
-object ComputeVertexNeighborhoodFromNeighborsAndEdges extends OpFromJson {
+object ComputeVertexNeighborhoodFromEdgesAndNeighbors extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     // The list of outgoing neighbors and edges.
@@ -16,13 +16,13 @@ object ComputeVertexNeighborhoodFromNeighborsAndEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val neighborhood = scalar[Set[ID]]
   }
-  def fromJson(j: JsValue) = ComputeVertexNeighborhoodFromNeighborsAndEdges(
+  def fromJson(j: JsValue) = ComputeVertexNeighborhoodFromEdgesAndNeighbors(
     (j \ "centers").as[Seq[ID]],
     (j \ "radius").as[Int],
     (j \ "maxCount").as[Int])
 }
-import ComputeVertexNeighborhoodFromNeighborsAndEdges._
-case class ComputeVertexNeighborhoodFromNeighborsAndEdges(
+import ComputeVertexNeighborhoodFromEdgesAndNeighbors._
+case class ComputeVertexNeighborhoodFromEdgesAndNeighbors(
     centers: Seq[ID],
     radius: Int,
     // Maximal number of vertices to return. If the specified neighborhood is larger then this, then

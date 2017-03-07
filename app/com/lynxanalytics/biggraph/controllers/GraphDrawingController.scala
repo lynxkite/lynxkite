@@ -221,12 +221,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
       val edgesAndNeighbors = edgesAndNeighborsMapping(smearBundle, sampled = false)
-      val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(
+      val nop = graph_operations.ComputeVertexNeighborhoodFromEdgesAndNeighbors(
         centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(
-          nop.srcTripletMapping, edgesAndNeighbors.srcEdges)(
-            nop.dstTripletMapping, edgesAndNeighbors.dstEdges).result
+          nop.srcMapping, edgesAndNeighbors.srcEdges)(
+            nop.dstMapping, edgesAndNeighbors.dstEdges).result
       val neighborhood = nopres.neighborhood.value
       assert(
         centers.isEmpty || neighborhood.nonEmpty,
@@ -415,18 +415,18 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val mapping = edgesAndNeighborsMapping(eb, sampled = false)
     if (srcView.vertexIndices.isDefined) {
       val vertexIds = srcView.vertexIndices.get.keySet
-      val op = graph_operations.EdgesForVertices(
+      val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
         vertexIds, DrawingThresholds.SmallEdges, bySource = true)
       val edges =
-        op(op.edges, eb)(op.tripletMapping, mapping.srcEdges).result.edges.value
+        op(op.edges, eb)(op.mapping, mapping.srcEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     if (dstView.vertexIndices.isDefined) {
       val vertexIds = dstView.vertexIndices.get.keySet
-      val op = graph_operations.EdgesForVertices(
+      val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
         vertexIds, DrawingThresholds.SmallEdges, bySource = false)
       val edges =
-        op(op.edges, eb)(op.tripletMapping, mapping.dstEdges).result.edges.value
+        op(op.edges, eb)(op.mapping, mapping.dstEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     return None
