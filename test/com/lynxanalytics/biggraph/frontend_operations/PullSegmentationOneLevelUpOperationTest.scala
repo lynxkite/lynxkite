@@ -15,18 +15,17 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
       "base-id-attr" -> "num",
       "base-id-column" -> "base_num",
       "seg-id-column" -> "seg_num"))
-    val segmentation1 = project.segmentation("segmentation1")
     run("Import segmentation", Map(
       "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
       "name" -> "segmentation2",
       "base-id-attr" -> "seg_num",
       "base-id-column" -> "base_num",
-      "seg-id-column" -> "seg_num"),
-      on = segmentation1)
+      "seg-id-column" -> "seg_num",
+      "apply_to" -> "|segmentation1"))
+    run("Pull segmentation one level up", Map("apply_to" -> "|segmentation1|segmentation2"))
+
+    val segmentation1 = project.segmentation("segmentation1")
     val segmentation2 = segmentation1.segmentation("segmentation2")
-
-    run("Pull segmentation one level up", on = segmentation2)
-
     assert(project.segmentationNames.contains("segmentation2"))
     val segmentation2Copy = project.segmentation("segmentation2")
     val segmentSizes = segmentation2Copy
