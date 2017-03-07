@@ -163,7 +163,7 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   implicit val manager = context.manager
   protected val project: ProjectEditor
   protected val user = context.user
-  protected val id = context.box.operationID
+  protected val id = context.meta.operationID
   protected val title = id
   protected val params = context.box.parameters
   protected def parameters: List[OperationParameterMeta]
