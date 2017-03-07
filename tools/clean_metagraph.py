@@ -43,24 +43,23 @@ class Dependency:
 # Dependency graph of entities, similar to LynxKite's metagraph.
 meta_graph = {}
 
-for version in sorted(os.listdir(meta_dir)):  # Sorting is necessary
-  # Parse operations, store operation_filenames, construct metagraph.
-  operations_dir = os.path.join(meta_dir, version, 'operations')
-  for operation_file in sorted(os.listdir(operations_dir)):
-    operations_to_delete.add(operation_file)
-    with open(operations_dir + '/' + operation_file) as operation:
-      op_json = json.load(operation)
-      for o in op_json["outputs"].values():
-        # This following line is the reason we need to sort the os.listdir()-s. We want to have the inputs ready
-        # to construct a new Dependency. Since the filenames contain a timestamp, the lexicographical order
-        # is equivalent with the chronological order, but using the former one is more convenient.
-        meta_graph[o] = Dependency(o, operation_file, [meta_graph[i]
-                                                       for i in op_json["inputs"].values()])
-  # Parse checkpoints for guids we want to keep.
-  checkpoints_dir = os.path.join(meta_dir, version, 'checkpoints')
-  for checkpoint_file in os.listdir(checkpoints_dir):
-    with open(checkpoints_dir + '/' + checkpoint_file) as checkpoint:
-      guids_to_keep.update(canonical_guid_representation.findall(checkpoint.read()))
+# Parse operations, store operation_filenames, construct metagraph.
+operations_dir = os.path.join(meta_dir, 'operations')
+for operation_file in sorted(os.listdir(operations_dir)):  # Sorting is necessary
+  operations_to_delete.add(operation_file)
+  with open(operations_dir + '/' + operation_file) as operation:
+    op_json = json.load(operation)
+    for o in op_json["outputs"].values():
+      # This following line is the reason we need to sort the os.listdir()-s. We want to have the inputs ready
+      # to construct a new Dependency. Since the filenames contain a timestamp, the lexicographical order
+      # is equivalent with the chronological order, but using the former one is more convenient.
+      meta_graph[o] = Dependency(o, operation_file, [meta_graph[i]
+                                                     for i in op_json["inputs"].values()])
+# Parse checkpoints for guids we want to keep.
+checkpoints_dir = os.path.join(meta_dir, 'checkpoints')
+for checkpoint_file in os.listdir(checkpoints_dir):
+  with open(checkpoints_dir + '/' + checkpoint_file) as checkpoint:
+    guids_to_keep.update(canonical_guid_representation.findall(checkpoint.read()))
 
 # Crawl the dependency graph, remove elements we want to keep from the operations_to_delete list.
 # We want to keep an operation iff we want to keep at least one of its (transitive-)output guids.
