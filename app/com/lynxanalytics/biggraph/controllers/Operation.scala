@@ -137,33 +137,8 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
-// Project-specific operation classes.
-abstract class ProjectTransformation(context: Operation.Context) extends ProjectOperation(context) {
-  assert(
-    context.meta.inputs == List(TypedConnection("project", "project")),
-    s"A ProjectTransformation must input a single project. $context")
-  implicit val m = manager
-  protected lazy val project = {
-    val segPath = SubProject.splitPipedPath(params.getOrElse("apply_to", ""))
-    assert(segPath.head == "", s"'apply_to' path must start with separator: $params")
-    context.inputs("project").project.offspringEditor(segPath.tail)
-  }
-  protected override def allParameters = {
-    val params = parameters
-    assert(
-      params.find(_.id == "apply_to").isEmpty, s"$id: 'apply_to' is a reserved parameter name.")
-    // "apply_to" is used to pick the base project or segmentation to apply the operation to.
-    // TODO: Use a special parameter kind for this.
-    OperationParams.Param("apply_to", "Apply to", mandatory = false) :: params
-  }
-}
-
-abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
-  assert(context.meta.inputs == List(), s"A ProjectCreation must have no inputs. $context")
-  implicit val m = manager
-  protected lazy val project = new RootProjectEditor(RootProjectState.emptyState)
-}
-
+// A "ProjectOperation" is an operation that has 1 project-typed output. It includes a lot of
+// utility methods for supporting this.
 abstract class ProjectOperation(context: Operation.Context) extends Operation {
   assert(
     context.meta.outputs == List(TypedConnection("project", "project")),
@@ -258,4 +233,30 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
   protected def accessibleTableOptions: List[FEOption] = ???
   protected def readableProjectCheckpoints: List[FEOption] = ???
+}
+
+// A "ProjectTransformation" takes 1 input project and produces 1 output project.
+abstract class ProjectTransformation(context: Operation.Context) extends ProjectOperation(context) {
+  assert(
+    context.meta.inputs == List(TypedConnection("project", "project")),
+    s"A ProjectTransformation must input a single project. $context")
+  protected lazy val project = {
+    val segPath = SubProject.splitPipedPath(params.getOrElse("apply_to", ""))
+    assert(segPath.head == "", s"'apply_to' path must start with separator: $params")
+    context.inputs("project").project.offspringEditor(segPath.tail)
+  }
+  protected override def allParameters = {
+    val params = parameters
+    assert(
+      params.find(_.id == "apply_to").isEmpty, s"$id: 'apply_to' is a reserved parameter name.")
+    // "apply_to" is used to pick the base project or segmentation to apply the operation to.
+    // TODO: Use a special parameter kind for this.
+    OperationParams.Param("apply_to", "Apply to", mandatory = false) :: params
+  }
+}
+
+// A "ProjectCreation" creates 1 output project from nothingness (no inputs).
+abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
+  assert(context.meta.inputs == List(), s"A ProjectCreation must have no inputs. $context")
+  protected lazy val project = new RootProjectEditor(RootProjectState.emptyState)
 }
