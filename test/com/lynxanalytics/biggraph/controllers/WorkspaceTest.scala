@@ -93,20 +93,28 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
       val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
-      val pr = Box("pr1", "PageRank", pagerankParams, 0, 20, Map())
-      set("test-workspace", Workspace(List(eg, pr)))
+      val cc = Box(
+        "cc", "Connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
+        0, 20, Map())
+      val pr = Box("pr", "PageRank", pagerankParams, 0, 20, Map())
+      set("test-workspace", Workspace(List(eg, cc, pr)))
       intercept[AssertionError] {
-        controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr1"))
+        controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr"))
       }
       set(
         "test-workspace",
-        Workspace(List(eg, pr.copy(inputs = Map("project" -> eg.output("project"))))))
-      val op = controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr1"))
+        Workspace(List(
+          eg,
+          cc.copy(inputs = Map("project" -> eg.output("project"))),
+          pr.copy(inputs = Map("project" -> cc.output("project"))))))
+      val op = controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr"))
       assert(
         op.parameters.map(_.id) ==
           Seq("apply_to", "name", "weights", "iterations", "damping", "direction"))
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
+      assert(
+        op.parameters.find(_.id == "apply_to").get.options.map(_.id) == Seq("", "|cc"))
     }
   }
 }

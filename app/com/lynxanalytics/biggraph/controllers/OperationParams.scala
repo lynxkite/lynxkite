@@ -149,6 +149,17 @@ object OperationParams {
       attrs = attrs)))
     def validate(value: String): Unit = {}
   }
+
+  case class SegmentationParam(
+      id: String,
+      title: String,
+      options: List[FEOption],
+      mandatory: Boolean = true) extends OperationParameterMeta {
+    val kind = "segmentation"
+    val multipleChoice = false
+    val defaultValue = ""
+    def validate(value: String): Unit = {}
+  }
 }
 
 // A special parameter payload to describe applicable models on the UI.
