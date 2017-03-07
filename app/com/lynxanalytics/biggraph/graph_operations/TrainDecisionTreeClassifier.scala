@@ -95,7 +95,6 @@ case class TrainDecisionTreeClassifier(
     val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
       row => (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
     val statistics = s"$treeDescription\naccuracy: $accuracy\nsupport: $support"
-    println(statistics)
     output(o.model, Model(
       method = "Decision tree classification",
       symbolicPath = file.symbolicName,
