@@ -103,7 +103,7 @@ angular.module('biggraph').directive('projectSelector',
           name = scope.path + '/' + name;
         }
         var notes = scope.newProject.notes;
-        util.post('/ajax/createProject',
+        util.post('/ajax/createWorkspace',
           {
             name: name,
             notes: notes || '',
@@ -151,7 +151,7 @@ angular.module('biggraph').directive('projectSelector',
       };
 
       scope.objectClick = function(event, o) {
-        if (scope.isProject(o)) { scope.projectClick(event, o); }
+        if (scope.isWorkspace(o)) { scope.workspaceClick(event, o); }
         if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
         return;
       };
@@ -173,7 +173,7 @@ angular.module('biggraph').directive('projectSelector',
           false); // Do not invoke apply as we don't change the scope.
       };
 
-      scope.projectClick = function(event, p) {
+      scope.workspaceClick = function(event, p) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
@@ -252,8 +252,8 @@ angular.module('biggraph').directive('projectSelector',
         renameMenuItemLabel: 'Rename or move...'
       };
 
-      scope.isProject = function(object) {
-        return object.objectType === 'project';
+      scope.isWorkspace = function(object) {
+        return object.objectType === 'workspace';
       };
       scope.isTable = function(object) {
         return object.objectType === 'table';

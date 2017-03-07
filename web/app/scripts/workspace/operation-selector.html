@@ -1,0 +1,40 @@
+<div class="operation-selector row" ng-class="{ open: category || searching }">
+
+  <div class="col-sm-1 categories">
+    <div ng-if="editMode">
+      <!-- The real category buttons: -->
+      <div class="category yellow"
+        ng-class="{ active: searching }"
+        id="operation-search"
+        drop-tooltip="Search"
+        drop-tooltip-position="left middle"
+        drop-tooltip-enable="true"
+        ng-click="searchClicked()">
+        <i class="glyphicon glyphicon-search"></i>
+      </div>
+      <div ng-repeat="cat in categories"
+        class="category {{cat.color}}"
+        ng-class="{ active: category === cat }"
+        drop-tooltip-position="left middle"
+        drop-tooltip-enable="true"
+        drop-tooltip="{{cat.title}}"
+        ng-click="clickedCat(cat)">
+        <span ng-if="cat.icon" class="glyphicon glyphicon-{{cat.icon}}"></span>
+        <span ng-if="!cat.icon">{{cat.title[0]}}</span>
+      </div>
+    </div>
+  </div>
+  <div ng-if="category" class="box col-sm-11 {{category.color}}">
+    <h1>{{category.title}}</h1>
+    <operation-selector-entry ng-repeat="op in category.ops" op="op">
+    </operation-selector-entry>
+  </div>
+
+  <div ng-if="searching" class="panel box col-sm-11 yellow">
+    <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
+    <operation-selector-entry ng-repeat="op in boxes | filter: { operationID: opFilter } | orderBy: 'title'"
+        op="op"
+        ng-class="{ highlight: $index === searchSelection }">
+    </operation-selector-entry>
+  </div>
+</div>
