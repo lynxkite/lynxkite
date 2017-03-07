@@ -1,10 +1,21 @@
 'use strict';
 
+// Creates a box object for a workspace.
+// This object wraps the actual box data representation and
+// provides methods to interact with the GUI, e.g. mouse events
+// and values to bind with Angular to SVG elements.
+// The wrapped box date representation has two parts:
+// - metadata describes the type of operation of the box.
+// - instance describes the operation parameter values,
+//   coordinates on the workspace and everything related to this
+//   box instance that have to be saved.
+
 angular.module('biggraph').factory('createBox', function() {
   return function(metadata, instance) {
     var width = 200;
     var height = 40;
 
+    // An input or output connection point of a box.
     function createPlug(plug, index, direction) {
       var plugRadius = 8;
 
@@ -43,17 +54,13 @@ angular.module('biggraph').factory('createBox', function() {
     return {
       metadata: metadata,
       instance: instance,
-
+      inputs: inputs,
+      outputs: outputs,
       width: width,
       height: height,
       isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
-      },
-      inputs: inputs,
-      outputs: outputs,
-      getPlugName: function(index, direction) {
-        return this.data[direction][index].id;
       },
       onMouseMove: function(event) {
         this.isMoved = true;
