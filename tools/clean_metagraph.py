@@ -65,7 +65,8 @@ for checkpoint_file in os.listdir(checkpoints_dir):
 # We want to keep an operation iff we want to keep at least one of its (transitive-)output guids.
 while guids_to_keep:
   guid = guids_to_keep.pop()
-  meta_graph[guid].crawl_upwards()
+  if guid in meta_graph:
+    meta_graph[guid].crawl_upwards()
 
 for op in operations_to_delete:
   print(op)
