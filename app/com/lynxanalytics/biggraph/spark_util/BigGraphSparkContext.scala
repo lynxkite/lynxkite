@@ -6,9 +6,8 @@ import com.lynxanalytics.biggraph.controllers.LogController
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
-import org.apache.spark.serializer.KryoRegistrator
-import org.apache.spark.sql.jdbc.JdbcDialect
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
