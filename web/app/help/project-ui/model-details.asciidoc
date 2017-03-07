@@ -42,6 +42,11 @@ The list of the feature attributes that this model uses for predictions.
 
 ### Details
 
+For decision tree classification model:
+
+* `support` is the number of occurrences of each class in the training data divided by the
+size of the training data.
+
 For linear regression and logistic regression models:
 
 * `intercept` is the constant parameter in the regression equation of the model.
