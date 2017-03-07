@@ -347,7 +347,9 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
-include::train-a-decision-tree-model.asciidoc[]
+include::train-a-decision-tree-classification-model.asciidoc[]
+
+include::train-a-decision-tree-regression-model.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 

@@ -83,12 +83,18 @@ case class TrainDecisionTreeRegressor(
       (description, i) => description.replaceAll("feature " + i.toString, featureNames(i))
     }.replaceFirst("[(]uid=.*[)] ", "")
     val prediction = model.transform(labeledFeaturesDF)
-    val evaluator = new ml.evaluation.RegressionEvaluator()
-      .setLabelCol("label")
-      .setPredictionCol("prediction")
-      .setMetricName("rmse")
-    val rmse = evaluator.evaluate(prediction).toString
-    val statistics = ("Root mean squared error: " + rmse)
+    val evaluation = Seq("rmse", "mse", "r2", "mae").map { metric =>
+      val evaluator = new ml.evaluation.RegressionEvaluator()
+        .setLabelCol("label")
+        .setPredictionCol("prediction")
+        .setMetricName(metric)
+      (metric, evaluator.evaluate(prediction).toString)
+    }.toMap
+    val statistics = (s"""$treeDescription
+Root mean squared error: ${evaluation("rmse")}
+Mean squarred error: ${evaluation("mse")}
+R-squared: ${evaluation("r2")}
+Mean absolute error: ${evaluation("mae")}""")
     output(o.model, Model(
       method = "Decision tree regression",
       symbolicPath = file.symbolicName,

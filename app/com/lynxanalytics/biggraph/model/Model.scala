@@ -99,7 +99,7 @@ case class Model(
     method match {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
-      case "Decision tree regresison" =>
+      case "Decision tree regression" =>
         new DecisionTreeRegressionModelImpl(ml.regression.DecisionTreeRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
