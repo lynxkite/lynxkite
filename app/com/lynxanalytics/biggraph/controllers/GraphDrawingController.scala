@@ -413,20 +413,22 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
 
     val mapping = edgesAndNeighborsMapping(eb, sampled = false)
-    if (srcView.vertexIndices.isDefined) {
-      val vertexIds = srcView.vertexIndices.get.keySet
+    val srcVI = srcView.vertexIndices
+    val dstVI = dstView.vertexIndices
+    if (srcVI.isDefined || dstVI.isDefined) {
+      // If both vertex indices are defined let's grab the edges by the smaller set, so we
+      // hit fewer partitions. This is not necessarily the case for small data sets but for
+      // large ones the number of partitions to hit should converge to the number of indices.
+      val bySource = dstVI.isEmpty || (srcVI.get.size < dstVI.get.size)
+      val (srcIdSet, dstIdSet, mappingEdges) = if (bySource) {
+        (srcVI.get.keySet, dstVI.map(_.keySet), mapping.srcEdges)
+      } else {
+        (dstVI.get.keySet, srcVI.map(_.keySet), mapping.dstEdges)
+      }
+      // Distributed filtering by dsts allows grabbing more edges without hitting the threshold.
       val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
-        vertexIds, DrawingThresholds.SmallEdges, bySource = true)
-      val edges =
-        op(op.edges, eb)(op.mapping, mapping.srcEdges).result.edges.value
-      if (edges.isDefined) return edges
-    }
-    if (dstView.vertexIndices.isDefined) {
-      val vertexIds = dstView.vertexIndices.get.keySet
-      val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
-        vertexIds, DrawingThresholds.SmallEdges, bySource = false)
-      val edges =
-        op(op.edges, eb)(op.mapping, mapping.dstEdges).result.edges.value
+        srcIdSet, dstIdSet, DrawingThresholds.SmallEdges, bySource)
+      val edges = op(op.edges, eb)(op.mapping, mappingEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     return None
