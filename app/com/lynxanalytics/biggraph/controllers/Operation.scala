@@ -143,7 +143,11 @@ abstract class ProjectTransformation(context: Operation.Context) extends Project
     context.meta.inputs == List(TypedConnection("project", "project")),
     s"A ProjectTransformation must input a single project. $context")
   implicit val m = manager
-  protected lazy val project = context.inputs("project").project
+  protected lazy val project = {
+    val segPath = SubProject.splitPipedPath(params.getOrElse("apply_to", ""))
+    assert(segPath.head == "", s"'apply_to' path must start with separator: $params")
+    context.inputs("project").project.offspringEditor(segPath.tail)
+  }
 }
 
 abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
@@ -205,12 +209,13 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   }
 
   def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    validateParameters(params - "apply_to")
     val before = project.viewer
     apply()
     updateDeltas(project, before)
     import CheckpointRepository._ // For JSON formatters.
-    val output = BoxOutputState("project", json.Json.toJson(project.state).as[json.JsObject])
+    val output = BoxOutputState(
+      "project", json.Json.toJson(project.rootState.state).as[json.JsObject])
     Map(context.meta.outputs(0).ofBox(context.box) -> output)
   }
 

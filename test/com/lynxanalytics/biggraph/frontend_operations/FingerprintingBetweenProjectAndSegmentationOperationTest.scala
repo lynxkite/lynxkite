@@ -10,28 +10,27 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     run("Example Graph")
     run("Import project as segmentation", Map(
       "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
-    val seg = project.segmentation("ExampleGraph2")
     run("Import segmentation links", Map(
       "table" -> importCSV("OPERATIONSTEST$/fingerprint-example-connections.csv"),
       "base-id-attr" -> "name",
       "base-id-column" -> "src",
       "seg-id-attr" -> "name",
-      "seg-id-column" -> "dst"),
-      on = seg)
+      "seg-id-column" -> "dst",
+      "apply_to" -> "|ExampleGraph2"))
     run("Fingerprinting between project and segmentation", Map(
       "mo" -> "1",
-      "ms" -> "0.5"),
-      on = seg)
-    run("Aggregate from segmentation",
-      Map("prefix" -> "seg",
-        "aggregate-age" -> "average",
-        "aggregate-id" -> "",
-        "aggregate-name" -> "",
-        "aggregate-location" -> "",
-        "aggregate-gender" -> "",
-        "aggregate-fingerprinting_similarity_score" -> "",
-        "aggregate-income" -> ""),
-      on = seg)
+      "ms" -> "0.5",
+      "apply_to" -> "|ExampleGraph2"))
+    run("Aggregate from segmentation", Map(
+      "prefix" -> "seg",
+      "aggregate-age" -> "average",
+      "aggregate-id" -> "",
+      "aggregate-name" -> "",
+      "aggregate-location" -> "",
+      "aggregate-gender" -> "",
+      "aggregate-fingerprinting_similarity_score" -> "",
+      "aggregate-income" -> "",
+      "apply_to" -> "|ExampleGraph2"))
     val newAge = project.vertexAttributes("seg_age_average")
       .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
     // Two mappings.
@@ -66,14 +65,14 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     val seg = project.segmentation("other")
     run("Define segmentation links from matching attributes", Map(
       "base-id-attr" -> "stringID",
-      "seg-id-attr" -> "link"),
-      on = seg)
+      "seg-id-attr" -> "link",
+      "apply_to" -> "|other"))
     def belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 6)
     run("Fingerprinting between project and segmentation", Map(
       "mo" -> "0",
-      "ms" -> "0"),
-      on = seg)
+      "ms" -> "0",
+      "apply_to" -> "|other"))
     assert(belongsTo.size == 6)
     val similarity = seg.vertexAttributes("fingerprinting_similarity_score")
       .runtimeSafeCast[Double].rdd.values.collect

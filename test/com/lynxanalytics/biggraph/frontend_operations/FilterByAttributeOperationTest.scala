@@ -30,8 +30,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
     run("Connected components",
       Map("name" -> "cc", "directions" -> "ignore directions"))
     run("Filter by attributes",
-      Map("filterva-size" -> "3"),
-      on = project.segmentation("cc"))
+      Map("filterva-size" -> "3", "apply_to" -> "|cc"))
     val c1 = project.segmentation("cc").vertexSet.rdd.keys.take(1).head
     run("Filter by attributes",
       Map("filterva-segmentation[cc]" -> s"any($c1)"))

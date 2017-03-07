@@ -7,11 +7,12 @@ class AggregateToSegmentationOperationTest extends OperationsTestBase {
   test("Aggregate to segmentation") {
     run("Example Graph")
     run("Connected components", Map("name" -> "cc", "directions" -> "require both directions"))
-    val seg = project.segmentation("cc")
     run("Aggregate to segmentation",
-      Map("aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100",
-        "aggregate-id" -> "", "aggregate-location" -> "", "aggregate-income" -> ""),
-      on = seg)
+      Map(
+        "apply_to" -> "|cc",
+        "aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100",
+        "aggregate-id" -> "", "aggregate-location" -> "", "aggregate-income" -> ""))
+    val seg = project.segmentation("cc")
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
     val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]

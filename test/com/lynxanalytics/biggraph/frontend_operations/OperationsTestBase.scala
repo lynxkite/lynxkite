@@ -21,8 +21,10 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     res
   }
 
-  val project = new RootProjectEditor(RootProjectState.emptyState)
-  project.checkpoint = Some("")
+  val user = serving.User.fake
+  var ws = Workspace(boxes = List())
+  var lastOutput: Option[BoxOutput] = None
+  def project = ws.state(user, ops, lastOutput.get).project
 
   def importCSV(files: String): String = {
     val f = sql.importCSV(serving.User.fake, CSVImportRequest(
@@ -39,13 +41,12 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     f.id
   }
 
-  def run(opId: String, params: Map[String, String] = Map(), on: ProjectEditor = project) = {
-    /*
-    val context = Operation.Context(serving.User.fake, on.viewer)
-    val result = ops.applyAndCheckpoint(context, FEOperationSpec(Operation.titleToID(opId), params))
-    on.rootEditor.rootState = result
-    */
-    ???
+  def run(opID: String, params: Map[String, String] = Map(), on: ProjectEditor = null): Unit = {
+    val box = Box(
+      s"box${ws.boxes.size}", opID, params, 0, 0,
+      lastOutput.map(o => Map("project" -> o)).getOrElse(Map()))
+    ws = ws.copy(boxes = ws.boxes :+ box)
+    lastOutput = Some(box.output("project"))
   }
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
