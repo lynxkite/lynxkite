@@ -297,7 +297,7 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
     val otherVs = vertexSet
-    val tripletMapping = vertexAttribute[EdgesAndNeighbors](vs)
+    val mapping = vertexAttribute[EdgesAndNeighbors](vs)
     val edges = if (bySource) edgeBundle(vs, otherVs) else edgeBundle(otherVs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
@@ -310,19 +310,19 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
     (j \ "bySource").as[Boolean])
 }
 case class EdgesForVerticesFromEdgesAndNeighbors(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
-    extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {
+    extends TypedMetaGraphOp[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
   import EdgesForVerticesFromEdgesAndNeighbors._
   @transient override lazy val inputs = new Input(bySource)
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val inst = instance
     // Do some additional checking on the inputs.
-    val tripletMapping = inputs.tripletMapping.entity
-    val tripletMappingInstance = tripletMapping.source
-    assert(tripletMappingInstance.operation.isInstanceOf[EdgeAndNeighborMapping],
+    val mapping = inputs.mapping.entity
+    val mappingInstance = mapping.source
+    assert(mappingInstance.operation.isInstanceOf[EdgeAndNeighborMapping],
       "tripletMapping is not a EdgeAndNeighborMapping")
-    assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
-      s"tripletMapping is for ${tripletMappingInstance.inputs.edgeBundles('edges)}" +
+    assert(mappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
+      s"tripletMapping is for ${mappingInstance.inputs.edgeBundles('edges)}" +
         s" instead of ${inputs.edges.entity}")
     new Output()(instance, inputs)
   }
@@ -337,7 +337,7 @@ case class EdgesForVerticesFromEdgesAndNeighbors(vertexIdSet: Set[ID], maxNumEdg
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val restricted = inputs.tripletMapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
+    val restricted = inputs.mapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
     val aggregatedEdges =
       restricted.aggregate(mutable.Set[(ID, Edge)]())(
         {
