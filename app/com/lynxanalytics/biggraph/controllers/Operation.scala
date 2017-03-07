@@ -29,9 +29,8 @@ object FEOperationParameterMeta {
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
     "code", // JavaScript code
     "model", // A special kind to set model parameters.
-    "table") // A table.
-
-  val choiceKinds = Set("choice", "tag-list", "table")
+    "table", // A table.
+    "segmentation") // One of the segmentations of the current project.
 }
 
 case class FEOperationParameterMeta(
@@ -245,13 +244,21 @@ abstract class ProjectTransformation(context: Operation.Context) extends Project
     assert(segPath.head == "", s"'apply_to' path must start with separator: $params")
     context.inputs("project").project.offspringEditor(segPath.tail)
   }
+  protected def segmentationsRecursively(
+    editor: ProjectEditor, prefix: String = ""): Seq[String] = {
+    prefix +: editor.segmentationNames.flatMap { seg =>
+      segmentationsRecursively(editor.segmentation(seg), prefix + "|" + seg)
+    }
+  }
   protected override def allParameters = {
     val params = parameters
+    // "apply_to" is used to pick the base project or segmentation to apply the operation to.
     assert(
       params.find(_.id == "apply_to").isEmpty, s"$id: 'apply_to' is a reserved parameter name.")
-    // "apply_to" is used to pick the base project or segmentation to apply the operation to.
-    // TODO: Use a special parameter kind for this.
-    OperationParams.Param("apply_to", "Apply to", mandatory = false) :: params
+    val segmentations = FEOption.list(segmentationsRecursively(project.rootEditor).toList)
+    val applyTo = OperationParams.SegmentationParam(
+      "apply_to", "Apply to", segmentations, mandatory = false)
+    applyTo :: params
   }
 }
 
