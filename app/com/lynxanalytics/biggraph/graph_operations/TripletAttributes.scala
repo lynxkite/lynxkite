@@ -305,11 +305,16 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
   def fromJson(j: JsValue) = EdgesForVerticesFromEdgesAndNeighbors(
-    (j \ "vertexIdSet").as[Set[ID]],
+    (j \ "srcIdSet").as[Set[ID]],
+    (j \ "dstIdSet").as[Option[Set[ID]]],
     (j \ "maxNumEdges").as[Int],
     (j \ "bySource").as[Boolean])
 }
-case class EdgesForVerticesFromEdgesAndNeighbors(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
+case class EdgesForVerticesFromEdgesAndNeighbors(
+  srcIdSet: Set[ID],
+  dstIdSet: Option[Set[ID]], // Filter the edges by dst too if set.
+  maxNumEdges: Int,
+  bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
   import EdgesForVerticesFromEdgesAndNeighbors._
   @transient override lazy val inputs = new Input(bySource)
@@ -328,7 +333,8 @@ case class EdgesForVerticesFromEdgesAndNeighbors(vertexIdSet: Set[ID], maxNumEdg
   }
 
   override def toJson = Json.obj(
-    "vertexIdSet" -> vertexIdSet,
+    "srcIdSet" -> srcIdSet,
+    "dstIdSet" -> dstIdSet,
     "maxNumEdges" -> maxNumEdges,
     "bySource" -> bySource)
 
@@ -337,15 +343,17 @@ case class EdgesForVerticesFromEdgesAndNeighbors(vertexIdSet: Set[ID], maxNumEdg
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val restricted = inputs.mapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
+    val restricted = inputs.mapping.rdd.restrictToIdSet(srcIdSet.toIndexedSeq.sorted)
     val aggregatedEdges =
       restricted.aggregate(mutable.Set[(ID, Edge)]())(
         {
           case (set, (srcId, edgesAndNeighbors)) =>
-            if ((set == null) || (set.size + edgesAndNeighbors.size > maxNumEdges)) {
+            val it = edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+            val byDst = if (dstIdSet.isDefined) it.filter(dstIdSet.get contains _._2.dst) else it
+            if ((set == null) || (set.size + byDst.size > maxNumEdges)) {
               null
             } else {
-              set ++= edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+              set ++= byDst
               set
             }
         },
