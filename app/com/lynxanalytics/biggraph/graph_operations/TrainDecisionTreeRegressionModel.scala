@@ -92,7 +92,7 @@ case class TrainDecisionTreeRegressor(
     }.toMap
     val statistics = (s"""$treeDescription
 Root mean squared error: ${evaluation("rmse")}
-Mean squarred error: ${evaluation("mse")}
+Mean squared error: ${evaluation("mse")}
 R-squared: ${evaluation("r2")}
 Mean absolute error: ${evaluation("mae")}""")
     output(o.model, Model(
