@@ -6,6 +6,9 @@ This operation can be used (among other things) to create connections between tw
 one has been imported as a segmentation of the other.
 (See <<Import project as segmentation>>.)
 
+If segmentation links already exist, use the
+<<discard-segmentation-links, Discard segmentation links>> operation to discard links first.
+
 ====
 [[base-id-attr]] Identifying vertex attribute in base project::
 A vertex will be connected to a segment if the selected vertex attribute of the vertex

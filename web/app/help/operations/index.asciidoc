@@ -203,6 +203,8 @@ include::discard-scalar.asciidoc[]
 
 include::discard-segmentation.asciidoc[]
 
+include::discard-segmentation-links.asciidoc[]
+
 include::discard-vertex-attribute.asciidoc[]
 
 include::discard-vertices.asciidoc[]
