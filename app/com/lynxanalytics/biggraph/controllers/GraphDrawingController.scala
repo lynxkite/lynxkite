@@ -407,6 +407,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
   }
 
+  // Optionally returns a small set of edges filtered by srcView, dstView or both if specified.
   def getSmallEdgeSet(
     eb: EdgeBundle,
     srcView: graph_operations.VertexView,

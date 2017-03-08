@@ -81,7 +81,7 @@ case class EdgesAndNeighbors(eids: Array[ID], nids: Array[ID]) {
   assert(eids.size == nids.size,
     s"The number of edges ${eids.size} does not match the number of neighbors ${nids.size}.")
 
-  def map[B](f: ((ID, ID)) => B): Iterable[B] = {
+  def map[T](f: ((ID, ID)) => T): Iterable[T] = {
     (eids zip nids).map(f)
   }
 
@@ -293,7 +293,7 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
   }
 }
 
-// Returns a small set of edges given a small set of vertices and a triplet mapping.
+// Returns a small set of edges given a small set of src and optionally dst vertices and a mapping.
 object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
@@ -350,6 +350,7 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
         {
           case (set, (srcId, edgesAndNeighbors)) =>
             val it = edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
+            // 
             val byDst = if (dstIdSet.isDefined) it.filter(dstIdSet.get contains _._2.dst) else it
             if ((set == null) || (set.size + byDst.size > maxNumEdges)) {
               null
