@@ -237,6 +237,7 @@ object EdgesForVertices extends OpFromJson {
     (j \ "maxNumEdges").as[Int],
     (j \ "bySource").as[Boolean])
 }
+@deprecated("EdgesForVertices is deprecated, use EdgesForVerticesFromEdgesAndNeighbors", "1.13.0")
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {
   import EdgesForVertices._
