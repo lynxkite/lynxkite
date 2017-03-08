@@ -257,11 +257,12 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Discard segmentation links", new StructureOperation(_, _) {
-    def parameters = List()
+  register("Discard segmentation links", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
     def enabled = isSegmentation && hasBelongsToLinks
     def apply(params: Map[String, String]) = {
-      project.asSegmentation.belongsTo = null
+      val op = graph_operations.EmptyEdgeBundle()
+      seg.belongsTo = op(op.src, seg.parent.vertexSet)(op.dst, seg.vertexSet).result.eb
     }
   })
 
