@@ -38,7 +38,7 @@ class DecisionTreeTest extends OperationsTestBase {
   }
 
   test("train and predict with a decision tree regression model") {
-    // run("Example Graph")
+    run("Example Graph")
     run("Derived vertex attribute",
       Map("type" -> "double", "output" -> "isJoe", "expr" -> "name == 'Isolated Joe'"))
     run("Derived vertex attribute",

@@ -26,35 +26,27 @@ class PredictFromModelTest extends ModelTestBase {
   }
 
   test("test decision tree regression") {
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
+      trainingData,
+      testDataForRegression
+    }
     val m = model(
       method = "Decision tree regression",
-      labelName = "length of the walk",
-      label = Map(0 -> 1, 1 -> 0, 2 -> 0, 3 -> 7, 4 -> 1, 5 -> 0, 6 -> 1, 7 -> 6),
-      featureNames = List("temperature", "rain"),
-      attrs = Seq(Map(0 -> -15, 1 -> 20, 2 -> -10, 3 -> 20, 4 -> 35, 5 -> 40, 6 -> -15, 7 -> -15),
-        Map(0 -> 0, 1 -> 1, 2 -> 1, 3 -> 0, 4 -> 0, 5 -> 1, 6 -> 0, 7 -> 0)),
-      // I love making long walks if it's not raining and the temperature is
-      // pleasant. I take only a short walk if it's not raining, but the weather
-      // is too hot or too cold. I hate rain, so I just stay at home if it's raining.
-      // Sometimes I'm in a really good mood and go on a long walk in spite of
-      // the cold weather.
-      graph(8))
+      labelName = trainingData.labelName,
+      label = trainingData.label,
+      featureNames = trainingData.featureNames,
+      attrs = trainingData.attrs,
+      graph(trainingData.vertexNumber))
 
-    val g = graph(numVertices = 6)
-    val attrs = Seq(Map(0 -> 20.0, 1 -> 42.0, 2 -> 38.0, 3 -> -16.0, 4 -> -20.0, 5 -> 20.0),
-      Map(0 -> 0.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0, 4 -> 1.0, 5 -> 1.0))
+    val g = graph(testDataForRegression.vertexNumber)
+    val attrs = testDataForRegression.attrs
     val features = attrs.map(attr => {
       AddVertexAttribute.run[Double](g.vs, attr)
     })
-    val op = PredictFromModel(2)
+    val op = PredictFromModel(testDataForRegression.featureNames.size)
     val result = op(op.features, features)(op.model, m).result
-    val prediction = result.prediction.rdd.values.collect
+    val prediction = result.prediction.rdd.collect.toMap
     assert(prediction.size == 6)
-    assert(prediction(0) == 7.0)
-    assert(prediction(1) == 0.0)
-    assert(prediction(2) == 1.0)
-    assert(prediction(3) > 2.66 && prediction(3) < 2.67)
-    assert(prediction(4) == 0.0)
-    assert(prediction(5) == 0.0)
+    assertRoughlyEquals(prediction, testDataForRegression.label, 0.1)
   }
 }
