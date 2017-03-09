@@ -383,9 +383,9 @@ class Table:
   def compute(self):
     '''Forces the computation of the table.'''
     fake_project = self.lk.new_project()
-    fake_project.importVertices(**{
-        'id_attr': '',
-        'table': self.name})
+    fake_project.importVertices(
+        id_attr='',
+        table=self.name)
     fake_project.compute()
 
 
@@ -617,9 +617,9 @@ class SubProject:
       import lynx
       p = lynx.LynxKite().new_project()
       p.exampleGraph()
-      p.connectedComponents(**{
-        'directions': 'ignore directions',
-        'name': 'connected_components'})
+      p.connectedComponents(
+        directions='ignore directions',
+        name='connected_components')
       s = p.segmentation('connected_components')
       print(s.scalar('vertex_count'))
 
@@ -712,9 +712,9 @@ class SubProject:
   def global_table_name(self, table):
     '''Returns a reference to a table within the project. Example usage::
 
-      project2.importVertices(**{
-        'id_attr': 'id',
-        'table': project1.global_table_name('edges')})
+      project2.importVertices(
+        id_attr='id',
+        table=project1.global_table_name('edges'))
 
     The same set of project tables are accessible as from SQL.
     '''

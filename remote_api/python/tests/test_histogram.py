@@ -7,10 +7,10 @@ class TestHistograms(unittest.TestCase):
   def test_double_vertex_histogram(self):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=123)
-    p.addRandomVertexAttribute(**{
-        'name': 'attribute_name',
-        'dist': 'Standard Uniform',
-        'seed': '12344321'})
+    p.addRandomVertexAttribute(
+        name='attribute_name',
+        dist='Standard Uniform',
+        seed=12344321)
     a = p.vertex_attribute('attribute_name')
     h = a.histogram(numbuckets=10, logarithmic=True)
     self.assertEqual(h.labelType, 'between')
@@ -21,10 +21,10 @@ class TestHistograms(unittest.TestCase):
   def test_constant_string_vertex_histogram(self):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=123)
-    p.addConstantVertexAttribute(**{
-        'name': 's_attr',
-        'type': 'String',
-        'value': 'kite'})
+    p.addConstantVertexAttribute(
+        name='s_attr',
+        type='String',
+        value='kite')
     a = p.vertex_attribute('s_attr')
     h = a.histogram(numbuckets=5, logarithmic=False)
     self.assertEqual(h.labelType, 'bucket')
@@ -34,13 +34,13 @@ class TestHistograms(unittest.TestCase):
   def test_double_edge_histogram(self):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=80)
-    p.createRandomEdgeBundle(**{
-        'degree': '10.0',
-        'seed': '12321'})
-    p.addRandomEdgeAttribute(**{
-        'name': 'edge_attr_name',
-        'dist': 'Standard Uniform',
-        'seed': '1234321'})
+    p.createRandomEdgeBundle(
+        degree=10.0,
+        seed=12321)
+    p.addRandomEdgeAttribute(
+        name='edge_attr_name',
+        dist='Standard Uniform',
+        seed=1234321)
     a = p.edge_attribute('edge_attr_name')
     h = a.histogram(numbuckets=4, logarithmic=False)
     self.assertEqual(h.labelType, 'between')
@@ -50,10 +50,10 @@ class TestHistograms(unittest.TestCase):
   def test_attribute_name(self):
     p = lynx.LynxKite().new_project()
     p.newVertexSet(size=20)
-    p.addConstantVertexAttribute(**{
-        'name': 's_attr',
-        'type': 'String',
-        'value': 'kite'})
+    p.addConstantVertexAttribute(
+        name='s_attr',
+        type='String',
+        value='kite')
     with self.assertRaises(lynx.LynxException):
       a = p.vertex_attribute('wrong_attribute_name')
       a.histogram(numbuckets=5, logarithmic=False)
