@@ -33,4 +33,17 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     assert(project.edgeBundle == null)
   }
 
+  test("Merge vertices by attribute, segmentation") {
+    run("Example Graph")
+    run("Segment by string attribute", Map("name" -> "bucketing", "attr" -> "gender"))
+    val bucketing = project.segmentation("bucketing")
+    run("Add constant vertex attribute", Map("name" -> "constant", "value" -> "1", "type" -> "Double"),
+      on = bucketing)
+    run("Merge vertices by attribute",
+      Map("key" -> "constant", "aggregate-gender" -> "", "aggregate-id" -> "", "aggregate-size" -> ""),
+      on = bucketing)
+    assert(bucketing.scalars("!coverage").value == 4)
+    assert(bucketing.scalars("!belongsToEdges").value == 4)
+    assert(bucketing.scalars("!nonEmpty").value == 1)
+  }
 }

@@ -2070,6 +2070,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
       val oldSegmentations = project.viewer.segmentationMap
+      val oldBelongsTo = if (project.isSegmentation) project.asSegmentation.belongsTo else null
       project.setVertexSet(m.segments, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
         val seg = project.segmentation(name)
@@ -2078,6 +2079,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         seg.belongsTo = op(
           op.srcMapping, m.belongsTo)(
             op.edges, seg.belongsTo).result.induced
+      }
+      if (project.isSegmentation) {
+        val seg = project.asSegmentation
+        val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+        seg.belongsTo = op(
+          op.dstMapping, m.belongsTo)(
+            op.edges, oldBelongsTo).result.induced
       }
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
@@ -2171,6 +2179,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       applyMergeParallelEdgesByKey(project, params)
+    }
+  })
+
+  register("Merge parallel segmentation links", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation
+    def apply(params: Map[String, String]) = {
+      val linksAsAttr = {
+        val op = graph_operations.EdgeBundleAsAttribute()
+        op(op.edges, seg.belongsTo).result.attr
+      }
+      val mergedResult = mergeEdges(linksAsAttr)
+      val newLinks = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, seg.belongsTo)(op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      seg.belongsTo = newLinks
     }
   })
 

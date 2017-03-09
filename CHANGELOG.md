@@ -6,6 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Added _Merge parallel segmentation links_ operation.
+
+### 1.13.0
+
  - Visualization settings UI now matches the new attribute UI.
  - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
  - Tab-completion for LynxKite operations works in Python command-line
@@ -16,6 +20,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
    that preserves the structure of the network to speed up model creation.
  - Edge and scalar attribute notes added or augmented.
+ - Merge vertices by attributes operation keeps links with base project.
 
 ### 1.12.1
 
