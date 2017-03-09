@@ -41,7 +41,7 @@ project.filterByAttributes('filterea_weight': '!1', 'filterva_age': '<40', 'filt
         lib.left.side.element(by.id('toggle-python-button')).click();
         expect(lib.getACEText(lib.left.getPythonWorkflowCodeEditor())).toBe(`
 project.exampleGraph()
-project.renameVertexAttribute(**{'from': 'age', 'to': 'newage'})
+project.renameVertexAttribute(before='age', after='newage')
         `.trim());
       },
       function() {}

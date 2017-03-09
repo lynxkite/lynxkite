@@ -2313,31 +2313,31 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Rename edge attribute", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = edgeAttributes),
-      Param("to", "New name"))
+      Choice("before", "Old name", options = edgeAttributes),
+      Param("after", "New name"))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("before")
+      val to = params("after")
       s"Rename edge attribute $from to $to"
     }
     def apply() = {
       assert(!project.edgeAttributes.contains(params("to")),
         s"""An edge-attribute named '${params("to")}' already exists,
             please discard it or choose another name""")
-      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
-      project.edgeAttributes(params("from")) = null
+      project.edgeAttributes(params("after")) = project.edgeAttributes(params("before"))
+      project.edgeAttributes(params("before")) = null
     }
   })
 
   register("Rename vertex attribute", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = vertexAttributes),
-      Param("to", "New name"))
+      Choice("before", "Old name", options = vertexAttributes),
+      Param("after", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("before")
+      val to = params("after")
       s"Rename vertex attribute $from to $to"
     }
     def apply() = {
@@ -2346,49 +2346,49 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             please discard it or choose another name""")
       assert(params("to").nonEmpty, "Please set the new attribute name.")
       project.newVertexAttribute(
-        params("to"), project.vertexAttributes(params("from")),
-        project.viewer.getVertexAttributeNote(params("from")))
-      project.vertexAttributes(params("from")) = null
+        params("after"), project.vertexAttributes(params("before")),
+        project.viewer.getVertexAttributeNote(params("before")))
+      project.vertexAttributes(params("before")) = null
     }
   })
 
   register("Rename segmentation", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = segmentations),
-      Param("to", "New name"))
+      Choice("before", "Old name", options = segmentations),
+      Param("after", "New name"))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("before")
+      val to = params("after")
       s"Rename segmentation $from to $to"
     }
     def apply() = {
       assert(
-        !project.segmentationNames.contains(params("to")),
-        s"""A segmentation named '${params("to")}' already exists,
+        !project.segmentationNames.contains(params("after")),
+        s"""A segmentation named '${params("after")}' already exists,
             please discard it or choose another name""")
-      project.segmentation(params("to")).segmentationState =
-        project.existingSegmentation(params("from")).segmentationState
-      project.deleteSegmentation(params("from"))
+      project.segmentation(params("after")).segmentationState =
+        project.existingSegmentation(params("before")).segmentationState
+      project.deleteSegmentation(params("before"))
     }
   })
 
   register("Rename scalar", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = scalars),
-      Param("to", "New name"))
+      Choice("before", "Old name", options = scalars),
+      Param("after", "New name"))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("before")
+      val to = params("after")
       s"Rename scalar $from to $to"
     }
     def apply() = {
-      assert(!project.scalars.contains(params("to")),
-        s"""A scalar named '${params("to")}' already exists,
+      assert(!project.scalars.contains(params("after")),
+        s"""A scalar named '${params("after")}' already exists,
             please discard it or choose another name""")
-      project.scalars(params("to")) = project.scalars(params("from"))
-      project.scalars(params("from")) = null
+      project.scalars(params("after")) = project.scalars(params("before"))
+      project.scalars(params("before")) = null
     }
   })
 
@@ -2478,66 +2478,66 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Copy edge attribute", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = edgeAttributes),
-      Param("to", "New name"))
+      Choice("name", "Old name", options = edgeAttributes),
+      Param("destination", "New name"))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("name")
+      val to = params("destination")
       s"Copy edge attribute $from to $to"
     }
     def apply() = {
-      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+      project.edgeAttributes(params("destination")) = project.edgeAttributes(params("name"))
     }
   })
 
   register("Copy vertex attribute", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = vertexAttributes),
-      Param("to", "New name"))
+      Choice("name", "Old name", options = vertexAttributes),
+      Param("destination", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("name")
+      val to = params("destination")
       s"Copy vertex attribute $from to $to"
     }
     def apply() = {
-      assert(params("to").nonEmpty, "Please set the new attribute name.")
+      assert(params("destination").nonEmpty, "Please set the new attribute name.")
       project.newVertexAttribute(
-        params("to"), project.vertexAttributes(params("from")),
-        project.viewer.getVertexAttributeNote(params("from")))
+        params("destination"), project.vertexAttributes(params("name")),
+        project.viewer.getVertexAttributeNote(params("name")))
     }
   })
 
   register("Copy segmentation", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = segmentations),
-      Param("to", "New name"))
+      Choice("name", "Old name", options = segmentations),
+      Param("destination", "New name"))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("name")
+      val to = params("destination")
       s"Copy segmentation $from to $to"
     }
     def apply() = {
-      val from = project.existingSegmentation(params("from"))
-      val to = project.segmentation(params("to"))
+      val from = project.existingSegmentation(params("name"))
+      val to = project.segmentation(params("destination"))
       to.segmentationState = from.segmentationState
     }
   })
 
   register("Copy scalar", UtilityOperations, new ProjectTransformation(_) {
     def parameters = List(
-      Choice("from", "Old name", options = scalars),
-      Param("to", "New name"))
+      Choice("name", "Old name", options = scalars),
+      Param("destination", "New name"))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
     override def summary = {
-      val from = params("from")
-      val to = params("to")
+      val from = params("name")
+      val to = params("destination")
       s"Copy scalar $from to $to"
     }
     def apply() = {
-      project.scalars(params("to")) = project.scalars(params("from"))
+      project.scalars(params("name")) = project.scalars(params("destination"))
     }
   })
 
