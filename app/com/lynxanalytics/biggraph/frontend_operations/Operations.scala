@@ -664,7 +664,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Enumerate triangles", CreateSegmentationOperations, new ProjectTransformation(_) {
+  register("Find triangles", CreateSegmentationOperations, new ProjectTransformation(_) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "triangles"),
       Choice("bothdir", "Edges required in both directions", options = FEOption.bools))
