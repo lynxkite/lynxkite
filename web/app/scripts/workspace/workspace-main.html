@@ -1,6 +1,21 @@
-<div id="box-project">
+<div id="workspace-main">
 
-  <h1>{{workspaceName}}</h1>
+  <div>
+    <span id="workspace-name">{{workspaceName}}</span>
+    <div class="btn-group pull-right">
+      <a class="btn btn-default"
+           href="#/"
+           id="close-workspace"
+           tooltip="Close&nbsp;workspace"
+           tooltip-append-to-body="true"
+           tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-remove"></i>
+      </a>
+    </div>
+  </div>
+
+  <div style="clear: both;">
+  </div>
 
   <div id="box-view">
     <workspace-drawing-board
