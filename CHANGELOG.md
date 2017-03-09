@@ -6,7 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Added _"Discard segmentation links"_ operation.
+ - Added _Discard segmentation links_ operation.
+ - Added _Merge parallel segmentation links_ operation.
 
 ### 1.13.0
 
