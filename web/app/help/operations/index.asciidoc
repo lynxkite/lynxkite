@@ -129,15 +129,11 @@ include::approximate-clustering-coefficient.asciidoc[]
 
 include::approximate-embeddedness.asciidoc[]
 
-include::centrality.asciidoc[]
-
 include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
 
 include::classify-vertices-with-a-model.asciidoc[]
-
-include::clustering-coefficient.asciidoc[]
 
 include::coloring.asciidoc[]
 
@@ -145,9 +141,29 @@ include::combine-segmentations.asciidoc[]
 
 include::compare-segmentation-edges.asciidoc[]
 
+include::compute-centrality.asciidoc[]
+
+include::compute-clustering-coefficient.asciidoc[]
+
+include::compute-degree.asciidoc[]
+
+include::compute-dispersion.asciidoc[]
+
+include::compute-embeddedness.asciidoc[]
+
+include::compute-pagerank.asciidoc[]
+
 include::connect-vertices-on-attribute.asciidoc[]
 
-include::connected-components.asciidoc[]
+include::convert-edge-attribute-to-double.asciidoc[]
+
+include::convert-edge-attribute-to-string.asciidoc[]
+
+include::convert-vertex-attribute-to-double.asciidoc[]
+
+include::convert-vertex-attribute-to-string.asciidoc[]
+
+include::convert-vertex-attributes-to-position.asciidoc[]
 
 include::convert-vertices-into-edges.asciidoc[]
 
@@ -177,49 +193,39 @@ include::create-edges-from-co-occurrence.asciidoc[]
 
 include::create-edges-from-set-overlaps.asciidoc[]
 
+include::create-example-graph.asciidoc[]
+
 include::create-random-edge-bundle.asciidoc[]
 
 include::create-scale-free-random-edge-bundle.asciidoc[]
 
 include::create-segmentation-from-sql.asciidoc[]
 
+include::create-vertices.asciidoc[]
+
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
-include::degree.asciidoc[]
+include::derive-edge-attribute.asciidoc[]
 
 include::derive-scalar.asciidoc[]
 
-include::derived-edge-attribute.asciidoc[]
+include::derive-vertex-attribute.asciidoc[]
 
-include::derived-vertex-attribute.asciidoc[]
-
-include::discard-edge-attribute.asciidoc[]
+include::discard-edge-attributes.asciidoc[]
 
 include::discard-edges.asciidoc[]
 
 include::discard-loop-edges.asciidoc[]
 
-include::discard-scalar.asciidoc[]
+include::discard-scalars.asciidoc[]
 
 include::discard-segmentation.asciidoc[]
 
-include::discard-vertex-attribute.asciidoc[]
+include::discard-vertex-attributes.asciidoc[]
 
 include::discard-vertices.asciidoc[]
 
-include::dispersion.asciidoc[]
-
-include::edge-attribute-to-double.asciidoc[]
-
-include::edge-attribute-to-string.asciidoc[]
-
-include::edge-graph.asciidoc[]
-
-include::embeddedness.asciidoc[]
-
 include::enumerate-triangles.asciidoc[]
-
-include::example-graph.asciidoc[]
 
 include::export-edge-attributes-to-database.asciidoc[]
 
@@ -233,17 +239,27 @@ include::export-vertex-attributes-to-database.asciidoc[]
 
 include::export-vertex-attributes-to-file.asciidoc[]
 
+include::expose-internal-edge-id.asciidoc[]
+
+include::expose-internal-vertex-id.asciidoc[]
+
 include::fill-edge-attribute-with-constant-default-value.asciidoc[]
 
-include::fill-with-constant-default-value.asciidoc[]
+include::fill-vertex-attribute-with-constant-default-value.asciidoc[]
 
 include::filter-by-attributes.asciidoc[]
 
+include::find-connected-components.asciidoc[]
+
 include::find-infocom-communities.asciidoc[]
 
-include::fingerprinting-based-on-attributes.asciidoc[]
+include::find-maximal-cliques.asciidoc[]
 
-include::fingerprinting-between-project-and-segmentation.asciidoc[]
+include::find-modular-clustering.asciidoc[]
+
+include::find-shortest-path.asciidoc[]
+
+include::fingerprint-based-on-attributes.asciidoc[]
 
 include::grow-segmentation.asciidoc[]
 
@@ -252,6 +268,8 @@ include::hash-vertex-attribute.asciidoc[]
 include::import-edge-attributes.asciidoc[]
 
 include::import-edges-for-existing-vertices.asciidoc[]
+
+include::import-metagraph.asciidoc[]
 
 include::import-project-as-segmentation.asciidoc[]
 
@@ -265,33 +283,21 @@ include::import-vertices-and-edges-from-a-single-table.asciidoc[]
 
 include::import-vertices.asciidoc[]
 
-include::internal-edge-id-as-attribute.asciidoc[]
-
-include::internal-vertex-id-as-attribute.asciidoc[]
+include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
 include::lookup-region.asciidoc[]
-
-include::maximal-cliques.asciidoc[]
 
 include::merge-parallel-edges-by-attribute.asciidoc[]
 
 include::merge-parallel-edges.asciidoc[]
 
-include::merge-two-attributes.asciidoc[]
-
 include::merge-two-edge-attributes.asciidoc[]
+
+include::merge-two-vertex-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
 
-include::metagraph.asciidoc[]
-
-include::modular-clustering.asciidoc[]
-
-include::new-vertex-set.asciidoc[]
-
-include::no-operation.asciidoc[]
-
-include::pagerank.asciidoc[]
+include::predict-attribute-by-viral-modeling.asciidoc[]
 
 include::predict-from-model.asciidoc[]
 
@@ -310,6 +316,10 @@ include::rename-scalar.asciidoc[]
 include::rename-segmentation.asciidoc[]
 
 include::rename-vertex-attribute.asciidoc[]
+
+include::replace-edges-with-triadic-closure.asciidoc[]
+
+include::replace-with-edge-graph.asciidoc[]
 
 include::reverse-edge-direction.asciidoc[]
 
@@ -337,8 +347,6 @@ include::set-segmentation-icon.asciidoc[]
 
 include::set-vertex-attribute-icon.asciidoc[]
 
-include::shortest-path.asciidoc[]
-
 include::snowball-sample.asciidoc[]
 
 include::split-edges.asciidoc[]
@@ -353,17 +361,7 @@ include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 
-include::triadic-closure.asciidoc[]
-
 include::union-with-another-project.asciidoc[]
-
-include::vertex-attribute-to-double.asciidoc[]
-
-include::vertex-attribute-to-string.asciidoc[]
-
-include::vertex-attributes-to-position.asciidoc[]
-
-include::viral-modeling.asciidoc[]
 
 include::weighted-aggregate-edge-attribute-globally.asciidoc[]
 
