@@ -84,7 +84,7 @@ project.renameVertexAttribute(**{'from': 'age', 'to': 'newage'})
         'A simple workflow that does a\nsimple derive on\na simple project.',
         `
 project.exampleGraph()
-project.derivedVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : \\'Ms \\' + name', output: 'polite', type: 'string')
+project.deriveVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : \\'Ms \\' + name', output: 'polite', type: 'string')
         `.trim());
       lib.left.runOperation('TestDeriveWorkflow');
       expect(lib.left.vertexCount()).toEqual(4);

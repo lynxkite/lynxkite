@@ -4,8 +4,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class TriadicClosureTest extends OperationsTestBase {
   test("Triadic closure") {
-    run("Example Graph")
-    run("Triadic closure")
+    run("Create example graph")
+    run("Replace edges with triadic closure")
 
     val ab_weights = project.edgeAttributes("ab_weight").runtimeSafeCast[Double]
     assert(ab_weights.rdd.values.collect.toSeq.sorted == Seq(1.0, 2.0, 3.0, 4.0))

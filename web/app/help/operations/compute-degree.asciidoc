@@ -1,4 +1,4 @@
-### Degree
+### Compute degree
 
 For every vertex, this operation calculates either the number of edges it is connected to
 or the number of neighboring vertices it is connected to.

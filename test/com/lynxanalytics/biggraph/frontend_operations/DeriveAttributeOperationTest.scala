@@ -2,18 +2,18 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class DerivedAttributeOperationTest extends OperationsTestBase {
-  test("Derived vertex attribute (Double)") {
-    run("Example Graph")
-    run("Derived vertex attribute",
+class DeriveAttributeOperationTest extends OperationsTestBase {
+  test("Derive vertex attribute (Double)") {
+    run("Create example graph")
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
   }
 
   test("Multi-line function") {
-    run("Example Graph")
-    run("Derived vertex attribute",
+    run("Create example graph")
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         (function() {
           return age;
@@ -23,8 +23,8 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Multi-line expression and utility function") {
-    run("Example Graph")
-    run("Derived vertex attribute",
+    run("Create example graph")
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         var rnd = util.rnd(income);
         rnd.nextDouble() + rnd.nextDouble();"""))
@@ -37,10 +37,10 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Vector attribute") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate on neighbors",
       Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-name" -> "vector"))
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "string", "output" -> "output", "expr" -> """
         (function() { neighbor_name_vector.sort(); return neighbor_name_vector[0]; })()"""))
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
@@ -48,10 +48,10 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Primitive vector attribute") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate on neighbors",
       Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         (function() {
            if (neighbor_age_vector.length > 0) {
@@ -65,7 +65,7 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Vector of vector attribute") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate on neighbors",
       Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
     run("Aggregate on neighbors",
@@ -73,7 +73,7 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
         "prefix" -> "neighbor",
         "direction" -> "all edges",
         "aggregate-neighbor_age_vector" -> "vector"))
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         neighbor_neighbor_age_vector_vector.map(function(subarray) {
           return subarray.reduce(function(a, b) { return a + b; }, 0);
@@ -83,10 +83,10 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Vector length") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate on neighbors",
       Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-name" -> "vector"))
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "neighbor_name_vector.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 3, 1 -> 3, 2 -> 2))
@@ -94,7 +94,7 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
 
   test("Wrong type") {
     val e = intercept[org.apache.spark.SparkException] {
-      run("Derived vertex attribute",
+      run("Derive vertex attribute",
         Map("type" -> "double", "output" -> "output", "expr" -> "'hello'"))
       project.vertexAttributes("output").runtimeSafeCast[Double].rdd.collect
     }
@@ -145,22 +145,22 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(false == JSUtilities.containsIdentifierJS("a + b + c", "a + b"))
   }
 
-  test("Derived vertex attribute with substring conflict (#1676)") {
-    run("Example Graph")
+  test("Derive vertex attribute with substring conflict (#1676)") {
+    run("Create example graph")
     run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.size == 4)
   }
 
-  test("Derived vertex attribute (String)") {
-    run("Example Graph")
+  test("Derive vertex attribute (String)") {
+    run("Create example graph")
     // Test dropping values.
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "string", "output" -> "gender",
         "expr" -> "name == 'Isolated Joe' ? undefined : gender"))
-    run("Derived vertex attribute",
+    run("Derive vertex attribute",
       Map("type" -> "string", "output" -> "output",
         "expr" -> "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
@@ -168,10 +168,10 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
   }
 
   // TODO: Re-enable this test. See #1037.
-  ignore("Derived edge attribute") {
-    run("Example Graph")
+  ignore("Derive edge attribute") {
+    run("Create example graph")
     // Test dropping values.
-    run("Derived edge attribute",
+    run("Derive edge attribute",
       Map("type" -> "string", "output" -> "tripletke",
         "expr" -> "src$name + ':' + comment + ':' + dst$age + '#' + weight"))
     val attr = project.edgeAttributes("tripletke").runtimeSafeCast[String]
@@ -182,28 +182,28 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       (3, "Bob:Bob loves Eve:18.2#4")))
   }
 
-  test("Derived vertex attribute (Vector of Strings)") {
-    run("Example Graph")
-    run("Derived vertex attribute",
+  test("Derive vertex attribute (Vector of Strings)") {
+    run("Create example graph")
+    run("Derive vertex attribute",
       Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "[gender]"))
     val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[String]]
     assert(attr.rdd.collect.toMap == Map(
       0 -> Vector("Male"), 1 -> Vector("Female"), 2 -> Vector("Male"), 3 -> Vector("Male")))
   }
 
-  test("Derived vertex attribute (Vector of Doubles)") {
-    run("Example Graph")
-    run("Derived vertex attribute",
+  test("Derive vertex attribute (Vector of Doubles)") {
+    run("Create example graph")
+    run("Derive vertex attribute",
       Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[age]"))
     val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]]
     assert(attr.rdd.collect.toMap == Map(
       0 -> Vector(20.3), 1 -> Vector(18.2), 2 -> Vector(50.3), 3 -> Vector(2.0)))
   }
 
-  test("Derived vertex attribute (does not return vector)") {
-    run("Example Graph")
+  test("Derive vertex attribute (does not return vector)") {
+    run("Create example graph")
     val e = intercept[org.apache.spark.SparkException] {
-      run("Derived vertex attribute",
+      run("Derive vertex attribute",
         Map("type" -> "vector of strings", "output" -> "vector", "expr" -> "gender"))
       project.vertexAttributes("vector").runtimeSafeCast[Vector[String]].rdd.collect
     }
@@ -211,10 +211,10 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       "{gender: Male} did not return a vector: Male")
   }
 
-  test("Derived vertex attribute (wrong vector generic type)") {
-    run("Example Graph")
+  test("Derive vertex attribute (wrong vector generic type)") {
+    run("Create example graph")
     val e = intercept[org.apache.spark.SparkException] {
-      run("Derived vertex attribute",
+      run("Derive vertex attribute",
         Map("type" -> "vector of doubles", "output" -> "vector", "expr" -> "[gender]"))
       project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
     }
@@ -222,10 +222,10 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
       "{gender: Male} did not return a number in vector: NaN")
   }
 
-  test("Derived vertex attribute (undefined in vector)") {
-    run("Example Graph")
+  test("Derive vertex attribute (undefined in vector)") {
+    run("Create example graph")
     val e = intercept[org.apache.spark.SparkException] {
-      run("Derived vertex attribute", Map("type" -> "vector of doubles",
+      run("Derive vertex attribute", Map("type" -> "vector of doubles",
         "output" -> "vector", "defined_attrs" -> "false", "expr" -> "[income]"))
       project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
     }

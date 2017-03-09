@@ -1,4 +1,4 @@
-### Metagraph
+### Import metagraph
 
 Loads the relationships between LynxKite entities such as attributes and operations as a graph.
 This complex graph can be useful for debugging or demonstration purposes. Because it exposes

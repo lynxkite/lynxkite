@@ -4,8 +4,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MergeTwoEdgeAttributesOperationTest extends OperationsTestBase {
   test("Merge two edge attributes") {
-    run("Example Graph")
-    run("Derived edge attribute",
+    run("Create example graph")
+    run("Derive edge attribute",
       Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
     run("Merge two edge attributes",
       Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))

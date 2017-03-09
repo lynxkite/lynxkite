@@ -1,4 +1,4 @@
-### Maximal cliques
+### Find maximal cliques
 
 Creates a segmentation of vertices based on the maximal cliques they are the member of.
 A maximal clique is a maximal set of vertices where there is an edge between every two vertex.

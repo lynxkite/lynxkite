@@ -131,7 +131,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'precise mode histogram has precise number for large datasets',
     function() {
-      lib.left.runOperation('New vertex set', {size: '123456'});
+      lib.left.runOperation('Create vertices', {size: '123456'});
       lib.left.runOperation('Add constant vertex attribute', {name: 'c'});
       expect(lib.left.vertexAttribute('c').getHistogramValues(true)).toEqual([
         { title : '1.00-1.00', size: 100, value: 123456 },

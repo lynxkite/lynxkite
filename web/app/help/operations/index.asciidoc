@@ -3,7 +3,7 @@
 # Operations
 
 LynxKite's operations make it possible to modify a graph. There are operations for adding new
-attributes (such as calculating <<PageRank>>), changing the graph structure (such as
+attributes (such as <<Compute PageRank>>), changing the graph structure (such as
 <<reverse-edge-direction>>), importing and exporting data, and for creating <<segmentations>>.
 
 All operations can be undone, so they are safe to experiment with.

@@ -34,7 +34,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
 
   test("merge parallel edges by attribute works for Double") {
     load("merge-parallel-edges-double.csv")
-    run("Edge attribute to double", Map("attr" -> "call"))
+    run("Convert edge attribute to double", Map("attr" -> "call"))
     run("Merge parallel edges by attribute", Map(
       "key" -> "call",
       "aggregate-src" -> "",
@@ -67,8 +67,8 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
 
   test("Merge parallel edges with undefined values keeps the defined values") {
     load("merge-parallel-edges-double.csv")
-    run("Edge attribute to double", Map("attr" -> "call"))
-    run("Derived edge attribute", Map(
+    run("Convert edge attribute to double", Map("attr" -> "call"))
+    run("Derive edge attribute", Map(
       "output" -> "call",
       "type" -> "double",
       "expr" -> "call == 6.0 ? call : undefined"))

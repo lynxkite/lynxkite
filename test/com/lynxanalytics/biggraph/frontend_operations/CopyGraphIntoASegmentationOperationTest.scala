@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CopyGraphIntoASegmentationOperationTest extends OperationsTestBase {
   test("Copy graph into a segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     val seg = project.segmentation("seg")
     assert(seg.belongsTo.toIdPairSeq == Seq((0, (0, 0)), (1, (1, 1)), (2, (2, 2)), (3, (3, 3))))
@@ -14,7 +14,7 @@ class CopyGraphIntoASegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Copy graph into a segmentation discards sub-segmentations") {
-    run("Example Graph")
+    run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg1"))
     run("Copy graph into a segmentation", Map("name" -> "seg2"))
     val seg2 = project.segmentation("seg2")

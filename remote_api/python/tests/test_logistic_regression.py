@@ -27,7 +27,7 @@ class TestLogisticRegression(unittest.TestCase):
         'name': 'rnd',
         'dist': 'Standard Normal',
         'seed': '1234543'})
-    p.derivedVertexAttribute(
+    p.deriveVertexAttribute(
         expr='rnd  > 0 ? 1 : 0',
         output='label',
         type='double')

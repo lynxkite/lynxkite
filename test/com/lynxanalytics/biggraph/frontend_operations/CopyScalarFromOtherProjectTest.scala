@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   test("Take scalar from other project with wrong source name") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Rename scalar", Map("from" -> "greeting", "to" -> "farewell"), on = other)
     val ex = intercept[java.lang.AssertionError] {
@@ -21,7 +21,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from other project with conflicting name") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     val ex = intercept[java.lang.AssertionError] {
       run(
@@ -36,7 +36,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from other project scalar value ok") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Derive scalar", Map(
       "output" -> "scalar_val",
@@ -53,7 +53,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",
@@ -78,7 +78,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from segmentation of segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",

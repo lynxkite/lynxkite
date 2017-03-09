@@ -5,11 +5,11 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CopyEdgesToSegmentationTest extends OperationsTestBase {
   test("Copy edges to cliques") {
-    run("New vertex set", Map("size" -> "5"))
+    run("Create vertices", Map("size" -> "5"))
     run("Create random edge bundle", Map("degree" -> "5", "seed" -> "0"))
     assert(project.edgeBundle.toPairSeq.size == 21)
     run("Add constant edge attribute", Map("name" -> "const", "value" -> "1", "type" -> "Double"))
-    run("Maximal cliques", Map("name" -> "cliques", "bothdir" -> "false", "min" -> "3"))
+    run("Find maximal cliques", Map("name" -> "cliques", "bothdir" -> "false", "min" -> "3"))
     val cliques = project.segmentation("cliques")
     assert(cliques.vertexSet.toSeq.size == 2)
     run("Copy edges to segmentation", Map("apply_to" -> "|cliques"))

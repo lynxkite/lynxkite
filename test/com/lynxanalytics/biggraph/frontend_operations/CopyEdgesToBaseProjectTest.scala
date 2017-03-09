@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CopyEdgesToBaseProjectTest extends OperationsTestBase {
   test("Copy edges to base project") {
-    run("New vertex set", Map("size" -> "5"))
+    run("Create vertices", Map("size" -> "5"))
 
     run("Copy graph into a segmentation", Map("name" -> "copy"))
     val copy = project.segmentation("copy")

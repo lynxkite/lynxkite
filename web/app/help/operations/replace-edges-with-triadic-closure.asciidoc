@@ -1,4 +1,4 @@
-### Triadic closure
+### Replace edges with triadic closure
 
 For every A{to}B{to}C triplet, creates an A{to}C edge. The original edges are discarded.
 The new A{to}C edge gets the attributes of the original A{to}B and B{to}C edges with prefixes "ab_" and "bc_".

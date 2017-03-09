@@ -90,7 +90,7 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     }
     val projectFrame = ProjectFrame.fromName(projectName)
     val subProject = projectFrame.subproject
-    run("Example Graph", Map())
+    run("Create example graph", Map())
     // Add an attribute that is of a type that DataFrames do not support.
     run("Aggregate on neighbors",
       Map("prefix" -> "", "direction" -> "all edges", "aggregate-name" -> "set"))

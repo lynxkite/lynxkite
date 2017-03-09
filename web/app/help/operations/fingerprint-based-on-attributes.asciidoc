@@ -1,4 +1,4 @@
-### Fingerprinting based on attributes
+### Fingerprint based on attributes
 
 In a graph that has two different string identifier attributes (e.g. Facebook ID and
 MSISDN) this operation will match the vertices that only have the first attribute defined

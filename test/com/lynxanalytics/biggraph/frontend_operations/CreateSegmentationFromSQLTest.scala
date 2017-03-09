@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CreateSegmentationFromSQLTest extends OperationsTestBase {
   test("Create segmentation from SQL") {
-    run("Example Graph")
+    run("Create example graph")
     run(
       "Create segmentation from SQL",
       Map("name" -> "sqltest", "sql" -> "select name,location,age from vertices"))

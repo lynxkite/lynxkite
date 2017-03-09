@@ -1,4 +1,4 @@
-### Internal edge ID as attribute
+### Expose internal edge ID
 
 Exposes the internal edge ID as an attribute. Useful if you want to identify edges, for example in
 an exported dataset.

@@ -1,4 +1,4 @@
-### Derived vertex attribute
+### Derive vertex attribute
 
 Generates a new attribute based on existing vertex attributes. The value expression can be
 an arbitrary JavaScript expression, and it can refer to existing attributes as if they

@@ -5,8 +5,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class AggregateToSegmentationOperationTest extends OperationsTestBase {
 
   test("Aggregate to segmentation") {
-    run("Example Graph")
-    run("Connected components", Map("name" -> "cc", "directions" -> "require both directions"))
+    run("Create example graph")
+    run("Find connected components", Map("name" -> "cc", "directions" -> "require both directions"))
     run("Aggregate to segmentation",
       Map(
         "apply_to" -> "|cc",

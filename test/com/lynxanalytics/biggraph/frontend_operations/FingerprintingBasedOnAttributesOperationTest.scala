@@ -13,15 +13,15 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst"))
     // Turn empty strings into "undefined".
-    run("Derived vertex attribute", Map(
+    run("Derive vertex attribute", Map(
       "output" -> "email",
       "type" -> "string",
       "expr" -> "email ? email : undefined"))
-    run("Derived vertex attribute", Map(
+    run("Derive vertex attribute", Map(
       "output" -> "name",
       "type" -> "string",
       "expr" -> "name ? name : undefined"))
-    run("Fingerprinting based on attributes", Map(
+    run("Fingerprint based on attributes", Map(
       "leftName" -> "email",
       "rightName" -> "name",
       "mo" -> "1",

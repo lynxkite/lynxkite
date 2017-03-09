@@ -1,4 +1,4 @@
-### Derived edge attribute
+### Derive edge attribute
 
 Generates a new attribute based on existing attributes. The value expression can be
 an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if

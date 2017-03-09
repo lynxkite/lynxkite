@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.controllers._
 class AuxiliaryOperationTest extends OperationsTestBase {
 
   test("Optional and mandatory parameters work") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "incoming",
       "direction" -> "incoming edges",

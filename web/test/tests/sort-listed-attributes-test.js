@@ -3,10 +3,10 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  /* We use the Derived vertex attribute operation to generate attributes for the graph.
+  /* We use the Derive vertex attribute operation to generate attributes for the graph.
    * The attributes object below contains the attributes we are using:
    *     - the keys are the names of the attributes,
-   *     - the corresponding values are the expression for the Derived vertex attribute operation.
+   *     - the corresponding values are the expression for the Derive vertex attribute operation.
    *
    * We have several attribute pairs which starts with the same letter but one of them is
    * capitalized while the other is all lower case letters to test how the sorting handles
@@ -59,9 +59,9 @@ module.exports = function(fw) {
     expect(aggrList.getText()).toEqual(sortedAttributes);
     lib.left.closeOperation();
 
-    // Checking if the attributes listed for the Vertex attribute to string operation are in
+    // Checking if the attributes listed for the Convert vertex attribute to string operation are in
     // correct order.
-    lib.left.openOperation('Vertex attribute to string');
+    lib.left.openOperation('Convert vertex attribute to string');
     // The list of the attributes in the order they are displayed in the listbox.
     var castList = lib.left.operationParameter(lib.left.toolbox, 'attr');
     expect(castList.getText()).toEqual(sortedAttributes.join('\n'));

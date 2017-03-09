@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
   test("Fingerprinting between project and segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import project as segmentation", Map(
       "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
     run("Import segmentation links", Map(
@@ -17,7 +17,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "seg-id-attr" -> "name",
       "seg-id-column" -> "dst",
       "apply_to" -> "|ExampleGraph2"))
-    run("Fingerprinting between project and segmentation", Map(
+    run("Link project and segmentation by fingerprint", Map(
       "mo" -> "1",
       "ms" -> "0.5",
       "apply_to" -> "|ExampleGraph2"))
@@ -69,7 +69,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "apply_to" -> "|other"))
     def belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 6)
-    run("Fingerprinting between project and segmentation", Map(
+    run("Link project and segmentation by fingerprint", Map(
       "mo" -> "0",
       "ms" -> "0",
       "apply_to" -> "|other"))

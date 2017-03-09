@@ -1,4 +1,4 @@
-### Centrality
+### Compute centrality
 
 Calculates an approximation of the centrality for every vertex. Higher centrality means that
 the vertex is more embedded in the graph. Multiple different centrality measures have been defined

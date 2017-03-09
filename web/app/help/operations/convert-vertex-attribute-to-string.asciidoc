@@ -1,4 +1,4 @@
-### Vertex attribute to string
+### Convert vertex attribute to string
 
 Converts the selected vertex attributes to `String` type.
 

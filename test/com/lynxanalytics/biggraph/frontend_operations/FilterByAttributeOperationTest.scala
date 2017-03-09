@@ -10,7 +10,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
 
     TestUtils.withRestoreGlobals(verticesPerPartition = 2, tolerance = 1.0) {
       val sizeForTwoPartitions = 3
-      run("New vertex set",
+      run("Create vertices",
         Map("size" -> sizeForTwoPartitions.toString))
       run("Create random edge bundle",
         Map("degree" -> "2.0", "seed" -> "42"))
@@ -26,8 +26,8 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
   }
 
   test("Filtering by segment ID") {
-    run("Example Graph")
-    run("Connected components",
+    run("Create example graph")
+    run("Find connected components",
       Map("name" -> "cc", "directions" -> "ignore directions"))
     run("Filter by attributes",
       Map("filterva-size" -> "3", "apply_to" -> "|cc"))
