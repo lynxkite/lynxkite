@@ -1,4 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segment_by_interval.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-[seg_interval] vertices: 1230 edges: null
-[seg_interval_overlap] vertices: 2459 edges: null
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/segment_by_interval.groovy, took 2514 seconds
