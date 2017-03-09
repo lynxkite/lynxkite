@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
-    run("Example Graph")
+    run("Create example graph")
     val otherEditor = clone(project)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = otherEditor)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = otherEditor)
@@ -39,7 +39,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   }
 
   test("Project union on vertex sets") {
-    run("New vertex set", Map("size" -> "10"))
+    run("Create vertices", Map("size" -> "10"))
     run(
       "Union with another project",
       Map(
@@ -51,7 +51,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   }
 
   test("Project union - useful error message (#1611)") {
-    run("Example Graph")
+    run("Create example graph")
     val otherEditor = clone(project)
     run("Rename vertex attribute",
       Map("from" -> "age", "to" -> "newage"), on = otherEditor)

@@ -23,7 +23,7 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Import segmentation for example graph") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import segmentation", Map(
       "table" -> getTable,
       "name" -> "imported",
@@ -34,7 +34,7 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Import segmentation links for example graph") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import segmentation", Map(
       "table" -> getTable,
       "name" -> "imported",
@@ -68,7 +68,7 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Import segmentation for example graph by Long ID") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import segmentation", Map(
       "table" -> getTable,
       "name" -> "imported",

@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
   test("Aggregate edge attribute to vertices, all directions") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "incoming",
       "direction" -> "incoming edges",

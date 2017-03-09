@@ -1,4 +1,4 @@
-### Clustering coefficient
+### Compute clustering coefficient
 
 Calculates the local
 http://en.wikipedia.org/wiki/Clustering_coefficient[clustering

@@ -21,7 +21,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
 
   test("global sql on vertices") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
-    run("Example Graph", on = "Test_Dir/Test_Project")
+    run("Create example graph", on = "Test_Dir/Test_Project")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.global(directory = "Test_Dir",
         sql = "select name from `Test_Project|vertices` where age < 40"),
@@ -34,7 +34,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
 
   test("global sql on vertices with attribute name quoted with backticks") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
-    run("Example Graph", on = "Test_Dir/Test_Project")
+    run("Create example graph", on = "Test_Dir/Test_Project")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.global(directory = "Test_Dir",
         sql = "select `name` from `Test_Project|vertices` where age < 40"),
@@ -45,7 +45,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("sql on vertices") {
-    run("Example Graph")
+    run("Create example graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
       maxRows = 10)))
@@ -55,7 +55,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("sql with empty results") {
-    run("Example Graph")
+    run("Create example graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.local(project = projectName, sql = "select id from vertices where id = 11"),
       maxRows = 10)))
@@ -75,7 +75,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("sql export to csv") {
-    run("Example Graph")
+    run("Create example graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
       DataFrameSpec.local(
         project = projectName,
@@ -92,7 +92,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
 
   test("sql export to database") {
     val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    run("Example Graph")
+    run("Create example graph")
     val connection = graph_util.JDBCUtil.getConnection(url)
     val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
       DataFrameSpec.local(
@@ -461,7 +461,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val exportPath = "IMPORTGRAPHTEST$/example.parquet"
     graph_util.HadoopFile(exportPath).deleteIfExists
 
-    run("Example Graph")
+    run("Create example graph")
     val result = await(
       sqlController.exportSQLQueryToParquet(
         user,
@@ -549,7 +549,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     createProject(name = "example1")
     createDirectory(name = "dir")
     createProject(name = "dir/example2")
-    run("Example Graph", on = "dir/example2")
+    run("Create example graph", on = "dir/example2")
     run(
       "Segment by double attribute",
       params = Map(
@@ -593,7 +593,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("list project table columns") {
-    run("Example Graph")
+    run("Create example graph")
     checkExampleGraphColumns(
       TableBrowserNodeRequest(
         path = "Test_Project|vertices",
@@ -601,7 +601,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("list view columns") {
-    run("Example Graph")
+    run("Create example graph")
     sqlController.createViewDFSpec(
       user,
       SQLCreateViewRequest(
@@ -620,7 +620,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("list table columns") {
-    run("Example Graph")
+    run("Create example graph")
     await(sqlController.exportSQLQueryToTable(
       user,
       SQLExportToTableRequest(

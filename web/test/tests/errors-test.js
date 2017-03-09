@@ -20,7 +20,7 @@ module.exports = function(fw) {
     'error in a scalar',
     function() {
       lib.left.runOperation(
-        'Derived vertex attribute', { output: 'empty', 'type': 'double', expr: 'undefined' });
+        'Derive vertex attribute', { output: 'empty', 'type': 'double', expr: 'undefined' });
       lib.left.runOperation(
         'Aggregate vertex attribute globally',
         { 'aggregate-empty': 'average,sum', 'aggregate-income': 'average' });

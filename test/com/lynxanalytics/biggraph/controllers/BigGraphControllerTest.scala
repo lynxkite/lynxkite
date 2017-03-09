@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class BigGraphControllerTest extends BigGraphControllerTestBase {
   test("filtering by vertex attribute") {
-    run("Example Graph")
+    run("Create example graph")
     val filter = ProjectAttributeFilter("age", "<40")
     controller.filterProject(user, ProjectFilterRequest(projectName, List(filter), List()))
     assert(vattr[String]("name") == Seq("Adam", "Eve", "Isolated Joe"))
@@ -13,7 +13,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("filtering by defined vertex attribute") {
-    run("Example Graph")
+    run("Create example graph")
     val filter = ProjectAttributeFilter("income", "*")
     controller.filterProject(user, ProjectFilterRequest(projectName, List(filter), List()))
     assert(vattr[String]("name") == Seq("Adam", "Bob"))
@@ -22,7 +22,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("filtering by vertex attribute (no edge bundle)") {
-    run("Example Graph")
+    run("Create example graph")
     run("Discard edges")
     val filter = ProjectAttributeFilter("age", "<40")
     controller.filterProject(user, ProjectFilterRequest(projectName, List(filter), List()))
@@ -31,14 +31,14 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("filtering by partially defined vertex attribute") {
-    run("Example Graph")
+    run("Create example graph")
     val filter = ProjectAttributeFilter("income", ">1000")
     controller.filterProject(user, ProjectFilterRequest(projectName, List(filter), List()))
     assert(vattr[String]("name") == Seq("Bob"))
   }
 
   test("filtering by edge attribute") {
-    run("Example Graph")
+    run("Create example graph")
     val filter = ProjectAttributeFilter("weight", ">2")
     controller.filterProject(user, ProjectFilterRequest(projectName, List(), List(filter)))
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
@@ -57,7 +57,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("project list with scalars") {
-    run("Example Graph")
+    run("Create example graph")
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "new_project"))
     val pl = list("")
     assert(pl.objects.size == 2)
@@ -67,7 +67,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("fork project") {
-    run("Example Graph")
+    run("Create example graph")
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "forked"))
     assert(list("").objects.size == 2)
   }
@@ -83,7 +83,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("create directory inside project") {
-    run("Example Graph")
+    run("Create example graph")
     intercept[AssertionError] {
       controller.createDirectory(user, CreateDirectoryRequest(
         name = projectName + "/bar", privacy = "private"))

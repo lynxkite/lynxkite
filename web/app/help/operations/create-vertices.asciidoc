@@ -1,4 +1,4 @@
-### New vertex set
+### Create vertices
 
 Creates a new vertex set with no edges. Two attributes are generated: `id` and `ordinal`. `id`
 is the internal vertex ID, while `ordinal` is an index for the vertex: it goes from zero to the

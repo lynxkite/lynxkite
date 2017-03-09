@@ -12,14 +12,14 @@ class ViralModelingOperationTest extends OperationsTestBase {
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst"))
-    run("Maximal cliques", Map(
+    run("Find maximal cliques", Map(
       "name" -> "cliques",
       "bothdir" -> "false",
       "min" -> "3"))
-    run("Vertex attribute to double", Map(
+    run("Convert vertex attribute to double", Map(
       "attr" -> "num"))
 
-    run("Viral modeling", Map(
+    run("Predict attribute by viral modeling", Map(
       "prefix" -> "viral",
       "target" -> "num",
       "test_set_ratio" -> "0",

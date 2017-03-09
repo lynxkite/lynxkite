@@ -1,4 +1,4 @@
-### Viral modeling
+### Predict attribute by viral modeling
 
 Viral modeling tries to predict unknown values of an attribute based on the known values of the
 attribute on peers that belong to the same segments.

@@ -20,8 +20,8 @@ module.exports = function(fw) {
     'regression data imported as vertices',
     'trained regression model',
     function() {
-      lib.left.runOperation('Vertex attribute to double', {attr: 'age'});
-      lib.left.runOperation('Vertex attribute to double', {attr: 'yob'});
+      lib.left.runOperation('Convert vertex attribute to double', {attr: 'age'});
+      lib.left.runOperation('Convert vertex attribute to double', {attr: 'yob'});
       lib.left.runOperation('Train linear regression model', {
         name: 'age_from_yob',
         label: 'age',
@@ -51,11 +51,11 @@ module.exports = function(fw) {
       lib.left.populateOperationInput('model-feature-yob', 'yob');
       lib.left.submitOperation(lib.left.toolbox);
       // Convert the predictions to a more convenient format to test.
-      lib.left.runOperation('Derived vertex attribute', {
+      lib.left.runOperation('Derive vertex attribute', {
         output: 'age_prediction',
         type: 'double',
         expr: 'age_prediction | 0'});
-      lib.left.runOperation('Vertex attribute to string', {attr: 'age_prediction'});
+      lib.left.runOperation('Convert vertex attribute to string', {attr: 'age_prediction'});
       expect(lib.left.vertexAttribute('age_prediction').getHistogramValues()).toEqual([
         { title: '25.0', size: 100, value: 1 },
         { title: '35.0', size: 100, value: 1 },

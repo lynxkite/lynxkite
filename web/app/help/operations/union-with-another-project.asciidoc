@@ -20,7 +20,7 @@ A simple procedure for connecting the two graphs would be the following.
 . Take the union of the two projects.
 . Use <<Merge vertices by attribute>> to combine the vertices that can be exactly matched
 based on their email address.
-. Use <<Fingerprinting based on attributes>> to identify more matches based on neighborhood
+. Use <<Fingerprint based on attributes>> to identify more matches based on neighborhood
 similarity.
 
 *Parameters*

@@ -11,7 +11,7 @@ module.exports = function(fw) {
     function() {
       lib.left.runOperation('example graph');
       lib.left.runOperation(
-          'degree',
+          'compute degree',
            {
             name: 'deg',
             direction: 'incoming edges',
@@ -23,13 +23,13 @@ module.exports = function(fw) {
             value: '300000',
           });
       lib.left.runOperation(
-          'derived edge attribute',
+          'derive edge attribute',
           {
             output: 'foo',
             expr: 'src$deg + dst$deg',
           });
       lib.left.runOperation(
-          'connected components',
+          'find connected components',
           {
             name: 'connected_components_segmentation',
           });
@@ -111,10 +111,10 @@ module.exports = function(fw) {
       lib.left.history.open();
       lib.left.history.deleteOperation(2);
       expect(lib.left.history.numOperations()).toBe(numOperations - 1);
-      expect(lib.left.history.getOperationName(0)).toBe('Example Graph');
-      expect(lib.left.history.getOperationName(1)).toBe('Degree');
-      expect(lib.left.history.getOperationName(2)).toBe('Derived edge attribute');
-      expect(lib.left.history.getOperationName(3)).toBe('Connected components');
+      expect(lib.left.history.getOperationName(0)).toBe('Create example graph');
+      expect(lib.left.history.getOperationName(1)).toBe('Compute degree');
+      expect(lib.left.history.getOperationName(2)).toBe('Derive edge attribute');
+      expect(lib.left.history.getOperationName(3)).toBe('Find connected components');
       lib.left.history.close(true);
     });
 
@@ -137,7 +137,7 @@ module.exports = function(fw) {
     function() {
       lib.left.history.open();
       lib.left.history.insertOperationSimple(
-          3, 'PageRank',
+          3, 'Compute PageRank',
           {name: 'wow_such_page_rank'});
       lib.left.history.expectOperationParameter(3, 'name', 'wow_such_page_rank');
       lib.left.history.close(true);
@@ -149,7 +149,7 @@ module.exports = function(fw) {
     function() {
       lib.left.history.open();
       lib.left.history.insertOperationSimple(
-          0, 'New vertex set',
+          0, 'Create vertices',
           {size: '111'});
       lib.left.history.expectOperationParameter(0, 'size', '111');
       lib.left.history.close(true);
@@ -256,7 +256,7 @@ module.exports = function(fw) {
 project.exampleGraph()
 project.degree(direction='incoming edges', name='deg')
 project.addConstantVertexAttribute(name='c', type='Double', value=300000)
-project.derivedEdgeAttribute(expr='src$deg + dst$deg', output='foo', type='double')
+project.deriveEdgeAttribute(expr='src$deg + dst$deg', output='foo', type='double')
 project.connectedComponents(directions='ignore directions', name='connected_components_segmentation')
           `.trim());
       lib.left.history.close(false);
@@ -275,7 +275,7 @@ project.connectedComponents(directions='ignore directions', name='connected_comp
         var first = lib.left.history.getOperation(0);
         lib.left.history.enterEditMode(first);
         lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
-          first, 'Structure operations', 'New vertex set'
+          first, 'Structure operations', 'Create vertices'
           ), 'disabled');
         lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
           first, 'Vertex attribute operations', 'Add random vertex attribute'
@@ -285,7 +285,7 @@ project.connectedComponents(directions='ignore directions', name='connected_comp
         var second = lib.left.history.getOperation(1);
         lib.left.history.enterEditMode(second);
         lib.expectHasClass(lib.left.history.getOperationInCategoryByName(
-          second, 'Structure operations', 'New vertex set'
+          second, 'Structure operations', 'Create vertices'
           ), 'disabled');
         lib.expectNoClass(lib.left.history.getOperationInCategoryByName(
           second, 'Vertex attribute operations', 'Add random vertex attribute'

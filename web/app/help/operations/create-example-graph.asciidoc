@@ -1,4 +1,4 @@
-### Example Graph
+### Create example graph
 
 Creates small test graph with 4 people and 4 edges between them.
 

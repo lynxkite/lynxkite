@@ -1,4 +1,4 @@
-### Shortest path
+### Find shortest path
 
 Calculates the length of the shortest path from a given set of vertices for every vertex.
 To use this operation, a set of starting _v~i~_ vertices has to be specified, each with

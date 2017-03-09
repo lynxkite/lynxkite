@@ -1,4 +1,4 @@
-### Edge attribute to double
+### Convert edge attribute to double
 
 Converts the selected `String` typed edge attributes to `Double` (floating point
 number) type.

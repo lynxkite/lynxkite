@@ -1,4 +1,4 @@
-### Modular clustering
+### Find modular clustering
 
 Tries to find a partitioning of the vertices with high
 http://en.wikipedia.org/wiki/Modularity_(networks)[modularity].

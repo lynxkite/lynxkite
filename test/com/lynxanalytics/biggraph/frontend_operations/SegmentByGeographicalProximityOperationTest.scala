@@ -22,7 +22,7 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
   }
 
   test("Segment by geographical proximity") {
-    run("Example Graph")
+    run("Create example graph")
     val shapePath = linkShapeFile("earth")
     run("Segment by geographical proximity", Map(
       "name" -> "timezones",

@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation handles belongsTo edges properly") {
-    run("Example Graph")
+    run("Create example graph")
     run("Segment by double attribute",
       Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
     )
@@ -22,7 +22,7 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   }
 
   test("Segmentation stays sane after filtering (which uses pullBack)") {
-    run("Example Graph")
+    run("Create example graph")
     run("Segment by double attribute",
       Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
     )
@@ -37,7 +37,7 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   }
 
   test("Segmentation stays sane after filtering on the segmentation side (this uses pullBack)") {
-    run("Example Graph")
+    run("Create example graph")
     run("Segment by double attribute",
       Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
     )
@@ -51,7 +51,7 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   }
 
   test("Segmentation stays sane after merging vertices") {
-    run("Example Graph")
+    run("Create example graph")
     run("Segment by double attribute",
       Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
     )

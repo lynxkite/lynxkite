@@ -1,4 +1,4 @@
-### Dispersion
+### Compute dispersion
 
 Calculates the extent to which two people's mutual friends are not themselves well-connected.
 The dispersion attribute for an A{to}B edge is the number of pairs of nodes that are both

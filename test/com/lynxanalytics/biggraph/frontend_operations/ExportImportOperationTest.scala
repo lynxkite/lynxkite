@@ -8,15 +8,15 @@ import com.lynxanalytics.biggraph.table.TableImport
 class ExportImportOperationTest extends OperationsTestBase {
   test("Imports from implicit tables") {
     val project2 = clone(project)
-    run("Example Graph", on = project2)
+    run("Create example graph", on = project2)
     run(
-      "Connected components",
+      "Find connected components",
       Map(
         "name" -> "cc",
         "directions" -> "ignore directions"),
       on = project2)
     run(
-      "Vertex attribute to string",
+      "Convert vertex attribute to string",
       Map("attr" -> "id"),
       on = project2.segmentation("cc"))
     val project2Checkpoint = s"!checkpoint(${project2.checkpoint.get},ExampleGraph)"
@@ -99,14 +99,14 @@ class ExportImportOperationTest extends OperationsTestBase {
       ("Adam", "Eve", "value1"),
       ("Isolated Joe", "Bob", "value2"),
       ("Eve", "Alice", "value3"))
-    // The string "Alice" in the last row does not match any vertices in the Example Graph.
+    // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("src", "dst", "value")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_edges_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
-    run("Example Graph")
+    run("Create example graph")
     run("Import edges for existing vertices", Map(
       "table" -> tablePath,
       "attr" -> "name",
@@ -127,14 +127,14 @@ class ExportImportOperationTest extends OperationsTestBase {
       ("Adam", "value1"),
       ("Isolated Joe", "value2"),
       ("Alice", "value3"))
-    // The string "Alice" in the last row does not match any vertices in the Example Graph.
+    // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
-    run("Example Graph")
+    run("Create example graph")
     run("Import vertex attributes", Map(
       "table" -> tablePath,
       "id-attr" -> "name",
@@ -150,14 +150,14 @@ class ExportImportOperationTest extends OperationsTestBase {
       ("Adam loves Eve", "value1"),
       ("Bob envies Adam", "value2"),
       ("Squirrell loves Peanuts", "value3"))
-    // The last row does not match any edges in the Example Graph.
+    // The last row does not match any edges in the example graph.
     // Therefore we expect it to be discarded.
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("row_id", "value")
     val table = TableImport.importDataFrameAsync(dataFrame)
     val tableFrame = DirectoryEntry.fromName("test_edge_attr_table").asNewTableFrame(table, "")
     val tablePath = s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
-    run("Example Graph")
+    run("Create example graph")
     run("Import edge attributes", Map(
       "table" -> tablePath,
       "id-attr" -> "comment",
@@ -185,8 +185,8 @@ class ExportImportOperationTest extends OperationsTestBase {
     val edgeTableFrame = DirectoryEntry.fromName("test_attr_overwrite_table2").asNewTableFrame(edgeTable, "")
     val edgeTablePath = s"!checkpoint(${edgeTableFrame.checkpoint}, ${edgeTableFrame.name})|vertices"
 
-    run("Example Graph")
-    run("Vertex attribute to string", Map(
+    run("Create example graph")
+    run("Convert vertex attribute to string", Map(
       "attr" -> "id"
     ))
     val ex = intercept[java.lang.AssertionError] {

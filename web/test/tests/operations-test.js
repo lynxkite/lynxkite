@@ -7,7 +7,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'attributes are alphabetically ordered',
     function() {
-      lib.left.openOperation('Vertex attribute to string');
+      lib.left.openOperation('Convert vertex attribute to string');
       var list = lib.left.operationParameter(lib.left.toolbox, 'attr');
       var expected = ['age', 'gender', 'id', 'income', 'location', 'name'];
       expect(list.getText()).toEqual(expected.join('\n'));
@@ -17,9 +17,9 @@ module.exports = function(fw) {
     'empty test-example project',
     'scalar can show up in an operation box',
     function() {
-      lib.left.runOperation('New vertex set', { size: '10' });
-      lib.left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
-      lib.left.runOperation('Derived vertex attribute', {
+      lib.left.runOperation('Create vertices', { size: '10' });
+      lib.left.runOperation('Convert vertex attribute to double', { attr: 'ordinal' });
+      lib.left.runOperation('Derive vertex attribute', {
         'output': 'seg',
         'type': 'double',
         'expr': 'ordinal % 4'});

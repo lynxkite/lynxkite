@@ -1,4 +1,4 @@
-### Fingerprinting between project and segmentation
+### Link project and segmentation by fingerprint
 
 Finds the best matching between a project and a segmentation.
 It considers a base vertex A and a segment B a good "match"
