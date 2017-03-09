@@ -129,6 +129,21 @@ Entity.prototype = {
   },
 };
 
+function Workspace() {
+  this.main = element(by.id('workspace-main'));
+}
+
+Workspace.prototype = {
+  expectCurrentWorkspaceIs: function(name) {
+    expect(this.main.element(by.id('workspace-name')).getText()).toBe(name);
+    // TODO: check that workspace is error-free
+  },
+
+  close: function() {
+    this.main.element(by.id('close-workspace')).click();
+  },
+};
+
 
 function Side(direction) {
   this.direction = direction;
@@ -139,10 +154,6 @@ function Side(direction) {
 }
 
 Side.prototype = {
-  expectCurrentProjectIs: function(name) {
-    expect(this.side.evaluate('side.project.$error')).toBeFalsy();
-    expect(this.side.evaluate('side.state.projectName')).toBe(name);
-  },
 
   expectCurrentProjectIsError: function() {
     expect(this.side.evaluate('side.project.$error')).toBeTruthy();
@@ -665,8 +676,8 @@ function Selector(root) {
 }
 
 Selector.prototype = {
-  project: function(name) {
-    return element(by.id('project-' + toID(name)));
+  workspace: function(name) {
+    return element(by.id('workspace-' + toID(name)));
   },
 
   directory: function(name) {
@@ -681,8 +692,8 @@ Selector.prototype = {
     return element(by.id('view-' + toID(name)));
   },
 
-  expectNumProjects: function(n) {
-    return expect($$('.project-entry').count()).toEqual(n);
+  expectNumWorkspaces: function(n) {
+    return expect($$('.workspace-entry').count()).toEqual(n);
   },
 
   expectNumDirectories: function(n) {
@@ -709,10 +720,10 @@ Selector.prototype = {
     return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name);
-    $('#new-project button[type=submit]').click();
+  openNewWorkspace: function(name) {
+    element(by.id('new-workspace')).click();
+    element(by.id('new-workspace-name')).sendKeys(name);
+    $('#new-workspace button[type=submit]').click();
     this.hideFloatingElements();
   },
 
@@ -786,14 +797,14 @@ Selector.prototype = {
     element(by.id('pop-directory-icon')).click();
   },
 
-  renameProject: function(name, newName) {
-    var project = this.project(name);
-    testLib.menuClick(project, 'rename');
-    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
+  renameWorkspace: function(name, newName) {
+    var workspace = this.workspace(name);
+    testLib.menuClick(workspace, 'rename');
+    workspace.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
   },
 
-  deleteProject: function(name) {
-    testLib.menuClick(this.project(name), 'discard');
+  deleteWorkspace: function(name) {
+    testLib.menuClick(this.workspace(name), 'discard');
   },
 
   deleteDirectory: function(name) {
@@ -808,12 +819,12 @@ Selector.prototype = {
     testLib.menuClick(this.view(name), 'edit-import');
   },
 
-  expectProjectListed: function(name) {
-    testLib.expectElement(this.project(name));
+  expectWorkspaceListed: function(name) {
+    testLib.expectElement(this.workspace(name));
   },
 
-  expectProjectNotListed: function(name) {
-    testLib.expectNotElement(this.project(name));
+  expectWorkspaceNotListed: function(name) {
+    testLib.expectNotElement(this.workspace(name));
   },
 
   expectDirectoryListed: function(name) {
@@ -913,6 +924,7 @@ testLib = {
   theRandomPattern: randomPattern(),
   left: new Side('left'),
   right: new Side('right'),
+  workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),

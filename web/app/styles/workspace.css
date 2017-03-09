@@ -2,8 +2,12 @@ html {
   overflow: visible;
 }
 
-html, body, body > div.ng-scope, div#box-project {
+html, body, body > div.ng-scope, div#workspace-main {
   height: 98%;
+}
+
+span#workspace-name {
+  font-size: 2em;
 }
 
 div#box-view {
