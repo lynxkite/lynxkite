@@ -11,7 +11,7 @@ to the cluster with the nearest mean, serving as a prototype of the cluster.
 For best results it may be necessary to scale the features before training the model.
 ====
 [[name]] Model name::
-The model will be stored as a scalar attribute using this name.
+The model will be stored as a scalar using this name.
 
 [[features]] Feature attributes::
 Attributes to be used as inputs for the training algorithm. The trained model
