@@ -2537,7 +2537,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Copy scalar $from to $to"
     }
     def apply() = {
-      project.scalars(params("name")) = project.scalars(params("destination"))
+      project.scalars(params("destination")) = project.scalars(params("name"))
     }
   })
 
