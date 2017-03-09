@@ -9,9 +9,15 @@ gain the variance of the nodes is used:
 the information gain is the difference between the parent node impurity and the
 weighted sum of the two child node impurities.
 https://spark.apache.org/docs/latest/mllib-decision-tree.html#basic-algorithm[More information about the parameters.]
+
+Note: Once the tree is trained there is only a finite number of possible predictions.
+Because of this, the regression model might seem like a classification. The main
+difference is that these buckets ("classes") are invented by the algorithm during
+the training in order to minimize the variance.
+
 ====
 [[name]] Model name::
-The model will be stored as a scalar attribute using this name.
+The model will be stored as a scalar using this name.
 
 [[label]] Label attribute::
 The vertex attribute the model is trained to predict.
@@ -33,5 +39,6 @@ For a node to be split further, the split must improve at least this much
 (in terms of information gain).
 
 [[seed]] Seed::
-Random seed.
+We maximize the information gain only among a subset of the possible splits.
+This random seed is used for selecting the set of splits we consider at a node.
 ====

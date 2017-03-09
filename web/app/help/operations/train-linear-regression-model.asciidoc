@@ -4,7 +4,7 @@ Trains a linear regression model using the graph's vertex attributes.
 
 ====
 [[name]] Model name::
-The model will be stored as a scalar attribute using this name.
+The model will be stored as a scalar using this name.
 
 [[label]] Label attribute::
 The vertex attribute for which the model is trained.
