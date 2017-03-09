@@ -131,6 +131,8 @@ Entity.prototype = {
 
 function Workspace() {
   this.main = element(by.id('workspace-main'));
+  this.selector = element(by.css('.operation-selector'));
+  this.board = element(by.css('workspace-drawing-board'));
 }
 
 Workspace.prototype = {
@@ -142,32 +144,60 @@ Workspace.prototype = {
   close: function() {
     this.main.element(by.id('close-workspace')).click();
   },
+
+  openOperation: function(name) {
+    this.selector.element(by.id('operation-search')).click();
+    this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
+    return this.selector.$$('operation-selector-entry').get(0);
+  },
+
+  closeOperationSelector: function() {
+    this.selector.element(by.id('operation-search')).click();
+  },
+
+  addBox: function(name, params, x, y) {
+
+    params = {};
+    var op = this.openOperation(name);
+    testLib.simulateDragAndDrop(op, this.board, x, y);
+    this.closeOperationSelector();
+  },
+
+  getInputPlug: function(boxId, plugId) {
+    // We take the circle because its convex and easily
+    // clickable for Protractor.
+    return this.board
+        .element(by.id(boxId + '-inputs-' + plugId))
+        .element(by.css('circle'));
+  },
+
+  getOutputPlug: function(boxId, plugId) {
+    // We take the circle because its convex and easily
+    // clickable for Protractor.
+    return this.board
+        .element(by.id(boxId + '-outputs-' + plugId))
+        .element(by.css('circle'));
+  },
+
+  connectBoxes: function(name1, output1, name2, input2) {
+    var src = this.getOutputPlug(name1, output1);
+    var dst = this.getInputPlug(name2, input2);
+    browser.actions()
+        .mouseDown(src)
+        .mouseMove(dst)
+        .mouseUp()
+        .perform();
+  }
+
 };
 
 
 function Side(direction) {
   this.direction = direction;
-  this.side = element(by.id('side-' + direction));
-  this.toolbox = element(by.id('operation-toolbox-' + direction));
-  this.history = new History(this);
-  this.tableBrowser = new TableBrowser(this.side);
+  this.side = element(by.css('project-state-view'));
 }
 
 Side.prototype = {
-
-  expectCurrentProjectIsError: function() {
-    expect(this.side.evaluate('side.project.$error')).toBeTruthy();
-  },
-
-  // Only for opening the second project next to an already open project.
-  openSecondProject: function(project) {
-    testLib.showSelector();
-    this.side.$('#project-' + toID(project)).click();
-  },
-
-  close: function() {
-    this.side.element(by.id('close-project')).click();
-  },
 
   evaluate: function(expr) {
     return this.side.evaluate(expr);
@@ -922,8 +952,7 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  left: new Side('left'),
-  right: new Side('right'),
+  state: new Side(),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
@@ -1204,6 +1233,49 @@ testLib = {
     $('.sweet-alert button.confirm').click();
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
+
+  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY) {
+
+    function simulateDragAndDropInBrowser(src, dst, dstX, dstY) {
+      function createEvent(type) {
+        var event = new CustomEvent('CustomEvent');
+        event.initCustomEvent(type, true, true, null);
+        event.dataTransfer = {
+          data: {},
+          setData: function(type, value) {
+            this.data[type] = value;
+          },
+          getData: function(type) {
+            return this.data[type];
+          }
+        };
+        return event;
+      }
+
+      var dragStartEvent = createEvent('dragstart');
+      src.dispatchEvent(dragStartEvent);
+
+      var dropEvent = createEvent('drop');
+      dropEvent.offsetX = dstX;
+      dropEvent.offsetY = dstY;
+      
+      dropEvent.dataTransfer = dragStartEvent.dataTransfer;
+      dst.dispatchEvent(dropEvent);
+
+      var dragEndEvent = createEvent('dragend');
+      dragEndEvent.dataTransfer = dragStartEvent.dataTransfer;
+      src.dispatchEvent(dragEndEvent);
+    }
+
+    
+    browser.executeScript(
+        simulateDragAndDropInBrowser,
+        srcSelector.getWebElement(),
+        dstSelector.getWebElement(),
+        dstX, dstY);
+
+  },
+
 };
 
 module.exports = testLib;

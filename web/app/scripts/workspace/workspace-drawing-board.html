@@ -14,9 +14,10 @@
           ng-attr-transform="{{ plug.posTransform }}"
           ng-class="{ 'selected-plug': plug == selectedPlug }"
           ng-mousedown="onMouseDownOnPlug(plug, $event)"
-          ng-mouseup="onMouseUpOnPlug(plug, $event)">
+          ng-mouseup="onMouseUpOnPlug(plug, $event)"
+          id="{{ box.instance.id + '-' + direction + '-' + plug.data.id }}">
         <text x="10">{{ plug.data.id }}</text>
-        <circle ng-attr-r="{{ plug.radius}}" class="io-circle"></circle>
+        <circle ng-attr-r="{{ plug.radius }}" class="io-circle"></circle>
       </g>
     </g>
     <!-- end list of I/O plugs -->
