@@ -154,7 +154,10 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   def summary = title
 
   protected def apply(): Unit
-  protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
+  protected def help = { // Add to notes for help link.
+    val helpID = id.toLowerCase.replaceAll("\\W+", "-").replaceFirst("-+$", "")
+    "<help-popup href=\"" + helpID + "\"></help-popup>"
+  }
 
   protected def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = allParameters.map { param => param.id }.toSet
