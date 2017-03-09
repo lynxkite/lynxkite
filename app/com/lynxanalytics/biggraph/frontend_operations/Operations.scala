@@ -259,10 +259,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 
   register("Discard segmentation links", new StructureOperation(_, _) with SegOp {
     def segmentationParameters = List()
-    def enabled = isSegmentation && hasBelongsToLinks
+    def enabled = isSegmentation
     def apply(params: Map[String, String]) = {
       val op = graph_operations.EmptyEdgeBundle()
-      seg.belongsTo = op(op.src, seg.parent.vertexSet)(op.dst, seg.vertexSet).result.eb
+      seg.belongsTo = op(op.src, parent.vertexSet)(op.dst, seg.vertexSet).result.eb
     }
   })
 
@@ -2881,7 +2881,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           options = vertexAttributes[String]))
       def enabled =
         isSegmentation &&
-          hasNoBelongsToLinks &&
           FEStatus.assert(
             vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
             FEStatus.assert(
