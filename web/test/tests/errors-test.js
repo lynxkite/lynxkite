@@ -23,7 +23,7 @@ module.exports = function(fw) {
         'Derive vertex attribute', { output: 'empty', 'type': 'double', expr: 'undefined' });
       lib.left.runOperation(
         'Aggregate vertex attribute globally',
-        { 'aggregate-empty': 'average,sum', 'aggregate-income': 'average' });
+        { 'aggregate_empty': 'average,sum', 'aggregate_income': 'average' });
       // Check non-error behavior while we're here.
       expect(lib.left.scalarValue('income_average').getText()).toBe('2k');
       lib.left.scalarValue('income_average').click();

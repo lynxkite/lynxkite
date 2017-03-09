@@ -20,7 +20,7 @@ module.exports = function(fw) {
       lib.left.openWorkflowSavingDialog();
       expect(lib.getACEText(lib.left.getWorkflowCodeEditor())).toBe(`
 project.exampleGraph()
-project.filterByAttributes('filterea-weight': '!1', 'filterva-age': '<40', 'filterva-name': 'Adam,Eve,Bob')
+project.filterByAttributes('filterea_weight': '!1', 'filterva_age': '<40', 'filterva_name': 'Adam,Eve,Bob')
       `.trim());
       lib.left.closeWorkflowSavingDialog();
       lib.left.history.close();

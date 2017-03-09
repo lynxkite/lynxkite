@@ -19,7 +19,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
       run("Add constant vertex attribute",
         Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
       run("Filter by attributes",
-        Map("filterva-v" -> "> 0.0", "filterea-e" -> "> 1.0"))
+        Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
 
       project.scalars("edge_count").value
     }
@@ -30,10 +30,10 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
     run("Find connected components",
       Map("name" -> "cc", "directions" -> "ignore directions"))
     run("Filter by attributes",
-      Map("filterva-size" -> "3", "apply_to" -> "|cc"))
+      Map("filterva_size" -> "3", "apply_to" -> "|cc"))
     val c1 = project.segmentation("cc").vertexSet.rdd.keys.take(1).head
     run("Filter by attributes",
-      Map("filterva-segmentation[cc]" -> s"any($c1)"))
+      Map("filterva_segmentation[cc]" -> s"any($c1)"))
     assert(project.vertexSet.rdd.count == 3)
   }
 }

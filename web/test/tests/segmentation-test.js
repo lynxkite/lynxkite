@@ -9,7 +9,7 @@ module.exports = function(fw) {
     function() {
       var params = {
         'attr': 'income',
-        'interval-size': '10',
+        'interval_size': '10',
       };
       lib.left.runOperation('Segment by double attribute', params);
     },
@@ -80,7 +80,7 @@ module.exports = function(fw) {
     'segmentation size reporting - has empty segments',
     function() {
       var params = {
-        'filterva-income': '*',
+        'filterva_income': '*',
       };
       lib.left.runOperation('Filter by attributes', params);
     },

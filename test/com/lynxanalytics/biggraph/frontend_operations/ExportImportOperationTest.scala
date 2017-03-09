@@ -26,7 +26,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "Import vertices",
       Map(
         "table" -> (project2Checkpoint + "|vertices"),
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
     assert(project.vertexSet.rdd.count == 4)
     assert(project.edgeBundle == null)
 
@@ -45,7 +45,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "Import vertices",
       Map(
         "table" -> (project2Checkpoint + "|edges"),
-        "id-attr" -> "id"))
+        "id_attr" -> "id"))
     assert(project.vertexSet.rdd.count == 4)
     assert(project.edgeBundle == null)
 
@@ -137,8 +137,8 @@ class ExportImportOperationTest extends OperationsTestBase {
     run("Create example graph")
     run("Import vertex attributes", Map(
       "table" -> tablePath,
-      "id-attr" -> "name",
-      "id-column" -> "row_id",
+      "id_attr" -> "name",
+      "id_column" -> "row_id",
       "prefix" -> "imported"
     ))
     val valueAttr = project.vertexAttributes("imported_value").runtimeSafeCast[String].rdd
@@ -160,8 +160,8 @@ class ExportImportOperationTest extends OperationsTestBase {
     run("Create example graph")
     run("Import edge attributes", Map(
       "table" -> tablePath,
-      "id-attr" -> "comment",
-      "id-column" -> "row_id",
+      "id_attr" -> "comment",
+      "id_column" -> "row_id",
       "prefix" -> "imported"
     ))
     val valueAttr = project.edgeAttributes("imported_value").runtimeSafeCast[String].rdd
@@ -192,8 +192,8 @@ class ExportImportOperationTest extends OperationsTestBase {
     val ex = intercept[java.lang.AssertionError] {
       run("Import vertex attributes", Map(
         "table" -> tablePath,
-        "id-attr" -> "id",
-        "id-column" -> "id",
+        "id_attr" -> "id",
+        "id_column" -> "id",
         "prefix" -> ""
       ))
     }
@@ -202,8 +202,8 @@ class ExportImportOperationTest extends OperationsTestBase {
     val ex2 = intercept[java.lang.AssertionError] {
       run("Import edge attributes", Map(
         "table" -> edgeTablePath,
-        "id-attr" -> "comment",
-        "id-column" -> "new_comment",
+        "id_attr" -> "comment",
+        "id_column" -> "new_comment",
         "prefix" -> ""
       ))
     }

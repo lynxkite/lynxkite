@@ -31,7 +31,7 @@ class TestProjects(unittest.TestCase):
     p1 = lynx.LynxKite().new_project()
     p1.exampleGraph()
     p2 = lynx.LynxKite().new_project()
-    p2.importVertices(**{'id-attr': 'id', 'table': p1.edges_table()})
+    p2.importVertices(**{'id_attr': 'id', 'table': p1.edges_table()})
     self.assertEqual(4, p2.scalar('vertex_count'))
 
   def test_project_operations(self):

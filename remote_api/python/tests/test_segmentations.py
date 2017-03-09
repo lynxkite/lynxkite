@@ -14,7 +14,7 @@ class TestSegmentations(unittest.TestCase):
     p.segmentByDoubleAttribute(**{
         'name': 'seg1',
         'attr': 'rnd1',
-        'interval-size': '0.001',
+        'interval_size': '0.001',
         'overlap': 'no'})
     seg1 = p.segmentation('seg1')
     seg1.addRandomVertexAttribute(**{
@@ -24,7 +24,7 @@ class TestSegmentations(unittest.TestCase):
     seg1.segmentByDoubleAttribute(**{
         'name': 'seg2',
         'attr': 'rnd2',
-        'interval-size': '0.001',
+        'interval_size': '0.001',
         'overlap': 'no'})
     seg2 = seg1.segmentation('seg2')
     self.assertEqual(seg2.path, ['seg1', 'seg2'])
@@ -56,7 +56,7 @@ class TestSegmentations(unittest.TestCase):
         'rankattr': 'ranking'})
     s.segmentByDoubleAttribute(**{
         'attr': 'ranking',
-        'interval-size': '2',
+        'interval_size': '2',
         'name': 'bucketing',
         'overlap': 'no'})
     s2 = s.segmentation('bucketing')

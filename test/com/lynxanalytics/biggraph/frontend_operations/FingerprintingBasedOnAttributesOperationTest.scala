@@ -6,7 +6,7 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
   test("Fingerprinting based on attributes") {
     run("Import vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/fingerprint-100-vertices.csv"),
-      "id-attr" -> "delete me"))
+      "id_attr" -> "delete me"))
     run("Import edges for existing vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/fingerprint-100-edges.csv"),
       "attr" -> "id",
@@ -33,12 +33,12 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
     assert(project.scalars("vertex_count").value == 109)
     run("Merge vertices by attribute", Map(
       "key" -> "name",
-      "aggregate-email" -> "",
-      "aggregate-id" -> "",
-      "aggregate-name" -> "",
-      "aggregate-delete me" -> "",
-      "aggregate-email similarity score" -> "",
-      "aggregate-name similarity score" -> ""))
+      "aggregate_email" -> "",
+      "aggregate_id" -> "",
+      "aggregate_name" -> "",
+      "aggregate_delete me" -> "",
+      "aggregate_email similarity score" -> "",
+      "aggregate_name similarity score" -> ""))
     assert(project.scalars("vertex_count").value == 100)
   }
 }

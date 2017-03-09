@@ -13,7 +13,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
       "Union with another project",
       Map(
         "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 8)
     assert(project.edgeBundle.rdd.count == 8)
@@ -44,7 +44,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
       "Union with another project",
       Map(
         "other" -> s"!checkpoint(${project.checkpoint.get},Copy)",
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 20)
     assert(project.edgeBundle == null)
@@ -62,7 +62,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
       run("Union with another project",
         Map(
           "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-          "id-attr" -> "new_id"))
+          "id_attr" -> "new_id"))
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))

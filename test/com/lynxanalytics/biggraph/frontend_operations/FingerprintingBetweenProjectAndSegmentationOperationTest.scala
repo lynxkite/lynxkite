@@ -12,10 +12,10 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
     run("Import segmentation links", Map(
       "table" -> importCSV("OPERATIONSTEST$/fingerprint-example-connections.csv"),
-      "base-id-attr" -> "name",
-      "base-id-column" -> "src",
-      "seg-id-attr" -> "name",
-      "seg-id-column" -> "dst",
+      "base_id_attr" -> "name",
+      "base_id_column" -> "src",
+      "seg_id_attr" -> "name",
+      "seg_id_column" -> "dst",
       "apply_to" -> "|ExampleGraph2"))
     run("Link project and segmentation by fingerprint", Map(
       "mo" -> "1",
@@ -23,13 +23,13 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "apply_to" -> "|ExampleGraph2"))
     run("Aggregate from segmentation", Map(
       "prefix" -> "seg",
-      "aggregate-age" -> "average",
-      "aggregate-id" -> "",
-      "aggregate-name" -> "",
-      "aggregate-location" -> "",
-      "aggregate-gender" -> "",
-      "aggregate-fingerprinting_similarity_score" -> "",
-      "aggregate-income" -> "",
+      "aggregate_age" -> "average",
+      "aggregate_id" -> "",
+      "aggregate_name" -> "",
+      "aggregate_location" -> "",
+      "aggregate_gender" -> "",
+      "aggregate_fingerprinting_similarity_score" -> "",
+      "aggregate_income" -> "",
       "apply_to" -> "|ExampleGraph2"))
     val newAge = project.vertexAttributes("seg_age_average")
       .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
@@ -51,9 +51,9 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
       "direction" -> "outgoing edges",
-      "aggregate-src_link" -> "most_common",
-      "aggregate-dst" -> "",
-      "aggregate-src" -> ""))
+      "aggregate_src_link" -> "most_common",
+      "aggregate_dst" -> "",
+      "aggregate_src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
     val otherCp = project.checkpoint.get
     run("Import vertices and edges from a single table", Map(
@@ -64,8 +64,8 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "them" -> s"!checkpoint($otherCp,other)"))
     val seg = project.segmentation("other")
     run("Define segmentation links from matching attributes", Map(
-      "base-id-attr" -> "stringID",
-      "seg-id-attr" -> "link",
+      "base_id_attr" -> "stringID",
+      "seg_id_attr" -> "link",
       "apply_to" -> "|other"))
     def belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 6)
