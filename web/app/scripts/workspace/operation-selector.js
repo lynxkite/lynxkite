@@ -66,10 +66,6 @@ angular.module('biggraph').directive('operationSelector', function() {
           if (scope.searchSelection >= operations.length) {
             scope.searchSelection = operations.length - 1;
           }
-        } else if (e.keyCode === 13) { // ENTER
-          e.preventDefault();
-          var op = angular.element(operations[scope.searchSelection]).scope().op;
-          scope.clickedOp(op);
         }
       };
 
@@ -81,11 +77,6 @@ angular.module('biggraph').directive('operationSelector', function() {
         }
         scope.searching = undefined;
         scope.op = undefined;
-      };
-      scope.clickedOp = function(op) {
-        if (op.status.enabled) {
-          scope.op = op.id;
-        }
       };
       scope.searchClicked = function() {
         if (scope.searching) {
