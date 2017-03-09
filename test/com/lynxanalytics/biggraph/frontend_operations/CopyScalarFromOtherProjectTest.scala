@@ -61,7 +61,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       "seed" -> "1474343267"), on = other)
     run("Segment by double attribute", Map(
       "attr" -> "rnd",
-      "interval-size" -> "0.1",
+      "interval_size" -> "0.1",
       "name" -> "seg", "overlap" -> "no"), on = other)
     run("Derive scalar", Map(
       "output" -> "scalar_val",
@@ -86,7 +86,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       "seed" -> "1474343267"), on = other)
     run("Segment by double attribute", Map(
       "attr" -> "rnd",
-      "interval-size" -> "0.1",
+      "interval_size" -> "0.1",
       "name" -> "seg",
       "overlap" -> "no"), on = other)
     run("Add random vertex attribute", Map(
@@ -95,7 +95,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       "seed" -> "1474343267"), on = other.segmentation("seg"))
     run("Segment by double attribute", Map(
       "attr" -> "rnd2",
-      "interval-size" -> "0.1",
+      "interval_size" -> "0.1",
       "name" -> "seg2",
       "overlap" -> "no"), on = other.segmentation("seg"))
     run("Derive scalar", Map(

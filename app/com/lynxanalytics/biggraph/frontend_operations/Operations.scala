@@ -176,7 +176,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Param("id-attr", "Save internal ID as", defaultValue = "id"))
+      Param("id_attr", "Save internal ID as", defaultValue = "id"))
     def enabled = hasNoVertexSet
     def apply() = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
@@ -184,7 +184,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       for ((name, attr) <- table.columns) {
         project.newVertexAttribute(name, attr, "imported")
       }
-      val idAttr = params("id-attr")
+      val idAttr = params("id_attr")
       if (idAttr.nonEmpty) {
         assert(
           !project.vertexAttributes.contains(idAttr),
@@ -262,23 +262,23 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("id-attr", "Vertex attribute",
+      Choice("id_attr", "Vertex attribute",
         options = FEOption.unset +: vertexAttributes[String]),
-      Param("id-column", "ID column"),
+      Param("id_column", "ID column"),
       Param("prefix", "Name prefix for the imported vertex attributes"),
-      Choice("unique-keys", "Assert unique vertex attribute values",
+      Choice("unique_keys", "Assert unique vertex attribute values",
         options = FEOption.bools, mandatory = false))
     def enabled =
       hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as key.")
     def apply() = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
-      val attrName = params("id-attr")
+      val attrName = params("id_attr")
       assert(attrName != FEOption.unset.id, "The Vertex attribute parameter must be set.")
       val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
+      val idColumn = table.column(params("id_column")).runtimeSafeCast[String]
       val projectAttrNames = project.vertexAttributeNames
-      val uniqueKeys = params.getOrElse("unique-keys", "true").toBoolean
+      val uniqueKeys = params.getOrElse("unique_keys", "true").toBoolean
       val edges = if (uniqueKeys) {
         val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
         op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
@@ -301,25 +301,25 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "table",
         "Table to import from",
         accessibleTableOptions),
-      Choice("id-attr", "Edge attribute",
+      Choice("id_attr", "Edge attribute",
         options = FEOption.unset +: edgeAttributes[String]),
-      Param("id-column", "ID column"),
+      Param("id_column", "ID column"),
       Param("prefix", "Name prefix for the imported edge attributes"),
-      Choice("unique-keys", "Assert unique edge attribute values",
+      Choice("unique_keys", "Assert unique edge attribute values",
         options = FEOption.bools, mandatory = false))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as key.")
     def apply() = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
-      val columnName = params("id-column")
+      val columnName = params("id_column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
-      val attrName = params("id-attr")
+      val attrName = params("id_attr")
       assert(attrName != FEOption.unset.id, "The Edge attribute parameter must be set.")
       val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.column(params("id-column")).runtimeSafeCast[String]
+      val idColumn = table.column(params("id_column")).runtimeSafeCast[String]
       val projectAttrNames = project.edgeAttributeNames
-      val uniqueKeys = params.getOrElse("unique-keys", "true").toBoolean
+      val uniqueKeys = params.getOrElse("unique_keys", "true").toBoolean
       val edges = if (uniqueKeys) {
         val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
         op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
@@ -462,11 +462,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("weights", "Weight attribute", options =
         FEOption.noWeight +: edgeAttributes[Double], mandatory = false),
       Param(
-        "max-iterations",
+        "max_iterations",
         "Maximum number of iterations to do",
         defaultValue = "30"),
       Param(
-        "min-increment-per-iteration",
+        "min_increment_per_iteration",
         "Minimal modularity increment in an iteration to keep going",
         defaultValue = "0.001"))
     def enabled = hasEdgeBundle
@@ -478,7 +478,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
         val op = graph_operations.FindModularClusteringByTweaks(
-          params("max-iterations").toInt, params("min-increment-per-iteration").toDouble)
+          params("max_iterations").toInt, params("min_increment_per_iteration").toDouble)
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
@@ -505,7 +505,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = vertexAttributes[Double]),
-      NonNegDouble("interval-size", "Interval size"),
+      NonNegDouble("interval_size", "Interval size"),
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
     override def summary = {
@@ -518,7 +518,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val attrName = params("attr")
       val attr = project.vertexAttributes(attrName).runtimeSafeCast[Double]
       val overlap = params("overlap") == "yes"
-      val intervalSize = params("interval-size").toDouble
+      val intervalSize = params("interval_size").toDouble
       val bucketing = {
         val op = graph_operations.DoubleBucketing(intervalSize, overlap)
         op(op.attr, attr).result
@@ -613,13 +613,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "location",
         "Location",
         options = possibleLocations),
-      Choice("time-attr", "Time attribute", options = vertexAttributes[Double]),
+      Choice("time_attr", "Time attribute", options = vertexAttributes[Double]),
       Choice("algorithm", "Algorithm", options = List(
         FEOption("continuous", "Take continuous event sequences"),
         FEOption("with-gaps", "Allow gaps in event sequences"))),
-      NonNegInt("sequence-length", "Sequence length", default = 2),
-      NonNegDouble("time-window-step", "Time window step"),
-      NonNegDouble("time-window-length", "Time window length")
+      NonNegInt("sequence_length", "Sequence length", default = 2),
+      NonNegDouble("time_window_step", "Time window step"),
+      NonNegDouble("time_window_length", "Time window length")
     )
 
     def enabled =
@@ -632,7 +632,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             "There must be a double attribute to define event times")
 
     def apply() = {
-      val timeAttrName = params("time-attr")
+      val timeAttrName = params("time_attr")
       val timeAttr = project.vertexAttributes(timeAttrName).runtimeSafeCast[Double]
       val locationAttr = params("location")
       val belongsToLocation =
@@ -648,9 +648,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val cells = {
         val op = graph_operations.SegmentByEventSequence(
           params("algorithm"),
-          params("sequence-length").toInt,
-          params("time-window-step").toDouble,
-          params("time-window-length").toDouble)
+          params("sequence_length").toInt,
+          params("time_window_step").toDouble,
+          params("time_window_length").toDouble)
         op(op.personBelongsToEvent, project.asSegmentation.belongsTo)(
           op.eventTimeAttribute, timeAttr)(
             op.eventBelongsToLocation, belongsToLocation).result
@@ -1493,7 +1493,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("name", "The name of the model"),
       Choice("label", "Label", options = vertexAttributes[Double]),
       Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
-      NonNegInt("max-iter", "Maximum number of iterations", default = 20))
+      NonNegInt("max_iter", "Maximum number of iterations", default = 20))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply() = {
@@ -1506,7 +1506,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val name = params("name")
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-      val maxIter = params("max-iter").toInt
+      val maxIter = params("max_iter").toInt
       val model = {
         val op = graph_operations.LogisticRegressionModelTrainer(
           maxIter, labelName, featureNames.toList)
@@ -1521,7 +1521,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("name", "The name of the model"),
       Choice("features", "Attributes", options = vertexAttributes[Double], multipleChoice = true),
       NonNegInt("k", "Number of clusters", default = 2),
-      NonNegInt("max-iter", "Maximum number of iterations", default = 20),
+      NonNegInt("max_iter", "Maximum number of iterations", default = 20),
       RandomSeed("seed", "Seed"))
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
@@ -1538,7 +1538,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       val name = params("name")
       val k = params("k").toInt
-      val maxIter = params("max-iter").toInt
+      val maxIter = params("max_iter").toInt
       val seed = params("seed").toLong
       val model = {
         val op = graph_operations.KMeansClusteringModelTrainer(
@@ -2591,15 +2591,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "Table to import from",
         accessibleTableOptions),
       Choice(
-        "base-id-attr",
+        "base_id_attr",
         s"Identifying vertex attribute in base project",
         options = FEOption.list(parent.vertexAttributeNames.toList)),
-      Param("base-id-column", s"Identifying column for base project"),
+      Param("base_id_column", s"Identifying column for base project"),
       Choice(
-        "seg-id-attr",
+        "seg_id_attr",
         s"Identifying vertex attribute in segmentation",
         options = vertexAttributes),
-      Param("seg-id-column", s"Identifying column for segmentation"))
+      Param("seg_id_column", s"Identifying column for segmentation"))
     def enabled =
       isSegmentation &&
         FEStatus.assert(
@@ -2610,10 +2610,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             "No vertex attributes in base project")
     def apply() = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
-      val baseColumnName = params("base-id-column")
-      val segColumnName = params("seg-id-column")
-      val baseAttrName = params("base-id-attr")
-      val segAttrName = params("seg-id-attr")
+      val baseColumnName = params("base_id_column")
+      val segColumnName = params("seg_id_column")
+      val baseAttrName = params("base_id_attr")
+      val segAttrName = params("seg_id_attr")
       assert(baseColumnName.nonEmpty,
         "The identifying column parameter must be set for the base project.")
       assert(segColumnName.nonEmpty,
@@ -2638,17 +2638,17 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "Table to import from",
         accessibleTableOptions),
       Param("name", s"Name of new segmentation"),
-      Choice("base-id-attr", "Vertex ID attribute",
+      Choice("base_id_attr", "Vertex ID attribute",
         options = FEOption.unset +: vertexAttributes),
-      Param("base-id-column", "Vertex ID column"),
-      Param("seg-id-column", "Segment ID column"))
+      Param("base_id_column", "Vertex ID column"),
+      Param("seg_id_column", "Segment ID column"))
     def enabled = FEStatus.assert(
       vertexAttributes.nonEmpty, "No suitable vertex attributes")
     def apply() = {
       val table = Table(TablePath.parse(params("table")), project.viewer)
-      val baseColumnName = params("base-id-column")
-      val segColumnName = params("seg-id-column")
-      val baseAttrName = params("base-id-attr")
+      val baseColumnName = params("base_id_column")
+      val segColumnName = params("seg_id_column")
+      val baseAttrName = params("base_id_attr")
       assert(baseColumnName.nonEmpty,
         "The identifying column parameter must be set for the base project.")
       assert(segColumnName.nonEmpty,
@@ -2692,11 +2692,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     StructureOperations, new ProjectTransformation(_) with SegOp {
       def segmentationParameters = List(
         Choice(
-          "base-id-attr",
+          "base_id_attr",
           s"Identifying vertex attribute in base project",
           options = FEOption.list(parent.vertexAttributeNames[String].toList)),
         Choice(
-          "seg-id-attr",
+          "seg_id_attr",
           s"Identifying vertex attribute in segmentation",
           options = vertexAttributes[String]))
       def enabled =
@@ -2706,8 +2706,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             FEStatus.assert(
               parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
       def apply() = {
-        val baseIdAttr = parent.vertexAttributes(params("base-id-attr")).runtimeSafeCast[String]
-        val segIdAttr = project.vertexAttributes(params("seg-id-attr")).runtimeSafeCast[String]
+        val baseIdAttr = parent.vertexAttributes(params("base_id_attr")).runtimeSafeCast[String]
+        val segIdAttr = project.vertexAttributes(params("seg_id_attr")).runtimeSafeCast[String]
         val op = graph_operations.EdgesFromBipartiteAttributeMatches[String]()
         seg.belongsTo = op(op.fromAttr, baseIdAttr)(op.toAttr, segIdAttr).result.edges
       }
@@ -2751,7 +2751,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "Other project's name",
         options = readableProjectCheckpoints,
         allowUnknownOption = true),
-      Param("id-attr", "ID attribute name", defaultValue = "new_id"))
+      Param("id_attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     override def summary = {
       val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("other"))
@@ -2846,7 +2846,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       for ((name, attr) <- newVertexAttributes) {
         project.newVertexAttribute(name, attr) // Clear notes.
       }
-      val idAttr = params("id-attr")
+      val idAttr = params("id_attr")
       assert(
         !project.vertexAttributes.contains(idAttr),
         s"The project already contains a field called '$idAttr'. Please pick a different name.")
@@ -3225,23 +3225,23 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Filter by attributes", StructureOperations, new ProjectTransformation(_) {
     def parameters =
       vertexAttributes.toList.map {
-        attr => Param(s"filterva-${attr.id}", attr.id, mandatory = false)
+        attr => Param(s"filterva_${attr.id}", attr.id, mandatory = false)
       } ++
         project.segmentations.toList.map {
           seg =>
             Param(
-              s"filterva-${seg.viewer.equivalentUIAttributeTitle}",
+              s"filterva_${seg.viewer.equivalentUIAttributeTitle}",
               seg.segmentationName,
               mandatory = false)
         } ++
         edgeAttributes.toList.map {
-          attr => Param(s"filterea-${attr.id}", attr.id, mandatory = false)
+          attr => Param(s"filterea_${attr.id}", attr.id, mandatory = false)
         }
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") ||
         FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
-    val vaFilter = "filterva-(.*)".r
-    val eaFilter = "filterea-(.*)".r
+    val vaFilter = "filterva_(.*)".r
+    val eaFilter = "filterea_(.*)".r
 
     override def summary = {
       val filterStrings = params.collect {
@@ -3577,7 +3577,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   def parseAggregateParams(params: Map[String, String]) = {
-    val aggregate = "aggregate-(.*)".r
+    val aggregate = "aggregate_(.*)".r
     params.toSeq.collect {
       case (aggregate(attr), choices) if choices.nonEmpty => attr -> choices
     }.flatMap {
@@ -3623,7 +3623,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
           }
         }
-        TagList(s"aggregate-$name", name, options = options)
+        TagList(s"aggregate_$name", name, options = options)
     }
   }
 
@@ -3741,7 +3741,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
 object Operations {
   def addNotesOperation(notes: String): FEOperationSpec = {
-    FEOperationSpec("Change-project-notes", Map("notes" -> notes))
+    FEOperationSpec("Change project notes", Map("notes" -> notes))
   }
 }
 

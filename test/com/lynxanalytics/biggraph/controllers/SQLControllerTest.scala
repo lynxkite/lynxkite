@@ -133,7 +133,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       "Import vertices",
       Map(
         "table" -> tablePath,
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
   }
 
   def createViewCSV(file: String, columns: List[String], limit: Option[Int] = None): Unit = {
@@ -220,7 +220,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       "Import vertices",
       Map(
         "table" -> table,
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
     assert(vattr[String]("n") == Seq("A", "B", "C", "D"))
     assert(vattr[Long]("id") == Seq(1, 2, 3, 4, 5))
     assert(vattr[String]("name") == Seq("Beata", "Daniel", "Felix", "Oliver"))
@@ -341,7 +341,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       "Import vertices",
       Map(
         "table" -> table,
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
     assert(vattr[Long]("id") == Seq(1L))
     assert(vattr[Long]("colname with space") == Seq(1L))
     assert(vattr[String]("a") == Seq("x"))
@@ -484,7 +484,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       "Import vertices",
       Map(
         "table" -> tablePath,
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
 
     assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(vattr[(Double, Double)]("location") == Seq(
@@ -555,7 +555,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       params = Map(
         "name" -> "bucketing",
         "attr" -> "age",
-        "interval-size" -> "0.1",
+        "interval_size" -> "0.1",
         "overlap" -> "no"),
       on = "dir/example2")
     run(
@@ -563,7 +563,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       params = Map(
         "name" -> "vertices", // This segmentation is named vertices to test extremes.
         "attr" -> "age",
-        "interval-size" -> "0.1",
+        "interval_size" -> "0.1",
         "overlap" -> "no"),
       on = "dir/example2")
 

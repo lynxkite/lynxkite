@@ -384,7 +384,7 @@ class Table:
     '''Forces the computation of the table.'''
     fake_project = self.lk.new_project()
     fake_project.importVertices(**{
-        'id-attr': '',
+        'id_attr': '',
         'table': self.name})
     fake_project.compute()
 
@@ -713,7 +713,7 @@ class SubProject:
     '''Returns a reference to a table within the project. Example usage::
 
       project2.importVertices(**{
-        'id-attr': 'id',
+        'id_attr': 'id',
         'table': project1.global_table_name('edges')})
 
     The same set of project tables are accessible as from SQL.

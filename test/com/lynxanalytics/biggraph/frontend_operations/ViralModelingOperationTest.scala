@@ -6,7 +6,7 @@ class ViralModelingOperationTest extends OperationsTestBase {
   test("Viral modeling segment logic") {
     run("Import vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/viral-vertices-1.csv"),
-      "id-attr" -> "internalID"))
+      "id_attr" -> "internalID"))
     run("Import edges for existing vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/viral-edges-1.csv"),
       "attr" -> "id",

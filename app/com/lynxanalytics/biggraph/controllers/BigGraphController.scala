@@ -265,10 +265,10 @@ class BigGraphController(val env: SparkFreeEnvironment) {
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
     val vertexParams = request.vertexFilters.map {
-      f => s"filterva-${f.attributeName}" -> f.valueSpec
+      f => s"filterva_${f.attributeName}" -> f.valueSpec
     }
     val edgeParams = request.edgeFilters.map {
-      f => s"filterea-${f.attributeName}" -> f.valueSpec
+      f => s"filterea_${f.attributeName}" -> f.valueSpec
     }
     projectOp(user, ProjectOperationRequest(
       project = request.project,

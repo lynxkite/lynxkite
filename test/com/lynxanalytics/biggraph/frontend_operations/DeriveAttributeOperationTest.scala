@@ -39,7 +39,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Vector attribute") {
     run("Create example graph")
     run("Aggregate on neighbors",
-      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-name" -> "vector"))
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_name" -> "vector"))
     run("Derive vertex attribute",
       Map("type" -> "string", "output" -> "output", "expr" -> """
         (function() { neighbor_name_vector.sort(); return neighbor_name_vector[0]; })()"""))
@@ -50,7 +50,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Primitive vector attribute") {
     run("Create example graph")
     run("Aggregate on neighbors",
-      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_age" -> "vector"))
     run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         (function() {
@@ -67,12 +67,12 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Vector of vector attribute") {
     run("Create example graph")
     run("Aggregate on neighbors",
-      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-age" -> "vector"))
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_age" -> "vector"))
     run("Aggregate on neighbors",
       Map(
         "prefix" -> "neighbor",
         "direction" -> "all edges",
-        "aggregate-neighbor_age_vector" -> "vector"))
+        "aggregate_neighbor_age_vector" -> "vector"))
     run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> """
         neighbor_neighbor_age_vector_vector.map(function(subarray) {
@@ -85,7 +85,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Vector length") {
     run("Create example graph")
     run("Aggregate on neighbors",
-      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate-name" -> "vector"))
+      Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_name" -> "vector"))
     run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "neighbor_name_vector.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]

@@ -38,7 +38,7 @@ class TestLogisticRegression(unittest.TestCase):
     p.trainALogisticRegressionModel(**{
         'features': 'feature',
         'label': 'label',
-        'max-iter': 20,
+        'max_iter': 20,
         'name': 'test'})
     # No assert, we only want to see if it runs without error.
     # This test try to catch an error caused by wrong breeze version.
@@ -82,17 +82,17 @@ class TestLogisticRegression(unittest.TestCase):
 
     # Model training
     train_p = self.lk.new_project()
-    train_p.importVertices(**{'id-attr': 'id', 'table': table})
+    train_p.importVertices(**{'id_attr': 'id', 'table': table})
     train_p.vertexAttributeToDouble(attr='accept,f1,f2')
     train_p.trainALogisticRegressionModel(**{
         'features': 'f1,f2',
         'label': 'accept',
-        'max-iter': 20,
+        'max_iter': 20,
         'name': 'logreg_model'})
 
     # Classification based on model
     classify_p = self.lk.new_project()
-    classify_p.importVertices(**{'id-attr': 'id', 'table': table})
+    classify_p.importVertices(**{'id_attr': 'id', 'table': table})
     classify_p.vertexAttributeToDouble(attr='accept,f1,f2')
     classify_p.copyScalarFromOtherProject(
         destScalarName='model',

@@ -15,9 +15,9 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
     load("merge-parallel-edges.csv")
     run("Merge parallel edges by attribute", Map(
       "key" -> "call",
-      "aggregate-src" -> "",
-      "aggregate-dst" -> "",
-      "aggregate-call" -> ""
+      "aggregate_src" -> "",
+      "aggregate_dst" -> "",
+      "aggregate_call" -> ""
     ))
     val call = project.edgeAttributes("call").runtimeSafeCast[String]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(
@@ -37,9 +37,9 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
     run("Convert edge attribute to double", Map("attr" -> "call"))
     run("Merge parallel edges by attribute", Map(
       "key" -> "call",
-      "aggregate-src" -> "",
-      "aggregate-dst" -> "",
-      "aggregate-call" -> ""
+      "aggregate_src" -> "",
+      "aggregate_dst" -> "",
+      "aggregate_call" -> ""
     ))
     val call = project.edgeAttributes("call").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(
@@ -57,9 +57,9 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
   test("Merge parallel edges works") {
     load("merge-parallel-edges.csv")
     run("Merge parallel edges", Map(
-      "aggregate-src" -> "",
-      "aggregate-dst" -> "",
-      "aggregate-call" -> "count"
+      "aggregate_src" -> "",
+      "aggregate_dst" -> "",
+      "aggregate_call" -> "count"
     ))
     val call = project.edgeAttributes("call_count").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
@@ -73,9 +73,9 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
       "type" -> "double",
       "expr" -> "call == 6.0 ? call : undefined"))
     run("Merge parallel edges", Map(
-      "aggregate-src" -> "most_common",
-      "aggregate-dst" -> "most_common",
-      "aggregate-call" -> "max"
+      "aggregate_src" -> "most_common",
+      "aggregate_dst" -> "most_common",
+      "aggregate_call" -> "max"
     ))
     val call = project.edgeAttributes("call_max").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(6.0))

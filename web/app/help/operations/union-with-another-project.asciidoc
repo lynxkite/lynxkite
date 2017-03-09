@@ -28,7 +28,7 @@ similarity.
 [[other]] Other project's name::
 The project to merge into the current project.
 
-[[id-attr]] ID attribute name::
+[[id_attr]] ID attribute name::
 The internal vertex IDs change after the union. The old ID attributes are preserved, but no
 longer reflect the internal IDs. The new internal IDs will be exposed through a new attribute.
 This parameter sets the name of this new attribute.

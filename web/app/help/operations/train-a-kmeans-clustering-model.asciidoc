@@ -20,7 +20,7 @@ will have a list of features with the same names and semantics.
 [[k]] K clusters::
 The number of clusters to be created.
 
-[[max-iter]] Maximum iterations::
+[[max_iter]] Maximum iterations::
 The maximum number of iterations (>=0).
 
 [[seed]] Seed::

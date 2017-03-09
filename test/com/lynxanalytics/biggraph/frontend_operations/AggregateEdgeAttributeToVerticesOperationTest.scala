@@ -8,18 +8,18 @@ class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "incoming",
       "direction" -> "incoming edges",
-      "aggregate-weight" -> "sum",
-      "aggregate-comment" -> ""))
+      "aggregate_weight" -> "sum",
+      "aggregate_comment" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "outgoing",
       "direction" -> "outgoing edges",
-      "aggregate-weight" -> "sum",
-      "aggregate-comment" -> ""))
+      "aggregate_weight" -> "sum",
+      "aggregate_comment" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "all",
       "direction" -> "all edges",
-      "aggregate-weight" -> "sum",
-      "aggregate-comment" -> ""))
+      "aggregate_weight" -> "sum",
+      "aggregate_comment" -> ""))
     def value(direction: String) = {
       val attr = project.vertexAttributes(s"${direction}_weight_sum").runtimeSafeCast[Double]
       attr.rdd.collect.toSeq.sorted

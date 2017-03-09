@@ -26,7 +26,7 @@ module.exports = function(fw) {
       // values of attribute seg now: [0, 0, 0, 1, 1, 1, 2, 2, 3, 3]
       lib.left.runOperation('Segment by double attribute', {
         'attr': 'seg',
-        'interval-size': '1',
+        'interval_size': '1',
         'name': 'seg'
       });
       // segment sizes now: [3, 3, 2, 2]
