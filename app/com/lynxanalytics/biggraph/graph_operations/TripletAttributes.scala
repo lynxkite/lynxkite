@@ -75,14 +75,14 @@ object EdgesAndNeighbors {
   def empty = EdgesAndNeighbors(Array[ID](), Array[ID]())
 }
 
-// A wrapper class to hold the egde and neighbor IDs of a vertex. We use long arrays
+// A wrapper class to hold the edge and neighbor IDs of a vertex. We use long arrays
 // for performance reasons.
 case class EdgesAndNeighbors(eids: Array[ID], nids: Array[ID]) {
   assert(eids.size == nids.size,
     s"The number of edges ${eids.size} does not match the number of neighbors ${nids.size}.")
 
-  def map[T](f: ((ID, ID)) => T): Iterable[T] = {
-    (eids zip nids).map(f)
+  def map[T](f: (ID, ID) => T): Iterable[T] = {
+    (eids zip nids).map { case (eid, nid) => f(eid, nid) }
   }
 
   def size: Long = eids.size
@@ -237,7 +237,7 @@ object EdgesForVertices extends OpFromJson {
     (j \ "maxNumEdges").as[Int],
     (j \ "bySource").as[Boolean])
 }
-@deprecated("EdgesForVertices is deprecated, use EdgesForVerticesFromEdgesAndNeighbors", "1.13.0")
+@deprecated("EdgesForVertices is deprecated, use EdgesForVerticesFromEdgesAndNeighbors", "1.13.1")
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {
   import EdgesForVertices._
@@ -303,6 +303,7 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
+    // This output is None if the number of edges exceeds the threshold (maxNumEdges parameter).
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
   def fromJson(j: JsValue) = EdgesForVerticesFromEdgesAndNeighbors(
@@ -326,9 +327,9 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
     val mapping = inputs.mapping.entity
     val mappingInstance = mapping.source
     assert(mappingInstance.operation.isInstanceOf[EdgeAndNeighborMapping],
-      "tripletMapping is not a EdgeAndNeighborMapping")
+      "mapping is not a EdgeAndNeighborMapping")
     assert(mappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
-      s"tripletMapping is for ${mappingInstance.inputs.edgeBundles('edges)}" +
+      s"mapping is for ${mappingInstance.inputs.edgeBundles('edges)}" +
         s" instead of ${inputs.edges.entity}")
     new Output()(instance, inputs)
   }
@@ -349,19 +350,23 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
       restricted.aggregate(mutable.Set[(ID, Edge)]())(
         {
           case (set, (srcId, edgesAndNeighbors)) =>
-            val it = edgesAndNeighbors.map { case (edgeId, dstId) => edgeId -> Edge(srcId, dstId) }
-            // 
-            val byDst = if (dstIdSet.isDefined) it.filter(dstIdSet.get contains _._2.dst) else it
-            if ((set == null) || (set.size + byDst.size > maxNumEdges)) {
-              null
-            } else {
-              set ++= byDst
-              set
+            if (set == null) null
+            else {
+              val it = edgesAndNeighbors.map((edgeId, dstId) => edgeId -> Edge(srcId, dstId))
+              val byDst = if (dstIdSet.isDefined) {
+                it.filter { case (_, edge) => dstIdSet.get.contains(edge.dst) }
+              } else it
+              if (set.size + byDst.size > maxNumEdges) {
+                null
+              } else {
+                set ++= byDst
+                set
+              }
             }
         },
         {
           case (set1, set2) =>
-            if ((set1 == null) || (set2 == null)) null
+            if (set1 == null || set2 == null) null
             else {
               set1 ++= set2
               set1

@@ -37,8 +37,8 @@ case class ComputeVertexNeighborhoodFromEdgesAndNeighbors(
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
     val all = inputs.srcMapping.rdd.fullOuterJoin(inputs.dstMapping.rdd)
-    var neighborhood = mutable.SortedSet[ID]() ++ centers.toArray
-    var tooMuch = false
+    var neighborhood = mutable.SortedSet[ID]() ++ centers
+    var tooMuch = neighborhood.size > maxCount
     for (i <- 0 until radius) {
       if (!tooMuch) {
         neighborhood ++= all
@@ -55,7 +55,7 @@ case class ComputeVertexNeighborhoodFromEdgesAndNeighbors(
         }
       }
     }
-    if (tooMuch || neighborhood.size > maxCount) {
+    if (tooMuch) {
       output(o.neighborhood, Set[ID]())
     } else {
       output(o.neighborhood, neighborhood.toSet)
