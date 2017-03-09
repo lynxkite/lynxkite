@@ -203,6 +203,8 @@ include::discard-scalar.asciidoc[]
 
 include::discard-segmentation.asciidoc[]
 
+include::discard-segmentation-links.asciidoc[]
+
 include::discard-vertex-attribute.asciidoc[]
 
 include::discard-vertices.asciidoc[]
@@ -276,6 +278,8 @@ include::maximal-cliques.asciidoc[]
 include::merge-parallel-edges-by-attribute.asciidoc[]
 
 include::merge-parallel-edges.asciidoc[]
+
+include::merge-parallel-segmentation-links.asciidoc[]
 
 include::merge-two-attributes.asciidoc[]
 
