@@ -127,17 +127,22 @@ module.exports = function(fw) {
       expect(weight.getHistogramValues()).toEqual([
         { title : '2.00-2.00', size : 100, value : 1 },
       ]);
-    });
+    });*/
+
   fw.transitionTest(
-    'empty test-example project',
+    'empty test-example workspace',
     'precise mode histogram has precise number for large datasets',
     function() {
-      lib.left.runOperation('Create vertices', {size: '123456'});
-      lib.left.runOperation('Add constant vertex attribute', {name: 'c'});
-      expect(lib.left.vertexAttribute('c').getHistogramValues(true)).toEqual([
+      lib.workspace.addBox('Create vertices', 100, 100);
+      lib.workspace.editBox(0, {size: '123456'});
+      lib.workspace.addBox('Add constant vertex attribute', 100, 200);
+      lib.workspace.connectBoxes(0, 'project', 1, 'project');
+      lib.workspace.editBox(1, {name: 'c'});
+      lib.workspace.getOutputPlug(1, 'project').click();  // select state
+      expect(lib.state.vertexAttribute('c').getHistogramValues(true)).toEqual([
         { title : '1.00-1.00', size: 100, value: 123456 },
       ]);
     },
     function() {});
-*/
+
 };

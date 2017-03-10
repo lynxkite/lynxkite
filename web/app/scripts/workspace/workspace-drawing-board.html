@@ -6,14 +6,17 @@
   <!-- start box -->
   <g ng-repeat="box in workspace.boxes"
       ng-mousedown="onMouseDownOnBox(box, $event)"
-      ng-attr-transform="{{ box.mainPosTransform() }}">
+      ng-attr-transform="{{ box.mainPosTransform() }}"
+      class="box"
+      id="{{ box.instance.id }}">
 
     <!-- start list of I/O plugs -->
-    <g ng-repeat="direction in ['inputs', 'outputs']">
+    <g ng-repeat="direction in ['inputs', 'outputs']"
+      id="{{ direction }}">
       <g ng-repeat="plug in box[direction]"
           ng-attr-transform="{{ plug.posTransform }}"
           ng-class="{ 'selected-plug': plug == selectedPlug }"
-          id="{{ box.instance.id + '-' + direction + '-' + plug.data.id }}">
+          id="{{ plug.data.id }}">
         <text x="10">{{ plug.data.id }}</text>
         <circle ng-attr-r="{{ plug.radius }}"
               class="io-circle"
