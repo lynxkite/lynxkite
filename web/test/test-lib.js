@@ -133,6 +133,7 @@ function Workspace() {
   this.main = element(by.id('workspace-main'));
   this.selector = element(by.css('.operation-selector'));
   this.board = element(by.css('workspace-drawing-board'));
+  this.boxEditor = element(by.css('box-editor'));
 }
 
 Workspace.prototype = {
@@ -155,23 +156,53 @@ Workspace.prototype = {
     this.selector.element(by.id('operation-search')).click();
   },
 
-  addBox: function(name, params, x, y) {
+  operationParameter: function(param) {
+    return this.boxEditor.element(by.css(
+        'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
 
-    params = {};
+  populateOperation: function(params) {
+    params = params || {};
+    for (var key in params) {
+      testLib.setParameter(this.operationParameter(key), params[key]);
+    }
+  },
+
+  submitOperation: function() {
+    var button = this.boxEditor.element(by.css('.ok-button'));
+    // Wait for uploads or whatever.
+    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
+    button.click();
+  },
+
+  addBox: function(name, x, y) {
     var op = this.openOperation(name);
     testLib.simulateDragAndDrop(op, this.board, x, y);
     this.closeOperationSelector();
   },
 
+  editBox: function(boxId, params) {
+    var op = this.getBox(boxId);
+    op.element(by.css('rect')).click();
+    this.populateOperation(params);
+    this.submitOperation();
+  },
+
+  getBox(boxId) {
+    return this.board.all(by.css('.box')).get(boxId);
+  },
+
   getInputPlug: function(boxId, plugId) {
-    return this.board
-        .element(by.id(boxId + '-inputs-' + plugId))
+    return this.getBox(boxId)
+        .element(by.id('inputs'))
+        .element(by.id(plugId))
         .element(by.css('circle'));
   },
 
   getOutputPlug: function(boxId, plugId) {
-    return this.board
-        .element(by.id(boxId + '-outputs-' + plugId))
+    return this.getBox(boxId)
+        .element(by.id('outputs'))
+        .element(by.id(plugId))
         .element(by.css('circle'));
   },
 
@@ -277,17 +308,6 @@ Side.prototype = {
 
   redoButton: function() {
     return this.side.element(by.id('redo-button'));
-  },
-
-  operationParameter: function(opElement, param) {
-    return opElement.$('operation-parameters #' + param + ' .operation-attribute-entry');
-  },
-
-  populateOperation: function(parentElement, params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(parentElement, key), params[key]);
-    }
   },
 
   populateOperationInput: function(parameterId, param) {
