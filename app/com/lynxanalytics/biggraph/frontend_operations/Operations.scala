@@ -1311,7 +1311,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
 
     def enabled = FEStatus.assert(
-      (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
+      (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No numeric (double) or string vertex attributes.")
     def apply(params: Map[String, String]) = {
       val keyAttr = params("keyattr")
       val isDouble = project.vertexAttributes(params("keyattr")).is[Double]
