@@ -534,12 +534,10 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], need
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
     val it = data.iterator(split, context)
     Iterator((split.index, it)).map {
-      case (idx, it) => (idx, {
+      case (idx, it) =>
         val array = it.toArray
         if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
-        array
-      }
-      )
+        (idx, array)
     }
   }
 }
