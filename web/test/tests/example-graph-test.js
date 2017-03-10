@@ -7,7 +7,7 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'test-example workspace with example graph',
     function() {
-      lib.workspace.addBox('example graph', {}, 100, 100);
+      lib.workspace.addBox('create example graph', {}, 100, 100);
     },
     function() {
     });
@@ -16,7 +16,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with example graph state selected',
     function() {
-      lib.workspace.getOutputPlug('Example-Graph0', 'project').click();
+      lib.workspace.getOutputPlug('Create-example-graph0', 'project').click();
     },
     function() {
     });
@@ -36,7 +36,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox('add reversed edges', {}, 100, 200);
       lib.workspace.connectBoxes(
-          'Example-Graph0', 'project',
+          'Create-example-graph0', 'project',
           'Add-reversed-edges1', 'project');
     },
     function() {
