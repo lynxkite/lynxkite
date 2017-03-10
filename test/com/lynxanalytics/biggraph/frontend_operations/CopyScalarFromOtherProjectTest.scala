@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   test("Take scalar from other project with wrong source name") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Rename scalar", Map("from" -> "greeting", "to" -> "farewell"), on = other)
     val ex = intercept[java.lang.AssertionError] {
@@ -21,7 +21,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from other project with conflicting name") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     val ex = intercept[java.lang.AssertionError] {
       run(
@@ -36,7 +36,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from other project scalar value ok") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Derive scalar", Map(
       "output" -> "scalar_val",
@@ -53,7 +53,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",
@@ -61,7 +61,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       "seed" -> "1474343267"), on = other)
     run("Segment by double attribute", Map(
       "attr" -> "rnd",
-      "interval-size" -> "0.1",
+      "interval_size" -> "0.1",
       "name" -> "seg", "overlap" -> "no"), on = other)
     run("Derive scalar", Map(
       "output" -> "scalar_val",
@@ -78,7 +78,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
   }
 
   test("Take scalar from segmentation of segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     val other = clone(project)
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",
@@ -86,7 +86,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       "seed" -> "1474343267"), on = other)
     run("Segment by double attribute", Map(
       "attr" -> "rnd",
-      "interval-size" -> "0.1",
+      "interval_size" -> "0.1",
       "name" -> "seg",
       "overlap" -> "no"), on = other)
     run("Add random vertex attribute", Map(
@@ -95,7 +95,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       "seed" -> "1474343267"), on = other.segmentation("seg"))
     run("Segment by double attribute", Map(
       "attr" -> "rnd2",
-      "interval-size" -> "0.1",
+      "interval_size" -> "0.1",
       "name" -> "seg2",
       "overlap" -> "no"), on = other.segmentation("seg"))
     run("Derive scalar", Map(

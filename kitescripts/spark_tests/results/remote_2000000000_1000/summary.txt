@@ -1,6 +1,0 @@
-/home/hadoop/biggraphstage/kitescripts/spark_tests/cache_disk.groovy:417
-/home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memdisk.groovy:450
-/home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memdisk_ser.groovy:1278
-/home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memory.groovy:446
-/home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memory_ser.groovy:1451
-/home/hadoop/biggraphstage/kitescripts/spark_tests/cache_none.groovy:327

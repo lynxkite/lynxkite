@@ -7,7 +7,7 @@ class CorrelateTwoAttributesOperationTest extends OperationsTestBase {
   implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(0.0001)
 
   test("Aggregate edge attribute to vertices, all directions") {
-    run("Example Graph")
+    run("Create example graph")
     run("Correlate two attributes", Map(
       "attrA" -> "age",
       "attrB" -> "age"))

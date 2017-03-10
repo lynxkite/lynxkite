@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
-    run("Example Graph")
+    run("Create example graph")
     val otherEditor = clone(project)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = otherEditor)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = otherEditor)
@@ -13,7 +13,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
       "Union with another project",
       Map(
         "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 8)
     assert(project.edgeBundle.rdd.count == 8)
@@ -39,19 +39,19 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   }
 
   test("Project union on vertex sets") {
-    run("New vertex set", Map("size" -> "10"))
+    run("Create vertices", Map("size" -> "10"))
     run(
       "Union with another project",
       Map(
         "other" -> s"!checkpoint(${project.checkpoint.get},Copy)",
-        "id-attr" -> "new_id"))
+        "id_attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 20)
     assert(project.edgeBundle == null)
   }
 
   test("Project union - useful error message (#1611)") {
-    run("Example Graph")
+    run("Create example graph")
     val otherEditor = clone(project)
     run("Rename vertex attribute",
       Map("from" -> "age", "to" -> "newage"), on = otherEditor)
@@ -62,7 +62,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
       run("Union with another project",
         Map(
           "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-          "id-attr" -> "new_id"))
+          "id_attr" -> "new_id"))
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))

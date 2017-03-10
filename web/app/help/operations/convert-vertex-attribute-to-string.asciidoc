@@ -1,0 +1,11 @@
+### Convert vertex attribute to string
+
+Converts the selected vertex attributes to `String` type.
+
+The attributes will be converted in-place. If you want to keep the original attributes as
+well, make a copy first!
+
+====
+[[attr]] Vertex attribute::
+The attributes to be converted.
+====

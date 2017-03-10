@@ -4,8 +4,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class FillEdgeAttributeWithConstantDefaultValueOperationTest extends OperationsTestBase {
   test("Fill edge attribute with constant default value") {
-    run("Example Graph")
-    run("Derived edge attribute",
+    run("Create example graph")
+    run("Derive edge attribute",
       Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
     run("Fill edge attribute with constant default value",
       Map("attr" -> "income_edge", "def" -> "-1.0"))

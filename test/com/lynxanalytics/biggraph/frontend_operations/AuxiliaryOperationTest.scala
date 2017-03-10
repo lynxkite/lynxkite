@@ -8,18 +8,18 @@ import com.lynxanalytics.biggraph.controllers._
 class AuxiliaryOperationTest extends OperationsTestBase {
 
   test("Optional and mandatory parameters work") {
-    run("Example Graph")
+    run("Create example graph")
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "incoming",
       "direction" -> "incoming edges",
-      // "aggregate-comment" -> "", This is now optional
-      "aggregate-weight" -> "sum"))
+      // "aggregate_comment" -> "", This is now optional
+      "aggregate_weight" -> "sum"))
     intercept[java.lang.AssertionError] {
       run("Aggregate edge attribute to vertices", Map(
         "prefix" -> "incoming",
         // "direction" -> "incoming edges", But this is not
-        "aggregate-comment" -> "",
-        "aggregate-weight" -> "sum"))
+        "aggregate_comment" -> "",
+        "aggregate_weight" -> "sum"))
     }
   }
 }
