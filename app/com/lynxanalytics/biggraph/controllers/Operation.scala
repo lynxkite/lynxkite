@@ -102,6 +102,9 @@ object Operation {
     meta: BoxMetadata,
     inputs: Map[String, BoxOutputState],
     manager: MetaGraphManager)
+
+  // Turns an operation name into a valid HTML identifier.
+  def htmlID(name: String) = name.toLowerCase.replaceAll("\\W+", "-").replaceFirst("-+$", "")
 }
 
 // OperationRegistry is a simple trait for a class that wants to declare a set of operations.
@@ -154,7 +157,8 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   def summary = title
 
   protected def apply(): Unit
-  protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
+  protected def help = // Add to notes for help link.
+    "<help-popup href=\"" + Operation.htmlID(id) + "\"></help-popup>"
 
   protected def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = allParameters.map { param => param.id }.toSet
