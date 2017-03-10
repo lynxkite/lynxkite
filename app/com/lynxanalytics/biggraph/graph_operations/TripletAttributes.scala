@@ -295,11 +295,9 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
 
 // Returns a small set of edges given a small set of src and optionally dst vertices and a mapping.
 object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
-  class Input(bySource: Boolean) extends MagicInputSignature {
+  class Input() extends MagicInputSignature {
     val vs = vertexSet
-    val otherVs = vertexSet
     val mapping = vertexAttribute[EdgesAndNeighbors](vs)
-    val edges = if (bySource) edgeBundle(vs, otherVs) else edgeBundle(otherVs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
@@ -309,17 +307,15 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
   def fromJson(j: JsValue) = EdgesForVerticesFromEdgesAndNeighbors(
     (j \ "srcIdSet").as[Set[ID]],
     (j \ "dstIdSet").as[Option[Set[ID]]],
-    (j \ "maxNumEdges").as[Int],
-    (j \ "bySource").as[Boolean])
+    (j \ "maxNumEdges").as[Int])
 }
 case class EdgesForVerticesFromEdgesAndNeighbors(
   srcIdSet: Set[ID],
   dstIdSet: Option[Set[ID]], // Filter the edges by dst too if set.
-  maxNumEdges: Int,
-  bySource: Boolean)
+  maxNumEdges: Int)
     extends TypedMetaGraphOp[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
   import EdgesForVerticesFromEdgesAndNeighbors._
-  @transient override lazy val inputs = new Input(bySource)
+  @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val inst = instance
@@ -328,17 +324,13 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
     val mappingInstance = mapping.source
     assert(mappingInstance.operation.isInstanceOf[EdgeAndNeighborMapping],
       "mapping is not a EdgeAndNeighborMapping")
-    assert(mappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity,
-      s"mapping is for ${mappingInstance.inputs.edgeBundles('edges)}" +
-        s" instead of ${inputs.edges.entity}")
     new Output()(instance, inputs)
   }
 
   override def toJson = Json.obj(
     "srcIdSet" -> srcIdSet,
     "dstIdSet" -> dstIdSet,
-    "maxNumEdges" -> maxNumEdges,
-    "bySource" -> bySource)
+    "maxNumEdges" -> maxNumEdges)
 
   def execute(inputDatas: DataSet,
               o: Output,
