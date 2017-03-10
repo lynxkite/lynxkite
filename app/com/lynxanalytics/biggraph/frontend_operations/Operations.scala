@@ -664,7 +664,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Enumerate triangles", CreateSegmentationOperations, new ProjectTransformation(_) {
+  register("Find triangles", CreateSegmentationOperations, new ProjectTransformation(_) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "triangles"),
       Choice("bothdir", "Edges required in both directions", options = FEOption.bools))
@@ -2537,7 +2537,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Copy scalar $from to $to"
     }
     def apply() = {
-      project.scalars(params("name")) = project.scalars(params("destination"))
+      project.scalars(params("destination")) = project.scalars(params("name"))
     }
   })
 

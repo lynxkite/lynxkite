@@ -1,4 +1,4 @@
-### Enumerate triangles
+### Find triangles
 
 Creates a segment for every triangle in the graph.
 A triangle is defined as 3 pairwise connected vertices, regardless of the direction and number of edges between them.
