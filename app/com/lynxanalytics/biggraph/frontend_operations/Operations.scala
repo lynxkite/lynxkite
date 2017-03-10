@@ -1307,20 +1307,28 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   register("Add rank attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
-      Choice("keyattr", "Key attribute name", options = vertexAttributes[Double]),
+      Choice("keyattr", "Key attribute name", options = vertexAttributes[String] ++ vertexAttributes[Double]),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
 
-    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric (double) vertex attributes")
+    def enabled = FEStatus.assert(
+      (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]) = {
       val keyAttr = params("keyattr")
+      val isDouble = project.vertexAttributes(params("keyattr")).is[Double]
       val rankAttr = params("rankattr")
       val ascending = params("order") == "ascending"
       assert(keyAttr.nonEmpty, "Please set a key attribute name.")
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
-      val op = graph_operations.AddRankingAttributeDouble(ascending)
-      val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
-      project.newVertexAttribute(
-        rankAttr, op(op.sortKey, sortKey).result.ordinal.asDouble, s"rank by $keyAttr" + help)
+      val resAttr = if (isDouble) {
+        val op = graph_operations.AddRankingAttributeDouble(ascending)
+        val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
+        op(op.sortKey, sortKey).result.ordinal.asDouble
+      } else {
+        val op = graph_operations.AddRankingAttributeString(ascending)
+        val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[String]
+        op(op.sortKey, sortKey).result.ordinal.asDouble
+      }
+      project.newVertexAttribute(rankAttr, resAttr, s"rank by $keyAttr" + help)
     }
   })
 
