@@ -418,18 +418,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val srcIds = srcView.vertexIndices.get.keySet
       val dstIds = dstView.vertexIndices.map(_.keySet)
       val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
-        srcIds, dstIds, DrawingThresholds.SmallEdges, bySource = true)
-      val edges =
-        op(op.edges, eb)(op.mapping, mapping.srcEdges).result.edges.value
+        srcIds, dstIds, DrawingThresholds.SmallEdges)
+      val edges = op(op.mapping, mapping.srcEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     if (dstView.vertexIndices.isDefined) {
       val srcIds = dstView.vertexIndices.get.keySet
       val dstIds = srcView.vertexIndices.map(_.keySet)
       val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
-        srcIds, dstIds, DrawingThresholds.SmallEdges, bySource = false)
-      val edges =
-        op(op.edges, eb)(op.mapping, mapping.dstEdges).result.edges.value
+        srcIds, dstIds, DrawingThresholds.SmallEdges)
+      val edges = op(op.mapping, mapping.dstEdges).result.edges.value
       if (edges.isDefined) return edges
     }
     return None
