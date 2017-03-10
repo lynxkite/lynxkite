@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Added _Discard segmentation links_ operation.
  - Added _Merge parallel segmentation links_ operation.
+ - _Add rank attribute_ can be used on String attributes.
 
 ### 1.13.0
 
