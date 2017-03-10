@@ -3,7 +3,7 @@ html {
 }
 
 html, body, body > div.ng-scope, div#workspace-main {
-  height: 98%;
+  height: 97%;
 }
 
 span#workspace-name {
