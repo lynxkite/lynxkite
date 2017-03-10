@@ -25,6 +25,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       f
     } finally discard(name)
   }
+  def getOpMeta(ws: String, box: String) =
+    controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
+  def getOutput(ws: String, box: String, output: String) =
+    controller.getOutput(user, GetOutputRequest(ws, BoxOutput(box, output)))
   import WorkspaceJsonFormatters._
   import CheckpointRepository._
   def print[T: json.Writes](t: T): Unit = {
@@ -82,7 +86,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
-      val o = controller.getOutput(user, GetOutputRequest("test-workspace", eg.output("project")))
+      val o = getOutput("test-workspace", "eg", "project")
       assert(o.kind == "project")
       val income = o.project.get.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
@@ -99,7 +103,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
       set("test-workspace", Workspace(List(eg, cc, pr)))
       intercept[AssertionError] {
-        controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr"))
+        getOpMeta("test-workspace", "pr")
       }
       set(
         "test-workspace",
@@ -107,14 +111,50 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
           eg,
           cc.copy(inputs = Map("project" -> eg.output("project"))),
           pr.copy(inputs = Map("project" -> cc.output("project"))))))
-      val op = controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr"))
+      val op = getOpMeta("test-workspace", "pr")
       assert(
         op.parameters.map(_.id) ==
-          Seq("apply_to", "name", "weights", "iterations", "damping", "direction"))
+          Seq("apply_to_project", "name", "weights", "iterations", "damping", "direction"))
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
       assert(
-        op.parameters.find(_.id == "apply_to").get.options.map(_.id) == Seq("", "|cc"))
+        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", "|cc"))
+    }
+  }
+
+  test("2-input operation") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val blanks = Box("blanks", "Create vertices", Map("size" -> "2"), 0, 0, Map())
+      val convert = Box(
+        "convert", "Convert vertex attribute to double",
+        Map("attr" -> "ordinal"), 0, 0, Map("project" -> blanks.output("project")))
+      val srcs = Box(
+        "srcs", "Derive vertex attribute",
+        Map("output" -> "src", "type" -> "string", "expr" -> "ordinal == 0 ? 'Adam' : 'Eve'"),
+        0, 0, Map("project" -> convert.output("project")))
+      val dsts = Box(
+        "dsts", "Derive vertex attribute",
+        Map("output" -> "dst", "type" -> "string", "expr" -> "ordinal == 0 ? 'Eve' : 'Bob'"),
+        0, 0, Map("project" -> srcs.output("project")))
+      val combine = Box(
+        "combine", "Import edges for existing vertices",
+        Map("attr" -> "name", "src" -> "src", "dst" -> "dst"), 0, 0,
+        Map("project" -> eg.output("project"), "edges" -> dsts.output("project")))
+      val ws = Workspace(List(eg, blanks, convert, srcs, dsts, combine))
+      set("test-workspace", ws)
+      val op = getOpMeta("test-workspace", "combine")
+      assert(
+        op.parameters.find(_.id == "attr").get.options.map(_.id) ==
+          Seq("!unset", "age", "gender", "id", "income", "location", "name"))
+      assert(
+        op.parameters.find(_.id == "src").get.options.map(_.id) ==
+          Seq("!unset", "dst", "id", "ordinal", "src"))
+      val project = ws.state(user, ops, combine.output("project")).project
+      import graph_api.Scripting._
+      import graph_util.Scripting._
+      assert(project.edgeBundle.countScalar.value == 2)
     }
   }
 }
