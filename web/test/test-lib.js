@@ -1234,6 +1234,9 @@ testLib = {
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
 
+  // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
+  // to generate and send drag-and-drop events to the page. This function can be used to
+  // achieve that.
   simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY) {
 
     function simulateDragAndDropInBrowser(src, dst, dstX, dstY) {
@@ -1258,7 +1261,7 @@ testLib = {
       var dropEvent = createEvent('drop');
       dropEvent.offsetX = dstX;
       dropEvent.offsetY = dstY;
-      
+
       dropEvent.dataTransfer = dragStartEvent.dataTransfer;
       dst.dispatchEvent(dropEvent);
 
@@ -1267,13 +1270,11 @@ testLib = {
       src.dispatchEvent(dragEndEvent);
     }
 
-    
     browser.executeScript(
         simulateDragAndDropInBrowser,
         srcSelector.getWebElement(),
         dstSelector.getWebElement(),
         dstX, dstY);
-
   },
 
 };
