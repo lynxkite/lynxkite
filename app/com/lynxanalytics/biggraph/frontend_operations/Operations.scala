@@ -2322,8 +2322,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename edge attribute $from to $to"
     }
     def apply() = {
-      assert(!project.edgeAttributes.contains(params("to")),
-        s"""An edge-attribute named '${params("to")}' already exists,
+      assert(!project.edgeAttributes.contains(params("after")),
+        s"""An edge-attribute named '${params("after")}' already exists,
             please discard it or choose another name""")
       project.edgeAttributes(params("after")) = project.edgeAttributes(params("before"))
       project.edgeAttributes(params("before")) = null
@@ -2336,15 +2336,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("after", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     override def summary = {
-      val from = params("before")
-      val to = params("after")
-      s"Rename vertex attribute $from to $to"
+      val before = params("before")
+      val after = params("after")
+      s"Rename vertex attribute $before to $after"
     }
     def apply() = {
-      assert(!project.vertexAttributes.contains(params("to")),
-        s"""A vertex-attribute named '${params("to")}' already exists,
+      assert(!project.vertexAttributes.contains(params("after")),
+        s"""A vertex-attribute named '${params("after")}' already exists,
             please discard it or choose another name""")
-      assert(params("to").nonEmpty, "Please set the new attribute name.")
+      assert(params("after").nonEmpty, "Please set the new attribute name.")
       project.newVertexAttribute(
         params("after"), project.vertexAttributes(params("before")),
         project.viewer.getVertexAttributeNote(params("before")))
