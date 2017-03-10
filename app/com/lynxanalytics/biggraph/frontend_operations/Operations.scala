@@ -98,7 +98,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Create vertices", StructureOperations, new ProjectTransformation(_) {
+  registerNoInput("Create vertices", StructureOperations, new ProjectCreation(_) {
     def parameters = List(
       NonNegInt("size", "Vertex set size", default = 10))
     def enabled = hasNoVertexSet
