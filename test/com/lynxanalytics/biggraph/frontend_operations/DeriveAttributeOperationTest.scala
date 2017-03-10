@@ -147,7 +147,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
 
   test("Derive vertex attribute with substring conflict (#1676)") {
     run("Create example graph")
-    run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
+    run("Rename vertex attribute", Map("before" -> "income", "after" -> "nam"))
     run("Derive vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
