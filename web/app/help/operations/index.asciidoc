@@ -225,8 +225,6 @@ include::discard-vertex-attributes.asciidoc[]
 
 include::discard-vertices.asciidoc[]
 
-include::enumerate-triangles.asciidoc[]
-
 include::export-edge-attributes-to-database.asciidoc[]
 
 include::export-edge-attributes-to-file.asciidoc[]
@@ -258,6 +256,8 @@ include::find-maximal-cliques.asciidoc[]
 include::find-modular-clustering.asciidoc[]
 
 include::find-shortest-path.asciidoc[]
+
+include::find-triangles.asciidoc[]
 
 include::fingerprint-based-on-attributes.asciidoc[]
 
