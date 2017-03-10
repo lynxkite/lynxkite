@@ -151,6 +151,11 @@ angular.module('biggraph')
             scope.addBox(operationID, origEvent.offsetX, origEvent.offsetY);
           });
         });
+
+        scope.$on('box parameters updated', function(event, data) {
+          scope.workspace.setBoxParams(data.boxId, data.paramValues);
+          scope.saveWorkspace();
+        });
       }
 
     };

@@ -121,6 +121,11 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
         return true;
       },
 
+      setBoxParams: function(boxId, paramValues) {
+        this.boxMap[boxId].instance.parameters =
+            Object.assign({}, paramValues);
+      },
+
     };
 
     workspace.build();
