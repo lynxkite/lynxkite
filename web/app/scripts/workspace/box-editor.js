@@ -3,10 +3,10 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
- .directive('boxView', function(util, $rootScope) {
+ .directive('boxEditor', function(util, $rootScope) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/box-view.html',
+      templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
         box: '=',
         workspaceName: '=',
