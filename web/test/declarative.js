@@ -93,7 +93,6 @@ function UIDescription() {
       // statesToReach.
       var statesAutomaticallyReached = {};
       function markParentsAutomaticallyReached(stateName) {
-        console.log('ST', stateName);
         var state = states[stateName];
         var parent = state.parent;
         if (parent !== undefined) {
