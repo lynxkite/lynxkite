@@ -164,16 +164,12 @@ Workspace.prototype = {
   },
 
   getInputPlug: function(boxId, plugId) {
-    // We take the circle because its convex and easily
-    // clickable for Protractor.
     return this.board
         .element(by.id(boxId + '-inputs-' + plugId))
         .element(by.css('circle'));
   },
 
   getOutputPlug: function(boxId, plugId) {
-    // We take the circle because its convex and easily
-    // clickable for Protractor.
     return this.board
         .element(by.id(boxId + '-outputs-' + plugId))
         .element(by.css('circle'));
@@ -182,6 +178,8 @@ Workspace.prototype = {
   connectBoxes: function(name1, output1, name2, input2) {
     var src = this.getOutputPlug(name1, output1);
     var dst = this.getInputPlug(name2, input2);
+    expect(src.isDisplayed()).toBe(true);
+    expect(dst.isDisplayed()).toBe(true);
     browser.actions()
         .mouseDown(src)
         .mouseMove(dst)
