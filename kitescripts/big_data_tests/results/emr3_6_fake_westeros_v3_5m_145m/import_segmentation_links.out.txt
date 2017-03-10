@@ -1,2 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/import_segmentation_links.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/import_segmentation_links.groovy, took 0 seconds

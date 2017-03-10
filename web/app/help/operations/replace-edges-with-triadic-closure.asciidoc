@@ -1,0 +1,13 @@
+### Replace edges with triadic closure
+
+For every A{to}B{to}C triplet, creates an A{to}C edge. The original edges are discarded.
+The new A{to}C edge gets the attributes of the original A{to}B and B{to}C edges with prefixes "ab_" and "bc_".
+
+Be aware, in dense graphs a plenty of new edges can be generated.
+
+Possible use case: we are looking for connections between vertices, like same subscriber with multiple devices.
+We have an edge metric that we think is a good indicator, or we have a model that gives predictions for edges.
+If we want to calculate this metric, and pick the edges with high values, it is possible that the edge
+that would be the winner does not exist.
+Often we think that a transitive closure would add the missing edge.
+For example, I don't call my second phone, but I call a lot of the same people from the two phones.

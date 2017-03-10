@@ -1,8 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/connected_components.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-id: <computed>
-id: <computed>
-size: {"labelType":"between","labels":["5000002.00","5000002.00"],"sizes":[1]}
-!coverage: 5000002
-!nonEmpty: 1
-!belongsToEdges: 5000002
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/connected_components.groovy, took 903 seconds

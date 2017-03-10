@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class GrowSegmentationTest extends OperationsTestBase {
   test("Grow segmentation - in-neighbors") {
-    run("Example Graph")
+    run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     run("Grow segmentation",
       Map("direction" -> "in-neighbors", "apply_to" -> "|seg"))
@@ -15,7 +15,7 @@ class GrowSegmentationTest extends OperationsTestBase {
   }
 
   test("Grow segmentation - out-neighbors") {
-    run("Example Graph")
+    run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     run("Grow segmentation",
       Map("direction" -> "out-neighbors", "apply_to" -> "|seg"))
@@ -25,7 +25,7 @@ class GrowSegmentationTest extends OperationsTestBase {
   }
 
   test("Grow segmentation - all neighbors") {
-    run("Example Graph")
+    run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     run("Grow segmentation",
       Map("direction" -> "all neighbors", "apply_to" -> "|seg"))
@@ -35,7 +35,7 @@ class GrowSegmentationTest extends OperationsTestBase {
   }
 
   test("Grow segmentation - symmetric neighbors") {
-    run("Example Graph")
+    run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg"))
     run("Grow segmentation",
       Map("direction" -> "symmetric neighbors", "apply_to" -> "|seg"))

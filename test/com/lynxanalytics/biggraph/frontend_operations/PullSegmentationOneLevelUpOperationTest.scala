@@ -8,19 +8,19 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
   test("Pull segmentation one level up") {
     run("Import vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-vertices.csv"),
-      "id-attr" -> "id"))
+      "id_attr" -> "id"))
     run("Import segmentation", Map(
       "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
       "name" -> "segmentation1",
-      "base-id-attr" -> "num",
-      "base-id-column" -> "base_num",
-      "seg-id-column" -> "seg_num"))
+      "base_id_attr" -> "num",
+      "base_id_column" -> "base_num",
+      "seg_id_column" -> "seg_num"))
     run("Import segmentation", Map(
       "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
       "name" -> "segmentation2",
-      "base-id-attr" -> "seg_num",
-      "base-id-column" -> "base_num",
-      "seg-id-column" -> "seg_num",
+      "base_id_attr" -> "seg_num",
+      "base_id_column" -> "base_num",
+      "seg_id_column" -> "seg_num",
       "apply_to" -> "|segmentation1"))
     run("Pull segmentation one level up", Map("apply_to" -> "|segmentation1|segmentation2"))
 

@@ -36,8 +36,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     "iterations" -> "5", "direction" -> "all edges")
 
   test("pagerank on example graph") {
-    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
-    val pr = Box("pr", "PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
     val ws = Workspace(List(eg, pr))
     val project = ws.state(user, ops, pr.output("project")).project
     import graph_api.Scripting._
@@ -46,7 +46,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("deltas still work") {
-    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val merge = Box(
       "merge", "Merge vertices by attribute", Map("key" -> "gender"), 0, 20,
       Map("project" -> eg.output("project")))
@@ -57,7 +57,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("validation") {
-    val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val ex = intercept[AssertionError] {
       Workspace(List(eg, eg))
     }
@@ -65,7 +65,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("errors") {
-    val pr1 = Box("pr1", "PageRank", pagerankParams, 0, 20, Map())
+    val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map())
     val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
     val ws = Workspace(List(pr1, pr2))
     val p1 = ws.state(user, ops, pr1.output("project"))
@@ -79,7 +79,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("getProject") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
-      val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
       val o = controller.getOutput(user, GetOutputRequest("test-workspace", eg.output("project")))
@@ -92,11 +92,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("getOperationMeta") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
-      val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
-        "cc", "Connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
+        "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
         0, 20, Map())
-      val pr = Box("pr", "PageRank", pagerankParams, 0, 20, Map())
+      val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
       set("test-workspace", Workspace(List(eg, cc, pr)))
       intercept[AssertionError] {
         controller.getOperationMeta(user, GetOperationMetaRequest("test-workspace", "pr"))

@@ -4,9 +4,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class AggregateEdgeAttributeOperationTest extends OperationsTestBase {
   test("Aggregate edge attribute") {
-    run("Enhanced Example Graph")
+    run("Create enhanced example graph")
     run("Aggregate edge attribute globally",
-      Map("prefix" -> "", "aggregate-weight" -> "sum", "aggregate-comment" -> ""))
+      Map("prefix" -> "", "aggregate_weight" -> "sum", "aggregate_comment" -> ""))
     assert(project.scalars("weight_sum").value == 171.0)
   }
 }

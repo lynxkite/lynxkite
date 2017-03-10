@@ -6,20 +6,20 @@ class ViralModelingOperationTest extends OperationsTestBase {
   test("Viral modeling segment logic") {
     run("Import vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/viral-vertices-1.csv"),
-      "id-attr" -> "internalID"))
+      "id_attr" -> "internalID"))
     run("Import edges for existing vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/viral-edges-1.csv"),
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst"))
-    run("Maximal cliques", Map(
+    run("Find maximal cliques", Map(
       "name" -> "cliques",
       "bothdir" -> "false",
       "min" -> "3"))
-    run("Vertex attribute to double", Map(
+    run("Convert vertex attribute to double", Map(
       "attr" -> "num"))
 
-    run("Viral modeling", Map(
+    run("Predict attribute by viral modeling", Map(
       "prefix" -> "viral",
       "target" -> "num",
       "test_set_ratio" -> "0",

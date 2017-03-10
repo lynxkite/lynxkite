@@ -1,3 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_segmentation_from_sql.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-vertices: 5000002
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/create_segmentation_from_sql.groovy, took 64 seconds
