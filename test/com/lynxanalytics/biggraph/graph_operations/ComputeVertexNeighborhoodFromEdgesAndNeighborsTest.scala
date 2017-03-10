@@ -5,20 +5,19 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphOp {
+class ComputeVertexNeighborhoodFromEdgesAndNeighborsTest extends FunSuite with TestGraphOp {
 
   test("vertex neighborhood of example graph using triplets") {
     val g = ExampleGraph()().result
     val triplets = {
-      val op = TripletMapping()
+      val op = EdgeAndNeighborMapping()
       op(op.edges, g.edges).result
     }
-    val nop = ComputeVertexNeighborhoodFromTriplets(Seq(2, 3), 1, 10)
+    val nop = ComputeVertexNeighborhoodFromEdgesAndNeighbors(Seq(2, 3), 1, 10)
     val nopres = nop(
       nop.vertices, g.vertices)(
-        nop.edges, g.edges)(
-          nop.srcTripletMapping, triplets.srcEdges)(
-            nop.dstTripletMapping, triplets.dstEdges).result
+        nop.srcMapping, triplets.srcEdges)(
+          nop.dstMapping, triplets.dstEdges).result
     assert(nopres.neighborhood.value == Set(0, 1, 2, 3))
   }
 
@@ -29,16 +28,15 @@ class ComputeVertexNeighborhoodFromTripletsTest extends FunSuite with TestGraphO
       3 -> Seq(7, 8), 4 -> Seq(9, 10), 5 -> Seq(11, 12), 6 -> Seq(13, 14))
     val g = SmallTestGraph(edges)().result
     val triplets = {
-      val op = TripletMapping()
+      val op = EdgeAndNeighborMapping()
       op(op.edges, g.es).result
     }
     val neighborhood = {
-      val op = ComputeVertexNeighborhoodFromTriplets(Seq(0), 2, 10)
+      val op = ComputeVertexNeighborhoodFromEdgesAndNeighbors(Seq(0), 2, 10)
       op(
         op.vertices, g.vs)(
-          op.edges, g.es)(
-            op.srcTripletMapping, triplets.srcEdges)(
-              op.dstTripletMapping, triplets.dstEdges).result.neighborhood.value
+          op.srcMapping, triplets.srcEdges)(
+            op.dstMapping, triplets.dstEdges).result.neighborhood.value
     }
     assert(neighborhood == Set(0, 1, 2, 3, 4, 5, 6))
   }
