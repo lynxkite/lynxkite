@@ -23,7 +23,7 @@ $(pip): python_requirements.txt
 	./.test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
-		.build/gulp-done  # .build/documentation-verified
+		.build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
 .build/chronomaster-test-passed: $(shell $(find) chronomaster remote_api/python) $(pip)
 	chronomaster/test.sh && touch $@
