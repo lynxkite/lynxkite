@@ -118,12 +118,10 @@ angular.module('biggraph')
           scope.movedBox.onMouseDown(event);
         };
         scope.onMouseDownOnPlug = function(plug, event) {
-          console.log('mouse down on plug');
           event.stopPropagation();
           scope.pulledPlug = plug;
         };
         scope.onMouseUpOnPlug = function(plug, event) {
-          console.log('mouse up on plug');
           event.stopPropagation();
           if (scope.pulledPlug) {
             var otherPlug = scope.pulledPlug;
