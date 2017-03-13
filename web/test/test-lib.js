@@ -129,34 +129,73 @@ Entity.prototype = {
   },
 };
 
-
-function Side(direction) {
-  this.direction = direction;
-  this.side = element(by.id('side-' + direction));
-  this.toolbox = element(by.id('operation-toolbox-' + direction));
-  this.history = new History(this);
-  this.tableBrowser = new TableBrowser(this.side);
+function Workspace() {
+  this.main = element(by.id('workspace-main'));
+  this.selector = element(by.css('.operation-selector'));
+  this.board = element(by.css('workspace-drawing-board'));
 }
 
-Side.prototype = {
-  expectCurrentProjectIs: function(name) {
-    expect(this.side.evaluate('side.project.$error')).toBeFalsy();
-    expect(this.side.evaluate('side.state.projectName')).toBe(name);
-  },
-
-  expectCurrentProjectIsError: function() {
-    expect(this.side.evaluate('side.project.$error')).toBeTruthy();
-  },
-
-  // Only for opening the second project next to an already open project.
-  openSecondProject: function(project) {
-    testLib.showSelector();
-    this.side.$('#project-' + toID(project)).click();
+Workspace.prototype = {
+  expectCurrentWorkspaceIs: function(name) {
+    expect(this.main.element(by.id('workspace-name')).getText()).toBe(name);
+    // TODO: check that workspace is error-free
   },
 
   close: function() {
-    this.side.element(by.id('close-project')).click();
+    this.main.element(by.id('close-workspace')).click();
   },
+
+  openOperation: function(name) {
+    this.selector.element(by.id('operation-search')).click();
+    this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
+    return this.selector.$$('operation-selector-entry').get(0);
+  },
+
+  closeOperationSelector: function() {
+    this.selector.element(by.id('operation-search')).click();
+  },
+
+  addBox: function(name, params, x, y) {
+
+    params = {};
+    var op = this.openOperation(name);
+    testLib.simulateDragAndDrop(op, this.board, x, y);
+    this.closeOperationSelector();
+  },
+
+  getInputPlug: function(boxId, plugId) {
+    return this.board
+        .element(by.id(boxId + '-inputs-' + plugId))
+        .element(by.css('circle'));
+  },
+
+  getOutputPlug: function(boxId, plugId) {
+    return this.board
+        .element(by.id(boxId + '-outputs-' + plugId))
+        .element(by.css('circle'));
+  },
+
+  connectBoxes: function(name1, output1, name2, input2) {
+    var src = this.getOutputPlug(name1, output1);
+    var dst = this.getInputPlug(name2, input2);
+    expect(src.isDisplayed()).toBe(true);
+    expect(dst.isDisplayed()).toBe(true);
+    browser.actions()
+        .mouseDown(src)
+        .mouseMove(dst)
+        .mouseUp()
+        .perform();
+  }
+
+};
+
+
+function Side(direction) {
+  this.direction = direction;
+  this.side = element(by.css('project-state-view'));
+}
+
+Side.prototype = {
 
   evaluate: function(expr) {
     return this.side.evaluate(expr);
@@ -665,8 +704,8 @@ function Selector(root) {
 }
 
 Selector.prototype = {
-  project: function(name) {
-    return element(by.id('project-' + toID(name)));
+  workspace: function(name) {
+    return element(by.id('workspace-' + toID(name)));
   },
 
   directory: function(name) {
@@ -681,8 +720,8 @@ Selector.prototype = {
     return element(by.id('view-' + toID(name)));
   },
 
-  expectNumProjects: function(n) {
-    return expect($$('.project-entry').count()).toEqual(n);
+  expectNumWorkspaces: function(n) {
+    return expect($$('.workspace-entry').count()).toEqual(n);
   },
 
   expectNumDirectories: function(n) {
@@ -709,10 +748,10 @@ Selector.prototype = {
     return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name);
-    $('#new-project button[type=submit]').click();
+  openNewWorkspace: function(name) {
+    element(by.id('new-workspace')).click();
+    element(by.id('new-workspace-name')).sendKeys(name);
+    $('#new-workspace button[type=submit]').click();
     this.hideFloatingElements();
   },
 
@@ -786,14 +825,14 @@ Selector.prototype = {
     element(by.id('pop-directory-icon')).click();
   },
 
-  renameProject: function(name, newName) {
-    var project = this.project(name);
-    testLib.menuClick(project, 'rename');
-    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
+  renameWorkspace: function(name, newName) {
+    var workspace = this.workspace(name);
+    testLib.menuClick(workspace, 'rename');
+    workspace.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
   },
 
-  deleteProject: function(name) {
-    testLib.menuClick(this.project(name), 'discard');
+  deleteWorkspace: function(name) {
+    testLib.menuClick(this.workspace(name), 'discard');
   },
 
   deleteDirectory: function(name) {
@@ -808,12 +847,12 @@ Selector.prototype = {
     testLib.menuClick(this.view(name), 'edit-import');
   },
 
-  expectProjectListed: function(name) {
-    testLib.expectElement(this.project(name));
+  expectWorkspaceListed: function(name) {
+    testLib.expectElement(this.workspace(name));
   },
 
-  expectProjectNotListed: function(name) {
-    testLib.expectNotElement(this.project(name));
+  expectWorkspaceNotListed: function(name) {
+    testLib.expectNotElement(this.workspace(name));
   },
 
   expectDirectoryListed: function(name) {
@@ -911,8 +950,8 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  left: new Side('left'),
-  right: new Side('right'),
+  state: new Side(),
+  workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
@@ -1192,6 +1231,50 @@ testLib = {
     $('.sweet-alert button.confirm').click();
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
+
+  // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
+  // to generate and send drag-and-drop events to the page. This function can be used to
+  // achieve that.
+  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY) {
+
+    function simulateDragAndDropInBrowser(src, dst, dstX, dstY) {
+      function createEvent(type) {
+        var event = new CustomEvent('CustomEvent');
+        event.initCustomEvent(type, true, true, null);
+        event.dataTransfer = {
+          data: {},
+          setData: function(type, value) {
+            this.data[type] = value;
+          },
+          getData: function(type) {
+            return this.data[type];
+          }
+        };
+        return event;
+      }
+
+      var dragStartEvent = createEvent('dragstart');
+      src.dispatchEvent(dragStartEvent);
+
+      var dropEvent = createEvent('drop');
+      dropEvent.offsetX = dstX;
+      dropEvent.offsetY = dstY;
+
+      dropEvent.dataTransfer = dragStartEvent.dataTransfer;
+      dst.dispatchEvent(dropEvent);
+
+      var dragEndEvent = createEvent('dragend');
+      dragEndEvent.dataTransfer = dragStartEvent.dataTransfer;
+      src.dispatchEvent(dragEndEvent);
+    }
+
+    browser.executeScript(
+        simulateDragAndDropInBrowser,
+        srcSelector.getWebElement(),
+        dstSelector.getWebElement(),
+        dstX, dstY);
+  },
+
 };
 
 module.exports = testLib;

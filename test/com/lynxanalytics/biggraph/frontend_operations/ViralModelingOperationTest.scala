@@ -28,7 +28,7 @@ class ViralModelingOperationTest extends OperationsTestBase {
       "iterations" -> "1",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5",
-      "apply_to" -> "|cliques"))
+      "apply_to_project" -> "|cliques"))
     val viral = project.vertexAttributes("viral_num_after_iteration_1").runtimeSafeCast[Double]
     val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
     assert(remapIDs(viral, stringID).collect.toMap == Map(

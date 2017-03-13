@@ -15,7 +15,7 @@ angular.module('biggraph').directive('projectSelector',
       function defaultSettings() {
         return { privacy: 'private' };
       }
-      scope.newProject = defaultSettings();
+      scope.newWorkspace = defaultSettings();
       scope.newDirectory = defaultSettings();
       scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
         window.localStorage.getItem('last_selector_path') || '';
@@ -96,22 +96,22 @@ angular.module('biggraph').directive('projectSelector',
 
       scope.$on('new table or view', scope.reload);
 
-      scope.createProject = function() {
-        scope.newProject.sending = true;
-        var name = scope.newProject.name;
+      scope.createWorkspace = function() {
+        scope.newWorkspace.sending = true;
+        var name = scope.newWorkspace.name;
         if (scope.path) {
           name = scope.path + '/' + name;
         }
-        var notes = scope.newProject.notes;
+        var notes = scope.newWorkspace.notes;
         util.post('/ajax/createWorkspace',
           {
             name: name,
             notes: notes || '',
-            privacy: scope.newProject.privacy,
+            privacy: scope.newWorkspace.privacy,
           }).then(function() {
             scope.name = name;
           }).finally(function() {
-            scope.newProject.sending = false;
+            scope.newWorkspace.sending = false;
           });
       };
 
@@ -198,11 +198,11 @@ angular.module('biggraph').directive('projectSelector',
       };
 
       scope.reportListError = function() {
-        util.reportRequestError(scope.data, 'Project list could not be loaded.');
+        util.reportRequestError(scope.data, 'Workspace list could not be loaded.');
       };
 
-      scope.reportProjectError = function(project) {
-        util.reportError({ message: project.error, details: scope.data });
+      scope.reportWorkspaceError = function(workspace) {
+        util.reportError({ message: workspace.error, details: scope.data });
       };
 
       scope.menu = {

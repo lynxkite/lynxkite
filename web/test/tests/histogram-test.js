@@ -3,12 +3,12 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  var name = lib.left.vertexAttribute('name');
-  var income = lib.left.vertexAttribute('income');
-  var weight = lib.left.edgeAttribute('weight');
+  var name = lib.state.vertexAttribute('name');
+  var income = lib.state.vertexAttribute('income');
+  var weight = lib.state.edgeAttribute('weight');
 
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'string vertex histogram looks good',
     function() {
       expect(name.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
@@ -19,7 +19,7 @@ module.exports = function(fw) {
       ]);
     });
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'double vertex histogram looks good',
     function() {
       expect(income.getHistogramValues()).toEqual([
@@ -46,7 +46,7 @@ module.exports = function(fw) {
       ]);
     });
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'double edge histogram looks good',
     function() {
       expect(weight.getHistogramValues()).toEqual([
@@ -72,6 +72,7 @@ module.exports = function(fw) {
         { title : '3.85-4.00', size : 100, value : 1 },
       ]);
     });
+/*
   fw.statePreservingTest(
     'example graph with filters set',
     'soft filters are applied to string vertex histogram',
@@ -138,4 +139,5 @@ module.exports = function(fw) {
       ]);
     },
     function() {});
+*/
 };

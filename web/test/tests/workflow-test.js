@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var fs = require('fs');
 var lib = require('../test-lib.js');
 var K = protractor.Key;
@@ -194,3 +197,4 @@ project.deriveVertexAttribute(expr: 'gender == \\'Male\\' ? \\'Mr \\' + name : \
       lib.expectElement(testConstAttr);
     });
 };
+*/
