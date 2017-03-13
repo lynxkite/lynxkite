@@ -1,0 +1,8 @@
+### Take segmentation as base project
+
+Takes a segmentation of a project and returns the segmentation as a base project itself.
+
+====
+[[segmentation]] Segmentation to be set as base project::
+The name of the segmentation which will be takes as a base project.
+====
