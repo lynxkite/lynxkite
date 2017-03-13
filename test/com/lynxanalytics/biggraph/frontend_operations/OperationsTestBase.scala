@@ -53,8 +53,6 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
   override def test(testName: String, testTags: org.scalatest.Tag*)(testFun: => Unit): Unit = {
-    ws = Workspace.empty
-    lastOutput = None
     super.test(testName, testTags: _*) {
       ws = Workspace.empty
       lastOutput = None
