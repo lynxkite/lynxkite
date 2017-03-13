@@ -12,11 +12,11 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
       Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no")
     )
     run("Add constant vertex attribute",
-      Map("name" -> "const", "value" -> "1.0", "type" -> "Double", "apply_to" -> "|seg"))
+      Map("name" -> "const", "value" -> "1.0", "type" -> "Double", "apply_to_project" -> "|seg"))
     run("Merge vertices by attribute", Map(
       "key" -> "const", "aggregate_bottom" -> "", "aggregate_id" -> "",
       "aggregate_size" -> "", "aggregate_top" -> "", "aggregate_const" -> "count",
-      "apply_to" -> "|seg"))
+      "apply_to_project" -> "|seg"))
     val seg = project.segmentation("seg")
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
@@ -42,10 +42,10 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
       Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no")
     )
     run("Add rank attribute", Map(
-      "rankattr" -> "ranking", "keyattr" -> "top", "order" -> "ascending", "apply_to" -> "|seg"))
+      "rankattr" -> "ranking", "keyattr" -> "top", "order" -> "ascending", "apply_to_project" -> "|seg"))
     run("Filter by attributes", Map(
       "filterva_ranking" -> "> 0", "filterva_bottom" -> "", "filterva_id" -> "",
-      "filterva_size" -> "", "filterva_top" -> "", "apply_to" -> "|seg"))
+      "filterva_size" -> "", "filterva_top" -> "", "apply_to_project" -> "|seg"))
     val seg = project.segmentation("seg")
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
