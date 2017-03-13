@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 var left = lib.left;
 var right = lib.right;
@@ -403,5 +406,5 @@ module.exports = function(fw) {
       lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
       expect(lib.getACEText(editor)).toBe('0');
     });
-
 };
+*/

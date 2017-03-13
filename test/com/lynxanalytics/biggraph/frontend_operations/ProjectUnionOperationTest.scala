@@ -7,8 +7,8 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
     run("Create example graph")
     val otherEditor = clone(project)
-    run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = otherEditor)
-    run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = otherEditor)
+    run("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"), on = otherEditor)
+    run("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"), on = otherEditor)
     run(
       "Union with another project",
       Map(
@@ -54,7 +54,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     run("Create example graph")
     val otherEditor = clone(project)
     run("Rename vertex attribute",
-      Map("from" -> "age", "to" -> "newage"), on = otherEditor)
+      Map("before" -> "age", "after" -> "newage"), on = otherEditor)
     run("Add constant vertex attribute",
       Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = otherEditor)
 

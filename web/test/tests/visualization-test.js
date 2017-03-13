@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var fs = require('fs');
 var lib = require('../test-lib.js');
 
@@ -555,3 +558,4 @@ module.exports = function(fw) {
     },
     function() {});
 };
+*/

@@ -1,17 +1,20 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  /* We use the Derive vertex attribute operation to generate attributes for the graph.
-   * The attributes object below contains the attributes we are using:
-   *     - the keys are the names of the attributes,
-   *     - the corresponding values are the expression for the Derive vertex attribute operation.
-   *
-   * We have several attribute pairs which starts with the same letter but one of them is
-   * capitalized while the other is all lower case letters to test how the sorting handles
-   * the lower and the upper case.
-   */
+  // We use the Derive vertex attribute operation to generate attributes for the graph.
+  // The attributes object below contains the attributes we are using:
+  //     - the keys are the names of the attributes,
+  //     - the corresponding values are the expression for the Derive vertex attribute operation.
+  //
+  // We have several attribute pairs which starts with the same letter but one of them is
+  // capitalized while the other is all lower case letters to test how the sorting handles
+  // the lower and the upper case.
+  //
   var attributes = {
         'goals': '73',
         'points': '90',
@@ -76,3 +79,4 @@ module.exports = function(fw) {
   },
   function() {});
 };
+*/

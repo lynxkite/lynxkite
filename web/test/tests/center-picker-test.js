@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 var K = protractor.Key;
 
@@ -131,3 +134,4 @@ module.exports = function(fw) {
       centerCount.sendKeys('1');
     });
 };
+*/
