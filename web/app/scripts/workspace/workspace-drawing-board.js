@@ -101,7 +101,12 @@ angular.module('biggraph')
           }
         };
 
-        var workspaceDrag = false, workspaceX = 0, workspaceY = 0;
+        var workspaceDrag = false;
+        var workspaceX = 0;
+        var workspaceY = 0;
+        var workspaceZoom = 0;
+        function zoomToScale(z) { return Math.exp(z * 0.001); }
+
         scope.onMouseMove = function(event) {
           event.preventDefault();
           if (workspaceDrag) {
@@ -130,6 +135,24 @@ angular.module('biggraph')
           workspaceDrag = true;
           setGrabCursor(element[0]);
         };
+
+        element.on('wheel', function(event) {
+          event.preventDefault();
+          var delta = event.originalEvent.deltaY;
+          if (/Firefox/.test(window.navigator.userAgent)) {
+            // Every browser sets different deltas for the same amount of scrolling.
+            // It is tiny on Firefox. We need to boost it.
+            delta *= 20;
+          }
+          scope.$apply(function() {
+            var z1 = zoomToScale(workspaceZoom);
+            workspaceZoom -= delta;
+            var z2 = zoomToScale(workspaceZoom);
+            // Maintain screen-coordinates of logical point under the mouse.
+            workspaceX = scope.mouseX - (scope.mouseX - workspaceX) * z2 / z1;
+            workspaceY = scope.mouseY - (scope.mouseY - workspaceY) * z2 / z1;
+          });
+        });
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
@@ -187,7 +210,8 @@ angular.module('biggraph')
         });
 
         scope.workspaceTransform = function() {
-          return 'translate(' + workspaceX + ', ' + workspaceY + ')';
+          var z = zoomToScale(workspaceZoom);
+          return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
       }
 
