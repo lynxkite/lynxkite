@@ -40,7 +40,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def register(
     id: String,
     category: Category,
-    inputProjects: String*)(factory: Context => Operation): Unit = {
+    inputProjects: String*)(factory: Context => ProjectOutputOperation): Unit = {
     registerOp(
       id, category, inputProjects.toList.map(i => TypedConnection(i, "project")),
       List(projectConnection), factory)

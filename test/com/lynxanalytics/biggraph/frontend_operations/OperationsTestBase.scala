@@ -51,4 +51,15 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
+
+  override def test(testName: String, testTags: org.scalatest.Tag*)(testFun: => Unit): Unit = {
+    ws = Workspace.empty
+    lastOutput = None
+    super.test(testName, testTags: _*) {
+      ws = Workspace.empty
+      lastOutput = None
+      testFun
+    }
+  }
+
 }
