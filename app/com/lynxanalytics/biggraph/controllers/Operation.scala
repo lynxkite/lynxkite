@@ -76,6 +76,7 @@ abstract class OperationParameterMeta {
 // They are registered in an OperationRegistry with a factory function that takes an
 // Operation.Context parameter. Operations are short-lived and created for a specific input.
 trait Operation {
+  protected val context: Operation.Context
   def enabled: FEStatus
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
@@ -178,12 +179,8 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
-// A "ProjectOperation" is an operation that has 1 project-typed output. It includes a lot of
-// utility methods for supporting this.
-abstract class ProjectOperation(context: Operation.Context) extends Operation {
-  assert(
-    context.meta.outputs == List(TypedConnection("project", "project")),
-    s"A ProjectOperation must output a project. $context")
+// A base class with some conveniences for working with projects.
+trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
   protected val id = context.meta.operationID
@@ -232,13 +229,6 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
     editor.scalars.set(s"!${name}_delta", delta)
   }
 
-  protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
-    import CheckpointRepository._ // For JSON formatters.
-    val output = BoxOutputState(
-      "project", json.Json.toJson(project.rootState.state).as[json.JsObject])
-    Map(context.meta.outputs(0).ofBox(context.box) -> output)
-  }
-
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
     title,
@@ -247,7 +237,7 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
     context.meta.categoryID,
     enabled)
 
-  protected def projectInput(input: String) = {
+  protected def projectInput(input: String): ProjectEditor = {
     val segPath = SubProject.splitPipedPath(params.getOrElse("apply_to_" + input, ""))
     assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $params")
     context.inputs(input).project.offspringEditor(segPath.tail)
@@ -271,41 +261,40 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
   }
 }
 
+// A ProjectOutputOperation is an operation that has 1 project-typed output.
+abstract class ProjectOutputOperation(
+    protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.outputs == List(TypedConnection("project", "project")),
+    s"A ProjectOperation must output a project. $context")
+  protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
+
+  protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
+    import CheckpointRepository._ // For JSON formatters.
+    val output = BoxOutputState(
+      "project", json.Json.toJson(project.rootState.state).as[json.JsObject])
+    Map(context.meta.outputs(0).ofBox(context.box) -> output)
+  }
+
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    apply()
+    makeOutput(project)
+  }
+}
+
 // A "ProjectTransformation" takes 1 input project and produces 1 output project.
-abstract class ProjectTransformation(context: Operation.Context) extends ProjectOperation(context) {
+abstract class ProjectTransformation(
+    context: Operation.Context) extends ProjectOutputOperation(context) {
   assert(
     context.meta.inputs == List(TypedConnection("project", "project")),
     s"A ProjectTransformation must input a single project. $context")
-  protected lazy val project = projectInput("project")
+  override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     val before = project.viewer
     apply()
     updateDeltas(project, before)
-    makeOutput(project)
-  }
-}
-
-// A "ProjectCombination" takes 2 input projects and produces 1 output project.
-abstract class ProjectCombination(context: Operation.Context) extends ProjectOperation(context) {
-  assert(
-    context.meta.inputs.size == 2 && context.meta.inputs.forall(_.kind == BoxOutputKind.Project),
-    s"A ProjectCombination must input two projects. $context")
-  protected lazy val outputProject = new RootProjectEditor(RootProjectState.emptyState)
-  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
-    apply()
-    makeOutput(outputProject)
-  }
-}
-
-// A "ProjectCreation" creates 1 output project from nothingness (no inputs).
-abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
-  assert(context.meta.inputs == List(), s"A ProjectCreation must have no inputs. $context")
-  protected lazy val project = new RootProjectEditor(RootProjectState.emptyState)
-  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
-    apply()
     makeOutput(project)
   }
 }
