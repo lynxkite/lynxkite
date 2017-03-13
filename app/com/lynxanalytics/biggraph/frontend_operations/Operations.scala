@@ -37,31 +37,20 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     registerOp(id, category, List(projectConnection), List(projectConnection), factory)
   }
 
-  def registerNoInput(
+  def register(
     id: String,
     category: Category,
-    factory: Context => ProjectCreation): Unit = {
-    registerOp(id, category, List(), List(projectConnection), factory)
-  }
-
-  def registerCombination(
-    id: String,
-    category: Category,
-    input1Name: String,
-    input2Name: String,
-    factory: Context => ProjectCombination): Unit = {
+    inputProjects: String*)(factory: Context => Operation): Unit = {
     registerOp(
-      id, category,
-      List(TypedConnection(input1Name, "project"), TypedConnection(input2Name, "project")),
-      List(projectConnection),
-      factory)
+      id, category, inputProjects.toList.map(i => TypedConnection(i, "project")),
+      List(projectConnection), factory)
   }
 
   trait SegOp extends ProjectTransformation {
     protected def seg = project.asSegmentation
     protected def parent = seg.parent
     protected def segmentationParameters(): List[OperationParameterMeta]
-    def parameters = {
+    lazy val parameters = {
       if (project.isSegmentation) segmentationParameters
       else List[OperationParameterMeta]()
     }
@@ -97,7 +86,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import OperationParams._
 
   register("Discard vertices", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List()
+    lazy val parameters = List()
     def enabled = project.hasVertexSet && project.assertNotSegmentation
     def apply() = {
       project.vertexSet = null
@@ -105,15 +94,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Discard edges", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List()
+    lazy val parameters = List()
     def enabled = project.hasEdgeBundle
     def apply() = {
       project.edgeBundle = null
     }
   })
 
-  registerNoInput("Create vertices", StructureOperations, new ProjectCreation(_) {
-    def parameters = List(
+  register("Create vertices", StructureOperations)(new ProjectOutputOperation(_) {
+    lazy val parameters = List(
       NonNegInt("size", "Vertex set size", default = 10))
     def enabled = project.hasNoVertexSet
     def apply() = {
@@ -124,7 +113,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Create random edge bundle", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasVertexSet && project.hasNoEdgeBundle
@@ -136,7 +125,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Create scale-free random edge bundle", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       NonNegInt("iterations", "Number of iterations", default = 10),
       NonNegDouble(
         "perIterationMultiplier",
@@ -154,7 +143,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Connect vertices on attribute", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("fromAttr", "Source attribute", options = project.vertexAttrList),
       Choice("toAttr", "Destination attribute", options = project.vertexAttrList))
     def enabled =
@@ -184,8 +173,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  registerNoInput("Import vertices", ImportOperations, factory = new ProjectCreation(_) {
-    def parameters = List(
+  register("Import vertices", ImportOperations)(new ProjectOutputOperation(_) {
+    lazy val parameters = List(
       TableParam(
         "table",
         "Table to import from",
@@ -208,46 +197,44 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  registerCombination(
+  register(
     "Import edges for existing vertices", ImportOperations,
-    "project", "edges",
-    new ProjectCombination(_) {
-      lazy val project = projectInput("project")
-      lazy val edges = projectInput("edges")
-      def parameters = List(
-        Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
-        Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
-        Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
-      def enabled =
-        project.hasNoEdgeBundle &&
-          FEStatus.assert(
-            project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
+    "project", "edges")(
+      new ProjectOutputOperation(_) {
+        override lazy val project = projectInput("project")
+        lazy val edges = projectInput("edges")
+        lazy val parameters = List(
+          Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
+          Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
+          Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
+        def enabled =
+          project.hasNoEdgeBundle &&
             FEStatus.assert(
-              edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
-      def apply() = {
-        val src = params("src")
-        val dst = params("dst")
-        val id = params("attr")
-        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
-        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
-        assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-        val idAttr = project.vertexAttributes(id)
-        val srcAttr = edges.vertexAttributes(src)
-        val dstAttr = edges.vertexAttributes(dst)
-        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-          idAttr, idAttr, srcAttr, dstAttr)
-        outputProject.state = project.state
-        outputProject.edgeBundle = imp.edges
-        for ((name, attr) <- edges.vertexAttributes) {
-          outputProject.edgeAttributes(name) = attr.pullVia(imp.embedding)
+              project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
+              FEStatus.assert(
+                edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
+        def apply() = {
+          val src = params("src")
+          val dst = params("dst")
+          val id = params("attr")
+          assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
+          assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
+          assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+          val idAttr = project.vertexAttributes(id)
+          val srcAttr = edges.vertexAttributes(src)
+          val dstAttr = edges.vertexAttributes(dst)
+          val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+            idAttr, idAttr, srcAttr, dstAttr)
+          project.edgeBundle = imp.edges
+          for ((name, attr) <- edges.vertexAttributes) {
+            project.edgeAttributes(name) = attr.pullVia(imp.embedding)
+          }
         }
-      }
-    })
+      })
 
-  registerNoInput(
-    "Import vertices and edges from a single table",
-    ImportOperations, factory = new ProjectCreation(_) {
-      def parameters = List(
+  register("Import vertices and edges from a single table", ImportOperations)(
+    new ProjectOutputOperation(_) {
+      lazy val parameters = List(
         TableParam(
           "table",
           "Table to import from",
@@ -276,7 +263,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Import vertex attributes", ImportOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       TableParam(
         "table",
         "Table to import from",
@@ -315,7 +302,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Import edge attributes", ImportOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       TableParam(
         "table",
         "Table to import from",
@@ -356,7 +343,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find maximal cliques", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Choice(
         "bothdir", "Edges required in both directions", options = FEOption.bools),
@@ -392,7 +379,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find connected components", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
       Choice(
         "directions",
@@ -416,7 +403,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find infocom communities", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param(
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
@@ -476,7 +463,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find modular clustering", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
         FEOption.noWeight +: project.edgeAttrList[Double], mandatory = false),
@@ -521,7 +508,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Segment by double attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[Double]),
       NonNegDouble("interval_size", "Interval size"),
@@ -554,7 +541,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Segment by string attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[String]))
     def enabled = FEStatus.assert(
@@ -581,7 +568,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Segment by interval", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("begin_attr", "Begin attribute", options = project.vertexAttrList[Double]),
       Choice("end_attr", "End attribute", options = project.vertexAttrList[Double]),
@@ -630,7 +617,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           attr => FEOption.regular(AttributePrefix + attr.title)
         }
 
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Target segmentation name"),
       Choice(
         "location",
@@ -688,7 +675,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find triangles", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "triangles"),
       Choice("bothdir", "Edges required in both directions", options = FEOption.bools))
     def enabled = project.hasEdgeBundle
@@ -706,7 +693,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Combine segmentations", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "New segmentation name"),
       Choice(
         "segmentations", "Segmentations",
@@ -758,7 +745,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Expose internal vertex ID", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "id"))
     def enabled = project.hasVertexSet
     def apply() = {
@@ -768,7 +755,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Expose internal edge ID", EdgeAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "id"))
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -778,7 +765,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add gaussian vertex attribute", DeprecatedOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasVertexSet
@@ -791,7 +778,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add random vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
@@ -805,7 +792,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add random edge attribute", EdgeAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
@@ -819,7 +806,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add constant edge attribute", EdgeAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"),
       Choice("type", "Type", options = FEOption.list("Double", "String")))
@@ -837,7 +824,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add constant vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
       Choice("type", "Type", options = FEOption.list("Double", "String")))
@@ -856,7 +843,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register(
     "Fill vertex attribute with constant default value",
     VertexAttributesOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Choice(
           "attr", "Vertex attribute",
           options = project.vertexAttrList[String] ++ project.vertexAttrList[Double]),
@@ -877,7 +864,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register(
     "Fill edge attribute with constant default value",
     EdgeAttributesOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Choice(
           "attr", "Edge attribute",
           options = project.edgeAttrList[String] ++ project.edgeAttrList[Double]),
@@ -896,7 +883,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Merge two vertex attributes", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "New attribute name", defaultValue = ""),
       Choice("attr1", "Primary attribute", options = project.vertexAttrList),
       Choice("attr2", "Secondary attribute", options = project.vertexAttrList))
@@ -914,7 +901,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Merge two edge attributes", EdgeAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "New attribute name", defaultValue = ""),
       Choice("attr1", "Primary attribute", options = project.edgeAttrList),
       Choice("attr2", "Secondary attribute", options = project.edgeAttrList))
@@ -934,7 +921,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register(
     "Reduce vertex attributes to two dimensions",
     MachineLearningOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
         Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
         Choice(
@@ -956,7 +943,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Reverse edge direction", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List()
+    lazy val parameters = List()
     def enabled = project.hasEdgeBundle
     def apply() = {
       val op = graph_operations.ReverseEdges()
@@ -970,7 +957,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add reversed edges", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("distattr", "Distinguishing edge attribute", mandatory = false)
     )
     def enabled = project.hasEdgeBundle
@@ -994,7 +981,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find vertex coloring", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "color"))
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -1006,7 +993,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Compute clustering coefficient", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -1018,7 +1005,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Approximate clustering coefficient", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"),
       NonNegInt("bits", "Precision", default = 8))
     def enabled = project.hasEdgeBundle
@@ -1031,7 +1018,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Compute embeddedness", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "embeddedness"))
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -1041,7 +1028,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Approximate embeddedness", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "embeddedness"),
       NonNegInt("bits", "Precision", default = 8))
     def enabled = project.hasEdgeBundle
@@ -1052,7 +1039,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Compute dispersion", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "dispersion"))
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -1079,7 +1066,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Compute degree", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
       Choice("direction", "Count", options = Direction.options))
     def enabled = project.hasEdgeBundle
@@ -1093,7 +1080,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Compute PageRank", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Choice("weights", "Weight attribute",
         options = FEOption.noWeight +: project.edgeAttrList[Double], mandatory = false),
@@ -1118,7 +1105,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Find shortest path", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "shortest_distance"),
       Choice("edge_distance", "Edge distance attribute",
         options = FEOption.unitDistances +: project.edgeAttrList[Double]),
@@ -1148,7 +1135,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Compute centrality", MetricsOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "centrality"),
       NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
       Choice("algorithm", "Centrality type",
@@ -1171,7 +1158,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add rank attribute", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
       Choice("keyattr", "Key attribute name", options = project.vertexAttrList[Double]),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
@@ -1191,8 +1178,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  registerNoInput("Create example graph", StructureOperations, factory = new ProjectCreation(_) {
-    def parameters = List()
+  register("Create example graph", StructureOperations)(new ProjectOutputOperation(_) {
+    lazy val parameters = List()
     def enabled = project.hasNoVertexSet
     def apply() = {
       val g = graph_operations.ExampleGraph()().result
@@ -1211,9 +1198,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  registerNoInput(
-    "Create enhanced example graph", HiddenOperations, factory = new ProjectCreation(_) {
-      def parameters = List()
+  register(
+    "Create enhanced example graph", HiddenOperations)(new ProjectOutputOperation(_) {
+      lazy val parameters = List()
       def enabled = project.hasNoVertexSet
       def apply() = {
         val g = graph_operations.EnhancedExampleGraph()().result
@@ -1228,7 +1215,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
       Param("salt", "Salt",
         defaultValue = graph_operations.HashVertexAttribute.makeSecret(nextString(15)))
@@ -1264,7 +1251,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register(
     "Convert vertex attribute to string", VertexAttributesOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
       def apply() = {
@@ -1276,7 +1263,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register(
     "Convert edge attribute to string", EdgeAttributesOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Choice("attr", "Edge attribute", options = project.edgeAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes.")
       def apply() = {
@@ -1292,7 +1279,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.vertexAttrList[String] ++
           project.vertexAttrList[Long] ++
           project.vertexAttrList[Int]
-      def parameters = List(
+      lazy val parameters = List(
         Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true))
       def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
       def apply() = {
@@ -1309,7 +1296,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.edgeAttrList[String] ++
           project.edgeAttrList[Long] ++
           project.edgeAttrList[Int]
-      def parameters = List(
+      lazy val parameters = List(
         Choice("attr", "Edge attribute", options = eligible, multipleChoice = true))
       def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
       def apply() = {
@@ -1323,7 +1310,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register(
     "Convert vertex attributes to position",
     VertexAttributesOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Param("output", "Save as", defaultValue = "position"),
         Choice("x", "X or latitude", options = project.vertexAttrList[Double]),
         Choice("y", "Y or longitude", options = project.vertexAttrList[Double]))
@@ -1342,7 +1329,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Replace with edge graph", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List()
+    lazy val parameters = List()
     def enabled = project.hasEdgeBundle
     def apply() = {
       val op = graph_operations.EdgeGraph()
@@ -1353,7 +1340,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Derive vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
@@ -1391,7 +1378,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Derive edge attribute", EdgeAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
@@ -1444,7 +1431,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Derive scalar", GlobalOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
       Code("expr", "Value", defaultValue = "1 + 1"))
@@ -1467,7 +1454,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Predict vertex attribute", MachineLearningOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Choice("features", "Predictors", options = project.vertexAttrList[Double], multipleChoice = true),
       Choice("method", "Method", options = FEOption.list(
@@ -1498,7 +1485,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Train linear regression model", MachineLearningOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = project.vertexAttrList[Double]),
       Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
@@ -1532,7 +1519,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Train a logistic regression model", MachineLearningOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "The name of the model"),
       Choice("label", "Label", options = project.vertexAttrList[Double]),
       Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
@@ -1560,7 +1547,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Train a k-means clustering model", MachineLearningOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "The name of the model"),
       Choice(
         "features", "Attributes",
@@ -1596,7 +1583,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Predict from model", MachineLearningOperations, new ProjectTransformation(_) {
     val models = project.viewer.models.filterNot(_._2.isClassification)
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "The name of the attribute of the predictions"),
       ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
     def enabled =
@@ -1622,7 +1609,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Classify vertices with a model", MachineLearningOperations, new ProjectTransformation(_) {
     val models = project.viewer.models.filter(_._2.isClassification)
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "The name of the attribute of the classifications"),
       ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
     def enabled =
@@ -1861,7 +1848,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Aggregate on neighbors", PropagationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Choice("direction", "Aggregate on", options = Direction.options)) ++
       aggregateParams(project.vertexAttributes)
@@ -1880,7 +1867,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Weighted aggregate on neighbors", PropagationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Choice("weight", "Weight", options = project.vertexAttrList[Double]),
       Choice("direction", "Aggregate on", options = Direction.options)) ++
@@ -1904,7 +1891,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Split vertices", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("rep", "Repetition attribute", options = project.vertexAttrList[Double]),
       Param("idattr", "ID attribute name", defaultValue = "new_id"),
       Param("idx", "Index attribute name", defaultValue = "index"))
@@ -1926,7 +1913,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Split edges", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("rep", "Repetition attribute", options = project.edgeAttrList[Double]),
       Param("idx", "Index attribute name", defaultValue = "index"))
 
@@ -1947,7 +1934,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Merge vertices by attribute", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("key", "Match by", options = project.vertexAttrList)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
@@ -2047,7 +2034,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   register("Merge parallel edges", StructureOperations, new ProjectTransformation(_) {
-    def parameters = aggregateParams(project.edgeAttributes)
+    lazy val parameters = aggregateParams(project.edgeAttributes)
     def enabled = project.hasEdgeBundle
 
     def apply() = {
@@ -2056,7 +2043,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Merge parallel edges by attribute", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("key", "Merge by", options = project.edgeAttrList)) ++
       aggregateParams(project.edgeAttributes)
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty,
@@ -2068,7 +2055,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Discard loop edges", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List()
+    lazy val parameters = List()
     def enabled = project.hasEdgeBundle
     def apply() = {
       val edgesAsAttr = {
@@ -2084,7 +2071,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Replace edges with triadic closure", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List()
+    lazy val parameters = List()
     def enabled = project.hasVertexSet && project.hasEdgeBundle
     def apply() = {
       val op = graph_operations.ConcatenateBundlesMulti()
@@ -2106,7 +2093,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Create snowball sample", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Ratio("ratio", "Fraction of vertices to use as starting points", defaultValue = "0.0001"),
       NonNegInt("radius", "Radius", default = 3),
       Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
@@ -2147,7 +2134,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Sample graph by random walks", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       NonNegInt("startPoints", "Number of start points", default = 1),
       NonNegInt("walksFromOnePoint", "Number of walks from each start point", default = 10000),
       Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
@@ -2173,7 +2160,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Aggregate vertex attribute globally", GlobalOperations, new ProjectTransformation(_) {
-    def parameters = List(Param("prefix", "Generated name prefix")) ++
+    lazy val parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
     def enabled =
       FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
@@ -2189,7 +2176,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Weighted aggregate vertex attribute globally", GlobalOperations,
     new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Param("prefix", "Generated name prefix"),
         Choice("weight", "Weight", options = project.vertexAttrList[Double])) ++
         aggregateParams(project.vertexAttributes, needsGlobal = true, weighted = true)
@@ -2209,7 +2196,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Aggregate edge attribute globally", GlobalOperations, new ProjectTransformation(_) {
-    def parameters = List(Param("prefix", "Generated name prefix")) ++
+    lazy val parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(
         project.edgeAttributes,
         needsGlobal = true)
@@ -2227,7 +2214,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Weighted aggregate edge attribute globally", GlobalOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = project.edgeAttrList[Double])) ++
       aggregateParams(
@@ -2249,7 +2236,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Aggregate edge attribute to vertices", PropagationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
@@ -2273,7 +2260,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register(
     "Weighted aggregate edge attribute to vertices", PropagationOperations,
     new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Param("prefix", "Generated name prefix", defaultValue = "edge"),
         Choice("weight", "Weight", options = project.edgeAttrList[Double]),
         Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
@@ -2300,7 +2287,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Discard edge attributes", EdgeAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.edgeAttrList, multipleChoice = true))
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
     override def summary = {
@@ -2315,7 +2302,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Discard vertex attributes", VertexAttributesOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.vertexAttrList, multipleChoice = true))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
     override def summary = {
@@ -2330,7 +2317,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Discard segmentation", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.segmentationList))
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
     override def summary = {
@@ -2343,7 +2330,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Discard scalars", GlobalOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.scalarList, multipleChoice = true))
     def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
     override def summary = {
@@ -2358,7 +2345,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Rename edge attribute", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("before", "Old name", options = project.edgeAttrList),
       Param("after", "New name"))
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
@@ -2377,7 +2364,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Rename vertex attribute", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("before", "Old name", options = project.vertexAttrList),
       Param("after", "New name"))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
@@ -2399,7 +2386,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Rename segmentation", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("before", "Old name", options = project.segmentationList),
       Param("after", "New name"))
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
@@ -2420,7 +2407,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Rename scalar", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("before", "Old name", options = project.scalarList),
       Param("after", "New name"))
     def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
@@ -2439,7 +2426,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Set scalar icon", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.scalarList),
       Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
@@ -2460,7 +2447,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Set vertex attribute icon", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.vertexAttrList),
       Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
@@ -2481,7 +2468,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Set edge attribute icon", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.edgeAttrList),
       Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No vertex attributes")
@@ -2502,7 +2489,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Set segmentation icon", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Name", options = project.segmentationList),
       Param("icon", "Icon name", mandatory = false))
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No vertex attributes")
@@ -2523,7 +2510,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Copy edge attribute", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Old name", options = project.edgeAttrList),
       Param("destination", "New name"))
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
@@ -2538,7 +2525,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Copy vertex attribute", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Old name", options = project.vertexAttrList),
       Param("destination", "New name"))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
@@ -2556,7 +2543,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Copy segmentation", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Old name", options = project.segmentationList),
       Param("destination", "New name"))
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
@@ -2573,7 +2560,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Copy scalar", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("name", "Old name", options = project.scalarList),
       Param("destination", "New name"))
     def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
@@ -2588,7 +2575,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Copy graph into a segmentation", CreateSegmentationOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "self_as_segmentation"))
     def enabled = project.hasVertexSet
 
@@ -2606,7 +2593,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Import project as segmentation", ImportOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice(
         "them",
         "Other project's name",
@@ -2678,7 +2665,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Import segmentation", ImportOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       TableParam(
         "table",
         "Table to import from",
@@ -2760,7 +2747,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Copy scalar from other project", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice(
         "sourceProject",
         "Other project's name",
@@ -2791,7 +2778,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Union with another project", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice(
         "other",
         "Other project's name",
@@ -2903,7 +2890,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Fingerprint based on attributes", SpecialtyOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("leftName", "First ID attribute", options = project.vertexAttrList[String]),
       Choice("rightName", "Second ID attribute", options = project.vertexAttrList[String]),
       Choice("weights", "Edge weights",
@@ -3016,7 +3003,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         .map { seg => seg.segmentationName }
         .toList)
 
-    override def parameters = List(
+    lazy val parameters = List(
       Choice("golden", "Golden segmentation", options = possibleSegmentations),
       Choice("test", "Test segmentation", options = possibleSegmentations)
     )
@@ -3109,7 +3096,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Change project notes", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("notes", "New contents"))
     def enabled = FEStatus.enabled
     def apply() = {
@@ -3253,7 +3240,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Correlate two attributes", GlobalOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Choice("attrA", "First attribute", options = project.vertexAttrList[Double]),
       Choice("attrB", "Second attribute", options = project.vertexAttrList[Double]))
     def enabled =
@@ -3269,7 +3256,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Filter by attributes", StructureOperations, new ProjectTransformation(_) {
-    def parameters =
+    lazy val parameters =
       project.vertexAttrList.toList.map {
         attr => Param(s"filterva_${attr.id}", attr.id, mandatory = false)
       } ++
@@ -3327,7 +3314,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Save UI status as graph attribute", UtilityOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
       Param("uiStatusJson", "UI status as JSON"))
@@ -3347,7 +3334,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Import metagraph", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
+    lazy val parameters = List(
       Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
     def enabled =
       FEStatus.assert(user.isAdmin, "Requires administrator privileges") && project.hasNoVertexSet
@@ -3431,7 +3418,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Create segmentation from SQL", StructureOperations, new ProjectTransformation(_) with SegOp {
-    override def parameters = List(
+    override lazy val parameters = List(
       Param("name", "Name"),
       Code("sql", "SQL", defaultValue = "select * from vertices"))
     def segmentationParameters = List()
@@ -3448,7 +3435,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Split to train and test set", MachineLearningOperations, new ProjectTransformation(_) {
-    override def parameters = List(
+    lazy val parameters = List(
       Choice("source", "Source attribute",
         options = project.vertexAttrList),
       Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
@@ -3476,7 +3463,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Predict with a neural network (1st version)",
     MachineLearningOperations, new ProjectTransformation(_) {
-      def parameters = List(
+      lazy val parameters = List(
         Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
         Param("output", "Save as"),
         Choice("features", "Predictors", options = FEOption.unset +: project.vertexAttrList[Double], multipleChoice = true),
@@ -3529,7 +3516,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register("Lookup region", VertexAttributesOperations, new ProjectTransformation(_) {
-    override def parameters = List(
+    lazy val parameters = List(
       Choice("position", "Position", options = project.vertexAttrList[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
@@ -3552,7 +3539,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Segment by geographical proximity", StructureOperations, new ProjectTransformation(_) {
-    override def parameters = List(
+    lazy val parameters = List(
       Param("name", "Name"),
       Choice("position", "Position", options = project.vertexAttrList[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
