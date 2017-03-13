@@ -17,11 +17,11 @@ class DissectTest extends OperationsTestBase {
     assert(projectStateWithoutVertexCountDelta == stateOfTheSegmentation)
   }
 
-  test("Take edgebundle as vertex set") {
+  test("Take edges as vertices") {
     run("Create enhanced example graph")
     val originalEdgeID = project.edgeBundle.idSet
     val originalEdgeAttributes = project.edgeAttributes
-    run("Take edgebundle as vertex set")
+    run("Take edges as vertices")
     assert(project.vertexSet == originalEdgeID)
     assert(project.vertexAttributes == originalEdgeAttributes)
     assert(project.scalars.keys == Set("vertex_count", "!vertex_count_delta"))

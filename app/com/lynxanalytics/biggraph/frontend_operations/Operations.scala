@@ -374,15 +374,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Take edgebundle as vertex set", StructureOperations, new ProjectTransformation(_) {
+  register("Take edges as vertices", StructureOperations, new ProjectTransformation(_) {
     def parameters = List()
     def enabled = project.hasEdgeBundle
     def apply() = {
-      val edgebundle = project.edgeBundle
-      val edgeattr = project.edgeAttributes.toMap
+      val edgeBundle = project.edgeBundle
+      val edgeAttr = project.edgeAttributes.toMap
       project.scalars = Map()
-      project.vertexSet = edgebundle.idSet
-      project.vertexAttributes = edgeattr
+      project.vertexSet = edgeBundle.idSet
+      project.vertexAttributes = edgeAttr
     }
   })
 
