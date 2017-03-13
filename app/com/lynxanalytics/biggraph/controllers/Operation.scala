@@ -125,7 +125,7 @@ object Operation {
       def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
       def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
       def assertNotSegmentation = FEStatus.assert(!project.isSegmentation,
-        "This operation is not available with segmentations.")
+        "This operation is not available for segmentations.")
       def assertSegmentation = FEStatus.assert(project.isSegmentation,
         "This operation is only available for segmentations.")
 
@@ -232,8 +232,6 @@ abstract class ProjectOperation(context: Operation.Context) extends Operation {
     editor.scalars.set(s"!${name}_delta", delta)
   }
 
-  def getOutputs(): Map[BoxOutput, BoxOutputState]
-
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
     import CheckpointRepository._ // For JSON formatters.
     val output = BoxOutputState(
@@ -279,7 +277,7 @@ abstract class ProjectTransformation(context: Operation.Context) extends Project
     context.meta.inputs == List(TypedConnection("project", "project")),
     s"A ProjectTransformation must input a single project. $context")
   protected lazy val project = projectInput("project")
-  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     val before = project.viewer
     apply()
@@ -294,7 +292,7 @@ abstract class ProjectCombination(context: Operation.Context) extends ProjectOpe
     context.meta.inputs.size == 2 && context.meta.inputs.forall(_.kind == BoxOutputKind.Project),
     s"A ProjectCombination must input two projects. $context")
   protected lazy val outputProject = new RootProjectEditor(RootProjectState.emptyState)
-  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     apply()
     makeOutput(outputProject)
@@ -305,7 +303,7 @@ abstract class ProjectCombination(context: Operation.Context) extends ProjectOpe
 abstract class ProjectCreation(context: Operation.Context) extends ProjectOperation(context) {
   assert(context.meta.inputs == List(), s"A ProjectCreation must have no inputs. $context")
   protected lazy val project = new RootProjectEditor(RootProjectState.emptyState)
-  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     apply()
     makeOutput(project)
