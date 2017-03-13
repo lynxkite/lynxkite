@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.{ FunSuite, BeforeAndAfterEach }
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.controllers._
 
-trait OperationsTestBase extends FunSuite with TestGraphOp {
+trait OperationsTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEach {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
@@ -52,12 +52,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
-  override def test(testName: String, testTags: org.scalatest.Tag*)(testFun: => Unit): Unit = {
-    super.test(testName, testTags: _*) {
-      ws = Workspace.empty
-      lastOutput = None
-      testFun
-    }
+  override def beforeEach() = {
+    ws = Workspace.empty
+    lastOutput = None
   }
-
 }
