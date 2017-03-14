@@ -16,7 +16,8 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with example graph state selected',
     function() {
-      lib.workspace.getOutputPlug(0, 'project').click();
+      var box = lib.workspace.getBox(0);
+      lib.workspace.getOutputPlug(box, 'project').click();
     },
     function() {
     });
@@ -34,8 +35,12 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with two connected boxes',
     function() {
+      var exampleGraph = lib.workspace.getBox(0);
       lib.workspace.addBox('add reversed edges', 100, 200);
-      lib.workspace.connectBoxes(0, 'project', 1, 'project');
+      var reversedEdges = lib.workspace.getBox(1);
+      lib.workspace.connectBoxes(
+          exampleGraph, 'project',
+          reversedEdges, 'project');
     },
     function() {
     });
@@ -44,7 +49,8 @@ module.exports = function(fw) {
     'test-example workspace with two connected boxes',
     'has the proper vertex count',
     function() {
-      lib.workspace.getOutputPlug(1, 'project').click();
+      var reversedEdges = lib.workspace.getBox(1);
+      lib.workspace.getOutputPlug(reversedEdges, 'project').click();
       expect(lib.state.vertexCount()).toEqual(4);
       expect(lib.state.edgeCount()).toEqual(8);
       expect(lib.state.attributeCount()).toEqual(8);
