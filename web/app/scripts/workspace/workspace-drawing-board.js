@@ -106,6 +106,10 @@ angular.module('biggraph')
         var workspaceY = 0;
         var workspaceZoom = 0;
         function zoomToScale(z) { return Math.exp(z * 0.001); }
+        function zoomEvent(event) {
+          event.clientX /= zoomToScale(workspaceZoom);
+          event.clientY /= zoomToScale(workspaceZoom);
+        }
 
         scope.onMouseMove = function(event) {
           event.preventDefault();
@@ -116,6 +120,7 @@ angular.module('biggraph')
           scope.mouseX = event.offsetX;
           scope.mouseY = event.offsetY;
           if (event.buttons === 1 && scope.movedBox) {
+            zoomEvent(event);
             scope.movedBox.onMouseMove(event);
           }
         };
@@ -170,6 +175,7 @@ angular.module('biggraph')
           event.stopPropagation();
           scope.selectBox(box.instance.id);
           scope.movedBox = box;
+          zoomEvent(event);
           scope.movedBox.onMouseDown(event);
         };
 
