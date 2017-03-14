@@ -181,9 +181,8 @@ Workspace.prototype = {
     this.closeOperationSelector();
   },
 
-  editBox: function(boxId, params) {
-    var op = this.getBox(boxId);
-    op.element(by.css('rect')).click();
+  editBox: function(box, params) {
+    box.element(by.css('rect')).click();
     this.populateOperation(params);
     this.submitOperation();
   },
@@ -192,23 +191,23 @@ Workspace.prototype = {
     return this.board.all(by.css('.box')).get(boxId);
   },
 
-  getInputPlug: function(boxId, plugId) {
-    return this.getBox(boxId)
+  getInputPlug: function(box, plugId) {
+    return box
         .element(by.id('inputs'))
         .element(by.id(plugId))
         .element(by.css('circle'));
   },
 
-  getOutputPlug: function(boxId, plugId) {
-    return this.getBox(boxId)
+  getOutputPlug: function(box, plugId) {
+    return box
         .element(by.id('outputs'))
         .element(by.id(plugId))
         .element(by.css('circle'));
   },
 
-  connectBoxes: function(name1, output1, name2, input2) {
-    var src = this.getOutputPlug(name1, output1);
-    var dst = this.getInputPlug(name2, input2);
+  connectBoxes: function(box1, output1, box2, input2) {
+    var src = this.getOutputPlug(box1, output1);
+    var dst = this.getInputPlug(box2, input2);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
