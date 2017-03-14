@@ -1,17 +1,18 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
-    val first = run("Create example graph")
-    run("Create example graph")
-    run("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
-    run("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"))
-    run("Union with another project", Map("id_attr" -> "new_id"), first)
+    val a = box("Create example graph")
+    val b = box("Create example graph")
+      .box("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+      .box("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"))
+    val union = box("Union with another project", Map("id_attr" -> "new_id"), Seq(a, b))
+    val project = union.project
 
     assert(project.vertexSet.rdd.count == 8)
+
     assert(project.edgeBundle.rdd.count == 8)
 
     val vAttrs = project.vertexAttributes.toMap
@@ -35,27 +36,26 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   }
 
   test("Project union on vertex sets") {
-    val first = run("Create vertices", Map("size" -> "10"))
-    run("Create vertices", Map("size" -> "10"))
-    run(
+    val a = box("Create vertices", Map("size" -> "10"))
+    val b = box("Create vertices", Map("size" -> "10"))
+    val union = box(
       "Union with another project",
-      Map("id_attr" -> "new_id"), on = first)
+      Map("id_attr" -> "new_id"), Seq(a, b))
+    val project = union.project
 
     assert(project.vertexSet.rdd.count == 20)
     assert(project.edgeBundle == null)
   }
 
   test("Project union - useful error message (#1611)") {
-    val first = run("Create example graph")
-    run("Create example graph")
-    run("Rename vertex attribute",
-      Map("before" -> "age", "after" -> "newage"))
-    run("Add constant vertex attribute",
-      Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
-
+    val a = box("Create example graph")
+    val b = box("Create example graph")
+      .box("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+      .box("Add constant vertex attribute",
+        Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {
-      run("Union with another project", Map("id_attr" -> "new_id"), first)
-      enforceComputation
+      val union = box("Union with another project", Map("id_attr" -> "new_id"), Seq(a, b))
+      union.enforceComputation
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))
