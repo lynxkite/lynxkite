@@ -54,7 +54,7 @@ angular.module('biggraph')
               })
               .then(function(rawWorkspace) {
                 scope.workspace = createWorkspace(
-                    rawWorkspace, scope.boxCatalogMap);
+                  rawWorkspace, scope.boxCatalogMap);
                 scope.selectBox(scope.selectedBoxId);
               });
         };
@@ -95,6 +95,7 @@ angular.module('biggraph')
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
             scope.selectState(plug.boxId, plug.data.id);
+            scope.getAndUpdateProgress();
           } else {
             scope.selectedState = undefined;
           }
@@ -153,7 +154,7 @@ angular.module('biggraph')
           });
         });
 
-        scope.updateProgress = function() {
+        scope.getAndUpdateProgress = function() {
           var workspaceBefore = scope.workspace;
           var plugBefore = scope.selectedPlug;
           if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
@@ -166,19 +167,9 @@ angular.module('biggraph')
             }).then(
               /* success */
               function(response) {
-                var workspace = scope.workspace;
-                var selectedPlug = scope.selectedPlug;
-                if (workspace && workspace === workspaceBefore &&
-                    selectedPlug && selectedPlug === plugBefore) {
-                  var progressMap = response.progressMap;
-                  for (var i = 0; i < progressMap.length; i++) {
-                    var output =  progressMap[i];
-                    var boxID = output.a.boxID;
-                    var plugID = output.a.id;
-                    var box = workspace.boxMap[boxID];
-                    var plug = box.outputMap[plugID];
-                    plug.onUpdatedProgress(output.b);
-                  }
+                if (scope.workspace && scope.workspace === workspaceBefore &&
+                    scope.selectedPlug && scope.selectedPlug === plugBefore) {
+                  scope.workspace.updateProgress(response.progressMap);
                 }
               },
               /* failure */
@@ -188,7 +179,7 @@ angular.module('biggraph')
           }
         };
 
-        progressUpdater = $interval(scope.updateProgress, 2000);
+        progressUpdater = $interval(scope.getAndUpdateProgress, 2000);
 
         scope.$on('$destroy', function() {
           $interval.cancel(progressUpdater);
