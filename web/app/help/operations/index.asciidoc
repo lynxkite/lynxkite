@@ -355,6 +355,10 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
+include::take-edges-as-vertices.asciidoc[]
+
+include::take-segmentation-as-base-project.asciidoc[]
+
 include::train-a-kmeans-clustering-model.asciidoc[]
 
 include::train-a-logistic-regression-model.asciidoc[]
