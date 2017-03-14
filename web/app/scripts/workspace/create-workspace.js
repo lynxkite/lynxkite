@@ -121,6 +121,16 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
         return true;
       },
 
+      updateProgress: function(progressInfo) {
+        for (var i = 0; i < progressInfo.length; i++) {
+          var output =  progressInfo[i];
+          var plugDescription = output.a;
+          var box = this.boxMap[plugDescription.boxID];
+          var plug = box.outputMap[plugDescription.id];
+          plug.updateProgress(output.b);
+        }
+      },
+
     };
 
     workspace.build();

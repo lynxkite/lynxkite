@@ -29,6 +29,12 @@ angular.module('biggraph').factory('createBox', function() {
       }
       var y = direction === 'outputs' ? height + 15 : -15;
 
+      function progressToColor(progressRatio) {
+        /* global tinycolor */
+        return tinycolor.mix('red', 'green', progressRatio * 100).toHexString();
+        // return chroma.scale(['red', 'green']).mode('lch')(progressRatio);
+      }
+
       return {
         boxId: instance.id,
         instance: instance,
@@ -40,27 +46,22 @@ angular.module('biggraph').factory('createBox', function() {
         y: function() { return y + instance.y; },
         posTransform: 'translate(' + x + ', ' + y + ')',
         inProgress: false,
-        computedness: 'unknown',
-        onUpdatedProgress: function(progress) {
+        color: progressToColor(0),
+        hasColor: false,
+        updateProgress: function(progress) {
           if (progress) {
-            console.log(progress.inProgress, progress.notYetStarted, progress.failed);
-            if (progress.inProgress + progress.notYetStarted + progress.failed === 0) {
-              this.computedness = 'fullyComputed';
-            } else if (progress.computed > 0 && progress.notYetStarted > 0) {
-              this.computedness = 'halfwayComputed';
-            } else if (progress.computed + progress.inProgress + progress.failed === 0) {
-              this.computedness = 'fullyUncomputed';
-            } else if (progress.failed > 0) {
-              this.computedness = 'failed';
-            } else {
-              this.computedness = 'unknown';
+            var all = 0;
+            for (var p in progress) {
+              all += progress[p];
             }
+            this.color = progressToColor(progress.computed / all);
+            this.hasColor = true;
             this.inProgress = progress.inProgress > 0;
           } else {
             this.inProgress = false;
-            this.computedness = 'unknown';
+            this.hasColor = false;
+            this.color = progressToColor(0);
           }
-          console.log(this.computedness);
         }
       };
     }

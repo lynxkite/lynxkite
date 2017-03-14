@@ -66,6 +66,11 @@ rect.selected-box {
 g.selected-plug circle {
   stroke-width: 3;
 }
+
+circle.io-circle.colored-output {
+  fill-opacity: 1;
+}
+
 line.arrow {
   stroke-width: 1;
   stroke: blue;
