@@ -91,7 +91,7 @@ case class TrainDecisionTreeClassifier(
       .setPredictionCol("classification")
       .setMetricName("accuracy")
     val accuracy = evaluator.evaluate(prediction).toString
-    val dataSize = labelDF.count().toLong.toDouble
+    val dataSize = labelDF.count().toDouble
     val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
       row => (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
     val statistics = s"$treeDescription\nAccuracy: $accuracy\nSupport: $support"
