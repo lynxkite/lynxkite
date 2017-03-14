@@ -125,6 +125,7 @@ object Operation {
       def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
       def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
       def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
+      def hasSegmentation = FEStatus.assert(project.segmentations.nonEmpty, "No segmentations.")
       def assertNotSegmentation = FEStatus.assert(!project.isSegmentation,
         "This operation is not available for segmentations.")
       def assertSegmentation = FEStatus.assert(project.isSegmentation,
