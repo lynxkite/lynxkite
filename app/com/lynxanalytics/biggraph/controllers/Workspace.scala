@@ -103,7 +103,12 @@ case class Box(
     parameters: Map[String, String],
     x: Double,
     y: Double,
-    inputs: Map[String, BoxOutput]) {
+    verticalDimension: Double = 10,
+    horizontalDimension: Double = 50,
+    inputs: Map[String, BoxOutput],
+    assignedTo: List[Box] = List(),
+    title: String = "",
+    content: String = "") {
 
   def output(id: String) = BoxOutput(this.id, id)
 
@@ -146,7 +151,8 @@ case class BoxMetadata(
 
 object BoxOutputKind {
   val Project = "project"
-  val validKinds = Set(Project) // More kinds to come.
+  val Decorator = "Decorator"
+  val validKinds = Set(Project, Decorator) // More kinds to come.
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }

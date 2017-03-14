@@ -299,3 +299,19 @@ abstract class ProjectTransformation(
     makeOutput(project)
   }
 }
+
+// A DecoratorOperation is an operation that has no input or output.
+abstract class DecoratorOperation(
+    protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.inputs == List(),
+    s"A DecoratorOperation must not have an input. $context")
+  assert(
+    context.meta.outputs == List(),
+    s"A DecoratorOperation must not have an output. $context")
+  protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
+  override def getOutputs() = {
+    apply()
+    Map[BoxOutput, BoxOutputState]()
+  }
+}
