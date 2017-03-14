@@ -42,9 +42,63 @@ trait OperationsTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEa
     }
   }
 
+  case class TestBox(
+      operationID: String,
+      parameters: Map[String, String],
+      inputs: Seq[TestBox]) {
+
+    private def projectRec(boxes: scala.collection.mutable.ListBuffer[Box]): String = {
+      val inputNames = inputs.map(
+        input => input.projectRec(boxes)
+      )
+      val name = s"box${boxes.length}"
+      val inputIds = ops.getBoxMetadata(operationID).inputs.map(_.id)
+      assert(inputIds.size == inputNames.size)
+      val inputBoxOutputs = inputIds.zip(inputNames).map(
+        idName => idName._1 -> BoxOutput(idName._2, "project")
+      ).toMap
+
+      val box = Box(
+        name,
+        operationID,
+        parameters, 0, 0,
+        inputBoxOutputs
+      )
+      boxes += box
+      name
+    }
+
+    def project(): RootProjectEditor = {
+      val boxes = scala.collection.mutable.ListBuffer[Box]()
+      projectRec(boxes)
+      val lastBox = boxes.last
+      val ws = Workspace(boxes = boxes.toList)
+      println("Result:")
+      boxes.foreach(println)
+      ws.state(user, ops, lastBox.output("project")).project
+    }
+
+    def enforceComputation = project()
+
+    def box(operationID: String,
+            parameters: Map[String, String] = Map()): TestBox = {
+      TestBox(operationID, parameters, Seq(this))
+    }
+  }
+
+  def box(operationID: String,
+          parameters: Map[String, String] = Map(),
+          inputs: Seq[TestBox] = Seq()): TestBox = {
+    TestBox(operationID, parameters, inputs)
+  }
+
   var chain: BoxChain = null
 
-  def project = ws.state(user, ops, chain.lastOutput.get).project
+  def project(): RootProjectEditor = {
+    println("run boxes:")
+    ws.boxes.foreach(println)
+    ws.state(user, ops, chain.lastOutput.get).project
+  }
 
   def enforceComputation = project
 
