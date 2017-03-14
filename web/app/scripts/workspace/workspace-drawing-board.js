@@ -108,8 +108,8 @@ angular.module('biggraph')
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function getLogicalPosition(event) {
           return {
-            x: (event.clientX - workspaceX) / zoomToScale(workspaceZoom),
-            y: (event.clientY - workspaceY) / zoomToScale(workspaceZoom) };
+            x: (event.offsetX - workspaceX) / zoomToScale(workspaceZoom),
+            y: (event.offsetY - workspaceY) / zoomToScale(workspaceZoom) };
         }
 
         scope.onMouseMove = function(event) {
