@@ -40,13 +40,13 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
       "name" -> "constant",
       "value" -> "1",
       "type" -> "Double",
-      "apply_to" -> "|bucketing"))
+      "apply_to_project" -> "|bucketing"))
     run("Merge vertices by attribute", Map(
       "key" -> "constant",
       "aggregate_gender" -> "",
       "aggregate_id" -> "",
       "aggregate_size" -> "",
-      "apply_to" -> "|bucketing"))
+      "apply_to_project" -> "|bucketing"))
     val bucketing = project.segmentation("bucketing")
     assert(bucketing.scalars("!coverage").value == 4)
     assert(bucketing.scalars("!belongsToEdges").value == 4)

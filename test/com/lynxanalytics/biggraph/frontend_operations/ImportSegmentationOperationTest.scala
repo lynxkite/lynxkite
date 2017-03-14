@@ -49,7 +49,7 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
       "seg_id_attr" -> "seg_name",
       "base_id_column" -> "base_name",
       "seg_id_column" -> "seg_name",
-      "apply_to" -> "|imported"))
+      "apply_to_project" -> "|imported"))
     checkAssertions()
   }
 
