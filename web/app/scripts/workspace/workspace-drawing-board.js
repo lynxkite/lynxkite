@@ -175,6 +175,7 @@ angular.module('biggraph')
               /* failure */
               function(error) {
                 scope.error = error;
+                scope.workspace.clearprogress();
               });
           }
         };
