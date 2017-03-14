@@ -1,9 +1,11 @@
-html {
-  overflow: visible;
+#workspace-main {
+  height: 100vh;
 }
 
-html, body, body > div.ng-scope, div#workspace-main {
-  height: 98%;
+#workspace-header {
+  height: 50px;
+  padding: 5px 10px;
+  border-bottom: 1px solid lightgray;
 }
 
 span#workspace-name {
@@ -11,17 +13,13 @@ span#workspace-name {
 }
 
 div#box-view {
-  height: 100%;
-  left: 0;
-  right: 10px;
-  bottom: 5px;
+  height: calc(100% - 50px);
 }
 
 workspace-drawing-board {
   user-select: none;
   height: 100%;
   width: 60%;
-  top: 0px;
   float: left;
 }
 div#right-panel {
@@ -30,33 +28,29 @@ div#right-panel {
   height: 100%;
   overflow: hidden;
 }
-div#clear {
-  float: clear;
-}
 .operation-selector {
   margin-left: -35px;
   z-index: 2;
   float: left;
 }
 workspace-drawing-board > svg {
+  display: block;
   width: 100%;
   height: 100%;
   background-color: lightgray;
-  border: 1px solid black;
 }
 state-view {
   display: block;
   width: 100%;
   height: 50%;
   overflow: auto;
-  border: 1px solid black;
+  border-bottom: 1px solid lightgray;
 }
 box-view {
   display: block;
   width: 100%;
   height: 50%;
   overflow: auto;
-  border: 1px solid black;
 }
 
 rect.box-main, circle.io-circle {
