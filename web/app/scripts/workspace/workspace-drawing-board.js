@@ -18,7 +18,7 @@
 // 6. GOTO 2
 
 angular.module('biggraph')
- .directive('workspaceDrawingBoard', function(createWorkspace, util) {
+  .directive('workspaceDrawingBoard', function(createWorkspace, util, $interval) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -30,6 +30,7 @@ angular.module('biggraph')
         boxCatalog: '=',
       },
       link: function(scope, element) {
+        var progressUpdater;
 
         scope.$watchGroup(
           ['boxCatalog.$resolved', 'workspaceName'],
@@ -151,8 +152,48 @@ angular.module('biggraph')
             scope.addBox(operationID, origEvent.offsetX, origEvent.offsetY);
           });
         });
+
+        scope.updateProgress = function() {
+          var workspaceBefore = scope.workspace;
+          var plugBefore = scope.selectedPlug;
+          if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
+            util.nocache('/ajax/getProgress', {
+              workspace: scope.workspaceName,
+              output: {
+                boxID: plugBefore.boxId,
+                id: plugBefore.data.id
+              }
+            }).then(
+              /* success */
+              function(response) {
+                var workspace = scope.workspace;
+                var selectedPlug = scope.selectedPlug;
+                if (workspace && workspace === workspaceBefore &&
+                    selectedPlug && selectedPlug === plugBefore) {
+                  var progressMap = response.progressMap;
+                  for (var i = 0; i < progressMap.length; i++) {
+                    var output =  progressMap[i];
+                    var boxID = output.a.boxID;
+                    var plugID = output.a.id;
+                    var box = workspace.boxMap[boxID];
+                    var plug = box.outputMap[plugID];
+                    plug.onUpdatedProgress(output.b);
+                  }
+                }
+              },
+              /* failure */
+              function(error) {
+                scope.error = error;
+              });
+          }
+        };
+
+        progressUpdater = $interval(scope.updateProgress, 2000);
+
+        scope.$on('$destroy', function() {
+          $interval.cancel(progressUpdater);
+          progressUpdater = undefined;
+        });
       }
-
     };
-
-});
+  });

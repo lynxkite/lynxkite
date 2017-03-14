@@ -38,24 +38,51 @@ angular.module('biggraph').factory('createBox', function() {
         radius: plugRadius,
         x: function() { return x + instance.x; },
         y: function() { return y + instance.y; },
-        posTransform: 'translate(' + x + ', ' + y + ')'
+        posTransform: 'translate(' + x + ', ' + y + ')',
+        inProgress: false,
+        computedness: 'unknown',
+        onUpdatedProgress: function(progress) {
+          if (progress) {
+            console.log(progress.inProgress, progress.notYetStarted, progress.failed);
+            if (progress.inProgress + progress.notYetStarted + progress.failed === 0) {
+              this.computedness = 'fullyComputed';
+            } else if (progress.computed > 0 && progress.notYetStarted > 0) {
+              this.computedness = 'halfwayComputed';
+            } else if (progress.computed + progress.inProgress + progress.failed === 0) {
+              this.computedness = 'fullyUncomputed';
+            } else if (progress.failed > 0) {
+              this.computedness = 'failed';
+            } else {
+              this.computedness = 'unknown';
+            }
+            this.inProgress = progress.inProgress > 0;
+          } else {
+            this.inProgress = false;
+            this.computedness = 'unknown';
+          }
+          console.log(this.computedness);
+        }
       };
     }
 
     var inputs = [];
     var outputs = [];
+    var outputMap = {};
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
       inputs.push(createPlug(metadata.inputs[i], i, 'inputs'));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      outputs.push(createPlug(metadata.outputs[i], i, 'outputs'));
+      var plug = createPlug(metadata.outputs[i], i, 'outputs');
+      outputs.push(plug);
+      outputMap[plug.data.id] = plug;
     }
     return {
       metadata: metadata,
       instance: instance,
       inputs: inputs,
       outputs: outputs,
+      outputMap: outputMap,
       width: width,
       height: height,
       isMoved: false,
