@@ -96,7 +96,12 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
               operationID: operationId,
               x: x,
               y: y,
+              width: 200,
+              height: 40,
               inputs: {},
+              assignedTo: [],
+              title: '',
+              content: '',
               parameters: {}
             });
         this.build();

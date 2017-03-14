@@ -12,8 +12,8 @@
 
 angular.module('biggraph').factory('createBox', function() {
   return function(metadata, instance) {
-    var width = 200;
-    var height = 40;
+    var width = instance.width;
+    var height = instance.height;
 
     // An input or output connection point of a box.
     function createPlug(plug, index, direction) {

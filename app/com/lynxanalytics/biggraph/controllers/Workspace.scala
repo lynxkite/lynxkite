@@ -103,10 +103,10 @@ case class Box(
     parameters: Map[String, String],
     x: Double,
     y: Double,
-    verticalDimension: Double = 10,
-    horizontalDimension: Double = 50,
+    width: Double = 200,
+    height: Double = 40,
     inputs: Map[String, BoxOutput],
-    assignedTo: List[Box] = List(),
+    assignedTo: List[Box] = List(),    // CommentBoxes will be able to be assigned to other boxes.
     title: String = "",
     content: String = "") {
 
