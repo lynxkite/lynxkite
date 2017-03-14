@@ -12,10 +12,10 @@ class CopyEdgesToSegmentationTest extends OperationsTestBase {
     run("Find maximal cliques", Map("name" -> "cliques", "bothdir" -> "false", "min" -> "3"))
     val cliques = project.segmentation("cliques")
     assert(cliques.vertexSet.toSeq.size == 2)
-    run("Copy edges to segmentation", Map("apply_to" -> "|cliques"))
+    run("Copy edges to segmentation", Map("apply_to_project" -> "|cliques"))
     assert(cliques.edgeBundle.toPairSeq.size == 56)
     assert(cliques.edgeAttributes("const").rdd.count == 56)
-    run("Merge parallel edges", Map("apply_to" -> "|cliques"))
+    run("Merge parallel edges", Map("apply_to_project" -> "|cliques"))
     assert(cliques.edgeBundle.toPairSeq.size == 4)
   }
 }

@@ -12,13 +12,13 @@ class CopyEdgesToBaseProjectTest extends OperationsTestBase {
 
     run(
       "Create random edge bundle",
-      Map("degree" -> "5", "seed" -> "0", "apply_to" -> "|copy"))
+      Map("degree" -> "5", "seed" -> "0", "apply_to_project" -> "|copy"))
     assert(copy.edgeBundle.toPairSeq.size == 21)
     run(
       "Add constant edge attribute",
-      Map("name" -> "const", "value" -> "1", "type" -> "Double", "apply_to" -> "|copy"))
+      Map("name" -> "const", "value" -> "1", "type" -> "Double", "apply_to_project" -> "|copy"))
 
-    run("Copy edges to base project", Map("apply_to" -> "|copy"))
+    run("Copy edges to base project", Map("apply_to_project" -> "|copy"))
     assert(project.edgeBundle.toPairSeq.size == 21)
     assert(project.edgeAttributes("const").rdd.count == 21)
   }

@@ -21,8 +21,8 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
       "base_id_attr" -> "seg_num",
       "base_id_column" -> "base_num",
       "seg_id_column" -> "seg_num",
-      "apply_to" -> "|segmentation1"))
-    run("Pull segmentation one level up", Map("apply_to" -> "|segmentation1|segmentation2"))
+      "apply_to_project" -> "|segmentation1"))
+    run("Pull segmentation one level up", Map("apply_to_project" -> "|segmentation1|segmentation2"))
 
     val segmentation1 = project.segmentation("segmentation1")
     val segmentation2 = segmentation1.segmentation("segmentation2")
