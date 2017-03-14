@@ -29,11 +29,19 @@ angular.module('biggraph')
                       workspace: scope.workspaceName,
                       box: scope.box.instance.id
                   })
-                .then(function(boxMeta) {
-                  if (scope.lastRequest === currentRequest) {
-                    scope.newOpSelected(boxMeta);
-                  }
-                });
+                .then(
+                  function(boxMeta) {
+                    // success
+                    if (scope.lastRequest === currentRequest) {
+                      scope.newOpSelected(boxMeta);
+                    }
+                  },
+                  function() {
+                    // error
+                    if (scope.lastRequest === currentRequest) {
+                      scope.newOpSelected(undefined);
+                    }
+                  });
             });
 
         scope.paramValues = {};
@@ -45,6 +53,10 @@ angular.module('biggraph')
             // Make a copy of the parameter values.
             scope.paramValues = Object.assign(
                 {}, scope.box.instance.parameters);
+            if (!scope.boxMeta) {
+              return;
+            }
+
             // Populate defaults:
             // TODO: this is misleading now, because the default
             // values are shown to the user but not there in the
