@@ -169,7 +169,7 @@ Workspace.prototype = {
   },
 
   submitOperation: function() {
-    var button = this.boxEditor.element(by.css('.ok-button'));
+    var button = this.boxEditor.$('.ok-button');
     // Wait for uploads or whatever.
     testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
     button.click();
@@ -182,27 +182,21 @@ Workspace.prototype = {
   },
 
   editBox: function(box, params) {
-    box.element(by.css('rect')).click();
+    box.$('rect').click();
     this.populateOperation(params);
     this.submitOperation();
   },
 
   getBox(boxId) {
-    return this.board.all(by.css('.box')).get(boxId);
+    return this.board.$$('.box').get(boxId);
   },
 
   getInputPlug: function(box, plugId) {
-    return box
-        .element(by.id('inputs'))
-        .element(by.id(plugId))
-        .element(by.css('circle'));
+    return box.$('#inputs #' + plugId + ' circle');
   },
 
   getOutputPlug: function(box, plugId) {
-    return box
-        .element(by.id('outputs'))
-        .element(by.id(plugId))
-        .element(by.css('circle'));
+    return box.$('#outputs #' + plugId + ' circle');
   },
 
   connectBoxes: function(box1, output1, box2, input2) {
