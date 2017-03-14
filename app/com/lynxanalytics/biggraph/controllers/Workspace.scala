@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.graph_api.MetaGraphEntity
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class Workspace(
@@ -72,6 +73,56 @@ case class Workspace(
         }
       }
     }
+  }
+
+  def progress(
+    user: serving.User, ops: OperationRepository,
+    connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                           manager: graph_api.MetaGraphManager): Map[BoxOutput, Progress] = {
+    val states = calculate(user, ops, connection, Map())
+    states.mapValues(singleStateProgress)
+  }
+
+  private def singleStateProgress(boxOutputState: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                                                                  manager: graph_api.MetaGraphManager): Progress =
+    boxOutputState.kind match {
+      case BoxOutputKind.Project => projectProgress(boxOutputState)
+    }
+
+  private def projectProgress(boxOutputState: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                                                              manager: graph_api.MetaGraphManager): Progress = {
+    assert(boxOutputState.kind == BoxOutputKind.Project,
+      s"Can't compute projectProgress for kind ${boxOutputState.kind}")
+    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
+      val vertexAndEdgeEntities = List(state.vertexSetGUID.map(manager.vertexSet),
+        state.edgeBundleGUID.map(manager.edgeBundle)).flatten
+      val attributeEntities = List(
+        state.scalarGUIDs.values.map(manager.scalar).asInstanceOf[List[MetaGraphEntity]],
+        state.vertexAttributeGUIDs.values.map(manager.attribute),
+        state.edgeAttributeGUIDs.values.map(manager.attribute)
+      ).flatten
+      val allEntities = vertexAndEdgeEntities ++ attributeEntities
+      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
+      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
+    }
+
+    def segmentationStateProgress(state: SegmentationState): List[Double] = {
+      val segmentationProgress = commonProjectStateProgress(state.state)
+      if (state.belongsToGUID.isDefined) {
+        val belongsTo = manager.edgeBundle(state.belongsToGUID.get)
+        val belongsToProgress = entityProgressManager.computeProgress(belongsTo)
+        belongsToProgress :: segmentationProgress
+      } else {
+        segmentationProgress
+      }
+    }
+
+    val progressList = commonProjectStateProgress(boxOutputState.project.rootState.state)
+    Progress(computed = progressList.count(_ == 1.0),
+      inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+      notYetStarted = progressList.count(_ == 0.0),
+      failed = progressList.count(_ < 0.0)
+    )
   }
 
   def getOperation(
@@ -168,6 +219,10 @@ case class BoxOutputState(
   }
 }
 
+case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
+
+case class X(a: BoxOutput, b: Progress)
+
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   implicit val fBoxOutput = json.Json.format[BoxOutput]
@@ -176,4 +231,6 @@ object WorkspaceJsonFormatters {
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
   implicit val fWorkspace = json.Json.format[Workspace]
+  implicit val fProgress = json.Json.format[Progress]
+  implicit val fX = json.Json.format[X]
 }

@@ -16,7 +16,8 @@
           ng-mousedown="onMouseDownOnPlug(plug, $event)"
           ng-mouseup="onMouseUpOnPlug(plug, $event)">
         <text x="10">{{ plug.data.id }}</text>
-        <circle ng-attr-r="{{ plug.radius}}" class="io-circle"></circle>
+        <circle ng-attr-r="{{ plug.radius}}" class="io-circle"
+                ng-class="[{inProgress: plug.inProgress}, plug.computedness]"></circle>
       </g>
     </g>
     <!-- end list of I/O plugs -->
