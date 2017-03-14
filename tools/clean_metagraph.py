@@ -46,7 +46,7 @@ meta_graph = {}
 # Parse operations, store operation_filenames, construct metagraph.
 operations_dir = os.path.join(meta_dir, 'operations')
 for operation_file in sorted(os.listdir(operations_dir)):  # Sorting is necessary
-  if operation_file.startswith('dump'):
+  if not operation_file.startswith('save-'):
     continue
   operations_to_delete.add(operation_file)
   with open(operations_dir + '/' + operation_file) as operation:
