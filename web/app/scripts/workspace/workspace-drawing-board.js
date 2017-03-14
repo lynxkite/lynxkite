@@ -169,7 +169,7 @@ angular.module('biggraph')
               function(response) {
                 if (scope.workspace && scope.workspace === workspaceBefore &&
                     scope.selectedPlug && scope.selectedPlug === plugBefore) {
-                  scope.workspace.updateProgress(response.progressMap);
+                  scope.workspace.updateProgress(response.progress);
                 }
               },
               /* failure */
