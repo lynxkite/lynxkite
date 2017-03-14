@@ -1,0 +1,8 @@
+### Take edges as vertices
+
+Takes a project and creates a new one where the vertices correspond to the original project's
+edges. All edge attributes in the original project are converted to vertex attributes in the new
+project. All vertex attributes, scalars and segmentations of the original project are lost.
+
+
+
