@@ -5,15 +5,11 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
+    val first = run("Create example graph")
     run("Create example graph")
-    val otherEditor = clone(project)
-    run("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"), on = otherEditor)
-    run("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"), on = otherEditor)
-    run(
-      "Union with another project",
-      Map(
-        "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-        "id_attr" -> "new_id"))
+    run("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+    run("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"))
+    run("Union with another project", Map("id_attr" -> "new_id"), first)
 
     assert(project.vertexSet.rdd.count == 8)
     assert(project.edgeBundle.rdd.count == 8)
@@ -39,30 +35,27 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   }
 
   test("Project union on vertex sets") {
+    val first = run("Create vertices", Map("size" -> "10"))
     run("Create vertices", Map("size" -> "10"))
     run(
       "Union with another project",
-      Map(
-        "other" -> s"!checkpoint(${project.checkpoint.get},Copy)",
-        "id_attr" -> "new_id"))
+      Map("id_attr" -> "new_id"), on = first)
 
     assert(project.vertexSet.rdd.count == 20)
     assert(project.edgeBundle == null)
   }
 
   test("Project union - useful error message (#1611)") {
+    val first = run("Create example graph")
     run("Create example graph")
-    val otherEditor = clone(project)
     run("Rename vertex attribute",
-      Map("before" -> "age", "after" -> "newage"), on = otherEditor)
+      Map("before" -> "age", "after" -> "newage"))
     run("Add constant vertex attribute",
-      Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = otherEditor)
+      Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
 
     val ex = intercept[java.lang.AssertionError] {
-      run("Union with another project",
-        Map(
-          "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-          "id_attr" -> "new_id"))
+      run("Union with another project", Map("id_attr" -> "new_id"), first)
+      enforceComputation
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))
