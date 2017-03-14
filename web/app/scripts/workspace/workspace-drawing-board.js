@@ -106,9 +106,10 @@ angular.module('biggraph')
         var workspaceY = 0;
         var workspaceZoom = 0;
         function zoomToScale(z) { return Math.exp(z * 0.001); }
-        function zoomEvent(event) {
-          event.clientX /= zoomToScale(workspaceZoom);
-          event.clientY /= zoomToScale(workspaceZoom);
+        function getLogicalPosition(event) {
+          return {
+            x: (event.clientX - workspaceX) / zoomToScale(workspaceZoom),
+            y: (event.clientY - workspaceY) / zoomToScale(workspaceZoom) };
         }
 
         scope.onMouseMove = function(event) {
@@ -120,8 +121,7 @@ angular.module('biggraph')
           scope.mouseX = event.offsetX;
           scope.mouseY = event.offsetY;
           if (event.buttons === 1 && scope.movedBox) {
-            zoomEvent(event);
-            scope.movedBox.onMouseMove(event);
+            scope.movedBox.onMouseMove(getLogicalPosition(event));
           }
         };
 
@@ -175,8 +175,7 @@ angular.module('biggraph')
           event.stopPropagation();
           scope.selectBox(box.instance.id);
           scope.movedBox = box;
-          zoomEvent(event);
-          scope.movedBox.onMouseDown(event);
+          scope.movedBox.onMouseDown(getLogicalPosition(event));
         };
 
         scope.onMouseDownOnPlug = function(plug, event) {
@@ -198,8 +197,8 @@ angular.module('biggraph')
           }
         };
 
-        scope.addBox = function(operationId, x, y) {
-          scope.workspace.addBox(operationId, x, y);
+        scope.addBox = function(operationId, pos) {
+          scope.workspace.addBox(operationId, pos.x, pos.y);
           scope.saveWorkspace();
         };
         element.bind('dragover', function(event) {
@@ -211,7 +210,7 @@ angular.module('biggraph')
           var operationID = event.originalEvent.dataTransfer.getData('text');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
-            scope.addBox(operationID, origEvent.offsetX, origEvent.offsetY);
+            scope.addBox(operationID, getLogicalPosition(origEvent));
           });
         });
 
