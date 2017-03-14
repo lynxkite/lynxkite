@@ -8,17 +8,17 @@ import com.lynxanalytics.biggraph.table.TableImport
 class ExportImportOperationTest extends OperationsTestBase {
   test("Imports from implicit tables") {
     val project2 = clone(project)
-    run("Create example graph", on = project2)
+    run("Create example graph" /* , on = project2 */ )
     run(
       "Find connected components",
       Map(
         "name" -> "cc",
-        "directions" -> "ignore directions"),
-      on = project2)
+        "directions" -> "ignore directions")
+    /*, on = project2 */ )
     run(
       "Convert vertex attribute to string",
-      Map("attr" -> "id"),
-      on = project2.segmentation("cc"))
+      Map("attr" -> "id") /*,
+      on = project2.segmentation("cc") */ )
     val project2Checkpoint = s"!checkpoint(${project2.checkpoint.get},ExampleGraph)"
 
     // Import vertices as vertices

@@ -9,6 +9,8 @@ import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.controllers._
 
+import scala.collection.mutable.ListBuffer
+
 trait OperationsTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEach {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
@@ -23,8 +25,28 @@ trait OperationsTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEa
 
   val user = serving.User.fake
   var ws = Workspace(boxes = List())
-  var lastOutput: Option[BoxOutput] = None
-  def project = ws.state(user, ops, lastOutput.get).project
+
+  class BoxChain() {
+    var chain = new ListBuffer[Box]()
+
+    def lastOutput: Option[BoxOutput] = {
+      chain.toList.lastOption.map {
+        box => box.output("project")
+      }
+    }
+    def add(box: Box): Unit = {
+      chain += box
+    }
+    def asList: List[Box] = {
+      chain.toList
+    }
+  }
+
+  var chain: BoxChain = null
+
+  def project = ws.state(user, ops, chain.lastOutput.get).project
+
+  def enforceComputation = project
 
   def importCSV(files: String): String = {
     val f = sql.importCSV(serving.User.fake, CSVImportRequest(
@@ -41,12 +63,35 @@ trait OperationsTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEa
     f.id
   }
 
-  def run(opID: String, params: Map[String, String] = Map(), on: ProjectEditor = null): Unit = {
+  def run(opID: String,
+          params: Map[String, String] = Map(), on: BoxChain = null): BoxChain = {
+    val inputIds = ops.getBoxMetadata(opID).inputs.map(_.id)
+    val boxOutputs: Map[String, BoxOutput] = inputIds.size match {
+      case 0 =>
+        chain = new BoxChain()
+        Map()
+      case 1 =>
+        assert(on == null, s"BoxChain $on will be unused")
+        Map(inputIds(0) -> chain.lastOutput.get)
+      case 2 =>
+        assert(on != null, s"For inputs: $inputIds we need another BoxChain")
+        Map(
+          inputIds(0) -> on.lastOutput.get,
+          inputIds(1) -> chain.lastOutput.get
+        )
+      case _ => ???
+    }
+
     val box = Box(
-      s"box${ws.boxes.size}", opID, params, 0, 0,
-      lastOutput.map(o => Map("project" -> o)).getOrElse(Map()))
+      s"box${ws.boxes.size}",
+      opID,
+      params,
+      0, 0,
+      boxOutputs)
+
     ws = ws.copy(boxes = ws.boxes :+ box)
-    lastOutput = Some(box.output("project"))
+    chain.add(box)
+    chain
   }
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
@@ -54,6 +99,6 @@ trait OperationsTestBase extends FunSuite with TestGraphOp with BeforeAndAfterEa
 
   override def beforeEach() = {
     ws = Workspace.empty
-    lastOutput = None
+    chain = null
   }
 }

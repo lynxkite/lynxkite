@@ -40,7 +40,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def register(
     id: String,
     category: Category,
-    inputProjects: String*)(factory: Context => ProjectOutputOperation): Unit = {
+    inputProjects: String*)(factory: Context => Operation): Unit = {
     registerOp(
       id, category, inputProjects.toList.map(i => TypedConnection(i, "project")),
       List(projectConnection), factory)
@@ -2777,15 +2777,12 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.enabled
   })
 
-  register("Union with another project", StructureOperations, new ProjectTransformation(_) {
+  register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
+    override lazy val project = projectInput("a")
+    lazy val other = projectInput("b")
     lazy val parameters = List(
-      Choice(
-        "other",
-        "Other project's name",
-        options = project.readableProjectCheckpoints,
-        allowUnknownOption = true),
       Param("id_attr", "ID attribute name", defaultValue = "new_id"))
-    def enabled = project.hasVertexSet
+    def enabled = project.hasVertexSet && other.hasVertexSet
     override def summary = {
       val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("other"))
       s"Union with $title"
@@ -2805,14 +2802,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     }
     def apply(): Unit = {
-      val otherId = params("other")
-      val (cp, _, _) = getAndCheckProjectCheckpoint(otherId)
-      val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      if (other.vertexSet == null) {
-        // Nothing to do
-        return
-      }
-      checkTypeCollision(other)
+      checkTypeCollision(other.viewer)
       val vsUnion = {
         val op = graph_operations.VertexSetUnion(2)
         op(op.vss, Seq(project.vertexSet, other.vertexSet)).result

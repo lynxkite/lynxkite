@@ -20,6 +20,7 @@ class AuxiliaryOperationTest extends OperationsTestBase {
         // "direction" -> "incoming edges", But this is not
         "aggregate_comment" -> "",
         "aggregate_weight" -> "sum"))
+      enforceComputation
     }
   }
 }
