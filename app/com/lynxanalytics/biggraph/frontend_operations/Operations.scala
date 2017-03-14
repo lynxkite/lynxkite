@@ -3595,6 +3595,12 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
+  register("Add comment", UtilityOperations)(new DecoratorOperation(_) {
+    def parameters = List[OperationParameterMeta]()
+    def apply() = {}
+    def enabled = FEStatus.enabled
+  })
+
   private def getShapeFilePath(params: Map[String, String]): String = {
     val shapeFilePath = params("shapefile")
     assert(listShapefiles().exists(f => f.id == shapeFilePath),
