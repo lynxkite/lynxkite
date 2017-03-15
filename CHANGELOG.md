@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Visualization up to 10&times; faster in some cases.
  - Added _Discard segmentation links_ operation.
  - Added _Merge parallel segmentation links_ operation.
 
