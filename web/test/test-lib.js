@@ -181,10 +181,24 @@ Workspace.prototype = {
     this.closeOperationSelector();
   },
 
-  editBox: function(box, params) {
+  selectBox(box) {
     box.$('rect').click();
+  },
+
+  editBox: function(box, params) {
+    this.selectBox(box);
     this.populateOperation(params);
     this.submitOperation();
+  },
+
+  expectSelectedBoxParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectedBoxSelectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   getBox(boxId) {
@@ -597,15 +611,6 @@ History.prototype = {
       count();
   },
 
-  expectOperationParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  },
-
-  expectOperationSelectParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  }
 };
 
 var visualization = {
