@@ -7,6 +7,11 @@ import com.lynxanalytics.biggraph.table.TableImport
 
 class ImportSegmentationOperationTest extends OperationsTestBase {
 
+  test("Compiles and fails") {
+    assert(false)
+  }
+
+  /*
   def getTable = {
     val rows = Seq(
       ("Adam", "Good", 0L),
@@ -77,4 +82,5 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
       "seg_id_column" -> "seg_name"))
     checkAssertions()
   }
+  */
 }

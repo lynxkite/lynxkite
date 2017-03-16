@@ -6,6 +6,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.table.TableImport
 
 class ExportImportOperationTest extends OperationsTestBase {
+  test("This compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Imports from implicit tables") {
     val project2 = clone(project)
     run("Create example graph" /* , on = project2 */ )
@@ -211,4 +215,5 @@ class ExportImportOperationTest extends OperationsTestBase {
       "Cannot import column `weight`. Attribute already exists."))
 
   }
+  */
 }

@@ -10,31 +10,31 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
 
     TestUtils.withRestoreGlobals(verticesPerPartition = 2, tolerance = 1.0) {
       val sizeForTwoPartitions = 3
-      run("Create vertices",
+      val a = box("Create vertices",
         Map("size" -> sizeForTwoPartitions.toString))
-      run("Create random edge bundle",
-        Map("degree" -> "2.0", "seed" -> "42"))
-      run("Add constant edge attribute",
-        Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))
-      run("Add constant vertex attribute",
-        Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
-      run("Filter by attributes",
-        Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
+        .box("Create random edge bundle",
+          Map("degree" -> "2.0", "seed" -> "42"))
+        .box("Add constant edge attribute",
+          Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))
+        .box("Add constant vertex attribute",
+          Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
+        .box("Filter by attributes",
+          Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
 
-      project.scalars("edge_count").value
+      a.project.scalars("edge_count").value
     }
   }
 
   test("Filtering by segment ID") {
-    run("Create example graph")
-    run("Find connected components",
-      Map("name" -> "cc", "directions" -> "ignore directions"))
-    run("Filter by attributes",
-      Map("filterva_size" -> "3", "apply_to_project" -> "|cc"))
-    val c1 = project.segmentation("cc").vertexSet.rdd.keys.take(1).head
-    run("Filter by attributes",
+    val a = box("Create example graph")
+      .box("Find connected components",
+        Map("name" -> "cc", "directions" -> "ignore directions"))
+      .box("Filter by attributes",
+        Map("filterva_size" -> "3", "apply_to_project" -> "|cc"))
+    val c1 = a.project.segmentation("cc").vertexSet.rdd.keys.take(1).head
+    val b = a.box("Filter by attributes",
       Map("filterva_segmentation[cc]" -> s"any($c1)"))
-    assert(project.vertexSet.rdd.count == 3)
+    assert(b.project.vertexSet.rdd.count == 3)
   }
 }
 
