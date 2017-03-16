@@ -120,8 +120,9 @@ angular.module('biggraph')
           }
           scope.mouseX = event.offsetX;
           scope.mouseY = event.offsetY;
+          scope.mouseLogical = getLogicalPosition(event);
           if (event.buttons === 1 && scope.movedBox) {
-            scope.movedBox.onMouseMove(getLogicalPosition(event));
+            scope.movedBox.onMouseMove(scope.mouseLogical);
           }
         };
 
