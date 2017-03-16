@@ -49,19 +49,18 @@ angular.module('biggraph').factory('createBox', function() {
         color: progressToColor(0),
         hasColor: false,
         updateProgress: function(progress) {
-          if (progress) {
-            var all = 0;
-            for (var p in progress) {
-              all += progress[p];
-            }
-            this.color = progressToColor(progress.computed / all);
-            this.hasColor = true;
-            this.inProgress = progress.inProgress > 0;
-          } else {
-            this.inProgress = false;
-            this.hasColor = false;
-            this.color = progressToColor(0);
+          var all = 0;
+          for (var p in progress) {
+            all += progress[p];
           }
+          this.color = progressToColor(progress.computed / all);
+          this.hasColor = true;
+          this.inProgress = progress.inProgress > 0;
+        },
+        clearProgress: function() {
+          this.inProgress = false;
+          this.hasColor = false;
+          this.color = progressToColor(0);
         }
       };
     }

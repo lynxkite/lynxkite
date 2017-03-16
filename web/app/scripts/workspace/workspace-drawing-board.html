@@ -18,7 +18,7 @@
         <text x="10">{{ plug.data.id }}</text>
         <circle ng-attr-r="{{ plug.radius}}" class="io-circle"
                 ng-class="{'in-progress': plug.inProgress, 'colored-output': plug.hasColor}"
-                ng-attr-fill="{{ plug.color }}"></circle>
+                ng-attr-fill="{{ plug.hasColor ? plug.color : undefined }}"></circle>
       </g>
     </g>
     <!-- end list of I/O plugs -->
