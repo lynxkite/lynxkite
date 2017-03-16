@@ -24,12 +24,12 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       val inputNames = inputs.map(
         input => input.projectRec(boxes)
       )
-      val name = s"box${boxes.length}"
+      val name = s"${operationID} ${boxes.length}"
       val inputIds = ops.getBoxMetadata(operationID).inputs.map(_.id)
       assert(inputIds.size == inputNames.size)
-      val inputBoxOutputs = inputIds.zip(inputNames).map(
-        idName => idName._1 -> BoxOutput(idName._2, "project")
-      ).toMap
+      val inputBoxOutputs = inputIds.zip(inputNames).map {
+        case (inputID, boxID) => inputID -> BoxOutput(boxID, "project")
+      }.toMap
 
       val box = Box(
         name,
@@ -48,8 +48,6 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       val ws = Workspace(boxes = boxes.toList)
       ws.state(serving.User.fake, ops, lastBox.output("project")).project
     }
-
-    def enforceComputation = project()
 
     def box(operationID: String,
             parameters: Map[String, String] = Map()): TestBox = {

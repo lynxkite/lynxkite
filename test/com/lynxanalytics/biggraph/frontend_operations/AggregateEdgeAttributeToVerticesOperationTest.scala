@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
   test("Aggregate edge attribute to vertices, all directions") {
-    val a = box("Create example graph")
+    val project = box("Create example graph")
       .box("Aggregate edge attribute to vertices", Map(
         "prefix" -> "incoming",
         "direction" -> "incoming edges",
@@ -20,7 +20,7 @@ class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
         "direction" -> "all edges",
         "aggregate_weight" -> "sum",
         "aggregate_comment" -> ""))
-    val project = a.project
+      .project
     def value(direction: String) = {
       val attr = project.vertexAttributes(s"${direction}_weight_sum").runtimeSafeCast[Double]
       attr.rdd.collect.toSeq.sorted
