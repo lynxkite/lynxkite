@@ -10,7 +10,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
 
     TestUtils.withRestoreGlobals(verticesPerPartition = 2, tolerance = 1.0) {
       val sizeForTwoPartitions = 3
-      val a = box("Create vertices",
+      val project = box("Create vertices",
         Map("size" -> sizeForTwoPartitions.toString))
         .box("Create random edge bundle",
           Map("degree" -> "2.0", "seed" -> "42"))
@@ -20,21 +20,22 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
           Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
         .box("Filter by attributes",
           Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
-
-      a.project.scalars("edge_count").value
+        .project
+      project.scalars("edge_count").value
     }
   }
 
   test("Filtering by segment ID") {
-    val a = box("Create example graph")
+    val base = box("Create example graph")
       .box("Find connected components",
         Map("name" -> "cc", "directions" -> "ignore directions"))
       .box("Filter by attributes",
         Map("filterva_size" -> "3", "apply_to_project" -> "|cc"))
-    val c1 = a.project.segmentation("cc").vertexSet.rdd.keys.take(1).head
-    val b = a.box("Filter by attributes",
+    val c1 = base.project.segmentation("cc").vertexSet.rdd.keys.take(1).head
+    val project2 = base.box("Filter by attributes",
       Map("filterva_segmentation[cc]" -> s"any($c1)"))
-    assert(b.project.vertexSet.rdd.count == 3)
+      .project
+    assert(project2.vertexSet.rdd.count == 3)
   }
 }
 

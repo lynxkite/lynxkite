@@ -5,15 +5,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class AggregateToSegmentationOperationTest extends OperationsTestBase {
 
   test("Aggregate to segmentation") {
-    val a = box("Create example graph")
+    val seg = box("Create example graph")
       .box("Find connected components", Map("name" -> "cc", "directions" -> "require both directions"))
       .box("Aggregate to segmentation",
         Map(
           "apply_to_project" -> "|cc",
           "aggregate_age" -> "average", "aggregate_name" -> "count", "aggregate_gender" -> "majority_100",
           "aggregate_id" -> "", "aggregate_location" -> "", "aggregate_income" -> ""))
-    val project = a.project
-    val seg = project.segmentation("cc")
+      .project.segmentation("cc")
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
     val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]

@@ -55,7 +55,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
         Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {
       val union = box("Union with another project", Map("id_attr" -> "new_id"), Seq(a, b))
-      union.enforceComputation
+      union.project
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))

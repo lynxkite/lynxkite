@@ -21,29 +21,28 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   }
 
   test("Segmentation stays sane after filtering (which uses pullBack)") {
-    val base = box("Create example graph")
+    val seg = box("Create example graph")
       .box("Segment by double attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
-    val seg = base.project.segmentation("seg")
-
-    base.box("Filter by attributes", Map("filterva_age" -> "> 10",
-      "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-      "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-      "filterea_weight" -> "", "filterva_segmentation[seg]" -> "")).enforceComputation
+      .box("Filter by attributes", Map("filterva_age" -> "> 10",
+        "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
+        "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
+        "filterea_weight" -> "", "filterva_segmentation[seg]" -> ""))
+      .project.segmentation("seg")
 
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
 
   test("Segmentation stays sane after filtering on the segmentation side (this uses pullBack)") {
-    val project = box("Create example graph")
+    val seg = box("Create example graph")
       .box("Segment by double attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
       .box("Add rank attribute", Map(
         "rankattr" -> "ranking", "keyattr" -> "top", "order" -> "ascending", "apply_to_project" -> "|seg"))
       .box("Filter by attributes", Map(
         "filterva_ranking" -> "> 0", "filterva_bottom" -> "", "filterva_id" -> "",
-        "filterva_size" -> "", "filterva_top" -> "", "apply_to_project" -> "|seg")).project
-    val seg = project.segmentation("seg")
+        "filterva_size" -> "", "filterva_top" -> "", "apply_to_project" -> "|seg"))
+      .project.segmentation("seg")
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
 

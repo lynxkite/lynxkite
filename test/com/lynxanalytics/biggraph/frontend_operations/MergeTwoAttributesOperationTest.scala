@@ -8,10 +8,10 @@ class MergeTwoAttributesOperationTest extends OperationsTestBase {
     // The unification is used everywhere, I'm just worried about the type equality check.
     intercept[java.lang.AssertionError] {
       val b = a.box("Merge two vertex attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "age"))
-      b.enforceComputation
+      b.project
     }
     val c = a.box("Merge two vertex attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
-    c.enforceComputation
+    c.project
   }
 }
 
