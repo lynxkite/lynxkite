@@ -4,6 +4,10 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class CopyScalarFromOtherProjectTest extends OperationsTestBase {
+  test("This compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Take scalar from other project with wrong source name") {
     run("Create example graph")
     val other = clone(project)
@@ -111,5 +115,5 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
 
     assert(project.scalars("my_scalar_3").value == "deep value")
   }
-
+*/
 }
