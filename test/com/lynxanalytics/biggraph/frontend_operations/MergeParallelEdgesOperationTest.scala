@@ -4,6 +4,11 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MergeParallelEdgesOperationTest extends OperationsTestBase {
 
+  test("Compiles and fails") {
+    assert(false)
+  }
+
+  /*
   def load(filename: String) = {
     run("Import vertices and edges from a single table", Map(
       "table" -> importCSV("OPERATIONSTEST$/" + filename),
@@ -80,4 +85,5 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
     val call = project.edgeAttributes("call_max").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(6.0))
   }
+  */
 }

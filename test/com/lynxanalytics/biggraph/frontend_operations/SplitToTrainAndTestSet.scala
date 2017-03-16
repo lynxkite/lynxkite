@@ -5,9 +5,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class SplitToTrainAndTestSet extends OperationsTestBase {
   test("Split to train and test sets") {
     val source = "age"
-    run("Create example graph")
-    run("Split to train and test set",
-      Map("source" -> s"$source", "test_set_ratio" -> "0.25", "seed" -> "16"))
+    val project = box("Create example graph")
+      .box("Split to train and test set",
+        Map("source" -> s"$source", "test_set_ratio" -> "0.25", "seed" -> "16"))
+      .project
     val trainRDD = project.vertexAttributes(s"${source}_train").rdd
     val testRDD = project.vertexAttributes(s"${source}_test").rdd
     // train and test should be disjoint

@@ -4,6 +4,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class GrowSegmentationTest extends OperationsTestBase {
+  test("Compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Grow segmentation - in-neighbors") {
     run("Create example graph")
     run("Copy graph into a segmentation", Map("name" -> "seg"))
@@ -43,4 +47,5 @@ class GrowSegmentationTest extends OperationsTestBase {
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
       (0, 0), (1, 0), (0, 1), (1, 1), (3, 3), (2, 2)))
   }
+  */
 }
