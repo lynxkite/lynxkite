@@ -3,6 +3,10 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DiscardLoopEdgesOperationTest extends OperationsTestBase {
+  test("Compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Discard loop edges") {
     run("Import vertices and edges from a single table", Map(
       "table" -> importCSV("OPERATIONSTEST$/loop-edges.csv"),
@@ -14,4 +18,5 @@ class DiscardLoopEdgesOperationTest extends OperationsTestBase {
     run("Discard loop edges")
     assert(colors == Seq("blue", "green")) // "red" was the loop edge.
   }
+  */
 }

@@ -5,6 +5,11 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
 
+  test("Compiles and fails") {
+    assert(false)
+  }
+
+  /*
   test("Pull segmentation one level up") {
     run("Import vertices", Map(
       "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-vertices.csv"),
@@ -38,4 +43,5 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
       .sorted
     assert(segmentSizes == Seq(1, 2, 3, 3, 3))
   }
+  */
 }
