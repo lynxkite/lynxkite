@@ -117,4 +117,36 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         op.parameters.find(_.id == "apply_to").get.options.map(_.id) == Seq("", "|cc"))
     }
   }
+
+  test("progress success") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+      val cc = Box(
+        "cc", "Connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
+        0, 20, Map("project" -> eg.output("project")))
+      // use a different pagerankParams to prevent reusing the attribute computed in an earlier
+      // test
+      val pr = Box("pr", "PageRank", pagerankParams + ("iterations" -> "3"), 0, 20,
+        Map("project" -> cc.output("project")))
+      val prOutput = pr.output("project")
+      val ws = Workspace(List(eg, cc, pr))
+      set("test-workspace", ws)
+      val progressBeforePR = controller.getProgress(user,
+        GetProgressRequest("test-workspace", prOutput)
+      ).progressList.find(_.boxOutput == prOutput).get
+      assert(progressBeforePR.success.enabled)
+      assert(progressBeforePR.progress("inProgress") == 0)
+      val computedBeforePR = progressBeforePR.progress("computed")
+      import graph_api.Scripting._
+      // trigger PR computation
+      ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name")).
+        rdd.values.collect
+      val progressAfterPR = controller.getProgress(user,
+        GetProgressRequest("test-workspace", prOutput)
+      ).progressList.find(_.boxOutput == prOutput).get
+      val computedAfterPR = progressAfterPR.progress("computed")
+      assert(computedAfterPR > computedBeforePR)
+    }
+  }
 }
