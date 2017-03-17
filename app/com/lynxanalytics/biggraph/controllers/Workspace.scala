@@ -236,6 +236,6 @@ object WorkspaceJsonFormatters {
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
   implicit val fWorkspace = json.Json.format[Workspace]
-  implicit val fProgress = json.Json.format[ProgressInfo]
-  implicit val fX = json.Json.format[Progress]
+  implicit val fProgressInfo = json.Json.format[ProgressInfo]
+  implicit val fProgress = json.Json.format[Progress]
 }
