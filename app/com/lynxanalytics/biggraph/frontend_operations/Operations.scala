@@ -2077,6 +2077,24 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
+  register("Merge parallel segmentation links", StructureOperations, new ProjectTransformation(_) with SegOp {
+    def segmentationParameters = List()
+    def enabled = project.assertSegmentation
+    def apply() = {
+      val linksAsAttr = {
+        val op = graph_operations.EdgeBundleAsAttribute()
+        op(op.edges, seg.belongsTo).result.attr
+      }
+      val mergedResult = mergeEdges(linksAsAttr)
+      val newLinks = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, seg.belongsTo)(op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      seg.belongsTo = newLinks
+    }
+  })
+
   register("Discard loop edges", StructureOperations, new ProjectTransformation(_) {
     lazy val parameters = List()
     def enabled = project.hasEdgeBundle
