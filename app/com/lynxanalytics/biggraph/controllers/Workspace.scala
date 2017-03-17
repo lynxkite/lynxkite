@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.graph_api.MetaGraphEntity
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class Workspace(
