@@ -127,9 +127,7 @@ case class Workspace(
       }
     }
 
-    val progress = if (boxOutputState.state == null) {
-      null
-    } else {
+    val progress = if (boxOutputState.success.enabled) {
       val progressList = commonProjectStateProgress(boxOutputState.project.rootState.state)
       Map(
         "computed" -> progressList.count(_ == 1.0),
@@ -137,6 +135,8 @@ case class Workspace(
         "notYetStarted" -> progressList.count(_ == 0.0),
         "failed" -> progressList.count(_ < 0.0)
       )
+    } else {
+      null
     }
     ProgressInfo(boxOutput, progress, boxOutputState.success)
   }
