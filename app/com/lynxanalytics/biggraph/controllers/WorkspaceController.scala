@@ -12,7 +12,7 @@ case class GetOutputRequest(workspace: String, output: BoxOutput)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
-case class GetProgressResponse(progress: List[Progress])
+case class GetProgressResponse(progressList: List[ProgressInfo])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
