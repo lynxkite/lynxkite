@@ -104,14 +104,13 @@ case class Workspace(
       s"Can't compute projectProgress for kind ${boxOutputState.kind}")
 
     def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
-      val vertexAndEdgeEntities = List(state.vertexSetGUID.map(manager.vertexSet),
-        state.edgeBundleGUID.map(manager.edgeBundle)).flatten
-      val attributeEntities = List(
-        state.scalarGUIDs.values.map(manager.scalar).asInstanceOf[List[MetaGraphEntity]],
+      val allEntities = List(
+        state.vertexSetGUID.map(manager.vertexSet).toList,
+        state.edgeBundleGUID.map(manager.edgeBundle).toList,
+        state.scalarGUIDs.values.map(manager.scalar),
         state.vertexAttributeGUIDs.values.map(manager.attribute),
         state.edgeAttributeGUIDs.values.map(manager.attribute)
       ).flatten
-      val allEntities = vertexAndEdgeEntities ++ attributeEntities
       val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
       allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
     }
