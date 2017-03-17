@@ -75,23 +75,27 @@ case class Workspace(
     }
   }
 
+  // Calculates the progress of an output and all other outputs that had been calculated as a
+  // side-effect.
   def progress(
     user: serving.User, ops: OperationRepository,
     connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
                            manager: graph_api.MetaGraphManager): List[Progress] = {
     val states = calculate(user, ops, connection, Map())
-    val progressInfo = states.mapValues(singleStateProgress)
+    val progressInfo = states.mapValues(calculatedStateProgress)
     progressInfo.map((Progress.apply _).tupled).toList
   }
 
-  private def singleStateProgress(boxOutputState: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                                                                  manager: graph_api.MetaGraphManager): ProgressInfo =
+  private def calculatedStateProgress(
+    boxOutputState: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                                    manager: graph_api.MetaGraphManager): ProgressInfo =
     boxOutputState.kind match {
       case BoxOutputKind.Project => projectProgress(boxOutputState)
     }
 
-  private def projectProgress(boxOutputState: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                                                              manager: graph_api.MetaGraphManager): ProgressInfo = {
+  private def projectProgress(
+    boxOutputState: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                                    manager: graph_api.MetaGraphManager): ProgressInfo = {
     assert(boxOutputState.kind == BoxOutputKind.Project,
       s"Can't compute projectProgress for kind ${boxOutputState.kind}")
     def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
