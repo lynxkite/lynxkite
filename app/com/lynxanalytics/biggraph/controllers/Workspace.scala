@@ -90,6 +90,9 @@ case class Workspace(
                            manager: graph_api.MetaGraphManager): ProgressInfo =
     state.kind match {
       case BoxOutputKind.Project => projectProgress(boxOutput, state)
+      case _ =>
+        log.error(s"Unknown BoxOutputState kind: ${state.kind}")
+        ProgressInfo(boxOutput, Map(), FEStatus.disabled("Unknown kind"))
     }
 
   private def projectProgress(
