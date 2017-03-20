@@ -210,10 +210,6 @@ trait BasicOperation extends Operation {
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
-    // val mandatoryParamIds =
-    //   allParameters.map { param => param.id }.toSet
-    // val missingIds = mandatoryParamIds &~ values.keySet
-    // assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (param <- allParameters) {
       if (values.contains(param.id)) {
         param.validate(values(param.id))
