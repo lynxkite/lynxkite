@@ -149,4 +149,19 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(computedAfterPR > computedBeforePR)
     }
   }
+
+  test("progress fails") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      // box with unconnected input
+      val pr = Box("pr", "PageRank", pagerankParams, 0, 20, Map())
+      val prOutput = pr.output("project")
+      val ws = Workspace(List(pr))
+      set("test-workspace", ws)
+      val progress = controller.getProgress(user,
+        GetProgressRequest("test-workspace", prOutput)
+      ).progressList.find(_.boxOutput == prOutput).get
+      assert(!progress.success.enabled)
+    }
+  }
 }
