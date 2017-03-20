@@ -10,8 +10,7 @@ object OperationParams {
   case class Param(
       id: String,
       title: String,
-      defaultValue: String = "",
-      mandatory: Boolean = true) extends OperationParameterMeta {
+      defaultValue: String = "") extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -23,8 +22,7 @@ object OperationParams {
       title: String,
       options: List[FEOption],
       multipleChoice: Boolean = false,
-      allowUnknownOption: Boolean = false,
-      mandatory: Boolean = true) extends OperationParameterMeta {
+      allowUnknownOption: Boolean = false) extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
@@ -49,15 +47,13 @@ object OperationParams {
     val kind = "table"
     val multipleChoice = false
     val defaultValue = ""
-    val mandatory = true
     def validate(value: String): Unit = {}
   }
 
   case class TagList(
       id: String,
       title: String,
-      options: List[FEOption],
-      mandatory: Boolean = false) extends OperationParameterMeta {
+      options: List[FEOption]) extends OperationParameterMeta {
     val kind = "tag-list"
     val multipleChoice = true
     val defaultValue = ""
@@ -69,7 +65,6 @@ object OperationParams {
     val multipleChoice = false
     val defaultValue = ""
     val options = List()
-    val mandatory = true
     def validate(value: String): Unit = {}
   }
 
@@ -78,7 +73,6 @@ object OperationParams {
     val kind = "default"
     val options = List()
     val multipleChoice = false
-    val mandatory = true
     def validate(value: String): Unit = {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
@@ -91,7 +85,6 @@ object OperationParams {
     val defaultValue = default.toString
     val options = List()
     val multipleChoice = false
-    val mandatory = true
     def validate(value: String): Unit = {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
     }
@@ -102,7 +95,6 @@ object OperationParams {
     val kind = "default"
     val options = List()
     val multipleChoice = false
-    val mandatory = true
     def validate(value: String): Unit = {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
@@ -111,8 +103,7 @@ object OperationParams {
   case class Code(
       id: String,
       title: String,
-      defaultValue: String = "",
-      mandatory: Boolean = true) extends OperationParameterMeta {
+      defaultValue: String = "") extends OperationParameterMeta {
     val kind = "code"
     val options = List()
     val multipleChoice = false
@@ -125,7 +116,6 @@ object OperationParams {
     val kind = "default"
     val options = List()
     val multipleChoice = false
-    val mandatory = true
     def validate(value: String): Unit = {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
@@ -139,7 +129,6 @@ object OperationParams {
     val defaultValue = ""
     val kind = "model"
     val multipleChoice = false
-    val mandatory = true
     val options = List()
     import FrontendJson.wFEModelMeta
     import FrontendJson.wFEOption
@@ -153,8 +142,7 @@ object OperationParams {
   case class SegmentationParam(
       id: String,
       title: String,
-      options: List[FEOption],
-      mandatory: Boolean = true) extends OperationParameterMeta {
+      options: List[FEOption]) extends OperationParameterMeta {
     val kind = "segmentation"
     val multipleChoice = false
     val defaultValue = ""

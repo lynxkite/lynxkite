@@ -40,7 +40,6 @@ case class FEOperationParameterMeta(
     defaultValue: String,
     options: List[FEOption],
     multipleChoice: Boolean,
-    mandatory: Boolean, // If false, this parameter can be omitted from the request.
     payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
 
   require(
@@ -63,13 +62,12 @@ abstract class OperationParameterMeta {
   val defaultValue: String
   val options: List[FEOption]
   val multipleChoice: Boolean
-  val mandatory: Boolean
   val payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
+    id, title, kind, defaultValue, options, multipleChoice, payload)
 }
 
 // An Operation is the computation that a Box represents in a workspace.
@@ -208,10 +206,10 @@ trait BasicOperation extends Operation {
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
-    val mandatoryParamIds =
-      allParameters.filter(_.mandatory).map { param => param.id }.toSet
-    val missingIds = mandatoryParamIds &~ values.keySet
-    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
+    // val mandatoryParamIds =
+    //   allParameters.map { param => param.id }.toSet
+    // val missingIds = mandatoryParamIds &~ values.keySet
+    // assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (param <- allParameters) {
       if (values.contains(param.id)) {
         param.validate(values(param.id))
@@ -265,7 +263,7 @@ trait BasicOperation extends Operation {
       reservedParameter(param)
       OperationParams.SegmentationParam(
         param, s"Apply to (${input.id})",
-        context.inputs(input.id).project.segmentationsRecursively, mandatory = false)
+        context.inputs(input.id).project.segmentationsRecursively)
     } ++ parameters
   }
 }
