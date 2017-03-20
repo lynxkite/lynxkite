@@ -247,7 +247,7 @@ angular.module('biggraph')
               },
               /* failure */
               function(error) {
-                scope.error = error;
+                util.error('Couldn\'t get prgress', error);
                 scope.workspace.clearProgress();
               });
           }
