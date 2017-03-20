@@ -3,14 +3,12 @@
 import boto3
 from prettytable import PrettyTable
 
+
 client = boto3.client('ec2')
 regions = client.describe_regions()['Regions']
-
-
 attributes = ['Region', 'Name', 'Type', 'State', 'Private IP', 'Public IP', 'Launch Time', 'Owner', 'Expiry Date']
 table = PrettyTable(attributes) 
 table.align = 'l'
-
 for region in regions:
     region_name=region['RegionName']
     
@@ -31,6 +29,7 @@ for region in regions:
                 owner = tag['Value']
             if 'expiry' in tag['Key']:
                 expiry = tag['Value']
+		
 
         instanceinfo.append(region_name.upper())
         instanceinfo.append(name) 
@@ -45,4 +44,8 @@ for region in regions:
         if len(instanceinfo) > 0:
             table.add_row(instanceinfo)
 
-print (table)
+message = table.get_html_string()
+print(message)
+
+
+
