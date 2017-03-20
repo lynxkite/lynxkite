@@ -15,13 +15,12 @@ class AuxiliaryOperationTest extends OperationsTestBase {
         "direction" -> "incoming edges",
         // "aggregate_comment" -> "", This is now optional
         "aggregate_weight" -> "sum"))
-    intercept[java.lang.AssertionError] {
-      firstPart.box("Aggregate edge attribute to vertices", Map(
-        "prefix" -> "incoming",
-        // "direction" -> "incoming edges", But this is not
-        "aggregate_comment" -> "",
-        "aggregate_weight" -> "sum")).project
-    }
+    firstPart.box("Aggregate edge attribute to vertices", Map(
+      "prefix" -> "incoming",
+      // "direction" -> "incoming edges", This is not optional, but it has
+      // a default so it should still work.
+      "aggregate_comment" -> "",
+      "aggregate_weight" -> "sum")).project
   }
 
   test("Default parameters work") {
