@@ -289,6 +289,8 @@ include::lookup-region.asciidoc[]
 
 include::merge-parallel-edges-by-attribute.asciidoc[]
 
+include::merge-parallel-segmentation-links.asciidoc[]
+
 include::merge-parallel-edges.asciidoc[]
 
 include::merge-two-edge-attributes.asciidoc[]
