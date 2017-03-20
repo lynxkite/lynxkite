@@ -46,8 +46,7 @@ angular.module('biggraph').factory('createBox', function() {
         y: function() { return y + instance.y; },
         posTransform: 'translate(' + x + ', ' + y + ')',
         inProgress: false,
-        color: progressToColor(0),
-        hasColor: false,
+        color: undefined,
         updateProgress: function(progress, success) {
           if (success.enabled) {
             var all = 0;
@@ -57,7 +56,6 @@ angular.module('biggraph').factory('createBox', function() {
               }
             }
             this.color = progressToColor(progress.computed / all);
-            this.hasColor = true;
             this.inProgress = progress.inProgress > 0;
           } else {
             this.clearProgress();
@@ -65,8 +63,7 @@ angular.module('biggraph').factory('createBox', function() {
         },
         clearProgress: function() {
           this.inProgress = false;
-          this.hasColor = false;
-          this.color = progressToColor(0);
+          this.color = undefined;
         }
       };
     }
