@@ -186,7 +186,15 @@ trait BasicOperation extends Operation {
   protected val user = context.user
   protected val id = context.meta.operationID
   protected val title = id
-  protected val params = context.box.parameters
+  // Parameters without default values:
+  protected val paramValues = context.box.parameters
+  // Parameters with default values:
+  protected def params =
+    parameters
+      .map {
+        paramMeta => (paramMeta.id, paramMeta.defaultValue)
+      }
+      .toMap ++ paramValues
   protected def parameters: List[OperationParameterMeta]
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
@@ -239,8 +247,8 @@ trait BasicOperation extends Operation {
     enabled)
 
   protected def projectInput(input: String): ProjectEditor = {
-    val segPath = SubProject.splitPipedPath(params.getOrElse("apply_to_" + input, ""))
-    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $params")
+    val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
+    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $paramValues")
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 

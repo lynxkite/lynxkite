@@ -57,11 +57,7 @@ angular.module('biggraph')
               return;
             }
 
-            // Populate defaults:
-            // TODO: this is misleading now, because the default
-            // values are shown to the user but not there in the
-            // operation. This computation should most likely happen
-            // when a box is wired for the first time.
+            // Populate parameter values.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
               if (scope.paramValues[p.id] !== undefined) {
