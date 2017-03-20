@@ -238,15 +238,13 @@ angular.module('biggraph')
                 id: plugBefore.data.id
               }
             }).then(
-              /* success */
-              function(response) {
+              function success(response) {
                 if (scope.workspace && scope.workspace === workspaceBefore &&
                     scope.selectedPlug && scope.selectedPlug === plugBefore) {
                   scope.workspace.updateProgress(response.progressList);
                 }
               },
-              /* failure */
-              function(error) {
+              function failure(error) {
                 util.error('Couldn\'t get prgress', error);
                 scope.workspace.clearProgress();
               });
