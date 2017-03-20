@@ -14,6 +14,7 @@ POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/createWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.createWorkspace
 POST /ajax/setWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.setWorkspace
 GET /ajax/getWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.getWorkspace
+GET /ajax/getOutputId com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOutputId
 GET /ajax/getOutput com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOutput
 GET /ajax/getOperationMeta com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperationMeta
 GET /ajax/boxCatalog com.lynxanalytics.biggraph.serving.ProductionJsonServer.boxCatalog
