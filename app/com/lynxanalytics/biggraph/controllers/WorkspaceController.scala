@@ -1,15 +1,20 @@
 // Methods for manipulating workspaces.
 package com.lynxanalytics.biggraph.controllers
 
+import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.serving
 
+import scala.util.Random
+
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetOutputRequest(workspace: String, output: BoxOutput)
+case class GetOutputIdRequest(workspace: String, output: BoxOutput)
+case class GetOutputRequest(id: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
+case class GetOutputIdResponse(id: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
@@ -48,13 +53,24 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): Workspace =
     getWorkspaceByName(user, request.name)
 
-  def getOutput(
-    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+  val calculatedStates = new HashMap[String, (String, BoxOutputState)]()
+  def getOutputId(
+    user: serving.User, request: GetOutputIdRequest): GetOutputIdResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
-    state.kind match {
-      case BoxOutputKind.Project =>
-        GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(request.workspace)))
+    val id = Random.alphanumeric.take(20).mkString
+    calculatedStates(id) = (request.workspace, state)
+    GetOutputIdResponse(id)
+  }
+
+  def getOutput(
+    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+    calculatedStates.getOrElse(request.id, None) match {
+      case Some((workspace:String, state: BoxOutputState)) =>
+        state.kind match {
+          case BoxOutputKind.Project =>
+          GetOutputResponse (state.kind, project = Some (state.project.viewer.toFE(workspace)))
+        }
     }
   }
 
