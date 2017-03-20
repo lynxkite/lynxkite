@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import boto3
 from prettytable import PrettyTable
@@ -7,7 +7,7 @@ client = boto3.client('ec2')
 regions = client.describe_regions()['Regions']
 
 
-attributes = ['Region', 'Name', 'Type', 'State', 'Private IP', 'Public IP', 'Launch Time']
+attributes = ['Region', 'Name', 'Type', 'State', 'Private IP', 'Public IP', 'Launch Time', 'Owner', 'Expiry Date']
 table = PrettyTable(attributes) 
 table.align = 'l'
 
@@ -27,6 +27,10 @@ for region in regions:
         for tag in instance.tags:
             if 'Name'in tag['Key']:
                 name = tag['Value']
+            if 'owner' in tag['Key']:
+                owner = tag['Value']
+            if 'expiry' in tag['Key']:
+                expiry = tag['Value']
 
         instanceinfo.append(region_name.upper())
         instanceinfo.append(name) 
@@ -35,8 +39,10 @@ for region in regions:
         instanceinfo.append(instance.private_ip_address)
         instanceinfo.append(instance.public_ip_address)
         instanceinfo.append(instance.launch_time)
+        instanceinfo.append(owner)
+        instanceinfo.append(expiry)
 
         if len(instanceinfo) > 0:
             table.add_row(instanceinfo)
 
-print table
+print (table)
