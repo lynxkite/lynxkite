@@ -1,0 +1,17 @@
+### Find connected components
+
+Creates a segment for every connected component of the graph.
+
+Connected components are maximal vertex sets where a path exists between each pair of vertices.
+
+
+====
+[[name]] Segmentation name::
+The new segmentation will be saved under this name.
+
+[[directions]] Edge direction::
+Ignore directions:::
+The algorithm adds reversed edges before calculating the components.
+Require both directions:::
+The algorithm discards non-symmetric edges before calculating the components.
+====

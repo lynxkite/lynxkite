@@ -1,3 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy with params List((testDataSet,fake_westeros_v3_10m_303m))
-x: {"labelType":"between","labels":["0.00","0.10","0.20","0.30","0.40","0.50","0.60","0.70","0.80","0.90","1.00"],"sizes":[3162151,1310123,1004633,848011,746438,674563,620680,577190,542760,513453]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy, took 15 seconds

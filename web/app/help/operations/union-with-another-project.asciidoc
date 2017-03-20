@@ -20,7 +20,7 @@ A simple procedure for connecting the two graphs would be the following.
 . Take the union of the two projects.
 . Use <<Merge vertices by attribute>> to combine the vertices that can be exactly matched
 based on their email address.
-. Use <<Fingerprinting based on attributes>> to identify more matches based on neighborhood
+. Use <<Fingerprint based on attributes>> to identify more matches based on neighborhood
 similarity.
 
 *Parameters*
@@ -28,7 +28,7 @@ similarity.
 [[other]] Other project's name::
 The project to merge into the current project.
 
-[[id-attr]] ID attribute name::
+[[id_attr]] ID attribute name::
 The internal vertex IDs change after the union. The old ID attributes are preserved, but no
 longer reflect the internal IDs. The new internal IDs will be exposed through a new attribute.
 This parameter sets the name of this new attribute.

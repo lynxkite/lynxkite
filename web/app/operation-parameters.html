@@ -1,8 +1,8 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
-<div class="form-group" ng-repeat="param in op.parameters">
+<div class="form-group" ng-repeat="param in params">
   <label for="{{param.id}}" class="col-sm-4 control-label">
     {{param.title}}
-    <help-popup href="{{op.id + '-' + param.id}}"></help-popup>
+    <help-popup href="{{box.meta.operationID + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
     <input ng-if="param.kind === 'default'"

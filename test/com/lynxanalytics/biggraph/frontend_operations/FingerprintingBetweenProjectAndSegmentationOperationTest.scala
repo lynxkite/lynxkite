@@ -6,31 +6,35 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
+  test("Compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Fingerprinting between project and segmentation") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import project as segmentation", Map(
       "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
     run("Import segmentation links", Map(
       "table" -> importCSV("OPERATIONSTEST$/fingerprint-example-connections.csv"),
-      "base-id-attr" -> "name",
-      "base-id-column" -> "src",
-      "seg-id-attr" -> "name",
-      "seg-id-column" -> "dst",
-      "apply_to" -> "|ExampleGraph2"))
-    run("Fingerprinting between project and segmentation", Map(
+      "base_id_attr" -> "name",
+      "base_id_column" -> "src",
+      "seg_id_attr" -> "name",
+      "seg_id_column" -> "dst",
+      "apply_to_project" -> "|ExampleGraph2"))
+    run("Link project and segmentation by fingerprint", Map(
       "mo" -> "1",
       "ms" -> "0.5",
-      "apply_to" -> "|ExampleGraph2"))
+      "apply_to_project" -> "|ExampleGraph2"))
     run("Aggregate from segmentation", Map(
       "prefix" -> "seg",
-      "aggregate-age" -> "average",
-      "aggregate-id" -> "",
-      "aggregate-name" -> "",
-      "aggregate-location" -> "",
-      "aggregate-gender" -> "",
-      "aggregate-fingerprinting_similarity_score" -> "",
-      "aggregate-income" -> "",
-      "apply_to" -> "|ExampleGraph2"))
+      "aggregate_age" -> "average",
+      "aggregate_id" -> "",
+      "aggregate_name" -> "",
+      "aggregate_location" -> "",
+      "aggregate_gender" -> "",
+      "aggregate_fingerprinting_similarity_score" -> "",
+      "aggregate_income" -> "",
+      "apply_to_project" -> "|ExampleGraph2"))
     val newAge = project.vertexAttributes("seg_age_average")
       .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
     // Two mappings.
@@ -51,9 +55,9 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
       "direction" -> "outgoing edges",
-      "aggregate-src_link" -> "most_common",
-      "aggregate-dst" -> "",
-      "aggregate-src" -> ""))
+      "aggregate_src_link" -> "most_common",
+      "aggregate_dst" -> "",
+      "aggregate_src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
     val otherCp = project.checkpoint.get
     run("Import vertices and edges from a single table", Map(
@@ -64,20 +68,20 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "them" -> s"!checkpoint($otherCp,other)"))
     val seg = project.segmentation("other")
     run("Define segmentation links from matching attributes", Map(
-      "base-id-attr" -> "stringID",
-      "seg-id-attr" -> "link",
-      "apply_to" -> "|other"))
+      "base_id_attr" -> "stringID",
+      "seg_id_attr" -> "link",
+      "apply_to_project" -> "|other"))
     def belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 6)
-    run("Fingerprinting between project and segmentation", Map(
+    run("Link project and segmentation by fingerprint", Map(
       "mo" -> "0",
       "ms" -> "0",
-      "apply_to" -> "|other"))
+      "apply_to_project" -> "|other"))
     assert(belongsTo.size == 6)
     val similarity = seg.vertexAttributes("fingerprinting_similarity_score")
       .runtimeSafeCast[Double].rdd.values.collect
     assert(similarity.size == 6)
     assert(similarity.filter(_ > 0).size == 6)
   }
-
+*/
 }

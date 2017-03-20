@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
@@ -58,3 +61,4 @@ module.exports = function(fw) {
       expect(lib.left.attributeCount()).toEqual(8);
     });
 };
+*/

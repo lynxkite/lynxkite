@@ -95,14 +95,14 @@ angular.module('biggraph').factory('createBox', function() {
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
       },
-      onMouseMove: function(event) {
+      onMouseMove: function(mousePos) {
         this.isMoved = true;
-        this.instance.x = event.clientX + this.xOffset;
-        this.instance.y = event.clientY + this.yOffset;
+        this.instance.x = mousePos.x + this.xOffset;
+        this.instance.y = mousePos.y + this.yOffset;
       },
-      onMouseDown: function(event) {
-        this.xOffset = this.instance.x - event.clientX;
-        this.yOffset = this.instance.y - event.clientY;
+      onMouseDown: function(mousePos) {
+        this.xOffset = this.instance.x - mousePos.x;
+        this.yOffset = this.instance.y - mousePos.y;
       },
     };
   };

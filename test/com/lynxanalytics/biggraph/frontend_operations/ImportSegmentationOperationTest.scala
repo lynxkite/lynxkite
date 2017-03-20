@@ -7,6 +7,11 @@ import com.lynxanalytics.biggraph.table.TableImport
 
 class ImportSegmentationOperationTest extends OperationsTestBase {
 
+  test("Compiles and fails") {
+    assert(false)
+  }
+
+  /*
   def getTable = {
     val rows = Seq(
       ("Adam", "Good", 0L),
@@ -23,33 +28,33 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Import segmentation for example graph") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import segmentation", Map(
       "table" -> getTable,
       "name" -> "imported",
-      "base-id-attr" -> "name",
-      "base-id-column" -> "base_name",
-      "seg-id-column" -> "seg_name"))
+      "base_id_attr" -> "name",
+      "base_id_column" -> "base_name",
+      "seg_id_column" -> "seg_name"))
     checkAssertions()
   }
 
   test("Import segmentation links for example graph") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import segmentation", Map(
       "table" -> getTable,
       "name" -> "imported",
-      "base-id-attr" -> "name",
-      "base-id-column" -> "base_name",
-      "seg-id-column" -> "seg_name"))
+      "base_id_attr" -> "name",
+      "base_id_column" -> "base_name",
+      "seg_id_column" -> "seg_name"))
     val seg = project.segmentation("imported")
     // Overwrite the links by importing them for the existing base+segmentation.
     run("Import segmentation links", Map(
       "table" -> getTable,
-      "base-id-attr" -> "name",
-      "seg-id-attr" -> "seg_name",
-      "base-id-column" -> "base_name",
-      "seg-id-column" -> "seg_name",
-      "apply_to" -> "|imported"))
+      "base_id_attr" -> "name",
+      "seg_id_attr" -> "seg_name",
+      "base_id_column" -> "base_name",
+      "seg_id_column" -> "seg_name",
+      "apply_to_project" -> "|imported"))
     checkAssertions()
   }
 
@@ -68,13 +73,14 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Import segmentation for example graph by Long ID") {
-    run("Example Graph")
+    run("Create example graph")
     run("Import segmentation", Map(
       "table" -> getTable,
       "name" -> "imported",
-      "base-id-attr" -> "id",
-      "base-id-column" -> "base_id",
-      "seg-id-column" -> "seg_name"))
+      "base_id_attr" -> "id",
+      "base_id_column" -> "base_id",
+      "seg_id_column" -> "seg_name"))
     checkAssertions()
   }
+  */
 }

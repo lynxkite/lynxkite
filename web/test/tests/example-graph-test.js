@@ -4,30 +4,58 @@ var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
-    'empty test-example project',
-    'test-example project with example graph',
+    'empty test-example workspace',
+    'test-example workspace with example graph',
     function() {
-      lib.left.runOperation('example graph');
+      lib.workspace.addBox('create example graph', 100, 100);
+    },
+    function() {
+    });
+
+  fw.transitionTest(
+    'test-example workspace with example graph',
+    'test-example workspace with example graph state selected',
+    function() {
+      var box = lib.workspace.getBox(0);
+      lib.workspace.getOutputPlug(box, 'project').click();
     },
     function() {
     });
 
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'has the proper vertex count',
     function() {
-      expect(lib.left.vertexCount()).toEqual(4);
-      expect(lib.left.edgeCount()).toEqual(4);
-      expect(lib.left.attributeCount()).toEqual(8);
+      expect(lib.state.vertexCount()).toEqual(4);
+      expect(lib.state.edgeCount()).toEqual(4);
+      expect(lib.state.attributeCount()).toEqual(8);
     });
 
   fw.transitionTest(
-    'test-example project with example graph',
-    'test-example project in sampled view',
+    'test-example workspace with example graph',
+    'test-example workspace with two connected boxes',
     function() {
-      lib.left.toggleSampledVisualization();
+      var exampleGraph = lib.workspace.getBox(0);
+      lib.workspace.addBox('add reversed edges', 100, 200);
+      var reversedEdges = lib.workspace.getBox(1);
+      lib.workspace.connectBoxes(
+          exampleGraph, 'project',
+          reversedEdges, 'project');
     },
     function() {
-      expect($('svg.graph-view').isDisplayed()).toBe(true);
     });
+
+  fw.transitionTest(
+    'test-example workspace with two connected boxes',
+    'has the proper vertex count',
+    function() {
+      var reversedEdges = lib.workspace.getBox(1);
+      lib.workspace.getOutputPlug(reversedEdges, 'project').click();
+      expect(lib.state.vertexCount()).toEqual(4);
+      expect(lib.state.edgeCount()).toEqual(8);
+      expect(lib.state.attributeCount()).toEqual(8);
+    },
+    function() {
+    });
+
 };

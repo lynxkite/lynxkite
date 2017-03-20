@@ -1,8 +1,20 @@
-<div id="box-project">
+<div id="workspace-main">
 
-  <h1>{{workspaceName}}</h1>
+  <div id="workspace-header">
+    <span id="workspace-name">{{workspaceName}}</span>
+    <div class="btn-group pull-right">
+      <a class="btn btn-default"
+           href="#/"
+           id="close-workspace"
+           tooltip="Close&nbsp;workspace"
+           tooltip-append-to-body="true"
+           tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-remove"></i>
+      </a>
+    </div>
+  </div>
 
-  <div id="box-view">
+  <div id="workspace-main-layout">
     <workspace-drawing-board
         box-catalog="boxCatalog"
         selected-box="selectedBox"
@@ -14,10 +26,11 @@
     <div id="right-panel">
       <state-view state="selectedState">
       </state-view>
-      <box-view box="selectedBox">
-      </box-view>
+      <box-editor
+          box="selectedBox"
+          workspace-name="workspaceName">
+      </box-editor>
     </div>
-    <div id="clear"></div>
   </div>
 
 </div>

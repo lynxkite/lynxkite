@@ -12,7 +12,7 @@ The new segmentation will be saved under this name.
 [[attr]] Attribute::
 The `Double` attribute to segment by.
 
-[[interval-size]] Interval size::
+[[interval_size]] Interval size::
 The attribute's domain will be split into intervals of this size. The splitting always starts at
 zero.
 

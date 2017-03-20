@@ -1,59 +1,68 @@
 <svg
   ng-mousemove="onMouseMove($event)"
-  ng-mouseup="onMouseUp($event)">
+  ng-mouseup="onMouseUp($event)"
+  ng-mousedown="onMouseDown($event)">
+  <g id="drawing-board"
+     ng-attr-transform="{{ workspaceTransform() }}">
 
+    <!-- start box -->
+    <g ng-repeat="box in workspace.boxes"
+        ng-mousedown="onMouseDownOnBox(box, $event)"
+        ng-attr-transform="{{ box.mainPosTransform() }}"
+        class="box"
+        id="{{ box.instance.id }}">
 
-  <!-- start box -->
-  <g ng-repeat="box in workspace.boxes"
-      ng-mousedown="onMouseDownOnBox(box, $event)"
-      ng-attr-transform="{{ box.mainPosTransform() }}">
-
-    <!-- start list of I/O plugs -->
-    <g ng-repeat="direction in ['inputs', 'outputs']">
-      <g ng-repeat="plug in box[direction]"
-          ng-attr-transform="{{ plug.posTransform }}"
-          ng-class="{ 'selected-plug': plug == selectedPlug }"
-          ng-mousedown="onMouseDownOnPlug(plug, $event)"
-          ng-mouseup="onMouseUpOnPlug(plug, $event)">
-        <text x="10">{{ plug.data.id }}</text>
-        <circle ng-attr-r="{{ plug.radius}}" class="io-circle"
+      <!-- start list of I/O plugs -->
+      <g ng-repeat="direction in ['inputs', 'outputs']"
+        id="{{ direction }}">
+        <g ng-repeat="plug in box[direction]"
+            ng-attr-transform="{{ plug.posTransform }}"
+            ng-class="{ 'selected-plug': plug == selectedPlug }"
+            id="{{ plug.data.id }}">
+          <text x="10">{{ plug.data.id }}</text>
+          <circle ng-attr-r="{{ plug.radius }}"
+                class="io-circle"
                 ng-class="{'in-progress': plug.inProgress, 'colored-output': plug.hasColor}"
-                ng-attr-fill="{{ plug.hasColor ? plug.color : undefined }}"></circle>
+                ng-mousedown="onMouseDownOnPlug(plug, $event)"
+                ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                ng-attr-fill="{{ plug.hasColor ? plug.color : undefined }}" >
+          </circle>
+        </g>
       </g>
+      <!-- end list of I/O plugs -->
+
+      <rect
+          class="box-main"
+          ng-class="{ 'selected-box': box.instance.id == selectedBoxId }"
+          ng-attr-width="{{box.width}}"
+          ng-attr-height="{{box.height}}">
+      </rect>
+      <text x="5" y="15">
+        {{box.metadata.operationID}}
+      </text>
+
     </g>
-    <!-- end list of I/O plugs -->
+    <!-- end box -->
 
-    <rect
-        class="box-main"
-        ng-class="{ 'selected-box': box.instance.id == selectedBoxId }"
-        ng-attr-width="{{box.width}}"
-        ng-attr-height="{{box.height}}">
-    </rect>
-    <text x="5" y="15">
-      {{box.metadata.operationID}}
-    </text>
+    <!-- start arrow -->
+    <g ng-repeat="arrow in workspace.arrows">
+      <line class="arrow"
+          ng-attr-x1="{{arrow.x1()}}"
+          ng-attr-y1="{{arrow.y1()}}"
+          ng-attr-x2="{{arrow.x2()}}"
+          ng-attr-y2="{{arrow.y2()}}"></line>
+    </g>
+    <!-- end arrow -->
+
+    <!-- start pulled arrow -->
+    <g ng-if="pulledPlug">
+      <line class="arrow pulled-arrow"
+          ng-attr-x1="{{pulledPlug.x()}}"
+          ng-attr-y1="{{pulledPlug.y()}}"
+          ng-attr-x2="{{mouseLogical.x}}"
+          ng-attr-y2="{{mouseLogical.y}}">
+      </line>
+    </g>
 
   </g>
-  <!-- end box -->
-
-  <!-- start arrow -->
-  <g ng-repeat="arrow in workspace.arrows">
-    <line class="arrow"
-        ng-attr-x1="{{arrow.x1()}}"
-        ng-attr-y1="{{arrow.y1()}}"
-        ng-attr-x2="{{arrow.x2()}}"
-        ng-attr-y2="{{arrow.y2()}}"></line>
-  </g>
-  <!-- end arrow -->
-
-  <!-- start pulled arrow -->
-  <g ng-if="pulledPlug">
-    <line class="arrow pulled-arrow"
-        ng-attr-x1="{{pulledPlug.x()}}"
-        ng-attr-y1="{{pulledPlug.y()}}"
-        ng-attr-x2="{{mouseX}}"
-        ng-attr-y2="{{mouseY}}">
-    </line>
-  </g>
-
 </svg>

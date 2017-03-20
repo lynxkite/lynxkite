@@ -7,7 +7,7 @@ class TestGetParquetMetadata(unittest.TestCase):
 
   lk = lynx.LynxKite()
   p = lk.new_project()
-  p.newVertexSet(**{'size': 1000000})
+  p.createVertices(size=1000000)
 
   def generate_view(self, limit, frame=p):
     '''Used to generate views for the tests. The first test should test if it really works.'''
