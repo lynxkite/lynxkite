@@ -138,6 +138,7 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
             box.outputs[j].clearProgress();
           }
         }
+      },
 
       setBoxParams: function(boxId, paramValues) {
         this.boxMap[boxId].instance.parameters =
