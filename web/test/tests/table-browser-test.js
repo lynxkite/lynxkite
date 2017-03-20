@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
@@ -10,7 +13,7 @@ module.exports = function(fw) {
       // Create a segmentation.
       lib.left.runOperation('Segment by double attribute', {
         'attr': 'age',
-        'interval-size': '1',
+        'interval_size': '1',
         'name': 'bucketing'
       });
 
@@ -79,3 +82,4 @@ module.exports = function(fw) {
     function() {
     });
 };
+*/

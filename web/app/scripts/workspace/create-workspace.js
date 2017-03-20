@@ -88,7 +88,7 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
 
       addBox: function(operationId, x, y) {
         var cnt = this.boxes.length;
-        var boxId = operationId + cnt;
+        var boxId = operationId.replace(/ /g, '-') + cnt;
 
         this.rawBoxes.push(
             {
@@ -138,6 +138,10 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
             box.outputs[j].clearProgress();
           }
         }
+
+      setBoxParams: function(boxId, paramValues) {
+        this.boxMap[boxId].instance.parameters =
+            Object.assign({}, paramValues);
       },
 
     };

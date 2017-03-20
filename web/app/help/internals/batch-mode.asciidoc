@@ -115,7 +115,7 @@ project.importVerticesAndEdgesFromASingleTable(
   table: lynx.saveAsTable(df, 'Batch Example Table'),
   src: 'src',
   dst: 'dst')
-project.pageRank(
+project.computePageRank(
   name: 'page_rank',
   iterations: '5',
   damping: '0.85')

@@ -1,0 +1,45 @@
+### Fingerprint based on attributes
+
+In a graph that has two different string identifier attributes (e.g. Facebook ID and
+MSISDN) this operation will match the vertices that only have the first attribute defined
+with the vertices that only have the second attribute defined. For the well-matched vertices
+the new attributes will be added. (For example if a vertex only had an MSISDN and we found a
+matching Facebook ID, this will be saved as the Facebook ID of the vertex.)
+
+The matched vertices will not be automatically merged, but this can easily be performed
+with the <<Merge vertices by attribute>> operation
+on either of the two identifier attributes.
+
+====
+The matches are identified by calculating a similarity score between vertices and picking a
+matching that ensures a high total similarity score across the matched pairs.
+
+The similarity calculation is based on the network structure: the more alike their neighborhoods
+are, the more similar two vertices are considered. Vertex attributes are not considered in the
+calculation.
+
+*Parameters*
+
+[[leftname]] First ID attribute::
+Two identifying attributes have to be selected.
+
+[[rightname]] Second ID attribute::
+Two identifying attributes have to be selected.
+
+[[weights]] Edge weights::
+What `Double` edge attribute to use as edge weight. The edge weights are also considered when
+calculating the similarity between two vertices.
+
+[[mo]] Minimum overlap::
+The number of common neighbors two vertices must have to be considered for matching.
+It must be at least 1. (If two vertices have no common neighbors their similarity would be zero
+anyway.)
+
+[[ms]] Minimum similarity::
+The similarity threshold below which two vertices will not be considered a match even if there are
+no better matches for them. Similarity is normalized to [0, 1].
+
+[[extra]] Fingerprinting algorithm additional parameters::
+You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
+expert if you think you need this.
+====

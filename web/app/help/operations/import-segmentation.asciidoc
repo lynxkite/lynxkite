@@ -12,12 +12,12 @@ include::{g}[tag=table-import]
 [[name]] Name of new segmentation::
 The imported segmentation will be created under this name.
 
-[[base-id-attr]] Vertex ID attribute::
+[[base_id_attr]] Vertex ID attribute::
 The `String` vertex attribute that identifies the base vertices.
 
-[[base-id-column]] Vertex ID column::
+[[base_id_column]] Vertex ID column::
 The table column that identifies vertices.
 
-[[seg-id-column]] Segment ID column::
+[[seg_id_column]] Segment ID column::
 The table column that identifies segments.
 ====

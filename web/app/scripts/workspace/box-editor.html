@@ -1,0 +1,31 @@
+<div class="box col-sm-11 {{color}}">
+  <h1>
+    {{box.metadata.operationID}}
+  </h1>
+
+  <!-- For documented operations. -->
+  <p help-id="{{box.metadata.operationID}}"
+     remove-header="yes"
+     scalars="scalars"
+     class="description"></p>
+
+  <p ng-if="boxMeta.parameters.length === 0" class="text-center">
+    No parameters
+  </p>
+  <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="apply()">
+    <operation-parameters
+        params="boxMeta.parameters"
+        output="paramValues"
+        editable="true">
+    </operation-parameters>
+  </form>
+  <div tabindex="0" ng-click="apply()" class="ok-button text-center operation-apply-button">
+    <span ng-if="applying">
+      <i class="glyphicon glyphicon-hourglass"></i>
+    </span>
+    <span ng-if="!applying">
+      OK <i class="glyphicon glyphicon-ok"></i>
+    </span>
+  </div>
+</div>
+

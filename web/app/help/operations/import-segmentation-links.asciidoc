@@ -6,15 +6,15 @@ Each row in the table represents a connection between one base vertex and one se
 ====
 include::{g}[tag=table-import]
 
-[[base-id-attr]] Identifying vertex attribute in base project::
+[[base_id_attr]] Identifying vertex attribute in base project::
 The `String` vertex attribute that can be joined to the identifying column in the table.
 
-[[base-id-column]] Identifying column for base project::
+[[base_id_column]] Identifying column for base project::
 The table column that can be joined to the identifying attribute on the base project.
 
-[[seg-id-attr]] Identifying vertex attribute in segmentation::
+[[seg_id_attr]] Identifying vertex attribute in segmentation::
 The `String` vertex attribute that can be joined to the identifying column in the table.
 
-[[seg-id-column]] Identifying column for segmentation::
+[[seg_id_column]] Identifying column for segmentation::
 The table column that can be joined to the identifying attribute on the segmentation.
 ====

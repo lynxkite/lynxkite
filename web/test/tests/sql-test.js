@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 var left = lib.left;
 var right = lib.right;
@@ -138,7 +141,7 @@ module.exports = function(fw) {
          [ 'Isolated Joe', 'null' ],
          [ 'Eve', 'null' ],
        ]);
-       left.runOperation('Derived vertex attribute', {
+       left.runOperation('Derive vertex attribute', {
          expr: 'income === 1000 ? \'apple\' : \'orange\'',
          output: 'new_attr',
          type: 'string',
@@ -162,7 +165,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'SQL runs nice on belongs to reached from project and segmentation',
     function() {
-      left.runOperation('New vertex set', { size: '100' });
+      left.runOperation('Create vertices', { size: '100' });
       left.runOperation('Add random vertex attribute', { seed: '1' });
       left.runOperation('Copy graph into a segmentation');
       left.openSegmentation('self_as_segmentation');
@@ -203,7 +206,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'table export and reimport',
     function() {
-      left.runOperation('New vertex set', { size: '100' });
+      left.runOperation('Create vertices', { size: '100' });
       left.runOperation('Add random vertex attribute', { name: 'random1', seed: '1' });
       left.runOperation('Add random vertex attribute', { name: 'random2', seed: '2' });
       left.runOperation('Add rank attribute', { keyattr: 'random1', rankattr: 'rank1' });
@@ -220,8 +223,8 @@ module.exports = function(fw) {
       left.executeSqlSaving();
       lib.confirmSweetAlert('Entry already exists');
 
-      left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
-      left.runOperation('Vertex attribute to string', { attr: 'ordinal' });
+      left.runOperation('Convert vertex attribute to double', { attr: 'ordinal' });
+      left.runOperation('Convert vertex attribute to string', { attr: 'ordinal' });
       left.runOperation(
         'Import edges for existing vertices',
         {
@@ -286,7 +289,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'test-example project with 100 vertices',
     function() {
-      left.runOperation('New vertex set', { size: '100'});
+      left.runOperation('Create vertices', { size: '100'});
       var maxRows = left.side.element(by.css('#max-rows'));
 
       maxRows.clear().sendKeys('1000');
@@ -403,5 +406,5 @@ module.exports = function(fw) {
       lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
       expect(lib.getACEText(editor)).toBe('0');
     });
-
 };
+*/

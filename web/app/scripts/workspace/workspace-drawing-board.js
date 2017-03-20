@@ -80,6 +80,7 @@ angular.module('biggraph')
           scope.selectedBox = scope.workspace.boxMap[boxId];
           scope.selectedBoxId = boxId;
         };
+
         scope.selectState = function(boxID, outputID) {
           scope.selectedState = util.nocache(
               '/ajax/getOutput',
@@ -91,6 +92,7 @@ angular.module('biggraph')
                   }
               });
         };
+
         scope.selectPlug = function(plug) {
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
@@ -100,29 +102,90 @@ angular.module('biggraph')
             scope.selectedState = undefined;
           }
         };
+
+        var workspaceDrag = false;
+        var workspaceX = 0;
+        var workspaceY = 0;
+        var workspaceZoom = 0;
+        function zoomToScale(z) { return Math.exp(z * 0.001); }
+        function getLogicalPosition(event) {
+          return {
+            x: (event.offsetX - workspaceX) / zoomToScale(workspaceZoom),
+            y: (event.offsetY - workspaceY) / zoomToScale(workspaceZoom) };
+        }
+
         scope.onMouseMove = function(event) {
+          event.preventDefault();
+          if (workspaceDrag) {
+            workspaceX += event.offsetX - scope.mouseX;
+            workspaceY += event.offsetY - scope.mouseY;
+          }
           scope.mouseX = event.offsetX;
           scope.mouseY = event.offsetY;
+          scope.mouseLogical = getLogicalPosition(event);
           if (event.buttons === 1 && scope.movedBox) {
-            scope.movedBox.onMouseMove(event);
+            scope.movedBox.onMouseMove(scope.mouseLogical);
           }
         };
+
         scope.onMouseUp = function() {
           if (scope.movedBox && scope.movedBox.isMoved) {
             scope.saveWorkspace();
           }
           scope.movedBox = undefined;
           scope.pulledPlug = undefined;
+          workspaceDrag = false;
+          element[0].style.cursor = '';
         };
+
+        scope.onMouseDown = function(event) {
+          event.preventDefault();
+          workspaceDrag = true;
+          setGrabCursor(element[0]);
+        };
+
+        element.on('wheel', function(event) {
+          event.preventDefault();
+          var delta = event.originalEvent.deltaY;
+          if (/Firefox/.test(window.navigator.userAgent)) {
+            // Every browser sets different deltas for the same amount of scrolling.
+            // It is tiny on Firefox. We need to boost it.
+            delta *= 20;
+          }
+          scope.$apply(function() {
+            var z1 = zoomToScale(workspaceZoom);
+            workspaceZoom -= delta;
+            var z2 = zoomToScale(workspaceZoom);
+            // Maintain screen-coordinates of logical point under the mouse.
+            workspaceX = scope.mouseX - (scope.mouseX - workspaceX) * z2 / z1;
+            workspaceY = scope.mouseY - (scope.mouseY - workspaceY) * z2 / z1;
+          });
+        });
+
+        function setGrabCursor(e) {
+          // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
+          e.style.cursor = '';
+          e.style.cursor = 'grabbing';
+          if (!e.style.cursor) {
+            e.style.cursor = '-webkit-grabbing';
+          }
+          if (!e.style.cursor) {
+            e.style.cursor = '-moz-grabbing';
+          }
+        }
+
         scope.onMouseDownOnBox = function(box, event) {
+          event.stopPropagation();
           scope.selectBox(box.instance.id);
           scope.movedBox = box;
-          scope.movedBox.onMouseDown(event);
+          scope.movedBox.onMouseDown(getLogicalPosition(event));
         };
+
         scope.onMouseDownOnPlug = function(plug, event) {
           event.stopPropagation();
           scope.pulledPlug = plug;
         };
+
         scope.onMouseUpOnPlug = function(plug, event) {
           event.stopPropagation();
           if (scope.pulledPlug) {
@@ -137,8 +200,8 @@ angular.module('biggraph')
           }
         };
 
-        scope.addBox = function(operationId, x, y) {
-          scope.workspace.addBox(operationId, x, y);
+        scope.addBox = function(operationId, pos) {
+          scope.workspace.addBox(operationId, pos.x, pos.y);
           scope.saveWorkspace();
         };
         element.bind('dragover', function(event) {
@@ -150,8 +213,18 @@ angular.module('biggraph')
           var operationID = event.originalEvent.dataTransfer.getData('text');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
-            scope.addBox(operationID, origEvent.offsetX, origEvent.offsetY);
+            scope.addBox(operationID, getLogicalPosition(origEvent));
           });
+        });
+
+        scope.workspaceTransform = function() {
+          var z = zoomToScale(workspaceZoom);
+          return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
+        };
+
+        scope.$on('box parameters updated', function(event, data) {
+          scope.workspace.setBoxParams(data.boxId, data.paramValues);
+          scope.saveWorkspace();
         });
 
         scope.getAndUpdateProgress = function() {

@@ -3,12 +3,12 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  var name = lib.left.vertexAttribute('name');
-  var income = lib.left.vertexAttribute('income');
-  var weight = lib.left.edgeAttribute('weight');
+  var name = lib.state.vertexAttribute('name');
+  var income = lib.state.vertexAttribute('income');
+  var weight = lib.state.edgeAttribute('weight');
 
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'string vertex histogram looks good',
     function() {
       expect(name.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
@@ -19,7 +19,7 @@ module.exports = function(fw) {
       ]);
     });
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'double vertex histogram looks good',
     function() {
       expect(income.getHistogramValues()).toEqual([
@@ -46,7 +46,7 @@ module.exports = function(fw) {
       ]);
     });
   fw.statePreservingTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'double edge histogram looks good',
     function() {
       expect(weight.getHistogramValues()).toEqual([
@@ -72,6 +72,7 @@ module.exports = function(fw) {
         { title : '3.85-4.00', size : 100, value : 1 },
       ]);
     });
+/*
   fw.statePreservingTest(
     'example graph with filters set',
     'soft filters are applied to string vertex histogram',
@@ -126,16 +127,24 @@ module.exports = function(fw) {
       expect(weight.getHistogramValues()).toEqual([
         { title : '2.00-2.00', size : 100, value : 1 },
       ]);
-    });
+    });*/
+
   fw.transitionTest(
-    'empty test-example project',
+    'empty test-example workspace',
     'precise mode histogram has precise number for large datasets',
     function() {
-      lib.left.runOperation('New vertex set', {size: '123456'});
-      lib.left.runOperation('Add constant vertex attribute', {name: 'c'});
-      expect(lib.left.vertexAttribute('c').getHistogramValues(true)).toEqual([
+      lib.workspace.addBox('Create vertices', 100, 100);
+      var createVertices = lib.workspace.getBox(0);
+      lib.workspace.editBox(createVertices, {size: '123456'});
+      lib.workspace.addBox('Add constant vertex attribute', 100, 200);
+      var addAttr = lib.workspace.getBox(1);
+      lib.workspace.connectBoxes(createVertices, 'project', addAttr, 'project');
+      lib.workspace.editBox(addAttr, {name: 'c'});
+      lib.workspace.getOutputPlug(addAttr, 'project').click();  // select state
+      expect(lib.state.vertexAttribute('c').getHistogramValues(true)).toEqual([
         { title : '1.00-1.00', size: 100, value: 123456 },
       ]);
     },
     function() {});
+
 };
