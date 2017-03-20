@@ -100,26 +100,23 @@ case class Workspace(
       s"Can't compute projectProgress for kind ${state.kind}")
 
     def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
-      val allEntities = List(
-        state.vertexSetGUID.map(manager.vertexSet).toList,
-        state.edgeBundleGUID.map(manager.edgeBundle).toList,
-        state.scalarGUIDs.values.map(manager.scalar),
-        state.vertexAttributeGUIDs.values.map(manager.attribute),
+      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
+        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
+        state.scalarGUIDs.values.map(manager.scalar) ++
+        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
         state.edgeAttributeGUIDs.values.map(manager.attribute)
-      ).flatten
+
       val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
       allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
     }
 
     def segmentationStateProgress(state: SegmentationState): List[Double] = {
       val segmentationProgress = commonProjectStateProgress(state.state)
-      if (state.belongsToGUID.isDefined) {
-        val belongsTo = manager.edgeBundle(state.belongsToGUID.get)
-        val belongsToProgress = entityProgressManager.computeProgress(belongsTo)
-        belongsToProgress :: segmentationProgress
-      } else {
-        segmentationProgress
-      }
+      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
+        val belongsTo = manager.edgeBundle(belongsToGUID)
+        entityProgressManager.computeProgress(belongsTo)
+      }).toList
+      belongsToProgress ++ segmentationProgress
     }
 
     val progress = if (state.success.enabled) {
