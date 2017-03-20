@@ -12,3 +12,4 @@ cat /tmp/bigfiles | while read size guid; do
     echo "$size kb $guid $cp $project"
   fi
 done
+rm -f /tmp/bigfiles
