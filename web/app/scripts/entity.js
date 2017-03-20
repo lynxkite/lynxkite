@@ -65,10 +65,10 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
 
       scope.active = function() {
-        if (scope.isSegmentation() &&
+        /* if (scope.isSegmentation() &&
             scope.side.sides[1].state.projectName === scope.entity.fullName) {
           return true;
-        }
+        } */
         return false;
       };
 

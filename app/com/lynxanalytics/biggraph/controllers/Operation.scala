@@ -136,7 +136,11 @@ object Operation {
         }
       }
       def segmentationsRecursively: List[FEOption] =
-        FEOption.list(segmentationsRecursively(project.rootEditor).toList)
+        List(FEOption("", "Main project")) ++
+          FEOption.list(
+            segmentationsRecursively(project.rootEditor)
+              .toList
+              .filter(_ != ""))
 
       // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
       def accessibleTableOptions: List[FEOption] = ???
