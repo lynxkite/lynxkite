@@ -180,8 +180,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val computedBeforePR = progressBeforePR.progress("computed")
       import graph_api.Scripting._
       // trigger PR computation
-      ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name")).
-        rdd.values.collect
+      ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
+        .rdd.values.collect
       val progressAfterPR = controller.getProgress(user,
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
