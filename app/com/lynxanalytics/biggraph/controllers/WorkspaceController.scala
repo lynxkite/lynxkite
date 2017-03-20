@@ -58,7 +58,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetOutputIdRequest): GetOutputIdResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
-    val id = Random.alphanumeric.take(20).mkString
+    val id = "asdasd" //Random.alphanumeric.take(20).mkString
     calculatedStates(id) = (request.workspace, state)
     GetOutputIdResponse(id)
   }
@@ -66,10 +66,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getOutput(
     user: serving.User, request: GetOutputRequest): GetOutputResponse = {
     calculatedStates.getOrElse(request.id, None) match {
-      case Some((workspace:String, state: BoxOutputState)) =>
+      case Some((workspace: String, state: BoxOutputState)) =>
         state.kind match {
           case BoxOutputKind.Project =>
-          GetOutputResponse (state.kind, project = Some (state.project.viewer.toFE(workspace)))
+            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(workspace)))
         }
     }
   }

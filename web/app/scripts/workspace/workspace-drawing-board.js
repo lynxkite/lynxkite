@@ -81,15 +81,32 @@ angular.module('biggraph')
         };
 
         scope.selectState = function(boxID, outputID) {
+          console.log('whatshappenning?');
+          console.log(boxID);
+          console.log(outputID);
           scope.selectedState = util.nocache(
+            '/ajax/getOutput',
+            {
+              id: 'asdasd'
+            });
+          /*var stateID = util.nocache(
+            '/ajax/getOutputId',
+            {
+              workspace: scope.workspaceName,
+              output: {
+                boxID: boxID,
+                id: outputID
+              }
+            }
+          ).then(
+            //console.log('then this other thing happens');
+            scope.selectedState = util.nocache(
               '/ajax/getOutput',
               {
-                  workspace: scope.workspaceName,
-                  output: {
-                    boxID: boxID,
-                    id: outputID
-                  }
-              });
+                id: stateID
+              }
+            )
+          );*/
         };
 
         scope.selectPlug = function(plug) {
