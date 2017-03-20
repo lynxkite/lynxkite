@@ -161,13 +161,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("progress success") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
-      val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
-        "cc", "Connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
+        "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
         0, 20, Map("project" -> eg.output("project")))
       // use a different pagerankParams to prevent reusing the attribute computed in an earlier
       // test
-      val pr = Box("pr", "PageRank", pagerankParams + ("iterations" -> "3"), 0, 20,
+      val pr = Box("pr", "Compute PageRank", pagerankParams + ("iterations" -> "3"), 0, 20,
         Map("project" -> cc.output("project")))
       val prOutput = pr.output("project")
       val ws = Workspace(List(eg, cc, pr))
@@ -194,7 +194,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
       // box with unconnected input
-      val pr = Box("pr", "PageRank", pagerankParams, 0, 20, Map())
+      val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
       val prOutput = pr.output("project")
       val ws = Workspace(List(pr))
       set("test-workspace", ws)

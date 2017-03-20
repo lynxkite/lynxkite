@@ -81,26 +81,23 @@ case class Workspace(
     connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
                            manager: graph_api.MetaGraphManager): List[ProgressInfo] = {
     val states = calculate(user, ops, connection, Map())
-    states.toList.map(calculatedStateProgress)
+    states.toList.map((calculatedStateProgress _).tupled)
   }
 
   private def calculatedStateProgress(
-    p: (BoxOutput, BoxOutputState))(implicit entityProgressManager: graph_api.EntityProgressManager,
-                                    manager: graph_api.MetaGraphManager): ProgressInfo = {
-
-    val boxOutputState = p._2
-    boxOutputState.kind match {
-      case BoxOutputKind.Project => projectProgress(p)
+    boxOutput: BoxOutput,
+    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                           manager: graph_api.MetaGraphManager): ProgressInfo =
+    state.kind match {
+      case BoxOutputKind.Project => projectProgress(boxOutput, state)
     }
-  }
 
   private def projectProgress(
-    p: (BoxOutput, BoxOutputState))(implicit entityProgressManager: graph_api.EntityProgressManager,
-                                    manager: graph_api.MetaGraphManager): ProgressInfo = {
-    val boxOutput = p._1
-    val boxOutputState = p._2
-    assert(boxOutputState.kind == BoxOutputKind.Project,
-      s"Can't compute projectProgress for kind ${boxOutputState.kind}")
+    boxOutput: BoxOutput,
+    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                           manager: graph_api.MetaGraphManager): ProgressInfo = {
+    assert(state.kind == BoxOutputKind.Project,
+      s"Can't compute projectProgress for kind ${state.kind}")
 
     def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
       val allEntities = List(
@@ -125,8 +122,8 @@ case class Workspace(
       }
     }
 
-    val progress = if (boxOutputState.success.enabled) {
-      val progressList = commonProjectStateProgress(boxOutputState.project.rootState.state)
+    val progress = if (state.success.enabled) {
+      val progressList = commonProjectStateProgress(state.project.rootState.state)
       Map(
         "computed" -> progressList.count(_ == 1.0),
         "inProgress" -> progressList.count(x => x < 1.0 && x > 0.0),
@@ -136,7 +133,7 @@ case class Workspace(
     } else {
       null
     }
-    ProgressInfo(boxOutput, progress, boxOutputState.success)
+    ProgressInfo(boxOutput, progress, state.success)
   }
 
   def getOperation(
