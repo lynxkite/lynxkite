@@ -292,6 +292,7 @@ object FrontendJson {
   implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
+  implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -410,6 +411,7 @@ object ProductionJsonServer extends JsonServer {
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
   def getOutputID = jsonGet(workspaceController.getOutputID)
   def getOutput = jsonGet(workspaceController.getOutput)
+  def createSnapshot = jsonPost(workspaceController.createSnapshot)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
