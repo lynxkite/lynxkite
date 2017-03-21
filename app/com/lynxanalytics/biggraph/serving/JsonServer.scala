@@ -285,10 +285,10 @@ object FrontendJson {
   import WorkspaceJsonFormatters._
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
-  implicit val rGetOutputIdRequest = json.Json.reads[GetOutputIdRequest]
+  implicit val rGetOutputIDRequest = json.Json.reads[GetOutputIDRequest]
   implicit val rGetOutputRequest = json.Json.reads[GetOutputRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
-  implicit val wGetOutputIdResponse = json.Json.writes[GetOutputIdResponse]
+  implicit val wGetOutputIDResponse = json.Json.writes[GetOutputIDResponse]
   implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
@@ -408,7 +408,7 @@ object ProductionJsonServer extends JsonServer {
   val workspaceController = new WorkspaceController(BigGraphProductionEnvironment)
   def createWorkspace = jsonPost(workspaceController.createWorkspace)
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
-  def getOutputId = jsonGet(workspaceController.getOutputId)
+  def getOutputID = jsonGet(workspaceController.getOutputID)
   def getOutput = jsonGet(workspaceController.getOutput)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)

@@ -82,7 +82,7 @@ angular.module('biggraph')
 
         scope.selectState = function(boxID, outputID) {
           util.nocache(
-            '/ajax/getOutputId',
+            '/ajax/getOutputID',
             {
               workspace: scope.workspaceName,
               output: {
