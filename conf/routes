@@ -33,12 +33,7 @@ POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.Production
 POST /ajax/exportSQLQueryToORC     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToORC
 POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJdbc
 POST /ajax/createViewDFSpec    com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewDFSpec
-POST /ajax/importCSV         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importCSV
-POST /ajax/importJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJdbc
-POST /ajax/importParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.importParquet
-POST /ajax/importORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importORC
-POST /ajax/importJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJson
-POST /ajax/importHive         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importHive
+POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
 POST /ajax/createViewCSV         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewCSV
 POST /ajax/createViewJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJdbc
 POST /ajax/createViewParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewParquet

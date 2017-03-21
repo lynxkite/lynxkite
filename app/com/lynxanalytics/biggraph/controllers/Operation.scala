@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
+import org.apache.spark
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -276,14 +277,14 @@ trait BasicOperation extends Operation {
 abstract class ProjectOutputOperation(
     protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.outputs == List(TypedConnection("project", "project")),
+    context.meta.outputs == List(TypedConnection("project", BoxOutputKind.Project)),
     s"A ProjectOperation must output a project. $context")
   protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
     import CheckpointRepository._ // For JSON formatters.
     val output = BoxOutputState(
-      "project", json.Json.toJson(project.rootState.state).as[json.JsObject])
+      BoxOutputKind.Project, json.Json.toJson(project.rootState.state).as[json.JsObject])
     Map(context.meta.outputs(0).ofBox(context.box) -> output)
   }
 
@@ -298,7 +299,7 @@ abstract class ProjectOutputOperation(
 abstract class ProjectTransformation(
     context: Operation.Context) extends ProjectOutputOperation(context) {
   assert(
-    context.meta.inputs == List(TypedConnection("project", "project")),
+    context.meta.inputs == List(TypedConnection("project", BoxOutputKind.Project)),
     s"A ProjectTransformation must input a single project. $context")
   override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -312,7 +313,7 @@ abstract class ProjectTransformation(
 
 abstract class ParquetOperation(protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.outputs == List(TypedConnection("table", "parquet")),
+    context.meta.outputs == List(TypedConnection("table", BoxOutputKind.Parquet)),
     s"A ParquetOperation must output a Parquet table. $context")
 
   import graph_operations.ParquetMetadata
@@ -320,7 +321,7 @@ abstract class ParquetOperation(protected val context: Operation.Context) extend
   def pmParam(name: String): ParquetMetadata = json.Json.parse(params(name)).as[ParquetMetadata]
 
   protected def makeOutput(pm: ParquetMetadata): Map[BoxOutput, BoxOutputState] = {
-    val output = BoxOutputState("table", json.Json.toJson(pm).as[json.JsObject])
+    val output = BoxOutputState(BoxOutputKind.Parquet, json.Json.toJson(pm).as[json.JsObject])
     Map(context.meta.outputs(0).ofBox(context.box) -> output)
   }
 
@@ -331,4 +332,5 @@ abstract class ParquetOperation(protected val context: Operation.Context) extend
   }
 
   override def apply(): Unit = ???
+  def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }

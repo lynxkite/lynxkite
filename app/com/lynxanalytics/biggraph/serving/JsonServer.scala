@@ -11,6 +11,7 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
@@ -290,6 +291,7 @@ object FrontendJson {
   implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
+  implicit val fParquetMetadata = graph_operations.ImportFromParquet.ParquetMetadataFormat
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -411,7 +413,7 @@ object ProductionJsonServer extends JsonServer {
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
 
-  val sqlController = new SQLController(BigGraphProductionEnvironment)
+  val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
@@ -420,12 +422,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def importCSV = jsonPost(sqlController.importCSV)
-  def importJdbc = jsonPost(sqlController.importJdbc)
-  def importParquet = jsonPost(sqlController.importParquet)
-  def importORC = jsonPost(sqlController.importORC)
-  def importJson = jsonPost(sqlController.importJson)
-  def importHive = jsonPost(sqlController.importHive)
+  def importBox = jsonPost(sqlController.importBox)
   def createViewCSV = jsonPost(sqlController.createViewCSV)
   def createViewJdbc = jsonPost(sqlController.createViewJdbc)
   def createViewParquet = jsonPost(sqlController.createViewParquet)

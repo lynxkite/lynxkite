@@ -221,7 +221,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
-  val sqlController = new SQLController(env)
+  val sqlController = new SQLController(env, ops)
   val bigGraphController = new BigGraphController(env)
   val graphDrawingController = new GraphDrawingController(env)
 

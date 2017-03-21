@@ -30,7 +30,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  private val projectConnection = TypedConnection("project", "project")
+  private val projectConnection = TypedConnection("project", BoxOutputKind.Project)
 
   def register(
     id: String,
@@ -44,7 +44,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     category: Category,
     inputProjects: String*)(factory: Context => Operation): Unit = {
     registerOp(
-      id, category, inputProjects.toList.map(i => TypedConnection(i, "project")),
+      id, category, inputProjects.toList.map(i => TypedConnection(i, BoxOutputKind.Project)),
       List(projectConnection), factory)
   }
 
@@ -176,7 +176,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   registerOp(
-    "Import vertices", ImportOperations, inputs = List(TypedConnection("table", "parquet")),
+    "Import vertices", ImportOperations,
+    inputs = List(TypedConnection("table", BoxOutputKind.Parquet)),
     outputs = List(projectConnection), factory = new ProjectOutputOperation(_) {
       lazy val parameters = List(
         Param("id_attr", "Save internal ID as", defaultValue = ""))
@@ -3852,7 +3853,7 @@ class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  private val parquetConnection = TypedConnection("parquet", "parquet")
+  private val parquetConnection = TypedConnection("table", BoxOutputKind.Parquet)
   val ParquetOperations = Category("Import operations", "green", icon = "folder-open")
 
   def register(
@@ -3862,12 +3863,13 @@ class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   import OperationParams._
+  import org.apache.spark
 
   register("Import CSV")(new ParquetOperation(_) {
     lazy val parameters = List(
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
-      Param("delimiter", "Delimiter"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
       Choice("error_handling", "Error handling", List(
         FEOption("FAILFAST", "Fail on any malformed line"),
         FEOption("DROPMALFORMED", "Ignore malformed lines"),
@@ -3878,5 +3880,35 @@ class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Code("sql", "SQL"),
       TableParam("snapshot", "Snapshot ID"))
     def enabled = FEStatus.enabled
+    def getDataFrame(context: spark.sql.SQLContext) = {
+      val errorHandling = params("error_handling")
+      val infer = params("infer") == "yes"
+      val columns = params("columns")
+      assert(
+        Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST").contains(errorHandling),
+        s"Unrecognized error handling mode: $errorHandling")
+      assert(!infer || columns.isEmpty, "List of columns cannot be set when using type inference.")
+      val reader = context
+        .read
+        .format("csv")
+        .option("mode", errorHandling)
+        .option("delimiter", params("delimiter"))
+        .option("inferSchema", if (infer) "true" else "false")
+        // We don't want to skip lines starting with #
+        .option("comment", null)
+      val readerWithSchema = if (columns.nonEmpty) {
+        reader.schema(SQLController.stringOnlySchema(columns.split(",", -1)))
+      } else {
+        // Read column names from header.
+        reader.option("header", "true")
+      }
+      val hadoopFile = graph_util.HadoopFile(params("filename"))
+      hadoopFile.assertReadAllowedFrom(user)
+      FileImportValidator.checkFileHasContents(hadoopFile)
+      val df = readerWithSchema.load(hadoopFile.resolvedName)
+      val sql = params("sql")
+      if (sql.isEmpty) df
+      else DataManager.sql(context, sql, List("this" -> df))
+    }
   })
 }
