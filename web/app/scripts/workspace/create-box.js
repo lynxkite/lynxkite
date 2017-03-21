@@ -32,7 +32,6 @@ angular.module('biggraph').factory('createBox', function() {
       function progressToColor(progressRatio) {
         /* global tinycolor */
         return tinycolor.mix('red', 'green', progressRatio * 100).toHexString();
-        // return chroma.scale(['red', 'green']).mode('lch')(progressRatio);
       }
 
       return {
