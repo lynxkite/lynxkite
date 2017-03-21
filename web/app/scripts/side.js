@@ -509,23 +509,11 @@ angular.module('biggraph')
     };
 
     Side.prototype.createSnapshot = function() {
-        console.log('legalább a button működik, karaj');
-        /*console.log(this.state);
         util.post(
           '/ajax/createSnapshot',
           {
-            name: 'mofoname',
-            state:
-            {
-              kind: 'project',
-              success:
-              {
-                enabled: true,
-                disabledReason: '',
-              },
-              state: this.state
-            }
-          });*/
+            id: this.stateID
+          });
     };
 
     Side.prototype.rename = function(kind, oldName, newName) {
