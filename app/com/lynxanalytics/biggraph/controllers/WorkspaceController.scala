@@ -54,8 +54,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getWorkspaceByName(user, request.name)
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
-  case class CalculatedState(workspace: String, state: BoxOutputState)
-  val calculatedStates = new HashMap[String, CalculatedState]()
+  val calculatedStates = new HashMap[String, BoxOutputState]()
 
   def getOutputID(
     user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
@@ -63,7 +62,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val state = ws.state(user, ops, request.output)
     val id = UUID.randomUUID.toString
     calculatedStates.synchronized {
-      calculatedStates(id) = CalculatedState(request.workspace, state)
+      calculatedStates(id) = state
     }
     GetOutputIDResponse(id)
   }
@@ -72,12 +71,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetOutputRequest): GetOutputResponse = {
     calculatedStates.get(request.id) match {
       case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(storedState: CalculatedState) =>
-        storedState.state.kind match {
+      case Some(state: BoxOutputState) =>
+        state.kind match {
           case BoxOutputKind.Project =>
-            GetOutputResponse(
-              storedState.state.kind,
-              project = Some(storedState.state.project.viewer.toFE(storedState.workspace)))
+            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
         }
     }
   }
