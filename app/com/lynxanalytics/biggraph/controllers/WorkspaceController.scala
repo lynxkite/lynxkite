@@ -62,7 +62,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
     val id = UUID.randomUUID.toString
-    calculatedStates(id) = CalculatedState(request.workspace, state)
+    calculatedStates.synchronized {
+      calculatedStates(id) = CalculatedState(request.workspace, state)
+    }
     GetOutputIDResponse(id)
   }
 
