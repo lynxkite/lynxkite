@@ -75,8 +75,9 @@ module.exports = function(fw) {
       let outPlugReversedEdges = lib.workspace.getOutputPlug(reversedEdges, 'project');
       let secondExampleGraph = lib.workspace.getBox(2);
       let outPlugSecondEG = lib.workspace.getOutputPlug(secondExampleGraph, 'project');
+      // progress is updated every 2 seconds, so we may need to wait
+      browser.wait(() => outPlugReversedEdges.getAttribute('fill'), 1000 * 3);
       expect(outPlugFirstEG.getAttribute('fill')).not.toBeNull();
-      expect(outPlugReversedEdges.getAttribute('fill')).not.toBeNull();
       expect(outPlugSecondEG.getAttribute('fill')).toBeNull();
     });
 
