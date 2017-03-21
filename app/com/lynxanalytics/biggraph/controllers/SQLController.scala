@@ -8,6 +8,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_operations.ParquetMetadata
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
@@ -405,7 +406,7 @@ object HiveImportRequest extends FromJson[HiveImportRequest] {
   override def fromJson(j: JsValue): HiveImportRequest = json.Json.fromJson(j).get
 }
 
-class SQLController(val env: BigGraphEnvironment) {
+class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
   // We don't want to block the HTTP threads -- we want to return Futures instead. But the DataFrame
@@ -433,12 +434,10 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importCSV(user: serving.User, request: CSVImportRequest) = doImport(user, request)
-  def importJdbc(user: serving.User, request: JdbcImportRequest) = doImport(user, request)
-  def importParquet(user: serving.User, request: ParquetImportRequest) = doImport(user, request)
-  def importORC(user: serving.User, request: ORCImportRequest) = doImport(user, request)
-  def importJson(user: serving.User, request: JsonImportRequest) = doImport(user, request)
-  def importHive(user: serving.User, request: HiveImportRequest) = doImport(user, request)
+  def importBox(user: serving.User, box: Box): ParquetMetadata = {
+    val op = ops.opForBox(user, box, inputs = Map()).asInstanceOf[ParquetOperation]
+    SQLController.saveParquet(op.getDataFrame(SQLController.defaultContext(user)))
+  }
 
   def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
   def createViewJdbc(user: serving.User, request: JdbcImportRequest) = saveView(user, request)
@@ -661,6 +660,14 @@ object SQLController {
     importConfig.foreach(frame.setImportConfig)
     frame.setupACL(privacy, user)
     FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
+  }
+
+  def saveParquet(df: spark.sql.DataFrame)(
+    implicit dataManager: DataManager): ParquetMetadata = {
+    val filename = dataManager.writablePath / io.TablesDir / Timestamp.toString
+    val schema = df.schema
+    df.write.parquet(filename.resolvedName)
+    ParquetMetadata(filename.symbolicName, schema)
   }
 
   def saveView[T <: ViewRecipe: json.Writes](

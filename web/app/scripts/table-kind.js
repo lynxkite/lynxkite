@@ -1,35 +1,29 @@
-// UI for the table selector operation parameter kind
+// UI for the "table" parameter kind.
 'use strict';
 
-angular.module('biggraph').directive('tableKind', function() {
+angular.module('biggraph').directive('tableKind', function(util) {
   return {
     scope: {
-      tables: '=',
-      selected: '=model',
-      editable: '=',
+      box: '=',
+      params: '=',
+      snapshot: '=',
       fileUploads: '=',
     },
     templateUrl: 'table-kind.html',
     link: function(scope) {
-      scope.currentDirectory = '';
-      scope.wizard = {
-        visible: false,
+      scope.createSnapshot = function() {
+        scope.disabled = true;
+        scope.error = undefined;
+        var box = angular.copy(scope.box.instance);
+        box.parameters = scope.params;
+        util.post('/ajax/importBox', box).then(function success(response) {
+          scope.snapshot = JSON.stringify(response);
+        }, function error(error) {
+          scope.error = error;
+        }).finally(function() {
+          scope.disabled = false;
+        });
       };
-      scope.openWizard = function() {
-        scope.wizard.visible = true;
-        scope.fileUploads += 1;
-      };
-      scope.closeWizard = function() {
-        scope.wizard.visible = false;
-        scope.fileUploads -= 1;
-      };
-      scope.$watch('wizard.tableImported', function(table) {
-        if (table !== undefined) {
-          scope.closeWizard();
-          scope.tables.unshift(table);
-          scope.selected = table.id;
-        }
-      });
     },
   };
 });

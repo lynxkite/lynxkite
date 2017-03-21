@@ -14,7 +14,8 @@
   </p>
   <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="apply()">
     <operation-parameters
-        params="boxMeta.parameters"
+        box="box"
+        meta="boxMeta"
         output="paramValues"
         editable="true">
     </operation-parameters>
