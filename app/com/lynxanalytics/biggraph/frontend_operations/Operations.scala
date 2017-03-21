@@ -19,7 +19,9 @@ import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val operations = new ProjectOperations(env).operations.toMap
+  override val operations =
+    new ProjectOperations(env).operations.toMap ++
+      new ParquetOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -173,29 +175,27 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import vertices", ImportOperations)(new ProjectOutputOperation(_) {
-    lazy val parameters = List(
-      TableParam(
-        "table",
-        "Table to import from",
-        project.accessibleTableOptions),
-      Param("id_attr", "Save internal ID as", defaultValue = "id"))
-    def enabled = project.hasNoVertexSet
-    def apply() = {
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      project.vertexSet = table.idSet
-      for ((name, attr) <- table.columns) {
-        project.newVertexAttribute(name, attr, "imported")
+  registerOp(
+    "Import vertices", ImportOperations, inputs = List(TypedConnection("table", "parquet")),
+    outputs = List(projectConnection), factory = new ProjectOutputOperation(_) {
+      lazy val parameters = List(
+        Param("id_attr", "Save internal ID as", defaultValue = ""))
+      def enabled = FEStatus.enabled
+      def apply() = {
+        val table = graph_operations.ImportFromParquet(parquetInput("table")).result
+        project.vertexSet = table.ids
+        for ((name, attr) <- table.columns) {
+          project.newVertexAttribute(name, attr, "imported")
+        }
+        val idAttr = params("id_attr")
+        if (idAttr.nonEmpty) {
+          assert(
+            !project.vertexAttributes.contains(idAttr),
+            s"The input also contains a column called '$idAttr'. Please pick a different name.")
+          project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
+        }
       }
-      val idAttr = params("id_attr")
-      if (idAttr.nonEmpty) {
-        assert(
-          !project.vertexAttributes.contains(idAttr),
-          s"The input also contains a column called '$idAttr'. Please pick a different name.")
-        project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
-      }
-    }
-  })
+    })
 
   register(
     "Import edges for existing vertices", ImportOperations,
@@ -237,8 +237,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       lazy val parameters = List(
         TableParam(
           "table",
-          "Table to import from",
-          project.accessibleTableOptions),
+          "Table to import from"),
         Param("src", "Source ID column"),
         Param("dst", "Destination ID column"))
       def enabled = project.hasNoVertexSet
@@ -266,8 +265,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       TableParam(
         "table",
-        "Table to import from",
-        project.accessibleTableOptions),
+        "Table to import from"),
       Choice("id_attr", "Vertex attribute",
         options = FEOption.unset +: project.vertexAttrList[String]),
       Param("id_column", "ID column"),
@@ -305,8 +303,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       TableParam(
         "table",
-        "Table to import from",
-        project.accessibleTableOptions),
+        "Table to import from"),
       Choice("id_attr", "Edge attribute",
         options = FEOption.unset +: project.edgeAttrList[String]),
       Param("id_column", "ID column"),
@@ -2670,8 +2667,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def segmentationParameters = List(
       TableParam(
         "table",
-        "Table to import from",
-        project.accessibleTableOptions),
+        "Table to import from"),
       Choice(
         "base_id_attr",
         s"Identifying vertex attribute in base project",
@@ -2717,8 +2713,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       TableParam(
         "table",
-        "Table to import from",
-        project.accessibleTableOptions),
+        "Table to import from"),
       Param("name", s"Name of new segmentation"),
       Choice("base_id_attr", "Vertex ID attribute",
         options = FEOption.unset +: project.vertexAttrList),
@@ -3849,4 +3844,39 @@ object JSUtilities {
       expr.matches(re)
     }
   }
+}
+
+class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
+  implicit lazy val manager = env.metaGraphManager
+  import Operation.Category
+  import Operation.Context
+  import Operation.Implicits._
+
+  private val parquetConnection = TypedConnection("parquet", "parquet")
+  val ParquetOperations = Category("Import operations", "green", icon = "folder-open")
+
+  def register(
+    id: String,
+    inputs: TypedConnection*)(factory: Context => Operation): Unit = {
+    registerOp(id, ParquetOperations, inputs.toList, List(parquetConnection), factory)
+  }
+
+  import OperationParams._
+
+  register("Import CSV")(new ParquetOperation(_) {
+    lazy val parameters = List(
+      FileParam("filename", "File"),
+      Param("columns", "Columns in file"),
+      Param("delimiter", "Delimiter"),
+      Choice("error_handling", "Error handling", List(
+        FEOption("FAILFAST", "Fail on any malformed line"),
+        FEOption("DROPMALFORMED", "Ignore malformed lines"),
+        FEOption("PERMISSIVE", "Salvage malformed lines: truncate or fill with nulls"))),
+      Choice("infer", "Infer types", options = FEOption.noyes),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL"),
+      TableParam("snapshot", "Snapshot ID"))
+    def enabled = FEStatus.enabled
+  })
 }

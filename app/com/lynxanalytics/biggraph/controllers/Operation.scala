@@ -250,6 +250,10 @@ trait BasicOperation extends Operation {
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
+  protected def parquetInput(input: String): graph_operations.ParquetMetadata = {
+    context.inputs(input).parquetMetadata
+  }
+
   protected def reservedParameter(reserved: String): Unit = {
     assert(
       parameters.find(_.id == reserved).isEmpty, s"$id: '$reserved' is a reserved parameter name.")
@@ -304,4 +308,27 @@ abstract class ProjectTransformation(
     updateDeltas(project, before)
     makeOutput(project)
   }
+}
+
+abstract class ParquetOperation(protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.outputs == List(TypedConnection("table", "parquet")),
+    s"A ParquetOperation must output a Parquet table. $context")
+
+  import graph_operations.ParquetMetadata
+  implicit val parquetMetadataFormat = graph_operations.ImportFromParquet.ParquetMetadataFormat
+  def pmParam(name: String): ParquetMetadata = json.Json.parse(params(name)).as[ParquetMetadata]
+
+  protected def makeOutput(pm: ParquetMetadata): Map[BoxOutput, BoxOutputState] = {
+    val output = BoxOutputState("table", json.Json.toJson(pm).as[json.JsObject])
+    Map(context.meta.outputs(0).ofBox(context.box) -> output)
+  }
+
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    assert(params("snapshot").nonEmpty, "You have to snapshot the file first.")
+    makeOutput(pmParam("snapshot"))
+  }
+
+  override def apply(): Unit = ???
 }
