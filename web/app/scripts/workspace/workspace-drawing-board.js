@@ -80,20 +80,24 @@ angular.module('biggraph')
           scope.selectedBoxId = boxId;
         };
 
-        scope.selectState = function(boxID, outputID) {
-          scope.selectedState = {
-            workspaceName: scope.workspaceName,
-            boxID: boxID,
-            outputID: outputID,
-            path: '',
-          };
-
+        scope.selectState = function(boxID, outputID, kind) {
+          if (kind === 'project') {
+            scope.selectedState = {
+              workspaceName: scope.workspaceName,
+              boxID: boxID,
+              outputID: outputID,
+              path: '',
+              kind: 'project',
+            };
+          } else {
+            scope.selectedState = {};
+          }
         };
 
         scope.selectPlug = function(plug) {
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
-            scope.selectState(plug.boxId, plug.data.id);
+            scope.selectState(plug.boxId, plug.data.id, plug.data.kind);
           } else {
             scope.selectedState = undefined;
           }
