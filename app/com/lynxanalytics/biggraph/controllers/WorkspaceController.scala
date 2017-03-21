@@ -11,10 +11,10 @@ import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetOutputIdRequest(workspace: String, output: BoxOutput)
+case class GetOutputIDRequest(workspace: String, output: BoxOutput)
 case class GetOutputRequest(id: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
-case class GetOutputIdResponse(id: String)
+case class GetOutputIDResponse(id: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
@@ -54,13 +54,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getWorkspaceByName(user, request.name)
 
   val calculatedStates = new HashMap[String, (String, BoxOutputState)]()
-  def getOutputId(
-    user: serving.User, request: GetOutputIdRequest): GetOutputIdResponse = {
+  def getOutputID(
+    user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
     val id = UUID.randomUUID.toString
     calculatedStates(id) = (request.workspace, state)
-    GetOutputIdResponse(id)
+    GetOutputIDResponse(id)
   }
 
   def getOutput(
