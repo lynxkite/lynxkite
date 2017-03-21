@@ -34,11 +34,11 @@ class MyEc2():
                         for instance in running_instances:
                                 instanceinfo = []
                                 for tag in instance.tags:
-                                        if 'Name' in tag['Key']:
+                                        if 'name' in tag['Key'].lower():
                                                 name = tag['Value']
-                                        if 'owner' in tag['Key']:
+                                        if 'owner' in tag['Key'].lower():
                                                 owner = tag['Value']
-                                        if 'expiry' in tag['Key']:
+                                        if 'expiry' in tag['Key'].lower():
                                                 expiry = tag['Value']
                                 instanceinfo.append(region_name.upper())
                                 instanceinfo.append(name)
