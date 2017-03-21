@@ -54,6 +54,7 @@ class MyEc2():
                                 if len(instanceinfo) > 0:
                                         self.table.add_row(instanceinfo)
         def print_instances_ascii(self):
+                print ("%s running instances" % self.get_num_instances())
                 print (self.table.get_table())
 
         def print_instances_html(self):
@@ -78,8 +79,6 @@ class MySesEmail():
                 self._html = html
 
         def send(self, from_address=None):
-                body = self._html
-
                 if isinstance (self.to, str):
                         self.to = [self.to]
                 if not from_address:
