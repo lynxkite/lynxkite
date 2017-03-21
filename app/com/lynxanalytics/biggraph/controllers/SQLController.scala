@@ -434,7 +434,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box): ParquetMetadata = {
+  def importBox(user: serving.User, box: Box) = async[ParquetMetadata] {
     val op = ops.opForBox(user, box, inputs = Map()).asInstanceOf[ParquetOperation]
     SQLController.saveParquet(op.getDataFrame(SQLController.defaultContext(user)))
   }

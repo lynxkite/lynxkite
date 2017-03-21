@@ -422,7 +422,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def importBox = jsonPost(sqlController.importBox)
+  def importBox = jsonFuturePost(sqlController.importBox)
   def createViewCSV = jsonPost(sqlController.createViewCSV)
   def createViewJdbc = jsonPost(sqlController.createViewJdbc)
   def createViewParquet = jsonPost(sqlController.createViewParquet)
