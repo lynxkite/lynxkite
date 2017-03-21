@@ -146,7 +146,8 @@ case class BoxMetadata(
 
 object BoxOutputKind {
   val Project = "project"
-  val validKinds = Set(Project) // More kinds to come.
+  val Parquet = "parquet"
+  val validKinds = Set(Project, Parquet)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -156,8 +157,12 @@ case class BoxOutputState(
     state: json.JsValue,
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
+
   def isError = !success.enabled
+
   def isProject = kind == BoxOutputKind.Project
+  def isParquet = kind == BoxOutputKind.Parquet
+
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
@@ -165,6 +170,13 @@ case class BoxOutputState(
     val p = state.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
+  }
+
+  def parquetMetadata: graph_operations.ParquetMetadata = {
+    assert(isParquet, s"Tried to access '$kind' as 'parquet'.")
+    assert(success.enabled, success.disabledReason)
+    import graph_operations.ImportFromParquet.ParquetMetadataFormat
+    state.as[graph_operations.ParquetMetadata]
   }
 }
 

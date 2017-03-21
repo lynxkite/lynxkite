@@ -42,9 +42,9 @@ object OperationParams {
 
   case class TableParam(
       id: String,
-      title: String,
-      options: List[FEOption]) extends OperationParameterMeta {
+      title: String) extends OperationParameterMeta {
     val kind = "table"
+    val options = List()
     val multipleChoice = false
     val defaultValue = ""
     def validate(value: String): Unit = {}
@@ -60,7 +60,7 @@ object OperationParams {
     def validate(value: String): Unit = {}
   }
 
-  case class File(id: String, title: String) extends OperationParameterMeta {
+  case class FileParam(id: String, title: String) extends OperationParameterMeta {
     val kind = "file"
     val multipleChoice = false
     val defaultValue = ""
