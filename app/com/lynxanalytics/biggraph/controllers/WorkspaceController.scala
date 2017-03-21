@@ -9,6 +9,10 @@ import com.lynxanalytics.biggraph.serving
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputRequest(workspace: String, output: BoxOutput)
+case class GetProjectOutputRequest(
+  workspace: String,
+  output: BoxOutput,
+  path: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
@@ -55,6 +59,20 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     state.kind match {
       case BoxOutputKind.Project =>
         GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(request.workspace)))
+    }
+  }
+
+  def getProjectOutput(
+    user: serving.User, request: GetProjectOutputRequest): FEProject = {
+    val ws = getWorkspaceByName(user, request.workspace)
+    val state = ws.state(user, ops, request.output)
+    val path = SubProject.splitPipedPath(request.path)
+      .filter(_ != "")
+    state.kind match {
+      case BoxOutputKind.Project =>
+        state.project.viewer
+          .offspringViewer(path)
+          .toFE(request.workspace)
     }
   }
 

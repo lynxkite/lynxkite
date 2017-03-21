@@ -84,7 +84,8 @@ angular.module('biggraph')
           scope.selectedState = {
             workspaceName: scope.workspaceName,
             boxID: boxID,
-            outputID: outputID
+            outputID: outputID,
+            path: '',
           };
 
         };
