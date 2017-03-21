@@ -18,6 +18,7 @@ case class GetOutputIDResponse(id: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
+case class CreateSnapshotRequest(id: String)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -78,6 +79,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               project = Some(storedState.state.project.viewer.toFE(storedState.workspace)))
         }
     }
+  }
+
+  def createSnapshot(
+    user: serving.User, request: CreateSnapshotRequest): Unit = {
+    print("Itt vagyok.")
+    import com.lynxanalytics.biggraph.controllers.CheckpointRepository.fCommonProjectState
+    val cpState = calculatedStates.get(request.id).get.state.state.as[CommonProjectState]
+    val rpState = RootProjectState.emptyState.copy(state = cpState, checkpoint = None)
+    metaManager.checkpointRepo.checkpointState(rpState, "")
   }
 
   def setWorkspace(
