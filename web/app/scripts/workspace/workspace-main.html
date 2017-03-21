@@ -19,12 +19,15 @@
         box-catalog="boxCatalog"
         selected-box="selectedBox"
         selected-state="selectedState"
+        selected-state-id="selectedStateId"
         workspace-name="workspaceName">
     </workspace-drawing-board>
     <operation-selector box-catalog="boxCatalog" editable="true">
     </operation-selector>
     <div id="right-panel">
-      <state-view state="selectedState">
+      <state-view
+          state="selectedState"
+          state-id="selectedStateId">
       </state-view>
       <box-editor
           box="selectedBox"
