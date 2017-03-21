@@ -85,8 +85,13 @@
     <help-popup href="project-header-buttons" class="pull-right"></help-popup>
 
     <div class="project-name">
-      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
-        {{parent}} &raquo;
+      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'">
+        <span>
+          State
+        </span>
+        <span ng-repeat="parent in side.parentProjects()">
+          {{parent}} &raquo;
+        </span>
       </span>
       {{side.shortName()}}
     </div>

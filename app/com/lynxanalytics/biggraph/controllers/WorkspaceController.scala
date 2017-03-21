@@ -72,7 +72,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case BoxOutputKind.Project =>
         state.project.viewer
           .offspringViewer(path)
-          .toFE(request.workspace)
+          .toFE(request.path)
     }
   }
 

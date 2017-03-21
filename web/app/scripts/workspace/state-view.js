@@ -15,11 +15,13 @@ angular.module('biggraph')
 
         util.deepWatch(scope, 'state', function() {
           scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left');
-          scope.right = new side.Side(scope.sides, 'right');
+          scope.left = new side.Side(scope.sides, 'left', scope.state);
+          scope.right = new side.Side(scope.sides, 'right', scope.state);
           scope.sides.push(scope.left);
           scope.sides.push(scope.right);
-          scope.sides[0].state.projectRef = Object.assign({}, scope.state);
+
+          scope.sides[0].state.projectPath = '';
+          scope.sides[0].reload();
         });
 
         scope.$watch(
@@ -33,60 +35,9 @@ angular.module('biggraph')
           'right.project.$resolved',
           function(loaded) {
             if (loaded) {
-              console.log('RIGHT LOADED');
               scope.right.onProjectLoaded();
             }
           });
-
-        util.deepWatch(
-          scope,
-          'left.state.projectRef',
-          function() {
-            scope.left.reload();
-          });
-        util.deepWatch(
-          scope,
-          'right.state.projectRef',
-          function() {
-            console.log('RELOAD RIGHT');
-            scope.right.reload();
-          });
-
-
-/*
-        util.deepWatch(scope, 'state1', function() {
-          if (!scope.state1) {
-            return;
-          }
-          scope.state = util.nocache(
-              '/ajax/getOutput',
-              {
-                  workspace: scope.state1.workspaceName,
-                  output: {
-                    boxID: scope.state1.boxID,
-                    id: scope.state1.outputID
-                  }
-              });
-        });
-*/
-
-/*
-        scope.$watch('state.$resolved', function() {
-          if (scope.state && scope.state.$resolved &&
-              scope.state.kind === 'project') {
-            scope.sides = [];
-            scope.sides.push(new side.Side(scope.sides, 'left'));
-            scope.sides.push(new side.Side(scope.sides, 'right'));
-            var left = scope.sides[0];
-            left.project = scope.state.project;
-            left.project.$resolved = true;
-            left.onProjectLoaded();
-          } else {
-            scope.sides = [];
-          }
-        });
-      }
-*/
     }
   };
 });
