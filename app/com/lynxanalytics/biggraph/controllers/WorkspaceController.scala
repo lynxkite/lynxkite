@@ -68,13 +68,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getOutput(
     user: serving.User, request: GetOutputRequest): GetOutputResponse = {
-    assert(calculatedStates.contains(request.id), s"BoxOutputState state identified by ${request.id} is not found.")
-    val storedState = calculatedStates.get(request.id).get
-    storedState.state.kind match {
-      case BoxOutputKind.Project =>
-        GetOutputResponse(
-          storedState.state.kind,
-          project = Some(storedState.state.project.viewer.toFE(storedState.workspace)))
+    calculatedStates.get(request.id) match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
+      case Some(storedState: CalculatedState) =>
+        storedState.state.kind match {
+          case BoxOutputKind.Project =>
+            GetOutputResponse(
+              storedState.state.kind,
+              project = Some(storedState.state.project.viewer.toFE(storedState.workspace)))
+        }
     }
   }
 
