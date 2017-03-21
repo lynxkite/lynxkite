@@ -81,15 +81,7 @@ angular.module('biggraph')
         };
 
         scope.selectState = function(boxID, outputID) {
-          console.log('whatshappenning?');
-          console.log(boxID);
-          console.log(outputID);
-          scope.selectedState = util.nocache(
-            '/ajax/getOutput',
-            {
-              id: 'asdasd'
-            });
-          /*var stateID = util.nocache(
+          util.nocache(
             '/ajax/getOutputId',
             {
               workspace: scope.workspaceName,
@@ -98,15 +90,12 @@ angular.module('biggraph')
                 id: outputID
               }
             }
-          ).then(
-            //console.log('then this other thing happens');
+          ).then(function(stateID) {
             scope.selectedState = util.nocache(
               '/ajax/getOutput',
-              {
-                id: stateID
-              }
-            )
-          );*/
+              stateID
+            );
+          });
         };
 
         scope.selectPlug = function(plug) {
