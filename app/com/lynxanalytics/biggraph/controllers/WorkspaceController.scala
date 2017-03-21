@@ -53,6 +53,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): Workspace =
     getWorkspaceByName(user, request.name)
 
+  // This is for storing the calculated JSON states, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, (String, BoxOutputState)]()
   def getOutputID(
     user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
