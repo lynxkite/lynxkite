@@ -79,7 +79,7 @@ case class Workspace(
   def progress(
     user: serving.User, ops: OperationRepository,
     connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): List[ProgressInfo] = {
+                           manager: graph_api.MetaGraphManager): List[BoxOutputProgress] = {
     val states = calculate(user, ops, connection, Map())
     states.toList.map((calculatedStateProgress _).tupled)
   }
@@ -87,18 +87,18 @@ case class Workspace(
   private def calculatedStateProgress(
     boxOutput: BoxOutput,
     state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): ProgressInfo =
+                           manager: graph_api.MetaGraphManager): BoxOutputProgress =
     state.kind match {
       case BoxOutputKind.Project => projectProgress(boxOutput, state)
       case _ =>
         log.error(s"Unknown BoxOutputState kind: ${state.kind}")
-        ProgressInfo(boxOutput, Map(), FEStatus.disabled("Unknown kind"))
+        BoxOutputProgress(boxOutput, Progress.Empty, FEStatus.disabled("Unknown kind"))
     }
 
   private def projectProgress(
     boxOutput: BoxOutput,
     state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): ProgressInfo = {
+                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
     assert(state.kind == BoxOutputKind.Project,
       s"Can't compute projectProgress for kind ${state.kind}")
 
@@ -124,16 +124,16 @@ case class Workspace(
 
     val progress = if (state.success.enabled) {
       val progressList = commonProjectStateProgress(state.project.rootState.state)
-      Map(
-        "computed" -> progressList.count(_ == 1.0),
-        "inProgress" -> progressList.count(x => x < 1.0 && x > 0.0),
-        "notYetStarted" -> progressList.count(_ == 0.0),
-        "failed" -> progressList.count(_ < 0.0)
+      Progress(
+        computed = progressList.count(_ == 1.0),
+        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+        notYetStarted = progressList.count(_ == 0.0),
+        failed = progressList.count(_ < 0.0)
       )
     } else {
-      Map[String, Int]()
+      Progress.Empty
     }
-    ProgressInfo(boxOutput, progress, state.success)
+    BoxOutputProgress(boxOutput, progress, state.success)
   }
 
   def getOperation(
@@ -230,7 +230,11 @@ case class BoxOutputState(
   }
 }
 
-case class ProgressInfo(boxOutput: BoxOutput, progress: Map[String, Int], success: FEStatus)
+case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
+case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
+object Progress {
+  val Empty = Progress(0, 0, 0, 0)
+}
 
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
@@ -240,5 +244,6 @@ object WorkspaceJsonFormatters {
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
   implicit val fWorkspace = json.Json.format[Workspace]
-  implicit val fProgressInfo = json.Json.format[ProgressInfo]
+  implicit val fProgress = json.Json.format[Progress]
+  implicit val fBoxOutputProgress = json.Json.format[BoxOutputProgress]
 }
