@@ -8,7 +8,8 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
-        state: '='
+        state: '=',
+        stateId: '='
       },
       link: function(scope) {
         scope.$watch('state.$resolved', function() {
@@ -16,6 +17,7 @@ angular.module('biggraph')
               scope.state.kind === 'project') {
             scope.side = new side.Side([], '');
             scope.side.project = scope.state.project;
+            scope.side.stateID = scope.stateId;
             scope.side.project.$resolved = true;
             scope.side.onProjectLoaded();
           } else {

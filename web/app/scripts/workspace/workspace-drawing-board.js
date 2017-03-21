@@ -27,6 +27,7 @@ angular.module('biggraph')
         workspaceName: '=',
         selectedBox: '=',
         selectedState: '=',
+        selectedStateId: '=',
         boxCatalog: '=',
       },
       link: function(scope, element) {
@@ -91,6 +92,7 @@ angular.module('biggraph')
               }
             }
           ).then(function(stateID) {
+            scope.selectedStateId = stateID.id;
             scope.selectedState = util.nocache(
               '/ajax/getOutput',
               stateID
