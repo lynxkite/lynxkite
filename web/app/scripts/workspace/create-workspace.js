@@ -123,11 +123,11 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
 
       updateProgress: function(progressList) {
         for (var i = 0; i < progressList.length; i++) {
-          var progressInfo =  progressList[i];
-          var plugDescription = progressInfo.boxOutput;
+          var boxOutputProgress =  progressList[i];
+          var plugDescription = boxOutputProgress.boxOutput;
           var box = this.boxMap[plugDescription.boxID];
           var plug = box.outputMap[plugDescription.id];
-          plug.updateProgress(progressInfo.progress, progressInfo.success);
+          plug.updateProgress(boxOutputProgress.progress, boxOutputProgress.success);
         }
       },
 
