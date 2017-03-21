@@ -53,25 +53,28 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): Workspace =
     getWorkspaceByName(user, request.name)
 
-  // This is for storing the calculated JSON states, so the same states can be referenced later.
-  val calculatedStates = new HashMap[String, (String, BoxOutputState)]()
+  // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
+  case class CalculatedState(workspace: String, state: BoxOutputState)
+  val calculatedStates = new HashMap[String, CalculatedState]()
+
   def getOutputID(
     user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
     val id = UUID.randomUUID.toString
-    calculatedStates(id) = (request.workspace, state)
+    calculatedStates(id) = CalculatedState(request.workspace, state)
     GetOutputIDResponse(id)
   }
 
   def getOutput(
     user: serving.User, request: GetOutputRequest): GetOutputResponse = {
-    calculatedStates.getOrElse(request.id, None) match {
-      case (workspace: String, state: BoxOutputState) =>
-        state.kind match {
-          case BoxOutputKind.Project =>
-            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(workspace)))
-        }
+    assert(calculatedStates.contains(request.id), s"BoxOutputState state identified by ${request.id} is not found.")
+    val storedState = calculatedStates.get(request.id).get
+    storedState.state.kind match {
+      case BoxOutputKind.Project =>
+        GetOutputResponse(
+          storedState.state.kind,
+          project = Some(storedState.state.project.viewer.toFE(storedState.workspace)))
     }
   }
 
