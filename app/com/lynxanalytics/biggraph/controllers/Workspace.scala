@@ -131,7 +131,7 @@ case class Workspace(
         "failed" -> progressList.count(_ < 0.0)
       )
     } else {
-      null
+      Map[String, Int]()
     }
     ProgressInfo(boxOutput, progress, state.success)
   }
