@@ -97,7 +97,7 @@ angular.module('biggraph')
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
             scope.selectState(plug.boxId, plug.data.id);
-            scope.getAndUpdateProgress();
+            scope.startProgressUpdate();
           } else {
             scope.selectedState = undefined;
           }
@@ -227,7 +227,7 @@ angular.module('biggraph')
           scope.saveWorkspace();
         });
 
-        scope.getAndUpdateProgress = function() {
+        scope.getAndUpdateProgress = function(errorHandler) {
           var workspaceBefore = scope.workspace;
           var plugBefore = scope.selectedPlug;
           if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
@@ -244,18 +244,31 @@ angular.module('biggraph')
                   scope.workspace.updateProgress(response.progressList);
                 }
               },
-              function failure(error) {
-                util.error('Couldn\'t get prgress', error);
-                scope.workspace.clearProgress();
-              });
+              errorHandler);
           }
         };
 
-        progressUpdater = $interval(scope.getAndUpdateProgress, 2000);
+        scope.startProgressUpdate = function() {
+          scope.stopProgressUpdate();
+          progressUpdater = $interval(function() {
+            function errorHandler(error) {
+              util.error('Couldn\'t get progress information for selected state.', error);
+              scope.stopProgressUpdate();
+              scope.workspace.clearProgress();
+            }
+            scope.getAndUpdateProgress(errorHandler);
+          }, 2000);
+        };
+
+        scope.stopProgressUpdate = function() {
+          if (progressUpdater) {
+            $interval.cancel(progressUpdater);
+            progressUpdater = undefined;
+          }
+        };
 
         scope.$on('$destroy', function() {
-          $interval.cancel(progressUpdater);
-          progressUpdater = undefined;
+          scope.stopProgressUpdate();
         });
       }
     };
