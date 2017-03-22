@@ -12,9 +12,11 @@ case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputIDRequest(workspace: String, output: BoxOutput)
 case class GetOutputRequest(id: String)
+case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputIDResponse(id: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
+case class GetProgressResponse(progressList: List[BoxOutputProgress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
@@ -78,6 +80,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
           }
       }
     }
+  }
+
+  def getProgress(
+    user: serving.User, request: GetProgressRequest): GetProgressResponse = {
+    val ws = getWorkspaceByName(user, request.workspace)
+    GetProgressResponse(ws.progress(user, ops, request.output))
   }
 
   def setWorkspace(

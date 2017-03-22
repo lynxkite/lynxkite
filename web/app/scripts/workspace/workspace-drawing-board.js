@@ -18,7 +18,7 @@
 // 6. GOTO 2
 
 angular.module('biggraph')
- .directive('workspaceDrawingBoard', function(createWorkspace, util) {
+  .directive('workspaceDrawingBoard', function(createWorkspace, util, $interval) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -30,6 +30,7 @@ angular.module('biggraph')
         boxCatalog: '=',
       },
       link: function(scope, element) {
+        var progressUpdater;
 
         scope.$watchGroup(
           ['boxCatalog.$resolved', 'workspaceName'],
@@ -53,7 +54,7 @@ angular.module('biggraph')
               })
               .then(function(rawWorkspace) {
                 scope.workspace = createWorkspace(
-                    rawWorkspace, scope.boxCatalogMap);
+                  rawWorkspace, scope.boxCatalogMap);
                 scope.selectBox(scope.selectedBoxId);
               });
         };
@@ -102,6 +103,7 @@ angular.module('biggraph')
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
             scope.selectState(plug.boxId, plug.data.id);
+            scope.startProgressUpdate();
           } else {
             scope.selectedState = undefined;
           }
@@ -231,8 +233,49 @@ angular.module('biggraph')
           scope.saveWorkspace();
         });
 
+        scope.getAndUpdateProgress = function(errorHandler) {
+          var workspaceBefore = scope.workspace;
+          var plugBefore = scope.selectedPlug;
+          if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
+            util.nocache('/ajax/getProgress', {
+              workspace: scope.workspaceName,
+              output: {
+                boxID: plugBefore.boxId,
+                id: plugBefore.data.id
+              }
+            }).then(
+              function success(response) {
+                if (scope.workspace && scope.workspace === workspaceBefore &&
+                    scope.selectedPlug && scope.selectedPlug === plugBefore) {
+                  scope.workspace.updateProgress(response.progressList);
+                }
+              },
+              errorHandler);
+          }
+        };
+
+        scope.startProgressUpdate = function() {
+          scope.stopProgressUpdate();
+          progressUpdater = $interval(function() {
+            function errorHandler(error) {
+              util.error('Couldn\'t get progress information for selected state.', error);
+              scope.stopProgressUpdate();
+              scope.workspace.clearProgress();
+            }
+            scope.getAndUpdateProgress(errorHandler);
+          }, 2000);
+        };
+
+        scope.stopProgressUpdate = function() {
+          if (progressUpdater) {
+            $interval.cancel(progressUpdater);
+            progressUpdater = undefined;
+          }
+        };
+
+        scope.$on('$destroy', function() {
+          scope.stopProgressUpdate();
+        });
       }
-
     };
-
-});
+  });
