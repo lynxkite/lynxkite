@@ -71,14 +71,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getOutput(
     user: serving.User, request: GetOutputRequest): GetOutputResponse = {
     calculatedStates.synchronized {
-      calculatedStates.get(request.id) match {
-        case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-        case Some(state: BoxOutputState) =>
-          state.kind match {
-            case BoxOutputKind.Project =>
-              GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
-          }
-      }
+      calculatedStates.get(request.id)
+    } match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
+      case Some(state: BoxOutputState) =>
+        state.kind match {
+          case BoxOutputKind.Project =>
+            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
+        }
     }
   }
 
