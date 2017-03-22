@@ -22,8 +22,10 @@
           <text x="10">{{ plug.data.id }}</text>
           <circle ng-attr-r="{{ plug.radius }}"
                 class="io-circle"
+                ng-class="{'in-progress': plug.inProgress, 'colored-output': plug.color}"
                 ng-mousedown="onMouseDownOnPlug(plug, $event)"
-                ng-mouseup="onMouseUpOnPlug(plug, $event)">
+                ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                ng-attr-fill="{{ plug.color }}" >
           </circle>
         </g>
       </g>
