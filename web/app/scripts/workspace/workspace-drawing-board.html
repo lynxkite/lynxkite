@@ -6,7 +6,7 @@
      ng-attr-transform="{{ workspaceTransform() }}">
 
     <!-- start box -->
-    <g ng-repeat="box in workspace.boxes"
+    <g ng-repeat="box in manager.workspace.boxes"
         ng-mousedown="onMouseDownOnBox(box, $event)"
         ng-attr-transform="{{ box.mainPosTransform() }}"
         class="box"
@@ -17,14 +17,14 @@
         id="{{ direction }}">
         <g ng-repeat="plug in box[direction]"
             ng-attr-transform="{{ plug.posTransform }}"
-            ng-class="{ 'selected-plug': plug == selectedPlug }"
+            ng-class="{ 'selected-plug': plug == manager.selectedPlug }"
             id="{{ plug.data.id }}">
           <text x="10">{{ plug.data.id }}</text>
           <circle ng-attr-r="{{ plug.radius }}"
                 class="io-circle"
                 ng-class="{'in-progress': plug.inProgress, 'colored-output': plug.color}"
-                ng-mousedown="onMouseDownOnPlug(plug, $event)"
-                ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                ng-mousedown="manager.onMouseDownOnPlug(plug, $event)"
+                ng-mouseup="manager.onMouseUpOnPlug(plug, $event)"
                 ng-attr-fill="{{ plug.color }}" >
           </circle>
         </g>
@@ -33,7 +33,7 @@
 
       <rect
           class="box-main"
-          ng-class="{ 'selected-box': box.instance.id == selectedBoxId }"
+          ng-class="{ 'selected-box': box.instance.id == manager.selectedBoxId }"
           ng-attr-width="{{box.width}}"
           ng-attr-height="{{box.height}}">
       </rect>
@@ -45,7 +45,7 @@
     <!-- end box -->
 
     <!-- start arrow -->
-    <g ng-repeat="arrow in workspace.arrows">
+    <g ng-repeat="arrow in manager.workspace.arrows">
       <line class="arrow"
           ng-attr-x1="{{arrow.x1()}}"
           ng-attr-y1="{{arrow.y1()}}"
@@ -55,12 +55,12 @@
     <!-- end arrow -->
 
     <!-- start pulled arrow -->
-    <g ng-if="pulledPlug">
+    <g ng-if="manager.pulledPlug">
       <line class="arrow pulled-arrow"
-          ng-attr-x1="{{pulledPlug.x()}}"
-          ng-attr-y1="{{pulledPlug.y()}}"
-          ng-attr-x2="{{mouseLogical.x}}"
-          ng-attr-y2="{{mouseLogical.y}}">
+          ng-attr-x1="{{manager.pulledPlug.x()}}"
+          ng-attr-y1="{{manager.pulledPlug.y()}}"
+          ng-attr-x2="{{manager.mouseLogical.x}}"
+          ng-attr-y2="{{manager.mouseLogical.y}}">
       </line>
     </g>
 
