@@ -10,7 +10,7 @@
 //   coordinates on the workspace and everything related to this
 //   box instance that have to be saved.
 
-angular.module('biggraph').factory('createBox', function() {
+angular.module('biggraph').factory('boxState', function() {
   return function(metadata, instance) {
     var width = 200;
     var height = 40;
