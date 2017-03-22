@@ -84,7 +84,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def createSnapshot(
     user: serving.User, request: CreateSnapshotRequest): Unit = {
     import com.lynxanalytics.biggraph.controllers.CheckpointRepository.fCommonProjectState
-    val cpState = calculatedStates.get(request.id).get.state.state.as[CommonProjectState]
+    val cpState = calculatedStates.synchronized {
+        calculatedStates.get(request.id).get.state.state.as[CommonProjectState]
+    }
     val rpState = RootProjectState.emptyState.copy(state = cpState, checkpoint = None)
     metaManager.checkpointRepo.checkpointState(rpState, "")
   }
