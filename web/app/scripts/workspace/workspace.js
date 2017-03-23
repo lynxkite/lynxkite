@@ -33,12 +33,22 @@ angular.module('biggraph')
       var boxSelectionCallback;
 
       var manager = {
+        name: workspaceName,
+
+        boxes: function() {
+          return this.workspace ? this.workspace.boxes : [];
+        },
+
+        arrows: function() {
+          return this.workspace ? this.workspace.arrows : [];
+        },
+
         loadWorkspace: function() {
           var that = this;
           util.nocache(
               '/ajax/getWorkspace',
               {
-                name: workspaceName
+                name: this.name
               })
               .then(function(rawWorkspace) {
                 that.workspace = workspaceState(
@@ -52,7 +62,7 @@ angular.module('biggraph')
           util.post(
             '/ajax/setWorkspace',
             {
-              name: workspaceName,
+              name: this.name,
               workspace: that.workspace.rawWorkspace(),
             }).then(
               // Reload workspace both in error and success cases.
@@ -95,7 +105,7 @@ angular.module('biggraph')
           this.selectedStateId = util.nocache(
             '/ajax/getOutputID',
             {
-              workspace: workspaceName,
+              workspace: this.name,
               output: {
                 boxID: boxID,
                 id: outputID
@@ -164,7 +174,7 @@ angular.module('biggraph')
           var plugBefore = this.selectedPlug;
           if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
             util.nocache('/ajax/getProgress', {
-              workspace: workspaceName,
+              workspace: this.name,
               output: {
                 boxID: plugBefore.boxId,
                 id: plugBefore.data.id

@@ -10,7 +10,7 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
       templateNamespace: 'svg',
       scope: {
-        manager: '=',
+        workspace: '=',
       },
       link: function(scope, element) {
 
@@ -34,18 +34,18 @@ angular.module('biggraph')
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
-          scope.manager.onMouseMove(getLogicalPosition(event));
+          scope.workspace.onMouseMove(getLogicalPosition(event));
         };
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
-          scope.manager.onMouseDownOnBox(box, getLogicalPosition(event));
+          scope.workspace.onMouseDownOnBox(box, getLogicalPosition(event));
         };
 
         scope.onMouseUp = function(event) {
           workspaceDrag = false;
           element[0].style.cursor = '';
-          scope.manager.onMouseUp(event);
+          scope.workspace.onMouseUp(event);
         };
 
         scope.onMouseDown = function(event) {
@@ -99,12 +99,12 @@ angular.module('biggraph')
           var operationID = event.originalEvent.dataTransfer.getData('text');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
-            scope.manager.addBox(operationID, getLogicalPosition(origEvent));
+            scope.workspace.addBox(operationID, getLogicalPosition(origEvent));
           });
         });
 
         scope.$on('$destroy', function() {
-          scope.manager.stopProgressUpdate();
+          scope.workspace.stopProgressUpdate();
         });
       }
     };
