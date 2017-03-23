@@ -105,10 +105,7 @@ case class Box(
     y: Double,
     width: Double = 200,
     height: Double = 40,
-    inputs: Map[String, BoxOutput],
-    assignedTo: List[Box] = List(),    // CommentBoxes will be able to be assigned to other boxes.
-    title: String = "",
-    content: String = "") {
+    inputs: Map[String, BoxOutput]) {
 
   def output(id: String) = BoxOutput(this.id, id)
 
