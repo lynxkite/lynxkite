@@ -123,6 +123,30 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
         return true;
       },
 
+      updateProgress: function(progressList) {
+        for (var i = 0; i < progressList.length; i++) {
+          var boxOutputProgress =  progressList[i];
+          var plugDescription = boxOutputProgress.boxOutput;
+          var box = this.boxMap[plugDescription.boxID];
+          var plug = box.outputMap[plugDescription.id];
+          plug.updateProgress(boxOutputProgress.progress, boxOutputProgress.success);
+        }
+      },
+
+      clearProgress : function() {
+        for (var i = 0; i < this.boxes.length; i++) {
+          var box = this.boxes[i];
+          for (var j = 0; j < box.outputs.length; j++) {
+            box.outputs[j].clearProgress();
+          }
+        }
+      },
+
+      setBoxParams: function(boxId, paramValues) {
+        this.boxMap[boxId].instance.parameters =
+            Object.assign({}, paramValues);
+      },
+
     };
 
     workspace.build();

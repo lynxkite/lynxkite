@@ -289,6 +289,8 @@ include::lookup-region.asciidoc[]
 
 include::merge-parallel-edges-by-attribute.asciidoc[]
 
+include::merge-parallel-segmentation-links.asciidoc[]
+
 include::merge-parallel-edges.asciidoc[]
 
 include::merge-two-edge-attributes.asciidoc[]
@@ -354,6 +356,10 @@ include::split-edges.asciidoc[]
 include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
+
+include::take-edges-as-vertices.asciidoc[]
+
+include::take-segmentation-as-base-project.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 

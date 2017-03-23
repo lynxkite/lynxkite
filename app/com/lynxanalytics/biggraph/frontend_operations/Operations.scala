@@ -301,7 +301,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("id_column", "ID column"),
       Param("prefix", "Name prefix for the imported vertex attributes"),
       Choice("unique_keys", "Assert unique vertex attribute values",
-        options = FEOption.bools, mandatory = false))
+        options = FEOption.bools))
     def enabled =
       project.hasVertexSet &&
         FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
@@ -340,7 +340,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("id_column", "ID column"),
       Param("prefix", "Name prefix for the imported edge attributes"),
       Choice("unique_keys", "Assert unique edge attribute values",
-        options = FEOption.bools, mandatory = false))
+        options = FEOption.bools))
     def enabled =
       project.hasEdgeBundle &&
         FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
@@ -517,7 +517,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
-        FEOption.noWeight +: project.edgeAttrList[Double], mandatory = false),
+        FEOption.noWeight +: project.edgeAttrList[Double]),
       Param(
         "max_iterations",
         "Maximum number of iterations to do",
@@ -1009,7 +1009,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Add reversed edges", StructureOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
-      Param("distattr", "Distinguishing edge attribute", mandatory = false)
+      Param("distattr", "Distinguishing edge attribute")
     )
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -1134,11 +1134,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Choice("weights", "Weight attribute",
-        options = FEOption.noWeight +: project.edgeAttrList[Double], mandatory = false),
+        options = FEOption.noWeight +: project.edgeAttrList[Double]),
       NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"),
       Choice("direction", "Direction",
-        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
+        options = Direction.attrOptionsWithDefault("outgoing edges")))
     def enabled = project.hasEdgeBundle
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1193,7 +1193,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         options = FEOption.list("Harmonic", "Lin", "Average distance")),
       NonNegInt("bits", "Precision", default = 8),
       Choice("direction", "Direction",
-        options = Direction.attrOptionsWithDefault("outgoing edges"), mandatory = false))
+        options = Direction.attrOptionsWithDefault("outgoing edges")))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("name")
@@ -1395,7 +1395,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
-        options = FEOption.bools, mandatory = false), // Default is true.
+        options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = project.hasVertexSet
     override def summary = {
@@ -1433,7 +1433,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
-        options = FEOption.bools, mandatory = false), // Default is true.
+        options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "1 + 1"))
     def enabled = project.hasEdgeBundle
     override def summary = {
@@ -2001,6 +2001,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
       val oldSegmentations = project.viewer.segmentationMap
+      val oldBelongsTo = if (project.isSegmentation) project.asSegmentation.belongsTo else null
       project.setVertexSet(m.segments, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
         val seg = project.segmentation(name)
@@ -2009,6 +2010,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         seg.belongsTo = op(
           op.srcMapping, m.belongsTo)(
             op.edges, seg.belongsTo).result.induced
+      }
+      if (project.isSegmentation) {
+        val seg = project.asSegmentation
+        val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+        seg.belongsTo = op(
+          op.dstMapping, m.belongsTo)(
+            op.edges, oldBelongsTo).result.induced
       }
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
@@ -2102,6 +2110,24 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def apply() = {
       applyMergeParallelEdgesByKey(project, params)
+    }
+  })
+
+  register("Merge parallel segmentation links", StructureOperations, new ProjectTransformation(_) with SegOp {
+    def segmentationParameters = List()
+    def enabled = project.assertSegmentation
+    def apply() = {
+      val linksAsAttr = {
+        val op = graph_operations.EdgeBundleAsAttribute()
+        op(op.edges, seg.belongsTo).result.attr
+      }
+      val mergedResult = mergeEdges(linksAsAttr)
+      val newLinks = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, seg.belongsTo)(op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      seg.belongsTo = newLinks
     }
   })
 
@@ -2479,7 +2505,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Set scalar icon", UtilityOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("name", "Name", options = project.scalarList),
-      Param("icon", "Icon name", mandatory = false))
+      Param("icon", "Icon name"))
     def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
     override def summary = {
       val name = params("name")
@@ -2500,7 +2526,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Set vertex attribute icon", UtilityOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("name", "Name", options = project.vertexAttrList),
-      Param("icon", "Icon name", mandatory = false))
+      Param("icon", "Icon name"))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
     override def summary = {
       val name = params("name")
@@ -2521,7 +2547,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Set edge attribute icon", UtilityOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("name", "Name", options = project.edgeAttrList),
-      Param("icon", "Icon name", mandatory = false))
+      Param("icon", "Icon name"))
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No vertex attributes")
     override def summary = {
       val name = params("name")
@@ -2542,7 +2568,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Set segmentation icon", UtilityOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("name", "Name", options = project.segmentationList),
-      Param("icon", "Icon name", mandatory = false))
+      Param("icon", "Icon name"))
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No vertex attributes")
     override def summary = {
       val name = params("name")
@@ -2828,15 +2854,12 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.enabled
   })
 
-  register("Union with another project", StructureOperations, new ProjectTransformation(_) {
+  register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
+    override lazy val project = projectInput("a")
+    lazy val other = projectInput("b")
     lazy val parameters = List(
-      Choice(
-        "other",
-        "Other project's name",
-        options = project.readableProjectCheckpoints,
-        allowUnknownOption = true),
       Param("id_attr", "ID attribute name", defaultValue = "new_id"))
-    def enabled = project.hasVertexSet
+    def enabled = project.hasVertexSet && other.hasVertexSet
     override def summary = {
       val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("other"))
       s"Union with $title"
@@ -2856,14 +2879,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     }
     def apply(): Unit = {
-      val otherId = params("other")
-      val (cp, _, _) = getAndCheckProjectCheckpoint(otherId)
-      val other = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      if (other.vertexSet == null) {
-        // Nothing to do
-        return
-      }
-      checkTypeCollision(other)
+      checkTypeCollision(other.viewer)
       val vsUnion = {
         val op = graph_operations.VertexSetUnion(2)
         op(op.vss, Seq(project.vertexSet, other.vertexSet)).result
@@ -2945,13 +2961,12 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("leftName", "First ID attribute", options = project.vertexAttrList[String]),
       Choice("rightName", "Second ID attribute", options = project.vertexAttrList[String]),
       Choice("weights", "Edge weights",
-        options = FEOption.noWeight +: project.edgeAttrList[Double], mandatory = false),
+        options = FEOption.noWeight +: project.edgeAttrList[Double]),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"),
       Param(
         "extra",
         "Fingerprinting algorithm additional parameters",
-        mandatory = false,
         defaultValue = ""))
     def enabled =
       project.hasEdgeBundle &&
@@ -3090,7 +3105,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Param(
           "extra",
           "Fingerprinting algorithm additional parameters",
-          mandatory = false,
           defaultValue = ""))
       def enabled =
         project.assertSegmentation &&
@@ -3309,17 +3323,16 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Filter by attributes", StructureOperations, new ProjectTransformation(_) {
     lazy val parameters =
       project.vertexAttrList.toList.map {
-        attr => Param(s"filterva_${attr.id}", attr.id, mandatory = false)
+        attr => Param(s"filterva_${attr.id}", attr.id)
       } ++
         project.segmentations.toList.map {
           seg =>
             Param(
               s"filterva_${seg.viewer.equivalentUIAttributeTitle}",
-              seg.segmentationName,
-              mandatory = false)
+              seg.segmentationName)
         } ++
         project.edgeAttrList.toList.map {
-          attr => Param(s"filterea_${attr.id}", attr.id, mandatory = false)
+          attr => Param(s"filterea_${attr.id}", attr.id)
         }
     def enabled =
       FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes") ||
@@ -3572,7 +3585,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
       Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
-        options = FEOption.boolsDefaultFalse, mandatory = false),
+        options = FEOption.boolsDefaultFalse),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(
       project.vertexAttrList[(Double, Double)].nonEmpty, "No position vertex attributes.")

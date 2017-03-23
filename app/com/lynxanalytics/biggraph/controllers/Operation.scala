@@ -40,7 +40,6 @@ case class FEOperationParameterMeta(
     defaultValue: String,
     options: List[FEOption],
     multipleChoice: Boolean,
-    mandatory: Boolean, // If false, this parameter can be omitted from the request.
     payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
 
   require(
@@ -63,13 +62,12 @@ abstract class OperationParameterMeta {
   val defaultValue: String
   val options: List[FEOption]
   val multipleChoice: Boolean
-  val mandatory: Boolean
   val payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, mandatory, payload)
+    id, title, kind, defaultValue, options, multipleChoice, payload)
 }
 
 // An Operation is the computation that a Box represents in a workspace.
@@ -138,7 +136,11 @@ object Operation {
         }
       }
       def segmentationsRecursively: List[FEOption] =
-        FEOption.list(segmentationsRecursively(project.rootEditor).toList)
+        List(FEOption("", "Main project")) ++
+          FEOption.list(
+            segmentationsRecursively(project.rootEditor)
+              .toList
+              .filter(_ != ""))
 
       // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
       def accessibleTableOptions: List[FEOption] = ???
@@ -186,7 +188,15 @@ trait BasicOperation extends Operation {
   protected val user = context.user
   protected val id = context.meta.operationID
   protected val title = id
-  protected val params = context.box.parameters
+  // Parameters without default values:
+  protected val paramValues = context.box.parameters
+  // Parameters with default values:
+  protected def params =
+    parameters
+      .map {
+        paramMeta => (paramMeta.id, paramMeta.defaultValue)
+      }
+      .toMap ++ paramValues
   protected def parameters: List[OperationParameterMeta]
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
@@ -200,10 +210,6 @@ trait BasicOperation extends Operation {
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
-    val mandatoryParamIds =
-      allParameters.filter(_.mandatory).map { param => param.id }.toSet
-    val missingIds = mandatoryParamIds &~ values.keySet
-    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (param <- allParameters) {
       if (values.contains(param.id)) {
         param.validate(values(param.id))
@@ -239,8 +245,8 @@ trait BasicOperation extends Operation {
     enabled)
 
   protected def projectInput(input: String): ProjectEditor = {
-    val segPath = SubProject.splitPipedPath(params.getOrElse("apply_to_" + input, ""))
-    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $params")
+    val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
+    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $paramValues")
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
@@ -257,7 +263,7 @@ trait BasicOperation extends Operation {
       reservedParameter(param)
       OperationParams.SegmentationParam(
         param, s"Apply to (${input.id})",
-        context.inputs(input.id).project.segmentationsRecursively, mandatory = false)
+        context.inputs(input.id).project.segmentationsRecursively)
     } ++ parameters
   }
 }

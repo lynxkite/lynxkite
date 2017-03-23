@@ -29,6 +29,11 @@ angular.module('biggraph').factory('createBox', function() {
       }
       var y = direction === 'outputs' ? height + 15 : -15;
 
+      function progressToColor(progressRatio) {
+        /* global tinycolor */
+        return tinycolor.mix('red', 'green', progressRatio * 100).toHexString();
+      }
+
       return {
         boxId: instance.id,
         instance: instance,
@@ -38,38 +43,63 @@ angular.module('biggraph').factory('createBox', function() {
         radius: plugRadius,
         x: function() { return x + instance.x; },
         y: function() { return y + instance.y; },
-        posTransform: 'translate(' + x + ', ' + y + ')'
+        posTransform: 'translate(' + x + ', ' + y + ')',
+        inProgress: false,
+        color: undefined,
+        updateProgress: function(progress, success) {
+          if (success.enabled) {
+            var all = 0;
+            for (var p in progress) {
+              if (progress.hasOwnProperty(p)) {
+                all += progress[p];
+              }
+            }
+            var progressPercentage = all ? progress.computed / all : 1.0;
+            this.color = progressToColor(progressPercentage);
+            this.inProgress = progress.inProgress > 0;
+          } else {
+            this.clearProgress();
+          }
+        },
+        clearProgress: function() {
+          this.inProgress = false;
+          this.color = undefined;
+        }
       };
     }
 
     var inputs = [];
     var outputs = [];
+    var outputMap = {};
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
       inputs.push(createPlug(metadata.inputs[i], i, 'inputs'));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      outputs.push(createPlug(metadata.outputs[i], i, 'outputs'));
+      var plug = createPlug(metadata.outputs[i], i, 'outputs');
+      outputs.push(plug);
+      outputMap[plug.data.id] = plug;
     }
     return {
       metadata: metadata,
       instance: instance,
       inputs: inputs,
       outputs: outputs,
+      outputMap: outputMap,
       width: width,
       height: height,
       isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
       },
-      onMouseMove: function(event) {
+      onMouseMove: function(mousePos) {
         this.isMoved = true;
-        this.instance.x = event.clientX + this.xOffset;
-        this.instance.y = event.clientY + this.yOffset;
+        this.instance.x = mousePos.x + this.xOffset;
+        this.instance.y = mousePos.y + this.yOffset;
       },
-      onMouseDown: function(event) {
-        this.xOffset = this.instance.x - event.clientX;
-        this.yOffset = this.instance.y - event.clientY;
+      onMouseDown: function(mousePos) {
+        this.xOffset = this.instance.x - mousePos.x;
+        this.yOffset = this.instance.y - mousePos.y;
       },
       isCommentBox: function() {
         return this.metadata.operationID === 'Add comment';
