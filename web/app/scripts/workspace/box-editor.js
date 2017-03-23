@@ -8,13 +8,12 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
-        manager: '=',
-        workspaceName: '=',
+        workspace: '=',
       },
       link: function(scope) {
-        scope.$watch('manager', function() {
-          if (scope.manager) {
-            scope.manager.setBoxSelectionCallback(
+        scope.$watch('workspace', function() {
+          if (scope.workspace) {
+            scope.workspace.setBoxSelectionCallback(
                 scope.loadBoxMeta);
           }
         });
@@ -22,7 +21,7 @@ angular.module('biggraph')
         scope.paramValues = {};
 
         scope.loadBoxMeta = function() {
-          if (!scope.workspaceName || !scope.manager || !scope.manager.selectedBoxId) {
+          if (!scope.workspace || !scope.workspace.selectedBoxId) {
             return;
           }
           // The below magic makes sure that the response
@@ -33,8 +32,8 @@ angular.module('biggraph')
             .nocache(
               '/ajax/getOperationMeta',
               {
-                  workspace: scope.workspaceName,
-                  box: scope.manager.selectedBoxId
+                  workspace: scope.workspace.name,
+                  box: scope.workspace.selectedBoxId
               })
             .then(
               function(boxMeta) {
@@ -57,7 +56,7 @@ angular.module('biggraph')
             scope.boxMeta = boxMeta;
             // Make a copy of the parameter values.
             scope.paramValues = Object.assign(
-                {}, scope.manager.selectedBox().instance.parameters);
+                {}, scope.workspace.selectedBox().instance.parameters);
             if (!scope.boxMeta) {
               return;
             }
@@ -78,7 +77,7 @@ angular.module('biggraph')
         };
 
         scope.apply = function() {
-          scope.manager.updateSelectedBox(scope.paramValues);
+          scope.workspace.updateSelectedBox(scope.paramValues);
         };
       },
     };
