@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import scala.annotation.tailrec
 
@@ -35,13 +35,15 @@ case class Workspace(
           newOutputStates ++ states
       }
     val unreachableStates = computationOrder.withCircularDependency.flatMap {
-      box => {
-        val meta = ops.getBoxMetadata(box.operationID)
-        meta.outputs.map {
-          o => o.ofBox(box) -> BoxOutputState(o.kind, null,
-            FEStatus.disabled("Can not compute state due to circular dependencies."))
+      box =>
+        {
+          val meta = ops.getBoxMetadata(box.operationID)
+          meta.outputs.map {
+            o =>
+              o.ofBox(box) -> BoxOutputState(o.kind, null,
+                FEStatus.disabled("Can not compute state due to circular dependencies."))
+          }
         }
-      }
     }.toMap
     (reachableStates ++ unreachableStates).map { (X.apply _).tupled }.toList
   }
@@ -100,8 +102,8 @@ case class Workspace(
       val (box, lowestDegree) = inDegrees.minBy(_._2)
       if (lowestDegree > 0) {
         ComputationOrder(
-          topologicalOrder=reversedTopologicalOrder.reverse,
-          withCircularDependency=inDegrees.keys.toList
+          topologicalOrder = reversedTopologicalOrder.reverse,
+          withCircularDependency = inDegrees.keys.toList
         )
       } else {
         if (outEdgeList.contains(box)) {
@@ -113,7 +115,7 @@ case class Workspace(
         calculate(box :: reversedTopologicalOrder)
       }
     }
-    
+
     calculate(List())
   }
 

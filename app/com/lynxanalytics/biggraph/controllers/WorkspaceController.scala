@@ -1,17 +1,21 @@
 // Methods for manipulating workspaces.
 package com.lynxanalytics.biggraph.controllers
 
+import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetOutputRequest(workspace: String, output: BoxOutput)
 case class GetAllOutputsRequest(workspace: String)
+case class GetOutputIDRequest(workspace: String, output: BoxOutput)
+case class GetOutputRequest(id: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
+case class GetOutputIDResponse(id: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class GetAllOutputsResponse(outputs: List[X])
 case class GetProgressResponse(progressList: List[BoxOutputProgress])
@@ -52,13 +56,31 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): Workspace =
     getWorkspaceByName(user, request.name)
 
-  def getOutput(
-    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+  // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
+  val calculatedStates = new HashMap[String, BoxOutputState]()
+
+  def getOutputID(
+    user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
-    state.kind match {
-      case BoxOutputKind.Project =>
-        GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(request.workspace)))
+    val id = Timestamp.toString
+    calculatedStates.synchronized {
+      calculatedStates(id) = state
+    }
+    GetOutputIDResponse(id)
+  }
+
+  def getOutput(
+    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+    calculatedStates.synchronized {
+      calculatedStates.get(request.id)
+    } match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
+      case Some(state: BoxOutputState) =>
+        state.kind match {
+          case BoxOutputKind.Project =>
+            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
+        }
     }
   }
 
