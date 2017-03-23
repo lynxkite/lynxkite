@@ -64,9 +64,8 @@ angular.module('biggraph')
             {
               name: this.name,
               workspace: that.workspace.rawWorkspace(),
-            }).then(
+            }).finally(
               // Reload workspace both in error and success cases.
-              function() { that.loadWorkspace(); },
               function() { that.loadWorkspace(); });
         },
 
@@ -102,7 +101,8 @@ angular.module('biggraph')
         },
 
         selectState: function(boxID, outputID) {
-          this.selectedStateId = util.nocache(
+          var that = this;
+          util.nocache(
             '/ajax/getOutputID',
             {
               workspace: this.name,
@@ -110,7 +110,14 @@ angular.module('biggraph')
                 boxID: boxID,
                 id: outputID
               }
-            });
+            })
+            .then(
+              function success(response) {
+                that.selectedStateId = response.id;
+              },
+              function error() {
+                that.selectedStateId = undefined;
+              });
         },
 
         selectPlug: function(plug) {
