@@ -20,7 +20,7 @@
 // 6. GOTO 2
 
 angular.module('biggraph')
-  .factory('workspaceManager', function(workspaceState, util, $interval) {
+  .factory('workspace', function(workspaceState, util, $interval) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
