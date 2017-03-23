@@ -11,11 +11,11 @@ angular.module('biggraph')
         stateId: '='
       },
       link: function(scope) {
-        scope.$watch('stateId.id', function() {
-          if (scope.stateId && scope.stateId.id) {
+        scope.$watch('stateId', function() {
+          if (scope.stateId) {
             scope.state = util.nocache(
               '/ajax/getOutput',
-              { id: scope.stateId.id }
+              { id: scope.stateId }
             );
           }
         });

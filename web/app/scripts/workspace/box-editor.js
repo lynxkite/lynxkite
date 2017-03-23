@@ -12,9 +12,15 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch('workspace', function() {
+          // We are not expecting updates of this it will be
+          // only set once at setup time. The $watch is just
+          // needed to be able to see the initial value.
           if (scope.workspace) {
+            // This callback will fire in two cases: if the
+            // box ID is changed or if the workspace (and therefore,
+            // possibly the box meta is changed).
             scope.workspace.setBoxSelectionCallback(
-                scope.loadBoxMeta);
+                function() { scope.loadBoxMeta(); });
           }
         });
 
@@ -33,17 +39,15 @@ angular.module('biggraph')
               '/ajax/getOperationMeta',
               {
                   workspace: scope.workspace.name,
-                  box: scope.workspace.selectedBoxId
+                  box: scope.workspace.selectedBoxId,
               })
             .then(
-              function(boxMeta) {
-                // success
+              function success(boxMeta) {
                 if (scope.lastRequest === currentRequest) {
                   scope.newOpSelected(boxMeta);
                 }
               },
-              function() {
-                // error
+              function error() {
                 if (scope.lastRequest === currentRequest) {
                   scope.newOpSelected(undefined);
                 }
