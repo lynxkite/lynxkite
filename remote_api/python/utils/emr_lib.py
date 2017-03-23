@@ -155,7 +155,9 @@ class EMRLib:
               {
               'Key': 'expiry',
               'Value': expiry
-              }])
+              },
+              {'Key': 'name',
+               'Value': name}])
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):
