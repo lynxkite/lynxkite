@@ -4,7 +4,7 @@ import boto3
 from prettytable import PrettyTable
 import argparse
 
-class MyTable():
+class ReportTable():
   def __init__(self):
     self.row = 0
     self.attributes =  ['Region', 'Name', 'Type', 'State', 'Private IP', 'Public IP', 'Launch Time', 'Owner', 'Expiry Date']
@@ -28,13 +28,13 @@ class MyTable():
     return self.row
 
 
-class MyEc2():
+class Ec2():
   def __init__(self):
     self.client = boto3.client('ec2')
     self.regions = self.client.describe_regions()['Regions']
 
   def get_running_instances(self):
-    table = MyTable()
+    table = ReportTable()
     for region in self.regions:
       region_name = region['RegionName']
       ec2 = boto3.resource('ec2', region_name=region['RegionName'])
@@ -66,7 +66,7 @@ class MyEc2():
           table.row += 1
     return table
 
-class MySesEmail():
+class SesEmail():
   def __init__(self):
     self.to = None
     self.from_addr = None
@@ -120,7 +120,7 @@ class MySesEmail():
 
 
 if __name__ == '__main__':
-  my_ec2 = MyEc2()
+  my_ec2 = Ec2()
   my_table = my_ec2.get_running_instances()
 
   my_parser = argparse.ArgumentParser(description='Sends report of active AWS instances')
@@ -130,7 +130,7 @@ if __name__ == '__main__':
   if args.ascii:
     my_table.print_table_ascii()
   else:
-    email = MySesEmail()
+    email = SesEmail()
     email.send_ses_email(
         to_address="ec2-users@lynxanalytics.com",
         from_address="ec2-users@lynxanalytics.com",
