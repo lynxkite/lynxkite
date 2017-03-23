@@ -28,7 +28,6 @@ GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 
 GET  /ajax/getTableBrowserNodes     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
-POST /ajax/exportSQLQueryToTable   com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToTable
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
 POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson
 POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToParquet
@@ -93,13 +92,9 @@ POST /remote/getComplexView com.lynxanalytics.biggraph.serving.RemoteAPIServer.g
 POST /remote/newWorkspace com.lynxanalytics.biggraph.serving.RemoteAPIServer.newWorkspace
 POST /remote/loadWorkspace com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadWorkspace
 POST /remote/removeName com.lynxanalytics.biggraph.serving.RemoteAPIServer.removeName
-POST /remote/loadTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadTable
-POST /remote/loadView com.lynxanalytics.biggraph.serving.RemoteAPIServer.loadView
 POST /remote/runOperation com.lynxanalytics.biggraph.serving.RemoteAPIServer.runOperation
 POST /remote/getOperationNames com.lynxanalytics.biggraph.serving.RemoteAPIServer.getOperationNames
 POST /remote/saveWorkspace com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveWorkspace
-POST /remote/saveTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveTable
-POST /remote/saveView com.lynxanalytics.biggraph.serving.RemoteAPIServer.saveView
 POST /remote/globalSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSQL
 POST /remote/isComputed com.lynxanalytics.biggraph.serving.RemoteAPIServer.isComputed
 POST /remote/computeWorkspace com.lynxanalytics.biggraph.serving.RemoteAPIServer.computeWorkspace
@@ -115,7 +110,6 @@ POST /remote/exportViewToJson com.lynxanalytics.biggraph.serving.RemoteAPIServer
 POST /remote/exportViewToORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToORC
 POST /remote/exportViewToParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToParquet
 POST /remote/exportViewToJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJdbc
-POST /remote/exportViewToTable com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToTable
 POST /remote/changeACL com.lynxanalytics.biggraph.serving.RemoteAPIServer.changeACL
 POST /remote/list com.lynxanalytics.biggraph.serving.RemoteAPIServer.list
 POST /remote/cleanFileSystem com.lynxanalytics.biggraph.serving.RemoteAPIServer.cleanFileSystem

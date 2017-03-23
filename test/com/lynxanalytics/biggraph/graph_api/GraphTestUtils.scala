@@ -79,7 +79,6 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGrap
   }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
-  override def sqlHelper = new SQLHelper(sparkContext, metaGraphManager, dataManager)
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }

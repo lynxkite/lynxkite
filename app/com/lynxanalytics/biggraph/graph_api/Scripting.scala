@@ -75,6 +75,9 @@ object Scripting {
   implicit def getData[T](entity: EntityContainer[Scalar[T]])(
     implicit dataManager: DataManager): ScalarData[T] =
     dataManager.get(entity.entity)
+  implicit def getData(entity: EntityContainer[Table])(
+    implicit dataManager: DataManager): TableData =
+    dataManager.get(entity.entity)
 
   implicit def getData(entity: VertexSet)(
     implicit dataManager: DataManager): VertexSetData =
@@ -87,6 +90,9 @@ object Scripting {
     dataManager.get(entity)
   implicit def getData[T](entity: Scalar[T])(
     implicit dataManager: DataManager): ScalarData[T] =
+    dataManager.get(entity)
+  implicit def getData(entity: Table)(
+    implicit dataManager: DataManager): TableData =
     dataManager.get(entity)
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
