@@ -36,7 +36,7 @@ angular.module('biggraph').factory('boxWrapper', function() {
 
       return {
         boxId: instance.id,
-        instance: instance,
+        boxInstance: instance,
         data: plug,
         direction: direction,
         radius: plugRadius,
