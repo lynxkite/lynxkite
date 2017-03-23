@@ -20,7 +20,7 @@
 // 6. GOTO 2
 
 angular.module('biggraph')
-  .factory('workspace', function(workspaceState, util, $interval) {
+  .factory('workspace', function(workspaceWrapper, util, $interval) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
@@ -51,7 +51,7 @@ angular.module('biggraph')
                 name: this.name
               })
               .then(function(rawWorkspace) {
-                that.workspace = workspaceState(
+                that.workspace = workspaceWrapper(
                   rawWorkspace, boxCatalogMap);
                 that.broadcastBoxSelection();
               });
