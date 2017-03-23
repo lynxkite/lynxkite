@@ -12,11 +12,12 @@ angular.module('biggraph')
         workspaceName: '=',
       },
       link: function(scope) {
-        scope.$watchGroup(
-            ['workspaceName', 'manager.selectedBoxId'],
-            function() {
-              scope.loadBoxMeta();
-            });
+        scope.$watch('manager', function() {
+          if (scope.manager) {
+            scope.manager.setBoxSelectionCallback(
+                scope.loadBoxMeta);
+          }
+        });
 
         scope.paramValues = {};
 

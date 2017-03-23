@@ -34,6 +34,8 @@ angular.module('biggraph')
         boxCatalogMap[boxMeta.operationID] = boxMeta;
       }
 
+      var boxSelectionCallback;
+
       var manager = {
         loadWorkspace: function() {
           var that = this;
@@ -45,7 +47,7 @@ angular.module('biggraph')
               .then(function(rawWorkspace) {
                 that.workspace = workspaceState(
                   rawWorkspace, boxCatalogMap);
-                that.selectBox(that.selectedBoxId);
+                that.broadcastBoxSelection();
               });
         },
 
@@ -63,7 +65,21 @@ angular.module('biggraph')
         },
 
         selectBox: function(boxId) {
+          var old = this.selectedBoxId;
           this.selectedBoxId = boxId;
+          if (old !== boxId) {
+            this.broadcastBoxSelection();
+          }
+        },
+
+        setBoxSelectionCallback: function(callback) {
+          boxSelectionCallback = callback;
+        },
+
+        broadcastBoxSelection: function() {
+          if (boxSelectionCallback) {
+            boxSelectionCallback();
+          }
         },
 
         selectedBox: function() {
