@@ -7,7 +7,7 @@
 // Every time the underlying workspace data was significantly changed, the
 // build() method needs to be invoked to rebuild the frontend-facing data.
 
-angular.module('biggraph').factory('workspaceState', function(boxState) {
+angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
   return function(rawWorkspace, boxCatalogMap) {
     var workspace = {
       // Original list of boxes. This is what we save and load.
@@ -34,7 +34,7 @@ angular.module('biggraph').factory('workspaceState', function(boxState) {
           var rawBox = this.rawBoxes[i];
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
-          box = boxState(boxCatalogMap[operationId], rawBox);
+          box = boxWrapper(boxCatalogMap[operationId], rawBox);
           this.boxes[i] = box;
           this.boxMap[boxId] = box;
         }

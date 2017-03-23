@@ -10,13 +10,13 @@
 //   coordinates on the workspace and everything related to this
 //   box instance that have to be saved.
 
-angular.module('biggraph').factory('boxState', function() {
+angular.module('biggraph').factory('boxWrapper', function() {
   return function(metadata, instance) {
     var width = 200;
     var height = 40;
 
     // An input or output connection point of a box.
-    function createPlug(plug, index, direction) {
+    function plugWrapper(plug, index, direction) {
       var plugRadius = 8;
 
       var len = metadata[direction].length;
@@ -72,10 +72,10 @@ angular.module('biggraph').factory('boxState', function() {
     var outputMap = {};
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
-      inputs.push(createPlug(metadata.inputs[i], i, 'inputs'));
+      inputs.push(plugWrapper(metadata.inputs[i], i, 'inputs'));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = createPlug(metadata.outputs[i], i, 'outputs');
+      var plug = plugWrapper(metadata.outputs[i], i, 'outputs');
       outputs.push(plug);
       outputMap[plug.data.id] = plug;
     }
