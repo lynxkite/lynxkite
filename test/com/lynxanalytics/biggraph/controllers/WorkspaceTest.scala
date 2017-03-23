@@ -27,8 +27,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
   def getOpMeta(ws: String, box: String) =
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
-  def getOutput(ws: String, box: String, output: String) =
-    controller.getOutput(user, GetOutputRequest(ws, BoxOutput(box, output)))
+  def getOutputID(ws: String, box: String, output: String) =
+    controller.getOutputID(user, GetOutputIDRequest(ws, BoxOutput(box, output)))
+  def getOutput(id: String) =
+    controller.getOutput(user, GetOutputRequest(id))
   import WorkspaceJsonFormatters._
   import CheckpointRepository._
   def print[T: json.Writes](t: T): Unit = {
@@ -86,7 +88,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
-      val o = getOutput("test-workspace", "eg", "project")
+      val o = getOutput(getOutputID("test-workspace", "eg", "project").id)
       assert(o.kind == "project")
       val income = o.project.get.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
