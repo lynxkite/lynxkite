@@ -71,6 +71,9 @@ angular.module('biggraph').factory('createBox', function() {
         this.xOffset = this.instance.x - event.clientX;
         this.yOffset = this.instance.y - event.clientY;
       },
+      isCommentBox: function() {
+        return this.metadata.operationID === 'Add comment';
+        }
     };
   };
 });
