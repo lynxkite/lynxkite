@@ -1,24 +1,20 @@
 'use strict';
 
 // An "uber manager" for the workspace state.
-// This class is responsible for hooking a workspace to the
-// several outside-world components, like the drawing-board
-// box-editor, the state-view and also load/save to the backend.
-//
-// The responsibility of the workspaceState is to mind its own
-// business, i.e. it's just an API for the data structures
-// describing the workspace.
+// This class wraps a workspaceState and implements logic to
+// connect it to Angular components (workspace-drawing-board,
+// box-editor, state-view) and the backend.
 //
 // Life cycle:
 // 1. boxCatalog needs to be loaded at all times for things to work
 // 2. loadWorkspace()
 //    - downloads a workspace
 //    - triggers workspace.build()
-//    - sets scope.workspace to the downloaded and built workspace
-//    - visible GUI gets updated
+//    - sets this.workspace to the downloaded and built workspace
+//    - visible GUI gets updated via workspace-drawing-board
 // 3. user edit happens, e.g. box move, add box, or add arrow
 // 4. in cases of "complex edits" - edits except for move:
-//    - scope.workspace.build() is called by the edit code
+//    - this.workspace.build() is called by the edit code
 //    - this updates the visible GUI immediately
 // 5. saveWorkspace()
 // 6. GOTO 2
