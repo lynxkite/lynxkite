@@ -58,7 +58,8 @@ object IOContext {
   }
 }
 
-case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext) {
+case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
+  val sparkContext = sparkSession.sparkContext
   def partitionedPath(entity: MetaGraphEntity): HadoopFileLike =
     dataRoot / io.PartitionedDir / entity.gUID.toString
 
@@ -216,6 +217,31 @@ class ScalarIO[T](entity: Scalar[T], context: IOContext)
 
   private def path = dataRoot / ScalarsDir / entity.gUID.toString
   private def serializedScalarFileName: HadoopFileLike = path / "serialized_data"
+  private def successPath: HadoopFileLike = path / Success
+}
+
+class TableIO(entity: Table, context: IOContext) extends EntityIO(entity, context) {
+
+  def read(parent: Option[VertexSetData]): TableData = {
+    assert(parent == None, s"Table read called with parent $parent")
+    log.info(s"PERF Loading table $entity from disk")
+    val df = context.sparkSession.read.parquet(path.forReading.resolvedName)
+    assert(df.schema == entity.schema, s"Schema mismatch on read for $entity.")
+    log.info(s"PERF Loaded table $entity from disk")
+    new TableData(entity, df)
+  }
+
+  def write(data: EntityData): Unit = {
+    val tableData = data.asInstanceOf[TableData]
+    log.info(s"PERF Writing table $entity to disk")
+    tableData.df.write.parquet(path.forWriting.resolvedName)
+    log.info(s"PERF Written table $entity to disk")
+  }
+  def delete() = path.forWriting.deleteIfExists()
+  def exists = operationExists && (path / Success).exists
+  def mayHaveExisted = operationMayHaveExisted && path.mayHaveExisted
+
+  private def path = dataRoot / TablesDir / entity.gUID.toString
   private def successPath: HadoopFileLike = path / Success
 }
 
