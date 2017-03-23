@@ -113,11 +113,12 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         var src = plugs.outputs;
         var dst = plugs.inputs;
 
-        dst.instance.inputs[dst.data.id] = {
+        // Mutate raw workflow:
+        dst.boxInstance.inputs[dst.data.id] = {
           boxID: src.boxId,
           id: src.data.id
         };
-
+        // Rebuild API objects based on raw workflow:
         this.build();
         return true;
       },
