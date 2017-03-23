@@ -32,7 +32,11 @@ case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {
     val attrB = inputs.attrB.rdd
     val joined = attrA.sortedJoin(attrB).values
     val a = joined.keys
+    val distinctA = a.distinct().count()
+    assert(distinctA > 1, "Correlation is not defined because the first attribute is constant.")
     val b = joined.values
+    val distinctB = b.distinct().count()
+    assert(distinctB > 1, "Correlation is not defined because the second attribute is constant.")
     val correlation = Statistics.corr(a, b, "pearson") // we could do "spearman" too
     output(o.correlation, correlation)
   }
