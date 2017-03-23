@@ -7,6 +7,7 @@ import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
@@ -88,7 +89,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       calculatedStates.get(request.id).get.state.state.as[CommonProjectState]
     }
     val rpState = RootProjectState.emptyState.copy(state = cpState, checkpoint = None)
-    metaManager.checkpointRepo.checkpointState(rpState, "")
+    val checkpointedState = metaManager.checkpointRepo.checkpointState(rpState, "")
+    val snapShot = new ProjectFrame(SymbolPath("snapshot-" + checkpointedState.checkpoint.get))
+    snapShot.initialize()
+    snapShot.setCheckpoint(checkpointedState.checkpoint.get)
   }
 
   def setWorkspace(
