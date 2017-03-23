@@ -178,8 +178,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
       assert(progressBeforePR.success.enabled)
-      assert(progressBeforePR.progress("inProgress") == 0)
-      val computedBeforePR = progressBeforePR.progress("computed")
+      assert(progressBeforePR.progress.inProgress == 0)
+      val computedBeforePR = progressBeforePR.progress.computed
       import graph_api.Scripting._
       // trigger PR computation
       ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
@@ -187,7 +187,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val progressAfterPR = controller.getProgress(user,
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
-      val computedAfterPR = progressAfterPR.progress("computed")
+      val computedAfterPR = progressAfterPR.progress.computed
       assert(computedAfterPR > computedBeforePR)
     }
   }
