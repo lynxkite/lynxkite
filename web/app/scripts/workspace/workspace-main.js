@@ -10,7 +10,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('WorkspaceMainCtrl', function ($scope, $routeParams, util, workspaceManager) {
+  .controller('WorkspaceMainCtrl', function ($scope, $routeParams, util, workspace) {
 
   $scope.workspaceName = $routeParams.workspaceName;
   $scope.boxCatalog = util.nocache('/ajax/boxCatalog');
@@ -18,8 +18,7 @@ angular.module('biggraph')
     ['boxCatalog.$resolved', 'workspaceName'],
     function() {
       if ($scope.boxCatalog.$resolved && $scope.workspaceName) {
-        $scope.manager = workspaceManager(
-            $scope.boxCatalog, $scope.workspaceName);
+        $scope.manager = workspace($scope.boxCatalog, $scope.workspaceName);
       }
   });
 });
