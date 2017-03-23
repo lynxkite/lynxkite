@@ -94,7 +94,10 @@ case class LogisticRegressionModelTrainer(
     val featuresDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
-
+    // Logistic regression is a binary classification method now.
+    // All labels have to be 0 or 1 in the training set.
+    val wrongLabels = inputs.label.rdd.filter { case (_, value) => !(value == 1.0 || value == 0.0) }.count()
+    assert(wrongLabels == 0, "Classification labels should be 0 or 1.")
     // Train a logistic regression model. The model chooses a threshold with minimal
     // F-score. Feature scaling is set to be true by default.
     val logisticRegression = new ml.classification.LogisticRegression()
