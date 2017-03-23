@@ -1,2 +1,7 @@
+<button ng-click="createSnapshot()"
+        ng-if="state.kind === 'project'"
+        class="btn btn-default">
+    Take a snapshot
+</button>
 <project-state-view side="side" ng-if="state.kind === 'project'">
 </project-state-view>
