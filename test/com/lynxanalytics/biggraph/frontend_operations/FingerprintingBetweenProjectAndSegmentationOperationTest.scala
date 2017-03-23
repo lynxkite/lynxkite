@@ -6,6 +6,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
+  test("Compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Fingerprinting between project and segmentation") {
     run("Create example graph")
     run("Import project as segmentation", Map(
@@ -79,5 +83,5 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     assert(similarity.size == 6)
     assert(similarity.filter(_ > 0).size == 6)
   }
-
+*/
 }

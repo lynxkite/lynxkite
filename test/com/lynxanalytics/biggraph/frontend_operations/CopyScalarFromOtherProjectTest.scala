@@ -4,10 +4,14 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class CopyScalarFromOtherProjectTest extends OperationsTestBase {
+  test("This compiles and fails") {
+    assert(false)
+  }
+  /*
   test("Take scalar from other project with wrong source name") {
     run("Create example graph")
     val other = clone(project)
-    run("Rename scalar", Map("from" -> "greeting", "to" -> "farewell"), on = other)
+    run("Rename scalar", Map("from" -> "greeting", "to" -> "farewell"))
     val ex = intercept[java.lang.AssertionError] {
       run(
         "Copy scalar from other project",
@@ -41,7 +45,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
     run("Derive scalar", Map(
       "output" -> "scalar_val",
       "type" -> "double",
-      "expr" -> "42.0"), on = other)
+      "expr" -> "42.0"))
     run(
       "Copy scalar from other project",
       Map(
@@ -58,15 +62,15 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",
       "name" -> "rnd",
-      "seed" -> "1474343267"), on = other)
+      "seed" -> "1474343267"))
     run("Segment by double attribute", Map(
       "attr" -> "rnd",
       "interval_size" -> "0.1",
-      "name" -> "seg", "overlap" -> "no"), on = other)
+      "name" -> "seg", "overlap" -> "no"))
     run("Derive scalar", Map(
       "output" -> "scalar_val",
       "type" -> "string",
-      "expr" -> "'myvalue'"), on = other.segmentation("seg"))
+      "expr" -> "'myvalue'"))
     run(
       "Copy scalar from other project",
       Map(
@@ -83,25 +87,25 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",
       "name" -> "rnd",
-      "seed" -> "1474343267"), on = other)
+      "seed" -> "1474343267"))
     run("Segment by double attribute", Map(
       "attr" -> "rnd",
       "interval_size" -> "0.1",
       "name" -> "seg",
-      "overlap" -> "no"), on = other)
+      "overlap" -> "no"))
     run("Add random vertex attribute", Map(
       "dist" -> "Standard Normal",
       "name" -> "rnd2",
-      "seed" -> "1474343267"), on = other.segmentation("seg"))
+      "seed" -> "1474343267") /*, on = other.segmentation("seg") */ )
     run("Segment by double attribute", Map(
       "attr" -> "rnd2",
       "interval_size" -> "0.1",
       "name" -> "seg2",
-      "overlap" -> "no"), on = other.segmentation("seg"))
+      "overlap" -> "no") /*, on = other.segmentation("seg")*/ )
     run("Derive scalar", Map(
       "output" -> "deep_scalar",
       "type" -> "string",
-      "expr" -> "'deep value'"), on = other.segmentation("seg").segmentation("seg2"))
+      "expr" -> "'deep value'") /*, on = other.segmentation("seg").segmentation("seg2") */ )
     run(
       "Copy scalar from other project",
       Map(
@@ -111,5 +115,5 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
 
     assert(project.scalars("my_scalar_3").value == "deep value")
   }
-
+*/
 }

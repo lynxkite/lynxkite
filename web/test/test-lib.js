@@ -133,6 +133,7 @@ function Workspace() {
   this.main = element(by.id('workspace-main'));
   this.selector = element(by.css('.operation-selector'));
   this.board = element(by.css('workspace-drawing-board'));
+  this.boxEditor = element(by.css('box-editor'));
 }
 
 Workspace.prototype = {
@@ -155,29 +156,66 @@ Workspace.prototype = {
     this.selector.element(by.id('operation-search')).click();
   },
 
-  addBox: function(name, params, x, y) {
+  operationParameter: function(param) {
+    return this.boxEditor.element(by.css(
+        'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
 
-    params = {};
+  populateOperation: function(params) {
+    params = params || {};
+    for (var key in params) {
+      testLib.setParameter(this.operationParameter(key), params[key]);
+    }
+  },
+
+  submitOperation: function() {
+    var button = this.boxEditor.$('.ok-button');
+    // Wait for uploads or whatever.
+    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
+    button.click();
+  },
+
+  addBox: function(name, x, y) {
     var op = this.openOperation(name);
     testLib.simulateDragAndDrop(op, this.board, x, y);
     this.closeOperationSelector();
   },
 
-  getInputPlug: function(boxId, plugId) {
-    return this.board
-        .element(by.id(boxId + '-inputs-' + plugId))
-        .element(by.css('circle'));
+  selectBox(box) {
+    box.$('rect').click();
   },
 
-  getOutputPlug: function(boxId, plugId) {
-    return this.board
-        .element(by.id(boxId + '-outputs-' + plugId))
-        .element(by.css('circle'));
+  editBox: function(box, params) {
+    this.selectBox(box);
+    this.populateOperation(params);
+    this.submitOperation();
   },
 
-  connectBoxes: function(name1, output1, name2, input2) {
-    var src = this.getOutputPlug(name1, output1);
-    var dst = this.getInputPlug(name2, input2);
+  expectSelectedBoxParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectedBoxSelectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  getBox(boxId) {
+    return this.board.$$('.box').get(boxId);
+  },
+
+  getInputPlug: function(box, plugId) {
+    return box.$('#inputs #' + plugId + ' circle');
+  },
+
+  getOutputPlug: function(box, plugId) {
+    return box.$('#outputs #' + plugId + ' circle');
+  },
+
+  connectBoxes: function(box1, output1, box2, input2) {
+    var src = this.getOutputPlug(box1, output1);
+    var dst = this.getInputPlug(box2, input2);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
@@ -277,17 +315,6 @@ Side.prototype = {
 
   redoButton: function() {
     return this.side.element(by.id('redo-button'));
-  },
-
-  operationParameter: function(opElement, param) {
-    return opElement.$('operation-parameters #' + param + ' .operation-attribute-entry');
-  },
-
-  populateOperation: function(parentElement, params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(parentElement, key), params[key]);
-    }
   },
 
   populateOperationInput: function(parameterId, param) {
@@ -584,15 +611,6 @@ History.prototype = {
       count();
   },
 
-  expectOperationParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  },
-
-  expectOperationSelectParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  }
 };
 
 var visualization = {

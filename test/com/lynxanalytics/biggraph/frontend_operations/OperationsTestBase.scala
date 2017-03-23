@@ -15,16 +15,51 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val ops = new Operations(this)
   val sql = new SQLController(this)
 
-  def clone(original: RootProjectEditor): RootProjectEditor = {
-    val res = original.viewer.editor
-    res.checkpoint = original.checkpoint
-    res
+  case class TestBox(
+      operationID: String,
+      parameters: Map[String, String],
+      inputs: Seq[TestBox]) {
+
+    private def projectRec(boxes: scala.collection.mutable.ListBuffer[Box]): String = {
+      val inputNames = inputs.map(
+        input => input.projectRec(boxes)
+      )
+      val name = s"${operationID} ${boxes.length}"
+      val inputIds = ops.getBoxMetadata(operationID).inputs.map(_.id)
+      assert(inputIds.size == inputNames.size)
+      val inputBoxOutputs = inputIds.zip(inputNames).map {
+        case (inputID, boxID) => inputID -> BoxOutput(boxID, "project")
+      }.toMap
+
+      val box = Box(
+        name,
+        operationID,
+        parameters, 0, 0,
+        inputBoxOutputs
+      )
+      boxes += box
+      name
+    }
+
+    def project(): RootProjectEditor = {
+      val boxes = scala.collection.mutable.ListBuffer[Box]()
+      projectRec(boxes)
+      val lastBox = boxes.last
+      val ws = Workspace(boxes = boxes.toList)
+      ws.state(serving.User.fake, ops, lastBox.output("project")).project
+    }
+
+    def box(operationID: String,
+            parameters: Map[String, String] = Map()): TestBox = {
+      TestBox(operationID, parameters, Seq(this))
+    }
   }
 
-  val user = serving.User.fake
-  var ws = Workspace(boxes = List())
-  var lastOutput: Option[BoxOutput] = None
-  def project = ws.state(user, ops, lastOutput.get).project
+  def box(operationID: String,
+          parameters: Map[String, String] = Map(),
+          inputs: Seq[TestBox] = Seq()): TestBox = {
+    TestBox(operationID, parameters, inputs)
+  }
 
   def importCSV(files: String): String = {
     val f = sql.importCSV(serving.User.fake, CSVImportRequest(
@@ -41,14 +76,4 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     f.id
   }
 
-  def run(opID: String, params: Map[String, String] = Map(), on: ProjectEditor = null): Unit = {
-    val box = Box(
-      s"box${ws.boxes.size}", opID, params, 0, 0,
-      lastOutput.map(o => Map("project" -> o)).getOrElse(Map()))
-    ws = ws.copy(boxes = ws.boxes :+ box)
-    lastOutput = Some(box.output("project"))
-  }
-
-  def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
-    attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 }

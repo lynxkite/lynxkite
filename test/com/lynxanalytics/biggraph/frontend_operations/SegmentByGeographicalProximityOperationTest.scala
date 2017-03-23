@@ -22,19 +22,20 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
   }
 
   test("Segment by geographical proximity") {
-    run("Create example graph")
     val shapePath = linkShapeFile("earth")
-    run("Segment by geographical proximity", Map(
-      "name" -> "timezones",
-      "position" -> "location",
-      "shapefile" -> shapePath,
-      "distance" -> "0.1",
-      "ignoreUnsupportedShapes" -> "false"))
-    val seg = project.segmentation("timezones")
+    val base = box("Create example graph")
+      .box("Segment by geographical proximity", Map(
+        "name" -> "timezones",
+        "position" -> "location",
+        "shapefile" -> shapePath,
+        "distance" -> "0.1",
+        "ignoreUnsupportedShapes" -> "false"))
+    val seg = base.project.segmentation("timezones")
     // Assert that the TZID segment attribute is created.
     assert(seg.vertexAttributes("TZID").runtimeSafeCast[String].rdd.count == 418)
-    run("Aggregate from segmentation",
+    val project = base.box("Aggregate from segmentation",
       Map("prefix" -> "timezones", "aggregate_TZID" -> "vector", "apply_to_project" -> "|timezones"))
+      .project
     val tzids = project.vertexAttributes("timezones_TZID_vector").runtimeSafeCast[Vector[String]]
     assert(tzids.rdd.collect.toSet == Set(
       (0, Vector("America/New_York")),

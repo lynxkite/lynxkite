@@ -1,8 +1,8 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
-<div class="form-group" ng-repeat="param in op.parameters">
+<div class="form-group" ng-repeat="param in params">
   <label for="{{param.id}}" class="col-sm-4 control-label">
     {{param.title}}
-    <help-popup href="{{op.id + '-' + param.id}}"></help-popup>
+    <help-popup href="{{box.meta.operationID + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
     <input ng-if="param.kind === 'default'"
@@ -48,7 +48,7 @@
     </table-kind>
     <select
       ng-disabled="!editable"
-      ng-if="param.kind === 'choice' && !param.multipleChoice"
+      ng-if="(param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation')"
       class="form-control operation-attribute-entry"
       ng-model="output[param.id]"
       ng-options="option.id as option.title for option in param.options"></select>

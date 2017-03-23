@@ -2,59 +2,62 @@
 
 module.exports = function() {};
 
-/*
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
-    'empty test-example project',
+    'empty test-example workspace',
     'test pagerank default choice values',
     function() {
-      lib.left.runOperation('example graph');
-      lib.left.runOperation('pagerank',
+      lib.workspace.addBox('create example graph', 100, 100);
+      var ex0 = lib.workspace.getBox(0);
+      lib.workspace.addBox('compute pagerank', 100, 200);
+      var pr1 = lib.workspace.getBox(1);
+      lib.workspace.addBox('compute pagerank', 100, 300);
+      var pr2 = lib.workspace.getBox(2);
+      lib.workspace.connectBoxes(ex0, 'project', pr1, 'project');
+      lib.workspace.connectBoxes(pr1, 'project', pr2, 'project');
+      lib.workspace.editBox(
+          pr1,
           {
             name: 'page_rank_default',
           });
-      lib.left.runOperation('pagerank',
+      lib.workspace.editBox(
+          pr2,
           {
             name: 'page_rank_incoming',
             direction: 'incoming edges',
           });
     },
     function() {
+      var pr1 = lib.workspace.getBox(1);
+      var pr2 = lib.workspace.getBox(2);
+      lib.workspace.getOutputPlug(pr2, 'project').click();
       expect(
-        lib.left.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
-        lib.left.vertexAttribute('page_rank_default').getHistogramValues());
-      lib.left.history.open();
-      lib.left.history.expectOperationSelectParameter(1, 'direction', 'string:outgoing edges');
-      lib.left.history.expectOperationSelectParameter(2, 'direction', 'string:incoming edges');
-      lib.left.history.close();
+        lib.state.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
+        lib.state.vertexAttribute('page_rank_default').getHistogramValues());
+      lib.workspace.selectBox(pr1);
+      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:outgoing edges');
+      lib.workspace.selectBox(pr2);
+      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:incoming edges');
     });
 
   fw.statePreservingTest(
     'test pagerank default choice values',
-    'test pagerank default choice values edit history',
+    'test pagerank default choice values edit workspace',
     function() {
-      lib.left.history.open();
-      var op1 = lib.left.history.getOperation(1);
-      lib.left.populateOperation(op1, {direction: 'all edges'});  // change direction
-      lib.left.submitOperation(op1);
-      var op2 = lib.left.history.getOperation(2);
-      lib.left.populateOperation(op2, {direction: 'all edges'});  // change direction
-      lib.left.submitOperation(op2);
-      lib.left.history.save();
+      var pr1 = lib.workspace.getBox(1);
+      var pr2 = lib.workspace.getBox(2);
+      lib.workspace.editBox(pr1, {direction: 'all edges'});  // change direction
+      lib.workspace.editBox(pr2, {direction: 'all edges'});  // change direction
 
-      lib.left.history.open();
-      lib.left.history.expectOperationSelectParameter(1, 'direction', 'string:all edges');
-      lib.left.history.expectOperationSelectParameter(2, 'direction', 'string:all edges');
-      // Restore original state.
-      var op3 = lib.left.history.getOperation(1);
-      lib.left.populateOperation(op3, {direction: 'outgoing edges'});
-      lib.left.submitOperation(op3);
-      var op4 = lib.left.history.getOperation(2);
-      lib.left.populateOperation(op4, {direction: 'incoming edges'});
-      lib.left.submitOperation(op4);
-      lib.left.history.save();
+      lib.workspace.selectBox(pr1);
+      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:all edges');
+      lib.workspace.selectBox(pr2);
+      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:all edges');
+
+      // Restore original state, because this is a state-preserving test.
+      lib.workspace.editBox(pr1, {direction: 'outgoing edges'});
+      lib.workspace.editBox(pr2, {direction: 'incoming edges'});
     });
 };
-*/
