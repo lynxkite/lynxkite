@@ -176,8 +176,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
       assert(progressBeforePR.success.enabled)
-      assert(progressBeforePR.progress("inProgress") == 0)
-      val computedBeforePR = progressBeforePR.progress("computed")
+      assert(progressBeforePR.progress.inProgress == 0)
+      val computedBeforePR = progressBeforePR.progress.computed
       import graph_api.Scripting._
       // trigger PR computation
       ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
@@ -185,7 +185,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val progressAfterPR = controller.getProgress(user,
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
-      val computedAfterPR = progressAfterPR.progress("computed")
+      val computedAfterPR = progressAfterPR.progress.computed
       assert(computedAfterPR > computedBeforePR)
     }
   }
@@ -202,6 +202,25 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
       assert(!progress.success.enabled)
+    }
+  }
+
+  test("circular dependencies") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> BoxOutput("pr2", "project")))
+      val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> BoxOutput("pr1", "project")))
+      val pr3 = Box("pr3", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> BoxOutput("pr2", "project")))
+      val badBoxes = List(pr1, pr2, pr3)
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val ws = Workspace(eg :: badBoxes)
+      set("test-workspace", ws)
+      val outputs = controller.getAllOutputs(user, GetAllOutputsRequest("test-workspace"))
+        .outputs.map(x => (x.boxOutput, x.state)).toMap
+      for (box <- badBoxes) {
+        assert(!outputs(box.output("project")).success.enabled)
+      }
+      assert(outputs(eg.output("project")).success.enabled)
     }
   }
 }
