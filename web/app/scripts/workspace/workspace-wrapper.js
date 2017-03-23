@@ -4,14 +4,18 @@
 // This object wraps the actual workspace data representation and
 // provides methods to interact with the GUI, e.g. mouse events
 // and values to bind with Angular to SVG elements.
+//
 // Every time the underlying workspace data was significantly changed, the
-// build() method needs to be invoked to rebuild the frontend-facing data.
+// private build() method is invoked to rebuild the frontend-facing data.
+// The flow of changes here is always one-way:
+// 1. user change or new workspace state loaded
+// 2. "raw" state is updated
+// 3. build() updates the frontend-facing objects
 
 angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
-  return function(rawWorkspace, boxCatalogMap) {
-    var workspace = {
-      // Original list of boxes. This is what we save and load.
-      rawBoxes: rawWorkspace.boxes,
+  return function(state, boxCatalogMap) {
+    var wrapper = {
+      state: state,
       // The below data structures are generated from rawBoxes
       // by this.build(). These are the ones that interact with
       // the GUI.
@@ -19,19 +23,13 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       arrows: [],
       boxMap: {},
 
-      rawWorkspace: function() {
-        return {
-          boxes: this.rawBoxes
-        };
-      },
-
       // private
       buildBoxes: function() {
         this.boxes = [];
         this.boxMap = {};
         var box;
-        for (var i = 0; i < this.rawBoxes.length; ++i) {
-          var rawBox = this.rawBoxes[i];
+        for (var i = 0; i < this.state.boxes.length; ++i) {
+          var rawBox = this.state.boxes[i];
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
           box = boxWrapper(boxCatalogMap[operationId], rawBox);
@@ -81,6 +79,9 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         }
       },
 
+      // private
+      // If state was updated, this needs to run so that the frontend-facing objects
+      // are also updated.
       build: function() {
         this.buildBoxes();
         this.buildArrows();
@@ -90,7 +91,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         var cnt = this.boxes.length;
         var boxId = operationId.replace(/ /g, '-') + cnt;
 
-        this.rawBoxes.push(
+        this.state.boxes.push(
             {
               id: boxId,
               operationID: operationId,
@@ -147,7 +148,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
 
     };
 
-    workspace.build();
-    return workspace;
+    wrapper.build();
+    return wrapper;
   };
 });

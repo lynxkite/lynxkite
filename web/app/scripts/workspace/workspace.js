@@ -1,23 +1,22 @@
 'use strict';
 
-// An "uber manager" for the workspace state.
-// This class wraps a workspaceState and implements logic to
-// connect it to Angular components (workspace-drawing-board,
-// box-editor, state-view) and the backend.
+// This class manages a workspace state and its connection to Angular
+// components (workspace-drawing-board, box-editor, state-view) and the
+// backend.
+// Handling the workspace state data structure and wrapping it with API
+// objects is outsourced from here to workspaceWrapper.
 //
 // Life cycle:
 // 1. boxCatalog needs to be loaded at all times for things to work
 // 2. loadWorkspace()
-//    - downloads a workspace
-//    - triggers workspace.build()
-//    - sets this.workspace to the downloaded and built workspace
+//    - downloads a workspace state
+//    - creates a workspaceWrapper using the downloaded state and
+//      sets this.workspace to points to it
 //    - visible GUI gets updated via workspace-drawing-board
 // 3. user edit happens, e.g. box move, add box, or add arrow
-// 4. in cases of "complex edits" - edits except for move:
-//    - this.workspace.build() is called by the edit code
-//    - this updates the visible GUI immediately
+//    - all objects are updated inside workspaceWrapper
 // 5. saveWorkspace()
-// 6. GOTO 2
+// 5. GOTO 2
 
 angular.module('biggraph')
   .factory('workspace', function(workspaceWrapper, util, $interval) {
@@ -50,9 +49,9 @@ angular.module('biggraph')
               {
                 name: this.name
               })
-              .then(function(rawWorkspace) {
+              .then(function(state) {
                 that.workspace = workspaceWrapper(
-                  rawWorkspace, boxCatalogMap);
+                  state, boxCatalogMap);
                 that.broadcastBoxSelection();
               });
         },
@@ -63,7 +62,7 @@ angular.module('biggraph')
             '/ajax/setWorkspace',
             {
               name: this.name,
-              workspace: that.workspace.rawWorkspace(),
+              workspace: that.workspace.state,
             }).finally(
               // Reload workspace both in error and success cases.
               function() { that.loadWorkspace(); });
