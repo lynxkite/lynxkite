@@ -38,7 +38,6 @@ angular.module('biggraph').factory('boxState', function() {
         boxId: instance.id,
         instance: instance,
         data: plug,
-        index: index,
         direction: direction,
         radius: plugRadius,
         x: function() { return x + instance.x; },
