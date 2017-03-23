@@ -3,48 +3,52 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
- .directive('boxEditor', function(util, $rootScope) {
+ .directive('boxEditor', function(util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
-        box: '=',
+        manager: '=',
         workspaceName: '=',
       },
       link: function(scope) {
         scope.$watchGroup(
-            ['workspaceName', 'box.instance.id'],
+            ['workspaceName', 'manager.selectedBoxId'],
             function() {
-              if (!scope.workspaceName || !scope.box) {
-                return;
-              }
-              // The below magic makes sure that the response
-              // to the result of the latest getOperationMetaRequest
-              // will be passed to scope.newOpSelected().
-              var currentRequest;
-              scope.lastRequest = currentRequest = util
-                .nocache(
-                  '/ajax/getOperationMeta',
-                  {
-                      workspace: scope.workspaceName,
-                      box: scope.box.instance.id
-                  })
-                .then(
-                  function(boxMeta) {
-                    // success
-                    if (scope.lastRequest === currentRequest) {
-                      scope.newOpSelected(boxMeta);
-                    }
-                  },
-                  function() {
-                    // error
-                    if (scope.lastRequest === currentRequest) {
-                      scope.newOpSelected(undefined);
-                    }
-                  });
+              scope.loadBoxMeta();
             });
 
         scope.paramValues = {};
+
+        scope.loadBoxMeta = function() {
+          if (!scope.workspaceName || !scope.manager || !scope.manager.selectedBoxId) {
+            return;
+          }
+          // The below magic makes sure that the response
+          // to the result of the latest getOperationMetaRequest
+          // will be passed to scope.newOpSelected().
+          var currentRequest;
+          scope.lastRequest = currentRequest = util
+            .nocache(
+              '/ajax/getOperationMeta',
+              {
+                  workspace: scope.workspaceName,
+                  box: scope.manager.selectedBoxId
+              })
+            .then(
+              function(boxMeta) {
+                // success
+                if (scope.lastRequest === currentRequest) {
+                  scope.newOpSelected(boxMeta);
+                }
+              },
+              function() {
+                // error
+                if (scope.lastRequest === currentRequest) {
+                  scope.newOpSelected(undefined);
+                }
+              });
+        };
 
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.
@@ -52,7 +56,7 @@ angular.module('biggraph')
             scope.boxMeta = boxMeta;
             // Make a copy of the parameter values.
             scope.paramValues = Object.assign(
-                {}, scope.box.instance.parameters);
+                {}, scope.manager.selectedBox().instance.parameters);
             if (!scope.boxMeta) {
               return;
             }
@@ -73,12 +77,7 @@ angular.module('biggraph')
         };
 
         scope.apply = function() {
-          $rootScope.$broadcast(
-              'box parameters updated',
-              {
-                  boxId: scope.box.instance.id,
-                  paramValues: scope.paramValues
-              });
+          scope.manager.updateSelectedBox(scope.paramValues);
         };
       },
     };

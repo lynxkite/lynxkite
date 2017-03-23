@@ -4,26 +4,15 @@
 // arrows diagram.
 
 angular.module('biggraph')
-  .directive('workspaceDrawingBoard', function(workspaceManager) {
+  .directive('workspaceDrawingBoard', function() {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
       templateNamespace: 'svg',
       scope: {
-        workspaceName: '=',
-        selectedBox: '=',
-        selectedState: '=',
-        boxCatalog: '=',
+        manager: '=',
       },
       link: function(scope, element) {
-        scope.$watchGroup(
-          ['boxCatalog.$resolved', 'workspaceName'],
-          function() {
-            if (scope.boxCatalog.$resolved && scope.workspaceName) {
-              scope.manager = workspaceManager(
-                  scope.boxCatalog, scope.workspaceName);
-            }
-        });
 
         var workspaceDrag = false;
         var workspaceX = 0;

@@ -63,18 +63,24 @@ angular.module('biggraph')
         },
 
         selectBox: function(boxId) {
-          this.selectedBox = undefined;
-          this.selectedBoxId = undefined;
-          if (!boxId) {
-            return;
-          }
-          this.selectedBox = this.workspace.boxMap[boxId];
           this.selectedBoxId = boxId;
         },
 
+        selectedBox: function() {
+          if (this.selectedBoxId) {
+            return this.workspace.boxMap[this.selectedBoxId];
+          } else {
+            return undefined;
+          }
+        },
+
+        updateSelectedBox: function(paramValues) {
+          this.workspace.setBoxParams(this.selectedBoxId, paramValues);
+          this.saveWorkspace();
+        },
+
         selectState: function(boxID, outputID) {
-          var that = this;
-          util.nocache(
+          this.selectedStateId = util.nocache(
             '/ajax/getOutputID',
             {
               workspace: workspaceName,
@@ -82,13 +88,7 @@ angular.module('biggraph')
                 boxID: boxID,
                 id: outputID
               }
-            }
-          ).then(function(stateID) {
-            that.selectedState = util.nocache(
-              '/ajax/getOutput',
-              stateID
-            );
-          });
+            });
         },
 
         selectPlug: function(plug) {
@@ -146,18 +146,13 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
-        onBoxParametersUpdated: function(boxId, paramValues) {
-          this.workspace.setBoxParams(boxId, paramValues);
-          this.saveWorkspace();
-        },
-
         getAndUpdateProgress: function(errorHandler) {
           var that = this;
           var workspaceBefore = this.workspace;
           var plugBefore = this.selectedPlug;
           if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
             util.nocache('/ajax/getProgress', {
-              workspace: this.workspaceName,
+              workspace: workspaceName,
               output: {
                 boxID: plugBefore.boxId,
                 id: plugBefore.data.id

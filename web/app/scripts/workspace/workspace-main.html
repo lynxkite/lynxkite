@@ -15,19 +15,15 @@
   </div>
 
   <div id="workspace-main-layout">
-    <workspace-drawing-board
-        box-catalog="boxCatalog"
-        selected-box="selectedBox"
-        selected-state="selectedState"
-        workspace-name="workspaceName">
+    <workspace-drawing-board manager="manager">
     </workspace-drawing-board>
     <operation-selector box-catalog="boxCatalog" editable="true">
     </operation-selector>
     <div id="right-panel">
-      <state-view state="selectedState">
+      <state-view state-id="manager.selectedStateId">
       </state-view>
       <box-editor
-          box="selectedBox"
+          manager="manager"
           workspace-name="workspaceName">
       </box-editor>
     </div>
