@@ -508,13 +508,6 @@ angular.module('biggraph')
         });
     };
 
-    Side.prototype.createSnapshot = function() {
-        util.post(
-          '/ajax/createSnapshot',
-          {
-            id: this.stateID
-          });
-    };
 
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
