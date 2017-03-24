@@ -283,16 +283,15 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
 
   import WorkspaceJsonFormatters._
+  import WorkspaceControllerJsonFormatters._
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
-  implicit val rGetOutputIDRequest = json.Json.reads[GetOutputIDRequest]
   implicit val rGetOutputRequest = json.Json.reads[GetOutputRequest]
-  implicit val rGetAllOutputsRequest = json.Json.reads[GetAllOutputsRequest]
+  implicit val rGetAllOutputIDsRequest = json.Json.reads[GetAllOutputIDsRequest]
   implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
-  implicit val wGetOutputIDResponse = json.Json.writes[GetOutputIDResponse]
   implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
-  implicit val wGetAllOutputsResponse = json.Json.writes[GetAllOutputsResponse]
+  implicit val wGetAllOutputIDsResponse = json.Json.writes[GetAllOutputIDsResponse]
   implicit val wGetProgressResponse = json.Json.writes[GetProgressResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
@@ -412,9 +411,8 @@ object ProductionJsonServer extends JsonServer {
   val workspaceController = new WorkspaceController(BigGraphProductionEnvironment)
   def createWorkspace = jsonPost(workspaceController.createWorkspace)
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
-  def getOutputID = jsonGet(workspaceController.getOutputID)
   def getOutput = jsonGet(workspaceController.getOutput)
-  def getAllOutputs = jsonGet(workspaceController.getAllOutputs)
+  def getAllOutputIDs = jsonGet(workspaceController.getAllOutputIDs)
   def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)

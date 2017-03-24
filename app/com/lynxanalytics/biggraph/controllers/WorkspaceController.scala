@@ -7,17 +7,17 @@ import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import play.api.libs.json
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetAllOutputsRequest(workspace: String)
-case class GetOutputIDRequest(workspace: String, output: BoxOutput)
+case class GetAllOutputIDsRequest(workspace: String)
 case class GetOutputRequest(id: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
-case class GetOutputIDResponse(id: String)
-case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
-case class GetAllOutputsResponse(outputs: List[X])
+case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
+case class BoxOuputIDPair(boxOutput: BoxOutput, id: String)
+case class GetAllOutputIDsResponse(outputs: List[BoxOuputIDPair])
 case class GetProgressResponse(progressList: List[BoxOutputProgress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
@@ -59,15 +59,16 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
 
-  def getOutputID(
-    user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
+  def getAllOutputIDs(user: serving.User, request: GetAllOutputIDsRequest): GetAllOutputIDsResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
-    val state = ws.state(user, ops, request.output)
-    val id = Timestamp.toString
+    val states = ws.allStates(user, ops)
+    val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
-      calculatedStates(id) = state
+      for ((_, (boxOutputState, id)) <- statesWithId) {
+        calculatedStates(id) = boxOutputState
+      }
     }
-    GetOutputIDResponse(id)
+    GetAllOutputIDsResponse(statesWithId.mapValues(_._2).toList.map((BoxOuputIDPair.apply _).tupled))
   }
 
   def getOutput(
@@ -79,15 +80,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case Some(state: BoxOutputState) =>
         state.kind match {
           case BoxOutputKind.Project =>
-            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
+            val project = if (state.success.enabled) {
+              Some(state.project.viewer.toFE(""))
+            } else None
+            GetOutputResponse(state.kind, project = project, success = state.success)
         }
     }
-  }
-
-  def getAllOutputs(user: serving.User, request: GetAllOutputsRequest): GetAllOutputsResponse = {
-    val ws = getWorkspaceByName(user, request.workspace)
-    val states = ws.allStates(user, ops)
-    GetAllOutputsResponse(states)
   }
 
   def getProgress(
@@ -118,4 +116,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val op = ws.getOperation(user, ops, request.box)
     op.toFE
   }
+}
+
+object WorkspaceControllerJsonFormatters {
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
+  import WorkspaceJsonFormatters._
+  implicit val fBoxOutputIDPair = json.Json.format[BoxOuputIDPair]
 }
