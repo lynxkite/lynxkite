@@ -3,14 +3,22 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
- .directive('stateView', function(side) {
+ .directive('stateView', function(side, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
-        state: '='
+        stateId: '='
       },
       link: function(scope) {
+        scope.$watch('stateId', function() {
+          if (scope.stateId) {
+            scope.state = util.nocache(
+              '/ajax/getOutput',
+              { id: scope.stateId }
+            );
+          }
+        });
         scope.$watch('state.$resolved', function() {
           if (scope.state && scope.state.$resolved &&
               scope.state.kind === 'project') {
