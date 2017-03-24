@@ -621,6 +621,7 @@ angular.module('biggraph')
       tmp = this.project; this.project = otherSide.project; otherSide.project = tmp;
       tmp = this.state; this.state = otherSide.state; otherSide.state = tmp;
       tmp = this.viewData; this.viewData = otherSide.viewData; otherSide.viewData = tmp;
+      tmp = this.scalars; this.scalars = otherSide.scalars; otherSide.scalars = tmp;
     };
 
     Side.prototype.openSegmentation = function(seg) {
@@ -704,6 +705,7 @@ angular.module('biggraph')
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
+      console.log('SIDE OPL ', this.direction);
       this.cleanState();
       this.loadScalars();
       this.updateViewData();

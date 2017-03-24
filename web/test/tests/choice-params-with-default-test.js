@@ -40,7 +40,7 @@ module.exports = function(fw) {
       lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:outgoing edges');
       lib.workspace.selectBox(pr2);
       lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:incoming edges');
-    }, 'solo');
+    });
 
   fw.statePreservingTest(
     'test pagerank default choice values',
