@@ -30,7 +30,7 @@ angular.module('biggraph')
         // or only deepwatch the current selected box (and assume
         // box selection has to change to edit other boxes).
         scope.$watch(
-            'workspace.workspace',
+            'workspace.backendState',
             function() {
               if (!scope.workspace) {
                 return;

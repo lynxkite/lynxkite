@@ -48,6 +48,8 @@ angular.module('biggraph')
                 name: this.name
               })
               .then(function(state) {
+                // Make a deep copy of tha backend's state.
+                that.backendState = JSON.parse(JSON.stringify(state));
                 that.wrapper = workspaceWrapper(
                   state, boxCatalogMap);
               });
