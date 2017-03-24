@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.serving
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputIDRequest(workspace: String, output: BoxOutput)
-case class GetOutputRequest(id: String, projectSegmentationPath: Option[String])
+case class GetProjectOutputRequest(id: String, path: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputIDResponse(id: String, kind: String)
@@ -68,22 +68,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     GetOutputIDResponse(id, state.kind)
   }
 
-  def getOutput(
-    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
-    calculatedStates.synchronized {
-      calculatedStates.get(request.id)
-    } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(state: BoxOutputState) =>
-        state.kind match {
-          case BoxOutputKind.Project =>
-            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
-        }
-    }
-  }
-
   def getProjectOutput(
-    user: serving.User, request: GetOutputRequest): FEProject = {
+    user: serving.User, request: GetProjectOutputRequest): FEProject = {
     calculatedStates.synchronized {
       calculatedStates.get(request.id)
     } match {
@@ -91,11 +77,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case Some(state: BoxOutputState) =>
         state.kind match {
           case BoxOutputKind.Project =>
-            val pathStr = request.projectSegmentationPath.getOrElse("")
-            val pathSeq = SubProject.splitPipedPath(pathStr)
+            val pathSeq = SubProject.splitPipedPath(request.path)
               .filter(_ != "")
             val viewer = state.project.viewer.offspringViewer(pathSeq)
-            viewer.toFE(pathStr)
+            viewer.toFE(request.path)
         }
     }
   }
