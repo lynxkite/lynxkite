@@ -11,7 +11,7 @@
 // 2. loadWorkspace()
 //    - downloads a workspace state
 //    - creates a workspaceWrapper using the downloaded state and
-//      sets this.workspace to points to it
+//      sets this.wrapper to points to it
 //    - visible GUI gets updated via workspace-drawing-board
 // 3. user edit happens, e.g. box move, add box, or add arrow
 //    - all objects are updated inside workspaceWrapper
@@ -29,15 +29,15 @@ angular.module('biggraph')
         boxCatalogMap[boxMeta.operationID] = boxMeta;
       }
 
-      var manager = {
+      var workspace = {
         name: workspaceName,
 
         boxes: function() {
-          return this.workspace ? this.workspace.boxes : [];
+          return this.wrapper ? this.wrapper.boxes : [];
         },
 
         arrows: function() {
-          return this.workspace ? this.workspace.arrows : [];
+          return this.wrapper ? this.wrapper.arrows : [];
         },
 
         loadWorkspace: function() {
@@ -48,7 +48,7 @@ angular.module('biggraph')
                 name: this.name
               })
               .then(function(state) {
-                that.workspace = workspaceWrapper(
+                that.wrapper = workspaceWrapper(
                   state, boxCatalogMap);
               });
         },
@@ -59,7 +59,7 @@ angular.module('biggraph')
             '/ajax/setWorkspace',
             {
               name: this.name,
-              workspace: that.workspace.state,
+              workspace: that.wrapper.state,
             }).finally(
               // Reload workspace both in error and success cases.
               function() { that.loadWorkspace(); });
@@ -71,14 +71,14 @@ angular.module('biggraph')
 
         selectedBox: function() {
           if (this.selectedBoxId) {
-            return this.workspace.boxMap[this.selectedBoxId];
+            return this.wrapper.boxMap[this.selectedBoxId];
           } else {
             return undefined;
           }
         },
 
         updateSelectedBox: function(paramValues) {
-          this.workspace.setBoxParams(this.selectedBoxId, paramValues);
+          this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
           this.saveWorkspace();
         },
 
@@ -143,7 +143,7 @@ angular.module('biggraph')
           if (this.pulledPlug) {
             var otherPlug = this.pulledPlug;
             this.pulledPlug = undefined;
-            if (this.workspace.addArrow(otherPlug, plug)) {
+            if (this.wrapper.addArrow(otherPlug, plug)) {
               this.saveWorkspace();
             }
           }
@@ -153,13 +153,13 @@ angular.module('biggraph')
         },
 
         addBox: function(operationId, pos) {
-          this.workspace.addBox(operationId, pos.x, pos.y);
+          this.wrapper.addBox(operationId, pos.x, pos.y);
           this.saveWorkspace();
         },
 
         getAndUpdateProgress: function(errorHandler) {
           var that = this;
-          var workspaceBefore = this.workspace;
+          var workspaceBefore = this.wrapper;
           var plugBefore = this.selectedPlug;
           if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
             util.nocache('/ajax/getProgress', {
@@ -170,9 +170,9 @@ angular.module('biggraph')
               }
             }).then(
               function success(response) {
-                if (that.workspace && that.workspace === workspaceBefore &&
+                if (that.wrapper && that.wrapper === workspaceBefore &&
                     that.selectedPlug && that.selectedPlug === plugBefore) {
-                  that.workspace.updateProgress(response.progressList);
+                  that.wrapper.updateProgress(response.progressList);
                 }
               },
               errorHandler);
@@ -186,7 +186,7 @@ angular.module('biggraph')
             function errorHandler(error) {
               util.error('Couldn\'t get progress information for selected state.', error);
               that.stopProgressUpdate();
-              that.workspace.clearProgress();
+              that.wrapper.clearProgress();
             }
             that.getAndUpdateProgress(errorHandler);
           }, 2000);
@@ -199,7 +199,7 @@ angular.module('biggraph')
           }
         },
       };
-      manager.loadWorkspace();
-      return manager;
+      workspace.loadWorkspace();
+      return workspace;
     };
   });

@@ -6,11 +6,11 @@
 // and values to bind with Angular to SVG elements.
 //
 // Every time the underlying workspace data was significantly changed, the
-// private build() method is invoked to rebuild the frontend-facing data.
+// _build() method is invoked to rebuild the frontend-facing data.
 // The flow of changes here is always one-way:
 // 1. user change or new workspace state loaded
 // 2. "raw" state is updated
-// 3. build() updates the frontend-facing objects
+// 3. _build() updates the frontend-facing objects
 
 angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
   return function(state, boxCatalogMap) {
@@ -23,8 +23,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       arrows: [],
       boxMap: {},
 
-      // private
-      buildBoxes: function() {
+      _buildBoxes: function() {
         this.boxes = [];
         this.boxMap = {};
         var box;
@@ -38,8 +37,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         }
       },
 
-      // private static
-      lookupArrowEndpoint: function(list, id) {
+      _lookupArrowEndpoint: function(list, id) {
         for (var i = 0; i < list.length; ++i) {
           if (list[i].data.id === id) {
             return list[i];
@@ -48,8 +46,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         return undefined;
       },
 
-      // private static
-      createArrow: function(srcPlug, dstPlug) {
+      _createArrow: function(srcPlug, dstPlug) {
         return {
           x1: srcPlug.x,
           y1: srcPlug.y,
@@ -58,8 +55,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         };
       },
 
-      // private
-      buildArrows: function() {
+      _buildArrows: function() {
         this.arrows = [];
         for (var i = 0; i < this.boxes.length; ++i) {
           var dst = this.boxes[i];
@@ -68,23 +64,22 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             if (inputs.hasOwnProperty(inputName)) {
               var input = inputs[inputName];
               var src = this.boxMap[input.boxID];
-              var srcPlug = this.lookupArrowEndpoint(
+              var srcPlug = this._lookupArrowEndpoint(
                 src.outputs, input.id);
-              var dstPlug = this.lookupArrowEndpoint(
+              var dstPlug = this._lookupArrowEndpoint(
                 dst.inputs, inputName);
-              this.arrows.push(this.createArrow(
+              this.arrows.push(this._createArrow(
                 srcPlug, dstPlug));
             }
           }
         }
       },
 
-      // private
       // If state was updated, this needs to run so that the frontend-facing objects
       // are also updated.
-      build: function() {
-        this.buildBoxes();
-        this.buildArrows();
+      _build: function() {
+        this._buildBoxes();
+        this._buildArrows();
       },
 
       addBox: function(operationId, x, y) {
@@ -100,7 +95,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
               inputs: {},
               parameters: {}
             });
-        this.build();
+        this._build();
       },
 
       addArrow: function(plug1, plug2) {
@@ -119,7 +114,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           id: src.data.id
         };
         // Rebuild API objects based on raw workflow:
-        this.build();
+        this._build();
         return true;
       },
 
@@ -149,7 +144,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
 
     };
 
-    wrapper.build();
+    wrapper._build();
     return wrapper;
   };
 });
