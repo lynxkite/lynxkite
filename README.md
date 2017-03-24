@@ -161,7 +161,18 @@ outside of the office, you can use the
 [SSH gateway](https://github.com/biggraph/deployments/tree/master/budapest-office) and
 [FoxyProxy](https://github.com/biggraph/biggraph/wiki/Accessing-our-instances-in-public-clouds).
 
+### Jenkins cleanup
 
+It can happen that Jenkins runs out of _inodes_, and it causes  
+"No space left on device" error.  To resolve this issue you can do the following.
+
+ 1. Login to Jenkins: `ssh jenkins@192.168.0.37`. (Password is in the secrets repo.)
+ 
+ 2. Check available inodes: `df -i`
+ 
+ 3. Start docker shell: `docker exec -u root -it lynx-jenkins bash`
+ 
+ 4. Delete content of `/tmp` in the container: `rm -Rf /tmp/*`
 
 ## Run executors on different JVM-s.
 
