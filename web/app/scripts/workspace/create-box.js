@@ -79,16 +79,16 @@ angular.module('biggraph').factory('createBox', function() {
       outputs.push(plug);
       outputMap[plug.data.id] = plug;
     }
-    var isCommentBox = metadata.operationID === 'Add comment'
+    var isCommentBox = metadata.operationID === 'Add comment';
     var comment = instance.parameters.comment;
     var commentLines = comment ? comment.split('\n') : [];
-    var indexedCommentLines = []
-    for (var i=0; i < commentLines.length; ++i) {
+    var indexedCommentLines = [];
+    for (i=0; i < commentLines.length; ++i) {
       var nextIndexedCommentLine = {
         index: i,
         content: commentLines[i]
       };
-      indexedCommentLines.push(nextIndexedCommentLine)
+      indexedCommentLines.push(nextIndexedCommentLine);
     }
 
     return {
