@@ -11,18 +11,6 @@ angular.module('biggraph')
         workspace: '=',
       },
       link: function(scope) {
-        scope.$watch('workspace', function() {
-          // We are not expecting updates of this it will be
-          // only set once at setup time. The $watch is just
-          // needed to be able to see the initial value.
-          if (scope.workspace) {
-            // This callback will fire in two cases: if the
-            // box ID is changed or if the workspace (and therefore,
-            // possibly the box meta is changed).
-            scope.workspace.setBoxSelectionCallback(
-                function() { scope.loadBoxMeta(); });
-          }
-        });
         scope.$watch(
             'workspace.selectedBoxId',
             function() {
