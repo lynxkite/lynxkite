@@ -48,15 +48,26 @@ angular.module('biggraph')
 
         scope.loadWorkspace = function() {
           util.nocache(
-              '/ajax/getWorkspace',
-              {
-                name: scope.workspaceName
-              })
-              .then(function(rawWorkspace) {
-                scope.workspace = createWorkspace(
-                  rawWorkspace, scope.boxCatalogMap);
-                scope.selectBox(scope.selectedBoxId);
-              });
+            '/ajax/getWorkspace',
+            {
+              name: scope.workspaceName
+            })
+            .then(function(rawWorkspace) {
+              scope.workspace = createWorkspace(
+                rawWorkspace, scope.boxCatalogMap);
+              scope.selectBox(scope.selectedBoxId);
+            })
+            .then(function() {
+              util.nocache(
+                '/ajax/getAllOutputs',
+                {
+                  workspace: scope.workspaceName
+                });
+            })
+            .then(function(response) {
+              var outputs = response.outputs;
+              console.log(outputs);
+            });
         };
 
         scope.saveWorkspace = function() {

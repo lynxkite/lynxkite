@@ -26,26 +26,26 @@ case class Workspace(
       previous).checkpoint.get
   }
 
-  def allStates(user: serving.User, ops: OperationRepository): List[X] = {
-    val computationOrder = calculateComputationOrder
-    val reachableStates = computationOrder.topologicalOrder.
+  def allStates(user: serving.User, ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
+    val dependencies = discoverDependencies
+    val reachableStates = dependencies.topologicalOrder.
       foldLeft(Map[BoxOutput, BoxOutputState]()) {
         (states, box) =>
           val newOutputStates = outputStatesOfBox(user, ops, box, states)
           newOutputStates ++ states
       }
-    val unreachableStates = computationOrder.withCircularDependency.flatMap {
+    val unreachableStates = dependencies.withCircularDependency.flatMap {
       box =>
         {
           val meta = ops.getBoxMetadata(box.operationID)
           meta.outputs.map {
             o =>
-              o.ofBox(box) -> BoxOutputState(o.kind, null,
+              o.ofBox(box) -> BoxOutputState(o.kind, json.Json.toJson(0).as[json.JsNumber],
                 FEStatus.disabled("Can not compute state due to circular dependencies."))
           }
         }
     }.toMap
-    (reachableStates ++ unreachableStates).map { (X.apply _).tupled }.toList
+    reachableStates ++ unreachableStates
   }
 
   private def outputStatesOfBox(user: serving.User, ops: OperationRepository, box: Box,
@@ -85,9 +85,9 @@ case class Workspace(
     }
   }
 
-  case class ComputationOrder(topologicalOrder: List[Box], withCircularDependency: List[Box])
+  case class Dependencies(topologicalOrder: List[Box], withCircularDependency: List[Box])
 
-  private def calculateComputationOrder: ComputationOrder = {
+  private def discoverDependencies: Dependencies = {
     val inDegrees = scala.collection.mutable.Map() ++= boxes.map(box => box -> box.inputs.size)
     val outEdgeList: Map[Box, List[Box]] = {
       val edges = boxes.flatMap(dst => for {
@@ -98,75 +98,33 @@ case class Workspace(
     }
 
     @tailrec
-    def calculate(reversedTopologicalOrder: List[Box]): ComputationOrder = {
-      val (box, lowestDegree) = inDegrees.minBy(_._2)
-      if (lowestDegree > 0) {
-        ComputationOrder(
-          topologicalOrder = reversedTopologicalOrder.reverse,
-          withCircularDependency = inDegrees.keys.toList
-        )
+    def discover(reversedTopologicalOrder: List[Box]): Dependencies =
+      if (inDegrees.isEmpty) {
+        Dependencies(reversedTopologicalOrder.reverse, List())
       } else {
-        if (outEdgeList.contains(box)) {
-          for (dst <- outEdgeList(box)) {
-            inDegrees(dst) -= 1
+        val (box, lowestDegree) = inDegrees.minBy(_._2)
+        if (lowestDegree > 0) {
+          Dependencies(
+            topologicalOrder = reversedTopologicalOrder.reverse,
+            withCircularDependency = inDegrees.keys.toList
+          )
+        } else {
+          if (outEdgeList.contains(box)) {
+            for (dst <- outEdgeList(box)) {
+              inDegrees(dst) -= 1
+            }
           }
+          inDegrees.remove(box)
+          discover(box :: reversedTopologicalOrder)
         }
-        inDegrees.remove(box)
-        calculate(box :: reversedTopologicalOrder)
       }
-    }
 
-    calculate(List())
+    discover(List())
   }
 
   def state(
     user: serving.User, ops: OperationRepository, connection: BoxOutput): BoxOutputState = {
-    calculate(user, ops, connection, Map())(connection)
-  }
-
-  // Calculates an output. Returns every state that had been calculated as a side-effect.
-  def calculate(
-    user: serving.User, ops: OperationRepository, connection: BoxOutput,
-    states: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    if (states.contains(connection)) states else {
-      val box = findBox(connection.boxID)
-      val meta = ops.getBoxMetadata(box.operationID)
-
-      def errorOutputs(msg: String): Map[BoxOutput, BoxOutputState] = {
-        meta.outputs.map {
-          o => o.ofBox(box) -> BoxOutputState(o.kind, null, FEStatus.disabled(msg))
-        }.toMap
-      }
-
-      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
-      if (unconnecteds.nonEmpty) {
-        val list = unconnecteds.map(_.id).mkString(", ")
-        states ++ errorOutputs(s"Input $list is not connected.")
-      } else {
-        val updatedStates = box.inputs.values.foldLeft(states) {
-          (states, output) => calculate(user, ops, output, states)
-        }
-        val inputs = box.inputs.map { case (id, output) => id -> updatedStates(output) }
-        val errors = inputs.filter(_._2.isError)
-        if (errors.nonEmpty) {
-          val list = errors.map(_._1).mkString(", ")
-          updatedStates ++ errorOutputs(s"Input $list has an error.")
-        } else {
-          val outputStates = try {
-            box.execute(user, inputs, ops)
-          } catch {
-            case ex: Throwable =>
-              log.error(s"Failed to execute $box:", ex)
-              val msg = ex match {
-                case ae: AssertionError => ae.getMessage
-                case _ => ex.toString
-              }
-              errorOutputs(msg)
-          }
-          updatedStates ++ outputStates
-        }
-      }
-    }
+    allStates(user, ops)(connection)
   }
 
   // Calculates the progress of an output and all other outputs that had been calculated as a
@@ -175,7 +133,7 @@ case class Workspace(
     user: serving.User, ops: OperationRepository,
     connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
                            manager: graph_api.MetaGraphManager): List[BoxOutputProgress] = {
-    val states = calculate(user, ops, connection, Map())
+    val states = allStates(user, ops)
     states.toList.map((calculatedStateProgress _).tupled)
   }
 
@@ -238,9 +196,7 @@ case class Workspace(
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i.id), s"Input ${i.id} is not connected.")
     }
-    val states = box.inputs.values.foldLeft(Map[BoxOutput, BoxOutputState]()) {
-      (states, output) => calculate(user, ops, output, states)
-    }
+    val states = allStates(user, ops)
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
@@ -325,7 +281,6 @@ case class BoxOutputState(
   }
 }
 
-case class X(boxOutput: BoxOutput, state: BoxOutputState)
 case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 object Progress {
@@ -342,5 +297,4 @@ object WorkspaceJsonFormatters {
   implicit val fWorkspace = json.Json.format[Workspace]
   implicit val fProgress = json.Json.format[Progress]
   implicit val fBoxOutputProgress = json.Json.format[BoxOutputProgress]
-  implicit val fX = json.Json.format[X]
 }

@@ -27,8 +27,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
   def getOpMeta(ws: String, box: String) =
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
-  def getOutputID(ws: String, box: String, output: String) =
-    controller.getOutputID(user, GetOutputIDRequest(ws, BoxOutput(box, output)))
+  def getOutputIDs(ws: String) = {
+    val allIds = controller.getAllOutputIDs(user, GetAllOutputIDsRequest(ws)).outputs
+    allIds.map(BoxOuputIDPair.unapply).map(_.get).toMap
+  }
   def getOutput(id: String) =
     controller.getOutput(user, GetOutputRequest(id))
   import WorkspaceJsonFormatters._
@@ -88,7 +90,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
-      val o = getOutput(getOutputID("test-workspace", "eg", "project").id)
+      val id = getOutputIDs("test-workspace")(eg.output("project"))
+      val o = getOutput(id)
       assert(o.kind == "project")
       val income = o.project.get.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
@@ -217,8 +220,12 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(eg :: badBoxes)
       set("test-workspace", ws)
-      val outputs = controller.getAllOutputs(user, GetAllOutputsRequest("test-workspace"))
-        .outputs.map(x => (x.boxOutput, x.state)).toMap
+      val outputIds = controller.getAllOutputIDs(user, GetAllOutputIDsRequest("test-workspace"))
+        .outputs.map(BoxOuputIDPair.unapply).map(_.get).toMap
+      val outputs = for {
+        (boxOutput, id) <- outputIds
+        state = controller.getOutput(user, GetOutputRequest(id))
+      } yield (boxOutput, state)
       for (box <- badBoxes) {
         assert(!outputs(box.output("project")).success.enabled)
       }
