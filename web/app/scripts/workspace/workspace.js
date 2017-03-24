@@ -9,14 +9,18 @@
 // Life cycle:
 // 1. boxCatalog needs to be loaded at all times for things to work
 // 2. loadWorkspace()
-//    - downloads a workspace state
+//    - downloads a workspace state and saves it in backendState
 //    - creates a workspaceWrapper using the downloaded state and
-//      sets this.wrapper to points to it
-//    - visible GUI gets updated via workspace-drawing-board
+//      sets this.wrapper to point to it
+//    - visible GUI gets updated based on this.wrapper via
+//      workspace-drawing-board
 // 3. user edit happens, e.g. box move, add box, or add arrow
-//    - all objects are updated inside workspaceWrapper
+//    - this updates the wrapper.state
+//    - all frontend-facing objects are updated inside
+//      workspaceWrapper
+//    - backendState remains unchanged at this point
 // 5. saveWorkspace()
-// 5. GOTO 2
+// 6. GOTO 2
 
 angular.module('biggraph')
   .factory('workspace', function(workspaceWrapper, util, $interval) {
@@ -48,10 +52,14 @@ angular.module('biggraph')
                 name: this.name
               })
               .then(function(state) {
-                // Make a deep copy of tha backend's state.
-                that.backendState = JSON.parse(JSON.stringify(state));
+                that.backendState = state;
+                // User edits will be applied to a deep copy of
+                // the original backend state. This way watchers
+                // of backendState will only be notified once the
+                // backend is fully aware of the new state.
+                var stateCopy = angular.copy(state);
                 that.wrapper = workspaceWrapper(
-                  state, boxCatalogMap);
+                  stateCopy, boxCatalogMap);
               });
         },
 
