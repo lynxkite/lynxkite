@@ -1,7 +1,7 @@
 <div id="workspace-main">
 
   <div id="workspace-header">
-    <span id="workspace-name">{{workspaceName}}</span>
+    <span id="workspace-name">{{workspace.name}}</span>
     <div class="btn-group pull-right">
       <a class="btn btn-default"
            href="#/"
@@ -15,20 +15,14 @@
   </div>
 
   <div id="workspace-main-layout">
-    <workspace-drawing-board
-        box-catalog="boxCatalog"
-        selected-box="selectedBox"
-        selected-state="selectedState"
-        workspace-name="workspaceName">
+    <workspace-drawing-board workspace="workspace">
     </workspace-drawing-board>
     <operation-selector box-catalog="boxCatalog" editable="true">
     </operation-selector>
     <div id="right-panel">
-      <state-view state="selectedState">
+      <state-view state-id="workspace.selectedStateId">
       </state-view>
-      <box-editor
-          box="selectedBox"
-          workspace-name="workspaceName">
+      <box-editor workspace="workspace">
       </box-editor>
     </div>
   </div>
