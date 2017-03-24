@@ -12,15 +12,15 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/project-state-view.html',
       scope: {
-        state: '='
+        stateId: '=',
       },
       link: function(scope) {
         scope.sides = [];
 
-        util.deepWatch(scope, 'state', function() {
+        util.deepWatch(scope, 'stateId', function() {
           scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left', scope.state);
-          scope.right = new side.Side(scope.sides, 'right', scope.state);
+          scope.left = new side.Side(scope.sides, 'left', scope.stateId);
+          scope.right = new side.Side(scope.sides, 'right', scope.stateId);
           scope.sides.push(scope.left);
           scope.sides.push(scope.right);
 
