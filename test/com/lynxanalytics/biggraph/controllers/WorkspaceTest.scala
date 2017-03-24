@@ -177,20 +177,24 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace(List(eg, cc, pr))
       set("test-workspace", ws)
+      val stateIDs = controller.getAllOutputIDs(user, GetAllOutputIDsRequest("test-workspace"))
+        .outputs.map(BoxOuputIDPair.unapply).map(_.get).toMap
+      val prStateID = stateIDs(prOutput)
       val progressBeforePR = controller.getProgress(user,
-        GetProgressRequest("test-workspace", prOutput)
-      ).progressList.find(_.boxOutput == prOutput).get
-      assert(progressBeforePR.success.enabled)
-      assert(progressBeforePR.progress.inProgress == 0)
-      val computedBeforePR = progressBeforePR.progress.computed
+        GetProgressRequest(List(prStateID))
+      ).progressMap(prStateID)
+      assert(progressBeforePR.inProgress == 0)
+      assert(progressBeforePR.computed + progressBeforePR.inProgress
+        + progressBeforePR.notYetStarted + progressBeforePR.failed > 0)
+      val computedBeforePR = progressBeforePR.computed
       import graph_api.Scripting._
       // trigger PR computation
       ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(user,
-        GetProgressRequest("test-workspace", prOutput)
-      ).progressList.find(_.boxOutput == prOutput).get
-      val computedAfterPR = progressAfterPR.progress.computed
+        GetProgressRequest(List(prStateID))
+      ).progressMap(prStateID)
+      val computedAfterPR = progressAfterPR.computed
       assert(computedAfterPR > computedBeforePR)
     }
   }
@@ -203,19 +207,26 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace(List(pr))
       set("test-workspace", ws)
+      val stateIDs = controller.getAllOutputIDs(user, GetAllOutputIDsRequest("test-workspace"))
+        .outputs.map(BoxOuputIDPair.unapply).map(_.get).toMap
+      val prStateID = stateIDs(prOutput)
       val progress = controller.getProgress(user,
-        GetProgressRequest("test-workspace", prOutput)
-      ).progressList.find(_.boxOutput == prOutput).get
-      assert(!progress.success.enabled)
+        GetProgressRequest(List(prStateID))
+      ).progressMap(prStateID)
+      assert(progress.computed + progress.inProgress + progress.notYetStarted +
+        progress.failed == 0)
     }
   }
 
   test("circular dependencies") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
-      val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> BoxOutput("pr2", "project")))
-      val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> BoxOutput("pr1", "project")))
-      val pr3 = Box("pr3", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> BoxOutput("pr2", "project")))
+      val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20,
+        Map("project" -> BoxOutput("pr2", "project")))
+      val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20,
+        Map("project" -> BoxOutput("pr1", "project")))
+      val pr3 = Box("pr3", "Compute PageRank", pagerankParams, 0, 20,
+        Map("project" -> BoxOutput("pr2", "project")))
       val badBoxes = List(pr1, pr2, pr3)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(eg :: badBoxes)

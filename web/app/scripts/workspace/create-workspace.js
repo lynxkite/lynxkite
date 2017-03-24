@@ -121,13 +121,29 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
         return true;
       },
 
-      updateProgress: function(progressList) {
-        for (var i = 0; i < progressList.length; i++) {
-          var boxOutputProgress =  progressList[i];
-          var plugDescription = boxOutputProgress.boxOutput;
-          var box = this.boxMap[plugDescription.boxID];
-          var plug = box.outputMap[plugDescription.id];
-          plug.updateProgress(boxOutputProgress.progress, boxOutputProgress.success);
+      assignStateIDsToPlugs: function(plugsAndIDs) {
+        this.knownStateIDs = [];
+        this.stateID2Plug = {};
+        for (var i = 0; i < plugsAndIDs.length; i++) {
+          var item = plugsAndIDs[i];
+          var boxOutput = item.boxOutput;
+          var stateID = item.id;
+          this.knownStateIDs.push(stateID);
+          var box = this.boxMap[boxOutput.boxID];
+          var plug = box.outputMap[boxOutput.id];
+          plug.stateID = stateID;
+          this.stateID2Plug[stateID] = plug;
+        }
+      },
+
+      updateProgress: function(progressMap) {
+        for (var stateID in progressMap) {
+          if (progressMap.hasOwnProperty(stateID)) {
+            var plug = this.stateID2Plug[stateID];
+            if (plug) {
+              plug.updateProgress(progressMap[stateID]);
+            }
+          }
         }
       },
 

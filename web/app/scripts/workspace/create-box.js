@@ -46,21 +46,22 @@ angular.module('biggraph').factory('createBox', function() {
         posTransform: 'translate(' + x + ', ' + y + ')',
         inProgress: false,
         color: undefined,
-        updateProgress: function(progress, success) {
-          if (success.enabled) {
-            var all = 0;
-            for (var p in progress) {
-              if (progress.hasOwnProperty(p)) {
-                all += progress[p];
-              }
+        updateProgress: function(progress) {
+          var all = 0;
+          for (var p in progress) {
+            if (progress.hasOwnProperty(p)) {
+              all += progress[p];
             }
-            var progressPercentage = all ? progress.computed / all : 1.0;
+          }
+          if (all) {
+            var progressPercentage = progress.computed / all;
             this.color = progressToColor(progressPercentage);
             this.inProgress = progress.inProgress > 0;
           } else {
             this.clearProgress();
           }
         },
+
         clearProgress: function() {
           this.inProgress = false;
           this.color = undefined;
