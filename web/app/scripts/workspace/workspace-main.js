@@ -13,10 +13,10 @@ angular.module('biggraph')
   .controller('WorkspaceMainCtrl', function ($scope, $routeParams, util, workspace) {
 
   $scope.boxCatalog = util.nocache('/ajax/boxCatalog');
-  $scope.$watchGroup(
-    ['boxCatalog.$resolved'],
-    function() {
-      if ($scope.boxCatalog.$resolved) {
+  $scope.$watch(
+    'boxCatalog.$resolved',
+    function(resolved) {
+      if (resolved) {
         $scope.workspace = workspace(
             $scope.boxCatalog,
             $routeParams.workspaceName);
