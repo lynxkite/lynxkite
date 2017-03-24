@@ -12,8 +12,8 @@
 
 angular.module('biggraph').factory('createBox', function() {
   return function(metadata, instance) {
-    var width = instance.width;
-    var height = instance.height;
+    var width = 200;
+    var height = 40;
 
     // An input or output connection point of a box.
     function createPlug(plug, index, direction) {
@@ -80,16 +80,19 @@ angular.module('biggraph').factory('createBox', function() {
       outputMap[plug.data.id] = plug;
     }
     var isCommentBox = metadata.operationID === 'Add comment';
-    var comment = instance.parameters.comment;
-    var commentLines = comment ? comment.split('\n') : [];
-    var indexedCommentLines = [];
-    for (i=0; i < commentLines.length; ++i) {
-      var nextIndexedCommentLine = {
-        index: i,
-        content: commentLines[i]
-      };
-      indexedCommentLines.push(nextIndexedCommentLine);
-    }
+    var indexedCommentLines = (function(){
+      var comment = instance.parameters.comment;
+      var commentLines = comment ? comment.split('\n') : [];
+      var indexedComLines = [];
+      for (i = 0; i < commentLines.length; ++i) {
+        var nextIndexedCommentLine = {
+          index: i,
+          content: commentLines[i]
+        };
+      indexedComLines.push(nextIndexedCommentLine);
+      }
+      return indexedComLines;
+    })();
 
     return {
       metadata: metadata,
@@ -100,7 +103,7 @@ angular.module('biggraph').factory('createBox', function() {
       width: width,
       height: height,
       isCommentBox: isCommentBox,
-      commentPerLine: indexedCommentLines,
+      commentLines: indexedCommentLines,
       isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';

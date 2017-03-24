@@ -41,7 +41,7 @@
         {{box.metadata.operationID}}
       </text>
       <text x="5" y="50" ng-show="box.isCommentBox">
-        <tspan ng-repeat="line in box.commentPerLine | orderBy:index" x="5" dy="15">
+        <tspan ng-repeat="line in box.commentLines | orderBy:index" x="5" dy="15">
           {{line.content}}
         </tspan>
       </text>
