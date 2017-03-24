@@ -23,6 +23,33 @@ angular.module('biggraph')
                 function() { scope.loadBoxMeta(); });
           }
         });
+        scope.$watch(
+            'workspace.selectedBoxId',
+            function() {
+              if (!scope.workspace) {
+                return;
+              }
+              // Make a copy of the parameter values.
+              scope.paramValues = Object.assign(
+                  {}, scope.workspace.selectedBox().instance.parameters);
+              scope.loadBoxMeta();
+            });
+        // The metadata (param definition list) of the current box
+        // depends on the whole workspace. (Attributes added by
+        // previous operations, state of apply_to_ parameters of
+        // current box.) If this deepwatch is a performance problem,
+        // then we can put a timestamp in workspace and watch that,
+        // or only deepwatch the current selected box (and assume
+        // box selection has to change to edit other boxes).
+        scope.$watch(
+            'workspace.workspace',
+            function() {
+              if (!scope.workspace) {
+                return;
+              }
+              scope.loadBoxMeta();
+            },
+            true);
 
         scope.paramValues = {};
 
@@ -58,9 +85,6 @@ angular.module('biggraph')
         // metadata is successfully downloaded.
         scope.newOpSelected = function(boxMeta) {
             scope.boxMeta = boxMeta;
-            // Make a copy of the parameter values.
-            scope.paramValues = Object.assign(
-                {}, scope.workspace.selectedBox().instance.parameters);
             if (!scope.boxMeta) {
               return;
             }
