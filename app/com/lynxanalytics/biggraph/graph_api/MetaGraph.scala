@@ -414,10 +414,8 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
     new P(Attribute[T](instance, _, eb.idSet), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
   def scalar[T: TypeTag](name: Symbol) = new P(Scalar[T](instance, _), Some(name))
-  def table(schema: => spark.sql.types.StructType) =
-    new P(Table(instance, _, schema), None)
-  def table(name: Symbol, schema: => spark.sql.types.StructType) =
-    new P(Table(instance, _, schema), Some(name))
+  def table(schema: spark.sql.types.StructType, name: Symbol = null) =
+    new P(Table(instance, _, schema), Option(name))
 
   private val placeholders = mutable.Buffer[P[_ <: MetaGraphEntity]]()
 
