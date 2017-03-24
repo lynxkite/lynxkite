@@ -1,20 +1,22 @@
 // Methods for manipulating workspaces.
 package com.lynxanalytics.biggraph.controllers
 
+import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetOutputRequest(workspace: String, output: BoxOutput)
-case class GetProjectOutputRequest(
-  workspace: String,
-  output: BoxOutput,
-  path: String)
+case class GetOutputIDRequest(workspace: String, output: BoxOutput)
+case class GetOutputRequest(id: String, projectSegmentationPath: Option[String])
+case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
+case class GetOutputIDResponse(id: String, kind: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
+case class GetProgressResponse(progressList: List[BoxOutputProgress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
@@ -52,28 +54,56 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): Workspace =
     getWorkspaceByName(user, request.name)
 
-  def getOutput(
-    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+  // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
+  val calculatedStates = new HashMap[String, BoxOutputState]()
+
+  def getOutputID(
+    user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
-    state.kind match {
-      case BoxOutputKind.Project =>
-        GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE(request.workspace)))
+    val id = Timestamp.toString
+    calculatedStates.synchronized {
+      calculatedStates(id) = state
+    }
+    GetOutputIDResponse(id, state.kind)
+  }
+
+  def getOutput(
+    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+    calculatedStates.synchronized {
+      calculatedStates.get(request.id)
+    } match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
+      case Some(state: BoxOutputState) =>
+        state.kind match {
+          case BoxOutputKind.Project =>
+            GetOutputResponse(state.kind, project = Some(state.project.viewer.toFE("")))
+        }
     }
   }
 
   def getProjectOutput(
-    user: serving.User, request: GetProjectOutputRequest): FEProject = {
-    val ws = getWorkspaceByName(user, request.workspace)
-    val state = ws.state(user, ops, request.output)
-    val path = SubProject.splitPipedPath(request.path)
-      .filter(_ != "")
-    state.kind match {
-      case BoxOutputKind.Project =>
-        state.project.viewer
-          .offspringViewer(path)
-          .toFE(request.path)
+    user: serving.User, request: GetOutputRequest): FEProject = {
+    calculatedStates.synchronized {
+      calculatedStates.get(request.id)
+    } match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
+      case Some(state: BoxOutputState) =>
+        state.kind match {
+          case BoxOutputKind.Project =>
+            val pathStr = request.projectSegmentationPath.getOrElse("")
+            val pathSeq = SubProject.splitPipedPath(pathStr)
+              .filter(_ != "")
+            val viewer = state.project.viewer.offspringViewer(pathSeq)
+            viewer.toFE(pathStr)
+        }
     }
+  }
+
+  def getProgress(
+    user: serving.User, request: GetProgressRequest): GetProgressResponse = {
+    val ws = getWorkspaceByName(user, request.workspace)
+    GetProgressResponse(ws.progress(user, ops, request.output))
   }
 
   def setWorkspace(

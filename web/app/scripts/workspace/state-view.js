@@ -8,7 +8,7 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
-        state: '='
-      }
+        workspace: '='
+      },
     };
 });

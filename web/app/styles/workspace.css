@@ -63,6 +63,32 @@ rect.selected-box {
 g.selected-plug circle {
   stroke-width: 3;
 }
+
+circle.io-circle.colored-output {
+  fill-opacity: 1;
+}
+
+@keyframes in-progress-indication {
+  0% {
+    fill-opacity: 1;
+  }
+
+  50% {
+    fill-opacity: 0;
+  }
+
+  100% {
+    fill-opacity: 1;
+  }
+}
+
+circle.io-circle.in-progress {
+  animation-name: in-progress-indication;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  fill: yellow;
+}
+
 line.arrow {
   stroke-width: 1;
   stroke: blue;
