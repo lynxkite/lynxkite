@@ -1,6 +1,7 @@
 <button ng-click="createSnapshot()"
         ng-if="state.kind === 'project'"
-        class="btn btn-default">
+        class="btn btn-default"
+        id="create-snapshot-button">
     Take a snapshot
 </button>
 <project-state-view side="side" ng-if="state.kind === 'project'">
