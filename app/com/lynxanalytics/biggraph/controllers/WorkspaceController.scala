@@ -11,14 +11,15 @@ import play.api.libs.json
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetAllOutputIDsRequest(workspace: String)
+case class GetAllOutputIDsRequest(workspaceName: String)
 case class GetOutputRequest(id: String)
-case class GetProgressRequest(workspace: String, output: BoxOutput)
+case class GetProgressRequest(stateIDs: List[String])
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
 case class BoxOuputIDPair(boxOutput: BoxOutput, id: String)
 case class GetAllOutputIDsResponse(outputs: List[BoxOuputIDPair])
-case class GetProgressResponse(progressList: List[BoxOutputProgress])
+case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
+case class GetProgressResponse(progressMap: Map[String, Progress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
@@ -59,8 +60,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
 
-  def getAllOutputIDs(user: serving.User, request: GetAllOutputIDsRequest): GetAllOutputIDsResponse = {
-    val ws = getWorkspaceByName(user, request.workspace)
+  def getAllOutputIDs(user: serving.User,
+                      request: GetAllOutputIDsRequest): GetAllOutputIDsResponse = {
+    val ws = getWorkspaceByName(user, request.workspaceName)
     val states = ws.allStates(user, ops)
     val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
@@ -68,30 +70,53 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         calculatedStates(id) = boxOutputState
       }
     }
-    GetAllOutputIDsResponse(statesWithId.mapValues(_._2).toList.map((BoxOuputIDPair.apply _).tupled))
+    val outputs = statesWithId.mapValues(_._2).toList.map((BoxOuputIDPair.apply _).tupled)
+    GetAllOutputIDsResponse(outputs)
   }
 
-  def getOutput(
-    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+  def getOutput(user: serving.User, request: GetOutputRequest): GetOutputResponse = {
+    val state = getOutput(user, request.id)
+    state.kind match {
+      case BoxOutputKind.Project =>
+        val project = if (state.success.enabled) {
+          Some(state.project.viewer.toFE(""))
+        } else None
+        GetOutputResponse(state.kind, project = project, success = state.success)
+    }
+  }
+
+  private def getOutput(user: serving.User, stateID: String): BoxOutputState = {
     calculatedStates.synchronized {
-      calculatedStates.get(request.id)
+      calculatedStates.get(stateID)
     } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(state: BoxOutputState) =>
-        state.kind match {
-          case BoxOutputKind.Project =>
-            val project = if (state.success.enabled) {
-              Some(state.project.viewer.toFE(""))
-            } else None
-            GetOutputResponse(state.kind, project = project, success = state.success)
-        }
+      case None => throw new AssertionError(s"BoxOutputState state identified by $stateID not found")
+      case Some(state: BoxOutputState) => state
     }
   }
 
   def getProgress(
     user: serving.User, request: GetProgressRequest): GetProgressResponse = {
-    val ws = getWorkspaceByName(user, request.workspace)
-    GetProgressResponse(ws.progress(user, ops, request.output))
+    val progress = request.stateIDs.map {
+      stateID =>
+        val state = getOutput(user, stateID)
+        if (state.success.enabled) {
+          state.kind match {
+            case BoxOutputKind.Project => (stateID, state.project.state.progress)
+            case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
+          }
+        } else {
+          (stateID, List())
+        }
+    }.toMap.mapValues {
+      progressList =>
+        Progress(
+          computed = progressList.count(_ == 1.0),
+          inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+          notYetStarted = progressList.count(_ == 0.0),
+          failed = progressList.count(_ < 0.0)
+        )
+    }
+    GetProgressResponse(progress)
   }
 
   def setWorkspace(
@@ -122,4 +147,5 @@ object WorkspaceControllerJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputIDPair = json.Json.format[BoxOuputIDPair]
+  implicit val fProgress = json.Json.format[Progress]
 }

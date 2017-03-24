@@ -33,7 +33,7 @@ module.exports = function(fw) {
 
   fw.transitionTest(
     'test-example workspace with example graph',
-    'test-example workspace with two connected and one independent boxes',
+    'test-example workspace with two connected and one unconnected box',
     function() {
       var exampleGraph = lib.workspace.getBox(0);
       lib.workspace.addBox('add reversed edges', 100, 200);
@@ -41,13 +41,29 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes(
           exampleGraph, 'project',
           reversedEdges, 'project');
-      lib.workspace.addBox('create example graph', 350, 100);
+      lib.workspace.addBox('compute pagerank', 350, 100);
     },
     function() {
     });
 
+  fw.statePreservingTest(
+    'test-example workspace with two connected and one unconnected box',
+    'states has correct fill color',
+    function() {
+      let exampleGraph = lib.workspace.getBox(0);
+      let outPlugEG = lib.workspace.getOutputPlug(exampleGraph, 'project');
+      let reversedEdges = lib.workspace.getBox(1);
+      let outPlugReversedEdges = lib.workspace.getOutputPlug(reversedEdges, 'project');
+      let pageRank = lib.workspace.getBox(2);
+      let outPlugPR = lib.workspace.getOutputPlug(pageRank, 'project');
+      // progress is updated every 2 seconds, so we may need to wait
+      browser.wait(() => outPlugReversedEdges.getAttribute('fill'), 1000 * 3);
+      expect(outPlugEG.getAttribute('fill')).not.toBeNull();
+      expect(outPlugPR.getAttribute('fill')).toBeNull();
+    });
+
   fw.transitionTest(
-    'test-example workspace with two connected and one independent boxes',
+    'test-example workspace with two connected and one unconnected box',
     'test-example workspace with reverse edges state selected',
     function() {
       var reversedEdges = lib.workspace.getBox(1);
@@ -63,22 +79,6 @@ module.exports = function(fw) {
       expect(lib.state.vertexCount()).toEqual(4);
       expect(lib.state.edgeCount()).toEqual(8);
       expect(lib.state.attributeCount()).toEqual(8);
-    });
-
-  fw.statePreservingTest(
-    'test-example workspace with reverse edges state selected',
-    'states has correct fill color',
-    function() {
-      let firstExampleGraph = lib.workspace.getBox(0);
-      let outPlugFirstEG = lib.workspace.getOutputPlug(firstExampleGraph, 'project');
-      let reversedEdges = lib.workspace.getBox(1);
-      let outPlugReversedEdges = lib.workspace.getOutputPlug(reversedEdges, 'project');
-      let secondExampleGraph = lib.workspace.getBox(2);
-      let outPlugSecondEG = lib.workspace.getOutputPlug(secondExampleGraph, 'project');
-      // progress is updated every 2 seconds, so we may need to wait
-      browser.wait(() => outPlugReversedEdges.getAttribute('fill'), 1000 * 3);
-      expect(outPlugFirstEG.getAttribute('fill')).not.toBeNull();
-      expect(outPlugSecondEG.getAttribute('fill')).toBeNull();
     });
 
 };

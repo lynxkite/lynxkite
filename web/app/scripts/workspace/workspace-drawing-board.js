@@ -58,15 +58,18 @@ angular.module('biggraph')
               scope.selectBox(scope.selectedBoxId);
             })
             .then(function() {
-              util.nocache(
-                '/ajax/getAllOutputs',
+              return util.nocache(
+                '/ajax/getAllOutputIDs',
                 {
-                  workspace: scope.workspaceName
+                  workspaceName: scope.workspaceName
                 });
             })
             .then(function(response) {
               var outputs = response.outputs;
-              console.log(outputs);
+              scope.workspace.assignStateIDsToPlugs(outputs);
+            })
+            .then(function() {
+              scope.startProgressUpdate();
             });
         };
 
@@ -93,28 +96,19 @@ angular.module('biggraph')
         };
 
         scope.selectState = function(boxID, outputID) {
-          util.nocache(
-            '/ajax/getOutputID',
+          var stateID = scope.workspace.boxMap[boxID].outputMap[outputID].stateID;
+          scope.selectedState = util.nocache(
+            '/ajax/getOutput',
             {
-              workspace: scope.workspaceName,
-              output: {
-                boxID: boxID,
-                id: outputID
-              }
+              id: stateID,
             }
-          ).then(function(stateID) {
-            scope.selectedState = util.nocache(
-              '/ajax/getOutput',
-              stateID
-            );
-          });
+          );
         };
 
         scope.selectPlug = function(plug) {
           scope.selectedPlug = plug;
           if (plug.direction === 'outputs') {
             scope.selectState(plug.boxId, plug.data.id);
-            scope.startProgressUpdate();
           } else {
             scope.selectedState = undefined;
           }
@@ -246,19 +240,13 @@ angular.module('biggraph')
 
         scope.getAndUpdateProgress = function(errorHandler) {
           var workspaceBefore = scope.workspace;
-          var plugBefore = scope.selectedPlug;
-          if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
+          if (workspaceBefore) {
             util.nocache('/ajax/getProgress', {
-              workspace: scope.workspaceName,
-              output: {
-                boxID: plugBefore.boxId,
-                id: plugBefore.data.id
-              }
+              stateIDs: workspaceBefore.knownStateIDs,
             }).then(
               function success(response) {
-                if (scope.workspace && scope.workspace === workspaceBefore &&
-                    scope.selectedPlug && scope.selectedPlug === plugBefore) {
-                  scope.workspace.updateProgress(response.progressList);
+                if (scope.workspace && scope.workspace === workspaceBefore) {
+                  scope.workspace.updateProgress(response.progressMap);
                 }
               },
               errorHandler);
@@ -269,7 +257,7 @@ angular.module('biggraph')
           scope.stopProgressUpdate();
           progressUpdater = $interval(function() {
             function errorHandler(error) {
-              util.error('Couldn\'t get progress information for selected state.', error);
+              util.error('Couldn\'t get progress information.', error);
               scope.stopProgressUpdate();
               scope.workspace.clearProgress();
             }

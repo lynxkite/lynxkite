@@ -23,17 +23,15 @@
 
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{ graph_operations, model, bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
-
 import java.io.File
 import java.util.UUID
+
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.JsObject
@@ -66,7 +64,20 @@ case class CommonProjectState(
   segmentations: Map[String, SegmentationState],
   notes: String,
   elementNotes: Option[Map[String, String]], // Option for compatibility.
-  elementMetadata: Option[Map[String, Map[String, String]]]) // Option for compatibility.
+  elementMetadata: Option[Map[String, Map[String, String]]] // Option for compatibility.
+    ) {
+  def progress(implicit entityProgressManager: EntityProgressManager,
+               manager: MetaGraphManager): List[Double] = {
+    val allEntities = vertexSetGUID.map(manager.vertexSet).toList ++
+      edgeBundleGUID.map(manager.edgeBundle).toList ++
+      scalarGUIDs.values.map(manager.scalar) ++
+      vertexAttributeGUIDs.values.map(manager.attribute) ++
+      edgeAttributeGUIDs.values.map(manager.attribute)
+
+    val segmentationProgress = segmentations.values.flatMap(_.progress)
+    allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
+  }
+}
 object CommonProjectState {
   val emptyState = CommonProjectState(
     None, Map(), None, Map(), Map(), Map(), "", Some(Map()), Some(Map()))
@@ -91,7 +102,17 @@ object RootProjectState {
 // Complete state of segmentation.
 case class SegmentationState(
   state: CommonProjectState,
-  belongsToGUID: Option[UUID])
+  belongsToGUID: Option[UUID]) {
+  def progress(implicit entityProgressManager: EntityProgressManager,
+               manager: MetaGraphManager): List[Double] = {
+    val segmentationProgress = state.progress
+    val belongsToProgress = belongsToGUID.map(belongsToGUID => {
+      val belongsTo = manager.edgeBundle(belongsToGUID)
+      entityProgressManager.computeProgress(belongsTo)
+    }).toList
+    belongsToProgress ++ segmentationProgress
+  }
+}
 object SegmentationState {
   val emptyState = SegmentationState(CommonProjectState.emptyState, None)
 }
