@@ -30,7 +30,7 @@ angular.module('biggraph')
         boxCatalog: '=',
       },
       link: function(scope, element) {
-        var progressUpdater;
+        var statusUpdater;
 
         scope.$watchGroup(
           ['boxCatalog.$resolved', 'workspaceName'],
@@ -61,7 +61,7 @@ angular.module('biggraph')
               scope.selectBox(scope.selectedBoxId);
             })
             .then(function() {
-              scope.startProgressUpdate();
+              scope.startStatusUpdate();
             });
         };
 
@@ -230,42 +230,42 @@ angular.module('biggraph')
           scope.saveWorkspace();
         });
 
-        scope.getAndUpdateProgress = function(errorHandler) {
+        scope.getAndUpdaterStatus = function(errorHandler) {
           var workspaceBefore = scope.workspace;
           if (workspaceBefore) {
-            util.nocache('/ajax/getProgress', {
+            util.nocache('/ajax/getStatus', {
               stateIDs: workspaceBefore.knownStateIDs,
             }).then(
-              function success(response) {
+              function success(statusMap) {
                 if (scope.workspace && scope.workspace === workspaceBefore) {
-                  scope.workspace.updateProgress(response.progressMap);
+                  scope.workspace.updateStatus(statusMap);
                 }
               },
               errorHandler);
           }
         };
 
-        scope.startProgressUpdate = function() {
-          scope.stopProgressUpdate();
-          progressUpdater = $interval(function() {
+        scope.startStatusUpdate = function() {
+          scope.stopStatusUpdate();
+          statusUpdater = $interval(function() {
             function errorHandler(error) {
-              util.error('Couldn\'t get progress information.', error);
-              scope.stopProgressUpdate();
-              scope.workspace.clearProgress();
+              util.error('Couldn\'t get status information.', error);
+              scope.stopStatusUpdate();
+              scope.workspace.clearStatus();
             }
-            scope.getAndUpdateProgress(errorHandler);
+            scope.getAndUpdaterStatus(errorHandler);
           }, 2000);
         };
 
-        scope.stopProgressUpdate = function() {
-          if (progressUpdater) {
-            $interval.cancel(progressUpdater);
-            progressUpdater = undefined;
+        scope.stopStatusUpdate = function() {
+          if (statusUpdater) {
+            $interval.cancel(statusUpdater);
+            statusUpdater = undefined;
           }
         };
 
         scope.$on('$destroy', function() {
-          scope.stopProgressUpdate();
+          scope.stopStatusUpdate();
         });
       }
     };
