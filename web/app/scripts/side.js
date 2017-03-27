@@ -311,8 +311,7 @@ angular.module('biggraph')
         return undefined;
       }
       var path = util.projectPath(this.state.projectPath);
-      path.pop();  // Discard own name.
-      return path;
+      return path.slice(0, -1);  // Discard own name.
     };
     Side.prototype.isSegmentation = function() {
       return this.parentProjects().length !== 0;
@@ -420,8 +419,8 @@ angular.module('biggraph')
         // Then move its parent to the right hand side, and open its
         // grandparent on the left hand side.
         this.state.projectPath = this.sides[0].parentProject();
+        this.reload();
         this.swapWithSide(this.sides[0]);
-        this.sides[0].reload();
       } else if (this.direction === 'left' && this.sides[1].state.projectName) {
         // If this project was on the left and there is something on the right,
         // then let the project on the right shift to the left.
@@ -705,7 +704,6 @@ angular.module('biggraph')
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
-      console.log('SIDE OPL ', this.direction);
       this.cleanState();
       this.loadScalars();
       this.updateViewData();
