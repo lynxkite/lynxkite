@@ -976,6 +976,15 @@ class ViewFrame(path: SymbolPath)(
   def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
+class SnapshotFrame(path: SymbolPath)(
+  implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  set(rootDir / "objectType", "snapshot")
+
+  def setState(obj: json.JsObject) = details = obj
+
+  override def isDirectory: Boolean = false
+}
+
 class WorkspaceFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ProjectFrame(path) {
   override def initialize(): Unit = manager.synchronized {
@@ -1151,11 +1160,13 @@ class DirectoryEntry(val path: SymbolPath)(
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
+  def hasObjectType = manager.tagExists(rootDir / "objectType")
   def isTable = get(rootDir / "objectType", "") == "table"
   def isProject = hasCheckpoint && !isTable && !isView && !isWorkspace
-  def isDirectory = exists && !hasCheckpoint
+  def isDirectory = exists && !hasCheckpoint && !hasObjectType
   def isView = get(rootDir / "objectType", "") == "view"
   def isWorkspace = get(rootDir / "objectType", "") == "workspace"
+  def isSnapshot = get(rootDir / "objectType", "") == "snapshot"
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1262,6 +1273,8 @@ object DirectoryEntry {
         new ViewFrame(entry.path)
       } else if (entry.isWorkspace) {
         new WorkspaceFrame(entry.path)
+      } else if (entry.isSnapshot) {
+        new SnapshotFrame(entry.path)
       } else {
         new Directory(entry.path)
       }
