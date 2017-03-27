@@ -57,22 +57,16 @@ class Ec2():
                                       'Values': ['running']}])
             for instance in running_instances:
                 instanceinfo = []
-                for tag in instance.tags:
-                    if 'name' in tag['Key'].lower():
-                        name = tag['Value']
-                    if 'owner' in tag['Key'].lower():
-                        owner = tag['Value']
-                    if 'expiry' in tag['Key'].lower():
-                        expiry = tag['Value']
+                tags = {t['Key'].lower():t['Value'] for t in instance.tags}
                 instanceinfo.append(region_name.upper())
-                instanceinfo.append(name)
+                instanceinfo.append(tags.get('name', 'undefined'))
                 instanceinfo.append(instance.instance_type.upper())
                 instanceinfo.append(instance.state['Name'].upper())
                 instanceinfo.append(instance.private_ip_address)
                 instanceinfo.append(instance.public_ip_address)
                 instanceinfo.append(instance.launch_time)
-                instanceinfo.append(owner)
-                instanceinfo.append(expiry)
+                instanceinfo.append(tags.get('owner','undefined'))
+                instanceinfo.append(tags.get('expiry','undefined'))
 
                 table.add_row(instanceinfo)
         return table
