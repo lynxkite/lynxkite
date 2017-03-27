@@ -31,7 +31,7 @@ angular.module('biggraph').factory('createBox', function() {
 
       function progressToColor(progressRatio) {
         /* global tinycolor */
-        return tinycolor.mix('red', 'green', progressRatio * 100).toHexString();
+        return tinycolor.mix('blue', 'green', progressRatio * 100).toHexString();
       }
 
       return {
@@ -45,8 +45,10 @@ angular.module('biggraph').factory('createBox', function() {
         y: function() { return y + instance.y; },
         posTransform: 'translate(' + x + ', ' + y + ')',
         inProgress: false,
-        color: undefined,
-        updateProgress: function(progress) {
+        progressColor: undefined,
+        error: '',
+        updateStatus: function(status) {
+          var progress = status.progress;
           var all = 0;
           for (var p in progress) {
             if (progress.hasOwnProperty(p)) {
@@ -55,16 +57,27 @@ angular.module('biggraph').factory('createBox', function() {
           }
           if (all) {
             var progressPercentage = progress.computed / all;
-            this.color = progressToColor(progressPercentage);
+            this.progressColor = progressToColor(progressPercentage);
             this.inProgress = progress.inProgress > 0;
           } else {
             this.clearProgress();
+          }
+
+          if (status.success.enabled) {
+            this.error = '';
+          } else {
+            this.error = status.success.disabledReason;
           }
         },
 
         clearProgress: function() {
           this.inProgress = false;
-          this.color = undefined;
+          this.progressColor = undefined;
+        },
+
+        clearStatus: function() {
+          this.clearProgress();
+          this.error = '';
         }
       };
     }

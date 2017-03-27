@@ -16,6 +16,7 @@ import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, Log
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 import org.apache.spark.sql.types.{ StructField, StructType }
+import play.api.libs.json.{ JsValue, Writes }
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -288,10 +289,12 @@ object FrontendJson {
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
   implicit val rGetOutputRequest = json.Json.reads[GetOutputRequest]
-  implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
-  implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
   implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
-  implicit val wGetProgressResponse = json.Json.writes[GetProgressResponse]
+  implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
+  implicit val rGetStatusRequest = json.Json.reads[GetStatusRequest]
+  implicit val wMapStringStatus = new Writes[Map[String, Status]] {
+    override def writes(o: Map[String, Status]): JsValue = json.Json.toJson(o)
+  }
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
 
@@ -411,7 +414,7 @@ object ProductionJsonServer extends JsonServer {
   def createWorkspace = jsonPost(workspaceController.createWorkspace)
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
   def getOutput = jsonGet(workspaceController.getOutput)
-  def getProgress = jsonGet(workspaceController.getProgress)
+  def getStatus = jsonGet(workspaceController.getStatus)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)

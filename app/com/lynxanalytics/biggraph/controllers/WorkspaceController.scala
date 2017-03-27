@@ -14,11 +14,11 @@ case class BoxOutputIDPair(boxOutput: BoxOutput, id: String)
 case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputIDPair])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputRequest(id: String)
-case class GetProgressRequest(stateIDs: List[String])
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
+case class GetStatusRequest(stateIDs: List[String])
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
-case class GetProgressResponse(progressMap: Map[String, Progress])
+case class Status(progress: Progress, success: FEStatus)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
@@ -89,29 +89,28 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getProgress(
-    user: serving.User, request: GetProgressRequest): GetProgressResponse = {
-    val progress = request.stateIDs.map {
-      stateID =>
-        val state = getOutput(user, stateID)
+  def getStatus(user: serving.User, request: GetStatusRequest): Map[String, Status] = {
+    val states = request.stateIDs.map(stateID => stateID -> getOutput(user, stateID)).toMap
+    states.map {
+      case (stateID, state) =>
         if (state.success.enabled) {
           state.kind match {
-            case BoxOutputKind.Project => (stateID, state.project.state.progress)
+            case BoxOutputKind.Project => stateID -> (state.project.state.progress, state.success)
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
-          (stateID, List())
+          stateID -> (List(), state.success)
         }
-    }.toMap.mapValues {
-      progressList =>
-        Progress(
+    }.mapValues {
+      case (progressList, success) =>
+        val progress = Progress(
           computed = progressList.count(_ == 1.0),
           inProgress = progressList.count(x => x < 1.0 && x > 0.0),
           notYetStarted = progressList.count(_ == 0.0),
           failed = progressList.count(_ < 0.0)
         )
+        Status(progress, success)
     }.view.force
-    GetProgressResponse(progress)
   }
 
   def setWorkspace(
@@ -143,4 +142,5 @@ object WorkspaceControllerJsonFormatters {
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputIDPair = json.Json.format[BoxOutputIDPair]
   implicit val fProgress = json.Json.format[Progress]
+  implicit val fStatus = json.Json.format[Status]
 }
