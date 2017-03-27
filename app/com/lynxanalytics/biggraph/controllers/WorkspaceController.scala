@@ -10,14 +10,13 @@ import com.lynxanalytics.biggraph.serving
 import play.api.libs.json
 
 case class GetWorkspaceRequest(name: String)
+case class BoxOutputIDPair(boxOutput: BoxOutput, id: String)
+case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputIDPair])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetAllOutputIDsRequest(workspaceName: String)
 case class GetOutputRequest(id: String)
 case class GetProgressRequest(stateIDs: List[String])
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
-case class BoxOuputIDPair(boxOutput: BoxOutput, id: String)
-case class GetAllOutputIDsResponse(outputs: List[BoxOuputIDPair])
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProgressResponse(progressMap: Map[String, Progress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
@@ -54,25 +53,21 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getWorkspace(
-    user: serving.User, request: GetWorkspaceRequest): Workspace =
-    getWorkspaceByName(user, request.name)
-
-  // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
-  val calculatedStates = new HashMap[String, BoxOutputState]()
-
-  def getAllOutputIDs(user: serving.User,
-                      request: GetAllOutputIDsRequest): GetAllOutputIDsResponse = {
-    val ws = getWorkspaceByName(user, request.workspaceName)
-    val states = ws.allStates(user, ops)
+    user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
+    val workspace = getWorkspaceByName(user, request.name)
+    val states = workspace.allStates(user, ops)
     val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
       for ((_, (boxOutputState, id)) <- statesWithId) {
         calculatedStates(id) = boxOutputState
       }
     }
-    val outputs = statesWithId.mapValues(_._2).toList.map((BoxOuputIDPair.apply _).tupled)
-    GetAllOutputIDsResponse(outputs)
+    val stateIDs = statesWithId.mapValues(_._2).toList.map((BoxOutputIDPair.apply _).tupled)
+    GetWorkspaceResponse(workspace, stateIDs)
   }
+
+  // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
+  val calculatedStates = new HashMap[String, BoxOutputState]()
 
   def getOutput(user: serving.User, request: GetOutputRequest): GetOutputResponse = {
     val state = getOutput(user, request.id)
@@ -115,7 +110,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
           notYetStarted = progressList.count(_ == 0.0),
           failed = progressList.count(_ < 0.0)
         )
-    }
+    }.view.force
     GetProgressResponse(progress)
   }
 
@@ -146,6 +141,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 object WorkspaceControllerJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   import WorkspaceJsonFormatters._
-  implicit val fBoxOutputIDPair = json.Json.format[BoxOuputIDPair]
+  implicit val fBoxOutputIDPair = json.Json.format[BoxOutputIDPair]
   implicit val fProgress = json.Json.format[Progress]
 }

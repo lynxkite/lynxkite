@@ -13,7 +13,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   def create(name: String) =
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
-  def get(name: String): Workspace =
+  def get(name: String): GetWorkspaceResponse =
     controller.getWorkspace(user, GetWorkspaceRequest(name))
   def set(name: String, workspace: Workspace): Unit =
     controller.setWorkspace(user, SetWorkspaceRequest(name, workspace))
@@ -28,8 +28,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def getOpMeta(ws: String, box: String) =
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
   def getOutputIDs(ws: String) = {
-    val allIds = controller.getAllOutputIDs(user, GetAllOutputIDsRequest(ws)).outputs
-    allIds.map(BoxOuputIDPair.unapply).map(_.get).toMap
+    val allIds = get(ws).outputs
+    allIds.map(BoxOutputIDPair.unapply).map(_.get).toMap
   }
   def getOutput(id: String) =
     controller.getOutput(user, GetOutputRequest(id))
@@ -86,7 +86,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("getProject") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
+      assert(get("test-workspace").workspace.boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
@@ -100,7 +100,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("getOperationMeta") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
+      assert(get("test-workspace").workspace.boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
         "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
@@ -129,7 +129,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("2-input operation") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
+      assert(get("test-workspace").workspace.boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val blanks = Box("blanks", "Create vertices", Map("size" -> "2"), 0, 0, Map())
       val convert = Box(
@@ -165,7 +165,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("progress success") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
+      assert(get("test-workspace").workspace.boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
         "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
@@ -177,8 +177,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace(List(eg, cc, pr))
       set("test-workspace", ws)
-      val stateIDs = controller.getAllOutputIDs(user, GetAllOutputIDsRequest("test-workspace"))
-        .outputs.map(BoxOuputIDPair.unapply).map(_.get).toMap
+      val stateIDs = getOutputIDs("test-workspace")
       val prStateID = stateIDs(prOutput)
       val progressBeforePR = controller.getProgress(user,
         GetProgressRequest(List(prStateID))
@@ -201,14 +200,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("progress fails") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
+      assert(get("test-workspace").workspace.boxes.isEmpty)
       // box with unconnected input
       val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
       val prOutput = pr.output("project")
       val ws = Workspace(List(pr))
       set("test-workspace", ws)
-      val stateIDs = controller.getAllOutputIDs(user, GetAllOutputIDsRequest("test-workspace"))
-        .outputs.map(BoxOuputIDPair.unapply).map(_.get).toMap
+      val stateIDs = getOutputIDs("test-workspace")
       val prStateID = stateIDs(prOutput)
       val progress = controller.getProgress(user,
         GetProgressRequest(List(prStateID))
@@ -220,7 +218,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("circular dependencies") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
+      assert(get("test-workspace").workspace.boxes.isEmpty)
       val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20,
         Map("project" -> BoxOutput("pr2", "project")))
       val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20,
@@ -231,8 +229,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(eg :: badBoxes)
       set("test-workspace", ws)
-      val outputIds = controller.getAllOutputIDs(user, GetAllOutputIDsRequest("test-workspace"))
-        .outputs.map(BoxOuputIDPair.unapply).map(_.get).toMap
+      val outputIds = getOutputIDs("test-workspace")
       val outputs = for {
         (boxOutput, id) <- outputIds
         state = controller.getOutput(user, GetOutputRequest(id))
