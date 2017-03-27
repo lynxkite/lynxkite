@@ -40,6 +40,7 @@ angular.module('biggraph')
             true);
 
         scope.paramValues = {};
+        scope.parametricParams = {};
 
         scope.loadBoxMeta = function() {
           if (!scope.workspace || !scope.workspace.selectedBoxId) {
@@ -93,7 +94,7 @@ angular.module('biggraph')
         };
 
         scope.apply = function() {
-          scope.workspace.updateSelectedBox(scope.paramValues);
+          scope.workspace.updateSelectedBox(scope.paramValues, scope.parametricParams);
         };
       },
     };

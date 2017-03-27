@@ -87,8 +87,8 @@ angular.module('biggraph')
           }
         },
 
-        updateSelectedBox: function(paramValues) {
-          this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
+        updateSelectedBox: function(paramValues, parametricParameters) {
+          this.wrapper.setBoxParams(this.selectedBoxId, paramValues, parametricParameters);
           this.saveWorkspace();
         },
 
