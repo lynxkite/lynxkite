@@ -26,7 +26,8 @@
                           'colored-output': plug.progressColor || plug.error }"
                 ng-mousedown="onMouseDownOnPlug(plug, $event)"
                 ng-mouseup="onMouseUpOnPlug(plug, $event)"
-                ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}" >
+                ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
+                ng-attr-drop-tooltip="{{ plug.error }}">
           </circle>
         </g>
       </g>
