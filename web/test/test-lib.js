@@ -733,6 +733,10 @@ Selector.prototype = {
     return element(by.id('view-' + toID(name)));
   },
 
+  snapshot: function(name) {
+    return element(by.id('snapshot-' + toID(name)));
+  },
+
   expectNumWorkspaces: function(n) {
     return expect($$('.workspace-entry').count()).toEqual(n);
   },
@@ -886,6 +890,10 @@ Selector.prototype = {
 
   expectViewListed: function(name) {
     testLib.expectElement(this.view(name));
+  },
+
+  expectSnapshotListed: function(name) {
+    testLib.expectElement(this.snapshot(name));
   },
 
   enterSearchQuery: function(query) {
