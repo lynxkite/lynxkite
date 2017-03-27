@@ -13,7 +13,7 @@ angular.module('biggraph')
       link: function(scope) {
         scope.$watch('state.$resolved', function() {
           if (scope.state && scope.state.$resolved &&
-              scope.state.kind === 'project') {
+              scope.state.kind === 'project' && scope.state.success.enabled) {
             scope.side = new side.Side([], '');
             scope.side.project = scope.state.project;
             scope.side.project.$resolved = true;
