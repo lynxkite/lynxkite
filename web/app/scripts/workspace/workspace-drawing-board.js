@@ -52,21 +52,13 @@ angular.module('biggraph')
             {
               name: scope.workspaceName
             })
-            .then(function(rawWorkspace) {
+            .then(function(response) {
+              var rawWorkspace = response.workspace;
               scope.workspace = createWorkspace(
                 rawWorkspace, scope.boxCatalogMap);
-              scope.selectBox(scope.selectedBoxId);
-            })
-            .then(function() {
-              return util.nocache(
-                '/ajax/getAllOutputIDs',
-                {
-                  workspaceName: scope.workspaceName
-                });
-            })
-            .then(function(response) {
               var outputs = response.outputs;
               scope.workspace.assignStateIDsToPlugs(outputs);
+              scope.selectBox(scope.selectedBoxId);
             })
             .then(function() {
               scope.startProgressUpdate();

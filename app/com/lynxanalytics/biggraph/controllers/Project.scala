@@ -56,15 +56,15 @@ object MetadataNames {
 
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
-  vertexSetGUID: Option[UUID],
-  vertexAttributeGUIDs: Map[String, UUID],
-  edgeBundleGUID: Option[UUID],
-  edgeAttributeGUIDs: Map[String, UUID],
-  scalarGUIDs: Map[String, UUID],
-  segmentations: Map[String, SegmentationState],
-  notes: String,
-  elementNotes: Option[Map[String, String]], // Option for compatibility.
-  elementMetadata: Option[Map[String, Map[String, String]]] // Option for compatibility.
+    vertexSetGUID: Option[UUID],
+    vertexAttributeGUIDs: Map[String, UUID],
+    edgeBundleGUID: Option[UUID],
+    edgeAttributeGUIDs: Map[String, UUID],
+    scalarGUIDs: Map[String, UUID],
+    segmentations: Map[String, SegmentationState],
+    notes: String,
+    elementNotes: Option[Map[String, String]], // Option for compatibility.
+    elementMetadata: Option[Map[String, Map[String, String]]] // Option for compatibility.
     ) {
   def progress(implicit entityProgressManager: EntityProgressManager,
                manager: MetaGraphManager): List[Double] = {
@@ -101,8 +101,8 @@ object RootProjectState {
 
 // Complete state of segmentation.
 case class SegmentationState(
-  state: CommonProjectState,
-  belongsToGUID: Option[UUID]) {
+    state: CommonProjectState,
+    belongsToGUID: Option[UUID]) {
   def progress(implicit entityProgressManager: EntityProgressManager,
                manager: MetaGraphManager): List[Double] = {
     val segmentationProgress = state.progress
