@@ -92,6 +92,8 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
               operationID: operationId,
               x: x,
               y: y,
+              width: 200,
+              height: 40,
               inputs: {},
               parameters: {}
             });

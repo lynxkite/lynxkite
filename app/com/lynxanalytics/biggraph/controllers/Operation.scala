@@ -28,6 +28,7 @@ object FEOperationParameterMeta {
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
     "code", // JavaScript code
+    "multiline-sting", // A textbox allowing multiline text.
     "model", // A special kind to set model parameters.
     "table", // A table.
     "segmentation") // One of the segmentations of the current project.
@@ -301,5 +302,21 @@ abstract class ProjectTransformation(
     apply()
     updateDeltas(project, before)
     makeOutput(project)
+  }
+}
+
+// A DecoratorOperation is an operation that has no input or output.
+abstract class DecoratorOperation(
+    protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.inputs == List(),
+    s"A DecoratorOperation must not have an input. $context")
+  assert(
+    context.meta.outputs == List(),
+    s"A DecoratorOperation must not have an output. $context")
+  protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
+  override def getOutputs() = {
+    apply()
+    Map[BoxOutput, BoxOutputState]()
   }
 }

@@ -40,7 +40,11 @@
       <text x="5" y="15">
         {{box.metadata.operationID}}
       </text>
-
+      <text x="5" y="50" ng-show="box.isCommentBox">
+        <tspan xml:space="preserve" ng-repeat="line in box.commentLines track by $index" x="5" dy="15">
+          {{line}}
+        </tspan>
+      </text>
     </g>
     <!-- end box -->
 
