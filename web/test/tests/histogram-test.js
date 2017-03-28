@@ -133,14 +133,29 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'precise mode histogram has precise number for large datasets',
     function() {
-      lib.workspace.addBox('Create vertices', 100, 100, 'create-vertices', []);
-      lib.workspace.editBox('create-vertices', {size: '123456'});
-      lib.workspace.addBox('Add constant vertex attribute', 100, 200, 'add-attr', [{
-        boxID: 'create-vertices',
-        srcPlugID: 'project',
-        dstPlugID: 'project'
-      }]);
-      lib.workspace.editBox('add-attr', {name: 'c'});
+      lib.workspace.addBox({
+        id: 'create-vertices',
+        name: 'create vertices',
+        x: 100,
+        y: 100,
+        params: {
+          size: '123456',
+        },
+      });
+      lib.workspace.addBox({
+        id: 'add-attr',
+        name: 'add constant vertex attribute',
+        x: 100,
+        y: 200,
+        inputs: [{
+          boxID: 'create-vertices',
+          srcPlugID: 'project',
+          dstPlugID: 'project'
+        }],
+        params: {
+          name: 'c',
+        },
+      });
       lib.workspace.getOutputPlug('add-attr', 'project').click();  // select state
       expect(lib.state.vertexAttribute('c').getHistogramValues(true)).toEqual([
         { title : '1.00-1.00', size: 100, value: 123456 },

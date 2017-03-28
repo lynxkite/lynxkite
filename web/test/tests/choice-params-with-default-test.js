@@ -9,28 +9,41 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'test pagerank default choice values',
     function() {
-      lib.workspace.addBox('create example graph', 100, 100, 'ex0', []);
-      lib.workspace.addBox('compute pagerank', 100, 200, 'pr1', [{
-        boxID: 'ex0',
-        srcPlugID: 'project',
-        dstPlugID: 'project'
-      }]);
-      lib.workspace.addBox('compute pagerank', 100, 300, 'pr2', [{
-        boxID: 'pr1',
-        srcPlugID: 'project',
-        dstPlugID: 'project'
-      }]);
-      lib.workspace.editBox(
-          'pr1',
-          {
-            name: 'page_rank_default',
-          });
-      lib.workspace.editBox(
-          'pr2',
-          {
-            name: 'page_rank_incoming',
-            direction: 'incoming edges',
-          });
+      lib.workspace.addBox({
+        id: 'ex0',
+        name: 'create example graph',
+        x: 100,
+        y: 100,
+      });
+      lib.workspace.addBox({
+        id: 'pr1',
+        name: 'compute pagerank',
+        x: 100,
+        y: 200,
+        inputs: [{
+          boxID: 'ex0',
+          srcPlugID: 'project',
+          dstPlugID: 'project',
+        }],
+        params: {
+          name: 'page_rank_default',
+        },
+      });
+      lib.workspace.addBox({
+        id: 'pr2',
+        name: 'compute pagerank',
+        x: 100,
+        y: 300,
+        inputs: [{
+          boxID: 'pr1',
+          srcPlugID: 'project',
+          dstPlugID: 'project',
+        }],
+        params: {
+          name: 'page_rank_incoming',
+          direction: 'incoming edges',
+        },
+      });
     },
     function() {
       lib.workspace.getOutputPlug('pr2', 'project').click();
