@@ -18,7 +18,7 @@ case class GetOutputIDResponse(id: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
-case class CreateSnapshotRequest(id: String)
+case class CreateSnapshotRequest(name: String, id: String)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -55,15 +55,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getWorkspaceByName(user, request.name)
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
-  case class CalculatedState(workspace: String, state: BoxOutputState)
-  val calculatedStates = new HashMap[String, CalculatedState]()
+  val calculatedStates = new HashMap[String, BoxOutputState]()
 
   def getOutputID(
     user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
     val state = ws.state(user, ops, request.output)
     val id = UUID.randomUUID.toString
-    calculatedStates(id) = CalculatedState(request.workspace, state)
+    calculatedStates(id) = state
     GetOutputIDResponse(id)
   }
 
@@ -71,27 +70,24 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetOutputRequest): GetOutputResponse = {
     calculatedStates.get(request.id) match {
       case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(storedState: CalculatedState) =>
-        storedState.state.kind match {
+      case Some(storedState: BoxOutputState) =>
+        storedState.kind match {
           case BoxOutputKind.Project =>
             GetOutputResponse(
-              storedState.state.kind,
-              project = Some(storedState.state.project.viewer.toFE(storedState.workspace)))
+              storedState.kind,
+              project = Some(storedState.project.viewer.toFE("")))
         }
     }
   }
 
   def createSnapshot(
     user: serving.User, request: CreateSnapshotRequest): Unit = {
-    import com.lynxanalytics.biggraph.controllers.CheckpointRepository.fCommonProjectState
-    val cpState = calculatedStates.synchronized {
-      calculatedStates.get(request.id).get.state.state.as[CommonProjectState]
+    val calculatedState = calculatedStates.synchronized {
+      calculatedStates.get(request.id).get
     }
-    val rpState = RootProjectState.emptyState.copy(state = cpState, checkpoint = None)
-    val checkpointedState = metaManager.checkpointRepo.checkpointState(rpState, "")
-    val snapShot = new ProjectFrame(SymbolPath("snapshot-" + checkpointedState.checkpoint.get))
-    snapShot.initialize()
-    snapShot.setCheckpoint(checkpointedState.checkpoint.get)
+    val snapshot = new SnapshotFrame(SymbolPath(request.name))
+    import WorkspaceJsonFormatters.fBoxOutputState
+    snapshot.setState(calculatedState)
   }
 
   def setWorkspace(
