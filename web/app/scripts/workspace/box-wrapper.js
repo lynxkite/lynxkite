@@ -66,6 +66,7 @@ angular.module('biggraph').factory('boxWrapper', function() {
         }
       };
     }
+
     var inputs = [];
     var outputs = [];
     var outputMap = {};
@@ -78,13 +79,6 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputs.push(plug);
       outputMap[plug.data.id] = plug;
     }
-    var isCommentBox = metadata.operationID === 'Add comment';
-    var commentLines = (function(){
-      var comment = instance.parameters.comment;
-      var commLines = comment ? comment.split('\n') : [];
-      return commLines;
-    })();
-
     return {
       metadata: metadata,
       instance: instance,
@@ -93,8 +87,6 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputMap: outputMap,
       width: width,
       height: height,
-      isCommentBox: isCommentBox,
-      commentLines: commentLines,
       isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
