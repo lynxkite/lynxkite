@@ -44,6 +44,20 @@ angular.module('biggraph')
           return this.wrapper ? this.wrapper.arrows : [];
         },
 
+        startX: 0,
+        startY: 0,
+        endX: 0,
+        endY: 0,
+
+        selectionBox:function(x1,x2,y1,y2){
+          return({
+            x: Math.min(x1,x2),
+            y: Math.min(y1,y2),
+            width: Math.abs(x1 - x2),
+            length: Math.abs(y1-y2),
+          });
+        },
+
         loadWorkspace: function() {
           var that = this;
           util.nocache(
@@ -90,6 +104,19 @@ angular.module('biggraph')
         updateSelectedBox: function(paramValues) {
           this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
           this.saveWorkspace();
+        },
+
+
+        selectBoxes: function(boxIds) {
+          this.selectedBoxIds = boxIds;
+        },
+
+        selectedBoxes: function() {
+          if (this.selectedBoxIds) {
+            return this.selectedBoxIds.map(function(id){return this.wrapper.boxMap[id];});
+          } else {
+            return undefined;
+          }
         },
 
         selectState: function(boxID, outputID) {
