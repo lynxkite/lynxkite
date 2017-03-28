@@ -175,18 +175,23 @@ Workspace.prototype = {
     button.click();
   },
 
-  addBox: function(name, x, y) {
+  addBox: function(name, x, y, id, connections) {
     var op = this.openOperation(name);
-    testLib.simulateDragAndDrop(op, this.board, x, y);
+    testLib.simulateDragAndDrop(op, this.board, x, y, {id: id});
     this.closeOperationSelector();
+    for (var i = 0; i < connections.length; ++i) {
+      var connection = connections[i];
+      this.connectBoxes(connection.boxID, connection.srcPlugID, id, connection.dstPlugID);
+    }
+    return this.getBox(id);
   },
 
-  selectBox(box) {
-    box.$('rect').click();
+  selectBox(boxID) {
+    this.getBox(boxID).$('rect').click();
   },
 
-  editBox: function(box, params) {
-    this.selectBox(box);
+  editBox: function(boxID, params) {
+    this.selectBox(boxID);
     this.populateOperation(params);
     this.submitOperation();
   },
@@ -201,25 +206,25 @@ Workspace.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
-  getBox(boxId) {
-    return this.board.$$('.box').get(boxId);
+  getBox(boxID) {
+    return this.board.$('.box#' + boxID);
   },
 
-  getInputPlug: function(box, plugId) {
-    return box.$('#inputs #' + plugId + ' circle');
+  getInputPlug: function(boxID, plugID) {
+    return this.getBox(boxID).$('#inputs #' + plugID + ' circle');
   },
 
-  getOutputPlug: function(box, plugId) {
-    return box.$('#outputs #' + plugId + ' circle');
+  getOutputPlug: function(boxID, plugID) {
+    return this.getBox(boxID).$('#outputs #' + plugID + ' circle');
   },
 
-  selectOutput: function(box, plugId) {
-    this.getOutputPlug(box, plugId).click();
+  selectOutput: function(boxID, plugID) {
+    this.getOutputPlug(boxID, plugID).click();
   },
 
-  connectBoxes: function(box1, output1, box2, input2) {
-    var src = this.getOutputPlug(box1, output1);
-    var dst = this.getInputPlug(box2, input2);
+  connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
+    var src = this.getOutputPlug(srcBoxID, srcPlugID);
+    var dst = this.getInputPlug(dstBoxID, dstPlugID);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
@@ -1266,9 +1271,9 @@ testLib = {
   // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
   // to generate and send drag-and-drop events to the page. This function can be used to
   // achieve that.
-  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY) {
+  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransfer) {
 
-    function simulateDragAndDropInBrowser(src, dst, dstX, dstY) {
+    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransfer) {
       function createEvent(type) {
         var event = new CustomEvent('CustomEvent');
         event.initCustomEvent(type, true, true, null);
@@ -1286,6 +1291,11 @@ testLib = {
 
       var dragStartEvent = createEvent('dragstart');
       src.dispatchEvent(dragStartEvent);
+      for (var a in dataTransfer) {
+        if (dataTransfer.hasOwnProperty(a)) {
+          dragStartEvent.dataTransfer.setData(a, dataTransfer[a]);
+        }
+      }
 
       var dropEvent = createEvent('drop');
       dropEvent.offsetX = dstX;
@@ -1300,10 +1310,11 @@ testLib = {
     }
 
     browser.executeScript(
-        simulateDragAndDropInBrowser,
-        srcSelector.getWebElement(),
-        dstSelector.getWebElement(),
-        dstX, dstY);
+      simulateDragAndDropInBrowser,
+      srcSelector.getWebElement(),
+      dstSelector.getWebElement(),
+      dstX, dstY, dataTransfer
+    );
   },
 
 };
