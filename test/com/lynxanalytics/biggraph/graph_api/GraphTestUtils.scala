@@ -79,7 +79,6 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGrap
   }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
-  override def sqlHelper = new SQLHelper(sparkContext, metaGraphManager, dataManager)
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
@@ -96,16 +95,20 @@ case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, 
   def attr[T: TypeTag](name: String) = attrs(name).runtimeSafeCast[T]
 }
 object TestGraph {
-  private def loadCSV(file: String)(implicit dm: DataManager) = {
-    dm.newSQLContext().read.format("com.databricks.spark.csv")
+  import Scripting._
+  def loadCSV(file: String)(
+    implicit mm: MetaGraphManager, dm: DataManager): TableToAttributes.Output = {
+    val df = dm.newSQLContext().read.format("com.databricks.spark.csv")
       .option("header", "true")
       .load(file)
+    val t = ImportDataFrame.run(df)
+    val op = TableToAttributes()
+    op(op.t, t).result
   }
   // Loads a graph from vertices.csv and edges.csv.
   def fromCSV(directory: String)(implicit mm: MetaGraphManager, dm: DataManager): TestGraph = {
-    import Scripting._
-    val vertexCSV = ImportDataFrame(loadCSV(directory + "/vertices.csv")).result
-    val edgeCSV = ImportDataFrame(loadCSV(directory + "/edges.csv")).result
+    val vertexCSV = loadCSV(directory + "/vertices.csv")
+    val edgeCSV = loadCSV(directory + "/edges.csv")
     val edges = {
       val op = new ImportEdgeListForExistingVertexSetFromTable()
       op(
