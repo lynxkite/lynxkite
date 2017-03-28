@@ -37,13 +37,22 @@
           ng-attr-width="{{box.width}}"
           ng-attr-height="{{box.height}}">
       </rect>
+
       <text x="5" y="15">
         {{box.metadata.operationID}}
       </text>
 
     </g>
     <!-- end box -->
-
+    <g>
+    <rect
+      class="selection-box"
+      ng-attr-x="{{workspace.startX}}"
+      ng-attr-y="{{workspace.startY}}"
+      ng-attr-width="{{workspace.endX - workspace.startX}}"
+      ng-attr-height="{{workspace.endY - workspace.startY}}">
+    </rect>
+  </g>
     <!-- start arrow -->
     <g ng-repeat="arrow in workspace.arrows()">
       <line class="arrow"

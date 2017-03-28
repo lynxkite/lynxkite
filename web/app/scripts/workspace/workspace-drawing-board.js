@@ -14,6 +14,7 @@ angular.module('biggraph')
       },
       link: function(scope, element) {
         var workspaceDrag = false;
+        var selectBoxes = false;
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
@@ -31,6 +32,10 @@ angular.module('biggraph')
             workspaceX += event.offsetX - mouseX;
             workspaceY += event.offsetY - mouseY;
           }
+          if (selectBoxes) {
+            scope.workspace.endX = event.offsetX;
+            scope.workspace.endY = event.offsetY;
+          }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
           scope.workspace.onMouseMove(getLogicalPosition(event));
@@ -47,6 +52,9 @@ angular.module('biggraph')
             element[0].style.cursor = '';
             scope.workspace.onMouseUp(event);
           }
+          else{
+            selectBoxes = false;
+          }
         };
 
         scope.onMouseDown = function(event) {
@@ -56,6 +64,15 @@ angular.module('biggraph')
             setGrabCursor(element[0]);
             mouseX = event.offsetX;
             mouseY = event.offsetY;
+        }
+        else {
+          event.preventDefault();
+          selectBoxes = true;
+          scope.workspace.endX = undefined;
+          scope.workspace.endY = undefined;
+          scope.workspace.startX = event.offsetX;
+          scope.workspace.startY = event.offsetY;
+
         }
       };
 
