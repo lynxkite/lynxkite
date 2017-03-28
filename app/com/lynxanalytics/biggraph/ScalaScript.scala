@@ -30,22 +30,16 @@ object ScalaScript {
   settings.usejavacp.value = true
 
   def run(code: String): String = {
-    val compiledCode = engine.compile(code)
-    SafeFuture {
-      try {
-        (compiledCode.eval().toString, None)
-      } catch {
-        case t: Throwable =>
-          ("", Some(t))
-      }
-    }(executionContext)
-      .awaitResult(timeout) match {
-        case (str: String, None) =>
-          str
-        case (str: String, ex: Option[Throwable]) =>
-          throw ex.get
-        case _ =>
-          ???
-      }
+    // https://issues.scala-lang.org/browse/SI-8521
+    val cl = Thread.currentThread().getContextClassLoader
+    val result = try {
+      val compiledCode = engine.compile(code)
+      SafeFuture {
+        compiledCode.eval().toString
+      }(executionContext).awaitResult(timeout)
+    } finally {
+      Thread.currentThread().setContextClassLoader(cl)
+    }
+    result
   }
 }
