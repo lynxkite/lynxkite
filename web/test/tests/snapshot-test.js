@@ -9,13 +9,14 @@ module.exports = function(fw) {
     'test-example workspace with example graph state selected',
     'snapshot-created',
     function() {
-      browser.driver.sleep(2000);
-      $$('#create-snapshot-button').click();
+      var inputBox = $$('.save-as-snapshot-box input');
+      var inputButton = $$('.save-as-snapshot-box .glyphicon-camera');
+
+      var name = 'This is a snapshot.';
+      inputBox.sendKeys(lib.selectAllKey + name);
+      inputButton.click();
       lib.workspace.close();
-      browser.driver.sleep(5000);
-      console.log('F M L');
-      /*expect(lib.error()).toEqual('Entry \'test-example\' already exists.');
-      lib.closeErrors();*/
-      expect(2).toEqual(2);
+
+      lib.splash.expectSnapshotListed(name);
     });
 };
