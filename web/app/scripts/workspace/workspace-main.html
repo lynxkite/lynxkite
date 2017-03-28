@@ -3,6 +3,22 @@
   <div id="workspace-header">
     <span id="workspace-name">{{workspace.name}}</span>
     <div class="btn-group pull-right">
+      <button class="btn btn-default"
+           id="select-mode-on"
+           onclick="window.localStorage.setItem('grab_or_select', 'select')"
+           tooltip="Select&nbsp;boxes&nbsp;on&nbsp;click"
+           tooltip-append-to-body="true"
+           tooltip-placement="bottom">
+        <i class="fa fa-mouse-pointer"></i>
+      </button>
+      <button class="btn btn-default"
+           id="grab-mode-on"
+           onclick="window.localStorage.setItem('grab_or_select', 'grab')"
+           tooltip="Grab&nbsp;workspace&nbsp;on&nbsp;click"
+           tooltip-append-to-body="true"
+           tooltip-placement="bottom">
+        <i class="fa fa-hand-rock-o"></i>
+      </button>
       <a class="btn btn-default"
            href="#/"
            id="close-workspace"

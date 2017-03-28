@@ -42,19 +42,23 @@ angular.module('biggraph')
         };
 
         scope.onMouseUp = function(event) {
-          workspaceDrag = false;
-          element[0].style.cursor = '';
-          scope.workspace.onMouseUp(event);
+          if(window.localStorage.getItem('grab_or_select') === 'grab'){
+            workspaceDrag = false;
+            element[0].style.cursor = '';
+            scope.workspace.onMouseUp(event);
+          }
         };
 
         scope.onMouseDown = function(event) {
-          event.preventDefault();
-          workspaceDrag = true;
-          setGrabCursor(element[0]);
-          mouseX = event.offsetX;
-          mouseY = event.offsetY;
-        };
-        
+          if(window.localStorage.getItem('grab_or_select') === 'grab'){
+            event.preventDefault();
+            workspaceDrag = true;
+            setGrabCursor(element[0]);
+            mouseX = event.offsetX;
+            mouseY = event.offsetY;
+        }
+      };
+
         scope.workspaceTransform = function() {
           var z = zoomToScale(workspaceZoom);
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
