@@ -34,7 +34,7 @@ class TableToAttributesTest extends FunSuite with TestGraphOp {
     assertWithType("id", 1L, 2L, 3L, 4L)
     assertWithType("name", "Daniel", "Beata", "Felix")
     assertWithType("iq", 222.0, 222.3, 222.9)
-    assertWithType("race_condition", "Halfling", "Dwarf", "Gnome")
+    assertWithType("race condition", "Halfling", "Dwarf", "Gnome")
     assertWithType("level", 10.0, 20.0)
   }
 }

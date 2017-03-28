@@ -15,21 +15,7 @@ object ImportDataFrame extends OpFromJson {
     None,
     (j \ "timestamp").as[String])
 
-  // Renames columns to names that are allowed by Parquet.
-  private def normalize(df: DataFrame): DataFrame = {
-    df.columns.foldLeft(df) {
-      (df, c) => df.withColumnRenamed(c, normalizeColumnName(c))
-    }
-  }
-
-  private def normalizeColumnName(name: String): String = {
-    name.replaceAll("[ ,;{}()\n\t=]", "_")
-  }
-
-  def apply(df: DataFrame) = {
-    val ndf = normalize(df)
-    new ImportDataFrame(ndf.schema, Some(ndf), Timestamp.toString)
-  }
+  def apply(df: DataFrame) = new ImportDataFrame(df.schema, Some(df), Timestamp.toString)
 
   def run(df: DataFrame)(implicit mm: MetaGraphManager): Table = {
     import Scripting._
