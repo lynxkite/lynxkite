@@ -164,8 +164,8 @@ angular.module('biggraph')
           }
         },
 
-        addBox: function(operationId, pos) {
-          this.wrapper.addBox(operationId, pos.x, pos.y);
+        addBox: function(operationId, pos, /* test-purposes only */ boxID) {
+          this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
           this.saveWorkspace();
         },
 
