@@ -19,34 +19,7 @@ import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val operations = new ProjectOperations(env).operations.toMap ++
-    new NoInputOutputOperations(env).operations.toMap
-}
-
-class NoInputOutputOperations(env: SparkFreeEnvironment) extends OperationRegistry {
-  implicit lazy val manager = env.metaGraphManager
-  import Operation.Category
-  import Operation.Context
-  import Operation.Implicits._
-
-  import OperationParams._
-
-  def register(
-    id: String,
-    category: Category)(factory: Context => Operation): Unit = {
-    registerOp(id, category, List(), List(), factory)
-  }
-
-  //Categories
-  val BoxDecorators = Category("Box decorators", "black", icon = "kraken")
-
-  register("Add comment", BoxDecorators)(new DecoratorOperation(_) {
-    def parameters = List(
-      MultilineString("comment", "Comment")
-    )
-    def apply() = {}
-    def enabled = FEStatus.enabled
-  })
+  override val operations = new ProjectOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {

@@ -208,8 +208,7 @@ case class BoxMetadata(
 
 object BoxOutputKind {
   val Project = "project"
-  val Decorator = "Decorator"
-  val validKinds = Set(Project, Decorator) // More kinds to come.
+  val validKinds = Set(Project) // More kinds to come.
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
