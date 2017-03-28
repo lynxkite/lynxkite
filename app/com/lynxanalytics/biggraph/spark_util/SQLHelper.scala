@@ -14,7 +14,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types
 
-import scala.collection.mutable;
+import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
 import java.util.UUID
@@ -80,53 +80,4 @@ object SQLHelper {
     val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
     dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
   }
-
-  private def toNumberedLines(dataFrame: DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
-    val numRows = dataFrame.count()
-    val maxRows = Limitations.maxImportedLines
-    if (maxRows >= 0) {
-      if (numRows > maxRows) {
-        throw new AssertionError(
-          s"Can't import $numRows lines as your licence only allows $maxRows.")
-      }
-    }
-    val seqRDD = toSeqRDD(dataFrame)
-    val partitioner = rc.partitionerForNRows(numRows)
-    import com.lynxanalytics.biggraph.spark_util.Implicits._
-    seqRDD.randomNumbered(partitioner)
-  }
-
-  // Magic output for metagraph operations whose output is created
-  // from a DataFrame.
-  class DataFrameOutput(schema: types.StructType)(implicit instance: MetaGraphOperationInstance)
-      extends MagicOutput(instance) {
-    // Methods for listing the output entities for metagraph building purposes.
-    private def attributeFromTypeTag[T: TypeTag](
-      ids: => EntityContainer[VertexSet], name: scala.Symbol): EntityContainer[Attribute[T]] =
-      vertexAttribute[T](ids, name)
-
-    private def attributeFromField(
-      ids: => EntityContainer[VertexSet],
-      field: types.StructField): EntityContainer[Attribute[_]] = {
-      attributeFromTypeTag(ids, toSymbol(field))(typeTagFromDataType(field.dataType))
-    }
-
-    val ids = vertexSet
-    val columns = schema.map {
-      field => field.name -> attributeFromField(ids, field)
-    }.toMap
-
-    // Methods for populating this output instance with computed output RDDs.
-    def populateOutput(
-      rc: RuntimeContext,
-      schema: types.StructType,
-      dataFrame: DataFrame) {
-      val entities = this.columns.values.map(_.entity)
-      val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
-      val inOrder = schema.map(f => entitiesByName(SQLHelper.toSymbol(f)))
-
-      rc.ioContext.writeAttributes(inOrder, toNumberedLines(dataFrame, rc))
-    }
-  }
-
 }

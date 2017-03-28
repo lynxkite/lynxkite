@@ -96,7 +96,8 @@ case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, 
 }
 object TestGraph {
   import Scripting._
-  def loadCSV(file: String)(implicit mm: MetaGraphManager, dm: DataManager): SQLHelper.DataFrameOutput = {
+  def loadCSV(file: String)(
+    implicit mm: MetaGraphManager, dm: DataManager): TableToAttributes.Output = {
     val df = dm.newSQLContext().read.format("com.databricks.spark.csv")
       .option("header", "true")
       .load(file)
