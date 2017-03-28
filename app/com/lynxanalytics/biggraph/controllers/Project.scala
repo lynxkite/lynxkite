@@ -977,10 +977,10 @@ class ViewFrame(path: SymbolPath)(
 }
 
 class SnapshotFrame(path: SymbolPath)(
-  implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   set(rootDir / "objectType", "snapshot")
 
-  def setState(obj: json.JsObject) = details = obj
+  def setState[T: json.Writes](obj: T) = details = TypedJson.createFromWriter(obj).as[json.JsObject]
 
   override def isDirectory: Boolean = false
 }
