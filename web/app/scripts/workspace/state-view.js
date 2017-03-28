@@ -13,12 +13,14 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch('state.$resolved', function() {
-          scope.createSnapshot = function() {
-            util.post(
-              '/ajax/createSnapshot',
-              {
-                id: scope.side.stateID
-              });
+          scope.createSnapshot = function(saveAsName) {
+            scope.saving = true;
+            util.post('/ajax/createSnapshot', {
+              name: saveAsName,
+              id: scope.side.stateID
+            }).finally(function() {
+              scope.saving = false;
+            });
           };
           if (scope.state && scope.state.$resolved &&
               scope.state.kind === 'project') {
