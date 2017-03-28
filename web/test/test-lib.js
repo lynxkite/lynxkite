@@ -175,13 +175,20 @@ Workspace.prototype = {
     button.click();
   },
 
-  addBox: function(name, x, y, id, connections) {
-    var op = this.openOperation(name);
-    testLib.simulateDragAndDrop(op, this.board, x, y, {id: id});
+  addBox: function(boxData) {
+    var id = boxData.id;
+    var op = this.openOperation(boxData.name);
+    testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
     this.closeOperationSelector();
-    for (var i = 0; i < connections.length; ++i) {
-      var connection = connections[i];
-      this.connectBoxes(connection.boxID, connection.srcPlugID, id, connection.dstPlugID);
+    var inputs = boxData.inputs;
+    if (inputs) {
+      for (var i = 0; i < inputs.length; ++i) {
+        var input = inputs[i];
+        this.connectBoxes(input.boxID, input.srcPlugID, id, input.dstPlugID);
+      }
+    }
+    if (boxData.params) {
+      this.editBox(id, boxData.params);
     }
     return this.getBox(id);
   },
@@ -1271,9 +1278,9 @@ testLib = {
   // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
   // to generate and send drag-and-drop events to the page. This function can be used to
   // achieve that.
-  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransfer) {
+  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransferOverrides) {
 
-    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransfer) {
+    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransferOverrides) {
       function createEvent(type) {
         var event = new CustomEvent('CustomEvent');
         event.initCustomEvent(type, true, true, null);
@@ -1291,9 +1298,9 @@ testLib = {
 
       var dragStartEvent = createEvent('dragstart');
       src.dispatchEvent(dragStartEvent);
-      for (var a in dataTransfer) {
-        if (dataTransfer.hasOwnProperty(a)) {
-          dragStartEvent.dataTransfer.setData(a, dataTransfer[a]);
+      for (var key in dataTransferOverrides) {
+        if (dataTransferOverrides.hasOwnProperty(key)) {
+          dragStartEvent.dataTransfer.setData(key, dataTransferOverrides[key]);
         }
       }
 
@@ -1313,7 +1320,8 @@ testLib = {
       simulateDragAndDropInBrowser,
       srcSelector.getWebElement(),
       dstSelector.getWebElement(),
-      dstX, dstY, dataTransfer
+      dstX, dstY,
+      dataTransferOverrides
     );
   },
 
