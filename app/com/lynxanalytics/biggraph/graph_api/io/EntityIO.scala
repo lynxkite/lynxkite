@@ -5,6 +5,7 @@ package com.lynxanalytics.biggraph.graph_api.io
 import com.lynxanalytics.biggraph.graph_api.TypeTagToFormat
 import org.apache.hadoop
 import org.apache.spark
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.HashPartitioner
 import play.api.libs.json
 import scala.reflect.runtime.universe._
@@ -225,7 +226,8 @@ class TableIO(entity: Table, context: IOContext) extends EntityIO(entity, contex
   def read(parent: Option[VertexSetData]): TableData = {
     assert(parent == None, s"Table read called with parent $parent")
     log.info(s"PERF Loading table $entity from disk")
-    val df = context.sparkSession.read.parquet(path.forReading.resolvedName)
+    val parquet = context.sparkSession.read.parquet(path.forReading.resolvedName)
+    val df = columnsFromParquet(parquet)
     assert(df.schema == entity.schema, s"Schema mismatch on read for $entity.")
     log.info(s"PERF Loaded table $entity from disk")
     new TableData(entity, df)
@@ -233,10 +235,35 @@ class TableIO(entity: Table, context: IOContext) extends EntityIO(entity, contex
 
   def write(data: EntityData): Unit = {
     val tableData = data.asInstanceOf[TableData]
+    val df = columnsToParquet(tableData.df)
     log.info(s"PERF Writing table $entity to disk")
-    tableData.df.write.parquet(path.forWriting.resolvedName)
+    df.write.parquet(path.forWriting.resolvedName)
     log.info(s"PERF Written table $entity to disk")
   }
+
+  // Renames columns to names that are allowed by Parquet.
+  // Parquet disallows column names that contain any of " ,;{}()\n\t=".
+  private def columnsToParquet(df: DataFrame): DataFrame = {
+    df.columns.foldLeft(df) { (df, name) =>
+      val safeName =
+        if (name.startsWith("_") || name.matches(".*[ ,;{}()\n\t=].*"))
+          "_" + java.net.URLEncoder.encode(name, "utf-8")
+        else name
+      df.withColumnRenamed(name, safeName)
+    }
+  }
+
+  // Restores the original names.
+  private def columnsFromParquet(df: DataFrame): DataFrame = {
+    df.columns.foldLeft(df) { (df, name) =>
+      val originalName =
+        if (name.startsWith("_"))
+          java.net.URLDecoder.decode(name.substring(1), "utf-8")
+        else name
+      df.withColumnRenamed(name, originalName)
+    }
+  }
+
   def delete() = path.forWriting.deleteIfExists()
   def exists = operationExists && (path / Success).exists
   def mayHaveExisted = operationMayHaveExisted && path.mayHaveExisted
