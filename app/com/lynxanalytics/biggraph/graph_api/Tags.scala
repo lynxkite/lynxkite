@@ -17,8 +17,14 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
     SymbolPath.check(symbol, expanded)
     expanded
   }
+  def /:(symbol: Symbol): SymbolPath = {
+    val expanded = symbol +: path.toSeq
+    SymbolPath.check(symbol, expanded)
+    expanded
+  }
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   def /(suffixDir: String): SymbolPath = /(Symbol(suffixDir))
+  def /:(prefixDir: String): SymbolPath = /:(Symbol(prefixDir))
   override def toString = path.map(_.name).mkString("/")
   def iterator = path.iterator
   def parent: SymbolPath = path.init

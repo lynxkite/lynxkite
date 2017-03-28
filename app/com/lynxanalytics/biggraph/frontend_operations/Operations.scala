@@ -182,6 +182,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("id_attr", "Save internal ID as", defaultValue = "id"))
     def enabled = FEStatus.enabled
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       project.vertexSet = table.idSet
       for ((name, attr) <- table.columns) {
@@ -194,6 +196,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           s"The input also contains a column called '$idAttr'. Please pick a different name.")
         project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
       }
+      */
     }
   })
 
@@ -246,6 +249,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         val dst = params("dst")
         assert(src.nonEmpty, "The Source ID column parameter must be set.")
         assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
+        ???
+        /*
         val table = Table(TablePath.parse(params("table")), project.viewer)
         val eg = {
           val op = graph_operations.VerticesToEdges()
@@ -258,6 +263,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         for ((name, attr) <- table.columns) {
           project.edgeAttributes(name) = attr.pullVia(eg.embedding)
         }
+        */
       }
     })
 
@@ -277,6 +283,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.hasVertexSet &&
         FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val attrName = params("id_attr")
       assert(attrName != FEOption.unset.id, "The Vertex attribute parameter must be set.")
@@ -297,6 +305,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
+      */
     }
   })
 
@@ -316,6 +325,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.hasEdgeBundle &&
         FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val columnName = params("id_column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
@@ -338,6 +349,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
+      */
     }
   })
 
@@ -2690,6 +2702,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             parent.vertexAttributeNames.nonEmpty,
             "No vertex attributes in base project")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base_id_column")
       val segColumnName = params("seg_id_column")
@@ -2709,6 +2723,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         table.column(baseColumnName),
         table.column(segColumnName))
       seg.belongsTo = imp.edges
+      */
     }
   })
 
@@ -2726,6 +2741,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(
       project.vertexAttrList.nonEmpty, "No suitable vertex attributes")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base_id_column")
       val segColumnName = params("seg_id_column")
@@ -2743,6 +2760,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
       segmentation.newVertexAttribute(segColumnName, segAttr)
+      */
     }
 
     def typedImport[A, B](
@@ -3460,12 +3478,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(true, "")
 
     def apply() = {
+      ???
+      /*
       val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
       val tableSegmentation = project.segmentation(params("name"))
       tableSegmentation.vertexSet = table.idSet
       for ((name, column) <- table.columns) {
         tableSegmentation.newVertexAttribute(name, column)
       }
+      */
     }
   })
 
