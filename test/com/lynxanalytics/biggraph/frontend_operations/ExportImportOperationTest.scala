@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 import com.lynxanalytics.biggraph.graph_api.Edge
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.table.TableImport
 
 class ExportImportOperationTest extends OperationsTestBase {
   test("This compiles and fails") {
