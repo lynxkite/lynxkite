@@ -2661,113 +2661,128 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import segmentation links", ImportOperations, new ProjectTransformation(_) with SegOp {
-    def segmentationParameters = List(
-      TableParam(
-        "table",
-        "Table to import from"),
-      Choice(
-        "base_id_attr",
-        s"Identifying vertex attribute in base project",
-        options = FEOption.list(parent.vertexAttributeNames.toList)),
-      Param("base_id_column", s"Identifying column for base project"),
-      Choice(
-        "seg_id_attr",
-        s"Identifying vertex attribute in segmentation",
-        options = project.vertexAttrList),
-      Param("seg_id_column", s"Identifying column for segmentation"))
-    def enabled =
-      project.assertSegmentation &&
-        FEStatus.assert(
-          project.vertexAttrList.nonEmpty,
-          "No vertex attributes in this segmentation") &&
-          FEStatus.assert(
-            parent.vertexAttributeNames.nonEmpty,
-            "No vertex attributes in base project")
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      val baseColumnName = params("base_id_column")
-      val segColumnName = params("seg_id_column")
-      val baseAttrName = params("base_id_attr")
-      val segAttrName = params("seg_id_attr")
-      assert(baseColumnName.nonEmpty,
-        "The identifying column parameter must be set for the base project.")
-      assert(segColumnName.nonEmpty,
-        "The identifying column parameter must be set for the segmentation.")
-      assert(baseAttrName != FEOption.unset.id,
-        "The base ID attribute parameter must be set.")
-      assert(segAttrName != FEOption.unset.id,
-        "The segmentation ID attribute parameter must be set.")
-      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-        parent.vertexAttributes(baseAttrName),
-        project.vertexAttributes(segAttrName),
-        table.column(baseColumnName),
-        table.column(segColumnName))
-      seg.belongsTo = imp.edges
-      */
-    }
-  })
-
-  register("Import segmentation", ImportOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      TableParam(
-        "table",
-        "Table to import from"),
-      Param("name", s"Name of new segmentation"),
-      Choice("base_id_attr", "Vertex ID attribute",
-        options = FEOption.unset +: project.vertexAttrList),
-      Param("base_id_column", "Vertex ID column"),
-      Param("seg_id_column", "Segment ID column"))
-    def enabled = FEStatus.assert(
-      project.vertexAttrList.nonEmpty, "No suitable vertex attributes")
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      val baseColumnName = params("base_id_column")
-      val segColumnName = params("seg_id_column")
-      val baseAttrName = params("base_id_attr")
-      assert(baseColumnName.nonEmpty,
-        "The identifying column parameter must be set for the base project.")
-      assert(segColumnName.nonEmpty,
-        "The identifying column parameter must be set for the segmentation.")
-      assert(baseAttrName != FEOption.unset.id,
-        "The base ID attribute parameter must be set.")
-      val baseColumn = table.column(baseColumnName)
-      val segColumn = table.column(segColumnName)
-      val baseAttr = project.vertexAttributes(baseAttrName)
-      val segmentation = project.segmentation(params("name"))
-
-      val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
-      segmentation.newVertexAttribute(segColumnName, segAttr)
-      */
-    }
-
-    def typedImport[A, B](
-      segmentation: SegmentationEditor,
-      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
-      // Merge by segment ID to create the segments.
-      val merge = {
-        val op = graph_operations.MergeVertices[B]()
-        op(op.attr, segColumn).result
+  registerOp(
+    "Import segmentation links", ImportOperations,
+    inputs = List(projectConnection, tableConnection("links")), outputs = List(projectConnection),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val links = tableInput("links")
+      def seg = project.asSegmentation
+      def parent = seg.parent
+      def segmentationParameters = List(
+        Choice(
+          "base_id_attr",
+          s"Identifying vertex attribute in base project",
+          options = FEOption.unset +: FEOption.list(parent.vertexAttributeNames.toList)),
+        Choice(
+          "base_id_column",
+          s"Identifying column for base project",
+          options = FEOption.unset +: columnList(links)),
+        Choice(
+          "seg_id_attr",
+          s"Identifying vertex attribute in segmentation",
+          options = FEOption.unset +: project.vertexAttrList),
+        Choice(
+          "seg_id_column",
+          s"Identifying column for segmentation",
+          options = FEOption.unset +: columnList(links)))
+      lazy val parameters = {
+        // We cannot just mix in SegOp, because it extends ProjectTransformation.
+        if (project.isSegmentation) segmentationParameters
+        else List[OperationParameterMeta]()
       }
-      segmentation.setVertexSet(merge.segments, idAttr = "id")
-      // Move segment ID to the segments.
-      val segAttr = aggregateViaConnection(
-        merge.belongsTo,
-        // Use scalable aggregator.
-        AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
-      implicit val ta = baseColumn.typeTag
-      implicit val tb = segColumn.typeTag
-      // Import belongs-to relationship as edges between the base and the segmentation.
-      val imp = graph_operations.ImportEdgesForExistingVertices.run(
-        baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
-      segmentation.belongsTo = imp.edges
-      segAttr
-    }
-  })
+      def enabled =
+        project.assertSegmentation &&
+          FEStatus.assert(
+            project.vertexAttrList.nonEmpty,
+            "No vertex attributes in this segmentation") &&
+            FEStatus.assert(
+              parent.vertexAttributeNames.nonEmpty,
+              "No vertex attributes in base project")
+      def apply() = {
+        val table = links.toAttributes
+        val baseColumnName = params("base_id_column")
+        val segColumnName = params("seg_id_column")
+        val baseAttrName = params("base_id_attr")
+        val segAttrName = params("seg_id_attr")
+        assert(baseColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the base project.")
+        assert(segColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the segmentation.")
+        assert(baseAttrName != FEOption.unset.id,
+          "The base ID attribute parameter must be set.")
+        assert(segAttrName != FEOption.unset.id,
+          "The segmentation ID attribute parameter must be set.")
+        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+          parent.vertexAttributes(baseAttrName),
+          project.vertexAttributes(segAttrName),
+          table.columns(baseColumnName),
+          table.columns(segColumnName))
+        seg.belongsTo = imp.edges
+      }
+    })
+
+  registerOp(
+    "Import segmentation", ImportOperations,
+    inputs = List(projectConnection, tableConnection("segmentation")),
+    outputs = List(projectConnection),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val segTable = tableInput("segmentation")
+      lazy val parameters = List(
+        Param("name", s"Name of new segmentation"),
+        Choice("base_id_attr", "Vertex ID attribute",
+          options = FEOption.unset +: project.vertexAttrList),
+        Choice("base_id_column", "Vertex ID column",
+          options = FEOption.unset +: columnList(segTable)),
+        Choice("seg_id_column", "Segment ID column",
+          options = FEOption.unset +: columnList(segTable)))
+      def enabled = FEStatus.assert(
+        project.vertexAttrList.nonEmpty, "No suitable vertex attributes") &&
+        FEStatus.assert(columnList(segTable).nonEmpty, "No columns in table")
+      def apply() = {
+        val table = segTable.toAttributes
+        val baseColumnName = params("base_id_column")
+        val segColumnName = params("seg_id_column")
+        val baseAttrName = params("base_id_attr")
+        assert(baseColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the base project.")
+        assert(segColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the segmentation.")
+        assert(baseAttrName != FEOption.unset.id,
+          "The base ID attribute parameter must be set.")
+        val baseColumn = table.columns(baseColumnName)
+        val segColumn = table.columns(segColumnName)
+        val baseAttr = project.vertexAttributes(baseAttrName)
+        val segmentation = project.segmentation(params("name"))
+
+        val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
+        segmentation.newVertexAttribute(segColumnName, segAttr)
+      }
+
+      def typedImport[A, B](
+        segmentation: SegmentationEditor,
+        baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
+        // Merge by segment ID to create the segments.
+        val merge = {
+          val op = graph_operations.MergeVertices[B]()
+          op(op.attr, segColumn).result
+        }
+        segmentation.setVertexSet(merge.segments, idAttr = "id")
+        // Move segment ID to the segments.
+        val segAttr = aggregateViaConnection(
+          merge.belongsTo,
+          // Use scalable aggregator.
+          AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
+        implicit val ta = baseColumn.typeTag
+        implicit val tb = segColumn.typeTag
+        // Import belongs-to relationship as edges between the base and the segmentation.
+        val imp = graph_operations.ImportEdgesForExistingVertices.run(
+          baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
+        segmentation.belongsTo = imp.edges
+        segAttr
+      }
+    })
 
   register("Define segmentation links from matching attributes",
     StructureOperations, new ProjectTransformation(_) with SegOp {

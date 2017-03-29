@@ -27,11 +27,11 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       )
       val name = s"${operationID} ${boxes.length}"
       val inputIds = meta.inputs.map(_.id)
-      assert(inputIds.size == inputNames.size)
+      assert(inputNames.size == inputIds.size, s"for $name")
       val inputBoxOutputs = inputIds.zip(inputNames).zip(inputs).map {
         case ((inputId, inputName), inputBox) =>
           val outputs = inputBox.meta.outputs
-          assert(outputs.size == 1, s"$inputName has ${outputs.size} outputs.")
+          assert(outputs.size == 1, s"for $inputName outputs.")
           inputId -> BoxOutput(inputName, outputs.head.id)
       }.toMap
 
@@ -55,13 +55,13 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
     def meta = ops.getBoxMetadata(operationID)
 
-    def project(): RootProjectEditor = {
+    lazy val project: RootProjectEditor =
       workspace.state(user, ops, realBox.output("project")).project
-    }
 
     def box(operationID: String,
-            parameters: Map[String, String] = Map()): TestBox = {
-      TestBox(operationID, parameters, Seq(this))
+            parameters: Map[String, String] = Map(),
+            otherInputs: Seq[TestBox] = Seq()): TestBox = {
+      TestBox(operationID, parameters, this +: otherInputs)
     }
   }
 
