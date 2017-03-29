@@ -81,26 +81,33 @@ case class Workspace(
     connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
                            manager: graph_api.MetaGraphManager): List[BoxOutputProgress] = {
     val states = calculate(user, ops, connection, Map())
-    states.toList.map((calculatedStateProgress _).tupled)
+    states.toList.map { case (o, s) => calculatedStateProgress(o, s) }
   }
 
   private def calculatedStateProgress(
     boxOutput: BoxOutput,
     state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): BoxOutputProgress =
-    state.kind match {
-      case BoxOutputKind.Project => projectProgress(boxOutput, state)
-      case _ =>
-        log.error(s"Unknown BoxOutputState kind: ${state.kind}")
-        BoxOutputProgress(boxOutput, Progress.Empty, FEStatus.disabled("Unknown kind"))
+                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
+    val progressList: List[Double] = if (!state.success.enabled) List() else {
+      state.kind match {
+        case BoxOutputKind.Project => projectProgress(state.project)
+        case BoxOutputKind.Table => List(entityProgressManager.computeProgress(state.table))
+        case _ => List()
+      }
     }
+    BoxOutputProgress(
+      boxOutput,
+      Progress(
+        computed = progressList.count(_ == 1.0),
+        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+        notYetStarted = progressList.count(_ == 0.0),
+        failed = progressList.count(_ < 0.0)),
+      state.success)
+  }
 
   private def projectProgress(
-    boxOutput: BoxOutput,
-    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
-    assert(state.kind == BoxOutputKind.Project,
-      s"Can't compute projectProgress for kind ${state.kind}")
+    project: ProjectEditor)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                            manager: graph_api.MetaGraphManager): List[Double] = {
 
     def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
       val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
@@ -122,18 +129,7 @@ case class Workspace(
       belongsToProgress ++ segmentationProgress
     }
 
-    val progress = if (state.success.enabled) {
-      val progressList = commonProjectStateProgress(state.project.rootState.state)
-      Progress(
-        computed = progressList.count(_ == 1.0),
-        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-        notYetStarted = progressList.count(_ == 0.0),
-        failed = progressList.count(_ < 0.0)
-      )
-    } else {
-      Progress.Empty
-    }
-    BoxOutputProgress(boxOutput, progress, state.success)
+    commonProjectStateProgress(project.rootState.state)
   }
 
   def getOperation(
