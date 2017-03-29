@@ -16,7 +16,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with example graph state selected',
     function() {
-      lib.workspace.getOutputPlug('eg0', 'project').click();
+      lib.workspace.selectOutput('eg0', 'project');
     },
     function() {
     });
@@ -45,7 +45,7 @@ module.exports = function(fw) {
     'test-example workspace with two connected and one independent boxes',
     'test-example workspace with reverse edges state selected',
     function() {
-      lib.workspace.getOutputPlug('reversed-edges', 'project').click();
+      lib.workspace.selectOutput('reversed-edges', 'project');
     },
     function() {
     });
