@@ -213,6 +213,10 @@ Workspace.prototype = {
     return box.$('#outputs #' + plugId + ' circle');
   },
 
+  selectOutput: function(box, plugId) {
+    this.getOutputPlug(box, plugId).click();
+  },
+
   connectBoxes: function(box1, output1, box2, input2) {
     var src = this.getOutputPlug(box1, output1);
     var dst = this.getInputPlug(box2, input2);
@@ -230,10 +234,17 @@ Workspace.prototype = {
 
 function Side(direction) {
   this.direction = direction;
-  this.side = element(by.css('project-state-view'));
+  this.side = $('project-state-view #side-' + direction);
 }
 
 Side.prototype = {
+  expectCurrentProjectIs: function(name) {
+    expect(this.side.$('.project-name').getText()).toBe(name);
+  },
+
+  close: function() {
+    this.side.$('#close-project').click();
+  },
 
   evaluate: function(expr) {
     return this.side.evaluate(expr);
@@ -968,7 +979,9 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  state: new Side(),
+  state: new Side('left'),
+  left: new Side('left'),
+  right: new Side('right'),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
