@@ -16,7 +16,6 @@ module.exports = function(fw) {
                             params: { name: 'page_rank_incoming', direction: 'incoming edges'} });
     },
     function() {
-      lib.workspace.selectOutput('pr2');
       expect(
         lib.state.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
         lib.state.vertexAttribute('page_rank_default').getHistogramValues());
