@@ -177,18 +177,23 @@ Workspace.prototype = {
 
   addBox: function(boxData) {
     var id = boxData.id;
+    var after = boxData.after;
+    var inputs = boxData.inputs;
+    var params = boxData.params;
     var op = this.openOperation(boxData.name);
     testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
     this.closeOperationSelector();
-    var inputs = boxData.inputs;
+    if (after) {
+      this.connectBoxes(after, 'project', id, 'project');
+    }
     if (inputs) {
       for (var i = 0; i < inputs.length; ++i) {
         var input = inputs[i];
         this.connectBoxes(input.boxID, input.srcPlugID, id, input.dstPlugID);
       }
     }
-    if (boxData.params) {
-      this.editBox(id, boxData.params);
+    if (params) {
+      this.editBox(id, params);
     }
     return this.getBox(id);
   },
