@@ -27,8 +27,8 @@ class ReportTable():
         self.table.add_row(instance)
 
     def print_table_ascii(self):
-        print ("%s running instances" % self.get_num_rows())
-        print (self.table)
+        print("%s running instances" % self.get_num_rows())
+        print(self.table)
 
     def print_table_html(self):
         msg = "<html><body>"
@@ -70,41 +70,20 @@ def get_running_instances():
 
 
 def send_ses_email(
-        to_address=None, from_address=None, subject=None, html_body=None):
-
-    email_client = boto3.client('ses')
-    email_info = {"to_address": "ec2-users@lynxanalytics.com",
-                  "from_address": "ec2-users@lynxanalytics.com",
-                  "subject": "Not filled subject",
-                  "html_body": None}
-
-    if to_address:
-        email_info["to_address"] = [to_address]
-
-    if from_address:
-        email_info["from_address"] = from_address
-
-    if subject:
-        email_info["subject"] = subject
-
-    if not html_body:
-        if not email_info["html_body"]:
-            raise Exception('You must provide a html body')
-    else:
-        email_info["html_body"] = html_body
-
+        to_address, from_address, subject, html_body):
+        email_client = boto3.client('ses')
     return email_client.send_email(
-        Source=email_info["from_address"],
+        Source=from_address,
         Destination={
-            'ToAddresses': email_info["to_address"],
+            'ToAddresses': [to_address],
         },
         Message={
             'Subject': {
-                'Data': email_info["subject"],
+                'Data': subject,
             },
           'Body': {
               'Html': {
-                  'Data': email_info["html_body"],
+                  'Data': html_body,
               }
             },
         },
@@ -127,8 +106,7 @@ if __name__ == '__main__':
         table.print_table_ascii()
     else:
         send_ses_email(
-            to_address="ec2-users@lynxanalytics.com",
-            from_address="ec2-users@lynxanalytics.com",
-            subject='AWS Instances Report - %s instances running' % table.get_num_rows(
-            ),
-            html_body=table.print_table_html())
+          to_address="ec2-users@lynxanalytics.com",
+          from_address="ec2-users@lynxanalytics.com",
+          subject='AWS Instances Report - %s instances running' % table.get_num_rows(),
+          html_body=table.print_table_html())
