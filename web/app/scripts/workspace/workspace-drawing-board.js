@@ -36,6 +36,7 @@ angular.module('biggraph')
             var logicalPos = getLogicalPosition(event);
             scope.workspace.selectionBox.endX = logicalPos.x;
             scope.workspace.selectionBox.endY = logicalPos.y;
+            scope.workspace.getSelectedBoxes();
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;

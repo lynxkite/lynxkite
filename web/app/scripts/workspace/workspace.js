@@ -99,9 +99,25 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
+        getSelectedBoxes: function(){
+          var boxes = this.boxes();
+          for (i = 0; i < boxes.length; i++) {
+            var box = boxes[i];
+            // console.log(box);
+            if(this.inSelectionBox(box)){
+              console.log(boxes[i].instance.x);
+              this.selectedBoxIds.push(box.instance.id);
+            }
+          }
+        },
 
-        selectBoxes: function(boxIds) {
-          this.selectedBoxIds = boxIds;
+        inSelectionBox: function(box){
+          var sb = this.selectionBox;
+          return(
+            ((box.instance.x < sb.endX && sb.startX < box.instance.x) ||
+            (box.instance.x < sb.startX && sb.endX < box.instance.x)) &&
+            ((box.instance.y < sb.endY && sb.startY < box.instance.y) ||
+            (box.instance.y < sb.startY && sb.endY < box.instance.y)));
         },
 
         selectedBoxes: function() {
