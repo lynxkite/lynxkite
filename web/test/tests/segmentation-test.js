@@ -20,7 +20,7 @@ module.exports = function(fw) {
     'segmentation by double created',
     'segmentation opens',
     function() {
-      lib.workspace.selectOutput('segment-op', 'project');
+      lib.workspace.selectOutput('segment-op');
       lib.left.openSegmentation('bucketing');
     },
     function() {
@@ -37,7 +37,7 @@ module.exports = function(fw) {
       };
       lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 300,
                              after: 'segment-op', params: params });
-      lib.workspace.selectOutput('copy', 'project');
+      lib.workspace.selectOutput('copy');
       lib.left.openSegmentation('bucketing');
       lib.right.openSegmentation('copy');
     },
@@ -65,7 +65,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({ id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
                              after: 'copy', params: { name: 'bucketing' } });
-      lib.workspace.selectOutput('discard-segment', 'project');
+      lib.workspace.selectOutput('discard-segment');
     },
     function() {
       expect(lib.left.segmentation('bucketing').isPresent()).toBe(false);
@@ -77,7 +77,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
                              after: 'eg0', params: { name: 'self' } });
-      lib.workspace.selectOutput('copy', 'project');
+      lib.workspace.selectOutput('copy');
       lib.left.openSegmentation('self');
     },
     function() {
@@ -92,7 +92,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({ id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
                              after: 'copy', params: { 'filterva_income': '*' } });
-      lib.workspace.selectOutput('filter-op', 'project');
+      lib.workspace.selectOutput('filter-op');
       lib.left.openSegmentation('self');
     },
     function() {

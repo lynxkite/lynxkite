@@ -223,11 +223,13 @@ Workspace.prototype = {
   },
 
   getInputPlug: function(boxID, plugID) {
-    return this.getBox(boxID).$('#inputs #' + plugID + ' circle');
+    let box = this.getBox(boxID);
+    return plugID ? box.$('#inputs #' + plugID + ' circle') : box.$$('#inputs circle').get(0);
   },
 
   getOutputPlug: function(boxID, plugID) {
-    return this.getBox(boxID).$('#outputs #' + plugID + ' circle');
+    let box = this.getBox(boxID);
+    return plugID ? box.$('#outputs #' + plugID + ' circle') : box.$$('#outputs circle').get(0);
   },
 
   selectOutput: function(boxID, plugID) {
