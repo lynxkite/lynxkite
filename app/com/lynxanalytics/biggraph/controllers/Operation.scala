@@ -273,6 +273,12 @@ trait BasicOperation extends Operation {
         context.inputs(input.id).project.segmentationsRecursively)
     } ++ parameters
   }
+
+  protected def splitParam(param: String): Seq[String] = {
+    val p = params(param)
+    if (p.isEmpty) Seq()
+    else p.split(",", -1).map(_.trim)
+  }
 }
 
 // A ProjectOutputOperation is an operation that has 1 project-typed output.

@@ -392,7 +392,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       val selected =
         if (params("selected") == "<All>") None
-        else Some(params("selected").split(",", -1).map(_.toLong).toSet)
+        else Some(splitParam("selected").map(_.toLong).toSet)
       val op = graph_operations.CheckClique(selected, params("bothdir").toBoolean)
       val result = op(op.es, parent.edgeBundle)(op.belongsTo, seg.belongsTo).result
       parent.scalars("invalid_cliques") = result.invalid
@@ -727,7 +727,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def apply() = {
       val segmentations =
-        params("segmentations").split(",", -1).map(project.existingSegmentation(_))
+        splitParam("segmentations").map(project.existingSegmentation(_))
       assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
@@ -951,7 +951,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus.assert(
         project.vertexAttrList[Double].size >= 2, "Less than two vertex attributes.")
       def apply() = {
-        val featureNames = params("features").split(",", -1).sorted
+        val featureNames = splitParam("features").sorted
         assert(featureNames.size >= 2, "Please select at least two attributes.")
         val features = featureNames.map {
           name => project.vertexAttributes(name).runtimeSafeCast[Double]
@@ -1250,7 +1250,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       assert(
         graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
       val op = graph_operations.HashVertexAttribute(salt)
-      for (attribute <- params("attr").split(",", -1)) {
+      for (attribute <- splitParam("attr")) {
         val attr = project.vertexAttributes(attribute).asString
         project.newVertexAttribute(
           attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed, "hashed")
@@ -1276,7 +1276,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
       def apply() = {
-        for (attr <- params("attr").split(",", -1)) {
+        for (attr <- splitParam("attr")) {
           project.vertexAttributes(attr) = project.vertexAttributes(attr).asString
         }
       }
@@ -1288,7 +1288,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Edge attribute", options = project.edgeAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes.")
       def apply() = {
-        for (attr <- params("attr").split(",", -1)) {
+        for (attr <- splitParam("attr")) {
           project.edgeAttributes(attr) = project.edgeAttributes(attr).asString
         }
       }
@@ -1304,7 +1304,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true))
       def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
       def apply() = {
-        for (name <- params("attr").split(",", -1)) {
+        for (name <- splitParam("attr")) {
           val attr = project.vertexAttributes(name)
           project.vertexAttributes(name) = toDouble(attr)
         }
@@ -1321,7 +1321,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Edge attribute", options = eligible, multipleChoice = true))
       def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
       def apply() = {
-        for (name <- params("attr").split(",", -1)) {
+        for (name <- splitParam("attr")) {
           val attr = project.edgeAttributes(name)
           project.edgeAttributes(name) = toDouble(attr)
         }
@@ -1490,7 +1490,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
     def apply() = {
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1)
+      val featureNames = splitParam("features")
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1522,7 +1522,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1).sorted
+      val featureNames = splitParam("features").sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1550,7 +1550,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one feature.")
-      val featureNames = params("features").split(",", -1).sorted
+      val featureNames = splitParam("features").sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1585,7 +1585,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1).sorted
+      val featureNames = splitParam("features").sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -2342,7 +2342,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Discard edge attributes: $names"
     }
     def apply() = {
-      for (param <- params("name").split(",", -1)) {
+      for (param <- splitParam("name")) {
         project.deleteEdgeAttribute(param)
       }
     }
@@ -2357,7 +2357,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Discard vertex attributes: $names"
     }
     def apply() = {
-      for (param <- params("name").split(",", -1)) {
+      for (param <- splitParam("name")) {
         project.deleteVertexAttribute(param)
       }
     }
@@ -2385,7 +2385,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Discard scalars: $names"
     }
     def apply() = {
-      for (param <- params("name").split(",", -1)) {
+      for (param <- splitParam("name")) {
         project.deleteScalar(param)
       }
     }
@@ -3529,7 +3529,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         val features: Seq[Attribute[Double]] =
           if (params("features") == FEOption.unset.id) Seq()
           else {
-            val featureNames = params("features").split(",", -1)
+            val featureNames = splitParam("features")
             featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
           }
         val prediction = {
