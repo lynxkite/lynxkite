@@ -30,7 +30,6 @@ class StaticSparkSessionProvider() extends SparkSessionProvider {
 trait SparkFreeEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def entityProgressManager: graph_api.EntityProgressManager
-  def sqlHelper: spark_util.SQLHelper
 }
 
 trait BigGraphEnvironment extends SparkFreeEnvironment {
@@ -39,13 +38,6 @@ trait BigGraphEnvironment extends SparkFreeEnvironment {
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
   def entityProgressManager = dataManager
-
-  private lazy val uniqueId = table.DefaultSource.register(this)
-  def dataFrame: spark.sql.DataFrameReader = {
-    dataManager.masterSQLContext.read
-      .format("com.lynxanalytics.biggraph.table")
-      .option("environment", uniqueId)
-  }
 }
 
 object BigGraphEnvironmentImpl {
@@ -67,11 +59,7 @@ object BigGraphEnvironmentImpl {
     } yield new BigGraphEnvironmentImpl(
       sparkSession,
       metaGraphManager,
-      dataManager,
-      new spark_util.SQLHelper(
-        sparkSession.sparkContext,
-        metaGraphManager,
-        dataManager))
+      dataManager)
     Await.result(envFuture, Duration.Inf)
   }
 
@@ -95,8 +83,7 @@ object BigGraphEnvironmentImpl {
 case class BigGraphEnvironmentImpl(
     sparkSession: spark.sql.SparkSession,
     metaGraphManager: graph_api.MetaGraphManager,
-    dataManager: graph_api.DataManager,
-    sqlHelper: spark_util.SQLHelper) extends BigGraphEnvironment {
+    dataManager: graph_api.DataManager) extends BigGraphEnvironment {
   val sparkContext = sparkSession.sparkContext
 }
 

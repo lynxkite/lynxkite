@@ -3,65 +3,81 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
- .directive('boxEditor', function(util, $rootScope) {
+ .directive('boxEditor', function(util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
-        box: '=',
-        workspaceName: '=',
+        workspace: '=',
       },
       link: function(scope) {
-        scope.$watchGroup(
-            ['workspaceName', 'box.instance.id'],
+        scope.$watch(
+            'workspace.selectedBoxId',
             function() {
-              if (!scope.workspaceName || !scope.box) {
+              if (!scope.workspace) {
                 return;
               }
-              // The below magic makes sure that the response
-              // to the result of the latest getOperationMetaRequest
-              // will be passed to scope.newOpSelected().
-              var currentRequest;
-              scope.lastRequest = currentRequest = util
-                .nocache(
-                  '/ajax/getOperationMeta',
-                  {
-                      workspace: scope.workspaceName,
-                      box: scope.box.instance.id
-                  })
-                .then(
-                  function(boxMeta) {
-                    // success
-                    if (scope.lastRequest === currentRequest) {
-                      scope.newOpSelected(boxMeta);
-                    }
-                  },
-                  function() {
-                    // error
-                    if (scope.lastRequest === currentRequest) {
-                      scope.newOpSelected(undefined);
-                    }
-                  });
+              // Make a copy of the parameter values.
+              scope.paramValues = Object.assign(
+                  {}, scope.workspace.selectedBox().instance.parameters);
+              scope.loadBoxMeta();
             });
+        // The metadata (param definition list) of the current box
+        // depends on the whole workspace. (Attributes added by
+        // previous operations, state of apply_to_ parameters of
+        // current box.) If this deepwatch is a performance problem,
+        // then we can put a timestamp in workspace and watch that,
+        // or only deepwatch the current selected box (and assume
+        // box selection has to change to edit other boxes).
+        scope.$watch(
+            'workspace.backendState',
+            function() {
+              if (!scope.workspace) {
+                return;
+              }
+              scope.loadBoxMeta();
+            },
+            true);
 
         scope.paramValues = {};
+
+        scope.loadBoxMeta = function() {
+          if (!scope.workspace || !scope.workspace.selectedBoxId) {
+            return;
+          }
+          // The below magic makes sure that the response
+          // to the result of the latest getOperationMetaRequest
+          // will be passed to scope.newOpSelected().
+          var currentRequest;
+          scope.lastRequest = currentRequest = util
+            .nocache(
+              '/ajax/getOperationMeta',
+              {
+                  workspace: scope.workspace.name,
+                  box: scope.workspace.selectedBoxId,
+              })
+            .then(
+              function success(boxMeta) {
+                if (scope.lastRequest === currentRequest) {
+                  scope.newOpSelected(boxMeta);
+                }
+              },
+              function error() {
+                if (scope.lastRequest === currentRequest) {
+                  scope.newOpSelected(undefined);
+                }
+              });
+        };
 
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.
         scope.newOpSelected = function(boxMeta) {
             scope.boxMeta = boxMeta;
-            // Make a copy of the parameter values.
-            scope.paramValues = Object.assign(
-                {}, scope.box.instance.parameters);
             if (!scope.boxMeta) {
               return;
             }
 
-            // Populate defaults:
-            // TODO: this is misleading now, because the default
-            // values are shown to the user but not there in the
-            // operation. This computation should most likely happen
-            // when a box is wired for the first time.
+            // Populate parameter values.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
               if (scope.paramValues[p.id] !== undefined) {
@@ -77,12 +93,7 @@ angular.module('biggraph')
         };
 
         scope.apply = function() {
-          $rootScope.$broadcast(
-              'box parameters updated',
-              {
-                  boxId: scope.box.instance.id,
-                  paramValues: scope.paramValues
-              });
+          scope.workspace.updateSelectedBox(scope.paramValues);
         };
       },
     };
