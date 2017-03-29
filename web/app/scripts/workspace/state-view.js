@@ -3,7 +3,7 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
- .directive('stateView', function(side, util) {
+ .directive('stateView', function(util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
@@ -11,26 +11,22 @@ angular.module('biggraph')
         workspace: '='
       },
       link: function(scope) {
-        scope.$watch('state.$resolved', function() {
+        scope.$watch('workspace.$resolved', function() {
+          console.log('lalalalalalla lallala                    alalalalalal');
           scope.createSnapshot = function(saveAsName) {
             scope.saving = true;
+            console.log('snapshotting');
             util.post('/ajax/createSnapshot', {
               name: saveAsName,
-              id: scope.side.stateID
+              id: scope.workspace.selectedStateId
             }).finally(function() {
+              console.log(scope.workspace);
+              console.log(scope.workspace.selectedStateId);
+              console.log('goddamnfina;lly');
               scope.saving = false;
             });
           };
-          if (scope.state && scope.state.$resolved &&
-              scope.state.kind === 'project') {
-            scope.side = new side.Side([], '');
-            scope.side.project = scope.state.project;
-            scope.side.stateID = scope.stateId;
-            scope.side.project.$resolved = true;
-            scope.side.onProjectLoaded();
-          } else {
-            scope.side = undefined;
-          }
+          window.ss = scope.createSnapshot;
         });
       },
     };
