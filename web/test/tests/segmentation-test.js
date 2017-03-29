@@ -10,21 +10,8 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'segmentation by double created',
     function() {
-      lib.workspace.addBox({
-        id: 'segment-op',
-        name: 'segment by double attribute',
-        x: 100,
-        y: 200,
-        inputs: [{
-          boxID: 'first-example-graph',
-          srcPlugID: 'project',
-          dstPlugID: 'project'
-        }],
-        params: {
-          'attr': 'income',
-          'interval_size': '10',
-        },
-      });
+      lib.workspace.addBox({ id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
+                             after: 'eg0', params: { attr: 'income', interval_size: '10'} });
     },
     function() {
     });
@@ -44,22 +31,13 @@ module.exports = function(fw) {
     'segmentation opens',
     'sub-segmentation can be created and opened',
     function() {
-      lib.workspace.addBox({
-        id: 'copy-as-segment',
-        name: 'copy graph into a segmentation',
-        x: 100,
-        y: 300,
-        inputs: [{
-          boxID: 'segment-op',
-          srcPlugID: 'project',
-          dstPlugID: 'project'
-        }],
-        params: {
-          'apply_to_project': '|bucketing',
-          'name': 'copy',
-        },
-      });
-      lib.workspace.selectOutput('copy-as-segment', 'project');
+      let params = {
+        apply_to_project: '|bucketing',
+        name: 'copy'
+      };
+      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 300,
+                             after: 'segment-op', params: params });
+      lib.workspace.selectOutput('copy', 'project');
       lib.left.openSegmentation('bucketing');
       lib.right.openSegmentation('copy');
     },
@@ -85,20 +63,8 @@ module.exports = function(fw) {
     'closing sub-segmentation on the RHS reopens its grandparent',
     'discard segmentation works',
     function() {
-      lib.workspace.addBox({
-        id: 'discard-segment',
-        name: 'discard segmentation',
-        x: 100,
-        y: 400,
-        inputs: [{
-          boxID: 'copy-as-segment',
-          srcPlugID: 'project',
-          dstPlugID: 'project'
-        }],
-        params: {
-          'name': 'bucketing',
-        },
-      });
+      lib.workspace.addBox({ id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
+                             after: 'copy', params: { name: 'bucketing' } });
       lib.workspace.selectOutput('discard-segment', 'project');
     },
     function() {
@@ -109,21 +75,9 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'segmentation size reporting - non empty segments',
     function() {
-      lib.workspace.addBox({
-        id: 'copy-as-segment',
-        name: 'copy graph into a segmentation',
-        x: 100,
-        y: 200,
-        inputs: [{
-          boxID: 'first-example-graph',
-          srcPlugID: 'project',
-          dstPlugID: 'project'
-        }],
-        params: {
-          'name': 'self',
-        },
-      });
-      lib.workspace.selectOutput('copy-as-segment', 'project');
+      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
+                             after: 'eg0', params: { name: 'self' } });
+      lib.workspace.selectOutput('copy', 'project');
       lib.left.openSegmentation('self');
     },
     function() {
@@ -136,20 +90,8 @@ module.exports = function(fw) {
     'segmentation size reporting - non empty segments',
     'segmentation size reporting - has empty segments',
     function() {
-      lib.workspace.addBox({
-        id: 'filter-op',
-        name: 'filter by attributes',
-        x: 100,
-        y: 300,
-        inputs: [{
-          boxID: 'copy-as-segment',
-          srcPlugID: 'project',
-          dstPlugID: 'project'
-        }],
-        params: {
-          'filterva_income': '*',
-        },
-      });
+      lib.workspace.addBox({ id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
+                             after: 'copy', params: { 'filterva_income': '*' } });
       lib.workspace.selectOutput('filter-op', 'project');
       lib.left.openSegmentation('self');
     },
