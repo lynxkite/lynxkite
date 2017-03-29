@@ -164,8 +164,9 @@ angular.module('biggraph')
           }
         },
 
-        addBox: function(operationId, pos) {
-          this.wrapper.addBox(operationId, pos.x, pos.y);
+        // boxID should be used for test-purposes only
+        addBox: function(operationId, pos, boxID) {
+          this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
           this.saveWorkspace();
         },
 
