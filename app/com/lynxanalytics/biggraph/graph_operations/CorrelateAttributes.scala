@@ -34,6 +34,7 @@ case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {
     val a = joined.keys
     val b = joined.values
     val correlation = Statistics.corr(a, b, "pearson") // we could do "spearman" too
+    assert(!correlation.isNaN, "Correlation is undefined because one of the attributes is constant.")
     output(o.correlation, correlation)
   }
 }

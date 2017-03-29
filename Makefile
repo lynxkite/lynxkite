@@ -25,11 +25,11 @@ $(pip): python_requirements.txt
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
-.build/chronomaster-test-passed: $(shell $(find) chronomaster) $(pip)
+.build/chronomaster-test-passed: $(shell $(find) chronomaster remote_api/python) $(pip)
 	chronomaster/test.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
-.build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python)
+.build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api chronomaster ecosystem/release/lynx/luigi_tasks) \

@@ -66,6 +66,7 @@ object FEOption {
   def list(lst: String*): List[FEOption] = list(lst.toList)
   def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))
   val bools = list("true", "false")
+  val boolsDefaultFalse = list("false", "true")
   val noyes = list("no", "yes")
   val unset = special("!unset")
   val noWeight = special("!no weight")

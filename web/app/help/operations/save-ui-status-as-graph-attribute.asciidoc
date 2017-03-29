@@ -2,8 +2,8 @@
 
 Saves UI status as a graph attribute that can be reused later to reload the same visualization.
 
-This operation is normally accessed via the _Save Visualization_ button in the visualization
-options panel.
+This operation is normally accessed via the _"Save visualization"_ option in the visualization
+settings menu.
 
 ====
 [[scalarname]] Name of new graph attribute::

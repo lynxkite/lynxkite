@@ -15,4 +15,7 @@ boto3
 pandas
 Sphinx
 sphinx-rtd-theme
+pytest
+selenium
 prettytable==0.7.2
+

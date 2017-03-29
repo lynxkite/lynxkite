@@ -4207,6 +4207,10 @@ supports-color@^3.1.2:
   dependencies:
     has-flag "^1.0.0"
 
+sweetalert@1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/sweetalert/-/sweetalert-1.1.3.tgz#d2c31ea492b22b6a8d887aea15989a238fc084ae"
+
 tar-pack@~3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/tar-pack/-/tar-pack-3.3.0.tgz#30931816418f55afc4d21775afdd6720cee45dae"
@@ -4237,9 +4241,9 @@ ternary-stream@^2.0.0:
     merge-stream "^1.0.0"
     through2 "^2.0.0"
 
-tether-drop@1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/tether-drop/-/tether-drop-1.4.0.tgz#5e9833240a6f0c140f87f2e28136504dae9144d3"
+tether-drop@1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/tether-drop/-/tether-drop-1.4.2.tgz#28e240cce077f4ae1d8e5990a03b71e0cd6fbfec"
   dependencies:
     tether "^1.1.0"
 

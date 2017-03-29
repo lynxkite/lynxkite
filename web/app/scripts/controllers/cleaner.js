@@ -3,8 +3,14 @@
 
 angular.module('biggraph')
   .controller('CleanerCtrl', function ($scope, util) {
-    $scope.inProgress = 0;
-    $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
+    $scope.inProgress = 1;
+    $scope.getDataFilesStatus = function() {
+      $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
+      $scope.fileStatus.finally(function() {
+        $scope.inProgress -= 1;
+      });
+    };
+    $scope.getDataFilesStatus();
 
     $scope.moveToTrash = function(method) {
       $scope.inProgress += 1;
@@ -12,10 +18,7 @@ angular.module('biggraph')
         .post('/ajax/moveToCleanerTrash', {
           method: method,
         }).finally(function() {
-          $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
-          $scope.fileStatus.finally(function() {
-            $scope.inProgress -= 1;
-          });
+          $scope.getDataFilesStatus();
         });
     };
 
@@ -25,10 +28,7 @@ angular.module('biggraph')
         .post('/ajax/emptyCleanerTrash', {
           fake: 0,
         }).finally(function() {
-          $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
-          $scope.fileStatus.finally(function() {
-            $scope.inProgress -= 1;
-          });
+          $scope.getDataFilesStatus();
         });
     };
 
