@@ -34,8 +34,8 @@ angular.module('biggraph')
           }
           if (selectBoxes) {
             var logicalPos = getLogicalPosition(event);
-            scope.workspace.endX = logicalPos.x;
-            scope.workspace.endY = logicalPos.y;
+            scope.workspace.selectionBox.endX = logicalPos.x;
+            scope.workspace.selectionBox.endY = logicalPos.y;
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
@@ -72,10 +72,10 @@ angular.module('biggraph')
             event.preventDefault();
             selectBoxes = true;
             var logicalPos = getLogicalPosition(event);
-            scope.workspace.endX = logicalPos.x;
-            scope.workspace.endY = logicalPos.y;
-            scope.workspace.startX = logicalPos.x;
-            scope.workspace.startY = logicalPos.y;
+            scope.workspace.selectionBox.endX = logicalPos.x;
+            scope.workspace.selectionBox.endY = logicalPos.y;
+            scope.workspace.selectionBox.startX = logicalPos.x;
+            scope.workspace.selectionBox.startY = logicalPos.y;
           }
         };
 

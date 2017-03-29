@@ -44,18 +44,11 @@ angular.module('biggraph')
           return this.wrapper ? this.wrapper.arrows : [];
         },
 
-        startX: undefined,
-        startY: undefined,
-        endX: undefined,
-        endY: undefined,
-
-        selectionBox:function(x1,x2,y1,y2){
-          return({
-            x: Math.min(x1,x2),
-            y: Math.min(y1,y2),
-            width: Math.abs(x1 - x2),
-            length: Math.abs(y1-y2),
-          });
+        selectionBox: {
+          startX: undefined,
+          startY: undefined,
+          endX: undefined,
+          endY: undefined
         },
 
         loadWorkspace: function() {
