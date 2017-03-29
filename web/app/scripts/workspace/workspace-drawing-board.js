@@ -33,8 +33,9 @@ angular.module('biggraph')
             workspaceY += event.offsetY - mouseY;
           }
           if (selectBoxes) {
-            scope.workspace.endX = event.offsetX;
-            scope.workspace.endY = event.offsetY;
+            var logicalPos = getLogicalPosition(event);
+            scope.workspace.endX = logicalPos.x;
+            scope.workspace.endY = logicalPos.y;
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
@@ -50,10 +51,11 @@ angular.module('biggraph')
           if(window.localStorage.getItem('grab_or_select') === 'grab'){
             workspaceDrag = false;
             element[0].style.cursor = '';
-            scope.workspace.onMouseUp(event);
+            scope.workspace.onMouseUp(getLogicalPosition(event));
           }
           else{
             selectBoxes = false;
+            scope.workspace.onMouseUp(getLogicalPosition(event));
           }
         };
 
@@ -64,17 +66,16 @@ angular.module('biggraph')
             setGrabCursor(element[0]);
             mouseX = event.offsetX;
             mouseY = event.offsetY;
-        }
-        else {
-          event.preventDefault();
-          selectBoxes = true;
-          scope.workspace.endX = undefined;
-          scope.workspace.endY = undefined;
-          scope.workspace.startX = event.offsetX;
-          scope.workspace.startY = event.offsetY;
-
-        }
-      };
+          } else {
+            event.preventDefault();
+            selectBoxes = true;
+            scope.workspace.endX = undefined;
+            scope.workspace.endY = undefined;
+            var logicalPos = getLogicalPosition(event);
+            scope.workspace.startX = logicalPos.x;
+            scope.workspace.startY = logicalPos.y;
+          }
+        };
 
         scope.workspaceTransform = function() {
           var z = zoomToScale(workspaceZoom);
