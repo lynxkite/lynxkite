@@ -47,10 +47,10 @@
     <g>
     <rect
       class="selection-box"
-      ng-attr-x="{{workspace.startX}}"
-      ng-attr-y="{{workspace.startY}}"
-      ng-attr-width="{{workspace.endX - workspace.startX}}"
-      ng-attr-height="{{workspace.endY - workspace.startY}}">
+      ng-attr-x="{{Math.min(workspace.startX, workspace.endX)}}"
+      ng-attr-y="{{Math.min(workspace.startY, workspace.endY)}}"
+      ng-attr-width="{{Math.abs(workspace.endX - workspace.startX)}}"
+      ng-attr-height="{{Math.abs(workspace.endY - workspace.startY)}}">
     </rect>
   </g>
     <!-- start arrow -->

@@ -44,10 +44,10 @@ angular.module('biggraph')
           return this.wrapper ? this.wrapper.arrows : [];
         },
 
-        startX: 0,
-        startY: 0,
-        endX: 0,
-        endY: 0,
+        startX: undefined,
+        startY: undefined,
+        endX: undefined,
+        endY: undefined,
 
         selectionBox:function(x1,x2,y1,y2){
           return({
