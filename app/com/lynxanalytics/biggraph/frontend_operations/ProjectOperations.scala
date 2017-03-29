@@ -224,35 +224,32 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Import vertices and edges from a single table", ImportOperations)(
-    new ProjectOutputOperation(_) {
+  registerOp(
+    "Import vertices and edges from a single table", ImportOperations,
+    inputs = List(tableConnection("edges")), outputs = List(projectConnection),
+    factory = new ProjectOutputOperation(_) {
+      lazy val edges = tableInput("edges")
       lazy val parameters = List(
-        TableParam(
-          "table",
-          "Table to import from"),
-        Param("src", "Source ID column"),
-        Param("dst", "Destination ID column"))
+        Choice("src", "Source ID column", options = FEOption.unset +: columnList(edges)),
+        Choice("dst", "Destination ID column", options = FEOption.unset +: columnList(edges)))
       def enabled = FEStatus.enabled
       def apply() = {
         val src = params("src")
         val dst = params("dst")
-        assert(src.nonEmpty, "The Source ID column parameter must be set.")
-        assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
-        ???
-        /*
-        val table = Table(TablePath.parse(params("table")), project.viewer)
+        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
+        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
+        val edgeAttrs = edges.toAttributes
         val eg = {
           val op = graph_operations.VerticesToEdges()
-          op(op.srcAttr, table.column(src).runtimeSafeCast[String])(
-            op.dstAttr, table.column(dst).runtimeSafeCast[String]).result
+          op(op.srcAttr, edgeAttrs.columns(src).runtimeSafeCast[String])(
+            op.dstAttr, edgeAttrs.columns(dst).runtimeSafeCast[String]).result
         }
         project.setVertexSet(eg.vs, idAttr = "id")
         project.newVertexAttribute("stringID", eg.stringID)
         project.edgeBundle = eg.es
-        for ((name, attr) <- table.columns) {
-          project.edgeAttributes(name) = attr.pullVia(eg.embedding)
+        for ((name, attr) <- edgeAttrs.columns) {
+          project.edgeAttributes(name) = attr.entity.pullVia(eg.embedding)
         }
-        */
       }
     })
 
