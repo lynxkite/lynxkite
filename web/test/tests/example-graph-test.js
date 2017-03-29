@@ -16,7 +16,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with example graph state selected',
     function() {
-      lib.workspace.selectOutput('eg0', 'project');
+      lib.workspace.selectOutput('eg0');
     },
     function() {
     });
@@ -45,7 +45,7 @@ module.exports = function(fw) {
     'test-example workspace with two connected and one independent boxes',
     'test-example workspace with reverse edges state selected',
     function() {
-      lib.workspace.selectOutput('reversed-edges', 'project');
+      lib.workspace.selectOutput('reversed-edges');
     },
     function() {
     });
@@ -63,9 +63,9 @@ module.exports = function(fw) {
     'test-example workspace with reverse edges state selected',
     'states has correct fill color',
     function() {
-      let outPlugFirstEG = lib.workspace.getOutputPlug('eg0', 'project');
-      let outPlugReversedEdges = lib.workspace.getOutputPlug('reversed-edges', 'project');
-      let outPlugSecondEG = lib.workspace.getOutputPlug('eg1', 'project');
+      let outPlugFirstEG = lib.workspace.getOutputPlug('eg0');
+      let outPlugReversedEdges = lib.workspace.getOutputPlug('reversed-edges');
+      let outPlugSecondEG = lib.workspace.getOutputPlug('eg1');
       // progress is updated every 2 seconds, so we may need to wait
       browser.wait(() => outPlugReversedEdges.getAttribute('fill'), 1000 * 3);
       expect(outPlugFirstEG.getAttribute('fill')).not.toBeNull();
