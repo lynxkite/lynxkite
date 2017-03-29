@@ -172,7 +172,9 @@ It can happen that Jenkins runs out of _inodes_, and it causes
  
  3. Start docker shell: `docker exec -u root -it lynx-jenkins bash`
  
- 4. Delete content of `/tmp` in the container: `rm -Rf /tmp/*`
+ 4. Delete content of `/tmp` in the container: `rm -Rf /tmp/*` If there are a huge number of files in `/tmp` this
+command may fail wih `[Argument list too long]`. In that case the solution is to delete (`rm -r /tmp`) and recreate (`mkdir /tmp`) the `/tmp` folder
+with proper (`chmod 1777 /tmp`) permissions.
 
 ## Run executors on different JVM-s.
 
