@@ -12,17 +12,12 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch('workspace.$resolved', function() {
-          console.log('lalalalalalla lallala                    alalalalalal');
           scope.createSnapshot = function(saveAsName) {
             scope.saving = true;
-            console.log('snapshotting');
             util.post('/ajax/createSnapshot', {
               name: saveAsName,
               id: scope.workspace.selectedStateId
             }).finally(function() {
-              console.log(scope.workspace);
-              console.log(scope.workspace.selectedStateId);
-              console.log('goddamnfina;lly');
               scope.saving = false;
             });
           };
