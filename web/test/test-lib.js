@@ -175,7 +175,7 @@ Workspace.prototype = {
     button.click();
   },
 
-  addBox: function(boxData) {
+  addBox: function(boxData, dontSelect) {
     var id = boxData.id;
     var after = boxData.after;
     var inputs = boxData.inputs;
@@ -195,7 +195,9 @@ Workspace.prototype = {
     if (params) {
       this.editBox(id, params);
     }
-    return this.getBox(id);
+    if (!dontSelect) {
+      this.selectOutput(id);
+    }
   },
 
   selectBox(boxID) {
