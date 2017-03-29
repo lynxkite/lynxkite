@@ -96,9 +96,11 @@ angular.module('biggraph')
           event.preventDefault();
           var origEvent = event.originalEvent;
           var operationID = event.originalEvent.dataTransfer.getData('text');
+          // This isn't undefined iff testing
+          var boxID = event.originalEvent.dataTransfer.getData('id');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
-            scope.workspace.addBox(operationID, getLogicalPosition(origEvent));
+            scope.workspace.addBox(operationID, getLogicalPosition(origEvent), boxID);
           });
         });
 
