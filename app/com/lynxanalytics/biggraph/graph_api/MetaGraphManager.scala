@@ -58,6 +58,8 @@ class MetaGraphManager(val repositoryPath: String) {
     entities(gUID).asInstanceOf[Scalar[_]]
   def scalarOf[T: TypeTag](gUID: UUID): Scalar[T] =
     scalar(gUID).runtimeSafeCast[T]
+  def table(gUID: UUID): Table =
+    entities(gUID).asInstanceOf[Table]
   def entity(gUID: UUID): MetaGraphEntity = entities(gUID)
 
   def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
@@ -115,28 +117,6 @@ class MetaGraphManager(val repositoryPath: String) {
   // Defers tag writes until after "fn". Improves performance for large tag transactions.
   def tagBatch[T](fn: => T) = synchronized {
     tagRoot.batch { fn }
-  }
-
-  def vertexSet(tag: SymbolPath): VertexSet = synchronized {
-    vertexSet((tagRoot / tag).gUID)
-  }
-  def edgeBundle(tag: SymbolPath): EdgeBundle = synchronized {
-    edgeBundle((tagRoot / tag).gUID)
-  }
-  def attribute(tag: SymbolPath): Attribute[_] = synchronized {
-    attribute((tagRoot / tag).gUID)
-  }
-  def scalar(tag: SymbolPath): Scalar[_] = synchronized {
-    scalar((tagRoot / tag).gUID)
-  }
-  def attributeOf[T: TypeTag](tag: SymbolPath): Attribute[T] = synchronized {
-    attributeOf[T]((tagRoot / tag).gUID)
-  }
-  def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[T] = synchronized {
-    scalarOf[T]((tagRoot / tag).gUID)
-  }
-  def entity(tag: SymbolPath): MetaGraphEntity = synchronized {
-    entity((tagRoot / tag).gUID)
   }
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
@@ -262,7 +242,9 @@ class MetaGraphManager(val repositoryPath: String) {
         op.inputSig.attributes
           .map(n => n -> attribute(inputs(n))).toMap,
         op.inputSig.scalars
-          .map(n => n -> scalar(inputs(n))).toMap))
+          .map(n => n -> scalar(inputs(n))).toMap,
+        op.inputSig.tables
+          .map(n => n -> table(inputs(n))).toMap))
   }
 }
 object MetaGraphManager {

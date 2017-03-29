@@ -8,8 +8,7 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
-        state: '=',
-        stateId: '='
+        workspace: '='
       },
       link: function(scope) {
         scope.$watch('state.$resolved', function() {
@@ -33,6 +32,6 @@ angular.module('biggraph')
             scope.side = undefined;
           }
         });
-      }
+      },
     };
 });

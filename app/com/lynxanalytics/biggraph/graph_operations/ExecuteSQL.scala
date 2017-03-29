@@ -1,12 +1,11 @@
 // Operation for importing data from a DataFrame.
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.controllers.RawTable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import com.lynxanalytics.biggraph.table.RDDRelation
 import org.apache.spark.sql
 
+/* #5817
 object ExecuteSQL extends OpFromJson {
   class Input(inputTables: Map[String, Seq[String]]) extends MagicInputSignature {
     val tables = inputTables.map {
@@ -77,3 +76,4 @@ case class ExecuteSQL(
     o.populateOutput(rc, outputSchema, dataFrame)
   }
 }
+*/

@@ -74,6 +74,68 @@ case class Workspace(
     }
   }
 
+  // Calculates the progress of an output and all other outputs that had been calculated as a
+  // side-effect.
+  def progress(
+    user: serving.User, ops: OperationRepository,
+    connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                           manager: graph_api.MetaGraphManager): List[BoxOutputProgress] = {
+    val states = calculate(user, ops, connection, Map())
+    states.toList.map((calculatedStateProgress _).tupled)
+  }
+
+  private def calculatedStateProgress(
+    boxOutput: BoxOutput,
+    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                           manager: graph_api.MetaGraphManager): BoxOutputProgress =
+    state.kind match {
+      case BoxOutputKind.Project => projectProgress(boxOutput, state)
+      case _ =>
+        log.error(s"Unknown BoxOutputState kind: ${state.kind}")
+        BoxOutputProgress(boxOutput, Progress.Empty, FEStatus.disabled("Unknown kind"))
+    }
+
+  private def projectProgress(
+    boxOutput: BoxOutput,
+    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
+    assert(state.kind == BoxOutputKind.Project,
+      s"Can't compute projectProgress for kind ${state.kind}")
+
+    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
+      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
+        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
+        state.scalarGUIDs.values.map(manager.scalar) ++
+        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
+        state.edgeAttributeGUIDs.values.map(manager.attribute)
+
+      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
+      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
+    }
+
+    def segmentationStateProgress(state: SegmentationState): List[Double] = {
+      val segmentationProgress = commonProjectStateProgress(state.state)
+      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
+        val belongsTo = manager.edgeBundle(belongsToGUID)
+        entityProgressManager.computeProgress(belongsTo)
+      }).toList
+      belongsToProgress ++ segmentationProgress
+    }
+
+    val progress = if (state.success.enabled) {
+      val progressList = commonProjectStateProgress(state.project.rootState.state)
+      Progress(
+        computed = progressList.count(_ == 1.0),
+        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+        notYetStarted = progressList.count(_ == 0.0),
+        failed = progressList.count(_ < 0.0)
+      )
+    } else {
+      Progress.Empty
+    }
+    BoxOutputProgress(boxOutput, progress, state.success)
+  }
+
   def getOperation(
     user: serving.User, ops: OperationRepository, boxID: String): Operation = {
     val box = findBox(boxID)
@@ -168,6 +230,12 @@ case class BoxOutputState(
   }
 }
 
+case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
+case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
+object Progress {
+  val Empty = Progress(0, 0, 0, 0)
+}
+
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   implicit val fBoxOutput = json.Json.format[BoxOutput]
@@ -176,4 +244,6 @@ object WorkspaceJsonFormatters {
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
   implicit val fWorkspace = json.Json.format[Workspace]
+  implicit val fProgress = json.Json.format[Progress]
+  implicit val fBoxOutputProgress = json.Json.format[BoxOutputProgress]
 }

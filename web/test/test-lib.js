@@ -181,10 +181,24 @@ Workspace.prototype = {
     this.closeOperationSelector();
   },
 
-  editBox: function(box, params) {
+  selectBox(box) {
     box.$('rect').click();
+  },
+
+  editBox: function(box, params) {
+    this.selectBox(box);
     this.populateOperation(params);
     this.submitOperation();
+  },
+
+  expectSelectedBoxParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectedBoxSelectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   getBox(boxId) {
@@ -197,6 +211,10 @@ Workspace.prototype = {
 
   getOutputPlug: function(box, plugId) {
     return box.$('#outputs #' + plugId + ' circle');
+  },
+
+  selectOutput: function(box, plugId) {
+    this.getOutputPlug(box, plugId).click();
   },
 
   connectBoxes: function(box1, output1, box2, input2) {
@@ -216,10 +234,17 @@ Workspace.prototype = {
 
 function Side(direction) {
   this.direction = direction;
-  this.side = element(by.css('project-state-view'));
+  this.side = $('project-state-view #side-' + direction);
 }
 
 Side.prototype = {
+  expectCurrentProjectIs: function(name) {
+    expect(this.side.$('.project-name').getText()).toBe(name);
+  },
+
+  close: function() {
+    this.side.$('#close-project').click();
+  },
 
   evaluate: function(expr) {
     return this.side.evaluate(expr);
@@ -597,15 +622,6 @@ History.prototype = {
       count();
   },
 
-  expectOperationParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  },
-
-  expectOperationSelectParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  }
 };
 
 var visualization = {
@@ -971,7 +987,9 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  state: new Side(),
+  state: new Side('left'),
+  left: new Side('left'),
+  right: new Side('right'),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,

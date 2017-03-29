@@ -11,5 +11,8 @@
         <i class="glyphicon glyphicon-camera"></i>
     </label>
 </div>
-<project-state-view side="side" ng-if="state.kind === 'project'">
+<project-state-view 
+    state-id="workspace.selectedStateId"
+    ng-if="workspace.selectedStateKind === 'project'">
 </project-state-view>
+
