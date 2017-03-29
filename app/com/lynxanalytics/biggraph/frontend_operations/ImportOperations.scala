@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
@@ -73,6 +74,36 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val sql = params("sql")
       if (sql.isEmpty) df
       else DataManager.sql(context, sql, List("this" -> df))
+    }
+  })
+
+  register("Import JDBC")(new ImportOperation(_) {
+    lazy val parameters = List(
+      Param("table", "File"),
+      Param("jdbc_url", "JDBC URL"),
+      Param("jdbc_table", "JDBC table"),
+      Param("key_column", "Key column"),
+      NonNegInt("num_partitions", "Number of partitions", default = 0),
+      Param("predicates", "Predicates"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Param("connection_properties", "Connection properties"),
+      Code("sql", "SQL"),
+      TableParam("imported_table", "Table GUID"))
+    def getDataFrame(context: spark.sql.SQLContext) = {
+      JDBCUtil.read(
+        context,
+        params("jdbc_url"),
+        params("jdbc_table"),
+        params("key_column"),
+        params("num_partitions").toInt,
+        splitParam("predicates").toList,
+        splitParam("connection_properties").map { e =>
+          val eq = e.indexOf("=")
+          assert(eq != -1,
+            s"Invalid connection property definition: ${params("connection_properties")}")
+          e.take(eq) -> e.drop(eq + 1)
+        }.toMap)
     }
   })
 }
