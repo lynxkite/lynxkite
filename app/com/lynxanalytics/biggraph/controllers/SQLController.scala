@@ -38,7 +38,7 @@ object DataFrameSpec extends FromJson[DataFrameSpec] {
 }
 case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
   assert(directory.isDefined ^ project.isDefined,
-    "Exaclty one of directory and project should be defined")
+    "Exactly one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
     implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
     if (project.isDefined) projectSQL(user, context)
