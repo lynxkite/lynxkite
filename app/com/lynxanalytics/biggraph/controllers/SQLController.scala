@@ -14,7 +14,6 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.serving.User
-import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
@@ -64,37 +63,8 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val givenTableNames = findTablesFromQuery(sql)
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
-      // Separates tables depending on whether they are tables in projects or imported tables without assigned projects
-      val (projectTableNames, tableOrViewNames) = tableNames.partition(_._2.contains('|'))
-
-      // For the assumed project tables we select those whose corresponding project really exists and
-      // is accessible to the user
-      val usedProjectNames = projectTableNames.mapValues(_.split('|').head)
-      val usedProjects = usedProjectNames.mapValues(DirectoryEntry.fromName(_))
-      val goodProjectViewers = usedProjects.collect {
-        case (name, proj) if proj.isProject && proj.readAllowedFrom(user) => (name, proj.asProjectFrame.viewer)
-      }
-
-      val goodTablePathsInGoodProjects = goodProjectViewers.flatMap {
-        case (name, proj) => proj.allRelativeTablePaths.find(_.path == name.split('|').tail.toSeq)
-          .map { path => ((name, path), proj) }
-      }
-
-      val projectTables = goodTablePathsInGoodProjects.map {
-        case ((name, path), proj) => (name, Table(path, proj))
-      }
-
-      val tableOrViewFrames = tableOrViewNames.mapValues(DirectoryEntry.fromName(_))
-      val goodTablesOrViews = tableOrViewFrames.filter {
-        case (name, entry) => entry.exists && entry.readAllowedFrom(user)
-      }
-
-      val (goodTables, goodViews) = goodTablesOrViews.partition(_._2.isTable)
-      val importedTables = goodTables.mapValues(_.asTableFrame.table)
-      val importedViews = goodViews.mapValues(a =>
-        a.asViewFrame().getRecipe
-      )
-      queryTables(sql, projectTables ++ importedTables, user, context, importedViews)
+      // TODO: Adapt this to querying named snapshots.
+      queryTables(sql, Seq())
     }
 
   // Executes an SQL query at the project level.
@@ -109,22 +79,19 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
 
       val v = p.viewer
       v.allRelativeTablePaths.map {
-        path => (path.toString -> Table(path, v))
+        path => (path.toString -> ???)
       }
     }
-    queryTables(sql, tables, user, context)
+    queryTables(sql, Seq())
   }
 
   private def queryTables(
     sql: String,
-    tables: Iterable[(String, Table)], user: serving.User,
-    context: SQLContext,
-    viewRecipes: Iterable[(String, ViewRecipe)] = List())(
+    tables: Iterable[(String, Table)])(
       implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
-    val dfs =
-      tables.map { case (name, table) => name -> table.toDF(context) } ++
-        viewRecipes.map { case (name, recipe) => name -> recipe.createDataFrame(user, context) }
-    DataManager.sql(context, sql, dfs.toList)
+    import Scripting._
+    val dfs = tables.map { case (name, table) => name -> table.df }
+    DataManager.sql(dataManager.newSQLContext, sql, dfs.toList)
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
@@ -460,9 +427,6 @@ class SQLController(val env: BigGraphEnvironment) {
     if (frame.isView) {
       assert(pathParts.length == 1)
       getViewColumns(user, frame.asViewFrame)
-    } else if (frame.isTable) {
-      assert(pathParts.length == 1)
-      getTableColumns(frame, Seq("vertices"))
     } else if (frame.isProject) {
       assert(pathParts.length >= 1)
       if (request.isImplicitTable) {
@@ -514,20 +478,7 @@ class SQLController(val env: BigGraphEnvironment) {
   }
 
   def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): TableBrowserNodeResponse = {
-    val viewer = frame.viewer
-    val table = Table(AbsoluteTablePath(tablePath), viewer)
-
-    TableBrowserNodeResponse(
-      list = table.columns.toIterator.map {
-        case (name, attr) =>
-          TableBrowserNode(
-            absolutePath = "",
-            name = name,
-            objectType = "column",
-            columnType = ProjectViewer.feTypeName(attr)
-          )
-      }.toSeq
-    )
+    ??? // TODO: Do it for snapshots instead.
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
@@ -651,27 +602,14 @@ object SQLController {
     importConfig: Option[json.JsObject] = None)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
-    assertAccessAndGetTableEntry(user, tableName, privacy)
-    val table = TableImport.importDataFrameAsync(df)
-    val entry = assertAccessAndGetTableEntry(user, tableName, privacy)
-    assert(!entry.exists || overwrite, "file-already-exists-confirm-overwrite")
-    val checkpoint = table.saveAsCheckpoint(notes)
-    if (overwrite) entry.remove()
-    val frame = entry.asNewTableFrame(checkpoint)
-    importConfig.foreach(frame.setImportConfig)
-    frame.setupACL(privacy, user)
-    FEOption.titledCheckpoint(checkpoint, frame.name, s"|${Table.VertexTableName}")
+    ???
   }
 
   def saveView[T <: ViewRecipe: json.Writes](
     notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager) = {
-    val entry = assertAccessAndGetTableEntry(user, name, privacy)
-    assert(!entry.exists || overwrite, "file-already-exists-confirm-overwrite")
-    if (overwrite) entry.remove()
-    val view = entry.asNewViewFrame(recipe, notes)
-    FEOption.titledCheckpoint(view.checkpoint, name, s"|${name}")
+    ???
   }
 
   // Every query runs in its own SQLContext for isolation.
