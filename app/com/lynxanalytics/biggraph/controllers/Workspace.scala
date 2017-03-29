@@ -208,7 +208,7 @@ case class BoxMetadata(
 
 object BoxOutputKind {
   val Project = "project"
-  val Table = "parquet"
+  val Table = "table"
   val validKinds = Set(Project, Table)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
@@ -218,8 +218,7 @@ object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
   def from(project: ProjectEditor): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    BoxOutputState(
-      BoxOutputKind.Project, json.Json.toJson(project.rootState.state)) //.as[json.JsObject])
+    BoxOutputState(BoxOutputKind.Project, json.Json.toJson(project.rootState.state))
   }
 
   def from(table: graph_api.Table): BoxOutputState = {
@@ -248,7 +247,7 @@ case class BoxOutputState(
   }
 
   def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
-    assert(isTable, s"Tried to access '$kind' as 'parquet'.")
+    assert(isTable, s"Tried to access '$kind' as 'table'.")
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state \ "guid").as[String].asUUID)

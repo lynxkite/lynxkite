@@ -17,7 +17,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
         var box = angular.copy(scope.box.instance);
         box.parameters = scope.params;
         util.post('/ajax/importBox', box).then(function success(response) {
-          scope.snapshot = JSON.stringify(response);
+          scope.snapshot = response;
         }, function error(error) {
           scope.error = error;
         }).finally(function() {

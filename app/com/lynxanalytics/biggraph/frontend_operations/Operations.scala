@@ -31,6 +31,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Implicits._
 
   private val projectConnection = TypedConnection("project", BoxOutputKind.Project)
+  private def tableConnection(name: String) = TypedConnection(name, BoxOutputKind.Table)
 
   def register(
     id: String,
@@ -177,13 +178,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   registerOp(
     "Import vertices", ImportOperations,
-    inputs = List(TypedConnection("table", BoxOutputKind.Table)),
-    outputs = List(projectConnection), factory = new ProjectOutputOperation(_) {
+    inputs = List(tableConnection("vertices")), outputs = List(projectConnection),
+    factory = new ProjectOutputOperation(_) {
       lazy val parameters = List(
         Param("id_attr", "Save internal ID as", defaultValue = ""))
       def enabled = FEStatus.enabled
       def apply() = {
-        val table = graph_operations.TableToAttributes.run(tableInput("table"))
+        val table = graph_operations.TableToAttributes.run(tableInput("vertices"))
         project.vertexSet = table.ids
         for ((name, attr) <- table.columns) {
           project.newVertexAttribute(name, attr, "imported")
@@ -198,39 +199,40 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register(
+  registerOp(
     "Import edges for existing vertices", ImportOperations,
-    "project", "edges")(
-      new ProjectOutputOperation(_) {
-        override lazy val project = projectInput("project")
-        lazy val edges = projectInput("edges")
-        lazy val parameters = List(
-          Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
-          Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
-          Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
-        def enabled =
+    inputs = List(projectConnection, tableConnection("edges")), outputs = List(projectConnection),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val edges = tableInput("edges")
+      lazy val parameters = List(
+        Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
+        Choice("src", "Source ID column", options = FEOption.unset +: columnList(edges)),
+        Choice("dst", "Destination ID column", options = FEOption.unset +: columnList(edges)))
+      def enabled =
+        FEStatus.assert(
+          project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
           FEStatus.assert(
-            project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
-            FEStatus.assert(
-              edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
-        def apply() = {
-          val src = params("src")
-          val dst = params("dst")
-          val id = params("attr")
-          assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
-          assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
-          assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-          val idAttr = project.vertexAttributes(id)
-          val srcAttr = edges.vertexAttributes(src)
-          val dstAttr = edges.vertexAttributes(dst)
-          val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-            idAttr, idAttr, srcAttr, dstAttr)
-          project.edgeBundle = imp.edges
-          for ((name, attr) <- edges.vertexAttributes) {
-            project.edgeAttributes(name) = attr.pullVia(imp.embedding)
-          }
+            columnList(edges).nonEmpty, "No attributes on the edges to use as id.")
+      def apply() = {
+        val src = params("src")
+        val dst = params("dst")
+        val id = params("attr")
+        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
+        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
+        assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+        val idAttr = project.vertexAttributes(id)
+        val edgeAttrs = edges.toAttributes
+        val srcAttr = edgeAttrs.columns(src)
+        val dstAttr = edgeAttrs.columns(dst)
+        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+          idAttr, idAttr, srcAttr, dstAttr)
+        project.edgeBundle = imp.edges
+        for ((name, attr) <- edgeAttrs.columns) {
+          project.edgeAttributes(name) = attr.entity.pullVia(imp.embedding)
         }
-      })
+      }
+    })
 
   register("Import vertices and edges from a single table", ImportOperations)(
     new ProjectOutputOperation(_) {

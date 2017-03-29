@@ -181,7 +181,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
-// A base class with some conveniences for working with projects.
+// A base class with some conveniences for working with projects and tables.
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
@@ -251,6 +251,10 @@ trait BasicOperation extends Operation {
 
   protected def tableInput(input: String): Table = {
     context.inputs(input).table
+  }
+
+  protected def columnList(table: Table): List[FEOption] = {
+    table.schema.fieldNames.toList.map(n => FEOption(n, n))
   }
 
   protected def reservedParameter(reserved: String): Unit = {
