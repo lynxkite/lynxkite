@@ -1,16 +1,12 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_operations
 
 class ImportSegmentationOperationTest extends OperationsTestBase {
 
-  test("Compiles and fails") {
-    assert(false)
-  }
-
-  /*
   def getTable = {
     val rows = Seq(
       ("Adam", "Good", 0L),
@@ -20,44 +16,44 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
       ("Isolated Joe", "Retired", 3L))
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("base_name", "seg_name", "base_id")
-    val table = TableImport.importDataFrameAsync(dataFrame)
-    DirectoryEntry.fromName("test_segmentation_import").remove()
-    val tableFrame = DirectoryEntry.fromName("test_segmentation_import").asNewTableFrame(table, "")
-    s"!checkpoint(${tableFrame.checkpoint}, ${tableFrame.name})|vertices"
+    val table = graph_operations.ImportDataFrame.run(dataFrame)
+    box("Import CSV", Map("imported_table" -> table.gUID.toString))
   }
 
   test("Import segmentation for example graph") {
-    run("Create example graph")
-    run("Import segmentation", Map(
-      "table" -> getTable,
-      "name" -> "imported",
-      "base_id_attr" -> "name",
-      "base_id_column" -> "base_name",
-      "seg_id_column" -> "seg_name"))
-    checkAssertions()
+    val project = box("Create example graph")
+      .box("Import segmentation",
+        Map(
+          "name" -> "imported",
+          "base_id_attr" -> "name",
+          "base_id_column" -> "base_name",
+          "seg_id_column" -> "seg_name"),
+        Seq(getTable))
+      .project
+    checkAssertions(project)
   }
 
   test("Import segmentation links for example graph") {
-    run("Create example graph")
-    run("Import segmentation", Map(
-      "table" -> getTable,
-      "name" -> "imported",
-      "base_id_attr" -> "name",
-      "base_id_column" -> "base_name",
-      "seg_id_column" -> "seg_name"))
-    val seg = project.segmentation("imported")
-    // Overwrite the links by importing them for the existing base+segmentation.
-    run("Import segmentation links", Map(
-      "table" -> getTable,
-      "base_id_attr" -> "name",
-      "seg_id_attr" -> "seg_name",
-      "base_id_column" -> "base_name",
-      "seg_id_column" -> "seg_name",
-      "apply_to_project" -> "|imported"))
-    checkAssertions()
+    val project = box("Create example graph")
+      .box("Import segmentation",
+        Map(
+          "name" -> "imported",
+          "base_id_attr" -> "name",
+          "base_id_column" -> "base_name",
+          "seg_id_column" -> "seg_name"),
+        Seq(getTable))
+      .box("Import segmentation links", Map(
+        "base_id_attr" -> "name",
+        "seg_id_attr" -> "seg_name",
+        "base_id_column" -> "base_name",
+        "seg_id_column" -> "seg_name",
+        "apply_to_project" -> "|imported"),
+        Seq(getTable))
+      .project
+    checkAssertions(project)
   }
 
-  def checkAssertions() = {
+  def checkAssertions(project: controllers.ProjectEditor) = {
     val seg = project.segmentation("imported")
     val belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 5)
@@ -72,14 +68,14 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
   }
 
   test("Import segmentation for example graph by Long ID") {
-    run("Create example graph")
-    run("Import segmentation", Map(
-      "table" -> getTable,
-      "name" -> "imported",
-      "base_id_attr" -> "id",
-      "base_id_column" -> "base_id",
-      "seg_id_column" -> "seg_name"))
-    checkAssertions()
+    val project = box("Create example graph")
+      .box("Import segmentation", Map(
+        "name" -> "imported",
+        "base_id_attr" -> "id",
+        "base_id_column" -> "base_id",
+        "seg_id_column" -> "seg_name"),
+        Seq(getTable))
+      .project
+    checkAssertions(project)
   }
-  */
 }
