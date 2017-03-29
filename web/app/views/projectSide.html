@@ -1,9 +1,5 @@
 <div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
 
-  <div ng-if="side.state.projectName === undefined && side.unsaved.showSelector">
-    <project-selector name="side.state.projectName"></project-selector>
-  </div>
-
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
   Loading...
   </progressbar>
@@ -30,76 +26,10 @@
     </div>
   </div>
 
-  <project-history side="side" show="side.project.$resolved && !side.project.$error && side.showHistory">
-  </project-history>
-  <workflow-editor
-    side="side"
-    state="side.unsaved.workflowEditor"
-    ng-if="side.project.$resolved && !side.project.$error && side.unsaved.workflowEditor.enabled">
-  </workflow-editor>
-
   <div class="project" ng-if="
     side.project.$resolved && !side.project.$error && !side.showHistory && !side.unsaved.workflowEditor.enabled">
 
     <div class="btn-group pull-right">
-      <label class="btn btn-default"
-             ng-disabled="!side.project.undoOp"
-             ng-click="side.undo()"
-             id="undo-button"
-             ng-if="!side.isSegmentation()"
-             tooltip="Undo {{side.project.undoOp}}"
-             tooltip-append-to-body="true"
-             tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-backward"></i>
-      </label>
-      <label class="btn btn-default history-button"
-             ng-click="side.showHistory = !side.showHistory"
-             ng-if="!side.isSegmentation()"
-             tooltip="History"
-             tooltip-append-to-body="true"
-             tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-time"></i>
-      </label>
-      <label class="btn btn-default"
-             ng-disabled="!side.project.redoOp"
-             ng-click="side.redo()"
-             id="redo-button"
-             ng-if="!side.isSegmentation()"
-             tooltip="Redo {{side.project.redoOp}}"
-             tooltip-append-to-body="true"
-             tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-forward"></i>
-      </label>
-      <!-- "Save as" is closed. The floppy reveals the input box. -->
-      <label class="btn btn-default"
-             ng-click="side.startSavingAs()"
-             ng-if="!side.showSaveAs && !side.isSegmentation()"
-             id="save-as-starter-button"
-             tooltip="Save&nbsp;as..."
-             tooltip-append-to-body="true"
-             tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-floppy-disk"></i>
-      </label>
-      <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
-      <label class="btn btn-default"
-             ng-if="side.showSaveAs && !side.isSegmentation()"
-             ng-click="side.maybeSaveAs()"
-             tooltip="{{side.saveAsName === side.state.projectName ? 'Enter new name' : 'Click the icon to save as ' + side.saveAsName}}"
-             tooltip-append-to-body="true" tooltip-placement="bottom">
-        <form ng-submit="side.maybeSaveAs()" style="display: inline;">
-          <input class="form-control save-as" ng-model="side.saveAsName" ng-click="$event.stopPropagation();" id='save-as-input'>
-        </form>
-        <i id="save-as-button" class="glyphicon glyphicon-floppy-disk"></i>
-      </label>
-      <label class="btn btn-{{ side.showSettings ? 'primary' : 'default' }}"
-             ng-click="side.showSettings = !side.showSettings"
-             ng-if="!side.isSegmentation()"
-             tooltip="Project&nbsp;settings"
-             tooltip-append-to-body="true"
-             tooltip-placement="bottom"
-             ng-show="util.globals.hasAuth">
-        <i class="glyphicon glyphicon-cog"></i>
-      </label>
       <label class="btn btn-default"
              ng-click="side.close()"
              id="close-project"
@@ -155,8 +85,13 @@
     <help-popup href="project-header-buttons" class="pull-right"></help-popup>
 
     <div class="project-name">
-      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
-        {{parent}} &raquo;
+      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'">
+        <span>
+          State
+        </span>
+        <span ng-repeat="parent in side.parentProjects()">
+          {{parent}} &raquo;
+        </span>
       </span>
       {{side.shortName()}}
     </div>

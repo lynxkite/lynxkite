@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
-import com.lynxanalytics.biggraph.table.TableImport
 
 class ImportSegmentationOperationTest extends OperationsTestBase {
 

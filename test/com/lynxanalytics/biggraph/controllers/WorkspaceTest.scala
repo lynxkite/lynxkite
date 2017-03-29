@@ -27,8 +27,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
   def getOpMeta(ws: String, box: String) =
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
-  def getOutput(ws: String, box: String, output: String) =
-    controller.getOutput(user, GetOutputRequest(ws, BoxOutput(box, output)))
+  def getOutputID(ws: String, box: String, output: String) =
+    controller.getOutputID(user, GetOutputIDRequest(ws, BoxOutput(box, output)))
+  def getOutput(id: String) =
+    controller.getOutput(user, GetOutputRequest(id))
   import WorkspaceJsonFormatters._
   import CheckpointRepository._
   def print[T: json.Writes](t: T): Unit = {
@@ -86,7 +88,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
-      val o = getOutput("test-workspace", "eg", "project")
+      val o = getOutput(getOutputID("test-workspace", "eg", "project").id)
       assert(o.kind == "project")
       val income = o.project.get.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
@@ -155,6 +157,53 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       import graph_api.Scripting._
       import graph_util.Scripting._
       assert(project.edgeBundle.countScalar.value == 2)
+    }
+  }
+
+  test("progress success") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val cc = Box(
+        "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
+        0, 20, Map("project" -> eg.output("project")))
+      // use a different pagerankParams to prevent reusing the attribute computed in an earlier
+      // test
+      val pr = Box("pr", "Compute PageRank", pagerankParams + ("iterations" -> "3"), 0, 20,
+        Map("project" -> cc.output("project")))
+      val prOutput = pr.output("project")
+      val ws = Workspace(List(eg, cc, pr))
+      set("test-workspace", ws)
+      val progressBeforePR = controller.getProgress(user,
+        GetProgressRequest("test-workspace", prOutput)
+      ).progressList.find(_.boxOutput == prOutput).get
+      assert(progressBeforePR.success.enabled)
+      assert(progressBeforePR.progress.inProgress == 0)
+      val computedBeforePR = progressBeforePR.progress.computed
+      import graph_api.Scripting._
+      // trigger PR computation
+      ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
+        .rdd.values.collect
+      val progressAfterPR = controller.getProgress(user,
+        GetProgressRequest("test-workspace", prOutput)
+      ).progressList.find(_.boxOutput == prOutput).get
+      val computedAfterPR = progressAfterPR.progress.computed
+      assert(computedAfterPR > computedBeforePR)
+    }
+  }
+
+  test("progress fails") {
+    using("test-workspace") {
+      assert(get("test-workspace").boxes.isEmpty)
+      // box with unconnected input
+      val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
+      val prOutput = pr.output("project")
+      val ws = Workspace(List(pr))
+      set("test-workspace", ws)
+      val progress = controller.getProgress(user,
+        GetProgressRequest("test-workspace", prOutput)
+      ).progressList.find(_.boxOutput == prOutput).get
+      assert(!progress.success.enabled)
     }
   }
 }

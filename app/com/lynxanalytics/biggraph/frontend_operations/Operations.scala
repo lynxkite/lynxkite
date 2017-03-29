@@ -106,7 +106,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Create vertices", StructureOperations)(new ProjectOutputOperation(_) {
     lazy val parameters = List(
       NonNegInt("size", "Vertex set size", default = 10))
-    def enabled = project.hasNoVertexSet
+    def enabled = FEStatus.enabled
     def apply() = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
       project.setVertexSet(result.vs, idAttr = "id")
@@ -118,7 +118,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
       RandomSeed("seed", "Seed"))
-    def enabled = project.hasVertexSet && project.hasNoEdgeBundle
+    def enabled = project.hasVertexSet
     def apply() = {
       val op = graph_operations.FastRandomEdgeBundle(
         params("seed").toInt, params("degree").toDouble)
@@ -134,7 +134,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         "Per iteration edge number multiplier",
         defaultValue = "1.3"),
       RandomSeed("seed", "Seed"))
-    def enabled = project.hasVertexSet && project.hasNoEdgeBundle
+    def enabled = project.hasVertexSet
     def apply() = {
       val op = graph_operations.ScaleFreeEdgeBundle(
         params("iterations").toInt,
@@ -149,7 +149,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("fromAttr", "Source attribute", options = project.vertexAttrList),
       Choice("toAttr", "Destination attribute", options = project.vertexAttrList))
     def enabled =
-      (project.hasVertexSet && project.hasNoEdgeBundle
+      (project.hasVertexSet
         && FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes."))
     private def applyAA[A](fromAttr: Attribute[A], toAttr: Attribute[A]) = {
       if (fromAttr == toAttr) {
@@ -209,11 +209,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
           Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
         def enabled =
-          project.hasNoEdgeBundle &&
+          FEStatus.assert(
+            project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
             FEStatus.assert(
-              project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
-              FEStatus.assert(
-                edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
+              edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
         def apply() = {
           val src = params("src")
           val dst = params("dst")
@@ -241,12 +240,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           "Table to import from"),
         Param("src", "Source ID column"),
         Param("dst", "Destination ID column"))
-      def enabled = project.hasNoVertexSet
+      def enabled = FEStatus.enabled
       def apply() = {
         val src = params("src")
         val dst = params("dst")
         assert(src.nonEmpty, "The Source ID column parameter must be set.")
         assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
+        ???
+        /*
         val table = Table(TablePath.parse(params("table")), project.viewer)
         val eg = {
           val op = graph_operations.VerticesToEdges()
@@ -259,6 +260,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         for ((name, attr) <- table.columns) {
           project.edgeAttributes(name) = attr.pullVia(eg.embedding)
         }
+        */
       }
     })
 
@@ -277,6 +279,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.hasVertexSet &&
         FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val attrName = params("id_attr")
       assert(attrName != FEOption.unset.id, "The Vertex attribute parameter must be set.")
@@ -297,6 +301,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
+      */
     }
   })
 
@@ -315,6 +320,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.hasEdgeBundle &&
         FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val columnName = params("id_column")
       assert(columnName.nonEmpty, "The ID column parameter must be set.")
@@ -337,6 +344,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           s"Cannot import column `${prefix + name}`. Attribute already exists.")
         project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
       }
+      */
     }
   })
 
@@ -1201,7 +1209,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Create example graph", StructureOperations)(new ProjectOutputOperation(_) {
     lazy val parameters = List()
-    def enabled = project.hasNoVertexSet
+    def enabled = FEStatus.enabled
     def apply() = {
       val g = graph_operations.ExampleGraph()().result
       project.vertexSet = g.vertices
@@ -1222,7 +1230,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register(
     "Create enhanced example graph", HiddenOperations)(new ProjectOutputOperation(_) {
       lazy val parameters = List()
-      def enabled = project.hasNoVertexSet
+      def enabled = FEStatus.enabled
       def apply() = {
         val g = graph_operations.EnhancedExampleGraph()().result
         project.vertexSet = g.vertices
@@ -1754,7 +1762,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Create edges from set overlaps", StructureOperations, new ProjectTransformation(_) with SegOp {
     def segmentationParameters = List(
       NonNegInt("minOverlap", "Minimal overlap for connecting two segments", default = 3))
-    def enabled = project.hasNoEdgeBundle && project.assertSegmentation
+    def enabled = project.assertSegmentation
     def apply() = {
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
       val res = op(op.belongsTo, seg.belongsTo).result
@@ -2688,6 +2696,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             parent.vertexAttributeNames.nonEmpty,
             "No vertex attributes in base project")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base_id_column")
       val segColumnName = params("seg_id_column")
@@ -2707,6 +2717,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         table.column(baseColumnName),
         table.column(segColumnName))
       seg.belongsTo = imp.edges
+      */
     }
   })
 
@@ -2723,6 +2734,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(
       project.vertexAttrList.nonEmpty, "No suitable vertex attributes")
     def apply() = {
+      ???
+      /*
       val table = Table(TablePath.parse(params("table")), project.viewer)
       val baseColumnName = params("base_id_column")
       val segColumnName = params("seg_id_column")
@@ -2740,6 +2753,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
       segmentation.newVertexAttribute(segColumnName, segAttr)
+      */
     }
 
     def typedImport[A, B](
@@ -3369,7 +3383,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
     def enabled =
-      FEStatus.assert(user.isAdmin, "Requires administrator privileges") && project.hasNoVertexSet
+      FEStatus.assert(user.isAdmin, "Requires administrator privileges")
     def apply() = {
       val t = params("timestamp")
       val mg = graph_operations.MetaGraph(t, Some(env)).result
@@ -3387,7 +3401,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Copy edges to segmentation", StructureOperations, new ProjectTransformation(_) with SegOp {
     def segmentationParameters = List()
-    def enabled = project.assertSegmentation && project.hasNoEdgeBundle &&
+    def enabled = project.assertSegmentation &&
       FEStatus.assert(parent.edgeBundle != null, "No edges on base project")
     def apply() = {
       val induction = {
@@ -3457,12 +3471,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(true, "")
 
     def apply() = {
+      ???
+      /*
       val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
       val tableSegmentation = project.segmentation(params("name"))
       tableSegmentation.vertexSet = table.idSet
       for ((name, column) <- table.columns) {
         tableSegmentation.newVertexAttribute(name, column)
       }
+      */
     }
   })
 
