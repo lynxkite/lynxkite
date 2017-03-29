@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_operations.ParquetMetadata
+import com.lynxanalytics.biggraph.graph_operations.ImportDataFrame
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
@@ -401,9 +401,12 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box) = async[ParquetMetadata] {
-    val op = ops.opForBox(user, box, inputs = Map()).asInstanceOf[ParquetOperation]
-    SQLController.saveParquet(op.getDataFrame(SQLController.defaultContext(user)))
+  def importBox(user: serving.User, box: Box) = async[String] {
+    val op = ops.opForBox(user, box, inputs = Map()).asInstanceOf[ImportOperation]
+    val df = op.getDataFrame(SQLController.defaultContext(user))
+    val table = ImportDataFrame.run(df)
+    dataManager.getFuture(table) // Start importing in the background.
+    table.gUID.toString
   }
 
   def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
@@ -602,14 +605,6 @@ object SQLController {
       implicit metaManager: MetaGraphManager,
       dataManager: DataManager): FEOption = metaManager.synchronized {
     ???
-  }
-
-  def saveParquet(df: spark.sql.DataFrame)(
-    implicit dataManager: DataManager): ParquetMetadata = {
-    val filename = dataManager.writablePath / io.TablesDir / Timestamp.toString
-    val schema = df.schema
-    df.write.parquet(filename.resolvedName)
-    ParquetMetadata(filename.symbolicName, schema)
   }
 
   def saveView[T <: ViewRecipe: json.Writes](

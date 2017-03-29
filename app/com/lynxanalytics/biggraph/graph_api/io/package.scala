@@ -5,7 +5,6 @@ package object io {
   val BroadcastsDir = "broadcasts"
   val ScalarsDir = "scalars.json"
   val ModelsDir = "models"
-  val TablesDir = "tables"
   val EntitiesDir = "entities"
   val PartitionedDir = "partitioned"
   val TablesDir = "tables"

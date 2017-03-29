@@ -249,8 +249,8 @@ trait BasicOperation extends Operation {
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
-  protected def parquetInput(input: String): graph_operations.ParquetMetadata = {
-    context.inputs(input).parquetMetadata
+  protected def tableInput(input: String): Table = {
+    context.inputs(input).table
   }
 
   protected def reservedParameter(reserved: String): Unit = {
@@ -280,10 +280,7 @@ abstract class ProjectOutputOperation(
   protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
-    import CheckpointRepository._ // For JSON formatters.
-    val output = BoxOutputState(
-      BoxOutputKind.Project, json.Json.toJson(project.rootState.state).as[json.JsObject])
-    Map(context.meta.outputs(0).ofBox(context.box) -> output)
+    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(project))
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -309,26 +306,31 @@ abstract class ProjectTransformation(
   }
 }
 
-abstract class ParquetOperation(protected val context: Operation.Context) extends BasicOperation {
+abstract class TableOutputOperation(
+    protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.outputs == List(TypedConnection("table", BoxOutputKind.Parquet)),
-    s"A ParquetOperation must output a Parquet table. $context")
+    context.meta.outputs == List(TypedConnection("table", BoxOutputKind.Table)),
+    s"A TableOutputOperation must output a table. $context")
 
-  import graph_operations.ParquetMetadata
-  implicit val parquetMetadataFormat = graph_operations.ImportFromParquet.ParquetMetadataFormat
-  def pmParam(name: String): ParquetMetadata = json.Json.parse(params(name)).as[ParquetMetadata]
-
-  protected def makeOutput(pm: ParquetMetadata): Map[BoxOutput, BoxOutputState] = {
-    val output = BoxOutputState(BoxOutputKind.Parquet, json.Json.toJson(pm).as[json.JsObject])
-    Map(context.meta.outputs(0).ofBox(context.box) -> output)
+  protected def makeOutput(t: Table): Map[BoxOutput, BoxOutputState] = {
+    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(t))
   }
+}
+
+abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
+  import MetaGraphManager.StringAsUUID
+  protected def tableFromParam(name: String): Table = manager.table(params(name).asUUID)
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
-    assert(params("snapshot").nonEmpty, "You have to snapshot the file first.")
-    makeOutput(pmParam("snapshot"))
+    assert(params("imported_table").nonEmpty, "You have to import the data first.")
+    makeOutput(tableFromParam("imported_table"))
   }
 
+  def enabled = FEStatus.enabled // Useful default.
+
   override def apply(): Unit = ???
+
+  // Called by /ajax/importBox to create the table that is passed in "imported_table".
   def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }
