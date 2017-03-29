@@ -82,9 +82,10 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildArrows();
       },
 
-      addBox: function(operationId, x, y) {
+      // boxID should be used for  test-purposes only
+      addBox: function(operationId, x, y, boxId) {
         var cnt = this.boxes.length;
-        var boxId = operationId.replace(/ /g, '-') + cnt;
+        boxId = boxId || operationId.replace(/ /g, '-') + cnt;
 
         this.state.boxes.push(
             {
