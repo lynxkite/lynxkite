@@ -21,7 +21,6 @@ angular.module('biggraph')
               scope.saving = false;
             });
           };
-          window.ss = scope.createSnapshot;
         });
       },
     };
