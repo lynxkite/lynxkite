@@ -7,7 +7,7 @@ var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
-    'test-example workspace with example graph',
+    'test-example workspace with example graph state selected',
     'segmentation by double created',
     function() {
       lib.workspace.addBox({ id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
@@ -20,7 +20,6 @@ module.exports = function(fw) {
     'segmentation by double created',
     'segmentation opens',
     function() {
-      lib.workspace.selectOutput('segment-op');
       lib.left.openSegmentation('bucketing');
     },
     function() {
@@ -72,12 +71,11 @@ module.exports = function(fw) {
     });
 
   fw.transitionTest(
-    'test-example workspace with example graph',
+    'test-example workspace with example graph state selected',
     'segmentation size reporting - non empty segments',
     function() {
       lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
                              after: 'eg0', params: { name: 'self' } });
-      lib.workspace.selectOutput('copy');
       lib.left.openSegmentation('self');
     },
     function() {
@@ -92,7 +90,6 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({ id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
                              after: 'copy', params: { 'filterva_income': '*' } });
-      lib.workspace.selectOutput('filter-op');
       lib.left.openSegmentation('self');
     },
     function() {
