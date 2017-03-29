@@ -14,6 +14,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
   val sql = new SQLController(this, ops)
+  val user = serving.User.fake
 
   case class TestBox(
       operationID: String,
@@ -25,10 +26,13 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
         input => input.projectRec(boxes)
       )
       val name = s"${operationID} ${boxes.length}"
-      val inputIds = ops.getBoxMetadata(operationID).inputs.map(_.id)
+      val inputIds = meta.inputs.map(_.id)
       assert(inputIds.size == inputNames.size)
-      val inputBoxOutputs = inputIds.zip(inputNames).map {
-        case (inputID, boxID) => inputID -> BoxOutput(boxID, "project")
+      val inputBoxOutputs = inputIds.zip(inputNames).zip(inputs).map {
+        case ((inputId, inputName), inputBox) =>
+          val outputs = inputBox.meta.outputs
+          assert(outputs.size == 1, s"$inputName has ${outputs.size} outputs.")
+          inputId -> BoxOutput(inputName, outputs.head.id)
       }.toMap
 
       val box = Box(
@@ -41,12 +45,18 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       name
     }
 
-    def project(): RootProjectEditor = {
+    lazy val (workspace, realBox) = {
       val boxes = scala.collection.mutable.ListBuffer[Box]()
       projectRec(boxes)
       val lastBox = boxes.last
       val ws = Workspace(boxes = boxes.toList)
-      ws.state(serving.User.fake, ops, lastBox.output("project")).project
+      (ws, lastBox)
+    }
+
+    def meta = ops.getBoxMetadata(operationID)
+
+    def project(): RootProjectEditor = {
+      workspace.state(user, ops, realBox.output("project")).project
     }
 
     def box(operationID: String,
@@ -61,22 +71,11 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     TestBox(operationID, parameters, inputs)
   }
 
-  def importCSV(files: String): String = {
-    ???
-    /*
-    val f = sql.importCSV(serving.User.fake, CSVImportRequest(
-      table = s"test-$Timestamp",
-      privacy = "private",
-      files = files,
-      columnNames = Nil,
-      delimiter = ",",
-      mode = "FAILFAST",
-      infer = false,
-      overwrite = false,
-      columnsToImport = List(),
-      limit = None))
-    f.id
-    */
+  def importBox(operationID: String,
+                parameters: Map[String, String] = Map()): TestBox = {
+    val b = box(operationID, parameters)
+    val guidFuture = sql.importBox(user, b.realBox)
+    val guid = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
+    box(operationID, parameters + ("imported_table" -> guid))
   }
-
 }
