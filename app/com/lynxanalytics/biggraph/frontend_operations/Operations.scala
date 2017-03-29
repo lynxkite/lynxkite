@@ -21,7 +21,7 @@ import play.api.libs.json
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val operations =
     new ProjectOperations(env).operations.toMap ++
-      new ParquetOperations(env).operations.toMap
+      new TableOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -177,13 +177,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   registerOp(
     "Import vertices", ImportOperations,
-    inputs = List(TypedConnection("table", BoxOutputKind.Parquet)),
+    inputs = List(TypedConnection("table", BoxOutputKind.Table)),
     outputs = List(projectConnection), factory = new ProjectOutputOperation(_) {
       lazy val parameters = List(
         Param("id_attr", "Save internal ID as", defaultValue = ""))
       def enabled = FEStatus.enabled
       def apply() = {
-        val table = graph_operations.ImportFromParquet(parquetInput("table")).result
+        val table = graph_operations.TableToAttributes.run(tableInput("table"))
         project.vertexSet = table.ids
         for ((name, attr) <- table.columns) {
           project.newVertexAttribute(name, attr, "imported")
@@ -3864,25 +3864,25 @@ object JSUtilities {
   }
 }
 
-class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
+class TableOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
   import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  private val parquetConnection = TypedConnection("table", BoxOutputKind.Parquet)
-  val ParquetOperations = Category("Import operations", "green", icon = "folder-open")
+  private val tableConnection = TypedConnection("table", BoxOutputKind.Table)
+  val ImportOperations = Category("Import operations", "green", icon = "folder-open")
 
   def register(
     id: String,
     inputs: TypedConnection*)(factory: Context => Operation): Unit = {
-    registerOp(id, ParquetOperations, inputs.toList, List(parquetConnection), factory)
+    registerOp(id, ImportOperations, inputs.toList, List(tableConnection), factory)
   }
 
   import OperationParams._
   import org.apache.spark
 
-  register("Import CSV")(new ParquetOperation(_) {
+  register("Import CSV")(new ImportOperation(_) {
     lazy val parameters = List(
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
@@ -3895,8 +3895,7 @@ class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL"),
-      TableParam("snapshot", "Snapshot ID"))
-    def enabled = FEStatus.enabled
+      TableParam("imported_table", "Table GUID"))
     def getDataFrame(context: spark.sql.SQLContext) = {
       val errorHandling = params("error_handling")
       val infer = params("infer") == "yes"
@@ -3911,7 +3910,7 @@ class ParquetOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         .option("mode", errorHandling)
         .option("delimiter", params("delimiter"))
         .option("inferSchema", if (infer) "true" else "false")
-        // We don't want to skip lines starting with #
+        // We don't want to skip lines starting with #.
         .option("comment", null)
       val readerWithSchema = if (columns.nonEmpty) {
         reader.schema(SQLController.stringOnlySchema(columns.split(",", -1)))

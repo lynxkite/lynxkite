@@ -8,7 +8,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class SQLControllerTest extends BigGraphControllerTestBase {
-  val sqlController = new SQLController(this)
+  val sqlController = new SQLController(this, ops = null)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
   graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
 
@@ -113,6 +113,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
 
+  /*
   def importCSV(file: String, columns: List[String], infer: Boolean, limit: Option[Int] = None): Unit = {
     val csvFiles = "IMPORTGRAPHTEST$/" + file + "/part*"
     val response = sqlController.importCSV(
@@ -544,6 +545,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       Duration.Inf)
     assert(res.data.length == 2)
   }
+  */
 
   test("list project tables") {
     createProject(name = "example1")

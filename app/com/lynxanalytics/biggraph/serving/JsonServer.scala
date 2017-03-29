@@ -294,7 +294,6 @@ object FrontendJson {
   implicit val wGetProgressResponse = json.Json.writes[GetProgressResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
-  implicit val fParquetMetadata = graph_operations.ImportFromParquet.ParquetMetadataFormat
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]

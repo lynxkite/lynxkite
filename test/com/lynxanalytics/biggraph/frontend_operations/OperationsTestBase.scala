@@ -13,7 +13,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
-  val sql = new SQLController(this)
+  val sql = new SQLController(this, ops)
 
   case class TestBox(
       operationID: String,
@@ -62,6 +62,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   }
 
   def importCSV(files: String): String = {
+    ???
+    /*
     val f = sql.importCSV(serving.User.fake, CSVImportRequest(
       table = s"test-$Timestamp",
       privacy = "private",
@@ -74,6 +76,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       columnsToImport = List(),
       limit = None))
     f.id
+    */
   }
 
 }

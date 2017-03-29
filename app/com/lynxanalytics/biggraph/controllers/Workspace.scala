@@ -208,10 +208,23 @@ case class BoxMetadata(
 
 object BoxOutputKind {
   val Project = "project"
-  val Parquet = "parquet"
-  val validKinds = Set(Project, Parquet)
+  val Table = "parquet"
+  val validKinds = Set(Project, Table)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
+}
+
+object BoxOutputState {
+  // Cannot call these "apply" due to the JSON formatter macros.
+  def from(project: ProjectEditor): BoxOutputState = {
+    import CheckpointRepository._ // For JSON formatters.
+    BoxOutputState(
+      BoxOutputKind.Project, json.Json.toJson(project.rootState.state)) //.as[json.JsObject])
+  }
+
+  def from(table: graph_api.Table): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.Table, json.Json.obj("guid" -> table.gUID))
+  }
 }
 
 case class BoxOutputState(
@@ -223,7 +236,7 @@ case class BoxOutputState(
   def isError = !success.enabled
 
   def isProject = kind == BoxOutputKind.Project
-  def isParquet = kind == BoxOutputKind.Parquet
+  def isTable = kind == BoxOutputKind.Table
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
@@ -234,11 +247,11 @@ case class BoxOutputState(
     new RootProjectEditor(rps)
   }
 
-  def parquetMetadata: graph_operations.ParquetMetadata = {
-    assert(isParquet, s"Tried to access '$kind' as 'parquet'.")
+  def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
+    assert(isTable, s"Tried to access '$kind' as 'parquet'.")
     assert(success.enabled, success.disabledReason)
-    import graph_operations.ImportFromParquet.ParquetMetadataFormat
-    state.as[graph_operations.ParquetMetadata]
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.table((state \ "guid").as[String].asUUID)
   }
 }
 
