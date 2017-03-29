@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.serving
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputIDRequest(workspace: String, output: BoxOutput)
+case class GetOutputRequest(id: String)
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
@@ -109,7 +110,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     import WorkspaceJsonFormatters.fBoxOutputState
     snapshot.setState(calculatedState)
   }
-  
+
   def getProgress(
     user: serving.User, request: GetProgressRequest): GetProgressResponse = {
     val ws = getWorkspaceByName(user, request.workspace)
