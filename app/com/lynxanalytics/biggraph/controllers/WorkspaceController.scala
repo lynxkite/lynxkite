@@ -11,12 +11,10 @@ import com.lynxanalytics.biggraph.serving
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputIDRequest(workspace: String, output: BoxOutput)
-case class GetOutputRequest(id: String)
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputIDResponse(id: String, kind: String)
-case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
 case class GetProgressResponse(progressList: List[BoxOutputProgress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
@@ -68,20 +66,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       calculatedStates(id) = state
     }
     GetOutputIDResponse(id, state.kind)
-  }
-
-  def getOutput(
-    user: serving.User, request: GetOutputRequest): GetOutputResponse = {
-    calculatedStates.get(request.id) match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(storedState: BoxOutputState) =>
-        storedState.kind match {
-          case BoxOutputKind.Project =>
-            GetOutputResponse(
-              storedState.kind,
-              project = Some(storedState.project.viewer.toFE("")))
-        }
-    }
   }
 
   def getProjectOutput(
